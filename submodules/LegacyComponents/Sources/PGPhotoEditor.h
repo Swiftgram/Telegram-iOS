@@ -19,6 +19,7 @@
 @property (nonatomic, assign) NSTimeInterval trimStartValue;
 @property (nonatomic, assign) NSTimeInterval trimEndValue;
 @property (nonatomic, assign) bool sendAsGif;
+@property (nonatomic, assign) bool sendAsTelescope;
 @property (nonatomic, assign) TGMediaVideoConversionPreset preset;
 
 @property (nonatomic, weak) TGPhotoEditorPreviewView *previewOutput;

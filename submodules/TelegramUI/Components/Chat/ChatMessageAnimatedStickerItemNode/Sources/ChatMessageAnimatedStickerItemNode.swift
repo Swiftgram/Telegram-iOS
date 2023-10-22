@@ -108,9 +108,12 @@ public class ChatMessageAnimatedStickerItemNode: ChatMessageItemView {
     public var emojiString: String?
     private let disposable = MetaDisposable()
     private let disposables = DisposableSet()
+    
+    // MARK: Swiftgram
+    public var sizeCoefficient: Float = 1.0
 
     private var viaBotNode: TextNode?
-    private let dateAndStatusNode: ChatMessageDateAndStatusNode
+    public let dateAndStatusNode: ChatMessageDateAndStatusNode
     private var threadInfoNode: ChatMessageThreadInfoNode?
     private var replyInfoNode: ChatMessageReplyInfoNode?
     private var replyBackgroundContent: WallpaperBubbleBackgroundNode?
@@ -789,7 +792,7 @@ public class ChatMessageAnimatedStickerItemNode: ChatMessageItemView {
     }
         
     override public func asyncLayout() -> (_ item: ChatMessageItem, _ params: ListViewItemLayoutParams, _ mergedTop: ChatMessageMerge, _ mergedBottom: ChatMessageMerge, _ dateHeaderAtBottom: Bool) -> (ListViewItemNodeLayout, (ListViewItemUpdateAnimation, ListViewItemApply, Bool) -> Void) {
-        var displaySize = CGSize(width: 180.0, height: 180.0)
+        var displaySize = CGSize(width: 180.0 * CGFloat(self.sizeCoefficient), height: 180.0 * CGFloat(self.sizeCoefficient))
         let telegramFile = self.telegramFile
         let emojiFile = self.emojiFile
         let telegramDice = self.telegramDice
@@ -821,7 +824,7 @@ public class ChatMessageAnimatedStickerItemNode: ChatMessageItemView {
             var imageBottomPadding: CGFloat = 0.0
             var imageHorizontalOffset: CGFloat = 0.0
             if !(telegramFile?.videoThumbnails.isEmpty ?? true) {
-                displaySize = CGSize(width: 240.0, height: 240.0)
+                displaySize = CGSize(width: 240.0 * CGFloat(self.sizeCoefficient), height: 240.0 * CGFloat(self.sizeCoefficient))
                 imageVerticalInset = -20.0
                 imageHorizontalOffset = 12.0
             }

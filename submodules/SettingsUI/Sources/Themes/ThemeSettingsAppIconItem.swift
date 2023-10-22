@@ -357,6 +357,22 @@ class ThemeSettingsAppIconItemNode: ListViewItemNode, ItemListItemNode {
                             var name = "Icon"
                             var bordered = true
                             switch icon.name {
+                                case "SGDefault":
+                                    name = item.strings.Appearance_AppIconDefault
+                                    bordered = false
+                                case "SGBlack":
+                                    name = "Black"
+                                    bordered = false
+                                case "SGLegacy":
+                                    name = "Legacy"
+                                    bordered = false
+                                case "SGInverted":
+                                    name = "Inverted"
+                                case "SGWhite":
+                                    name = "White"
+                                case "SGNight":
+                                    name = "Night"
+                                    bordered = false
                                 case "BlueIcon":
                                     name = item.strings.Appearance_AppIconDefault
                                 case "BlackIcon":

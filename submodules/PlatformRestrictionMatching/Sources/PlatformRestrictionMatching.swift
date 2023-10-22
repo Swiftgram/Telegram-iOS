@@ -29,3 +29,18 @@ public extension RestrictedContentMessageAttribute {
         return nil
     }
 }
+
+// MARK: Swiftgram
+public extension Message {
+    func canRevealContent(contentSettings: ContentSettings) -> Bool {
+        if contentSettings.appConfiguration.sgWebSettings.global.canViewMessages && self.flags.contains(.CopyProtected) {
+            let messageContentWasUnblocked = self.restrictedContentAttribute != nil && self.isRestricted(platform: "ios", contentSettings: ContentSettings.default) && !self.isRestricted(platform: "ios", contentSettings: contentSettings)
+            var authorWasUnblocked: Bool = false
+            if let author = self.author {
+                authorWasUnblocked = author.restrictionText(platform: "ios", contentSettings: ContentSettings.default) != nil && author.restrictionText(platform: "ios", contentSettings: contentSettings) == nil
+            }
+            return messageContentWasUnblocked || authorWasUnblocked
+        }
+        return false
+    }
+}

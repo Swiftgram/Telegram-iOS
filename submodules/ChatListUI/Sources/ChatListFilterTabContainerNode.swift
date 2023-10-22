@@ -4,6 +4,8 @@ import AsyncDisplayKit
 import Display
 import TelegramCore
 import TelegramPresentationData
+import AccountContext
+import SGSimpleSettings
 
 private final class ItemNodeDeleteButtonNode: HighlightableButtonNode {
     private let pressed: () -> Void
@@ -304,6 +306,11 @@ private final class ItemNode: ASDisplayNode {
     }
     
     func updateLayout(height: CGFloat, transition: ContainedViewLayoutTransition) -> (width: CGFloat, shortWidth: CGFloat) {
+        // MARK: Swiftgram
+        var height = height
+        if SGSimpleSettings.shared.hideTabBar {
+            height = 46.0
+        }
         let titleSize = self.titleNode.updateLayout(CGSize(width: 160.0, height: .greatestFiniteMagnitude))
         let _ = self.titleActiveNode.updateLayout(CGSize(width: 160.0, height: .greatestFiniteMagnitude))
         let titleFrame = CGRect(origin: CGPoint(x: -self.titleNode.insets.left, y: floor((height - titleSize.height) / 2.0)), size: titleSize)
@@ -350,6 +357,11 @@ private final class ItemNode: ASDisplayNode {
     }
     
     func updateArea(size: CGSize, sideInset: CGFloat, useShortTitle: Bool, transition: ContainedViewLayoutTransition) {
+        // MARK: Swiftgram
+        var size = size
+        if SGSimpleSettings.shared.hideTabBar {
+            size.height = 46.0
+        }
         transition.updateAlpha(node: self.titleContainer, alpha: useShortTitle ? 0.0 : 1.0)
         transition.updateAlpha(node: self.shortTitleContainer, alpha: useShortTitle ? 1.0 : 0.0)
         
@@ -546,12 +558,25 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
         }
     }
     
-    public override init() {
+    // MARK: Swiftgram
+    public let inline: Bool
+    private var backgroundNode: NavigationBackgroundNode? = nil
+    
+    public init(inline: Bool = false, context: AccountContext? = nil) {
         self.scrollNode = ASScrollNode()
         
         self.selectedLineNode = ASImageNode()
         self.selectedLineNode.displaysAsynchronously = false
         self.selectedLineNode.displayWithoutProcessing = true
+        
+        // MARK: Swiftgram
+        self.inline = inline
+        if self.inline {
+            if let context = context {
+                let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                self.backgroundNode = NavigationBackgroundNode(color: presentationData.theme.rootController.navigationBar.blurredBackgroundColor)
+            }
+        }
         
         super.init()
         
@@ -563,7 +588,9 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
         if #available(iOS 11.0, *) {
             self.scrollNode.view.contentInsetAdjustmentBehavior = .never
         }
-        
+        if let backgroundNode = self.backgroundNode {
+            self.addSubnode(backgroundNode)
+        }
         self.addSubnode(self.scrollNode)
         self.scrollNode.addSubnode(self.selectedLineNode)
         
@@ -711,13 +738,25 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
         let previousContentWidth = self.scrollNode.view.contentSize.width
         
         if self.currentParams?.presentationData.theme !== presentationData.theme {
+            if let backgroundNode = self.backgroundNode {
+                backgroundNode.updateColor(color: presentationData.theme.rootController.navigationBar.blurredBackgroundColor, transition: .immediate)
+            }
             self.selectedLineNode.image = generateImage(CGSize(width: 5.0, height: 3.0), rotatedContext: { size, context in
                 context.clear(CGRect(origin: CGPoint(), size: size))
                 context.setFillColor(presentationData.theme.list.itemAccentColor.cgColor)
-                context.fillEllipse(in: CGRect(origin: CGPoint(), size: CGSize(width: 4.0, height: 4.0)))
-                context.fillEllipse(in: CGRect(origin: CGPoint(x: size.width - 4.0, y: 0.0), size: CGSize(width: 4.0, height: 4.0)))
-                context.fill(CGRect(x: 2.0, y: 0.0, width: size.width - 4.0, height: 4.0))
-                context.fill(CGRect(x: 0.0, y: 2.0, width: size.width, height: 2.0))
+                if self.inline {
+                    // Draw ellipses at the bottom corners
+                    context.fillEllipse(in: CGRect(origin: CGPoint(x: 0, y: size.height - 4.0), size: CGSize(width: 4.0, height: 4.0)))
+                    context.fillEllipse(in: CGRect(origin: CGPoint(x: size.width - 4.0, y: size.height - 4.0), size: CGSize(width: 4.0, height: 4.0)))
+                    // Draw rectangles to connect the ellipses
+                    context.fill(CGRect(x: 2.0, y: size.height - 4.0, width: size.width - 4.0, height: 4.0))
+                    context.fill(CGRect(x: 0.0, y: 0.0, width: size.width, height: size.height - 2.0))
+                } else {
+                    context.fillEllipse(in: CGRect(origin: CGPoint(), size: CGSize(width: 4.0, height: 4.0)))
+                    context.fillEllipse(in: CGRect(origin: CGPoint(x: size.width - 4.0, y: 0.0), size: CGSize(width: 4.0, height: 4.0)))
+                    context.fill(CGRect(x: 2.0, y: 0.0, width: size.width - 4.0, height: 4.0))
+                    context.fill(CGRect(x: 0.0, y: 2.0, width: size.width, height: 2.0))
+                }
             })?.resizableImage(withCapInsets: UIEdgeInsets(top: 3.0, left: 3.0, bottom: 0.0, right: 3.0), resizingMode: .stretch)
         }
         
@@ -746,6 +785,11 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
         
         self.reorderingGesture?.isEnabled = isReordering
         
+        // MARK: Swiftgram
+        if let backgroundNode = self.backgroundNode {
+            transition.updateFrame(node: backgroundNode, frame: CGRect(origin: CGPoint(), size: size))
+            backgroundNode.update(size: backgroundNode.bounds.size, transition: transition)
+        }
         transition.updateFrame(node: self.scrollNode, frame: CGRect(origin: CGPoint(), size: size))
         
         enum BadgeAnimation {
@@ -955,7 +999,7 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
         if let selectedFrame = selectedFrame {
             let wasAdded = self.selectedLineNode.isHidden
             self.selectedLineNode.isHidden = false
-            let lineFrame = CGRect(origin: CGPoint(x: selectedFrame.minX, y: size.height - 3.0), size: CGSize(width: selectedFrame.width, height: 3.0))
+            let lineFrame = CGRect(origin: CGPoint(x: selectedFrame.minX, y: self.inline ? 0.0 : size.height - 3.0), size: CGSize(width: selectedFrame.width, height: 3.0))
             if wasAdded {
                 self.selectedLineNode.frame = lineFrame
             } else {

@@ -1479,7 +1479,7 @@ static CGPoint TGCameraControllerClampPointToScreenSize(__unused id self, __unus
             TGCameraCapturedPhoto *photo = (TGCameraCapturedPhoto *)editableItem;
             CGSize size = photo.originalSize;
             CGFloat height = size.width * 0.704f;
-            PGPhotoEditorValues *values = [PGPhotoEditorValues editorValuesWithOriginalSize:size cropRect:CGRectMake(0, floor((size.height - height) / 2.0f), size.width, height) cropRotation:0.0f cropOrientation:UIImageOrientationUp cropLockedAspectRatio:0.0f cropMirrored:false toolValues:nil paintingData:nil sendAsGif:false];
+            PGPhotoEditorValues *values = [PGPhotoEditorValues editorValuesWithOriginalSize:size cropRect:CGRectMake(0, floor((size.height - height) / 2.0f), size.width, height) cropRotation:0.0f cropOrientation:UIImageOrientationUp cropLockedAspectRatio:0.0f cropMirrored:false toolValues:nil paintingData:nil sendAsGif:false sendAsTelescope:false];
             
             SSignal *cropSignal = [[photo originalImageSignal:0.0] map:^UIImage *(UIImage *image)
             {
@@ -1536,7 +1536,7 @@ static CGPoint TGCameraControllerClampPointToScreenSize(__unused id self, __unus
         }];
         
         bool hasCamera = !self.inhibitMultipleCapture && (((_intent == TGCameraControllerGenericIntent || _intent == TGCameraControllerGenericPhotoOnlyIntent || _intent == TGCameraControllerGenericVideoOnlyIntent) && !_shortcut) || (_intent == TGCameraControllerPassportMultipleIntent));
-        TGMediaPickerGalleryModel *model = [[TGMediaPickerGalleryModel alloc] initWithContext:windowContext items:galleryItems focusItem:focusItem selectionContext:_items.count > 1 ? selectionContext : nil editingContext:editingContext hasCaptions:self.allowCaptions allowCaptionEntities:self.allowCaptionEntities hasTimer:self.hasTimer onlyCrop:_intent == TGCameraControllerPassportIntent || _intent == TGCameraControllerPassportIdIntent || _intent == TGCameraControllerPassportMultipleIntent inhibitDocumentCaptions:self.inhibitDocumentCaptions hasSelectionPanel:true hasCamera:hasCamera recipientName:self.recipientName isScheduledMessages:false];
+        TGMediaPickerGalleryModel *model = [[TGMediaPickerGalleryModel alloc] initWithContext:windowContext items:galleryItems focusItem:focusItem selectionContext:_items.count > 1 ? selectionContext : nil editingContext:editingContext hasCaptions:self.allowCaptions allowCaptionEntities:self.allowCaptionEntities hasTimer:self.hasTimer onlyCrop:_intent == TGCameraControllerPassportIntent || _intent == TGCameraControllerPassportIdIntent || _intent == TGCameraControllerPassportMultipleIntent inhibitDocumentCaptions:self.inhibitDocumentCaptions hasSelectionPanel:true hasCamera:hasCamera recipientName:self.recipientName isScheduledMessages:false canShowTelescope:false canSendTelescope:false];
         model.inhibitMute = self.inhibitMute;
         model.controller = galleryController;
         model.stickersContext = self.stickersContext;
