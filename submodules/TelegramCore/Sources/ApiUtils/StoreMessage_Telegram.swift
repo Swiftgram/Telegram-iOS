@@ -81,6 +81,7 @@ public func tagsForStoreMessage(incoming: Bool, attributes: [MessageAttribute], 
                 }
             }
             if isAnimated {
+                // TODO(swiftgram): refinedTag = [.photoOrVideo, .video, .gif]
                 refinedTag = .gif
             }
             if file.isAnimatedSticker {

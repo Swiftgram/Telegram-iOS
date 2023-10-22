@@ -2255,7 +2255,55 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
             displaySpoiler = true
             icon = .eye
         }
+ 
         
+        // let date = Date(timeIntervalSince1970: TimeInterval(message.timestamp))
+        // let formatter = DateFormatter()
+        // formatter.dateFormat = "HH:mm:ss"
+        // let dateString = formatter.string(from: date)
+        // print("Message [\(dateString)]: contentAnalysisResult: \(self.contentAnalysisResult as Optional) canAnalyze: \(canAnalyzeMedia())")
+        // if self.contentAnalysisResult == nil && canAnalyzeMedia() {
+        //     print("Message [\(dateString)]: displaying initial spoiler")
+        //     displaySpoiler = true
+        //     var mediaAnalysisSignal: Signal<Bool,Error>? = nil
+        //     if let media = self.media as? TelegramMediaImage {
+        //         if let largestRepresentation = largestImageRepresentation(media.representations), let path = self.context?.account.postbox.mediaBox.completedResourcePath(largestRepresentation.resource) {
+        //             mediaAnalysisSignal = analyzeMediaSignal(URL(fileURLWithPath: path), mediaType: .image)
+        //         }
+        //     } else if let media = self.media as? TelegramMediaFile {
+        //         let videoURL = URL(fileURLWithPath: media.fileName ?? "")
+        //         let videoExtension = videoURL.pathExtension.isEmpty ? nil : videoURL.pathExtension
+        //         if let path = self.context?.account.postbox.mediaBox.completedResourcePath(media.resource, pathExtension: videoExtension) {
+        //             mediaAnalysisSignal = analyzeMediaSignal(URL(fileURLWithPath: path), mediaType: .video)
+        //         }
+        //     }
+            
+        //     if let mediaAnalysisSignal = mediaAnalysisSignal {
+        //         if !self.contentAnalysisPending {
+        //             self.contentAnalysisPending = true
+        //             let _ = mediaAnalysisSignal.start(next: { [weak self] analysisStatus in
+        //                 guard let strongSelf = self else {
+        //                     return
+        //                 }
+        //                 strongSelf.contentAnalysisPending = false
+        //                 strongSelf.contentAnalysisResult = analysisStatus
+        //                 if strongSelf.contentAnalysisResult == false {
+        //                     print("Message [\(dateString)]: Removing initial spoiler")
+        //                     Queue.mainQueue().async {
+        //                         strongSelf.updateStatus(animated: false)
+        //                     }
+        //                 } else {
+        //                     print("Message [\(dateString)]: Non removing initial spoiler.")
+        //                 }
+        //             })
+        //         }
+        //     }
+            
+        // } else if let contentAnalysisResult = self.contentAnalysisResult, contentAnalysisResult == true {
+        //     print("Message [\(dateString)]: Ensuring soiler for checked content")
+        //     displaySpoiler = true
+        // }
+    
         if displaySpoiler {
             if self.extendedMediaOverlayNode == nil {
                 let enableAnimations = (self.context?.sharedContext.energyUsageSettings.fullTranslucency ?? true) && !isPreview

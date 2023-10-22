@@ -1,5 +1,6 @@
 import Foundation
 import Postbox
+import SGSimpleSettings
 
 public let anonymousSavedMessagesId: Int64 = 2666000
 
@@ -218,8 +219,11 @@ public extension Peer {
             return false
         }
     }
-    
+    // MARK: Swiftgram
     var nameColor: PeerNameColor? {
+        if SGSimpleSettings.shared.accountColorsSaturation == 0 {
+            return nil
+        }
         switch self {
         case let user as TelegramUser:
             if let nameColor = user.nameColor {

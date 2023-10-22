@@ -2534,16 +2534,17 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                     })
                 })))
             }
-
-//            if #available(iOS 11.0, *) {
-//                items.append(.action(ContextMenuActionItem(text: "AirPlay", textColor: .primary, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Media Gallery/AirPlay"), color: theme.contextMenu.primaryColor) }, action: { [weak self] _, f in
-//                    f(.default)
-//                    guard let strongSelf = self else {
-//                        return
-//                    }
-//                    strongSelf.beginAirPlaySetup()
-//                })))
-//            }
+            
+            // MARK: Swiftgram
+            if #available(iOS 11.0, *) {
+                items.append(.action(ContextMenuActionItem(text: "AirPlay", textColor: .primary, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Media Gallery/AirPlay"), color: theme.contextMenu.primaryColor) }, action: { [weak self] _, f in
+                    f(.default)
+                    guard let strongSelf = self else {
+                        return
+                    }
+                    strongSelf.beginAirPlaySetup()
+                })))
+            }
             
             if let (message, _, _) = strongSelf.contentInfo() {
                 for media in message.media {
