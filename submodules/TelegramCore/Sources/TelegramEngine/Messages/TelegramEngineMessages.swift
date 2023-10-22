@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import SwiftSignalKit
 import Postbox
@@ -74,6 +75,13 @@ public extension TelegramEngine {
 
         public func searchMessages(location: SearchMessagesLocation, query: String, state: SearchMessagesState?, centerId: MessageId? = nil, limit: Int32 = 100) -> Signal<(SearchMessagesResult, SearchMessagesState), NoError> {
             return _internal_searchMessages(account: self.account, location: location, query: query, state: state, centerId: centerId, limit: limit)
+            // TODO(swiftgram): Try to fallback on error when searching. RX is hard...
+            |> mapToSignal { result -> Signal<(SearchMessagesResult, SearchMessagesState), NoError> in
+                if (result.0.totalCount > 0) {
+                    return .single(result)
+                }
+                return _internal_searchMessages(account: self.account, location: location, query: query, state: state, centerId: centerId, limit: limit, forceLocal: true)
+            }
         }
 
         public func downloadMessage(messageId: MessageId) -> Signal<Message?, NoError> {
@@ -506,6 +514,10 @@ public extension TelegramEngine {
         
         public func translate(text: String, toLang: String) -> Signal<String?, TranslationError> {
             return _internal_translate(network: self.account.network, text: text, toLang: toLang)
+        }
+        
+        public func translateMessagesViaText(messagesDict: [EngineMessage.Id: String], toLang: String, generateEntitiesFunction: @escaping (String) -> [MessageTextEntity]) -> Signal<Void, TranslationError> {
+            return _internal_translateMessagesViaText(account: self.account, messagesDict: messagesDict, toLang: toLang, generateEntitiesFunction: generateEntitiesFunction)
         }
         
         public func translateMessages(messageIds: [EngineMessage.Id], toLang: String) -> Signal<Void, TranslationError> {
@@ -1314,6 +1326,10 @@ public extension TelegramEngine {
         }
         
         public func markStoryAsSeen(peerId: EnginePeer.Id, id: Int32, asPinned: Bool) -> Signal<Never, NoError> {
+            // MARK: Swiftgram
+            if SGSimpleSettings.shared.isStealthModeEnabled {
+                return .never()
+            }
             return _internal_markStoryAsSeen(account: self.account, peerId: peerId, id: id, asPinned: asPinned)
         }
         

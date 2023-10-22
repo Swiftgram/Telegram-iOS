@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import Display
@@ -5508,7 +5509,7 @@ public final class StoryItemSetContainerComponent: Component {
                                 defer {
                                     TempBox.shared.dispose(tempFile)
                                 }
-                                if let imageData = compressImageToJPEG(image, quality: 0.7, tempFilePath: tempFile.path) {
+                                if let imageData = compressImageToJPEG(image, quality: Float(SGSimpleSettings.shared.outgoingPhotoQuality) / 100.0, tempFilePath: tempFile.path) {
                                     self.updateDisposable.set((context.engine.messages.editStory(peerId: peerId, id: id, media: .image(dimensions: dimensions, data: imageData, stickers: result.stickers), mediaAreas: result.mediaAreas, text: updatedText, entities: updatedEntities, privacy: nil)
                                     |> deliverOnMainQueue).startStrict(next: { [weak self] result in
                                         guard let self else {
@@ -5553,7 +5554,7 @@ public final class StoryItemSetContainerComponent: Component {
                                     defer {
                                         TempBox.shared.dispose(tempFile)
                                     }
-                                    let firstFrameImageData = firstFrameImage.flatMap { compressImageToJPEG($0, quality: 0.6, tempFilePath: tempFile.path) }
+                                    let firstFrameImageData = firstFrameImage.flatMap { compressImageToJPEG($0, quality: Float(SGSimpleSettings.shared.outgoingPhotoQuality) / 100.0, tempFilePath: tempFile.path) }
                                     let firstFrameFile = firstFrameImageData.flatMap { data -> TempBoxFile? in
                                         let file = TempBox.shared.tempFile(fileName: "image.jpg")
                                         if let _ = try? data.write(to: URL(fileURLWithPath: file.path)) {
@@ -6980,14 +6981,13 @@ public final class StoryItemSetContainerComponent: Component {
                 if !component.slice.item.storyItem.isForwardingDisabled {
                     let saveText: String = component.strings.Story_Context_SaveToGallery
                     items.append(.action(ContextMenuActionItem(text: saveText, icon: { theme in
-                        return generateTintedImage(image: UIImage(bundleImageName: accountUser.isPremium ? "Chat/Context Menu/Download" : "Chat/Context Menu/DownloadLocked"), color: theme.contextMenu.primaryColor)
+                        return generateTintedImage(image: UIImage(bundleImageName: (accountUser.isPremium || true) ? "Chat/Context Menu/Download" : "Chat/Context Menu/DownloadLocked"), color: theme.contextMenu.primaryColor)
                     }, action: { [weak self] _, a in
                         a(.default)
                         
                         guard let self else {
                             return
                         }
-                        
                         if accountUser.isPremium {
                             self.requestSave()
                         } else {

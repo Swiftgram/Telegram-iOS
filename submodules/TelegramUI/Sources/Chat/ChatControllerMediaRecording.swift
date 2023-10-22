@@ -166,6 +166,7 @@ extension ChatControllerImpl {
                 }
                 
                 let controller = VideoMessageCameraScreen(
+                    startWithRearCam: SGSimpleSettings.shared.startTelescopeWithRearCam,
                     context: self.context,
                     updatedPresentationData: self.updatedPresentationData,
                     allowLiveUpload: allowLiveUpload,

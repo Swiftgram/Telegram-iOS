@@ -70,6 +70,7 @@ API_AVAILABLE(ios(10))
 
 @interface BuildConfig () {
     NSData * _Nullable _bundleData;
+    NSString * _Nonnull _sgConfig;
     int32_t _apiId;
     NSString * _Nonnull _apiHash;
     NSString * _Nullable _appCenterId;
@@ -127,6 +128,7 @@ API_AVAILABLE(ios(10))
 - (instancetype _Nonnull)initWithBaseAppBundleId:(NSString * _Nonnull)baseAppBundleId {
     self = [super init];
     if (self != nil) {
+        _sgConfig = @(APP_SG_CONFIG);
         _apiId = APP_CONFIG_API_ID;
         _apiHash = @(APP_CONFIG_API_HASH);
         _appCenterId = @(APP_CONFIG_APP_CENTER_ID);

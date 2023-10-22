@@ -1,3 +1,4 @@
+// MARK: Swiftgram
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -16,6 +17,9 @@ private let leftInset: CGFloat = 16.0
 private let rightInset: CGFloat = 16.0
 
 private enum ChatSendMessageActionIcon {
+    case translate
+    case changeTranslationLanguage
+
     case sendWithoutSound
     case sendWhenOnline
     case schedule
@@ -23,6 +27,10 @@ private enum ChatSendMessageActionIcon {
     func image(theme: PresentationTheme) -> UIImage? {
         let imageName: String
         switch self {
+        case .translate:
+            imageName = "Chat/Context Menu/Translate"
+        case .changeTranslationLanguage:
+            imageName = "Chat/Context Menu/Caption"
         case .sendWithoutSound:
             imageName = "Chat/Input/Menu/SilentIcon"
         case .sendWhenOnline:
@@ -174,6 +182,7 @@ final class ChatSendMessageActionSheetControllerNode: ViewControllerTracingNode,
     private let contentContainerNode: ASDisplayNode
     private let contentNodes: [ActionSheetItemNode]
     private let sendButtonNode: HighlightableButtonNode
+    private let canTranslateOutgoingMessage: Bool
     
     private let messageClipNode: ASDisplayNode
     private let messageBackgroundNode: ASImageNode
@@ -196,7 +205,7 @@ final class ChatSendMessageActionSheetControllerNode: ViewControllerTracingNode,
     
     private var emojiViewProvider: ((ChatTextInputTextCustomEmojiAttribute) -> UIView)?
     
-    init(context: AccountContext, presentationData: PresentationData, reminders: Bool, gesture: ContextGesture, sourceSendButton: ASDisplayNode, textInputView: UITextView, attachment: Bool, canSendWhenOnline: Bool, forwardedCount: Int?, hasEntityKeyboard: Bool, emojiViewProvider: ((ChatTextInputTextCustomEmojiAttribute) -> UIView)?, send: (() -> Void)?, sendSilently: (() -> Void)?, sendWhenOnline: (() -> Void)?, schedule: (() -> Void)?, cancel: (() -> Void)?) {
+    init(canTranslateOutgoingMessage: Bool = false, outgoingMessageTranslateToLang: String? = nil, translate: (() -> Void)? = nil, changeTranslationLanguage: (() -> ())? = nil, context: AccountContext, presentationData: PresentationData, reminders: Bool, gesture: ContextGesture, sourceSendButton: ASDisplayNode, textInputView: UITextView, attachment: Bool, canSendWhenOnline: Bool, forwardedCount: Int?, hasEntityKeyboard: Bool, emojiViewProvider: ((ChatTextInputTextCustomEmojiAttribute) -> UIView)?, send: (() -> Void)?, sendSilently: (() -> Void)?, sendWhenOnline: (() -> Void)?, schedule: (() -> Void)?, cancel: (() -> Void)?) {
         self.context = context
         self.presentationData = presentationData
         self.sourceSendButton = sourceSendButton
@@ -209,6 +218,7 @@ final class ChatSendMessageActionSheetControllerNode: ViewControllerTracingNode,
         
         self.send = send
         self.cancel = cancel
+        self.canTranslateOutgoingMessage = canTranslateOutgoingMessage
                 
         self.effectView = UIVisualEffectView()
         
@@ -258,10 +268,53 @@ final class ChatSendMessageActionSheetControllerNode: ViewControllerTracingNode,
             }
         }
         if let _ = schedule {
-            contentNodes.append(ActionSheetItemNode(theme: self.presentationData.theme, title: reminders ? self.presentationData.strings.Conversation_SendMessage_SetReminder: self.presentationData.strings.Conversation_SendMessage_ScheduleMessage, icon: .schedule, hasSeparator: false, action: {
+            contentNodes.append(ActionSheetItemNode(theme: self.presentationData.theme, title: reminders ? self.presentationData.strings.Conversation_SendMessage_SetReminder: self.presentationData.strings.Conversation_SendMessage_ScheduleMessage, icon: .schedule, hasSeparator: canTranslateOutgoingMessage, action: {
                 schedule?()
             }))
         }
+        
+        
+        
+        
+        
+        
+        // MARK: Swiftgram
+        if canTranslateOutgoingMessage {
+            if let outgoingMessageTranslateToLang = outgoingMessageTranslateToLang {
+                let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                
+                var languageCode = presentationData.strings.baseLanguageCode
+                let rawSuffix = "-raw"
+                if languageCode.hasSuffix(rawSuffix) {
+                    languageCode = String(languageCode.dropLast(rawSuffix.count))
+                }
+                
+                // Assuming, user want to send message in the same language the chat is
+                let toLang = outgoingMessageTranslateToLang
+                let key = "Translation.Language.\(toLang)"
+                let translateTitle: String
+                if let string = self.presentationData.strings.primaryComponent.dict[key] {
+                    translateTitle =  self.presentationData.strings.Conversation_Translation_TranslateTo(string).string
+                } else {
+                    let languageLocale = Locale(identifier: languageCode)
+                    let toLanguage = languageLocale.localizedString(forLanguageCode: toLang) ?? ""
+                    translateTitle = self.presentationData.strings.Conversation_Translation_TranslateToOther(toLanguage).string
+                }
+                
+                contentNodes.append(ActionSheetItemNode(theme: self.presentationData.theme, title: translateTitle, icon: .translate, hasSeparator: true, action: {
+                    translate?()
+                }))
+                
+                contentNodes.append(ActionSheetItemNode(theme: self.presentationData.theme, title:             self.presentationData.strings.Translate_ChangeLanguage, icon: .changeTranslationLanguage, hasSeparator: false, action: {
+                    changeTranslationLanguage?()
+                }))
+            } else {
+                contentNodes.append(ActionSheetItemNode(theme: self.presentationData.theme, title:             self.presentationData.strings.Conversation_Translation_TranslateToOther("...").string, icon: .changeTranslationLanguage, hasSeparator: false, action: {
+                    changeTranslationLanguage?()
+                }))
+            }
+        }
+        
         self.contentNodes = contentNodes
         
         super.init()
@@ -687,7 +740,7 @@ final class ChatSendMessageActionSheetControllerNode: ViewControllerTracingNode,
         let sideInset: CGFloat = self.sendButtonFrame.width - 1.0
         
         var contentSize = CGSize()
-        contentSize.width = min(layout.size.width - 40.0, 250.0)
+        contentSize.width = min(layout.size.width - 40.0, self.canTranslateOutgoingMessage ? 290.0 : 250.0)
         var applyNodes: [(ASDisplayNode, CGFloat, (CGFloat) -> Void)] = []
         for itemNode in self.contentNodes {
             let (width, height, apply) = itemNode.updateLayout(maxWidth: layout.size.width - 16.0 * 2.0)

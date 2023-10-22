@@ -31,6 +31,8 @@ public final class ChatMessageItemAssociatedData: Equatable {
         }
     }
     
+    public let translateToLanguageSG: String?
+    public let translationSettings: TranslationSettings?
     public let automaticDownloadPeerType: MediaAutoDownloadPeerType
     public let automaticDownloadPeerId: EnginePeer.Id?
     public let automaticDownloadNetworkType: MediaAutoDownloadNetworkType
@@ -62,6 +64,8 @@ public final class ChatMessageItemAssociatedData: Equatable {
     public let isInline: Bool
     
     public init(
+        translateToLanguageSG: String? = nil,
+        translationSettings: TranslationSettings? = nil,
         automaticDownloadPeerType: MediaAutoDownloadPeerType,
         automaticDownloadPeerId: EnginePeer.Id?,
         automaticDownloadNetworkType: MediaAutoDownloadNetworkType,
@@ -92,6 +96,8 @@ public final class ChatMessageItemAssociatedData: Equatable {
         isStandalone: Bool = false,
         isInline: Bool = false
     ) {
+        self.translateToLanguageSG = translateToLanguageSG
+        self.translationSettings = translationSettings
         self.automaticDownloadPeerType = automaticDownloadPeerType
         self.automaticDownloadPeerId = automaticDownloadPeerId
         self.automaticDownloadNetworkType = automaticDownloadNetworkType
@@ -125,6 +131,12 @@ public final class ChatMessageItemAssociatedData: Equatable {
     
     public static func == (lhs: ChatMessageItemAssociatedData, rhs: ChatMessageItemAssociatedData) -> Bool {
         if lhs.automaticDownloadPeerType != rhs.automaticDownloadPeerType {
+            return false
+        }
+        if lhs.translateToLanguageSG != rhs.translateToLanguageSG {
+            return false
+        }
+        if lhs.translationSettings != rhs.translationSettings {
             return false
         }
         if lhs.automaticDownloadPeerId != rhs.automaticDownloadPeerId {
@@ -916,6 +928,7 @@ public protocol PeerInfoScreen: ViewController {
     var privacySettings: Promise<AccountPrivacySettings?> { get }
     
     func openBirthdaySetup()
+    func tabBarItemContextAction(sourceView: UIView, gesture: ContextGesture?)
     func toggleStorySelection(ids: [Int32], isSelected: Bool)
     func cancelItemSelection()
 }
@@ -965,6 +978,7 @@ public protocol ChatControllerCustomNavigationPanelNode: ASDisplayNode {
 }
 
 public protocol ChatController: ViewController {
+    var overlayTitle: String? { get }
     var chatLocation: ChatLocation { get }
     var canReadHistory: ValuePromise<Bool> { get }
     var parentController: ViewController? { get set }

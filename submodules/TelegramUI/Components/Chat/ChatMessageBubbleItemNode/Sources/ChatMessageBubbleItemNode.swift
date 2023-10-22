@@ -1,3 +1,6 @@
+import SGStrings
+import SGSimpleSettings
+import TranslateUI
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -244,6 +247,11 @@ private func contentNodeMessagesAndClassesForItem(_ item: ChatMessageItem) -> ([
                     messageWithCaptionToAdd = (message, itemAttributes)
                     skipText = true
                 } else {
+                    // MARK: Swiftgram
+                    var message = message
+                    if message.canRevealContent(contentSettings: item.context.currentContentSettings.with { $0 }) {
+                        message = message.withUpdatedText(message.text + "\n" + i18n("Message.HoldToShowOrReport",     item.presentationData.strings.baseLanguageCode))
+                    }
                     result.append((message, ChatMessageTextBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: isFile ? .condensed : .default)))
                     needReactions = false
                 }
@@ -583,6 +591,9 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
     private var reactionButtonsNode: ChatMessageReactionButtonsNode?
     
     private var shareButtonNode: ChatMessageShareButton?
+    
+    private var quickTranslateButtonNode: ChatMessageShareButton?
+    public var needsQuickTranslateButton: Bool = false /* SGSimpleSettings.defaultValues[SGSimpleSettings.Keys.quickTranslateButton.rawValue] as! Bool*/
     
     private let messageAccessibilityArea: AccessibilityAreaNode
 
@@ -1088,6 +1099,10 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                 if let shareButtonNode = strongSelf.shareButtonNode, shareButtonNode.frame.contains(point) {
                     return .fail
                 }
+                // MARK: Swiftgram
+                if let quickTranslateButtonNode = strongSelf.quickTranslateButtonNode, quickTranslateButtonNode.frame.contains(point) {
+                    return .fail
+                }
                 
                 if let actionButtonsNode = strongSelf.actionButtonsNode {
                     if let _ = actionButtonsNode.hitTest(strongSelf.view.convert(point, to: actionButtonsNode.view), with: nil) {
@@ -1484,6 +1499,16 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         
         let isFailed = item.content.firstMessage.effectivelyFailed(timestamp: item.context.account.network.getApproximateRemoteTimestamp())
         
+        // MARK: Swiftgram
+        var localNeedsQuickTranslateButton = false /* SGSimpleSettings.defaultValues[SGSimpleSettings.Keys.quickTranslateButton.rawValue] as! Bool*/
+        if let strongSelf = selfReference.value {
+            if strongSelf.needsQuickTranslateButton {
+                if incoming && !item.message.text.isEmpty {
+                    localNeedsQuickTranslateButton = true
+                }
+            }
+        }
+        
         var needsShareButton = false
         if case .pinnedMessages = item.associatedData.subject {
             needsShareButton = true
@@ -1495,7 +1520,9 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             }
         } else if case let .replyThread(replyThreadMessage) = item.chatLocation, replyThreadMessage.effectiveTopId == item.message.id {
             needsShareButton = false
-            allowFullWidth = true
+            if !localNeedsQuickTranslateButton {
+                allowFullWidth = true
+            }
         } else if isFailed || Namespaces.Message.allNonRegular.contains(item.message.id.namespace) {
             needsShareButton = false
         } else if item.message.id.peerId == item.context.account.peerId {
@@ -1583,14 +1610,14 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         var tmpWidth: CGFloat
         if allowFullWidth {
             tmpWidth = baseWidth
-            if needsShareButton || isAd {
+            if needsShareButton || isAd || localNeedsQuickTranslateButton {
                 tmpWidth -= 45.0
             } else {
                 tmpWidth -= 4.0
             }
         } else {
             tmpWidth = layoutConstants.bubble.maximumWidthFill.widthFor(baseWidth)
-            if (needsShareButton || isAd) && tmpWidth + 32.0 > baseWidth {
+            if (needsShareButton || isAd || localNeedsQuickTranslateButton) && tmpWidth + 32.0 > baseWidth {
                 tmpWidth = baseWidth - 32.0
             }
         }
@@ -1605,7 +1632,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         let (contentNodeMessagesAndClasses, needSeparateContainers, needReactions) = contentNodeMessagesAndClassesForItem(item)
         
         var maximumContentWidth = floor(tmpWidth - layoutConstants.bubble.edgeInset * 3.0 - layoutConstants.bubble.contentInsets.left - layoutConstants.bubble.contentInsets.right - avatarInset)
-        if needsShareButton {
+        if needsShareButton || localNeedsQuickTranslateButton {
             maximumContentWidth -= 10.0
         }
         
@@ -3956,6 +3983,22 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             shareButtonNode.removeFromSupernode()
         }
         
+        // MARK: Swiftgram
+        // TODO(swiftgram): Move business-logic up to hierarchy
+        if strongSelf.needsQuickTranslateButton && incoming && !item.message.text.isEmpty {
+            if strongSelf.quickTranslateButtonNode == nil {
+                let quickTranslateButtonNode = ChatMessageShareButton()
+                strongSelf.quickTranslateButtonNode = quickTranslateButtonNode
+                strongSelf.insertSubnode(quickTranslateButtonNode, belowSubnode: strongSelf.messageAccessibilityArea)
+                quickTranslateButtonNode.pressed = { [weak strongSelf] in
+                    strongSelf?.quickTranslateButtonPressed()
+                }
+            }
+        } else if let quickTranslateButtonNode = strongSelf.quickTranslateButtonNode {
+            strongSelf.quickTranslateButtonNode = nil
+            quickTranslateButtonNode.removeFromSupernode()
+        }
+        
         let offset: CGFloat = params.leftInset + (incoming ? 42.0 : 0.0)
         let selectionFrame = CGRect(origin: CGPoint(x: -offset, y: 0.0), size: CGSize(width: params.width, height: layout.contentSize.height))
         strongSelf.selectionNode?.frame = selectionFrame
@@ -4118,6 +4161,29 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                 animation.animator.updateAlpha(layer: shareButtonNode.layer, alpha: isCurrentlyPlayingMedia ? 0.0 : 1.0, completion: nil)
 
             }
+            // MARK: Swiftgram
+            if let quickTranslateButtonNode = strongSelf.quickTranslateButtonNode {
+                let currentBackgroundFrame = strongSelf.backgroundNode.frame
+                let buttonSize = quickTranslateButtonNode.update(hasTranslation: false /*item.message.attributes.first(where: { $0 is QuickTranslationMessageAttribute }) as? QuickTranslationMessageAttribute != nil*/, presentationData: item.presentationData, controllerInteraction: item.controllerInteraction, chatLocation: item.chatLocation, subject: item.associatedData.subject, message: item.message, account: item.context.account, disableComments: disablesComments)
+                
+                var buttonFrame = CGRect(origin: CGPoint(x: !incoming ? currentBackgroundFrame.minX - buttonSize.width : currentBackgroundFrame.maxX + 8.0, y: currentBackgroundFrame.maxY - buttonSize.width - 1.0), size: buttonSize)
+
+                if let shareButtonOffset = shareButtonOffset {
+                    buttonFrame.origin.x = shareButtonOffset.x
+                    buttonFrame.origin.y = buttonFrame.origin.y + shareButtonOffset.y - (buttonSize.height - 30.0)
+                } else if !disablesComments {
+                    buttonFrame.origin.y = buttonFrame.origin.y - (buttonSize.height - 30.0)
+                }
+                
+                // Spacing from current shareButton
+                if let shareButtonNode = strongSelf.shareButtonNode {
+                    buttonFrame.origin.y += -4.0 - shareButtonNode.frame.height
+                }
+                
+                animation.animator.updateFrame(layer: quickTranslateButtonNode.layer, frame: buttonFrame, completion: nil)
+                animation.animator.updateAlpha(layer: quickTranslateButtonNode.layer, alpha: isCurrentlyPlayingMedia ? 0.0 : 1.0, completion: nil)
+
+            }
         } else {
             /*if let _ = strongSelf.backgroundFrameTransition {
                 strongSelf.animateFrameTransition(1.0, backgroundFrame.size.height)
@@ -4143,6 +4209,29 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                 }
                 shareButtonNode.frame = buttonFrame
                 shareButtonNode.alpha = isCurrentlyPlayingMedia ? 0.0 : 1.0
+            }
+
+            // MARK: Swiftgram
+            if let quickTranslateButtonNode = strongSelf.quickTranslateButtonNode {
+                let buttonSize = quickTranslateButtonNode.update(hasTranslation: false /*item.message.attributes.first(where: { $0 is QuickTranslationMessageAttribute }) as? QuickTranslationMessageAttribute != nil*/, presentationData: item.presentationData, controllerInteraction: item.controllerInteraction, chatLocation: item.chatLocation, subject: item.associatedData.subject, message: item.message, account: item.context.account, disableComments: disablesComments)
+                
+                var buttonFrame = CGRect(origin: CGPoint(x: !incoming ? backgroundFrame.minX - buttonSize.width - 8.0 : backgroundFrame.maxX + 8.0, y: backgroundFrame.maxY - buttonSize.width - 1.0), size: buttonSize)
+                if let shareButtonOffset = shareButtonOffset {
+                    if incoming {
+                        buttonFrame.origin.x = shareButtonOffset.x
+                    }
+                    buttonFrame.origin.y = buttonFrame.origin.y + shareButtonOffset.y - (buttonSize.height - 30.0)
+                } else if !disablesComments {
+                    buttonFrame.origin.y = buttonFrame.origin.y - (buttonSize.height - 30.0)
+                }
+                
+                // Spacing from current shareButton
+                if let shareButtonNode = strongSelf.shareButtonNode {
+                    buttonFrame.origin.y += -4.0 - shareButtonNode.frame.height
+                }
+                
+                quickTranslateButtonNode.frame = buttonFrame
+                quickTranslateButtonNode.alpha = isCurrentlyPlayingMedia ? 0.0 : 1.0
             }
             
             if case .System = animation, strongSelf.mainContextSourceNode.isExtractedToContextPreview {
@@ -4806,6 +4895,10 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         if let shareButtonNode = self.shareButtonNode, shareButtonNode.frame.contains(point) {
             return shareButtonNode.view.hitTest(self.view.convert(point, to: shareButtonNode.view), with: event)
         }
+        // MARK: Swiftgram
+        if let quickTranslateButtonNode = self.quickTranslateButtonNode, quickTranslateButtonNode.frame.contains(point) {
+            return quickTranslateButtonNode.view.hitTest(self.view.convert(point, to: quickTranslateButtonNode.view), with: event)
+        }
         
         if let selectionNode = self.selectionNode {
             if let result = self.traceSelectionNodes(parent: self, point: point.offsetBy(dx: -42.0, dy: 0.0)) {
@@ -5178,6 +5271,82 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         }
     }
     
+    private func updateParentMessageIsTranslating(_ isTranslating: Bool) {
+        for contentNode in self.contentNodes {
+            if let contentNode = contentNode as? ChatMessageTextBubbleContentNode {
+                contentNode.updateIsTranslating(isTranslating)
+            }
+        }
+    }
+    
+    @objc private func quickTranslateButtonPressed() {
+        if let item = self.item {
+            let translateToLanguage = item.associatedData.translateToLanguageSG ?? item.presentationData.strings.baseLanguageCode
+            if let quickTranslationAttribute = item.message.attributes.first(where: { $0 is QuickTranslationMessageAttribute }) as? QuickTranslationMessageAttribute {
+                let _ = (item.context.account.postbox.transaction { transaction in
+                    transaction.updateMessage(item.message.id, update: { currentMessage in
+                        var attributes = currentMessage.attributes
+
+                        // Restore entities
+                        attributes = attributes.filter { !($0 is TextEntitiesMessageAttribute) }
+                        attributes.append(TextEntitiesMessageAttribute(entities: quickTranslationAttribute.originalEntities))
+                        
+                        // Remove quick translation mark and Telegram's translation data to prevent bugs
+                        attributes = attributes.filter { !($0 is QuickTranslationMessageAttribute) }
+                        
+                        let storeForwardInfo = currentMessage.forwardInfo.flatMap(StoreMessageForwardInfo.init)
+                        return .update(StoreMessage(id: currentMessage.id, globallyUniqueId: currentMessage.globallyUniqueId, groupingKey: currentMessage.groupingKey, threadId: currentMessage.threadId, timestamp: currentMessage.timestamp, flags: StoreMessageFlags(currentMessage.flags), tags: currentMessage.tags, globalTags: currentMessage.globalTags, localTags: currentMessage.localTags, forwardInfo: storeForwardInfo, authorId: currentMessage.author?.id, text: quickTranslationAttribute.originalText, attributes: attributes, media: currentMessage.media))
+                    })
+                    
+                }).start()
+            } else {
+                Queue.mainQueue().async {
+                    self.updateParentMessageIsTranslating(true)
+                }
+                let _ = translateMessageIds(context: item.context, messageIds: [item.message.id], toLang: translateToLanguage, viaText: !item.context.isPremium, forQuickTranslate: true).startStandalone(completed: { [weak self] in
+                    if let strongSelf = self, let item = strongSelf.item {
+                        let _ = (item.context.account.postbox.transaction { transaction in
+                            transaction.updateMessage(item.message.id, update: { currentMessage in
+                                // Searching for succesfull translation
+                                var translationAttribute: TranslationMessageAttribute? = nil
+                                for attribute in currentMessage.attributes {
+                                    if let attribute = attribute as? TranslationMessageAttribute, !attribute.text.isEmpty, attribute.toLang == translateToLanguage {
+                                        translationAttribute = attribute
+                                        break
+                                    }
+                                }
+                                
+                                if let translationAttribute = translationAttribute {
+                                    var attributes = currentMessage.attributes
+                                    // Replace entities
+                                    attributes = attributes.filter { !($0 is TextEntitiesMessageAttribute) }
+                                    attributes.append(TextEntitiesMessageAttribute(entities: translationAttribute.entities))
+                                    
+                                    // Mark message as quickly translated
+                                    attributes.append(QuickTranslationMessageAttribute(text: currentMessage.text, entities: currentMessage.textEntitiesAttribute?.entities ?? []))
+                                    
+                                    let storeForwardInfo = currentMessage.forwardInfo.flatMap(StoreMessageForwardInfo.init)
+                                    return .update(StoreMessage(id: currentMessage.id, globallyUniqueId: currentMessage.globallyUniqueId, groupingKey: currentMessage.groupingKey, threadId: currentMessage.threadId, timestamp: currentMessage.timestamp, flags: StoreMessageFlags(currentMessage.flags), tags: currentMessage.tags, globalTags: currentMessage.globalTags, localTags: currentMessage.localTags, forwardInfo: storeForwardInfo, authorId: currentMessage.author?.id, text: translationAttribute.text, attributes: attributes, media: currentMessage.media))
+                                } else {
+                                    return .skip
+                                }
+                                
+                            })
+                        }).start(completed: { [weak self] in
+                            if let strongSelf = self {
+                                Queue.mainQueue().async {
+                                    strongSelf.updateParentMessageIsTranslating(false)
+                                }
+                            }
+                        })
+                    }
+                })
+            }
+        
+            
+        }
+    }
+    
     @objc private func shareButtonPressed() {
         if let item = self.item {
             if item.message.adAttribute != nil {
@@ -5418,6 +5587,14 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             shareButtonNodeFrame.origin.y += rect.minY
             
             shareButtonNode.updateAbsoluteRect(shareButtonNodeFrame, within: containerSize)
+        }
+        
+        if let quickTranslateButtonNode = self.quickTranslateButtonNode {
+            var quickTranslateButtonNodeFrame = quickTranslateButtonNode.frame
+            quickTranslateButtonNodeFrame.origin.x += rect.minX
+            quickTranslateButtonNodeFrame.origin.y += rect.minY
+            
+            quickTranslateButtonNode.updateAbsoluteRect(quickTranslateButtonNodeFrame, within: containerSize)
         }
         
         if let actionButtonsNode = self.actionButtonsNode {

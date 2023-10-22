@@ -1,3 +1,6 @@
+// MARK: Swiftgram
+import SGSimpleSettings
+import TranslateUI
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -48,8 +51,45 @@ func chatMessageDisplaySendMessageOptions(selfController: ChatControllerImpl, no
         if sendWhenOnlineAvailable {
             let _ = ApplicationSpecificNotice.incrementSendWhenOnlineTip(accountManager: selfController.context.sharedContext.accountManager, count: 4).startStandalone()
         }
-        
-        let controller = ChatSendMessageActionSheetController(context: selfController.context, updatedPresentationData: selfController.updatedPresentationData, peerId: selfController.presentationInterfaceState.chatLocation.peerId, forwardMessageIds: selfController.presentationInterfaceState.interfaceState.forwardMessageIds, hasEntityKeyboard: hasEntityKeyboard, gesture: gesture, sourceSendButton: node, textInputView: textInputView, canSendWhenOnline: sendWhenOnlineAvailable, completion: { [weak selfController] in
+        // MARK: Swiftgram
+        let outgoingMessageTranslateToLang = SGSimpleSettings.shared.outgoingLanguageTranslation[SGSimpleSettings.makeOutgoingLanguageTranslationKey(accountId: selfController.context.account.peerId.id._internalGetInt64Value(), peerId: peer.id.id._internalGetInt64Value())] ?? selfController.predictedChatLanguage
+        let controller = ChatSendMessageActionSheetController(outgoingMessageTranslateToLang: outgoingMessageTranslateToLang, translate: { [weak selfController] in
+            guard let selfController else { return }
+            let textToTranslate = selfController.presentationInterfaceState.interfaceState.effectiveInputState.inputText.string
+            
+            if let outgoingMessageTranslateToLang = outgoingMessageTranslateToLang {
+                let _ = (selfController.context.engine.messages.translate(text: textToTranslate, toLang: outgoingMessageTranslateToLang) |> deliverOnMainQueue).start(next: { [weak selfController] translatedText in
+                    guard let selfController, let translatedText else { return }
+                    let newInputText = NSAttributedString(string: translatedText)
+                    let newTextInputState = ChatTextInputState(inputText: newInputText, selectionRange: 0 ..< newInputText.length)
+                    selfController.updateChatPresentationInterfaceState(interactive: true, { state in
+                        return state.updatedInterfaceState { interfaceState in
+                            return interfaceState.withUpdatedEffectiveInputState(newTextInputState)
+                        }
+                    })
+                })
+            }
+        }, changeTranslationLanguage: { [weak selfController] in
+            guard let selfController else { return }
+            let controller = languageSelectionController(translateOutgoingMessage: true, context: selfController.context, forceTheme: selfController.presentationData.theme, fromLanguage: "", toLanguage: selfController.presentationInterfaceState.translationState?.fromLang ?? "", completion: { _, toLang in
+                guard let peerId = selfController.chatLocation.peerId else {
+                    return
+                }
+                var langCode = toLang
+                if langCode == "nb" {
+                    langCode = "no"
+                } else if langCode == "pt-br" {
+                    langCode = "pt"
+                }
+                
+                if !toLang.isEmpty {
+                    SGSimpleSettings.shared.outgoingLanguageTranslation[SGSimpleSettings.makeOutgoingLanguageTranslationKey(accountId: selfController.context.account.peerId.id._internalGetInt64Value(), peerId: peerId.id._internalGetInt64Value())] = langCode
+                }
+                chatMessageDisplaySendMessageOptions(selfController: selfController, node: node, gesture: gesture)
+            })
+            controller.navigationPresentation = .modal
+            selfController.push(controller)
+        }, context: selfController.context, updatedPresentationData: selfController.updatedPresentationData, peerId: selfController.presentationInterfaceState.chatLocation.peerId, forwardMessageIds: selfController.presentationInterfaceState.interfaceState.forwardMessageIds, hasEntityKeyboard: hasEntityKeyboard, gesture: gesture, sourceSendButton: node, textInputView: textInputView, canSendWhenOnline: sendWhenOnlineAvailable, completion: { [weak selfController] in
             guard let selfController else {
                 return
             }

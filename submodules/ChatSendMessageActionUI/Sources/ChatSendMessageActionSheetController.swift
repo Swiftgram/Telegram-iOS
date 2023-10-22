@@ -26,6 +26,11 @@ public final class ChatSendMessageActionSheetController: ViewController {
     private let forwardMessageIds: [EngineMessage.Id]?
     private let hasEntityKeyboard: Bool
     
+    // MARK: Swiftgram
+    private let translate: () -> Void
+    private let changeTranslationLanguage: () -> Void
+    private let outgoingMessageTranslateToLang: String?
+    
     private let gesture: ContextGesture
     private let sourceSendButton: ASDisplayNode
     private let textInputView: UITextView
@@ -46,7 +51,7 @@ public final class ChatSendMessageActionSheetController: ViewController {
     
     public var emojiViewProvider: ((ChatTextInputTextCustomEmojiAttribute) -> UIView)?
 
-    public init(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil, peerId: EnginePeer.Id?, isScheduledMessages: Bool = false, forwardMessageIds: [EngineMessage.Id]?, hasEntityKeyboard: Bool, gesture: ContextGesture, sourceSendButton: ASDisplayNode, textInputView: UITextView, attachment: Bool = false, canSendWhenOnline: Bool, completion: @escaping () -> Void, sendMessage: @escaping (SendMode) -> Void, schedule: @escaping () -> Void) {
+    public init(outgoingMessageTranslateToLang: String? = nil, translate: @escaping () -> Void = {}, changeTranslationLanguage: @escaping () -> Void = {}, context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil, peerId: EnginePeer.Id?, isScheduledMessages: Bool = false, forwardMessageIds: [EngineMessage.Id]?, hasEntityKeyboard: Bool, gesture: ContextGesture, sourceSendButton: ASDisplayNode, textInputView: UITextView, attachment: Bool = false, canSendWhenOnline: Bool, completion: @escaping () -> Void, sendMessage: @escaping (SendMode) -> Void, schedule: @escaping () -> Void) {
         self.context = context
         self.peerId = peerId
         self.isScheduledMessages = isScheduledMessages
@@ -61,6 +66,10 @@ public final class ChatSendMessageActionSheetController: ViewController {
         self.sendMessage = sendMessage
         self.schedule = schedule
         
+        // MARK: Swiftgram
+        self.translate = translate
+        self.changeTranslationLanguage = changeTranslationLanguage
+        self.outgoingMessageTranslateToLang = outgoingMessageTranslateToLang
         self.presentationData = updatedPresentationData?.initial ?? context.sharedContext.currentPresentationData.with { $0 }
         
         super.init(navigationBarPresentationData: nil)
@@ -107,7 +116,7 @@ public final class ChatSendMessageActionSheetController: ViewController {
             canSchedule = false
         }
         
-        self.displayNode = ChatSendMessageActionSheetControllerNode(context: self.context, presentationData: self.presentationData, reminders: reminders, gesture: gesture, sourceSendButton: self.sourceSendButton, textInputView: self.textInputView, attachment: self.attachment, canSendWhenOnline: self.canSendWhenOnline, forwardedCount: forwardedCount, hasEntityKeyboard: self.hasEntityKeyboard, emojiViewProvider: self.emojiViewProvider, send: { [weak self] in
+        self.displayNode = ChatSendMessageActionSheetControllerNode(canTranslateOutgoingMessage: !isSecret, outgoingMessageTranslateToLang: self.outgoingMessageTranslateToLang, translate: { [weak self] in self?.translate(); self?.dismiss(cancel: false) }, changeTranslationLanguage: { [weak self] in self?.changeTranslationLanguage(); self?.dismiss(cancel: false) }, context: self.context, presentationData: self.presentationData, reminders: reminders, gesture: gesture, sourceSendButton: self.sourceSendButton, textInputView: self.textInputView, attachment: self.attachment, canSendWhenOnline: self.canSendWhenOnline, forwardedCount: forwardedCount, hasEntityKeyboard: self.hasEntityKeyboard, emojiViewProvider: self.emojiViewProvider, send: { [weak self] in
             self?.sendMessage(.generic)
             self?.dismiss(cancel: false)
         }, sendSilently: { [weak self] in

@@ -1072,6 +1072,18 @@ public final class Camera {
     }
 }
 
+extension Camera {
+    // MARK: Swiftgram
+    public func togglePositionSync(semaphore: DispatchSemaphore) {
+        self.queue.async {
+            if let context = self.contextRef?.takeUnretainedValue() {
+                context.togglePosition()
+                semaphore.signal()
+            }
+        }
+    }
+}
+
 public final class CameraHolder {
     public let camera: Camera
     public let previewView: CameraSimplePreviewView
