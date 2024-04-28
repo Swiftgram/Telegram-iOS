@@ -4674,7 +4674,7 @@ extension ChatControllerImpl {
             downPressed: buttonAction
         )
 
-        self.chatDisplayNode.historyNode.openNextChannelToRead = { [weak self] peer, location in
+        self.chatDisplayNode.historyNode.openNextChannelToRead = { [weak self] peer, threadData, location in
             guard let strongSelf = self else {
                 return
             }
