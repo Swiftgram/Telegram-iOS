@@ -250,7 +250,27 @@ private func contentNodeMessagesAndClassesForItem(_ item: ChatMessageItem) -> ([
                     // MARK: Swiftgram
                     var message = message
                     if message.canRevealContent(contentSettings: item.context.currentContentSettings.with { $0 }) {
-                        message = message.withUpdatedText(message.text + "\n" + i18n("Message.HoldToShowOrReport",     item.presentationData.strings.baseLanguageCode))
+                        let originalTextLength = message.text.count
+                        let noticeString = i18n("Message.HoldToShowOrReport", item.presentationData.strings.baseLanguageCode)
+                        
+                        message = message.withUpdatedText(message.text + "\n" + noticeString)
+                        let noticeStringLength = noticeString.count
+                        let startIndex = originalTextLength + 1 // +1 for the newline character
+                        // Calculate the end index, which is the start index plus the length of noticeString
+                        let endIndex = startIndex + noticeStringLength
+
+                        var newAttributes = message.attributes
+                        newAttributes.append(
+                            TextEntitiesMessageAttribute(
+                                entities: [
+                                    MessageTextEntity(
+                                        range: startIndex..<endIndex,
+                                        type: .BlockQuote//.Custom(type: ApplicationSpecificEntityType.Button)
+                                    )
+                                ]
+                            )
+                        )
+                        message = message.withUpdatedAttributes(newAttributes)
                     }
                     result.append((message, ChatMessageTextBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: isFile ? .condensed : .default)))
                     needReactions = false
