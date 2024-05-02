@@ -3,8 +3,23 @@ load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 sgdeps = [
     "//Swiftgram/SGSettingsUI:SGSettingsUI",
     "//Swiftgram/SGStrings:SGStrings",
-    "//Swiftgram/SGSimpleSettings:SGSimpleSettings"
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
 ]
+
+config_setting(
+    name = "debug_build",
+    values = {
+        "compilation_mode": "dbg",
+    },
+)
+
+flex_dependency = select({
+    ":debug_build": [
+        "@flex_sdk//:FLEX"
+    ],
+    "//conditions:default": [],
+})
+
 
 swift_library(
     name = "PeerInfoScreen",
@@ -15,7 +30,7 @@ swift_library(
     copts = [
         "-warnings-as-errors",
     ],
-    deps = sgdeps + [
+    deps = flex_dependency + sgdeps + [
         "//submodules/AccountContext",
         "//submodules/AccountUtils",
         "//submodules/ActionSheetPeerItem",
