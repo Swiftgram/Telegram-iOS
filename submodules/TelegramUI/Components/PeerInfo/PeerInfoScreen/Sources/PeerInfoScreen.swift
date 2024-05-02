@@ -1,4 +1,7 @@
 // MARK: Swiftgram
+#if DEBUG
+import FLEX
+#endif
 import SGSimpleSettings
 import SGSettingsUI
 import SGStrings
@@ -12637,6 +12640,9 @@ public final class PeerInfoScreenImpl: ViewController, PeerInfoScreen, KeyShortc
             guard let _ = self else {
                 return
             }
+            #if DEBUG
+            FLEXManager.shared.showExplorer()
+            #endif
 //            SGSimpleSettings.shared.hideReactions = !SGSimpleSettings.shared.hideReactions
 //            let _ = updateSGUISettings(engine: strongSelf.context.engine, { settings in
 //                var settings = settings
