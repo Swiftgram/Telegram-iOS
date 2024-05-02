@@ -18,7 +18,7 @@ public func getSGApiToken(context: AccountContext, botUsername: String = SG_CONF
     let userId = context.account.peerId.id._internalGetInt64Value()
     
     if let (token, expiration) = tokenCache[userId], Date() < expiration {
-        SGLogger.shared.log("SGAPI", "Using cached token. Expiring at: \(expiration)")
+        // SGLogger.shared.log("SGAPI", "Using cached token. Expiring at: \(expiration)")
         return Signal { subscriber in
             subscriber.putNext(token)
             subscriber.putCompletion()
