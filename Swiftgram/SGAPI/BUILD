@@ -15,6 +15,7 @@ swift_library(
         "//Swiftgram/SGWebAppExtensions:SGWebAppExtensions",
         "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
         "//Swiftgram/SGWebSettingsScheme:SGWebSettingsScheme",
+        "//Swiftgram/SGRegDateScheme:SGRegDateScheme",
         "//Swiftgram/SGRequests:SGRequests",
         "//Swiftgram/SGConfig:SGConfig"
     ],
