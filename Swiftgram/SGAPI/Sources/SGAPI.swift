@@ -7,6 +7,7 @@ import SGSimpleSettings
 import SGWebAppExtensions
 import SGWebSettingsScheme
 import SGRequests
+import SGRegDateScheme
 
 private let API_VERSION: String = "0"
 
@@ -15,6 +16,7 @@ private func buildApiUrl(_ endpoint: String) -> String {
 }
 
 public let SG_API_AUTHORIZATION_HEADER = "Authorization"
+public let SG_API_DEVICE_TOKEN_HEADER = "Device-Token"
 
 private enum HTTPRequestError {
     case network
@@ -98,6 +100,45 @@ public func postSGSettings(token: String, data: [String:Any]) -> Signal<Void, SG
         return ActionDisposable {
             if !completed.with({ $0 }) {
                 dataSignal.dispose()
+            }
+        }
+    }
+}
+
+public func getSGAPIRegDate(token: String, deviceToken: String, userId: Int64) -> Signal<RegDate, SGAPIError> {
+    return Signal { subscriber in
+
+        let url = URL(string: buildApiUrl("regdate/\(userId)"))!
+        let headers = [
+            SG_API_AUTHORIZATION_HEADER: "Token \(token)",
+            SG_API_DEVICE_TOKEN_HEADER: deviceToken
+        ]
+        let completed = Atomic<Bool>(value: false)
+        
+        var request = URLRequest(url: url)
+        headers.forEach { key, value in
+            request.addValue(value, forHTTPHeaderField: key)
+        }
+        request.timeoutInterval = 10
+        
+        let downloadSignal = requestsCustom(request: request).start(next: { data, urlResponse in
+            let _ = completed.swap(true)
+            do {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let settings = try decoder.decode(RegDate.self, from: data)
+                subscriber.putNext(settings)
+                subscriber.putCompletion()
+            } catch {
+                subscriber.putError(.generic("Can't parse regDate: \(error). Response: \(String(data: data, encoding: .utf8) ?? "")"))
+            }
+        }, error: { error in
+            subscriber.putError(.generic("Error requesting regDate: \(String(describing: error))"))
+        })
+        
+        return ActionDisposable {
+            if !completed.with({ $0 }) {
+                downloadSignal.dispose()
             }
         }
     }

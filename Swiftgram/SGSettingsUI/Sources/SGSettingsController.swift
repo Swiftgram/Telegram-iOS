@@ -94,6 +94,7 @@ private enum SGBoolSetting: String {
     case hideTabBar
     case showDC
     case showCreationDate
+    case showRegDate
 }
 
 private enum SGOneFromManySetting: String {
@@ -417,6 +418,8 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.oneFromManySelector(id: id.count, section: .other, settingName: .downloadSpeedBoost, text: i18n("Settings.DownloadsBoost", presentationData.strings.baseLanguageCode), value: i18n("Settings.DownloadsBoost.\(SGSimpleSettings.shared.downloadSpeedBoost)", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .showProfileId, value: SGSettings.showProfileId, text: i18n("Settings.ShowProfileID", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .showDC, value: SGSimpleSettings.shared.showDC, text: i18n("Settings.ShowDC", presentationData.strings.baseLanguageCode), enabled: true))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .showRegDate, value: SGSimpleSettings.shared.showRegDate, text: i18n("Settings.ShowRegDate", presentationData.strings.baseLanguageCode), enabled: true))
+    entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.ShowRegDate.Notice", presentationData.strings.baseLanguageCode)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .showCreationDate, value: SGSimpleSettings.shared.showCreationDate, text: i18n("Settings.ShowCreationDate", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.ShowCreationDate.Notice", presentationData.strings.baseLanguageCode)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .sendWithReturnKey, value: SGSettings.sendWithReturnKey, text: i18n("Settings.SendWithReturnKey", presentationData.strings.baseLanguageCode), enabled: true))
@@ -577,6 +580,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.showDC = value
         case .showCreationDate:
             SGSimpleSettings.shared.showCreationDate = value
+        case .showRegDate:
+            SGSimpleSettings.shared.showRegDate = value
         }
     }, updateSliderValue: { setting, value in
         switch (setting) {
