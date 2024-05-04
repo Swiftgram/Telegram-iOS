@@ -84,6 +84,8 @@ public class SGSimpleSettings {
         case hideTabBar
         case showDC
         case showCreationDate
+        case showRegDate
+        case regDateCache
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -138,7 +140,9 @@ public class SGSimpleSettings {
         Keys.hideRecordingButton.rawValue: false,
         Keys.hideTabBar.rawValue: false,
         Keys.showDC.rawValue: false,
-        Keys.showCreationDate.rawValue: true
+        Keys.showCreationDate.rawValue: true,
+        Keys.showRegDate.rawValue: true,
+        Keys.regDateCache.rawValue: [:]
     ]
     
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
@@ -261,6 +265,11 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.showCreationDate.rawValue)
     public var showCreationDate: Bool
+
+    @UserDefault(key: Keys.showRegDate.rawValue)
+    public var showRegDate: Bool
+
+    public var regDateCache = UserDefaultsBackedDictionary<String, Data>(userDefaultsKey: Keys.regDateCache.rawValue, threadSafe: false)
 }
 
 extension SGSimpleSettings {

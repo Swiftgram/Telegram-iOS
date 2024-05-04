@@ -4,6 +4,9 @@ sgdeps = [
     "//Swiftgram/SGSettingsUI:SGSettingsUI",
     "//Swiftgram/SGStrings:SGStrings",
     "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+
+    "//Swiftgram/SGRegDate:SGRegDate",
+    "//Swiftgram/SGRegDateScheme:SGRegDateScheme"
 ]
 
 config_setting(

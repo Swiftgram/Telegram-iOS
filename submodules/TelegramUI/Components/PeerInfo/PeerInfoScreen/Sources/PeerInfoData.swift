@@ -1,3 +1,5 @@
+import SGRegDateScheme
+import SGRegDate
 import Foundation
 import UIKit
 import Postbox
@@ -322,6 +324,7 @@ final class PeerInfoPersonalChannelData: Equatable {
 }
 
 final class PeerInfoScreenData {
+    let regDate: RegDate?
     let channelCreationTimestamp: Int32?
     let peer: Peer?
     let chatPeer: Peer?
@@ -363,6 +366,7 @@ final class PeerInfoScreenData {
     }
     
     init(
+        regDate: RegDate? = nil,
         channelCreationTimestamp: Int32? = nil,
         peer: Peer?,
         chatPeer: Peer?,
@@ -393,6 +397,7 @@ final class PeerInfoScreenData {
         personalChannel: PeerInfoPersonalChannelData?,
         starsState: StarsContext.State?
     ) {
+        self.regDate = regDate
         self.channelCreationTimestamp = channelCreationTimestamp
         self.peer = peer
         self.chatPeer = chatPeer
@@ -1177,6 +1182,7 @@ func peerInfoScreenData(context: AccountContext, peerId: PeerId, strings: Presen
             }
             
             return combineLatest(
+                Signal<RegDate?, NoError>.single(nil) |> then (getRegDate(context: context, peerId: peerId.id._internalGetInt64Value())),
                 context.account.viewTracker.peerView(peerId, updateData: true),
                 peerInfoAvailableMediaPanes(context: context, peerId: peerId, chatLocation: chatLocation, isMyProfile: isMyProfile, chatLocationContextHolder: chatLocationContextHolder),
                 context.engine.data.subscribe(TelegramEngine.EngineData.Item.NotificationSettings.Global()),
@@ -1192,7 +1198,7 @@ func peerInfoScreenData(context: AccountContext, peerId: PeerId, strings: Presen
                 peerInfoPersonalChannel(context: context, peerId: peerId, isSettings: false),
                 privacySettings
             )
-            |> map { peerView, availablePanes, globalNotificationSettings, encryptionKeyFingerprint, status, hasStories, hasStoryArchive, accountIsPremium, savedMessagesPeer, hasSavedMessagesChats, hasSavedMessages, hasSavedMessageTags, personalChannel, privacySettings -> PeerInfoScreenData in
+            |> map { regDate, peerView, availablePanes, globalNotificationSettings, encryptionKeyFingerprint, status, hasStories, hasStoryArchive, accountIsPremium, savedMessagesPeer, hasSavedMessagesChats, hasSavedMessages, hasSavedMessageTags, personalChannel, privacySettings -> PeerInfoScreenData in
                 var availablePanes = availablePanes
                 
                 if isMyProfile {
@@ -1260,6 +1266,7 @@ func peerInfoScreenData(context: AccountContext, peerId: PeerId, strings: Presen
                 }
                 
                 return PeerInfoScreenData(
+                    regDate: regDate,
                     peer: peer,
                     chatPeer: peerView.peers[peerId],
                     savedMessagesPeer: savedMessagesPeer?._asPeer(),

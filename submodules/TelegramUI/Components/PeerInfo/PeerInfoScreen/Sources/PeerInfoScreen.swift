@@ -1826,6 +1826,18 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
         sgItemId += 1
     }
     
+    if SGSimpleSettings.shared.showRegDate {
+        if let regDate = data.regDate {
+            let regDateString = stringForDate(timestamp: Int32((regDate.from + regDate.to) / 2), strings: presentationData.strings)
+            items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: i18n("Chat.RegDate", presentationData.strings.baseLanguageCode), text: regDateString, action: nil, longTapAction: { sourceNode in
+                interaction.openPeerInfoContextMenu(.copy(regDateString), sourceNode, nil)
+            }, requestLayout: {
+                interaction.requestLayout(false)
+            }))
+            sgItemId += 1
+        }
+    }
+    
     
     var result: [(AnyHashable, [PeerInfoScreenItem])] = []
     for section in InfoSection.allCases {
