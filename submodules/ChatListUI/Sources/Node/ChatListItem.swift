@@ -1612,7 +1612,8 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
         } else if case let .groupReference(groupReference) = item.content {
             storyState = groupReference.storyState
         }
-        
+        // MARK: Swiftgram
+        let sgCompactChatList = SGSimpleSettings.shared.compactChatList
         var peer: EnginePeer?
         var displayAsMessage = false
         var enablePreview = true
@@ -1677,8 +1678,8 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                     isForumAvatar = true
                 }
             }
-            
-            var avatarDiameter = min(60.0, floor(item.presentationData.fontSize.baseDisplaySize * 60.0 / 17.0))
+            // MARK: Swiftgram
+            var avatarDiameter = min(60.0, floor(item.presentationData.fontSize.baseDisplaySize * 60.0 / 17.0)) / (sgCompactChatList ? 1.5 : 1.0)
             
             if case let .peer(peerData) = item.content, let customMessageListData = peerData.customMessageListData, customMessageListData.commandPrefix != nil {
                 avatarDiameter = 40.0
@@ -1888,6 +1889,10 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
         let currentChatListSearchResult = self.cachedChatListSearchResult
         let currentChatListQuoteSearchResult = self.cachedChatListQuoteSearchResult
         let currentCustomTextEntities = self.cachedCustomTextEntities
+        
+        
+        // MARK: Swiftgram
+        let sgCompactChatList = SGSimpleSettings.shared.compactChatList
         
         return { item, params, first, last, firstWithHeader, nextIsPinned in
             let titleFont = Font.medium(floor(item.presentationData.fontSize.itemListBaseFontSize * 16.0 / 17.0))
@@ -2116,9 +2121,9 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
             }
             
             let enableChatListPhotos = true
-            
+            // MARK: Swiftgram
             // if changed, adjust setupItem accordingly
-            var avatarDiameter = min(60.0, floor(item.presentationData.fontSize.baseDisplaySize * 60.0 / 17.0))
+            var avatarDiameter = min(60.0, floor(item.presentationData.fontSize.baseDisplaySize * 60.0 / 17.0)) / (sgCompactChatList ? 1.5 : 1.0)
             let avatarLeftInset: CGFloat
             
             if case let .peer(peerData) = item.content, let customMessageListData = peerData.customMessageListData, customMessageListData.commandPrefix != nil {
@@ -2184,7 +2189,8 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                     contentData = .group(peers: groupPeers)
                     hideAuthor = true
             }
-            
+            // MARK: Swiftgram
+            if sgCompactChatList { hideAuthor = true };
             var attributedText: NSAttributedString
             var hasDraft = false
             
@@ -2212,7 +2218,8 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                     }
                 }
             }
-            
+            // MARK: Swiftgram
+            if sgCompactChatList { useInlineAuthorPrefix = true };
             if useInlineAuthorPrefix {
                 if case let .user(author) = messages.last?.author {
                     if author.id == item.context.account.peerId {
@@ -3266,7 +3273,8 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
             
             let titleSpacing: CGFloat = -1.0
             let authorSpacing: CGFloat = -3.0
-            var itemHeight: CGFloat = 8.0 * 2.0 + 1.0
+            // MARK: Swiftgram
+            var itemHeight: CGFloat = (8.0 * 2.0 + 1.0) / (sgCompactChatList ? 1.65 : 1.0)
             itemHeight -= 21.0
             if case let .peer(peerData) = item.content, let customMessageListData = peerData.customMessageListData, customMessageListData.commandPrefix != nil {
                 itemHeight += measureLayout.size.height * 2.0
