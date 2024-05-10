@@ -592,6 +592,7 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.showRegDate = value
         case .compactChatList:
             SGSimpleSettings.shared.compactChatList = value
+            askForRestart?()
         }
     }, updateSliderValue: { setting, value in
         switch (setting) {
