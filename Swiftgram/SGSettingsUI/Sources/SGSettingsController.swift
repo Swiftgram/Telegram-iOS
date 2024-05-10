@@ -45,6 +45,8 @@ private enum SGControllerSection: Int32 {
     case content
     case tabs
     case folders
+    case chatList
+    case profiles
     case stories
     case translation
     case photo
@@ -95,6 +97,7 @@ private enum SGBoolSetting: String {
     case showDC
     case showCreationDate
     case showRegDate
+    case compactChatList
 }
 
 private enum SGOneFromManySetting: String {
@@ -326,10 +329,23 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .folders, settingName: .rememberLastFolder, value: SGSimpleSettings.shared.rememberLastFolder, text: i18n("Settings.Folders.RememberLast", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.notice(id: id.count, section: .folders, text: i18n("Settings.Folders.RememberLast.Notice", presentationData.strings.baseLanguageCode)))
     
+    entries.append(.header(id: id.count, section: .chatList, text: i18n("Settings.ChatList.Header", presentationData.strings.baseLanguageCode), badge: nil))
+    entries.append(.toggle(id: id.count, section: .chatList, settingName: .compactChatList, value: SGSimpleSettings.shared.compactChatList, text: i18n("Settings.CompactChatList", presentationData.strings.baseLanguageCode), enabled: true))
+    entries.append(.toggle(id: id.count, section: .chatList, settingName: .disableChatSwipeOptions, value: !SGSimpleSettings.shared.disableChatSwipeOptions, text: i18n("Settings.ChatSwipeOptions", presentationData.strings.baseLanguageCode), enabled: true))
+    
+    entries.append(.header(id: id.count, section: .profiles, text: i18n("Settings.Profiles.Header", presentationData.strings.baseLanguageCode), badge: nil))
+    entries.append(.toggle(id: id.count, section: .profiles, settingName: .showProfileId, value: SGSettings.showProfileId, text: i18n("Settings.ShowProfileID", presentationData.strings.baseLanguageCode), enabled: true))
+    entries.append(.toggle(id: id.count, section: .profiles, settingName: .showDC, value: SGSimpleSettings.shared.showDC, text: i18n("Settings.ShowDC", presentationData.strings.baseLanguageCode), enabled: true))
+    entries.append(.toggle(id: id.count, section: .profiles, settingName: .showRegDate, value: SGSimpleSettings.shared.showRegDate, text: i18n("Settings.ShowRegDate", presentationData.strings.baseLanguageCode), enabled: true))
+    entries.append(.notice(id: id.count, section: .profiles, text: i18n("Settings.ShowRegDate.Notice", presentationData.strings.baseLanguageCode)))
+    entries.append(.toggle(id: id.count, section: .profiles, settingName: .showCreationDate, value: SGSimpleSettings.shared.showCreationDate, text: i18n("Settings.ShowCreationDate", presentationData.strings.baseLanguageCode), enabled: true))
+    entries.append(.notice(id: id.count, section: .profiles, text: i18n("Settings.ShowCreationDate.Notice", presentationData.strings.baseLanguageCode)))
+    
     entries.append(.header(id: id.count, section: .stories, text: presentationData.strings.AutoDownloadSettings_Stories.uppercased(), badge: nil))
     entries.append(.toggle(id: id.count, section: .stories, settingName: .hideStories, value: SGSettings.hideStories, text: i18n("Settings.Stories.Hide", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.toggle(id: id.count, section: .stories, settingName: .disableSwipeToRecordStory, value: SGSimpleSettings.shared.disableSwipeToRecordStory, text: i18n("Settings.Stories.DisableSwipeToRecord", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.toggle(id: id.count, section: .stories, settingName: .warnOnStoriesOpen, value: SGSettings.warnOnStoriesOpen, text: i18n("Settings.Stories.WarnBeforeView", presentationData.strings.baseLanguageCode), enabled: true))
+    entries.append(.toggle(id: id.count, section: .stories, settingName: .showRepostToStory, value: SGSimpleSettings.shared.showRepostToStory, text: presentationData.strings.Share_RepostToStory.replacingOccurrences(of: "\n", with: " "), enabled: true))
     if SGSimpleSettings.shared.canUseStealthMode {
         entries.append(.toggle(id: id.count, section: .stories, settingName: .storyStealthMode, value: SGSimpleSettings.shared.storyStealthMode, text: presentationData.strings.Story_StealthMode_Title, enabled: true))
         entries.append(.notice(id: id.count, section: .stories, text: presentationData.strings.Story_StealthMode_ControlText))
@@ -410,18 +426,10 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableSnapDeletionEffect, value: !SGSimpleSettings.shared.disableSnapDeletionEffect, text: i18n("Settings.SnapDeletionEffect", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableSendAsButton, value: !SGSimpleSettings.shared.disableSendAsButton, text: i18n("Settings.SendAsButton", presentationData.strings.baseLanguageCode, presentationData.strings.Conversation_SendMesageAs), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableGalleryCamera, value: !SGSimpleSettings.shared.disableGalleryCamera, text: i18n("Settings.GalleryCamera", presentationData.strings.baseLanguageCode), enabled: true))
-    entries.append(.toggle(id: id.count, section: .other, settingName: .disableChatSwipeOptions, value: !SGSimpleSettings.shared.disableChatSwipeOptions, text: i18n("Settings.ChatSwipeOptions", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableScrollToNextChannel, value: !SGSimpleSettings.shared.disableScrollToNextChannel, text: i18n("Settings.PullToNextChannel", presentationData.strings.baseLanguageCode), enabled: true))
-    entries.append(.toggle(id: id.count, section: .other, settingName: .showRepostToStory, value: SGSimpleSettings.shared.showRepostToStory, text: presentationData.strings.Share_RepostToStory.replacingOccurrences(of: "\n", with: " "), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .smallReactions, value: SGSimpleSettings.shared.smallReactions, text: i18n("Settings.SmallReactions", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .uploadSpeedBoost, value: SGSimpleSettings.shared.uploadSpeedBoost, text: i18n("Settings.UploadsBoost", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.oneFromManySelector(id: id.count, section: .other, settingName: .downloadSpeedBoost, text: i18n("Settings.DownloadsBoost", presentationData.strings.baseLanguageCode), value: i18n("Settings.DownloadsBoost.\(SGSimpleSettings.shared.downloadSpeedBoost)", presentationData.strings.baseLanguageCode), enabled: true))
-    entries.append(.toggle(id: id.count, section: .other, settingName: .showProfileId, value: SGSettings.showProfileId, text: i18n("Settings.ShowProfileID", presentationData.strings.baseLanguageCode), enabled: true))
-    entries.append(.toggle(id: id.count, section: .other, settingName: .showDC, value: SGSimpleSettings.shared.showDC, text: i18n("Settings.ShowDC", presentationData.strings.baseLanguageCode), enabled: true))
-    entries.append(.toggle(id: id.count, section: .other, settingName: .showRegDate, value: SGSimpleSettings.shared.showRegDate, text: i18n("Settings.ShowRegDate", presentationData.strings.baseLanguageCode), enabled: true))
-    entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.ShowRegDate.Notice", presentationData.strings.baseLanguageCode)))
-    entries.append(.toggle(id: id.count, section: .other, settingName: .showCreationDate, value: SGSimpleSettings.shared.showCreationDate, text: i18n("Settings.ShowCreationDate", presentationData.strings.baseLanguageCode), enabled: true))
-    entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.ShowCreationDate.Notice", presentationData.strings.baseLanguageCode)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .sendWithReturnKey, value: SGSettings.sendWithReturnKey, text: i18n("Settings.SendWithReturnKey", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hidePhoneInSettings, value: SGSimpleSettings.shared.hidePhoneInSettings, text: i18n("Settings.HidePhoneInSettingsUI", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.HidePhoneInSettingsUI.Notice", presentationData.strings.baseLanguageCode)))
@@ -582,6 +590,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.showCreationDate = value
         case .showRegDate:
             SGSimpleSettings.shared.showRegDate = value
+        case .compactChatList:
+            SGSimpleSettings.shared.compactChatList = value
         }
     }, updateSliderValue: { setting, value in
         switch (setting) {
