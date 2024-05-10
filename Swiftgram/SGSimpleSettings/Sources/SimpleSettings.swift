@@ -20,6 +20,7 @@ public class SGSimpleSettings {
         let tasks = [
             { let _ = self.hideTabBar },
             { let _ = self.bottomTabStyle },
+            { let _ = self.compactChatList },
             { let _ = self.disableSwipeToRecordStory },
             { let _ = self.rememberLastFolder },
             { let _ = self.quickTranslateButton },
@@ -86,6 +87,7 @@ public class SGSimpleSettings {
         case showCreationDate
         case showRegDate
         case regDateCache
+        case compactChatList
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -142,7 +144,8 @@ public class SGSimpleSettings {
         Keys.showDC.rawValue: false,
         Keys.showCreationDate.rawValue: true,
         Keys.showRegDate.rawValue: true,
-        Keys.regDateCache.rawValue: [:]
+        Keys.regDateCache.rawValue: [:],
+        Keys.compactChatList.rawValue: false
     ]
     
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
@@ -270,6 +273,9 @@ public class SGSimpleSettings {
     public var showRegDate: Bool
 
     public var regDateCache = UserDefaultsBackedDictionary<String, Data>(userDefaultsKey: Keys.regDateCache.rawValue, threadSafe: false)
+    
+    @UserDefault(key: Keys.compactChatList.rawValue)
+    public var compactChatList: Bool
 }
 
 extension SGSimpleSettings {
