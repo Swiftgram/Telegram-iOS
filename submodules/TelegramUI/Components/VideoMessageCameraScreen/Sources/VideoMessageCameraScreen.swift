@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import Display
@@ -634,7 +635,8 @@ public class VideoMessageCameraScreen: ViewController {
             self.previewContainerView.addSubview(self.previewContainerContentView)
                         
             let isDualCameraEnabled = Camera.isDualCameraSupported(forRoundVideo: true)
-            let isFrontPosition = "".isEmpty
+            // MARK: Swiftgram
+            let isFrontPosition = !SGSimpleSettings.shared.startTelescopeWithRearCam
             
             self.mainPreviewView = CameraSimplePreviewView(frame: .zero, main: true, roundVideo: true)
             self.additionalPreviewView = CameraSimplePreviewView(frame: .zero, main: false, roundVideo: true)
@@ -775,13 +777,6 @@ public class VideoMessageCameraScreen: ViewController {
             })
             
             camera.focus(at: CGPoint(x: 0.5, y: 0.5), autoFocus: true)
-            // MARK: Swiftgram
-            var startCaptureSemaphore: DispatchSemaphore? = nil
-            if self.controller?.startWithRearCam ?? false {
-                startCaptureSemaphore = DispatchSemaphore(value: 0)
-                camera.togglePositionSync(semaphore: startCaptureSemaphore!)
-            }
-            startCaptureSemaphore?.wait()
             camera.startCapture()
             
             self.camera = camera
@@ -1428,11 +1423,8 @@ public class VideoMessageCameraScreen: ViewController {
     }
     
     fileprivate weak var chatNode: ASDisplayNode?
-    // MARK: Swiftgram
-    let startWithRearCam: Bool
     
     public init(
-        startWithRearCam: Bool,
         context: AccountContext,
         updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?,
         allowLiveUpload: Bool,
@@ -1448,7 +1440,6 @@ public class VideoMessageCameraScreen: ViewController {
         self.inputPanelFrame = inputPanelFrame
         self.chatNode = chatNode
         self.completion = completion
-        self.startWithRearCam = startWithRearCam
         
         self.recordingStatus = RecordingStatus(micLevel: self.micLevelValue.get(), duration: self.durationValue.get())
 
