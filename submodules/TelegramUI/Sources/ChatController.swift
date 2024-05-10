@@ -6461,7 +6461,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                                     }
                             })
                             
-                            if let replyThreadId, let channel = renderedPeer?.peer as? TelegramChannel, channel.isForum, strongSelf.nextChannelToReadDisposable == nil {
+                            if let replyThreadId, let channel = renderedPeer?.peer as? TelegramChannel, channel.isForum, strongSelf.nextChannelToReadDisposable == nil, !SGSimpleSettings.shared.disableScrollToNextChannel {
                                 strongSelf.nextChannelToReadDisposable = (combineLatest(queue: .mainQueue(),
                                 strongSelf.context.engine.peers.getNextUnreadForumTopic(peerId: channel.id, topicId: Int32(clamping: replyThreadId)),
                                     ApplicationSpecificNotice.getNextChatSuggestionTip(accountManager: strongSelf.context.sharedContext.accountManager)
