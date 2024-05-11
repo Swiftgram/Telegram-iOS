@@ -98,11 +98,13 @@ private enum SGBoolSetting: String {
     case showCreationDate
     case showRegDate
     case compactChatList
+    case compactFolderNames
 }
 
 private enum SGOneFromManySetting: String {
     case bottomTabStyle
     case downloadSpeedBoost
+    case allChatsTitleLengthOverride
 }
 
 private enum SGSliderSetting: String {
@@ -326,6 +328,8 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.header(id: id.count, section: .folders, text: presentationData.strings.Settings_ChatFolders.uppercased(), badge: nil))
     entries.append(.toggle(id: id.count, section: .folders, settingName: .foldersAtBottom, value: experimentalUISettings.foldersTabAtBottom, text: i18n("Settings.Folders.BottomTab", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.oneFromManySelector(id: id.count, section: .folders, settingName: .bottomTabStyle, text: i18n("Settings.Folders.BottomTabStyle", presentationData.strings.baseLanguageCode), value: i18n("Settings.Folders.BottomTabStyle.\(SGSimpleSettings.shared.bottomTabStyle)", presentationData.strings.baseLanguageCode), enabled: experimentalUISettings.foldersTabAtBottom))
+    entries.append(.toggle(id: id.count, section: .folders, settingName: .compactFolderNames, value: SGSimpleSettings.shared.compactFolderNames, text: i18n("Settings.Folders.CompactNames", presentationData.strings.baseLanguageCode), enabled: SGSimpleSettings.shared.bottomTabStyle != SGSimpleSettings.BottomTabStyleValues.ios.rawValue))
+    entries.append(.oneFromManySelector(id: id.count, section: .folders, settingName: .allChatsTitleLengthOverride, text: i18n("Settings.Folders.AllChatsTitle", presentationData.strings.baseLanguageCode), value: i18n("Settings.Folders.AllChatsTitle.\(SGSimpleSettings.shared.allChatsTitleLengthOverride)", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.toggle(id: id.count, section: .folders, settingName: .rememberLastFolder, value: SGSimpleSettings.shared.rememberLastFolder, text: i18n("Settings.Folders.RememberLast", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.notice(id: id.count, section: .folders, text: i18n("Settings.Folders.RememberLast.Notice", presentationData.strings.baseLanguageCode)))
     
@@ -593,6 +597,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
         case .compactChatList:
             SGSimpleSettings.shared.compactChatList = value
             askForRestart?()
+        case .compactFolderNames:
+            SGSimpleSettings.shared.compactFolderNames = value
         }
     }, updateSliderValue: { setting, value in
         switch (setting) {
@@ -659,6 +665,27 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
 
                 for value in SGSimpleSettings.BottomTabStyleValues.allCases {
                     items.append(ActionSheetButtonItem(title: i18n("Settings.Folders.BottomTabStyle.\(value.rawValue)", presentationData.strings.baseLanguageCode), color: .accent, action: { [weak actionSheet] in
+                        actionSheet?.dismissAnimated()
+                        setAction(value.rawValue)
+                    }))
+                }
+            case .allChatsTitleLengthOverride:
+                let setAction: (String) -> Void = { value in
+                    SGSimpleSettings.shared.allChatsTitleLengthOverride = value
+                    simplePromise.set(true)
+                }
+
+                for value in SGSimpleSettings.AllChatsTitleLengthOverride.allCases {
+                    let title: String
+                    switch (value) {
+                        case SGSimpleSettings.AllChatsTitleLengthOverride.short:
+                            title = "\"\(presentationData.strings.ChatList_Tabs_All)\""
+                        case SGSimpleSettings.AllChatsTitleLengthOverride.long:
+                            title = "\"\(presentationData.strings.ChatList_Tabs_AllChats)\""
+                        default:
+                            title = i18n("Settings.Folders.AllChatsTitle.none", presentationData.strings.baseLanguageCode)
+                    }
+                    items.append(ActionSheetButtonItem(title: title, color: .accent, action: { [weak actionSheet] in
                         actionSheet?.dismissAnimated()
                         setAction(value.rawValue)
                     }))

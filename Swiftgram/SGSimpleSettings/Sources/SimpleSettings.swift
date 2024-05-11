@@ -21,6 +21,7 @@ public class SGSimpleSettings {
             { let _ = self.hideTabBar },
             { let _ = self.bottomTabStyle },
             { let _ = self.compactChatList },
+            { let _ = self.compactFolderNames },
             { let _ = self.disableSwipeToRecordStory },
             { let _ = self.rememberLastFolder },
             { let _ = self.quickTranslateButton },
@@ -88,6 +89,8 @@ public class SGSimpleSettings {
         case showRegDate
         case regDateCache
         case compactChatList
+        case compactFolderNames
+        case allChatsTitleLengthOverride
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -99,6 +102,12 @@ public class SGSimpleSettings {
     public enum BottomTabStyleValues: String, CaseIterable {
         case telegram
         case ios
+    }
+    
+    public enum AllChatsTitleLengthOverride: String, CaseIterable {
+        case none
+        case short
+        case long
     }
     
     public static let defaultValues: [String: Any] = [
@@ -145,7 +154,9 @@ public class SGSimpleSettings {
         Keys.showCreationDate.rawValue: true,
         Keys.showRegDate.rawValue: true,
         Keys.regDateCache.rawValue: [:],
-        Keys.compactChatList.rawValue: false
+        Keys.compactChatList.rawValue: false,
+        Keys.compactFolderNames.rawValue: false,
+        Keys.allChatsTitleLengthOverride.rawValue: AllChatsTitleLengthOverride.none.rawValue
     ]
     
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
@@ -276,6 +287,12 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.compactChatList.rawValue)
     public var compactChatList: Bool
+
+    @UserDefault(key: Keys.compactFolderNames.rawValue)
+    public var compactFolderNames: Bool
+    
+    @UserDefault(key: Keys.allChatsTitleLengthOverride.rawValue)
+    public var allChatsTitleLengthOverride: String
 }
 
 extension SGSimpleSettings {
@@ -307,6 +324,18 @@ public func getSGMaxPendingParts(_ default: Int) -> Int {
             return 8
         case SGSimpleSettings.DownloadSpeedBoostValues.maximum.rawValue:
             return 12
+        default:
+            return `default`
+    }
+}
+
+public func sgUseShortAllChatsTitle(_ default: Bool) -> Bool {
+    let currentOverride = SGSimpleSettings.shared.allChatsTitleLengthOverride
+    switch (currentOverride) {
+        case SGSimpleSettings.AllChatsTitleLengthOverride.short.rawValue:
+            return true
+        case SGSimpleSettings.AllChatsTitleLengthOverride.long.rawValue:
+            return false
         default:
             return `default`
     }

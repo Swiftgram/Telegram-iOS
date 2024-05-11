@@ -5,6 +5,7 @@ import Display
 import Postbox
 import TelegramCore
 import TelegramPresentationData
+import SGSimpleSettings
 
 private final class ItemNodeDeleteButtonNode: HighlightableButtonNode {
     private let pressed: () -> Void
@@ -753,7 +754,7 @@ public final class AppleStyleFoldersNode: ASDisplayNode {
                 }
             }
         }
-        
+        // TODO(swiftgram): Support compact layout
         let minSpacing: CGFloat = 30.0
         
         let resolvedInitialSideInset: CGFloat = 8.0 + 14.0 + 4.0 + sideInset
@@ -784,7 +785,7 @@ public final class AppleStyleFoldersNode: ASDisplayNode {
                 itemNodeTransition = .immediate
             }
             
-            let useShortTitle = itemId == .all && useShortTitles
+            let useShortTitle = itemId == .all && sgUseShortAllChatsTitle(useShortTitles)
             let paneNodeSize = useShortTitle ? paneNodeShortSize : paneNodeLongSize
             
             let paneFrame = CGRect(origin: CGPoint(x: leftOffset, y: floor((size.height - paneNodeSize.height) / 2.0)), size: paneNodeSize)
