@@ -922,7 +922,7 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
             }
         }
         
-        let minSpacing: CGFloat = 26.0
+        let minSpacing: CGFloat = 26.0 / (SGSimpleSettings.shared.compactFolderNames ? 2.5 : 1.0)
         
         let resolvedSideInset: CGFloat = 16.0 + sideInset
         var leftOffset: CGFloat = resolvedSideInset
@@ -945,7 +945,7 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
                 itemNodeTransition = .immediate
             }
             
-            let useShortTitle = itemId == .all && useShortTitles
+            let useShortTitle = itemId == .all && sgUseShortAllChatsTitle(useShortTitles)
             let paneNodeSize = useShortTitle ? paneNodeShortSize : paneNodeLongSize
             
             let paneFrame = CGRect(origin: CGPoint(x: leftOffset, y: floor((size.height - paneNodeSize.height) / 2.0)), size: paneNodeSize)
