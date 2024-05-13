@@ -162,7 +162,7 @@ def load_codesigning_data_from_git(working_dir, repo_url, temp_key_path, branch,
 def copy_profiles_from_directory(source_path, destination_path, team_id, bundle_id):
     profile_name_mapping = {
         # Swiftgram
-        '.SGActionRequestHandler': 'SGActionRequestHandler',
+        # '.SGActionRequestHandler': 'SGActionRequestHandler',
         '.SiriIntents': 'Intents',
         '.NotificationContent': 'NotificationContent',
         '.NotificationService': 'NotificationService',
