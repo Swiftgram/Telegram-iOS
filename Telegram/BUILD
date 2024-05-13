@@ -2155,7 +2155,7 @@ ios_application(
     extensions = select({
         ":disableExtensionsSetting": [],
         "//conditions:default": [
-            ":SGActionRequestHandler",
+            # ":SGActionRequestHandler", # UX sucks https://t.me/swiftgramchat/7335
             ":ShareExtension",
             ":NotificationContentExtension",
             ":NotificationServiceExtension",
