@@ -66,3 +66,4 @@ build-input/*
 **/*.pyc
 *.pyc
 submodules/**/.build/*
+swiftgram-scripts
