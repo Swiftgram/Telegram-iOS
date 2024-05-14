@@ -10,7 +10,7 @@ Supercharged Telegram fork for iOS
 - TestFlight beta: link in the [chat description](https://t.me/swiftgramchat)
 - Help translate Swiftgram: https://translate.swiftgram.app
 
-Swiftgram's compilation steps are the same as for the official app. Below you'll find a complete compilation guide based on the official app.
+Swiftgram's compilation steps are the same as for the official app. Below you will find a complete compilation guide based on the official app.
 
 # Telegram iOS Source Code Compilation Guide
 
