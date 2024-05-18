@@ -1584,7 +1584,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         var localNeedsQuickTranslateButton = false /* SGSimpleSettings.defaultValues[SGSimpleSettings.Keys.quickTranslateButton.rawValue] as! Bool*/
         if let strongSelf = selfReference.value {
             if strongSelf.needsQuickTranslateButton {
-                if incoming && !item.message.text.isEmpty {
+                if incoming && !item.message.text.isEmpty && item.message.adAttribute == nil {
                     localNeedsQuickTranslateButton = true
                 }
             }
@@ -4129,7 +4129,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         
         // MARK: Swiftgram
         // TODO(swiftgram): Move business-logic up to hierarchy
-        if strongSelf.needsQuickTranslateButton && incoming && !item.message.text.isEmpty {
+        if strongSelf.needsQuickTranslateButton && incoming && !item.message.text.isEmpty && item.message.adAttribute == nil {
             if strongSelf.quickTranslateButtonNode == nil {
                 let quickTranslateButtonNode = ChatMessageShareButton()
                 strongSelf.quickTranslateButtonNode = quickTranslateButtonNode
