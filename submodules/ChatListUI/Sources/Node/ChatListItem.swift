@@ -3762,7 +3762,8 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                         
                         transition.updateFrame(node: strongSelf.badgeNode, frame: badgeFrame)
                     }
-                    
+                    // MARK: Swiftgram
+                    let sizeFactor = item.presentationData.fontSize.itemListBaseFontSize / 17.0
                     if currentMentionBadgeImage != nil || currentBadgeBackgroundImage != nil {
                         let mentionBadgeOffset: CGFloat
                         if badgeLayout.width.isZero {
@@ -3771,7 +3772,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                             mentionBadgeOffset = contentRect.maxX - badgeLayout.width - 6.0 - mentionBadgeLayout.width
                         }
                         
-                        let badgeFrame = CGRect(x: mentionBadgeOffset, y: contentRect.maxY - mentionBadgeLayout.height - 2.0, width: mentionBadgeLayout.width, height: mentionBadgeLayout.height)
+                        let badgeFrame = CGRect(x: mentionBadgeOffset, y: contentRect.maxY - mentionBadgeLayout.height - 2.0 + (sgCompactChatList ? 13.0 / sizeFactor : 0.0), width: mentionBadgeLayout.width, height: mentionBadgeLayout.height)
                         
                         transition.updateFrame(node: strongSelf.mentionBadgeNode, frame: badgeFrame)
                     }
@@ -3782,7 +3783,6 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                         
                         let pinnedIconSize = currentPinnedIconImage.size
                         // MARK: Swiftgram
-                        let sizeFactor = item.presentationData.fontSize.itemListBaseFontSize / 17.0
                         let pinnedIconFrame = CGRect(x: contentRect.maxX - pinnedIconSize.width, y: contentRect.maxY - pinnedIconSize.height - 2.0 + (sgCompactChatList ? 13.0 / sizeFactor : 0.0), width: pinnedIconSize.width, height: pinnedIconSize.height)
                         
                         strongSelf.pinnedIconNode.frame = pinnedIconFrame
