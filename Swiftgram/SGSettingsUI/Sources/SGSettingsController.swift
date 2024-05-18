@@ -87,6 +87,7 @@ private enum SGBoolSetting: String {
     case contextShowMessageReplies
     case contextShowJson
     case disableScrollToNextChannel
+    case disableScrollToNextTopic
     case disableChatSwipeOptions
     case disableGalleryCamera
     case disableSendAsButton
@@ -431,6 +432,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableSendAsButton, value: !SGSimpleSettings.shared.disableSendAsButton, text: i18n("Settings.SendAsButton", presentationData.strings.baseLanguageCode, presentationData.strings.Conversation_SendMesageAs), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableGalleryCamera, value: !SGSimpleSettings.shared.disableGalleryCamera, text: i18n("Settings.GalleryCamera", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableScrollToNextChannel, value: !SGSimpleSettings.shared.disableScrollToNextChannel, text: i18n("Settings.PullToNextChannel", presentationData.strings.baseLanguageCode), enabled: true))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .disableScrollToNextTopic, value: !SGSimpleSettings.shared.disableScrollToNextTopic, text: i18n("Settings.PullToNextTopic", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .smallReactions, value: SGSimpleSettings.shared.smallReactions, text: i18n("Settings.SmallReactions", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .uploadSpeedBoost, value: SGSimpleSettings.shared.uploadSpeedBoost, text: i18n("Settings.UploadsBoost", presentationData.strings.baseLanguageCode), enabled: true))
     entries.append(.oneFromManySelector(id: id.count, section: .other, settingName: .downloadSpeedBoost, text: i18n("Settings.DownloadsBoost", presentationData.strings.baseLanguageCode), value: i18n("Settings.DownloadsBoost.\(SGSimpleSettings.shared.downloadSpeedBoost)", presentationData.strings.baseLanguageCode), enabled: true))
@@ -559,6 +561,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.contextShowHideForwardName = value
         case .disableScrollToNextChannel:
             SGSimpleSettings.shared.disableScrollToNextChannel = !value
+        case .disableScrollToNextTopic:
+            SGSimpleSettings.shared.disableScrollToNextTopic = !value
         case .disableChatSwipeOptions:
             SGSimpleSettings.shared.disableChatSwipeOptions = !value
             askForRestart?()

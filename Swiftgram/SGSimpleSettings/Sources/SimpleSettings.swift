@@ -76,6 +76,7 @@ public class SGSimpleSettings {
         case contextShowMessageReplies
         case contextShowJson
         case disableScrollToNextChannel
+        case disableScrollToNextTopic
         case disableChatSwipeOptions
         case disableGalleryCamera
         case disableSendAsButton
@@ -142,6 +143,7 @@ public class SGSimpleSettings {
         Keys.contextShowMessageReplies.rawValue: true,
         Keys.contextShowJson.rawValue: false,
         Keys.disableScrollToNextChannel.rawValue: false,
+        Keys.disableScrollToNextTopic.rawValue: false,
         Keys.disableChatSwipeOptions.rawValue: false,
         Keys.disableGalleryCamera.rawValue: false,
         Keys.disableSendAsButton.rawValue: false,
@@ -248,7 +250,10 @@ public class SGSimpleSettings {
     public var contextShowJson: Bool
     
     @UserDefault(key: Keys.disableScrollToNextChannel.rawValue)
-    public var disableScrollToNextChannel: Bool 
+    public var disableScrollToNextChannel: Bool
+
+    @UserDefault(key: Keys.disableScrollToNextTopic.rawValue)
+    public var disableScrollToNextTopic: Bool
 
     @UserDefault(key: Keys.disableChatSwipeOptions.rawValue)
     public var disableChatSwipeOptions: Bool
