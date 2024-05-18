@@ -326,7 +326,14 @@ alternate_icon_folders = [
     "SGLegacy",
     "SGInverted",
     "SGWhite",
-    "SGNight"
+    "SGNight",
+    "SGSky",
+    "SGTitanium",
+    "SGNeon",
+    "SGNeonBlue",
+    "SGGlass",
+    "SGSparkling",
+    "SGBeta"
 ]
 
 [

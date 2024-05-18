@@ -373,6 +373,27 @@ class ThemeSettingsAppIconItemNode: ListViewItemNode, ItemListItemNode {
                                 case "SGNight":
                                     name = "Night"
                                     bordered = false
+                                case "SGSky":
+                                    name = "Sky"
+                                    bordered = false
+                                case "SGTitanium":
+                                    name = "Titanium"
+                                    bordered = false
+                                case "SGNeon":
+                                    name = "Neon"
+                                    bordered = false
+                                case "SGNeonBlue":
+                                    name = "Neon Blue"
+                                    bordered = false
+                                case "SGGlass":
+                                    name = "Glass"
+                                    bordered = false
+                                case "SGSparkling":
+                                    name = "Sparkling"
+                                    bordered = false
+                                case "SGBeta":
+                                    name = "β Beta"
+                                    bordered = false
                                 case "BlueIcon":
                                     name = item.strings.Appearance_AppIconDefault
                                 case "BlackIcon":
