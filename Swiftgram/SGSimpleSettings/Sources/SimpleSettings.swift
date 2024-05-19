@@ -18,6 +18,7 @@ public class SGSimpleSettings {
         // let dispatchGroup = DispatchGroup()
 
         let tasks = [
+            { let _ = self.allChatsFolderPositionOverride },
             { let _ = self.hideTabBar },
             { let _ = self.bottomTabStyle },
             { let _ = self.compactChatList },
@@ -92,6 +93,7 @@ public class SGSimpleSettings {
         case compactChatList
         case compactFolderNames
         case allChatsTitleLengthOverride
+        case allChatsFolderPositionOverride
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -109,6 +111,12 @@ public class SGSimpleSettings {
         case none
         case short
         case long
+    }
+    
+    public enum AllChatsFolderPositionOverride: String, CaseIterable {
+        case none
+        case last
+        case hidden
     }
     
     public static let defaultValues: [String: Any] = [
@@ -158,7 +166,8 @@ public class SGSimpleSettings {
         Keys.regDateCache.rawValue: [:],
         Keys.compactChatList.rawValue: false,
         Keys.compactFolderNames.rawValue: false,
-        Keys.allChatsTitleLengthOverride.rawValue: AllChatsTitleLengthOverride.none.rawValue
+        Keys.allChatsTitleLengthOverride.rawValue: AllChatsTitleLengthOverride.none.rawValue,
+        Keys.allChatsFolderPositionOverride.rawValue: AllChatsFolderPositionOverride.none.rawValue
     ]
     
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
@@ -298,6 +307,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.allChatsTitleLengthOverride.rawValue)
     public var allChatsTitleLengthOverride: String
+    
+    @UserDefault(key: Keys.allChatsFolderPositionOverride.rawValue)
+    public var allChatsFolderPositionOverride: String
 }
 
 extension SGSimpleSettings {
