@@ -377,12 +377,23 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                     strongSelf.chatListDisplayNode.willScrollToTop()
                     strongSelf.chatListDisplayNode.effectiveContainerNode.currentItemNode.scrollToPosition(.top(adjustForTempInset: false))
                 case let .known(offset):
-                    let isFirstFilter = strongSelf.chatListDisplayNode.effectiveContainerNode.currentItemNode.chatListFilter == strongSelf.chatListDisplayNode.mainContainerNode.availableFilters.first?.filter
+                    // MARK: Swiftgram
+                    let sgAllChatsHiddden = SGSimpleSettings.shared.allChatsHidden
+                    var mainContainerNode_availableFilters = strongSelf.chatListDisplayNode.mainContainerNode.availableFilters
+                    if sgAllChatsHiddden {
+                        mainContainerNode_availableFilters.removeAll { $0 == .all }
+                    }
+                    let isFirstFilter = strongSelf.chatListDisplayNode.effectiveContainerNode.currentItemNode.chatListFilter == mainContainerNode_availableFilters.first?.filter
                     
                     if offset <= ChatListNavigationBar.searchScrollHeight + 1.0 && strongSelf.chatListDisplayNode.inlineStackContainerNode != nil {
                         strongSelf.setInlineChatList(location: nil)
                     } else if offset <= ChatListNavigationBar.searchScrollHeight + 1.0 && !isFirstFilter {
-                        let firstFilter = strongSelf.chatListDisplayNode.effectiveContainerNode.availableFilters.first ?? .all
+                        // MARK: Swiftgram
+                        var effectiveContainerNode_availableFilters = strongSelf.chatListDisplayNode.mainContainerNode.availableFilters
+                        if sgAllChatsHiddden {
+                            effectiveContainerNode_availableFilters.removeAll { $0 == .all }
+                        }
+                        let firstFilter = effectiveContainerNode_availableFilters.first ?? .all
                         let targetTab: ChatListFilterTabEntryId
                         switch firstFilter {
                             case .all:
