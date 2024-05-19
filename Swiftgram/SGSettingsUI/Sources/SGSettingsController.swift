@@ -100,13 +100,14 @@ private enum SGBoolSetting: String {
     case showRegDate
     case compactChatList
     case compactFolderNames
+    case allChatsHidden
 }
 
 private enum SGOneFromManySetting: String {
     case bottomTabStyle
     case downloadSpeedBoost
     case allChatsTitleLengthOverride
-    case allChatsFolderPositionOverride
+//    case allChatsFolderPositionOverride
 }
 
 private enum SGSliderSetting: String {
@@ -332,8 +333,9 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.header(id: id.count, section: .folders, text: presentationData.strings.Settings_ChatFolders.uppercased(), badge: nil))
     entries.append(.toggle(id: id.count, section: .folders, settingName: .foldersAtBottom, value: experimentalUISettings.foldersTabAtBottom, text: i18n("Settings.Folders.BottomTab", lang), enabled: true))
     entries.append(.oneFromManySelector(id: id.count, section: .folders, settingName: .bottomTabStyle, text: i18n("Settings.Folders.BottomTabStyle", lang), value: i18n("Settings.Folders.BottomTabStyle.\(SGSimpleSettings.shared.bottomTabStyle)", lang), enabled: experimentalUISettings.foldersTabAtBottom))
+    entries.append(.toggle(id: id.count, section: .folders, settingName: .allChatsHidden, value: SGSimpleSettings.shared.allChatsHidden, text: i18n("Settings.Folders.AllChatsHidden", lang), enabled: true))
     #if DEBUG
-    entries.append(.oneFromManySelector(id: id.count, section: .folders, settingName: .allChatsFolderPositionOverride, text: i18n("Settings.Folders.AllChatsPlacement", lang), value: i18n("Settings.Folders.AllChatsPlacement.\(SGSimpleSettings.shared.allChatsFolderPositionOverride)", lang), enabled: true))
+//    entries.append(.oneFromManySelector(id: id.count, section: .folders, settingName: .allChatsFolderPositionOverride, text: i18n("Settings.Folders.AllChatsPlacement", lang), value: i18n("Settings.Folders.AllChatsPlacement.\(SGSimpleSettings.shared.allChatsFolderPositionOverride)", lang), enabled: true))
     #endif
     entries.append(.toggle(id: id.count, section: .folders, settingName: .compactFolderNames, value: SGSimpleSettings.shared.compactFolderNames, text: i18n("Settings.Folders.CompactNames", lang), enabled: SGSimpleSettings.shared.bottomTabStyle != SGSimpleSettings.BottomTabStyleValues.ios.rawValue))
     entries.append(.oneFromManySelector(id: id.count, section: .folders, settingName: .allChatsTitleLengthOverride, text: i18n("Settings.Folders.AllChatsTitle", lang), value: i18n("Settings.Folders.AllChatsTitle.\(SGSimpleSettings.shared.allChatsTitleLengthOverride)", lang), enabled: true))
@@ -609,6 +611,9 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             askForRestart?()
         case .compactFolderNames:
             SGSimpleSettings.shared.compactFolderNames = value
+        case .allChatsHidden:
+            SGSimpleSettings.shared.allChatsHidden = value
+            askForRestart?()
         }
     }, updateSliderValue: { setting, value in
         switch (setting) {
@@ -700,18 +705,18 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
                         setAction(value.rawValue)
                     }))
                 }
-        case .allChatsFolderPositionOverride:
-            let setAction: (String) -> Void = { value in
-                SGSimpleSettings.shared.allChatsFolderPositionOverride = value
-                simplePromise.set(true)
-            }
-
-            for value in SGSimpleSettings.AllChatsFolderPositionOverride.allCases {
-                items.append(ActionSheetButtonItem(title: i18n("Settings.Folders.AllChatsTitle.\(value)", presentationData.strings.baseLanguageCode), color: .accent, action: { [weak actionSheet] in
-                    actionSheet?.dismissAnimated()
-                    setAction(value.rawValue)
-                }))
-            }
+//        case .allChatsFolderPositionOverride:
+//            let setAction: (String) -> Void = { value in
+//                SGSimpleSettings.shared.allChatsFolderPositionOverride = value
+//                simplePromise.set(true)
+//            }
+//
+//            for value in SGSimpleSettings.AllChatsFolderPositionOverride.allCases {
+//                items.append(ActionSheetButtonItem(title: i18n("Settings.Folders.AllChatsTitle.\(value)", presentationData.strings.baseLanguageCode), color: .accent, action: { [weak actionSheet] in
+//                    actionSheet?.dismissAnimated()
+//                    setAction(value.rawValue)
+//                }))
+//            }
         }
         
         actionSheet.setItemGroups([ActionSheetItemGroup(items: items), ActionSheetItemGroup(items: [
