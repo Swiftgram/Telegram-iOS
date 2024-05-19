@@ -333,7 +333,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.header(id: id.count, section: .folders, text: presentationData.strings.Settings_ChatFolders.uppercased(), badge: nil))
     entries.append(.toggle(id: id.count, section: .folders, settingName: .foldersAtBottom, value: experimentalUISettings.foldersTabAtBottom, text: i18n("Settings.Folders.BottomTab", lang), enabled: true))
     entries.append(.oneFromManySelector(id: id.count, section: .folders, settingName: .bottomTabStyle, text: i18n("Settings.Folders.BottomTabStyle", lang), value: i18n("Settings.Folders.BottomTabStyle.\(SGSimpleSettings.shared.bottomTabStyle)", lang), enabled: experimentalUISettings.foldersTabAtBottom))
-    entries.append(.toggle(id: id.count, section: .folders, settingName: .allChatsHidden, value: SGSimpleSettings.shared.allChatsHidden, text: i18n("Settings.Folders.AllChatsHidden", lang), enabled: true))
+    entries.append(.toggle(id: id.count, section: .folders, settingName: .allChatsHidden, value: SGSimpleSettings.shared.allChatsHidden, text: i18n("Settings.Folders.AllChatsHidden", lang, presentationData.strings.ChatList_Tabs_AllChats), enabled: true))
     #if DEBUG
 //    entries.append(.oneFromManySelector(id: id.count, section: .folders, settingName: .allChatsFolderPositionOverride, text: i18n("Settings.Folders.AllChatsPlacement", lang), value: i18n("Settings.Folders.AllChatsPlacement.\(SGSimpleSettings.shared.allChatsFolderPositionOverride)", lang), enabled: true))
     #endif
