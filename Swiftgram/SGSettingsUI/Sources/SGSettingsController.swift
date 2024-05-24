@@ -101,6 +101,7 @@ private enum SGBoolSetting: String {
     case compactChatList
     case compactFolderNames
     case allChatsHidden
+    case defaultEmojisFirst
 }
 
 private enum SGOneFromManySetting: String {
@@ -445,6 +446,8 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .other, settingName: .uploadSpeedBoost, value: SGSimpleSettings.shared.uploadSpeedBoost, text: i18n("Settings.UploadsBoost", lang), enabled: true))
     entries.append(.oneFromManySelector(id: id.count, section: .other, settingName: .downloadSpeedBoost, text: i18n("Settings.DownloadsBoost", lang), value: i18n("Settings.DownloadsBoost.\(SGSimpleSettings.shared.downloadSpeedBoost)", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .sendWithReturnKey, value: SGSettings.sendWithReturnKey, text: i18n("Settings.SendWithReturnKey", lang), enabled: true))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .defaultEmojisFirst, value: SGSimpleSettings.shared.defaultEmojisFirst, text: i18n("Settings.DefaultEmojisFirst", lang), enabled: true))
+    entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.DefaultEmojisFirst.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hidePhoneInSettings, value: SGSimpleSettings.shared.hidePhoneInSettings, text: i18n("Settings.HidePhoneInSettingsUI", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.HidePhoneInSettingsUI.Notice", lang)))
     
@@ -614,6 +617,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
         case .allChatsHidden:
             SGSimpleSettings.shared.allChatsHidden = value
             askForRestart?()
+        case .defaultEmojisFirst:
+            SGSimpleSettings.shared.defaultEmojisFirst = value
         }
     }, updateSliderValue: { setting, value in
         switch (setting) {

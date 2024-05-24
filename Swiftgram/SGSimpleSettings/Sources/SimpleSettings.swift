@@ -96,6 +96,7 @@ public class SGSimpleSettings {
         case allChatsTitleLengthOverride
 //        case allChatsFolderPositionOverride
         case allChatsHidden
+        case defaultEmojisFirst
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -170,7 +171,8 @@ public class SGSimpleSettings {
         Keys.compactFolderNames.rawValue: false,
         Keys.allChatsTitleLengthOverride.rawValue: AllChatsTitleLengthOverride.none.rawValue,
 //        Keys.allChatsFolderPositionOverride.rawValue: AllChatsFolderPositionOverride.none.rawValue
-        Keys.allChatsHidden.rawValue: false
+        Keys.allChatsHidden.rawValue: false,
+        Keys.defaultEmojisFirst.rawValue: false
     ]
     
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
@@ -315,6 +317,9 @@ public class SGSimpleSettings {
 //    public var allChatsFolderPositionOverride: String
     @UserDefault(key: Keys.allChatsHidden.rawValue)
     public var allChatsHidden: Bool
+
+    @UserDefault(key: Keys.defaultEmojisFirst.rawValue)
+    public var defaultEmojisFirst: Bool
 }
 
 extension SGSimpleSettings {

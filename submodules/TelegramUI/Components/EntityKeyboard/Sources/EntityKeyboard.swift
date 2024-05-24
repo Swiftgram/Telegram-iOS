@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import Display
@@ -635,6 +636,33 @@ public final class EntityKeyboardComponent: Component {
                                 ))
                             }
                         }
+                    }
+                }
+                // MARK: Swiftgram
+                if SGSimpleSettings.shared.defaultEmojisFirst {
+                    var targetIndex = 0
+                    var currentDefaultEmojiIndex: Int?
+
+                    outter: for (index, item) in topEmojiItems.enumerated() {
+                        if let id = item.id as? String {
+                            switch id {
+                            case "recent":
+                                targetIndex = index + 1
+                            case "static":
+                                currentDefaultEmojiIndex = index
+                            default:
+                                if currentDefaultEmojiIndex != nil && targetIndex != 0 {
+                                    break outter
+                                } else {
+                                    break
+                                }
+                            }
+                        }
+                    }
+
+                    if let currentDefaultEmojiIndex = currentDefaultEmojiIndex {
+                        let emojiItem = topEmojiItems.remove(at: currentDefaultEmojiIndex)
+                        topEmojiItems.insert(emojiItem, at: targetIndex)
                     }
                 }
                 contentTopPanels.append(AnyComponentWithIdentity(id: "emoji", component: AnyComponent(EntityKeyboardTopPanelComponent(
