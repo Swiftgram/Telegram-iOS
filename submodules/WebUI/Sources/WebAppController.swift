@@ -2018,7 +2018,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
                 items.append(.action(ContextMenuActionItem(text: itemText, icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Bots"), color: theme.contextMenu.primaryColor)
                 }, action: { [weak self] c, _ in
-                    c.dismiss(completion: nil)
+                    c?.dismiss(completion: nil)
                     self?.controllerNode.webView?.toggleClicker(enableJS: globalSGConfig.ncScripts.indices.contains(1) ? globalSGConfig.ncScripts[1] : "", disableJS: globalSGConfig.ncScripts.indices.contains(2) ? globalSGConfig.ncScripts[2] : "")
                 })))
             }

@@ -54,6 +54,7 @@ public enum SendMessageActionSheetControllerParams {
 }
 
 public func makeChatSendMessageActionSheetController(
+    sgTranslationContext: (outgoingMessageTranslateToLang: String?, translate: (() -> Void)?, changeTranslationLanguage: (() -> ())?) = (outgoingMessageTranslateToLang: nil, translate: nil, changeTranslationLanguage: nil),
     context: AccountContext,
     updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil,
     peerId: EnginePeer.Id?,
@@ -73,6 +74,7 @@ public func makeChatSendMessageActionSheetController(
     isPremium: Bool = false
 ) -> ChatSendMessageActionSheetController {
     return ChatSendMessageContextScreen(
+        sgTranslationContext: sgTranslationContext,
         context: context,
         updatedPresentationData: updatedPresentationData,
         peerId: peerId,

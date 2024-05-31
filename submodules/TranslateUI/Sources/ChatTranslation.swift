@@ -149,8 +149,10 @@ public func translateMessageIds(context: AccountContext, messageIds: [EngineMess
                     if !messageIdsSet.contains(messageId) {
                         messageIdsToTranslate.append(messageId)
                         messageIdsSet.insert(messageId)
+                        messageDictToTranslate[messageId] = message.text
                     }
-                } else if let _ = message.media.first(where: { $0 is TelegramMediaPoll }) {
+                // TODO(swiftgram): Translate polls
+                } else if let _ = message.media.first(where: { $0 is TelegramMediaPoll }), !viaText {
                     if !messageIdsSet.contains(messageId) {
                         messageIdsToTranslate.append(messageId)
                         messageIdsSet.insert(messageId)
@@ -167,7 +169,7 @@ public func translateMessageIds(context: AccountContext, messageIds: [EngineMess
             return context.engine.messages.translateMessagesViaText(messagesDict: messageDictToTranslate, toLang: toLang, generateEntitiesFunction: { text in
                 generateTextEntities(text, enabledTypes: .all)
             })
-            |> `catch` { _ -> Signal<Void, NoError> in
+            |> `catch` { _ -> Signal<Never, NoError> in
                 return .complete()
             }
         } else {

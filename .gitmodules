@@ -1,7 +1,4 @@
 
-[submodule "swiftgram-scripts"]
-	path = swiftgram-scripts
-	url = ../Telegram-iOS-Scripts.git
 [submodule "Swiftgram/SGStrings/Strings"]
 	path = Swiftgram/SGStrings/Strings
 	url = ../translations.git

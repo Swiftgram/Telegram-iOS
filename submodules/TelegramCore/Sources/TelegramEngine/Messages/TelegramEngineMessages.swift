@@ -525,7 +525,7 @@ public extension TelegramEngine {
         }
 
         // MARK: Swiftgram
-        public func translateMessagesViaText(messagesDict: [EngineMessage.Id: String], toLang: String, generateEntitiesFunction: @escaping (String) -> [MessageTextEntity]) -> Signal<Void, TranslationError> {
+        public func translateMessagesViaText(messagesDict: [EngineMessage.Id: String], toLang: String, generateEntitiesFunction: @escaping (String) -> [MessageTextEntity]) -> Signal<Never, TranslationError> {
             return _internal_translateMessagesViaText(account: self.account, messagesDict: messagesDict, toLang: toLang, generateEntitiesFunction: generateEntitiesFunction)
         }
         

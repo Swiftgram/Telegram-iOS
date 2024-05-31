@@ -217,7 +217,7 @@ private func _internal_translateMessagesByPeerId(account: Account, peerId: Engin
     }
 }
 
-func _internal_translateMessagesViaText(account: Account, messagesDict: [EngineMessage.Id: String], toLang: String, generateEntitiesFunction: @escaping (String) -> [MessageTextEntity]) -> Signal<Void, TranslationError> {
+func _internal_translateMessagesViaText(account: Account, messagesDict: [EngineMessage.Id: String], toLang: String, generateEntitiesFunction: @escaping (String) -> [MessageTextEntity]) -> Signal<Never, TranslationError> {
     var listOfSignals: [Signal<Void, TranslationError>] = []
     for (messageId, text) in messagesDict {
         listOfSignals.append(
@@ -250,7 +250,7 @@ func _internal_translateMessagesViaText(account: Account, messagesDict: [EngineM
             }
         )
     }
-    return combineLatest(listOfSignals) |> map { _ in Void() }
+    return combineLatest(listOfSignals) |> ignoreValues
 }
 
 func _internal_togglePeerMessagesTranslationHidden(account: Account, peerId: EnginePeer.Id, hidden: Bool) -> Signal<Never, NoError> {
