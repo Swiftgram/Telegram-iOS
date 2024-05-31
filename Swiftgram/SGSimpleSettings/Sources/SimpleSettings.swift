@@ -29,7 +29,7 @@ public class SGSimpleSettings {
             { let _ = self.quickTranslateButton },
             { let _ = self.stickerSize },
             { let _ = self.stickerTimestamp },
-            { let _ = self.smallReactions },
+            { let _ = self.hideReactions },
             { let _ = self.disableGalleryCamera },
             { let _ = self.disableSendAsButton },
             { let _ = self.disableSnapDeletionEffect },
@@ -64,7 +64,7 @@ public class SGSimpleSettings {
         case disableSwipeToRecordStory
         case quickTranslateButton
         case outgoingLanguageTranslation
-        case smallReactions
+        case hideReactions
         case showRepostToStory
         case contextShowSelectFromUser
         case contextShowSaveToCloud
@@ -140,7 +140,7 @@ public class SGSimpleSettings {
         Keys.disableSwipeToRecordStory.rawValue: false,
         Keys.quickTranslateButton.rawValue: false,
         Keys.outgoingLanguageTranslation.rawValue: [:],
-        Keys.smallReactions.rawValue: false,
+        Keys.hideReactions.rawValue: false,
         Keys.showRepostToStory.rawValue: true,
         Keys.contextShowSelectFromUser.rawValue: true,
         Keys.contextShowSaveToCloud.rawValue: true,
@@ -224,8 +224,8 @@ public class SGSimpleSettings {
     
     public var outgoingLanguageTranslation = UserDefaultsBackedDictionary<String, String>(userDefaultsKey: Keys.outgoingLanguageTranslation.rawValue, threadSafe: false)
     
-    @UserDefault(key: Keys.smallReactions.rawValue)
-    public var smallReactions: Bool
+    @UserDefault(key: Keys.hideReactions.rawValue)
+    public var hideReactions: Bool
 
     @UserDefault(key: Keys.showRepostToStory.rawValue)
     public var showRepostToStory: Bool

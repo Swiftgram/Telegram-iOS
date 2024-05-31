@@ -2068,7 +2068,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                 popSGItems = { [weak c] in
                     c?.popItems()
                 }
-                c.pushItems(items: .single(ContextController.Items(content: .list(sgActions))))
+                c?.pushItems(items: .single(ContextController.Items(content: .list(sgActions))))
             }))
             
             if let sgActionsIndex = sgActionsIndex {

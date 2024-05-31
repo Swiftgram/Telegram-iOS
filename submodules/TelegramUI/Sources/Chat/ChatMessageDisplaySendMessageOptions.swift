@@ -1,5 +1,6 @@
 // MARK: Swiftgram
 import SGSimpleSettings
+import TextFormat
 import TranslateUI
 import Foundation
 import UIKit
@@ -79,21 +80,17 @@ func chatMessageDisplaySendMessageOptions(selfController: ChatControllerImpl, no
             return
         }
         
-        if let editMessage = selfController.presentationInterfaceState.interfaceState.editMessage {
-            if editMessages.isEmpty {
-        /*if sendWhenOnlineAvailable {
-            let _ = ApplicationSpecificNotice.incrementSendWhenOnlineTip(accountManager: selfController.context.sharedContext.accountManager, count: 4).startStandalone()
-        }
         // MARK: Swiftgram
         let outgoingMessageTranslateToLang = SGSimpleSettings.shared.outgoingLanguageTranslation[SGSimpleSettings.makeOutgoingLanguageTranslationKey(accountId: selfController.context.account.peerId.id._internalGetInt64Value(), peerId: peer.id.id._internalGetInt64Value())] ?? selfController.predictedChatLanguage
-        let controller = ChatSendMessageActionSheetController(outgoingMessageTranslateToLang: outgoingMessageTranslateToLang, translate: { [weak selfController] in
+                
+        let sgTranslationContext: (outgoingMessageTranslateToLang: String?, translate: (() -> Void)?, changeTranslationLanguage: (() -> ())?) = (outgoingMessageTranslateToLang: outgoingMessageTranslateToLang, translate: { [weak selfController] in
             guard let selfController else { return }
             let textToTranslate = selfController.presentationInterfaceState.interfaceState.effectiveInputState.inputText.string
-            
+            let textEntities = selfController.presentationInterfaceState.interfaceState.synchronizeableInputState?.entities ?? []
             if let outgoingMessageTranslateToLang = outgoingMessageTranslateToLang {
-                let _ = (selfController.context.engine.messages.translate(text: textToTranslate, toLang: outgoingMessageTranslateToLang) |> deliverOnMainQueue).start(next: { [weak selfController] translatedText in
-                    guard let selfController, let translatedText else { return }
-                    let newInputText = NSAttributedString(string: translatedText)
+                let _ = (selfController.context.engine.messages.translate(text: textToTranslate, toLang: outgoingMessageTranslateToLang, entities: textEntities) |> deliverOnMainQueue).start(next: { [weak selfController] translatedTextAndEntities in
+                    guard let selfController, let translatedTextAndEntities else { return }
+                    let newInputText = chatInputStateStringWithAppliedEntities(translatedTextAndEntities.0, entities: translatedTextAndEntities.1)
                     let newTextInputState = ChatTextInputState(inputText: newInputText, selectionRange: 0 ..< newInputText.length)
                     selfController.updateChatPresentationInterfaceState(interactive: true, { state in
                         return state.updatedInterfaceState { interfaceState in
@@ -122,8 +119,10 @@ func chatMessageDisplaySendMessageOptions(selfController: ChatControllerImpl, no
             })
             controller.navigationPresentation = .modal
             selfController.push(controller)
-        }, context: selfController.context, updatedPresentationData: selfController.updatedPresentationData, peerId: selfController.presentationInterfaceState.chatLocation.peerId, forwardMessageIds: selfController.presentationInterfaceState.interfaceState.forwardMessageIds, hasEntityKeyboard: hasEntityKeyboard, gesture: gesture, sourceSendButton: node, textInputView: textInputView, canSendWhenOnline: sendWhenOnlineAvailable, completion: { [weak selfController] in
-            guard let selfController else {*/
+        })
+        
+        if let editMessage = selfController.presentationInterfaceState.interfaceState.editMessage {
+            if editMessages.isEmpty {
                 return
             }
             
@@ -158,6 +157,7 @@ func chatMessageDisplaySendMessageOptions(selfController: ChatControllerImpl, no
             }
             
             let controller = makeChatSendMessageActionSheetController(
+                sgTranslationContext: sgTranslationContext,
                 context: selfController.context,
                 updatedPresentationData: selfController.updatedPresentationData,
                 peerId: selfController.presentationInterfaceState.chatLocation.peerId,
@@ -246,6 +246,7 @@ func chatMessageDisplaySendMessageOptions(selfController: ChatControllerImpl, no
             }
             
             let controller = makeChatSendMessageActionSheetController(
+                sgTranslationContext: sgTranslationContext,
                 context: selfController.context,
                 updatedPresentationData: selfController.updatedPresentationData,
                 peerId: selfController.presentationInterfaceState.chatLocation.peerId,

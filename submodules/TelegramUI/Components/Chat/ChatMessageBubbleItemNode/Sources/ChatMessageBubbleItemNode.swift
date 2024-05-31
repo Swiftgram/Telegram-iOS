@@ -260,11 +260,7 @@ private func contentNodeMessagesAndClassesForItem(_ item: ChatMessageItem) -> ([
                         isMediaInverted = true
                     }
                     
-                    if isMediaInverted {
-                        result.insert((message, ChatMessageTextBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: isFile ? .condensed : .default)), at: 0)
-                    } else {
-                        result.append((message, ChatMessageTextBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: isFile ? .condensed : .default)))
-                    }
+                    
                     // MARK: Swiftgram
                     var message = message
                     if message.canRevealContent(contentSettings: item.context.currentContentSettings.with { $0 }) {
@@ -283,14 +279,21 @@ private func contentNodeMessagesAndClassesForItem(_ item: ChatMessageItem) -> ([
                                 entities: [
                                     MessageTextEntity(
                                         range: startIndex..<endIndex,
-                                        type: .BlockQuote//.Custom(type: ApplicationSpecificEntityType.Button)
+                                        // TODO(swiftgram): Add more instructions to collapsed block?
+                                        type: .BlockQuote(isCollapsed: false) //.Custom(type: ApplicationSpecificEntityType.Button)
                                     )
                                 ]
                             )
                         )
                         message = message.withUpdatedAttributes(newAttributes)
                     }
-                    result.append((message, ChatMessageTextBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: isFile ? .condensed : .default)))
+                    
+                    
+                    if isMediaInverted {
+                        result.insert((message, ChatMessageTextBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: isFile ? .condensed : .default)), at: 0)
+                    } else {
+                        result.append((message, ChatMessageTextBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: isFile ? .condensed : .default)))
+                    }
                     needReactions = false
                 }
             } else {

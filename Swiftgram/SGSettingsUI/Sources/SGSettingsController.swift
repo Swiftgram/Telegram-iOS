@@ -74,7 +74,7 @@ private enum SGBoolSetting: String {
     case storyStealthMode
     case disableSwipeToRecordStory
     case quickTranslateButton
-    case smallReactions
+    case hideReactions
     case showRepostToStory
     case contextShowSelectFromUser
     case contextShowSaveToCloud
@@ -442,7 +442,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableGalleryCamera, value: !SGSimpleSettings.shared.disableGalleryCamera, text: i18n("Settings.GalleryCamera", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableScrollToNextChannel, value: !SGSimpleSettings.shared.disableScrollToNextChannel, text: i18n("Settings.PullToNextChannel", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableScrollToNextTopic, value: !SGSimpleSettings.shared.disableScrollToNextTopic, text: i18n("Settings.PullToNextTopic", lang), enabled: true))
-    entries.append(.toggle(id: id.count, section: .other, settingName: .smallReactions, value: SGSimpleSettings.shared.smallReactions, text: i18n("Settings.SmallReactions", lang), enabled: true))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .hideReactions, value: SGSimpleSettings.shared.hideReactions, text: i18n("Settings.HideReactions", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .uploadSpeedBoost, value: SGSimpleSettings.shared.uploadSpeedBoost, text: i18n("Settings.UploadsBoost", lang), enabled: true))
     entries.append(.oneFromManySelector(id: id.count, section: .other, settingName: .downloadSpeedBoost, text: i18n("Settings.DownloadsBoost", lang), value: i18n("Settings.DownloadsBoost.\(SGSimpleSettings.shared.downloadSpeedBoost)", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .sendWithReturnKey, value: SGSettings.sendWithReturnKey, text: i18n("Settings.SendWithReturnKey", lang), enabled: true))
@@ -558,8 +558,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.quickTranslateButton = value
         case .uploadSpeedBoost:
             SGSimpleSettings.shared.uploadSpeedBoost = value
-        case .smallReactions:
-            SGSimpleSettings.shared.smallReactions = value
+        case .hideReactions:
+            SGSimpleSettings.shared.hideReactions = value
         case .showRepostToStory:
             SGSimpleSettings.shared.showRepostToStory = value
         case .contextShowSelectFromUser:
