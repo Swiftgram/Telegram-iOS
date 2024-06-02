@@ -97,6 +97,7 @@ public class SGSimpleSettings {
 //        case allChatsFolderPositionOverride
         case allChatsHidden
         case defaultEmojisFirst
+        case messageDoubleTapActionOutgoing
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -120,6 +121,12 @@ public class SGSimpleSettings {
         case none
         case last
         case hidden
+    }
+    
+    public enum MessageDoubleTapAction: String, CaseIterable {
+        case `default`
+        case none
+        case edit
     }
     
     public static let defaultValues: [String: Any] = [
@@ -172,7 +179,8 @@ public class SGSimpleSettings {
         Keys.allChatsTitleLengthOverride.rawValue: AllChatsTitleLengthOverride.none.rawValue,
 //        Keys.allChatsFolderPositionOverride.rawValue: AllChatsFolderPositionOverride.none.rawValue
         Keys.allChatsHidden.rawValue: false,
-        Keys.defaultEmojisFirst.rawValue: false
+        Keys.defaultEmojisFirst.rawValue: false,
+        Keys.messageDoubleTapActionOutgoing.rawValue: MessageDoubleTapAction.default.rawValue,
     ]
     
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
@@ -320,6 +328,9 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.defaultEmojisFirst.rawValue)
     public var defaultEmojisFirst: Bool
+    
+    @UserDefault(key: Keys.messageDoubleTapActionOutgoing.rawValue)
+    public var messageDoubleTapActionOutgoing: String
 }
 
 extension SGSimpleSettings {

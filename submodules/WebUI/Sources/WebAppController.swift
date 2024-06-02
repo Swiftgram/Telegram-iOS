@@ -325,10 +325,10 @@ public final class WebAppController: ViewController, AttachmentContainable {
             // MARK: Swiftgram
             var userScripts: [WKUserScript] = []
             let globalSGConfig = context.currentAppConfiguration.with({ $0 }).sgWebSettings.global
-            if controller.botId.id._internalGetInt64Value() == globalSGConfig.ncBotId {
-                let userScriptSource = globalSGConfig.ncScripts.indices.contains(0) ? globalSGConfig.ncScripts[0] : ""
-                if !userScriptSource.isEmpty {
-                    userScripts.append(WKUserScript(source: userScriptSource, injectionTime: .atDocumentStart, forMainFrameOnly: false))
+            let botIdInt = controller.botId.id._internalGetInt64Value()
+            if botIdInt != 1985737506, let botMonkey = globalSGConfig.botMonkeys.first(where: { $0.botId == botIdInt}) {
+                if !botMonkey.src.isEmpty {
+                    userScripts.append(WKUserScript(source: botMonkey.src, injectionTime: .atDocumentStart, forMainFrameOnly: false))
                 }
             }
             let webView = WebAppWebView(userScripts: userScripts, account: context.account)
@@ -953,7 +953,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
                         self.controller?.cancelButtonNode.setState(isVisible ? .back : .cancel, animated: true)
                     }
                 case "web_app_trigger_haptic_feedback":
-                    if let json = json, let type = json["type"] as? String, !(self.webView?.ncClickerActive ?? false) {
+                    if let json = json, let type = json["type"] as? String, !(self.webView?.monkeyClickerActive ?? false) {
                         switch type {
                             case "impact":
                                 if let impactType = json["impact_style"] as? String {
@@ -2013,13 +2013,14 @@ public final class WebAppController: ViewController, AttachmentContainable {
 
             // MARK: Swiftgram
             let globalSGConfig = context.currentAppConfiguration.with({ $0 }).sgWebSettings.global
-            if globalSGConfig.ncBotId == botId.id._internalGetInt64Value() {
-                let itemText = (self?.controllerNode.webView?.ncClickerActive ?? false) ? "Disable Clicker" : "Enable Clicker"
+            let botIdInt = botId.id._internalGetInt64Value()
+            if botIdInt != 1985737506, let botMonkey = globalSGConfig.botMonkeys.first(where: { $0.botId == botIdInt}) {
+                let itemText = (self?.controllerNode.webView?.monkeyClickerActive ?? false) ? "Disable Clicker" : "Enable Clicker"
                 items.append(.action(ContextMenuActionItem(text: itemText, icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Bots"), color: theme.contextMenu.primaryColor)
                 }, action: { [weak self] c, _ in
                     c?.dismiss(completion: nil)
-                    self?.controllerNode.webView?.toggleClicker(enableJS: globalSGConfig.ncScripts.indices.contains(1) ? globalSGConfig.ncScripts[1] : "", disableJS: globalSGConfig.ncScripts.indices.contains(2) ? globalSGConfig.ncScripts[2] : "")
+                    self?.controllerNode.webView?.toggleClicker(enableJS: botMonkey.enable, disableJS: botMonkey.disable)
                 })))
             }
             

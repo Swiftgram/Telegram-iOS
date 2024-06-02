@@ -1382,6 +1382,10 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                     return rect
                 }
             ))
+        }, sgStartMessageEdit: { [weak self] message in
+            if let strongSelf = self {
+                strongSelf.interfaceInteraction?.setupEditMessage(message.id, { _ in })
+            }
         }, openPeer: { [weak self] peer, navigation, fromMessage, source in
             var expandAvatar = false
             if case let .groupParticipant(storyStats, avatarHeaderNode) = source {

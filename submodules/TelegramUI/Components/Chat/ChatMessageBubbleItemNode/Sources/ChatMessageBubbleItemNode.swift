@@ -4515,17 +4515,31 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                     case let .optionalAction(f):
                         f()
                     case let .openContextMenu(openContextMenu):
+                        switch (sgDoubleTapMessageAction(incoming: openContextMenu.tapMessage.effectivelyIncoming(item.context.account.peerId), message: openContextMenu.tapMessage)) {
+                        case SGSimpleSettings.MessageDoubleTapAction.none.rawValue:
+                            break
+                        case SGSimpleSettings.MessageDoubleTapAction.edit.rawValue:
+                            item.controllerInteraction.sgStartMessageEdit(openContextMenu.tapMessage)
+                        default:
                         if canAddMessageReactions(message: openContextMenu.tapMessage) {
                             item.controllerInteraction.updateMessageReaction(openContextMenu.tapMessage, .default, false, nil)
                         } else {
                             item.controllerInteraction.openMessageContextMenu(openContextMenu.tapMessage, openContextMenu.selectAll, self, openContextMenu.subFrame, nil, nil)
                         }
+                        }
                     }
                 } else if case .tap = gesture {
                     item.controllerInteraction.clickThroughMessage()
                 } else if case .doubleTap = gesture {
+                    switch (sgDoubleTapMessageAction(incoming:                    item.message.effectivelyIncoming(item.context.account.peerId), message: item.message)) {
+                    case SGSimpleSettings.MessageDoubleTapAction.none.rawValue:
+                        break
+                    case SGSimpleSettings.MessageDoubleTapAction.edit.rawValue:
+                        item.controllerInteraction.sgStartMessageEdit(item.message)
+                    default:
                     if canAddMessageReactions(message: item.message) {
                         item.controllerInteraction.updateMessageReaction(item.message, .default, false, nil)
+                    }
                     }
                 }
             }
