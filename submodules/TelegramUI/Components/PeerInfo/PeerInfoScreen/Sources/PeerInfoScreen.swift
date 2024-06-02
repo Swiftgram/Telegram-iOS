@@ -1817,7 +1817,6 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
     
     if let invitedAt = nearestChatParticipant.1 {
         let joinedDateString = stringForDate(timestamp: invitedAt, strings: presentationData.strings)
-//        items[.swiftgram]!.append(PeerInfoScreenCommentItem(id: sgItemId, text: "Joined \(nearestChatParticipant.0 ?? "Chat")" + "\n" + joinedDateString))
         items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: i18n("Chat.JoinedDateTitle", presentationData.strings.baseLanguageCode, nearestChatParticipant.0 ?? "chat") , text: joinedDateString, action: nil, longTapAction: { sourceNode in
             interaction.openPeerInfoContextMenu(.copy(joinedDateString), sourceNode, nil)
         }, requestLayout: {
@@ -1828,7 +1827,16 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
     
     if SGSimpleSettings.shared.showRegDate {
         if let regDate = data.regDate {
-            let regDateString = stringForDate(timestamp: Int32((regDate.from + regDate.to) / 2), strings: presentationData.strings)
+            let regTimestamp = Int32((regDate.from + regDate.to) / 2)
+            let regDateString: String
+            switch (context.currentAppConfiguration.with { $0 }.sgWebSettings.global.regdateFormat) {
+                case "year":
+                    regDateString = stringForDateWithoutDayAndMonth(date: Date(timeIntervalSince1970: Double(regTimestamp)), strings: presentationData.strings)
+                case "month":
+                    regDateString = stringForDateWithoutDay(date: Date(timeIntervalSince1970: Double(regTimestamp)), strings: presentationData.strings)
+                default:
+                    regDateString = stringForDate(timestamp: regTimestamp, strings: presentationData.strings)
+            }
             items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: i18n("Chat.RegDate", presentationData.strings.baseLanguageCode), text: regDateString, action: nil, longTapAction: { sourceNode in
                 interaction.openPeerInfoContextMenu(.copy(regDateString), sourceNode, nil)
             }, requestLayout: {

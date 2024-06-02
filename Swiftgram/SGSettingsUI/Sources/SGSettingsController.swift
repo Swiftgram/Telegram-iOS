@@ -102,6 +102,7 @@ private enum SGBoolSetting: String {
     case compactFolderNames
     case allChatsHidden
     case defaultEmojisFirst
+    case messageDoubleTapActionOutgoingEdit
 }
 
 private enum SGOneFromManySetting: String {
@@ -425,7 +426,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
         entries.append(.peerColorDisclosurePreview(id: id.count, section: .accountColors, name: "\(presentationData.strings.UserInfo_FirstNamePlaceholder) \(presentationData.strings.UserInfo_LastNamePlaceholder)", color:         presentationData.theme.chat.message.incoming.accentTextColor))
     } else {
         id.increment(200)
-        for index in nameColors.displayOrder.prefix(5) {
+        for index in nameColors.displayOrder.prefix(3) {
             let color: PeerNameColor = PeerNameColor(rawValue: index)
             let colors = nameColors.get(color, dark: presentationData.theme.overallDarkAppearance)
             entries.append(.peerColorDisclosurePreview(id: id.count, section: .accountColors, name: "\(presentationData.strings.UserInfo_FirstNamePlaceholder) \(presentationData.strings.UserInfo_LastNamePlaceholder)", color: colors.main))
@@ -435,7 +436,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     
     id.increment(10000)
     entries.append(.header(id: id.count, section: .other, text: presentationData.strings.Appearance_Other.uppercased(), badge: nil))
-    
+    entries.append(.toggle(id: id.count, section: .other, settingName: .messageDoubleTapActionOutgoingEdit, value: SGSimpleSettings.shared.messageDoubleTapActionOutgoing == SGSimpleSettings.MessageDoubleTapAction.edit.rawValue, text: i18n("Settings.messageDoubleTapActionOutgoingEdit", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hideRecordingButton, value: !SGSimpleSettings.shared.hideRecordingButton, text: i18n("Settings.RecordingButton", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableSnapDeletionEffect, value: !SGSimpleSettings.shared.disableSnapDeletionEffect, text: i18n("Settings.SnapDeletionEffect", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableSendAsButton, value: !SGSimpleSettings.shared.disableSendAsButton, text: i18n("Settings.SendAsButton", lang, presentationData.strings.Conversation_SendMesageAs), enabled: true))
@@ -619,6 +620,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             askForRestart?()
         case .defaultEmojisFirst:
             SGSimpleSettings.shared.defaultEmojisFirst = value
+        case .messageDoubleTapActionOutgoingEdit:
+            SGSimpleSettings.shared.messageDoubleTapActionOutgoing = value ? SGSimpleSettings.MessageDoubleTapAction.edit.rawValue : SGSimpleSettings.MessageDoubleTapAction.default.rawValue
         }
     }, updateSliderValue: { setting, value in
         switch (setting) {

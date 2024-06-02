@@ -6,10 +6,14 @@ sgdeps = [
     "//submodules/TranslateUI:TranslateUI"
 ]
 
+sgsrc = [
+    "//Swiftgram/SGDoubleTapMessageAction:SGDoubleTapMessageAction"
+]
+
 swift_library(
     name = "ChatMessageBubbleItemNode",
     module_name = "ChatMessageBubbleItemNode",
-    srcs = glob([
+    srcs = sgsrc + glob([
         "Sources/**/*.swift",
     ]),
     copts = [

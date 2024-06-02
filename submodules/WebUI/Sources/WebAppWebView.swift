@@ -238,8 +238,7 @@ final class WebAppWebView: WKWebView {
     }
     
     // MARK: Swiftgram
-    public private(set) var ncClickerActive = false
-    private var ncClickerInjected = false
+    public private(set) var monkeyClickerActive = false
     
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let result = super.hitTest(point, with: event)
@@ -260,11 +259,11 @@ final class WebAppWebView: WKWebView {
 extension WebAppWebView {
     
     public func toggleClicker(enableJS: String, disableJS: String) {
-        if self.ncClickerActive {
+        if self.monkeyClickerActive {
             self.evaluateJavaScript(disableJS, completionHandler: nil)
         } else {
             self.evaluateJavaScript(enableJS, completionHandler: nil)
         }
-        self.ncClickerActive = !self.ncClickerActive
+        self.monkeyClickerActive = !self.monkeyClickerActive
     }
 }

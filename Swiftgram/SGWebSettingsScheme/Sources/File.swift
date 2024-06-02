@@ -5,7 +5,7 @@ public struct SGWebSettings: Codable, Equatable {
     public let user: SGUserSettings
     
     public static var defaultValue: SGWebSettings {
-        return SGWebSettings(global: SGGlobalSettings(ytPip: true, qrLogin: true, storiesAvailable: false, canViewMessages: true, canEditSettings: false, canShowTelescope: false, announcementsData: nil, ncBotId: 0, ncScripts: []), user: SGUserSettings(contentReasons: [], canSendTelescope: false))
+        return SGWebSettings(global: SGGlobalSettings(ytPip: true, qrLogin: true, storiesAvailable: false, canViewMessages: true, canEditSettings: false, canShowTelescope: false, announcementsData: nil, regdateFormat: "full", botMonkeys: []), user: SGUserSettings(contentReasons: [], canSendTelescope: false))
     }
 }
 
@@ -17,8 +17,15 @@ public struct SGGlobalSettings: Codable, Equatable {
     public let canEditSettings: Bool
     public let canShowTelescope: Bool
     public let announcementsData: String?
-    public let ncBotId: Int64
-    public let ncScripts: [String]
+    public let regdateFormat: String
+    public let botMonkeys: [SGBotMonkeys]
+}
+
+public struct SGBotMonkeys: Codable, Equatable {
+    public let botId: Int64
+    public let src: String
+    public let enable: String
+    public let disable: String
 }
 
 
