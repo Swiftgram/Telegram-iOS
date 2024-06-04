@@ -4,10 +4,14 @@ sgdeps = [
     "//Swiftgram/SGSimpleSettings:SGSimpleSettings"
 ]
 
+sgsrc = [
+    "//Swiftgram/SGEmojiKeyboardDefaultFirst:SGEmojiKeyboardDefaultFirst"
+]
+
 swift_library(
     name = "EntityKeyboard",
     module_name = "EntityKeyboard",
-    srcs = glob([
+    srcs = sgsrc + glob([
         "Sources/**/*.swift",
     ]),
     copts = [

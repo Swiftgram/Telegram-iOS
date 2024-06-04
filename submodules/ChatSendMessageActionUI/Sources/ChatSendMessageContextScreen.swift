@@ -652,6 +652,7 @@ final class ChatSendMessageContextScreenComponent: Component {
                             }
                             self.animateOutToEmpty = true
                             
+                            self.environment?.controller()?.dismiss()
                             component.sgTranslationContext.changeTranslationLanguage?()
                         }
                     )))
