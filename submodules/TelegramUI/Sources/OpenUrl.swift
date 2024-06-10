@@ -1,6 +1,7 @@
 import SGLogging
 import SGAPIWebSettings
 import SGConfig
+import SGSettingsUI
 import SFSafariViewControllerPlus
 import Foundation
 import Display
@@ -957,7 +958,25 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                     }
                 }
             } else {
-                if parsedUrl.host == "importStickers" {
+                if parsedUrl.host == "sg" {
+                    if let path = parsedUrl.pathComponents.last {
+                        switch path {
+                            case "debug":
+                                if let debugController = context.sharedContext.makeDebugSettingsController(context: context) {
+                                    navigationController?.pushViewController(debugController)
+                                    return
+                                }
+                            case "settings":
+                                navigationController?.pushViewController(sgSettingsController(context: context))
+                                return
+                            case "ios_settings":
+                                context.sharedContext.applicationBindings.openSettings()
+                                return
+                            default:
+                                break
+                        }
+                    }
+                } else if parsedUrl.host == "importStickers" {
                     handleResolvedUrl(.importStickers)
                 } else if parsedUrl.host == "settings" {
                     if let path = parsedUrl.pathComponents.last {
