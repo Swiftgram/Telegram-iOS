@@ -10211,7 +10211,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                                 strongSelf.context.sharedContext.beginNewAuth(testingEnvironment: strongSelf.context.account.testingEnvironment)
                             })
                         ], dismissOnOutsideTap: false)
-                        strongSelf.controller?.present(alertController, in: .window(.root))
+                        strongSelf.context.sharedContext.mainWindow?.presentInGlobalOverlay(alertController)
                     } else {
                         strongSelf.context.sharedContext.beginNewAuth(testingEnvironment: strongSelf.context.account.testingEnvironment)
                     }
