@@ -1714,6 +1714,17 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         }
         
         tmpWidth -= deliveryFailedInset
+        // MARK: Swifgram
+        let renderWideChannelPosts: Bool
+        if let channel = item.message.peers[item.message.id.peerId] as? TelegramChannel, case .broadcast = channel.info, SGSimpleSettings.shared.wideChannelPosts {
+            renderWideChannelPosts = true
+            
+            tmpWidth = baseWidth
+            needsShareButton = false
+            localNeedsQuickTranslateButton = false
+        } else {
+            renderWideChannelPosts = false
+        }
         
         let (contentNodeMessagesAndClasses, needSeparateContainers, needReactions) = contentNodeMessagesAndClassesForItem(item)
         
@@ -2188,13 +2199,29 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         var mosaicStatusSizeAndApply: (CGSize, (ListViewItemUpdateAnimation) -> ChatMessageDateAndStatusNode)?
         
         if let mosaicRange = mosaicRange {
-            let maxSize = layoutConstants.image.maxDimensions.fittedToWidthOrSmaller(maximumContentWidth - layoutConstants.image.bubbleInsets.left - layoutConstants.image.bubbleInsets.right)
-            let (innerFramesAndPositions, innerSize) = chatMessageBubbleMosaicLayout(maxSize: maxSize, itemSizes: contentPropertiesAndLayouts[mosaicRange].map { item in
+            // MARK: Swiftgram
+            var maxDimensions = layoutConstants.image.maxDimensions
+            if renderWideChannelPosts {
+                maxDimensions.width = maximumContentWidth
+            }
+            var maxSize = maxDimensions.fittedToWidthOrSmaller(maximumContentWidth - layoutConstants.image.bubbleInsets.left - layoutConstants.image.bubbleInsets.right)
+            var (innerFramesAndPositions, innerSize) = chatMessageBubbleMosaicLayout(maxSize: maxSize, itemSizes: contentPropertiesAndLayouts[mosaicRange].map { item in
                 guard let size = item.0, size.width > 0.0, size.height > 0 else {
                     return CGSize(width: 256.0, height: 256.0)
                 }
                 return size
             })
+            // MARK: Swiftgram
+            if innerSize.height > maxSize.height, maxDimensions.width != layoutConstants.image.maxDimensions.width {
+                maxDimensions.width = max(round(maxDimensions.width * maxSize.height / innerSize.height), layoutConstants.image.maxDimensions.width)
+                maxSize = maxDimensions.fittedToWidthOrSmaller(maximumContentWidth - layoutConstants.image.bubbleInsets.left - layoutConstants.image.bubbleInsets.right)
+                (innerFramesAndPositions, innerSize) = chatMessageBubbleMosaicLayout(maxSize: maxSize, itemSizes: contentPropertiesAndLayouts[mosaicRange].map { item in
+                    guard let size = item.0, size.width > 0.0, size.height > 0 else {
+                        return CGSize(width: 256.0, height: 256.0)
+                    }
+                    return size
+                })
+            }
             
             let framesAndPositions = innerFramesAndPositions.map { ($0.0.offsetBy(dx: layoutConstants.image.bubbleInsets.left, dy: layoutConstants.image.bubbleInsets.top), $0.1) }
             
