@@ -183,7 +183,7 @@ public class SGSimpleSettings {
         Keys.allChatsHidden.rawValue: false,
         Keys.defaultEmojisFirst.rawValue: false,
         Keys.messageDoubleTapActionOutgoing.rawValue: MessageDoubleTapAction.default.rawValue,
-        Keys.wideChannelPosts.rawValue: false
+        Keys.wideChannelPosts.rawValue: false,
         Keys.forceEmojiTab.rawValue: false,
     ]
     
