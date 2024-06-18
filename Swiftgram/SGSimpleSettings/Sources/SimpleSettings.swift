@@ -99,6 +99,7 @@ public class SGSimpleSettings {
         case defaultEmojisFirst
         case messageDoubleTapActionOutgoing
         case wideChannelPosts
+        case forceEmojiTab
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -183,6 +184,7 @@ public class SGSimpleSettings {
         Keys.defaultEmojisFirst.rawValue: false,
         Keys.messageDoubleTapActionOutgoing.rawValue: MessageDoubleTapAction.default.rawValue,
         Keys.wideChannelPosts.rawValue: false
+        Keys.forceEmojiTab.rawValue: false,
     ]
     
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
@@ -336,6 +338,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.wideChannelPosts.rawValue)
     public var wideChannelPosts: Bool
+
+    @UserDefault(key: Keys.forceEmojiTab.rawValue)
+    public var forceEmojiTab: Bool
 }
 
 extension SGSimpleSettings {
