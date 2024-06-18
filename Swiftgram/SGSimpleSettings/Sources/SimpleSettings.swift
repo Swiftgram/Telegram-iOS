@@ -98,6 +98,7 @@ public class SGSimpleSettings {
         case allChatsHidden
         case defaultEmojisFirst
         case messageDoubleTapActionOutgoing
+        case forceBuiltInMic
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -331,6 +332,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.messageDoubleTapActionOutgoing.rawValue)
     public var messageDoubleTapActionOutgoing: String
+    
+    @UserDefault(key: Keys.forceBuiltInMic.rawValue)
+    public var forceBuiltInMic: Bool
 }
 
 extension SGSimpleSettings {
