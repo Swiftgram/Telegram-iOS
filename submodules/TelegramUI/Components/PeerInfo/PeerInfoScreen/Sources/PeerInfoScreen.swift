@@ -7274,7 +7274,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             })))
             
             let (canTranslate, language) = canTranslateText(context: self.context, text: bioText, showTranslate: translationSettings.showTranslate, showTranslateIfTopical: false, ignoredLanguages: translationSettings.ignoredLanguages)
-            if canTranslate {
+            if canTranslate || { return true }() {
                 items.append(.action(ContextMenuActionItem(text: self.presentationData.strings.Conversation_ContextMenuTranslate, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Translate"), color: theme.contextMenu.primaryColor) }, action: { [weak self] c, _ in
                     c?.dismiss {
                         guard let self else {
@@ -8951,7 +8951,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                     })]
                     
                     let (canTranslate, language) = canTranslateText(context: context, text: text, showTranslate: translationSettings.showTranslate, showTranslateIfTopical: false, ignoredLanguages: translationSettings.ignoredLanguages)
-                    if canTranslate {
+                    if canTranslate || { return true }() {
                         actions.append(ContextMenuAction(content: .text(title: presentationData.strings.Conversation_ContextMenuTranslate, accessibilityLabel: presentationData.strings.Conversation_ContextMenuTranslate), action: { [weak self] in
                             
                             let controller = TranslateScreen(context: context, text: text, canCopy: true, fromLanguage: language, ignoredLanguages: translationSettings.ignoredLanguages)
