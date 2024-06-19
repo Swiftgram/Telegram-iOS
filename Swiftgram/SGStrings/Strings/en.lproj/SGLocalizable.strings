@@ -1,0 +1,134 @@
+"Settings.ContentSettings" = "Content Settings";
+
+"Settings.Tabs.Header" = "TABS";
+"Settings.Tabs.HideTabBar" = "Hide Tab bar";
+"Settings.Tabs.ShowContacts" = "Show Contacts Tab";
+"Settings.Tabs.ShowNames" = "Show Tab Names";
+
+"Settings.Folders.BottomTab" = "Folders at Bottom";
+"Settings.Folders.BottomTabStyle" = "Bottom Folders Style";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "Hide \"%@\"";
+"Settings.Folders.RememberLast" = "Open Last Folder";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram will open the last used folder when you restart the app or switch accounts.";
+
+"Settings.Folders.CompactNames" = "Smaller spacing";
+"Settings.Folders.AllChatsTitle" = "\"All Chats\" title";
+"Settings.Folders.AllChatsTitle.short" = "Short";
+"Settings.Folders.AllChatsTitle.long" = "Long";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Default";
+
+
+"Settings.ChatList.Header" = "CHAT LIST";
+"Settings.CompactChatList" = "Compact Chat List";
+
+"Settings.Profiles.Header" = "PROFILES";
+
+"Settings.Stories.Hide" = "Hide Stories";
+"Settings.Stories.WarnBeforeView" = "Ask Before Viewing";
+"Settings.Stories.DisableSwipeToRecord" = "Disable Swipe to Record";
+
+"Settings.Translation.QuickTranslateButton" = "Quick Translate button";
+
+"Stories.Warning.Author" = "Author";
+"Stories.Warning.ViewStory" = "View Story?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ WILL BE ABLE TO SEE that you viewed their Story.";
+"Stories.Warning.NoticeStealth" = "%@ will not be able to see that you viewed their Story.";
+
+"Settings.Photo.Quality.Notice" = "Quality of uploaded photos and stories.";
+"Settings.Photo.SendLarge" = "Send Large Photos";
+"Settings.Photo.SendLarge.Notice" = "Increase the side limit on compressed images to 2560px.";
+
+"Settings.VideoNotes.Header" = "ROUND VIDEOS";
+"Settings.VideoNotes.StartWithRearCam" = "Start with Rear Camera";
+
+"Settings.CustomColors.Header" = "ACCOUNT COLORS";
+"Settings.CustomColors.Saturation" = "SATURATION";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Set to 0%% to disable account colors.";
+
+"Settings.UploadsBoost" = "Upload Boost";
+"Settings.DownloadsBoost" = "Download Boost";
+"Settings.DownloadsBoost.none" = "Disabled";
+"Settings.DownloadsBoost.medium" = "Medium";
+"Settings.DownloadsBoost.maximum" = "Maximum";
+
+"Settings.ShowProfileID" = "Show Profile ID";
+"Settings.ShowDC" = "Show Data Center";
+"Settings.ShowCreationDate" = "Show Chat Creation Date";
+"Settings.ShowCreationDate.Notice" = "The creation date may be unknown for some chats.";
+
+"Settings.ShowRegDate" = "Show Registration Date";
+"Settings.ShowRegDate.Notice" = "The registration date is approximate.";
+
+"Settings.SendWithReturnKey" = "Send with \"return\" key";
+"Settings.HidePhoneInSettingsUI" = "Hide Phone in Settings";
+"Settings.HidePhoneInSettingsUI.Notice" = "This will only hide your phone number from the settings interface. To hide it from others, go to Privacy and Security.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "If away for 5 seconds";
+
+"ProxySettings.UseSystemDNS" = "Use system DNS";
+"ProxySettings.UseSystemDNS.Notice" = "Use system DNS to bypass timeout if you don't have access to Google DNS";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "You **don't need** %@!";
+"Common.RestartRequired" = "Restart required";
+"Common.RestartNow" = "Restart Now";
+"Common.OpenTelegram" = "Open Telegram";
+"Common.UseTelegramForPremium" = "Please note that to get Telegram Premium, you must use the official Telegram app. Once you have obtained Telegram Premium, all its features will become available in Swiftgram.";
+
+"Message.HoldToShowOrReport" = "Hold to Show or Report.";
+
+"Auth.AccountBackupReminder" = "Make sure you have a backup access method. Keep a SIM for SMS or an additional session logged in to avoid being locked out.";
+"Auth.UnofficialAppCodeTitle" = "You can get the code only with official app";
+
+"Settings.SmallReactions" = "Small Reactions";
+"Settings.HideReactions" = "Hide Reactions";
+
+"ContextMenu.SaveToCloud" = "Save to Cloud";
+"ContextMenu.SelectFromUser" = "Select from Author";
+
+"Settings.ContextMenu" = "CONTEXT MENU";
+"Settings.ContextMenu.Notice" = "Disabled entries will be available in \"Swiftgram\" sub-menu.";
+
+
+"Settings.ChatSwipeOptions" = "Chat List Swipe Options";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Pull to Next Unread Channel";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Pull to Next Topic";
+"Settings.GalleryCamera" = "Camera in Gallery";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" Button";
+"Settings.SnapDeletionEffect" = "Message Deletion Effects";
+
+"Settings.Stickers.Size" = "SIZE";
+"Settings.Stickers.Timestamp" = "Show Timestamp";
+
+"Settings.RecordingButton" = "Voice Recording Button";
+
+"Settings.DefaultEmojisFirst" = "Prioritize standard emojis";
+"Settings.DefaultEmojisFirst.Notice" = "Show standard emojis before premium in emoji keyboard";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "created: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "Joined %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Registered";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Double-tap to edit message";
+
+"Settings.wideChannelPosts" = "Wide posts in channels";
+"Settings.ForceEmojiTab" = "Emoji keyboard by default";
+
+"Settings.forceBuiltInMic" = "Force Device Microphone";
+"Settings.forceBuiltInMic.Notice" = "If enabled, app will use only device microphone even if headphones are connected.";
