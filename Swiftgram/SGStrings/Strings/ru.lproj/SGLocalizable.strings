@@ -126,3 +126,9 @@
 "Chat.RegDate" = "Дата регистрации";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Редактирование двойным тапом";
+
+"Settings.wideChannelPosts" = "Широкие посты в каналах";
+"Settings.ForceEmojiTab" = "Клавиатура с эмодзи по умолчанию";
+
+"Settings.forceBuiltInMic" = "Всегда использовать микрофон устройства";
+"Settings.forceBuiltInMic.Notice" = "Если включено, то приложение будет использовать только встроенный микрофон устройства, даже если подключены наушники.";
