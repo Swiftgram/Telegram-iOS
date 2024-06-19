@@ -7,8 +7,7 @@ Supercharged Telegram fork for iOS
 - Download: [App Store](https://apps.apple.com/app/apple-store/id6471879502?pt=126511626&ct=gh&mt=8)
 - Telegram channel: https://t.me/swiftgram
 - Telegram chat: https://t.me/swiftgramchat
-- TestFlight beta: link in the [chat description](https://t.me/swiftgramchat)
-- Help translate Swiftgram: https://translate.swiftgram.app
+- TestFlight beta, local chats, translations and other [@SwiftgramLinks](https://t.me/s/SwiftgramLinks)
 
 Swiftgram's compilation steps are the same as for the official app. Below you'll find a complete compilation guide based on the official app.
 
