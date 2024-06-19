@@ -61,7 +61,7 @@
 "Settings.DownloadsBoost.maximum" = "Максимальне";
 
 "Settings.ShowProfileID" = "Показувати ID профілю";
-"Settings.ShowDC" = "Показувати дата-центр";
+"Settings.ShowDC" = "Показувати датацентр";
 "Settings.ShowCreationDate" = "Показувати дату створення чату";
 "Settings.ShowCreationDate.Notice" = "Дата створення може бути невідома для деяких чатів.";
 
@@ -128,3 +128,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Ред. повідомлення подвійним дотиком";
 
 "Settings.wideChannelPosts" = "Широкі пости в каналах";
+"Settings.ForceEmojiTab" = "Клавіатура емодзі за замовчуванням";
+
+"Settings.forceBuiltInMic" = "Використовувати мікрофон пристрою";
+"Settings.forceBuiltInMic.Notice" = "Якщо увімкнено, застосунок використовуватиме лише мікрофон пристрою, навіть якщо підключені навушники.";
