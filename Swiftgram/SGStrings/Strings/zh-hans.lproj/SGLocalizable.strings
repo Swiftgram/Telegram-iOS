@@ -126,3 +126,9 @@
 "Chat.RegDate" = "注册日期";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "双击编辑消息";
+
+"Settings.wideChannelPosts" = "在频道中以更宽的版面显示消息";
+"Settings.ForceEmojiTab" = "默认展示表情符号";
+
+"Settings.forceBuiltInMic" = "强制使用设备麦克风";
+"Settings.forceBuiltInMic.Notice" = "若启用，即使已连接耳机，应用也只使用设备自身的麦克风。";
