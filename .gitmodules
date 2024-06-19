@@ -1,7 +1,3 @@
-
-[submodule "Swiftgram/SGStrings/Strings"]
-	path = Swiftgram/SGStrings/Strings
-	url = ../translations.git
 [submodule "submodules/rlottie/rlottie"]
 	path = submodules/rlottie/rlottie
 	url=https://github.com/TelegramMessenger/rlottie.git
