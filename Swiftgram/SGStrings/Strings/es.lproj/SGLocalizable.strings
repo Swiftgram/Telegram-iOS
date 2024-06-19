@@ -126,3 +126,9 @@
 "Chat.RegDate" = "Registrado";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Doble toque para editar mensaje";
+
+"Settings.wideChannelPosts" = "Publicaciones amplias en canales";
+"Settings.ForceEmojiTab" = "Teclado de emojis por defecto";
+
+"Settings.forceBuiltInMic" = "Forzar micrófono del dispositivo";
+"Settings.forceBuiltInMic.Notice" = "Si está habilitado, la aplicación utilizará solo el micrófono del dispositivo incluso si se conectan auriculares.";
