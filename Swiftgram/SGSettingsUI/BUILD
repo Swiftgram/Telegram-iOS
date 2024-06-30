@@ -16,6 +16,7 @@ swift_library(
         "-warnings-as-errors",
     ],
     deps = [
+        "//Swiftgram/SGItemListUI:SGItemListUI",
         "//Swiftgram/SGLogging:SGLogging",
         "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
         "//Swiftgram/SGStrings:SGStrings",

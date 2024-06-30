@@ -4,6 +4,7 @@ import SGSimpleSettings
 import SGStrings
 import SGAPIToken
 
+import SGItemListUI
 import Foundation
 import UIKit
 import Display
@@ -22,26 +23,8 @@ import AppBundle
 import WebKit
 import PeerNameColorScreen
 
-private class Counter {
-    private var _count = 0
-    
-    var count: Int {
-        _count += 1
-        return _count
-    }
-    
-    func increment(_ amount: Int) {
-        _count += amount
-    }
-    
-    func countWith(_ amount: Int) -> Int {
-        _count += amount
-        return count
-    }
-}
 
-
-private enum SGControllerSection: Int32 {
+private enum SGControllerSection: Int32, SGItemListSection {
     case content
     case tabs
     case folders
@@ -126,202 +109,19 @@ private enum SGDisclosureLink: String {
     case languageSettings
 }
 
-private final class SGControllerArguments {
-    let context: AccountContext
-    //
-    let setBoolValue: (SGBoolSetting, Bool) -> Void
-//    let updatePeerColor: (PeerNameColor) -> Void
-    let updateSliderValue: (SGSliderSetting, Int32) -> Void
-    let setOneFromManyValue: (SGOneFromManySetting) -> Void
-    let openDisclosureLink: (SGDisclosureLink) -> Void
-    //
-    let presentController: (ViewController, ViewControllerPresentationArguments?) -> Void
-    let pushController: (ViewController) -> Void
-    let getRootController: () -> UIViewController?
-    let getNavigationController: () -> NavigationController?
-
-    
-    init(
-        context: AccountContext,
-        //
-//        updatePeerColor: @escaping (PeerNameColor) -> Void,
-        setBoolValue: @escaping (SGBoolSetting, Bool) -> Void,
-        updateSliderValue: @escaping (SGSliderSetting, Int32) -> Void,
-        setOneFromManyValue: @escaping (SGOneFromManySetting) -> Void,
-        openDisclosureLink: @escaping (SGDisclosureLink) -> Void,
-        //
-        presentController: @escaping (ViewController, ViewControllerPresentationArguments?) -> Void, pushController: @escaping (ViewController) -> Void, getRootController: @escaping () -> UIViewController?, getNavigationController: @escaping () -> NavigationController?
-    ) {
-        self.context = context
-        //
-//        self.updatePeerColor = updatePeerColor
-        self.setBoolValue = setBoolValue
-        self.updateSliderValue = updateSliderValue
-        self.setOneFromManyValue = setOneFromManyValue
-        self.openDisclosureLink = openDisclosureLink
-        //
-        self.presentController = presentController
-        self.pushController = pushController
-        self.getRootController = getRootController
-        self.getNavigationController = getNavigationController
-    }
-}
-
-private enum SGControllerEntry: ItemListNodeEntry {
-    case header(id: Int, section: SGControllerSection, text: String, badge: String?)
-    case toggle(id: Int, section: SGControllerSection, settingName: SGBoolSetting, value: Bool, text: String, enabled: Bool)
-    case notice(id: Int, section: SGControllerSection, text: String)
-    case percentageSlider(id: Int, section: SGControllerSection, settingName: SGSliderSetting, value: Int32)
-    case oneFromManySelector(id: Int, section: SGControllerSection, settingName: SGOneFromManySetting, text: String, value: String, enabled: Bool)
-    case disclosure(id: Int, section: SGControllerSection, link: SGDisclosureLink, text: String)
-    
-//    case peerColorPicker(id: Int, section: SGControllerSection, colors: PeerNameColors, currentColor: PeerNameColor, currentSaturation: Int32)
-    
-    case peerColorDisclosurePreview(id: Int, section: SGControllerSection, name: String, color: UIColor)
-    
-    var section: ItemListSectionId {
-        switch self {
-        case let .header(_, sectionId, _, _):
-            return sectionId.rawValue
-        case let .toggle(_, sectionId, _, _, _, _):
-            return sectionId.rawValue
-        case let .notice(_, sectionId, _):
-            return sectionId.rawValue
-            
-        case let .disclosure(_, sectionId, _, _):
-            return sectionId.rawValue
-//        case let .peerColorPicker(_, sectionId, _, _, _):
-//            return sectionId.rawValue
-
-        case let .percentageSlider(_, sectionId, _, _):
-            return sectionId.rawValue
-            
-        case let .peerColorDisclosurePreview(_, sectionId, _, _):
-            return sectionId.rawValue
-        case let .oneFromManySelector(_, sectionId, _, _, _, _):
-            return sectionId.rawValue
-        }
-    }
-    
-    var stableId: Int {
-        switch self {
-        case let .header(stableIdValue, _, _, _):
-            return stableIdValue
-        case let .toggle(stableIdValue, _, _, _, _, _):
-            return stableIdValue
-        case let .notice(stableIdValue, _, _):
-            return stableIdValue
-        case let .disclosure(stableIdValue, _, _, _):
-            return stableIdValue
-//        case let .peerColorPicker(stableIdValue, _, _, _, _):
-//            return stableIdValue
-        case let .percentageSlider(stableIdValue, _, _, _):
-            return stableIdValue
-        case let .peerColorDisclosurePreview(stableIdValue, _, _, _):
-            return stableIdValue
-        case let .oneFromManySelector(stableIdValue, _, _, _, _, _):
-            return stableIdValue
-        }
-    }
-    
-    static func <(lhs: SGControllerEntry, rhs: SGControllerEntry) -> Bool {
-        return lhs.stableId < rhs.stableId
-    }
-    
-    static func ==(lhs: SGControllerEntry, rhs: SGControllerEntry) -> Bool {
-        switch (lhs, rhs) {
-        case let (.header(id1, section1, text1, badge1), .header(id2, section2, text2, badge2)):
-            return id1 == id2 && section1 == section2 && text1 == text2 && badge1 == badge2
-        
-        case let (.toggle(id1, section1, settingName1, value1, text1, enabled1), .toggle(id2, section2, settingName2, value2, text2, enabled2)):
-            return id1 == id2 && section1 == section2 && settingName1 == settingName2 && value1 == value2 && text1 == text2 && enabled1 == enabled2
-        
-        case let (.notice(id1, section1, text1), .notice(id2, section2, text2)):
-            return id1 == id2 && section1 == section2 && text1 == text2
-        
-        case let (.percentageSlider(id1, section1, settingName1, value1), .percentageSlider(id2, section2, settingName2, value2)):
-            return id1 == id2 && section1 == section2 && value1 == value2 && settingName1 == settingName2
-            
-        case let (.disclosure(id1, section1, link1, text1), .disclosure(id2, section2, link2, text2)):
-            return id1 == id2 && section1 == section2 && link1 == link2 && text1 == text2
-        
-//        case let (.peerColorPicker(id1, section1, colors1, currentColor1, currentSaturation1), .peerColorPicker(id2, section2, colors2, currentColor2, currentSaturation2)):
-//            return id1 == id2 && section1 == section2 && colors1 == colors2 && currentColor1 == currentColor2 && currentSaturation1 == currentSaturation2
-            
-        case let (.peerColorDisclosurePreview(id1, section1, name1, currentColor1), .peerColorDisclosurePreview(id2, section2, name2, currentColor2)):
-            return id1 == id2 && section1 == section2 && name1 == name2 && currentColor1 == currentColor2
-        
-        case let (.oneFromManySelector(id1, section1, settingName1, text1, value1, enabled1), .oneFromManySelector(id2, section2, settingName2, text2, value2, enabled2)):
-            return id1 == id2 && section1 == section2 && settingName1 == settingName2 && text1 == text2 && value1 == value2 && enabled1 == enabled2
-
-        default:
-            return false
-        }
-    }
-
-    
-    func item(presentationData: ItemListPresentationData, arguments: Any) -> ListViewItem {
-        let arguments = arguments as! SGControllerArguments
-        switch self {
-        case let .header(_, _, string, badge):
-            return ItemListSectionHeaderItem(presentationData: presentationData, text: string, badge: badge, sectionId: self.section)
-            
-        case let .toggle(_, _, setting, value, text, enabled):
-            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, enabled: enabled, sectionId: self.section, style: .blocks, updated: { value in
-                arguments.setBoolValue(setting, value)
-            })
-        case let .notice(_, _, string):
-            return ItemListTextItem(presentationData: presentationData, text: .markdown(string), sectionId: self.section)
-        case let .disclosure(_, _, link, text):
-            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: "", sectionId: self.section, style: .blocks) {
-                arguments.openDisclosureLink(link)
-            }
-            
-//        case let .peerColorPicker(_, _, colors, currentColor, saturation):
-//            print("Color picker with saturation \(saturation)")
-//            return PeerNameColorItem(
-//                theme: presentationData.theme,
-//                colors: colors,
-//                currentColor: currentColor,
-//                updated: { color in
-//                    arguments.updatePeerColor(color)
-//                },
-//                sectionId: self.section
-//            )
-        case let .percentageSlider(_, _, setting, value):
-            return SliderPercentageItem(
-                theme: presentationData.theme,
-                strings: presentationData.strings,
-                value: value,
-                sectionId: self.section,
-                updated: { value in
-                    arguments.updateSliderValue(setting, value)
-                }
-            )
-        
-        case let .peerColorDisclosurePreview(_, _, name, color):
-            return ItemListDisclosureItem(presentationData: presentationData, title: " ", enabled: false, label: name, labelStyle: .semitransparentBadge(color), centerLabelAlignment: true, sectionId: self.section, style: .blocks, disclosureStyle: .none, action: {
-            })
-        
-        case let .oneFromManySelector(_, _, settingName, text, value, enabled):
-            return ItemListDisclosureItem(presentationData: presentationData, title: text, enabled: enabled, label: value, sectionId: self.section, style: .blocks, action: {
-                arguments.setOneFromManyValue(settingName)
-            })
-        }
-    }
-}
-
 private struct PeerNameColorScreenState: Equatable {
     var updatedNameColor: PeerNameColor?
     var updatedBackgroundEmojiId: Int64?
 }
+
+private typealias SGControllerEntry = SGItemListUIEntry<SGControllerSection, SGBoolSetting, SGSliderSetting, SGOneFromManySetting, SGDisclosureLink, AnyHashable>
 
 private func SGControllerEntries(presentationData: PresentationData, callListSettings: CallListSettings, experimentalUISettings: ExperimentalUISettings, SGSettings: SGUISettings, appConfiguration: AppConfiguration, nameColors: PeerNameColors /*state: PeerNameColorScreenState,*/) -> [SGControllerEntry] {
     
     let lang = presentationData.strings.baseLanguageCode
     var entries: [SGControllerEntry] = []
     
-    let id = Counter()
+    let id = SGItemListCounter()
     
     if appConfiguration.sgWebSettings.global.canEditSettings {
         entries.append(.disclosure(id: id.count, section: .content, link: .contentSettings, text: i18n("Settings.ContentSettings", lang)))
@@ -465,8 +265,8 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
 public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int? = nil*/) -> ViewController {
     var presentControllerImpl: ((ViewController, ViewControllerPresentationArguments?) -> Void)?
     var pushControllerImpl: ((ViewController) -> Void)?
-    var getRootControllerImpl: (() -> UIViewController?)?
-    var getNavigationControllerImpl: (() -> NavigationController?)?
+//    var getRootControllerImpl: (() -> UIViewController?)?
+//    var getNavigationControllerImpl: (() -> NavigationController?)?
     var askForRestart: (() -> Void)?
     
 //    let statePromise = ValuePromise(PeerNameColorScreenState(), ignoreRepeated: true)
@@ -483,7 +283,7 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
     
     let simplePromise = ValuePromise(true, ignoreRepeated: false)
     
-    let arguments = SGControllerArguments(
+    let arguments = SGItemListArguments<SGBoolSetting, SGSliderSetting, SGOneFromManySetting, SGDisclosureLink, AnyHashable>(
         context: context,
         /*updatePeerColor: { color in
           updateState { state in
@@ -758,14 +558,6 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
                     strongContext.sharedContext.applicationBindings.openUrl(url)
                 })
         }
-    }, presentController: { controller, arguments in
-        presentControllerImpl?(controller, arguments)
-    }, pushController: { controller in
-        pushControllerImpl?(controller)
-    }, getRootController: {
-        return getRootControllerImpl?()
-    }, getNavigationController: {
-        return getNavigationControllerImpl?()
     })
     
     let sharedData = context.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.callListSettings, ApplicationSpecificSharedDataKeys.experimentalUISettings])
@@ -791,7 +583,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
         
         let controllerState = ItemListControllerState(presentationData: ItemListPresentationData(presentationData), title: .text("Swiftgram"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         
-        /*var index = 0
+        // TODO(swiftgram): focusOnItemTag support
+        /* var index = 0
         var scrollToItem: ListViewScrollToItem?
          if let focusOnItemTag = focusOnItemTag {
             for entry in entries {
@@ -814,15 +607,12 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
     pushControllerImpl = { [weak controller] c in
         (controller?.navigationController as? NavigationController)?.pushViewController(c)
     }
-    getRootControllerImpl = { [weak controller] in
-        return controller?.view.window?.rootViewController
-    }
-    getRootControllerImpl = { [weak controller] in
-        return controller?.view.window?.rootViewController
-    }
-    getNavigationControllerImpl = { [weak controller] in
-        return controller?.navigationController as? NavigationController
-    }
+//    getRootControllerImpl = { [weak controller] in
+//        return controller?.view.window?.rootViewController
+//    }
+//    getNavigationControllerImpl = { [weak controller] in
+//        return controller?.navigationController as? NavigationController
+//    }
     askForRestart = { [weak context] in
         guard let context = context else {
             return

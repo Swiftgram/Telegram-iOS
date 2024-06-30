@@ -361,6 +361,23 @@ public class UserDefaultsBackedDictionary<Key: Hashable, Value> {
             userDefaults.set(newValue, forKey: userDefaultsKey)
         }
     }
+    
+    public func drop() {
+        #if DEBUG
+        SGtrace("UD.\(userDefaultsKey)\(threadSafe ? "-ts" : "")", what: "DROPPING")
+        #endif
+        if threadSafe {
+            rwlock.writeLock()
+        }
+        userDefaults.removeObject(forKey: userDefaultsKey)
+        container = userDefaultsContainer
+        #if DEBUG
+        SGtrace("UD.\(userDefaultsKey)\(threadSafe ? "-ts" : "")", what: "DROPPED: \(container!)")
+        #endif
+        if threadSafe {
+            rwlock.unlock()
+        }
+    }
 
 }
 

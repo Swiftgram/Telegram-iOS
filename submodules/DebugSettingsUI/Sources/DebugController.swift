@@ -1,6 +1,7 @@
 // MARK: Swiftgram
 import SGLogging
 import SGSimpleSettings
+import SGDebugUI
 
 import Foundation
 import UIKit
@@ -279,20 +280,11 @@ private enum DebugControllerEntry: ItemListNodeEntry {
         let arguments = arguments as! DebugControllerArguments
         switch self {
         case .SGDebug:
-            return ItemListActionItem(presentationData: presentationData, title: "Swiftgram Debug", kind: .generic, alignment: .natural, sectionId: self.section, style: .blocks, action: {
-                #if DEBUG
-                print("Invoked debug action")
+            return ItemListDisclosureItem(presentationData: presentationData, title: "Swiftgram Debug", label: "", sectionId: self.section, style: .blocks, action: {
                 guard let context = arguments.context else {
                     return
                 }
-                let _ = context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.PremiumPromo()).start(next: { promoConfiguration in
-                    var premiumMessages: [EnqueueMessage] = []
-                    for (name, video) in promoConfiguration.videos {
-                        premiumMessages.append(.message(text: name, attributes: [], inlineStickers: [:], mediaReference: .standalone(media: video), threadId: nil, replyToMessageId: nil, replyToStoryId: nil, localGroupingKey: nil, correlationId: nil, bubbleUpEmojiOrStickersets: []))
-                    }
-                    let _ = enqueueMessages(account: context.account, peerId: context.account.peerId, messages: premiumMessages).start()
-                })
-                #endif
+                arguments.pushController(sgDebugController(context: context))
             })
         case .testStickerImport:
             return ItemListActionItem(presentationData: presentationData, title: "Simulate Stickers Import", kind: .generic, alignment: .natural, sectionId: self.section, style: .blocks, action: {
@@ -1441,9 +1433,7 @@ private func debugControllerEntries(sharedContext: SharedAccountContext, present
     let isMainApp = sharedContext.applicationBindings.isMainApp
     
     // MARK: Swiftgram
-    #if DEBUG
     entries.append(.SGDebug(presentationData.theme))
-    #endif
     entries.append(.sendSGLogs(presentationData.theme))
     
 //    entries.append(.testStickerImport(presentationData.theme))

@@ -2,6 +2,7 @@ import SGLogging
 import SGAPIWebSettings
 import SGConfig
 import SGSettingsUI
+import SGDebugUI
 import SFSafariViewControllerPlus
 import Foundation
 import Display
@@ -966,6 +967,9 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                                     navigationController?.pushViewController(debugController)
                                     return
                                 }
+                            case "sgdebug", "sg_debug":
+                                navigationController?.pushViewController(sgDebugController(context: context))
+                                return
                             case "settings":
                                 navigationController?.pushViewController(sgSettingsController(context: context))
                                 return

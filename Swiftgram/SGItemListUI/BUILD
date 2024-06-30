@@ -1,21 +1,15 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
-sgdeps = [
-    "//Swiftgram/SGDebugUI:SGDebugUI",
-    "//Swiftgram/SGLogging:SGLogging",
-    "//Swiftgram/SGSimpleSettings:SGSimpleSettings"
-]
-
 swift_library(
-    name = "DebugSettingsUI",
-    module_name = "DebugSettingsUI",
+    name = "SGItemListUI",
+    module_name = "SGItemListUI",
     srcs = glob([
-		"Sources/**/*.swift",
+        "Sources/**/*.swift",
     ]),
     copts = [
         "-warnings-as-errors",
     ],
-    deps = sgdeps + [
+    deps = [
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/Display:Display",
         "//submodules/Postbox:Postbox",
@@ -28,9 +22,7 @@ swift_library(
         "//submodules/OverlayStatusController:OverlayStatusController",
         "//submodules/AccountContext:AccountContext",
         "//submodules/AppBundle:AppBundle",
-        "//submodules/GZip:GZip",
-        "//third-party/ZipArchive:ZipArchive",
-        "//submodules/InAppPurchaseManager:InAppPurchaseManager",
+        "//submodules/TelegramUI/Components/Settings/PeerNameColorScreen",
     ],
     visibility = [
         "//visibility:public",

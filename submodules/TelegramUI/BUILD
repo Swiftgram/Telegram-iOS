@@ -15,7 +15,8 @@ sgdeps = [
     "//Swiftgram/SGStrings:SGStrings",
     "//Swiftgram/SGActionRequestHandlerSanitizer:SGActionRequestHandlerSanitizer",
     "//Swiftgram/Wrap:Wrap",
-    "//Swiftgram/SGDeviceToken:SGDeviceToken"
+    "//Swiftgram/SGDeviceToken:SGDeviceToken",
+    "//Swiftgram/SGDebugUI:SGDebugUI"
     # "//Swiftgram/SGContentAnalysis:SGContentAnalysis"
 ]
 

@@ -1,37 +1,45 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
-sgdeps = [
-    "//Swiftgram/SGDebugUI:SGDebugUI",
-    "//Swiftgram/SGLogging:SGLogging",
-    "//Swiftgram/SGSimpleSettings:SGSimpleSettings"
-]
+config_setting(
+    name = "debug_build",
+    values = {
+        "compilation_mode": "dbg",
+    },
+)
+
+flex_dependency = select({
+    ":debug_build": [
+        "@flex_sdk//:FLEX"
+    ],
+    "//conditions:default": [],
+})
+
 
 swift_library(
-    name = "DebugSettingsUI",
-    module_name = "DebugSettingsUI",
+    name = "SGDebugUI",
+    module_name = "SGDebugUI",
     srcs = glob([
-		"Sources/**/*.swift",
+        "Sources/**/*.swift",
     ]),
     copts = [
         "-warnings-as-errors",
     ],
-    deps = sgdeps + [
+    deps = [
+        "//Swiftgram/SGItemListUI:SGItemListUI",
+        "//Swiftgram/SGLogging:SGLogging",
+        "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+        "//Swiftgram/SGStrings:SGStrings",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
-        "//submodules/Display:Display",
         "//submodules/Postbox:Postbox",
+        "//submodules/Display:Display",
         "//submodules/TelegramCore:TelegramCore",
-        "//submodules/MtProtoKit:MtProtoKit",
         "//submodules/TelegramPresentationData:TelegramPresentationData",
-        "//submodules/TelegramUIPreferences:TelegramUIPreferences",
         "//submodules/ItemListUI:ItemListUI",
         "//submodules/PresentationDataUtils:PresentationDataUtils",
         "//submodules/OverlayStatusController:OverlayStatusController",
         "//submodules/AccountContext:AccountContext",
-        "//submodules/AppBundle:AppBundle",
-        "//submodules/GZip:GZip",
-        "//third-party/ZipArchive:ZipArchive",
-        "//submodules/InAppPurchaseManager:InAppPurchaseManager",
-    ],
+        "//submodules/UndoUI:UndoUI",
+    ] + flex_dependency,
     visibility = [
         "//visibility:public",
     ],
