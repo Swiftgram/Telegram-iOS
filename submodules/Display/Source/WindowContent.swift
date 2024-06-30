@@ -1171,6 +1171,11 @@ public class Window1 {
                     self.updateBadgeVisibility()
                     // MARK: Swiftgram
                     var badgeOffset: CGFloat = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone13ProMax.statusBarHeight
+                    if case self.deviceMetrics = DeviceMetrics.iPhone14ProZoomed {
+                        badgeOffset = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone14ProZoomed.statusBarHeight
+                    } else if case self.deviceMetrics = DeviceMetrics.iPhone14ProMaxZoomed {
+                        badgeOffset = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone14ProMaxZoomed.statusBarHeight
+                    }
                     if badgeOffset != 0 {
                         badgeOffset += 3.0 // Centering badge in status bar for Dynamic island devices
                     }
