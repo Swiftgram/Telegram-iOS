@@ -367,6 +367,25 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
     private var displayVideoUnmuteTipDisposable: Disposable?
     
     private var onLayoutCompletions: [(ContainedViewLayoutTransition) -> Void] = []
+    
+    // MARK: Swiftgram
+    private var shouldHideChannelBottomButton: Bool {
+        guard let channel = self.chatPresentationInterfaceState.renderedPeer?.peer as? TelegramChannel else { return false }
+        var isMember = false
+        switch channel.participationStatus {
+        case .kicked:
+            isMember = false
+        case .member:
+            isMember = true
+        case .left:
+            if case let .replyThread(message) = self.chatPresentationInterfaceState.chatLocation {
+                if !message.isForumPost && !channel.flags.contains(.joinToSend) {
+                    isMember = true
+                }
+            }
+        }
+        return (!channel.hasPermission(.sendSomething) || !isMember) && SGSimpleSettings.shared.hideChannelBottomButton
+    }
 
     init(context: AccountContext, chatLocation: ChatLocation, chatLocationContextHolder: Atomic<ChatLocationContextHolder?>, subject: ChatControllerSubject?, controllerInteraction: ChatControllerInteraction, chatPresentationInterfaceState: ChatPresentationInterfaceState, automaticMediaDownloadSettings: MediaAutoDownloadSettings, navigationBar: NavigationBar?, statusBar: StatusBar?, backgroundNode: WallpaperBackgroundNode, controller: ChatControllerImpl?) {
         self.context = context
@@ -807,10 +826,8 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
         self.inputPanelContainerNode.addSubnode(self.inputPanelClippingNode)
         self.inputPanelContainerNode.addSubnode(self.inputPanelOverlayNode)
         self.inputPanelClippingNode.addSubnode(self.inputPanelBackgroundNode)
-        if !SGSimpleSettings.shared.hideChannelBottomButton {
-            self.inputPanelClippingNode.addSubnode(self.inputPanelBackgroundSeparatorNode)
-            self.inputPanelBackgroundNode.addSubnode(self.inputPanelBottomBackgroundSeparatorNode)
-        }
+        self.inputPanelClippingNode.addSubnode(self.inputPanelBackgroundSeparatorNode)
+        self.inputPanelBackgroundNode.addSubnode(self.inputPanelBottomBackgroundSeparatorNode)
 
         self.addSubnode(self.messageTransitionNode)
         self.contentContainerNode.addSubnode(self.navigateButtons)
@@ -1838,7 +1855,8 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
         }
         
         let inputBackgroundInset: CGFloat
-        if SGSimpleSettings.shared.hideChannelBottomButton {
+        // MARK: Swiftgram
+        if shouldHideChannelBottomButton {
             inputBackgroundInset = 0.0
         } else if cleanInsets.bottom < insets.bottom {
             if case .regular = layout.metrics.widthClass, insets.bottom < 88.0 {
@@ -2978,6 +2996,13 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
     }
     
     func updateChatPresentationInterfaceState(_ chatPresentationInterfaceState: ChatPresentationInterfaceState, transition: ContainedViewLayoutTransition, interactive: Bool, completion: @escaping (ContainedViewLayoutTransition) -> Void) {
+        // MARK: Swiftgram
+        defer {
+            if shouldHideChannelBottomButton {
+                self.inputPanelBackgroundSeparatorNode.removeFromSupernode()
+                self.inputPanelBottomBackgroundSeparatorNode.removeFromSupernode()
+            }
+        }
         self.selectedMessages = chatPresentationInterfaceState.interfaceState.selectionState?.selectedIds
         
         var textStateUpdated = false
