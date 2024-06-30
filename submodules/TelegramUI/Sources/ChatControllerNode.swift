@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -806,8 +807,10 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
         self.inputPanelContainerNode.addSubnode(self.inputPanelClippingNode)
         self.inputPanelContainerNode.addSubnode(self.inputPanelOverlayNode)
         self.inputPanelClippingNode.addSubnode(self.inputPanelBackgroundNode)
-        self.inputPanelClippingNode.addSubnode(self.inputPanelBackgroundSeparatorNode)
-        self.inputPanelBackgroundNode.addSubnode(self.inputPanelBottomBackgroundSeparatorNode)
+        if !SGSimpleSettings.shared.hideChannelBottomButton {
+            self.inputPanelClippingNode.addSubnode(self.inputPanelBackgroundSeparatorNode)
+            self.inputPanelBackgroundNode.addSubnode(self.inputPanelBottomBackgroundSeparatorNode)
+        }
 
         self.addSubnode(self.messageTransitionNode)
         self.contentContainerNode.addSubnode(self.navigateButtons)
@@ -1835,7 +1838,9 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
         }
         
         let inputBackgroundInset: CGFloat
-        if cleanInsets.bottom < insets.bottom {
+        if SGSimpleSettings.shared.hideChannelBottomButton {
+            inputBackgroundInset = 0.0
+        } else if cleanInsets.bottom < insets.bottom {
             if case .regular = layout.metrics.widthClass, insets.bottom < 88.0 {
                 inputBackgroundInset = insets.bottom
             } else {
