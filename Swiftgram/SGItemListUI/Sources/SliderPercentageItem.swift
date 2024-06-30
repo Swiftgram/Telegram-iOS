@@ -86,6 +86,9 @@ class SliderPercentageItemNode: ListViewItemNode {
     private var item: SliderPercentageItem?
     private var layoutParams: ListViewItemLayoutParams?
     
+    // MARK: Swiftgram
+    private let activateArea: AccessibilityAreaNode
+    
     init() {
         self.backgroundNode = ASDisplayNode()
         self.backgroundNode.isLayerBacked = true
@@ -107,6 +110,9 @@ class SliderPercentageItemNode: ListViewItemNode {
         self.batteryBackgroundNode = ASImageNode()
         self.batteryForegroundNode = ASImageNode()
         
+        // MARK: Swiftgram
+        self.activateArea = AccessibilityAreaNode()
+        
         super.init(layerBacked: false, dynamicBounce: false)
         
         self.addSubnode(self.leftTextNode)
@@ -114,6 +120,20 @@ class SliderPercentageItemNode: ListViewItemNode {
         self.addSubnode(self.centerTextNode)
         self.addSubnode(self.batteryBackgroundNode)
         self.addSubnode(self.batteryForegroundNode)
+        self.addSubnode(self.activateArea)
+        
+        // MARK: Swiftgram
+        self.activateArea.increment = { [weak self] in
+            if let self {
+                self.sliderView?.increase(by: 0.10)
+            }
+        }
+        
+        self.activateArea.decrement = { [weak self] in
+            if let self {
+                self.sliderView?.decrease(by: 0.10)
+            }
+        }
     }
     
     override func didLoad() {
@@ -225,6 +245,11 @@ class SliderPercentageItemNode: ListViewItemNode {
                     strongSelf.centerTextNode.attributedText = NSAttributedString(string: centralText, font: Font.regular(16.0), textColor: item.theme.list.itemPrimaryTextColor)
                     strongSelf.centerMeasureTextNode.attributedText = NSAttributedString(string: centralMeasureText, font: Font.regular(16.0), textColor: item.theme.list.itemPrimaryTextColor)
                     
+                    strongSelf.leftTextNode.isAccessibilityElement = true
+                    strongSelf.leftTextNode.accessibilityLabel = "Minimum: \(Int32(rescaleSliderValueToPercentageValue(strongSelf.sliderView?.minimumValue ?? 0.0) * 100.0))%"
+                    strongSelf.rightTextNode.isAccessibilityElement = true
+                    strongSelf.rightTextNode.accessibilityLabel = "Maximum: \(Int32(rescaleSliderValueToPercentageValue(strongSelf.sliderView?.maximumValue ?? 1.0) * 100.0))%"
+                    
                     let leftTextSize = strongSelf.leftTextNode.updateLayout(CGSize(width: 100.0, height: 100.0))
                     let rightTextSize = strongSelf.rightTextNode.updateLayout(CGSize(width: 100.0, height: 100.0))
                     let centerTextSize = strongSelf.centerTextNode.updateLayout(CGSize(width: 200.0, height: 100.0))
@@ -300,6 +325,11 @@ class SliderPercentageItemNode: ListViewItemNode {
                         
                         sliderView.frame = CGRect(origin: CGPoint(x: params.leftInset + 18.0, y: 36.0), size: CGSize(width: params.width - params.leftInset - params.rightInset - 18.0 * 2.0, height: 44.0))
                     }
+                    
+                    strongSelf.activateArea.accessibilityLabel = "Slider"
+                    strongSelf.activateArea.accessibilityValue = centralMeasureText
+                    strongSelf.activateArea.accessibilityTraits = .adjustable
+                    strongSelf.activateArea.frame = CGRect(origin: CGPoint(x: params.leftInset, y: 0.0), size: CGSize(width: params.width - params.leftInset - params.rightInset, height: layout.contentSize.height))
                 }
             })
         }
