@@ -1855,10 +1855,7 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
         }
         
         let inputBackgroundInset: CGFloat
-        // MARK: Swiftgram
-        if shouldHideChannelBottomButton {
-            inputBackgroundInset = 0.0
-        } else if cleanInsets.bottom < insets.bottom {
+        if cleanInsets.bottom < insets.bottom {
             if case .regular = layout.metrics.widthClass, insets.bottom < 88.0 {
                 inputBackgroundInset = insets.bottom
             } else {
@@ -3001,6 +2998,7 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
             if shouldHideChannelBottomButton {
                 self.inputPanelBackgroundSeparatorNode.removeFromSupernode()
                 self.inputPanelBottomBackgroundSeparatorNode.removeFromSupernode()
+                self.inputPanelBackgroundNode.removeFromSupernode()
             }
         }
         self.selectedMessages = chatPresentationInterfaceState.interfaceState.selectionState?.selectedIds
