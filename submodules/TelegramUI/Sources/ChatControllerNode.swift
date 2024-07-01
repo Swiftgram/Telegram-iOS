@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -366,6 +367,25 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
     private var displayVideoUnmuteTipDisposable: Disposable?
     
     private var onLayoutCompletions: [(ContainedViewLayoutTransition) -> Void] = []
+    
+    // MARK: Swiftgram
+    private var shouldHideChannelBottomButton: Bool {
+        guard let channel = self.chatPresentationInterfaceState.renderedPeer?.peer as? TelegramChannel else { return false }
+        var isMember = false
+        switch channel.participationStatus {
+        case .kicked:
+            isMember = false
+        case .member:
+            isMember = true
+        case .left:
+            if case let .replyThread(message) = self.chatPresentationInterfaceState.chatLocation {
+                if !message.isForumPost && !channel.flags.contains(.joinToSend) {
+                    isMember = true
+                }
+            }
+        }
+        return (!channel.hasPermission(.sendSomething) || !isMember) && SGSimpleSettings.shared.hideChannelBottomButton
+    }
 
     init(context: AccountContext, chatLocation: ChatLocation, chatLocationContextHolder: Atomic<ChatLocationContextHolder?>, subject: ChatControllerSubject?, controllerInteraction: ChatControllerInteraction, chatPresentationInterfaceState: ChatPresentationInterfaceState, automaticMediaDownloadSettings: MediaAutoDownloadSettings, navigationBar: NavigationBar?, statusBar: StatusBar?, backgroundNode: WallpaperBackgroundNode, controller: ChatControllerImpl?) {
         self.context = context
@@ -2973,6 +2993,14 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
     }
     
     func updateChatPresentationInterfaceState(_ chatPresentationInterfaceState: ChatPresentationInterfaceState, transition: ContainedViewLayoutTransition, interactive: Bool, completion: @escaping (ContainedViewLayoutTransition) -> Void) {
+        // MARK: Swiftgram
+        defer {
+            if shouldHideChannelBottomButton {
+                self.inputPanelBackgroundSeparatorNode.removeFromSupernode()
+                self.inputPanelBottomBackgroundSeparatorNode.removeFromSupernode()
+                self.inputPanelBackgroundNode.removeFromSupernode()
+            }
+        }
         self.selectedMessages = chatPresentationInterfaceState.interfaceState.selectionState?.selectedIds
         
         var textStateUpdated = false

@@ -89,6 +89,7 @@ private enum SGBoolSetting: String {
     case wideChannelPosts
     case forceEmojiTab
     case forceBuiltInMic
+    case hideChannelBottomButton
 }
 
 private enum SGOneFromManySetting: String {
@@ -239,6 +240,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     
     id.increment(10000)
     entries.append(.header(id: id.count, section: .other, text: presentationData.strings.Appearance_Other.uppercased(), badge: nil))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .hideChannelBottomButton, value: SGSimpleSettings.shared.hideChannelBottomButton, text: i18n("Settings.hideChannelBottomButton", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .wideChannelPosts, value: SGSimpleSettings.shared.wideChannelPosts, text: i18n("Settings.wideChannelPosts", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .forceBuiltInMic, value: SGSimpleSettings.shared.forceBuiltInMic, text: i18n("Settings.forceBuiltInMic", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.forceBuiltInMic.Notice", lang)))
@@ -435,6 +437,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.forceEmojiTab = value
         case .forceBuiltInMic:
             SGSimpleSettings.shared.forceBuiltInMic = value
+        case .hideChannelBottomButton:
+            SGSimpleSettings.shared.hideChannelBottomButton = value
         }
     }, updateSliderValue: { setting, value in
         switch (setting) {

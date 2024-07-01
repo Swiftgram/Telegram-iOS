@@ -101,6 +101,7 @@ public class SGSimpleSettings {
         case wideChannelPosts
         case forceEmojiTab
         case forceBuiltInMic
+        case hideChannelBottomButton
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -345,6 +346,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.forceBuiltInMic.rawValue)
     public var forceBuiltInMic: Bool
+    
+    @UserDefault(key: Keys.hideChannelBottomButton.rawValue)
+    public var hideChannelBottomButton: Bool
 }
 
 extension SGSimpleSettings {
