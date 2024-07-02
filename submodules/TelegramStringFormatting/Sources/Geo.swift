@@ -37,6 +37,25 @@ public func stringForDistance(strings: PresentationStrings, distance: CLLocation
         sharedDistanceFormatter = distanceFormatter
     }
     
+    // MARK: - Swiftgram fix for iOS 18 crash on location open
+    func localeWithStrings(_ strings: PresentationStrings) -> Locale {
+        let systemLocaleRegionSuffix: String = {
+            let identifier = Locale.current.identifier
+            if let range = identifier.range(of: "_") {
+                return String(identifier[range.lowerBound...])
+            } else {
+                return ""
+            }
+        }()
+        
+        var languageCode = strings.baseLanguageCode
+        let rawSuffix = "-raw"
+        if languageCode.hasSuffix(rawSuffix) {
+            languageCode = String(languageCode.dropLast(rawSuffix.count))
+        }
+        let code = languageCode + systemLocaleRegionSuffix
+        return Locale(identifier: code)
+    }
     let locale = localeWithStrings(strings)
     if distanceFormatter.locale != locale {
         distanceFormatter.locale = locale
