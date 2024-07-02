@@ -1,3 +1,8 @@
+// MARK: Swiftgram
+import SGActionRequestHandlerSanitizer
+import SGAPIWebSettings
+import SGLogging
+import SGStrings
 import UIKit
 import SwiftSignalKit
 import Display
@@ -828,6 +833,27 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                 icons.append(PresentationAppIcon(name: "PremiumTurbo", imageName: "PremiumTurbo", isPremium: true))
                 icons.append(PresentationAppIcon(name: "PremiumBlack", imageName: "PremiumBlack", isPremium: true))
                 
+                
+                // MARK: Swiftgram
+                icons = [
+                    PresentationAppIcon(name: "SGDefault", imageName: "SGDefault", isDefault: true),
+                    PresentationAppIcon(name: "SGBlack", imageName: "SGBlack"),
+                    PresentationAppIcon(name: "SGLegacy", imageName: "SGLegacy"),
+                    PresentationAppIcon(name: "SGInverted", imageName: "SGInverted"),
+                    PresentationAppIcon(name: "SGWhite", imageName: "SGWhite"),
+                    PresentationAppIcon(name: "SGNight", imageName: "SGNight"),
+                    PresentationAppIcon(name: "SGSky", imageName: "SGSky"),
+                    PresentationAppIcon(name: "SGTitanium", imageName: "SGTitanium"),
+                    PresentationAppIcon(name: "SGNeon", imageName: "SGNeon"),
+                    PresentationAppIcon(name: "SGNeonBlue", imageName: "SGNeonBlue"),
+                    PresentationAppIcon(name: "SGGlass", imageName: "SGGlass"),
+                    PresentationAppIcon(name: "SGSparkling", imageName: "SGSparkling"),
+                ]
+
+                if Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt" {
+                    icons.append(PresentationAppIcon(name: "SGBeta", imageName: "SGBeta"))
+                }
+                
                 return icons
             } else {
                 return []
@@ -1091,7 +1117,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             |> deliverOnMainQueue
             |> map { accountAndSettings -> AuthorizedApplicationContext? in
                 return accountAndSettings.flatMap { context, callListSettings in
-                    return AuthorizedApplicationContext(sharedApplicationContext: sharedApplicationContext, mainWindow: self.mainWindow, watchManagerArguments: .single(nil), context: context as! AccountContextImpl, accountManager: sharedApplicationContext.sharedContext.accountManager, showCallsTab: callListSettings.showTab, reinitializedNotificationSettings: {
+                    return AuthorizedApplicationContext(sharedApplicationContext: sharedApplicationContext, mainWindow: self.mainWindow, watchManagerArguments: .single(nil), context: context as! AccountContextImpl, accountManager: sharedApplicationContext.sharedContext.accountManager, showContactsTab: callListSettings.showContactsTab, showCallsTab: callListSettings.showTab, reinitializedNotificationSettings: {
                         let _ = (self.context.get()
                         |> take(1)
                         |> deliverOnMainQueue).start(next: { context in
@@ -1168,6 +1194,8 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             var network: Network?
             if let context = context {
                 network = context.context.account.network
+                // MARK: Swiftgram
+                sgDBResetIfNeeded(databasePath: context.context.sharedContext.accountManager.basePath + "/db", present: self.mainWindow?.presentNative)
             }
             
             Logger.shared.log("App \(self.episodeId)", "received context \(String(describing: context)) account \(String(describing: context?.context.account.id)) network \(String(describing: network))")
@@ -1231,6 +1259,12 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                     self.registerForNotifications(context: context.context, authorize: authorizeNotifications)
                     
                     self.resetIntentsIfNeeded(context: context.context)
+                    
+                    // MARK: Swiftgram
+                    updateSGWebSettingsInteractivelly(context: context.context)
+                    let _ = (context.context.sharedContext.presentationData.start(next: { presentationData in
+                        SGLocalizationManager.shared.downloadLocale(presentationData.strings.baseLanguageCode)
+                    }))
                 }))
             } else {
                 self.mainWindow.viewController = nil
@@ -1395,7 +1429,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         
         if let url = launchOptions?[.url] {
             if let url = url as? URL, url.scheme == "tg" || url.scheme == buildConfig.appSpecificUrlScheme {
-                self.openUrlWhenReady(url: url)
+                self.openUrlWhenReady(url: sgActionRequestHandlerSanitizer(url))
             } else if let urlString = url as? String, urlString.lowercased().hasPrefix("tg:") || urlString.lowercased().hasPrefix("\(buildConfig.appSpecificUrlScheme):"), let url = URL(string: urlString) {
                 self.openUrlWhenReady(url: url)
             }
@@ -1839,7 +1873,8 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         SharedDisplayLinkDriver.shared.updateForegroundState(self.isActiveValue)
     }
     
-    func runForegroundTasks() {
+    func runForegroundTasks(onlySG: Bool = false) {
+        
         let _ = (self.sharedContextPromise.get()
         |> take(1)
         |> deliverOnMainQueue).start(next: { sharedApplicationContext in
@@ -1847,6 +1882,11 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
              |> take(1)
              |> deliverOnMainQueue).start(next: { activeAccounts in
                 for (_, context, _) in activeAccounts.accounts {
+                    // MARK: Swiftgram
+                    updateSGWebSettingsInteractivelly(context: context)
+                    if onlySG {
+                        continue
+                    }
                     (context.downloadedMediaStoreManager as? DownloadedMediaStoreManagerImpl)?.runTasks()
                 }
             })
@@ -2196,6 +2236,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             }
         }
         |> deliverOnMainQueue).start(next: { sharedContext, context, authContext in
+            let url = sgActionRequestHandlerSanitizer(url)
             if let authContext = authContext, let confirmationCode = parseConfirmationCodeUrl(sharedContext: sharedContext, url: url) {
                 authContext.rootController.applyConfirmationCode(confirmationCode)
             } else if let context = context {

@@ -8,6 +8,7 @@ private struct TranscriptionResult {
     var text: String
     var confidence: Float
     var isFinal: Bool
+    var locale: String
 }
 
 private func transcribeAudio(path: String, locale: String) -> Signal<TranscriptionResult?, NoError> {
@@ -67,7 +68,7 @@ private func transcribeAudio(path: String, locale: String) -> Signal<Transcripti
                                     confidence += segment.confidence
                                 }
                                 confidence /= Float(result.bestTranscription.segments.count)
-                                subscriber.putNext(TranscriptionResult(text: result.bestTranscription.formattedString, confidence: confidence, isFinal: result.isFinal))
+                                subscriber.putNext(TranscriptionResult(text: result.bestTranscription.formattedString, confidence: confidence, isFinal: result.isFinal, locale: locale))
                                 
                                 if result.isFinal {
                                     subscriber.putCompletion()
@@ -106,32 +107,59 @@ public struct LocallyTranscribedAudio {
 
 public func transcribeAudio(path: String, appLocale: String) -> Signal<LocallyTranscribedAudio?, NoError> {
     var signals: [Signal<TranscriptionResult?, NoError>] = []
-    var locales: [String] = []
-    if !locales.contains(Locale.current.identifier) {
-        locales.append(Locale.current.identifier)
-    }
-    if locales.isEmpty {
-        locales.append("en-US")
-    }
+    let locales: [String] = [appLocale]
+    // Device can effectivelly transcribe only one language at a time. So it will be wise to run language recognition once for each popular language, check the confidence, start over with most confident language and output something it has already generated
+//    if !locales.contains(Locale.current.identifier) {
+//        locales.append(Locale.current.identifier)
+//    }
+//    if locales.isEmpty {
+//        locales.append("en-US")
+//    }
+    // Dictionary to hold accumulated transcriptions and confidences for each locale
+    var accumulatedTranscription: [String: (confidence: Float, text: [String])] = [:]
     for locale in locales {
         signals.append(transcribeAudio(path: path, locale: locale))
     }
-    var resultSignal: Signal<[TranscriptionResult?], NoError> = .single([])
-    for signal in signals {
-        resultSignal = resultSignal |> mapToSignal { result -> Signal<[TranscriptionResult?], NoError> in
-            return signal |> map { next in
-                return result + [next]
+    // We need to combine results per-language and compare their total confidence, (instead of outputting everything we have to the signal)
+    // return the one with the most confidence
+    let resultSignal: Signal<[TranscriptionResult?], NoError> = signals.reduce(.single([])) { (accumulator, signal) in
+        return accumulator
+            |> mapToSignal { results in
+                return signal
+                    |> map { next in
+                        return results + [next]
+                    }
             }
-        }
     }
+
     
     return resultSignal
     |> map { results -> LocallyTranscribedAudio? in
-        let sortedResults = results.compactMap({ $0 }).sorted(by: { lhs, rhs in
-            return lhs.confidence > rhs.confidence
-        })
-        return sortedResults.first.flatMap { result -> LocallyTranscribedAudio in
-            return LocallyTranscribedAudio(text: result.text, isFinal: result.isFinal)
+        for result in results {
+            if let result = result {
+                var result = result
+                if result.text.isEmpty {
+                    result.text = "..."
+                }
+                if var existing = accumulatedTranscription[result.locale] {
+                    existing.text.append(result.text)
+                    existing.confidence += result.confidence
+                    accumulatedTranscription[result.locale] = existing
+                } else {
+                    accumulatedTranscription[result.locale] = (result.confidence, [result.text])
+                }
+            }
         }
+        
+        // Find the locale with the highest accumulated confidence
+        guard let bestLocale = accumulatedTranscription.max(by: { $0.value.confidence < $1.value.confidence }) else {
+            return nil
+        }
+        
+        let combinedText = bestLocale.value.text.joined(separator: ". ")
+        // Assume 'isFinal' is true if the last result in 'results' is final. Adjust if needed.
+        let isFinal = results.compactMap({ $0 }).last?.isFinal ?? false
+        return LocallyTranscribedAudio(text: combinedText, isFinal: isFinal)
     }
+
 }
