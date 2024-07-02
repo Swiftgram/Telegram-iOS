@@ -3,11 +3,12 @@ import TelegramCore
 import SwiftSignalKit
 
 public struct CallListSettings: Codable, Equatable {
+    public var showContactsTab: Bool
     public var _showTab: Bool?
     public var defaultShowTab: Bool?
     
     public static var defaultSettings: CallListSettings {
-        return CallListSettings(showTab: false)
+        return CallListSettings(showContactsTab: true, showTab: false)
     }
     
     public var showTab: Bool {
@@ -24,18 +25,21 @@ public struct CallListSettings: Codable, Equatable {
         }
     }
     
-    public init(showTab: Bool) {
+    public init(showContactsTab: Bool, showTab: Bool) {
+        self.showContactsTab = showContactsTab
         self._showTab = showTab
     }
     
-    public init(showTab: Bool?, defaultShowTab: Bool?) {
+    public init(showContactsTab: Bool, showTab: Bool?, defaultShowTab: Bool?) {
         self._showTab = showTab
+        self.showContactsTab = showContactsTab
         self.defaultShowTab = defaultShowTab
     }
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: StringCodingKey.self)
-
+        
+        self.showContactsTab = (try container.decode(Int32.self, forKey: "showContactsTab")) != 0
         if let alternativeDefaultValue = try container.decodeIfPresent(Int32.self, forKey: "defaultShowTab") {
             self.defaultShowTab = alternativeDefaultValue != 0
         }
@@ -46,7 +50,9 @@ public struct CallListSettings: Codable, Equatable {
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: StringCodingKey.self)
-
+        
+        try container.encode((self.showContactsTab ? 1 : 0) as Int32, forKey: "showContactsTab")
+        
         if let defaultShowTab = self.defaultShowTab {
             try container.encode((defaultShowTab ? 1 : 0) as Int32, forKey: "defaultShowTab")
         } else {
@@ -60,11 +66,15 @@ public struct CallListSettings: Codable, Equatable {
     }
     
     public static func ==(lhs: CallListSettings, rhs: CallListSettings) -> Bool {
-        return lhs._showTab == rhs._showTab && lhs.defaultShowTab == rhs.defaultShowTab
+        return lhs.showContactsTab == rhs.showContactsTab && lhs._showTab == rhs._showTab && lhs.defaultShowTab == rhs.defaultShowTab
     }
     
     public func withUpdatedShowTab(_ showTab: Bool) -> CallListSettings {
-        return CallListSettings(showTab: showTab, defaultShowTab: self.defaultShowTab)
+        return CallListSettings(showContactsTab: self.showContactsTab, showTab: showTab, defaultShowTab: self.defaultShowTab)
+    }
+    
+    public func withUpdatedShowContactsTab(_ showContactsTab: Bool) -> CallListSettings {
+        return CallListSettings(showContactsTab: showContactsTab, showTab: self.showTab, defaultShowTab: self.defaultShowTab)
     }
 }
 

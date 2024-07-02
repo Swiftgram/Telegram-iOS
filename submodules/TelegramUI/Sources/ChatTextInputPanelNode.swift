@@ -1,3 +1,7 @@
+// MARK: Swiftgram
+import TelegramUIPreferences
+import SGSimpleSettings
+
 import Foundation
 import UIKit
 import Display
@@ -607,6 +611,10 @@ class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDelegate, Ch
     
     private let hapticFeedback = HapticFeedback()
     
+    // MARK: Swiftgram
+    private var sendWithReturnKey: Bool
+    private var sendWithReturnKeyDisposable: Disposable?
+    
     var inputTextState: ChatTextInputState {
         if let textInputNode = self.textInputNode {
             let selectionRange: Range<Int> = textInputNode.selectedRange.location ..< (textInputNode.selectedRange.location + textInputNode.selectedRange.length)
@@ -869,6 +877,7 @@ class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDelegate, Ch
         self.slowModeButton.alpha = 0.0
         
         self.viewOnceButton = ChatRecordingViewOnceButtonNode(icon: .viewOnce)
+        self.sendWithReturnKey = SGUISettings.default.sendWithReturnKey
         
         super.init()
         
@@ -901,6 +910,25 @@ class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDelegate, Ch
         )
         
         self.context = context
+        
+        // MARK: Swiftgram
+        let sendWithReturnKeySignal = context.account.postbox.preferencesView(keys: [ApplicationSpecificPreferencesKeys.SGUISettings])
+        |> map { view -> Bool in
+            let settings: SGUISettings = view.values[ApplicationSpecificPreferencesKeys.SGUISettings]?.get(SGUISettings.self) ?? .default
+            return settings.sendWithReturnKey
+        }
+        |> distinctUntilChanged
+        
+        self.sendWithReturnKeyDisposable = (sendWithReturnKeySignal
+        |> deliverOnMainQueue).startStrict(next: { [weak self] value in
+            if let strongSelf = self {
+                strongSelf.sendWithReturnKey = value
+                if let textInputNode = strongSelf.textInputNode {
+                    textInputNode.textView.returnKeyType = strongSelf.sendWithReturnKey ? .send : .default
+                    textInputNode.textView.reloadInputViews()
+                }
+            }
+        })
         
         self.addSubnode(self.clippingNode)
         
@@ -955,6 +983,10 @@ class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDelegate, Ch
         
         self.attachmentButton.addTarget(self, action: #selector(self.attachmentButtonPressed), forControlEvents: .touchUpInside)
         self.attachmentButtonDisabledNode.addTarget(self, action: #selector(self.attachmentButtonPressed), forControlEvents: .touchUpInside)
+        // MARK: Swiftgram
+        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(self.attachmentButtonLongPressed(_:)))
+        longPressGesture.minimumPressDuration = 1.0
+        self.attachmentButton.view.addGestureRecognizer(longPressGesture)
   
         self.actionButtons.sendButtonLongPressed = { [weak self] node, gesture in
             self?.interfaceInteraction?.displaySendMessageOptions(node, gesture)
@@ -1121,6 +1153,7 @@ class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDelegate, Ch
     
     deinit {
         self.statusDisposable.dispose()
+        self.sendWithReturnKeyDisposable?.dispose()
         self.startingBotDisposable.dispose()
         self.tooltipController?.dismiss()
         self.currentEmojiSuggestion?.disposable.dispose()
@@ -1174,6 +1207,7 @@ class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDelegate, Ch
         self.textInputContainer.addSubnode(textInputNode)
         textInputNode.view.disablesInteractiveTransitionGestureRecognizer = true
         textInputNode.isUserInteractionEnabled = !self.sendingTextDisabled
+        textInputNode.textView.returnKeyType = self.sendWithReturnKey ? .send : .default
         self.textInputNode = textInputNode
         
         var accessoryButtonsWidth: CGFloat = 0.0
@@ -1621,7 +1655,7 @@ class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDelegate, Ch
         }
         
         let mediaRecordingState = interfaceState.inputTextPanelState.mediaRecordingState
-        if let sendAsPeers = interfaceState.sendAsPeers, !sendAsPeers.isEmpty && interfaceState.editMessageState == nil {
+        if !SGSimpleSettings.shared.disableSendAsButton, let sendAsPeers = interfaceState.sendAsPeers, !sendAsPeers.isEmpty && interfaceState.editMessageState == nil {
             hasMenuButton = true
             menuButtonExpanded = false
             isSendAsButton = true
@@ -3816,7 +3850,7 @@ class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDelegate, Ch
                 }
             }
             
-            if (hasText || keepSendButtonEnabled && !mediaInputIsActive && !hasSlowModeButton) {
+            if (hasText || keepSendButtonEnabled && !mediaInputIsActive && !hasSlowModeButton || SGSimpleSettings.shared.hideRecordingButton) {
                 hideMicButton = true
                 
                 if self.actionButtons.sendContainerNode.alpha.isZero && self.rightSlowModeInset.isZero {
@@ -4363,6 +4397,13 @@ class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDelegate, Ch
         }
         
         self.updateActivity()
+        
+        // MARK: Swiftgram
+        if self.sendWithReturnKey && text == "\n" {
+            self.sendButtonPressed()
+            return false
+        }
+        
         var cleanText = text
         let removeSequences: [String] = ["\u{202d}", "\u{202c}"]
         for sequence in removeSequences {
@@ -4552,6 +4593,15 @@ class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDelegate, Ch
 
     @objc func attachmentButtonPressed() {
         self.displayAttachmentMenu()
+    }
+    
+    // MARK: Swiftgram
+    @objc func attachmentButtonLongPressed(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        guard let _ = self.interfaceInteraction?.chatController() as? ChatControllerImpl else {
+            return
+        }
+        // controller.openStickerEditor()
     }
     
     @objc func searchLayoutClearButtonPressed() {

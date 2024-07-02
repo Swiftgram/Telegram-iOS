@@ -1,3 +1,4 @@
+import SGStrings
 import Foundation
 import UIKit
 import Display
@@ -200,15 +201,15 @@ public func deleteAccountOptionsController(context: AccountContext, navigationCo
         |> take(1)
         |> deliverOnMainQueue
         ).start(next: { accountAndPeer, accountsAndPeers in
-            var maximumAvailableAccounts: Int = 3
+            var maximumAvailableAccounts: Int = maximumSwiftgramNumberOfAccounts
             if accountAndPeer?.1.isPremium == true && !context.account.testingEnvironment {
-                maximumAvailableAccounts = 4
+                maximumAvailableAccounts = maximumSwiftgramNumberOfAccounts
             }
             var count: Int = 1
             for (accountContext, peer, _) in accountsAndPeers {
                 if !accountContext.account.testingEnvironment {
                     if peer.isPremium {
-                        maximumAvailableAccounts = 4
+                        maximumAvailableAccounts = maximumSwiftgramNumberOfAccounts
                     }
                     count += 1
                 }
@@ -226,8 +227,18 @@ public func deleteAccountOptionsController(context: AccountContext, navigationCo
                 }
                 pushControllerImpl?(controller)
             } else {
-                context.sharedContext.beginNewAuth(testingEnvironment: context.account.testingEnvironment)
-
+                if count + 1 > maximumSafeNumberOfAccounts {
+                    let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                    let alertController = textAlertController(context: context, title: presentationData.strings.ChatList_DeleteSavedMessagesConfirmationTitle, text: i18n("Auth.AccountBackupReminder", presentationData.strings.baseLanguageCode), actions: [
+                        TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {
+                            context.sharedContext.beginNewAuth(testingEnvironment: context.account.testingEnvironment)
+                        })
+                    ], dismissOnOutsideTap: false)
+                    presentControllerImpl?(alertController, nil)
+                } else {
+                    context.sharedContext.beginNewAuth(testingEnvironment: context.account.testingEnvironment)
+                }
+                
                 dismissImpl?()
             }
         })

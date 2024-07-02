@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import SwiftSignalKit
 import AVFoundation
@@ -1054,6 +1055,10 @@ public final class ManagedAudioSessionImpl: NSObject, ManagedAudioSession {
                         var alreadySet = false
                         if self.isHeadsetPluggedInValue {
                             if case .voiceCall = updatedType, case .custom(.builtin) = outputMode {
+                            } else if SGSimpleSettings.shared.forceBuiltInMic {
+                                let _ = try? AVAudioSession.sharedInstance().setPreferredInput(
+                                    routes.first { $0.portType == .builtInMic }
+                                )
                             } else {
                                 loop: for route in routes {
                                     switch route.portType {

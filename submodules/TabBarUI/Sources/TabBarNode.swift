@@ -348,6 +348,8 @@ class TabBarNode: ASDisplayNode, ASGestureRecognizerDelegate {
     private var horizontal: Bool = false
     private var centered: Bool = false
     
+    private var showTabNames: Bool
+    
     private var badgeImage: UIImage
 
     let backgroundNode: NavigationBackgroundNode
@@ -356,8 +358,9 @@ class TabBarNode: ASDisplayNode, ASGestureRecognizerDelegate {
     
     private var tapRecognizer: TapLongTapOrDoubleTapGestureRecognizer?
     
-    init(theme: TabBarControllerTheme, itemSelected: @escaping (Int, Bool, [ASDisplayNode]) -> Void, contextAction: @escaping (Int, ContextExtractedContentContainingNode, ContextGesture) -> Void, swipeAction: @escaping (Int, TabBarItemSwipeDirection) -> Void) {
+    init(showTabNames: Bool, theme: TabBarControllerTheme, itemSelected: @escaping (Int, Bool, [ASDisplayNode]) -> Void, contextAction: @escaping (Int, ContextExtractedContentContainingNode, ContextGesture) -> Void, swipeAction: @escaping (Int, TabBarItemSwipeDirection) -> Void) {
         self.itemSelected = itemSelected
+        self.showTabNames = showTabNames
         self.contextAction = contextAction
         self.swipeAction = swipeAction
         self.theme = theme
@@ -734,6 +737,12 @@ class TabBarNode: ASDisplayNode, ASGestureRecognizerDelegate {
                 node.contextImageNode.frame = CGRect(origin: CGPoint(), size: nodeFrame.size)
                 node.contextTextImageNode.frame = CGRect(origin: CGPoint(), size: nodeFrame.size)
                                 
+                // MARK: Swiftgram
+                if !self.showTabNames {
+                    node.imageNode.frame = CGRect(origin: CGPoint(x: 0.0, y: 6.0), size: nodeFrame.size)
+                    node.textImageNode.frame = CGRect(origin: CGPoint(), size: CGSize())
+                }
+                
                 let scaleFactor: CGFloat = horizontal ? 0.8 : 1.0
                 node.animationContainerNode.subnodeTransform = CATransform3DMakeScale(scaleFactor, scaleFactor, 1.0)
                 let animationOffset: CGPoint = self.tabBarItems[i].item.animationOffset

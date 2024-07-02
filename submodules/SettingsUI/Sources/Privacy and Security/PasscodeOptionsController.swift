@@ -1,3 +1,6 @@
+// MARK: Swiftgram
+import SGStrings
+
 import Foundation
 import UIKit
 import Display
@@ -163,7 +166,10 @@ private struct PasscodeOptionsData: Equatable {
 
 private func autolockStringForTimeout(strings: PresentationStrings, timeout: Int32?) -> String {
     if let timeout = timeout {
-        if timeout == 10 {
+        // MARK: Swiftgram
+        if timeout == 5 {
+            return i18n("PasscodeSettings.AutoLock.InFiveSeconds", strings.baseLanguageCode)
+        } else if timeout == 10 {
             return "If away for 10 seconds"
         } else if timeout == 1 * 60 {
             return strings.PasscodeSettings_AutoLock_IfAwayFor_1minute
@@ -321,7 +327,7 @@ func passcodeOptionsController(context: AccountContext) -> ViewController {
                 }).start()
             })
         }
-        var values: [Int32] = [0, 1 * 60, 5 * 60, 1 * 60 * 60, 5 * 60 * 60]
+        var values: [Int32] = [0, 5, 1 * 60, 5 * 60, 1 * 60 * 60, 5 * 60 * 60]
         
         #if DEBUG
             values.append(10)

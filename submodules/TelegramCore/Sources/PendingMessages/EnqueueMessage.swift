@@ -544,11 +544,11 @@ func enqueueMessages(transaction: Transaction, account: Account, peerId: PeerId,
                         transaction.storeMediaIfNotPresent(media: file)
                     }
                 
-                    for emoji in text.emojis {
-                        if emoji.isSingleEmoji {
-                            if !emojiItems.contains(where: { $0.content == .text(emoji) }) {
-                                emojiItems.append(RecentEmojiItem(.text(emoji)))
-                            }
+                    // MARK: Swiftgram
+                    var filteredEmojiItems = [NSRange: RecentEmojiItem]()
+                    text.enumerateSubstrings(in: text.startIndex ..< text.endIndex, options: .byComposedCharacterSequences) { substring, range, _, _ in
+                        if let substring, substring.isSingleEmoji {
+                            filteredEmojiItems[NSRange(range, in: text)] = RecentEmojiItem(.text(substring))
                         }
                     }
                 
@@ -673,10 +673,17 @@ func enqueueMessages(transaction: Transaction, account: Account, peerId: PeerId,
                                         addedHashtags.append(hashtag)
                                     }
                                 } else if case let .CustomEmoji(_, fileId) = entity.type {
+                                    // MARK: Swiftgram
                                     let mediaId = MediaId(namespace: Namespaces.Media.CloudFile, id: fileId)
-                                    if let file = inlineStickers[mediaId] as? TelegramMediaFile {
-                                        emojiItems.append(RecentEmojiItem(.file(file)))
-                                    } else if let file = transaction.getMedia(mediaId) as? TelegramMediaFile {
+                                    let entityRange = NSRange(location: entity.range.lowerBound, length: entity.range.upperBound - entity.range.lowerBound)
+                                    var file: TelegramMediaFile?
+                                    if let unwrappedFile = inlineStickers[mediaId] as? TelegramMediaFile {
+                                        file = unwrappedFile
+                                    } else if let unwrappedFile = transaction.getMedia(mediaId) as? TelegramMediaFile {
+                                        file = unwrappedFile
+                                    }
+                                    if let file {
+                                        filteredEmojiItems.removeValue(forKey: entityRange)
                                         emojiItems.append(RecentEmojiItem(.file(file)))
                                     }
                                 }
@@ -684,6 +691,8 @@ func enqueueMessages(transaction: Transaction, account: Account, peerId: PeerId,
                             break
                         }
                     }
+                    // MARK: Swiftgram
+                    emojiItems.insert(contentsOf: filteredEmojiItems.values, at: 0)
                                     
                     let (tags, globalTags) = tagsForStoreMessage(incoming: false, attributes: attributes, media: mediaList, textEntities: entitiesAttribute?.entities, isPinned: false)
                     

@@ -279,7 +279,7 @@ public func messageTextWithAttributes(message: EngineMessage) -> NSAttributedStr
 public func messageContentKind(contentSettings: ContentSettings, message: EngineMessage, strings: PresentationStrings, nameDisplayOrder: PresentationPersonNameOrder, dateTimeFormat: PresentationDateTimeFormat, accountPeerId: EnginePeer.Id) -> MessageContentKind {
     for attribute in message.attributes {
         if let attribute = attribute as? RestrictedContentMessageAttribute {
-            if let text = attribute.platformText(platform: "ios", contentSettings: contentSettings) {
+            if let text = attribute.platformText(platform: "ios", contentSettings: contentSettings, chatId: message.author?.id.id._internalGetInt64Value()) {
                 return .restricted(text)
             }
             break

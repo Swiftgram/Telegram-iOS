@@ -71,9 +71,9 @@ public final class ChatPanelInterfaceInteraction {
     public let reportMessages: ([Message], ContextControllerProtocol?) -> Void
     public let blockMessageAuthor: (Message, ContextControllerProtocol?) -> Void
     public let deleteMessages: ([Message], ContextControllerProtocol?, @escaping (ContextMenuActionResult) -> Void) -> Void
-    public let forwardSelectedMessages: () -> Void
+    public let forwardSelectedMessages: (String?) -> Void
     public let forwardCurrentForwardMessages: () -> Void
-    public let forwardMessages: ([Message]) -> Void
+    public let forwardMessages: ([Message], String?) -> Void
     public let updateForwardOptionsState: ((ChatInterfaceForwardOptionsState) -> ChatInterfaceForwardOptionsState) -> Void
     public let presentForwardOptions: (ASDisplayNode) -> Void
     public let presentReplyOptions: (ASDisplayNode) -> Void
@@ -186,9 +186,9 @@ public final class ChatPanelInterfaceInteraction {
         reportMessages: @escaping ([Message], ContextControllerProtocol?) -> Void,
         blockMessageAuthor: @escaping (Message, ContextControllerProtocol?) -> Void,
         deleteMessages: @escaping ([Message], ContextControllerProtocol?, @escaping (ContextMenuActionResult) -> Void) -> Void,
-        forwardSelectedMessages: @escaping () -> Void,
+        forwardSelectedMessages: @escaping (String?) -> Void,
         forwardCurrentForwardMessages: @escaping () -> Void,
-        forwardMessages: @escaping ([Message]) -> Void,
+        forwardMessages: @escaping ([Message], String?) -> Void,
         updateForwardOptionsState: @escaping ((ChatInterfaceForwardOptionsState) -> ChatInterfaceForwardOptionsState) -> Void,
         presentForwardOptions: @escaping (ASDisplayNode) -> Void,
         presentReplyOptions: @escaping (ASDisplayNode) -> Void,
@@ -422,9 +422,9 @@ public final class ChatPanelInterfaceInteraction {
         }, blockMessageAuthor: { _, _ in
         }, deleteMessages: { _, _, f in
             f(.default)
-        }, forwardSelectedMessages: {
+        }, forwardSelectedMessages: { _ in
         }, forwardCurrentForwardMessages: {
-        }, forwardMessages: { _ in
+        }, forwardMessages: { _, _ in
         }, updateForwardOptionsState: { _ in
         }, presentForwardOptions: { _ in
         }, presentReplyOptions: { _ in

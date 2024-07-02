@@ -49,6 +49,9 @@ public func flagEmoji(countryCode: String) -> String {
     if countryCode.uppercased() == "FT" {
         return "🏴‍☠️"
     }
+    if countryCode.uppercased() == "XX" {
+        return "🏳️"
+    }
     let base : UInt32 = 127397
     var flagString = ""
     for v in countryCode.uppercased().unicodeScalars {

@@ -583,7 +583,7 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
         }
         
         let contactSyncSize = self.contactSyncNode.updateLayout(width: maximumWidth)
-        if self.hasOtherAccounts {
+        if self.hasOtherAccounts || { return true }() {
             self.contactSyncNode.isHidden = false
             items.append(AuthorizationLayoutItem(node: self.contactSyncNode, size: contactSyncSize, spacingBefore: AuthorizationLayoutItemSpacing(weight: 14.0, maxValue: 14.0), spacingAfter: AuthorizationLayoutItemSpacing(weight: 0.0, maxValue: 0.0)))
         } else {

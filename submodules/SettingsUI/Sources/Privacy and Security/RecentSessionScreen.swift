@@ -1,3 +1,4 @@
+import BuildConfig
 import Foundation
 import UIKit
 import Display
@@ -278,6 +279,9 @@ private class RecentSessionScreenNode: ViewControllerTracingNode, ASScrollViewDe
         var hasSecretChats = false
         var hasIncomingCalls = false
         
+        let baseAppBundleId = Bundle.main.bundleIdentifier!
+        let buildConfig = BuildConfig(baseAppBundleId: baseAppBundleId)
+        
         let timestamp = Int32(CFAbsoluteTimeGetCurrent() + NSTimeIntervalSince1970)
         let title: String
         let subtitle: String
@@ -286,6 +290,7 @@ private class RecentSessionScreenNode: ViewControllerTracingNode, ASScrollViewDe
         let deviceTitle: String
         let location: String
         let ip: String
+        var apiId: String = ""
         switch subject {
             case let .session(session):
                 self.terminateButton.title = self.presentationData.strings.AuthSessions_View_TerminateSession
@@ -305,8 +310,23 @@ private class RecentSessionScreenNode: ViewControllerTracingNode, ASScrollViewDe
                 if !session.deviceModel.isEmpty {
                     deviceString = session.deviceModel
                 }
+//                if !session.platform.isEmpty {
+//                    if !deviceString.isEmpty {
+//                        deviceString += ", "
+//                    }
+//                    deviceString += session.platform
+//                }
+//                if !session.systemVersion.isEmpty {
+//                    if !deviceString.isEmpty {
+//                        deviceString += ", "
+//                    }
+//                    deviceString += session.systemVersion
+//                }
+                if buildConfig.apiId != session.apiId {
+                    apiId = "\napi_id: \(session.apiId)"
+                }
                 title = deviceString
-                device = "\(session.appName) \(appVersion)"
+                device = "\(session.appName) \(appVersion)\(apiId)"
                 location = session.country
                 ip = session.ip
             
@@ -391,6 +411,7 @@ private class RecentSessionScreenNode: ViewControllerTracingNode, ASScrollViewDe
         
         self.deviceTitleNode.attributedText = NSAttributedString(string: deviceTitle, font: Font.regular(17.0), textColor: textColor)
         self.deviceValueNode.attributedText = NSAttributedString(string: device, font: Font.regular(17.0), textColor: secondaryTextColor)
+        self.deviceValueNode.maximumNumberOfLines = 2
         self.deviceValueNode.accessibilityLabel = deviceTitle
         self.deviceValueNode.accessibilityValue = device
         self.deviceValueNode.isAccessibilityElement = true

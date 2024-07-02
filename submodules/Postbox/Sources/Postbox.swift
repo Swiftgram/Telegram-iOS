@@ -152,8 +152,8 @@ public final class Transaction {
         self.postbox?.deleteMessagesInRange(peerId: peerId, namespace: namespace, minId: minId, maxId: maxId, forEachMedia: forEachMedia)
     }
     
-    public func withAllMessages(peerId: PeerId, namespace: MessageId.Namespace? = nil, _ f: (Message) -> Bool) {
-        self.postbox?.withAllMessages(peerId: peerId, namespace: namespace, f)
+    public func withAllMessages(peerId: PeerId, namespace: MessageId.Namespace? = nil, reversed: Bool = false, _ f: (Message) -> Bool) {
+        self.postbox?.withAllMessages(peerId: peerId, namespace: namespace, reversed: reversed, f)
     }
     
     public func clearHistory(_ peerId: PeerId, threadId: Int64?, minTimestamp: Int32?, maxTimestamp: Int32?, namespaces: MessageIdNamespaces, forEachMedia: ((Media) -> Void)?) {
@@ -2197,8 +2197,10 @@ final class PostboxImpl {
         self.messageHistoryTable.removeMessagesInRange(peerId: peerId, namespace: namespace, minId: minId, maxId: maxId, operationsByPeerId: &self.currentOperationsByPeerId, updatedMedia: &self.currentUpdatedMedia, unsentMessageOperations: &currentUnsentOperations, updatedPeerReadStateOperations: &self.currentUpdatedSynchronizeReadStateOperations, globalTagsOperations: &self.currentGlobalTagsOperations, pendingActionsOperations: &self.currentPendingMessageActionsOperations, updatedMessageActionsSummaries: &self.currentUpdatedMessageActionsSummaries, updatedMessageTagSummaries: &self.currentUpdatedMessageTagSummaries, invalidateMessageTagSummaries: &self.currentInvalidateMessageTagSummaries, localTagsOperations: &self.currentLocalTagsOperations, timestampBasedMessageAttributesOperations: &self.currentTimestampBasedMessageAttributesOperations, forEachMedia: forEachMedia)
     }
     
-    fileprivate func withAllMessages(peerId: PeerId, namespace: MessageId.Namespace?, _ f: (Message) -> Bool) {
-        for index in self.messageHistoryTable.allMessageIndices(peerId: peerId, namespace: namespace) {
+    fileprivate func withAllMessages(peerId: PeerId, namespace: MessageId.Namespace?, reversed: Bool = false, _ f: (Message) -> Bool) {
+        var indexes = self.messageHistoryTable.allMessageIndices(peerId: peerId, namespace: namespace)
+        if reversed { indexes.reverse() }
+        for index in indexes {
             if let message = self.messageHistoryTable.getMessage(index) {
                 if !f(self.renderIntermediateMessage(message)) {
                     break
@@ -3561,6 +3563,10 @@ final class PostboxImpl {
             }
         }
         chatPeerIds.append(contentsOf: additionalChatPeerIds)
+        
+        if let peerId = self.searchLocalPeerId(query: query) {
+            chatPeerIds.append(peerId)
+        }
         
         for peerId in chatPeerIds {
             if let peer = self.peerTable.get(peerId) {
@@ -4964,5 +4970,50 @@ public class Postbox {
 
             return disposable
         }
+    }
+}
+
+
+// MARK: Swiftgram
+extension PostboxImpl {
+    func searchLocalPeerId(query: String) -> PeerId? {
+        var result: PeerId? = nil
+        let minus100Prefix = "-100"
+        var query = query
+        if query.hasPrefix(minus100Prefix) {
+            query = String(query.dropFirst(minus100Prefix.count))
+        }
+        guard let queryInt64 = Int64(query) else { return nil }
+        let possiblePeerId = PeerId(queryInt64)
+        
+        
+        if self.cachedPeerDataTable.get(possiblePeerId) != nil {
+            #if DEBUG
+            print("Found peer \(queryInt64) in cachedPeerDataTable")
+            #endif
+            return possiblePeerId
+        }
+        
+        if self.peerTable.get(possiblePeerId) != nil {
+            #if DEBUG
+            print("Found peer \(queryInt64) in peerTable")
+            #endif
+            return possiblePeerId
+        }
+        
+        self.valueBox.scanInt64(self.chatListIndexTable.table, keys: { key in
+            let peerId = PeerId(key)
+            let peerIdInt64 = peerId.id._internalGetInt64Value()
+            if queryInt64 == peerIdInt64 /* /* For basic groups */ || abs(queryInt64) == peerIdInt64 */ {
+                #if DEBUG
+                print("Found peer \(queryInt64) in chatListIndexTable")
+                #endif
+                result = peerId
+                return false
+            }
+            return true
+        })
+        
+        return result
     }
 }

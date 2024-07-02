@@ -145,6 +145,16 @@
     return TGTintedImage([self gifIcon], [self accentColor]);
 }
 
++ (UIImage *)telescopeIcon
+{
+    return TGComponentsImageNamed(@"RecordVideoIconOverlay@2x.png");
+}
+
++ (UIImage *)telescopeActiveIcon
+{
+    return TGTintedImage(TGTintedImage([self telescopeIcon], [self toolbarIconColor]), [self accentColor]);
+}
+
 + (UIImage *)gifIcon
 {
     return TGTintedImage([UIImage imageNamed:@"Editor/Gif"], [self toolbarIconColor]);

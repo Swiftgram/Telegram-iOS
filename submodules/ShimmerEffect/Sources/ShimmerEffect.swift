@@ -437,12 +437,12 @@ public final class ShimmerEffectNode: ASDisplayNode {
                 self.view.mask = self.foregroundNode.view
             }
         } else {
-            if self.view.mask != nil {
-                self.view.mask = nil
+            //if self.view.mask != nil {
+            //    self.view.mask = nil
                 if self.foregroundNode.supernode == nil {
                     self.addSubnode(self.foregroundNode)
                 }
-            }
+            //}
         }
         
         self.backgroundNode.frame = CGRect(origin: CGPoint(), size: size)

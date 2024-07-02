@@ -289,7 +289,7 @@ func _internal_getSearchMessageCount(account: Account, location: SearchMessagesL
     }
 }
 
-func _internal_searchMessages(account: Account, location: SearchMessagesLocation, query: String, state: SearchMessagesState?, centerId: MessageId?, limit: Int32 = 100) -> Signal<(SearchMessagesResult, SearchMessagesState), NoError> {
+func _internal_searchMessages(account: Account, location: SearchMessagesLocation, query: String, state: SearchMessagesState?, centerId: MessageId?, limit: Int32 = 100, forceLocal: Bool = false) -> Signal<(SearchMessagesResult, SearchMessagesState), NoError> {
     if case let .peer(peerId, fromId, tags, reactions, threadId, minDate, maxDate) = location, fromId == nil, tags == nil, peerId == account.peerId, let reactions, let reaction = reactions.first, (minDate == nil || minDate == 0), (maxDate == nil || maxDate == 0) {
         return account.postbox.transaction { transaction -> (SearchMessagesResult, SearchMessagesState) in
             let messages = transaction.getMessagesWithCustomTag(peerId: peerId, namespace: Namespaces.Message.Cloud, threadId: threadId, customTag: ReactionsMessageAttribute.messageTag(reaction: reaction), from: MessageIndex.upperBound(peerId: peerId, namespace: Namespaces.Message.Cloud), includeFrom: false, to: MessageIndex.lowerBound(peerId: peerId, namespace: Namespaces.Message.Cloud), limit: 500)
@@ -320,14 +320,31 @@ func _internal_searchMessages(account: Account, location: SearchMessagesLocation
     let remoteSearchResult: Signal<(Api.messages.Messages?, Api.messages.Messages?), NoError>
     switch location {
         case let .peer(peerId, fromId, tags, reactions, threadId, minDate, maxDate):
-            if peerId.namespace == Namespaces.Peer.SecretChat {
+            if peerId.namespace == Namespaces.Peer.SecretChat || forceLocal {
                 return account.postbox.transaction { transaction -> (SearchMessagesResult, SearchMessagesState) in
                     var readStates: [PeerId: CombinedPeerReadState] = [:]
                     var threadInfo: [MessageId: MessageHistoryThreadData] = [:]
                     if let readState = transaction.getCombinedPeerReadState(peerId) {
                         readStates[peerId] = readState
                     }
-                    let result = transaction.searchMessages(peerId: peerId, query: query, tags: tags)
+                    // MARK: Swiftgram
+                    var result: [Message] = []
+                    if forceLocal {
+                        transaction.withAllMessages(peerId: peerId, reversed: true, { message in
+                            if result.count >= limit {
+                                return false
+                            }
+                            if let tags = tags, message.tags != tags {
+                                return true
+                            }
+                            if message.text.contains(query) {
+                                result.append(message)
+                            }
+                            return true
+                        })
+                    } else {
+                        result = transaction.searchMessages(peerId: peerId, query: query, tags: tags)
+                    }
                     
                     for message in result {
                         for attribute in message.attributes {

@@ -3,6 +3,8 @@
 #import <LegacyComponents/TGModernGalleryImageItemImageView.h>
 #import <AVFoundation/AVFoundation.h>
 
+typedef void (^CompletionBlock)(void);
+
 @protocol TGMediaEditableItem;
 @protocol TGPhotoDrawingEntitiesView;
 
@@ -23,6 +25,7 @@
 
 - (void)setPlayButtonHidden:(bool)hidden animated:(bool)animated;
 - (void)toggleSendAsGif;
+- (void)toggleSendAsTelescope:(bool)canSendAsTelescope dismissParent:(CompletionBlock)dismissParent;
 
 - (void)setScrubbingPanelApperanceLocked:(bool)locked;
 - (void)setScrubbingPanelHidden:(bool)hidden animated:(bool)animated;

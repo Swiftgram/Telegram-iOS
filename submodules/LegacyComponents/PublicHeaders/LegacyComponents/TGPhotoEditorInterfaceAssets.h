@@ -29,6 +29,8 @@
 + (UIImage *)gifActiveIcon;
 + (UIImage *)muteIcon;
 + (UIImage *)muteActiveIcon;
++ (UIImage *)telescopeIcon;
++ (UIImage *)telescopeActiveIcon;
 + (UIImage *)qualityIconForPreset:(TGMediaVideoConversionPreset)preset;
 + (UIImage *)timerIconForValue:(NSInteger)value;
 + (UIImage *)eraserIcon;

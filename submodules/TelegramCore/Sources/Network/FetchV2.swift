@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import Postbox
 import SwiftSignalKit
@@ -335,9 +336,9 @@ private final class FetchImpl {
             }
             
             if isStory {
-                self.defaultPartSize = 512 * 1024
+                self.defaultPartSize = getSGDownloadPartSize(512 * 1024)
             } else {
-                self.defaultPartSize = 128 * 1024
+                self.defaultPartSize = getSGDownloadPartSize(128 * 1024)
             }
             self.cdnPartSize = 128 * 1024
             
@@ -380,7 +381,7 @@ private final class FetchImpl {
                     maxPartSize: 1 * 1024 * 1024,
                     partAlignment: 4 * 1024,
                     partDivision: 1 * 1024 * 1024,
-                    maxPendingParts: 6
+                    maxPendingParts: getSGMaxPendingParts(6)
                 ))
             }
             guard let state = self.state else {
@@ -613,7 +614,7 @@ private final class FetchImpl {
                             maxPartSize: self.cdnPartSize * 2,
                             partAlignment: self.cdnPartSize,
                             partDivision: 1 * 1024 * 1024,
-                            maxPendingParts: 6
+                            maxPendingParts: getSGMaxPendingParts(6)
                         ))
                         self.update()
                     }, error: { [weak self] error in
@@ -661,7 +662,7 @@ private final class FetchImpl {
                                 maxPartSize: self.defaultPartSize,
                                 partAlignment: 4 * 1024,
                                 partDivision: 1 * 1024 * 1024,
-                                maxPendingParts: 6
+                                maxPendingParts: getSGMaxPendingParts(6)
                             ))
                             
                             self.update()
@@ -837,7 +838,7 @@ private final class FetchImpl {
                             maxPartSize: self.cdnPartSize * 2,
                             partAlignment: self.cdnPartSize,
                             partDivision: 1 * 1024 * 1024,
-                            maxPendingParts: 6
+                            maxPendingParts: getSGMaxPendingParts(6)
                         ))
                     case let .cdnRefresh(cdnData, refreshToken):
                         self.state = .reuploadingToCdn(ReuploadingToCdnState(
