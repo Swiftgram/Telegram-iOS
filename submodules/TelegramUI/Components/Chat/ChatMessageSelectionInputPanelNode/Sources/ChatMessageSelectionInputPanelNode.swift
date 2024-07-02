@@ -65,6 +65,9 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
     private let deleteButton: HighlightableButtonNode
     private let reportButton: HighlightableButtonNode
     private let forwardButton: HighlightableButtonNode
+    // MARK: Swiftgram
+    private let cloudButton: HighlightableButtonNode
+    private let forwardHideNamesButton: HighlightableButtonNode
     private let shareButton: HighlightableButtonNode
     private let tagButton: HighlightableButtonNode
     private let tagEditButton: HighlightableButtonNode
@@ -106,7 +109,16 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
         self.forwardButton = HighlightableButtonNode(pointerStyle: .rectangle(CGSize(width: 56.0, height: 40.0)))
         self.forwardButton.isAccessibilityElement = true
         self.forwardButton.accessibilityLabel = strings.VoiceOver_MessageContextForward
+
+        // MARK: Swiftgram
+        self.cloudButton = HighlightableButtonNode(pointerStyle: .rectangle(CGSize(width: 56.0, height: 40.0)))
+        self.cloudButton.isAccessibilityElement = true
+        self.cloudButton.accessibilityLabel = "Save To Cloud"
         
+        self.forwardHideNamesButton = HighlightableButtonNode(pointerStyle: .rectangle(CGSize(width: 56.0, height: 40.0)))
+        self.forwardHideNamesButton.isAccessibilityElement = true
+        self.forwardHideNamesButton.accessibilityLabel = "Hide Sender Name"
+
         self.shareButton = HighlightableButtonNode(pointerStyle: .rectangle(CGSize(width: 56.0, height: 40.0)))
         self.shareButton.isAccessibilityElement = true
         self.shareButton.accessibilityLabel = strings.VoiceOver_MessageContextShare
@@ -150,6 +162,19 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
         self.forwardButton.isImplicitlyDisabled = true
         self.shareButton.isImplicitlyDisabled = true
         
+        // MARK: Swiftgram
+        self.cloudButton.setImage(generateTintedImage(image: UIImage(bundleImageName: "SaveToCloud"), color: theme.chat.inputPanel.panelControlAccentColor), for: [.normal])
+        self.cloudButton.setImage(generateTintedImage(image: UIImage(bundleImageName: "SaveToCloud"), color: theme.chat.inputPanel.panelControlDisabledColor), for: [.disabled])
+        self.addSubnode(self.cloudButton)
+        self.cloudButton.isImplicitlyDisabled = true
+        self.cloudButton.addTarget(self, action: #selector(self.cloudButtonPressed), forControlEvents: .touchUpInside)
+        
+        self.forwardHideNamesButton.setImage(generateTintedImage(image: UIImage(bundleImageName: "Avatar/AnonymousSenderIcon"), color: theme.chat.inputPanel.panelControlAccentColor, customSize: CGSize(width: 28.0, height: 28.0)), for: [.normal])
+        self.forwardHideNamesButton.setImage(generateTintedImage(image: UIImage(bundleImageName: "Avatar/AnonymousSenderIcon"), color: theme.chat.inputPanel.panelControlDisabledColor, customSize: CGSize(width: 28.0, height: 28.0)), for: [.disabled])
+        self.addSubnode(self.forwardHideNamesButton)
+        self.forwardHideNamesButton.isImplicitlyDisabled = true
+        self.forwardHideNamesButton.addTarget(self, action: #selector(self.forwardHideNamesButtonPressed), forControlEvents: .touchUpInside)
+        
         self.deleteButton.addTarget(self, action: #selector(self.deleteButtonPressed), forControlEvents: .touchUpInside)
         self.reportButton.addTarget(self, action: #selector(self.reportButtonPressed), forControlEvents: .touchUpInside)
         self.forwardButton.addTarget(self, action: #selector(self.forwardButtonPressed), forControlEvents: .touchUpInside)
@@ -164,6 +189,9 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
     
     private func updateActions() {
         self.forwardButton.isEnabled = self.selectedMessages.count != 0
+        // MARK: Swiftgram
+        self.cloudButton.isEnabled = self.forwardButton.isEnabled
+        self.forwardHideNamesButton.isEnabled = self.forwardButton.isEnabled
         
         if self.selectedMessages.isEmpty {
             self.actions = nil
@@ -194,6 +222,11 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
             self.reportButton.setImage(generateTintedImage(image: UIImage(bundleImageName: "Chat/Input/Accessory Panels/MessageSelectionReport"), color: theme.chat.inputPanel.panelControlDisabledColor), for: [.disabled])
             self.forwardButton.setImage(generateTintedImage(image: UIImage(bundleImageName: "Chat/Input/Accessory Panels/MessageSelectionForward"), color: theme.chat.inputPanel.panelControlAccentColor), for: [.normal])
             self.forwardButton.setImage(generateTintedImage(image: UIImage(bundleImageName: "Chat/Input/Accessory Panels/MessageSelectionForward"), color: theme.chat.inputPanel.panelControlDisabledColor), for: [.disabled])
+            // MARK: Swiftgram
+            self.cloudButton.setImage(generateTintedImage(image: UIImage(bundleImageName: "SaveToCloud"), color: theme.chat.inputPanel.panelControlAccentColor), for: [.normal])
+            self.cloudButton.setImage(generateTintedImage(image: UIImage(bundleImageName: "SaveToCloud"), color: theme.chat.inputPanel.panelControlDisabledColor), for: [.disabled])
+            self.forwardHideNamesButton.setImage(generateTintedImage(image: UIImage(bundleImageName: "Avatar/AnonymousSenderIcon"), color: theme.chat.inputPanel.panelControlAccentColor, customSize: CGSize(width: 28.0, height: 28.0)), for: [.normal])
+            self.forwardHideNamesButton.setImage(generateTintedImage(image: UIImage(bundleImageName: "Avatar/AnonymousSenderIcon"), color: theme.chat.inputPanel.panelControlDisabledColor, customSize: CGSize(width: 28.0, height: 28.0)), for: [.disabled])
             self.shareButton.setImage(generateTintedImage(image: UIImage(bundleImageName: "Chat/Input/Accessory Panels/MessageSelectionAction"), color: theme.chat.inputPanel.panelControlAccentColor), for: [.normal])
             self.shareButton.setImage(generateTintedImage(image: UIImage(bundleImageName: "Chat/Input/Accessory Panels/MessageSelectionAction"), color: theme.chat.inputPanel.panelControlDisabledColor), for: [.disabled])
             self.tagButton.setImage(generateTintedImage(image: UIImage(bundleImageName: "Chat/Input/Accessory Panels/WebpageIcon"), color: theme.chat.inputPanel.panelControlAccentColor), for: [.normal])
@@ -218,7 +251,30 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
         if let actions = self.actions, actions.isCopyProtected {
             self.interfaceInteraction?.displayCopyProtectionTip(self.forwardButton, false)
         } else if !self.forwardButton.isImplicitlyDisabled {
-            self.interfaceInteraction?.forwardSelectedMessages()
+            self.interfaceInteraction?.forwardSelectedMessages(nil)
+        }
+    }
+    
+    // MARK: Swiftgram
+    @objc private func cloudButtonPressed() {
+        if let _ = self.presentationInterfaceState?.renderedPeer?.peer as? TelegramSecretChat {
+            return
+        }
+        if let actions = self.actions, actions.isCopyProtected {
+            self.interfaceInteraction?.displayCopyProtectionTip(self.cloudButton, false)
+        } else {
+            self.interfaceInteraction?.forwardSelectedMessages("toCloud")
+        }
+    }
+
+    @objc private func forwardHideNamesButtonPressed() {
+        if let _ = self.presentationInterfaceState?.renderedPeer?.peer as? TelegramSecretChat {
+            return
+        }
+        if let actions = self.actions, actions.isCopyProtected {
+            self.interfaceInteraction?.displayCopyProtectionTip(self.forwardHideNamesButton, false)
+        } else {
+            self.interfaceInteraction?.forwardSelectedMessages("hideNames")
         }
     }
     
@@ -365,6 +421,9 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
             self.deleteButton.isEnabled = false
             self.reportButton.isEnabled = false
             self.forwardButton.isImplicitlyDisabled = !actions.options.contains(.forward)
+            // MARK: Swiftgram
+            self.cloudButton.isImplicitlyDisabled = self.forwardButton.isImplicitlyDisabled
+            self.forwardHideNamesButton.isImplicitlyDisabled = self.forwardButton.isImplicitlyDisabled
             
             if self.peerMedia {
                 self.deleteButton.isEnabled = !actions.options.intersection([.deleteLocally, .deleteGlobally]).isEmpty
@@ -404,6 +463,9 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
             self.tagEditButton.isHidden = true
             self.tagButton.isHidden = true
             self.tagEditButton.isHidden = true
+            // MARK: Swiftgram
+            self.cloudButton.isImplicitlyDisabled = self.forwardButton.isImplicitlyDisabled
+            self.forwardHideNamesButton.isImplicitlyDisabled = self.forwardButton.isImplicitlyDisabled
         }
         
         if self.reportButton.isHidden || (self.peerMedia && self.deleteButton.isHidden && self.reportButton.isHidden) {
@@ -426,7 +488,7 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
             tagButton = self.tagEditButton
         }
         
-        let buttons: [HighlightableButtonNode]
+        var buttons: [HighlightableButtonNode]
         if self.reportButton.isHidden {
             if let tagButton {
                 buttons = [
@@ -477,6 +539,18 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
                 ]
             }
         }
+        
+        // MARK: Swiftgram
+        reportButton.isHidden = true
+        buttons = [
+            self.deleteButton,
+            self.reportButton,
+            self.tagButton,
+            self.shareButton,
+            self.cloudButton,
+            self.forwardHideNamesButton,
+            self.forwardButton
+        ].filter { !$0.isHidden }
         
         let buttonSize = CGSize(width: 57.0, height: panelHeight)
         

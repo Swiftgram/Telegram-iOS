@@ -369,6 +369,7 @@ public enum DeviceMetrics: CaseIterable, Equatable {
         if case .iPhoneX = self {
             return false
         }
-        return self.hasTopNotch
+        // MARK: Swiftgram
+        return self.hasTopNotch || self.hasDynamicIsland
     }
 }

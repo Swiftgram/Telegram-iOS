@@ -302,7 +302,7 @@ MTAtomic *sharedFetchConfigKeychains() {
     apiEnvironment.disableUpdates = true;
     apiEnvironment.langPack = currentContext.apiEnvironment.langPack;
     
-    MTContext *context = [[MTContext alloc] initWithSerialization:currentContext.serialization encryptionProvider:currentContext.encryptionProvider apiEnvironment:apiEnvironment isTestingEnvironment:currentContext.isTestingEnvironment useTempAuthKeys:false];
+    MTContext *context = [[MTContext alloc] initWithSerialization:currentContext.serialization encryptionProvider:currentContext.encryptionProvider apiEnvironment:apiEnvironment isTestingEnvironment:currentContext.isTestingEnvironment useTempAuthKeys:false forceLocalDNS:currentContext.forceLocalDNS];
     
     context.makeTcpConnectionInterface = currentContext.makeTcpConnectionInterface;
     

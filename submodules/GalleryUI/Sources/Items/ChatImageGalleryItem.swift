@@ -708,6 +708,21 @@ final class ChatImageGalleryItemNode: ZoomableContentGalleryItemNode {
                             controller.present(UndoOverlayController(presentationData: strongSelf.presentationData, content: .mediaSaved(text: strongSelf.presentationData.strings.Gallery_ImageSaved), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .window(.root))
                         })
                     })))
+                    // MARK: Swiftgram
+                    items.append(.action(ContextMenuActionItem(text: self.presentationData.strings.Conversation_ContextMenuCopy, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Copy"), color: theme.actionSheet.primaryTextColor) }, action: { [weak self] _, f in
+                        f(.default)
+                        
+                        let _ = (SaveToCameraRoll.copyToPasteboard(context: context, postbox: context.account.postbox, userLocation: .peer(message.id.peerId), mediaReference: media)
+                        |> deliverOnMainQueue).start(completed: { [weak self] in
+                            guard let strongSelf = self else {
+                                return
+                            }
+                            guard let controller = strongSelf.galleryController() else {
+                                return
+                            }
+                            controller.present(UndoOverlayController(presentationData: strongSelf.presentationData, content: .mediaSaved(text: strongSelf.presentationData.strings.Conversation_ImageCopied), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .window(.root))
+                        })
+                    })))
                 }
             }
             

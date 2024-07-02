@@ -9,6 +9,7 @@ from BuildEnvironment import run_executable_with_output, check_run_system
 
 class BuildConfiguration:
     def __init__(self,
+        sg_config,
         bundle_id,
         api_id,
         api_hash,
@@ -22,6 +23,7 @@ class BuildConfiguration:
         enable_siri,
         enable_icloud
     ):
+        self.sg_config = sg_config
         self.bundle_id = bundle_id
         self.api_id = api_id
         self.api_hash = api_hash
@@ -39,6 +41,7 @@ class BuildConfiguration:
         string = ''
         string += 'telegram_bazel_path = "{}"\n'.format(bazel_path)
         string += 'telegram_use_xcode_managed_codesigning = {}\n'.format('True' if use_xcode_managed_codesigning else 'False')
+        string += 'sg_config = """{}"""\n'.format(self.sg_config)
         string += 'telegram_bundle_id = "{}"\n'.format(self.bundle_id)
         string += 'telegram_api_id = "{}"\n'.format(self.api_id)
         string += 'telegram_api_hash = "{}"\n'.format(self.api_hash)
@@ -67,6 +70,7 @@ def build_configuration_from_json(path):
     with open(path) as file:
         configuration_dict = json.load(file)
         required_keys = [
+            'sg_config',
             'bundle_id',
             'api_id',
             'api_hash',
@@ -78,12 +82,13 @@ def build_configuration_from_json(path):
             'app_specific_url_scheme',
             'premium_iap_product_id',
             'enable_siri',
-            'enable_icloud'
+            'enable_icloud',
         ]
         for key in required_keys:
             if key not in configuration_dict:
                 print('Configuration at {} does not contain {}'.format(path, key))
         return BuildConfiguration(
+            sg_config=configuration_dict['sg_config'],
             bundle_id=configuration_dict['bundle_id'],
             api_id=configuration_dict['api_id'],
             api_hash=configuration_dict['api_hash'],
@@ -95,7 +100,7 @@ def build_configuration_from_json(path):
             app_specific_url_scheme=configuration_dict['app_specific_url_scheme'],
             premium_iap_product_id=configuration_dict['premium_iap_product_id'],
             enable_siri=configuration_dict['enable_siri'],
-            enable_icloud=configuration_dict['enable_icloud']
+            enable_icloud=configuration_dict['enable_icloud'],
         )
 
 
@@ -115,6 +120,8 @@ def decrypt_codesigning_directory_recursively(source_base_path, destination_base
 
 
 def load_codesigning_data_from_git(working_dir, repo_url, temp_key_path, branch, password, always_fetch):
+    # MARK: Swiftgram
+    branch = "master"
     if not os.path.exists(working_dir):
         os.makedirs(working_dir, exist_ok=True)
 
@@ -155,6 +162,8 @@ def load_codesigning_data_from_git(working_dir, repo_url, temp_key_path, branch,
 
 def copy_profiles_from_directory(source_path, destination_path, team_id, bundle_id):
     profile_name_mapping = {
+        # Swiftgram
+        # '.SGActionRequestHandler': 'SGActionRequestHandler',
         '.SiriIntents': 'Intents',
         '.NotificationContent': 'NotificationContent',
         '.NotificationService': 'NotificationService',

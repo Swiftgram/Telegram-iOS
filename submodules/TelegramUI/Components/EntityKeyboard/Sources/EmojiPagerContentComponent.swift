@@ -586,8 +586,8 @@ public final class EmojiPagerContentComponent: Component {
     public let animationCache: AnimationCache
     public let animationRenderer: MultiAnimationRenderer
     public let inputInteractionHolder: InputInteractionHolder
-    public let panelItemGroups: [ItemGroup]
-    public let contentItemGroups: [ItemGroup]
+    public var panelItemGroups: [ItemGroup]
+    public var contentItemGroups: [ItemGroup]
     public let itemLayoutType: ItemLayoutType
     public let itemContentUniqueId: ContentId?
     public let searchState: SearchState
