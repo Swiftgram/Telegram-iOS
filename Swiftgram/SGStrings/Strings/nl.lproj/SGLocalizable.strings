@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "Inhoudsinstellingen";
+
+"Settings.Tabs.Header" = "TABS";
+"Settings.Tabs.HideTabBar" = "Tabbladbalk verbergen";
+"Settings.Tabs.ShowContacts" = "Toon Contacten Tab";
+"Settings.Tabs.ShowNames" = "Show Tab Names";
+
+"Settings.Folders.BottomTab" = "Mappen onderaan";
+"Settings.Folders.BottomTabStyle" = "Onderste mappenstijl";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "Verberg \"%@\"";
+"Settings.Folders.RememberLast" = "Laatste map openen";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram zal de laatst gebruikte map openen wanneer u de app herstart of van account wisselt.";
+
+"Settings.Folders.CompactNames" = "Kleinere afstand";
+"Settings.Folders.AllChatsTitle" = "\"Alle Chats\" titel";
+"Settings.Folders.AllChatsTitle.short" = "Kort";
+"Settings.Folders.AllChatsTitle.long" = "Lang";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Standaard";
+
+
+"Settings.ChatList.Header" = "CHAT LIJST";
+"Settings.CompactChatList" = "Compacte Chat Lijst";
+
+"Settings.Profiles.Header" = "PROFILES";
+
+"Settings.Stories.Hide" = "Verberg Verhalen";
+"Settings.Stories.WarnBeforeView" = "Vragen voor bekijken";
+"Settings.Stories.DisableSwipeToRecord" = "Swipe om op te nemen uitschakelen";
+
+"Settings.Translation.QuickTranslateButton" = "Snelle Vertaalknop";
+
+"Stories.Warning.Author" = "Auteur";
+"Stories.Warning.ViewStory" = "Bekijk Verhaal?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ ZAL KUNNEN ZIEN dat je hun Verhaal hebt bekeken.";
+"Stories.Warning.NoticeStealth" = "%@ zal niet kunnen zien dat je hun Verhaal hebt bekeken.";
+
+"Settings.Photo.Quality.Notice" = "Kwaliteit van geüploade foto's en verhalen.";
+"Settings.Photo.SendLarge" = "Verstuur grote foto's";
+"Settings.Photo.SendLarge.Notice" = "Verhoog de zijlimiet bij gecomprimeerde afbeeldingen naar 2560px.";
+
+"Settings.VideoNotes.Header" = "RONDE VIDEO'S";
+"Settings.VideoNotes.StartWithRearCam" = "Start met achtercamera";
+
+"Settings.CustomColors.Header" = "ACCOUNTKLEUREN";
+"Settings.CustomColors.Saturation" = "VERZADIGING";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Zet op 0%% om accountkleuren uit te schakelen.";
+
+"Settings.UploadsBoost" = "Upload Boost";
+"Settings.DownloadsBoost" = "Download Boost";
+"Settings.DownloadsBoost.Notice" = "Verhoogt het aantal gelijktijdige verbindingen en de grootte van bestandsgedeelten. Als uw netwerk de belasting niet aankan, probeer dan verschillende opties die geschikt zijn voor uw verbinding.";
+"Settings.DownloadsBoost.none" = "Uitgeschakeld";
+"Settings.DownloadsBoost.medium" = "Gemiddeld";
+"Settings.DownloadsBoost.maximum" = "Maximaal";
+
+"Settings.ShowProfileID" = "Toon profiel ID";
+"Settings.ShowDC" = "Toon datacentrum";
+"Settings.ShowCreationDate" = "Toon Chat Aanmaakdatum";
+"Settings.ShowCreationDate.Notice" = "De aanmaakdatum kan onbekend zijn voor sommige chatten.";
+
+"Settings.ShowRegDate" = "Toon registratiedatum";
+"Settings.ShowRegDate.Notice" = "De registratiedatum is ongeveer hetzelfde.";
+
+"Settings.SendWithReturnKey" = "Verstuur met 'return'-toets";
+"Settings.HidePhoneInSettingsUI" = "Verberg telefoon in Instellingen";
+"Settings.HidePhoneInSettingsUI.Notice" = "Dit verbergt alleen je telefoonnummer in de instellingen interface. Ga naar Privacy en Beveiliging om het voor anderen te verbergen.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "Automatisch vergrendelen na 5 seconden";
+
+"ProxySettings.UseSystemDNS" = "Gebruik systeem DNS";
+"ProxySettings.UseSystemDNS.Notice" = "Gebruik systeem DNS om time-out te omzeilen als je geen toegang hebt tot Google DNS";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "Je hebt **geen %@ nodig**!";
+"Common.RestartRequired" = "Herstart vereist";
+"Common.RestartNow" = "Nu herstarten";
+"Common.OpenTelegram" = "Open Telegram";
+"Common.UseTelegramForPremium" = "Om Telegram Premium te krijgen moet je de officiële Telegram app gebruiken. Zodra je Telegram Premium hebt ontvangen, zullen alle functies ervan beschikbaar komen in Swiftgram.";
+
+"Message.HoldToShowOrReport" = "Houd vast om te Tonen of te Rapporteren.";
+
+"Auth.AccountBackupReminder" = "Zorg ervoor dat je een back-up toegangsmethode hebt. Houd een SIM voor SMS of een extra sessie ingelogd om buitensluiting te voorkomen.";
+"Auth.UnofficialAppCodeTitle" = "Je kunt de code alleen krijgen met de officiële app";
+
+"Settings.SmallReactions" = "Kleine reacties";
+"Settings.HideReactions" = "Verberg Reacties";
+
+"ContextMenu.SaveToCloud" = "Opslaan in de Cloud";
+"ContextMenu.SelectFromUser" = "Selecteer van Auteur";
+
+"Settings.ContextMenu" = "CONTEXTMENU";
+"Settings.ContextMenu.Notice" = "Uitgeschakelde items zijn beschikbaar in het 'Swiftgram'-submenu.";
+
+
+"Settings.ChatSwipeOptions" = "Veegopties voor chatlijst";
+"Settings.DeleteChatSwipeOption" = "Veeg om Chat te Verwijderen";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Trek naar het volgende ongelezen kanaal";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Trek naar Volgend Onderwerp";
+"Settings.GalleryCamera" = "Camera in Galerij";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" knop";
+"Settings.SnapDeletionEffect" = "Verwijderde Berichten Effecten";
+
+"Settings.Stickers.Size" = "GROOTTE";
+"Settings.Stickers.Timestamp" = "Tijdstempel weergeven";
+
+"Settings.RecordingButton" = "Spraakopname knop";
+
+"Settings.DefaultEmojisFirst" = "Standaardemoji's prioriteren";
+"Settings.DefaultEmojisFirst.Notice" = "Toon standaardemoji's vóór premium in emoji-toetsenbord";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "aangemaakt: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "Lid geworden %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Geregistreerd";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Dubbelklik om bericht te bewerken";
+
+"Settings.wideChannelPosts" = "Brede berichten in kanalen";
+"Settings.ForceEmojiTab" = "Emoji-toetsenbord standaard";
+
+"Settings.forceBuiltInMic" = "Forceer Apparaatmicrofoon";
+"Settings.forceBuiltInMic.Notice" = "Indien ingeschakeld, zal de app alleen de apparaatmicrofoon gebruiken, zelfs als er hoofdtelefoons zijn aangesloten.";
+
+"Settings.hideChannelBottomButton" = "Verberg Kanaal Onderste Paneel";
+
+"Settings.CallConfirmation" = "Belbevestiging";
+"Settings.CallConfirmation.Notice" = "Swiftgram zal om uw bevestiging vragen voordat er een oproep wordt gedaan.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Een oproep maken?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Een video-oproep maken?";
+
+"MutualContact.Label" = "gemeenschappelijke contactpersoon";
+
+"Settings.swipeForVideoPIP" = "Video PIP met veeg";
+"Settings.swipeForVideoPIP.Notice" = "Als ingeschakeld, opent het swipen van video het in de modus Beeld-in-Beeld.";

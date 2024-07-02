@@ -1,0 +1,25 @@
+diff --git a/tools/swift_stdlib_tool/swift_stdlib_tool.py b/tools/swift_stdlib_tool/swift_stdlib_tool.py
+index fbb7f4fb..5a2277c5 100644
+--- a/tools/swift_stdlib_tool/swift_stdlib_tool.py
++++ b/tools/swift_stdlib_tool/swift_stdlib_tool.py
+@@ -134,6 +134,20 @@ def _copy_swift_stdlibs(binaries_to_scan, sdk_platform, destination_path):
+     if os.path.exists(libswiftcore_path):
+       os.remove(libswiftcore_path)
+ 
++  # MARK: Swiftgram
++  if sdk_platform == "iphoneos":
++    # Copy the concurrency runtime to the destination path.
++    _, stdout, stderr = execute.execute_and_filter_output(
++      [
++      "ditto",
++      f"{developer_dir}/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.5/iphoneos/libswift_Concurrency.dylib",
++        os.path.join(destination_path, "libswift_Concurrency.dylib")
++      ], raise_on_failure=True)
++    if stderr:
++      print(stderr)
++    if stdout:
++      print(stdout)
++
+ 
+ def _lipo_exec_files(exec_files, target_archs, strip_bitcode, source_path,
+                      destination_path):

@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import Photos
@@ -121,7 +122,7 @@ public func fetchPhotoLibraryResource(localIdentifier: String, width: Int32?, he
             if let width, let height {
                 size = CGSize(width: CGFloat(width), height: CGFloat(height))
             } else {
-                if hd {
+                if hd || SGSimpleSettings.shared.sendLargePhotos /* MARK: Swiftgram */ {
                     size = CGSize(width: 2560.0, height: 2560.0)
                 } else {
                     size = CGSize(width: 1280.0, height: 1280.0)
@@ -182,7 +183,7 @@ public func fetchPhotoLibraryResource(localIdentifier: String, width: Int32?, he
                                     defer {
                                         TempBox.shared.dispose(tempFile)
                                     }
-                                    if let scaledImage = scaledImage, let data = compressImageToJPEG(scaledImage, quality: 0.6, tempFilePath: tempFile.path) {
+                                    if let scaledImage = scaledImage, let data = compressImageToJPEG(scaledImage, quality: Float(SGSimpleSettings.shared.outgoingPhotoQuality) / 100.0, tempFilePath: tempFile.path) {
     #if DEBUG
                                         print("compression completion \((CACurrentMediaTime() - startTime) * 1000.0) ms")
     #endif
@@ -192,7 +193,7 @@ public func fetchPhotoLibraryResource(localIdentifier: String, width: Int32?, he
                                         subscriber.putCompletion()
                                     }
                                 case .jxl:
-                                    if let scaledImage = scaledImage, let data = compressImageToJPEGXL(scaledImage, quality: Int(quality ?? 75)) {
+                                    if let scaledImage = scaledImage, let data = compressImageToJPEGXL(scaledImage, quality: Int(SGSimpleSettings.shared.outgoingPhotoQuality)) {
     #if DEBUG
                                         print("jpegxl compression completion \((CACurrentMediaTime() - startTime) * 1000.0) ms")
     #endif

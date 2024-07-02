@@ -8,7 +8,7 @@
 
 @implementation TGBridgeBotSignals
 
-+ (SSignal *)botInfoForUserId:(int32_t)userId
++ (SSignal *)botInfoForUserId:(int64_t)userId
 {
     SSignal *cachedSignal = [[SSignal alloc] initWithGenerator:^id<SDisposable>(SSubscriber *subscriber)
     {

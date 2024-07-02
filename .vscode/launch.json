@@ -8,6 +8,22 @@
             "type": "swift",
             "request": "launch",
             "args": [],
+            "cwd": "${workspaceFolder}",
+            "name": "Run Swiftgram",
+            "preLaunchTask": "sweetpad: launch"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "name": "Debug Swiftgram",
+            "preLaunchTask": "sweetpad: debugging-launch"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
             "cwd": "${workspaceFolder:telegram-ios}",
             "name": "Debug Telegram",
             "program": "${workspaceFolder:telegram-ios}/.build/debug/Telegram",

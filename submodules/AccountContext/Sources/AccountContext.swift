@@ -1,3 +1,5 @@
+import SGSimpleSettings
+import SGIAP
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -890,6 +892,8 @@ public protocol MediaEditorScreenResult {
 }
 
 public protocol TelegramRootControllerInterface: NavigationController {
+    var accountSettingsController: PeerInfoScreen? { get set }
+
     @discardableResult
     func openStoryCamera(customTarget: Stories.PendingTarget?, transitionIn: StoryCameraTransitionIn?, transitionedIn: @escaping () -> Void, transitionOut: @escaping (Stories.PendingTarget?, Bool) -> StoryCameraTransitionOut?) -> StoryCameraTransitionInCoordinator?
     func proceedWithStoryUpload(target: Stories.PendingTarget, results: [MediaEditorScreenResult], existingMedia: EngineMedia?, forwardInfo: Stories.PendingForwardInfo?, externalState: MediaEditorTransitionOutExternalState, commit: @escaping (@escaping () -> Void) -> Void)
@@ -1112,6 +1116,13 @@ public protocol SharedAccountContext: AnyObject {
     var automaticMediaDownloadSettings: Signal<MediaAutoDownloadSettings, NoError> { get }
     var currentAutodownloadSettings: Atomic<AutodownloadSettings> { get }
     var immediateExperimentalUISettings: ExperimentalUISettings { get }
+    // MARK: Swiftgram
+    var immediateSGStatus: SGStatus { get }
+    var SGIAP: SGIAPManager? { get }
+    func makeSGProController(context: AccountContext) -> ViewController
+    func makeSGPayWallController(context: AccountContext) -> ViewController?
+    func makeSGUpdateIOSController() -> ViewController
+
     var currentInAppNotificationSettings: Atomic<InAppNotificationSettings> { get }
     var currentMediaInputSettings: Atomic<MediaInputSettings> { get }
     var currentStickerSettings: Atomic<StickerSettings> { get }

@@ -17,13 +17,13 @@ final class MentionChatInputPanelItem: ListViewItem {
     fileprivate let revealed: Bool
     fileprivate let inverted: Bool
     fileprivate let peer: Peer
-    private let peerSelected: (EnginePeer) -> Void
+    let peerSelected: (EnginePeer, Bool) -> Void
     fileprivate let setPeerIdRevealed: (EnginePeer.Id?) -> Void
     fileprivate let removeRequested: (EnginePeer.Id) -> Void
     
     let selectable: Bool = true
     
-    public init(context: AccountContext, presentationData: ItemListPresentationData, inverted: Bool, peer: Peer, revealed: Bool, setPeerIdRevealed: @escaping (PeerId?) -> Void, peerSelected: @escaping (EnginePeer) -> Void, removeRequested: @escaping (PeerId) -> Void) {
+    public init(context: AccountContext, presentationData: ItemListPresentationData, inverted: Bool, peer: Peer, revealed: Bool, setPeerIdRevealed: @escaping (PeerId?) -> Void, peerSelected: @escaping (EnginePeer, Bool) -> Void, removeRequested: @escaping (PeerId) -> Void) {
         self.context = context
         self.presentationData = presentationData
         self.inverted = inverted
@@ -85,14 +85,14 @@ final class MentionChatInputPanelItem: ListViewItem {
         if self.revealed {
             self.setPeerIdRevealed(nil)
         } else {
-            self.peerSelected(EnginePeer(self.peer))
+            self.peerSelected(EnginePeer(self.peer), false)
         }
     }
 }
 
 private let avatarFont = avatarPlaceholderFont(size: 16.0)
 
-final class MentionChatInputPanelItemNode: ListViewItemNode {
+final class MentionChatInputPanelItemNode: ListViewItemNode, UIGestureRecognizerDelegate {
     static let itemHeight: CGFloat = 42.0
         
     private let avatarNode: AvatarNode
@@ -147,7 +147,16 @@ final class MentionChatInputPanelItemNode: ListViewItemNode {
         let recognizer = ItemListRevealOptionsGestureRecognizer(target: self, action: #selector(self.revealGesture(_:)))
         self.recognizer = recognizer
         recognizer.allowAnyDirection = false
+        // MARK: Swiftgram
+        recognizer.delegate = self
+        //
         self.view.addGestureRecognizer(recognizer)
+        
+        // MARK: Swiftgram
+        let longPressRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(self.longPressed(_:)))
+        longPressRecognizer.minimumPressDuration = 0.3
+        longPressRecognizer.delegate = self
+        self.view.addGestureRecognizer(longPressRecognizer)
     }
     
     override public func layoutForParams(_ params: ListViewItemLayoutParams, item: ListViewItem, previousItem: ListViewItem?, nextItem: ListViewItem?) {
@@ -328,11 +337,13 @@ final class MentionChatInputPanelItemNode: ListViewItemNode {
     }
     
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        if let recognizer = self.recognizer, otherGestureRecognizer == recognizer {
+        if gestureRecognizer is ItemListRevealOptionsGestureRecognizer && otherGestureRecognizer is UILongPressGestureRecognizer {
             return true
-        } else {
-            return false
         }
+        if gestureRecognizer is UILongPressGestureRecognizer && otherGestureRecognizer is ItemListRevealOptionsGestureRecognizer {
+            return true
+        }
+        return false
     }
     
     @objc func revealGesture(_ recognizer: ItemListRevealOptionsGestureRecognizer) {
@@ -471,5 +482,23 @@ final class MentionChatInputPanelItemNode: ListViewItemNode {
             self.hapticFeedback = HapticFeedback()
         }
         self.hapticFeedback?.impact(.medium)
+    }
+}
+
+
+
+
+
+// MARK: Swiftgram
+extension MentionChatInputPanelItemNode {
+    @objc private func longPressed(_ gestureRecognizer: UILongPressGestureRecognizer) {
+        switch gestureRecognizer.state {
+            case .began:
+                if let item = self.item {
+                    item.peerSelected(EnginePeer(item.peer), true)
+                }
+            default:
+                break
+        }
     }
 }
