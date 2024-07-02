@@ -1,9 +1,13 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+sgsrcs = [
+    "//Swiftgram/SGStatus:SGStatus"
+]
+
 swift_library(
     name = "TelegramUIPreferences",
     module_name = "TelegramUIPreferences",
-    srcs = glob([
+    srcs = sgsrcs + glob([
         "Sources/**/*.swift",
     ]),
     copts = [

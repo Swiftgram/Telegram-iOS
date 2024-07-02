@@ -2,6 +2,11 @@
 
 #import <LegacyComponents/TGVideoEditAdjustments.h>
 
+// MARK: Swiftgram
+#import <VideoToolbox/VideoToolbox.h>
+#import <MediaPlayer/MediaPlayer.h>
+//
+
 @interface TGMediaVideoFileWatcher : NSObject
 {
     NSURL *_fileURL;

@@ -1,4 +1,6 @@
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+# MARK: Swiftgram
+new_git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
 
 bazel_dep(name = "bazel_features", version = "1.30.0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
@@ -26,6 +28,14 @@ bazel_dep(name = "apple_support", repo_name = "build_bazel_apple_support")
 local_path_override(
     module_name = "apple_support",
     path = "./build-system/bazel-rules/apple_support",
+)
+
+# MARK: Swiftgram
+new_git_repository(
+    name = "flex_sdk",
+    remote = "https://github.com/FLEXTool/FLEX.git",
+    commit = "2bfba6715eff664ef84a02e8eb0ad9b5a609c684",
+    build_file = "@//Swiftgram/FLEX:FLEX.BUILD"
 )
 
 http_file(
