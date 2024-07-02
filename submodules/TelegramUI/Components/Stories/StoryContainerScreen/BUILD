@@ -1,5 +1,10 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+sgdeps = [
+    "//Swiftgram/SGStrings:SGStrings",
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings"
+]
+
 swift_library(
     name = "StoryContainerScreen",
     module_name = "StoryContainerScreen",
@@ -9,7 +14,7 @@ swift_library(
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgdeps + [
         "//submodules/Display",
         "//submodules/AsyncDisplayKit",
         "//submodules/ComponentFlow",

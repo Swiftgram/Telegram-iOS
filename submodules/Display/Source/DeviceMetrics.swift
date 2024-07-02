@@ -385,6 +385,37 @@ public enum DeviceMetrics: CaseIterable, Equatable {
         if case .iPhoneX = self {
             return false
         }
-        return self.hasTopNotch
+        // MARK: Swiftgram
+        return self.hasTopNotch || self.hasDynamicIsland
     }
+}
+
+// MARK: Swifgram
+public extension DeviceMetrics {
+    
+    var deviceModelCode: String {
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let modelCode = withUnsafePointer(to: &systemInfo.machine) {
+            $0.withMemoryRebound(to: CChar.self, capacity: 1) {
+                ptr in String.init(validatingUTF8: ptr)
+            }
+        }
+        return modelCode ?? "unknown"
+    }
+    
+    var modelHasDynamicIsland: Bool {
+        switch self.deviceModelCode {
+            case "iPhone15,2", // iPhone 14 Pro
+                 "iPhone15,3", // iPhone 14 Pro Max
+                 "iPhone15,4", // iPhone 15
+                 "iPhone15,5", // iPhone 15 Plus
+                 "iPhone16,1", // iPhone 15 Pro
+                 "iPhone16,2": // iPhone 15 Pro Max
+                return true
+            default:
+                return false
+        }
+    }
+    
 }

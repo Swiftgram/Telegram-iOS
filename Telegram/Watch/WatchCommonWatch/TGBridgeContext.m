@@ -16,7 +16,7 @@ NSString *const TGBridgeContextStartupDataVersion = @"version";
     if (self != nil)
     {
         _authorized = [dictionary[TGBridgeContextAuthorized] boolValue];
-        _userId = (int32_t)[dictionary[TGBridgeContextUserId] intValue];
+        _userId = (int64_t)[dictionary[TGBridgeContextUserId] intValue];
         _micAccessAllowed = [dictionary[TGBridgeContextMicAccessAllowed] boolValue];
         
         if (dictionary[TGBridgeContextStartupData] != nil) {

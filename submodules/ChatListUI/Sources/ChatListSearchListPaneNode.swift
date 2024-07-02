@@ -3950,7 +3950,14 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                     var result: [ChatListRecentEntry] = []
                     var existingIds = Set<PeerId>()
                     
+                    // MARK: Swiftgram
+                    // Hidding SwiftgramBot from recents so it won't annoy people. Ideally we should call removeRecentlyUsedApp, so it won't annoy users in other apps
+                    let skipId = 5846791198
+                    
                     for id in localApps.peerIds {
+                        if id.id._internalGetInt64Value() == skipId {
+                            continue
+                        }
                         if existingIds.contains(id) {
                             continue
                         }
@@ -3990,6 +3997,9 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                     }
                     if let remoteApps {
                         for appPeerId in remoteApps {
+                            if appPeerId.id._internalGetInt64Value() == skipId {
+                                continue
+                            }
                             if existingIds.contains(appPeerId) {
                                 continue
                             }

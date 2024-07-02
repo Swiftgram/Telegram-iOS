@@ -79,6 +79,8 @@ private let TitleNodeStateExpanded = 1
 final class PeerInfoHeaderNode: ASDisplayNode {
     private var context: AccountContext
     private let isPremiumDisabled: Bool
+
+    private var hidePhoneInSettings: Bool
     private weak var controller: PeerInfoScreenImpl?
     private var presentationData: PresentationData?
     private var state: PeerInfoState?
@@ -185,8 +187,9 @@ final class PeerInfoHeaderNode: ASDisplayNode {
     
     private var validLayout: (width: CGFloat, deviceMetrics: DeviceMetrics)?
     
-    init(context: AccountContext, controller: PeerInfoScreenImpl, avatarInitiallyExpanded: Bool, isOpenedFromChat: Bool, isMediaOnly: Bool, isSettings: Bool, isMyProfile: Bool, forumTopicThreadId: Int64?, chatLocation: ChatLocation) {
+    init(hidePhoneInSettings: Bool, context: AccountContext, controller: PeerInfoScreenImpl, avatarInitiallyExpanded: Bool, isOpenedFromChat: Bool, isMediaOnly: Bool, isSettings: Bool, isMyProfile: Bool, forumTopicThreadId: Int64?, chatLocation: ChatLocation) {
         self.context = context
+        self.hidePhoneInSettings = hidePhoneInSettings
         self.controller = controller
         self.isAvatarExpanded = avatarInitiallyExpanded
         self.isOpenedFromChat = isOpenedFromChat
@@ -1099,8 +1102,9 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                 title = EnginePeer(peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
             }
             title = title.replacingOccurrences(of: "\u{1160}", with: "").replacingOccurrences(of: "\u{3164}", with: "")
+            // MARK: Swiftgram
             if title.isEmpty {
-                if let peer = peer as? TelegramUser, let phone = peer.phone {
+                if let peer = peer as? TelegramUser, let phone = peer.phone, !self.hidePhoneInSettings {
                     title = formatPhoneNumber(context: self.context, number: phone)
                 } else if let addressName = peer.addressName {
                     title = "@\(addressName)"
@@ -1114,10 +1118,20 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             smallTitleAttributes = MultiScaleTextState.Attributes(font: Font.medium(28.0), color: .white, shadowColor: titleShadowColor)
             
             if self.isSettings, let user = peer as? TelegramUser {
-                var subtitle = formatPhoneNumber(context: self.context, number: user.phone ?? "")
-                
+                // MARK: Swiftgram
+                var formattedPhone = formatPhoneNumber(context: self.context, number: user.phone ?? "")
+                if !formattedPhone.isEmpty && self.hidePhoneInSettings {
+                    formattedPhone = ""
+                }
+
+                var subtitle = formattedPhone
+
                 if let mainUsername = user.addressName, !mainUsername.isEmpty {
-                    subtitle = "\(subtitle) • @\(mainUsername)"
+                    if !subtitle.isEmpty {
+                        subtitle = "\(subtitle) • @\(mainUsername)"
+                    } else {
+                        subtitle = "@\(mainUsername)"
+                    }
                 }
                 subtitleStringText = subtitle
                 subtitleAttributes = MultiScaleTextState.Attributes(font: Font.regular(17.0), color: .white)

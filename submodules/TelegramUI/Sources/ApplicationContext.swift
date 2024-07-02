@@ -1,3 +1,5 @@
+// MARK: Swiftgram
+import SGSimpleSettings
 import Foundation
 import Intents
 import TelegramPresentationData
@@ -151,11 +153,12 @@ final class AuthorizedApplicationContext {
     
     private var applicationInForegroundDisposable: Disposable?
     
+    private var showContactsTab: Bool
     private var showCallsTab: Bool
     private var showCallsTabDisposable: Disposable?
     private var enablePostboxTransactionsDiposable: Disposable?
     
-    init(sharedApplicationContext: SharedApplicationContext, mainWindow: Window1, watchManagerArguments: Signal<WatchManagerArguments?, NoError>, context: AccountContextImpl, accountManager: AccountManager<TelegramAccountManagerTypes>, showCallsTab: Bool, reinitializedNotificationSettings: @escaping () -> Void) {
+    init(sharedApplicationContext: SharedApplicationContext, mainWindow: Window1, watchManagerArguments: Signal<WatchManagerArguments?, NoError>, context: AccountContextImpl, accountManager: AccountManager<TelegramAccountManagerTypes>, showContactsTab: Bool, showCallsTab: Bool, reinitializedNotificationSettings: @escaping () -> Void) {
         self.sharedApplicationContext = sharedApplicationContext
         
         setupLegacyComponents(context: context)
@@ -166,11 +169,13 @@ final class AuthorizedApplicationContext {
         
         self.context = context
         
+        self.showContactsTab = showContactsTab
+        
         self.showCallsTab = showCallsTab
         
         self.notificationController = NotificationContainerController(context: context)
         
-        self.rootController = TelegramRootController(context: context)
+        self.rootController = TelegramRootController(showTabNames: SGSimpleSettings.shared.showTabNames, context: context)
         self.rootController.minimizedContainer = self.sharedApplicationContext.minimizedContainer[context.account.id]
         self.rootController.minimizedContainerUpdated = { [weak self] minimizedContainer in
             guard let self else {
@@ -249,7 +254,7 @@ final class AuthorizedApplicationContext {
         }
         
         if self.rootController.rootTabController == nil {
-            self.rootController.addRootControllers(showCallsTab: self.showCallsTab)
+            self.rootController.addRootControllers(hidePhoneInSettings: SGSimpleSettings.shared.hidePhoneInSettings, showContactsTab: self.showContactsTab, showCallsTab: self.showCallsTab)
         }
         if let tabsController = self.rootController.viewControllers.first as? TabBarController, !tabsController.controllers.isEmpty, tabsController.selectedIndex >= 0 {
             let controller = tabsController.controllers[tabsController.selectedIndex]
@@ -780,18 +785,28 @@ final class AuthorizedApplicationContext {
         })
         
         let showCallsTabSignal = context.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.callListSettings])
-        |> map { sharedData -> Bool in
-            var value = CallListSettings.defaultSettings.showTab
+        |> map { sharedData -> (Bool, Bool) in
+            var showCallsTabValue = CallListSettings.defaultSettings.showTab
+            var showContactsTabValue = CallListSettings.defaultSettings.showContactsTab
             if let settings = sharedData.entries[ApplicationSpecificSharedDataKeys.callListSettings]?.get(CallListSettings.self) {
-                value = settings.showTab
+                showCallsTabValue = settings.showTab
+                showContactsTabValue = settings.showContactsTab
             }
-            return value
+            return (showContactsTabValue, showCallsTabValue)
         }
-        self.showCallsTabDisposable = (showCallsTabSignal |> deliverOnMainQueue).start(next: { [weak self] value in
+        self.showCallsTabDisposable = (showCallsTabSignal |> deliverOnMainQueue).start(next: { [weak self] showContactsTabValue, showCallsTabValue in
             if let strongSelf = self {
-                if strongSelf.showCallsTab != value {
-                    strongSelf.showCallsTab = value
-                    strongSelf.rootController.updateRootControllers(showCallsTab: value)
+                var needControllersUpdate = false
+                if strongSelf.showCallsTab != showCallsTabValue {
+                    needControllersUpdate = true
+                    strongSelf.showCallsTab = showCallsTabValue
+                }
+                if strongSelf.showContactsTab != showContactsTabValue {
+                    needControllersUpdate = true
+                    strongSelf.showContactsTab = showContactsTabValue
+                }
+                if needControllersUpdate {
+                    strongSelf.rootController.updateRootControllers(showContactsTab: showContactsTabValue, showCallsTab: showCallsTabValue)
                 }
             }
         })
@@ -948,7 +963,7 @@ final class AuthorizedApplicationContext {
                     if openAppIfAny, case let .user(user) = peer, let botInfo = user.botInfo, botInfo.flags.contains(.hasWebApp), let parentController = self.rootController.viewControllers.last as? ViewController {
                         self.context.sharedContext.openWebApp(context: self.context, parentController: parentController, updatedPresentationData: nil, botPeer: peer, chatPeer: nil, threadId: nil, buttonText: "", url: "", simple: true, source: .generic, skipTermsOfService: true, payload: nil)
                     } else {
-                        self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: self.rootController, context: self.context, chatLocation: chatLocation, subject: isOutgoingMessage ? messageId.flatMap { .message(id: .id($0), highlight: ChatControllerSubject.MessageHighlight(quote: nil), timecode: nil, setupReply: false) } : nil, activateInput: activateInput ? .text : nil))
+                        self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: self.rootController, context: self.context, chatLocation: chatLocation, subject: messageId.flatMap { .message(id: .id($0), highlight: ChatControllerSubject.MessageHighlight(quote: nil), timecode: nil, setupReply: false) }, activateInput: activateInput ? .text : nil))
                     }
                 })
             }

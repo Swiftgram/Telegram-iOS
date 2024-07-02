@@ -1,3 +1,5 @@
+import SGAPIToken
+import SGAPIWebSettings
 import Foundation
 import UIKit
 import Display
@@ -73,6 +75,7 @@ public final class ChatListNodeInteraction {
     }
     
     let activateSearch: () -> Void
+    let openSGAnnouncement: (String, String, Bool, Bool) -> Void
     let peerSelected: (EnginePeer, EnginePeer?, Int64?, ChatListNodeEntryPromoInfo?, Bool) -> Void
     let disabledPeerSelected: (EnginePeer, Int64?, ChatListDisabledPeerReason) -> Void
     let togglePeerSelected: (EnginePeer, Int64?) -> Void
@@ -131,6 +134,8 @@ public final class ChatListNodeInteraction {
         animationCache: AnimationCache,
         animationRenderer: MultiAnimationRenderer,
         activateSearch: @escaping () -> Void,
+        // MARK: Swiftgram
+        openSGAnnouncement: @escaping (String, String, Bool, Bool) -> Void = { _, _, _, _ in },
         peerSelected: @escaping (EnginePeer, EnginePeer?, Int64?, ChatListNodeEntryPromoInfo?, Bool) -> Void,
         disabledPeerSelected: @escaping (EnginePeer, Int64?, ChatListDisabledPeerReason) -> Void,
         togglePeerSelected: @escaping (EnginePeer, Int64?) -> Void,
@@ -174,6 +179,7 @@ public final class ChatListNodeInteraction {
         openPhotoSetup: @escaping () -> Void
     ) {
         self.activateSearch = activateSearch
+        self.openSGAnnouncement = openSGAnnouncement
         self.peerSelected = peerSelected
         self.disabledPeerSelected = disabledPeerSelected
         self.togglePeerSelected = togglePeerSelected
@@ -747,6 +753,8 @@ private func mappedInsertEntries(context: AccountContext, nodeInteraction: ChatL
                     switch action {
                     case .activate:
                         switch notice {
+                        case let .sgUrl(id, _, _, url, needAuth, permanent):
+                            nodeInteraction?.openSGAnnouncement(id, url, needAuth, permanent)
                         case .clearStorage:
                             nodeInteraction?.openStorageManagement()
                         case .setupPassword:
@@ -760,6 +768,7 @@ private func mappedInsertEntries(context: AccountContext, nodeInteraction: ChatL
                         case .setupBirthday:
                             nodeInteraction?.openBirthdaySetup()
                         case let .birthdayPremiumGift(peers, birthdays):
+                            // TODO(swiftgram): Open user's profile instead of gift
                             nodeInteraction?.openPremiumGift(peers, birthdays)
                         case .reviewLogin:
                             break
@@ -1093,6 +1102,8 @@ private func mappedUpdateEntries(context: AccountContext, nodeInteraction: ChatL
                     switch action {
                     case .activate:
                         switch notice {
+                        case let .sgUrl(id, _, _, url, needAuth, permanent):
+                            nodeInteraction?.openSGAnnouncement(id, url, needAuth, permanent)
                         case .clearStorage:
                             nodeInteraction?.openStorageManagement()
                         case .setupPassword:
@@ -1361,6 +1372,9 @@ public final class ChatListNode: ListView {
     
     public var startedScrollingAtUpperBound: Bool = false
     
+    // MARK: Swiftgram
+    public var getNavigationController: (()-> NavigationController?)?
+    
     private let autoSetReady: Bool
     
     public let isMainTab = ValuePromise<Bool>(false, ignoreRepeated: true)
@@ -1368,8 +1382,9 @@ public final class ChatListNode: ListView {
     
     public var synchronousDrawingWhenNotAnimated: Bool = false
     
-    public init(context: AccountContext, location: ChatListControllerLocation, chatListFilter: ChatListFilter? = nil, previewing: Bool, fillPreloadItems: Bool, mode: ChatListNodeMode, isPeerEnabled: ((EnginePeer) -> Bool)? = nil, theme: PresentationTheme, fontSize: PresentationFontSize, strings: PresentationStrings, dateTimeFormat: PresentationDateTimeFormat, nameSortOrder: PresentationPersonNameOrder, nameDisplayOrder: PresentationPersonNameOrder, animationCache: AnimationCache, animationRenderer: MultiAnimationRenderer, disableAnimations: Bool, isInlineMode: Bool, autoSetReady: Bool, isMainTab: Bool?) {
+    public init(getNavigationController: (() -> NavigationController?)? = nil, context: AccountContext, location: ChatListControllerLocation, chatListFilter: ChatListFilter? = nil, previewing: Bool, fillPreloadItems: Bool, mode: ChatListNodeMode, isPeerEnabled: ((EnginePeer) -> Bool)? = nil, theme: PresentationTheme, fontSize: PresentationFontSize, strings: PresentationStrings, dateTimeFormat: PresentationDateTimeFormat, nameSortOrder: PresentationPersonNameOrder, nameDisplayOrder: PresentationPersonNameOrder, animationCache: AnimationCache, animationRenderer: MultiAnimationRenderer, disableAnimations: Bool, isInlineMode: Bool, autoSetReady: Bool, isMainTab: Bool?) {
         self.context = context
+        self.getNavigationController = getNavigationController
         self.location = location
         self.chatListFilter = chatListFilter
         self.chatListFilterValue.set(.single(chatListFilter))
@@ -1409,6 +1424,31 @@ public final class ChatListNode: ListView {
         let nodeInteraction = ChatListNodeInteraction(context: context, animationCache: self.animationCache, animationRenderer: self.animationRenderer, activateSearch: { [weak self] in
             if let strongSelf = self, let activateSearch = strongSelf.activateSearch {
                 activateSearch()
+            }
+        }, openSGAnnouncement: { [weak self] announcementId, url, needAuth, permanent in
+            if let strongSelf = self {
+                if needAuth {
+                    let _ = (getSGSettingsURL(context: strongSelf.context, url: url)
+                             |> deliverOnMainQueue).start(next: { [weak self] url in
+                        guard let strongSelf = self else {
+                            return
+                        }
+                        strongSelf.context.sharedContext.openExternalUrl(context: strongSelf.context, urlContext: .generic, url: url, forceExternal: false, presentationData: strongSelf.context.sharedContext.currentPresentationData.with { $0 }, navigationController: strongSelf.getNavigationController?(), dismissInput: {})
+                    })
+                } else {
+                    Queue.mainQueue().async {
+                        strongSelf.context.sharedContext.openExternalUrl(context: strongSelf.context, urlContext: .generic, url: url, forceExternal: false, presentationData: strongSelf.context.sharedContext.currentPresentationData.with { $0 }, navigationController: strongSelf.getNavigationController?(), dismissInput: {})
+                    }
+                    
+                }
+                if !permanent {
+                    Queue.mainQueue().after(0.6) { [weak self] in
+                        if let strongSelf = self {
+                            dismissSGProvidedSuggestion(suggestionId: announcementId)
+                            postSGWebSettingsInteractivelly(context: strongSelf.context, data: ["skip_announcement_id": announcementId])
+                        }
+                    }
+                }
             }
         }, peerSelected: { [weak self] peer, _, threadId, promoInfo, _ in
             if let strongSelf = self, let peerSelected = strongSelf.peerSelected {
@@ -1982,6 +2022,7 @@ public final class ChatListNode: ListView {
             let twoStepData: Signal<TwoStepVerificationConfiguration?, NoError> = .single(nil) |> then(context.engine.auth.twoStepVerificationConfiguration() |> map(Optional.init))
             
             let suggestedChatListNoticeSignal: Signal<ChatListNotice?, NoError> = combineLatest(
+                getSGProvidedSuggestions(account: context.account),
                 context.engine.notices.getServerProvidedSuggestions(),
                 context.engine.notices.getServerDismissedSuggestions(),
                 twoStepData,
@@ -1993,9 +2034,16 @@ public final class ChatListNode: ListView {
                 context.account.stateManager.contactBirthdays,
                 starsSubscriptionsContextPromise.get()
             )
-            |> mapToSignal { suggestions, dismissedSuggestions, configuration, newSessionReviews, data, birthdays, starsSubscriptionsContext -> Signal<ChatListNotice?, NoError> in
+            |> mapToSignal { sgSuggestionsData, suggestions, dismissedSuggestions, configuration, newSessionReviews, data, birthdays, starsSubscriptionsContext -> Signal<ChatListNotice?, NoError> in
                 let (accountPeer, birthday) = data
                 
+                // MARK: Swiftgam
+                if let sgSuggestionsData = sgSuggestionsData, let dictionary = try? JSONSerialization.jsonObject(with: sgSuggestionsData, options: []), let sgSuggestions = dictionary as? [[String: Any]], let sgSuggestion = sgSuggestions.first, let sgSuggestionId = sgSuggestion["id"] as? String {
+                    if let sgSuggestionType = sgSuggestion["type"] as? String, sgSuggestionType == "SG_URL", let sgSuggestionTitle = sgSuggestion["title"] as? String, let sgSuggestionUrl = sgSuggestion["url"] as? String {
+                        return .single(.sgUrl(id: sgSuggestionId, title: sgSuggestionTitle, text: sgSuggestion["text"] as? String, url: sgSuggestionUrl, needAuth: sgSuggestion["need_auth"] as? Bool ?? false, permanent: sgSuggestion["permanent"] as? Bool ?? false))
+                        
+                    }
+                }
                 if let newSessionReview = newSessionReviews.first {
                     return .single(.reviewLogin(newSessionReview: newSessionReview, totalCount: newSessionReviews.count))
                 }
@@ -2053,8 +2101,12 @@ public final class ChatListNode: ListView {
                 } else if suggestions.contains(.setupBirthday) && birthday == nil {
                     return .single(.setupBirthday)
                 } else if suggestions.contains(.xmasPremiumGift) {
+                    // MARK: Swiftgram
+                    if ({ return true }()) { return .single(nil) }
                     return .single(.xmasPremiumGift)
                 } else if suggestions.contains(.annualPremium) || suggestions.contains(.upgradePremium) || suggestions.contains(.restorePremium), let inAppPurchaseManager = context.inAppPurchaseManager {
+                    // MARK: Swiftgram
+                    if ({ return true }()) { return .single(nil) }
                     return inAppPurchaseManager.availableProducts
                     |> map { products -> ChatListNotice? in
                         if products.count > 1 {

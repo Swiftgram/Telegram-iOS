@@ -468,7 +468,7 @@ open class LegacyController: ViewController, PresentableController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    public func bind(controller: UIViewController) {
+    open func bind(controller: UIViewController) {
         self.legacyController = controller
         if let controller = controller as? TGViewController {
             controller.customRemoveFromParentViewController = { [weak self] in
