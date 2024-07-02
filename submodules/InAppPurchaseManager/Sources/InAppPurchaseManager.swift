@@ -236,12 +236,12 @@ public final class InAppPurchaseManager: NSObject {
                 
         super.init()
         
-        SKPaymentQueue.default().add(self)
+        // SKPaymentQueue.default().add(self) // MARK: Swiftgram
         self.requestProducts()
     }
     
     deinit {
-        SKPaymentQueue.default().remove(self)
+        // SKPaymentQueue.default().remove(self) // MARK: Swiftgram
     }
     
     var canMakePayments: Bool {
@@ -249,6 +249,7 @@ public final class InAppPurchaseManager: NSObject {
     }
     
     private func requestProducts() {
+        if ({ return true }()) { return } // MARK: Swiftgram
         Logger.shared.log("InAppPurchaseManager", "Requesting products")
         let productRequest = SKProductsRequest(productIdentifiers: Set(productIdentifiers))
         productRequest.delegate = self
@@ -296,7 +297,7 @@ public final class InAppPurchaseManager: NSObject {
         let payment = SKMutablePayment(product: product.skProduct)
         payment.applicationUsername = accountPeerId
         payment.quantity = Int(quantity)
-        SKPaymentQueue.default().add(payment)
+        // SKPaymentQueue.default().add(payment) // MARK: Swiftgram
         
         let productIdentifier = payment.productIdentifier
         let signal = Signal<PurchaseState, PurchaseError> { subscriber in

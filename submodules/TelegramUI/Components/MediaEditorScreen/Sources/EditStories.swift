@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import Display
@@ -184,7 +185,7 @@ public extension MediaEditorScreenImpl {
                             defer {
                                 TempBox.shared.dispose(tempFile)
                             }
-                            if let imageData = compressImageToJPEG(image, quality: 0.7, tempFilePath: tempFile.path) {
+                            if let imageData = compressImageToJPEG(image, quality: Float(SGSimpleSettings.shared.outgoingPhotoQuality) / 100.0, tempFilePath: tempFile.path) {
                                 update((context.engine.messages.editStory(peerId: peer.id, id: storyItem.id, media: .image(dimensions: dimensions, data: imageData, stickers: result.stickers), mediaAreas: result.mediaAreas, text: updatedText, entities: updatedEntities, privacy: nil)
                                 |> deliverOnMainQueue).startStrict(next: { result in
                                     switch result {
@@ -223,7 +224,7 @@ public extension MediaEditorScreenImpl {
                                 defer {
                                     TempBox.shared.dispose(tempFile)
                                 }
-                                let firstFrameImageData = firstFrameImage.flatMap { compressImageToJPEG($0, quality: 0.6, tempFilePath: tempFile.path) }
+                                let firstFrameImageData = firstFrameImage.flatMap { compressImageToJPEG($0, quality: Float(SGSimpleSettings.shared.outgoingPhotoQuality) / 100.0, tempFilePath: tempFile.path) }
                                 let firstFrameFile = firstFrameImageData.flatMap { data -> TempBoxFile? in
                                     let file = TempBox.shared.tempFile(fileName: "image.jpg")
                                     if let _ = try? data.write(to: URL(fileURLWithPath: file.path)) {

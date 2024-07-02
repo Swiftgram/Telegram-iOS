@@ -401,23 +401,23 @@
 "Date.ChatDateHeaderYear" = "%1$@ %2$@, %3$@";
 
 // Tour
-"Tour.Title1" = "Telegram";
+"Tour.Title1" = "Swiftgram";
 "Tour.Text1" = "The world's **fastest** messaging app.\nIt is **free** and **secure**.";
 
 "Tour.Title2" = "Fast";
-"Tour.Text2" = "**Telegram** delivers messages\nfaster than any other application.";
+"Tour.Text2" = "**Swiftgram** delivers messages\nfaster than any other application.";
 
 "Tour.Title3" = "Powerful";
-"Tour.Text3" = "**Telegram** has no limits on\nthe size of your media and chats.";
+"Tour.Text3" = "**Swiftgram** has no limits on\nthe size of your media and chats.";
 
 "Tour.Title4" = "Secure";
-"Tour.Text4" = "**Telegram** keeps your messages\nsafe from hacker attacks.";
+"Tour.Text4" = "**Swiftgram** keeps your messages\nsafe from hacker attacks.";
 
 "Tour.Title5" = "Cloud-Based";
-"Tour.Text5" = "**Telegram** lets you access your\nmessages from multiple devices.";
+"Tour.Text5" = "**Swiftgram** lets you access your\nmessages from multiple devices.";
 
 "Tour.Title6" = "Free";
-"Tour.Text6" = "**Telegram** provides free unlimited\ncloud storage for chats and media.";
+"Tour.Text6" = "**Swiftgram** provides free unlimited\ncloud storage for chats and media.";
 
 "Tour.StartButton" = "Start Messaging";
 
@@ -432,7 +432,7 @@
 "Login.CallRequestState3" = "Telegram dialed your number\n[Didn't get the code?]";
 "Login.EmailNotConfiguredError" = "An email account is required so that you can send us details about the error.\n\nPlease go to your device‘s settings > Passwords & Accounts > Add account and set up an email account.";
 "Login.EmailCodeSubject" = "%@, no code";
-"Login.EmailCodeBody" = "My phone number is:\n%@\nI can't get an activation code for Telegram.";
+"Login.EmailCodeBody" = "My phone number is:\n%@\nI can't get an activation code for Swiftgram.";
 "Login.UnknownError" = "An error occurred, please try again later.";
 "Login.InvalidCodeError" = "Invalid code, please try again.";
 "Login.NetworkError" = "Please check your internet connection and try again.";
@@ -443,13 +443,13 @@
 "Login.InvalidLastNameError" = "Sorry, this last name can't be used.";
 
 "Login.InvalidPhoneEmailSubject" = "Invalid phone number: %@";
-"Login.InvalidPhoneEmailBody" = "I'm trying to use my mobile phone number: %1$@\nBut Telegram says it's invalid. Please help.\n\nApp version: %2$@\nOS version: %3$@\nLocale: %4$@\nMNC: %5$@";
+"Login.InvalidPhoneEmailBody" = "I'm trying to use my mobile phone number: %1$@\nBut Swiftgram says it's invalid. Please help.\n\nApp version: %2$@\nOS version: %3$@\nLocale: %4$@\nMNC: %5$@";
 
 "Login.PhoneBannedEmailSubject" = "Banned phone number: %@";
-"Login.PhoneBannedEmailBody" = "I'm trying to use my mobile phone number: %1$@\nBut Telegram says it's banned. Please help.\n\nApp version: %2$@\nOS version: %3$@\nLocale: %4$@\nMNC: %5$@";
+"Login.PhoneBannedEmailBody" = "I'm trying to use my mobile phone number: %1$@\nBut Swiftgram says it's banned. Please help.\n\nApp version: %2$@\nOS version: %3$@\nLocale: %4$@\nMNC: %5$@";
 
-"Login.PhoneGenericEmailSubject" = "Telegram iOS error: %@";
-"Login.PhoneGenericEmailBody" = "I'm trying to use my mobile phone number: %1$@\nBut Telegram shows an error. Please help.\n\nError: %2$@\nApp version: %3$@\nOS version: %4$@\nLocale: %5$@\nMNC: %6$@";
+"Login.PhoneGenericEmailSubject" = "Swiftgram iOS error: %@";
+"Login.PhoneGenericEmailBody" = "I'm trying to use my mobile phone number: %1$@\nBut Swiftgram shows an error. Please help.\n\nError: %2$@\nApp version: %3$@\nOS version: %4$@\nLocale: %5$@\nMNC: %6$@";
 
 
 "Login.PhoneTitle" = "Your Phone";
@@ -505,8 +505,8 @@
 "Contacts.Title" = "Contacts";
 "Contacts.FailedToSendInvitesMessage" = "An error occurred.";
 "Contacts.AccessDeniedError" = "Telegram does not have access to your contacts";
-"Contacts.AccessDeniedHelpLandscape" = "Please go to your %@ Settings — Privacy — Contacts.\nThen select ON for Telegram.";
-"Contacts.AccessDeniedHelpPortrait" = "Please go to your %@ Settings — Privacy — Contacts. Then select ON for Telegram.";
+"Contacts.AccessDeniedHelpLandscape" = "Please go to your %@ Settings — Privacy — Contacts.\nThen select ON for Swiftgram.";
+"Contacts.AccessDeniedHelpPortrait" = "Please go to your %@ Settings — Privacy — Contacts. Then select ON for Swiftgram.";
 "Contacts.AccessDeniedHelpON" = "ON";
 "Contacts.InviteToTelegram" = "Invite to Telegram";
 "Contacts.InviteFriends" = "Invite Friends";
@@ -544,7 +544,7 @@
 "Conversation.Contact" = "Contact";
 "Conversation.BlockUser" = "Block User";
 "Conversation.UnblockUser" = "Unblock User";
-"Conversation.UnsupportedMedia" = "This message is not supported on your version of Telegram. Update the app to view:\nhttps://telegram.org/update";
+"Conversation.UnsupportedMedia" = "This message is not supported on your version of Swiftgram. Update the app to view:\nhttps://apps.apple.com/app/id6471879502";
 "Conversation.EncryptionWaiting" = "Waiting for %@ to get online...";
 "Conversation.EncryptionProcessing" = "Exchanging encryption keys...";
 "Conversation.EmptyPlaceholder" = "No messages here yet...";
@@ -848,9 +848,9 @@
 "BroadcastListInfo.AddRecipient" = "Add Recipient";
 
 "Settings.LogoutConfirmationTitle" = "Log out?";
-"Settings.LogoutConfirmationText" = "\nNote that you can seamlessly use Telegram on all your devices at once.\n\nRemember, logging out kills all your Secret Chats.";
+"Settings.LogoutConfirmationText" = "\nNote that you can seamlessly use Swiftgram/Telegram on all your devices at once.\n\nRemember, logging out kills all your Secret Chats.";
 
-"Login.PadPhoneHelp" = "\nYou can use your main mobile number to log in to Telegram on all devices.\nDon't use your iPad's SIM number here — we'll need to send you an SMS.\n\nIs this number correct?\n{number}";
+"Login.PadPhoneHelp" = "\nYou can use your main mobile number to log in to Swiftgram on all devices.\nDon't use your iPad's SIM number here — we'll need to send you an SMS.\n\nIs this number correct?\n{number}";
 "Login.PadPhoneHelpTitle" = "Your Number";
 
 "MessageTimer.Custom" = "Custom";
@@ -1218,7 +1218,7 @@
 "SharedMedia.EmptyFilesText" = "You can send and receive\nfiles of any type up to 1.5 GB each\nand access them anywhere.";
 
 "ShareFileTip.Title" = "Sharing Files";
-"ShareFileTip.Text" = "You can share **uncompressed** media files from your Camera Roll here.\n\nTo share files of any other type, open them on your %@ (e.g. in your browser), tap **Open in...** or the action button and choose Telegram.";
+"ShareFileTip.Text" = "You can share **uncompressed** media files from your Camera Roll here.\n\nTo share files of any other type, open them on your %@ (e.g. in your browser), tap **Open in...** or the action button and choose Swiftgram.";
 "ShareFileTip.CloseTip" = "Close Tip";
 
 "DialogList.SearchSectionDialogs" = "Chats and Contacts";
@@ -1276,32 +1276,32 @@
 
 "AccessDenied.Title" = "Please Allow Access";
 
-"AccessDenied.Contacts" = "Telegram messaging is based on your existing contact list.\n\nPlease go to Settings > Privacy > Contacts and set Telegram to ON.";
+"AccessDenied.Contacts" = "Swiftgram messaging is based on your existing contact list.\n\nPlease go to Settings > Privacy > Contacts and set Swiftgram to ON.";
 
-"AccessDenied.VoiceMicrophone" = "Telegram needs access to your microphone to send voice messages.\n\nPlease go to Settings > Privacy > Microphone and set Telegram to ON.";
+"AccessDenied.VoiceMicrophone" = "Swiftgram needs access to your microphone to send voice messages.\n\nPlease go to Settings > Privacy > Microphone and set Swiftgram to ON.";
 
-"AccessDenied.VideoMicrophone" = "Telegram needs access to your microphone to record sound in videos recording.\n\nPlease go to Settings > Privacy > Microphone and set Telegram to ON.";
+"AccessDenied.VideoMicrophone" = "Swiftgram needs access to your microphone to record sound in videos recording.\n\nPlease go to Settings > Privacy > Microphone and set Swiftgram to ON.";
 
-"AccessDenied.MicrophoneRestricted" = "Microphone access is restricted for Telegram.\n\nPlease go to Settings > General > Restrictions > Microphone and set Telegram to ON.";
+"AccessDenied.MicrophoneRestricted" = "Microphone access is restricted for Swiftgram.\n\nPlease go to Settings > General > Restrictions > Microphone and set Swiftgram to ON.";
 
 
-"AccessDenied.Camera" = "Telegram needs access to your camera to take photos and videos.\n\nPlease go to Settings > Privacy > Camera and set Telegram to ON.";
+"AccessDenied.Camera" = "Swiftgram needs access to your camera to take photos and videos.\n\nPlease go to Settings > Privacy > Camera and set Swiftgram to ON.";
 
-"AccessDenied.CameraRestricted" = "Camera access is restricted for Telegram.\n\nPlease go to Settings > General > Restrictions > Camera and set Telegram to ON.";
+"AccessDenied.CameraRestricted" = "Camera access is restricted for Swiftgram.\n\nPlease go to Settings > General > Restrictions > Camera and set Swiftgram to ON.";
 
 "AccessDenied.CameraDisabled" = "Camera access is globally restricted on your phone.\n\nPlease go to Settings > General > Restrictions and set Camera to ON";
 
-"AccessDenied.PhotosAndVideos" = "Telegram needs access to your photo library to send photos and videos.\n\nPlease go to Settings > Privacy > Photos and set Telegram to ON.";
+"AccessDenied.PhotosAndVideos" = "Swiftgram needs access to your photo library to send photos and videos.\n\nPlease go to Settings > Privacy > Photos and set Swiftgram to ON.";
 
-"AccessDenied.SaveMedia" = "Telegram needs access to your photo library to save photos and videos.\n\nPlease go to Settings > Privacy > Photos and set Telegram to ON.";
+"AccessDenied.SaveMedia" = "Swiftgram needs access to your photo library to save photos and videos.\n\nPlease go to Settings > Privacy > Photos and set Swiftgram to ON.";
 
-"AccessDenied.PhotosRestricted" = "Photo access is restricted for Telegram.\n\nPlease go to Settings > General > Restrictions > Photos and set Telegram to ON.";
+"AccessDenied.PhotosRestricted" = "Photo access is restricted for Swiftgram.\n\nPlease go to Settings > General > Restrictions > Photos and set Swiftgram to ON.";
 
-"AccessDenied.LocationDenied" = "Telegram needs access to your location so that you can share it with your contacts.\n\nPlease go to Settings > Privacy > Location Services and set Telegram to ON.";
+"AccessDenied.LocationDenied" = "Swiftgram needs access to your location so that you can share it with your contacts.\n\nPlease go to Settings > Privacy > Location Services and set Swiftgram to ON.";
 
-"AccessDenied.LocationDisabled" = "Telegram needs access to your location so that you can share it with your contacts.\n\nPlease go to Settings > Privacy > Location Services and set it to ON.";
+"AccessDenied.LocationDisabled" = "Swiftgram needs access to your location so that you can share it with your contacts.\n\nPlease go to Settings > Privacy > Location Services and set it to ON.";
 
-"AccessDenied.LocationTracking" = "Telegram needs access to your location to show you on the map.\n\nPlease go to Settings > Privacy > Location Services and set it to ON.";
+"AccessDenied.LocationTracking" = "Swiftgram needs access to your location to show you on the map.\n\nPlease go to Settings > Privacy > Location Services and set it to ON.";
 
 "AccessDenied.Settings" = "Settings";
 
@@ -1439,7 +1439,7 @@
 "Conversation.FileDropbox" = "Dropbox";
 
 "Conversation.FileOpenIn" = "Open in...";
-"Conversation.FileHowToText" = "To share files of any type, open them on your %@ (e.g. in your browser), tap **Open in...** or the action button and choose Telegram.";
+"Conversation.FileHowToText" = "To share files of any type, open them on your %@ (e.g. in your browser), tap **Open in...** or the action button and choose Swiftgram.";
 
 "Map.LocationTitle" = "Location";
 "Map.OpenInMaps" = "Open in Maps";
@@ -1475,7 +1475,7 @@
 
 "ChangePhone.ErrorOccupied" = "The number %@ is already connected to a Telegram account. Please delete that account before migrating to the new number.";
 
-"AccessDenied.LocationTracking" = "Telegram needs access to your location to show you on the map.\n\nPlease go to Settings > Privacy > Location Services and set it to ON.";
+"AccessDenied.LocationTracking" = "Swiftgram needs access to your location to show you on the map.\n\nPlease go to Settings > Privacy > Location Services and set it to ON.";
 
 "PrivacySettings.AuthSessions" = "Active Sessions";
 "AuthSessions.Title" = "Active Sessions";
@@ -1585,7 +1585,7 @@
 
 "Login.PhoneNumberHelp" = "Help";
 "Login.EmailPhoneSubject" = "Invalid number %@";
-"Login.EmailPhoneBody" = "I'm trying to use my mobile phone number: %@\nBut Telegram says it's invalid. Please help.\nAdditional Info: %@, %@.";
+"Login.EmailPhoneBody" = "I'm trying to use my mobile phone number: %@\nBut Swiftgram says it's invalid. Please help.\nAdditional Info: %@, %@.";
 
 "SharedMedia.TitleLink" = "Shared Links";
 "SharedMedia.EmptyLinksText" = "All links shared in this chat will appear here.";
@@ -1882,7 +1882,7 @@
 "Cache.ClearProgress" = "Please Wait...";
 "Cache.ClearEmpty" = "Empty";
 "Cache.ByPeerHeader" = "CHATS";
-"Cache.Indexing" = "Telegram is calculating current cache size.\nThis can take a few minutes.";
+"Cache.Indexing" = "Swiftgram is calculating current cache size.\nThis can take a few minutes.";
 
 "ExplicitContent.AlertTitle" = "Sorry";
 "ExplicitContent.AlertChannel" = "You can't access this channel because it violates App Store rules.";
@@ -2297,11 +2297,11 @@ Unused sets are archived when you add more.";
 "Conversation.JumpToDate" = "Jump To Date";
 "Conversation.AddToReadingList" = "Add to Reading List";
 
-"AccessDenied.CallMicrophone" = "Telegram needs access to your microphone for voice calls.\n\nPlease go to Settings > Privacy > Microphone and set Telegram to ON.";
+"AccessDenied.CallMicrophone" = "Swiftgram needs access to your microphone for voice calls.\n\nPlease go to Settings > Privacy > Microphone and set Swiftgram to ON.";
 
 "Call.EncryptionKey.Title" = "Encryption Key";
 
-"Application.Name" = "Telegram";
+"Application.Name" = "Swiftgram";
 "DialogList.Pin" = "Pin";
 "DialogList.Unpin" = "Unpin";
 "DialogList.PinLimitError" = "Sorry, you can pin no more than %@ chats to the top.";
@@ -2351,7 +2351,7 @@ Unused sets are archived when you add more.";
 "Calls.AddTab" = "Add Tab";
 "Calls.NewCall" = "New Call";
 
-"Calls.RatingTitle" = "Please rate the quality\nof your Telegram call";
+"Calls.RatingTitle" = "Please rate the quality\nof your Swiftgram call";
 "Calls.SubmitRating" = "Submit";
 
 "Call.Seconds_1" = "%@ second";
@@ -2538,14 +2538,14 @@ Unused sets are archived when you add more.";
 
 "Calls.RatingFeedback" = "Write a comment...";
 
-"Call.StatusIncoming" = "Telegram Audio...";
+"Call.StatusIncoming" = "Swiftgram Audio...";
 "Call.IncomingVoiceCall" = "Incoming Voice Call";
 "Call.IncomingVideoCall" = "Incoming Video Call";
 "Call.StatusRequesting" = "Contacting...";
 "Call.StatusWaiting" = "Waiting...";
 "Call.StatusRinging" = "Ringing...";
 "Call.StatusConnecting" = "Connecting...";
-"Call.StatusOngoing" = "Telegram Audio %@";
+"Call.StatusOngoing" = "Swiftgram Audio %@";
 "Call.StatusEnded" = "Call Ended";
 "Call.StatusFailed" = "Call Failed";
 "Call.StatusBusy" = "Busy";
@@ -2610,7 +2610,7 @@ Unused sets are archived when you add more.";
 "Call.AudioRouteHeadphones" = "Headphones";
 "Call.AudioRouteHide" = "Hide";
 
-"Call.PhoneCallInProgressMessage" = "You can’t place a Telegram call if you’re already on a phone call.";
+"Call.PhoneCallInProgressMessage" = "You can’t place a Swiftgram call if you’re already on a phone call.";
 "Call.RecordingDisabledMessage" = "Please end your call before recording a voice message.";
 
 "Call.EmojiDescription" = "If these emoji are the same on %@'s screen, this call is 100%% secure.";
@@ -2620,8 +2620,8 @@ Unused sets are archived when you add more.";
 "Conversation.HoldForAudio" = "Hold to record audio. Tap to switch to video.";
 "Conversation.HoldForVideo" = "Hold to record video. Tap to switch to audio.";
 
-"UserInfo.TelegramCall" = "Telegram Call";
-"UserInfo.TelegramVideoCall" = "Telegram Video Call";
+"UserInfo.TelegramCall" = "Swiftgram Call";
+"UserInfo.TelegramVideoCall" = "Swiftgram Video Call";
 "UserInfo.PhoneCall" = "Phone Call";
 
 "SharedMedia.CategoryMedia" = "Media";
@@ -2629,8 +2629,8 @@ Unused sets are archived when you add more.";
 "SharedMedia.CategoryLinks" = "Links";
 "SharedMedia.CategoryOther" = "Audio";
 
-"AccessDenied.VideoMessageCamera" = "Telegram needs access to your camera to send video messages.\n\nPlease go to Settings > Privacy > Camera and set Telegram to ON.";
-"AccessDenied.VideoMessageMicrophone" = "Telegram needs access to your microphone to send video messages.\n\nPlease go to Settings > Privacy > Microphone and set Telegram to ON.";
+"AccessDenied.VideoMessageCamera" = "Swiftgram needs access to your camera to send video messages.\n\nPlease go to Settings > Privacy > Camera and set Swiftgram to ON.";
+"AccessDenied.VideoMessageMicrophone" = "Swiftgram needs access to your microphone to send video messages.\n\nPlease go to Settings > Privacy > Microphone and set Swiftgram to ON.";
 
 "ChatSettings.AutomaticVideoMessageDownload" = "AUTOMATIC VIDEO MESSAGE DOWNLOAD";
 
@@ -2656,7 +2656,7 @@ Unused sets are archived when you add more.";
 
 "Privacy.PaymentsTitle" = "PAYMENTS";
 "Privacy.PaymentsClearInfo" = "Clear payment & shipping info";
-"Privacy.PaymentsClearInfoHelp" = "You can delete your shipping info and instruct all payment providers to remove your saved credit cards. Note that Telegram never stores your credit card data.";
+"Privacy.PaymentsClearInfoHelp" = "You can delete your shipping info and instruct all payment providers to remove your saved credit cards. Note that Swiftgram never stores your credit card data.";
 "Privacy.PaymentsClear.PaymentInfo" = "Payment Info";
 "Privacy.PaymentsClear.ShippingInfo" = "Shipping Info";
 
@@ -2807,7 +2807,7 @@ Unused sets are archived when you add more.";
 
 "Contacts.PhoneNumber" = "Phone Number";
 "Contacts.AddPhoneNumber" = "Add %@";
-"Contacts.ShareTelegram" = "Share Telegram";
+"Contacts.ShareTelegram" = "Share Swiftgram";
 
 "Conversation.ViewChannel" = "VIEW CHANNEL";
 "Conversation.ViewGroup" = "VIEW GROUP";
@@ -2874,7 +2874,7 @@ Unused sets are archived when you add more.";
 "Privacy.Calls.P2PHelp" = "Disabling peer-to-peer will relay all calls through Telegram servers to avoid revealing your IP address, but will slightly decrease audio quality.";
 
 "Privacy.Calls.Integration" = "iOS Call Integration";
-"Privacy.Calls.IntegrationHelp" = "iOS Call Integration shows Telegram calls on the lock screen and in the system's call history. If iCloud sync is enabled, your call history is shared with Apple.";
+"Privacy.Calls.IntegrationHelp" = "iOS Call Integration shows Swiftgram calls on the lock screen and in the system's call history. If iCloud sync is enabled, your call history is shared with Apple.";
 
 "Call.ReportPlaceholder" = "What went wrong?";
 "Call.ReportIncludeLog" = "Send technical information";
@@ -2906,14 +2906,14 @@ Unused sets are archived when you add more.";
 "SocksProxySetup.UseForCalls" = "Use for calls";
 "SocksProxySetup.UseForCallsHelp" = "Proxy servers may degrade the quality of your calls.";
 
-"InviteText.URL" = "https://telegram.org/dl";
-"InviteText.SingleContact" = "Hey, I'm using Telegram to chat. Join me! Download it here: %@";
-"InviteText.ContactsCountText_1" = "Hey, I'm using Telegram to chat. Join me! Download it here: {url}";
-"InviteText.ContactsCountText_2" = "Hey, I'm using Telegram to chat – and so are 2 of our other contacts. Join us! Download it here: {url}";
-"InviteText.ContactsCountText_3_10" = "Hey, I'm using Telegram to chat – and so are %@ of our other contacts. Join us! Download it here: {url}";
-"InviteText.ContactsCountText_any" = "Hey, I'm using Telegram to chat – and so are %@ of our other contacts. Join us! Download it here: {url}";
-"InviteText.ContactsCountText_many" = "Hey, I'm using Telegram to chat – and so are %@ of our other contacts. Join us! Download it here: {url}";
-"InviteText.ContactsCountText_0" = "Hey, I'm using Telegram to chat. Join me! Download it here: {url}";
+"InviteText.URL" = "https://apps.apple.com/app/id6471879502";
+"InviteText.SingleContact" = "Hey, I'm using Swiftgram to chat. Join me! Download it here: %@";
+"InviteText.ContactsCountText_1" = "Hey, I'm using Swiftgram to chat. Join me! Download it here: {url}";
+"InviteText.ContactsCountText_2" = "Hey, I'm using Swiftgram to chat – and so are 2 of our other contacts. Join us! Download it here: {url}";
+"InviteText.ContactsCountText_3_10" = "Hey, I'm using Swiftgram to chat – and so are %@ of our other contacts. Join us! Download it here: {url}";
+"InviteText.ContactsCountText_any" = "Hey, I'm using Swiftgram to chat – and so are %@ of our other contacts. Join us! Download it here: {url}";
+"InviteText.ContactsCountText_many" = "Hey, I'm using Swiftgram to chat – and so are %@ of our other contacts. Join us! Download it here: {url}";
+"InviteText.ContactsCountText_0" = "Hey, I'm using Swiftgram to chat. Join me! Download it here: {url}";
 
 "Invite.LargeRecipientsCountWarning" = "Please note that it may take some time for your device to send all of these invitations";
 
@@ -3069,12 +3069,12 @@ Unused sets are archived when you add more.";
 
 "NotificationSettings.ContactJoined" = "New Contacts";
 
-"AccessDenied.LocationAlwaysDenied" = "If you'd like to share your Live Location with friends, Telegram needs location access when the app is in the background.\n\nPlease go to Settings > Privacy > Location Services and set Telegram to Always.";
+"AccessDenied.LocationAlwaysDenied" = "If you'd like to share your Live Location with friends, Swiftgram needs location access when the app is in the background.\n\nPlease go to Settings > Privacy > Location Services and set Telegram to Always.";
 
 "UserInfo.UnblockConfirmation" = "Unblock %@?";
 
 "Login.BannedPhoneSubject" = "Banned phone number: %@";
-"Login.BannedPhoneBody" = "I'm trying to use my mobile phone number: %@\nBut Telegram says it's banned. Please help.";
+"Login.BannedPhoneBody" = "I'm trying to use my mobile phone number: %@\nBut Swiftgram says it's banned. Please help.";
 
 "Conversation.StopLiveLocation" = "Stop Sharing";
 
@@ -3157,16 +3157,16 @@ Unused sets are archived when you add more.";
 
 "Privacy.PaymentsClearInfoDoneHelp" = "Payment & shipping info cleared.";
 
-"InfoPlist.NSContactsUsageDescription" = "Telegram will continuously upload your contacts to its heavily encrypted cloud servers to let you connect with your friends across all your devices.";
-"InfoPlist.NSLocationWhenInUseUsageDescription" = "When you send your location to your friends, Telegram needs access to show them a map.";
+"InfoPlist.NSContactsUsageDescription" = "Swiftgram will continuously upload your contacts to Telegram's heavily encrypted cloud servers to let you connect with your friends across all your devices.";
+"InfoPlist.NSLocationWhenInUseUsageDescription" = "When you send your location to your friends, Swiftgram needs access to show them a map.";
 "InfoPlist.NSCameraUsageDescription" = "We need this so that you can take and share photos and videos, as well as make video calls.";
 "InfoPlist.NSPhotoLibraryUsageDescription" = "We need this so that you can share photos and videos from your photo library.";
 "InfoPlist.NSPhotoLibraryAddUsageDescription" = "We need this so that you can save photos and videos to your photo library.";
 "InfoPlist.NSMicrophoneUsageDescription" = "We need this so that you can record and share voice messages and videos with sound.";
 "InfoPlist.NSSiriUsageDescription" = "You can use Siri to send messages.";
-"InfoPlist.NSLocationAlwaysAndWhenInUseUsageDescription" = "When you choose to share your Live Location with friends in a chat, Telegram needs background access to your location to keep them updated for the duration of the live sharing.";
-"InfoPlist.NSLocationAlwaysUsageDescription" = "When you choose to share your live location with friends in a chat, Telegram needs background access to your location to keep them updated for the duration of the live sharing. You also need this to send locations from an Apple Watch.";
-"InfoPlist.NSLocationWhenInUseUsageDescription" = "When you send your location to your friends, Telegram needs access to show them a map.";
+"InfoPlist.NSLocationAlwaysAndWhenInUseUsageDescription" = "When you choose to share your Live Location with friends in a chat, Swiftgram needs background access to your location to keep them updated for the duration of the live sharing.";
+"InfoPlist.NSLocationAlwaysUsageDescription" = "When you choose to share your live location with friends in a chat, Swiftgram needs background access to your location to keep them updated for the duration of the live sharing. You also need this to send locations from an Apple Watch.";
+"InfoPlist.NSLocationWhenInUseUsageDescription" = "When you send your location to your friends, Swiftgram needs access to show them a map.";
 "InfoPlist.NSFaceIDUsageDescription" = "You can use Face ID to unlock the app.";
 
 "Privacy.Calls.P2PNever" = "Never";
@@ -3310,7 +3310,7 @@ Unused sets are archived when you add more.";
 
 "DialogList.AdLabel" = "Proxy Sponsor";
 "DialogList.AdNoticeAlert" = "The proxy you are using displays a sponsored channel in your chat list.";
-"SocksProxySetup.AdNoticeHelp" = "This proxy may display a sponsored channel in your chat list. This doesn't reveal your Telegram traffic.";
+"SocksProxySetup.AdNoticeHelp" = "This proxy may display a sponsored channel in your chat list. This doesn't reveal your Swiftgram traffic.";
 
 "SocksProxySetup.ShareProxyList" = "Share Proxy List";
 
@@ -3588,9 +3588,9 @@ Unused sets are archived when you add more.";
 
 "Passport.NotLoggedInMessage" = "Please log in to your account to use Telegram Passport";
 
-"Update.Title" = "Telegram Update";
-"Update.AppVersion" = "Telegram %@";
-"Update.UpdateApp" = "Update Telegram";
+"Update.Title" = "Swiftgram Update";
+"Update.AppVersion" = "Swiftgram %@";
+"Update.UpdateApp" = "Update Swiftgram";
 "Update.Skip" = "Skip";
 
 "ReportPeer.ReasonCopyright" = "Copyright";
@@ -3769,8 +3769,8 @@ Unused sets are archived when you add more.";
 
 "SocksProxySetup.PasteFromClipboard" = "Paste From Clipboard";
 
-"Share.AuthTitle" = "Log in to Telegram";
-"Share.AuthDescription" = "Open Telegram and log in to share.";
+"Share.AuthTitle" = "Log in to Swiftgram";
+"Share.AuthDescription" = "Open Swiftgram and log in to share.";
 
 "Notifications.DisplayNamesOnLockScreen" = "Names on lock-screen";
 "Notifications.DisplayNamesOnLockScreenInfoWithLink" = "Display names in notifications when the device is locked. To disable, make sure that \"Show Previews\" is also set to \"When Unlocked\" or \"Never\" in [iOS Settings]";
@@ -3857,7 +3857,7 @@ Unused sets are archived when you add more.";
 "InstantPage.TapToOpenLink" = "Tap to open the link:";
 "InstantPage.RelatedArticleAuthorAndDateTitle" = "%1$@ • %2$@";
 
-"AuthCode.Alert" = "Your login code is %@. Enter it in the Telegram app where you are trying to log in.\n\nDo not give this code to anyone.";
+"AuthCode.Alert" = "Your login code is %@. Enter it in the Swiftgram app where you are trying to log in.\n\nDo not give this code to anyone.";
 "Login.CheckOtherSessionMessages" = "Check your Telegram messages";
 "Login.SendCodeViaSms" = "Get the code via SMS";
 "Login.SendCodeViaCall" = "Call me to dictate the code";
@@ -3868,7 +3868,7 @@ Unused sets are archived when you add more.";
 "Login.CodeExpired" = "Code expired, please login again.";
 "Login.CancelSignUpConfirmation" = "Do you want to stop the registration process?";
 
-"Passcode.AppLockedAlert" = "Telegram\nLocked";
+"Passcode.AppLockedAlert" = "Swiftgram\nLocked";
 
 "ChatList.ReadAll" = "Read All";
 "ChatList.Read" = "Read";
@@ -3899,7 +3899,7 @@ Unused sets are archived when you add more.";
 "Permissions.NotificationsAllowInSettings.v0" = "Turn ON in Settings";
 
 "Permissions.CellularDataTitle.v0" = "Enable Cellular Data";
-"Permissions.CellularDataText.v0" = "Don't worry, Telegram keeps network usage to a minimum. You can further control this in Settings > Data and Storage.";
+"Permissions.CellularDataText.v0" = "Don't worry, Swiftgram keeps network usage to a minimum. You can further control this in Settings > Data and Storage.";
 "Permissions.CellularDataAllowInSettings.v0" = "Turn ON in Settings";
 
 "Permissions.SiriTitle.v0" = "Turn ON Siri";
@@ -3910,7 +3910,7 @@ Unused sets are archived when you add more.";
 "Permissions.PrivacyPolicy" = "Privacy Policy";
 
 "Contacts.PermissionsTitle" = "Access to Contacts";
-"Contacts.PermissionsText" = "Please allow Telegram access to your phonebook to seamlessly find all your friends.";
+"Contacts.PermissionsText" = "Please allow Swiftgram access to your phonebook to seamlessly find all your friends.";
 "Contacts.PermissionsAllow" = "Allow Access";
 "Contacts.PermissionsAllowInSettings" = "Allow in Settings";
 "Contacts.PermissionsSuppressWarningTitle" = "Keep contacts disabled?";
@@ -3983,8 +3983,8 @@ Unused sets are archived when you add more.";
 
 "AttachmentMenu.WebSearch" = "Web Search";
 
-"Conversation.UnsupportedMediaPlaceholder" = "This message is not supported on your version of Telegram. Please update to the latest version.";
-"Conversation.UpdateTelegram" = "UPDATE TELEGRAM";
+"Conversation.UnsupportedMediaPlaceholder" = "This message is not supported on your version of Swiftgram. Please update to the latest version.";
+"Conversation.UpdateTelegram" = "UPDATE SWIFTGRAM";
 
 "Cache.LowDiskSpaceText" = "Your phone has run out of available storage. Please free some space to download or upload media.";
 
@@ -4121,7 +4121,7 @@ Unused sets are archived when you add more.";
 "Undo.DeletedChannel" = "Deleted channel";
 "Undo.DeletedGroup" = "Deleted group";
 
-"AccessDenied.Wallpapers" = "Telegram needs access to your photo library to set a custom chat background.\n\nPlease go to Settings > Privacy > Photos and set Telegram to ON.";
+"AccessDenied.Wallpapers" = "Swiftgram needs access to your photo library to set a custom chat background.\n\nPlease go to Settings > Privacy > Photos and set Swiftgram to ON.";
 
 "Conversation.ChatBackground" = "Chat Background";
 "Conversation.ViewBackground" = "VIEW BACKGROUND";
@@ -4427,7 +4427,7 @@ Unused sets are archived when you add more.";
 
 "Undo.ChatDeletedForBothSides" = "Chat deleted for both sides";
 
-"AppUpgrade.Running" = "Optimizing Telegram...
+"AppUpgrade.Running" = "Optimizing Swiftgram...
 This may take a while, depending on the size of the database. Please keep the app open until the process is finished.
 
 Sorry for the inconvenience.";
@@ -5050,11 +5050,11 @@ Sorry for the inconvenience.";
 "Group.ErrorSupergroupConversionNotPossible" = "Sorry, you are a member of too many groups and channels. Please leave some before creating a new one.";
 
 "ClearCache.StorageTitle" = "%@ STORAGE";
-"ClearCache.StorageCache" = "Telegram Cache";
-"ClearCache.StorageServiceFiles" = "Telegram Service Files";
+"ClearCache.StorageCache" = "Swiftgram Cache";
+"ClearCache.StorageServiceFiles" = "Swiftgram Service Files";
 "ClearCache.StorageOtherApps" = "Other Apps";
 "ClearCache.StorageFree" = "Free";
-"ClearCache.ClearCache" = "Clear Telegram Cache";
+"ClearCache.ClearCache" = "Clear Swiftgram Cache";
 "ClearCache.Clear" = "Clear";
 "ClearCache.Forever" = "Forever";
 
@@ -5675,7 +5675,7 @@ Sorry for the inconvenience.";
 "Call.Audio" = "audio";
 "Call.AudioRouteMute" = "Mute Yourself";
 
-"AccessDenied.VideoCallCamera" = "Telegram needs access to your camera to make video calls.\n\nPlease go to Settings > Privacy > Camera and set Telegram to ON.";
+"AccessDenied.VideoCallCamera" = "Swiftgram needs access to your camera to make video calls.\n\nPlease go to Settings > Privacy > Camera and set Swiftgram to ON.";
 
 "Call.AccountIsLoggedOnCurrentDevice" = "Sorry, you can't call %@ because that account is logged in to Telegram on the device you're using for the call.";
 
@@ -5829,7 +5829,7 @@ Sorry for the inconvenience.";
 "Conversation.EditingPhotoPanelTitle" = "Edit Photo";
 
 "Media.LimitedAccessTitle" = "Limited Access to Media";
-"Media.LimitedAccessText" = "You've given Telegram access only to select number of photos.";
+"Media.LimitedAccessText" = "You've given Swiftgram access only to select number of photos.";
 "Media.LimitedAccessManage" = "Manage";
 "Media.LimitedAccessSelectMore" = "Select More Photos...";
 "Media.LimitedAccessChangeSettings" = "Change Settings";
@@ -6173,7 +6173,7 @@ Sorry for the inconvenience.";
 "Message.ImportedDateFormat" = "%1$@, %2$@ Imported %3$@";
 
 "ChatImportActivity.Title" = "Importing Chat";
-"ChatImportActivity.OpenApp" = "Open Telegram";
+"ChatImportActivity.OpenApp" = "Open Swiftgram";
 "ChatImportActivity.Retry" = "Retry";
 "ChatImportActivity.InProgress" = "Please keep this window open\nuntil the import is completed.";
 "ChatImportActivity.ErrorNotAdmin" = "You need to be an admin in the group to import messages.";
@@ -6325,7 +6325,7 @@ Sorry for the inconvenience.";
 "Widget.UpdatedAt" = "Updated {}";
 
 "Intents.ErrorLockedTitle" = "Locked";
-"Intents.ErrorLockedText" = "Open Telegram and enter passcode to edit widget.";
+"Intents.ErrorLockedText" = "Open Swiftgram and enter passcode to edit widget.";
 
 "Conversation.GigagroupDescription" = "Only admins can send messages in this group.";
 
@@ -6631,7 +6631,7 @@ Sorry for the inconvenience.";
 "ScheduledIn.Years_any" = "%@ years";
 "ScheduledIn.Months_many" = "%@ years";
 
-"Checkout.PaymentLiabilityAlert" = "Neither Telegram, nor {target} will have access to your credit card information. Credit card details will be handled only by the payment system, {payment_system}.\n\nPayments will go directly to the developer of {target}. Telegram cannot provide any guarantees, so proceed at your own risk. In case of problems, please contact the developer of {target} or your bank.";
+"Checkout.PaymentLiabilityAlert" = "Neither Swiftgram/Telegram, nor {target} will have access to your credit card information. Credit card details will be handled only by the payment system, {payment_system}.\n\nPayments will go directly to the developer of {target}. Swiftgram/Telegram cannot provide any guarantees, so proceed at your own risk. In case of problems, please contact the developer of {target} or your bank.";
 
 "Checkout.OptionalTipItem" = "Tip (Optional)";
 "Checkout.TipItem" = "Tip";
@@ -6932,7 +6932,7 @@ Sorry for the inconvenience.";
 
 "SponsoredMessageMenu.Info" = "What are sponsored\nmessages?";
 "SponsoredMessageInfoScreen.Title" = "What are sponsored messages?";
-"SponsoredMessageInfoScreen.MarkdownText" = "Unlike other apps, Telegram never uses your private data to target ads. [Learn more in the Privacy Policy](https://telegram.org/privacy#5-6-no-ads-based-on-user-data)\nYou are seeing this message only because someone chose this public one-to many channel as a space to promote their messages. This means that no user data is mined or analyzed to display ads, and every user viewing a channel on Telegram sees the same sponsored message.\n\nUnline other apps, Telegram doesn't track whether you tapped on a sponsored message and doesn't profile you based on your activity. We also prevent external links in sponsored messages to ensure that third parties can't spy on our users. We believe that everyone has the right to privacy, and technological platforms should respect that.\n\nTelegram offers free and unlimited service to hundreds of millions of users, which involves significant server and traffic costs. In order to remain independent and stay true to its values, Telegram developed a paid tool to promote messages with user privacy in mind. We welcome responsible adverticers at:\n[url]\nAds should no longer be synonymous with abuse of user privacy. Let us redefine how a tech compony should operate — together.";
+"SponsoredMessageInfoScreen.MarkdownText" = "Unlike other apps, Swiftgram and Telegram never use your private data to target ads. [Learn more in the Privacy Policy](https://telegram.org/privacy#5-6-no-ads-based-on-user-data)\nYou are seeing this message only because someone chose this public one-to many channel as a space to promote their messages. This means that no user data is mined or analyzed to display ads, and every user viewing a channel on Telegram sees the same sponsored message.\n\nUnline other apps, Telegram doesn't track whether you tapped on a sponsored message and doesn't profile you based on your activity. We also prevent external links in sponsored messages to ensure that third parties can't spy on our users. We believe that everyone has the right to privacy, and technological platforms should respect that.\n\nTelegram offers free and unlimited service to hundreds of millions of users, which involves significant server and traffic costs. In order to remain independent and stay true to its values, Telegram developed a paid tool to promote messages with user privacy in mind. We welcome responsible adverticers at:\n[url]\nAds should no longer be synonymous with abuse of user privacy. Let us redefine how a tech compony should operate — together.";
 "SponsoredMessageInfo.Action" = "Learn More";
 "SponsoredMessageInfo.Url" = "https://telegram.org/ads";
 
@@ -7298,8 +7298,8 @@ Sorry for the inconvenience.";
 "Contacts.QrCode.MyCode" = "My QR Code";
 "Contacts.QrCode.NoCodeFound" = "No valid QR code found in the image. Please try again.";
 
-"AccessDenied.QrCode" = "Telegram needs access to your photo library to scan QR codes.\n\nOpen your device's Settings > Privacy > Photos and set Telegram to ON.";
-"AccessDenied.QrCamera" = "Telegram needs access to your camera to scan QR codes.\n\nOpen your device's Settings > Privacy > Camera and set Telegram to ON.";
+"AccessDenied.QrCode" = "Swiftgram needs access to your photo library to scan QR codes.\n\nOpen your device's Settings > Privacy > Photos and set Swiftgram to ON.";
+"AccessDenied.QrCamera" = "Swiftgram needs access to your camera to scan QR codes.\n\nOpen your device's Settings > Privacy > Camera and set Swiftgram to ON.";
 
 "Share.ShareToInstagramStories" = "Share to Instagram Stories";
 
@@ -7412,8 +7412,8 @@ Sorry for the inconvenience.";
 "Attachment.MediaAccessText" = "Share an unlimited number of photos and videos of up to 2 GB each.";
 "Attachment.MediaAccessStoryText" = "Share an unlimited number of photos and videos of up to 2 GB each.";
 
-"Attachment.LimitedMediaAccessText" = "You have limited Telegram from accessing all of your photos.";
-"Attachment.CameraAccessText" = "Telegram needs camera access so that you can take photos and videos.";
+"Attachment.LimitedMediaAccessText" = "You have limited Swiftgram from accessing all of your photos.";
+"Attachment.CameraAccessText" = "Swiftgram needs camera access so that you can take photos and videos.";
 "Attachment.Manage" = "Manage";
 
 "Attachment.OpenSettings" = "Go to Settings";
@@ -7457,8 +7457,8 @@ Sorry for the inconvenience.";
 "LiveStream.ViewerCount_any" = "%@ viewers";
 "LiveStream.Watching" = "watching";
 
-"LiveStream.NoSignalAdminText" = "Oops! Telegram doesn't see any stream\ncoming from your streaming app.\n\nPlease make sure you entered the right Server\nURL and Stream Key in your app.";
-"LiveStream.NoSignalUserText" = "%@ is currently not broadcasting live\nstream data to Telegram.";
+"LiveStream.NoSignalAdminText" = "Oops! Swiftgram doesn't see any stream\ncoming from your streaming app.\n\nPlease make sure you entered the right Server\nURL and Stream Key in your app.";
+"LiveStream.NoSignalUserText" = "%@ is currently not broadcasting live\nstream data to Swiftgram.";
 
 "LiveStream.ViewCredentials" = "View Stream Key";
 
@@ -7535,7 +7535,7 @@ Sorry for the inconvenience.";
 "WebApp.RemoveConfirmationText" = "Remove **%@** from the attachment menu?";
 
 "Notifications.SystemTones" = "SYSTEM TONES";
-"Notifications.TelegramTones" = "TELEGRAM TONES";
+"Notifications.TelegramTones" = "SWIFTGRAM TONES";
 
 "Notifications.UploadSound" = "Upload Sound";
 "Notifications.MessageSoundInfo" = "Press and hold a short voice note or mp3 file in any chat and select \"Save for Notifications\". It will appear here.";
@@ -7547,7 +7547,7 @@ Sorry for the inconvenience.";
 "Notifications.UploadError.TooLong.Title" = "%@ is too long.";
 "Notifications.UploadError.TooLong.Text" = "Duration must be less than %@.";
 "Notifications.UploadSuccess.Title" = "Sound Added";
-"Notifications.UploadSuccess.Text" = "The sound **%@** was added to your Telegram tones.";
+"Notifications.UploadSuccess.Text" = "The sound **%@** was added to your Swiftgram tones.";
 "Notifications.SaveSuccess.Text" = "You can now use this sound as a notification tone in your [custom notification settings]().";
 
 "Conversation.DeleteTimer.SetupTitle" = "Auto-Delete After...";
@@ -7635,7 +7635,7 @@ Sorry for the inconvenience.";
 "Premium.AppIcons.Proceed" = "Unlock Premium Icons";
 "Premium.NoAds.Proceed" = "About Telegram Premium";
 
-"AccessDenied.LocationPreciseDenied" = "To share your specific location in this chat, please go to Settings > Privacy > Location Services > Telegram and set Precise Location to On.";
+"AccessDenied.LocationPreciseDenied" = "To share your specific location in this chat, please go to Settings > Privacy > Location Services > Swiftgram and set Precise Location to On.";
 
 "Chat.MultipleTypingPair" = "%@ and %@";
 "Chat.MultipleTypingMore" = "%@ and %@ others";
@@ -8058,7 +8058,7 @@ Sorry for the inconvenience.";
 "Login.Edit" = "Edit";
 "Login.Yes" = "Yes";
 
-"Checkout.PaymentLiabilityBothAlert" = "Telegram will not have access to your credit card information. Credit card details will be handled only by the payment system, {target}.\n\nPayments will go directly to the developer of {target}. Telegram cannot provide any guarantees, so proceed at your own risk. In case of problems, please contact the developer of {target} or your bank.";
+"Checkout.PaymentLiabilityBothAlert" = "Swiftgram/Telegram will not have access to your credit card information. Credit card details will be handled only by the payment system, {target}.\n\nPayments will go directly to the developer of {target}. Swiftgram/Telegram cannot provide any guarantees, so proceed at your own risk. In case of problems, please contact the developer of {target} or your bank.";
 
 "Settings.ChangeProfilePhoto" = "Change Profile Photo";
 
@@ -8618,7 +8618,7 @@ Sorry for the inconvenience.";
 
 "StorageManagement.DescriptionCleared" = "All media can be re-downloaded from the Telegram cloud if you need it again.";
 "StorageManagement.DescriptionChatUsage" = "This chat uses %1$@% of your Telegram cache.";
-"StorageManagement.DescriptionAppUsage" = "Telegram uses %1$@% of your free disk space.";
+"StorageManagement.DescriptionAppUsage" = "Swiftgram uses %1$@% of your free disk space.";
 
 "StorageManagement.ClearAll" = "Clear Entire Cache";
 "StorageManagement.ClearSelected" = "Clear Selected";
@@ -9024,7 +9024,7 @@ Sorry for the inconvenience.";
 "PowerSavingScreen.OptionAutoplayEmojiText" = "Loop animated emoji in messages, reactions, statuses.";
 
 "PowerSavingScreen.OptionAutoplayEffectsTitle" = "Interface Effects";
-"PowerSavingScreen.OptionAutoplayEffectsText" = "Various effects and animations that make Telegram look amazing.";
+"PowerSavingScreen.OptionAutoplayEffectsText" = "Various effects and animations that make Swiftgram look amazing.";
 
 "PowerSavingScreen.OptionBackgroundTitle" = "Extended Background Time";
 "PowerSavingScreen.OptionBackgroundText" = "Update chats faster when switching between apps.";
@@ -9385,7 +9385,7 @@ Sorry for the inconvenience.";
 "ChatList.PremiumRestoreDiscountTitle" = "Get Premium back with up to %@ off";
 "ChatList.PremiumRestoreDiscountText" = "Your Telegram Premium has recently expired. Tap here to extend it.";
 
-"Login.ErrorAppOutdated" = "Please update Telegram to the latest version to log in.";
+"Login.ErrorAppOutdated" = "Please update Swiftgram to the latest version to log in.";
 
 "Login.GetCodeViaFragment" = "Get a code via Fragment";
 
@@ -9554,8 +9554,8 @@ Sorry for the inconvenience.";
 "Story.HeaderEdited" = "edited";
 "Story.CaptionShowMore" = "Show more";
 
-"Story.UnsupportedText" = "This story is not supported by\nyour version of Telegram.";
-"Story.UnsupportedAction" = "Update Telegram";
+"Story.UnsupportedText" = "This story is not supported by\nyour version of Swiftgram.";
+"Story.UnsupportedAction" = "Update Swiftgram";
 
 "Story.ScreenshotBlockedTitle" = "Screenshot Blocked";
 "Story.ScreenshotBlockedText" = "The story you tried to take a\nscreenshot of is protected from\ncopying by its creator.";
@@ -9630,7 +9630,7 @@ Sorry for the inconvenience.";
 "Story.Camera.SwipeLeftRelease" = "Release to lock";
 "Story.Camera.SwipeRightToFlip" = "Swipe right to flip";
 
-"Story.Camera.AccessPlaceholderTitle" = "Allow Telegram to access your camera and microphone";
+"Story.Camera.AccessPlaceholderTitle" = "Allow Swiftgram to access your camera and microphone";
 "Story.Camera.AccessPlaceholderText" = "This lets you share photos and record videos.";
 "Story.Camera.AccessOpenSettings" = "Open Settings";
 
@@ -9940,7 +9940,7 @@ Sorry for the inconvenience.";
 "Gallery.ViewOnceVideoTooltip" = "This video can only be viewed once.";
 
 "WebApp.DisclaimerTitle" = "Terms of Use";
-"WebApp.DisclaimerText" = "You are about to use a mini app operated by an independent party not affiliated with Telegram. You must agree to the Terms of Use of mini apps to continue.";
+"WebApp.DisclaimerText" = "You are about to use a mini app operated by an independent party not affiliated with Swiftgram/Telegram. You must agree to the Terms of Use of mini apps to continue.";
 "WebApp.DisclaimerAgree" = "I agree to the [Terms of Use]()";
 "WebApp.DisclaimerContinue" = "Continue";
 "WebApp.Disclaimer_URL" = "https://telegram.org/tos/mini-apps";

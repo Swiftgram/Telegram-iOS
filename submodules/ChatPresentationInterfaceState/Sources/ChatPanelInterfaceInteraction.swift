@@ -63,6 +63,8 @@ public enum ChatTranslationDisplayType {
 
 public final class ChatPanelInterfaceInteraction {
     public let setupReplyMessage: (MessageId?, @escaping (ContainedViewLayoutTransition, @escaping () -> Void) -> Void) -> Void
+    public let sgSelectLastWordIfIdle: () -> Void
+    public let sgSetNewLine: () -> Void
     public let setupEditMessage: (MessageId?, @escaping (ContainedViewLayoutTransition) -> Void) -> Void
     public let beginMessageSelection: ([MessageId], @escaping (ContainedViewLayoutTransition) -> Void) -> Void
     public let cancelMessageSelection: (ContainedViewLayoutTransition) -> Void
@@ -71,9 +73,9 @@ public final class ChatPanelInterfaceInteraction {
     public let reportMessages: ([Message], ContextControllerProtocol?) -> Void
     public let blockMessageAuthor: (Message, ContextControllerProtocol?) -> Void
     public let deleteMessages: ([Message], ContextControllerProtocol?, @escaping (ContextMenuActionResult) -> Void) -> Void
-    public let forwardSelectedMessages: () -> Void
+    public let forwardSelectedMessages: (String?) -> Void
     public let forwardCurrentForwardMessages: () -> Void
-    public let forwardMessages: ([Message]) -> Void
+    public let forwardMessages: ([Message], String?) -> Void
     public let updateForwardOptionsState: ((ChatInterfaceForwardOptionsState) -> ChatInterfaceForwardOptionsState) -> Void
     public let presentForwardOptions: (ASDisplayNode) -> Void
     public let presentReplyOptions: (ASDisplayNode) -> Void
@@ -188,9 +190,9 @@ public final class ChatPanelInterfaceInteraction {
         reportMessages: @escaping ([Message], ContextControllerProtocol?) -> Void,
         blockMessageAuthor: @escaping (Message, ContextControllerProtocol?) -> Void,
         deleteMessages: @escaping ([Message], ContextControllerProtocol?, @escaping (ContextMenuActionResult) -> Void) -> Void,
-        forwardSelectedMessages: @escaping () -> Void,
+        forwardSelectedMessages: @escaping (String?) -> Void,
         forwardCurrentForwardMessages: @escaping () -> Void,
-        forwardMessages: @escaping ([Message]) -> Void,
+        forwardMessages: @escaping ([Message], String?) -> Void,
         updateForwardOptionsState: @escaping ((ChatInterfaceForwardOptionsState) -> ChatInterfaceForwardOptionsState) -> Void,
         presentForwardOptions: @escaping (ASDisplayNode) -> Void,
         presentReplyOptions: @escaping (ASDisplayNode) -> Void,
@@ -411,6 +413,93 @@ public final class ChatPanelInterfaceInteraction {
 
         self.chatController = chatController
         self.statuses = statuses
+        
+        // MARK: Swiftgram
+        self.sgSelectLastWordIfIdle = {
+            updateTextInputStateAndMode { current, inputMode in
+                // No changes to current selection
+                if !current.selectionRange.isEmpty {
+                    return (current, inputMode)
+                }
+                
+                let inputText = (current.inputText.mutableCopy() as? NSMutableAttributedString) ?? NSMutableAttributedString()
+                
+                // If text is empty or cursor is at the start, return current state
+                guard inputText.length > 0, current.selectionRange.lowerBound > 0 else {
+                    return (current, inputMode)
+                }
+                
+                let plainText = inputText.string
+                let nsString = plainText as NSString
+                
+                // Create character set for word boundaries
+                let wordBoundaries = CharacterSet.whitespacesAndNewlines
+                
+                // Start from cursor position instead of end of text
+                var endIndex = current.selectionRange.lowerBound - 1
+                
+                // Find last non-whitespace character before cursor
+                while endIndex >= 0 &&
+                      (nsString.substring(with: NSRange(location: endIndex, length: 1)) as NSString)
+                        .rangeOfCharacter(from: wordBoundaries).location != NSNotFound {
+                    endIndex -= 1
+                }
+                
+                // If we only had whitespace before cursor, return current state
+                guard endIndex >= 0 else {
+                    return (current, inputMode)
+                }
+                
+                // Find start of the current word by looking backwards for whitespace
+                var startIndex = endIndex
+                while startIndex > 0 {
+                    let char = nsString.substring(with: NSRange(location: startIndex - 1, length: 1))
+                    if (char as NSString).rangeOfCharacter(from: wordBoundaries).location != NSNotFound {
+                        break
+                    }
+                    startIndex -= 1
+                }
+                
+                // Create range for the word at cursor
+                let wordLength = endIndex - startIndex + 1
+                let wordRange = NSRange(location: startIndex, length: wordLength)
+                
+                // Create new selection range
+                let newSelectionRange = wordRange.location ..< (wordRange.location + wordLength)
+                
+                return (ChatTextInputState(inputText: inputText, selectionRange: newSelectionRange), inputMode)
+            }
+        }
+        self.sgSetNewLine = {
+            updateTextInputStateAndMode { current, inputMode in
+                let inputText = (current.inputText.mutableCopy() as? NSMutableAttributedString) ?? NSMutableAttributedString()
+                
+                // Check if there's selected text
+                let hasSelection = current.selectionRange.count > 0
+                
+                if hasSelection {
+                    // Move selected text to new line
+                    let selectedText = inputText.attributedSubstring(from: NSRange(current.selectionRange))
+                    let newLineAttr = NSAttributedString(string: "\n")
+                    
+                    // Insert newline and selected text
+                    inputText.replaceCharacters(in: NSRange(current.selectionRange), with: newLineAttr)
+                    inputText.insert(selectedText, at: current.selectionRange.lowerBound + 1)
+                    
+                    // Update selection range to end of moved text
+                    let newPosition = current.selectionRange.lowerBound + 1 + selectedText.length
+                    return (ChatTextInputState(inputText: inputText, selectionRange: newPosition ..< newPosition), inputMode)
+                } else {
+                    // Simple newline insertion at current position
+                    let attributedString = NSAttributedString(string: "\n")
+                    inputText.replaceCharacters(in: NSRange(current.selectionRange), with: attributedString)
+                    
+                    // Update cursor position
+                    let newPosition = current.selectionRange.lowerBound + attributedString.length
+                    return (ChatTextInputState(inputText: inputText, selectionRange: newPosition ..< newPosition), inputMode)
+                }
+            }
+        }
     }
     
     public convenience init(
@@ -428,9 +517,9 @@ public final class ChatPanelInterfaceInteraction {
         }, blockMessageAuthor: { _, _ in
         }, deleteMessages: { _, _, f in
             f(.default)
-        }, forwardSelectedMessages: {
+        }, forwardSelectedMessages: { _ in
         }, forwardCurrentForwardMessages: {
-        }, forwardMessages: { _ in
+        }, forwardMessages: { _, _ in
         }, updateForwardOptionsState: { _ in
         }, presentForwardOptions: { _ in
         }, presentReplyOptions: { _ in

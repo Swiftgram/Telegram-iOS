@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import Postbox
@@ -589,6 +590,8 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     }
     
     var translationStateDisposable: Disposable?
+    var chatLanguagePredictionDisposable: Disposable?
+    var predictedChatLanguage: String?
     var premiumGiftSuggestionDisposable: Disposable?
     
     var nextChannelToReadDisposable: Disposable?
@@ -597,7 +600,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     var inviteRequestsContext: PeerInvitationImportersContext?
     var inviteRequestsDisposable = MetaDisposable()
     
-    var overlayTitle: String? {
+    public var overlayTitle: String? {
         var title: String?
         if let threadInfo = self.threadInfo {
             title = threadInfo.title
@@ -1518,6 +1521,19 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             self.controllerInteraction?.isOpeningMediaSignal = openChatMessageParams.blockInteraction.get()
             
             return context.sharedContext.openChatMessage(openChatMessageParams)
+        }, sgGetChatPredictedLang: { [weak self] in
+            if let strongSelf = self {
+                var result: String?
+                if let chatPeerId = strongSelf.chatLocation.peerId {
+                    result = SGSimpleSettings.shared.outgoingLanguageTranslation[SGSimpleSettings.makeOutgoingLanguageTranslationKey(accountId: strongSelf.context.account.peerId.id._internalGetInt64Value(), peerId: chatPeerId.id._internalGetInt64Value())]
+                }
+                return result ?? strongSelf.predictedChatLanguage
+            }
+            return nil
+        }, sgStartMessageEdit: { [weak self] message in
+            if let strongSelf = self {
+                strongSelf.interfaceInteraction?.setupEditMessage(message.id, { _ in })
+            }
         }, openPeer: { [weak self] peer, navigation, fromMessage, source in
             var expandAvatar = false
             if case let .groupParticipant(storyStats, avatarHeaderNode) = source {
@@ -6061,7 +6077,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             } else {
                                 isRegularChat = true
                             }
-                            if strongSelf.nextChannelToReadDisposable == nil, let peerId = strongSelf.chatLocation.peerId, let customChatNavigationStack = strongSelf.customChatNavigationStack {
+                            if strongSelf.nextChannelToReadDisposable == nil, let peerId = strongSelf.chatLocation.peerId, let customChatNavigationStack = strongSelf.customChatNavigationStack, !SGSimpleSettings.shared.disableScrollToNextChannel {
                                 if let index = customChatNavigationStack.firstIndex(of: peerId), index != customChatNavigationStack.count - 1 {
                                     let nextPeerId = customChatNavigationStack[index + 1]
                                     strongSelf.nextChannelToReadDisposable = (combineLatest(queue: .mainQueue(),
@@ -6099,7 +6115,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                                         strongSelf.updateNextChannelToReadVisibility()
                                     })
                                 }
-                            } else if isRegularChat, strongSelf.nextChannelToReadDisposable == nil {
+                            } else if isRegularChat, strongSelf.nextChannelToReadDisposable == nil, !SGSimpleSettings.shared.disableScrollToNextChannel {
                                 //TODO:loc optimize
                                 let accountPeerId = strongSelf.context.account.peerId
                                 strongSelf.nextChannelToReadDisposable = (combineLatest(queue: .mainQueue(),
@@ -6702,7 +6718,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                                     }
                             })
                             
-                            if let replyThreadId, let channel = renderedPeer?.peer as? TelegramChannel, channel.isForum, strongSelf.nextChannelToReadDisposable == nil {
+                            if let replyThreadId, let channel = renderedPeer?.peer as? TelegramChannel, channel.isForum, strongSelf.nextChannelToReadDisposable == nil, !SGSimpleSettings.shared.disableScrollToNextTopic {
                                 strongSelf.nextChannelToReadDisposable = (combineLatest(queue: .mainQueue(),
                                 strongSelf.context.engine.peers.getNextUnreadForumTopic(peerId: channel.id, topicId: Int32(clamping: replyThreadId)),
                                     ApplicationSpecificNotice.getNextChatSuggestionTip(accountManager: strongSelf.context.sharedContext.accountManager)
@@ -7350,6 +7366,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             self.keepMessageCountersSyncrhonizedDisposable?.dispose()
             self.keepSavedMessagesSyncrhonizedDisposable?.dispose()
             self.translationStateDisposable?.dispose()
+            self.chatLanguagePredictionDisposable?.dispose()
             self.premiumGiftSuggestionDisposable?.dispose()
             self.powerSavingMonitoringDisposable?.dispose()
             self.saveMediaDisposable?.dispose()

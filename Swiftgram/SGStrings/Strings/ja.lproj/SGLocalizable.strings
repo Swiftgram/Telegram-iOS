@@ -1,0 +1,153 @@
+"Settings.ContentSettings" = "コンテンツの設定";
+
+"Settings.Tabs.Header" = "タブ";
+"Settings.Tabs.HideTabBar" = "タブバーを非表示にする";
+"Settings.Tabs.ShowContacts" = "連絡先のタブを表示";
+"Settings.Tabs.ShowNames" = "タブの名前を隠す";
+
+"Settings.Folders.BottomTab" = "フォルダーを下に表示";
+"Settings.Folders.BottomTabStyle" = "チャットフォルダーのスタイル";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "\"%@\"を非表示";
+"Settings.Folders.RememberLast" = "最後に開いたフォルダを開く";
+"Settings.Folders.RememberLast.Notice" = "Swiftgramは再起動またはアカウント切替後に最後に使用したフォルダを開きます";
+
+"Settings.Folders.CompactNames" = "より小さい間隔";
+"Settings.Folders.AllChatsTitle" = "「すべてのチャット」タイトル";
+"Settings.Folders.AllChatsTitle.short" = "Short";
+"Settings.Folders.AllChatsTitle.long" = "長い順";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "デフォルト";
+
+
+"Settings.ChatList.Header" = "チャットリスト";
+"Settings.CompactChatList" = "コンパクトなチャットリスト";
+
+"Settings.Profiles.Header" = "PROFILES";
+
+"Settings.Stories.Hide" = "ストーリーを隠す";
+"Settings.Stories.WarnBeforeView" = "視聴前に確認";
+"Settings.Stories.DisableSwipeToRecord" = "スワイプで録画を無効にする";
+
+"Settings.Translation.QuickTranslateButton" = "クイック翻訳ボタン";
+
+"Stories.Warning.Author" = "投稿者";
+"Stories.Warning.ViewStory" = "ストーリーを表示？";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@はあなたがそのストーリーを見たことを確認できます。";
+"Stories.Warning.NoticeStealth" = "%@はあなたがそのストーリーを見たことを確認できません。";
+
+"Settings.Photo.Quality.Notice" = "送信する写真とフォトストーリーの品質";
+"Settings.Photo.SendLarge" = "大きな写真を送信";
+"Settings.Photo.SendLarge.Notice" = "圧縮画像のサイド制限を2560pxに増加";
+
+"Settings.VideoNotes.Header" = "丸いビデオ";
+"Settings.VideoNotes.StartWithRearCam" = "リアカメラで開始";
+
+"Settings.CustomColors.Header" = "アカウントの色";
+"Settings.CustomColors.Saturation" = "彩度";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "彩度を0%%に設定してアカウントの色を無効にする";
+
+"Settings.UploadsBoost" = "アップロードブースト";
+"Settings.DownloadsBoost" = "ダウンロードブースト";
+"Settings.DownloadsBoost.Notice" = "並行接続の数とファイルチャンクのサイズを増やします。ネットワークが負荷に耐えられない場合は、接続に適した別のオプションを試してください。";
+"Settings.DownloadsBoost.none" = "無効";
+"Settings.DownloadsBoost.medium" = "中程度";
+"Settings.DownloadsBoost.maximum" = "最大";
+
+"Settings.ShowProfileID" = "プロフィールIDを表示";
+"Settings.ShowDC" = "データセンターを表示";
+"Settings.ShowCreationDate" = "チャットの作成日を表示";
+"Settings.ShowCreationDate.Notice" = "作成日が不明なチャットがあります。";
+
+"Settings.ShowRegDate" = "登録日を表示";
+"Settings.ShowRegDate.Notice" = "登録日はおおよその日です。";
+
+"Settings.SendWithReturnKey" = "\"return\" キーで送信";
+"Settings.HidePhoneInSettingsUI" = "設定で電話番号を隠す";
+"Settings.HidePhoneInSettingsUI.Notice" = "あなたの番号は設定UIでのみ隠されます。他の人から隠すにはプライバシー設定に移動してください。";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "5秒間離れると自動ロック";
+
+"ProxySettings.UseSystemDNS" = "システムDNSを使用";
+"ProxySettings.UseSystemDNS.Notice" = "Google DNSにアクセスできない場合はシステムDNSを使用してタイムアウトを回避";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "** %@は必要ありません**！";
+"Common.RestartRequired" = "再起動が必要です";
+"Common.RestartNow" = "今すぐ再実行";
+"Common.OpenTelegram" = "Telegram を開く";
+"Common.UseTelegramForPremium" = "Telegram Premiumを登録するには、公式のTelegramアプリが必要です。
+登録すると、Swiftgram等の非公式アプリ含め、Telegram Premiumをサポートする全てのアプリでプレミアムメソッドを利用できます。";
+
+"Message.HoldToShowOrReport" = "表示または報告するために押し続ける。";
+
+"Auth.AccountBackupReminder" = "バックアップアクセス方法があることを確認してください。SMS用のSIMを保持するか、追加のセッションにログインしてロックアウトを避けてください。";
+"Auth.UnofficialAppCodeTitle" = "テレグラムの公式アプリでのみログインコードを取得できます";
+
+"Settings.SmallReactions" = "小さいリアクション";
+"Settings.HideReactions" = "リアクションを非表示";
+
+"ContextMenu.SaveToCloud" = "メッセージを保存";
+"ContextMenu.SelectFromUser" = "全て選択";
+
+"Settings.ContextMenu" = "コンテキスト メニュー";
+"Settings.ContextMenu.Notice" = "無効化されたエントリは、「Swiftgram」サブメニューから利用できます。";
+
+
+"Settings.ChatSwipeOptions" = "チャットリストのスワイプ設定";
+"Settings.DeleteChatSwipeOption" = "チャットを削除するにはスワイプしてください";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "次の未読チャンネルまでプルする";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "次のトピックに移動する";
+"Settings.GalleryCamera" = "ギャラリーのカメラを隠す";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" ボタン";
+"Settings.SnapDeletionEffect" = "メッセージ削除のエフェクト";
+
+"Settings.Stickers.Size" = "サイズ";
+"Settings.Stickers.Timestamp" = "タイムスタンプを表示";
+
+"Settings.RecordingButton" = "音声録音ボタン";
+
+"Settings.DefaultEmojisFirst" = "標準エモジを優先";
+"Settings.DefaultEmojisFirst.Notice" = "絵文字キーボードでプレミアムより前に標準エモジを表示";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "作成済み: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "%@ に参加しました";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "登録済み";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "メッセージを編集するにはタップをダブルタップ";
+
+"Settings.wideChannelPosts" = "チャンネル内の幅広い投稿";
+"Settings.ForceEmojiTab" = "デフォルトで絵文字キーボード";
+
+"Settings.forceBuiltInMic" = "デバイスのマイクを強制";
+"Settings.forceBuiltInMic.Notice" = "有効にすると、ヘッドフォンが接続されていてもアプリはデバイスのマイクのみを使用します。";
+
+"Settings.hideChannelBottomButton" = "チャンネルボトムパネルを非表示";
+
+"Settings.CallConfirmation" = "コール確認";
+"Settings.CallConfirmation.Notice" = "Swiftgram は、通話を行う前にあなたの確認を求めます。";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "通話をかけますか？";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "ビデオ通話をかけますか？";
+
+"MutualContact.Label" = "相互連絡先";
+
+"Settings.swipeForVideoPIP" = "ビデオ PIP スワイプ";
+"Settings.swipeForVideoPIP.Notice" = "有効になっている場合、ビデオをスワイプするとピクチャーインピクチャーモードで開きます。";

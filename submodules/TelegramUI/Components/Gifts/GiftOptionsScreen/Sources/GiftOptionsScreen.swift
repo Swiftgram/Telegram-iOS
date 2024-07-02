@@ -868,10 +868,10 @@ final class GiftOptionsScreenComponent: Component {
             
             let optionSpacing: CGFloat = 10.0
             let optionWidth = (availableSize.width - sideInset * 2.0 - optionSpacing * 2.0) / 3.0
-            
             let showStarPrice = (self.starsState?.balance.value ?? 0) > 10
             
-            if isSelfGift || isChannelGift || isPremiumDisabled {
+            // MARK: Swiftgram
+            if isSelfGift || isChannelGift || isPremiumDisabled || { return true }() {
                 contentHeight += 6.0
             } else {
                 if let premiumProducts = state.premiumProducts {

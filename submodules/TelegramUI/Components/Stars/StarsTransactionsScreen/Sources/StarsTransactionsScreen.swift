@@ -647,7 +647,7 @@ final class StarsTransactionsScreenComponent: Component {
                             count: self.starsState?.balance ?? StarsAmount.zero,
                             rate: nil,
                             actionTitle: withdrawAvailable ? environment.strings.Stars_Intro_BuyShort : environment.strings.Stars_Intro_Buy,
-                            actionAvailable: !premiumConfiguration.areStarsDisabled && !premiumConfiguration.isPremiumDisabled,
+                            actionAvailable: false, /* MARK: Swiftgram */ // !premiumConfiguration.areStarsDisabled && !premiumConfiguration.isPremiumDisabled,
                             actionIsEnabled: true,
                             actionIcon: PresentationResourcesItemList.itemListRoundTopupIcon(environment.theme),
                             action: { [weak self] in

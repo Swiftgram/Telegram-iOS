@@ -34,6 +34,9 @@ def generate_xcodeproj(build_environment: BuildEnvironment, disable_extensions, 
         project_bazel_arguments.append(argument)
     project_bazel_arguments += ['--override_repository=build_configuration={}'.format(configuration_path)]
 
+    if target_name == "Swiftgram/Playground":
+        project_bazel_arguments += ["--swiftcopt=-no-warnings-as-errors", "--copt=-Wno-error"]#, "--swiftcopt=-DSWIFTGRAM_PLAYGROUND", "--copt=-DSWIFTGRAM_PLAYGROUND=1"]
+
     if target_name == 'Telegram':
         if disable_extensions:
             project_bazel_arguments += ['--//{}:disableExtensions'.format(app_target)]
@@ -50,7 +53,12 @@ def generate_xcodeproj(build_environment: BuildEnvironment, disable_extensions, 
 
     call_executable(bazel_generate_arguments)
 
-    xcodeproj_path = '{}.xcodeproj'.format(app_target_spec.replace(':', '/'))
+    # MARK: Swiftgram
+    if target_name == "Swiftgram/Playground":
+        xcodeproj_path = 'Swiftgram/Playground/Playground.xcodeproj'
+        call_executable(['open', xcodeproj_path])
+        return
+    xcodeproj_path = 'Telegram/Swiftgram.xcodeproj'
     call_executable(['open', xcodeproj_path])
 
 
