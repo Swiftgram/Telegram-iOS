@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -2770,6 +2771,12 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
     }
     
     override func maybePerformActionForSwipeDismiss() -> Bool {
+        if #available(iOS 15.0, *) {
+            if SGSimpleSettings.shared.videoPIPSwipeDirection != SGSimpleSettings.VideoPIPSwipeDirection.up.rawValue {
+                return false
+            }
+        }
+        
         if let data = self.context.currentAppConfiguration.with({ $0 }).data {
             if let _ = data["ios_killswitch_disable_swipe_pip"] {
                 return false
@@ -2956,6 +2963,9 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
             if content.fileReference.media.isAnimated {
                 useNative = false
             }
+        }
+        if SGSimpleSettings.shared.videoPIPSwipeDirection != SGSimpleSettings.VideoPIPSwipeDirection.up.rawValue {
+            useNative = false
         }
         if !useNative {
             return
@@ -3808,16 +3818,16 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                         f(.default)
                     })))
                 }
-                
-                //            if #available(iOS 11.0, *) {
-                //                items.append(.action(ContextMenuActionItem(text: "AirPlay", textColor: .primary, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Media Gallery/AirPlay"), color: theme.contextMenu.primaryColor) }, action: { [weak self] _, f in
-                //                    f(.default)
-                //                    guard let strongSelf = self else {
-                //                        return
-                //                    }
-                //                    strongSelf.beginAirPlaySetup()
-                //                })))
-                //            }
+                // MARK: Swiftgram
+                           if #available(iOS 11.0, *) {
+                               items.append(.action(ContextMenuActionItem(text: "AirPlay", textColor: .primary, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Media Gallery/AirPlay"), color: theme.contextMenu.primaryColor) }, action: { [weak self] _, f in
+                                   f(.default)
+                                   guard let strongSelf = self else {
+                                       return
+                                   }
+                                   strongSelf.beginAirPlaySetup()
+                               })))
+                           }
                 
                 if let (message, _, _) = strongSelf.contentInfo() {
                     for media in message.media {

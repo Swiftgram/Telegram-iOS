@@ -1,4 +1,5 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 
 http_archive(
     name = "bazel_features",
@@ -98,4 +99,12 @@ bazel_skylib_workspace()
 load("@build_bazel_rules_apple//apple:apple.bzl", "provisioning_profile_repository")
 provisioning_profile_repository(
     name = "local_provisioning_profiles",
+)
+
+# MARK: Swiftgram
+new_git_repository(
+    name = "flex_sdk",
+    remote = "https://github.com/FLEXTool/FLEX.git",
+    commit = "1b983160cc188aff18284c1d990121cdb1e42e9c",
+    build_file = "@//Swiftgram/FLEX:FLEX.BUILD"
 )

@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import Display
@@ -602,7 +603,7 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                 }
             })
             
-            if let controller = self.controller, case .assets(nil, .default) = controller.subject {
+            if let controller = self.controller, case .assets(nil, .default) = controller.subject, !SGSimpleSettings.shared.disableGalleryCamera {
                 let enableAnimations = self.controller?.context.sharedContext.energyUsageSettings.fullTranslucency ?? true
   
                 let cameraView = TGAttachmentCameraView(forSelfPortrait: false, videoModeByDefault: controller.bannedSendPhotos != nil && controller.bannedSendVideos == nil)!

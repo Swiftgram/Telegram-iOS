@@ -1,3 +1,5 @@
+import SGSimpleSettings
+import TranslateUI
 import Foundation
 import UIKit
 import Postbox
@@ -471,8 +473,36 @@ public final class ChatMessageItemImpl: ChatMessageItem, CustomStringConvertible
             }
         }
         
+        // MARK: Swiftgram
+        let needsQuickTranslateButton: Bool
+        if viewClassName == ChatMessageBubbleItemNode.self {
+            if self.message.attributes.first(where: { $0 is QuickTranslationMessageAttribute }) as? QuickTranslationMessageAttribute != nil {
+                needsQuickTranslateButton = true
+            } else {
+                let (canTranslate, _) = canTranslateText(context: self.context, text: self.message.text, showTranslate: SGSimpleSettings.shared.quickTranslateButton, showTranslateIfTopical: false, ignoredLanguages: self.associatedData.translationSettings?.ignoredLanguages)
+                needsQuickTranslateButton = canTranslate
+            }
+        } else {
+            needsQuickTranslateButton = false
+        }
+        
         let configure = {
             let node = (viewClassName as! ChatMessageItemView.Type).init(rotated: self.controllerInteraction.chatIsRotated)
+            // MARK: Swiftgram
+            if let node = node as? ChatMessageBubbleItemNode {
+                node.needsQuickTranslateButton = needsQuickTranslateButton
+            }
+            if let node = node as? ChatMessageStickerItemNode {
+                node.sizeCoefficient = Float(SGSimpleSettings.shared.stickerSize) / 100.0
+                if !SGSimpleSettings.shared.stickerTimestamp {
+                    node.dateAndStatusNode.isHidden = true
+                }
+            } else if let node = node as? ChatMessageAnimatedStickerItemNode {
+                node.sizeCoefficient = Float(SGSimpleSettings.shared.stickerSize) / 100.0
+                if !SGSimpleSettings.shared.stickerTimestamp {
+                    node.dateAndStatusNode.isHidden = true
+                }
+            }
             node.setupItem(self, synchronousLoad: synchronousLoads)
             
             let nodeLayout = node.asyncLayout()
