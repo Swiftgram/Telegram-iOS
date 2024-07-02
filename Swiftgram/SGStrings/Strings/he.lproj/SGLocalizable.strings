@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "הגדרות תוכן";
+
+"Settings.Tabs.Header" = "כרטיסיות";
+"Settings.Tabs.HideTabBar" = "הסתר סרגל לשוניים";
+"Settings.Tabs.ShowContacts" = "הצג כרטיסיית אנשי קשר";
+"Settings.Tabs.ShowNames" = "הצג שמות כרטיסיות";
+
+"Settings.Folders.BottomTab" = "תיקיות בתחתית";
+"Settings.Folders.BottomTabStyle" = "סגנון תיקיות תחתון";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "טלגרם";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "להסתיר \"%@\"";
+"Settings.Folders.RememberLast" = "פתח את התיקיה האחרונה";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram תפתח את התיקיה שנעשה בה שימוש לאחרונה לאחר הפעלה מחדש או החלפת חשבון";
+
+"Settings.Folders.CompactNames" = "ריווח קטן יותר";
+"Settings.Folders.AllChatsTitle" = "כותרת \"כל הצ'אטים\"";
+"Settings.Folders.AllChatsTitle.short" = "קצר";
+"Settings.Folders.AllChatsTitle.long" = "ארוך";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "ברירת מחדל";
+
+
+"Settings.ChatList.Header" = "רשימת צ'אטים";
+"Settings.CompactChatList" = "רשימת צ'אטים קומפקטית";
+
+"Settings.Profiles.Header" = "פרופילים";
+
+"Settings.Stories.Hide" = "הסתר סיפורים";
+"Settings.Stories.WarnBeforeView" = "שאל לפני צפייה";
+"Settings.Stories.DisableSwipeToRecord" = "בטל החלקה להקלטה";
+
+"Settings.Translation.QuickTranslateButton" = "כפתור תרגום מהיר";
+
+"Stories.Warning.Author" = "מחבר";
+"Stories.Warning.ViewStory" = "לצפות בסיפור?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ יוכל לראות שצפית בסיפור שלו.";
+"Stories.Warning.NoticeStealth" = "%@ לא יוכל לראות שצפית בסיפור שלו.";
+
+"Settings.Photo.Quality.Notice" = "איכות התמונות היוצאות והסיפורים בתמונות";
+"Settings.Photo.SendLarge" = "שלח תמונות גדולות";
+"Settings.Photo.SendLarge.Notice" = "הגדל את הגבול הצידי של תמונות מודחקות ל-2560px";
+
+"Settings.VideoNotes.Header" = "וידאו מעוגלים";
+"Settings.VideoNotes.StartWithRearCam" = "התחל עם מצלמה אחורית";
+
+"Settings.CustomColors.Header" = "צבעי חשבון";
+"Settings.CustomColors.Saturation" = "רווי";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "קבע רווי ל-0%% כדי לבטל צבעי חשבון";
+
+"Settings.UploadsBoost" = "תוספת העלאות";
+"Settings.DownloadsBoost" = "תוספת הורדות";
+"Settings.DownloadsBoost.Notice" = "מגביר את מספר החיבורים המקביליים וגודל חלקי הקבצים. אם הרשת שלך לא יכולה להתמודד עם העומס, נסה אפשרויות שונות שמתאימות לחיבור שלך.";
+"Settings.DownloadsBoost.none" = "מבוטל";
+"Settings.DownloadsBoost.medium" = "בינוני";
+"Settings.DownloadsBoost.maximum" = "מרבי";
+
+"Settings.ShowProfileID" = "הצג מזהה פרופיל";
+"Settings.ShowDC" = "הצג מרכז מידע";
+"Settings.ShowCreationDate" = "הצג תאריך יצירת צ'אט";
+"Settings.ShowCreationDate.Notice" = "ייתכן שתאריך היצירה אינו ידוע עבור חלק מהצ'אטים.";
+
+"Settings.ShowRegDate" = "הצג תאריך רישום";
+"Settings.ShowRegDate.Notice" = "תאריך הרישום הוא אופציונלי.";
+
+"Settings.SendWithReturnKey" = "שלח עם מקש \"חזור\"";
+"Settings.HidePhoneInSettingsUI" = "הסתר טלפון בהגדרות";
+"Settings.HidePhoneInSettingsUI.Notice" = "המספר שלך יהיה מוסתר בממשק ההגדרות בלבד. עבור להגדרות פרטיות כדי להסתיר אותו מאחרים.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "נעל אוטומטית אחרי 5 שניות";
+
+"ProxySettings.UseSystemDNS" = "השתמש ב-DNS של המערכת";
+"ProxySettings.UseSystemDNS.Notice" = "השתמש ב-DNS של המערכת כדי לעקוף זמן תגובה אם אין לך גישה ל-Google DNS";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "אין **צורך** ב%@!";
+"Common.RestartRequired" = "נדרש הפעלה מחדש";
+"Common.RestartNow" = "הפעל מחדש עכשיו";
+"Common.OpenTelegram" = "פתח טלגרם";
+"Common.UseTelegramForPremium" = "שים לב כי כדי לקבל Telegram Premium, עליך להשתמש באפליקציית Telegram הרשמית. לאחר שקיבלת טלגרם פרימיום, כל התכונות שלו יהיו זמינות ב־Swiftgram.";
+
+"Message.HoldToShowOrReport" = "החזק כדי להציג או לדווח.";
+
+"Auth.AccountBackupReminder" = "ודא שיש לך שיטת גישה לגיבוי. שמור כרטיס SIM ל-SMS או פתח סשן נוסף כדי למנוע חסימה.";
+"Auth.UnofficialAppCodeTitle" = "תוכל לקבל את הקוד רק דרך האפליקציה הרשמית";
+
+"Settings.SmallReactions" = "תגובות קטנות";
+"Settings.HideReactions" = "הסתר תגובות";
+
+"ContextMenu.SaveToCloud" = "שמור בענן";
+"ContextMenu.SelectFromUser" = "בחר מהמשתמש";
+
+"Settings.ContextMenu" = "תפריט הקשר";
+"Settings.ContextMenu.Notice" = "פריטים מבוטלים יהיו זמינים בתת-תפריט 'Swiftgram'.";
+
+
+"Settings.ChatSwipeOptions" = "אפשרויות גלילה ברשימת צ'אטים";
+"Settings.DeleteChatSwipeOption" = "החלק למחיקת הצ'אט";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "משוך לערוץ לא נקרא הבא";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "משוך כדי להמשיך לנושא הבא";
+"Settings.GalleryCamera" = "מצלמה בגלריה";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "כפתור \"%@\"";
+"Settings.SnapDeletionEffect" = "אפקטים של מחיקת הודעות";
+
+"Settings.Stickers.Size" = "גודל";
+"Settings.Stickers.Timestamp" = "הצג חותמת זמן";
+
+"Settings.RecordingButton" = "כפתור הקלטת קול";
+
+"Settings.DefaultEmojisFirst" = "העדף רמזי פנים סטנדרטיים";
+"Settings.DefaultEmojisFirst.Notice" = "הצג רמזי פנים סטנדרטיים לפני פרימיום במקלדת רמזי פנים";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "נוצר: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "הצטרף/הצטרפה ב־%@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "נרשם";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "לחץ פעמיים לעריכת הודעה";
+
+"Settings.wideChannelPosts" = "פוסטים רחבים בערוצים";
+"Settings.ForceEmojiTab" = "מקלדת Emoji כברירת מחדל";
+
+"Settings.forceBuiltInMic" = "כוח מיקרופון המכשיר";
+"Settings.forceBuiltInMic.Notice" = "אם מופעל, האפליקציה תשתמש רק במיקרופון המכשיר גם כאשר אוזניות מחוברות.";
+
+"Settings.hideChannelBottomButton" = "הסתר פאנל תחתון של ערוץ";
+
+"Settings.CallConfirmation" = "אישור שיחה";
+"Settings.CallConfirmation.Notice" = "Swiftgram יבקש את אישורך לפני ביצוע שיחה.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "לבצע שיחה?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "לבצע שיחת וידאו?";
+
+"MutualContact.Label" = "איש קשר משותף";
+
+"Settings.swipeForVideoPIP" = "וידאו PIP עם החלקה";
+"Settings.swipeForVideoPIP.Notice" = "אם מופעל, החלקת הווידאו תפתח אותו במצב תמונה בתוך תמונה.";

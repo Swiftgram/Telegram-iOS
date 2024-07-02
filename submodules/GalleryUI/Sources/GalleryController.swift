@@ -526,6 +526,10 @@ public struct GalleryConfiguration {
     }
     
     static func with(appConfiguration: AppConfiguration) -> GalleryConfiguration {
+        // MARK: Swiftgram
+        if appConfiguration.sgWebSettings.global.ytPip {
+            return GalleryConfiguration(youtubePictureInPictureEnabled: true)
+        }
         if let data = appConfiguration.data, let value = data["youtube_pip"] as? String {
             return GalleryConfiguration(youtubePictureInPictureEnabled: value != "disabled")
         } else {

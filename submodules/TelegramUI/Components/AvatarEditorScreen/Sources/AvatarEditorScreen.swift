@@ -1396,7 +1396,8 @@ final class AvatarEditorScreenComponent: Component {
                         cropMirrored: false,
                         toolValues: [:],
                         paintingData: paintingData,
-                        sendAsGif: true
+                        sendAsGif: true,
+                        sendAsTelescope: false
                     )
                     let preset: TGMediaVideoConversionPreset = TGMediaVideoConversionPresetProfileHigh
                     

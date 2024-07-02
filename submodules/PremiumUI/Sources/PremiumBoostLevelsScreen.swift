@@ -2408,7 +2408,8 @@ public class PremiumBoostLevelsScreen: ViewController {
                                     title: presentationData.strings.ChannelBoost_MoreBoosts_Title,
                                     text: presentationData.strings.ChannelBoost_MoreBoosts_Text(peer.compactDisplayTitle, "\(premiumConfiguration.boostsPerGiftCount)").string,
                                     actions: [
-                                        TextAlertAction(type: .defaultAction, title: presentationData.strings.ChannelBoost_MoreBoosts_Gift, action: { [weak controller] in
+                                        // MARK: Swiftgram
+                                        /*TextAlertAction(type: .defaultAction, title: presentationData.strings.ChannelBoost_MoreBoosts_Gift, action: { [weak controller] in
                                             if let navigationController = controller?.navigationController {
                                                 controller?.dismiss(animated: true, completion: nil)
                                                 
@@ -2417,7 +2418,7 @@ public class PremiumBoostLevelsScreen: ViewController {
                                                     navigationController.pushViewController(giftController, animated: true)
                                                 }
                                             }
-                                        }),
+                                        }),*/
                                         TextAlertAction(type: .genericAction, title: presentationData.strings.Common_Close, action: {})
                                     ],
                                     actionLayout: .vertical,

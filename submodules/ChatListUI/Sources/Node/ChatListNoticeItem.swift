@@ -185,6 +185,12 @@ final class ChatListNoticeItemNode: ItemListRevealOptionsItemNode {
             var alignment: NSTextAlignment = .left
             
             switch item.notice {
+            // MARK: Swiftgram
+            case let .sgUrl(_, title, text, _, _, _):
+                let titleStringValue = NSMutableAttributedString(attributedString: NSAttributedString(string: title, font: titleFont, textColor: item.theme.rootController.navigationBar.primaryTextColor))
+                titleString = titleStringValue
+                
+                textString = NSAttributedString(string: text ?? "", font: textFont, textColor: item.theme.rootController.navigationBar.secondaryTextColor)
             case let .clearStorage(sizeFraction):
                 let sizeString = dataSizeString(Int64(sizeFraction), formatting: DataSizeStringFormatting(strings: item.strings, decimalSeparator: "."))
                 let rawTitleString = item.strings.ChatList_StorageHintTitle(sizeString)
