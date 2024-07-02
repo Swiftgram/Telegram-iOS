@@ -56,6 +56,7 @@ public func stringForDistance(strings: PresentationStrings, distance: CLLocation
         let code = languageCode + systemLocaleRegionSuffix
         return Locale(identifier: code)
     }
+    
     let locale = localeWithStrings(strings)
     if distanceFormatter.locale != locale {
         distanceFormatter.locale = locale
