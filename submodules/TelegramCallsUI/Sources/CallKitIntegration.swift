@@ -19,11 +19,13 @@ public final class CallKitIntegration {
         #if targetEnvironment(simulator)
         return false
         #else
-        if #available(iOSApplicationExtension 10.0, iOS 10.0, *) {
-            return Locale.current.regionCode?.lowercased() != "cn"
-        } else {
-            return false
-        }
+        // MARK: Swiftgram disabled due to missing Notification Extension Filtering Entitlement
+        return false
+//        if #available(iOSApplicationExtension 10.0, iOS 10.0, *) {
+//            return Locale.current.regionCode?.lowercased() != "cn"
+//        } else {
+//            return false
+//        }
         #endif
     }
     
@@ -145,7 +147,8 @@ class CallKitProviderDelegate: NSObject, CXProviderDelegate {
     }
     
     private static func providerConfiguration() -> CXProviderConfiguration {
-        let providerConfiguration = CXProviderConfiguration(localizedName: "Telegram")
+        // MARK: Swiftgram
+        let providerConfiguration = CXProviderConfiguration(localizedName: "Swiftgram")
         
         providerConfiguration.supportsVideo = true
         providerConfiguration.maximumCallsPerCallGroup = 1

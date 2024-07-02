@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import SwiftSignalKit
 import Postbox
@@ -75,6 +76,13 @@ public extension TelegramEngine {
 
         public func searchMessages(location: SearchMessagesLocation, query: String, state: SearchMessagesState?, centerId: MessageId? = nil, limit: Int32 = 100) -> Signal<(SearchMessagesResult, SearchMessagesState), NoError> {
             return _internal_searchMessages(account: self.account, location: location, query: query, state: state, centerId: centerId, limit: limit)
+            // TODO(swiftgram): Try to fallback on error when searching. RX is hard...
+            |> mapToSignal { result -> Signal<(SearchMessagesResult, SearchMessagesState), NoError> in
+                if (result.0.totalCount > 0) {
+                    return .single(result)
+                }
+                return _internal_searchMessages(account: self.account, location: location, query: query, state: state, centerId: centerId, limit: limit, forceLocal: true)
+            }
         }
         
         public func getSearchMessageCount(location: SearchMessagesLocation, query: String) -> Signal<Int?, NoError> {
@@ -545,6 +553,11 @@ public extension TelegramEngine {
         
         public func translate(texts: [(String, [MessageTextEntity])], toLang: String) -> Signal<[(String, [MessageTextEntity])], TranslationError> {
             return _internal_translate_texts(network: self.account.network, texts: texts, toLang: toLang)
+        }
+
+        // MARK: Swiftgram
+        public func translateMessagesViaText(messagesDict: [EngineMessage.Id: String], fromLang: String?, toLang: String, generateEntitiesFunction: @escaping (String) -> [MessageTextEntity], enableLocalIfPossible: Bool) -> Signal<Never, TranslationError> {
+            return _internal_translateMessagesViaText(account: self.account, messagesDict: messagesDict, fromLang: fromLang, toLang: toLang, enableLocalIfPossible: enableLocalIfPossible, generateEntitiesFunction: generateEntitiesFunction)
         }
         
         public func translateMessages(messageIds: [EngineMessage.Id], fromLang: String?, toLang: String, enableLocalIfPossible: Bool) -> Signal<Never, TranslationError> {
@@ -1369,6 +1382,10 @@ public extension TelegramEngine {
         }
         
         public func markStoryAsSeen(peerId: EnginePeer.Id, id: Int32, asPinned: Bool) -> Signal<Never, NoError> {
+            // MARK: Swiftgram
+            if SGSimpleSettings.shared.isStealthModeEnabled {
+                return .never()
+            }
             return _internal_markStoryAsSeen(account: self.account, peerId: peerId, id: id, asPinned: asPinned)
         }
         

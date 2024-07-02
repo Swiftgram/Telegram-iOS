@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import LegacyComponents
@@ -396,7 +397,8 @@ public func legacyAssetPickerEnqueueMessages(context: AccountContext, account: A
                                         defer {
                                             TempBox.shared.dispose(tempFile)
                                         }
-                                        if let scaledImageData = compressImageToJPEG(scaledImage, quality: 0.6, tempFilePath: tempFile.path) {
+                                        // MARK: Swiftgram
+                                        if let scaledImageData = compressImageToJPEG(scaledImage, quality: Float(SGSimpleSettings.shared.outgoingPhotoQuality) / 100.0, tempFilePath: tempFile.path) {
                                             let _ = try? scaledImageData.write(to: URL(fileURLWithPath: tempFilePath))
 
                                             let resource = LocalFileReferenceMediaResource(localFilePath: tempFilePath, randomId: randomId)
@@ -757,6 +759,7 @@ public func legacyAssetPickerEnqueueMessages(context: AccountContext, account: A
                                     break
                             }
                         case let .video(data, thumbnail, adjustments, caption, asFile, asAnimation, stickers):
+                            var adjustments = adjustments
                             var finalDimensions: CGSize
                             var finalDuration: Double
                             switch data {
@@ -811,8 +814,77 @@ public func legacyAssetPickerEnqueueMessages(context: AccountContext, account: A
                                 preset = TGMediaVideoConversionPresetAnimation
                             }
                             
-                            if !asAnimation {
-                                finalDimensions = TGMediaVideoConverter.dimensions(for: finalDimensions, adjustments: adjustments, preset: TGMediaVideoConversionPresetCompressedMedium)
+                            // MARK: Swiftgram
+                            // TODO(swiftgram): Nice thumbnail
+                            var asTelescope = false
+                            if let strongAdjustments = adjustments, strongAdjustments.sendAsTelescope {
+                                asTelescope = true
+                                // Final size
+                                let size = CGSize(width: finalDimensions.width, height: finalDimensions.height)
+                                
+                                // Respecting user's crop
+                                var cropRect = strongAdjustments.cropRect
+                                
+                                let originalSize: CGSize
+                                if strongAdjustments.cropApplied(forAvatar: false) {
+                                    originalSize = strongAdjustments.originalSize
+                                } else {
+                                    // It's a hack, video is resized according to the quality preset
+                                    // To prevent this resize we must set original size the same as the after-resized video
+                                    originalSize = size
+                                }
+                                
+                                // Already square
+                                if abs(finalDimensions.width - finalDimensions.height) < CGFloat.ulpOfOne {
+                                    cropRect = cropRect.insetBy(dx: 13.0, dy: 13.0)
+                                    cropRect = cropRect.offsetBy(dx: 2.0, dy: 3.0)
+                                } else {
+                                // Need to make a square
+                                    let shortestSide = min(size.width, size.height)
+                                    let newX = cropRect.origin.x + (size.width - shortestSide) / 2.0
+                                    let newY = cropRect.origin.y + (size.height - shortestSide) / 2.0
+                                    cropRect = CGRect(x: newX, y: newY, width: shortestSide, height: shortestSide)
+                                    print("size.width \(size.width)")
+                                    print("size.height \(size.height)")
+                                    print("shortestSide \(shortestSide)")
+                                    print("cropRect.origin.x \(cropRect.origin.x)")
+                                    print("cropRect.origin.y \(cropRect.origin.y)")
+                                    print("newX \(newX)")
+                                    print("newY \(newY)")
+                                }
+                                
+                                let maxDuration: Double = 60.0
+                                let trimmedDuration: TimeInterval
+                                if strongAdjustments.trimApplied() {
+                                    trimmedDuration = strongAdjustments.trimEndValue - strongAdjustments.trimStartValue
+                                } else {
+                                    trimmedDuration = finalDuration
+                                }
+                                
+                                let trimEndValueLimited: TimeInterval
+                                if trimmedDuration > maxDuration {
+                                    trimEndValueLimited = strongAdjustments.trimEndValue - (trimmedDuration - maxDuration)
+                                } else {
+                                    trimEndValueLimited = strongAdjustments.trimEndValue
+                                }
+                                
+                                print("Preset TGMediaVideoConversionPresetVideoMessageHD \(TGMediaVideoConversionPresetVideoMessageHD)")
+                                print("Preset TGMediaVideoConversionPresetVideoMessage \(TGMediaVideoConversionPresetVideoMessage)")
+                                print("Preset TGMediaVideoConversionPresetCompressedLow \(TGMediaVideoConversionPresetCompressedLow)")
+                                
+                                // Dynamically calculate size with different presets and use the best one
+                                for presetTest in [TGMediaVideoConversionPresetVideoMessageHD, TGMediaVideoConversionPresetVideoMessage, TGMediaVideoConversionPresetCompressedLow] {
+                                    adjustments = TGVideoEditAdjustments(originalSize: originalSize, cropRect: cropRect, cropOrientation: strongAdjustments.cropOrientation, cropRotation: strongAdjustments.cropRotation, cropLockedAspectRatio: 1.0, cropMirrored: strongAdjustments.cropMirrored, trimStartValue: strongAdjustments.trimStartValue, trimEndValue: trimEndValueLimited, toolValues: strongAdjustments.toolValues, paintingData: strongAdjustments.paintingData, sendAsGif: false, sendAsTelescope: strongAdjustments.sendAsTelescope, preset: presetTest)
+
+                                    finalDimensions = TGMediaVideoConverter.dimensions(for: finalDimensions, adjustments: adjustments, preset: presetTest)
+                                    
+                                    let estimatedVideoMessageSize = TGMediaVideoConverter.estimatedSize(for: presetTest, duration: finalDuration, hasAudio: true)
+                                    if estimatedVideoMessageSize < 8 * 1024 * 1024 {
+                                        print("Using preset \(presetTest)")
+                                        preset = presetTest
+                                        break
+                                    }
+                                }
                             }
                             
                             var resourceAdjustments: VideoMediaResourceAdjustments?
@@ -890,7 +962,10 @@ public func legacyAssetPickerEnqueueMessages(context: AccountContext, account: A
                                 attributes.append(EmbeddedMediaStickersMessageAttribute(files: stickerFiles))
                                 fileAttributes.append(.HasLinkedStickers)
                             }
-                            
+                            // MARK: Swiftgram
+                            if asTelescope {
+                                fileAttributes = [.FileName(fileName: "video.mp4"), .Video(duration: finalDuration, size: PixelDimensions(finalDimensions), flags: [.instantRoundVideo], preloadSize: nil, coverTime: nil, videoCodec: nil)]
+                            }
                             let media = TelegramMediaFile(fileId: MediaId(namespace: Namespaces.Media.LocalFile, id: Int64.random(in: Int64.min ... Int64.max)), partialReference: nil, resource: resource, previewRepresentations: previewRepresentations, videoThumbnails: [], immediateThumbnailData: nil, mimeType: "video/mp4", size: nil, attributes: fileAttributes, alternativeRepresentations: [])
 
                             if let timer = item.timer, timer > 0 && (timer <= 60 || timer == viewOnceTimeout) {

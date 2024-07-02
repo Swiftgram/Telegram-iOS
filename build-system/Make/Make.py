@@ -274,7 +274,7 @@ class BazelCommandLine:
         if self.custom_target is not None:
             combined_arguments += [self.custom_target]
         else:
-            combined_arguments += ['Telegram/Telegram']
+            combined_arguments += ['Telegram/Swiftgram']
 
         if self.continue_on_error:
             combined_arguments += ['--keep_going']
@@ -555,22 +555,22 @@ def build(bazel, arguments):
 
     if arguments.outputBuildArtifactsPath is not None:
         artifacts_path = os.path.abspath(arguments.outputBuildArtifactsPath)
-        if os.path.exists(artifacts_path + '/Telegram.ipa'):
-            os.remove(artifacts_path + '/Telegram.ipa')
+        if os.path.exists(artifacts_path + '/Swiftgram.ipa'):
+            os.remove(artifacts_path + '/Swiftgram.ipa')
         if os.path.exists(artifacts_path + '/DSYMs'):
             shutil.rmtree(artifacts_path + '/DSYMs')
         os.makedirs(artifacts_path, exist_ok=True)
         os.makedirs(artifacts_path + '/DSYMs', exist_ok=True)
 
         built_ipa_path_prefix = 'bazel-out/ios_arm64-opt-ios-arm64-min12.0-applebin_ios-ST-*'
-        ipa_paths = glob.glob('{}/bin/Telegram/Telegram.ipa'.format(built_ipa_path_prefix))
+        ipa_paths = glob.glob('{}/bin/Telegram/Swiftgram.ipa'.format(built_ipa_path_prefix))
         if len(ipa_paths) == 0:
-            print('Could not find the IPA at bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/Telegram.ipa')
+            print('Could not find the IPA at bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/Swiftgram.ipa')
             sys.exit(1)
         elif len(ipa_paths) > 1:
             print('Multiple matching IPA files found: {}'.format(ipa_paths))
             sys.exit(1)
-        shutil.copyfile(ipa_paths[0], artifacts_path + '/Telegram.ipa')
+        shutil.copyfile(ipa_paths[0], artifacts_path + '/Swiftgram.ipa')
 
         dsym_paths = glob.glob('bazel-bin/Telegram/*.dSYM')
         for dsym_path in dsym_paths:
@@ -580,7 +580,7 @@ def build(bazel, arguments):
         os.chdir(artifacts_path)
         run_executable_with_output('zip', arguments=[
             '-r',
-            'Telegram.DSYMs.zip',
+            'Swiftgram.DSYMs.zip',
             './DSYMs'
         ], check_result=True)
         os.chdir(previous_directory)
