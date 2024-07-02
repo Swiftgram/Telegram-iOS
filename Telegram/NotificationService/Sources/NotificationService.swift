@@ -1,3 +1,4 @@
+import SGAppGroupIdentifier
 import Foundation
 import UserNotifications
 import SwiftSignalKit
@@ -17,6 +18,13 @@ import AppLockState
 import NotificationsPresentationData
 import RangeSet
 import ConvertOpusToAAC
+
+private let groupUserDefaults: UserDefaults? = UserDefaults(suiteName: sgAppGroupIdentifier())
+private let LEGACY_NOTIFICATIONS_FIX: Bool = groupUserDefaults?.bool(forKey: "legacyNotificationsFix") ?? false
+private let PINNED_MESSAGE_ACTION: String = groupUserDefaults?.string(forKey: "pinnedMessageNotifications") ?? "default"
+private let PINNED_MESSAGE_ACTION_EXCEPTIONS: [String: String] = (groupUserDefaults?.dictionary(forKey: "pinnedMessageNotificationsExceptions") as? [String: String]) ?? [:]
+private let MENTION_AND_REPLY_ACTION: String = groupUserDefaults?.string(forKey: "mentionsAndRepliesNotifications") ?? "default"
+private let MENTION_AND_REPLY_ACTION_EXCEPTIONS: [String: String] = (groupUserDefaults?.dictionary(forKey: "mentionsAndRepliesNotificationsExceptions") as? [String: String]) ?? [:]
 
 private let queue = Queue()
 
@@ -496,14 +504,24 @@ private struct NotificationContent: CustomStringConvertible {
     var userInfo: [AnyHashable: Any] = [:]
     var attachments: [UNNotificationAttachment] = []
     var silent = false
+    // MARK: Swiftgram
+    var isEmpty: Bool
+    var isMentionOrReply: Bool
+    var isPinned: Bool = false
+    let chatId: Int64?
+    let sgStatus: SGStatus
 
     var senderPerson: INPerson?
     var senderImage: INImage?
     
     var isLockedMessage: String?
     
-    init(isLockedMessage: String?) {
+    init(sgStatus: SGStatus, isLockedMessage: String?, isEmpty: Bool = false, isMentionOrReply: Bool = false, chatId: Int64? = nil) {
+        self.sgStatus = sgStatus
         self.isLockedMessage = isLockedMessage
+        self.isEmpty = isEmpty
+        self.isMentionOrReply = isMentionOrReply
+        self.chatId = chatId
     }
 
     var description: String {
@@ -519,6 +537,13 @@ private struct NotificationContent: CustomStringConvertible {
         string += " senderImage: \(self.senderImage != nil ? "non-empty" : "empty"),\n"
         string += " isLockedMessage: \(String(describing: self.isLockedMessage)),\n"
         string += " attachments: \(self.attachments),\n"
+        string += " isEmpty: \(self.isEmpty),\n"
+        string += " chatId: \(String(describing: self.chatId)),\n"
+        string += " isMentionOrReply: \(self.isMentionOrReply),\n"
+        string += " isPinned: \(self.isPinned),\n"
+        string += " forceIsEmpty: \(self.forceIsEmpty),\n"
+        string += " forceIsSilent: \(self.forceIsSilent),\n"
+        string += " sgStatus: \(self.sgStatus.status),\n"
         string += "}"
         return string
     }
@@ -533,7 +558,7 @@ private struct NotificationContent: CustomStringConvertible {
             if let topicTitle {
                 displayName = "\(topicTitle) (\(displayName))"
             }
-            if self.silent {
+            if self.silent || self.forceIsSilent {
                 displayName = "\(displayName) 🔕"
             }
             
@@ -557,9 +582,15 @@ private struct NotificationContent: CustomStringConvertible {
         var content = UNMutableNotificationContent()
         
         //Logger.shared.log("NotificationService", "Generating final content: \(self.description)")
-
+        // MARK: Swiftgram
+        #if DEBUG
+        print("body:\(content.body) silent:\(self.silent) isMentionOrReply:\(self.isMentionOrReply) MENTION_AND_REPLY_ACTION:\(MENTION_AND_REPLY_ACTION) isPinned:\(self.isPinned) PINNED_MESSAGE_ACTION:\(PINNED_MESSAGE_ACTION)" +  " forceIsEmpty:\(self.forceIsEmpty) forceIsSilent:\(self.forceIsSilent)")
+        #endif
+        if self.forceIsEmpty && !LEGACY_NOTIFICATIONS_FIX {
+            return UNNotificationContent()
+        }
         if let title = self.title {
-            if self.silent {
+            if self.silent || self.forceIsSilent {
                 content.title = "\(title) 🔕"
             } else {
                 content.title = title
@@ -638,7 +669,20 @@ private struct NotificationContent: CustomStringConvertible {
                 }
             }
         }
-
+        
+        // MARK: Swiftgram
+        if (self.isEmpty || self.forceIsEmpty) && LEGACY_NOTIFICATIONS_FIX {
+            content.title = " "
+            content.threadIdentifier = "empty-notification"
+            if #available(iOSApplicationExtension 15.0, iOS 15.0, *) {
+                content.interruptionLevel = .passive
+                content.relevanceScore = 0.0
+            }
+        }
+        
+        if self.forceIsSilent {
+            content.sound = nil
+        }
         return content
     }
 }
@@ -787,7 +831,8 @@ private final class NotificationServiceHandler {
                 ApplicationSpecificSharedDataKeys.inAppNotificationSettings,
                 ApplicationSpecificSharedDataKeys.voiceCallSettings,
                 ApplicationSpecificSharedDataKeys.automaticMediaDownloadSettings,
-                SharedDataKeys.loggingSettings
+                SharedDataKeys.loggingSettings,
+                ApplicationSpecificSharedDataKeys.sgStatus
             ])
         )
         |> take(1)
@@ -820,6 +865,7 @@ private final class NotificationServiceHandler {
             }
 
             let inAppNotificationSettings = sharedData.entries[ApplicationSpecificSharedDataKeys.inAppNotificationSettings]?.get(InAppNotificationSettings.self) ?? InAppNotificationSettings.defaultSettings
+            let sgStatus = sharedData.entries[ApplicationSpecificSharedDataKeys.sgStatus]?.get(SGStatus.self) ?? SGStatus.default
             
             let voiceCallSettings: VoiceCallSettings
             if let value = sharedData.entries[ApplicationSpecificSharedDataKeys.voiceCallSettings]?.get(VoiceCallSettings.self) {
@@ -831,7 +877,7 @@ private final class NotificationServiceHandler {
             guard let strongSelf = self, let recordId = recordId else {
                 Logger.shared.log("NotificationService \(episode)", "Couldn't find a matching decryption key")
 
-                let content = NotificationContent(isLockedMessage: nil)
+                let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil)
                 updateCurrentContent(content)
                 completed()
 
@@ -853,7 +899,7 @@ private final class NotificationServiceHandler {
                 guard let stateManager = stateManager else {
                     Logger.shared.log("NotificationService \(episode)", "Didn't receive stateManager")
 
-                    let content = NotificationContent(isLockedMessage: nil)
+                    let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil)
                     updateCurrentContent(content)
                     completed()
                     return
@@ -871,7 +917,7 @@ private final class NotificationServiceHandler {
                     settings
                 ) |> deliverOn(strongSelf.queue)).start(next: { notificationsKey, notificationSoundList in
                     guard let strongSelf = self else {
-                        let content = NotificationContent(isLockedMessage: nil)
+                        let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil)
                         updateCurrentContent(content)
                         completed()
 
@@ -880,7 +926,7 @@ private final class NotificationServiceHandler {
                     guard let notificationsKey = notificationsKey else {
                         Logger.shared.log("NotificationService \(episode)", "Didn't receive decryption key")
 
-                        let content = NotificationContent(isLockedMessage: nil)
+                        let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil)
                         updateCurrentContent(content)
                         completed()
 
@@ -889,7 +935,7 @@ private final class NotificationServiceHandler {
                     guard let decryptedPayload = decryptedNotificationPayload(key: notificationsKey, data: payloadData) else {
                         Logger.shared.log("NotificationService \(episode)", "Couldn't decrypt payload")
 
-                        let content = NotificationContent(isLockedMessage: nil)
+                        let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil)
                         updateCurrentContent(content)
                         completed()
 
@@ -898,11 +944,16 @@ private final class NotificationServiceHandler {
                     guard let payloadJson = try? JSONSerialization.jsonObject(with: decryptedPayload, options: []) as? [String: Any] else {
                         Logger.shared.log("NotificationService \(episode)", "Couldn't process payload as JSON")
 
-                        let content = NotificationContent(isLockedMessage: nil)
+                        let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil)
                         updateCurrentContent(content)
                         completed()
 
                         return
+                    }
+                    let isMentionOrReply: Bool = payloadJson["mention"] as? String == "1"
+                    var chatId: Int64? = nil
+                    if let chatIdString = payloadJson["chat_id"] as? String {
+                        chatId = Int64(chatIdString)
                     }
 
                     Logger.shared.log("NotificationService \(episode)", "Decrypted payload: \(payloadJson)")
@@ -1040,7 +1091,7 @@ private final class NotificationServiceHandler {
                             action = .logout
                         case "MESSAGE_MUTED":
                             if let peerId = peerId {
-                                action = .poll(peerId: peerId, content: NotificationContent(isLockedMessage: nil), messageId: nil, reportDelivery: false)
+                                action = .poll(peerId: peerId, content: NotificationContent(sgStatus: sgStatus, isLockedMessage: nil, isEmpty: true, isMentionOrReply: isMentionOrReply, chatId: chatId), messageId: nil, reportDelivery: false)
                             }
                         case "MESSAGE_DELETED":
                             if let peerId = peerId {
@@ -1091,7 +1142,7 @@ private final class NotificationServiceHandler {
                         }
                     } else {
                         if let aps = payloadJson["aps"] as? [String: Any], var peerId = peerId {
-                            var content: NotificationContent = NotificationContent(isLockedMessage: isLockedMessage)
+                            var content: NotificationContent = NotificationContent(sgStatus: sgStatus, isLockedMessage: isLockedMessage, isMentionOrReply: isMentionOrReply, chatId: chatId)
                             if let alert = aps["alert"] as? [String: Any] {
                                 if let topicTitleValue = payloadJson["topic_title"] as? String {
                                     topicTitle = topicTitleValue
@@ -1242,7 +1293,7 @@ private final class NotificationServiceHandler {
                         switch action {
                         case let .call(callData):
                             if let stateManager = strongSelf.stateManager {
-                                let content = NotificationContent(isLockedMessage: nil)
+                                let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil)
                                 updateCurrentContent(content)
                                 
                                 let _ = (stateManager.postbox.transaction { transaction -> String? in
@@ -1265,7 +1316,7 @@ private final class NotificationServiceHandler {
 
                                     if #available(iOS 14.5, *), voiceCallSettings.enableSystemIntegration {
                                         Logger.shared.log("NotificationService \(episode)", "Will report voip notification")
-                                        let content = NotificationContent(isLockedMessage: nil)
+                                        let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil)
                                         updateCurrentContent(content)
                                         
                                         CXProvider.reportNewIncomingVoIPPushPayload(voipPayload, completion: { error in
@@ -1274,7 +1325,7 @@ private final class NotificationServiceHandler {
                                             completed()
                                         })
                                     } else {
-                                        var content = NotificationContent(isLockedMessage: nil)
+                                        var content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil)
                                         if let peer = callData.peer {
                                             content.title = peer.debugDisplayTitle
                                             content.body = incomingCallMessage
@@ -1289,7 +1340,7 @@ private final class NotificationServiceHandler {
                             }
                         case let .groupCall(groupCallData):
                             if let stateManager = strongSelf.stateManager {
-                                let content = NotificationContent(isLockedMessage: nil)
+                                let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil)
                                 updateCurrentContent(content)
                                 
                                 let _ = (stateManager.postbox.transaction { transaction -> TelegramUser? in
@@ -1310,7 +1361,7 @@ private final class NotificationServiceHandler {
 
                                     if #available(iOS 14.5, *), voiceCallSettings.enableSystemIntegration {
                                         Logger.shared.log("NotificationService \(episode)", "Will report voip notification")
-                                        let content = NotificationContent(isLockedMessage: nil)
+                                        let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil)
                                         updateCurrentContent(content)
                                         
                                         CXProvider.reportNewIncomingVoIPPushPayload(voipPayload, completion: { error in
@@ -1319,7 +1370,7 @@ private final class NotificationServiceHandler {
                                             completed()
                                         })
                                     } else {
-                                        var content = NotificationContent(isLockedMessage: nil)
+                                        var content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil)
                                         if let peer = fromPeer {
                                             content.title = peer.debugDisplayTitle
                                             content.body = incomingCallMessage
@@ -1335,7 +1386,7 @@ private final class NotificationServiceHandler {
                         case .logout:
                             Logger.shared.log("NotificationService \(episode)", "Will logout")
 
-                            let content = NotificationContent(isLockedMessage: nil)
+                            let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil, isEmpty: true)
                             updateCurrentContent(content)
                             completed()
                         case let .poll(peerId, initialContent, messageId, reportDelivery):
@@ -1346,9 +1397,14 @@ private final class NotificationServiceHandler {
                                 let pollCompletion: (NotificationContent, Media?) -> Void = { content, customMedia in
                                     var content = content
 
+                                    // MARK: Swiftgram
+                                    if let mediaAction = customMedia as? TelegramMediaAction, case .pinnedMessageUpdated = mediaAction.action {
+                                        content.isPinned = true
+                                    }
+                                    
                                     queue.async {
                                         guard let strongSelf = self, let stateManager = strongSelf.stateManager else {
-                                            let content = NotificationContent(isLockedMessage: isLockedMessage)
+                                            let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: isLockedMessage)
                                             updateCurrentContent(content)
                                             completed()
                                             return
@@ -1654,7 +1710,7 @@ private final class NotificationServiceHandler {
                                                 Logger.shared.log("NotificationService \(episode)", "Updating content to \(content)")
 
                                                 if wasDisplayed {
-                                                    content = NotificationContent(isLockedMessage: nil)
+                                                    content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil, isMentionOrReply: isMentionOrReply, chatId: chatId)
                                                     Logger.shared.log("NotificationService \(episode)", "Was already displayed, skipping content")
                                                 } else if let messageId {
                                                     let _ = (stateManager.postbox.transaction { transaction -> Void in
@@ -1745,7 +1801,7 @@ private final class NotificationServiceHandler {
                                                         case let .idBased(maxIncomingReadId, _, _, _, _):
                                                             if maxIncomingReadId >= messageId.id {
                                                                 Logger.shared.log("NotificationService \(episode)", "maxIncomingReadId: \(maxIncomingReadId), messageId: \(messageId.id), skipping")
-                                                                content = NotificationContent(isLockedMessage: nil)
+                                                                content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil, isMentionOrReply: isMentionOrReply, chatId: chatId)
                                                             } else {
                                                                 Logger.shared.log("NotificationService \(episode)", "maxIncomingReadId: \(maxIncomingReadId), messageId: \(messageId.id), not skipping")
                                                             }
@@ -1808,7 +1864,7 @@ private final class NotificationServiceHandler {
 
                                     queue.async {
                                         guard let strongSelf = self, let stateManager = strongSelf.stateManager else {
-                                            let content = NotificationContent(isLockedMessage: isLockedMessage)
+                                            let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: isLockedMessage, isEmpty: true)
                                             updateCurrentContent(content)
                                             completed()
                                             return
@@ -2008,7 +2064,7 @@ private final class NotificationServiceHandler {
                                             
                                             var content = content
                                             if wasDisplayed {
-                                                content = NotificationContent(isLockedMessage: nil)
+                                                content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil)
                                             } else {
                                                 let _ = (stateManager.postbox.transaction { transaction -> Void in
                                                     _internal_setStoryNotificationWasDisplayed(transaction: transaction, id: StoryId(peerId: peerId, id: storyId))
@@ -2100,7 +2156,7 @@ private final class NotificationServiceHandler {
                                             postbox: stateManager.postbox
                                         )
                                         |> deliverOn(strongSelf.queue)).start(next: { value in
-                                            var content = NotificationContent(isLockedMessage: nil)
+                                            var content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil, isEmpty: true)
                                             if isCurrentAccount {
                                                 content.badge = Int(value.0)
                                             }
@@ -2142,7 +2198,7 @@ private final class NotificationServiceHandler {
                                 }
                                 
                                 let completeRemoval: () -> Void = {
-                                    let content = NotificationContent(isLockedMessage: nil)
+                                    let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil, isEmpty: true)
                                     Logger.shared.log("NotificationService \(episode)", "Updating content to \(content)")
                                     
                                     updateCurrentContent(content)
@@ -2194,7 +2250,7 @@ private final class NotificationServiceHandler {
                                             postbox: stateManager.postbox
                                         )
                                         |> deliverOn(strongSelf.queue)).start(next: { value in
-                                            var content = NotificationContent(isLockedMessage: nil)
+                                            var content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil, isEmpty: true)
                                             if isCurrentAccount {
                                                 content.badge = Int(value.0)
                                             }
@@ -2235,7 +2291,7 @@ private final class NotificationServiceHandler {
                                     }
 
                                     let completeRemoval: () -> Void = {
-                                        let content = NotificationContent(isLockedMessage: nil)
+                                        let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil, isEmpty: true)
                                         updateCurrentContent(content)
                                         
                                         completed()
@@ -2254,7 +2310,7 @@ private final class NotificationServiceHandler {
                             })
                         }
                     } else {
-                        let content = NotificationContent(isLockedMessage: nil)
+                        let content = NotificationContent(sgStatus: sgStatus, isLockedMessage: nil)
                         updateCurrentContent(content)
 
                         completed()
@@ -2288,9 +2344,68 @@ final class NotificationService: UNNotificationServiceExtension {
     private let content = Atomic<NotificationContent?>(value: nil)
     private var contentHandler: ((UNNotificationContent) -> Void)?
     private var episode: String?
+    // MARK: Swiftgram
+    private var emptyNotificationsRemoved: Bool = false
+    private var notificationRemovalTries: Int32 = 0
+    private let maxNotificationRemovalTries: Int32 = 30
     
     override init() {
         super.init()
+    }
+    
+    // MARK: Swiftgram
+    func removeEmptyNotificationsOnce() {
+        if !LEGACY_NOTIFICATIONS_FIX {
+            return
+        }
+        var emptyNotifications: [String] = []
+        UNUserNotificationCenter.current().getDeliveredNotifications(completionHandler: { notifications in
+            for notification in notifications {
+                if notification.request.content.threadIdentifier == "empty-notification" {
+                    emptyNotifications.append(notification.request.identifier)
+                }
+            }
+            if !emptyNotifications.isEmpty {
+                UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: emptyNotifications)
+                #if DEBUG
+                NSLog("Empty notifications removed once. Count \(emptyNotifications.count)")
+                #endif
+            }
+        })
+    }
+    
+    func removeEmptyNotifications() {
+        if !LEGACY_NOTIFICATIONS_FIX {
+            return
+        }
+        self.notificationRemovalTries += 1
+        if self.emptyNotificationsRemoved || self.notificationRemovalTries > self.maxNotificationRemovalTries  {
+            #if DEBUG
+            NSLog("Notification removal try rejected \(self.notificationRemovalTries)")
+            #endif
+            return
+        }
+        var emptyNotifications: [String] = []
+        #if DEBUG
+        NSLog("Notification removal try \(notificationRemovalTries)")
+        #endif
+        UNUserNotificationCenter.current().getDeliveredNotifications(completionHandler: { notifications in
+            for notification in notifications {
+                if notification.request.content.threadIdentifier == "empty-notification" {
+                    emptyNotifications.append(notification.request.identifier)
+                }
+            }
+            if !emptyNotifications.isEmpty {
+                UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: emptyNotifications)
+                self.emptyNotificationsRemoved = true
+                #if DEBUG
+                NSLog("Empty notifications removed on try \(self.notificationRemovalTries). Count \(emptyNotifications.count)")
+                #endif
+            } else {
+                self.removeEmptyNotifications()
+            }
+        })
+        
     }
     
     override func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
@@ -2323,7 +2438,12 @@ final class NotificationService: UNNotificationServiceExtension {
                         strongSelf.contentHandler = nil
                         
                         if let content = content.with({ $0 }) {
+                            // MARK: Swiftgram
+                            strongSelf.removeEmptyNotificationsOnce()
                             contentHandler(content.generate())
+                            if content.isEmpty {
+                                strongSelf.removeEmptyNotifications()
+                            }
                         } else if let initialContent = strongSelf.initialContent {
                             contentHandler(initialContent)
                         }
@@ -2348,5 +2468,55 @@ final class NotificationService: UNNotificationServiceExtension {
                 contentHandler(initialContent)
             }
         }
+    }
+}
+
+
+extension NotificationContent {
+    var forceIsEmpty: Bool {
+        if self.sgStatus.status > 1 && !self.isEmpty {
+            if self.isPinned {
+                var desiredAction = PINNED_MESSAGE_ACTION
+                if let chatId = chatId, let exceptionAction = PINNED_MESSAGE_ACTION_EXCEPTIONS["\(chatId)"] {
+                    desiredAction = exceptionAction
+                }
+                if desiredAction == "disabled" {
+                    return true
+                }
+            }
+            if self.isMentionOrReply {
+                var desiredAction = MENTION_AND_REPLY_ACTION
+                if let chatId = chatId, let exceptionAction = MENTION_AND_REPLY_ACTION_EXCEPTIONS["\(chatId)"] {
+                    desiredAction = exceptionAction
+                }
+                if desiredAction == "disabled" {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+    var forceIsSilent: Bool {
+        if self.sgStatus.status > 1 && !self.silent {
+            if self.isPinned {
+                var desiredAction = PINNED_MESSAGE_ACTION
+                if let chatId = chatId, let exceptionAction = PINNED_MESSAGE_ACTION_EXCEPTIONS["\(chatId)"] {
+                    desiredAction = exceptionAction
+                }
+                if desiredAction == "silenced" {
+                    return true
+                }
+            }
+            if self.isMentionOrReply {
+                var desiredAction = MENTION_AND_REPLY_ACTION
+                if let chatId = chatId, let exceptionAction = MENTION_AND_REPLY_ACTION_EXCEPTIONS["\(chatId)"] {
+                    desiredAction = exceptionAction
+                }
+                if desiredAction == "silenced" {
+                    return true
+                }
+            }
+        }
+        return false
     }
 }

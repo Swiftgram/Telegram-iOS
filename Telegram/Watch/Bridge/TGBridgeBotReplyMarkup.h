@@ -28,7 +28,7 @@
 
 @interface TGBridgeBotReplyMarkup : NSObject <NSCoding>
 {
-    int32_t _userId;
+    int64_t _userId;
     int32_t _messageId;
     TGBridgeMessage *_message;
     bool _hideKeyboardOnActivation;
@@ -36,7 +36,7 @@
     NSArray *_rows;
 }
 
-@property (nonatomic, readonly) int32_t userId;
+@property (nonatomic, readonly) int64_t userId;
 @property (nonatomic, readonly) int32_t messageId;
 @property (nonatomic, readonly) TGBridgeMessage *message;
 @property (nonatomic, readonly) bool hideKeyboardOnActivation;
