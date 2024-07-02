@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "Tartalombeállítások";
+
+"Settings.Tabs.Header" = "FÜLEK";
+"Settings.Tabs.HideTabBar" = "Feliratcsík elrejtése";
+"Settings.Tabs.ShowContacts" = "Kapcsolatok fül megjelenítése";
+"Settings.Tabs.ShowNames" = "Feliratcsík nevek megjelenítése";
+
+"Settings.Folders.BottomTab" = "Könyvtárak az alján";
+"Settings.Folders.BottomTabStyle" = "Alsó könyvtár stílus";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "Elrejtése \"%@\"";
+"Settings.Folders.RememberLast" = "Utolsó mappa megnyitása";
+"Settings.Folders.RememberLast.Notice" = "A Swiftgram az utoljára használt mappát fogja megnyitni, amikor újraindítja az alkalmazást vagy fiókok között vált.";
+
+"Settings.Folders.CompactNames" = "Kisebb térköz";
+"Settings.Folders.AllChatsTitle" = "\"Minden Beszélgetés\" cím";
+"Settings.Folders.AllChatsTitle.short" = "Rövid";
+"Settings.Folders.AllChatsTitle.long" = "Hosszú";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Alapértelmezett";
+
+
+"Settings.ChatList.Header" = "BESZÉLGETÉS LISTA";
+"Settings.CompactChatList" = "Kompakt Beszélgetés Lista";
+
+"Settings.Profiles.Header" = "PROFIL";
+
+"Settings.Stories.Hide" = "Történetek elrejtése";
+"Settings.Stories.WarnBeforeView" = "Kérdezzen megtekintés előtt";
+"Settings.Stories.DisableSwipeToRecord" = "Húzás letiltása felvételhez";
+
+"Settings.Translation.QuickTranslateButton" = "Gyors Fordítás gomb";
+
+"Stories.Warning.Author" = "Szerző";
+"Stories.Warning.ViewStory" = "Történet megtekintése?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ LÁTNI FOGJA, hogy megtekintetted a történetüket.";
+"Stories.Warning.NoticeStealth" = "%@ nem fogja látni, hogy megtekintetted a történetüket.";
+
+"Settings.Photo.Quality.Notice" = "Feltöltött fényképek és történetek minősége.";
+"Settings.Photo.SendLarge" = "Nagy fényképek küldése";
+"Settings.Photo.SendLarge.Notice" = "Növelje a tömörített képek oldalméretének határát 2560px-re.";
+
+"Settings.VideoNotes.Header" = "KEREK VIDEÓK";
+"Settings.VideoNotes.StartWithRearCam" = "Kezdje a hátsó kamerával";
+
+"Settings.CustomColors.Header" = "FIÓK SZÍNEI";
+"Settings.CustomColors.Saturation" = "TELÍTETTSÉG";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Színértéket 0%%-ra állítva az fiókszíneket letiltja.";
+
+"Settings.UploadsBoost" = "Feltöltés fokozása";
+"Settings.DownloadsBoost" = "Letöltés fokozása";
+"Settings.DownloadsBoost.Notice" = "Növeli a párhuzamos kapcsolatok számát és a fájlok darabjainak méretét. Ha a hálózatod nem képes kezelni a terhelést, próbálj ki különböző opciókat, amelyek illeszkednek a kapcsolatodhoz.";
+"Settings.DownloadsBoost.none" = "Kikapcsolva";
+"Settings.DownloadsBoost.medium" = "Közepes";
+"Settings.DownloadsBoost.maximum" = "Maximális";
+
+"Settings.ShowProfileID" = "Profil azonosító megjelenítése";
+"Settings.ShowDC" = "Adatközpont megjelenítése";
+"Settings.ShowCreationDate" = "Beszélgetés létrehozásának dátumának megjelenítése";
+"Settings.ShowCreationDate.Notice" = "A beszélgetés létrehozásának dátuma ismeretlen lehet néhány csevegésnél.";
+
+"Settings.ShowRegDate" = "Regisztrációs Dátum Megjelenítése";
+"Settings.ShowRegDate.Notice" = "A regisztrációs dátum csak hozzávetőleges.";
+
+"Settings.SendWithReturnKey" = "Küldés 'vissza' gombbal";
+"Settings.HidePhoneInSettingsUI" = "Telefonszám elrejtése a beállításokban";
+"Settings.HidePhoneInSettingsUI.Notice" = "Ezzel csak a telefonszámát rejti el a beállítások felületen. Ha mások számára is el akarja rejteni, menjen a Adatvédelem és biztonság menübe.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "Ha 5 másodpercig távol van";
+
+"ProxySettings.UseSystemDNS" = "Rendszer DNS használata";
+"ProxySettings.UseSystemDNS.Notice" = "Használja a rendszer DNS-t, ha nem fér hozzá a Google DNS-hez";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "Nem **szükséges** %@!";
+"Common.RestartRequired" = "Újraindítás szükséges";
+"Common.RestartNow" = "Újraindítás most";
+"Common.OpenTelegram" = "Telegram megnyitása";
+"Common.UseTelegramForPremium" = "Kérjük vegye figyelembe, hogy a Telegram Prémiumhoz az hivatalos Telegram appot kell használnia. Amint megkapta a Telegram Prémiumot, Swiftgram összes funkciója elérhető lesz.";
+
+"Message.HoldToShowOrReport" = "Tartsa lenyomva a Megjelenítéshez vagy Jelentéshez.";
+
+"Auth.AccountBackupReminder" = "Győződjön meg róla, hogy van biztonsági másolat hozzáférési módszere. Tartsa meg a SMS-hez használt SIM-et vagy egy másik bejelentkezett munkamenetet, hogy elkerülje a kizárást.";
+"Auth.UnofficialAppCodeTitle" = "A kódot csak a hivatalos alkalmazással szerezheti meg";
+
+"Settings.SmallReactions" = "Kis reakciók";
+"Settings.HideReactions" = "Reakciók Elrejtése";
+
+"ContextMenu.SaveToCloud" = "Mentés a Felhőbe";
+"ContextMenu.SelectFromUser" = "Kiválasztás a Szerzőtől";
+
+"Settings.ContextMenu" = "KONTEXTUS MENÜ";
+"Settings.ContextMenu.Notice" = "A kikapcsolt bejegyzések elérhetők lesznek a 'Swiftgram' almenüjében.";
+
+
+"Settings.ChatSwipeOptions" = "Csevegőlista húzás opciók";
+"Settings.DeleteChatSwipeOption" = "Húzza át az üzenet törléséhez";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Húzza a következő olvasatlan csatornához";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Húzza le a következő témához";
+"Settings.GalleryCamera" = "Kamera a Galériában";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" Gomb";
+"Settings.SnapDeletionEffect" = "Üzenet törlés hatások";
+
+"Settings.Stickers.Size" = "MÉRET";
+"Settings.Stickers.Timestamp" = "Időbélyeg Megjelenítése";
+
+"Settings.RecordingButton" = "Hangrögzítés Gomb";
+
+"Settings.DefaultEmojisFirst" = "Prioritize standard emojis";
+"Settings.DefaultEmojisFirst.Notice" = "Mutassa az alap emojisokat az emoji billentyűzet előtt a prémiumok helyett";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "létrehozva: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "Csatlakozott %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Regisztrált";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Dupla koppintás a üzenet szerkesztéséhez";
+
+"Settings.wideChannelPosts" = "Széles posztok csatornákban";
+"Settings.ForceEmojiTab" = "Alapértelmezett Emoji billentyűzet";
+
+"Settings.forceBuiltInMic" = "Eszköz mikrofonjának kényszerítése";
+"Settings.forceBuiltInMic.Notice" = "Ha engedélyezve van, az alkalmazás csak az eszköz mikrofonját fogja használni, még akkor is, ha a fejhallgató csatlakoztatva van.";
+
+"Settings.hideChannelBottomButton" = "Kanal Alsó Panel Elrejtése";
+
+"Settings.CallConfirmation" = "Hívás megerősítése";
+"Settings.CallConfirmation.Notice" = "A Swiftgram megkéri a megerősítését, mielőtt hívást indítana.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Hívást kezdeni?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Videóhívást kezdeni?";
+
+"MutualContact.Label" = "közöns kontakt";
+
+"Settings.swipeForVideoPIP" = "Videó PIP a húzással";
+"Settings.swipeForVideoPIP.Notice" = "Ha engedélyezve van, a videó húzása képet-képben üzemmódban nyitja meg.";

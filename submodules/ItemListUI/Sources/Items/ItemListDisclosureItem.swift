@@ -62,6 +62,7 @@ public class ItemListDisclosureItem: ListViewItem, ItemListItem, ListItemCompone
     let label: String
     let attributedLabel: NSAttributedString?
     let labelStyle: ItemListDisclosureLabelStyle
+    let centerLabelAlignment: Bool
     let additionalDetailLabel: String?
     let additionalDetailLabelColor: ItemListDisclosureItemDetailLabelColor
     public let sectionId: ItemListSectionId
@@ -73,7 +74,7 @@ public class ItemListDisclosureItem: ListViewItem, ItemListItem, ListItemCompone
     public let tag: ItemListItemTag?
     public let shimmeringIndex: Int?
     
-    public init(presentationData: ItemListPresentationData, icon: UIImage? = nil, context: AccountContext? = nil, iconPeer: EnginePeer? = nil, title: String, attributedTitle: NSAttributedString? = nil, enabled: Bool = true, titleColor: ItemListDisclosureItemTitleColor = .primary, titleFont: ItemListDisclosureItemTitleFont = .regular, titleIcon: UIImage? = nil, titleBadge: String? = nil, label: String, attributedLabel: NSAttributedString? = nil, labelStyle: ItemListDisclosureLabelStyle = .text, additionalDetailLabel: String? = nil, additionalDetailLabelColor: ItemListDisclosureItemDetailLabelColor = .generic, sectionId: ItemListSectionId, style: ItemListStyle, disclosureStyle: ItemListDisclosureStyle = .arrow, noInsets: Bool = false, action: (() -> Void)?, clearHighlightAutomatically: Bool = true, tag: ItemListItemTag? = nil, shimmeringIndex: Int? = nil) {
+    public init(presentationData: ItemListPresentationData, icon: UIImage? = nil, context: AccountContext? = nil, iconPeer: EnginePeer? = nil, title: String, attributedTitle: NSAttributedString? = nil, enabled: Bool = true, titleColor: ItemListDisclosureItemTitleColor = .primary, titleFont: ItemListDisclosureItemTitleFont = .regular, titleIcon: UIImage? = nil, titleBadge: String? = nil, label: String, attributedLabel: NSAttributedString? = nil, labelStyle: ItemListDisclosureLabelStyle = .text, centerLabelAlignment: Bool = false, additionalDetailLabel: String? = nil, additionalDetailLabelColor: ItemListDisclosureItemDetailLabelColor = .generic, sectionId: ItemListSectionId, style: ItemListStyle, disclosureStyle: ItemListDisclosureStyle = .arrow, noInsets: Bool = false, action: (() -> Void)?, clearHighlightAutomatically: Bool = true, tag: ItemListItemTag? = nil, shimmeringIndex: Int? = nil) {
         self.presentationData = presentationData
         self.icon = icon
         self.context = context
@@ -88,6 +89,7 @@ public class ItemListDisclosureItem: ListViewItem, ItemListItem, ListItemCompone
         self.labelStyle = labelStyle
         self.label = label
         self.attributedLabel = attributedLabel
+        self.centerLabelAlignment = centerLabelAlignment
         self.additionalDetailLabel = additionalDetailLabel
         self.additionalDetailLabelColor = additionalDetailLabelColor
         self.sectionId = sectionId
@@ -685,7 +687,7 @@ public class ItemListDisclosureItemNode: ListViewItemNode, ItemListItemNode {
                     if case .semitransparentBadge = item.labelStyle {
                         badgeWidth += 2.0
                     }
-                    let badgeFrame = CGRect(origin: CGPoint(x: params.width - rightInset - badgeWidth, y: floor((contentSize.height - badgeDiameter) / 2.0)), size: CGSize(width: badgeWidth, height: badgeDiameter))
+                    let badgeFrame = CGRect(origin: CGPoint(x: item.centerLabelAlignment ? floor((params.width - badgeWidth) / 2.0) : params.width - rightInset - badgeWidth, y: floor((contentSize.height - badgeDiameter) / 2.0)), size: CGSize(width: badgeWidth, height: badgeDiameter))
                     strongSelf.labelBadgeNode.frame = badgeFrame
                     
                     let labelFrame: CGRect
@@ -693,7 +695,7 @@ public class ItemListDisclosureItemNode: ListViewItemNode, ItemListItemNode {
                     case .badge:
                         labelFrame = CGRect(origin: CGPoint(x: params.width - rightInset - badgeWidth + (badgeWidth - labelLayout.size.width) / 2.0, y: badgeFrame.minY + 1.0), size: labelLayout.size)
                     case .semitransparentBadge:
-                        labelFrame = CGRect(origin: CGPoint(x: params.width - rightInset - badgeWidth + (badgeWidth - labelLayout.size.width) / 2.0, y: badgeFrame.minY + 1.0 - UIScreenPixel + floorToScreenPixels((badgeDiameter - labelLayout.size.height) / 2.0)), size: labelLayout.size)
+                        labelFrame = CGRect(origin: CGPoint(x: item.centerLabelAlignment ? floor((params.width - badgeWidth + (badgeWidth - labelLayout.size.width)) / 2.0) : params.width - rightInset - badgeWidth + (badgeWidth - labelLayout.size.width) / 2.0, y: badgeFrame.minY + 1.0 - UIScreenPixel + floorToScreenPixels((badgeDiameter - labelLayout.size.height) / 2.0)), size: labelLayout.size)
                     case .detailText, .multilineDetailText:
                         labelFrame = CGRect(origin: CGPoint(x: leftInset, y: titleFrame.maxY + titleSpacing), size: labelLayout.size)
                     default:

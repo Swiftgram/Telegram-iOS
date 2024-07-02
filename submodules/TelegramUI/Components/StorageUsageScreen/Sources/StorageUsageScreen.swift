@@ -1949,7 +1949,8 @@ final class StorageUsageScreenComponent: Component {
                             guard let self, let component = self.component else {
                                 return
                             }
-                            let value = max(5, value)
+                            // MARK: Swiftgram
+                            // let value = max(5, value)
                             let _ = updateCacheStorageSettingsInteractively(accountManager: component.context.sharedContext.accountManager, { current in
                                 var current = current
                                 current.defaultCacheStorageLimitGigabytes = value
@@ -3197,19 +3198,21 @@ final class StorageUsageScreenComponent: Component {
                 let presentationData = context.sharedContext.currentPresentationData.with { $0 }
                 
                 var presetValues: [Int32]
-                
+                // MARK: Swiftgram
                 if case .stories = mappedCategory {
                     presetValues = [
                         7 * 24 * 60 * 60,
                         2 * 24 * 60 * 60,
-                        1 * 24 * 60 * 60
+                        1 * 24 * 60 * 60,
+                        1 * 60 * 60
                     ]
                 } else {
                     presetValues = [
                         Int32.max,
                         31 * 24 * 60 * 60,
                         7 * 24 * 60 * 60,
-                        1 * 24 * 60 * 60
+                        1 * 24 * 60 * 60,
+                        1 * 60 * 60
                     ]
                 }
                 

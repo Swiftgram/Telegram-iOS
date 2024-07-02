@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -151,7 +152,7 @@ final class TabBarControllerNode: ASDisplayNode {
         transition.updateAlpha(node: self.disabledOverlayNode, alpha: value ? 0.0 : 1.0)
     }
     
-    var tabBarHidden = false {
+    var tabBarHidden = SGSimpleSettings.shared.hideTabBar {
         didSet {
             if self.tabBarHidden != oldValue {
                 self.requestUpdate()
@@ -187,6 +188,7 @@ final class TabBarControllerNode: ASDisplayNode {
         } else {
             bottomInset = max(bottomInset, 8.0)
         }
+        // TODO(swiftgram): Customize bottominset with SGTabBarHeightModifier
         let sideInset: CGFloat = 20.0
         
         var selectedId: AnyHashable?

@@ -180,6 +180,10 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
     private let deleteButton: GlassButtonView
     private let reportButton: GlassButtonView
     private let forwardButton: GlassButtonView
+    // MARK: Swiftgram
+    private let cloudButton: HighlightableButtonNode
+    private let forwardHideNamesButton: HighlightableButtonNode
+    //
     private let shareButton: GlassButtonView
     private let tagButton: GlassButtonView
     private let tagEditButton: GlassButtonView
@@ -223,6 +227,18 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
         self.forwardButton.icon = "Chat/Input/Accessory Panels/MessageSelectionForward"
         self.forwardButton.isAccessibilityElement = true
         self.forwardButton.accessibilityLabel = strings.VoiceOver_MessageContextForward
+
+        // MARK: Swiftgram
+        self.cloudButton = GlassButtonView()
+        self.cloudButton.icon = "SaveToCloud"
+        self.cloudButton.isAccessibilityElement = true
+        self.cloudButton.accessibilityLabel = "Save To Cloud"
+
+        self.forwardHideNamesButton = GlassButtonView()
+        self.forwardHideNamesButton.icon = "Avatar/AnonymousSenderIcon"
+        self.forwardHideNamesButton.isAccessibilityElement = true
+        self.forwardHideNamesButtonforwardHideNamesButton.accessibilityLabel = "Hide Sender Name"
+        //
         
         self.shareButton = GlassButtonView()
         self.shareButton.icon = "Chat/Input/Accessory Panels/MessageSelectionAction"
@@ -254,10 +270,18 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
         
         self.forwardButton.isImplicitlyDisabled = true
         self.shareButton.isImplicitlyDisabled = true
+        // MARK: Swiftgram
+        self.cloudButton.isImplicitlyDisabled = true
+        self.forwardHideNamesButton.isImplicitlyDisabled = true
+        //
         
         self.deleteButton.addTarget(self, action: #selector(self.deleteButtonPressed), for: .touchUpInside)
         self.reportButton.addTarget(self, action: #selector(self.reportButtonPressed), for: .touchUpInside)
         self.forwardButton.addTarget(self, action: #selector(self.forwardButtonPressed), for: .touchUpInside)
+        // MARK: Swiftgram
+        self.cloudButton.addTarget(self, action: #selector(self.cloudButtonPressed), for: .touchUpInside)
+        self.forwardHideNamesButton.addTarget(self, action: #selector(self.forwardHideNamesButtonPressed), for: .touchUpInside)
+        //
         self.shareButton.addTarget(self, action: #selector(self.shareButtonPressed), for: .touchUpInside)
         self.tagButton.addTarget(self, action: #selector(self.tagButtonPressed), for: .touchUpInside)
         self.tagEditButton.addTarget(self, action: #selector(self.tagButtonPressed), for: .touchUpInside)
@@ -269,6 +293,10 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
     
     private func updateActions() {
         self.forwardButton.isEnabled = self.selectedMessages.count != 0
+        // MARK: Swiftgram
+        self.cloudButton.isEnabled = self.forwardButton.isEnabled
+        self.forwardHideNamesButton.isEnabled = self.forwardButton.isEnabled
+        //
         
         if self.selectedMessages.isEmpty {
             self.actions = nil
@@ -310,7 +338,30 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
         if let actions = self.actions, actions.isCopyProtected {
             self.interfaceInteraction?.displayCopyProtectionTip(self.forwardButton, false)
         } else if !self.forwardButton.isImplicitlyDisabled {
-            self.interfaceInteraction?.forwardSelectedMessages()
+            self.interfaceInteraction?.forwardSelectedMessages(nil)
+        }
+    }
+    
+    // MARK: Swiftgram
+    @objc private func cloudButtonPressed() {
+        if let _ = self.presentationInterfaceState?.renderedPeer?.peer as? TelegramSecretChat {
+            return
+        }
+        if let actions = self.actions, actions.isCopyProtected {
+            self.interfaceInteraction?.displayCopyProtectionTip(self.cloudButton, false)
+        } else {
+            self.interfaceInteraction?.forwardSelectedMessages("toCloud")
+        }
+    }
+
+    @objc private func forwardHideNamesButtonPressed() {
+        if let _ = self.presentationInterfaceState?.renderedPeer?.peer as? TelegramSecretChat {
+            return
+        }
+        if let actions = self.actions, actions.isCopyProtected {
+            self.interfaceInteraction?.displayCopyProtectionTip(self.forwardHideNamesButton, false)
+        } else {
+            self.interfaceInteraction?.forwardSelectedMessages("hideNames")
         }
     }
     
@@ -463,6 +514,9 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
             self.deleteButton.isEnabled = false
             self.reportButton.isEnabled = false
             self.forwardButton.isImplicitlyDisabled = !actions.options.contains(.forward)
+            // MARK: Swiftgram
+            self.cloudButton.isImplicitlyDisabled = self.forwardButton.isImplicitlyDisabled
+            self.forwardHideNamesButton.isImplicitlyDisabled = self.forwardButton.isImplicitlyDisabled
             
             if self.peerMedia {
                 self.deleteButton.isEnabled = !actions.options.intersection([.deleteLocally, .deleteGlobally]).isEmpty
@@ -502,6 +556,9 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
             self.tagEditButton.isHidden = true
             self.tagButton.isHidden = true
             self.tagEditButton.isHidden = true
+            // MARK: Swiftgram
+            self.cloudButton.isImplicitlyDisabled = self.forwardButton.isImplicitlyDisabled
+            self.forwardHideNamesButton.isImplicitlyDisabled = self.forwardButton.isImplicitlyDisabled
         }
         
         if self.reportButton.isHidden || (self.peerMedia && self.deleteButton.isHidden && self.reportButton.isHidden) {
@@ -577,6 +634,19 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
         }
         
         let buttonSize = CGSize(width: 40.0, height: 40.0)
+
+        // MARK: Swiftgram
+        reportButton.isHidden = true
+        buttons = [
+            self.deleteButton,
+            self.reportButton,
+            self.tagButton,
+            self.shareButton,
+            self.cloudButton,
+            self.forwardHideNamesButton,
+            self.forwardButton
+        ].filter { !$0.isHidden }
+        //
         
         let availableWidth = width - leftInset - rightInset
         let spacing: CGFloat = floor((availableWidth - buttonSize.width * CGFloat(buttons.count)) / CGFloat(buttons.count - 1))
