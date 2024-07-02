@@ -113,7 +113,7 @@ class ChatDocumentGalleryItemNode: ZoomableContentGalleryItemNode, WKNavigationD
     private var status: MediaResourceStatus?
     
     init(context: AccountContext, presentationData: PresentationData) {
-        if #available(iOSApplicationExtension 11.0, iOS 11.0, *) {
+        //if #available(iOSApplicationExtension 11.0, iOS 11.0, *) {
             let preferences = WKPreferences()
             preferences.javaScriptEnabled = false
             let configuration = WKWebViewConfiguration()
@@ -122,13 +122,13 @@ class ChatDocumentGalleryItemNode: ZoomableContentGalleryItemNode, WKNavigationD
             webView.allowsLinkPreview = false
             webView.allowsBackForwardNavigationGestures = false
             self.webView = webView
-        } else {
+        /*} else {
             let _ = registeredURLProtocol
             let webView = UIWebView()
             
             webView.scalesPageToFit = true
             self.webView = webView
-        }
+        }*/
         self.footerContentNode = ChatItemGalleryFooterContentNode(context: context, presentationData: presentationData)
         
         self.statusNodeContainer = HighlightableButtonNode()

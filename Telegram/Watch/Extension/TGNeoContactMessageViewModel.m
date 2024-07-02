@@ -12,8 +12,8 @@
     TGNeoLabelViewModel *_nameModel;
     TGNeoLabelViewModel *_phoneModel;
     
-    int32_t _userId;
-    int32_t _ownUserId;
+    int64_t _userId;
+    int64_t _ownUserId;
     NSString *_avatarUrl;
     NSString *_firstName;
     NSString *_lastName;

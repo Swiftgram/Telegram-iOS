@@ -145,6 +145,16 @@
     return TGTintedImage([self gifIcon], [self accentColor]);
 }
 
++ (UIImage *)telescopeIcon
+{
+    return TGComponentsImageNamed(@"RecordVideoIconOverlay@2x.png");
+}
+
++ (UIImage *)telescopeActiveIcon
+{
+    return TGTintedImage(TGTintedImage([self telescopeIcon], [self toolbarIconColor]), [self accentColor]);
+}
+
 + (UIImage *)gifIcon
 {
     return TGTintedImage([UIImage imageNamed:@"Editor/Gif"], [self toolbarIconColor]);
@@ -234,7 +244,7 @@
         CGContextSetFillColorWithColor(context, [UIColor whiteColor].CGColor);
         CGContextFillPath(context);
     } else {
-        CGContextSetStrokeColorWithColor(context, [UIColor whiteColor].CGColor);
+        CGContextSetStrokeColorWithColor(context, highQuality ? [self accentColor].CGColor :[UIColor whiteColor].CGColor);
         CGContextSetLineWidth(context, lineWidth);
         CGContextStrokePath(context);
     }
@@ -247,7 +257,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     CGSize textSize = [label sizeWithFont:font];
-    [[UIColor whiteColor] setFill];
+    [highQuality ? [self accentColor] :[UIColor whiteColor] setFill];
     [label drawInRect:CGRectMake((size.width - textSize.width) / 2.0f + TGScreenPixel, 4.0f, textSize.width, textSize.height) withFont:font];
 #pragma clang diagnostic pop
     

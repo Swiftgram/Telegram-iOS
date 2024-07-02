@@ -1,12 +1,16 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+sgdeps = [
+    "//Swiftgram/SGAppGroupIdentifier:SGAppGroupIdentifier"
+]
+
 swift_library(
     name = "NotificationServiceExtensionLib",
     module_name = "NotificationServiceExtensionLib",
     srcs = glob([
         "Sources/*.swift",
     ]),
-    deps = [
+    deps = sgdeps + [
         "//submodules/Postbox:Postbox",
         "//submodules/TelegramCore:TelegramCore",
         "//submodules/BuildConfig:BuildConfig",

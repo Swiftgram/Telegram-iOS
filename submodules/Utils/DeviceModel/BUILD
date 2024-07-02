@@ -10,9 +10,10 @@ swift_library(
         "-warnings-as-errors",
     ],
     deps = [
-        "//submodules/SSignalKit/SwiftSignalKit",
-        "//submodules/LegacyComponents",
-        "//submodules/AccountContext",
+# MARK: Swiftgram
+#        "//submodules/SSignalKit/SwiftSignalKit",
+#        "//submodules/LegacyComponents",
+#        "//submodules/AccountContext",
     ],
     visibility = [
         "//visibility:public",

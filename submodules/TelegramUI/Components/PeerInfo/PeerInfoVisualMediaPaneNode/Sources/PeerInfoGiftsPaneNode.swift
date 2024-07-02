@@ -773,13 +773,13 @@ public final class PeerInfoGiftsPaneNode: ASDisplayNode, PeerInfoPaneNode, UIScr
             var buttonIconName: String?
             if self.peerId == self.context.account.peerId {
                 if case .all = self.currentCollection {
-                    buttonTitle = params.presentationData.strings.PeerInfo_Gifts_Send
+                    buttonTitle = "Telegram Gifts"
                 } else {
                     buttonTitle = params.presentationData.strings.PeerInfo_Gifts_AddGiftsButton
                     buttonIconName = "Item List/AddItemIcon"
                 }
             } else {
-                buttonTitle = params.presentationData.strings.PeerInfo_Gifts_SendGift
+                buttonTitle = "Telegram Gifts"
             }
             
             let buttonAttributedString = NSAttributedString(string: buttonTitle, font: Font.semibold(17.0), textColor: .white, paragraphAlignment: .center)

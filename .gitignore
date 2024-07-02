@@ -1,3 +1,9 @@
+submodules/**/.build/*
+swiftgram-scripts
+Swiftgram/Playground/custom_bazel_path.bzl
+Swiftgram/Playground/codesigning
+buildServer.json
+
 fastlane/README.md
 fastlane/report.xml
 fastlane/test_output/*

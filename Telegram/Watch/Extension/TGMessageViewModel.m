@@ -58,13 +58,13 @@
         *thumbnailSize = imageSize;
 }
 
-+ (void)updateAuthorLabel:(WKInterfaceLabel *)authorLabel isOutgoing:(bool)isOutgoing isGroup:(bool)isGroup user:(TGBridgeUser *)user ownUserId:(int32_t)ownUserId
++ (void)updateAuthorLabel:(WKInterfaceLabel *)authorLabel isOutgoing:(bool)isOutgoing isGroup:(bool)isGroup user:(TGBridgeUser *)user ownUserId:(int64_t)ownUserId
 {
     if (isGroup && !isOutgoing)
     {
         authorLabel.hidden = false;
         authorLabel.text = user.displayName;
-        authorLabel.textColor = [TGColor colorForUserId:(int32_t)user.identifier myUserId:ownUserId];
+        authorLabel.textColor = [TGColor colorForUserId:(int64_t)user.identifier myUserId:ownUserId];
     }
     else
     {
@@ -268,7 +268,7 @@
         textColor = subtitleColor;
     }
     
-    authorLabel.text = [[[TGBridgeUserCache instance] userWithId:(int32_t)message.fromUid] displayName];
+    authorLabel.text = [[[TGBridgeUserCache instance] userWithId:(int64_t)message.fromUid] displayName];
     imageGroup.hidden = !hasImagePreview;
     textLabel.text = messageText;
     textLabel.textColor = textColor;
@@ -325,7 +325,7 @@
 + (NSString *)stringForActionAttachment:(TGBridgeActionMediaAttachment *)actionAttachment message:(TGBridgeMessage *)message users:(NSDictionary *)users forChannel:(bool)forChannel
 {
     NSString *messageText = nil;
-    TGBridgeUser *author = (users != nil) ? users[@(message.fromUid)] : [[TGBridgeUserCache instance] userWithId:(int32_t)message.fromUid];
+    TGBridgeUser *author = (users != nil) ? users[@(message.fromUid)] : [[TGBridgeUserCache instance] userWithId:(int64_t)message.fromUid];
     
     switch (actionAttachment.actionType)
     {
@@ -373,7 +373,7 @@
         case TGBridgeMessageActionChatDeleteMember:
         {
             NSString *authorName = [TGStringUtils initialsForFirstName:author.firstName lastName:author.lastName single:false];
-            TGBridgeUser *user = (users != nil) ? users[actionAttachment.actionData[@"uid"]] : [[TGBridgeUserCache instance] userWithId:[actionAttachment.actionData[@"uid"] int32Value]];
+            TGBridgeUser *user = (users != nil) ? users[actionAttachment.actionData[@"uid"]] : [[TGBridgeUserCache instance] userWithId:[actionAttachment.actionData[@"uid"] int64Value]];
             
             if (user.identifier == author.identifier)
             {
@@ -419,7 +419,7 @@
             
         case TGBridgeMessageActionChannelInviter:
         {
-            TGBridgeUser *user = (users != nil) ? users[actionAttachment.actionData[@"uid"]] : [[TGBridgeUserCache instance] userWithId:[actionAttachment.actionData[@"uid"] int32Value]];
+            TGBridgeUser *user = (users != nil) ? users[actionAttachment.actionData[@"uid"]] : [[TGBridgeUserCache instance] userWithId:[actionAttachment.actionData[@"uid"] int64Value]];
             NSString *authorName = [TGStringUtils initialsForFirstName:user.firstName lastName:user.lastName single:false];
             NSString *formatString = TGLocalized(@"Notification.ChannelInviter");
             
@@ -486,7 +486,7 @@
 
 + (void)updateWithMessage:(TGBridgeMessage *)message notification:(bool)notification isGroup:(bool)isGroup context:(TGBridgeContext *)context currentDocumentId:(int64_t *)currentDocumentId authorLabel:(WKInterfaceLabel *)authorLabel imageGroup:(WKInterfaceGroup *)imageGroup isVisible:(bool (^)(void))isVisible completion:(void (^)(void))completion
 {
-    [TGMessageViewModel updateAuthorLabel:authorLabel isOutgoing:message.outgoing isGroup:isGroup user:[[TGBridgeUserCache instance] userWithId:(int32_t)message.fromUid] ownUserId:context.userId];
+    [TGMessageViewModel updateAuthorLabel:authorLabel isOutgoing:message.outgoing isGroup:isGroup user:[[TGBridgeUserCache instance] userWithId:(int64_t)message.fromUid] ownUserId:context.userId];
     
     for (TGBridgeMediaAttachment *attachment in message.media)
     {

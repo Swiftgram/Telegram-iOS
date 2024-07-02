@@ -397,6 +397,12 @@ public final class SelectablePeerNode: ASDisplayNode {
         }
         
         self.setNeedsLayout()
+        self.isAccessibilityElement = true
+        self.accessibilityLabel = customTitle ?? text
+        self.accessibilityTraits = [.button]
+        if self.currentSelected {
+            self.accessibilityTraits.insert(.selected)
+        }
     }
     
     public func updateSelection(selected: Bool, animated: Bool) {
@@ -490,6 +496,12 @@ public final class SelectablePeerNode: ASDisplayNode {
                 checkNode.setSelected(false, animated: animated)
             }
             self.setNeedsLayout()
+        }
+        
+        if selected {
+            self.accessibilityTraits.insert(.selected)
+        } else {
+            self.accessibilityTraits.remove(.selected)
         }
     }
     

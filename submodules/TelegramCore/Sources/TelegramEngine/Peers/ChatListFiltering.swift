@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import Postbox
 import SwiftSignalKit
@@ -1090,13 +1091,18 @@ func _internal_updatedChatListFilters(postbox: Postbox, hiddenIds: Signal<Set<In
     )
     |> map { preferences, hiddenIds -> [ChatListFilter] in
         let filtersState = preferences.values[PreferencesKeys.chatListFilters]?.get(ChatListFiltersState.self) ?? ChatListFiltersState.default
-        return filtersState.filters.filter { filter in
+        var filters = filtersState.filters.filter { filter in
             if hiddenIds.contains(filter.id) {
                 return false
             } else {
                 return true
             }
         }
+        // MARK: Swiftgram
+        if filters.count > 1 && SGSimpleSettings.shared.allChatsHidden {
+            filters.removeAll { $0 == .allChats }
+        }
+        return filters
     }
     |> distinctUntilChanged
 }

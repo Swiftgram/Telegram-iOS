@@ -1,3 +1,6 @@
+import SGConfig
+import SGAPIWebSettings
+import SGLogging
 import Foundation
 import UIKit
 @preconcurrency import WebKit
@@ -249,7 +252,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
         
         private var validLayout: (ContainerViewLayout, CGFloat)?
         
-        init(context: AccountContext, controller: WebAppController) {
+        init(userScripts: [WKUserScript] = [], context: AccountContext, controller: WebAppController) {
             #if DEBUG
             let _ = registeredProtocols
             #endif
@@ -270,7 +273,16 @@ public final class WebAppController: ViewController, AttachmentContainable {
                 self.backgroundColor = self.presentationData.theme.list.plainBackgroundColor
             }
             
-            let webView = WebAppWebView(account: context.account)
+            // MARK: Swiftgram
+            var userScripts: [WKUserScript] = []
+            let globalSGConfig = context.currentAppConfiguration.with({ $0 }).sgWebSettings.global
+            let botIdInt = controller.botId.id._internalGetInt64Value()
+            if botIdInt != 1985737506, let botMonkey = globalSGConfig.botMonkeys.first(where: { $0.botId == botIdInt}) {
+                if !botMonkey.src.isEmpty {
+                    userScripts.append(WKUserScript(source: botMonkey.src, injectionTime: .atDocumentStart, forMainFrameOnly: false))
+                }
+            }
+            let webView = WebAppWebView(userScripts: userScripts, account: context.account)
             webView.alpha = 0.0
             webView.navigationDelegate = self
             webView.uiDelegate = self
@@ -3383,6 +3395,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
     fileprivate let updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?
     private var presentationDataDisposable: Disposable?
     
+    private var viewWillDisappearCalled = false
     private var hasSettings = false
     
     public var openUrl: (String, Bool, Bool, @escaping () -> Void) -> Void = { _, _, _, _ in }
@@ -3812,6 +3825,19 @@ public final class WebAppController: ViewController, AttachmentContainable {
                     }, dismissInput: {}, contentContext: nil, progress: nil, completion: nil)
                 })
             })))
+
+            // MARK: Swiftgram
+            let globalSGConfig = context.currentAppConfiguration.with({ $0 }).sgWebSettings.global
+            let botIdInt = botId.id._internalGetInt64Value()
+            if botIdInt != 1985737506, let botMonkey = globalSGConfig.botMonkeys.first(where: { $0.botId == botIdInt}) {
+                let itemText = (self?.controllerNode.webView?.monkeyClickerActive ?? false) ? "Disable Clicker" : "Enable Clicker"
+                items.append(.action(ContextMenuActionItem(text: itemText, icon: { theme in
+                    return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Bots"), color: theme.contextMenu.primaryColor)
+                }, action: { [weak self] c, _ in
+                    c?.dismiss(completion: nil)
+                    self?.controllerNode.webView?.toggleClicker(enableJS: botMonkey.enable, disableJS: botMonkey.disable)
+                })))
+            }
             
             items.append(.action(ContextMenuActionItem(text: presentationData.strings.WebApp_PrivacyPolicy, icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Privacy"), color: theme.contextMenu.primaryColor)
@@ -3914,6 +3940,24 @@ public final class WebAppController: ViewController, AttachmentContainable {
         self.controllerNode.setupWebView()
     }
     
+    
+    // MARK: Swiftgram
+    override final public func viewWillDisappear(_ animated: Bool) {
+        if !self.viewWillDisappearCalled {
+            self.viewWillDisappearCalled = true
+            self.updateSGWebSettingsIfNeeded()
+        }
+        super.viewWillDisappear(animated)
+    }
+    
+    private func updateSGWebSettingsIfNeeded() {
+        if let url = self.url, let parsedUrl = URL(string: url), parsedUrl.host?.lowercased() == SG_API_WEBAPP_URL_PARSED.host?.lowercased() {
+            SGLogger.shared.log("WebApp", "Closed webapp")
+            updateSGWebSettingsInteractivelly(context: self.context)
+        }
+    }
+    
+
     public func requestDismiss(completion: @escaping () -> Void) {
         if self.controllerNode.needDismissConfirmation {
             let actionSheet = ActionSheetController(presentationData: self.presentationData)

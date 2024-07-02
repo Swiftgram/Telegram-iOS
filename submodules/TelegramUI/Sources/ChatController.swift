@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import Postbox
@@ -570,6 +571,20 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     
     var translationStateDisposable: Disposable?
     var premiumGiftSuggestionDisposable: Disposable?
+    
+    // MARK: Swiftgram
+    private var sgShowHiddenPinnedMessagesObserver: NSObjectProtocol?
+    public var overlayTitle: String? {
+         var title: String?
+        if let threadInfo = self.contentData?.state.threadInfo {
+             title = threadInfo.title
+        } else if let peerView = self.contentData?.state.peerView {
+             if let peer = peerViewMainPeer(peerView) {
+                 title = EnginePeer(peer).displayTitle(strings: self.presentationData.strings, displayOrder: self.presentationData.nameDisplayOrder)
+             }
+         }
+         return title
+     }
     
     var currentSpeechHolder: SpeechSynthesizerHolder?
     
@@ -1557,6 +1572,19 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             self.controllerInteraction?.isOpeningMediaSignal = openChatMessageParams.blockInteraction.get()
             
             return context.sharedContext.openChatMessage(openChatMessageParams)
+        }, sgGetChatPredictedLang: { [weak self] in
+            if let strongSelf = self {
+                var result: String?
+                if let chatPeerId = strongSelf.chatLocation.peerId {
+                    result = SGSimpleSettings.shared.outgoingLanguageTranslation[SGSimpleSettings.makeOutgoingLanguageTranslationKey(accountId: strongSelf.context.account.peerId.id._internalGetInt64Value(), peerId: chatPeerId.id._internalGetInt64Value())]
+                }
+                return result ?? strongSelf.contentData?.state.predictedChatLanguage
+            }
+            return nil
+        }, sgStartMessageEdit: { [weak self] message in
+            if let strongSelf = self {
+                strongSelf.interfaceInteraction?.setupEditMessage(message.id, { _ in })
+            }
         }, openPeer: { [weak self] peer, navigation, fromMessage, source in
             var expandAvatar = false
             if case let .groupParticipant(storyStats, avatarHeaderNode) = source {
@@ -6083,6 +6111,33 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 return state.updatedInterfaceState({ $0.withUpdatedSelectedMessages(messageIds) })
             })
         }
+
+        // MARK: Swiftgram
+        self.sgShowHiddenPinnedMessagesObserver = NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("SGShowHiddenPinnedMessages"),
+            object: nil,
+            queue: nil,
+            using: { [weak self] notification in
+                guard
+                    let self = self,
+                    let peerId = self.chatLocation.peerId,
+                    let notificationPeerId = notification.object as? PeerId,
+                    peerId == notificationPeerId
+                else {
+                    return
+                }
+
+                self.updateChatPresentationInterfaceState(animated: true, interactive: true, {
+                    $0.updatedInterfaceState {
+                        $0.withUpdatedMessageActionsState { value in
+                            var value = value
+                            value.closedPinnedMessageId = nil
+                            return value
+                        }
+                    }
+                })
+            }
+        )
     }
     
     required public init(coder aDecoder: NSCoder) {
@@ -6090,6 +6145,8 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     }
     
     deinit {
+        // MARK: Swiftgram
+        if let observer = sgShowHiddenPinnedMessagesObserver { NotificationCenter.default.removeObserver(observer) }
         let _ = ChatControllerCount.modify { value in
             return value - 1
         }
@@ -9088,6 +9145,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     }
     
     func displayMediaRecordingTooltip() {
+        if ({ return true })() { return } // MARK: Swiftgram
         guard let peer = self.presentationInterfaceState.renderedPeer?.peer else {
             return
         }

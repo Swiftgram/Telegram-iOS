@@ -1,5 +1,10 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+sgdeps = [
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+    "//submodules/TextFormat:TextFormat"
+]
+
 swift_library(
     name = "TranslateUI",
     module_name = "TranslateUI",
@@ -9,7 +14,7 @@ swift_library(
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgdeps + [
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/AsyncDisplayKit:AsyncDisplayKit",
         "//submodules/Display:Display",

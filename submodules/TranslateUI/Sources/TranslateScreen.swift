@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import Display
@@ -134,7 +135,7 @@ private final class TranslateScreenComponent: CombinedComponent {
         }
         
         func translate(text: String, fromLang: String?, toLang: String) -> Signal<(String, [MessageTextEntity])?, TranslationError> {
-            if self.useAlternativeTranslation {
+            if self.useAlternativeTranslation && SGSimpleSettings.shared.translationBackendEnum == .default {
                 return alternativeTranslateText(text: text, fromLang: fromLang, toLang: toLang)
             } else {
                 return self.context.engine.messages.translate(text: text, toLang: toLang)
@@ -1200,7 +1201,7 @@ public func presentTranslateScreen(
     display: (ViewController) -> Void
 ) {
     let translationConfiguration = TranslationConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 })
-    var useSystemTranslation = false
+    var useSystemTranslation = SGSimpleSettings.shared.translationBackendEnum == .system
     switch translationConfiguration.manual {
     case .system:
         if #available(iOS 18.0, *) {

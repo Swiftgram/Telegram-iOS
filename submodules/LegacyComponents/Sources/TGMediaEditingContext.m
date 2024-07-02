@@ -213,6 +213,9 @@
         _cropPipe = [[SPipe alloc] init];
         _captionAbovePipe = [[SPipe alloc] init];
         _highQualityPhotoPipe = [[SPipe alloc] init];
+
+        // MARK: Swiftgram
+        _highQualityPhoto = [[NSUserDefaults standardUserDefaults] boolForKey:@"sendLargePhotos"];
     }
     return self;
 }

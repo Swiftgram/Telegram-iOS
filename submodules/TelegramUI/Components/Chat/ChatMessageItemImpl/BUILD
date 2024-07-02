@@ -1,5 +1,10 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+sgdeps = [
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+    "//submodules/TranslateUI:TranslateUI"
+]
+
 swift_library(
     name = "ChatMessageItemImpl",
     module_name = "ChatMessageItemImpl",
@@ -9,7 +14,7 @@ swift_library(
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgdeps + [
         "//submodules/Postbox",
         "//submodules/AsyncDisplayKit",
         "//submodules/Display",

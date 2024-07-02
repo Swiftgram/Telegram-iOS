@@ -1,5 +1,16 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+sgdeps = [
+    "//Swiftgram/SGSettingsUI:SGSettingsUI",
+    "//Swiftgram/SGStrings:SGStrings",
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+
+    "//Swiftgram/SGRegDate:SGRegDate",
+    "//Swiftgram/SGRegDateScheme:SGRegDateScheme",
+    "//Swiftgram/SGDebugUI:SGDebugUI",
+]
+
+
 swift_library(
     name = "PeerInfoScreen",
     module_name = "PeerInfoScreen",
@@ -9,7 +20,7 @@ swift_library(
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgdeps + [
         "//submodules/AccountContext",
         "//submodules/AccountUtils",
         "//submodules/ActionSheetPeerItem",

@@ -1,0 +1,230 @@
+"Settings.ContentSettings" = "Sisällön Asetukset";
+
+"Settings.Tabs.Header" = "VÄLILEHDET";
+"Settings.Tabs.HideTabBar" = "Piilota Välilehtipalkki";
+"Settings.Tabs.ShowContacts" = "Näytä Yhteystiedot-välilehti";
+"Settings.Tabs.ShowNames" = "Näytä välilehtien nimet";
+
+"Settings.Folders.BottomTab" = "Kansiot alhaalla";
+"Settings.Folders.BottomTabStyle" = "Alhaalla olevien kansioiden tyyli";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "Piilota \"%@\"";
+"Settings.Folders.RememberLast" = "Avaa viimeisin kansio";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram avaa viimeksi käytetyn kansion uudelleenkäynnistyksen tai tilin vaihdon jälkeen.";
+
+"Settings.Folders.CompactNames" = "Pienempi väli";
+"Settings.Folders.AllChatsTitle" = "\"Kaikki chatit\" otsikko";
+"Settings.Folders.AllChatsTitle.short" = "Lyhyt";
+"Settings.Folders.AllChatsTitle.long" = "Pitkä";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Oletus";
+
+
+"Settings.ChatList.Header" = "CHAT LIST";
+"Settings.CompactChatList" = "Kompakti Keskustelulista";
+
+"Settings.Profiles.Header" = "PROFILES";
+
+"Settings.Stories.Hide" = "Piilota Tarinat";
+"Settings.Stories.WarnBeforeView" = "Kysy ennen katsomista";
+"Settings.Stories.DisableSwipeToRecord" = "Poista pyyhkäisy tallennukseen käytöstä";
+
+"Settings.Translation.QuickTranslateButton" = "Pikakäännöspainike";
+
+"Stories.Warning.Author" = "Tekijä";
+"Stories.Warning.ViewStory" = "Katso Tarina?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ NÄKEE, että olet katsonut heidän Tarinansa.";
+"Stories.Warning.NoticeStealth" = "%@ ei näe, että olet katsonut heidän Tarinansa.";
+
+"Settings.Photo.Quality.Notice" = "Lähtevien valokuvien ja valokuvatarinoiden laatu.";
+"Settings.Photo.SendLarge" = "Lähetä suuria valokuvia";
+"Settings.Photo.SendLarge.Notice" = "Suurenna pakattujen kuvien sivurajaa 2560px:ään.";
+
+"Settings.VideoNotes.Header" = "PYÖREÄT VIDEOT";
+"Settings.VideoNotes.StartWithRearCam" = "Aloita takakameralla";
+
+"Settings.CustomColors.Header" = "TILIN VÄRIT";
+"Settings.CustomColors.Saturation" = "KYLLÄISYYS";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Aseta kylläisyys 0%%:iin poistaaksesi tilin värit käytöstä.";
+
+"Settings.UploadsBoost" = "Latausten tehostus";
+"Settings.DownloadsBoost" = "Latausten tehostus";
+"Settings.DownloadsBoost.Notice" = "Lisää samanaikaisten yhteyksien määrää ja tiedostopalojen kokoa. Jos verkkoasi ei pysty käsittelemään kuormitusta, kokeile erilaisia vaihtoehtoja, jotka sopivat yhteyteesi.";
+"Settings.DownloadsBoost.none" = "Ei käytössä";
+"Settings.DownloadsBoost.medium" = "Keskitaso";
+"Settings.DownloadsBoost.maximum" = "Maksimi";
+
+"Settings.ShowProfileID" = "Näytä profiilin ID";
+"Settings.ShowDC" = "Näytä tietokeskus";
+"Settings.ShowCreationDate" = "Näytä keskustelun luontipäivä";
+"Settings.ShowCreationDate.Notice" = "Keskustelun luontipäivä voi olla tuntematon joillekin keskusteluille.";
+
+"Settings.ShowRegDate" = "Näytä Rekisteröintipäivä";
+"Settings.ShowRegDate.Notice" = "Rekisteröintipäivä on likimääräinen.";
+
+"Settings.SendWithReturnKey" = "Lähetä 'paluu'-näppäimellä";
+"Settings.HidePhoneInSettingsUI" = "Piilota puhelin asetuksissa";
+"Settings.HidePhoneInSettingsUI.Notice" = "Tämä piilottaa puhelinnumerosi vain asetukset-käyttöliittymästä. Piilottaaksesi sen muilta, siirry kohtaan Yksityisyys ja Turvallisuus.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "Jos poissa 5 sekuntia";
+
+"ProxySettings.UseSystemDNS" = "Käytä järjestelmän DNS:ää";
+"ProxySettings.UseSystemDNS.Notice" = "Käytä järjestelmän DNS:ää ohittaaksesi aikakatkaisun, jos sinulla ei ole pääsyä Google DNS:ään";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "Et **tarvitse** %@!";
+"Common.RestartRequired" = "Uudelleenkäynnistys vaaditaan";
+"Common.RestartNow" = "Käynnistä uudelleen nyt";
+"Common.OpenTelegram" = "Avaa Telegram";
+"Common.UseTelegramForPremium" = "Huomioi, että saat Telegram Premiumin käyttämällä virallista Telegram-sovellusta. Kun olet hankkinut Telegram Premiumin, kaikki sen ominaisuudet ovat saatavilla Swiftgramissa.";
+"Common.UpdateOS" = "iOS päivitys vaaditaan";
+
+"Message.HoldToShowOrReport" = "Pidä esillä näyttääksesi tai ilmoittaaksesi.";
+
+"Auth.AccountBackupReminder" = "Varmista, että sinulla on varmuuskopio pääsymenetelmästä. Pidä SIM tekstiviestejä varten tai ylimääräinen istunto kirjautuneena välttääksesi lukkiutumisen.";
+"Auth.UnofficialAppCodeTitle" = "Koodin voi saada vain virallisella sovelluksella";
+
+"Settings.SmallReactions" = "Pienet reaktiot";
+"Settings.HideReactions" = "Piilota reaktiot";
+
+"ContextMenu.SaveToCloud" = "Tallenna Pilveen";
+"ContextMenu.SelectFromUser" = "Valitse Tekijältä";
+
+"Settings.ContextMenu" = "KONTEKSTIVALIKKO";
+"Settings.ContextMenu.Notice" = "Poistetut kohteet ovat saatavilla 'Swiftgram'-alavalikossa.";
+
+
+"Settings.ChatSwipeOptions" = "Chat List Swipe Options";
+"Settings.DeleteChatSwipeOption" = "Vedä poistaaksesi keskustelu";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Vetää seuraavaan lukemattomaan kanavaan";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Vedä seuraava aihe";
+"Settings.GalleryCamera" = "Camera in Gallery";
+"Settings.GalleryCameraPreview" = "Kameran esikatselu galleriassa";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" Button";
+"Settings.SnapDeletionEffect" = "Message Deletion Effects";
+
+"Settings.Stickers.Size" = "SIZE";
+"Settings.Stickers.Timestamp" = "Show Timestamp";
+
+"Settings.RecordingButton" = "Voice Recording Button";
+
+"Settings.DefaultEmojisFirst" = "Oletusemojit ensin";
+"Settings.DefaultEmojisFirst.Notice" = "Näytä vakiotunnukset ennen premium-tunnuksia tunnusnäppäimistössä";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "created: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "Joined %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Rekisteröity";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Paina kahdesti muokataksesi viestiä";
+
+"Settings.wideChannelPosts" = "Leveitä viestejä kanavissa";
+"Settings.ForceEmojiTab" = "Emojivälilehti ensin";
+
+"Settings.forceBuiltInMic" = "Pakota laitteen mikrofoni";
+"Settings.forceBuiltInMic.Notice" = "Jos otettu käyttöön, sovellus käyttää vain laitteen mikrofonia, vaikka kuulokkeet olisivatkin liitettynä.";
+
+"Settings.showChannelBottomButton" = "Kanavan ala-paneeli";
+
+"Settings.CallConfirmation" = "Puhelun vahvistus";
+"Settings.CallConfirmation.Notice" = "Swiftgram pyytää vahvistustasi ennen puhelun soittamista.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Soita puhelu?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Soita videopuhelu?";
+
+"MutualContact.Label" = "yhteinen yhteys";
+
+"Settings.swipeForVideoPIP" = "Video PIP pyyhkäisevällä toiminnolla";
+"Settings.swipeForVideoPIP.Notice" = "Jos se on käytössä, videon pyyhkäisy avaa sen kuvassa kuvassa -tilassa.";
+
+"SessionBackup.Title" = "Istunnon varmuuskopio";
+"SessionBackup.Sessions.Title" = "Istunnot";
+"SessionBackup.Actions.Backup" = "Varmenteet Keychainiin";
+"SessionBackup.Actions.Restore" = "Palauta Keychainista";
+"SessionBackup.Actions.DeleteAll" = "Poista Keychain-varmuuskopio";
+"SessionBackup.Actions.DeleteOne" = "Poista varmuuskopiosta";
+"SessionBackup.Actions.RemoveFromApp" = "Poista sovelluksesta";
+"SessionBackup.LastBackupAt" = "Viimeisin varmuuskopio: %@";
+"SessionBackup.RestoreOK" = "OK. Istunnot palautettu: %@";
+"SessionBackup.LoggedIn" = "Sisäänkirjautuneena";
+"SessionBackup.LoggedOut" = "Uloskirjautuneena";
+"SessionBackup.DeleteAll.Title" = "Poista kaikki istunnot?";
+"SessionBackup.DeleteAll.Text" = "Kaikki istunnot poistetaan Keychainista.\n\nTilejä ei kirjaudu ulos Swiftgramista.";
+"SessionBackup.DeleteSingle.Title" = "Poista 1 (yksi) istunto?";
+"SessionBackup.DeleteSingle.Text" = "%@ istunto poistetaan Keychainista.\n\nTiliä ei kirjaudu ulos Swiftgramista.";
+"SessionBackup.RemoveFromApp.Title" = "Poista tili sovelluksesta?";
+"SessionBackup.RemoveFromApp.Text" = "%@ istunto POISTETAAN Swiftgramista! Istunto pysyy aktiivisena, joten voit palauttaa sen myöhemmin.";
+"SessionBackup.Notice" = "Istunnot on salattu ja tallennettu laitteen Keychain. Istunnot eivät koskaan jätä laitettasi.\n\nTÄRKEÄÄ: Voit palauttaa istunnot uudelle laitteelle tai käyttöjärjestelmän palautuksen jälkeen sinun TÄYTYY ottaa salatut varmuuskopiot käyttöön, muuten Keychain ei siirretä.\n\nHUOMAUTUS: Istunnot voidaan silti peruuttaa Telegramin tai toisen laitteen kautta.";
+
+"MessageFilter.Title" = "Viestisuoja";
+"MessageFilter.SubTitle" = "Poista häiriötekijät ja vähennä näkyvyyttä viesteistä, jotka sisältävät alla olevia avainsanoja.\nAvainsanat ovat erikoismerkkien suhteen herkkiä.";
+"MessageFilter.Keywords.Title" = "Avainsanat";
+"MessageFilter.InputPlaceholder" = "Syötä avainsana";
+
+"InputToolbar.Title" = "Muotoilupaneeli";
+
+"Notifications.MentionsAndReplies.Title" = "@Maininnat ja vastaukset";
+"Notifications.MentionsAndReplies.value.default" = "Oletus";
+"Notifications.MentionsAndReplies.value.silenced" = "Mykistetty";
+"Notifications.MentionsAndReplies.value.disabled" = "Ei käytössä";
+"Notifications.PinnedMessages.Title" = "Kiinnitetyt viestit";
+"Notifications.PinnedMessages.value.default" = "Oletus";
+"Notifications.PinnedMessages.value.silenced" = "Mykistetty";
+"Notifications.PinnedMessages.value.disabled" = "Ei käytössä";
+
+
+"PayWall.Text" = "Tehostettu Pro-ominaisuuksilla";
+
+"PayWall.SessionBackup.Title" = "Istunnon varmuuskopio";
+"PayWall.SessionBackup.Notice" = "Palauta istunnot salatusta paikallisesta Apple Keychain -varmuuskopiosta.";
+
+"PayWall.MessageFilter.Title" = "Viestisuodatin";
+"PayWall.MessageFilter.Notice" = "Vähennä roskapostin, mainosten ja ärsyttävien viestien näkyvyyttä.";
+
+"PayWall.Notifications.Title" = "Poista @maininnat ja vastaukset käytöstä";
+"PayWall.Notifications.Notice" = "Piilota tai mykistä ei-tärkeitä ilmoituksia.";
+
+"PayWall.InputToolbar.Title" = "Muotoilupaneeli";
+"PayWall.InputToolbar.Notice" = "Säästä aikaa valmistellessasi julkaisuja paneelilla juuri näppäimistösi yläpuolella.";
+
+"PayWall.AppIcons.Title" = "Ainutlaatuiset sovelluskuvakkeet";
+"PayWall.AppIcons.Notice" = "Mukauta Swiftgramin ulkoasu aloitusnäytölläsi.";
+
+"PayWall.About.Title" = "Tietoja Swiftgram Prosta";
+"PayWall.About.Notice" = "Swiftgramin ilmainen versio tarjoaa kymmeniä ominaisuuksia ja parannuksia Telegram-sovellukseen verrattuna. Innovointi ja Swiftgramin synkronointi kuukausittaisiin Telegram-päivityksiin vaatii valtavasti aikaa ja kallista laitteistoa.\n\nSwiftgram on avoimen lähdekoodin sovellus, joka kunnioittaa yksityisyyttäsi eikä vaivaa sinua mainoksilla. Tilatessasi Swiftgram Prota saat pääsyn eksklusiivisiin ominaisuuksiin ja tuet itsenäistä kehittäjää.\n\n- @Kylmakalle";
+
+"PayWall.RestorePurchases" = "Palauta ostot";
+"PayWall.Terms" = "Käyttöehdot";
+"PayWall.Privacy" = "Tietosuojakäytäntö";
+"PayWall.TermsURL" = "https://swiftgram.app/ehtosuhteet";
+"PayWall.PrivacyURL" = "https://swiftgram.app/tietosuoja";
+"PayWall.Notice.Markdown" = "Tilatessasi Swiftgram Prota hyväksyt [Swiftgramin käyttöehdot](%1$@) ja [tietosuojakäytännön](%2$@).";
+"PayWall.Notice.Raw" = "Tilatessasi Swiftgram Prota hyväksyt Swiftgramin käyttöehdot ja tietosuojakäytännön.";
+
+"PayWall.Button.OpenPro" = "Käytä Pro-ominaisuuksia";
+"PayWall.Button.Purchasing" = "Ostetaan...";
+"PayWall.Button.Restoring" = "Palautetaan ostot...";
+"PayWall.Button.Validating" = "Ostosten vahvistaminen...";
+"PayWall.Button.PaymentsUnavailable" = "Maksut eivät saatavilla";
+"PayWall.Button.Subscribe" = "Tilaa %@ / kuukausi";
+"PayWall.Button.ContactingAppStore" = "Otetaan yhteyttä App Storeen...";
+
+"Paywall.Error.Title" = "Virhe";
+"PayWall.ValidationError" = "Vahvistusvirhe";
+"PayWall.ValidationError.TryAgain" = "Ostovahvistuksessa tapahtui jokin virhe. Ei hätää! Yritä palauttaa ostot hieman myöhemmin.";

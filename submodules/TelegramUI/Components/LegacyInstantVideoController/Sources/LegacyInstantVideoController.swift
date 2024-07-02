@@ -1,3 +1,6 @@
+// MARK: Swiftgram
+import SGSimpleSettings
+
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -164,7 +167,7 @@ public func legacyInstantVideoController(theme: PresentationTheme, forStory: Boo
                 let node = ChatSendButtonRadialStatusView(color: theme.chat.inputPanel.panelControlAccentColor)
                 node.slowmodeState = slowmodeState
                 return node
-            }, canSendSilently: !isSecretChat, canSchedule: hasSchedule, reminder: peerId == context.account.peerId)!
+            }, canSendSilently: !isSecretChat, canSchedule: hasSchedule, reminder: peerId == context.account.peerId, startWithRearCam: SGSimpleSettings.shared.startTelescopeWithRearCam)!
             controller.presentScheduleController = { done in
                 presentSchedulePicker { time in
                     done?(time)

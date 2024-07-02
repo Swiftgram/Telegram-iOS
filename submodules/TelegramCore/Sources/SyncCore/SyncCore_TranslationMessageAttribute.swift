@@ -87,3 +87,47 @@ public class TranslationMessageAttribute: MessageAttribute, Equatable {
         return true
     }
 }
+
+
+
+
+
+
+
+// MARK: Swiftgram
+public class QuickTranslationMessageAttribute: MessageAttribute, Equatable {
+    public let originalText: String
+    public let originalEntities: [MessageTextEntity]
+
+    public var associatedPeerIds: [PeerId] {
+        return []
+    }
+    
+    public init(
+        text: String,
+        entities: [MessageTextEntity]
+    ) {
+        self.originalText = text
+        self.originalEntities = entities
+    }
+    
+    required public init(decoder: PostboxDecoder) {
+        self.originalText = decoder.decodeStringForKey("originalText", orElse: "")
+        self.originalEntities = decoder.decodeObjectArrayWithDecoderForKey("originalEntities")
+    }
+    
+    public func encode(_ encoder: PostboxEncoder) {
+        encoder.encodeString(self.originalText, forKey: "originalText")
+        encoder.encodeObjectArray(self.originalEntities, forKey: "originalEntities")
+    }
+    
+    public static func ==(lhs: QuickTranslationMessageAttribute, rhs: QuickTranslationMessageAttribute) -> Bool {
+        if lhs.originalText != rhs.originalText {
+            return false
+        }
+        if lhs.originalEntities != rhs.originalEntities {
+            return false
+        }
+        return true
+    }
+}

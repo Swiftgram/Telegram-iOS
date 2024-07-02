@@ -1,0 +1,3 @@
+--maxwidth 100
+--indent 4
+--disable redundantSelf

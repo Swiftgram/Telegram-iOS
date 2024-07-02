@@ -235,14 +235,15 @@ public func PremiumBoostScreen(
                                 title: presentationData.strings.ChannelBoost_MoreBoosts_Title,
                                 text: presentationData.strings.ChannelBoost_MoreBoosts_Text(peer.compactDisplayTitle, "\(premiumConfiguration.boostsPerGiftCount)").string,
                                 actions: [
-                                    TextAlertAction(type: .defaultAction, title: presentationData.strings.ChannelBoost_MoreBoosts_Gift, action: {
+                                    // MARK: Swiftgram
+                                    /*TextAlertAction(type: .defaultAction, title: presentationData.strings.ChannelBoost_MoreBoosts_Gift, action: {
                                         dismissImpl?()
                                         
                                         Queue.mainQueue().after(0.4) {
                                             let controller = context.sharedContext.makePremiumGiftController(context: context, source: .channelBoost, completion: nil)
                                             pushController(controller)
                                         }
-                                    }),
+                                    }),*/
                                     TextAlertAction(type: .genericAction, title: presentationData.strings.Common_Close, action: {})
                                 ],
                                 actionLayout: .vertical,

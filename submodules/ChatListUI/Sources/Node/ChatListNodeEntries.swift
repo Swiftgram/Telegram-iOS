@@ -81,6 +81,7 @@ public enum ChatListNodeEntryPromoInfo: Equatable {
 
 public enum ChatListNotice: Equatable {
     case clearStorage(sizeFraction: Double)
+    case sgUrl(id: String, title: String, text: String?, url: String, needAuth: Bool, permanent: Bool)
     case setupPassword
     case premiumUpgrade(discount: Int32)
     case premiumAnnualDiscount(discount: Int32)

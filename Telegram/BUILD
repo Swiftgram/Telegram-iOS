@@ -12,6 +12,12 @@ load("@build_bazel_rules_apple//apple:ios.bzl",
     "ios_ui_test",
 )
 
+# MARK: Swiftgram
+load("@build_bazel_rules_apple//apple:watchos.bzl",
+    "watchos_application",
+    "watchos_extension",
+)
+
 load("@build_bazel_rules_apple//apple:resources.bzl",
     "swift_intent_library",
 )
@@ -136,9 +142,14 @@ genrule(
         "GeneratedPresentationStrings/Sources/PresentationStrings.m",
         "GeneratedPresentationStrings/Resources/PresentationStrings.data",
     ],
+    # MARK: Swiftgram
+    visibility = [
+        "//visibility:public",
+    ],
 )
 
 minimum_os_version = "13.0"
+minimum_watchos_version="7.0" # MARK: Swiftgram
 
 notificationServiceExtensionVersion = "v1"
 
@@ -247,9 +258,20 @@ filegroup(
     name = "AppStringResources",
     srcs = [
         "Telegram-iOS/en.lproj/Localizable.strings",
+        "//Swiftgram/SGStrings:SGLocalizableStrings",
     ] + [
         "{}.lproj/Localizable.strings".format(language) for language in empty_languages
     ],
+    # MARK: Swiftgram
+    visibility = ["//visibility:public",],
+)
+
+# MARK: Swiftgram
+filegroup(
+    name = "WatchAppStringResources",
+    srcs = glob([
+        "Telegram-iOS/*.lproj/Localizable.strings",
+    ], exclude = ["Telegram-iOS/*.lproj/**/.*"]) + ["//Swiftgram/SGStrings:SGLocalizableStrings"],
 )
 
 filegroup(
@@ -274,42 +296,34 @@ filegroup(
 )
 
 filegroup(
-    name = "AppIcons",
-    srcs = glob([
-        "Telegram-iOS/AppIcons.xcassets/**/*",
-    ], exclude = ["Telegram-iOS/AppIcons.xcassets/**/.*"]),
-)
-
-filegroup(
     name = "DefaultAppIcon",
     srcs = glob([
         "Telegram-iOS/DefaultAppIcon.xcassets/**/*",
     ], exclude = ["Telegram-iOS/DefaultAppIcon.xcassets/**/.*"]),
 )
 
-filegroup(
-    name = "DefaultIcon",
-    srcs = glob([
-        "Telegram-iOS/AppIcons.xcassets/BlueIcon.appiconset/*.png",
-    ]),
-)
-
+# MARK: Swiftgram alternative icons
 alternate_icon_folders = [
-    "BlackIcon",
-    "BlackClassicIcon",
-    "BlackFilledIcon",
-    "BlueIcon",
-    "BlueClassicIcon",
-    "BlueFilledIcon",
-    "WhiteFilledIcon",
-    "New1",
-    "New2",
-    "Premium",
-    "PremiumBlack",
-    "PremiumTurbo",
+    "SGDefault",
+    "SGBlack",
+    "SGLegacy",
+    "SGInverted",
+    "SGWhite",
+    "SGNight",
+    "SGSky",
+    "SGTitanium",
+    "SGNeon",
+    "SGNeonBlue",
+    "SGGlass",
+    "SGSparkling",
+    "SGBeta",
+    "SGPro",
+    "SGGold",
+    "SGDucky",
+    "SGDay"
 ]
 
-composer_icon_folders = ["Telegram"]
+composer_icon_folders = ["Swiftgram"]
 
 [
     filegroup(
@@ -343,12 +357,14 @@ objc_library(
     ],
 )
 
+SGRESOURCES = ["//Swiftgram/SGSettingsUI:SGUIAssets", "//Swiftgram/SGPayWall:SGPayWallAssets", "//Swiftgram/SGAppBadgeAssets:SGAppBadgeAssets"]
+
 swift_library(
     name = "Lib",
     srcs = glob([
         "Telegram-iOS/Application.swift",
     ]),
-    data = [
+    data = SGRESOURCES + [
         ":Icons",
         ":AppResources",
         ":AppIntentVocabularyResources",
@@ -409,6 +425,16 @@ plist_fragment(
                 <string>tonsite</string>
             </array>
         </dict>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>CFBundleURLName</key>
+            <string>{telegram_bundle_id}.custom</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>sg</string>
+            </array>
+        </dict>
     </array>
     """.format(
         telegram_bundle_id = telegram_bundle_id,
@@ -467,7 +493,7 @@ official_carplay_fragment = """
 <key>com.apple.developer.carplay-messaging</key>
 <true/>
 """
-carplay_fragment = official_carplay_fragment if telegram_bundle_id in official_bundle_ids else ""
+carplay_fragment = official_carplay_fragment # MARK: Swiftgram if telegram_bundle_id in official_bundle_ids else ""
 
 icloud_fragment = "" if not telegram_enable_icloud else """
 <key>com.apple.developer.icloud-services</key>
@@ -495,6 +521,7 @@ associated_domains_fragment = "" if telegram_bundle_id not in official_bundle_id
     <string>applinks:telegram.me</string>
     <string>applinks:t.me</string>
     <string>applinks:*.t.me</string>
+    <string>applinks:swiftgram.app</string>
 </array>
 """
 
@@ -524,7 +551,7 @@ official_communication_notifications_fragment = """
 <key>com.apple.developer.usernotifications.communication</key>
 <true/>
 """
-communication_notifications_fragment = official_communication_notifications_fragment if telegram_bundle_id in official_bundle_ids else ""
+communication_notifications_fragment = official_communication_notifications_fragment # if telegram_bundle_id in official_bundle_ids else ""
 
 official_notification_filtering_fragment = """
 <key>com.apple.developer.usernotifications.filtering</key>
@@ -539,6 +566,13 @@ store_signin_fragment = """
 </array>
 """
 signin_fragment = store_signin_fragment if telegram_bundle_id in store_bundle_ids else ""
+
+# content_analysis = """
+# <key>com.apple.developer.sensitivecontentanalysis.client</key>
+# <array>
+#	<string>analysis</string>
+# </array>
+# """
 
 plist_fragment(
     name = "TelegramEntitlements",
@@ -555,8 +589,67 @@ plist_fragment(
         communication_notifications_fragment,
         notification_filtering_fragment,
         signin_fragment,
+        # content_analysis
     ])
 )
+
+# MARK: Swiftgram
+filegroup(
+    name = "TelegramWatchExtensionResources",
+    srcs = glob([
+        "Watch/Extension/Resources/**/*",
+    ], exclude = ["Watch/Extension/Resources/**/.*"]),
+)
+
+filegroup(
+    name = "TelegramWatchAppResources",
+    srcs = glob([
+        "Watch/Extension/Resources/**/*.png",
+    ], exclude = ["Watch/Extension/Resources/**/.*"]),
+)
+
+filegroup(
+    name = "TelegramWatchAppAssets",
+    srcs = glob([
+        "Watch/App/Assets.xcassets/**/*",
+    ], exclude = ["Watch/App/Assets.xcassets/**/.*"]),
+)
+
+filegroup(
+    name = "TelegramWatchAppInterface",
+    srcs = glob([
+        "Watch/App/Base.lproj/Interface.storyboard",
+    ]),
+)
+
+objc_library(
+    name = "TelegramWatchLib",
+    srcs = glob([
+        "Watch/Extension/**/*.m",
+        "Watch/Bridge/**/*.m",
+        "Watch/WatchCommonWatch/**/*.m",
+        "Watch/App/**/*.m",
+        "Watch/Extension/**/*.h",
+        "Watch/Bridge/**/*.h",
+        "Watch/WatchCommonWatch/**/*.h",
+    ]),
+    copts = [
+        "-DTARGET_OS_WATCH=1",
+        "-ITelegram/Watch",
+        "-ITelegram/Watch/Extension",
+        "-ITelegram/Watch/Bridge",
+        "-ITelegram/Watch/App",
+    ],
+    sdk_frameworks = [
+        "WatchKit",
+        "WatchConnectivity",
+        "ClockKit",
+        "UserNotifications",
+        "CoreLocation",
+        "CoreGraphics",
+    ],
+)
+#
 
 plist_fragment(
     name = "VersionInfoPlist",
@@ -586,9 +679,86 @@ plist_fragment(
     template =
     """
     <key>CFBundleDisplayName</key>
-    <string>Telegram</string>
+    <string>Swiftgram</string>
     """
 )
+
+# MARK: Swiftgram
+plist_fragment(
+    name = "WatchAppCompanionInfoPlist",
+    extension = "plist",
+    template =
+    """
+    <key>WKCompanionAppBundleIdentifier</key>
+    <string>{telegram_bundle_id}</string>
+    """.format(
+        telegram_bundle_id = telegram_bundle_id,
+    )
+)
+
+plist_fragment(
+    name = "WatchAppInfoPlist",
+    extension = "plist",
+    template =
+    """
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleIdentifier</key>
+    <string>{telegram_bundle_id}.watchkitapp</string>
+    <key>CFBundleName</key>
+    <string>Swiftgram</string>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+    </array>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>WKApplication</key>
+    <true/>
+    <key>WKCompanionAppBundleIdentifier</key>
+    <string>{telegram_bundle_id}</string>
+    <key>PrincipalClass</key>
+    <string>TGExtensionDelegate</string>
+    """.format(
+        telegram_bundle_id = telegram_bundle_id,
+    )
+)
+
+watchos_application(
+    name = "TelegramWatchApp",
+    bundle_id = "{telegram_bundle_id}.watchkitapp".format(
+        telegram_bundle_id = telegram_bundle_id,
+    ),
+    bundle_name = "SwiftgramWatch",
+    infoplists = [
+        ":WatchAppInfoPlist",
+        ":VersionInfoPlist",
+        ":BuildNumberInfoPlist",
+        ":AppNameInfoPlist",
+        ":WatchAppCompanionInfoPlist",
+    ],
+    minimum_os_version = minimum_watchos_version,
+    provisioning_profile = select({
+        ":disableProvisioningProfilesSetting": None,
+        "//conditions:default": ":Telegram_xcode_profile" if telegram_use_xcode_managed_codesigning else "@build_configuration//provisioning:WatchApp.mobileprovision",
+    }),
+    resources = [
+        ":TelegramWatchAppResources",
+        ":TelegramWatchAppAssets",
+        ":TelegramWatchExtensionResources",
+    ],
+    storyboards = [
+        ":TelegramWatchAppInterface",
+    ],
+    strings = [
+        ":WatchAppStringResources",
+    ],
+    deps = [
+        ":TelegramWatchLib",
+    ],
+)
+#
 
 plist_fragment(
     name = "MtProtoKitInfoPlist",
@@ -824,6 +994,14 @@ genrule(
     cmd_bash =
 """
     echo 'for f in $$1/*.framework; do binary_name=`echo $$(basename $$f) | sed -e "s/\\\\.framework//"`; strip -ST $$f/$$binary_name; done;' > $(location StripFramework.sh)
+    # MARK: Swiftgram
+    echo 'find "$$1" -type f \\( -perm +111 -o -name "*.dylib" \\) | while read -r bin; do \
+        if otool -L "$$bin" | grep -q "/usr/lib/swift/libswift_Concurrency.dylib"; then \
+            echo "Patching concurrency backport in: $$bin"; \
+            chmod +w "$$(dirname $$bin)/"; \
+            install_name_tool -change /usr/lib/swift/libswift_Concurrency.dylib @rpath/libswift_Concurrency.dylib "$$bin"; \
+        fi; \
+    done;' >> $(location StripFramework.sh)
     echo '' >> $(location StripFramework.sh)
 """,
     outs = [
@@ -919,7 +1097,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.Share</string>
     <key>CFBundleName</key>
-    <string>Telegram</string>
+    <string>Swiftgram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1011,7 +1189,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.NotificationContent</string>
     <key>CFBundleName</key>
-    <string>Telegram</string>
+    <string>Swiftgram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1118,7 +1296,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.Widget</string>
     <key>CFBundleName</key>
-    <string>Telegram</string>
+    <string>Swiftgram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1231,7 +1409,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.SiriIntents</string>
     <key>CFBundleName</key>
-    <string>Telegram</string>
+    <string>Swiftgram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1352,6 +1530,147 @@ ios_extension(
     ],
 )
 
+# MARK: Swiftgram
+# TODO(swiftgram): Localize CFBundleDisplayName
+plist_fragment(
+    name = "SGActionRequestHandlerInfoPlist",
+    extension = "plist",
+    template = 
+    """
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleIdentifier</key>
+    <string>{telegram_bundle_id}.SGActionRequestHandler</string>
+    <key>CFBundleName</key>
+    <string>Swiftgram</string>
+    <key>CFBundleDisplayName</key>
+    <string>Open in Swiftgram</string>
+    <key>CFBundlePackageType</key>
+    <string>XPC!</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict>
+			<key>NSExtensionActivationRule</key>
+			<dict>
+				<key>NSExtensionActivationSupportsFileWithMaxCount</key>
+				<integer>0</integer>
+				<key>NSExtensionActivationSupportsImageWithMaxCount</key>
+				<integer>0</integer>
+				<key>NSExtensionActivationSupportsMovieWithMaxCount</key>
+				<integer>0</integer>
+				<key>NSExtensionActivationSupportsText</key>
+				<false/>
+				<key>NSExtensionActivationSupportsWebURLWithMaxCount</key>
+				<integer>1</integer>
+			</dict>
+			<key>NSExtensionJavaScriptPreprocessingFile</key>
+			<string>Action</string>
+			<key>NSExtensionServiceAllowsFinderPreviewItem</key>
+			<true/>
+			<key>NSExtensionServiceAllowsTouchBarItem</key>
+			<true/>
+			<key>NSExtensionServiceFinderPreviewIconName</key>
+			<string>NSActionTemplate</string>
+			<key>NSExtensionServiceTouchBarBezelColorName</key>
+			<string>TouchBarBezel</string>
+			<key>NSExtensionServiceTouchBarIconName</key>
+			<string>NSActionTemplate</string>
+		</dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.services</string>
+		<key>NSExtensionPrincipalClass</key>
+		<string>SGActionRequestHandler</string>
+	</dict>
+    """.format(
+        telegram_bundle_id = telegram_bundle_id,
+    )
+)
+
+# TODO(swiftgram): Proper icon
+filegroup(
+    name = "SGActionRequestHandlerAssets",
+    srcs = glob(["SGActionRequestHandler/Media.xcassets/**"]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "SGActionRequestHandlerScript",
+    srcs = ["SGActionRequestHandler/Action.js"],
+    visibility = ["//visibility:public"],
+)
+
+swift_library(
+    name = "SGActionRequestHandlerLib",
+    module_name = "SGActionRequestHandlerLib",
+    srcs = glob([
+        "SGActionRequestHandler/**/*.swift",
+    ]),
+    copts = [
+        "-warnings-as-errors",
+    ],
+    data = [
+        ":SGActionRequestHandlerAssets",
+        ":SGActionRequestHandlerScript"
+    ],
+    deps = [
+        "//submodules/UrlEscaping:UrlEscaping"
+    ],
+)
+
+genrule(
+    name = "SetMinOsVersionSGActionRequestHandler",
+    cmd_bash =
+"""
+    name=SGActionRequestHandler.appex
+    cat $(location PatchMinOSVersion.source.sh) | sed -e "s/<<<MIN_OS_VERSION>>>/14\\.0/g" | sed -e "s/<<<NAME>>>/$$name/g" > $(location SetMinOsVersionSGActionRequestHandler.sh)
+""",
+    srcs = [
+        "PatchMinOSVersion.source.sh",
+    ],
+    outs = [
+        "SetMinOsVersionSGActionRequestHandler.sh",
+    ],
+    executable = True,
+    visibility = [
+        "//visibility:public",
+    ]
+)
+
+ios_extension(
+    name = "SGActionRequestHandler",
+    bundle_id = "{telegram_bundle_id}.SGActionRequestHandler".format(
+        telegram_bundle_id = telegram_bundle_id,
+    ),
+    families = [
+        "iphone",
+        "ipad",
+    ],
+    infoplists = [
+        ":SGActionRequestHandlerInfoPlist",
+        ":VersionInfoPlist",
+        ":RequiredDeviceCapabilitiesPlist",
+        ":BuildNumberInfoPlist",
+        # ":AppNameInfoPlist",
+    ],
+    minimum_os_version = minimum_os_version, # maintain the same minimum OS version across extensions
+    ipa_post_processor = ":SetMinOsVersionSGActionRequestHandler",
+    #provides_main = True,
+    provisioning_profile = select({
+        ":disableProvisioningProfilesSetting": None,
+        "//conditions:default": "@build_configuration//provisioning:SGActionRequestHandler.mobileprovision",
+    }),
+    deps = [
+        ":SGActionRequestHandlerLib",
+    ],
+    frameworks = [
+    ],
+    visibility = [
+        "//visibility:public",
+    ]
+)
+#
+
 plist_fragment(
     name = "BroadcastUploadInfoPlist",
     extension = "plist",
@@ -1362,7 +1681,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.BroadcastUpload</string>
     <key>CFBundleName</key>
-    <string>Telegram</string>
+    <string>Swiftgram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1456,7 +1775,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.NotificationService</string>
     <key>CFBundleName</key>
-    <string>Telegram</string>
+    <string>Swiftgram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1524,11 +1843,11 @@ plist_fragment(
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
-    <string>Telegram</string>
+    <string>Swiftgram</string>
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}</string>
     <key>CFBundleName</key>
-    <string>Telegram</string>
+    <string>Swiftgram</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
@@ -1582,17 +1901,17 @@ plist_fragment(
     <key>NSCameraUsageDescription</key>
     <string>We need this so that you can take and share photos and videos.</string>
     <key>NSContactsUsageDescription</key>
-    <string>Telegram stores your contacts heavily encrypted in the cloud to let you connect with your friends across all your devices.</string>
+    <string>Swiftgram stores your contacts heavily encrypted in the Telegram cloud to let you connect with your friends across all your devices.</string>
     <key>NSFaceIDUsageDescription</key>
     <string>You can use Face ID to unlock the app.</string>
     <key>NSLocationAlwaysUsageDescription</key>
-    <string>When you send your location to your friends, Telegram needs access to show them a map. You also need this to send locations from an Apple Watch.</string>
+    <string>When you send your location to your friends, Swiftgram needs access to show them a map. You also need this to send locations from an Apple Watch.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>When you send your location to your friends, Telegram needs access to show them a map.</string>
+    <string>When you send your location to your friends, Swiftgram needs access to show them a map.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>We need this so that you can record and share voice messages and videos with sound.</string>
     <key>NSMotionUsageDescription</key>
-    <string>When you send your location to your friends, Telegram needs access to show them a map.</string>
+    <string>When you send your location to your friends, Swiftgram needs access to show them a map.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
     <string>We need this so that you can share photos and videos from your photo library.</string>
     <key>NSPhotoLibraryUsageDescription</key>
@@ -1699,7 +2018,7 @@ xcode_provisioning_profile(
 )
 
 ios_application(
-    name = "Telegram",
+    name = "Swiftgram",
     bundle_id = "{telegram_bundle_id}".format(
         telegram_bundle_id = telegram_bundle_id,
     ),
@@ -1735,9 +2054,12 @@ ios_application(
     strings = [
         ":AppStringResources",
     ],
+    # MARK: Swiftgram
+    settings_bundle = "//Swiftgram/SGSettingsBundle:SGSettingsBundle",
     extensions = select({
         ":disableExtensionsSetting": [],
         "//conditions:default": [
+            # ":SGActionRequestHandler", # UX sucks https://t.me/swiftgramchat/7335
             ":ShareExtension",
             ":NotificationContentExtension",
             ":NotificationServiceExtension" + notificationServiceExtensionVersion,
@@ -1746,6 +2068,7 @@ ios_application(
             ":BroadcastUploadExtension",
         ],
     }),
+    watch_application = ":TelegramWatchApp", # MARK: Swiftgram
     deps = [
         ":Main",
         ":Lib",
@@ -1756,11 +2079,11 @@ ios_application(
 xcodeproj(
     name = "Telegram_xcodeproj",
     bazel_path = telegram_bazel_path,
-    project_name = "Telegram",
+    project_name = "Swiftgram",
     tags = ["manual"],
     top_level_targets = top_level_targets(
         labels = [
-            ":Telegram",
+            ":Swiftgram",
         ],
         target_environments = ["device", "simulator"],
     ),

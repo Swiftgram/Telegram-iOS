@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "कंटेंट सेटिंग्स";
+
+"Settings.Tabs.Header" = "टैब";
+"Settings.Tabs.HideTabBar" = "टैब बार छिपाएं";
+"Settings.Tabs.ShowContacts" = "संपर्क टैब दिखाएँ";
+"Settings.Tabs.ShowNames" = "टैब नाम दिखाएं";
+
+"Settings.Folders.BottomTab" = "निचले टैब में फोल्डर्स";
+"Settings.Folders.BottomTabStyle" = "बॉटम फोल्डर स्टाइल है";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "आईओएस";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "टेलीग्राम";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "\"%@\" छिपाएं";
+"Settings.Folders.RememberLast" = "आखिरी फोल्डर खोलें";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram पुनः आरंभ या खाता स्विच करने के बाद अंतिम प्रयुक्त फोल्डर को खोलेगा";
+
+"Settings.Folders.CompactNames" = "कम अंतराल";
+"Settings.Folders.AllChatsTitle" = "\"सभी चैट\" शीर्षक";
+"Settings.Folders.AllChatsTitle.short" = "संक्षिप्त";
+"Settings.Folders.AllChatsTitle.long" = "लंबा";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "डिफ़ॉल्ट";
+
+
+"Settings.ChatList.Header" = "चैट सूची";
+"Settings.CompactChatList" = "संक्षिप्त चैट सूची";
+
+"Settings.Profiles.Header" = "प्रोफाइल";
+
+"Settings.Stories.Hide" = "कहानियाँ छुपाएं";
+"Settings.Stories.WarnBeforeView" = "देखने से पहले पूछें";
+"Settings.Stories.DisableSwipeToRecord" = "रिकॉर्ड करने के लिए स्वाइप को अक्षम करें";
+
+"Settings.Translation.QuickTranslateButton" = "त्वरित अनुवाद बटन";
+
+"Stories.Warning.Author" = "लेखक";
+"Stories.Warning.ViewStory" = "कहानी देखें";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ देख सकते हैं कि आपने उनकी कहानी देखी है।";
+"Stories.Warning.NoticeStealth" = "%@ नहीं देख सकते कि आपने उनकी कहानी देखी है।";
+
+"Settings.Photo.Quality.Notice" = "भेजे गए फोटो और फोटो-कहानियों की गुणवत्ता";
+"Settings.Photo.SendLarge" = "बड़े फोटो भेजें";
+"Settings.Photo.SendLarge.Notice" = "संकुचित छवियों पर साइड सीमा को 2560px तक बढ़ाएं";
+
+"Settings.VideoNotes.Header" = "गोल वीडियो";
+"Settings.VideoNotes.StartWithRearCam" = "रियर कैमरा के साथ शुरू करें";
+
+"Settings.CustomColors.Header" = "खाता रंग";
+"Settings.CustomColors.Saturation" = "संतृप्ति";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "खाता रंगों को निष्क्रिय करने के लिए संतृप्ति को 0%% पर सेट करें";
+
+"Settings.UploadsBoost" = "अपलोड बूस्ट";
+"Settings.DownloadsBoost" = "डाउनलोड बूस्ट";
+"Settings.DownloadsBoost.Notice" = "पैरलेल कनेक्शनों की संख्या और फ़ाइल फ़्रैगमेंट का आकार बढ़ाता है। अगर आपका नेटवर्क लोड को संभाल नहीं सकता है, तो अपने कनेक्शन के अनुरूप अलग-अलग विकल्प आजमाएं।";
+"Settings.DownloadsBoost.none" = "निष्क्रिय";
+"Settings.DownloadsBoost.medium" = "माध्यम";
+"Settings.DownloadsBoost.maximum" = "अधिकतम";
+
+"Settings.ShowProfileID" = "प्रोफ़ाइल ID दिखाएं";
+"Settings.ShowDC" = "डेटा सेंटर दिखाएं";
+"Settings.ShowCreationDate" = "चैट निर्माण तिथि दिखाएं";
+"Settings.ShowCreationDate.Notice" = "कुछ चैट के लिए निर्माण तिथि अज्ञात हो सकती है।";
+
+"Settings.ShowRegDate" = "पंजीकरण दिनांक दिखाएं";
+"Settings.ShowRegDate.Notice" = "पंजीकरण दिनांक अनुमानित हो सकती है।";
+
+"Settings.SendWithReturnKey" = "\"वापसी\" कुंजी के साथ भेजें";
+"Settings.HidePhoneInSettingsUI" = "सेटिंग्स में फोन छिपाएं";
+"Settings.HidePhoneInSettingsUI.Notice" = "आपका नंबर केवल सेटिंग्स UI में छिपा होगा। इसे दूसरों से छिपाने के लिए गोपनीयता सेटिंग्स में जाएं।";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "5 सेकंड के लिए दूर रहने पर";
+
+"ProxySettings.UseSystemDNS" = "सिस्टम डीएनएस का प्रयोग करें";
+"ProxySettings.UseSystemDNS.Notice" = "यदि आपके पास Google DNS तक पहुँच नहीं है तो टाइमआउट से बचने के लिए सिस्टम DNS का उपयोग करें";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "आपको %@ की **आवश्यकता नहीं** है!";
+"Common.RestartRequired" = "पुनः आरंभ की आवश्यकता";
+"Common.RestartNow" = "अभी रीस्टार्ट करें";
+"Common.OpenTelegram" = "टेलीग्राम खोलें";
+"Common.UseTelegramForPremium" = "कृपया ध्यान दें कि टेलीग्राम प्रीमियम प्राप्त करने के लिए आपको आधिकारिक टेलीग्राम ऐप का उपयोग करना होगा। एक बार जब आप टेलीग्राम प्रीमियम प्राप्त कर लेंगे, तो इसकी सभी सुविधाएं स्विफ्टग्राम में उपलब्ध हो जाएंगी।";
+
+"Message.HoldToShowOrReport" = "दिखाने या रिपोर्ट करने के लिए दबाए रखें।";
+
+"Auth.AccountBackupReminder" = "सुनिश्चित करें कि आपके पास बैकअप एक्सेस विधि है। एसएमएस के लिए एक सिम रखें या बाहर निकलने से बचने के लिए एक अतिरिक्त सत्र में लॉग इन करें।";
+"Auth.UnofficialAppCodeTitle" = "आप केवल आधिकारिक ऐप से ही कोड प्राप्त कर सकते हैं";
+
+"Settings.SmallReactions" = "छोटी-छोटी प्रतिक्रियाएँ";
+"Settings.HideReactions" = "प्रतिक्रियाएँ छिपाएं";
+
+"ContextMenu.SaveToCloud" = "क्लाउड में सहेजें";
+"ContextMenu.SelectFromUser" = "लेखक में से चुनें";
+
+"Settings.ContextMenu" = "संदर्भ मेनू";
+"Settings.ContextMenu.Notice" = "अक्षम प्रविष्टियाँ \"स्विफ्टग्राम\" उप-मेनू में उपलब्ध होंगी।";
+
+
+"Settings.ChatSwipeOptions" = "चैटलिस्ट स्वाइप विकल्प";
+"Settings.DeleteChatSwipeOption" = "चैट हटाने के लिए स्वैप करें";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "अगले अपठित चैनल पर खींचें";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "अगले विषय को खींचें";
+"Settings.GalleryCamera" = "गैलरी में कैमरा";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" बटन";
+"Settings.SnapDeletionEffect" = "संदेश विलोपन प्रभाव";
+
+"Settings.Stickers.Size" = "आकार";
+"Settings.Stickers.Timestamp" = "टाइमस्टैंप दिखाएं";
+
+"Settings.RecordingButton" = "वॉयस रिकॉर्डिंग बटन";
+
+"Settings.DefaultEmojisFirst" = "मुख्यत: मानक इमोजी को प्राथमिकता दें";
+"Settings.DefaultEmojisFirst.Notice" = "इमोजी कीबोर्ड में प्रीमियम से पहले मानक इमोजी दिखाएं";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "बनाया गया: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "%@ में शामिल हो गया";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "पंजीकृत";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "संदेश संपादित करने के लिए दो बार टैप करें";
+
+"Settings.wideChannelPosts" = "चैनल में चौड़े पोस्ट";
+"Settings.ForceEmojiTab" = "डिफ़ॉल्ट ईमोजी कुंजीपटल";
+
+"Settings.forceBuiltInMic" = "फ़ोर्स डिवाइस माइक्रोफ़ोन";
+"Settings.forceBuiltInMic.Notice" = "यदि सक्षम है, ऐप केवल उपकरण का माइक्रोफ़ोन उपयोग करेगा भले ही हेडफ़ोन कनेक्ट किए हों।";
+
+"Settings.hideChannelBottomButton" = "चैनल बॉटम पैनल छिपाएँ";
+
+"Settings.CallConfirmation" = "कॉल पुष्टि";
+"Settings.CallConfirmation.Notice" = "Swiftgram कॉल करने से पहले आपकी पुष्टि मांगेगा।";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "कॉल करें?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "वीडियो कॉल करें?";
+
+"MutualContact.Label" = "आपसी संपर्क";
+
+"Settings.swipeForVideoPIP" = "वीडियो PIP स्वाइप के साथ";
+"Settings.swipeForVideoPIP.Notice" = "यदि सक्षम है, तो वीडियो को स्वाइप करने से यह चित्र-इन-चित्र मोड में खोला जाएगा।";

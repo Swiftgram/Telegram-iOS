@@ -8,6 +8,10 @@ load("//build-system/bazel-utils:plist_fragment.bzl",
     "plist_fragment",
 )
 
+sgDeps = [
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings"
+]
+
 filegroup(
     name = "CameraMetalResources",
     srcs = glob([
@@ -52,7 +56,7 @@ swift_library(
     data = [
         ":CameraBundle",
     ],
-    deps = [
+    deps = sgDeps + [
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/AsyncDisplayKit:AsyncDisplayKit",
         "//submodules/Display:Display",

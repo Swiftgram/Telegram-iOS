@@ -1,0 +1,245 @@
+"Settings.ContentSettings" = "敏感內容設定";
+
+"Settings.Tabs.Header" = "頁籤";
+"Settings.Tabs.HideTabBar" = "隱藏導航列";
+"Settings.Tabs.ShowContacts" = "顯示聯絡人頁籤";
+"Settings.Tabs.ShowNames" = "顯示頁籤名稱";
+
+"Settings.Folders.BottomTab" = "底部頁籤";
+"Settings.Folders.BottomTabStyle" = "底部對話盒樣式";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "隱藏 \"%@\"";
+"Settings.Folders.RememberLast" = "開啟最後瀏覽的對話盒";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram 會在重啟或帳號切換後開啟最後瀏覽的對話盒";
+
+"Settings.Folders.CompactNames" = "縮小間距";
+"Settings.Folders.AllChatsTitle" = "\"所有對話\"標題";
+"Settings.Folders.AllChatsTitle.short" = "短";
+"Settings.Folders.AllChatsTitle.long" = "長";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "預設";
+
+
+"Settings.ChatList.Header" = "對話列表";
+"Settings.CompactChatList" = "緊湊型對話列表";
+
+"Settings.Profiles.Header" = "配置文件";
+
+"Settings.Stories.Hide" = "隱藏限時動態";
+"Settings.Stories.WarnBeforeView" = "瀏覽前確認";
+"Settings.Stories.DisableSwipeToRecord" = "停用滑動錄製";
+
+"Settings.Translation.QuickTranslateButton" = "快速翻譯按鈕";
+
+"Stories.Warning.Author" = "來自";
+"Stories.Warning.ViewStory" = "查看限時動態？";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ 將會看到您瀏覽了限時動態";
+"Stories.Warning.NoticeStealth" = "%@ 將無法看到您瀏覽了限時動態";
+
+"Settings.Photo.Quality.Notice" = "傳送影像畫質";
+"Settings.Photo.SendLarge" = "傳送大尺寸影像";
+"Settings.Photo.SendLarge.Notice" = "將壓縮影像的尺寸限制增加到 2560px";
+
+"Settings.VideoNotes.Header" = "圓形影片";
+"Settings.VideoNotes.StartWithRearCam" = "預設使用後置鏡頭";
+
+"Settings.CustomColors.Header" = "帳號顏色";
+"Settings.CustomColors.Saturation" = "飽和度";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "將飽和度設為 0%% 以停用帳戶顏色";
+
+"Settings.UploadsBoost" = "上傳加速";
+"Settings.DownloadsBoost" = "下載加速";
+"Settings.DownloadsBoost.Notice" = "增加並行連接的數量和文件區塊的大小。如果您的網路無法承受負載，請嘗試不同適合您連接的選項。";
+"Settings.DownloadsBoost.none" = "已停用";
+"Settings.DownloadsBoost.medium" = "中等";
+"Settings.DownloadsBoost.maximum" = "最大";
+
+"Settings.ShowProfileID" = "顯示用戶 UID";
+"Settings.ShowDC" = "顯示資料中心 (DC)";
+"Settings.ShowCreationDate" = "顯示對話建立日期";
+"Settings.ShowCreationDate.Notice" = "某些對話可能會缺少建立日期";
+
+"Settings.ShowRegDate" = "顯示註冊日期";
+"Settings.ShowRegDate.Notice" = "大約註冊日期";
+
+"Settings.SendWithReturnKey" = "使用「換行」鍵傳送";
+"Settings.HidePhoneInSettingsUI" = "在設定頁中隱藏電話號碼";
+"Settings.HidePhoneInSettingsUI.Notice" = "您的電話在「設定頁」中不再顯示，可到「隱私與安全性」設定來對其他人隱藏。";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "離開5秒後";
+
+"ProxySettings.UseSystemDNS" = "使用系統 DNS";
+"ProxySettings.UseSystemDNS.Notice" = "如果您無法使用 Google DNS，請使用系統 DNS";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "您 **不需要** %@！";
+"Common.RestartRequired" = "需要重新啟動";
+"Common.RestartNow" = "立即重啟";
+"Common.OpenTelegram" = "開啟 Telegram";
+"Common.UseTelegramForPremium" = "要獲得 Telegram Premium，您必須使用官方 Telegram App。一旦您擁有 Telegram Premium，其所有功能都將在 Swiftgram 中可用。";
+"Common.UpdateOS" = "需要 iOS 更新";
+
+"Message.HoldToShowOrReport" = "按住以顯示訊息或報告";
+
+"Auth.AccountBackupReminder" = "請確保您有備用訪問方法。保留用於接收簡訊的 SIM 卡或其他登入狀態以避免被鎖定。";
+"Auth.UnofficialAppCodeTitle" = "您只能透過官方 App 取得驗證碼";
+
+"Settings.SmallReactions" = "縮小回應圖示";
+"Settings.HideReactions" = "隱藏回應";
+
+"ContextMenu.SaveToCloud" = "轉傳到儲存的訊息";
+"ContextMenu.SelectFromUser" = "選取此人的所有訊息";
+
+"Settings.ContextMenu" = "內容選單";
+"Settings.ContextMenu.Notice" = "停用的選項可在 Swiftgram 選單中使用";
+
+
+"Settings.ChatSwipeOptions" = "對話列表滑動選項";
+"Settings.DeleteChatSwipeOption" = "滑動刪除聊天記錄";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "頻道瀑布流";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "下拉以查看下一話題";
+"Settings.GalleryCamera" = "相簿圖庫";
+"Settings.GalleryCameraPreview" = "照片預覽";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" 按鈕";
+"Settings.SnapDeletionEffect" = "訊息刪除效果";
+
+"Settings.Stickers.Size" = "尺寸";
+"Settings.Stickers.Timestamp" = "顯示時間戳";
+
+"Settings.RecordingButton" = "錄音按鈕";
+
+"Settings.DefaultEmojisFirst" = "優先顯示標準表情符號";
+"Settings.DefaultEmojisFirst.Notice" = "在表情符號鍵盤中，先顯示標準表情符號，再顯示 Premium 的";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "建立於：%@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "已加入 %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "註冊日期";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "雙擊以編輯訊息";
+
+"Settings.wideChannelPosts" = "在頻道中以更寬的樣式顯示訊息";
+"Settings.ForceEmojiTab" = "預設表情符號鍵盤";
+
+"Settings.forceBuiltInMic" = "強制使用裝置麥克風";
+"Settings.forceBuiltInMic.Notice" = "如果啟用，應用程式將只會使用設備麥克風。";
+
+"Settings.showChannelBottomButton" = "頻道底部面板";
+
+"Settings.secondsInMessages" = "消息中的秒數";
+
+"Settings.CallConfirmation" = "撥號確認";
+"Settings.CallConfirmation.Notice" = "Swiftgram 在撥打電話之前會要求您確認。";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "打電話？";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "進行視訊通話？";
+
+"MutualContact.Label" = "雙向聯絡人";
+
+"Settings.swipeForVideoPIP" = "影片 PIP 及滑動";
+"Settings.swipeForVideoPIP.Notice" = "如果啟用，滑動視頻將以畫中畫模式打開。";
+
+"SessionBackup.Title" = "帳號備份";
+"SessionBackup.Sessions.Title" = "會話";
+"SessionBackup.Actions.Backup" = "備份到鑰匙串";
+"SessionBackup.Actions.Restore" = "從鑰匙串還原";
+"SessionBackup.Actions.DeleteAll" = "刪除鑰匙串備份";
+"SessionBackup.Actions.DeleteOne" = "從備份刪除";
+"SessionBackup.Actions.RemoveFromApp" = "從應用中移除";
+"SessionBackup.LastBackupAt" = "最後備份時間: %@";
+"SessionBackup.RestoreOK" = "確定。還原的會話: %@";
+"SessionBackup.LoggedIn" = "已登錄";
+"SessionBackup.LoggedOut" = "已登出";
+"SessionBackup.DeleteAll.Title" = "刪除所有會話？";
+"SessionBackup.DeleteAll.Text" = "所有會話將從鑰匙串中移除。\n\n帳戶將不會從 Swiftgram 登出。";
+"SessionBackup.DeleteSingle.Title" = "刪除 1 (一) 會話？";
+"SessionBackup.DeleteSingle.Text" = "%@ 會話將從鑰匙串中移除。\n\n帳戶將不會從 Swiftgram 登出。";
+"SessionBackup.RemoveFromApp.Title" = "從應用中移除帳戶？";
+"SessionBackup.RemoveFromApp.Text" = "%@ 會話將從 Swiftgram 中移除！會話將保持活躍，以便您稍後恢復。";
+"SessionBackup.Notice" = "會話會被加密並儲存在設備的鑰匙圈中。會話從不離開您的設備。\n\n重要提示：要在新設備上或在操作系統重置後恢復會話，您必須啟用加密備份，否則鑰匙圈將無法轉移。\n\n注意：會話仍然可能被 Telegram 或其他設備撤銷。";
+
+"MessageFilter.Title" = "訊息過濾器";
+"MessageFilter.SubTitle" = "移除干擾並減少包含以下關鍵字的訊息的可見性。\n關鍵字區分大小寫。";
+"MessageFilter.Keywords.Title" = "關鍵字";
+"MessageFilter.InputPlaceholder" = "輸入關鍵字";
+
+"InputToolbar.Title" = "格式化面板";
+
+"Notifications.MentionsAndReplies.Title" = "@提及和回覆";
+"Notifications.MentionsAndReplies.value.default" = "預設";
+"Notifications.MentionsAndReplies.value.silenced" = "靜音";
+"Notifications.MentionsAndReplies.value.disabled" = "已停用";
+"Notifications.PinnedMessages.Title" = "置頂訊息";
+"Notifications.PinnedMessages.value.default" = "預設";
+"Notifications.PinnedMessages.value.silenced" = "靜音";
+"Notifications.PinnedMessages.value.disabled" = "已停用";
+
+
+"PayWall.Text" = "以 Pro 功能強化";
+
+"PayWall.SessionBackup.Title" = "帳號備份";
+"PayWall.SessionBackup.Notice" = "即使在重新安裝後也可以登錄到沒有代碼的帳戶。使用設備上的密鑰鏈來安全存儲。";
+"PayWall.SessionBackup.Description" = "更改設備或刪除 Swiftgram 不再是問題。恢復 Telegram 伺服器上仍然活躍的所有會話。";
+
+"PayWall.MessageFilter.Title" = "訊息過濾器";
+"PayWall.MessageFilter.Notice" = "減少 SPAM、促銷和煩人的訊息的可見性。";
+"PayWall.MessageFilter.Description" = "建立一個不想經常看到的關鍵字列表，Swiftgram 將減少干擾。";
+
+"PayWall.Notifications.Title" = "禁用 @提及和回覆";
+"PayWall.Notifications.Notice" = "隱藏或靜音不重要的通知。";
+"PayWall.Notifications.Description" = "當你需要一些心情時，不再有固定的訊息或 @提及。";
+
+"PayWall.InputToolbar.Title" = "格式化面板";
+"PayWall.InputToolbar.Notice" = "只需輕點即可節省時間格式化訊息。";
+"PayWall.InputToolbar.Description" = "像專業人士一樣應用或清除格式化，或插入新行。";
+
+"PayWall.AppIcons.Title" = "獨特的應用圖標";
+"PayWall.AppIcons.Notice" = "自訂 Swiftgram 在您的主屏幕上的外觀。";
+
+"PayWall.About.Title" = "關於 Swiftgram Pro";
+"PayWall.About.Notice" = "Swiftgram 免費版本提供比 Telegram 應用更多的功能和改進。創新和保持 Swiftgram 與 Telegram 更新同步是一項巨大的努力，需要大量的時間和昂貴的硬體。\n\nSwiftgram 是一個尊重您隱私且不會打擾您廣告的開源應用。訂閱 Swiftgram Pro，您可以訪問獨家功能並支持獨立開發者。";
+/* DO NOT TRANSLATE */
+"PayWall.About.Signature" = "@Kylmakalle";
+/* DO NOT TRANSLATE */
+"PayWall.About.SignatureURL" = "https://t.me/Kylmakalle";
+
+"PayWall.ProSupport.Title" = "支付問題？";
+"PayWall.ProSupport.Contact" = "不用擔心！";
+
+"PayWall.RestorePurchases" = "恢復購買";
+"PayWall.Terms" = "服務條款";
+"PayWall.Privacy" = "隱私政策";
+"PayWall.TermsURL" = "https://swiftgram.app/terms";
+"PayWall.PrivacyURL" = "https://swiftgram.app/privacy";
+"PayWall.Notice.Markdown" = "通過訂閱 Swiftgram Pro，您同意[Swiftgram 服務條款](%1$@)和[隱私政策](%2$@)。";
+"PayWall.Notice.Raw" = "通過訂閱 Swiftgram Pro，您同意 Swiftgram 服務條款和隱私政策。";
+
+"PayWall.Button.OpenPro" = "使用 Pro 功能";
+"PayWall.Button.Purchasing" = "購買中……";
+"PayWall.Button.Restoring" = "恢復購買中……";
+"PayWall.Button.Validating" = "驗證購買中……";
+"PayWall.Button.PaymentsUnavailable" = "付款不可用";
+"PayWall.Button.BuyInAppStore" = "訂閱 App Store 版本";
+"PayWall.Button.Subscribe" = "訂閱 %@ / 月";
+"PayWall.Button.ContactingAppStore" = "正在聯繫 App Store……";
+
+"Paywall.Error.Title" = "錯誤";
+"PayWall.ValidationError" = "驗證錯誤";
+"PayWall.ValidationError.TryAgain" = "在購買驗證過程中出錯。別擔心！稍後再試恢復購買。";
+"PayWall.ValidationError.Expired" = "您的訂閱已過期。請重新訂閱以恢復訪問 Pro 功能。";

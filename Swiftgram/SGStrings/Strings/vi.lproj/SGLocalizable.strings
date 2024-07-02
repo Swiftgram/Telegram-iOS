@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "Cài đặt nội dung";
+
+"Settings.Tabs.Header" = "THẺ";
+"Settings.Tabs.HideTabBar" = "Ẩn thanh Tab";
+"Settings.Tabs.ShowContacts" = "Hiện Liên hệ";
+"Settings.Tabs.ShowNames" = "Hiện tên các thẻ";
+
+"Settings.Folders.BottomTab" = "Đặt thư mục tin nhắn ở dưới cùng";
+"Settings.Folders.BottomTabStyle" = "Kiểu Thư mục dưới cùng";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "Ẩn \"%@\"";
+"Settings.Folders.RememberLast" = "Mở thư mục gần đây";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram sẽ mở thư mục gần nhất sau khi khởi động lại hoặc chuyển tài khoản";
+
+"Settings.Folders.CompactNames" = "Khoảng cách nhỏ hơn";
+"Settings.Folders.AllChatsTitle" = "Tiêu đề \"Tất cả Chat\"";
+"Settings.Folders.AllChatsTitle.short" = "Ngắn";
+"Settings.Folders.AllChatsTitle.long" = "Dài";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Mặc định";
+
+
+"Settings.ChatList.Header" = "DANH SÁCH CHAT";
+"Settings.CompactChatList" = "Danh sách Chat Nhỏ gọn";
+
+"Settings.Profiles.Header" = "HỒ SƠ";
+
+"Settings.Stories.Hide" = "Ẩn Tin";
+"Settings.Stories.WarnBeforeView" = "Hỏi trước khi xem";
+"Settings.Stories.DisableSwipeToRecord" = "Tắt vuốt để quay";
+
+"Settings.Translation.QuickTranslateButton" = "Hiện nút dịch nhanh";
+
+"Stories.Warning.Author" = "Tác giả";
+"Stories.Warning.ViewStory" = "Xem Tin?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ SẼ CÓ THỂ THẤY bạn đã xem Tin của họ.";
+"Stories.Warning.NoticeStealth" = "%@ sẽ không biết bạn đã xem Tin của họ.";
+
+"Settings.Photo.Quality.Notice" = "Chất lượng của ảnh gửi đi và ảnh Tin";
+"Settings.Photo.SendLarge" = "Gửi ảnh lớn";
+"Settings.Photo.SendLarge.Notice" = "Tăng giới hạn kích thước bên trên của hình ảnh nén lên 2560px";
+
+"Settings.VideoNotes.Header" = "VIDEO TRÒN";
+"Settings.VideoNotes.StartWithRearCam" = "Bắt đầu với camera sau";
+
+"Settings.CustomColors.Header" = "MÀU TÀI KHOẢN";
+"Settings.CustomColors.Saturation" = "ĐỘ BÃO HÒA";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Đặt độ bão hòa thành 0%% để tắt màu tài khoản";
+
+"Settings.UploadsBoost" = "Tăng tốc tải lên";
+"Settings.DownloadsBoost" = "Tăng tốc tải xuống";
+"Settings.DownloadsBoost.Notice" = "Tăng số lượng kết nối song song và kích thước các khối tệp. Nếu mạng của bạn không thể xử lý tải, hãy thử các tùy chọn khác phù hợp với kết nối của bạn.";
+"Settings.DownloadsBoost.none" = "Tắt";
+"Settings.DownloadsBoost.medium" = "Trung bình";
+"Settings.DownloadsBoost.maximum" = "Tối đa";
+
+"Settings.ShowProfileID" = "Hiện ID hồ sơ";
+"Settings.ShowDC" = "Hiển thị Trung tâm Dữ liệu";
+"Settings.ShowCreationDate" = "Hiển thị Ngày Tạo Chat";
+"Settings.ShowCreationDate.Notice" = "Ngày tạo có thể không biết được đối với một số cuộc trò chuyện.";
+
+"Settings.ShowRegDate" = "Hiển thị Ngày Đăng ký";
+"Settings.ShowRegDate.Notice" = "Ngày đăng ký là xấp xỉ.";
+
+"Settings.SendWithReturnKey" = "Gửi tín nhắn bằng nút \"Nhập\"";
+"Settings.HidePhoneInSettingsUI" = "Ẩn số điện thoại trong cài đặt";
+"Settings.HidePhoneInSettingsUI.Notice" = "Số điện thoại của bạn sẽ chỉ ẩn đi trong cài đặt. Đến cài đặt \"Riêng tư và Bảo mật\" để ẩn đối với người khác\".";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "Nếu rời đi trong 5 giây";
+
+"ProxySettings.UseSystemDNS" = "Sử dụng DNS hệ thống";
+"ProxySettings.UseSystemDNS.Notice" = "Sử dụng DNS hệ thống để bỏ qua thời gian chờ nếu bạn không có quyền truy cập vào DNS của Google";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "Bạn **không cần** %@!";
+"Common.RestartRequired" = "Yêu cầu khởi động lại";
+"Common.RestartNow" = "Khởi động lại";
+"Common.OpenTelegram" = "Mở Telegram";
+"Common.UseTelegramForPremium" = "Vui lòng lưu ý rằng để có được Telegram Premium, bạn phải sử dụng ứng dụng Telegram chính thức. Sau khi bạn đã có Telegram Premium, tất cả các tính năng của nó sẽ trở nên có sẵn trong Swiftgram.";
+
+"Message.HoldToShowOrReport" = "Nhấn giữ để Hiển thị hoặc Báo cáo.";
+
+"Auth.AccountBackupReminder" = "Hãy đảm bảo bạn có một phương pháp truy cập dự phòng. Giữ lại một SIM để nhận SMS hoặc một phiên đăng nhập bổ sung để tránh bị khóa tài khoản.";
+"Auth.UnofficialAppCodeTitle" = "Bạn chỉ có thể nhận được mã thông qua ứng dụng chính thức";
+
+"Settings.SmallReactions" = "Thu nhỏ biểu tượng cảm xúc";
+"Settings.HideReactions" = "Ẩn Biểu tượng cảm xúc";
+
+"ContextMenu.SaveToCloud" = "Lưu vào Đám mây";
+"ContextMenu.SelectFromUser" = "Chọn từ Tác giả";
+
+"Settings.ContextMenu" = "MENU NGỮ CẢNH";
+"Settings.ContextMenu.Notice" = "Mục nhập đã vô hiệu hóa sẽ có sẵn trong menu phụ 'Swiftgram'.";
+
+
+"Settings.ChatSwipeOptions" = "Tuỳ chọn Lướt Danh sách Chat";
+"Settings.DeleteChatSwipeOption" = "Vuốt để xóa Cuộc trò chuyện";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Kéo xuống đến kênh chưa đọc";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Kéo Để Đến Chủ Đề Tiếp Theo";
+"Settings.GalleryCamera" = "Máy ảnh trong thư viện";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" Nút";
+"Settings.SnapDeletionEffect" = "Hiệu Ứng Xóa Tin Nhắn";
+
+"Settings.Stickers.Size" = "KÍCH THƯỚC";
+"Settings.Stickers.Timestamp" = "Hiện mốc thời gian";
+
+"Settings.RecordingButton" = "Nút Ghi Âm Giọng Nói";
+
+"Settings.DefaultEmojisFirst" = "Ưu tiên biểu tượng cảm xúc tiêu chuẩn";
+"Settings.DefaultEmojisFirst.Notice" = "Hiển thị biểu tượng cảm xúc tiêu chuẩn trước biểu tượng cảm xúc cao cấp trên bàn phím biểu tượng cảm xúc";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "đã tạo: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "Đã tham gia %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Đã đăng ký";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Double-tap để chỉnh sửa tin nhắn";
+
+"Settings.wideChannelPosts" = "Bài đăng rộng trong các kênh";
+"Settings.ForceEmojiTab" = "Bàn phím Emoji mặc định";
+
+"Settings.forceBuiltInMic" = "Buộc Micro Điện Thoại";
+"Settings.forceBuiltInMic.Notice" = "Nếu được kích hoạt, ứng dụng sẽ chỉ sử dụng micro điện thoại của thiết bị ngay cả khi tai nghe được kết nối.";
+
+"Settings.hideChannelBottomButton" = "Ẩn thanh dưới cùng của kênh";
+
+"Settings.CallConfirmation" = "Xác nhận cuộc gọi";
+"Settings.CallConfirmation.Notice" = "Swiftgram sẽ yêu cầu bạn xác nhận trước khi thực hiện cuộc gọi.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Thực hiện cuộc gọi?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Thực hiện cuộc gọi video?";
+
+"MutualContact.Label" = "liên hệ chung";
+
+"Settings.swipeForVideoPIP" = "Video PIP với Vuốt";
+"Settings.swipeForVideoPIP.Notice" = "Nếu được kích hoạt, việc vuốt video sẽ mở nó ở chế độ Hình trong hình.";

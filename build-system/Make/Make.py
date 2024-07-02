@@ -163,7 +163,7 @@ class BazelCommandLine:
                 '--ios_multi_cpus=arm64',
 
                 # Always build universal Watch binaries.
-                '--watchos_cpus=arm64_32'
+                '--watchos_cpus=armv7k,arm64_32'
             ] + self.common_debug_args
         elif configuration == 'debug_sim_arm64':
             self.configuration_args = [
@@ -174,7 +174,7 @@ class BazelCommandLine:
                 '--ios_multi_cpus=sim_arm64',
 
                 # Always build universal Watch binaries.
-                '--watchos_cpus=arm64_32'
+                '--watchos_cpus=armv7k,arm64_32'
             ] + self.common_debug_args
         elif configuration == 'release_sim_arm64':
             self.configuration_args = [
@@ -185,7 +185,7 @@ class BazelCommandLine:
                 '--ios_multi_cpus=sim_arm64',
 
                 # Always build universal Watch binaries.
-                '--watchos_cpus=arm64_32'
+                '--watchos_cpus=armv7k,arm64_32'
             ] + self.common_debug_args
         elif configuration == 'release_arm64':
             self.configuration_args = [
@@ -196,7 +196,7 @@ class BazelCommandLine:
                 '--ios_multi_cpus=arm64',
 
                 # Always build universal Watch binaries.
-                '--watchos_cpus=arm64_32',
+                '--watchos_cpus=armv7k,arm64_32',
 
                 # Generate DSYM files when building.
                 '--apple_generate_dsym',
@@ -283,7 +283,7 @@ class BazelCommandLine:
         if self.custom_target is not None:
             combined_arguments += [self.custom_target]
         else:
-            combined_arguments += ['Telegram/Telegram']
+            combined_arguments += ['Telegram/Swiftgram']
 
         if self.continue_on_error:
             combined_arguments += ['--keep_going']
@@ -675,24 +675,24 @@ def build(bazel, arguments):
 
     if arguments.outputBuildArtifactsPath is not None:
         artifacts_path = os.path.abspath(arguments.outputBuildArtifactsPath)
-        if os.path.exists(artifacts_path + '/Telegram.ipa'):
-            os.remove(artifacts_path + '/Telegram.ipa')
+        if os.path.exists(artifacts_path + '/Swiftgram.ipa'):
+            os.remove(artifacts_path + '/Swiftgram.ipa')
         if os.path.exists(artifacts_path + '/DSYMs'):
             shutil.rmtree(artifacts_path + '/DSYMs')
         os.makedirs(artifacts_path, exist_ok=True)
         os.makedirs(artifacts_path + '/DSYMs', exist_ok=True)
 
         built_ipa_path_prefix = 'bazel-bin/Telegram'
-        ipa_paths = glob.glob('{}/Telegram.ipa'.format(built_ipa_path_prefix))
+        ipa_paths = glob.glob('{}/Swiftgram.ipa'.format(built_ipa_path_prefix))
         if len(ipa_paths) == 0:
-            print(f'Could not find the IPA at {built_ipa_path_prefix}/Telegram.ipa')
+            print(f'Could not find the IPA at {built_ipa_path_prefix}/Swiftgram.ipa')
             sys.exit(1)
         elif len(ipa_paths) > 1:
             print('Multiple matching IPA files found: {}'.format(ipa_paths))
             sys.exit(1)
-        shutil.copyfile(ipa_paths[0], artifacts_path + '/Telegram.ipa')
+        shutil.copyfile(ipa_paths[0], artifacts_path + '/Swiftgram.ipa')
 
-        dsym_paths = glob.glob('bazel-bin/Telegram/*.dSYM')
+        dsym_paths = glob.glob('bazel-bin/Telegram/*.dSYM') + glob.glob('bazel-out/watchos_arm64_32-opt-watchos-arm64_32-min7.0-applebin_watchos-ST-*/bin/Telegram/TelegramWatchApp_dsyms/*.dSYM') + glob.glob('bazel-out/watchos_armv7k-opt-watchos-armv7k-min7.0-applebin_watchos-ST-*/bin/Telegram/TelegramWatchApp_dsyms/*.dSYM') 
         for dsym_path in dsym_paths:
             file_name = os.path.basename(dsym_path)
             shutil.copytree(dsym_path, artifacts_path + '/DSYMs/{}'.format(file_name))
@@ -700,7 +700,7 @@ def build(bazel, arguments):
         os.chdir(artifacts_path)
         run_executable_with_output('zip', arguments=[
             '-r',
-            'Telegram.DSYMs.zip',
+            'Swiftgram.DSYMs.zip',
             './DSYMs'
         ], check_result=True)
         os.chdir(previous_directory)

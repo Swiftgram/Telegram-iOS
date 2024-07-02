@@ -1,0 +1,245 @@
+"Settings.ContentSettings" = "Налаштування контенту";
+
+"Settings.Tabs.Header" = "ВКЛАДКИ";
+"Settings.Tabs.HideTabBar" = "Приховати панель вкладок";
+"Settings.Tabs.ShowContacts" = "Вкладка \"Контакти\"";
+"Settings.Tabs.ShowNames" = "Показувати назви вкладок";
+
+"Settings.Folders.BottomTab" = "Папки знизу";
+"Settings.Folders.BottomTabStyle" = "Стиль нижніх папок";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "Приховати \"%@\"";
+"Settings.Folders.RememberLast" = "Відкривати останню папку";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram відкриє останню папку після перезапуску застосунку або зміни акаунту.";
+
+"Settings.Folders.CompactNames" = "Зменшити відступи";
+"Settings.Folders.AllChatsTitle" = "Заголовок \"Усі чати\"";
+"Settings.Folders.AllChatsTitle.short" = "Короткий";
+"Settings.Folders.AllChatsTitle.long" = "Довгий";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Типовий";
+
+
+"Settings.ChatList.Header" = "СПИСОК ЧАТІВ";
+"Settings.CompactChatList" = "Компактний список чатів";
+
+"Settings.Profiles.Header" = "ПРОФІЛІ";
+
+"Settings.Stories.Hide" = "Приховувати історії";
+"Settings.Stories.WarnBeforeView" = "Питати перед переглядом";
+"Settings.Stories.DisableSwipeToRecord" = "Вимкнути \"Свайп для запису\"";
+
+"Settings.Translation.QuickTranslateButton" = "Кнопка швидкого перекладу";
+
+"Stories.Warning.Author" = "Автор";
+"Stories.Warning.ViewStory" = "Переглянути історію?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ ЗМОЖЕ ПОБАЧИТИ, що ви переглянули їх історію.";
+"Stories.Warning.NoticeStealth" = "%@ не побачить, що ви переглянули їх історію.";
+
+"Settings.Photo.Quality.Notice" = "Якість відправлених фото та історій";
+"Settings.Photo.SendLarge" = "Надсилати великі фотографії";
+"Settings.Photo.SendLarge.Notice" = "Збільшити ліміт розміру стиснутих зображень до 2560px";
+
+"Settings.VideoNotes.Header" = "КРУГЛІ ВІДЕО";
+"Settings.VideoNotes.StartWithRearCam" = "Починати запис з задньої камери";
+
+"Settings.CustomColors.Header" = "КОЛЬОРИ АККАУНТУ";
+"Settings.CustomColors.Saturation" = "НАСИЧЕНІСТЬ";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Встановіть насиченість на 0%%, щоб вимкнути персональні кольори";
+
+"Settings.UploadsBoost" = "Прискорення вивантаження";
+"Settings.DownloadsBoost" = "Прискорення завантаження";
+"Settings.DownloadsBoost.Notice" = "Збільшує кількість паралельних з'єднань та розмір частин файлів. Якщо ваша мережа не може витримати навантаження, спробуйте різні опції, які підходять вашому з'єднанню.";
+"Settings.DownloadsBoost.none" = "Відключено";
+"Settings.DownloadsBoost.medium" = "Середнє";
+"Settings.DownloadsBoost.maximum" = "Максимальне";
+
+"Settings.ShowProfileID" = "Показувати ID профілю";
+"Settings.ShowDC" = "Показувати дата-центр";
+"Settings.ShowCreationDate" = "Показувати дату створення чату";
+"Settings.ShowCreationDate.Notice" = "Дата створення може бути невідома для деяких чатів.";
+
+"Settings.ShowRegDate" = "Показувати дату реєстрації";
+"Settings.ShowRegDate.Notice" = "Дата реєстрації є приблизною.";
+
+"Settings.SendWithReturnKey" = "Надсилати кнопкою \"Введення\"";
+"Settings.HidePhoneInSettingsUI" = "Приховати телефон у налаштуваннях";
+"Settings.HidePhoneInSettingsUI.Notice" = "Номер буде прихований тільки в налаштуваннях. Перейдіть в \"Приватність і безпека\", щоб приховати його від інших.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "За 5 сек";
+
+"ProxySettings.UseSystemDNS" = "Використовувати системні налаштування DNS";
+"ProxySettings.UseSystemDNS.Notice" = "Використовувати системний DNS для обходу тайм-ауту, якщо у вас немає доступу до Google DNS";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "Вам **не потрібен** %@!";
+"Common.RestartRequired" = "Потрібен перезапуск";
+"Common.RestartNow" = "Перезавантажити";
+"Common.OpenTelegram" = "Відкрити Telegram";
+"Common.UseTelegramForPremium" = "Зверніть увагу, що для отримання Telegram Premium вам потрібен офіційний застосунок Telegram. Після отримання Telegram Premium, усі переваги стануть доступними у Swiftgram.";
+"Common.UpdateOS" = "Необхідне оновлення iOS";
+
+"Message.HoldToShowOrReport" = "Затисніть, щоб переглянути або поскаржитись.";
+
+"Auth.AccountBackupReminder" = "Переконайтеся, що у вас є резервний метод доступу. Тримайте SIM-карту для SMS або додаткову сесію, щоб не втратити доступ до акаунту.";
+"Auth.UnofficialAppCodeTitle" = "Ви можете отримати код тільки з офіційним додатком";
+
+"Settings.SmallReactions" = "Малі реакції";
+"Settings.HideReactions" = "Приховувати реакції";
+
+"ContextMenu.SaveToCloud" = "Переслати в Збережене";
+"ContextMenu.SelectFromUser" = "Вибрати від автора";
+
+"Settings.ContextMenu" = "КОНТЕКСТНЕ МЕНЮ";
+"Settings.ContextMenu.Notice" = "Вимкнені елементи будуть доступні в підменю \"Swiftgram\".";
+
+
+"Settings.ChatSwipeOptions" = "Опції свайпу у списку чатів";
+"Settings.DeleteChatSwipeOption" = "Потягнути для видалення чату";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Потягнути до наступного каналу";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Потягнути до наступної гілки";
+"Settings.GalleryCamera" = "Камера в галереї";
+"Settings.GalleryCameraPreview" = "Попередній перегляд камери в галереї";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "Кнопка \"%@\"";
+"Settings.SnapDeletionEffect" = "Ефекти видалення повідомлення";
+
+"Settings.Stickers.Size" = "РОЗМІР";
+"Settings.Stickers.Timestamp" = "Показувати час";
+
+"Settings.RecordingButton" = "Кнопка запису голосу";
+
+"Settings.DefaultEmojisFirst" = "Пріоритизувати звичайні емодзі";
+"Settings.DefaultEmojisFirst.Notice" = "Показувати звичайні емодзі перед преміум у клавіатурі емодзі";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "створено: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "Приєднався до %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Реєстрація";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Ред. повідомлення подвійним дотиком";
+
+"Settings.wideChannelPosts" = "Широкі пости в каналах";
+"Settings.ForceEmojiTab" = "Клавіатура емодзі за замовчуванням";
+
+"Settings.forceBuiltInMic" = "Використовувати мікрофон пристрою";
+"Settings.forceBuiltInMic.Notice" = "Якщо увімкнено, застосунок використовуватиме лише мікрофон пристрою, навіть якщо підключені навушники.";
+
+"Settings.showChannelBottomButton" = "Нижня панель у каналах";
+
+"Settings.secondsInMessages" = "Секунди в повідомленнях";
+
+"Settings.CallConfirmation" = "Підтвердження викликів";
+"Settings.CallConfirmation.Notice" = "Swiftgram запитуватиме дозвіл перед здійсненням виклику.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Здійснити виклик?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Здійснити відеовиклик?";
+
+"MutualContact.Label" = "взаємний контакт";
+
+"Settings.swipeForVideoPIP" = "Відео PIP зі змахуванням";
+"Settings.swipeForVideoPIP.Notice" = "Якщо увімкнено, змахування відео відкриє його в режимі «Картинка в картинці».";
+
+"SessionBackup.Title" = "Резервне копіювання сесії";
+"SessionBackup.Sessions.Title" = "Сесії";
+"SessionBackup.Actions.Backup" = "Резервне копіювання в Keychain";
+"SessionBackup.Actions.Restore" = "Відновлення з Keychain";
+"SessionBackup.Actions.DeleteAll" = "Видалити резервну копію Keychain";
+"SessionBackup.Actions.DeleteOne" = "Видалити з резервної копії";
+"SessionBackup.Actions.RemoveFromApp" = "Видалити з додатку";
+"SessionBackup.LastBackupAt" = "Останнє резервне копіювання: %@";
+"SessionBackup.RestoreOK" = "ОК. Сесії відновлено: %@";
+"SessionBackup.LoggedIn" = "Увійшли";
+"SessionBackup.LoggedOut" = "Вийшли";
+"SessionBackup.DeleteAll.Title" = "Видалити всі сесії?";
+"SessionBackup.DeleteAll.Text" = "Всі сесії будуть видалені з Keychain.\n\nОблікові записи не будуть вийшли зі Swiftgram.";
+"SessionBackup.DeleteSingle.Title" = "Видалити 1 (одну) сесію?";
+"SessionBackup.DeleteSingle.Text" = "%@ сесія буде видалена з Keychain.\n\nОбліковий запис не буде вийшов зі Swiftgram.";
+"SessionBackup.RemoveFromApp.Title" = "Видалити обліковий запис з додатку?";
+"SessionBackup.RemoveFromApp.Text" = "%@ сесія БУДЕ ВИДАЛЕНА з Swiftgram! Сесія залишиться активною, щоб ви могли відновити її пізніше.";
+"SessionBackup.Notice" = "Сесії зашифровані та зберігаються на пристрої. Сесії ніколи не залишають ваш пристрій.\n\nВАЖЛИВО: Для відновлення сесій на іншому пристрої або після скидання налаштувань, ви повинні ввімкнути шифрування резервних копій, в іншому випадку ключі не будуть перенесені.\n\nТАКОЖ: Сесії можуть бути відкликані Telegram або з іншого пристрою.";
+
+"MessageFilter.Title" = "Фільтр повідомлень";
+"MessageFilter.SubTitle" = "Приховати відволікання та зменшити видимість повідомлень, що містять нижчевказані ключові слова.\nКлючові слова чутливі до регістру.";
+"MessageFilter.Keywords.Title" = "Ключові слова";
+"MessageFilter.InputPlaceholder" = "Введіть ключове слово";
+
+"InputToolbar.Title" = "Панель форматування";
+
+"Notifications.MentionsAndReplies.Title" = "@Згадай та відповіді";
+"Notifications.MentionsAndReplies.value.default" = "Типовий";
+"Notifications.MentionsAndReplies.value.silenced" = "Приглушено";
+"Notifications.MentionsAndReplies.value.disabled" = "Відключено";
+"Notifications.PinnedMessages.Title" = "Закріплені повідомлення";
+"Notifications.PinnedMessages.value.default" = "Типовий";
+"Notifications.PinnedMessages.value.silenced" = "Приглушено";
+"Notifications.PinnedMessages.value.disabled" = "Відключено";
+
+
+"PayWall.Text" = "Посилений функціями Pro";
+
+"PayWall.SessionBackup.Title" = "Резервне копіювання сесії";
+"PayWall.SessionBackup.Notice" = "Вхід до облікових записів без коду, навіть після перевстановлення. Безпечне сховище з Ключарем пристрою.";
+"PayWall.SessionBackup.Description" = "Зміна пристрою або видалення Swiftgram більше не проблема. Відновити всі сеанси, які досі активні на серверах Telegram.";
+
+"PayWall.MessageFilter.Title" = "Фільтр повідомлень";
+"PayWall.MessageFilter.Notice" = "Зменшити видимість СПАМу, реклам та набридливих повідомлень.";
+"PayWall.MessageFilter.Description" = "Створити список ключових слів, які ви не хочете бачити часто, а Swiftgram зменшить відволікання.";
+
+"PayWall.Notifications.Title" = "Вимкнути @згадки та відповіді";
+"PayWall.Notifications.Notice" = "Сховати або приглушити непотрібні сповіщення.";
+"PayWall.Notifications.Description" = "Більше не потрібно використовувати прикріплені повідомлення або @згадки, коли ви потребуєте розуму.";
+
+"PayWall.InputToolbar.Title" = "Панель форматування";
+"PayWall.InputToolbar.Notice" = "Зберігати час форматування повідомлень одним дотиком.";
+"PayWall.InputToolbar.Description" = "Застосувати і очистити форматування або вставити нові лінії, як Pro.";
+
+"PayWall.AppIcons.Title" = "Унікальні значки додатків";
+"PayWall.AppIcons.Notice" = "Налаштуйте вигляд Swiftgram на вашому домашньому екрані.";
+
+"PayWall.About.Title" = "Про Swiftgram Pro";
+"PayWall.About.Notice" = "Безкоштовна версія Swiftgram надає десятки функцій та покращень у порівнянні з додатком Telegram. Інновації та підтримка Swiftgram в актуальному стані з місячними оновленнями Telegram потребує величезних зусиль, що вимагають багато часу та дорогого обладнання.\n\nSwiftgram — це додаток з відкритим кодом, який поважає вашу конфіденційність і не турбує вас рекламою. Підписуючись на Swiftgram Pro, ви отримуєте доступ до ексклюзивних функцій і підтримуєте незалежного розробника.\n\n- @Kylmakalle";
+/* DO NOT TRANSLATE */
+"PayWall.About.Signature" = "@Kylmakalle";
+/* DO NOT TRANSLATE */
+"PayWall.About.SignatureURL" = "https://t.me/Kylmakalle";
+
+"PayWall.ProSupport.Title" = "Проблеми з оплатою?";
+"PayWall.ProSupport.Contact" = "Не хвилюйтеся!";
+
+"PayWall.RestorePurchases" = "Відновити покупки";
+"PayWall.Terms" = "Умови обслуговування";
+"PayWall.Privacy" = "Політика конфіденційності";
+"PayWall.TermsURL" = "https://swiftgram.app/terms";
+"PayWall.PrivacyURL" = "https://swiftgram.app/privacy";
+"PayWall.Notice.Markdown" = "Підписуючись на Swiftgram Pro, ви погоджуєтеся з [Умовами обслуговування Swiftgram](%1$@) та [Політикою конфіденційності](%2$@).";
+"PayWall.Notice.Raw" = "Підписуючись на Swiftgram Pro, ви погоджуєтеся з Умовами обслуговування Swiftgram та Політикою конфіденційності.";
+
+"PayWall.Button.OpenPro" = "Використовувати функції Pro";
+"PayWall.Button.Purchasing" = "Придбання...";
+"PayWall.Button.Restoring" = "Відновлення покупок...";
+"PayWall.Button.Validating" = "Перевірка покупки...";
+"PayWall.Button.PaymentsUnavailable" = "Платежі недоступні";
+"PayWall.Button.BuyInAppStore" = "Підписатися на версію в App Store";
+"PayWall.Button.Subscribe" = "Підписатися за %@ / місяць";
+"PayWall.Button.ContactingAppStore" = "Зв'язок з App Store...";
+
+"Paywall.Error.Title" = "Помилка";
+"PayWall.ValidationError" = "Помилка валідації";
+"PayWall.ValidationError.TryAgain" = "Щось пішло не так під час перевірки покупки. Не хвилюйтеся! Спробуйте відновити покупки трохи пізніше.";
+"PayWall.ValidationError.Expired" = "Ваша підписка застаріла. Підпишіться, щоб відновити доступ до Pro-можливостей.";

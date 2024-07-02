@@ -1,3 +1,4 @@
+import TextFormat
 import Foundation
 import NaturalLanguage
 import SwiftSignalKit
@@ -54,6 +55,15 @@ public struct ChatTranslationState: Codable {
         try container.encode(self.isEnabled, forKey: .isEnabled)
     }
 
+    public func withFromLang(_ fromLang: String) -> ChatTranslationState {
+        return ChatTranslationState(
+            baseLang: self.baseLang,
+            fromLang: fromLang,
+            timestamp: self.timestamp,
+            toLang: self.toLang,
+            isEnabled: self.isEnabled
+        )
+    }
     public func withToLang(_ toLang: String?) -> ChatTranslationState {
         return ChatTranslationState(
             baseLang: self.baseLang,
@@ -138,8 +148,9 @@ public func updateChatTranslationStateInteractively(engine: TelegramEngine, peer
 @available(iOS 12.0, *)
 private let languageRecognizer = NLLanguageRecognizer()
 
-public func translateMessageIds(context: AccountContext, messageIds: [EngineMessage.Id], fromLang: String?, toLang: String) -> Signal<Never, NoError> {
+public func translateMessageIds(context: AccountContext, messageIds: [EngineMessage.Id], fromLang: String?, toLang: String, viaText: Bool = false, forQuickTranslate: Bool = false) -> Signal<Never, NoError> {
     return context.account.postbox.transaction { transaction -> Signal<Never, NoError> in
+        var messageDictToTranslate: [EngineMessage.Id: String] = [:]
         var messageIdsToTranslate: [EngineMessage.Id] = []
         var messageIdsSet = Set<EngineMessage.Id>()
         for messageId in messageIds {
@@ -151,11 +162,13 @@ public func translateMessageIds(context: AccountContext, messageIds: [EngineMess
                             if !messageIdsSet.contains(replyMessage.id) {
                                 messageIdsToTranslate.append(replyMessage.id)
                                 messageIdsSet.insert(replyMessage.id)
+                                messageDictToTranslate[replyMessage.id] = replyMessage.text
                             }
                         }
                     }
                 }
-                guard message.author?.id != context.account.peerId else {
+                // MARK: Swiftgram
+                guard forQuickTranslate || message.author?.id != context.account.peerId else {
                     continue
                 }
                 if let translation = message.attributes.first(where: { $0 is TranslationMessageAttribute }) as? TranslationMessageAttribute, translation.toLang == toLang {
@@ -166,8 +179,10 @@ public func translateMessageIds(context: AccountContext, messageIds: [EngineMess
                     if !messageIdsSet.contains(messageId) {
                         messageIdsToTranslate.append(messageId)
                         messageIdsSet.insert(messageId)
+                        messageDictToTranslate[messageId] = message.text
                     }
-                } else if let _ = message.media.first(where: { $0 is TelegramMediaPoll }) {
+                // TODO(swiftgram): Translate polls
+                } else if let _ = message.media.first(where: { $0 is TelegramMediaPoll }), !viaText {
                     if !messageIdsSet.contains(messageId) {
                         messageIdsToTranslate.append(messageId)
                         messageIdsSet.insert(messageId)
@@ -191,14 +206,24 @@ public func translateMessageIds(context: AccountContext, messageIds: [EngineMess
         default:
             break
         }
-        return context.engine.messages.translateMessages(messageIds: messageIdsToTranslate, fromLang: fromLang, toLang: toLang, enableLocalIfPossible: enableLocalIfPossible)
+        if viaText {
+        return context.engine.messages.translateMessagesViaText(messagesDict: messageDictToTranslate, fromLang: fromLang, toLang: toLang, generateEntitiesFunction: { text in
+            generateTextEntities(text, enabledTypes: .all)
+        }, enableLocalIfPossible: enableLocalIfPossible) //context.sharedContext.immediateExperimentalUISettings.enableLocalTranslation)
         |> `catch` { _ -> Signal<Never, NoError> in
             return .complete()
+        }
+        } else {
+        if forQuickTranslate && messageIdsToTranslate.isEmpty { return .complete() } // Otherwise Telegram's API will return .never()
+        return context.engine.messages.translateMessages(messageIds: messageIdsToTranslate, fromLang: fromLang, toLang: toLang, enableLocalIfPossible: enableLocalIfPossible)
+        |> `catch` { _ -> Signal<Never, NoError> in
+            return translateMessageIds(context: context, messageIds: messageIdsToTranslate, fromLang: fromLang, toLang: toLang, viaText: true, forQuickTranslate: forQuickTranslate)
+        }
         }
     } |> switchToLatest
 }
 
-public func chatTranslationState(context: AccountContext, peerId: EnginePeer.Id, threadId: Int64?) -> Signal<ChatTranslationState?, NoError> {
+public func chatTranslationState(context: AccountContext, peerId: EnginePeer.Id, threadId: Int64?, forcePredict: Bool = false) -> Signal<ChatTranslationState?, NoError> {
     if peerId.id == EnginePeer.Id.Id._internalFromInt64Value(777000) {
         return .single(nil)
     }
@@ -224,7 +249,7 @@ public func chatTranslationState(context: AccountContext, peerId: EnginePeer.Id,
             context.engine.data.subscribe(TelegramEngine.EngineData.Item.Peer.AutoTranslateEnabled(id: peerId))
         )
         |> mapToSignal { settings, autoTranslateEnabled in
-            if !settings.translateChats && !autoTranslateEnabled {
+            if !settings.translateChats && !autoTranslateEnabled && !forcePredict {
                 return .single(nil)
             }
             
@@ -242,7 +267,7 @@ public func chatTranslationState(context: AccountContext, peerId: EnginePeer.Id,
             |> mapToSignal { cached in
                 let currentTime = Int32(CFAbsoluteTimeGetCurrent() + kCFAbsoluteTimeIntervalSince1970)
                 if let cached, let timestamp = cached.timestamp, cached.baseLang == baseLang && currentTime - timestamp < 60 * 60 {
-                    if !dontTranslateLanguages.contains(cached.fromLang) {
+                    if !dontTranslateLanguages.contains(cached.fromLang) || forcePredict {
                         return .single(cached)
                     } else {
                         return .single(nil)
@@ -345,7 +370,7 @@ public func chatTranslationState(context: AccountContext, peerId: EnginePeer.Id,
                                 isEnabled: isEnabled
                             )
                             let _ = updateChatTranslationState(engine: context.engine, peerId: peerId, threadId: threadId, state: state).start()
-                            if !dontTranslateLanguages.contains(fromLang) {
+                            if !dontTranslateLanguages.contains(fromLang) || forcePredict {
                                 return state
                             } else {
                                 return nil

@@ -1,0 +1,6 @@
+files:
+  - source: Swiftgram/SGStrings/Strings/en.lproj/SGLocalizable.strings
+    translation: /Swiftgram/SGStrings/Strings/%osx_code%/SGLocalizable.strings
+    translation_replace:
+      zh-Hans: zh-hans
+      zh-Hant: zh-hant

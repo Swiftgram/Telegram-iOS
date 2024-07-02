@@ -6,7 +6,7 @@
 
 @implementation TGBridgeUserInfoSignals
 
-+ (SSignal *)userInfoWithUserId:(int32_t)userId;
++ (SSignal *)userInfoWithUserId:(int64_t)userId;
 {
     return [[self usersInfoWithUserIds:@[ @(userId) ]] map:^TGBridgeUser *(NSDictionary *users)
     {

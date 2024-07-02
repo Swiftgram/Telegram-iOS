@@ -34,7 +34,7 @@ NSString *const TGUserInfoControllerIdentifier = @"TGUserInfoController";
     return self;
 }
 
-- (instancetype)initWithUserId:(int32_t)userId
+- (instancetype)initWithUserId:(int64_t)userId
 {
     self = [super init];
     if (self != nil)
@@ -138,7 +138,7 @@ NSString *const TGUserInfoControllerIdentifier = @"TGUserInfoController";
 {
     self.title = TGLocalized(@"Watch.UserInfo.Title");
     
-    int32_t userId = (_context.user != nil) ? (int32_t)_context.user.identifier : _context.userId;
+    int64_t userId = (_context.user != nil) ? (int64_t)_context.user.identifier : _context.userId;
     SSignal *remoteUserSignal = [TGBridgeUserInfoSignals userInfoWithUserId:userId];
     
     SSignal *userSignal = nil;

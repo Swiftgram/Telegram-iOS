@@ -1,3 +1,4 @@
+import SGStrings
 import Foundation
 import UIKit
 import Display
@@ -459,7 +460,7 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
         default:
             break
         }
-        
+        chatTranslationAvailable = true; translateButtonAvailable = true // MARK: Swiftgram
         let previousState = Atomic<LocalizationListState?>(value: nil)
         let previousEntriesHolder = Atomic<([LanguageListEntry], PresentationTheme, PresentationStrings)?>(value: nil)
         self.listDisposable = combineLatest(
@@ -476,6 +477,7 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
                 return
             }
             
+            // MARK: Swiftgram
             let isPremium = peer?.isPremium ?? false
                         
             var entries: [LanguageListEntry] = []
@@ -490,7 +492,7 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
             var ignoredLanguages: [String] = []
             if let translationSettings = sharedData.entries[ApplicationSpecificSharedDataKeys.translationSettings]?.get(TranslationSettings.self) {
                 showTranslate = translationSettings.showTranslate
-                translateChats = isPremium ? translationSettings.translateChats : false
+                translateChats = translationSettings.translateChats
                 if let languages = translationSettings.ignoredLanguages {
                     ignoredLanguages = languages
                 } else {
@@ -511,7 +513,7 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
                     }
                 }
             } else {
-                translateChats = isPremium
+                translateChats = isPremium || true
                 if let activeLanguage = activeLanguageCode, supportedTranslationLanguages.contains(activeLanguage) {
                     ignoredLanguages = [activeLanguage]
                 }
@@ -532,7 +534,7 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
                         entries.append(.translate(text: presentationData.strings.Localization_ShowTranslate, value: showTranslate))
                     }
                     if chatTranslationAvailable {
-                        entries.append(.translateEntire(text: presentationData.strings.Localization_TranslateEntireChat, value: translateChats, locked: !isPremium))
+                        entries.append(.translateEntire(text: presentationData.strings.Localization_TranslateEntireChat, value: translateChats, locked: !(isPremium || true)))
                     }
                     
                     var value = ""
@@ -583,6 +585,17 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
                 } else {
                     entries.append(.localizationTitle(text: presentationData.strings.Localization_InterfaceLanguage.uppercased(), section: LanguageListSection.official.rawValue))
                 }
+                
+                // MARK: Swiftrgam
+                for info in SGLocalizations {
+                    if existingIds.contains(info.languageCode) {
+                        continue
+                    }
+                    existingIds.insert(info.languageCode)
+                    entries.append(.localization(index: entries.count, info: info, type: .official, selected: info.languageCode == activeLanguageCode, activity: applyingCode == info.languageCode, revealed: revealedCode == info.languageCode, editing: false))
+                }
+                //
+                
                 for info in localizationListState.availableOfficialLocalizations {
                     if existingIds.contains(info.languageCode) {
                         continue
@@ -758,6 +771,13 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
                     self?.applyingCode.set(.single(nil))
                 
                     self?.context.engine.messages.refreshAttachMenuBots()
+                    
+                    // MARK: Swiftgram
+                    // TODO(swiftgram): consider moving to downloadAndApplyLocalization for an app-wide strings update
+                    if let baseLanguageCode = info.baseLanguageCode {
+                        SGLocalizationManager.shared.downloadLocale(baseLanguageCode)
+                    }
+
                 }))
         }
         if info.isOfficial {

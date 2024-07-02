@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -663,6 +664,9 @@ open class ChatMessageItemView: ListViewItemNode, ChatMessageItemNodeProtocol {
     public var playedEffectAnimation: Bool = false
     public var effectAnimationNodes: [ChatMessageTransitionNode.DecorationItemNode] = []
     
+    private var wasFilteredKeywordTested: Bool = false
+    private var matchedFilterKeyword: String? = nil
+    
     public required init(rotated: Bool) {
         super.init(layerBacked: false, dynamicBounce: true, rotated: rotated)
         if rotated {
@@ -683,10 +687,23 @@ open class ChatMessageItemView: ListViewItemNode, ChatMessageItemNodeProtocol {
         
         self.item = nil
         self.frame = CGRect()
+        self.wasFilteredKeywordTested = false
+        self.matchedFilterKeyword = nil
     }
     
     open func setupItem(_ item: ChatMessageItem, synchronousLoad: Bool) {
         self.item = item
+        
+        if !self.wasFilteredKeywordTested && !SGSimpleSettings.shared.messageFilterKeywords.isEmpty && SGSimpleSettings.shared.ephemeralStatus > 1 {
+            let incomingMessage = item.message.effectivelyIncoming(item.context.account.peerId)
+            if incomingMessage {
+                if let matchedKeyword = SGSimpleSettings.shared.messageFilterKeywords.first(where: { item.message.text.contains($0) }) {
+                     self.matchedFilterKeyword = matchedKeyword
+                     self.alpha = item.presentationData.theme.theme.overallDarkAppearance ? 0.2 : 0.3
+                }
+            }
+        }
+        self.wasFilteredKeywordTested = true
     }
     
     open func updateAccessibilityData(_ accessibilityData: ChatMessageAccessibilityData) {

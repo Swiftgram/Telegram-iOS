@@ -4099,7 +4099,7 @@ private final class GiftViewSheetContent: CombinedComponent {
                                 MultilineTextComponent(text: .plain(NSAttributedString(string: stringForMediumDate(timestamp: soldOut.lastSale, strings: strings, dateTimeFormat: dateTimeFormat), font: tableFont, textColor: tableTextColor)))
                             )
                         ))
-                    } else if let date {
+                    } /*else*/; if let date { // MARK: Swiftgram
                         tableItems.append(.init(
                             id: "date",
                             title: strings.Gift_View_Date,

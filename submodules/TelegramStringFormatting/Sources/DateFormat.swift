@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import TelegramPresentationData
 import TelegramUIPreferences
@@ -46,8 +47,11 @@ public func stringForMessageTimestamp(timestamp: Int32, dateTimeFormat: Presenta
     } else {
         gmtime_r(&t, &timeinfo)
     }
-    
-    return stringForShortTimestamp(hours: timeinfo.tm_hour, minutes: timeinfo.tm_min, dateTimeFormat: dateTimeFormat)
+    if SGSimpleSettings.shared.secondsInMessages {
+        return stringForShortTimestampWithSeconds(hours: timeinfo.tm_hour, minutes: timeinfo.tm_min, seconds: timeinfo.tm_sec, dateTimeFormat: dateTimeFormat)
+    } else {
+        return stringForShortTimestamp(hours: timeinfo.tm_hour, minutes: timeinfo.tm_min, dateTimeFormat: dateTimeFormat)
+    }
 }
 
 public func getDateTimeComponents(timestamp: Int32) -> (day: Int32, month: Int32, year: Int32, hour: Int32, minutes: Int32) {
@@ -193,3 +197,69 @@ public func roundDateToDays(_ timestamp: Int32) -> Int32 {
     }
     return Int32(date.timeIntervalSince1970)
 }
+
+
+
+
+
+
+
+
+
+
+// MARK: Swiftgram
+public func stringForDateWithoutDay(date: Date, timeZone: TimeZone? = TimeZone(secondsFromGMT: 0), strings: PresentationStrings) -> String {
+    let formatter = DateFormatter()
+    formatter.timeStyle = .none
+    formatter.timeZone = timeZone
+    formatter.locale = localeWithStrings(strings)
+    formatter.setLocalizedDateFormatFromTemplate("MMMMyyyy")
+    return formatter.string(from: date)
+}
+
+
+public func stringForDateWithoutDayAndMonth(date: Date, timeZone: TimeZone? = TimeZone(secondsFromGMT: 0), strings: PresentationStrings) -> String {
+    let formatter = DateFormatter()
+    formatter.timeStyle = .none
+    formatter.timeZone = timeZone
+    formatter.locale = localeWithStrings(strings)
+    formatter.setLocalizedDateFormatFromTemplate("yyyy")
+    return formatter.string(from: date)
+}
+
+// MARK: Swiftgram
+public func stringForShortTimestampWithSeconds(hours: Int32, minutes: Int32, seconds: Int32, dateTimeFormat: PresentationDateTimeFormat) -> String {
+    switch dateTimeFormat.timeFormat {
+    case .regular:
+        let hourString: String
+        if hours == 0 {
+            hourString = "12"
+        } else if hours > 12 {
+            hourString = "\(hours - 12)"
+        } else {
+            hourString = "\(hours)"
+        }
+        
+        let periodString: String
+        if hours >= 12 {
+            periodString = "PM"
+        } else {
+            periodString = "AM"
+        }
+        
+        let minuteString: String
+        if minutes >= 10 {
+            minuteString = "\(minutes)"
+        } else {
+            minuteString = "0\(minutes)"
+        }
+        if seconds >= 10 {
+            return "\(hourString):\(minuteString):\(seconds)\u{00a0}\(periodString)"
+        } else {
+            return "\(hourString):\(minuteString):0\(seconds)\u{00a0}\(periodString)"
+        }
+    case .military:
+        return String(format: "%02d:%02d:%02d", arguments: [Int(hours), Int(minutes), Int(seconds)])
+    }
+}
+//

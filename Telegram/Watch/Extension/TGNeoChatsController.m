@@ -28,9 +28,9 @@ NSString *const TGContextNotificationKey = @"context";
 NSString *const TGSynchronizationStateNotification = @"TGSynchronizationStateNotification";
 NSString *const TGSynchronizationStateKey = @"state";
 
-const NSUInteger TGNeoChatsControllerInitialCount = 3;
-const NSUInteger TGNeoChatsControllerLimit = 12;
-const NSUInteger TGNeoChatsControllerForwardLimit = 20;
+const NSUInteger TGNeoChatsControllerInitialCount = 4;
+const NSUInteger TGNeoChatsControllerLimit = 12 * 2;
+const NSUInteger TGNeoChatsControllerForwardLimit = 20 * 2;
 
 @implementation TGNeoChatsControllerContext
 
