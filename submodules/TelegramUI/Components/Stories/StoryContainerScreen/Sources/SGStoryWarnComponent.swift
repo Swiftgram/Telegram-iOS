@@ -116,7 +116,7 @@ final class SGStoryWarningComponent: Component {
             self.containerView.layer.animateScale(from: 1.0, to: 1.1, duration: 0.4, timingFunction: kCAMediaTimingFunctionSpring, removeOnCompletion: false)
         }
         
-        func update(component: SGStoryWarningComponent, availableSize: CGSize, transition: Transition) -> CGSize {
+        func update(component: SGStoryWarningComponent, availableSize: CGSize, transition: ComponentTransition) -> CGSize {
             self.component = component
             
             let sideInset: CGFloat = 48.0
@@ -246,7 +246,7 @@ final class SGStoryWarningComponent: Component {
         return View(frame: CGRect())
     }
     
-    func update(view: View, availableSize: CGSize, state: EmptyComponentState, environment: Environment<Empty>, transition: Transition) -> CGSize {
+    func update(view: View, availableSize: CGSize, state: EmptyComponentState, environment: Environment<Empty>, transition: ComponentTransition) -> CGSize {
         return view.update(component: self, availableSize: availableSize, transition: transition)
     }
 }
