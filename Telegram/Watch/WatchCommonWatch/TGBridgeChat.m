@@ -37,7 +37,7 @@ NSString *const TGBridgeChatsArrayKey = @"chats";
     {
         _identifier = [aDecoder decodeInt64ForKey:TGBridgeChatIdentifierKey];
         _date = [aDecoder decodeDoubleForKey:TGBridgeChatDateKey];
-        _fromUid = [aDecoder decodeInt32ForKey:TGBridgeChatFromUidKey];
+        _fromUid = [aDecoder decodeInt64ForKey:TGBridgeChatFromUidKey];
         _text = [aDecoder decodeObjectForKey:TGBridgeChatTextKey];
         _outgoing = [aDecoder decodeBoolForKey:TGBridgeChatOutgoingKey];
         _unread = [aDecoder decodeBoolForKey:TGBridgeChatUnreadKey];
@@ -67,7 +67,7 @@ NSString *const TGBridgeChatsArrayKey = @"chats";
 {
     [aCoder encodeInt64:self.identifier forKey:TGBridgeChatIdentifierKey];
     [aCoder encodeDouble:self.date forKey:TGBridgeChatDateKey];
-    [aCoder encodeInt32:self.fromUid forKey:TGBridgeChatFromUidKey];
+    [aCoder encodeInt64:self.fromUid forKey:TGBridgeChatFromUidKey];
     [aCoder encodeObject:self.text forKey:TGBridgeChatTextKey];
     [aCoder encodeBool:self.outgoing forKey:TGBridgeChatOutgoingKey];
     [aCoder encodeBool:self.unread forKey:TGBridgeChatUnreadKey];

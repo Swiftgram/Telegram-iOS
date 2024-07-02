@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -11,6 +12,7 @@ private extension ToolbarTheme {
 
 final class TabBarControllerNode: ASDisplayNode {
     private var navigationBarPresentationData: NavigationBarPresentationData
+    private let showTabNames: Bool // MARK: Swiftgram
     private var theme: TabBarControllerTheme
     let tabBarNode: TabBarNode
     private let disabledOverlayNode: ASDisplayNode
@@ -42,10 +44,12 @@ final class TabBarControllerNode: ASDisplayNode {
         }
     }
     
-    init(theme: TabBarControllerTheme, navigationBarPresentationData: NavigationBarPresentationData, itemSelected: @escaping (Int, Bool, [ASDisplayNode]) -> Void, contextAction: @escaping (Int, ContextExtractedContentContainingNode, ContextGesture) -> Void, swipeAction: @escaping (Int, TabBarItemSwipeDirection) -> Void, toolbarActionSelected: @escaping (ToolbarActionOption) -> Void, disabledPressed: @escaping () -> Void) {
+    init(showTabNames: Bool, theme: TabBarControllerTheme, navigationBarPresentationData: NavigationBarPresentationData, itemSelected: @escaping (Int, Bool, [ASDisplayNode]) -> Void, contextAction: @escaping (Int, ContextExtractedContentContainingNode, ContextGesture) -> Void, swipeAction: @escaping (Int, TabBarItemSwipeDirection) -> Void, toolbarActionSelected: @escaping (ToolbarActionOption) -> Void, disabledPressed: @escaping () -> Void) {
         self.theme = theme
+        self.showTabNames = showTabNames
         self.navigationBarPresentationData = navigationBarPresentationData
-        self.tabBarNode = TabBarNode(theme: theme, itemSelected: itemSelected, contextAction: contextAction, swipeAction: swipeAction)
+        self.tabBarNode = TabBarNode(showTabNames: showTabNames, theme: theme, itemSelected: itemSelected, contextAction: contextAction, swipeAction: swipeAction)
+        self.tabBarNode.isHidden = SGSimpleSettings.shared.hideTabBar
         self.disabledOverlayNode = ASDisplayNode()
         self.disabledOverlayNode.backgroundColor = theme.backgroundColor.withAlphaComponent(0.5)
         self.disabledOverlayNode.alpha = 0.0
@@ -90,7 +94,7 @@ final class TabBarControllerNode: ASDisplayNode {
         transition.updateAlpha(node: self.disabledOverlayNode, alpha: value ? 0.0 : 1.0)
     }
     
-    var tabBarHidden = false
+    var tabBarHidden = SGSimpleSettings.shared.hideTabBar
     
     func containerLayoutUpdated(_ layout: ContainerViewLayout, toolbar: Toolbar?, transition: ContainedViewLayoutTransition) {
         var tabBarHeight: CGFloat
@@ -101,8 +105,10 @@ final class TabBarControllerNode: ASDisplayNode {
         let bottomInset: CGFloat = layout.insets(options: options).bottom
         if !layout.safeInsets.left.isZero {
             tabBarHeight = 34.0 + bottomInset
+            tabBarHeight = sgTabBarHeightModifier(showTabNames: self.showTabNames, tabBarHeight: tabBarHeight, layout: layout, defaultBarSmaller: true)  // MARK: Swiftgram
         } else {
             tabBarHeight = 49.0 + bottomInset
+            tabBarHeight = sgTabBarHeightModifier(showTabNames: self.showTabNames, tabBarHeight: tabBarHeight, layout: layout, defaultBarSmaller: false)  // MARK: Swiftgram
         }
         
         let tabBarFrame = CGRect(origin: CGPoint(x: 0.0, y: layout.size.height - (self.tabBarHidden ? 0.0 : tabBarHeight)), size: CGSize(width: layout.size.width, height: tabBarHeight))

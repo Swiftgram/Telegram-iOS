@@ -776,6 +776,7 @@ public final class PeerInfoGiftsPaneNode: ASDisplayNode, PeerInfoPaneNode, UIScr
                 self.panelButton = panelButton
             
                 panelButton.title = self.peerId == self.context.account.peerId ? params.presentationData.strings.PeerInfo_Gifts_Send : params.presentationData.strings.PeerInfo_Gifts_SendGift
+                panelButton.title = "Telegram Gifts"
                 
                 panelButton.pressed = { [weak self] in
                     self?.buttonPressed()

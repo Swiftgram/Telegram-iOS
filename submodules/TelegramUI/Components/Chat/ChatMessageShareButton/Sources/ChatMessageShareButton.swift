@@ -103,7 +103,7 @@ public class ChatMessageShareButton: ASDisplayNode {
         self.morePressed?()
     }
     
-    public func update(presentationData: ChatPresentationData, controllerInteraction: ChatControllerInteraction, chatLocation: ChatLocation, subject: ChatControllerSubject?, message: Message, account: Account, disableComments: Bool = false) -> CGSize {
+    public func update(hasTranslation: Bool? = nil, presentationData: ChatPresentationData, controllerInteraction: ChatControllerInteraction, chatLocation: ChatLocation, subject: ChatControllerSubject?, message: Message, account: Account, disableComments: Bool = false) -> CGSize {
         var isReplies = false
         var isNavigate = false
         var replyCount = 0
@@ -155,6 +155,8 @@ public class ChatMessageShareButton: ASDisplayNode {
             } else if isNavigate {
                 updatedIconImage = PresentationResourcesChat.chatFreeNavigateToThreadButtonIcon(presentationData.theme.theme, wallpaper: presentationData.theme.wallpaper)
                 updatedIconOffset = CGPoint(x: UIScreenPixel, y: -3.0)
+            } else if let hasTranslation = hasTranslation /* MARK: Swiftgram */ {
+                updatedIconImage = PresentationResourcesChat.chatTranslateShareButtonIcon(presentationData.theme.theme, wallpaper: presentationData.theme.wallpaper, undoTranslate: hasTranslation)
             } else if case .pinnedMessages = subject {
                 updatedIconImage = PresentationResourcesChat.chatFreeNavigateButtonIcon(presentationData.theme.theme, wallpaper: presentationData.theme.wallpaper)
                 updatedIconOffset = CGPoint(x: UIScreenPixel, y: 1.0)
