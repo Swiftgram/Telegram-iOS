@@ -97,6 +97,14 @@ final class PeerInfoHeaderNavigationButtonContainerNode: SparseNode {
                 let buttonFrame = CGRect(origin: CGPoint(x: nextButtonOrigin, y: buttonY), size: buttonSize)
                 
                 nextButtonOrigin += buttonSize.width + 4.0
+                // MARK: Swiftgram
+                if case .back = spec.key {
+                    if buttonNode.canBeExpanded {
+                        nextButtonOrigin += buttonNode.textNode.bounds.size.width
+                    } else {
+                        nextButtonOrigin += buttonSize.width
+                    }
+                }
                 if spec.isForExpandedView {
                     nextExpandedButtonOrigin = nextButtonOrigin
                 } else {
@@ -146,6 +154,14 @@ final class PeerInfoHeaderNavigationButtonContainerNode: SparseNode {
                     }
                     let buttonFrame = CGRect(origin: CGPoint(x: nextButtonOrigin, y: buttonY), size: buttonSize)
                     nextButtonOrigin += buttonSize.width + 4.0
+                    // MARK: Swiftgram
+                    if case .back = spec.key {
+                        if buttonNode.canBeExpanded {
+                            nextButtonOrigin += buttonNode.textNode.bounds.size.width
+                        } else {
+                            nextButtonOrigin += buttonSize.width
+                        }
+                    }
                     if spec.isForExpandedView {
                         nextExpandedButtonOrigin = nextButtonOrigin
                     } else {

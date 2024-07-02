@@ -1,3 +1,4 @@
+import SGStrings
 import Foundation
 import UIKit
 import Display
@@ -2101,7 +2102,7 @@ private final class PremiumIntroScreenContentComponent: CombinedComponent {
 
                             let isPremium = state?.isPremium == true
                             var dismissImpl: (() -> Void)?
-                            let controller = PremiumLimitsListScreen(context: accountContext, subject: demoSubject, source: .intro(state?.price), order: state?.configuration.perks, buttonText: isPremium ? strings.Common_OK : (state?.isAnnual == true ? strings.Premium_SubscribeForAnnual(state?.price ?? "—").string :  strings.Premium_SubscribeFor(state?.price ?? "–").string), isPremium: isPremium, forceDark: forceDark)
+                            let controller = PremiumLimitsListScreen(context: accountContext, subject: demoSubject, source: .intro(state?.price), order: state?.configuration.perks, buttonText: isPremium ? strings.Common_OK : i18n("Common.OpenTelegram", strings.baseLanguageCode), isPremium: isPremium, forceDark: forceDark)
                             controller.action = { [weak state] in
                                 dismissImpl?()
                                 if state?.isPremium == false {
@@ -3009,7 +3010,13 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
             guard !self.inProgress else {
                 return
             }
+
+            // MARK: Swiftgram
+            let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
+            let alertController = textAlertController(context: self.context, title: i18n("Common.OpenTelegram", presentationData.strings.baseLanguageCode), text: i18n("Common.UseTelegramForPremium", presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})])
+            self.present(alertController)
             
+            /*
             if case let .gift(_, _, _, giftCode) = self.source, let giftCode, giftCode.usedDate == nil {
                 self.inProgress = true
                 self.updateInProgress(true)
@@ -3164,7 +3171,7 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
                         strongSelf.updated(transition: .immediate)
                     }
                 }
-            })
+            })*/
         }
         
         func updateIsFocused(_ isFocused: Bool) {
@@ -3570,9 +3577,9 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
                 if isUnusedGift {
                     buttonTitle = environment.strings.Premium_Gift_ApplyLink
                 } else if state.isPremium == true && state.canUpgrade {
-                    buttonTitle = state.isAnnual ? environment.strings.Premium_UpgradeForAnnual(state.price ?? "—").string : environment.strings.Premium_UpgradeFor(state.price ?? "—").string
+                    buttonTitle = i18n("Common.OpenTelegram", environment.strings.baseLanguageCode)
                 } else {
-                    buttonTitle = state.isAnnual ? environment.strings.Premium_SubscribeForAnnual(state.price ?? "—").string : environment.strings.Premium_SubscribeFor(state.price ?? "—").string
+                    buttonTitle = i18n("Common.OpenTelegram", environment.strings.baseLanguageCode)
                 }
                 
                 let sideInset: CGFloat = 16.0

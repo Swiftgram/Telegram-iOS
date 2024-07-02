@@ -135,8 +135,8 @@ func presentLegacyMediaPickerGallery(context: AccountContext, peer: EnginePeer?,
             recipientName = peer?.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
         }
     }
-    
-    let model = TGMediaPickerGalleryModel(context: legacyController.context, items: items, focus: focusItem, selectionContext: selectionContext, editingContext: editingContext, hasCaptions: true, allowCaptionEntities: true, hasTimer: hasTimer, onlyCrop: false, inhibitDocumentCaptions: false, hasSelectionPanel: true, hasCamera: false, recipientName: recipientName, isScheduledMessages: isScheduledMessages)!
+    let currentAppConfiguration = context.currentAppConfiguration.with { $0 }
+    let model = TGMediaPickerGalleryModel(context: legacyController.context, items: items, focus: focusItem, selectionContext: selectionContext, editingContext: editingContext, hasCaptions: true, allowCaptionEntities: true, hasTimer: hasTimer, onlyCrop: false, inhibitDocumentCaptions: false, hasSelectionPanel: true, hasCamera: false, recipientName: recipientName, isScheduledMessages: isScheduledMessages, canShowTelescope: currentAppConfiguration.sgWebSettings.global.canShowTelescope, canSendTelescope: currentAppConfiguration.sgWebSettings.user.canSendTelescope)!
     model.stickersContext = paintStickersContext
     controller.model = model
     model.controller = controller

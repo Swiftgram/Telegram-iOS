@@ -1,0 +1,148 @@
+"Settings.ContentSettings" = "敏感内容设置";
+
+"Settings.Tabs.Header" = "标签";
+"Settings.Tabs.HideTabBar" = "隐藏底部导航栏";
+"Settings.Tabs.ShowContacts" = "显示联系人标签";
+"Settings.Tabs.ShowNames" = "显示标签名称";
+
+"Settings.Folders.BottomTab" = "底部分组";
+"Settings.Folders.BottomTabStyle" = "底部分组样式";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS样式";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram样式";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "隐藏 \"%@\"";
+"Settings.Folders.RememberLast" = "打开上次分组";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram 将在重启或切换账户后打开最后使用的分组";
+
+"Settings.Folders.CompactNames" = "缩小分组间距";
+"Settings.Folders.AllChatsTitle" = "\"所有对话\"标题";
+"Settings.Folders.AllChatsTitle.short" = "短标题";
+"Settings.Folders.AllChatsTitle.long" = "长标题";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "默认";
+
+
+"Settings.ChatList.Header" = "对话列表";
+"Settings.CompactChatList" = "紧凑型对话列表";
+
+"Settings.Profiles.Header" = "资料";
+
+"Settings.Stories.Hide" = "隐藏动态";
+"Settings.Stories.WarnBeforeView" = "查看前询问";
+"Settings.Stories.DisableSwipeToRecord" = "禁用侧滑拍摄";
+
+"Settings.Translation.QuickTranslateButton" = "快速翻译按钮";
+
+"Stories.Warning.Author" = "作者";
+"Stories.Warning.ViewStory" = "要查看动态吗？";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ 将能够看到你查看了他们的动态";
+"Stories.Warning.NoticeStealth" = "%@ 将无法看到您查看他们的动态";
+
+"Settings.Photo.Quality.Notice" = "发送图片的质量";
+"Settings.Photo.SendLarge" = "发送大尺寸照片";
+"Settings.Photo.SendLarge.Notice" = "将压缩图片的尺寸限制提高到 2560px";
+
+"Settings.VideoNotes.Header" = "圆形视频";
+"Settings.VideoNotes.StartWithRearCam" = "默认使用后置相机";
+
+"Settings.CustomColors.Header" = "账户颜色";
+"Settings.CustomColors.Saturation" = "饱和度";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "设置饱和度为 0%% 以禁用账户颜色";
+
+"Settings.UploadsBoost" = "上传加速";
+"Settings.DownloadsBoost" = "下载加速";
+"Settings.DownloadsBoost.none" = "停用";
+"Settings.DownloadsBoost.medium" = "中等";
+"Settings.DownloadsBoost.maximum" = "最大";
+
+"Settings.ShowProfileID" = "显示用户 UID";
+"Settings.ShowDC" = "显示数据中心";
+"Settings.ShowCreationDate" = "显示群组或频道的创建日期";
+"Settings.ShowCreationDate.Notice" = "某些群组或频道可能缺少创建日期";
+
+"Settings.ShowRegDate" = "显示注册日期";
+"Settings.ShowRegDate.Notice" = "这是大概的注册日期";
+
+"Settings.SendWithReturnKey" = "使用返回键发送";
+"Settings.HidePhoneInSettingsUI" = "在设置中隐藏电话号码";
+"Settings.HidePhoneInSettingsUI.Notice" = "您的电话号码只会在设置界面中隐藏。要对其他人隐藏，可进入隐私设置调整。";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "离开 5 秒后";
+
+"ProxySettings.UseSystemDNS" = "使用系统DNS";
+"ProxySettings.UseSystemDNS.Notice" = "如果您无法使用 Google DNS，请使用系统 DNS";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "此功能**无需** %@ 订阅！";
+"Common.RestartRequired" = "需要重启";
+"Common.RestartNow" = "立即重启";
+"Common.OpenTelegram" = "打开 Telegram";
+"Common.UseTelegramForPremium" = "请注意，您必须使用官方的 Telegram 客户端才可购买 Telegram Premium，一旦您获得 Telegram Premium，其所有功能也将在 Swiftgram 中生效。";
+
+"Message.HoldToShowOrReport" = "长按显示或举报";
+
+"Auth.AccountBackupReminder" = "请确保您有一个备用的访问方式。保留一张用于接收短信的 SIM 卡或多登录一个会话，以免被锁定。";
+"Auth.UnofficialAppCodeTitle" = "您只能通过官方应用程序获得代码";
+
+"Settings.SmallReactions" = "缩小表情回应";
+"Settings.HideReactions" = "隐藏回应";
+
+"ContextMenu.SaveToCloud" = "保存到收藏夹";
+"ContextMenu.SelectFromUser" = "选择此人所有消息";
+
+"Settings.ContextMenu" = "消息菜单";
+"Settings.ContextMenu.Notice" = "已禁用的项目可在 Swiftgram 子菜单中找到";
+
+
+"Settings.ChatSwipeOptions" = "对话列表滑动选项";
+"Settings.DeleteChatSwipeOption" = "滑动删除对话";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "上滑到下一未读频道";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "上滑到下一个主题";
+"Settings.GalleryCamera" = "图库中的相机";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" 按钮";
+"Settings.SnapDeletionEffect" = "删除消息的特效";
+
+"Settings.Stickers.Size" = "尺寸";
+"Settings.Stickers.Timestamp" = "显示时间";
+
+"Settings.RecordingButton" = "录音按钮";
+
+"Settings.DefaultEmojisFirst" = "优先使用标准表情符号";
+"Settings.DefaultEmojisFirst.Notice" = "在表情列表中将标准表情符号置于高级表情符号之前";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "创建日期: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "加入 %@ 的日期";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "注册日期";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "双击编辑消息";
+
+"Settings.wideChannelPosts" = "在频道中以更宽的版面显示消息";
+"Settings.ForceEmojiTab" = "默认展示表情符号";
+
+"Settings.forceBuiltInMic" = "强制使用设备麦克风";
+"Settings.forceBuiltInMic.Notice" = "若启用，即使已连接耳机，应用也只使用设备自身的麦克风。";
+
+"Settings.hideChannelBottomButton" = "隐藏频道底部面板";
+
+"Settings.CallConfirmation" = "通话确认";
+"Settings.CallConfirmation.Notice" = "Swiftgram 将在拨打电话前征求您的确认";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "拨打语音通话？";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "拨打视频通话？";
+
+"MutualContact.Label" = "双向联系人";
