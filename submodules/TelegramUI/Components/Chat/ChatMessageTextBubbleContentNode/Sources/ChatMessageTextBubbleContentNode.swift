@@ -1036,7 +1036,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         return super.hitTest(point, with: event)
     }
     
-    private func updateIsTranslating(_ isTranslating: Bool) {
+    public func updateIsTranslating(_ isTranslating: Bool) {
         guard let item = self.item else {
             return
         }

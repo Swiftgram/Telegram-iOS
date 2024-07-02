@@ -1,5 +1,9 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+sgDeps = [
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings"
+]
+
 swift_library(
     name = "VideoMessageCameraScreen",
     module_name = "VideoMessageCameraScreen",
@@ -9,7 +13,7 @@ swift_library(
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgDeps + [
         "//submodules/AsyncDisplayKit",
         "//submodules/Display",
         "//submodules/Postbox",

@@ -63,6 +63,7 @@ private func renderIcon(name: String, scaleFactor: CGFloat = 1.0, backgroundColo
 }
 
 public struct PresentationResourcesSettings {
+    public static let swiftgram = renderIcon(name: "SwiftgramSettings", scaleFactor: 30.0 / 512.0)
     public static let editProfile = renderIcon(name: "Settings/Menu/EditProfile")
     public static let proxy = renderIcon(name: "Settings/Menu/Proxy")
     public static let savedMessages = renderIcon(name: "Settings/Menu/SavedMessages")

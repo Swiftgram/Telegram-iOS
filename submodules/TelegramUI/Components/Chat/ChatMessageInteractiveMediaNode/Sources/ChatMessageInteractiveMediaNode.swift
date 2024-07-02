@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -796,6 +797,8 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
             var isSticker = false
             var maxDimensions = layoutConstants.image.maxDimensions
             var maxHeight = layoutConstants.image.maxDimensions.height
+            // MARK: Swiftgram
+            var imageOriginalMaxDimensions: CGSize?
             var isStory = false
             
             let _ = isStory
@@ -817,6 +820,19 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
                 }
             } else if let image = media as? TelegramMediaImage, let dimensions = largestImageRepresentation(image.representations)?.dimensions {
                 unboundSize = CGSize(width: max(10.0, floor(dimensions.cgSize.width * 0.5)), height: max(10.0, floor(dimensions.cgSize.height * 0.5)))
+                // MARK: Swiftgram
+                if let channel = message.peers[message.id.peerId] as? TelegramChannel, case .broadcast = channel.info, SGSimpleSettings.shared.wideChannelPosts {
+                    imageOriginalMaxDimensions = maxDimensions
+                    switch sizeCalculation {
+                    case let .constrained(constrainedSize):
+                        maxDimensions.width = constrainedSize.width
+                    case .unconstrained:
+                        maxDimensions.width = unboundSize.width
+                    }
+                    if message.text.isEmpty {
+                        maxDimensions.width = max(layoutConstants.image.maxDimensions.width, unboundSize.aspectFitted(CGSize(width: maxDimensions.width, height: layoutConstants.image.minDimensions.height)).width)
+                    }
+                }
             } else if let file = media as? TelegramMediaFile, var dimensions = file.dimensions {
                 if let thumbnail = file.previewRepresentations.first {
                     let dimensionsVertical = dimensions.width < dimensions.height
@@ -1027,6 +1043,9 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
                                 }
                                 
                                 boundingSize = CGSize(width: boundingWidth, height: filledSize.height).cropped(CGSize(width: CGFloat.greatestFiniteMagnitude, height: maxHeight))
+                                if let imageOriginalMaxDimensions = imageOriginalMaxDimensions {
+                                    boundingSize.height = min(boundingSize.height, nativeSize.aspectFitted(imageOriginalMaxDimensions).height)
+                                }
                                 boundingSize.height = max(boundingSize.height, layoutConstants.image.minDimensions.height)
                                 boundingSize.width = max(boundingSize.width, layoutConstants.image.minDimensions.width)
                                 switch contentMode {
@@ -2389,7 +2408,55 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
             displaySpoiler = true
             icon = .eye
         }
+ 
         
+        // let date = Date(timeIntervalSince1970: TimeInterval(message.timestamp))
+        // let formatter = DateFormatter()
+        // formatter.dateFormat = "HH:mm:ss"
+        // let dateString = formatter.string(from: date)
+        // print("Message [\(dateString)]: contentAnalysisResult: \(self.contentAnalysisResult as Optional) canAnalyze: \(canAnalyzeMedia())")
+        // if self.contentAnalysisResult == nil && canAnalyzeMedia() {
+        //     print("Message [\(dateString)]: displaying initial spoiler")
+        //     displaySpoiler = true
+        //     var mediaAnalysisSignal: Signal<Bool,Error>? = nil
+        //     if let media = self.media as? TelegramMediaImage {
+        //         if let largestRepresentation = largestImageRepresentation(media.representations), let path = self.context?.account.postbox.mediaBox.completedResourcePath(largestRepresentation.resource) {
+        //             mediaAnalysisSignal = analyzeMediaSignal(URL(fileURLWithPath: path), mediaType: .image)
+        //         }
+        //     } else if let media = self.media as? TelegramMediaFile {
+        //         let videoURL = URL(fileURLWithPath: media.fileName ?? "")
+        //         let videoExtension = videoURL.pathExtension.isEmpty ? nil : videoURL.pathExtension
+        //         if let path = self.context?.account.postbox.mediaBox.completedResourcePath(media.resource, pathExtension: videoExtension) {
+        //             mediaAnalysisSignal = analyzeMediaSignal(URL(fileURLWithPath: path), mediaType: .video)
+        //         }
+        //     }
+            
+        //     if let mediaAnalysisSignal = mediaAnalysisSignal {
+        //         if !self.contentAnalysisPending {
+        //             self.contentAnalysisPending = true
+        //             let _ = mediaAnalysisSignal.start(next: { [weak self] analysisStatus in
+        //                 guard let strongSelf = self else {
+        //                     return
+        //                 }
+        //                 strongSelf.contentAnalysisPending = false
+        //                 strongSelf.contentAnalysisResult = analysisStatus
+        //                 if strongSelf.contentAnalysisResult == false {
+        //                     print("Message [\(dateString)]: Removing initial spoiler")
+        //                     Queue.mainQueue().async {
+        //                         strongSelf.updateStatus(animated: false)
+        //                     }
+        //                 } else {
+        //                     print("Message [\(dateString)]: Non removing initial spoiler.")
+        //                 }
+        //             })
+        //         }
+        //     }
+            
+        // } else if let contentAnalysisResult = self.contentAnalysisResult, contentAnalysisResult == true {
+        //     print("Message [\(dateString)]: Ensuring soiler for checked content")
+        //     displaySpoiler = true
+        // }
+    
         if displaySpoiler {
             if self.extendedMediaOverlayNode == nil, let context = self.context {
                 let enableAnimations = context.sharedContext.energyUsageSettings.fullTranslucency && !isPreview

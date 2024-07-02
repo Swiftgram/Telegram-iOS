@@ -1,5 +1,6 @@
 import Foundation
 import Postbox
+import SGSimpleSettings
 
 public let anonymousSavedMessagesId: Int64 = 2666000
 
@@ -28,11 +29,18 @@ public extension Peer {
             break
         }
         
+        // MARK: Swiftgram
+        let chatId = self.id.id._internalGetInt64Value()
+        if contentSettings.appConfiguration.sgWebSettings.global.forceReasons.contains(chatId) {
+            return "Unavailable in Swiftgram due to App Store Guidelines"
+        } else if contentSettings.appConfiguration.sgWebSettings.global.unforceReasons.contains(chatId) {
+            return nil
+        }
         if let restrictionInfo = restrictionInfo {
             for rule in restrictionInfo.rules {
                 if rule.platform == "all" || rule.platform == platform || contentSettings.addContentRestrictionReasons.contains(rule.platform) {
                     if !contentSettings.ignoreContentRestrictionReasons.contains(rule.reason) {
-                        return rule.text
+                        return rule.text + "\n" + "\(rule.reason)-\(rule.platform)"
                     }
                 }
             }
@@ -218,8 +226,11 @@ public extension Peer {
             return false
         }
     }
-    
+    // MARK: Swiftgram
     var nameColor: PeerNameColor? {
+        if SGSimpleSettings.shared.accountColorsSaturation == 0 {
+            return nil
+        }
         switch self {
         case let user as TelegramUser:
             if let nameColor = user.nameColor {

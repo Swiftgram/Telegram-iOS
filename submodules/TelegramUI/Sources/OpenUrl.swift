@@ -1,3 +1,9 @@
+import SGLogging
+import SGAPIWebSettings
+import SGConfig
+import SGSettingsUI
+import SGDebugUI
+import SFSafariViewControllerPlus
 import Foundation
 import Display
 import SafariServices
@@ -953,7 +959,28 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                     }
                 }
             } else {
-                if parsedUrl.host == "importStickers" {
+                if parsedUrl.host == "sg" {
+                    if let path = parsedUrl.pathComponents.last {
+                        switch path {
+                            case "debug":
+                                if let debugController = context.sharedContext.makeDebugSettingsController(context: context) {
+                                    navigationController?.pushViewController(debugController)
+                                    return
+                                }
+                            case "sgdebug", "sg_debug":
+                                navigationController?.pushViewController(sgDebugController(context: context))
+                                return
+                            case "settings":
+                                navigationController?.pushViewController(sgSettingsController(context: context))
+                                return
+                            case "ios_settings":
+                                context.sharedContext.applicationBindings.openSettings()
+                                return
+                            default:
+                                break
+                        }
+                    }
+                } else if parsedUrl.host == "importStickers" {
                     handleResolvedUrl(.importStickers)
                 } else if parsedUrl.host == "settings" {
                     if let path = parsedUrl.pathComponents.last {
@@ -1050,9 +1077,16 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                             navigationController?.pushViewController(controller)
                         } else {
                             if let window = navigationController?.view.window {
-                                let controller = SFSafariViewController(url: parsedUrl)
+                                // MARK: Swiftgram
+                                let controller = SFSafariViewControllerPlusDidFinish(url: parsedUrl)
                                 controller.preferredBarTintColor = presentationData.theme.rootController.navigationBar.opaqueBackgroundColor
                                 controller.preferredControlTintColor = presentationData.theme.rootController.navigationBar.accentTextColor
+                                if parsedUrl.host?.lowercased() == SG_API_WEBAPP_URL_PARSED.host?.lowercased() {
+                                    controller.onDidFinish = {
+                                        SGLogger.shared.log("SafariController", "Closed webapp")
+                                        updateSGWebSettingsInteractivelly(context: context)
+                                    }
+                                }
                                 window.rootViewController?.present(controller, animated: true)
                             } else {
                                 context.sharedContext.applicationBindings.openUrl(parsedUrl.absoluteString)

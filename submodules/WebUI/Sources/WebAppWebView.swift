@@ -92,7 +92,7 @@ function disconnectObserver() {
 final class WebAppWebView: WKWebView {
     var handleScriptMessage: (WKScriptMessage) -> Void = { _ in }
     
-    init(account: Account) {
+    init(userScripts: [WKUserScript] = [], account: Account) {
         let configuration = WKWebViewConfiguration()
                 
         if #available(iOS 17.0, *) {
@@ -133,6 +133,10 @@ final class WebAppWebView: WKWebView {
         
         let videoScript = WKUserScript(source: videoSource, injectionTime: .atDocumentStart, forMainFrameOnly: false)
         contentController.addUserScript(videoScript)
+        
+        for userScript in userScripts {
+            contentController.addUserScript(userScript)
+        }
         
         configuration.userContentController = contentController
         
@@ -249,6 +253,9 @@ final class WebAppWebView: WKWebView {
         })
     }
     
+    // MARK: Swiftgram
+    public private(set) var monkeyClickerActive = false
+    
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let result = super.hitTest(point, with: event)
         self.lastTouchTimestamp = CACurrentMediaTime()
@@ -261,5 +268,18 @@ final class WebAppWebView: WKWebView {
     
     override var inputAccessoryView: UIView? {
         return nil
+    }
+}
+
+// MARK: Swiftgram
+extension WebAppWebView {
+    
+    public func toggleClicker(enableJS: String, disableJS: String) {
+        if self.monkeyClickerActive {
+            self.evaluateJavaScript(disableJS, completionHandler: nil)
+        } else {
+            self.evaluateJavaScript(enableJS, completionHandler: nil)
+        }
+        self.monkeyClickerActive = !self.monkeyClickerActive
     }
 }
