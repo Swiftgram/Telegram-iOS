@@ -95,7 +95,7 @@ private final class MoreIconNode: ManagedAnimationNode {
 final class PeerInfoHeaderNavigationButton: HighlightableButtonNode {
     let containerNode: ContextControllerSourceNode
     let contextSourceNode: ContextReferenceContentNode
-    private let textNode: ImmediateTextNode
+    public let textNode: ImmediateTextNode
     private let iconNode: ASImageNode
     private let backIconLayer: SimpleShapeLayer
     private var animationNode: MoreIconNode?
@@ -104,7 +104,7 @@ final class PeerInfoHeaderNavigationButton: HighlightableButtonNode {
     private var key: PeerInfoHeaderNavigationButtonKey?
     
     private var contentsColor: UIColor = .white
-    private var canBeExpanded: Bool = false
+    public private(set) var canBeExpanded: Bool = false
     
     var action: ((ASDisplayNode, ContextGesture?) -> Void)?
     

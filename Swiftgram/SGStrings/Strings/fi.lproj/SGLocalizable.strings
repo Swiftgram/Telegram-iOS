@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "Sisällön Asetukset";
+
+"Settings.Tabs.Header" = "VÄLILEHDET";
+"Settings.Tabs.HideTabBar" = "Piilota Välilehtipalkki";
+"Settings.Tabs.ShowContacts" = "Näytä Yhteystiedot-välilehti";
+"Settings.Tabs.ShowNames" = "Näytä välilehtien nimet";
+
+"Settings.Folders.BottomTab" = "Kansiot alhaalla";
+"Settings.Folders.BottomTabStyle" = "Alhaalla olevien kansioiden tyyli";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "Piilota \"%@\"";
+"Settings.Folders.RememberLast" = "Avaa viimeisin kansio";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram avaa viimeksi käytetyn kansion uudelleenkäynnistyksen tai tilin vaihdon jälkeen.";
+
+"Settings.Folders.CompactNames" = "Pienempi väli";
+"Settings.Folders.AllChatsTitle" = "\"Kaikki chatit\" otsikko";
+"Settings.Folders.AllChatsTitle.short" = "Lyhyt";
+"Settings.Folders.AllChatsTitle.long" = "Pitkä";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Oletus";
+
+
+"Settings.ChatList.Header" = "CHAT LIST";
+"Settings.CompactChatList" = "Kompakti Keskustelulista";
+
+"Settings.Profiles.Header" = "PROFILES";
+
+"Settings.Stories.Hide" = "Piilota Tarinat";
+"Settings.Stories.WarnBeforeView" = "Kysy ennen katsomista";
+"Settings.Stories.DisableSwipeToRecord" = "Poista pyyhkäisy tallennukseen käytöstä";
+
+"Settings.Translation.QuickTranslateButton" = "Pikakäännöspainike";
+
+"Stories.Warning.Author" = "Tekijä";
+"Stories.Warning.ViewStory" = "Katso Tarina?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ NÄKEE, että olet katsonut heidän Tarinansa.";
+"Stories.Warning.NoticeStealth" = "%@ ei näe, että olet katsonut heidän Tarinansa.";
+
+"Settings.Photo.Quality.Notice" = "Lähtevien valokuvien ja valokuvatarinoiden laatu.";
+"Settings.Photo.SendLarge" = "Lähetä suuria valokuvia";
+"Settings.Photo.SendLarge.Notice" = "Suurenna pakattujen kuvien sivurajaa 2560px:ään.";
+
+"Settings.VideoNotes.Header" = "PYÖREÄT VIDEOT";
+"Settings.VideoNotes.StartWithRearCam" = "Aloita takakameralla";
+
+"Settings.CustomColors.Header" = "TILIN VÄRIT";
+"Settings.CustomColors.Saturation" = "KYLLÄISYYS";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Aseta kylläisyys 0%%:iin poistaaksesi tilin värit käytöstä.";
+
+"Settings.UploadsBoost" = "Latausten tehostus";
+"Settings.DownloadsBoost" = "Latausten tehostus";
+"Settings.DownloadsBoost.Notice" = "Lisää samanaikaisten yhteyksien määrää ja tiedostopalojen kokoa. Jos verkkoasi ei pysty käsittelemään kuormitusta, kokeile erilaisia vaihtoehtoja, jotka sopivat yhteyteesi.";
+"Settings.DownloadsBoost.none" = "Ei käytössä";
+"Settings.DownloadsBoost.medium" = "Keskitaso";
+"Settings.DownloadsBoost.maximum" = "Maksimi";
+
+"Settings.ShowProfileID" = "Näytä profiilin ID";
+"Settings.ShowDC" = "Näytä tietokeskus";
+"Settings.ShowCreationDate" = "Näytä keskustelun luontipäivä";
+"Settings.ShowCreationDate.Notice" = "Keskustelun luontipäivä voi olla tuntematon joillekin keskusteluille.";
+
+"Settings.ShowRegDate" = "Näytä Rekisteröintipäivä";
+"Settings.ShowRegDate.Notice" = "Rekisteröintipäivä on likimääräinen.";
+
+"Settings.SendWithReturnKey" = "Lähetä 'paluu'-näppäimellä";
+"Settings.HidePhoneInSettingsUI" = "Piilota puhelin asetuksissa";
+"Settings.HidePhoneInSettingsUI.Notice" = "Tämä piilottaa puhelinnumerosi vain asetukset-käyttöliittymästä. Piilottaaksesi sen muilta, siirry kohtaan Yksityisyys ja Turvallisuus.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "Jos poissa 5 sekuntia";
+
+"ProxySettings.UseSystemDNS" = "Käytä järjestelmän DNS:ää";
+"ProxySettings.UseSystemDNS.Notice" = "Käytä järjestelmän DNS:ää ohittaaksesi aikakatkaisun, jos sinulla ei ole pääsyä Google DNS:ään";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "Et **tarvitse** %@!";
+"Common.RestartRequired" = "Uudelleenkäynnistys vaaditaan";
+"Common.RestartNow" = "Käynnistä uudelleen nyt";
+"Common.OpenTelegram" = "Avaa Telegram";
+"Common.UseTelegramForPremium" = "Huomioi, että saat Telegram Premiumin käyttämällä virallista Telegram-sovellusta. Kun olet hankkinut Telegram Premiumin, kaikki sen ominaisuudet ovat saatavilla Swiftgramissa.";
+
+"Message.HoldToShowOrReport" = "Pidä esillä näyttääksesi tai ilmoittaaksesi.";
+
+"Auth.AccountBackupReminder" = "Varmista, että sinulla on varmuuskopio pääsymenetelmästä. Pidä SIM tekstiviestejä varten tai ylimääräinen istunto kirjautuneena välttääksesi lukkiutumisen.";
+"Auth.UnofficialAppCodeTitle" = "Koodin voi saada vain virallisella sovelluksella";
+
+"Settings.SmallReactions" = "Pienet reaktiot";
+"Settings.HideReactions" = "Piilota reaktiot";
+
+"ContextMenu.SaveToCloud" = "Tallenna Pilveen";
+"ContextMenu.SelectFromUser" = "Valitse Tekijältä";
+
+"Settings.ContextMenu" = "KONTEKSTIVALIKKO";
+"Settings.ContextMenu.Notice" = "Poistetut kohteet ovat saatavilla 'Swiftgram'-alavalikossa.";
+
+
+"Settings.ChatSwipeOptions" = "Chat List Swipe Options";
+"Settings.DeleteChatSwipeOption" = "Vedä poistaaksesi keskustelu";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Vetää seuraavaan lukemattomaan kanavaan";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Vedä seuraava aihe";
+"Settings.GalleryCamera" = "Camera in Gallery";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" Button";
+"Settings.SnapDeletionEffect" = "Message Deletion Effects";
+
+"Settings.Stickers.Size" = "SIZE";
+"Settings.Stickers.Timestamp" = "Show Timestamp";
+
+"Settings.RecordingButton" = "Voice Recording Button";
+
+"Settings.DefaultEmojisFirst" = "Anna etusijalle vakiotunnuksia";
+"Settings.DefaultEmojisFirst.Notice" = "Näytä vakiotunnukset ennen premium-tunnuksia tunnusnäppäimistössä";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "created: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "Joined %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Rekisteröity";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Paina kahdesti muokataksesi viestiä";
+
+"Settings.wideChannelPosts" = "Leveitä viestejä kanavissa";
+"Settings.ForceEmojiTab" = "Emoji-näppäimistö oletuksena";
+
+"Settings.forceBuiltInMic" = "Pakota laitteen mikrofoni";
+"Settings.forceBuiltInMic.Notice" = "Jos otettu käyttöön, sovellus käyttää vain laitteen mikrofonia, vaikka kuulokkeet olisivatkin liitettynä.";
+
+"Settings.hideChannelBottomButton" = "Piilota kanavan alapalkki";
+
+"Settings.CallConfirmation" = "Puhelun vahvistus";
+"Settings.CallConfirmation.Notice" = "Swiftgram pyytää vahvistustasi ennen puhelun soittamista.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Soita puhelu?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Soita videopuhelu?";
+
+"MutualContact.Label" = "yhteinen yhteys";
+
+"Settings.swipeForVideoPIP" = "Video PIP pyyhkäisevällä toiminnolla";
+"Settings.swipeForVideoPIP.Notice" = "Jos se on käytössä, videon pyyhkäisy avaa sen kuvassa kuvassa -tilassa.";

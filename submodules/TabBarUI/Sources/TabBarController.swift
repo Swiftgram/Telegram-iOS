@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -128,11 +129,13 @@ open class TabBarControllerImpl: ViewController, TabBarController {
     private let pendingControllerDisposable = MetaDisposable()
     
     private var navigationBarPresentationData: NavigationBarPresentationData
+    private var showTabNames: Bool
     private var theme: TabBarControllerTheme
     
     public var cameraItemAndAction: (item: UITabBarItem, action: () -> Void)?
     
-    public init(navigationBarPresentationData: NavigationBarPresentationData, theme: TabBarControllerTheme) {
+    public init(showTabNames: Bool, navigationBarPresentationData: NavigationBarPresentationData, theme: TabBarControllerTheme) {
+        self.showTabNames = showTabNames
         self.navigationBarPresentationData = navigationBarPresentationData
         self.theme = theme
         
@@ -211,6 +214,7 @@ open class TabBarControllerImpl: ViewController, TabBarController {
     }
     
     public func updateIsTabBarHidden(_ value: Bool, transition: ContainedViewLayoutTransition) {
+        self.tabBarControllerNode.tabBarNode.isHidden = value
         self.tabBarControllerNode.tabBarHidden = value
         if let layout = self.validLayout {
             self.containerLayoutUpdated(layout, transition: .animated(duration: 0.4, curve: .slide))
@@ -218,7 +222,8 @@ open class TabBarControllerImpl: ViewController, TabBarController {
     }
     
     override open func loadDisplayNode() {
-        self.displayNode = TabBarControllerNode(theme: self.theme, navigationBarPresentationData: self.navigationBarPresentationData, itemSelected: { [weak self] index, longTap, itemNodes in
+        // MARK: Swiftgram
+        self.displayNode = TabBarControllerNode(showTabNames: self.showTabNames, theme: self.theme, navigationBarPresentationData: self.navigationBarPresentationData, itemSelected: { [weak self] index, longTap, itemNodes in
             if let strongSelf = self {
                 var index = index
                 if let (cameraItem, cameraAction) = strongSelf.cameraItemAndAction {

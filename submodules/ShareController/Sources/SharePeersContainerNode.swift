@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -163,7 +164,7 @@ final class SharePeersContainerNode: ASDisplayNode, ShareContentContainerNode {
         
         self.peersValue.set(.single(peers))
         
-        let canShareStory = controllerInteraction.shareStory != nil
+        let canShareStory = controllerInteraction.shareStory != nil && SGSimpleSettings.shared.showRepostToStory
         
         let items: Signal<[SharePeerEntry], NoError> = combineLatest(self.peersValue.get(), self.foundPeers.get(), self.tick.get(), self.themePromise.get())
         |> map { [weak controllerInteraction] initialPeers, foundPeers, _, theme -> [SharePeerEntry] in
@@ -316,6 +317,30 @@ final class SharePeersContainerNode: ASDisplayNode, ShareContentContainerNode {
         }
 
         self.contentTitleNode.view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.debugTapGesture(_:))))
+        
+        // MARK: Swiftgram
+        self.isAccessibilityElement = false
+
+        self.contentTitleNode.isAccessibilityElement = true
+        self.contentTitleNode.accessibilityLabel = strings.ShareMenu_ShareTo
+        self.contentTitleNode.accessibilityTraits = .header
+
+        self.contentSubtitleNode.isAccessibilityElement = true
+        self.contentSubtitleNode.accessibilityLabel = strings.ShareMenu_SelectChats
+
+        self.searchButtonNode.isAccessibilityElement = true
+        self.searchButtonNode.accessibilityLabel = strings.Common_Search
+        self.searchButtonNode.accessibilityTraits = .button
+
+        self.shareButtonNode.isAccessibilityElement = true
+        self.shareButtonNode.accessibilityLabel = "System Share Menu"
+        self.shareButtonNode.accessibilityTraits = .button
+
+        self.contentTitleAccountNode.isAccessibilityElement = true
+        self.contentTitleAccountNode.accessibilityLabel = strings.Shortcut_SwitchAccount
+        self.contentTitleAccountNode.accessibilityTraits = .button
+        //
+
     }
     
     deinit {
@@ -691,6 +716,7 @@ final class SharePeersContainerNode: ASDisplayNode, ShareContentContainerNode {
                 })
             }
             self.contentSubtitleNode.attributedText = NSAttributedString(string: subtitleText, font: subtitleFont, textColor: self.theme.actionSheet.secondaryTextColor)
+            self.contentSubtitleNode.accessibilityLabel = subtitleText
         }
         self.contentGridNode.forEachItemNode { itemNode in
             if let itemNode = itemNode as? ShareControllerPeerGridItemNode {

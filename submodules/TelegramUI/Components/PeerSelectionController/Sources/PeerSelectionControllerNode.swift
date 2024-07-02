@@ -353,9 +353,9 @@ final class PeerSelectionControllerNode: ASDisplayNode {
         }, blockMessageAuthor: { _, _ in
         }, deleteMessages: { _, _, f in
             f(.default)
-        }, forwardSelectedMessages: {
+        }, forwardSelectedMessages: { _ in
         }, forwardCurrentForwardMessages: {
-        }, forwardMessages: { _ in
+        }, forwardMessages: { _, _ in
         }, updateForwardOptionsState: { [weak self] f in
             if let strongSelf = self {
                 strongSelf.updateChatPresentationInterfaceState(animated: true, { $0.updatedInterfaceState({ $0.withUpdatedForwardOptionsState(f($0.forwardOptionsState ?? ChatInterfaceForwardOptionsState(hideNames: false, hideCaptions: false, unhideNamesOnCaptionChange: false))) }) })

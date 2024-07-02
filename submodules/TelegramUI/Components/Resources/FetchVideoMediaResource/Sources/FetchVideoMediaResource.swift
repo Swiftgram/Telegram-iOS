@@ -847,6 +847,8 @@ private extension MediaQualityPreset {
             qualityPreset = .animation
         case TGMediaVideoConversionPresetVideoMessage:
             qualityPreset = .videoMessage
+        case TGMediaVideoConversionPresetVideoMessageHD:
+            qualityPreset = .videoMessageHD
         default:
             qualityPreset = .compressedMedium
         }

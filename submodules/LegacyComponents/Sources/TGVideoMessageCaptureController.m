@@ -66,6 +66,7 @@ typedef enum
     SQueue *_queue;
         
     AVCaptureDevicePosition _preferredPosition;
+    bool _startWithRearCam;
     TGVideoCameraPipeline *_capturePipeline;
     NSURL *_url;
     
@@ -150,8 +151,8 @@ typedef enum
 @end
 
 @implementation TGVideoMessageCaptureController
-
-- (instancetype)initWithContext:(id<LegacyComponentsContext>)context forStory:(bool)forStory assets:(TGVideoMessageCaptureControllerAssets *)assets transitionInView:(UIView *(^)(void))transitionInView parentController:(TGViewController *)parentController controlsFrame:(CGRect)controlsFrame isAlreadyLocked:(bool (^)(void))isAlreadyLocked liveUploadInterface:(id<TGLiveUploadInterface>)liveUploadInterface pallete:(TGModernConversationInputMicPallete *)pallete slowmodeTimestamp:(int32_t)slowmodeTimestamp slowmodeView:(UIView *(^)(void))slowmodeView canSendSilently:(bool)canSendSilently canSchedule:(bool)canSchedule reminder:(bool)reminder
+# pragma mark - Swiftgram
+- (instancetype)initWithContext:(id<LegacyComponentsContext>)context forStory:(bool)forStory assets:(TGVideoMessageCaptureControllerAssets *)assets transitionInView:(UIView *(^)(void))transitionInView parentController:(TGViewController *)parentController controlsFrame:(CGRect)controlsFrame isAlreadyLocked:(bool (^)(void))isAlreadyLocked liveUploadInterface:(id<TGLiveUploadInterface>)liveUploadInterface pallete:(TGModernConversationInputMicPallete *)pallete slowmodeTimestamp:(int32_t)slowmodeTimestamp slowmodeView:(UIView *(^)(void))slowmodeView canSendSilently:(bool)canSendSilently canSchedule:(bool)canSchedule reminder:(bool)reminder startWithRearCam:(bool)startWithRearCam
 {
     self = [super initWithContext:context];
     if (self != nil)
@@ -173,7 +174,13 @@ typedef enum
         _queue = [[SQueue alloc] init];
         
         _previousDuration = 0.0;
-        _preferredPosition = AVCaptureDevicePositionFront;
+#pragma mark - Swiftgram
+        if (startWithRearCam) {
+            _preferredPosition = AVCaptureDevicePositionBack;
+        } else {
+            _preferredPosition = AVCaptureDevicePositionFront;
+        }
+        _startWithRearCam = startWithRearCam;
         
         self.isImportant = true;
         _controlsFrame = controlsFrame;
@@ -1060,7 +1067,7 @@ typedef enum
     CGFloat minSize = MIN(thumbnailImage.size.width, thumbnailImage.size.height);
     CGFloat maxSize = MAX(thumbnailImage.size.width, thumbnailImage.size.height);
     
-    bool mirrored = true;
+    bool mirrored = !_startWithRearCam;
     UIImageOrientation orientation = [self orientationForThumbnailWithTransform:_capturePipeline.videoTransform mirrored:mirrored];
     
     UIImage *image = TGPhotoEditorCrop(thumbnailImage, nil, orientation, 0.0f, CGRectMake((maxSize - minSize) / 2.0f, 0.0f, minSize, minSize), mirrored, CGSizeMake(240.0f, 240.0f), thumbnailImage.size, true);
@@ -1079,7 +1086,7 @@ typedef enum
         
         if (trimStartValue > DBL_EPSILON || trimEndValue < _duration - DBL_EPSILON)
         {
-            adjustments = [TGVideoEditAdjustments editAdjustmentsWithOriginalSize:dimensions cropRect:CGRectMake(0.0f, 0.0f, dimensions.width, dimensions.height) cropOrientation:UIImageOrientationUp cropRotation:0.0 cropLockedAspectRatio:1.0 cropMirrored:false trimStartValue:trimStartValue trimEndValue:trimEndValue toolValues:nil paintingData:nil sendAsGif:false preset:TGMediaVideoConversionPresetVideoMessage];
+            adjustments = [TGVideoEditAdjustments editAdjustmentsWithOriginalSize:dimensions cropRect:CGRectMake(0.0f, 0.0f, dimensions.width, dimensions.height) cropOrientation:UIImageOrientationUp cropRotation:0.0 cropLockedAspectRatio:1.0 cropMirrored:false trimStartValue:trimStartValue trimEndValue:trimEndValue toolValues:nil paintingData:nil sendAsGif:false sendAsTelescope:false preset:TGMediaVideoConversionPresetVideoMessage];
             
             duration = trimEndValue - trimStartValue;
         }

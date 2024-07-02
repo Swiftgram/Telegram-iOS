@@ -18,7 +18,9 @@ func makePeerIdFromBridgeIdentifier(_ identifier: Int64) -> PeerId? {
         return PeerId(namespace: Namespaces.Peer.CloudGroup, id: PeerId.Id._internalFromInt64Value(-identifier))
     } else if identifier < Int64(Int32.min) * 2 && identifier > Int64(Int32.min) * 3 {
         return PeerId(namespace: Namespaces.Peer.CloudChannel, id: PeerId.Id._internalFromInt64Value(Int64(Int32.min) &* 2 &- identifier))
-    } else if identifier > 0 && identifier < Int32.max {
+    // MARK: Swiftgram
+    // supports 52 bits
+    } else if identifier > 0 && identifier < (1 << 52) {
         return PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(identifier))
     } else {
         return nil
