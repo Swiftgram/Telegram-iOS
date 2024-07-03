@@ -132,3 +132,5 @@
 
 "Settings.forceBuiltInMic" = "Force Device Microphone";
 "Settings.forceBuiltInMic.Notice" = "If enabled, app will use only device microphone even if headphones are connected.";
+
+"Settings.hideChannelBottomButton" = "Hide Channel Bottom Panel";
