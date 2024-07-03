@@ -26,8 +26,12 @@ private enum SGDebugActions: String {
     case clearRegDateCache
 }
 
+private enum SGDebugToggles: String {
+    case forceImmediateShareSheet
+}
 
-private typealias SGDebugControllerEntry = SGItemListUIEntry<SGDebugControllerSection, AnyHashable, AnyHashable, AnyHashable, AnyHashable, SGDebugActions>
+
+private typealias SGDebugControllerEntry = SGItemListUIEntry<SGDebugControllerSection, SGDebugToggles, AnyHashable, AnyHashable, AnyHashable, SGDebugActions>
 
 private func SGDebugControllerEntries(presentationData: PresentationData) -> [SGDebugControllerEntry] {
     var entries: [SGDebugControllerEntry] = []
@@ -37,6 +41,7 @@ private func SGDebugControllerEntries(presentationData: PresentationData) -> [SG
     entries.append(.action(id: id.count, section: .base, actionType: .flexing, text: "FLEX", kind: .generic))
     #endif
     entries.append(.action(id: id.count, section: .base, actionType: .clearRegDateCache, text: "Clear Regdate cache", kind: .generic))
+    entries.append(.toggle(id: id.count, section: .base, settingName: .forceImmediateShareSheet, value: SGSimpleSettings.shared.forceSystemSharing, text: "Force System Share Sheet", enabled: true))
     
     return entries
 }
@@ -51,7 +56,12 @@ public func sgDebugController(context: AccountContext) -> ViewController {
 
     let simplePromise = ValuePromise(true, ignoreRepeated: false)
     
-    let arguments = SGItemListArguments<AnyHashable, AnyHashable, AnyHashable, AnyHashable, SGDebugActions>(context: context, action: { actionType in
+    let arguments = SGItemListArguments<SGDebugToggles, AnyHashable, AnyHashable, AnyHashable, SGDebugActions>(context: context, setBoolValue: { toggleName, value in
+        switch toggleName {
+            case .forceImmediateShareSheet:
+                SGSimpleSettings.shared.forceSystemSharing = value
+        }
+    }, action: { actionType in
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
         switch actionType {
             case .clearRegDateCache:
