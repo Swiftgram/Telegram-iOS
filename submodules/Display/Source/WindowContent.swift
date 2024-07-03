@@ -1182,7 +1182,13 @@ public class Window1 {
                     // MARK: Swiftgram
                     var badgeOffset: CGFloat = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone13ProMax.statusBarHeight
                     if case self.deviceMetrics = DeviceMetrics.iPhone14ProZoomed {
-                        badgeOffset = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone14ProZoomed.statusBarHeight + 3.0
+                        badgeOffset = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone14ProZoomed.statusBarHeight
+                        if ![
+                            "iPhone13,1", // iPhone 12 mini in Zoomed mode detected as iPhone14ProZoomed
+                            "iPhone14,4" // iPhone 13 Mini likely affected
+                        ].contains(self.deviceMetrics.deviceModelCode) {
+                            badgeOffset += 3.0
+                        }
                     } else if case self.deviceMetrics = DeviceMetrics.iPhone14ProMaxZoomed {
                         badgeOffset = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone14ProMaxZoomed.statusBarHeight + 3.0
                     }
