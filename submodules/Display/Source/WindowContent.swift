@@ -1180,17 +1180,19 @@ public class Window1 {
                 if let image = self.badgeView.image {
                     self.updateBadgeVisibility()
                     // MARK: Swiftgram
-                    var badgeOffset: CGFloat = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone13ProMax.statusBarHeight
+                    var badgeOffset: CGFloat
                     if case self.deviceMetrics = DeviceMetrics.iPhone14ProZoomed {
                         badgeOffset = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone14ProZoomed.statusBarHeight
-                        if ![
-                            "iPhone13,1", // iPhone 12 mini in Zoomed mode detected as iPhone14ProZoomed
-                            "iPhone14,4" // iPhone 13 Mini likely affected
-                        ].contains(self.deviceMetrics.deviceModelCode) {
+                        if self.deviceMetrics.modelHasDynamicIsland {
                             badgeOffset += 3.0
                         }
                     } else if case self.deviceMetrics = DeviceMetrics.iPhone14ProMaxZoomed {
-                        badgeOffset = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone14ProMaxZoomed.statusBarHeight + 3.0
+                        badgeOffset = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone14ProMaxZoomed.statusBarHeight
+                        if self.deviceMetrics.modelHasDynamicIsland {
+                            badgeOffset += 3.0
+                        }
+                    } else {
+                        badgeOffset = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone13ProMax.statusBarHeight
                     }
                     if badgeOffset != 0 {
                         badgeOffset += 3.0 // Centering badge in status bar for Dynamic island devices
