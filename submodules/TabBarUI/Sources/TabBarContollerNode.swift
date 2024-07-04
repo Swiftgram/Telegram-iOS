@@ -33,6 +33,7 @@ final class TabBarControllerNode: ASDisplayNode {
         self.theme = theme
         self.navigationBarPresentationData = navigationBarPresentationData
         self.tabBarNode = TabBarNode(showTabNames: showTabNames, theme: theme, itemSelected: itemSelected, contextAction: contextAction, swipeAction: swipeAction)
+        self.tabBarNode.isHidden = SGSimpleSettings.shared.hideTabBar
         self.disabledOverlayNode = ASDisplayNode()
         self.disabledOverlayNode.backgroundColor = theme.backgroundColor.withAlphaComponent(0.5)
         self.disabledOverlayNode.alpha = 0.0
