@@ -27,4 +27,7 @@ public protocol TabBarController: ViewController {
     func updateIsTabBarEnabled(_ value: Bool, transition: ContainedViewLayoutTransition)
     func updateIsTabBarHidden(_ value: Bool, transition: ContainedViewLayoutTransition)
     func updateLayout(transition: ContainedViewLayoutTransition)
+    
+    // MARK: Swiftgram
+    func updateIsTabBarHiddenForce(_ value: Bool, transition: ContainedViewLayoutTransition)
 }

@@ -214,7 +214,17 @@ open class TabBarControllerImpl: ViewController, TabBarController {
     }
     
     public func updateIsTabBarHidden(_ value: Bool, transition: ContainedViewLayoutTransition) {
+        self.tabBarControllerNode.tabBarNode.isHidden = SGSimpleSettings.shared.hideTabBar
         self.tabBarControllerNode.tabBarHidden = SGSimpleSettings.shared.hideTabBar ? true : value
+        if let layout = self.validLayout {
+            self.containerLayoutUpdated(layout, transition: .animated(duration: 0.4, curve: .slide))
+        }
+    }
+    
+    // MARK: Swiftgram
+    public func updateIsTabBarHiddenForce(_ value: Bool, transition: ContainedViewLayoutTransition) {
+        self.tabBarControllerNode.tabBarNode.isHidden = SGSimpleSettings.shared.hideTabBar
+        self.tabBarControllerNode.tabBarHidden = value
         if let layout = self.validLayout {
             self.containerLayoutUpdated(layout, transition: .animated(duration: 0.4, curve: .slide))
         }
