@@ -3397,6 +3397,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         if let layout = self.validLayout {
             self.updateLayout(layout: layout, transition: .animated(duration: 0.2, curve: .easeInOut))
         }
+        if SGSimpleSettings.shared.hideTabBar {
+            (self.parent as? TabBarController)?.updateIsTabBarHidden(false, transition: .animated(duration: 0.2, curve: .easeInOut))
+        }
     }
     
     @objc fileprivate func donePressed() {
@@ -3422,6 +3425,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             if let layout = self.validLayout {
                 self.updateLayout(layout: layout, transition: .animated(duration: 0.2, curve: .easeInOut))
             }
+        }
+        if SGSimpleSettings.shared.hideTabBar {
+            (self.parent as? TabBarController)?.updateIsTabBarHidden(true, transition: .animated(duration: 0.2, curve: .easeInOut))
         }
     }
     
@@ -4615,7 +4621,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         
         completion?()
         
-        (self.parent as? TabBarController)?.updateIsTabBarHidden(false, transition: .animated(duration: 0.4, curve: .spring))
+        (self.parent as? TabBarController)?.updateIsTabBarHidden(SGSimpleSettings.shared.hideTabBar ? true : false, transition: .animated(duration: 0.4, curve: .spring))
         
         self.isSearchActive = false
         if let navigationController = self.navigationController as? NavigationController {
@@ -6598,7 +6604,9 @@ private final class ChatListLocationContext {
             }
             var transition: ContainedViewLayoutTransition = .immediate
             let previousToolbar = previousToolbarValue.swap(toolbar)
-            if (previousToolbar == nil) != (toolbar == nil) {
+            if SGSimpleSettings.shared.hideTabBar {
+                transition = .animated(duration: 0.2, curve: .easeInOut)
+            } else if (previousToolbar == nil) != (toolbar == nil) {
                 transition = .animated(duration: 0.4, curve: .spring)
             }
             if strongSelf.toolbar != toolbar {
