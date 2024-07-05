@@ -132,3 +132,5 @@
 
 "Settings.forceBuiltInMic" = "强制使用设备麦克风";
 "Settings.forceBuiltInMic.Notice" = "若启用，即使已连接耳机，应用也只使用设备自身的麦克风。";
+
+"Settings.hideChannelBottomButton" = "隐藏频道底部面板";
