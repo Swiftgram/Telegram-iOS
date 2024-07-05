@@ -126,3 +126,11 @@
 "Chat.RegDate" = "註冊日期";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "雙擊以編輯訊息";
+
+"Settings.wideChannelPosts" = "在頻道中以更寬的樣式顯示訊息";
+"Settings.ForceEmojiTab" = "預設表情符號鍵盤";
+
+"Settings.forceBuiltInMic" = "強制使用裝置麥克風";
+"Settings.forceBuiltInMic.Notice" = "如果啟用，應用程式將只會使用設備麥克風。";
+
+"Settings.hideChannelBottomButton" = "隱藏頻道底部面板";
