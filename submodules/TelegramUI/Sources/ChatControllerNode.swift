@@ -1484,14 +1484,18 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
         // MARK: Swiftgram
         var inputPanelNodes = inputPanelForChatPresentationIntefaceState(self.chatPresentationInterfaceState, context: self.context, currentPanel: self.inputPanelNode, currentSecondaryPanel: self.secondaryInputPanelNode, textInputPanelNode: self.textInputPanelNode, interfaceInteraction: self.interfaceInteraction)
         
-        if (inputPanelNodes.primary != nil || inputPanelNodes.secondary != nil) && SGSimpleSettings.shared.hideChannelBottomButton {
+        if self.chatPresentationInterfaceState.interfaceState.selectionState != nil {
+            self.inputPanelClippingNode.addSubnode(self.inputPanelBackgroundNode)
+            self.inputPanelClippingNode.addSubnode(self.inputPanelBackgroundSeparatorNode)
+            self.inputPanelBackgroundNode.addSubnode(self.inputPanelBottomBackgroundSeparatorNode)
+        } else if (inputPanelNodes.primary != nil || inputPanelNodes.secondary != nil) && SGSimpleSettings.shared.hideChannelBottomButton {
             // So there should be some panel, but user don't want it. Let's check if our logic will hide it
             inputPanelNodes = inputPanelForChatPresentationIntefaceState(self.chatPresentationInterfaceState, context: self.context, currentPanel: self.inputPanelNode, currentSecondaryPanel: self.secondaryInputPanelNode, textInputPanelNode: self.textInputPanelNode, interfaceInteraction: self.interfaceInteraction, forceHideChannelButton: true)
             if inputPanelNodes.primary == nil && inputPanelNodes.secondary == nil {
                 // Looks like we're eligible to hide the panel, let's remove safe area fill as well
+                self.inputPanelBackgroundNode.removeFromSupernode()
                 self.inputPanelBackgroundSeparatorNode.removeFromSupernode()
                 self.inputPanelBottomBackgroundSeparatorNode.removeFromSupernode()
-                self.inputPanelBackgroundNode.removeFromSupernode()
             }
         }
         
