@@ -1458,7 +1458,7 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
         // MARK: Swiftgram
         var inputPanelNodes = inputPanelForChatPresentationIntefaceState(self.chatPresentationInterfaceState, context: self.context, currentPanel: self.inputPanelNode, currentSecondaryPanel: self.secondaryInputPanelNode, textInputPanelNode: self.textInputPanelNode, interfaceInteraction: self.interfaceInteraction)
         
-        if self.chatPresentationInterfaceState.interfaceState.selectionState != nil {
+        if self.chatPresentationInterfaceState.interfaceState.selectionState != nil || self.chatPresentationInterfaceState.search != nil {
             self.inputPanelClippingNode.addSubnode(self.inputPanelBackgroundNode)
             self.inputPanelClippingNode.addSubnode(self.inputPanelBackgroundSeparatorNode)
             self.inputPanelBackgroundNode.addSubnode(self.inputPanelBottomBackgroundSeparatorNode)
