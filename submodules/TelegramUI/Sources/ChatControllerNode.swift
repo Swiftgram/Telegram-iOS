@@ -1457,15 +1457,21 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
         var dismissedOverlayContextPanelNode: ChatInputContextPanelNode?
         // MARK: Swiftgram
         var inputPanelNodes = inputPanelForChatPresentationIntefaceState(self.chatPresentationInterfaceState, context: self.context, currentPanel: self.inputPanelNode, currentSecondaryPanel: self.secondaryInputPanelNode, textInputPanelNode: self.textInputPanelNode, interfaceInteraction: self.interfaceInteraction)
-        
-        if (inputPanelNodes.primary != nil || inputPanelNodes.secondary != nil) && SGSimpleSettings.shared.hideChannelBottomButton {
-            // So there should be some panel, but user don't want it. Let's check if our logic will hide it
-            inputPanelNodes = inputPanelForChatPresentationIntefaceState(self.chatPresentationInterfaceState, context: self.context, currentPanel: self.inputPanelNode, currentSecondaryPanel: self.secondaryInputPanelNode, textInputPanelNode: self.textInputPanelNode, interfaceInteraction: self.interfaceInteraction, forceHideChannelButton: true)
-            if inputPanelNodes.primary == nil && inputPanelNodes.secondary == nil {
-                // Looks like we're eligible to hide the panel, let's remove safe area fill as well
-                self.inputPanelBackgroundSeparatorNode.removeFromSupernode()
-                self.inputPanelBottomBackgroundSeparatorNode.removeFromSupernode()
-                self.inputPanelBackgroundNode.removeFromSupernode()
+        if SGSimpleSettings.shared.hideChannelBottomButton {
+            // We still need the panel for messages multi-select or search. Likely can break in future.
+            if self.chatPresentationInterfaceState.interfaceState.selectionState != nil || self.chatPresentationInterfaceState.search != nil {
+                self.inputPanelBackgroundNode.isHidden = false
+                self.inputPanelBackgroundSeparatorNode.isHidden = false
+                self.inputPanelBottomBackgroundSeparatorNode.isHidden = false
+            } else if (inputPanelNodes.primary != nil || inputPanelNodes.secondary != nil)  {
+                // So there should be some panel, but user don't want it. Let's check if our logic will hide it
+                inputPanelNodes = inputPanelForChatPresentationIntefaceState(self.chatPresentationInterfaceState, context: self.context, currentPanel: self.inputPanelNode, currentSecondaryPanel: self.secondaryInputPanelNode, textInputPanelNode: self.textInputPanelNode, interfaceInteraction: self.interfaceInteraction, forceHideChannelButton: true)
+                if inputPanelNodes.primary == nil && inputPanelNodes.secondary == nil {
+                    // Looks like we're eligible to hide the panel, let's remove safe area fill as well
+                    self.inputPanelBackgroundNode.isHidden = true
+                    self.inputPanelBackgroundSeparatorNode.isHidden = true
+                    self.inputPanelBottomBackgroundSeparatorNode.isHidden = true
+                }
             }
         }
         
