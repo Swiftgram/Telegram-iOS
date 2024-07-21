@@ -1,7 +1,5 @@
 // MARK: Swiftgram
-#if DEBUG
-import FLEX
-#endif
+import SGDebugUI
 import SGSimpleSettings
 import SGSettingsUI
 import SGStrings
@@ -13145,19 +13143,10 @@ public final class PeerInfoScreenImpl: ViewController, PeerInfoScreen, KeyShortc
         items.append(.action(ContextMenuActionItem(text: "Swiftgram Debug", icon: { theme in
             return generateTintedImage(image: nil, color: theme.contextMenu.primaryColor)
         }, action: { [weak self] _, f in
-            guard let _ = self else {
+            guard let self = self else {
                 return
             }
-            #if DEBUG
-            FLEXManager.shared.showExplorer()
-            #endif
-//            SGSimpleSettings.shared.hideReactions = !SGSimpleSettings.shared.hideReactions
-//            let _ = updateSGUISettings(engine: strongSelf.context.engine, { settings in
-//                var settings = settings
-//                settings.sendWithReturnKey = !settings.sendWithReturnKey
-//                print("New setting value \(settings.sendWithReturnKey)")
-//                return settings
-//            }).startStandalone()
+            self.push(sgDebugController(context: self.context))
 
             f(.dismissWithoutContent)
         })))
@@ -14321,9 +14310,11 @@ extension PeerInfoScreenImpl {
         items.append(.action(ContextMenuActionItem(text: "Swiftgram Debug", icon: { theme in
             return generateTintedImage(image: nil, color: theme.contextMenu.primaryColor)
         }, action: { [weak self] _, f in
-            guard let _ = self else {
+            guard let self = self else {
                 return
             }
+            self.push(sgDebugController(context: self.context))
+            
             f(.dismissWithoutContent)
         })))
         #endif

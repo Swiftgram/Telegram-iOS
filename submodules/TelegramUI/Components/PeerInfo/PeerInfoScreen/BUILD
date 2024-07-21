@@ -6,22 +6,9 @@ sgdeps = [
     "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
 
     "//Swiftgram/SGRegDate:SGRegDate",
-    "//Swiftgram/SGRegDateScheme:SGRegDateScheme"
+    "//Swiftgram/SGRegDateScheme:SGRegDateScheme",
+    "//Swiftgram/SGDebugUI:SGDebugUI",
 ]
-
-config_setting(
-    name = "debug_build",
-    values = {
-        "compilation_mode": "dbg",
-    },
-)
-
-flex_dependency = select({
-    ":debug_build": [
-        "@flex_sdk//:FLEX"
-    ],
-    "//conditions:default": [],
-})
 
 
 swift_library(
@@ -33,7 +20,7 @@ swift_library(
     copts = [
         "-warnings-as-errors",
     ],
-    deps = flex_dependency + sgdeps + [
+    deps = sgdeps + [
         "//submodules/AccountContext",
         "//submodules/AccountUtils",
         "//submodules/ActionSheetPeerItem",
