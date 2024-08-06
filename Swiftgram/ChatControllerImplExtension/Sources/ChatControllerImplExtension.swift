@@ -211,7 +211,7 @@ extension ChatControllerImpl {
                             var navigationSubject: ChatControllerSubject? = nil
                             for messageId in messageIds {
                                 if let messageId = messageId {
-                                    navigationSubject = .message(id: .id(messageId), highlight: ChatControllerSubject.MessageHighlight(quote: nil), timecode: nil)
+                                    navigationSubject = .message(id: .id(messageId), highlight: ChatControllerSubject.MessageHighlight(quote: nil), timecode: nil, setupReply: false)
                                     break
                                 }
                             }

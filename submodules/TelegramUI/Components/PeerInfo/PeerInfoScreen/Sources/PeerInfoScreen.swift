@@ -1888,7 +1888,7 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
     if showProfileId {
         items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: "id: \(idText)", text: "", textColor: .primary, action: nil, longTapAction: { sourceNode in
             interaction.openPeerInfoContextMenu(.copy(idText), sourceNode, nil)
-        }, requestLayout: {
+        }, requestLayout: { _ in
             interaction.requestLayout(false)
         }))
         sgItemId += 1
@@ -1923,7 +1923,7 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
         if !dcText.isEmpty {
             items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: "dc: \(dcText)", text: "", textColor: .primary, action: nil, longTapAction: { sourceNode in
                 interaction.openPeerInfoContextMenu(.aboutDC, sourceNode, nil)
-            }, requestLayout: {
+            }, requestLayout: { _ in
                 interaction.requestLayout(false)
             }))
             sgItemId += 1
@@ -1935,7 +1935,7 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
             let creationDateString = stringForDate(timestamp: channelCreationTimestamp, strings: presentationData.strings)
             items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: i18n("Chat.Created", presentationData.strings.baseLanguageCode, creationDateString), text: "", action: nil, longTapAction: { sourceNode in
                 interaction.openPeerInfoContextMenu(.copy(creationDateString), sourceNode, nil)
-            }, requestLayout: {
+            }, requestLayout: { _ in
                 interaction.requestLayout(false)
             }))
             sgItemId += 1
@@ -1946,7 +1946,7 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
         let joinedDateString = stringForDate(timestamp: invitedAt, strings: presentationData.strings)
         items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: i18n("Chat.JoinedDateTitle", presentationData.strings.baseLanguageCode, nearestChatParticipant.0 ?? "chat") , text: joinedDateString, action: nil, longTapAction: { sourceNode in
             interaction.openPeerInfoContextMenu(.copy(joinedDateString), sourceNode, nil)
-        }, requestLayout: {
+        }, requestLayout: { _ in
             interaction.requestLayout(false)
         }))
         sgItemId += 1
@@ -1966,7 +1966,7 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
             }
             items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: i18n("Chat.RegDate", presentationData.strings.baseLanguageCode), text: regDateString, action: nil, longTapAction: { sourceNode in
                 interaction.openPeerInfoContextMenu(.copy(regDateString), sourceNode, nil)
-            }, requestLayout: {
+            }, requestLayout: { _ in
                 interaction.requestLayout(false)
             }))
             sgItemId += 1
