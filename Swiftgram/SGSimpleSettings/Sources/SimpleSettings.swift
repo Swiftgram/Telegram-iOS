@@ -80,6 +80,7 @@ public class SGSimpleSettings {
         case disableScrollToNextChannel
         case disableScrollToNextTopic
         case disableChatSwipeOptions
+        case disableDeleteChatSwipeOption
         case disableGalleryCamera
         case disableSendAsButton
         case disableSnapDeletionEffect
@@ -168,6 +169,7 @@ public class SGSimpleSettings {
         Keys.disableScrollToNextChannel.rawValue: false,
         Keys.disableScrollToNextTopic.rawValue: false,
         Keys.disableChatSwipeOptions.rawValue: false,
+        Keys.disableDeleteChatSwipeOption.rawValue: false,
         Keys.disableGalleryCamera.rawValue: false,
         Keys.disableSendAsButton.rawValue: false,
         Keys.disableSnapDeletionEffect.rawValue: false,
@@ -288,6 +290,9 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.disableChatSwipeOptions.rawValue)
     public var disableChatSwipeOptions: Bool
+
+    @UserDefault(key: Keys.disableDeleteChatSwipeOption.rawValue)
+    public var disableDeleteChatSwipeOption: Bool
 
     @UserDefault(key: Keys.disableGalleryCamera.rawValue)
     public var disableGalleryCamera: Bool
