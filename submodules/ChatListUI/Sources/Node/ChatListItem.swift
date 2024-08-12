@@ -619,7 +619,7 @@ private func revealOptions(strings: PresentationStrings, theme: PresentationThem
             }
         }
     }
-    if canDelete {
+    if canDelete && !SGSimpleSettings.shared.disableDeleteChatSwipeOption {
         options.append(ItemListRevealOption(key: RevealOptionKey.delete.rawValue, title: strings.Common_Delete, icon: deleteIcon, color: theme.list.itemDisclosureActions.destructive.fillColor, textColor: theme.list.itemDisclosureActions.destructive.foregroundColor))
     }
     if case .savedMessagesChats = location {
@@ -707,7 +707,7 @@ private func forumThreadRevealOptions(strings: PresentationStrings, theme: Prese
             }
         }
     }
-    if canDelete {
+    if canDelete && !SGSimpleSettings.shared.disableDeleteChatSwipeOption {
         options.append(ItemListRevealOption(key: RevealOptionKey.delete.rawValue, title: strings.Common_Delete, icon: deleteIcon, color: theme.list.itemDisclosureActions.destructive.fillColor, textColor: theme.list.itemDisclosureActions.destructive.foregroundColor))
     }
     if canOpenClose {
@@ -3288,6 +3288,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                                     ItemListRevealOption(key: RevealOptionKey.edit.rawValue, title: item.presentationData.strings.ChatList_ItemMenuEdit, icon: .none, color: item.presentationData.theme.list.itemDisclosureActions.neutral2.fillColor, textColor: item.presentationData.theme.list.itemDisclosureActions.neutral2.foregroundColor),
                                     ItemListRevealOption(key: RevealOptionKey.delete.rawValue, title: item.presentationData.strings.ChatList_ItemMenuDelete, icon: .none, color: item.presentationData.theme.list.itemDisclosureActions.destructive.fillColor, textColor: item.presentationData.theme.list.itemDisclosureActions.destructive.foregroundColor)
                                 ]
+                                if SGSimpleSettings.shared.disableDeleteChatSwipeOption { peerRevealOptions.removeLast() }
                             } else {
                                 peerRevealOptions = []
                             }

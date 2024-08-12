@@ -22,6 +22,7 @@ import AccountContext
 import AppBundle
 import WebKit
 import PeerNameColorScreen
+import UndoUI
 
 
 private enum SGControllerSection: Int32, SGItemListSection {
@@ -56,6 +57,7 @@ private enum SGBoolSetting: String {
     case sendLargePhotos
     case storyStealthMode
     case disableSwipeToRecordStory
+    case disableDeleteChatSwipeOption
     case quickTranslateButton
     case hideReactions
     case showRepostToStory
@@ -151,6 +153,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.header(id: id.count, section: .chatList, text: i18n("Settings.ChatList.Header", lang), badge: nil))
     entries.append(.toggle(id: id.count, section: .chatList, settingName: .compactChatList, value: SGSimpleSettings.shared.compactChatList, text: i18n("Settings.CompactChatList", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .chatList, settingName: .disableChatSwipeOptions, value: !SGSimpleSettings.shared.disableChatSwipeOptions, text: i18n("Settings.ChatSwipeOptions", lang), enabled: true))
+    entries.append(.toggle(id: id.count, section: .chatList, settingName: .disableDeleteChatSwipeOption, value: !SGSimpleSettings.shared.disableDeleteChatSwipeOption, text: i18n("Settings.DeleteChatSwipeOption", lang), enabled: !SGSimpleSettings.shared.disableChatSwipeOptions))
     
     entries.append(.header(id: id.count, section: .profiles, text: i18n("Settings.Profiles.Header", lang), badge: nil))
     entries.append(.toggle(id: id.count, section: .profiles, settingName: .showProfileId, value: SGSettings.showProfileId, text: i18n("Settings.ShowProfileID", lang), enabled: true))
@@ -386,6 +389,10 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.disableScrollToNextTopic = !value
         case .disableChatSwipeOptions:
             SGSimpleSettings.shared.disableChatSwipeOptions = !value
+            simplePromise.set(true) // Trigger update for 'enabled' field of other toggles
+            askForRestart?()
+        case .disableDeleteChatSwipeOption:
+            SGSimpleSettings.shared.disableDeleteChatSwipeOption = !value
             askForRestart?()
         case .disableGalleryCamera:
             SGSimpleSettings.shared.disableGalleryCamera = !value
@@ -622,18 +629,19 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             return
         }
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-        let actionSheet = ActionSheetController(presentationData: presentationData)
-        actionSheet.setItemGroups([ActionSheetItemGroup(items: [
-            ActionSheetTextItem(title: i18n("Common.RestartRequired", presentationData.strings.baseLanguageCode)),
-            ActionSheetButtonItem(title: i18n("Common.RestartNow", presentationData.strings.baseLanguageCode), color: .destructive, font: .default, action: {
-                exit(0)
-            })
-        ]), ActionSheetItemGroup(items: [
-            ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, color: .accent, font: .bold, action: { [weak actionSheet] in
-                actionSheet?.dismissAnimated()
-            })
-        ])])
-        presentControllerImpl?(actionSheet, ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+        presentControllerImpl?(
+            UndoOverlayController(
+                presentationData: presentationData, 
+                content: .info(title: nil, // i18n("Common.RestartRequired", presentationData.strings.baseLanguageCode),
+                    text: i18n("Common.RestartRequired", presentationData.strings.baseLanguageCode),
+                    timeout: nil,
+                    customUndoText: i18n("Common.RestartNow", presentationData.strings.baseLanguageCode) //presentationData.strings.Common_Yes
+                ),
+                elevatedLayout: false,
+                action: { action in if action == .undo { exit(0) }; return true }
+            ),
+            nil
+        )
     }
     return controller
 
