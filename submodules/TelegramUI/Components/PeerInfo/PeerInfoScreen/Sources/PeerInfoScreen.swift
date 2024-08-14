@@ -14366,7 +14366,7 @@ extension PeerInfoScreenNode {
             if let chatController = controller as? ChatController, let chatPeerId = chatController.chatLocation.peerId, [Namespaces.Peer.CloudGroup, Namespaces.Peer.CloudChannel].contains(chatPeerId.namespace) {
                 return self.context.engine.peers.fetchChannelParticipant(peerId: chatPeerId, participantId: self.peerId)
                 |> mapToSignal { participant -> Signal<(String?, Int32?), NoError> in
-                    if let participant = participant, case let .member(_, invitedAt, _, _, _) = participant {
+                    if let participant = participant, case let .member(_, invitedAt, _, _, _, _) = participant {
                         return .single((chatController.overlayTitle, invitedAt))
                     } else {
                         return .single((nil, nil))
