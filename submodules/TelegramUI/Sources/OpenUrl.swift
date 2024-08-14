@@ -1120,6 +1120,8 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                                 break
                             }
                         }
+                        // MARK: Swiftgram
+                        if settings.defaultWebBrowser == "inApp" { isExceptedDomain = false}
 
                         if (settings.defaultWebBrowser == nil && !isExceptedDomain) || isTonSite {
                             let controller = BrowserScreen(context: context, subject: .webPage(url: parsedUrl.absoluteString))
