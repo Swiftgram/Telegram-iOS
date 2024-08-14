@@ -1781,7 +1781,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                         if peer is TelegramChannel {
                             participantSignal = context.engine.peers.fetchChannelParticipant(peerId: peer.id, participantId: user.id)
                         } else if peer is TelegramGroup {
-                            participantSignal = .single(.member(id: user.id, invitedAt: 0, adminInfo: nil, banInfo: nil, rank: nil))
+                            participantSignal = .single(.member(id: user.id, invitedAt: 0, adminInfo: nil, banInfo: nil, rank: nil, subscriptionUntilDate: nil))
                         } else {
                             participantSignal = .single(nil)
                         }
