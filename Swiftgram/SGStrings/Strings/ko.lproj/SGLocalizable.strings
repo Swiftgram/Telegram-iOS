@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "채팅 목록 스와이프 옵션";
+"Settings.DeleteChatSwipeOption" = "채팅 삭제를 위해 스와이프하세요";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "다음 읽지 않은 채널까지 당겨서 보기";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "가입함";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "메시지 수정을 위해 두 번 탭";
+
+"Settings.wideChannelPosts" = "채널의 넓은 게시물";
+"Settings.ForceEmojiTab" = "기본으로 이모티콘 키보드";
+
+"Settings.forceBuiltInMic" = "장치 마이크 강제";
+"Settings.forceBuiltInMic.Notice" = "만약 활성화되면, 앱은 헤드폰이 연결되어 있더라도 장치 마이크만 사용합니다.";
+
+"Settings.hideChannelBottomButton" = "채널 하단 패널 숨기기";

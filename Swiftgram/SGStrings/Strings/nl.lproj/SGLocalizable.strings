@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Veegopties voor chatlijst";
+"Settings.DeleteChatSwipeOption" = "Veeg om Chat te Verwijderen";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Trek naar het volgende ongelezen kanaal";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Geregistreerd";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Dubbelklik om bericht te bewerken";
+
+"Settings.wideChannelPosts" = "Brede berichten in kanalen";
+"Settings.ForceEmojiTab" = "Emoji-toetsenbord standaard";
+
+"Settings.forceBuiltInMic" = "Forceer Apparaatmicrofoon";
+"Settings.forceBuiltInMic.Notice" = "Indien ingeschakeld, zal de app alleen de apparaatmicrofoon gebruiken, zelfs als er hoofdtelefoons zijn aangesloten.";
+
+"Settings.hideChannelBottomButton" = "Verberg Kanaal Onderste Paneel";

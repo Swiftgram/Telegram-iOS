@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Chat List Swipe Options";
+"Settings.DeleteChatSwipeOption" = "Vedä poistaaksesi keskustelu";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Vetää seuraavaan lukemattomaan kanavaan";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Rekisteröity";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Paina kahdesti muokataksesi viestiä";
+
+"Settings.wideChannelPosts" = "Leveitä viestejä kanavissa";
+"Settings.ForceEmojiTab" = "Emoji-näppäimistö oletuksena";
+
+"Settings.forceBuiltInMic" = "Pakota laitteen mikrofoni";
+"Settings.forceBuiltInMic.Notice" = "Jos otettu käyttöön, sovellus käyttää vain laitteen mikrofonia, vaikka kuulokkeet olisivatkin liitettynä.";
+
+"Settings.hideChannelBottomButton" = "Piilota kanavan alapalkki";

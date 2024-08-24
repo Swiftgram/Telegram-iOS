@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Opțiuni de glisare a chatului";
+"Settings.DeleteChatSwipeOption" = "Glisați pentru ștergere chat";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Trageţi pentru următorul canal necitit";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Înregistrat";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Apăsați de două ori pentru a edita mesajul";
+
+"Settings.wideChannelPosts" = "Postări late în canale";
+"Settings.ForceEmojiTab" = "Tastatură emoji implicită";
+
+"Settings.forceBuiltInMic" = "Forțează Microfon Dispozitiv";
+"Settings.forceBuiltInMic.Notice" = "Dacă este activat, aplicația va folosi doar microfonul dispozitivului chiar dacă sunt conectate căștile.";
+
+"Settings.hideChannelBottomButton" = "Ascundeți panoul de jos al canalului";

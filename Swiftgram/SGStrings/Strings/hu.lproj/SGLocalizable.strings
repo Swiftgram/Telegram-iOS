@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Csevegőlista húzás opciók";
+"Settings.DeleteChatSwipeOption" = "Húzza át az üzenet törléséhez";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Húzza a következő olvasatlan csatornához";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Regisztrált";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Dupla koppintás a üzenet szerkesztéséhez";
+
+"Settings.wideChannelPosts" = "Széles posztok csatornákban";
+"Settings.ForceEmojiTab" = "Alapértelmezett Emoji billentyűzet";
+
+"Settings.forceBuiltInMic" = "Eszköz mikrofonjának kényszerítése";
+"Settings.forceBuiltInMic.Notice" = "Ha engedélyezve van, az alkalmazás csak az eszköz mikrofonját fogja használni, még akkor is, ha a fejhallgató csatlakoztatva van.";
+
+"Settings.hideChannelBottomButton" = "Kanal Alsó Panel Elrejtése";

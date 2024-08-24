@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Επιλογές Συρσίματος Λίστας Συνομιλίας";
+"Settings.DeleteChatSwipeOption" = "Σύρετε για Διαγραφή Συνομιλίας";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Τραβήξτε στο επόμενο μη αναγνωσμένο κανάλι";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Εγγεγραμμένος";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Διπλό Πάτημα για Επεξεργασία Μηνύματος";
+
+"Settings.wideChannelPosts" = "Πλατείες αναρτήσεις στα κανάλια";
+"Settings.ForceEmojiTab" = "Πληκτρολόγιο Emoji από προεπιλογή";
+
+"Settings.forceBuiltInMic" = "Εξαναγκασμός Μικροφώνου Συσκευής";
+"Settings.forceBuiltInMic.Notice" = "Εάν ενεργοποιηθεί, η εφαρμογή θα χρησιμοποιεί μόνο το μικρόφωνο της συσκευής ακόμα και αν είναι συνδεδεμένα ακουστικά.";
+
+"Settings.hideChannelBottomButton" = "Απόκρυψη Καναλιού Κάτω Πάνελ";
