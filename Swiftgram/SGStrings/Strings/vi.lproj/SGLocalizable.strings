@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Tuỳ chọn Lướt Danh sách Chat";
+"Settings.DeleteChatSwipeOption" = "Vuốt để xóa Cuộc trò chuyện";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Kéo xuống đến kênh chưa đọc";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Đã đăng ký";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Double-tap để chỉnh sửa tin nhắn";
+
+"Settings.wideChannelPosts" = "Bài đăng rộng trong các kênh";
+"Settings.ForceEmojiTab" = "Bàn phím Emoji mặc định";
+
+"Settings.forceBuiltInMic" = "Buộc Micro Điện Thoại";
+"Settings.forceBuiltInMic.Notice" = "Nếu được kích hoạt, ứng dụng sẽ chỉ sử dụng micro điện thoại của thiết bị ngay cả khi tai nghe được kết nối.";
+
+"Settings.hideChannelBottomButton" = "Ẩn thanh dưới cùng của kênh";
