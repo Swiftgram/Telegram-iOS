@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Chat Ro'yxati Sürüş variantlari";
+"Settings.DeleteChatSwipeOption" = "Sohbetni o'chirish uchun sug'urta";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Keyingi O'qilmagan Kanalga burilish";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Ro'yhatga olingan";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Xabarni tahrirlash uchun ikki marta bosing";
+
+"Settings.wideChannelPosts" = "Keng postlar kanallarda";
+"Settings.ForceEmojiTab" = "Emoji klaviatura sukutiga";
+
+"Settings.forceBuiltInMic" = "Qurilma Mikrofonini Kuchaytirish";
+"Settings.forceBuiltInMic.Notice" = "Agar yoqilsa, ilova faqat qurilma mikrofonidan foydalanadi, hattoki naushnik bog'langan bo'lsa ham.";
+
+"Settings.hideChannelBottomButton" = "Kanal Pastki Panellini yashirish";
