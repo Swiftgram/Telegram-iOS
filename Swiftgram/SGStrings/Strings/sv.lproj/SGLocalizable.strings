@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Svepalternativ för chattlistan";
+"Settings.DeleteChatSwipeOption" = "Svep för att ta bort chatt";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Dra till nästa olästa kanal";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Registrerad";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Dubbeltryck för att redigera meddelandet";
+
+"Settings.wideChannelPosts" = "Bredda inlägg i kanaler";
+"Settings.ForceEmojiTab" = "Emoji-tangentbord som standard";
+
+"Settings.forceBuiltInMic" = "Tvinga enhetsmikrofonen";
+"Settings.forceBuiltInMic.Notice" = "Om aktiverat, kommer appen endast använda enhetens mikrofon även om hörlurar är anslutna.";
+
+"Settings.hideChannelBottomButton" = "Dölj kanalle bottenpanel";
