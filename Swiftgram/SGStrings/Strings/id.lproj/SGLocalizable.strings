@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Opsi gesek daftar obrolan";
+"Settings.DeleteChatSwipeOption" = "Geser untuk Menghapus Obrolan";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Tarik untuk obrolan berikutnya";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Terdaftar";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Ketuk dua kali untuk mengedit pesan";
+
+"Settings.wideChannelPosts" = "Pos Luas di Saluran";
+"Settings.ForceEmojiTab" = "Papan emoji secara default";
+
+"Settings.forceBuiltInMic" = "Paksa Mikrofon Perangkat";
+"Settings.forceBuiltInMic.Notice" = "Jika diaktifkan, aplikasi akan menggunakan hanya mikrofon perangkat bahkan jika headphone terhubung.";
+
+"Settings.hideChannelBottomButton" = "Sembunyikan Panel Bawah Saluran";
