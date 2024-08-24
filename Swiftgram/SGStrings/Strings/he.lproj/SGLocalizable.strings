@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "אפשרויות גלילה ברשימת צ'אטים";
+"Settings.DeleteChatSwipeOption" = "החלק למחיקת הצ'אט";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "משוך לערוץ לא נקרא הבא";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "נרשם";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "לחץ פעמיים לעריכת הודעה";
+
+"Settings.wideChannelPosts" = "פוסטים רחבים בערוצים";
+"Settings.ForceEmojiTab" = "מקלדת Emoji כברירת מחדל";
+
+"Settings.forceBuiltInMic" = "כוח מיקרופון המכשיר";
+"Settings.forceBuiltInMic.Notice" = "אם מופעל, האפליקציה תשתמש רק במיקרופון המכשיר גם כאשר אוזניות מחוברות.";
+
+"Settings.hideChannelBottomButton" = "הסתר פאנל תחתון של ערוץ";

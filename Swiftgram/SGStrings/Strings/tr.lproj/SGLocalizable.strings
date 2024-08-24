@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Sohbet listesi kaydırma seçenekleri";
+"Settings.DeleteChatSwipeOption" = "Sohbete Silmek İçin Kaydırın";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Sonraki okunmamış kanal için çekin";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Kayıtlı";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Mesajı düzenlemek için çift dokunun";
+
+"Settings.wideChannelPosts" = "Kanallardaki geniş gönderiler";
+"Settings.ForceEmojiTab" = "Varsayılan olarak Emoji klavyesi";
+
+"Settings.forceBuiltInMic" = "Cihaz Mikrofonunu Zorla";
+"Settings.forceBuiltInMic.Notice" = "Etkinleştirildiğinde, uygulama kulaklıklar bağlı olsa bile sadece cihaz mikrofonunu kullanacaktır.";
+
+"Settings.hideChannelBottomButton" = "Kanal Alt Panelini Gizle";

@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "चैटलिस्ट स्वाइप विकल्प";
+"Settings.DeleteChatSwipeOption" = "चैट हटाने के लिए स्वैप करें";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "अगले अपठित चैनल पर खींचें";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "पंजीकृत";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "संदेश संपादित करने के लिए दो बार टैप करें";
+
+"Settings.wideChannelPosts" = "चैनल में चौड़े पोस्ट";
+"Settings.ForceEmojiTab" = "डिफ़ॉल्ट ईमोजी कुंजीपटल";
+
+"Settings.forceBuiltInMic" = "फ़ोर्स डिवाइस माइक्रोफ़ोन";
+"Settings.forceBuiltInMic.Notice" = "यदि सक्षम है, ऐप केवल उपकरण का माइक्रोफ़ोन उपयोग करेगा भले ही हेडफ़ोन कनेक्ट किए हों।";
+
+"Settings.hideChannelBottomButton" = "चैनल बॉटम पैनल छिपाएँ";

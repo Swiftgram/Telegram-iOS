@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Chat List Swipe Options";
+"Settings.DeleteChatSwipeOption" = "Svejp for at slette chat";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Træk til Næste U’læst Kanal";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Registreret";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Dobbelt tryk for at redigere besked";
+
+"Settings.wideChannelPosts" = "Brede indlæg i kanaler";
+"Settings.ForceEmojiTab" = "Emoji-tastatur som standard";
+
+"Settings.forceBuiltInMic" = "Tving enhedsmikrofon";
+"Settings.forceBuiltInMic.Notice" = "Hvis aktiveret, vil appen kun bruge enhedens mikrofon, selvom hovedtelefoner er tilsluttet.";
+
+"Settings.hideChannelBottomButton" = "Skjul Kanal Bund Panel";

@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Možnosti potáhnutí v seznamu chatu";
+"Settings.DeleteChatSwipeOption" = "Přejeďte pro smazání chatu";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Táhnout na další nepřečtený kanál";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Registrováno";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Dvojitým klepnutím upravte zprávu";
+
+"Settings.wideChannelPosts" = "Široké příspěvky ve skupinách";
+"Settings.ForceEmojiTab" = "Emoji klávesnice ve výchozím nastavení";
+
+"Settings.forceBuiltInMic" = "Vynutit vestavěný mikrofon zařízení";
+"Settings.forceBuiltInMic.Notice" = "Pokud je povoleno, aplikace použije pouze mikrofon zařízení, i když jsou připojeny sluchátka.";
+
+"Settings.hideChannelBottomButton" = "Skrýt panel dolního kanálu";

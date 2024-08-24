@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Opcions desplaçament de la llista de xats";
+"Settings.DeleteChatSwipeOption" = "Desplaceu-vos per esborrar la conversa";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Arrossega cap al següent canal no llegit";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Inscrit";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Toqueu dues vegades per editar el missatge";
+
+"Settings.wideChannelPosts" = "Entrades àmplies als canals";
+"Settings.ForceEmojiTab" = "Teclat d'emojis per defecte";
+
+"Settings.forceBuiltInMic" = "Força el Micròfon del Dispositiu";
+"Settings.forceBuiltInMic.Notice" = "Si està habilitat, l'aplicació utilitzarà només el micròfon del dispositiu encara que estiguin connectats els auriculars.";
+
+"Settings.hideChannelBottomButton" = "Amaga el panell inferior del canal";
