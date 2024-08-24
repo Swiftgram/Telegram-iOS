@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Chat List Swipe Options";
+"Settings.DeleteChatSwipeOption" = "Veeg om Klets Te Verwyder";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Trek na Volgende Ongelese Kanaal";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Geregistreer";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Dubbelklik om boodskap te wysig";
+
+"Settings.wideChannelPosts" = "Wye pos in kanale";
+"Settings.ForceEmojiTab" = "Emoji klawerbord standaard";
+
+"Settings.forceBuiltInMic" = "Kragtoestel Mikrofoon";
+"Settings.forceBuiltInMic.Notice" = "Indien geaktiveer, sal die app slegs die toestel se mikrofoon gebruik selfs as oorfone aangesluit is.";
+
+"Settings.hideChannelBottomButton" = "Verberg Kanaal Onderpaneel";

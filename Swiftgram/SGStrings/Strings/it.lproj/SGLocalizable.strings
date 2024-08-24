@@ -11,7 +11,7 @@
 /* Do not translate */
 "Settings.Folders.BottomTabStyle.ios" = "iOS";
 /* Do not translate */
-"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+"Settings.Folders.BottomTabStyle.telegram" = "Swiftgram";
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Nascondi \"%@\"";
 "Settings.Folders.RememberLast" = "Apri l'ultima cartella";
@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Opzioni scorrimento nella lista delle chat";
+"Settings.DeleteChatSwipeOption" = "Swipe per eliminare chat";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Tira per il prossimo canale non letto";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Registrato";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Doppio tap per modificare il messaggio";
+
+"Settings.wideChannelPosts" = "Ampie colonne nei canali";
+"Settings.ForceEmojiTab" = "Tastiera emoji predefinita";
+
+"Settings.forceBuiltInMic" = "Forza Microfono Dispositivo";
+"Settings.forceBuiltInMic.Notice" = "Se abilitato, l'app utilizzerà solo il microfono del dispositivo anche se sono collegate le cuffie.";
+
+"Settings.hideChannelBottomButton" = "Nascondi Pannello Inferiore del Canale";

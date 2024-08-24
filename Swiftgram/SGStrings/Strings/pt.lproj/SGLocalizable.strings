@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Opções de deslizar Lista de Chat";
+"Settings.DeleteChatSwipeOption" = "Deslize para excluir o bate-papo";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Puxe para o próximo canal não lido";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Registrado";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Toque duplo para editar mensagem";
+
+"Settings.wideChannelPosts" = "Postagens amplas nos canais";
+"Settings.ForceEmojiTab" = "Teclado de emojis por padrão";
+
+"Settings.forceBuiltInMic" = "Forçar Microfone do Dispositivo";
+"Settings.forceBuiltInMic.Notice" = "Se ativado, o aplicativo usará apenas o microfone do dispositivo mesmo se os fones de ouvido estiverem conectados.";
+
+"Settings.hideChannelBottomButton" = "Ocultar Painel Inferior do Canal";

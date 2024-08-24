@@ -101,6 +101,7 @@
 
 
 "Settings.ChatSwipeOptions" = "チャットリストのスワイプ設定";
+"Settings.DeleteChatSwipeOption" = "チャットを削除するにはスワイプしてください";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "次の未読チャンネルまでプルする";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -127,3 +128,11 @@
 "Chat.RegDate" = "登録済み";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "メッセージを編集するにはタップをダブルタップ";
+
+"Settings.wideChannelPosts" = "チャンネル内の幅広い投稿";
+"Settings.ForceEmojiTab" = "デフォルトで絵文字キーボード";
+
+"Settings.forceBuiltInMic" = "デバイスのマイクを強制";
+"Settings.forceBuiltInMic.Notice" = "有効にすると、ヘッドフォンが接続されていてもアプリはデバイスのマイクのみを使用します。";
+
+"Settings.hideChannelBottomButton" = "チャンネルボトムパネルを非表示";
