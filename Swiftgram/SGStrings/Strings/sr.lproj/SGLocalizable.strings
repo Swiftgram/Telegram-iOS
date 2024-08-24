@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Опције превлачења списка разговора";
+"Settings.DeleteChatSwipeOption" = "Превучите за брисање чет";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Повуци на следећи непрочитан канал";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -126,3 +127,11 @@
 "Chat.RegDate" = "Регистрован";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Двоструки додир за уређивање поруке";
+
+"Settings.wideChannelPosts" = "Широки постови у каналима";
+"Settings.ForceEmojiTab" = "Емоџи тастатура по подразумеваној подешавања";
+
+"Settings.forceBuiltInMic" = "Наметни микрофон уређаја";
+"Settings.forceBuiltInMic.Notice" = "Ако је омогућено, апликација ће користити само микрофон уређаја чак и ако су прикључене слушалице.";
+
+"Settings.hideChannelBottomButton" = "Сакриј донји панел канала";
