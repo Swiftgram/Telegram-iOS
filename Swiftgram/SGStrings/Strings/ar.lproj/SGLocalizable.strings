@@ -26,11 +26,11 @@
 
 
 "Settings.ChatList.Header" = "قائمة الفواصل";
-"Settings.CompactChatList" = "قائمة الدردشة المدمجة";
+"Settings.CompactChatList" = "قائمة الدردشة المتراصة";
 
-"Settings.Profiles.Header" = "PROFILES";
+"Settings.Profiles.Header" = "الملفات الشخصية";
 
-"Settings.Stories.Hide" = "إخفاء الستوري";
+"Settings.Stories.Hide" = "إخفاء القصص";
 "Settings.Stories.WarnBeforeView" = "اسأل قبل العرض";
 "Settings.Stories.DisableSwipeToRecord" = "تعطيل السحب للتسجيل";
 
