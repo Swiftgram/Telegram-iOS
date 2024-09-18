@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "Опции чатов при свайпе";
+"Settings.DeleteChatSwipeOption" = "Свайп для удаления чата";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Потянуть для перехода в канал";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
@@ -132,3 +133,5 @@
 
 "Settings.forceBuiltInMic" = "Всегда использовать микрофон устройства";
 "Settings.forceBuiltInMic.Notice" = "Если включено, то приложение будет использовать только встроенный микрофон устройства, даже если подключены наушники.";
+
+"Settings.hideChannelBottomButton" = "Скрыть нижнюю панель в каналах";
