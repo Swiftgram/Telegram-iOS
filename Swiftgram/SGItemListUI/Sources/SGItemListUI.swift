@@ -55,6 +55,7 @@ public final class SGItemListArguments<BoolSetting: Hashable, SliderSetting: Has
     let setOneFromManyValue: (OneFromManySetting) -> Void
     let openDisclosureLink: (DisclosureLink) -> Void
     let action: (ActionType) -> Void
+    let searchInput: (String) -> Void
 
     
     public init(
@@ -64,7 +65,8 @@ public final class SGItemListArguments<BoolSetting: Hashable, SliderSetting: Has
         updateSliderValue: @escaping (SliderSetting, Int32) -> Void = { _,_ in },
         setOneFromManyValue: @escaping (OneFromManySetting) -> Void = { _ in },
         openDisclosureLink: @escaping (DisclosureLink) -> Void = { _ in},
-        action: @escaping (ActionType) -> Void = { _ in }
+        action: @escaping (ActionType) -> Void = { _ in },
+        searchInput: @escaping (String) -> Void = { _ in }
     ) {
         self.context = context
         //
@@ -73,6 +75,7 @@ public final class SGItemListArguments<BoolSetting: Hashable, SliderSetting: Has
         self.setOneFromManyValue = setOneFromManyValue
         self.openDisclosureLink = openDisclosureLink
         self.action = action
+        self.searchInput = searchInput
     }
 }
 
@@ -85,6 +88,7 @@ public enum SGItemListUIEntry<Section: SGItemListSection, BoolSetting: Hashable,
     case disclosure(id: Int, section: Section, link: DisclosureLink, text: String)
     case peerColorDisclosurePreview(id: Int, section: Section, name: String, color: UIColor)
     case action(id: Int, section: Section, actionType: ActionType, text: String, kind: ItemListActionKind)
+    case searchInput(id: Int, section: Section, title: NSAttributedString, text: String, placeholder: String)
     
     public var section: ItemListSectionId {
         switch self {
@@ -108,6 +112,9 @@ public enum SGItemListUIEntry<Section: SGItemListSection, BoolSetting: Hashable,
             
         case let .action(_, sectionId, _, _, _):
             return sectionId.rawValue
+            
+        case let .searchInput(_, sectionId, _, _, _):
+            return sectionId.rawValue
         }
     }
     
@@ -128,6 +135,8 @@ public enum SGItemListUIEntry<Section: SGItemListSection, BoolSetting: Hashable,
         case let .oneFromManySelector(stableIdValue, _, _, _, _, _):
             return stableIdValue
         case let .action(stableIdValue, _, _, _, _):
+            return stableIdValue
+        case let .searchInput(stableIdValue, _, _, _, _):
             return stableIdValue
         }
     }
@@ -160,6 +169,9 @@ public enum SGItemListUIEntry<Section: SGItemListSection, BoolSetting: Hashable,
             return id1 == id2 && section1 == section2 && settingName1 == settingName2 && text1 == text2 && value1 == value2 && enabled1 == enabled2
         case let (.action(id1, section1, actionType1, text1, kind1), .action(id2, section2, actionType2, text2, kind2)):
             return id1 == id2 && section1 == section2 && actionType1 == actionType2 && text1 == text2 && kind1 == kind2
+            
+        case let (.searchInput(id1, lhsValue1, lhsValue2, lhsValue3, lhsValue4), .searchInput(id2, rhsValue1, rhsValue2, rhsValue3, rhsValue4)):
+            return id1 == id2 && lhsValue1 == rhsValue1 && lhsValue2 == rhsValue2 && lhsValue3 == rhsValue3 && lhsValue4 == rhsValue4
 
         default:
             return false
@@ -206,6 +218,80 @@ public enum SGItemListUIEntry<Section: SGItemListSection, BoolSetting: Hashable,
             return ItemListActionItem(presentationData: presentationData, title: text, kind: kind, alignment: .natural, sectionId: self.section, style: .blocks, action: {
                     arguments.action(actionType)
             })
+        case let .searchInput(_, _, title, text, placeholder):
+            return ItemListSingleLineInputItem(presentationData: presentationData, title: title, text: text, placeholder: placeholder, returnKeyType: .done, spacing: 3.0, clearType: .always, selectAllOnFocus: true, secondaryStyle: true, sectionId: self.section, textUpdated: { input in arguments.searchInput(input) }, action: {}, dismissKeyboardOnEnter: true)
         }
     }
+}
+
+
+public func filterSGItemListUIEntrires<Section: SGItemListSection & Hashable, BoolSetting: Hashable, SliderSetting: Hashable, OneFromManySetting: Hashable, DisclosureLink: Hashable, ActionType: Hashable>(
+    entries: [SGItemListUIEntry<Section, BoolSetting, SliderSetting, OneFromManySetting, DisclosureLink, ActionType>],
+    by searchQuery: String?
+) -> [SGItemListUIEntry<Section, BoolSetting, SliderSetting, OneFromManySetting, DisclosureLink, ActionType>] {
+    
+    guard let query = searchQuery?.lowercased(), !query.isEmpty else {
+        return entries
+    }
+    
+    var sectionsWithMatches: Set<Section> = []
+    var filteredEntries: [SGItemListUIEntry<Section, BoolSetting, SliderSetting, OneFromManySetting, DisclosureLink, ActionType>] = []
+    
+    func entryMatches(_ entry: SGItemListUIEntry<Section, BoolSetting, SliderSetting, OneFromManySetting, DisclosureLink, ActionType>, query: String) -> Bool {
+        switch entry {
+        case .header(_, _, let text, _):
+            return text.lowercased().contains(query)
+        case .toggle(_, _, _, _, let text, _):
+            return text.lowercased().contains(query)
+        case .notice(_, _, let text):
+            return text.lowercased().contains(query)
+        case .percentageSlider:
+            return false // Assuming percentage sliders don't have searchable text
+        case .oneFromManySelector(_, _, _, let text, let value, _):
+            return text.lowercased().contains(query) || value.lowercased().contains(query)
+        case .disclosure(_, _, _, let text):
+            return text.lowercased().contains(query)
+        case .peerColorDisclosurePreview(_, _, let name, _):
+            return name.lowercased().contains(query)
+        case .action(_, _, _, let text, _):
+            return text.lowercased().contains(query)
+        case .searchInput:
+            return true // Never hidding search
+        }
+    }
+    
+    // First pass: identify sections with matches
+    for entry in entries {
+        if entryMatches(entry, query: query) {
+            switch entry {
+            case .header(_, let section, _, _),
+                 .toggle(_, let section, _, _, _, _),
+                 .notice(_, let section, _),
+                 .percentageSlider(_, let section, _, _),
+                 .oneFromManySelector(_, let section, _, _, _, _),
+                 .disclosure(_, let section, _, _),
+                 .peerColorDisclosurePreview(_, let section, _, _),
+                 .action(_, let section, _, _, _):
+                sectionsWithMatches.insert(section)
+            case .searchInput:
+                continue
+            }
+        }
+    }
+    
+    // Second pass: keep matching entries and headers of sections with matches
+    for entry in entries {
+        switch entry {
+        case .header(_, let section, _, _):
+            if sectionsWithMatches.contains(section) {
+                filteredEntries.append(entry)
+            }
+        default:
+            if entryMatches(entry, query: query) {
+                filteredEntries.append(entry)
+            }
+        }
+    }
+    
+    return filteredEntries
 }

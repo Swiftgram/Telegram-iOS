@@ -26,6 +26,7 @@ import UndoUI
 
 
 private enum SGControllerSection: Int32, SGItemListSection {
+    case search
     case content
     case tabs
     case folders
@@ -118,15 +119,20 @@ private struct PeerNameColorScreenState: Equatable {
     var updatedBackgroundEmojiId: Int64?
 }
 
+private struct SGSettingsControllerState: Equatable {
+    var searchQuery: String?
+}
+
 private typealias SGControllerEntry = SGItemListUIEntry<SGControllerSection, SGBoolSetting, SGSliderSetting, SGOneFromManySetting, SGDisclosureLink, AnyHashable>
 
-private func SGControllerEntries(presentationData: PresentationData, callListSettings: CallListSettings, experimentalUISettings: ExperimentalUISettings, SGSettings: SGUISettings, appConfiguration: AppConfiguration, nameColors: PeerNameColors /*state: PeerNameColorScreenState,*/) -> [SGControllerEntry] {
+private func SGControllerEntries(presentationData: PresentationData, callListSettings: CallListSettings, experimentalUISettings: ExperimentalUISettings, SGSettings: SGUISettings, appConfiguration: AppConfiguration, nameColors: PeerNameColors, state: SGSettingsControllerState) -> [SGControllerEntry] {
     
     let lang = presentationData.strings.baseLanguageCode
     var entries: [SGControllerEntry] = []
     
     let id = SGItemListCounter()
     
+    entries.append(.searchInput(id: id.count, section: .search, title: NSAttributedString(string: "🔍"), text: state.searchQuery ?? "", placeholder: "Search"))
     if appConfiguration.sgWebSettings.global.canEditSettings {
         entries.append(.disclosure(id: id.count, section: .content, link: .contentSettings, text: i18n("Settings.ContentSettings", lang)))
     } else {
@@ -267,7 +273,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .other, settingName: .hidePhoneInSettings, value: SGSimpleSettings.shared.hidePhoneInSettings, text: i18n("Settings.HidePhoneInSettingsUI", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.HidePhoneInSettingsUI.Notice", lang)))
     
-    return entries
+    return filterSGItemListUIEntrires(entries: entries, by: state.searchQuery)
 }
 
 public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int? = nil*/) -> ViewController {
@@ -277,11 +283,12 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
 //    var getNavigationControllerImpl: (() -> NavigationController?)?
     var askForRestart: (() -> Void)?
     
-//    let statePromise = ValuePromise(PeerNameColorScreenState(), ignoreRepeated: true)
-//    let stateValue = Atomic(value: PeerNameColorScreenState())
-//    let updateState: ((PeerNameColorScreenState) -> PeerNameColorScreenState) -> Void = { f in
-//        statePromise.set(stateValue.modify { f($0) })
-//    }
+    let initialState = SGSettingsControllerState()
+    let statePromise = ValuePromise(initialState, ignoreRepeated: true)
+    let stateValue = Atomic(value: initialState)
+    let updateState: ((SGSettingsControllerState) -> SGSettingsControllerState) -> Void = { f in
+        statePromise.set(stateValue.modify { f($0) })
+    }
     
 //    let sliderPromise = ValuePromise(SGSimpleSettings.shared.accountColorsSaturation, ignoreRepeated: true)
 //    let sliderStateValue = Atomic(value: SGSimpleSettings.shared.accountColorsSaturation)
@@ -574,6 +581,12 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
                     strongContext.sharedContext.applicationBindings.openUrl(url)
                 })
         }
+    }, searchInput: { searchQuery in
+        updateState { state in
+            var updatedState = state
+            updatedState.searchQuery = searchQuery
+            return updatedState
+        }
     })
     
     let sharedData = context.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.callListSettings, ApplicationSpecificSharedDataKeys.experimentalUISettings])
@@ -584,18 +597,18 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
     contentSettingsConfiguration.set(.single(nil)
     |> then(updatedContentSettingsConfiguration))
     
-    let signal = combineLatest(simplePromise.get(), /*sliderPromise.get(),*/ /*statePromise.get(),*/ context.sharedContext.presentationData, sharedData, preferences, contentSettingsConfiguration.get(),
+    let signal = combineLatest(simplePromise.get(), /*sliderPromise.get(),*/ statePromise.get(), context.sharedContext.presentationData, sharedData, preferences, contentSettingsConfiguration.get(),
         context.engine.accountData.observeAvailableColorOptions(scope: .replies),
         context.engine.accountData.observeAvailableColorOptions(scope: .profile)
     )
-    |> map { _, /*sliderValue,*/ /*state,*/ presentationData, sharedData, view, contentSettingsConfiguration, availableReplyColors, availableProfileColors ->  (ItemListControllerState, (ItemListNodeState, Any)) in
+    |> map { _, /*sliderValue,*/ state, presentationData, sharedData, view, contentSettingsConfiguration, availableReplyColors, availableProfileColors ->  (ItemListControllerState, (ItemListNodeState, Any)) in
         
         let sgUISettings: SGUISettings = view.values[ApplicationSpecificPreferencesKeys.SGUISettings]?.get(SGUISettings.self) ?? SGUISettings.default
         let appConfiguration: AppConfiguration = view.values[PreferencesKeys.appConfiguration]?.get(AppConfiguration.self) ?? AppConfiguration.defaultValue
         let callListSettings: CallListSettings = sharedData.entries[ApplicationSpecificSharedDataKeys.callListSettings]?.get(CallListSettings.self) ?? CallListSettings.defaultSettings
         let experimentalUISettings: ExperimentalUISettings = sharedData.entries[ApplicationSpecificSharedDataKeys.experimentalUISettings]?.get(ExperimentalUISettings.self) ?? ExperimentalUISettings.defaultSettings
         
-        let entries = SGControllerEntries(presentationData: presentationData, callListSettings: callListSettings, experimentalUISettings: experimentalUISettings, SGSettings: sgUISettings, appConfiguration: appConfiguration, nameColors: PeerNameColors.with(availableReplyColors: availableReplyColors, availableProfileColors: availableProfileColors) /*state: state,*/)
+        let entries = SGControllerEntries(presentationData: presentationData, callListSettings: callListSettings, experimentalUISettings: experimentalUISettings, SGSettings: sgUISettings, appConfiguration: appConfiguration, nameColors: PeerNameColors.with(availableReplyColors: availableReplyColors, availableProfileColors: availableProfileColors), state: state)
         
         let controllerState = ItemListControllerState(presentationData: ItemListPresentationData(presentationData), title: .text("Swiftgram"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         
