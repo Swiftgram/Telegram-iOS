@@ -234,7 +234,8 @@ public func filterSGItemListUIEntrires<Section: SGItemListSection & Hashable, Bo
         return entries
     }
     
-    var sectionsWithMatches: Set<Section> = []
+    var sectionIdsForEntireIncludion: Set<ItemListSectionId> = []
+    var sectionIdsWithMatches: Set<ItemListSectionId> = []
     var filteredEntries: [SGItemListUIEntry<Section, BoolSetting, SliderSetting, OneFromManySetting, DisclosureLink, ActionType>] = []
     
     func entryMatches(_ entry: SGItemListUIEntry<Section, BoolSetting, SliderSetting, OneFromManySetting, DisclosureLink, ActionType>, query: String) -> Bool {
@@ -251,12 +252,12 @@ public func filterSGItemListUIEntrires<Section: SGItemListSection & Hashable, Bo
             return text.lowercased().contains(query) || value.lowercased().contains(query)
         case .disclosure(_, _, _, let text):
             return text.lowercased().contains(query)
-        case .peerColorDisclosurePreview(_, _, let name, _):
-            return name.lowercased().contains(query)
+        case .peerColorDisclosurePreview:
+            return false // Never indexed during search
         case .action(_, _, _, let text, _):
             return text.lowercased().contains(query)
         case .searchInput:
-            return true // Never hidding search
+            return true // Never hiding search input
         }
     }
     
@@ -264,31 +265,66 @@ public func filterSGItemListUIEntrires<Section: SGItemListSection & Hashable, Bo
     for entry in entries {
         if entryMatches(entry, query: query) {
             switch entry {
-            case .header(_, let section, _, _),
-                 .toggle(_, let section, _, _, _, _),
-                 .notice(_, let section, _),
-                 .percentageSlider(_, let section, _, _),
-                 .oneFromManySelector(_, let section, _, _, _, _),
-                 .disclosure(_, let section, _, _),
-                 .peerColorDisclosurePreview(_, let section, _, _),
-                 .action(_, let section, _, _, _):
-                sectionsWithMatches.insert(section)
             case .searchInput:
                 continue
+            default:
+                sectionIdsWithMatches.insert(entry.section)
             }
         }
     }
     
     // Second pass: keep matching entries and headers of sections with matches
-    for entry in entries {
+    for (index, entry) in entries.enumerated() {
         switch entry {
-        case .header(_, let section, _, _):
-            if sectionsWithMatches.contains(section) {
-                filteredEntries.append(entry)
+        case .header:
+            if entryMatches(entry, query: query) {
+                // Will show all entries for the same section
+                sectionIdsForEntireIncludion.insert(entry.section)
+                if !filteredEntries.contains(entry) {
+                    filteredEntries.append(entry)
+                }
+            }
+            // Or show header if something from the section already matched
+            if sectionIdsWithMatches.contains(entry.section) {
+                if !filteredEntries.contains(entry) {
+                    filteredEntries.append(entry)
+                }
             }
         default:
             if entryMatches(entry, query: query) {
-                filteredEntries.append(entry)
+                if case .notice = entry {
+                    // add previous entry to if it's not another notice and if it's not already here
+                    // possibly targeting related toggle / setting if we've matched it's description (notice) in search
+                    if index > 0 {
+                        let previousEntry = entries[index - 1]
+                        if case .notice = previousEntry {} else {
+                            if !filteredEntries.contains(previousEntry) {
+                                filteredEntries.append(previousEntry)
+                            }
+                        }
+                    }
+                    if !filteredEntries.contains(entry) {
+                        filteredEntries.append(entry)
+                    }
+                } else {
+                    if !filteredEntries.contains(entry) {
+                        filteredEntries.append(entry)
+                    }
+                    // add next entry if it's notice
+                    // possibly targeting description (notice) for the currently search-matched toggle/setting
+                    if index < entries.count - 1 {
+                        let nextEntry = entries[index + 1]
+                        if case .notice = nextEntry {
+                            if !filteredEntries.contains(nextEntry) {
+                                filteredEntries.append(nextEntry)
+                            }
+                        }
+                    }
+                }
+            } else if sectionIdsForEntireIncludion.contains(entry.section) {
+                if !filteredEntries.contains(entry) {
+                    filteredEntries.append(entry)
+                }
             }
         }
     }
