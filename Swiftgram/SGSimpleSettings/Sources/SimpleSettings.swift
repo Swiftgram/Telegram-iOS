@@ -104,6 +104,7 @@ public class SGSimpleSettings {
         case forceBuiltInMic
         case hideChannelBottomButton
         case forceSystemSharing
+        case confirmCalls
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -192,6 +193,7 @@ public class SGSimpleSettings {
         Keys.forceEmojiTab.rawValue: false,
         Keys.hideChannelBottomButton.rawValue: false,
         Keys.forceSystemSharing.rawValue: false,
+        Keys.confirmCalls.rawValue: true,
     ]
     
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
@@ -360,6 +362,9 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.forceSystemSharing.rawValue)
     public var forceSystemSharing: Bool
+
+    @UserDefault(key: Keys.confirmCalls.rawValue)
+    public var confirmCalls: Bool
 }
 
 extension SGSimpleSettings {

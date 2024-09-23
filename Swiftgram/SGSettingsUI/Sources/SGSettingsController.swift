@@ -92,6 +92,7 @@ private enum SGBoolSetting: String {
     case forceEmojiTab
     case forceBuiltInMic
     case hideChannelBottomButton
+    case confirmCalls
 }
 
 private enum SGOneFromManySetting: String {
@@ -162,6 +163,8 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.notice(id: id.count, section: .profiles, text: i18n("Settings.ShowRegDate.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .profiles, settingName: .showCreationDate, value: SGSimpleSettings.shared.showCreationDate, text: i18n("Settings.ShowCreationDate", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .profiles, text: i18n("Settings.ShowCreationDate.Notice", lang)))
+    entries.append(.toggle(id: id.count, section: .profiles, settingName: .confirmCalls, value: SGSimpleSettings.shared.confirmCalls, text: i18n("Settings.CallConfirmation", lang), enabled: true))
+    entries.append(.notice(id: id.count, section: .profiles, text: i18n("Settings.CallConfirmation.Notice", lang)))
     
     entries.append(.header(id: id.count, section: .stories, text: presentationData.strings.AutoDownloadSettings_Stories.uppercased(), badge: nil))
     entries.append(.toggle(id: id.count, section: .stories, settingName: .hideStories, value: SGSettings.hideStories, text: i18n("Settings.Stories.Hide", lang), enabled: true))
@@ -446,6 +449,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.forceBuiltInMic = value
         case .hideChannelBottomButton:
             SGSimpleSettings.shared.hideChannelBottomButton = value
+        case .confirmCalls:
+            SGSimpleSettings.shared.confirmCalls = value
         }
     }, updateSliderValue: { setting, value in
         switch (setting) {
