@@ -144,3 +144,5 @@
 
 /* Confirmation before making a Video Call */
 "CallConfirmation.Video.Title" = "Make a Video Call?";
+
+"MutualContact.Label" = "mutual contact";
