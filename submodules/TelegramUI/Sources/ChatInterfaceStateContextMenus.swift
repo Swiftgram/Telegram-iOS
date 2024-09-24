@@ -2043,7 +2043,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             var popSGItems: (() -> Void)? = nil
             sgActions.insert(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Common_Back, icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Back"), color: theme.actionSheet.primaryTextColor)
-            }, action: { _, _ in
+            }, iconPosition: .left, action: { _, _ in
                 popSGItems?()
             })), at: 0)
             sgActions.insert(.separator, at: 1)
