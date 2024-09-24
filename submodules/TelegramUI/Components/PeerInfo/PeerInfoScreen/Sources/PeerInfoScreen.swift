@@ -1335,7 +1335,7 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
             } else {
                 label = presentationData.strings.ContactInfo_PhoneLabelMobile
             }
-            items[currentPeerInfoSection]!.append(PeerInfoScreenLabeledValueItem(id: 2, label: label, text: formattedPhone, textColor: .accent, action: { node, progress in
+            items[currentPeerInfoSection]!.append(PeerInfoScreenLabeledValueItem(id: 2, label: label, text: formattedPhone, additionalText: user.flags.contains(.mutualContact) ? i18n("MutualContact.Label", presentationData.strings.baseLanguageCode) : nil, textColor: .accent, action: { node, progress in
                 interaction.openPhone(phone, node, nil, progress)
             }, longTapAction: nil, contextAction: { node, gesture, _ in
                 interaction.openPhone(phone, node, gesture, nil)
