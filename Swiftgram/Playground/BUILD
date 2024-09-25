@@ -6,7 +6,7 @@ load(
     "xcodeproj",
 )
 load(
-    "//Swiftgram/Playground:custom_bazel_path.bzl", "custom_bazel_path"
+    "@build_configuration//:variables.bzl", "telegram_bazel_path"
 )
 
 objc_library(
@@ -24,6 +24,13 @@ swift_library(
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/Display:Display",
         "//submodules/AsyncDisplayKit:AsyncDisplayKit",
+        "//submodules/LegacyUI:LegacyUI",
+        "//submodules/LegacyComponents:LegacyComponents",
+        "//submodules/MediaPlayer:UniversalMediaPlayer",
+        "//Swiftgram/SGSwiftUI:SGSwiftUI",
+    ],
+    data = [
+        "//Telegram:GeneratedPresentationStrings/Resources/PresentationStrings.data",
     ],
     visibility = ["//visibility:public"],
 )
@@ -38,12 +45,15 @@ ios_application(
     infoplists = ["Resources/Info.plist"],
     minimum_os_version = "14.0",
     visibility = ["//visibility:public"],
+    strings = [
+        "//Telegram:AppStringResources",
+    ],
     launch_storyboard = "Resources/LaunchScreen.storyboard",
     deps = [":PlaygroundMain", ":PlaygroundLib"],
 )
 
 xcodeproj(
-    bazel_path = custom_bazel_path(),
+    bazel_path = telegram_bazel_path,
     name = "Playground_xcodeproj",
     build_mode = "bazel",
     project_name = "Playground",
