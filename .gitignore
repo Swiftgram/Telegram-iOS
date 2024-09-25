@@ -67,3 +67,4 @@ build-input/*
 *.pyc
 submodules/**/.build/*
 swiftgram-scripts
+Swiftgram/Playground/custom_bazel_path.bzl
