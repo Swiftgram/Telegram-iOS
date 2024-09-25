@@ -100,6 +100,7 @@
 
 
 "Settings.ChatSwipeOptions" = "對話列表滑動選項";
+"Settings.DeleteChatSwipeOption" = "滑動刪除聊天記錄";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "頻道瀑布流";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
