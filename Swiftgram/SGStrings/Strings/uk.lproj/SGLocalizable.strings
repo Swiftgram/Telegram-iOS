@@ -135,3 +135,14 @@
 "Settings.forceBuiltInMic.Notice" = "Якщо увімкнено, застосунок використовуватиме лише мікрофон пристрою, навіть якщо підключені навушники.";
 
 "Settings.hideChannelBottomButton" = "Приховати нижню панель каналів";
+
+"Settings.CallConfirmation" = "Підтвердження викликів";
+"Settings.CallConfirmation.Notice" = "Swiftgram запитуватиме дозвіл перед здійсненням виклику.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Здійснити виклик?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Здійснити відеовиклик?";
+
+"MutualContact.Label" = "взаємний контакт";
