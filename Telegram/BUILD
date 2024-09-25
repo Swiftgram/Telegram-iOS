@@ -138,6 +138,10 @@ genrule(
         "GeneratedPresentationStrings/Sources/PresentationStrings.m",
         "GeneratedPresentationStrings/Resources/PresentationStrings.data",
     ],
+    # MARK: Swiftgram
+    visibility = [
+        "//visibility:public",
+    ],
 )
 
 minimum_os_version = "12.0"
@@ -253,7 +257,9 @@ filegroup(
         "//Swiftgram/SGStrings:SGLocalizableStrings",
     ] + [
         "{}.lproj/Localizable.strings".format(language) for language in empty_languages
-    ]
+    ],
+    # MARK: Swiftgram
+    visibility = ["//visibility:public",],
 )
 
 filegroup(
