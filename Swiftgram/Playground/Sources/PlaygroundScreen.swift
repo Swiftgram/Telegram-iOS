@@ -2,16 +2,22 @@ import Foundation
 import UIKit
 import AsyncDisplayKit
 import Display
+import SwiftUI
 
 private final class PlaygroundScreenNode: ASDisplayNode {
     private let headerBackgroundNode: ASDisplayNode
     private let headerCornerNode: ASImageNode
+    private let swiftUINode: ASDisplayNode
+    
+    private var pushController: ((ViewController) -> Void)?
     
     private var isDismissed = false
     
     private var validLayout: (layout: ContainerViewLayout, navigationHeight: CGFloat)?
-    
-    override init() {
+        
+    init(pushController: @escaping (ViewController) -> Void) {
+        self.pushController = pushController
+
         self.headerBackgroundNode = ASDisplayNode()
         self.headerBackgroundNode.backgroundColor = .black
         
@@ -25,12 +31,21 @@ private final class PlaygroundScreenNode: ASDisplayNode {
             context.setFillColor(UIColor.clear.cgColor)
             context.fillEllipse(in: CGRect(origin: CGPoint(x: 0.0, y: 0.0), size: CGSize(width: 20.0, height: 20.0)))
         })?.stretchableImage(withLeftCapWidth: 10, topCapHeight: 1)
+        
+        // Create SwiftUI view and wrap it in UIHostingController
+        let swiftUIView = MySwiftUIView(pushController: pushController)
+        let hostingController = UIHostingController(rootView: swiftUIView)
+        
+        // Create ASDisplayNode to host the SwiftUI view
+        self.swiftUINode = ASDisplayNode { hostingController.view }
+        
         super.init()
         
         self.backgroundColor = THEME.list.itemBlocksBackgroundColor
         
         self.addSubnode(self.headerBackgroundNode)
         self.addSubnode(self.headerCornerNode)
+        self.addSubnode(self.swiftUINode)
     }
     
     func containerLayoutUpdated(layout: ContainerViewLayout, navigationHeight: CGFloat, transition: ContainedViewLayoutTransition) {
@@ -43,6 +58,9 @@ private final class PlaygroundScreenNode: ASDisplayNode {
         
         transition.updateFrame(node: self.headerBackgroundNode, frame: CGRect(origin: CGPoint(x: -1.0, y: 0), size: CGSize(width: layout.size.width + 2.0, height: headerHeight)))
         transition.updateFrame(node: self.headerCornerNode, frame: CGRect(origin: CGPoint(x: 0.0, y: headerHeight), size: CGSize(width: layout.size.width, height: 10.0)))
+        
+        // Position the SwiftUI view
+        transition.updateFrame(node: self.swiftUINode, frame: CGRect(origin: CGPoint(x: 0, y: headerHeight + 10), size: CGSize(width: layout.size.width, height: (layout.size.height - headerHeight - 10) / 2.0)))
     }
     
     func animateOut(completion: @escaping () -> Void) {
@@ -59,8 +77,66 @@ private final class PlaygroundScreenNode: ASDisplayNode {
             completion()
         })
         transition.updateFrame(node: self.headerCornerNode, frame: CGRect(origin: CGPoint(x: 0.0, y: -10.0), size: CGSize(width: layout.size.width, height: 10.0)))
+        
+        // Animate out the SwiftUI view as well
+        transition.updateFrame(node: self.swiftUINode, frame: CGRect(origin: CGPoint(x: 0, y: layout.size.height), size: CGSize(width: layout.size.width, height: (layout.size.height - headerHeight - 10) / 2.0)))
     }
 }
+
+// Example SwiftUI view
+struct MySwiftUIView: View {
+    let pushController: (ViewController) -> Void
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 10) {
+                // Your buttons here
+                Button("Button 1") { }
+                    .buttonStyle(CustomButtonStyle())
+                Button("Button 2") { }
+                    .buttonStyle(CustomButtonStyle())
+                Button("Button 3") { }
+                    .buttonStyle(CustomButtonStyle())
+                Button("Button 4") { }
+                    .buttonStyle(CustomButtonStyle())
+                Button("Button 5") { }
+                    .buttonStyle(CustomButtonStyle())
+                Button("Button 6") { }
+                    .buttonStyle(CustomButtonStyle())
+                Button("Button 7") { }
+                    .buttonStyle(CustomButtonStyle())
+                Button("Button 8") { }
+                    .buttonStyle(CustomButtonStyle())
+                Button("Button 9") { }
+                    .buttonStyle(CustomButtonStyle())
+                Button("Button 10") { }
+                    .buttonStyle(CustomButtonStyle())
+                Button("Button 11") { }
+                    .buttonStyle(CustomButtonStyle())
+                Button("Button 12") { }
+                    .buttonStyle(CustomButtonStyle())
+                Button("Button 13") { }
+                    .buttonStyle(CustomButtonStyle())
+                Button("Button 14") { }
+                    .buttonStyle(CustomButtonStyle())
+                // ... more buttons
+            }
+            .padding()
+        }
+    }
+}
+
+struct CustomButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding()
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(8)
+            .frame(height: 44) // Set a fixed height for all buttons
+    }
+}
+
 
 public final class PlaygroundScreen: ViewController {
     
@@ -78,7 +154,11 @@ public final class PlaygroundScreen: ViewController {
     }
     
     override public func loadDisplayNode() {
-        self.displayNode = PlaygroundScreenNode()
+        self.displayNode = PlaygroundScreenNode(pushController: { [weak self] c in
+                if let strongSelf = self {
+                    strongSelf.push(c)
+                }
+        })
     }
     
     override public func containerLayoutUpdated(_ layout: ContainerViewLayout, transition: ContainedViewLayoutTransition) {
