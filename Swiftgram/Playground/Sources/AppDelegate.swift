@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         
         mainWindow.viewController = navigationController
         
-        navigationController.setViewControllers([PlaygroundScreen(), PlaygroundSplashScreen()], animated: false)
+        navigationController.setViewControllers([PlaygroundScreen()], animated: false)
         
         self.window?.makeKeyAndVisible()
         
