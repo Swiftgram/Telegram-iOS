@@ -9,9 +9,17 @@ load(
     "//Swiftgram/Playground:custom_bazel_path.bzl", "custom_bazel_path"
 )
 
+objc_library(
+    name = "PlaygroundMain",
+    srcs = [
+        "Sources/main.m"
+    ],
+)
+
+
 swift_library(
-    name = "playgroundLib",
-    srcs = glob(["Sources/*.swift"]),
+    name = "PlaygroundLib",
+    srcs = glob(["Sources/**/*.swift"]),
     deps = [
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/Display:Display",
@@ -30,7 +38,8 @@ ios_application(
     infoplists = ["Resources/Info.plist"],
     minimum_os_version = "14.0",
     visibility = ["//visibility:public"],
-    deps = [":playgroundLib"],
+    launch_storyboard = "Resources/LaunchScreen.storyboard",
+    deps = [":PlaygroundMain", ":PlaygroundLib"],
 )
 
 xcodeproj(
