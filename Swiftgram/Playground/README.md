@@ -15,3 +15,17 @@ Small app to quickly iterate on components testing without building an entire me
 ```shell
 ./generate_project.py
 ```
+
+## Run generated project on simulator
+
+### From root
+
+```shell
+./Swiftgram/Playground/launch_on_simulator.py
+```
+
+### From current directory
+
+```shell
+./launch_on_simulator.py
+```
