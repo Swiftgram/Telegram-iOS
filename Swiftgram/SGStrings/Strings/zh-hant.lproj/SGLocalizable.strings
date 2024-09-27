@@ -135,3 +135,14 @@
 "Settings.forceBuiltInMic.Notice" = "如果啟用，應用程式將只會使用設備麥克風。";
 
 "Settings.hideChannelBottomButton" = "隱藏頻道底部面板";
+
+"Settings.CallConfirmation" = "撥號確認";
+"Settings.CallConfirmation.Notice" = "Swiftgram 在撥打電話之前會要求您確認。";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "打電話？";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "進行視訊通話？";
+
+"MutualContact.Label" = "雙向聯絡人";
