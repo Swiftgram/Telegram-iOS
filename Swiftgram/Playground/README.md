@@ -4,17 +4,7 @@ Small app to quickly iterate on components testing without building an entire me
 
 ## Generate Xcode project
 
-### From root
-
-```shell
-./Swiftgram/Playground/generate_project.py
-```
-
-### From current directory
-
-```shell
-./generate_project.py
-```
+Same as main project described in [../../Readme.md](../../Readme.md), but with `--target="Swiftgram/Playground"` parameter.
 
 ## Run generated project on simulator
 
