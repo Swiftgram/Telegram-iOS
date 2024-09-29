@@ -4,6 +4,7 @@ import Display
 import SwiftSignalKit
 import LegacyComponents
 import TelegramPresentationData
+import SwiftUI
 
 public enum LegacyControllerPresentation {
     case custom
@@ -475,6 +476,10 @@ open class LegacyController: ViewController, PresentableController {
                 self?.dismiss()
             }
         }
+        if self.legacyController.isHosting {
+            self.addChild(self.legacyController)
+            self.legacyController.didMove(toParent: legacyController)
+        }
     }
     
     override open func loadDisplayNode() {
@@ -614,6 +619,11 @@ open class LegacyController: ViewController, PresentableController {
         if previousSizeClass != updatedSizeClass {
             self.sizeClass.set(SSignal.single(updatedSizeClass.rawValue as NSNumber))
         }
+        if let sai = self.controllerNode.controllerView?.safeAreaInsets {
+            print("Safe area 1", sai)
+        }
+        print("Safe area 2", self.controllerNode.safeAreaInsets)
+        print("Safe area 3", self.view.safeAreaInsets)
     }
     
     override open func dismiss(completion: (() -> Void)? = nil) {
@@ -635,4 +645,25 @@ open class LegacyController: ViewController, PresentableController {
             self?.presentingViewController?.dismiss(animated: false, completion: nil)
         }
     }
+}
+
+extension LegacyController {
+    
+//    private func syncLegacyControllerSafeArea() {
+//        let recommendedSafeAreaInsets = self.contextImpl.safeAreaInset()
+//        let currentSafeAreaInsets = self.legacyController.view.safeAreaInsets
+//        let additionalInsets = UIEdgeInsets(top: recommendedSafeAreaInsets.top - currentSafeAreaInsets.top, left: recommendedSafeAreaInsets.left - currentSafeAreaInsets.left, bottom: recommendedSafeAreaInsets.bottom - currentSafeAreaInsets.bottom, right: recommendedSafeAreaInsets.left - currentSafeAreaInsets.right)
+//        self.legacyController.additionalSafeAreaInsets = additionalInsets
+//        self.legacyController.viewSafeAreaInsetsDidChange()
+//        self.legacyController.view.setNeedsLayout()
+//    }
+    
+}
+
+// MARK: Swiftgram
+private protocol AnyUIHostingViewController: AnyObject {}
+extension UIHostingController: AnyUIHostingViewController {}
+
+extension UIViewController {
+   var isHosting: Bool { self is AnyUIHostingViewController }
 }
