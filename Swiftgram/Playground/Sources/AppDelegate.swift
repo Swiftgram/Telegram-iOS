@@ -2,6 +2,7 @@ import UIKit
 import SwiftUI
 import AsyncDisplayKit
 import Display
+import LegacyUI
 
 let SHOW_SAFE_AREA = false
 

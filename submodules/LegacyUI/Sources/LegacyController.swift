@@ -438,6 +438,9 @@ open class LegacyController: ViewController, PresentableController {
         }
     }
     
+    // MARK: Swiftgram
+    public var navigationBarHeightModel: ObservedNavigationBarHeight
+    
     public var disposables = DisposableSet()
             
     public init(presentation: LegacyControllerPresentation, theme: PresentationTheme? = nil, strings: PresentationStrings? = nil, initialLayout: ContainerViewLayout? = nil) {
@@ -451,6 +454,7 @@ open class LegacyController: ViewController, PresentableController {
         } else {
             navigationBarPresentationData = nil
         }
+        self.navigationBarHeightModel = ObservedNavigationBarHeight(value: 0.0)
         super.init(navigationBarPresentationData: navigationBarPresentationData)
         
         if let theme = theme {
@@ -589,8 +593,8 @@ open class LegacyController: ViewController, PresentableController {
         self.validLayout = layout
         
         super.containerLayoutUpdated(layout, transition: transition)
-        
-        self.controllerNode.containerLayoutUpdated(layout, navigationBarHeight: self.navigationLayout(layout: layout).navigationFrame.maxY, transition: transition)
+        let navigationBarHeight = self.navigationLayout(layout: layout).navigationFrame.maxY
+        self.controllerNode.containerLayoutUpdated(layout, navigationBarHeight: navigationBarHeight, transition: transition)
         if let legacyTelegramController = self.legacyController as? TGViewController {
             var duration: TimeInterval = 0.0
             if case let .animated(transitionDuration, _) = transition {
@@ -619,11 +623,7 @@ open class LegacyController: ViewController, PresentableController {
         if previousSizeClass != updatedSizeClass {
             self.sizeClass.set(SSignal.single(updatedSizeClass.rawValue as NSNumber))
         }
-        if let sai = self.controllerNode.controllerView?.safeAreaInsets {
-            print("Safe area 1", sai)
-        }
-        print("Safe area 2", self.controllerNode.safeAreaInsets)
-        print("Safe area 3", self.view.safeAreaInsets)
+        self.navigationBarHeightModel.value = navigationBarHeight
     }
     
     override open func dismiss(completion: (() -> Void)? = nil) {
@@ -647,23 +647,89 @@ open class LegacyController: ViewController, PresentableController {
     }
 }
 
-extension LegacyController {
-    
-//    private func syncLegacyControllerSafeArea() {
-//        let recommendedSafeAreaInsets = self.contextImpl.safeAreaInset()
-//        let currentSafeAreaInsets = self.legacyController.view.safeAreaInsets
-//        let additionalInsets = UIEdgeInsets(top: recommendedSafeAreaInsets.top - currentSafeAreaInsets.top, left: recommendedSafeAreaInsets.left - currentSafeAreaInsets.left, bottom: recommendedSafeAreaInsets.bottom - currentSafeAreaInsets.bottom, right: recommendedSafeAreaInsets.left - currentSafeAreaInsets.right)
-//        self.legacyController.additionalSafeAreaInsets = additionalInsets
-//        self.legacyController.viewSafeAreaInsetsDidChange()
-//        self.legacyController.view.setNeedsLayout()
-//    }
-    
-}
-
 // MARK: Swiftgram
 private protocol AnyUIHostingViewController: AnyObject {}
 extension UIHostingController: AnyUIHostingViewController {}
 
 extension UIViewController {
    var isHosting: Bool { self is AnyUIHostingViewController }
+}
+
+
+
+
+struct MySwiftUIView: View {
+    weak var wrapperController: LegacyController?
+
+    var num: Int64
+    
+    @ObservedObject var navigationBarHeight: ObservedNavigationBarHeight
+
+    var body: some View {
+        VStack {
+            Text("Hello, World!")
+                .font(.title)
+                .foregroundColor(.black)
+
+            Spacer(minLength: 0)
+            
+            Button("Push") {
+                self.wrapperController?.push(mySwiftUIViewController(num + 1))
+            }.buttonStyle(AppleButtonStyle())
+            Spacer()
+            Button("Modal") {
+                self.wrapperController?.present(mySwiftUIViewController(num + 1), in: .window(.root), with: ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+            }.buttonStyle(AppleButtonStyle())
+            Spacer()
+            if num > 0 {
+                Button("Dismiss") {
+                    self.wrapperController?.dismiss()
+                }.buttonStyle(AppleButtonStyle())
+                Spacer()
+            }
+        }
+        .background(Color.green)
+        .padding(.top, self.navigationBarHeight.value)
+    }
+    
+//    func containerLayoutUpdatedNotification(layout: ContainerViewLayout, navigationBarHeight: CGFloat, transition: ContainedViewLayoutTransition) {
+//        print("[\(num)] SwiftUI container update with navigationBarHeight \(navigationBarHeight)")
+//        self.navigationBarHeightValue = navigationBarHeight
+//    }
+    
+}
+
+
+struct AppleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .foregroundColor(.white)
+            .padding()
+            .frame(minWidth: 0, maxWidth: .infinity)
+            .background(Color.blue)
+            .cornerRadius(10)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .opacity(configuration.isPressed ? 0.9 : 1)
+    }
+}
+
+public func mySwiftUIViewController(_ num: Int64) -> ViewController {
+    let legacyController = LegacyController(presentation: .navigation, theme: defaultPresentationTheme, strings: defaultPresentationStrings)
+    legacyController.statusBar.statusBarStyle = defaultPresentationTheme.rootController.statusBarStyle.style
+    legacyController.title = "Controller: \(num)"
+    
+    let swiftUIView = MySwiftUIView(wrapperController: legacyController, num: num, navigationBarHeight: legacyController.navigationBarHeightModel)
+    let controller = UIHostingController(rootView: swiftUIView)
+    legacyController.bind(controller: controller)
+    
+    return legacyController
+}
+
+public class ObservedNavigationBarHeight: ObservableObject {
+    @Published var value: CGFloat
+    
+    init(value: CGFloat) {
+        self.value = value
+    }
 }
