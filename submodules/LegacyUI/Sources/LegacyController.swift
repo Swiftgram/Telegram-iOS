@@ -4,7 +4,6 @@ import Display
 import SwiftSignalKit
 import LegacyComponents
 import TelegramPresentationData
-import SwiftUI
 
 public enum LegacyControllerPresentation {
     case custom
@@ -438,9 +437,6 @@ open class LegacyController: ViewController, PresentableController {
         }
     }
     
-    // MARK: Swiftgram
-    public var navigationBarHeightModel: ObservedNavigationBarHeight
-    
     public var disposables = DisposableSet()
             
     public init(presentation: LegacyControllerPresentation, theme: PresentationTheme? = nil, strings: PresentationStrings? = nil, initialLayout: ContainerViewLayout? = nil) {
@@ -454,7 +450,6 @@ open class LegacyController: ViewController, PresentableController {
         } else {
             navigationBarPresentationData = nil
         }
-        self.navigationBarHeightModel = ObservedNavigationBarHeight(value: 0.0)
         super.init(navigationBarPresentationData: navigationBarPresentationData)
         
         if let theme = theme {
@@ -473,16 +468,12 @@ open class LegacyController: ViewController, PresentableController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    public func bind(controller: UIViewController) {
+    open func bind(controller: UIViewController) {
         self.legacyController = controller
         if let controller = controller as? TGViewController {
             controller.customRemoveFromParentViewController = { [weak self] in
                 self?.dismiss()
             }
-        }
-        if self.legacyController.isHosting {
-            self.addChild(self.legacyController)
-            self.legacyController.didMove(toParent: legacyController)
         }
     }
     
@@ -593,8 +584,8 @@ open class LegacyController: ViewController, PresentableController {
         self.validLayout = layout
         
         super.containerLayoutUpdated(layout, transition: transition)
-        let navigationBarHeight = self.navigationLayout(layout: layout).navigationFrame.maxY
-        self.controllerNode.containerLayoutUpdated(layout, navigationBarHeight: navigationBarHeight, transition: transition)
+        
+        self.controllerNode.containerLayoutUpdated(layout, navigationBarHeight: self.navigationLayout(layout: layout).navigationFrame.maxY, transition: transition)
         if let legacyTelegramController = self.legacyController as? TGViewController {
             var duration: TimeInterval = 0.0
             if case let .animated(transitionDuration, _) = transition {
@@ -623,7 +614,6 @@ open class LegacyController: ViewController, PresentableController {
         if previousSizeClass != updatedSizeClass {
             self.sizeClass.set(SSignal.single(updatedSizeClass.rawValue as NSNumber))
         }
-        self.navigationBarHeightModel.value = navigationBarHeight
     }
     
     override open func dismiss(completion: (() -> Void)? = nil) {
@@ -644,92 +634,5 @@ open class LegacyController: ViewController, PresentableController {
         self.controllerNode.animateModalOut { [weak self] in
             self?.presentingViewController?.dismiss(animated: false, completion: nil)
         }
-    }
-}
-
-// MARK: Swiftgram
-private protocol AnyUIHostingViewController: AnyObject {}
-extension UIHostingController: AnyUIHostingViewController {}
-
-extension UIViewController {
-   var isHosting: Bool { self is AnyUIHostingViewController }
-}
-
-
-
-
-struct MySwiftUIView: View {
-    weak var wrapperController: LegacyController?
-
-    var num: Int64
-    
-    @ObservedObject var navigationBarHeight: ObservedNavigationBarHeight
-
-    var body: some View {
-        VStack {
-            Text("Hello, World!")
-                .font(.title)
-                .foregroundColor(.black)
-
-            Spacer(minLength: 0)
-            
-            Button("Push") {
-                self.wrapperController?.push(mySwiftUIViewController(num + 1))
-            }.buttonStyle(AppleButtonStyle())
-            Spacer()
-            Button("Modal") {
-                self.wrapperController?.present(mySwiftUIViewController(num + 1), in: .window(.root), with: ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
-            }.buttonStyle(AppleButtonStyle())
-            Spacer()
-            if num > 0 {
-                Button("Dismiss") {
-                    self.wrapperController?.dismiss()
-                }.buttonStyle(AppleButtonStyle())
-                Spacer()
-            }
-        }
-        .background(Color.green)
-        .padding(.top, self.navigationBarHeight.value)
-    }
-    
-//    func containerLayoutUpdatedNotification(layout: ContainerViewLayout, navigationBarHeight: CGFloat, transition: ContainedViewLayoutTransition) {
-//        print("[\(num)] SwiftUI container update with navigationBarHeight \(navigationBarHeight)")
-//        self.navigationBarHeightValue = navigationBarHeight
-//    }
-    
-}
-
-
-struct AppleButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.headline)
-            .foregroundColor(.white)
-            .padding()
-            .frame(minWidth: 0, maxWidth: .infinity)
-            .background(Color.blue)
-            .cornerRadius(10)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1)
-            .opacity(configuration.isPressed ? 0.9 : 1)
-    }
-}
-
-public func mySwiftUIViewController(_ num: Int64) -> ViewController {
-    let legacyController = LegacyController(presentation: .navigation, theme: defaultPresentationTheme, strings: defaultPresentationStrings)
-    legacyController.statusBar.statusBarStyle = defaultPresentationTheme.rootController.statusBarStyle.style
-    legacyController.title = "Controller: \(num)"
-    
-    let swiftUIView = MySwiftUIView(wrapperController: legacyController, num: num, navigationBarHeight: legacyController.navigationBarHeightModel)
-    let controller = UIHostingController(rootView: swiftUIView)
-    legacyController.bind(controller: controller)
-    
-    return legacyController
-}
-
-public class ObservedNavigationBarHeight: ObservableObject {
-    @Published var value: CGFloat
-    
-    init(value: CGFloat) {
-        self.value = value
     }
 }

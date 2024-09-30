@@ -27,6 +27,7 @@ swift_library(
         "//submodules/LegacyUI:LegacyUI",
         "//submodules/LegacyComponents:LegacyComponents",
         "//submodules/MediaPlayer:UniversalMediaPlayer",
+        "//Swiftgram/SGSwiftUI:SGSwiftUI",
     ],
     data = [
         "//Telegram:GeneratedPresentationStrings/Resources/PresentationStrings.data",
