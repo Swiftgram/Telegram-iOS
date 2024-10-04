@@ -562,7 +562,7 @@ final class StarsTransactionsScreenComponent: Component {
                             count: self.starsState?.balance ?? 0,
                             rate: nil,
                             actionTitle: environment.strings.Stars_Intro_Buy,
-                            actionAvailable: false /* MARK: Swiftgram */ // !premiumConfiguration.areStarsDisabled,
+                            actionAvailable: false, /* MARK: Swiftgram */ // !premiumConfiguration.areStarsDisabled,
                             actionIsEnabled: true,
                             action: { [weak self] in
                                 guard let self, let component = self.component else {
