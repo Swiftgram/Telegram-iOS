@@ -34,14 +34,14 @@ public func showMessageJson(controllerInteraction: ChatControllerInteraction, ch
         let fileResource = LocalFileMediaResource(fileId: id, size: Int64(messageData.count), isSecretRelated: false)
         context.account.postbox.mediaBox.storeResourceData(fileResource.id, data: messageData, synchronous: true)
         
-        let file = TelegramMediaFile(fileId: MediaId(namespace: Namespaces.Media.LocalFile, id: id), partialReference: nil, resource: fileResource, previewRepresentations: [], videoThumbnails: [], immediateThumbnailData: nil, mimeType: "application/json; charset=utf-8", size: Int64(messageData.count), attributes: [.FileName(fileName: "message.json")])
+        let file = TelegramMediaFile(fileId: MediaId(namespace: Namespaces.Media.LocalFile, id: id), partialReference: nil, resource: fileResource, previewRepresentations: [], videoThumbnails: [], immediateThumbnailData: nil, mimeType: "application/json; charset=utf-8", size: Int64(messageData.count), attributes: [.FileName(fileName: "message.json")], alternativeRepresentations: [])
         
         presentDocumentPreviewController(rootController: rootController, theme: chatPresentationInterfaceState.theme, strings: chatPresentationInterfaceState.strings, postbox: context.account.postbox, file: file, canShare: !message.isCopyProtected())
         
     }
 }
 
-extension MemoryBuffer: WrapCustomizable {
+extension MemoryBuffer: @retroactive WrapCustomizable {
     
     public func wrap(context: Any?, dateFormatter: DateFormatter?) -> Any? {
         let hexString = self.description
@@ -50,7 +50,7 @@ extension MemoryBuffer: WrapCustomizable {
 }
 
 // There's a chacne we will need it for each empty/weird type, or it will be a runtime crash.
-extension ContentRequiresValidationMessageAttribute: WrapCustomizable {
+extension ContentRequiresValidationMessageAttribute: @retroactive WrapCustomizable {
     
     public func wrap(context: Any?, dateFormatter: DateFormatter?) -> Any? {
         return ["@type": "ContentRequiresValidationMessageAttribute"]
