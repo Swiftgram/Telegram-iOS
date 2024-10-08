@@ -135,3 +135,14 @@
 "Settings.forceBuiltInMic.Notice" = "Se abilitato, l'app utilizzerà solo il microfono del dispositivo anche se sono collegate le cuffie.";
 
 "Settings.hideChannelBottomButton" = "Nascondi Pannello Inferiore del Canale";
+
+"Settings.CallConfirmation" = "Conferma di chiamata";
+"Settings.CallConfirmation.Notice" = "Swiftgram chiederà la tua conferma prima di effettuare una chiamata.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Effettuare una chiamata?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Effettuare una videochiamata?";
+
+"MutualContact.Label" = "contatto reciproco";
