@@ -1586,7 +1586,7 @@ public func recommendedVideoExportConfiguration(values: MediaEditorValues, durat
     var values = values
     
     var videoBitrate: Int = 3700
-    var audioBitrate: Int = 64
+    var audioBitrate: Int = 320
     var audioNumberOfChannels = 2
     if image {
         videoBitrate = 5000
