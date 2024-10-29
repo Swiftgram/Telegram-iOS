@@ -135,3 +135,14 @@
 "Settings.forceBuiltInMic.Notice" = "若启用，即使已连接耳机，应用也只使用设备自身的麦克风。";
 
 "Settings.hideChannelBottomButton" = "隐藏频道底部面板";
+
+"Settings.CallConfirmation" = "呼叫确认";
+"Settings.CallConfirmation.Notice" = "Swiftgram 会在拨打电话之前请求确认";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "拨打电话？";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "拨打视频电话？";
+
+"MutualContact.Label" = "互为联系人";
