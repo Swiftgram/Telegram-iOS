@@ -187,9 +187,9 @@ public enum MediaQualityPreset: Int32 {
     var audioBitrateKbps: Int {
         switch self {
         case .compressedVeryLow, .compressedLow:
-            return 32
+            return 128
         case .compressedMedium, .compressedHigh, .compressedVeryHigh, .videoMessage:
-            return 64
+            return 320
         default:
             return 0
         }
