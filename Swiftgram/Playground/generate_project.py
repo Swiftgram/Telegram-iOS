@@ -28,7 +28,7 @@ def main():
     # Get the current script directory
     current_script_dir = os.path.dirname(os.path.abspath(__file__))
     with cwd(os.path.join(current_script_dir, "..", "..")):
-        bazel_path = locate_bazel(os.getcwd())
+        bazel_path = locate_bazel(os.getcwd(), cache_host=None)
     # 1. Kill all Xcode processes
     subprocess.run(["killall", "Xcode"], check=False)
 
