@@ -28,6 +28,7 @@ private enum SGDebugActions: String {
 
 private enum SGDebugToggles: String {
     case forceImmediateShareSheet
+    case legacyNotificationsFix
 }
 
 
@@ -42,6 +43,7 @@ private func SGDebugControllerEntries(presentationData: PresentationData) -> [SG
     #endif
     entries.append(.action(id: id.count, section: .base, actionType: .clearRegDateCache, text: "Clear Regdate cache", kind: .generic))
     entries.append(.toggle(id: id.count, section: .base, settingName: .forceImmediateShareSheet, value: SGSimpleSettings.shared.forceSystemSharing, text: "Force System Share Sheet", enabled: true))
+    entries.append(.toggle(id: id.count, section: .base, settingName: .legacyNotificationsFix, value: SGSimpleSettings.shared.legacyNotificationsFix, text: "[Legacy] Fix empty notifications", enabled: true))
     
     return entries
 }
@@ -60,6 +62,8 @@ public func sgDebugController(context: AccountContext) -> ViewController {
         switch toggleName {
             case .forceImmediateShareSheet:
                 SGSimpleSettings.shared.forceSystemSharing = value
+            case .legacyNotificationsFix:
+                SGSimpleSettings.shared.legacyNotificationsFix = value
         }
     }, action: { actionType in
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }

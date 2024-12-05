@@ -106,6 +106,7 @@ public class SGSimpleSettings {
         case forceSystemSharing
         case confirmCalls
         case videoPIPSwipeDirection
+        case legacyNotificationsFix
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -201,7 +202,8 @@ public class SGSimpleSettings {
         Keys.hideChannelBottomButton.rawValue: false,
         Keys.forceSystemSharing.rawValue: false,
         Keys.confirmCalls.rawValue: true,
-        Keys.videoPIPSwipeDirection.rawValue: VideoPIPSwipeDirection.up.rawValue
+        Keys.videoPIPSwipeDirection.rawValue: VideoPIPSwipeDirection.up.rawValue,
+        Keys.legacyNotificationsFix.rawValue: false
     ]
     
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
@@ -376,6 +378,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.videoPIPSwipeDirection.rawValue)
     public var videoPIPSwipeDirection: String
+
+    @UserDefault(key: Keys.legacyNotificationsFix.rawValue)
+    public var legacyNotificationsFix: Bool
 }
 
 extension SGSimpleSettings {
