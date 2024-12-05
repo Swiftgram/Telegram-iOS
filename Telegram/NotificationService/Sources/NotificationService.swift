@@ -18,6 +18,8 @@ import NotificationsPresentationData
 import RangeSet
 import ConvertOpusToAAC
 
+private let LEGACY_NOTIFICATIONS_FIX: Bool = UserDefaults.standard.bool(forKey: "legacyNotificationsFix")
+
 private let queue = Queue()
 
 private var installedSharedLogger = false
@@ -641,7 +643,7 @@ private struct NotificationContent: CustomStringConvertible {
         }
         
         // MARK: Swiftgram
-        if self.isEmpty {
+        if self.isEmpty && LEGACY_NOTIFICATIONS_FIX {
             content.title = " "
             content.threadIdentifier = "empty-notification"
             if #available(iOSApplicationExtension 15.0, iOS 15.0, *) {
@@ -2201,6 +2203,9 @@ final class NotificationService: UNNotificationServiceExtension {
     
     // MARK: Swiftgram
     func removeEmptyNotificationsOnce() {
+        if !LEGACY_NOTIFICATIONS_FIX {
+            return
+        }
         var emptyNotifications: [String] = []
         UNUserNotificationCenter.current().getDeliveredNotifications(completionHandler: { notifications in
             for notification in notifications {
@@ -2218,6 +2223,9 @@ final class NotificationService: UNNotificationServiceExtension {
     }
     
     func removeEmptyNotifications() {
+        if !LEGACY_NOTIFICATIONS_FIX {
+            return
+        }
         self.notificationRemovalTries += 1
         if self.emptyNotificationsRemoved || self.notificationRemovalTries > self.maxNotificationRemovalTries  {
             #if DEBUG

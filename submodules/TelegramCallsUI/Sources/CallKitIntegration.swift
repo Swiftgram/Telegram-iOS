@@ -19,13 +19,11 @@ public final class CallKitIntegration {
         #if targetEnvironment(simulator)
         return false
         #else
-        // MARK: Swiftgram disabled due to missing Notification Extension Filtering Entitlement
-        return false
-//        if #available(iOSApplicationExtension 10.0, iOS 10.0, *) {
-//            return Locale.current.regionCode?.lowercased() != "cn"
-//        } else {
-//            return false
-//        }
+        if #available(iOSApplicationExtension 10.0, iOS 10.0, *) {
+            return Locale.current.regionCode?.lowercased() != "cn" && !UserDefaults.standard.bool(forKey: "legacyNotificationsFix")
+        } else {
+            return false
+        }
         #endif
     }
     
