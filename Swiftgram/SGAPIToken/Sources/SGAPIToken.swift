@@ -85,7 +85,7 @@ public func getSGSettingsURL(context: AccountContext, botUsername: String = SG_C
         var requestWebViewSignalDisposable: Disposable? = nil
         var requestUpdatePeerIsBlocked: Disposable? = nil
         let resolvePeerSignal = (
-            context.engine.peers.resolvePeerByName(name: botUsername)
+            context.engine.peers.resolvePeerByName(name: botUsername, referrer: nil)
             |> mapToSignal { result -> Signal<EnginePeer?, NoError> in
                 guard case let .result(result) = result else {
                     return .complete()
