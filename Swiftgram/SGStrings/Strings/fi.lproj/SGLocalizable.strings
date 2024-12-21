@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Latausten tehostus";
 "Settings.DownloadsBoost" = "Latausten tehostus";
+"Settings.DownloadsBoost.Notice" = "Lisää samanaikaisten yhteyksien määrää ja tiedostopalojen kokoa. Jos verkkoasi ei pysty käsittelemään kuormitusta, kokeile erilaisia vaihtoehtoja, jotka sopivat yhteyteesi.";
 "Settings.DownloadsBoost.none" = "Ei käytössä";
 "Settings.DownloadsBoost.medium" = "Keskitaso";
 "Settings.DownloadsBoost.maximum" = "Maksimi";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Jos otettu käyttöön, sovellus käyttää vain laitteen mikrofonia, vaikka kuulokkeet olisivatkin liitettynä.";
 
 "Settings.hideChannelBottomButton" = "Piilota kanavan alapalkki";
+
+"Settings.CallConfirmation" = "Puhelun vahvistus";
+"Settings.CallConfirmation.Notice" = "Swiftgram pyytää vahvistustasi ennen puhelun soittamista.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Soita puhelu?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Soita videopuhelu?";
+
+"MutualContact.Label" = "yhteinen yhteys";
+
+"Settings.swipeForVideoPIP" = "Video PIP pyyhkäisevällä toiminnolla";
+"Settings.swipeForVideoPIP.Notice" = "Jos se on käytössä, videon pyyhkäisy avaa sen kuvassa kuvassa -tilassa.";
