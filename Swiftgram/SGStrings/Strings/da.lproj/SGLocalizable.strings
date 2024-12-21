@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Upload Boost";
 "Settings.DownloadsBoost" = "Download Boost";
+"Settings.DownloadsBoost.Notice" = "Øger antallet af parallelle forbindelser og størrelsen på filstykker. Hvis dit netværk ikke kan håndtere belastningen, kan du prøve forskellige muligheder, der passer til din forbindelse.";
 "Settings.DownloadsBoost.none" = "Deaktiveret";
 "Settings.DownloadsBoost.medium" = "Mellem";
 "Settings.DownloadsBoost.maximum" = "Maksimum";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Hvis aktiveret, vil appen kun bruge enhedens mikrofon, selvom hovedtelefoner er tilsluttet.";
 
 "Settings.hideChannelBottomButton" = "Skjul Kanal Bund Panel";
+
+"Settings.CallConfirmation" = "Opkaldsbekræftelse";
+"Settings.CallConfirmation.Notice" = "Swiftgram vil bede om din bekræftelse, før der foretages et opkald.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Foretage et opkald?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Foretage et videoopkald?";
+
+"MutualContact.Label" = "fælles kontakt";
+
+"Settings.swipeForVideoPIP" = "Video PIP med Swipe";
+"Settings.swipeForVideoPIP.Notice" = "Hvis aktiveret, vil sletning af video åbne den i billede-i-billede-tilstand.";

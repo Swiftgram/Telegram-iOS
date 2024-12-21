@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Ενίσχυση Αποστολής";
 "Settings.DownloadsBoost" = "Ενίσχυση Λήψης";
+"Settings.DownloadsBoost.Notice" = "Αυξάνει τον αριθμό των παράλληλων συνδέσεων και το μέγεθος των κομματιών αρχείου. Σε περίπτωση που το δίκτυό σας δεν μπορεί να διαχειριστεί το φορτίο, δοκιμάστε διαφορετικές επιλογές που ταιριάζουν στη σύνδεσή σας.";
 "Settings.DownloadsBoost.none" = "Απενεργοποιημένο";
 "Settings.DownloadsBoost.medium" = "Μεσαίο";
 "Settings.DownloadsBoost.maximum" = "Μέγιστο";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Εάν ενεργοποιηθεί, η εφαρμογή θα χρησιμοποιεί μόνο το μικρόφωνο της συσκευής ακόμα και αν είναι συνδεδεμένα ακουστικά.";
 
 "Settings.hideChannelBottomButton" = "Απόκρυψη Καναλιού Κάτω Πάνελ";
+
+"Settings.CallConfirmation" = "Επιβεβαίωση Κλήσης";
+"Settings.CallConfirmation.Notice" = "Η Swiftgram θα ζητήσει την επιβεβαίωσή σας πριν πραγματοποιήσει μια κλήση.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Να κάνω μια Κλήση;";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Να κάνω μια Βιντεοκλήση;";
+
+"MutualContact.Label" = "αμοιβαία επαφή";
+
+"Settings.swipeForVideoPIP" = "Βίντεο PIP με Swipe";
+"Settings.swipeForVideoPIP.Notice" = "Αν είναι ενεργοποιημένο, το σ swipe video θα το ανοίξει σε λειτουργία Εικόνα μέσα στην Εικόνα.";

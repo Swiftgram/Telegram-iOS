@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "تعزيز التحميلات";
 "Settings.DownloadsBoost" = "تعزيز التنزيلات";
+"Settings.DownloadsBoost.Notice" = "يزيد من عدد الاتصالات المتوازية وحجم أجزاء الملفات. إذا لم يتمكن شبكتك من تحمل الحمل، حاول خيارات مختلفة تناسب اتصالك.";
 "Settings.DownloadsBoost.none" = "تعطيل";
 "Settings.DownloadsBoost.medium" = "متوسط";
 "Settings.DownloadsBoost.maximum" = "الحد الاقصى";
@@ -128,10 +129,24 @@
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "اضغط مزدوجًا لتحرير الرسالة";
 
-"Settings.wideChannelPosts" = "المنشورات الواسعة في القنوات";
+"Settings.wideChannelPosts" = "المشاركات الواسعة في القنوات";
 "Settings.ForceEmojiTab" = "لوحة مفاتيح الرموز التعبيرية افتراضيًا";
 
-"Settings.forceBuiltInMic" = "فرض استخدام ميكروفون الجهاز";
+"Settings.forceBuiltInMic" = "قوة ميكروفون الجهاز";
 "Settings.forceBuiltInMic.Notice" = "إذا تم تمكينه، سيستخدم التطبيق فقط ميكروفون الجهاز حتى لو كانت سماعات الرأس متصلة.";
 
-"Settings.hideChannelBottomButton" = "إخفاء الزر في اسفل القناة";
+"Settings.hideChannelBottomButton" = "إخفاء لوحة قاعدة القناة";
+
+"Settings.CallConfirmation" = "تأكيد الاتصال";
+"Settings.CallConfirmation.Notice" = "سيطلب Swiftgram تأكيدك قبل إجراء مكالمة.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "هل ترغب في إجراء مكالمة؟";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "هل ترغب في إجراء مكالمة فيديو؟";
+
+"MutualContact.Label" = "جهة اتصال مشتركة";
+
+"Settings.swipeForVideoPIP" = "فيديو PIP مع السحب";
+"Settings.swipeForVideoPIP.Notice" = "إذا تم تمكينه، سيفتح سحب الفيديو في وضع الصورة في الصورة.";

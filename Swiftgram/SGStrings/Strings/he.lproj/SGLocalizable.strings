@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "תוספת העלאות";
 "Settings.DownloadsBoost" = "תוספת הורדות";
+"Settings.DownloadsBoost.Notice" = "מגביר את מספר החיבורים המקביליים וגודל חלקי הקבצים. אם הרשת שלך לא יכולה להתמודד עם העומס, נסה אפשרויות שונות שמתאימות לחיבור שלך.";
 "Settings.DownloadsBoost.none" = "מבוטל";
 "Settings.DownloadsBoost.medium" = "בינוני";
 "Settings.DownloadsBoost.maximum" = "מרבי";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "אם מופעל, האפליקציה תשתמש רק במיקרופון המכשיר גם כאשר אוזניות מחוברות.";
 
 "Settings.hideChannelBottomButton" = "הסתר פאנל תחתון של ערוץ";
+
+"Settings.CallConfirmation" = "אישור שיחה";
+"Settings.CallConfirmation.Notice" = "Swiftgram יבקש את אישורך לפני ביצוע שיחה.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "לבצע שיחה?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "לבצע שיחת וידאו?";
+
+"MutualContact.Label" = "איש קשר משותף";
+
+"Settings.swipeForVideoPIP" = "וידאו PIP עם החלקה";
+"Settings.swipeForVideoPIP.Notice" = "אם מופעל, החלקת הווידאו תפתח אותו במצב תמונה בתוך תמונה.";

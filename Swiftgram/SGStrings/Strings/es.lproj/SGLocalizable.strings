@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Aumento de subida";
 "Settings.DownloadsBoost" = "Aumento de descargas";
+"Settings.DownloadsBoost.Notice" = "Aumenta el número de conexiones paralelas y el tamaño de las partes del archivo. Si tu red no puede manejar la carga, prueba diferentes opciones que se adapten a tu conexión.";
 "Settings.DownloadsBoost.none" = "Desactivado";
 "Settings.DownloadsBoost.medium" = "Medio";
 "Settings.DownloadsBoost.maximum" = "Máximo";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Si está habilitado, la aplicación utilizará solo el micrófono del dispositivo incluso si se conectan auriculares.";
 
 "Settings.hideChannelBottomButton" = "Ocultar Panel Inferior del Canal";
+
+"Settings.CallConfirmation" = "Confirmación de llamada";
+"Settings.CallConfirmation.Notice" = "Swiftgram pedirá tu confirmación antes de realizar una llamada.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "¿Hacer una llamada?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "¿Hacer una videollamada?";
+
+"MutualContact.Label" = "contacto mutuo";
+
+"Settings.swipeForVideoPIP" = "Video PIP con deslizamiento";
+"Settings.swipeForVideoPIP.Notice" = "Si está habilitado, deslizar el video lo abrirá en modo imagen en imagen.";

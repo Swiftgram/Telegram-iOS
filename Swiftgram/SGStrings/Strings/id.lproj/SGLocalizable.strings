@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Peningkatan Unggahan";
 "Settings.DownloadsBoost" = "Peningkatan Unduhan";
+"Settings.DownloadsBoost.Notice" = "Meningkatkan jumlah koneksi paralel dan ukuran potongan file. Jika jaringan Anda tidak dapat menangani bebannya, coba berbagai opsi yang sesuai dengan sambungan Anda.";
 "Settings.DownloadsBoost.none" = "Nonaktif";
 "Settings.DownloadsBoost.medium" = "Sedang";
 "Settings.DownloadsBoost.maximum" = "Maksimal";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Jika diaktifkan, aplikasi akan menggunakan hanya mikrofon perangkat bahkan jika headphone terhubung.";
 
 "Settings.hideChannelBottomButton" = "Sembunyikan Panel Bawah Saluran";
+
+"Settings.CallConfirmation" = "Konfirmasi Panggilan";
+"Settings.CallConfirmation.Notice" = "Swiftgram akan meminta konfirmasi Anda sebelum melakukan panggilan.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Buat Panggilan?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Buat Panggilan Video?";
+
+"MutualContact.Label" = "kontak mutual";
+
+"Settings.swipeForVideoPIP" = "Video PIP dengan Geser";
+"Settings.swipeForVideoPIP.Notice" = "Jika diaktifkan, menggeser video akan membukanya dalam mode Gambar-dalam-Gambar.";

@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "अपलोड बूस्ट";
 "Settings.DownloadsBoost" = "डाउनलोड बूस्ट";
+"Settings.DownloadsBoost.Notice" = "पैरलेल कनेक्शनों की संख्या और फ़ाइल फ़्रैगमेंट का आकार बढ़ाता है। अगर आपका नेटवर्क लोड को संभाल नहीं सकता है, तो अपने कनेक्शन के अनुरूप अलग-अलग विकल्प आजमाएं।";
 "Settings.DownloadsBoost.none" = "निष्क्रिय";
 "Settings.DownloadsBoost.medium" = "माध्यम";
 "Settings.DownloadsBoost.maximum" = "अधिकतम";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "यदि सक्षम है, ऐप केवल उपकरण का माइक्रोफ़ोन उपयोग करेगा भले ही हेडफ़ोन कनेक्ट किए हों।";
 
 "Settings.hideChannelBottomButton" = "चैनल बॉटम पैनल छिपाएँ";
+
+"Settings.CallConfirmation" = "कॉल पुष्टि";
+"Settings.CallConfirmation.Notice" = "Swiftgram कॉल करने से पहले आपकी पुष्टि मांगेगा।";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "कॉल करें?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "वीडियो कॉल करें?";
+
+"MutualContact.Label" = "आपसी संपर्क";
+
+"Settings.swipeForVideoPIP" = "वीडियो PIP स्वाइप के साथ";
+"Settings.swipeForVideoPIP.Notice" = "यदि सक्षम है, तो वीडियो को स्वाइप करने से यह चित्र-इन-चित्र मोड में खोला जाएगा।";
