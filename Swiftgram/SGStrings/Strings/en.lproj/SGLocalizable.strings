@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Upload Boost";
 "Settings.DownloadsBoost" = "Download Boost";
+"Settings.DownloadsBoost.Notice" = "Increases number of parallel connections and size of file chunks. In case your network can't handle the load, try different options that suits your connection.";
 "Settings.DownloadsBoost.none" = "Disabled";
 "Settings.DownloadsBoost.medium" = "Medium";
 "Settings.DownloadsBoost.maximum" = "Maximum";
