@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Potenziamento del caricamento";
 "Settings.DownloadsBoost" = "Potenziamento dello scaricamento";
+"Settings.DownloadsBoost.Notice" = "Aumenta il numero di connessioni parallele e le dimensioni dei frammenti di file. Se la tua rete non riesce a gestire il carico, prova diverse opzioni che si adattano alla tua connessione.";
 "Settings.DownloadsBoost.none" = "Disabilitato";
 "Settings.DownloadsBoost.medium" = "Intermedio";
 "Settings.DownloadsBoost.maximum" = "Massimo";
@@ -146,3 +147,6 @@
 "CallConfirmation.Video.Title" = "Effettuare una videochiamata?";
 
 "MutualContact.Label" = "contatto reciproco";
+
+"Settings.swipeForVideoPIP" = "Video PIP con scorrimento";
+"Settings.swipeForVideoPIP.Notice" = "Se abilitato, scorrendo il video si aprirà in modalità Picture-in-Picture.";

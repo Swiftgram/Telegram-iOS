@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Accelerare Încărcare";
 "Settings.DownloadsBoost" = "Impuls descărcare";
+"Settings.DownloadsBoost.Notice" = "Crește numărul de conexiuni paralele și dimensiunea fragmentelor de fișier. Dacă rețeaua ta nu poate gestiona încărcătura, încearcă diferite opțiuni care se potrivesc conexiunii tale.";
 "Settings.DownloadsBoost.none" = "Dezactivat";
 "Settings.DownloadsBoost.medium" = "Medie";
 "Settings.DownloadsBoost.maximum" = "Maxim";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Dacă este activat, aplicația va folosi doar microfonul dispozitivului chiar dacă sunt conectate căștile.";
 
 "Settings.hideChannelBottomButton" = "Ascundeți panoul de jos al canalului";
+
+"Settings.CallConfirmation" = "Confirmare apel";
+"Settings.CallConfirmation.Notice" = "Swiftgram va solicita confirmarea dumneavoastră înainte de a efectua un apel.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Ești sigur că vrei să faci un apel?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Ești sigur că vrei să faci un apel video?";
+
+"MutualContact.Label" = "contact mutual";
+
+"Settings.swipeForVideoPIP" = "Video PIP cu gestul de glisare";
+"Settings.swipeForVideoPIP.Notice" = "Dacă este activat, glisarea video va deschide în modul imagine în imagine.";

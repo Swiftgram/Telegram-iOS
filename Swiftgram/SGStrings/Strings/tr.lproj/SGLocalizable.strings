@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Karşıya yüklemeleri hızlandır";
 "Settings.DownloadsBoost" = "İndirmeleri hızlandır";
+"Settings.DownloadsBoost.Notice" = "Paralel bağlantıların sayısını ve dosya parçalarının boyutunu artırır. Ağa yük bindiğinde eağa diğer bağlantı seçeneklerini deneyin.";
 "Settings.DownloadsBoost.none" = "Devre dışı";
 "Settings.DownloadsBoost.medium" = "Orta";
 "Settings.DownloadsBoost.maximum" = "En fazla";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Etkinleştirildiğinde, uygulama kulaklıklar bağlı olsa bile sadece cihaz mikrofonunu kullanacaktır.";
 
 "Settings.hideChannelBottomButton" = "Kanal Alt Panelini Gizle";
+
+"Settings.CallConfirmation" = "Arama Onayı";
+"Settings.CallConfirmation.Notice" = "Swiftgram, arama yapmadan önce onayınızı isteyecek.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Arama Yapmak mı?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Video Araması Yapmak mı?";
+
+"MutualContact.Label" = "karşılıklı iletişim";
+
+"Settings.swipeForVideoPIP" = "Videoyu kaydırarak PIP";
+"Settings.swipeForVideoPIP.Notice" = "Eğer etkinleştirildi ise videoyu kaydırmak, Piksel içinde Piksel modunda açılacaktır.";

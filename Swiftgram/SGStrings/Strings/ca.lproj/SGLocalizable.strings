@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Millora de càrregues";
 "Settings.DownloadsBoost" = "Millora de baixades";
+"Settings.DownloadsBoost.Notice" = "Augmenta el nombre de connexions paral·leles i la mida de les parts de fitxer. Si la teva xarxa no pot gestionar la càrrega, prova diferents opcions que s'adaptin a la teva connexió.";
 "Settings.DownloadsBoost.none" = "Desactivat";
 "Settings.DownloadsBoost.medium" = "Mitjà";
 "Settings.DownloadsBoost.maximum" = "Màxim";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Si està habilitat, l'aplicació utilitzarà només el micròfon del dispositiu encara que estiguin connectats els auriculars.";
 
 "Settings.hideChannelBottomButton" = "Amaga el panell inferior del canal";
+
+"Settings.CallConfirmation" = "Confirmació de trucada";
+"Settings.CallConfirmation.Notice" = "Swiftgram et demanarà la teva confirmació abans de fer una trucada.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Vols fer una trucada?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Vols fer una videotrucada?";
+
+"MutualContact.Label" = "contacte mutu";
+
+"Settings.swipeForVideoPIP" = "Vídeo PIP amb desplaçament";
+"Settings.swipeForVideoPIP.Notice" = "Si està habilitat, desplaçar el vídeo l'obrirà en mode Imatge en Imatge.";

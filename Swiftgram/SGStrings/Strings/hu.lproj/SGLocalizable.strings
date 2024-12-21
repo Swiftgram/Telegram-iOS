@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Feltöltés fokozása";
 "Settings.DownloadsBoost" = "Letöltés fokozása";
+"Settings.DownloadsBoost.Notice" = "Növeli a párhuzamos kapcsolatok számát és a fájlok darabjainak méretét. Ha a hálózatod nem képes kezelni a terhelést, próbálj ki különböző opciókat, amelyek illeszkednek a kapcsolatodhoz.";
 "Settings.DownloadsBoost.none" = "Kikapcsolva";
 "Settings.DownloadsBoost.medium" = "Közepes";
 "Settings.DownloadsBoost.maximum" = "Maximális";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Ha engedélyezve van, az alkalmazás csak az eszköz mikrofonját fogja használni, még akkor is, ha a fejhallgató csatlakoztatva van.";
 
 "Settings.hideChannelBottomButton" = "Kanal Alsó Panel Elrejtése";
+
+"Settings.CallConfirmation" = "Hívás megerősítése";
+"Settings.CallConfirmation.Notice" = "A Swiftgram megkéri a megerősítését, mielőtt hívást indítana.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Hívást kezdeni?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Videóhívást kezdeni?";
+
+"MutualContact.Label" = "közöns kontakt";
+
+"Settings.swipeForVideoPIP" = "Videó PIP a húzással";
+"Settings.swipeForVideoPIP.Notice" = "Ha engedélyezve van, a videó húzása képet-képben üzemmódban nyitja meg.";

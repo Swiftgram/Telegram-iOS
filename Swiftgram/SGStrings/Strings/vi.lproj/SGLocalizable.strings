@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Tăng tốc tải lên";
 "Settings.DownloadsBoost" = "Tăng tốc tải xuống";
+"Settings.DownloadsBoost.Notice" = "Tăng số lượng kết nối song song và kích thước các khối tệp. Nếu mạng của bạn không thể xử lý tải, hãy thử các tùy chọn khác phù hợp với kết nối của bạn.";
 "Settings.DownloadsBoost.none" = "Tắt";
 "Settings.DownloadsBoost.medium" = "Trung bình";
 "Settings.DownloadsBoost.maximum" = "Tối đa";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Nếu được kích hoạt, ứng dụng sẽ chỉ sử dụng micro điện thoại của thiết bị ngay cả khi tai nghe được kết nối.";
 
 "Settings.hideChannelBottomButton" = "Ẩn thanh dưới cùng của kênh";
+
+"Settings.CallConfirmation" = "Xác nhận cuộc gọi";
+"Settings.CallConfirmation.Notice" = "Swiftgram sẽ yêu cầu bạn xác nhận trước khi thực hiện cuộc gọi.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Thực hiện cuộc gọi?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Thực hiện cuộc gọi video?";
+
+"MutualContact.Label" = "liên hệ chung";
+
+"Settings.swipeForVideoPIP" = "Video PIP với Vuốt";
+"Settings.swipeForVideoPIP.Notice" = "Nếu được kích hoạt, việc vuốt video sẽ mở nó ở chế độ Hình trong hình.";
