@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Zrychlení nahrávání";
 "Settings.DownloadsBoost" = "Zrychlení stahování";
+"Settings.DownloadsBoost.Notice" = "Zvyšuje počet paralelních připojení a velikost částí souboru. Pokud vaše síť nezvládá zátěž, vyzkoušejte různé možnosti, které vyhovují vašemu připojení.";
 "Settings.DownloadsBoost.none" = "Vypnuto";
 "Settings.DownloadsBoost.medium" = "Střední";
 "Settings.DownloadsBoost.maximum" = "Maximální";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Pokud je povoleno, aplikace použije pouze mikrofon zařízení, i když jsou připojeny sluchátka.";
 
 "Settings.hideChannelBottomButton" = "Skrýt panel dolního kanálu";
+
+"Settings.CallConfirmation" = "Potvrzení hovoru";
+"Settings.CallConfirmation.Notice" = "Swiftgram požádá o vaši potvrzení před uskutečněním hovoru.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Uskutečnit hovor?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Uskutečnit video hovor?";
+
+"MutualContact.Label" = "vzájemný kontakt";
+
+"Settings.swipeForVideoPIP" = "Video PIP s přetahováním";
+"Settings.swipeForVideoPIP.Notice" = "Pokud je povoleno, poslání videa jej otevře v režimu Obraz v obraze.";
