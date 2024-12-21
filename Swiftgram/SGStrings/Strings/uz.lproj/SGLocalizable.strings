@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Yuklashni kuchaytirish";
 "Settings.DownloadsBoost" = "Yuklab olishni kuchaytirish";
+"Settings.DownloadsBoost.Notice" = "Parallel ulanishlar sonini va fayl bo'laklari o'lchamini oshiradi. Agar sizning tarmog'ingiz yuklamani boshqarolmasa, ulanishingizga mos keladigan boshqa variantlarni sinab ko'ring.";
 "Settings.DownloadsBoost.none" = "O'chirilgan";
 "Settings.DownloadsBoost.medium" = "O'rtacha";
 "Settings.DownloadsBoost.maximum" = "Maksimum";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Agar yoqilsa, ilova faqat qurilma mikrofonidan foydalanadi, hattoki naushnik bog'langan bo'lsa ham.";
 
 "Settings.hideChannelBottomButton" = "Kanal Pastki Panellini yashirish";
+
+"Settings.CallConfirmation" = "Qo'ng'iroq tasdiqlanishi";
+"Settings.CallConfirmation.Notice" = "Swiftgram sizdan qo'ng'iroq qilishdan oldin tasdiqlashni so'raydi.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Qo'ng'iroq qilish?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Video qo'ng'iroq qilish?";
+
+"MutualContact.Label" = "o'zaro aloqa";
+
+"Settings.swipeForVideoPIP" = "Video PIP bilan Surish";
+"Settings.swipeForVideoPIP.Notice" = "Agar yoqilgan bo'lsa, videoni surish uni Tasvir ichida Tasvir rejimida ochadi.";
