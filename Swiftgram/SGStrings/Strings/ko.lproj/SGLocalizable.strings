@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "업로드 향상";
 "Settings.DownloadsBoost" = "다운로드 향상";
+"Settings.DownloadsBoost.Notice" = "병렬 연결 수와 파일 조각 크기를 증가시킵니다. 네트워크가 부하를 처리할 수 없는 경우, 연결에 적합한 다양한 옵션을 시도해 보세요.";
 "Settings.DownloadsBoost.none" = "비활성화";
 "Settings.DownloadsBoost.medium" = "중간";
 "Settings.DownloadsBoost.maximum" = "최대";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "만약 활성화되면, 앱은 헤드폰이 연결되어 있더라도 장치 마이크만 사용합니다.";
 
 "Settings.hideChannelBottomButton" = "채널 하단 패널 숨기기";
+
+"Settings.CallConfirmation" = "통화 확인";
+"Settings.CallConfirmation.Notice" = "Swiftgram은 전화를 걸기 전에 귀하의 확인을 요청할 것입니다.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "통화를 하시겠습니까?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "영상 통화를 하시겠습니까?";
+
+"MutualContact.Label" = "상호 연락처";
+
+"Settings.swipeForVideoPIP" = "비디오 PIP 스와이프";
+"Settings.swipeForVideoPIP.Notice" = "설정이 활성화되면 비디오를 스와이프하면 화면 속 화면 모드로 열립니다.";
