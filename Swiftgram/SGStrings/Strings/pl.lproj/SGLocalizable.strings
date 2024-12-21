@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Przyśpieszenie wysyłania";
 "Settings.DownloadsBoost" = "Przyśpieszenie pobierania";
+"Settings.DownloadsBoost.Notice" = "Zwiększa liczbę równoległych połączeń oraz rozmiar fragmentów plików. Jeśli Twoja sieć nie jest w stanie znieść obciążenia, wypróbuj różne opcje, które pasują do Twojego połączenia.";
 "Settings.DownloadsBoost.none" = "Wyłączone";
 "Settings.DownloadsBoost.medium" = "Średnie";
 "Settings.DownloadsBoost.maximum" = "Maksymalne";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Jeśli ta opcja jest włączona, aplikacja będzie korzystać tylko z mikrofonu urządzenia nawet jeśli są podłączone słuchawki.";
 
 "Settings.hideChannelBottomButton" = "Ukryj dolny panel kanału";
+
+"Settings.CallConfirmation" = "Potwierdzenie połączenia";
+"Settings.CallConfirmation.Notice" = "Swiftgram poprosi o Twoje potwierdzenie przed wykonaniem połączenia.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Wykonać połączenie?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Wykonać połączenie wideo?";
+
+"MutualContact.Label" = "wspólny kontakt";
+
+"Settings.swipeForVideoPIP" = "Wideo PIP z przesunięciem";
+"Settings.swipeForVideoPIP.Notice" = "Jeśli włączone, przesunięcie wideo otworzy je w trybie obrazu w obrazie.";
