@@ -393,12 +393,20 @@ extension SGSimpleSettings {
     }
 }
 
-public func getSGDownloadPartSize(_ default: Int64) -> Int64 {
+public func getSGDownloadPartSize(_ default: Int64, fileSize: Int64?) -> Int64 {
     let currentDownloadSetting = SGSimpleSettings.shared.downloadSpeedBoost
+    // Increasing chunk size for small files make it worse in terms of overall download performance
+    let smallFileSizeThreshold = 1 * 1024 * 1024 // 1 MB
     switch (currentDownloadSetting) {
         case SGSimpleSettings.DownloadSpeedBoostValues.medium.rawValue:
+            if let fileSize, fileSize <= smallFileSizeThreshold {
+                return `default`
+            }
             return 512 * 1024
         case SGSimpleSettings.DownloadSpeedBoostValues.maximum.rawValue:
+            if let fileSize, fileSize <= smallFileSizeThreshold {
+                return `default`
+            }
             return 1024 * 1024
         default:
             return `default`
