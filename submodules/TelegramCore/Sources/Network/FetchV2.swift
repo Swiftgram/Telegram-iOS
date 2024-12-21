@@ -336,9 +336,9 @@ private final class FetchImpl {
             }
             
             if isStory {
-                self.defaultPartSize = getSGDownloadPartSize(512 * 1024)
+                self.defaultPartSize = getSGDownloadPartSize(512 * 1024, fileSize: self.size)
             } else {
-                self.defaultPartSize = getSGDownloadPartSize(128 * 1024)
+                self.defaultPartSize = getSGDownloadPartSize(128 * 1024, fileSize: self.size)
             }
             self.cdnPartSize = 128 * 1024
             
