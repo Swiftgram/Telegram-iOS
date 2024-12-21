@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Uppladdningshastighet";
 "Settings.DownloadsBoost" = "Ladda ner Boost";
+"Settings.DownloadsBoost.Notice" = "Ökar antalet parallella anslutningar och storleken på filbitar. Om ditt nätverk inte kan hantera belastningen, prova olika alternativ som passar din anslutning.";
 "Settings.DownloadsBoost.none" = "Inaktiverad";
 "Settings.DownloadsBoost.medium" = "Medium";
 "Settings.DownloadsBoost.maximum" = "Maximal";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Om aktiverat, kommer appen endast använda enhetens mikrofon även om hörlurar är anslutna.";
 
 "Settings.hideChannelBottomButton" = "Dölj kanalle bottenpanel";
+
+"Settings.CallConfirmation" = "Samtalsbekräftelse";
+"Settings.CallConfirmation.Notice" = "Swiftgram kommer att be om din bekräftelse innan ett samtal görs.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Vill du ringa ett samtal?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Vill du göra ett videosamtal?";
+
+"MutualContact.Label" = "ömsesidig kontakt";
+
+"Settings.swipeForVideoPIP" = "Video PIP med svep";
+"Settings.swipeForVideoPIP.Notice" = "Om aktiverat, kommer svepning av video att öppna det i bild-i-bild-läge.";

@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Oplaai versterking";
 "Settings.DownloadsBoost" = "Aflaai versterking";
+"Settings.DownloadsBoost.Notice" = "Verhoog die aantal parallelle verbindings en die grootte van lêerstukke. As jou netwerk nie die las kan hanteer nie, probeer verskillende opsies wat by jou verbinding pas.";
 "Settings.DownloadsBoost.none" = "Gedeaktiveer";
 "Settings.DownloadsBoost.medium" = "Medium";
 "Settings.DownloadsBoost.maximum" = "Maksimum";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Indien geaktiveer, sal die app slegs die toestel se mikrofoon gebruik selfs as oorfone aangesluit is.";
 
 "Settings.hideChannelBottomButton" = "Verberg Kanaal Onderpaneel";
+
+"Settings.CallConfirmation" = "Bel Bevestiging";
+"Settings.CallConfirmation.Notice" = "Swiftgram sal om jou bevestiging vra voordat 'n oproep gemaak word.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Maak 'n Oproep?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Maak 'n Video Oproep?";
+
+"MutualContact.Label" = "ewige kontak";
+
+"Settings.swipeForVideoPIP" = "Video PIP met Veeg";
+"Settings.swipeForVideoPIP.Notice" = "As geaktiveer, sal die veeg van die video dit in Prent-in-Prent modus oopmaak.";

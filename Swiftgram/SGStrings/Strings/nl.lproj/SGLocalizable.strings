@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Upload Boost";
 "Settings.DownloadsBoost" = "Download Boost";
+"Settings.DownloadsBoost.Notice" = "Verhoogt het aantal gelijktijdige verbindingen en de grootte van bestandsgedeelten. Als uw netwerk de belasting niet aankan, probeer dan verschillende opties die geschikt zijn voor uw verbinding.";
 "Settings.DownloadsBoost.none" = "Uitgeschakeld";
 "Settings.DownloadsBoost.medium" = "Gemiddeld";
 "Settings.DownloadsBoost.maximum" = "Maximaal";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Indien ingeschakeld, zal de app alleen de apparaatmicrofoon gebruiken, zelfs als er hoofdtelefoons zijn aangesloten.";
 
 "Settings.hideChannelBottomButton" = "Verberg Kanaal Onderste Paneel";
+
+"Settings.CallConfirmation" = "Belbevestiging";
+"Settings.CallConfirmation.Notice" = "Swiftgram zal om uw bevestiging vragen voordat er een oproep wordt gedaan.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Een oproep maken?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Een video-oproep maken?";
+
+"MutualContact.Label" = "gemeenschappelijke contactpersoon";
+
+"Settings.swipeForVideoPIP" = "Video PIP met veeg";
+"Settings.swipeForVideoPIP.Notice" = "Als ingeschakeld, opent het swipen van video het in de modus Beeld-in-Beeld.";

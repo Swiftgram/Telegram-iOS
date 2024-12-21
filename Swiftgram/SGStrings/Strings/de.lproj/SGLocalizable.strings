@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Upload Beschleuniger";
 "Settings.DownloadsBoost" = "Download Beschleuniger";
+"Settings.DownloadsBoost.Notice" = "Erhöht die Anzahl der parallelen Verbindungen und die Größe der Dateiabschnitte. Wenn Ihr Netzwerk die Last nicht bewältigen kann, versuchen Sie verschiedene Optionen, die zu Ihrer Verbindung passen.";
 "Settings.DownloadsBoost.none" = "Deaktiviert";
 "Settings.DownloadsBoost.medium" = "Mittel";
 "Settings.DownloadsBoost.maximum" = "Maximum";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Wenn aktiviert, verwendet die App nur das Geräte-Mikrofon, auch wenn Kopfhörer angeschlossen sind.";
 
 "Settings.hideChannelBottomButton" = "Kanalunteres Bedienfeld ausblenden";
+
+"Settings.CallConfirmation" = "Anrufbestätigung";
+"Settings.CallConfirmation.Notice" = "Swiftgram wird um Ihre Bestätigung bitten, bevor ein Anruf getätigt wird.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Einen Anruf tätigen?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Einen Videoanruf tätigen?";
+
+"MutualContact.Label" = "gemeinsamer Kontakt";
+
+"Settings.swipeForVideoPIP" = "Video PIP mit Wischen";
+"Settings.swipeForVideoPIP.Notice" = "Wenn aktiviert, öffnet das Wischen des Videos es im Bild-in-Bild-Modus.";

@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Појачај поставке поставки";
 "Settings.DownloadsBoost" = "Преузми појачање";
+"Settings.DownloadsBoost.Notice" = "Увећава број паралелних веза и величину делова фајлова. Уколико ваша мрежа не може да поднесе оптерећење, испробајте различите опције које одговарају вашој вези.";
 "Settings.DownloadsBoost.none" = "Онемогућено";
 "Settings.DownloadsBoost.medium" = "Средње";
 "Settings.DownloadsBoost.maximum" = "Максимално";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Ако је омогућено, апликација ће користити само микрофон уређаја чак и ако су прикључене слушалице.";
 
 "Settings.hideChannelBottomButton" = "Сакриј донји панел канала";
+
+"Settings.CallConfirmation" = "Потврда позива";
+"Settings.CallConfirmation.Notice" = "Swiftgram ће затражити вашу потврду пре него што направи позив.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Направити позив?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Направити видео позив?";
+
+"MutualContact.Label" = "заједнички контакт";
+
+"Settings.swipeForVideoPIP" = "Видео PIP са свлачење";
+"Settings.swipeForVideoPIP.Notice" = "Ако је омогућено, померање видеа ће га отворити у режиму слике у слици.";
