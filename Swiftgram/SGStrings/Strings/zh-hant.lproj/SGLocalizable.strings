@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "上傳加速";
 "Settings.DownloadsBoost" = "下載加速";
+"Settings.DownloadsBoost.Notice" = "增加並行連接的數量和文件區塊的大小。如果您的網路無法承受負載，請嘗試不同適合您連接的選項。";
 "Settings.DownloadsBoost.none" = "已停用";
 "Settings.DownloadsBoost.medium" = "中等";
 "Settings.DownloadsBoost.maximum" = "最大";
@@ -146,3 +147,6 @@
 "CallConfirmation.Video.Title" = "進行視訊通話？";
 
 "MutualContact.Label" = "雙向聯絡人";
+
+"Settings.swipeForVideoPIP" = "上滑打開畫中畫";
+"Settings.swipeForVideoPIP.Notice" = "如果啟用，滑動影片將以畫中畫模式打開。";
