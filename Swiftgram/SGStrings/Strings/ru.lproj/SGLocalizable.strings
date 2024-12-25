@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Ускорение загрузки";
 "Settings.DownloadsBoost" = "Ускорение скачивания";
+"Settings.DownloadsBoost.Notice" = "Увеличивает количество параллельных соединений и размер частей файлов. Если ваша сеть не может справиться с нагрузкой, попробуйте разные опции, которые подойдут для вашего соединения.";
 "Settings.DownloadsBoost.none" = "Выключено";
 "Settings.DownloadsBoost.medium" = "Средне";
 "Settings.DownloadsBoost.maximum" = "Максимум";
@@ -135,3 +136,17 @@
 "Settings.forceBuiltInMic.Notice" = "Если включено, то приложение будет использовать только встроенный микрофон устройства, даже если подключены наушники.";
 
 "Settings.hideChannelBottomButton" = "Скрыть нижнюю панель в каналах";
+
+"Settings.CallConfirmation" = "Подтверждение вызова";
+"Settings.CallConfirmation.Notice" = "Swiftgram запросит подтверждение перед совершением звонка.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Позвонить?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Позвонить с видео?";
+
+"MutualContact.Label" = "взаимный контакт";
+
+"Settings.swipeForVideoPIP" = "Видео PIP свайпом";
+"Settings.swipeForVideoPIP.Notice" = "Если включено, свайп видео откроет его в режиме «Картинка в картинке».";
