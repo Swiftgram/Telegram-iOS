@@ -105,6 +105,6 @@ provisioning_profile_repository(
 new_git_repository(
     name = "flex_sdk",
     remote = "https://github.com/FLEXTool/FLEX.git",
-    commit = "1b983160cc188aff18284c1d990121cdb1e42e9c",
+    commit = "2bfba6715eff664ef84a02e8eb0ad9b5a609c684",
     build_file = "@//Swiftgram/FLEX:FLEX.BUILD"
 )
