@@ -930,17 +930,12 @@ final class AuthorizedApplicationContext {
             if visiblePeerId != peerId || messageId != nil {
                 let isOutgoingMessage: Signal<Bool, NoError>
                 if let messageId {
-                    let accountPeerId = self.context.account.peerId
                     isOutgoingMessage = self.context.engine.data.get(TelegramEngine.EngineData.Item.Messages.Message(id: messageId))
                     |> map { message -> Bool in
-                        if let message {
-                            return !message._asMessage().effectivelyIncoming(accountPeerId)
-                        } else {
-                            return false
-                        }
+                        return true
                     }
                 } else {
-                    isOutgoingMessage = .single(false)
+                    isOutgoingMessage = .single(true)
                 }
                 let _ = combineLatest(
                     queue: Queue.mainQueue(),
