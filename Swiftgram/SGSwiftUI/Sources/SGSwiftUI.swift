@@ -4,6 +4,8 @@ import LegacyUI
 import SwiftUI
 import TelegramPresentationData
 
+
+@available(iOS 13.0, *)
 public class ObservedValue<T>: ObservableObject {
     @Published var value: T
 
@@ -12,6 +14,7 @@ public class ObservedValue<T>: ObservableObject {
     }
 }
 
+@available(iOS 13.0, *)
 public struct SGSwiftUIView<Content: View>: View {
     let content: Content
 
@@ -31,10 +34,10 @@ public struct SGSwiftUIView<Content: View>: View {
     public var body: some View {
         content
             .modifier(CustomSafeAreaPadding(navigationBarHeight: navigationBarHeight, containerViewLayout: containerViewLayout))
-            .background(Color.yellow)
     }
 }
 
+@available(iOS 13.0, *)
 public struct CustomSafeAreaPadding: ViewModifier {
     @ObservedObject var navigationBarHeight: ObservedValue<CGFloat>
     @ObservedObject var containerViewLayout: ObservedValue<ContainerViewLayout?>
@@ -43,7 +46,7 @@ public struct CustomSafeAreaPadding: ViewModifier {
         content
             .edgesIgnoringSafeArea(.all)
             .padding(.top, totalTopSafeArea > navigationBarHeight.value ? totalTopSafeArea : navigationBarHeight.value)
-            .padding(.bottom, (containerViewLayout.value?.safeInsets.bottom ?? 0) + (containerViewLayout.value?.intrinsicInsets.bottom ?? 0))
+            .padding(.bottom, (containerViewLayout.value?.safeInsets.bottom ?? 0) /*+ (containerViewLayout.value?.intrinsicInsets.bottom ?? 0)*/)
             .padding(.leading, containerViewLayout.value?.safeInsets.left ?? 0)
             .padding(.trailing, containerViewLayout.value?.safeInsets.right ?? 0)
     }
@@ -54,6 +57,7 @@ public struct CustomSafeAreaPadding: ViewModifier {
     }
 }
 
+@available(iOS 13.0, *)
 public final class LegacySwiftUIController: LegacyController {
     public var navigationBarHeightModel: ObservedValue<CGFloat>
     public var containerViewLayoutModel: ObservedValue<ContainerViewLayout?>
@@ -88,6 +92,7 @@ public final class LegacySwiftUIController: LegacyController {
     }
 }
 
+@available(iOS 13.0, *)
 extension UIHostingController {
     public convenience init(rootView: Content, ignoreSafeArea: Bool) {
         self.init(rootView: rootView)

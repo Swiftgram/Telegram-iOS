@@ -29,6 +29,8 @@ swift_library(
         "//Swiftgram/SGLogging:SGLogging",
         "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
         "//Swiftgram/SGStrings:SGStrings",
+        "//Swiftgram/SGSwiftUI:SGSwiftUI",
+        "//submodules/LegacyUI:LegacyUI",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/Postbox:Postbox",
         "//submodules/Display:Display",
