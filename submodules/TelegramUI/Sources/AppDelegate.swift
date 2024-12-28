@@ -3,6 +3,7 @@ import SGActionRequestHandlerSanitizer
 import SGAPIWebSettings
 import SGLogging
 import SGStrings
+import SGSimpleSettings
 import UIKit
 import SwiftSignalKit
 import Display
@@ -1264,6 +1265,13 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                     let _ = (context.context.sharedContext.presentationData.start(next: { presentationData in
                         SGLocalizationManager.shared.downloadLocale(presentationData.strings.baseLanguageCode)
                     }))
+                    if !SGSimpleSettings.shared.b {
+                        let _ = sgIqtpQuery(engine: context.context.engine, query: makeIqtpQuery(0, "b")).start(next: { response in
+                            guard let response else { return }
+                            SGLogger.shared.log("IQTP", "Response: \(response)")
+                            SGSimpleSettings.shared.b = response.description == "1"
+                        })
+                    }
                 }))
             } else {
                 self.mainWindow.viewController = nil

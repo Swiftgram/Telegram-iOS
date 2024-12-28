@@ -4,13 +4,19 @@ sgdeps = [
     "//Swiftgram/SwiftSoup:SwiftSoup",
     "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
     "//Swiftgram/SGTranslationLangFix:SGTranslationLangFix",
-    "//Swiftgram/SGWebSettingsScheme:SGWebSettingsScheme"
+    "//Swiftgram/SGWebSettingsScheme:SGWebSettingsScheme",
+    "//Swiftgram/SGConfig:SGConfig",
+    "//Swiftgram/SGLogging:SGLogging",
+]
+
+sgsrc = [
+    "//Swiftgram/SGIQTP:SGIQTP",
 ]
 
 swift_library(
     name = "TelegramCore",
     module_name = "TelegramCore",
-    srcs = glob([
+    srcs = sgsrc + glob([
         "Sources/**/*.swift",
     ]),
     copts = [
