@@ -930,12 +930,17 @@ final class AuthorizedApplicationContext {
             if visiblePeerId != peerId || messageId != nil {
                 let isOutgoingMessage: Signal<Bool, NoError>
                 if let messageId {
+                    let accountPeerId = self.context.account.peerId
                     isOutgoingMessage = self.context.engine.data.get(TelegramEngine.EngineData.Item.Messages.Message(id: messageId))
                     |> map { message -> Bool in
-                        return true
+                        if let message {
+                            return !message._asMessage().effectivelyIncoming(accountPeerId)
+                        } else {
+                            return false
+                        }
                     }
                 } else {
-                    isOutgoingMessage = .single(true)
+                    isOutgoingMessage = .single(false)
                 }
                 let _ = combineLatest(
                     queue: Queue.mainQueue(),
@@ -958,7 +963,7 @@ final class AuthorizedApplicationContext {
                     if openAppIfAny, case let .user(user) = peer, let botInfo = user.botInfo, botInfo.flags.contains(.hasWebApp), let parentController = self.rootController.viewControllers.last as? ViewController {
                         self.context.sharedContext.openWebApp(context: self.context, parentController: parentController, updatedPresentationData: nil, botPeer: peer, chatPeer: nil, threadId: nil, buttonText: "", url: "", simple: true, source: .generic, skipTermsOfService: true, payload: nil)
                     } else {
-                        self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: self.rootController, context: self.context, chatLocation: chatLocation, subject: isOutgoingMessage ? messageId.flatMap { .message(id: .id($0), highlight: ChatControllerSubject.MessageHighlight(quote: nil), timecode: nil, setupReply: false) } : nil, activateInput: activateInput ? .text : nil))
+                        self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: self.rootController, context: self.context, chatLocation: chatLocation, subject: messageId.flatMap { .message(id: .id($0), highlight: ChatControllerSubject.MessageHighlight(quote: nil), timecode: nil, setupReply: false) }, activateInput: activateInput ? .text : nil))
                     }
                 })
             }
