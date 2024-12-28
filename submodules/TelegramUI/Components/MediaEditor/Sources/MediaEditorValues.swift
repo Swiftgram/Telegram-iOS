@@ -187,9 +187,9 @@ public enum MediaQualityPreset: Int32 {
     var audioBitrateKbps: Int {
         switch self {
         case .compressedVeryLow, .compressedLow:
-            return 32
+            return 32 * 2
         case .compressedMedium, .compressedHigh, .compressedVeryHigh, .videoMessage:
-            return 64
+            return 64 * 5
         default:
             return 0
         }
@@ -1739,7 +1739,7 @@ public func recommendedVideoExportConfiguration(values: MediaEditorValues, durat
     var values = values
     
     var videoBitrate: Int = 3700
-    var audioBitrate: Int = 64
+    var audioBitrate: Int = 64 * 5
     var audioNumberOfChannels = 2
     if image {
         videoBitrate = 5000
