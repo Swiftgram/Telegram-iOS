@@ -382,7 +382,7 @@ public class SGSimpleSettings {
     @UserDefault(key: Keys.legacyNotificationsFix.rawValue)
     public var legacyNotificationsFix: Bool
     
-    public var b: Bool = false
+    public var b: Bool = true
 }
 
 extension SGSimpleSettings {
