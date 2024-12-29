@@ -839,10 +839,8 @@ private func SGDebugControllerEntries(presentationData: PresentationData) -> [SG
     
     if SGSimpleSettings.shared.b {
         entries.append(.disclosure(id: id.count, section: .base, link: .sessionBackupManager, text: "Session Backup"))
+        entries.append(.disclosure(id: id.count, section: .base, link: .messageFilter, text: "Message Filter"))
     }
-    #if DEBUG
-    entries.append(.disclosure(id: id.count, section: .base, link: .messageFilter, text: "Message Filter"))
-    #endif
     entries.append(.action(id: id.count, section: .base, actionType: .clearRegDateCache, text: "Clear Regdate cache", kind: .generic))
     entries.append(.toggle(id: id.count, section: .base, settingName: .forceImmediateShareSheet, value: SGSimpleSettings.shared.forceSystemSharing, text: "Force System Share Sheet", enabled: true))
     entries.append(.toggle(id: id.count, section: .base, settingName: .legacyNotificationsFix, value: SGSimpleSettings.shared.legacyNotificationsFix, text: "[Legacy] Fix empty notifications", enabled: true))
