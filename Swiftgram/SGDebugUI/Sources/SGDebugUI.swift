@@ -754,7 +754,7 @@ struct MessageFilterView: View {
         guard !trimmedKeyword.isEmpty else { return }
         
         let keywordExists = keywords.contains {
-            $0.lowercased() == trimmedKeyword.lowercased()
+            $0 == trimmedKeyword
         }
         
         guard !keywordExists else {
