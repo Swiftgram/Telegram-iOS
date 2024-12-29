@@ -45,6 +45,7 @@ public struct CustomSafeAreaPadding: ViewModifier {
     public func body(content: Content) -> some View {
         content
             .edgesIgnoringSafeArea(.all)
+//            .padding(.top, /*totalTopSafeArea > navigationBarHeight.value ? totalTopSafeArea :*/ navigationBarHeight.value)
             .padding(.top, totalTopSafeArea > navigationBarHeight.value ? totalTopSafeArea : navigationBarHeight.value)
             .padding(.bottom, (containerViewLayout.value?.safeInsets.bottom ?? 0) /*+ (containerViewLayout.value?.intrinsicInsets.bottom ?? 0)*/)
             .padding(.leading, containerViewLayout.value?.safeInsets.left ?? 0)
@@ -71,7 +72,10 @@ public final class LegacySwiftUIController: LegacyController {
     override public func containerLayoutUpdated(_ layout: ContainerViewLayout, transition: ContainedViewLayoutTransition) {
         super.containerLayoutUpdated(layout, transition: transition)
 
-        let newNavigationBarHeight = navigationLayout(layout: layout).navigationFrame.maxY
+        var newNavigationBarHeight = navigationLayout(layout: layout).navigationFrame.maxY
+        if !self.displayNavigationBar {
+            newNavigationBarHeight = 0.0
+        }
         if navigationBarHeightModel.value != newNavigationBarHeight {
             navigationBarHeightModel.value = newNavigationBarHeight
         }

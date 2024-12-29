@@ -688,51 +688,64 @@ struct MessageFilterView: View {
         }
     }
     
-    init() {
+    init(wrapperController: LegacyController?) {
+        self.wrapperController = wrapperController
         _keywords = State(initialValue: SGSimpleSettings.shared.messageFilterKeywords)
     }
     
     var body: some View {
-        List {
-            Section {
-                // Icon and title
-                VStack(spacing: 8) {
-                    Image(systemName: "nosign.app.fill")
-                        .font(.system(size: 50))
-                        .foregroundColor(.secondary)
+//        NavigationView {
+            List {
+                Section {
+                    // Icon and title
+                    VStack(spacing: 8) {
+                        Image(systemName: "nosign.app.fill")
+                            .font(.system(size: 50))
+                            .foregroundColor(.secondary)
+                        
+                        Text("Message Filter")
+                            .font(.title)
+                            .bold()
+                        
+                        Text("Remove distraction and reduce visibility of messages containing keywords below.\nKeywords are case-sensitive.")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .listRowInsets(EdgeInsets())
                     
-                    Text("Message Filter")
-                        .font(.title)
-                        .bold()
-                    
-                    Text("Remove distraction and reduce visibility of messages containing keywords below.\nKeywords are case-sensitive.")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .listRowInsets(EdgeInsets())
-
-            }
-            
-            Section {
-                MessageFilterKeywordInputView(newKeyword: $newKeyword, onAdd: addKeyword)
-            }
-
-            Section(header: Text("Keywords")) {
-                ForEach(keywords.reversed(), id: \.self) { keyword in
-                    Text(keyword)
+                
+                Section {
+                    MessageFilterKeywordInputView(newKeyword: $newKeyword, onAdd: addKeyword)
                 }
-                .onDelete { indexSet in
-                    let originalIndices = IndexSet(
-                        indexSet.map { keywords.count - 1 - $0 }
-                    )
-                    deleteKeywords(at: originalIndices)
+                
+                Section(header: Text("Keywords")) {
+                    ForEach(keywords.reversed(), id: \.self) { keyword in
+                        Text(keyword)
+                    }
+                    .onDelete { indexSet in
+                        let originalIndices = IndexSet(
+                            indexSet.map { keywords.count - 1 - $0 }
+                        )
+                        deleteKeywords(at: originalIndices)
+                    }
                 }
             }
-        }
+//            .navigationBarBackButtonHidden(true)
+//            .navigationBarItems(leading: Button(action: {
+//                wrapperController?.dismiss(animated: true)
+//            }) {
+//                HStack(spacing: 0) {
+//                    Image(systemName: "chevron.left")
+//                        .font(Font.body.weight(.bold))
+//                    Text("Back")
+//                }
+//            })
+//        }
     }
 
     
@@ -772,6 +785,7 @@ public func sgMessageFilterController(context: AccountContext, presentationData:
         theme: theme,
         strings: strings
     )
+//    legacyController.displayNavigationBar = false
     legacyController.statusBar.statusBarStyle = theme.rootController
         .statusBarStyle.style
     legacyController.title = "Message Filter" //i18n("BackupManager.Title", strings.baseLanguageCode)
@@ -780,7 +794,7 @@ public func sgMessageFilterController(context: AccountContext, presentationData:
         navigationBarHeight: legacyController.navigationBarHeightModel,
         containerViewLayout: legacyController.containerViewLayoutModel,
         content: {
-            MessageFilterView(/*wrapperController: legacyController*//*, context: context*/)
+            MessageFilterView(wrapperController: legacyController)
         }
     )
     let controller = UIHostingController(rootView: swiftUIView, ignoreSafeArea: true)
