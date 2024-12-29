@@ -16,7 +16,7 @@ public class ObservedValue<T>: ObservableObject {
 
 @available(iOS 13.0, *)
 public struct SGSwiftUIView<Content: View>: View {
-    let content: Content
+    public let content: Content
 
     @ObservedObject var navigationBarHeight: ObservedValue<CGFloat>
     @ObservedObject var containerViewLayout: ObservedValue<ContainerViewLayout?>

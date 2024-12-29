@@ -267,7 +267,9 @@ struct SessionBackupManagerView: View {
         Task {
             let (view, accountsWithInfo) = await combineLatest(signal, signal2).awaitable()
             backupSessionsFromView(view, accountsWithInfo: accountsWithInfo.1)
-            sessions = getBackedSessions()
+            withAnimation {
+                sessions = getBackedSessions()
+            }
             controller.dismiss()
         }
         
@@ -288,7 +290,9 @@ struct SessionBackupManagerView: View {
                 // Check if we're done
                 if index >= backupSessions.count {
                     // All done, update UI
-                    sessions = getBackedSessions()
+                    withAnimation {
+                        sessions = getBackedSessions()
+                    }
                     controller?.dismiss()
                     wrapperController?.present(
                         okUndoController("OK: \(restoredSessions) Sessions restored", presentationData),
@@ -361,7 +365,9 @@ struct SessionBackupManagerView: View {
                 wrapperController?.present(controller, in: .window(.root), with: nil)
                 do {
                     try KeychainBackupManager.shared.deleteAllSessions()
-                    sessions = getBackedSessions()
+                    withAnimation {
+                        sessions = getBackedSessions()
+                    }
                     controller.dismiss()
                 } catch let e {
                     print("Error deleting all sessions: \(e)")
@@ -382,7 +388,9 @@ struct SessionBackupManagerView: View {
                 wrapperController?.present(controller, in: .window(.root), with: nil)
                 do {
                     try KeychainBackupManager.shared.deleteSession(for: "\(session.peerIdInternal)")
-                    sessions = getBackedSessions()
+                    withAnimation {
+                        sessions = getBackedSessions()
+                    }
                     controller.dismiss()
                 } catch let e {
                     print("Error deleting session: \(e)")
@@ -428,7 +436,9 @@ struct SessionBackupManagerView: View {
                         |> deliverOnMainQueue
                         
                         let _ = deleteSignal.start(next: {
-                            sessions = getBackedSessions()
+                            withAnimation {
+                                sessions = getBackedSessions()
+                            }
                             controller?.dismiss()
                         })
                     } else {
@@ -512,7 +522,9 @@ struct SessionBackupManagerView: View {
             }
         }
         .onAppear {
-            sessions = getBackedSessions()
+            withAnimation {
+                sessions = getBackedSessions()
+            }
             
             let accountsSignal = context.sharedContext.accountManager.accountRecords()
             |> deliverOnMainQueue
@@ -645,6 +657,139 @@ public func sgSessionBackupManagerController(context: AccountContext, presentati
     return legacyController
 }
 
+@available(iOS 13.0, *)
+struct MessageFilterKeywordInputView: View {
+    @Binding var newKeyword: String
+    let onAdd: () -> Void
+
+    var body: some View {
+        HStack {
+            TextField("Enter keyword", text: $newKeyword)
+            
+            Button(action: onAdd) {
+                Image(systemName: "plus.circle.fill")
+                    .foregroundColor(newKeyword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .accentColor)
+                    .imageScale(.large)
+            }
+            .disabled(newKeyword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .buttonStyle(PlainButtonStyle())
+        }
+    }
+}
+
+@available(iOS 13.0, *)
+struct MessageFilterView: View {
+    weak var wrapperController: LegacyController?
+    
+    @State private var newKeyword: String = ""
+    @State private var keywords: [String] {
+        didSet {
+            SGSimpleSettings.shared.messageFilterKeywords = keywords
+        }
+    }
+    
+    init() {
+        _keywords = State(initialValue: SGSimpleSettings.shared.messageFilterKeywords)
+    }
+    
+    var body: some View {
+        List {
+            Section {
+                // Icon and title
+                VStack(spacing: 8) {
+                    Image(systemName: "nosign.app.fill")
+                        .font(.system(size: 50))
+                        .foregroundColor(.secondary)
+                    
+                    Text("Message Filter")
+                        .font(.title)
+                        .bold()
+                    
+                    Text("Remove distraction and reduce visibility of messages containing keywords below.\nKeywords are case-sensitive.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .listRowInsets(EdgeInsets())
+
+            }
+            
+            Section {
+                MessageFilterKeywordInputView(newKeyword: $newKeyword, onAdd: addKeyword)
+            }
+
+            Section(header: Text("Keywords")) {
+                ForEach(keywords.reversed(), id: \.self) { keyword in
+                    Text(keyword)
+                }
+                .onDelete { indexSet in
+                    let originalIndices = IndexSet(
+                        indexSet.map { keywords.count - 1 - $0 }
+                    )
+                    deleteKeywords(at: originalIndices)
+                }
+            }
+        }
+    }
+
+    
+    private func addKeyword() {
+        let trimmedKeyword = newKeyword.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedKeyword.isEmpty else { return }
+        
+        let keywordExists = keywords.contains {
+            $0.lowercased() == trimmedKeyword.lowercased()
+        }
+        
+        guard !keywordExists else {
+            return
+        }
+        
+        withAnimation {
+            keywords.append(trimmedKeyword)
+        }
+        newKeyword = ""
+        
+    }
+    
+    private func deleteKeywords(at offsets: IndexSet) {
+        withAnimation {
+            keywords.remove(atOffsets: offsets)
+        }
+    }
+}
+
+@available(iOS 13.0, *)
+public func sgMessageFilterController(context: AccountContext, presentationData: PresentationData? = nil) -> ViewController {
+    let theme = presentationData?.theme ?? (UITraitCollection.current.userInterfaceStyle == .dark ? defaultDarkColorPresentationTheme : defaultPresentationTheme)
+    let strings = presentationData?.strings ?? defaultPresentationStrings
+
+    let legacyController = LegacySwiftUIController(
+        presentation: .navigation,
+        theme: theme,
+        strings: strings
+    )
+    legacyController.statusBar.statusBarStyle = theme.rootController
+        .statusBarStyle.style
+    legacyController.title = "Message Filter" //i18n("BackupManager.Title", strings.baseLanguageCode)
+
+    let swiftUIView = SGSwiftUIView<MessageFilterView>(
+        navigationBarHeight: legacyController.navigationBarHeightModel,
+        containerViewLayout: legacyController.containerViewLayoutModel,
+        content: {
+            MessageFilterView(/*wrapperController: legacyController*//*, context: context*/)
+        }
+    )
+    let controller = UIHostingController(rootView: swiftUIView, ignoreSafeArea: true)
+    legacyController.bind(controller: controller)
+
+
+    return legacyController
+}
+
 
 private enum SGDebugControllerSection: Int32, SGItemListSection {
     case base
@@ -652,6 +797,7 @@ private enum SGDebugControllerSection: Int32, SGItemListSection {
 
 private enum SGDebugDisclosureLink: String {
     case sessionBackupManager
+    case messageFilter
 }
 
 private enum SGDebugActions: String {
@@ -680,6 +826,9 @@ private func SGDebugControllerEntries(presentationData: PresentationData) -> [SG
     if SGSimpleSettings.shared.b {
         entries.append(.disclosure(id: id.count, section: .base, link: .sessionBackupManager, text: "Session Backup"))
     }
+    #if DEBUG
+    entries.append(.disclosure(id: id.count, section: .base, link: .messageFilter, text: "Message Filter"))
+    #endif
     entries.append(.action(id: id.count, section: .base, actionType: .clearRegDateCache, text: "Clear Regdate cache", kind: .generic))
     entries.append(.toggle(id: id.count, section: .base, settingName: .forceImmediateShareSheet, value: SGSimpleSettings.shared.forceSystemSharing, text: "Force System Share Sheet", enabled: true))
     entries.append(.toggle(id: id.count, section: .base, settingName: .legacyNotificationsFix, value: SGSimpleSettings.shared.legacyNotificationsFix, text: "[Legacy] Fix empty notifications", enabled: true))
@@ -710,6 +859,17 @@ public func sgDebugController(context: AccountContext) -> ViewController {
             case .sessionBackupManager:
                 if #available(iOS 13.0, *) {
                     pushControllerImpl?(sgSessionBackupManagerController(context: context, presentationData: presentationData))
+                } else {
+                    presentControllerImpl?(UndoOverlayController(
+                        presentationData: presentationData,
+                        content: .info(title: nil, text: "Update OS to access this feature", timeout: nil, customUndoText: nil),
+                        elevatedLayout: false,
+                        action: { _ in return false }
+                    ), nil)
+                }
+        case .messageFilter:
+                if #available(iOS 13.0, *) {
+                    pushControllerImpl?(sgMessageFilterController(context: context, presentationData: presentationData))
                 } else {
                     presentControllerImpl?(UndoOverlayController(
                         presentationData: presentationData,

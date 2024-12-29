@@ -686,6 +686,18 @@ open class ChatMessageItemView: ListViewItemNode, ChatMessageItemNodeProtocol {
     
     open func setupItem(_ item: ChatMessageItem, synchronousLoad: Bool) {
         self.item = item
+        // randomly apply alpha or not
+        
+        #if DEBUG
+        let random = arc4random_uniform(2)
+        
+        if random != 0 {
+            let incomingMessage = item.message.effectivelyIncoming(item.context.account.peerId)
+            if incomingMessage {
+                self.alpha = 0.3
+            }
+        }
+        #endif
     }
     
     open func updateAccessibilityData(_ accessibilityData: ChatMessageAccessibilityData) {
