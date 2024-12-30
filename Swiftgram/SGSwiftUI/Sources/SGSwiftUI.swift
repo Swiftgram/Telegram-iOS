@@ -62,10 +62,12 @@ public struct CustomSafeAreaPadding: ViewModifier {
 public final class LegacySwiftUIController: LegacyController {
     public var navigationBarHeightModel: ObservedValue<CGFloat>
     public var containerViewLayoutModel: ObservedValue<ContainerViewLayout?>
+    public var inputHeightModel: ObservedValue<CGFloat?>
 
     override public init(presentation: LegacyControllerPresentation, theme: PresentationTheme? = nil, strings: PresentationStrings? = nil, initialLayout: ContainerViewLayout? = nil) {
         navigationBarHeightModel = ObservedValue<CGFloat>(0.0)
         containerViewLayoutModel = ObservedValue<ContainerViewLayout?>(initialLayout)
+        inputHeightModel = ObservedValue<CGFloat?>(nil)
         super.init(presentation: presentation, theme: theme, strings: strings, initialLayout: initialLayout)
     }
 
@@ -81,6 +83,9 @@ public final class LegacySwiftUIController: LegacyController {
         }
         if containerViewLayoutModel.value != layout {
             containerViewLayoutModel.value = layout
+        }
+        if inputHeightModel.value != layout.inputHeight {
+            inputHeightModel.value = layout.inputHeight
         }
     }
 
@@ -150,5 +155,113 @@ extension UIHostingController {
             objc_registerClassPair(viewSubclass)
             object_setClass(view, viewSubclass)
         }
+    }
+}
+
+
+@available(iOS 13.0, *)
+public struct TGNavigationBackButtonModifier: ViewModifier {
+    weak var wrapperController: LegacyController?
+    
+    public func body(content: Content) -> some View {
+        content
+            .navigationBarBackButtonHidden(true)
+            .navigationBarItems(leading:
+                NavigationBarBackButton(action: {
+                    wrapperController?.dismiss()
+                })
+                .padding(.leading, -8)
+            )
+    }
+}
+
+@available(iOS 13.0, *)
+public extension View {
+    func tgNavigationBackButton(wrapperController: LegacyController?) -> some View {
+        modifier(TGNavigationBackButtonModifier(wrapperController: wrapperController))
+    }
+}
+
+
+@available(iOS 13.0, *)
+public struct NavigationBarBackButton: View {
+    let text: String
+    let color: Color
+    let action: () -> Void
+    
+    public init(text: String = "Back", color: Color = .accentColor, action: @escaping () -> Void) {
+        self.text = text
+        self.color = color
+        self.action = action
+    }
+
+    public var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                if let customBackArrow = NavigationBar.backArrowImage(color: color.uiColor()) {
+                    Image(uiImage: customBackArrow)
+                } else {
+                    Image(systemName: "chevron.left")
+                        .font(Font.body.weight(.bold))
+                        .foregroundColor(color)
+                }
+                Text(text)
+                    .foregroundColor(color)
+            }
+            .contentShape(Rectangle())
+        }
+    }
+}
+
+@available(iOS 13.0, *)
+public extension View {
+    func apply<V: View>(@ViewBuilder _ block: (Self) -> V) -> V { block(self) }
+    
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
+
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: @escaping () -> Bool, transform: (Self) -> Content) -> some View {
+        if condition() {
+            transform(self)
+        } else {
+            self
+        }
+    }
+}
+
+@available(iOS 13.0, *)
+extension Color {
+ 
+    func uiColor() -> UIColor {
+
+        if #available(iOS 14.0, *) {
+            return UIColor(self)
+        }
+
+        let components = self.components()
+        return UIColor(red: components.r, green: components.g, blue: components.b, alpha: components.a)
+    }
+
+    private func components() -> (r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat) {
+
+        let scanner = Scanner(string: self.description.trimmingCharacters(in: CharacterSet.alphanumerics.inverted))
+        var hexNumber: UInt64 = 0
+        var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
+
+        let result = scanner.scanHexInt64(&hexNumber)
+        if result {
+            r = CGFloat((hexNumber & 0xff000000) >> 24) / 255
+            g = CGFloat((hexNumber & 0x00ff0000) >> 16) / 255
+            b = CGFloat((hexNumber & 0x0000ff00) >> 8) / 255
+            a = CGFloat(hexNumber & 0x000000ff) / 255
+        }
+        return (r, g, b, a)
     }
 }

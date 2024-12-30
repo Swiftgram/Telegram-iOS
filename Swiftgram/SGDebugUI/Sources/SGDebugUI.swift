@@ -657,6 +657,28 @@ public func sgSessionBackupManagerController(context: AccountContext, presentati
     return legacyController
 }
 
+
+@available(iOS 13.0, *)
+struct MessageFilterKeywordInputFieldModifier: ViewModifier {
+    @Binding var newKeyword: String
+    let onAdd: () -> Void
+    
+    func body(content: Content) -> some View {
+        if #available(iOS 15.0, *) {
+            content
+                .submitLabel(.return)
+                .submitScope(false) // TODO(swiftgram): Keyboard still closing
+                .interactiveDismissDisabled()
+                .onSubmit {
+                    onAdd()
+                }
+        } else {
+            content
+        }
+    }
+}
+
+
 @available(iOS 13.0, *)
 struct MessageFilterKeywordInputView: View {
     @Binding var newKeyword: String
@@ -665,6 +687,11 @@ struct MessageFilterKeywordInputView: View {
     var body: some View {
         HStack {
             TextField("Enter keyword", text: $newKeyword)
+                .autocorrectionDisabled(true)
+                .autocapitalization(.none)
+                .keyboardType(.default)
+                .modifier(MessageFilterKeywordInputFieldModifier(newKeyword: $newKeyword, onAdd: onAdd))
+                
             
             Button(action: onAdd) {
                 Image(systemName: "plus.circle.fill")
@@ -693,8 +720,7 @@ struct MessageFilterView: View {
         _keywords = State(initialValue: SGSimpleSettings.shared.messageFilterKeywords)
     }
     
-    var body: some View {
-//        NavigationView {
+    var bodyContent: some View {
             List {
                 Section {
                     // Icon and title
@@ -734,20 +760,22 @@ struct MessageFilterView: View {
                         deleteKeywords(at: originalIndices)
                     }
                 }
-            }
-//            .navigationBarBackButtonHidden(true)
-//            .navigationBarItems(leading: Button(action: {
-//                wrapperController?.dismiss(animated: true)
-//            }) {
-//                HStack(spacing: 0) {
-//                    Image(systemName: "chevron.left")
-//                        .font(Font.body.weight(.bold))
-//                    Text("Back")
-//                }
-//            })
-//        }
+        }
+        .tgNavigationBackButton(wrapperController: wrapperController)
     }
-
+    
+    var body: some View {
+        NavigationView {
+            if #available(iOS 14.0, *) {
+                bodyContent
+                    .toolbar {
+                        EditButton()
+                    }
+            } else {
+                bodyContent
+            }
+        }
+    }
     
     private func addKeyword() {
         let trimmedKeyword = newKeyword.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -776,7 +804,7 @@ struct MessageFilterView: View {
 }
 
 @available(iOS 13.0, *)
-public func sgMessageFilterController(context: AccountContext, presentationData: PresentationData? = nil) -> ViewController {
+public func sgMessageFilterController(presentationData: PresentationData? = nil) -> ViewController {
     let theme = presentationData?.theme ?? (UITraitCollection.current.userInterfaceStyle == .dark ? defaultDarkColorPresentationTheme : defaultPresentationTheme)
     let strings = presentationData?.strings ?? defaultPresentationStrings
 
@@ -785,21 +813,13 @@ public func sgMessageFilterController(context: AccountContext, presentationData:
         theme: theme,
         strings: strings
     )
-//    legacyController.displayNavigationBar = false
+    // Status bar color will break if theme changed
     legacyController.statusBar.statusBarStyle = theme.rootController
         .statusBarStyle.style
-    legacyController.title = "Message Filter" //i18n("BackupManager.Title", strings.baseLanguageCode)
-
-    let swiftUIView = SGSwiftUIView<MessageFilterView>(
-        navigationBarHeight: legacyController.navigationBarHeightModel,
-        containerViewLayout: legacyController.containerViewLayoutModel,
-        content: {
-            MessageFilterView(wrapperController: legacyController)
-        }
-    )
+    legacyController.displayNavigationBar = false
+    let swiftUIView = MessageFilterView(wrapperController: legacyController)
     let controller = UIHostingController(rootView: swiftUIView, ignoreSafeArea: true)
     legacyController.bind(controller: controller)
-
 
     return legacyController
 }
@@ -881,7 +901,7 @@ public func sgDebugController(context: AccountContext) -> ViewController {
                 }
         case .messageFilter:
                 if #available(iOS 13.0, *) {
-                    pushControllerImpl?(sgMessageFilterController(context: context, presentationData: presentationData))
+                    pushControllerImpl?(sgMessageFilterController(presentationData: presentationData))
                 } else {
                     presentControllerImpl?(UndoOverlayController(
                         presentationData: presentationData,
