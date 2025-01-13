@@ -629,6 +629,7 @@ objc_library(
         "Watch/SSignalKit/**/*.m",
         "Watch/Bridge/**/*.m",
         "Watch/WatchCommonWatch/**/*.m",
+        "Watch/App/**/*.m",
         "Watch/Extension/**/*.h",
         "Watch/SSignalKit/**/*.h",
         "Watch/Bridge/**/*.h",
@@ -639,6 +640,7 @@ objc_library(
         "-ITelegram/Watch",
         "-ITelegram/Watch/Extension",
         "-ITelegram/Watch/Bridge",
+        "-ITelegram/Watch/App",
     ],
     sdk_frameworks = [
         "WatchKit",
@@ -752,59 +754,25 @@ plist_fragment(
         <string>UIInterfaceOrientationPortrait</string>
         <string>UIInterfaceOrientationPortraitUpsideDown</string>
     </array>
-    <key>WKWatchKitApp</key>
-    <true/>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>WKApplication</key>
+    <true/>
+    <key>NSExtension</key>
+    <dict>
+        <key>NSExtensionAttributes</key>
+        <dict>
+            <key>WKAppBundleIdentifier</key>
+            <string>{telegram_bundle_id}.watchkitapp</string>
+        </dict>
+        <key>NSExtensionPointIdentifier</key>
+        <string>com.apple.watchkit</string>
+    </dict>
+    <key>WKAppDelegate</key>
+    <string>TGExtensionDelegate</string>
     """.format(
         telegram_bundle_id = telegram_bundle_id,
     )
-)
-
-watchos_extension(
-    name = "TelegramWatchExtension",
-    bundle_id = "{telegram_bundle_id}.watchkitapp.watchkitextension".format(
-        telegram_bundle_id = telegram_bundle_id,
-    ),
-    bundle_name = "TelegramWatchExtension",
-    infoplists = [
-        ":WatchExtensionInfoPlist",
-        ":VersionInfoPlist",
-        ":BuildNumberInfoPlist",
-        ":AppNameInfoPlist",
-        ":WatchExtensionNSExtensionInfoPlist",
-    ],
-    minimum_os_version = minimum_watchos_version,
-    provisioning_profile = select({
-        ":disableProvisioningProfilesSetting": None,
-        "//conditions:default": "@build_configuration//provisioning:WatchExtension.mobileprovision",
-    }),
-    resources = [
-        ":TelegramWatchExtensionResources",
-    ],
-    strings = [
-        ":WatchAppStringResources",
-    ],
-    deps = [
-        ":TelegramWatchLib",
-    ],
-)
-
-
-genrule(
-    name = "StripWatchosStubBinary",
-    cmd_bash =
-"""
-    echo 'lipo -remove armv7k -remove arm64 -remove arm64e $$1/TelegramWatch.app/_WatchKitStub/WK -output $$1/TelegramWatch.app/_WatchKitStub/WK' > $(location StripWatchosStubBinary.sh)
-    echo '' >> $(location StripWatchosStubBinary.sh)
-""",
-    outs = [
-        "StripWatchosStubBinary.sh",
-    ],
-    executable = True,
-    visibility = [
-        "//visibility:public",
-    ]
 )
 
 watchos_application(
@@ -813,7 +781,6 @@ watchos_application(
         telegram_bundle_id = telegram_bundle_id,
     ),
     bundle_name = "TelegramWatch",
-    extension = ":TelegramWatchExtension",
     infoplists = [
         ":WatchAppInfoPlist",
         ":VersionInfoPlist",
@@ -826,15 +793,19 @@ watchos_application(
         ":disableProvisioningProfilesSetting": None,
         "//conditions:default": "@build_configuration//provisioning:WatchApp.mobileprovision",
     }),
-    ipa_post_processor = ":StripWatchosStubBinary",
     resources = [
         ":TelegramWatchAppResources",
         ":TelegramWatchAppAssets",
+        ":TelegramWatchExtensionResources",
     ],
     storyboards = [
         ":TelegramWatchAppInterface",
     ],
     strings = [
+        ":WatchAppStringResources",
+    ],
+    deps = [
+        ":TelegramWatchLib",
     ],
 )
 
@@ -2163,7 +2134,7 @@ ios_application(
     }),
     watch_application = select({
         ":disableExtensionsSetting": None,
-        "//conditions:default": None#":TelegramWatchApp",
+        "//conditions:default": ":TelegramWatchApp",
     }) if telegram_enable_watch else None,
     deps = [
         ":Main",
