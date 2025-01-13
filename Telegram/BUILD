@@ -730,7 +730,7 @@ watchos_application(
     bundle_id = "{telegram_bundle_id}.watchkitapp".format(
         telegram_bundle_id = telegram_bundle_id,
     ),
-    bundle_name = "TelegramWatch",
+    bundle_name = "SwiftgramWatch",
     infoplists = [
         ":WatchAppInfoPlist",
         ":VersionInfoPlist",
