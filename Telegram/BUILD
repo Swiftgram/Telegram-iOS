@@ -685,54 +685,12 @@ plist_fragment(
 )
 
 plist_fragment(
-    name = "WatchExtensionNSExtensionInfoPlist",
-    extension = "plist",
-    template =
-    """
-    <key>NSExtension</key>
-    <dict>
-        <key>NSExtensionAttributes</key>
-        <dict>
-            <key>WKAppBundleIdentifier</key>
-            <string>{telegram_bundle_id}.watchkitapp</string>
-        </dict>
-        <key>NSExtensionPointIdentifier</key>
-        <string>com.apple.watchkit</string>
-    </dict>
-    """.format(
-        telegram_bundle_id = telegram_bundle_id,
-    )
-)
-
-plist_fragment(
     name = "WatchAppCompanionInfoPlist",
     extension = "plist",
     template =
     """
     <key>WKCompanionAppBundleIdentifier</key>
     <string>{telegram_bundle_id}</string>
-    """.format(
-        telegram_bundle_id = telegram_bundle_id,
-    )
-)
-
-plist_fragment(
-    name = "WatchExtensionInfoPlist",
-    extension = "plist",
-    template =
-    """
-    <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
-    <key>CFBundleExecutable</key>
-    <string>$(EXECUTABLE_NAME)</string>
-    <key>CFBundleIdentifier</key>
-    <string>{telegram_bundle_id}.watchkitapp.watchkitextension</string>
-    <key>CFBundleName</key>
-    <string>Swiftgram</string>
-    <key>CFBundlePackageType</key>
-    <string>XPC!</string>
-    <key>WKExtensionDelegateClassName</key>
-    <string>TGExtensionDelegate</string>
     """.format(
         telegram_bundle_id = telegram_bundle_id,
     )
@@ -758,17 +716,9 @@ plist_fragment(
     <string>APPL</string>
     <key>WKApplication</key>
     <true/>
-    <key>NSExtension</key>
-    <dict>
-        <key>NSExtensionAttributes</key>
-        <dict>
-            <key>WKAppBundleIdentifier</key>
-            <string>{telegram_bundle_id}.watchkitapp</string>
-        </dict>
-        <key>NSExtensionPointIdentifier</key>
-        <string>com.apple.watchkit</string>
-    </dict>
-    <key>WKAppDelegate</key>
+    <key>WKCompanionAppBundleIdentifier</key>
+    <string>{telegram_bundle_id}</string>
+    <key>PrincipalClass</key>
     <string>TGExtensionDelegate</string>
     """.format(
         telegram_bundle_id = telegram_bundle_id,
