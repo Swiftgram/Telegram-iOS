@@ -44,11 +44,11 @@
 #import "TGAudioMicAlertController.h"
 
 NSString *const TGNeoConversationControllerIdentifier = @"TGNeoConversationController";
-const NSInteger TGNeoConversationControllerDefaultBatchLimit = 8;
-const NSInteger TGNeoConversationControllerPerformantBatchLimit = 10;
-const NSInteger TGNeoConversationControllerMaximumBatchLimit = 20;
+const NSInteger TGNeoConversationControllerDefaultBatchLimit = 8 * 2;
+const NSInteger TGNeoConversationControllerPerformantBatchLimit = 10 * 2;
+const NSInteger TGNeoConversationControllerMaximumBatchLimit = 20 * 2;
 
-const NSInteger TGNeoConversationControllerInitialRenderCount = 4;
+const NSInteger TGNeoConversationControllerInitialRenderCount = 4 * 2;
 
 @interface TGNeoConversationControllerContext ()
 {
