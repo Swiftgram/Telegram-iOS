@@ -255,7 +255,7 @@ NSString *const TGBridgeUserChangeFieldsKey = @"fields";
 
 @implementation TGBridgeUserChange
 
-- (instancetype)initWithUserIdentifier:(int32_t)userIdentifier fields:(NSDictionary *)fields
+- (instancetype)initWithUserIdentifier:(int64_t)userIdentifier fields:(NSDictionary *)fields
 {
     self = [super init];
     if (self != nil)

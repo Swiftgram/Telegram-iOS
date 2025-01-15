@@ -349,7 +349,7 @@
         if (TGPeerIdIsChannel(forwardAttachment.peerId))
             forwardPeer = users[@(forwardAttachment.peerId)];
         else
-            forwardPeer = [[TGBridgeUserCache instance] userWithId:(int32_t)forwardAttachment.peerId];
+            forwardPeer = [[TGBridgeUserCache instance] userWithId:(int64_t)forwardAttachment.peerId];
     }
     [TGMessageViewModel updateForwardHeaderGroup:self.forwardHeaderGroup titleLabel:self.forwardTitleLabel fromLabel:self.forwardFromLabel forwardAttachment:forwardAttachment forwardPeer:forwardPeer textColor:[UIColor blackColor]];
     

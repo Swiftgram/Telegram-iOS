@@ -1,7 +1,6 @@
 #ifndef Telegraph_TGPeerIdAdapter_h
 #define Telegraph_TGPeerIdAdapter_h
 
-// Constants for 52-bit user IDs
 #define TG_USER_ID_BITS 52
 #define TG_MAX_USER_ID ((int64_t)1 << TG_USER_ID_BITS)
 

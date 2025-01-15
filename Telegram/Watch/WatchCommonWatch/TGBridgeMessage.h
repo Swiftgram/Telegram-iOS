@@ -53,11 +53,11 @@ typedef NS_ENUM(NSUInteger, TGBridgeMessageDeliveryState) {
 - (NSArray<NSNumber *> *)involvedUserIds;
 - (NSArray *)textCheckingResults;
 
-+ (instancetype)temporaryNewMessageForText:(NSString *)text userId:(int32_t)userId;
-+ (instancetype)temporaryNewMessageForText:(NSString *)text userId:(int32_t)userId replyToMessage:(TGBridgeMessage *)replyToMessage;
-+ (instancetype)temporaryNewMessageForSticker:(TGBridgeDocumentMediaAttachment *)sticker userId:(int32_t)userId;
-+ (instancetype)temporaryNewMessageForLocation:(TGBridgeLocationMediaAttachment *)location userId:(int32_t)userId;
-+ (instancetype)temporaryNewMessageForAudioWithDuration:(int32_t)duration userId:(int32_t)userId localAudioId:(int64_t)localAudioId;
++ (instancetype)temporaryNewMessageForText:(NSString *)text userId:(int64_t)userId;
++ (instancetype)temporaryNewMessageForText:(NSString *)text userId:(int64_t)userId replyToMessage:(TGBridgeMessage *)replyToMessage;
++ (instancetype)temporaryNewMessageForSticker:(TGBridgeDocumentMediaAttachment *)sticker userId:(int64_t)userId;
++ (instancetype)temporaryNewMessageForLocation:(TGBridgeLocationMediaAttachment *)location userId:(int64_t)userId;
++ (instancetype)temporaryNewMessageForAudioWithDuration:(int32_t)duration userId:(int64_t)userId localAudioId:(int64_t)localAudioId;
 
 @end
 

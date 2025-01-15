@@ -513,7 +513,7 @@ const NSInteger TGNeoConversationControllerInitialRenderCount = 4 * 2;
     else if (_context.context.userId == _context.peerId)
         return TGLocalized(@"Conversation.SavedMessages");
     else
-        return [[[TGBridgeUserCache instance] userWithId:(int32_t)[self peerId]] displayName];
+        return [[[TGBridgeUserCache instance] userWithId:(int64_t)[self peerId]] displayName];
 }
 
 - (void)configureHandoff
@@ -582,7 +582,7 @@ const NSInteger TGNeoConversationControllerInitialRenderCount = 4 * 2;
         }
         else
         {
-            TGUserInfoControllerContext *context = [[TGUserInfoControllerContext alloc] initWithUserId:(int32_t)[strongSelf peerId]];
+            TGUserInfoControllerContext *context = [[TGUserInfoControllerContext alloc] initWithUserId:(int64_t)[strongSelf peerId]];
             context.disallowCompose = true;
             [controller pushControllerWithClass:[TGUserInfoController class] context:context];
         }
@@ -736,7 +736,7 @@ const NSInteger TGNeoConversationControllerInitialRenderCount = 4 * 2;
     }
     else if ([self _userIsBot])
     {
-        int32_t userId = (int32_t)[self peerId];
+        int64_t userId = (int64_t)[self peerId];
         return [[TGBridgeBotSignals botInfoForUserId:userId] map:^NSArray *(TGBridgeBotInfo *botInfo)
         {
             if (botInfo != nil)
@@ -757,7 +757,7 @@ const NSInteger TGNeoConversationControllerInitialRenderCount = 4 * 2;
     if ([self peerId] < 0)
         return false;
     
-    TGBridgeUser *user = [[TGBridgeUserCache instance] userWithId:(int32_t)[self peerId]];
+    TGBridgeUser *user = [[TGBridgeUserCache instance] userWithId:(int64_t)[self peerId]];
     return [user isBot];
 }
 
@@ -779,7 +779,7 @@ const NSInteger TGNeoConversationControllerInitialRenderCount = 4 * 2;
     }
     else
     {
-        TGBridgeUser *user = [[TGBridgeUserCache instance] userWithId:(int32_t)[self peerId]];
+        TGBridgeUser *user = [[TGBridgeUserCache instance] userWithId:(int64_t)[self peerId]];
         _hasBots = [user isBot];
     }
 }
