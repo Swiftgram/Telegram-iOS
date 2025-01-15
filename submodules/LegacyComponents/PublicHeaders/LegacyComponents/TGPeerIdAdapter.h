@@ -1,12 +1,15 @@
 #ifndef Telegraph_TGPeerIdAdapter_h
 #define Telegraph_TGPeerIdAdapter_h
 
+#define TG_USER_ID_BITS 52
+#define TG_MAX_USER_ID ((int64_t)1 << TG_USER_ID_BITS)
+
 static inline bool TGPeerIdIsGroup(int64_t peerId) {
     return peerId < 0 && peerId > INT32_MIN;
 }
 
 static inline bool TGPeerIdIsUser(int64_t peerId) {
-    return peerId > 0 && peerId < INT32_MAX;
+    return peerId > 0 && peerId < TG_MAX_USER_ID;
 }
 
 static inline bool TGPeerIdIsChannel(int64_t peerId) {
