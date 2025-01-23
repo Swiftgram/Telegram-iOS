@@ -1,3 +1,8 @@
+// MARK: Swiftgram
+import SwiftUI
+import SGInputToolbar
+import SGSimpleSettings
+
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -38,6 +43,9 @@ public class LegacyMessageInputPanelNode: ASDisplayNode, TGCaptionPanelView {
     
     private let hapticFeedback = HapticFeedback()
     
+    // MARK: Swiftgram
+    private var toolbarNode: ASDisplayNode?
+    
     private var inputView: LegacyMessageInputPanelInputView?
     private var isEmojiKeyboardActive = false
     
@@ -76,6 +84,9 @@ public class LegacyMessageInputPanelNode: ASDisplayNode, TGCaptionPanelView {
                 self.update(transition: transition.containedViewLayoutTransition)
             }
         }
+        
+        // MARK: Swiftgram
+        self.initToolbarIfNeeded()
     }
     
     public func updateLayoutSize(_ size: CGSize, keyboardHeight: CGFloat, sideInset: CGFloat, animated: Bool) -> CGFloat {
@@ -204,7 +215,7 @@ public class LegacyMessageInputPanelNode: ASDisplayNode, TGCaptionPanelView {
         }
         
         self.inputPanel.parentState = self.state
-        let inputPanelSize = self.inputPanel.update(
+        var inputPanelSize = self.inputPanel.update(
             transition: ComponentTransition(transition),
             component: AnyComponent(
                 MessageInputPanelComponent(
@@ -295,6 +306,12 @@ public class LegacyMessageInputPanelNode: ASDisplayNode, TGCaptionPanelView {
             environment: {},
             containerSize: CGSize(width: width, height: maxInputPanelHeight)
         )
+
+        // MARK: Swiftgram
+        var toolbarOffset: CGFloat = 0.0
+        toolbarOffset = self.layoutToolbar(transition: transition, panelHeight: inputPanelSize.height - 8.0, width: width, leftInset: leftInset, rightInset: rightInset)
+        inputPanelSize.height += toolbarOffset
+        
         if let view = self.inputPanel.view {
             if view.superview == nil {
                 self.view.addSubview(view)
@@ -539,6 +556,9 @@ public class LegacyMessageInputPanelNode: ASDisplayNode, TGCaptionPanelView {
     
     public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let result = super.hitTest(point, with: event)
+        if let toolbarNode = self.toolbarNode, let toolbarResult = toolbarNode.hitTest(self.view.convert(point, to: toolbarNode.view), with: event) {
+            return toolbarResult
+        }
         if let view = self.inputPanel.view, let panelResult = view.hitTest(self.view.convert(point, to: view), with: event) {
             return panelResult
         }
@@ -563,3 +583,90 @@ private final class HeaderContextReferenceContentSource: ContextReferenceContent
         return ContextControllerReferenceViewInfo(referenceView: self.sourceView, contentAreaInScreenSpace: UIScreen.main.bounds, actionsPosition: self.position)
     }
 }
+
+
+extension LegacyMessageInputPanelNode {
+    func initToolbarIfNeeded() {
+        guard #available(iOS 13.0, *) else { return }
+        guard SGSimpleSettings.shared.inputToolbar else { return }
+        guard SGSimpleSettings.shared.b else { return }
+        guard self.toolbarNode == nil else { return }
+        let notificationName = Notification.Name("sgToolbarAction")
+        let toolbarView = ChatToolbarView(
+            onQuote: { [weak self] in
+                guard let _ = self else { return }
+                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "quote"])
+            },
+            onSpoiler: { [weak self] in
+                guard let _ = self else { return }
+                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "spoiler"])
+            },
+            onBold: { [weak self] in
+                guard let _ = self else { return }
+                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "bold"])
+            },
+            onItalic: { [weak self] in
+                guard let _ = self else { return }
+                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "italic"])
+            },
+            onMonospace: { [weak self] in
+                guard let _ = self else { return }
+                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "monospace"])
+            },
+            onLink: { [weak self] in
+                guard let _ = self else { return }
+                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "link"])
+            },
+            onStrikethrough: { [weak self]
+                in guard let _ = self else { return }
+                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "strikethrough"])
+            },
+            onUnderline: { [weak self] in
+                guard let _ = self else { return }
+                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "underline"])
+            },
+            onCode: { [weak self] in
+                guard let _ = self else { return }
+                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "code"])
+            },
+            onNewLine: { [weak self] in
+                guard let _ = self else { return }
+                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "newline"])
+            },
+            // TODO(swiftgram): Binding
+            showNewLine: .constant(true), //.constant(self.sendWithReturnKey)
+            onClearFormatting: { [weak self] in
+                guard let _ = self else { return }
+                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "clearFormatting"])
+            }
+        )
+        let toolbarHostingController = UIHostingController(rootView: toolbarView)
+        toolbarHostingController.view.backgroundColor = .clear
+        let toolbarNode = ASDisplayNode { toolbarHostingController.view }
+        self.toolbarNode = toolbarNode
+        // assigning toolbarHostingController bugs responsivness and overrides layout
+        // self.toolbarHostingController = toolbarHostingController
+        
+        // Disable "Swipe to go back" gesture when touching scrollview
+        self.view.interactiveTransitionGestureRecognizerTest = { [weak self] point in
+            if let self, let _ = self.toolbarNode?.view.hitTest(point, with: nil) {
+                return false
+            }
+            return true
+        }
+        self.addSubnode(toolbarNode)
+    }
+    
+    func layoutToolbar(transition: ContainedViewLayoutTransition, panelHeight: CGFloat, width: CGFloat, leftInset: CGFloat, rightInset: CGFloat) -> CGFloat {
+        // TODO(swiftgram): Do not show if locked formatting
+        var toolbarHeight: CGFloat = 0.0
+        var toolbarSpacing: CGFloat = 0.0
+        if let toolbarNode = self.toolbarNode {
+            toolbarHeight = 44.0
+            toolbarSpacing = 1.0
+            transition.updateFrame(node: toolbarNode, frame: CGRect(origin: CGPoint(x: leftInset, y: panelHeight + toolbarSpacing), size: CGSize(width: width - rightInset - leftInset, height: toolbarHeight)))
+        }
+        return toolbarHeight + toolbarSpacing
+    }
+}
+

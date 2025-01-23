@@ -289,6 +289,9 @@ public final class TextFieldComponent: Component {
             return InputState(inputText: stateAttributedStringForText(self.textView.attributedText ?? NSAttributedString()), selectionRange: selectionRange)
         }
         
+        // MARK: Swiftgram
+        var sgToolbarActionObserver: NSObjectProtocol? = nil
+        
         private var component: TextFieldComponent?
         private weak var state: EmptyComponentState?
         private var isUpdating: Bool = false
@@ -366,6 +369,21 @@ public final class TextFieldComponent: Component {
                         selectionRange: selectionRange
                     )
                 }
+            }
+            
+            // MARK: Swiftgram
+            self.sgToolbarActionObserver = NotificationCenter.default.addObserver(forName: Notification.Name("sgToolbarAction"), object: nil, queue: .main, using: { [weak self] notification in
+                    guard let self = self else { return }
+                    if let action = notification.userInfo?["action"] as? String {
+                        self.sgToolbarAction(action)
+                    }
+            })
+        }
+        
+        // MARK: Swiftgram
+        deinit {
+            if let sgToolbarActionObserver = self.sgToolbarActionObserver {
+                NotificationCenter.default.removeObserver(sgToolbarActionObserver)
             }
         }
         
@@ -1678,6 +1696,19 @@ extension TextFieldComponent.InputState {
             return TextFieldComponent.InputState(inputText: result, selectionRange: selectionRange)
         } else {
             return self
+        }
+    }
+}
+
+
+extension TextFieldComponent.View {
+    
+    func sgToolbarAction(_ action: String) {
+        
+        switch action {
+            default:
+                print("action: \(action)")
+//                assert(false, "Unhandled action \(action)")
         }
     }
 }

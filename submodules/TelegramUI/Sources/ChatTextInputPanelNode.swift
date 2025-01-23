@@ -5098,7 +5098,7 @@ extension ChatTextInputPanelNode {
             onLink: { [weak self] in
                 guard let strongSelf = self else { return }
                 strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesLink(self!)
+                strongSelf.formatAttributesLink(strongSelf)
             },
             onStrikethrough: { [weak self]
                 in guard let strongSelf = self else { return }
