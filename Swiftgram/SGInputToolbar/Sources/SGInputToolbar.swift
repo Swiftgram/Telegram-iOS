@@ -19,6 +19,7 @@ public struct ChatToolbarView: View {
     @Binding private var showNewLine: Bool
     
     var onClearFormatting: () -> Void
+    var preferredColorScheme: ColorScheme?
     
     public init(
         onQuote: @escaping () -> Void,
@@ -32,7 +33,8 @@ public struct ChatToolbarView: View {
         onCode: @escaping () -> Void,
         onNewLine: @escaping () -> Void,
         showNewLine: Binding<Bool>,
-        onClearFormatting: @escaping () -> Void
+        onClearFormatting: @escaping () -> Void,
+        preferredColorScheme: ColorScheme? = nil
     ) {
         self.onQuote = onQuote
         self.onSpoiler = onSpoiler
@@ -46,6 +48,7 @@ public struct ChatToolbarView: View {
         self.onNewLine = onNewLine
         self._showNewLine = showNewLine
         self.onClearFormatting = onClearFormatting
+        self.preferredColorScheme = preferredColorScheme // TODO(swiftgram): Does not work for buttons :(
     }
     
     public func setShowNewLine(_ value: Bool) {
@@ -59,36 +62,42 @@ public struct ChatToolbarView: View {
                     Button(action: onNewLine) {
                         Image(systemName: "return")
                     }
-                    .buttonStyle(ToolbarButtonStyle())
+                    .buttonStyle(ToolbarButtonStyle(preferredColorScheme: preferredColorScheme))
+                    .preferredColorScheme(preferredColorScheme)
                 }
                 Button(action: onClearFormatting) {
                     Image(systemName: "pencil.slash")
                 }
-                .buttonStyle(ToolbarButtonStyle())
+                .buttonStyle(ToolbarButtonStyle(preferredColorScheme: preferredColorScheme))
+                .preferredColorScheme(preferredColorScheme)
                 Spacer()
                 // Quote Button
                 Button(action: onQuote) {
                     Image(systemName: "text.quote")
                 }
-                .buttonStyle(ToolbarButtonStyle())
+                .buttonStyle(ToolbarButtonStyle(preferredColorScheme: preferredColorScheme))
+                .preferredColorScheme(preferredColorScheme)
                 
                 // Spoiler Button
                 Button(action: onSpoiler) {
                     Image(systemName: "eye.slash")
                 }
-                .buttonStyle(ToolbarButtonStyle())
+                .buttonStyle(ToolbarButtonStyle(preferredColorScheme: preferredColorScheme))
+                .preferredColorScheme(preferredColorScheme)
                 
                 // Bold Button
                 Button(action: onBold) {
                     Image(systemName: "bold")
                 }
-                .buttonStyle(ToolbarButtonStyle())
+                .buttonStyle(ToolbarButtonStyle(preferredColorScheme: preferredColorScheme))
+                .preferredColorScheme(preferredColorScheme)
                 
                 // Italic Button
                 Button(action: onItalic) {
                     Image(systemName: "italic")
                 }
-                .buttonStyle(ToolbarButtonStyle())
+                .buttonStyle(ToolbarButtonStyle(preferredColorScheme: preferredColorScheme))
+                .preferredColorScheme(preferredColorScheme)
                 
                 // Monospace Button
                 Button(action: onMonospace) {
@@ -98,43 +107,52 @@ public struct ChatToolbarView: View {
                         Text("M")
                     }
                 }
-                .buttonStyle(ToolbarButtonStyle())
+                .buttonStyle(ToolbarButtonStyle(preferredColorScheme: preferredColorScheme))
+                .preferredColorScheme(preferredColorScheme)
                 
                 // Link Button
                 Button(action: onLink) {
                     Image(systemName: "link")
                 }
-                .buttonStyle(ToolbarButtonStyle())
+                .buttonStyle(ToolbarButtonStyle(preferredColorScheme: preferredColorScheme))
+                .preferredColorScheme(preferredColorScheme)
                 
                 // Underline Button
                 Button(action: onUnderline) {
                     Image(systemName: "underline")
                 }
-                .buttonStyle(ToolbarButtonStyle())
+                .buttonStyle(ToolbarButtonStyle(preferredColorScheme: preferredColorScheme))
+                .preferredColorScheme(preferredColorScheme)
                 
                 
                 // Strikethrough Button
                 Button(action: onStrikethrough) {
                     Image(systemName: "strikethrough")
                 }
-                .buttonStyle(ToolbarButtonStyle())
+                .buttonStyle(ToolbarButtonStyle(preferredColorScheme: preferredColorScheme))
+                .preferredColorScheme(preferredColorScheme)
                 
                 
                 // Code Button
                 Button(action: onCode) {
                     Image(systemName: "chevron.left.forwardslash.chevron.right")
                 }
-                .buttonStyle(ToolbarButtonStyle())
+                .buttonStyle(ToolbarButtonStyle(preferredColorScheme: preferredColorScheme))
+                .preferredColorScheme(preferredColorScheme)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 8)
         }
         .background(Color(UIColor.clear))
+        .preferredColorScheme(preferredColorScheme)
     }
 }
 
 @available(iOS 13.0, *)
 struct ToolbarButtonStyle: ButtonStyle {
+    
+    var preferredColorScheme: ColorScheme? = nil
+    
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 17))
@@ -143,5 +161,6 @@ struct ToolbarButtonStyle: ButtonStyle {
             .cornerRadius(8)
             // TODO(swiftgram): Does not work for fast taps (like mine)
             .opacity(configuration.isPressed ? 0.4 : 1.0)
+            .preferredColorScheme(preferredColorScheme)
     }
 }
