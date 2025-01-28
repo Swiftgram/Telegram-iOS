@@ -5,7 +5,7 @@ import TelegramUIPreferences
 import AccountContext
 
 // MARK: Swiftgram
-public let maximumSwiftgramNumberOfAccounts = 200
+public let maximumSwiftgramNumberOfAccounts = 500
 public let maximumSafeNumberOfAccounts = 6
 public let maximumNumberOfAccounts = maximumSwiftgramNumberOfAccounts
 public let maximumPremiumNumberOfAccounts = maximumSwiftgramNumberOfAccounts
