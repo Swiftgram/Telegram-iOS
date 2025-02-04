@@ -839,6 +839,7 @@ private enum SGDebugActions: String {
     case flexing
     case fileManager
     case clearRegDateCache
+    case debugIAP
 }
 
 private enum SGDebugToggles: String {
@@ -862,6 +863,7 @@ private func SGDebugControllerEntries(presentationData: PresentationData) -> [SG
     #if DEBUG
     entries.append(.action(id: id.count, section: .base, actionType: .flexing, text: "FLEX", kind: .generic))
     entries.append(.action(id: id.count, section: .base, actionType: .fileManager, text: "FileManager", kind: .generic))
+    entries.append(.action(id: id.count, section: .base, actionType: .debugIAP, text: "Buy", kind: .generic))
     #endif
     
     if SGSimpleSettings.shared.b {
@@ -1019,6 +1021,10 @@ public func sgDebugController(context: AccountContext) -> ViewController {
                 ),
                 nil)
             }
+            #endif
+        case .debugIAP:
+            #if DEBUG
+            preconditionFailure("IAP")
             #endif
         }
     })

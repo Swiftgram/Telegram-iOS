@@ -27,7 +27,17 @@ public func ignoreSignalErrors<T, E>(onError: ((E) -> Void)? = nil) -> (Signal<T
     }
 }
 
-extension Signal where E: Error {
+// Wrapper for non-Error types
+public struct SignalError<E>: Error {
+    public let error: E
+    
+    public init(_ error: E) {
+        self.error = error
+    }
+}
+
+// Extension for Signals with Error types
+extension Signal {
     @available(iOS 13.0, *)
     public func awaitable() async throws -> T {
         return try await withCheckedThrowingContinuation { continuation in
@@ -38,7 +48,11 @@ extension Signal where E: Error {
                     disposable?.dispose()
                 },
                 error: { error in
-                    continuation.resume(throwing: error)
+                    if let error = error as? Error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(throwing: SignalError(error))
+                    }
                     disposable?.dispose()
                 },
                 completed: {
@@ -49,6 +63,7 @@ extension Signal where E: Error {
     }
 }
 
+// Extension for Signals with NoError
 extension Signal where E == NoError {
     @available(iOS 13.0, *)
     public func awaitable() async -> T {
@@ -71,6 +86,7 @@ extension Signal where E == NoError {
     }
 }
 
+// Extension for general Signal types - AsyncStream support
 extension Signal {
     @available(iOS 13.0, *)
     public func awaitableStream() -> AsyncStream<T> {
@@ -94,7 +110,7 @@ extension Signal {
     }
 }
 
-
+// Extension for NoError Signal types - AsyncStream support
 extension Signal where E == NoError {
     @available(iOS 13.0, *)
     public func awaitableStream() -> AsyncStream<T> {

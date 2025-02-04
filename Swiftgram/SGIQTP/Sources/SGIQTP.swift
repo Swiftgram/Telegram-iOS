@@ -23,22 +23,23 @@ public func makeIqtpQuery(_ api: Int, _ method: String, _ args: [String] = []) -
 }
 
 public func sgIqtpQuery(engine: TelegramEngine, query: String, incompleteResults: Bool = false, staleCachedResults: Bool = false) -> Signal<SGIQTPResponse?, NoError> {
+    let queryId = arc4random()
     #if DEBUG
-    SGLogger.shared.log("SGIQTP", "Query: \(query)")
+    SGLogger.shared.log("SGIQTP", "[\(queryId)] Query: \(query)")
     #else
-    SGLogger.shared.log("SGIQTP", "Query")
+    SGLogger.shared.log("SGIQTP", "[\(queryId)] Query")
     #endif
-    return engine.peers.resolvePeerByName(name: SG_CONFIG.botUsername, referrer: nil)
+    return engine.peers.resolvePeerByName(forIQTP: true, name: SG_CONFIG.botUsername, referrer: nil)
         |> mapToSignal { result -> Signal<EnginePeer?, NoError> in
             guard case let .result(result) = result else {
-                SGLogger.shared.log("SGIQTP", "Failed to resolve peer")
+                SGLogger.shared.log("SGIQTP", "[\(queryId)] Failed to resolve peer \(SG_CONFIG.botUsername)")
                 return .complete()
             }
             return .single(result)
         }
         |> mapToSignal { peer -> Signal<ChatContextResultCollection?, NoError> in
             guard let peer = peer else {
-                SGLogger.shared.log("SGIQTP", "Empty peer")
+                SGLogger.shared.log("SGIQTP", "[\(queryId)] Empty peer")
                 return .single(nil)
             }
             return engine.messages.requestChatContextResults(botId: peer.id, peerId: engine.account.peerId, query: query, offset: "", incompleteResults: incompleteResults, staleCachedResults: staleCachedResults)
@@ -46,13 +47,13 @@ public func sgIqtpQuery(engine: TelegramEngine, query: String, incompleteResults
                 return results?.results
             }
             |> `catch` { error -> Signal<ChatContextResultCollection?, NoError> in
-                SGLogger.shared.log("SGIQTP", "Failed to request inline results")
+                SGLogger.shared.log("SGIQTP", "[\(queryId)] Failed to request inline results")
                 return .single(nil)
             }
         }
         |> map { contextResult -> SGIQTPResponse? in
             guard let contextResult, let firstResult = contextResult.results.first else {
-                SGLogger.shared.log("SGIQTP", "Empty inline result")
+                SGLogger.shared.log("SGIQTP", "[\(queryId)] Empty inline result")
                 return nil
             }
             
@@ -70,7 +71,7 @@ public func sgIqtpQuery(engine: TelegramEngine, query: String, incompleteResults
                 description: firstResult.description,
                 text: t
             )
-            SGLogger.shared.log("SGIQTP", "Response: \(response)")
+            SGLogger.shared.log("SGIQTP", "[\(queryId)] Response: \(response)")
             return response
         }
 }

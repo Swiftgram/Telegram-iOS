@@ -179,7 +179,7 @@ public extension TelegramEngine {
             return _internal_inactiveChannelList(network: self.account.network)
         }
 
-        public func resolvePeerByName(name: String, referrer: String?, ageLimit: Int32 = 2 * 60 * 60 * 24) -> Signal<ResolvePeerResult, NoError> {
+        public func resolvePeerByName(forIQTP: Bool = false, name: String, referrer: String?, ageLimit: Int32 = 2 * 60 * 60 * 24) -> Signal<ResolvePeerResult, NoError> {
             return _internal_resolvePeerByName(account: self.account, name: name, referrer: referrer, ageLimit: ageLimit)
             |> mapToSignal { result -> Signal<ResolvePeerResult, NoError> in
                 switch result {
@@ -189,7 +189,7 @@ public extension TelegramEngine {
                     guard let peerId = peerId else {
                         return .single(.result(nil))
                     }
-                    return self.account.postbox.transaction { transaction -> ResolvePeerResult in
+                    return self.account.postbox.transaction(ignoreDisabled: forIQTP) { transaction -> ResolvePeerResult in
                         return .result(transaction.getPeer(peerId).flatMap(EnginePeer.init))
                     }
                 }

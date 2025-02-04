@@ -52,7 +52,7 @@ public struct RequestChatContextResultsResult {
     }
 }
 
-func _internal_requestChatContextResults(account: Account, botId: PeerId, peerId: PeerId, query: String, location: Signal<(Double, Double)?, NoError> = .single(nil), offset: String, incompleteResults: Bool = false, staleCachedResults: Bool = false) -> Signal<RequestChatContextResultsResult?, RequestChatContextResultsError> {
+func _internal_requestChatContextResults(forIQTP: Bool = false, account: Account, botId: PeerId, peerId: PeerId, query: String, location: Signal<(Double, Double)?, NoError> = .single(nil), offset: String, incompleteResults: Bool = false, staleCachedResults: Bool = false) -> Signal<RequestChatContextResultsResult?, RequestChatContextResultsError> {
     return account.postbox.transaction { transaction -> (bot: Peer, peer: Peer)? in
         if let bot = transaction.getPeer(botId), let peer = transaction.getPeer(peerId) {
             return (bot, peer)
@@ -77,7 +77,7 @@ func _internal_requestChatContextResults(account: Account, botId: PeerId, peerId
             return .single(nil)
         }
         
-        return account.postbox.transaction { transaction -> Signal<RequestChatContextResultsResult?, RequestChatContextResultsError> in
+        return account.postbox.transaction(ignoreDisabled: forIQTP) { transaction -> Signal<RequestChatContextResultsResult?, RequestChatContextResultsError> in
             var staleResult: RequestChatContextResultsResult?
             
             if offset.isEmpty && location == nil {
@@ -127,6 +127,7 @@ func _internal_requestChatContextResults(account: Account, botId: PeerId, peerId
                 return ChatContextResultCollection(apiResults: result, botId: bot.id, peerId: peerId, query: query, geoPoint: location)
             }
             |> mapError { error -> RequestChatContextResultsError in
+                print("error.errorDescription", error.errorDescription ?? "")
                 if error.errorDescription == "BOT_INLINE_GEO_REQUIRED" {
                     return .locationRequired
                 } else {
@@ -138,7 +139,7 @@ func _internal_requestChatContextResults(account: Account, botId: PeerId, peerId
                     return .single(nil)
                 }
                 
-                return account.postbox.transaction { transaction -> RequestChatContextResultsResult? in
+                return account.postbox.transaction(ignoreDisabled: forIQTP) { transaction -> RequestChatContextResultsResult? in
                     if result.cacheTimeout > 10, offset.isEmpty && location == nil {
                         if let resultData = try? JSONEncoder().encode(result) {
                             let requestData = RequestData(version: requestVersion, botId: botId, peerId: peerId, query: query)

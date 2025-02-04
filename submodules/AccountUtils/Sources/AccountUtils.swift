@@ -52,3 +52,18 @@ public func activeAccountsAndPeers(context: AccountContext, includePrimary: Bool
         }
     }
 }
+
+// MARK: Swiftgram
+public func getContextForUserId(context: AccountContext, userId: Int64) -> Signal<AccountContext?, NoError> {
+    if context.account.peerId.id._internalGetInt64Value() == userId {
+        return .single(context)
+    }
+    return context.sharedContext.activeAccountContexts
+    |> take(1)
+    |> map { _, activeAccounts, _ -> AccountContext? in
+        if let account = activeAccounts.first(where: { $0.1.account.peerId.id._internalGetInt64Value() == userId }) {
+            return account.1
+        }
+        return nil
+    }
+}

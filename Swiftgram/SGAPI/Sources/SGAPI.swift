@@ -143,3 +143,46 @@ public func getSGAPIRegDate(token: String, deviceToken: String, userId: Int64) -
         }
     }
 }
+
+
+public func postSGReceipt(token: String, deviceToken: String, encodedReceiptData: Data) -> Signal<Void, SGAPIError> {
+    return Signal { subscriber in
+
+        let url = URL(string: buildApiUrl("validate"))!
+        let headers = [
+            SG_API_AUTHORIZATION_HEADER: "Token \(token)",
+            SG_API_DEVICE_TOKEN_HEADER: deviceToken
+        ]
+        let completed = Atomic<Bool>(value: false)
+        
+        var request = URLRequest(url: url)
+        headers.forEach { key, value in
+            request.addValue(value, forHTTPHeaderField: key)
+        }
+        request.httpMethod = "POST"
+        request.httpBody = encodedReceiptData
+        
+        let dataSignal = requestsCustom(request: request).start(next: { data, urlResponse in
+            let _ = completed.swap(true)
+            
+            if let httpResponse = urlResponse as? HTTPURLResponse {
+                switch httpResponse.statusCode {
+                case 200...299:
+                    subscriber.putCompletion()
+                default:
+                    subscriber.putError(.generic("Error posting Receipt: \(httpResponse.statusCode). Response: \(String(data: data, encoding: .utf8) ?? "")"))
+                }
+            } else {
+                subscriber.putError(.generic("Not an HTTP response: \(String(describing: urlResponse))"))
+            }
+        }, error: { error in
+            subscriber.putError(.generic("Error posting Receipt: \(String(describing: error))"))
+        })
+        
+        return ActionDisposable {
+            if !completed.with({ $0 }) {
+                dataSignal.dispose()
+            }
+        }
+    }
+}

@@ -1,3 +1,5 @@
+// MARK: Swiftgram
+import SGIAP
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -240,6 +242,13 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return self.immediateExperimentalUISettingsValue.with { $0 }
     }
     private var experimentalUISettingsDisposable: Disposable?
+
+    private var immediateSGStatusValue = Atomic<SGStatus>(value: SGStatus.default)
+    public var immediateSGStatus: SGStatus {
+        return self.immediateSGStatusValue.with { $0 }
+    }
+    private var sgStatusDisposable: Disposable?
+    
     
     public var presentGlobalController: (ViewController, Any?) -> Void = { _, _ in }
     public var presentCrossfadeController: () -> Void = {}
@@ -466,6 +475,14 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         |> deliverOnMainQueue).start(next: { sharedData in
             if let settings = sharedData.entries[ApplicationSpecificSharedDataKeys.experimentalUISettings]?.get(ExperimentalUISettings.self) {
                 let _ = immediateExperimentalUISettingsValue.swap(settings)
+            }
+        })
+        // MARK: Swiftgram
+        let immediateSGStatusValue = self.immediateSGStatusValue
+        self.sgStatusDisposable = (self.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.sgStatus])
+        |> deliverOnMainQueue).start(next: { sharedData in
+            if let settings = sharedData.entries[ApplicationSpecificSharedDataKeys.sgStatus]?.get(SGStatus.self) {
+                let _ = immediateSGStatusValue.swap(settings)
             }
         })
         
@@ -3020,3 +3037,11 @@ private func peerInfoControllerImpl(context: AccountContext, updatedPresentation
     }
     return nil
 }
+
+
+// MARK: Swiftgram
+//public extension SharedAccountContextImpl {
+//    public func initSGIAP() {
+//        self.sgIAP = SGIAP
+//    }
+//}

@@ -126,6 +126,7 @@ public class SGSimpleSettings {
         case inputToolbar
         case pinnedMessageNotifications
         case mentionsAndRepliesNotifications
+        case primaryUserId
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -236,7 +237,8 @@ public class SGSimpleSettings {
         Keys.confirmCalls.rawValue: true,
         Keys.videoPIPSwipeDirection.rawValue: VideoPIPSwipeDirection.up.rawValue,
         Keys.messageFilterKeywords.rawValue: [],
-        Keys.inputToolbar.rawValue: false
+        Keys.inputToolbar.rawValue: false,
+        Keys.primaryUserId.rawValue: ""
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -437,6 +439,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.mentionsAndRepliesNotifications.rawValue, userDefaults: UserDefaults(suiteName: appGroupIdentifier) ?? .standard)
     public var mentionsAndRepliesNotifications: String
+    
+    @UserDefault(key: Keys.primaryUserId.rawValue)
+    public var primaryUserId: String
 }
 
 extension SGSimpleSettings {

@@ -1,0 +1,328 @@
+import StoreKit
+import SGConfig
+import SGLogging
+import AppBundle
+
+private final class CurrencyFormatterEntry {
+    public let symbol: String
+    public let thousandsSeparator: String
+    public let decimalSeparator: String
+    public let symbolOnLeft: Bool
+    public let spaceBetweenAmountAndSymbol: Bool
+    public let decimalDigits: Int
+    
+    public init(symbol: String, thousandsSeparator: String, decimalSeparator: String, symbolOnLeft: Bool, spaceBetweenAmountAndSymbol: Bool, decimalDigits: Int) {
+        self.symbol = symbol
+        self.thousandsSeparator = thousandsSeparator
+        self.decimalSeparator = decimalSeparator
+        self.symbolOnLeft = symbolOnLeft
+        self.spaceBetweenAmountAndSymbol = spaceBetweenAmountAndSymbol
+        self.decimalDigits = decimalDigits
+    }
+}
+
+private func getCurrencyExp(currency: String) -> Int {
+    switch currency {
+    case "CLF":
+        return 4
+    case "BHD", "IQD", "JOD", "KWD", "LYD", "OMR", "TND":
+        return 3
+    case "BIF", "BYR", "CLP", "CVE", "DJF", "GNF", "ISK", "JPY", "KMF", "KRW", "MGA", "PYG", "RWF", "UGX", "UYI", "VND", "VUV", "XAF", "XOF", "XPF":
+        return 0
+    case "MRO":
+        return 1
+    default:
+        return 2
+    }
+}
+
+private func loadCurrencyFormatterEntries() -> [String: CurrencyFormatterEntry] {
+    guard let filePath = getAppBundle().path(forResource: "currencies", ofType: "json") else {
+        return [:]
+    }
+    guard let data = try? Data(contentsOf: URL(fileURLWithPath: filePath)) else {
+        return [:]
+    }
+    
+    guard let object = try? JSONSerialization.jsonObject(with: data, options: []), let dict = object as? [String: AnyObject] else {
+        return [:]
+    }
+    
+    var result: [String: CurrencyFormatterEntry] = [:]
+    
+    for (code, contents) in dict {
+        if let contentsDict = contents as? [String: AnyObject] {
+            let entry = CurrencyFormatterEntry(
+                symbol: contentsDict["symbol"] as! String,
+                thousandsSeparator: contentsDict["thousandsSeparator"] as! String,
+                decimalSeparator: contentsDict["decimalSeparator"] as! String,
+                symbolOnLeft: (contentsDict["symbolOnLeft"] as! NSNumber).boolValue,
+                spaceBetweenAmountAndSymbol: (contentsDict["spaceBetweenAmountAndSymbol"] as! NSNumber).boolValue,
+                decimalDigits: getCurrencyExp(currency: code.uppercased())
+            )
+            result[code] = entry
+            result[code.lowercased()] = entry
+        }
+    }
+    
+    return result
+}
+
+private let currencyFormatterEntries = loadCurrencyFormatterEntries()
+
+private func fractionalValueToCurrencyAmount(value: Double, currency: String) -> Int64? {
+    guard let entry = currencyFormatterEntries[currency] ?? currencyFormatterEntries["USD"] else {
+        return nil
+    }
+    var factor: Double = 1.0
+    for _ in 0 ..< entry.decimalDigits {
+        factor *= 10.0
+    }
+    if value > Double(Int64.max) / factor {
+        return nil
+    } else {
+        return Int64(value * factor)
+    }
+}
+
+
+public extension Notification.Name {
+    static let SGIAPHelperPurchaseNotification = Notification.Name("SGIAPPurchaseNotification")
+    static let SGIAPHelperErrorNotification = Notification.Name("SGIAPErrorNotification")
+}
+
+public final class SGIAP: NSObject {
+    private var productRequest: SKProductsRequest?
+    private var productsRequestCompletion: (([SKProduct]) -> Void)?
+    private var purchaseCompletion: ((Bool, Error?) -> Void)?
+    
+    
+    public final class SGProduct: Equatable {
+        private lazy var numberFormatter: NumberFormatter = {
+            let numberFormatter = NumberFormatter()
+            numberFormatter.numberStyle = .currency
+            numberFormatter.locale = self.skProduct.priceLocale
+            return numberFormatter
+        }()
+        
+        let skProduct: SKProduct
+        
+        init(skProduct: SKProduct) {
+            self.skProduct = skProduct
+        }
+        
+        public var id: String {
+            return self.skProduct.productIdentifier
+        }
+        
+        public var isSubscription: Bool {
+            if #available(iOS 12.0, *) {
+                return self.skProduct.subscriptionGroupIdentifier != nil
+            } else {
+                return self.skProduct.subscriptionPeriod != nil
+            }
+        }
+        
+        public var price: String {
+            return self.numberFormatter.string(from: self.skProduct.price) ?? ""
+        }
+        
+        public func pricePerMonth(_ monthsCount: Int) -> String {
+            let price = self.skProduct.price.dividing(by: NSDecimalNumber(value: monthsCount)).round(2)
+            return self.numberFormatter.string(from: price) ?? ""
+        }
+        
+        public func defaultPrice(_ value: NSDecimalNumber, monthsCount: Int) -> String {
+            let price = value.multiplying(by: NSDecimalNumber(value: monthsCount)).round(2)
+            let prettierPrice = price
+                .multiplying(by: NSDecimalNumber(value: 2))
+                .rounding(accordingToBehavior:
+                    NSDecimalNumberHandler(
+                        roundingMode: .up,
+                        scale: Int16(0),
+                        raiseOnExactness: false,
+                        raiseOnOverflow: false,
+                        raiseOnUnderflow: false,
+                        raiseOnDivideByZero: false
+                    )
+                )
+                .dividing(by: NSDecimalNumber(value: 2))
+                .subtracting(NSDecimalNumber(value: 0.01))
+            return self.numberFormatter.string(from: prettierPrice) ?? ""
+        }
+        
+        public func multipliedPrice(count: Int) -> String {
+            let price = self.skProduct.price.multiplying(by: NSDecimalNumber(value: count)).round(2)
+            let prettierPrice = price
+                .multiplying(by: NSDecimalNumber(value: 2))
+                .rounding(accordingToBehavior:
+                    NSDecimalNumberHandler(
+                        roundingMode: .up,
+                        scale: Int16(0),
+                        raiseOnExactness: false,
+                        raiseOnOverflow: false,
+                        raiseOnUnderflow: false,
+                        raiseOnDivideByZero: false
+                    )
+                )
+                .dividing(by: NSDecimalNumber(value: 2))
+                .subtracting(NSDecimalNumber(value: 0.01))
+            return self.numberFormatter.string(from: prettierPrice) ?? ""
+        }
+        
+        public var priceValue: NSDecimalNumber {
+            return self.skProduct.price
+        }
+        
+        public var priceCurrencyAndAmount: (currency: String, amount: Int64) {
+            if let currencyCode = self.numberFormatter.currencyCode,
+                let amount = fractionalValueToCurrencyAmount(value: self.priceValue.doubleValue, currency: currencyCode) {
+                return (currencyCode, amount)
+            } else {
+                return ("", 0)
+            }
+        }
+        
+        public static func ==(lhs: SGProduct, rhs: SGProduct) -> Bool {
+            if lhs.id != rhs.id {
+                return false
+            }
+            if lhs.isSubscription != rhs.isSubscription {
+                return false
+            }
+            if lhs.priceValue != rhs.priceValue {
+                return false
+            }
+            return true
+        }
+        
+    }
+    
+    public init(foo: Bool = false) {
+        super.init()
+
+        SKPaymentQueue.default().add(self)
+        self.requestProducts()
+    }
+    
+    deinit {
+        SKPaymentQueue.default().remove(self)
+    }
+    
+    var canMakePayments: Bool {
+        return SKPaymentQueue.canMakePayments()
+    }
+    
+    public func buyProduct(_ product: SKProduct) {
+        SGLogger.shared.log("SGIAP", "Buying \(product.productIdentifier)...")
+        let payment = SKPayment(product: product)
+        SKPaymentQueue.default().add(payment)
+    }
+    
+    private func requestProducts() {
+        SGLogger.shared.log("SGIAP", "Requesting products...")
+        let productRequest = SKProductsRequest(productIdentifiers: Set(SG_CONFIG.iaps))
+        
+        productRequest.delegate = self
+        productRequest.start()
+        
+        self.productRequest = productRequest
+    }
+    
+    public func restorePurchases(completion: @escaping (RestoreState) -> Void) {
+        SGLogger.shared.log("SGIAP", "Restoring purchases...")
+
+        let paymentQueue = SKPaymentQueue.default()
+        paymentQueue.restoreCompletedTransactions()
+    }
+    
+    public enum RestoreState {
+        case succeed(Bool)
+        case failed
+    }
+}
+
+extension SGIAP: SKProductsRequestDelegate {
+    public func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
+        self.productRequest = nil
+        
+        DispatchQueue.main.async {
+            let products = response.products
+            SGLogger.shared.log("SGIAP", "Received products \(products.map({ $0.productIdentifier }).joined(separator: ", "))")
+        }
+    }
+    
+    public func request(_ request: SKRequest, didFailWithError error: Error) {
+        SGLogger.shared.log("SGIAP", "Failed to load list of products. Error \(error.localizedDescription)")
+        self.productRequest = nil
+    }
+}
+
+extension SGIAP: SKPaymentTransactionObserver {
+    public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+        SGLogger.shared.log("SGIAP", "paymentQueue transactions \(transactions.count)")
+        for transaction in transactions {
+            SGLogger.shared.log("SGIAP", "Transaction state for \(transaction.payment.productIdentifier): \(transaction.transactionState)")
+            switch transaction.transactionState {
+                case .purchased, .restored:
+                    NotificationCenter.default.post(name: .SGIAPHelperPurchaseNotification, object: transaction)
+                case .purchasing, .deferred:
+                    break
+                case .failed:
+                    if let transactionError = transaction.error as NSError?,
+                        let localizedDescription = transaction.error?.localizedDescription,
+                        transactionError.code != SKError.paymentCancelled.rawValue {
+                        SGLogger.shared.log("SGIAP", "Transaction Error: \(localizedDescription)")
+                    }
+                    NotificationCenter.default.post(name: .SGIAPHelperErrorNotification, object: transaction)
+                default:
+                    SGLogger.shared.log("SGIAP", "Unknown transaction state \(transaction.transactionState). Finishing transaction.")
+                    SKPaymentQueue.default().finishTransaction(transaction)
+            }
+        }
+    }
+
+}
+
+private extension NSDecimalNumber {
+    func round(_ decimals: Int) -> NSDecimalNumber {
+        return self.rounding(accordingToBehavior:
+                            NSDecimalNumberHandler(roundingMode: .down,
+                                   scale: Int16(decimals),
+                                   raiseOnExactness: false,
+                                   raiseOnOverflow: false,
+                                   raiseOnUnderflow: false,
+                                   raiseOnDivideByZero: false))
+    }
+    
+    func prettyPrice() -> NSDecimalNumber {
+        return self.multiplying(by: NSDecimalNumber(value: 2))
+            .rounding(accordingToBehavior:
+                NSDecimalNumberHandler(
+                    roundingMode: .plain,
+                    scale: Int16(0),
+                    raiseOnExactness: false,
+                    raiseOnOverflow: false,
+                    raiseOnUnderflow: false,
+                    raiseOnDivideByZero: false
+                )
+            )
+            .dividing(by: NSDecimalNumber(value: 2))
+            .subtracting(NSDecimalNumber(value: 0.01))
+    }
+}
+
+
+public func getPurchaceReceiptData() -> Data? {
+    var receiptData: Data?
+    if let appStoreReceiptURL = Bundle.main.appStoreReceiptURL, FileManager.default.fileExists(atPath: appStoreReceiptURL.path) {
+        do {
+            receiptData = try Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
+        } catch {
+            SGLogger.shared.log("SGIAP", "Couldn't read receipt data with error: \(error.localizedDescription)")
+        }
+    } else {
+        SGLogger.shared.log("SGIAP", "Couldn't find receipt path")
+    }
+    return receiptData
+}
