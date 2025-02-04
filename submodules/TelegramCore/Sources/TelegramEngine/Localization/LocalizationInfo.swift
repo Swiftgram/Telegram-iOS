@@ -35,6 +35,7 @@ public let SGLocalizations: [LocalizationInfo] = [
     // baseLanguageCode is actually nil, since it's an "official" beta language
     LocalizationInfo(languageCode: "vi-raw", baseLanguageCode: "vi-raw", customPluralizationCode: "vi", title: "Vietnamese", localizedTitle: "Tiếng Việt (beta)", isOfficial: true, totalStringCount: 7160, translatedStringCount: 3795, platformUrl: "https://translations.telegram.org/vi/"),
     LocalizationInfo(languageCode: "hi-raw", baseLanguageCode: "hi-raw", customPluralizationCode: "hi", title: "Hindi", localizedTitle: "हिन्दी (beta)", isOfficial: true, totalStringCount: 7358, translatedStringCount: 992, platformUrl: "https://translations.telegram.org/hi/"),
+    LocalizationInfo(languageCode: "ja-raw", baseLanguageCode: "ja-raw", customPluralizationCode: "ja", title: "Japanese", localizedTitle: "日本語 (beta)", isOfficial: true, totalStringCount: 9697, translatedStringCount: 9683, platformUrl: "https://translations.telegram.org/ja/"),
     // baseLanguageCode should be changed to nil? or hy?
     LocalizationInfo(languageCode: "earmenian", baseLanguageCode: "earmenian", customPluralizationCode: "hy", title: "Armenian", localizedTitle: "Հայերեն", isOfficial: true, totalStringCount: 7358, translatedStringCount: 6384, platformUrl: "https://translations.telegram.org/earmenian/")
 ]
