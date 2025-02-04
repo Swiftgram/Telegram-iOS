@@ -42,7 +42,7 @@ public func sgIqtpQuery(engine: TelegramEngine, query: String, incompleteResults
                 SGLogger.shared.log("SGIQTP", "[\(queryId)] Empty peer")
                 return .single(nil)
             }
-            return engine.messages.requestChatContextResults(botId: peer.id, peerId: engine.account.peerId, query: query, offset: "", incompleteResults: incompleteResults, staleCachedResults: staleCachedResults)
+            return engine.messages.requestChatContextResults(IQTP: true, botId: peer.id, peerId: engine.account.peerId, query: query, offset: "", incompleteResults: incompleteResults, staleCachedResults: staleCachedResults)
             |> map { results -> ChatContextResultCollection? in
                 return results?.results
             }
