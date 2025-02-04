@@ -39,12 +39,21 @@ public struct SignalError<E>: Error {
 // Extension for Signals with Error types
 extension Signal {
     @available(iOS 13.0, *)
-    public func awaitable() async throws -> T {
+    public func awaitable(file: String = #file, line: Int = #line) async throws -> T {
         return try await withCheckedThrowingContinuation { continuation in
             var disposable: Disposable?
+            let hasResumed = Atomic<Bool>(value: false)
             disposable = self.start(
                 next: { value in
-                    continuation.resume(returning: value)
+                    if !hasResumed.with({ $0 }) {
+                        let _ = hasResumed.swap(true)
+                        continuation.resume(returning: value)
+                    } else {
+                        #if DEBUG
+                        // Consider using awaitableStream() or |> take(1)
+                        assertionFailure("awaitable Signal emitted more than one value. \(file):\(line)")
+                        #endif
+                    }
                     disposable?.dispose()
                 },
                 error: { error in
@@ -66,12 +75,21 @@ extension Signal {
 // Extension for Signals with NoError
 extension Signal where E == NoError {
     @available(iOS 13.0, *)
-    public func awaitable() async -> T {
+    public func awaitable(file: String = #file, line: Int = #line) async -> T {
         return await withCheckedContinuation { continuation in
             var disposable: Disposable?
+            let hasResumed = Atomic<Bool>(value: false)
             disposable = self.start(
                 next: { value in
-                    continuation.resume(returning: value)
+                    if !hasResumed.with({ $0 }) {
+                        let _ = hasResumed.swap(true)
+                        continuation.resume(returning: value)
+                    } else {
+                        #if DEBUG
+                        // Consider using awaitableStream() or |> take(1)
+                        assertionFailure("awaitable Signal emitted more than one value. \(file):\(line)")
+                        #endif
+                    }
                     disposable?.dispose()
                 },
                 error: { _ in
