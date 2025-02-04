@@ -3146,6 +3146,7 @@ extension AppDelegate {
     
     func fetchSGStatus(primaryContext: AccountContext) async {
         // TODO(swiftgram): Stuck on getting shouldKeepConnection
+        // Perhaps, we can drop on some timeout?
 //        let currentShouldKeepConnection = await (primaryContext.account.network.shouldKeepConnection.get() |> take(1) |> deliverOnMainQueue).awaitable()
         let currentShouldKeepConnection = false
         let userId = primaryContext.account.peerId.id._internalGetInt64Value()
