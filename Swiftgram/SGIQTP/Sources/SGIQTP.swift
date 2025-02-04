@@ -29,7 +29,7 @@ public func sgIqtpQuery(engine: TelegramEngine, query: String, incompleteResults
     #else
     SGLogger.shared.log("SGIQTP", "[\(queryId)] Query")
     #endif
-    return engine.peers.resolvePeerByName(forIQTP: true, name: SG_CONFIG.botUsername, referrer: nil)
+    return engine.peers.resolvePeerByName(name: SG_CONFIG.botUsername, referrer: nil)
         |> mapToSignal { result -> Signal<EnginePeer?, NoError> in
             guard case let .result(result) = result else {
                 SGLogger.shared.log("SGIQTP", "[\(queryId)] Failed to resolve peer \(SG_CONFIG.botUsername)")
