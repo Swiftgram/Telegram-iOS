@@ -3037,11 +3037,3 @@ private func peerInfoControllerImpl(context: AccountContext, updatedPresentation
     }
     return nil
 }
-
-
-// MARK: Swiftgram
-//public extension SharedAccountContextImpl {
-//    public func initSGIAP() {
-//        self.sgIAP = SGIAP
-//    }
-//}
