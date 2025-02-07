@@ -2380,9 +2380,8 @@ extension MessageInputPanelComponent.View {
             onClearFormatting: { [weak self] in
                 guard let _ = self else { return }
                 NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "clearFormatting"])
-            },
-            preferredColorScheme: .dark
-        )
+            }
+        ).colorScheme(.dark)
 
         let toolbarHostingController = UIHostingController(rootView: toolbar)
         toolbarHostingController.view.backgroundColor = .clear
