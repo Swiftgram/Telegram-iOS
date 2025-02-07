@@ -14,6 +14,7 @@ import PresentationDataUtils
 // Optional
 import SGSimpleSettings
 import SGLogging
+import SGPayWall
 import OverlayStatusController
 #if DEBUG
 import FLEX
@@ -265,12 +266,14 @@ struct SessionBackupManagerView: View {
         wrapperController?.present(controller, in: .window(.root), with: nil)
         
         Task {
-            let (view, accountsWithInfo) = await combineLatest(signal, signal2).awaitable()
-            backupSessionsFromView(view, accountsWithInfo: accountsWithInfo.1)
-            withAnimation {
-                sessions = getBackedSessions()
+            if let result = try? await combineLatest(signal, signal2).awaitable() {
+                let (view, accountsWithInfo) = result
+                backupSessionsFromView(view, accountsWithInfo: accountsWithInfo.1)
+                withAnimation {
+                    sessions = getBackedSessions()
+                }
+                controller.dismiss()
             }
-            controller.dismiss()
         }
         
     }
@@ -833,13 +836,13 @@ private enum SGDebugControllerSection: Int32, SGItemListSection {
 private enum SGDebugDisclosureLink: String {
     case sessionBackupManager
     case messageFilter
+    case debugIAP
 }
 
 private enum SGDebugActions: String {
     case flexing
     case fileManager
     case clearRegDateCache
-    case debugIAP
 }
 
 private enum SGDebugToggles: String {
@@ -863,7 +866,7 @@ private func SGDebugControllerEntries(presentationData: PresentationData) -> [SG
     #if DEBUG
     entries.append(.action(id: id.count, section: .base, actionType: .flexing, text: "FLEX", kind: .generic))
     entries.append(.action(id: id.count, section: .base, actionType: .fileManager, text: "FileManager", kind: .generic))
-    entries.append(.action(id: id.count, section: .base, actionType: .debugIAP, text: "Buy", kind: .generic))
+    entries.append(.disclosure(id: id.count, section: .base, link: .debugIAP, text: "Pro"))
     #endif
     
     if SGSimpleSettings.shared.b {
@@ -977,6 +980,22 @@ public func sgDebugController(context: AccountContext) -> ViewController {
                         action: { _ in return false }
                     ), nil)
                 }
+        case .debugIAP:
+            #if DEBUG
+            if #available(iOS 13.0, *) {
+                if let sgIAPManager = context.sharedContext.SGIAP {
+                    presentControllerImpl?(sgPayWallController(presentationData: presentationData, SGIAPManager: sgIAPManager), ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+                }
+            } else {
+                presentControllerImpl?(UndoOverlayController(
+                    presentationData: presentationData,
+                    content: .info(title: nil, text: "Update OS to access this feature", timeout: nil, customUndoText: nil),
+                    elevatedLayout: false,
+                    action: { _ in return false }
+                ), nil)
+            }
+
+            #endif
         }
     }, action: { actionType in
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
@@ -1021,10 +1040,6 @@ public func sgDebugController(context: AccountContext) -> ViewController {
                 ),
                 nil)
             }
-            #endif
-        case .debugIAP:
-            #if DEBUG
-            preconditionFailure("IAP")
             #endif
         }
     })

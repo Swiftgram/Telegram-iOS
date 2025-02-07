@@ -1,8 +1,8 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
 swift_library(
-    name = "SGIAP",
-    module_name = "SGIAP",
+    name = "SGPayWall",
+    module_name = "SGPayWall",
     srcs = glob([
         "Sources/**/*.swift",
     ]),
@@ -10,9 +10,11 @@ swift_library(
         "-warnings-as-errors",
     ],
     deps = [
+        "//Swiftgram/SGIAP:SGIAP",
         "//Swiftgram/SGLogging:SGLogging",
-        "//Swiftgram/SGConfig:SGConfig",
-        "//submodules/AppBundle:AppBundle",
+        "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+        "//Swiftgram/SGSwiftUI:SGSwiftUI",
+        "//Swiftgram/SGStrings:SGStrings",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
     ],
     visibility = [

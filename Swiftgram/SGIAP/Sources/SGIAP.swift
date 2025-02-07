@@ -2,6 +2,7 @@ import StoreKit
 import SGConfig
 import SGLogging
 import AppBundle
+import Combine
 
 private final class CurrencyFormatterEntry {
     public let symbol: String
@@ -89,13 +90,16 @@ private func fractionalValueToCurrencyAmount(value: Double, currency: String) ->
 public extension Notification.Name {
     static let SGIAPHelperPurchaseNotification = Notification.Name("SGIAPPurchaseNotification")
     static let SGIAPHelperErrorNotification = Notification.Name("SGIAPErrorNotification")
+    static let SGIAPHelperProductsUpdatedNotification = Notification.Name("SGIAPProductsUpdatedNotification")
 }
 
-public final class SGIAP: NSObject {
+public final class SGIAPManager: NSObject {
     private var productRequest: SKProductsRequest?
     private var productsRequestCompletion: (([SKProduct]) -> Void)?
     private var purchaseCompletion: ((Bool, Error?) -> Void)?
     
+    public private(set) var availableProducts: [SGProduct] = []
+    private var finishedSuccessfulTransactions = Set<String>()
     
     public final class SGProduct: Equatable {
         private lazy var numberFormatter: NumberFormatter = {
@@ -105,7 +109,7 @@ public final class SGIAP: NSObject {
             return numberFormatter
         }()
         
-        let skProduct: SKProduct
+        public let skProduct: SKProduct
         
         init(skProduct: SKProduct) {
             self.skProduct = skProduct
@@ -198,7 +202,7 @@ public final class SGIAP: NSObject {
         
     }
     
-    public init(foo: Bool = false) {
+    public init(foo: Bool = false) { // I don't want to override init, idk why
         super.init()
 
         SKPaymentQueue.default().add(self)
@@ -220,7 +224,7 @@ public final class SGIAP: NSObject {
     }
     
     private func requestProducts() {
-        SGLogger.shared.log("SGIAP", "Requesting products...")
+        SGLogger.shared.log("SGIAP", "Requesting products for \(SG_CONFIG.iaps.count) ids...")
         let productRequest = SKProductsRequest(productIdentifiers: Set(SG_CONFIG.iaps))
         
         productRequest.delegate = self
@@ -242,13 +246,18 @@ public final class SGIAP: NSObject {
     }
 }
 
-extension SGIAP: SKProductsRequestDelegate {
+extension SGIAPManager: SKProductsRequestDelegate {
     public func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
         self.productRequest = nil
         
         DispatchQueue.main.async {
             let products = response.products
-            SGLogger.shared.log("SGIAP", "Received products \(products.map({ $0.productIdentifier }).joined(separator: ", "))")
+            SGLogger.shared.log("SGIAP", "Received products (\(products.count)): \(products.map({ $0.productIdentifier }).joined(separator: ", "))")
+            let currentlyAvailableProducts = self.availableProducts
+            self.availableProducts = products.map({ SGProduct(skProduct: $0) })
+            if currentlyAvailableProducts != self.availableProducts {
+                NotificationCenter.default.post(name: .SGIAPHelperProductsUpdatedNotification, object: nil)
+            }
         }
     }
     
@@ -258,13 +267,14 @@ extension SGIAP: SKProductsRequestDelegate {
     }
 }
 
-extension SGIAP: SKPaymentTransactionObserver {
+extension SGIAPManager: SKPaymentTransactionObserver {
     public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         SGLogger.shared.log("SGIAP", "paymentQueue transactions \(transactions.count)")
         for transaction in transactions {
-            SGLogger.shared.log("SGIAP", "Transaction state for \(transaction.payment.productIdentifier): \(transaction.transactionState)")
+            SGLogger.shared.log("SGIAP", "Transaction \(transaction.transactionIdentifier ?? "nil") state for product \(transaction.payment.productIdentifier): \(transaction.transactionState.description)")
             switch transaction.transactionState {
                 case .purchased, .restored:
+                    SGLogger.shared.log("SGIAP", "Sending SGIAPHelperPurchaseNotification for \(transaction.transactionIdentifier ?? "nil")")
                     NotificationCenter.default.post(name: .SGIAPHelperPurchaseNotification, object: transaction)
                 case .purchasing, .deferred:
                     break
@@ -272,11 +282,12 @@ extension SGIAP: SKPaymentTransactionObserver {
                     if let transactionError = transaction.error as NSError?,
                         let localizedDescription = transaction.error?.localizedDescription,
                         transactionError.code != SKError.paymentCancelled.rawValue {
-                        SGLogger.shared.log("SGIAP", "Transaction Error: \(localizedDescription)")
+                        SGLogger.shared.log("SGIAP", "Transaction Error []: \(localizedDescription)")
                     }
+                    SGLogger.shared.log("SGIAP", "Sending SGIAPHelperErrorNotification for \(transaction.transactionIdentifier ?? "nil")")
                     NotificationCenter.default.post(name: .SGIAPHelperErrorNotification, object: transaction)
                 default:
-                    SGLogger.shared.log("SGIAP", "Unknown transaction state \(transaction.transactionState). Finishing transaction.")
+                    SGLogger.shared.log("SGIAP", "Unknown transaction \(transaction.transactionIdentifier ?? "nil") state \(transaction.transactionState). Finishing transaction.")
                     SKPaymentQueue.default().finishTransaction(transaction)
             }
         }
@@ -326,3 +337,24 @@ public func getPurchaceReceiptData() -> Data? {
     }
     return receiptData
 }
+
+
+extension SKPaymentTransactionState {
+    var description: String {
+        switch self {
+        case .purchasing:
+            return "Purchasing"
+        case .purchased:
+            return "Purchased"
+        case .failed:
+            return "Failed"
+        case .restored:
+            return "Restored"
+        case .deferred:
+            return "Deferred"
+        @unknown default:
+            return "Unknown"
+        }
+    }
+}
+

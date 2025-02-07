@@ -30,6 +30,8 @@ swift_library(
         "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
         "//Swiftgram/SGStrings:SGStrings",
         "//Swiftgram/SGSwiftUI:SGSwiftUI",
+        "//Swiftgram/SGIAP:SGIAP",
+        "//Swiftgram/SGPayWall:SGPayWall",
         "//submodules/LegacyUI:LegacyUI",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/Postbox:Postbox",
@@ -40,7 +42,7 @@ swift_library(
         "//submodules/PresentationDataUtils:PresentationDataUtils",
         "//submodules/OverlayStatusController:OverlayStatusController",
         "//submodules/AccountContext:AccountContext",
-        "//submodules/UndoUI:UndoUI",
+        "//submodules/UndoUI:UndoUI"
     ] + flex_dependency,
     visibility = [
         "//visibility:public",

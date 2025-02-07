@@ -36,7 +36,11 @@ public struct SignalError<E>: Error {
     }
 }
 
-// Extension for Signals with Error types
+public struct SignalCompleted: Error {}
+
+// Extension for Signals
+// NoError can be marked a
+// try? await signal.awaitable()
 extension Signal {
     @available(iOS 13.0, *)
     public func awaitable(file: String = #file, line: Int = #line) async throws -> T {
@@ -57,46 +61,26 @@ extension Signal {
                     disposable?.dispose()
                 },
                 error: { error in
-                    if let error = error as? Error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume(throwing: SignalError(error))
-                    }
-                    disposable?.dispose()
-                },
-                completed: {
-                    disposable?.dispose()
-                }
-            )
-        }
-    }
-}
-
-// Extension for Signals with NoError
-extension Signal where E == NoError {
-    @available(iOS 13.0, *)
-    public func awaitable(file: String = #file, line: Int = #line) async -> T {
-        return await withCheckedContinuation { continuation in
-            var disposable: Disposable?
-            let hasResumed = Atomic<Bool>(value: false)
-            disposable = self.start(
-                next: { value in
                     if !hasResumed.with({ $0 }) {
                         let _ = hasResumed.swap(true)
-                        continuation.resume(returning: value)
+                        if let error = error as? Error {
+                            continuation.resume(throwing: error)
+                        } else {
+                            continuation.resume(throwing: SignalError(error))
+                        }
                     } else {
                         #if DEBUG
-                        // Consider using awaitableStream() or |> take(1)
-                        assertionFailure("awaitable Signal emitted more than one value. \(file):\(line)")
+                        // I don't even know what we should consider here. awaitableStream?
+                        assertionFailure("awaitable Signal emitted an error after a value. \(file):\(line)")
                         #endif
                     }
                     disposable?.dispose()
                 },
-                error: { _ in
-                    // This will never be called for NoError
-                    disposable?.dispose()
-                },
                 completed: {
+                    if !hasResumed.with({ $0 }) {
+                        let _ = hasResumed.swap(true)
+                        continuation.resume(throwing: SignalCompleted())
+                    }
                     disposable?.dispose()
                 }
             )

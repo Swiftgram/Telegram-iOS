@@ -19,6 +19,7 @@ sgdeps = [
     "//Swiftgram/SGDebugUI:SGDebugUI",
     "//Swiftgram/SGInputToolbar:SGInputToolbar",
     "//Swiftgram/SGIAP:SGIAP",
+    "//Swiftgram/SGPayWall:SGPayWall"
     # "//Swiftgram/SGContentAnalysis:SGContentAnalysis"
 ]
 

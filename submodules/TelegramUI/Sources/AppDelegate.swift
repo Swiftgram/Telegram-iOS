@@ -1348,6 +1348,12 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                 authContextReadyDisposable.set(nil)
             }
         }))
+        
+        
+        // MARK: Swiftgram
+        if #available(iOS 13.0, *) {
+            self.setupIAP()
+        }
 
 
         let logoutDataSignal: Signal<(AccountManager, Set<PeerId>), NoError> = self.sharedContextPromise.get()
@@ -3067,22 +3073,24 @@ extension AppDelegate {
 
     func setupIAP() {
         NotificationCenter.default.addObserver(forName: .SGIAPHelperPurchaseNotification, object: nil, queue: nil) { [weak self] notification in
+            SGLogger.shared.log("SGIAP", "Got SGIAPHelperPurchaseNotification")
             guard let strongSelf = self else { return }
             if let transaction = notification.object as? SKPaymentTransaction {
                 let _ = (strongSelf.context.get()
                 |> take(1)
                 |> deliverOnMainQueue).start(next: { context in
+                    SGLogger.shared.log("SGIAP", "Got context for SGIAPHelperPurchaseNotification")
                     guard let context = context else {
                         SGLogger.shared.log("SGIAP", "Empty app context (how?)")
                         
-                        SGLogger.shared.log("SGIAP", "Finishing transaction")
+                        SGLogger.shared.log("SGIAP", "Finishing transaction \(transaction.transactionIdentifier ?? "nil")")
                         SKPaymentQueue.default().finishTransaction(transaction)
                         return
                     }
                     let _ = Task {
                         await strongSelf.sendReceiptForVerification(primaryContext: context.context)
                         await strongSelf.fetchSGStatus(primaryContext: context.context)
-                        SGLogger.shared.log("SGIAP", "Finishing transaction")
+                        SGLogger.shared.log("SGIAP", "Finishing transaction \(transaction.transactionIdentifier ?? "nil")")
                         SKPaymentQueue.default().finishTransaction(transaction)
                     }
                 })
@@ -3100,7 +3108,7 @@ extension AppDelegate {
             SGSimpleSettings.shared.primaryUserId = String(primaryUserId)
         }
 
-        var primaryContext = await getContextForUserId(context: context, userId: primaryUserId).awaitable()
+        var primaryContext = try? await getContextForUserId(context: context, userId: primaryUserId).awaitable()
         if let primaryContext = primaryContext {
             SGLogger.shared.log("SGIAP", "Got primary context for user id: \(primaryContext.account.peerId.id._internalGetInt64Value())")
             return primaryContext
@@ -3136,8 +3144,10 @@ extension AppDelegate {
         if let deviceToken, let apiToken {
             do {
                 let _ = try await postSGReceipt(token: apiToken,
-                                          deviceToken: deviceToken,
-                                          encodedReceiptData: encodedReceiptData).awaitable()
+                                                deviceToken: deviceToken,
+                                                encodedReceiptData: encodedReceiptData).awaitable()
+            } catch let error as SignalCompleted {
+                let _ = error
             } catch {
                 SGLogger.shared.log("SGIAP", "Error: \(error)")
             }
@@ -3155,7 +3165,7 @@ extension AppDelegate {
             SGLogger.shared.log("SGIAP", "Asking user id \(userId) to keep connection: true")
             primaryContext.account.network.shouldKeepConnection.set(.single(true))
         }
-        let iqtpResponse = await sgIqtpQuery(engine: primaryContext.engine, query: makeIqtpQuery(0, "s")).awaitable()
+        let iqtpResponse = try? await sgIqtpQuery(engine: primaryContext.engine, query: makeIqtpQuery(0, "s")).awaitable()
         guard let iqtpResponse = iqtpResponse else {
             SGLogger.shared.log("SGIAP", "IQTP response is nil!")
 //            if !currentShouldKeepConnection {
@@ -3165,7 +3175,7 @@ extension AppDelegate {
             return
         }
         SGLogger.shared.log("SGIAP", "Got IQTP response: \(iqtpResponse)")
-        let _ = await updateSGStatusInteractively(accountManager: primaryContext.sharedContext.accountManager, { value in
+        let _ = try? await updateSGStatusInteractively(accountManager: primaryContext.sharedContext.accountManager, { value in
             var value = value
 
             let newStatus: Int64

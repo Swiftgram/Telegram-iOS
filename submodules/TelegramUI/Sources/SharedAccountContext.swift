@@ -243,12 +243,13 @@ public final class SharedAccountContextImpl: SharedAccountContext {
     }
     private var experimentalUISettingsDisposable: Disposable?
 
+    // MARK: Swiftgram
     private var immediateSGStatusValue = Atomic<SGStatus>(value: SGStatus.default)
     public var immediateSGStatus: SGStatus {
         return self.immediateSGStatusValue.with { $0 }
     }
     private var sgStatusDisposable: Disposable?
-    
+    public var SGIAP: SGIAPManager?
     
     public var presentGlobalController: (ViewController, Any?) -> Void = { _, _ in }
     public var presentCrossfadeController: () -> Void = {}
@@ -485,6 +486,8 @@ public final class SharedAccountContextImpl: SharedAccountContext {
                 let _ = immediateSGStatusValue.swap(settings)
             }
         })
+        self.initSGIAP(isMainApp: applicationBindings.isMainApp)
+        //
         
         let _ = self.contactDataManager?.personNameDisplayOrder().start(next: { order in
             let _ = updateContactSettingsInteractively(accountManager: accountManager, { settings in
@@ -3036,4 +3039,15 @@ private func peerInfoControllerImpl(context: AccountContext, updatedPresentation
         return PeerInfoScreenImpl(context: context, updatedPresentationData: updatedPresentationData, peerId: peer.id, avatarInitiallyExpanded: avatarInitiallyExpanded, isOpenedFromChat: isOpenedFromChat, nearbyPeerDistance: nil, reactionSourceMessageId: nil, callMessages: [])
     }
     return nil
+}
+
+// MARK: Swiftgram
+extension SharedAccountContextImpl {
+    func initSGIAP(isMainApp: Bool) {
+        if isMainApp {
+            self.SGIAP = SGIAPManager()
+        } else {
+            self.SGIAP = nil
+        }
+    }
 }
