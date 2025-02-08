@@ -100,6 +100,7 @@ public final class SGIAPManager: NSObject {
     
     public private(set) var availableProducts: [SGProduct] = []
     private var finishedSuccessfulTransactions = Set<String>()
+    private var onRestoreCompletion: (() -> Void)?
     
     public final class SGProduct: Equatable {
         private lazy var numberFormatter: NumberFormatter = {
@@ -206,14 +207,21 @@ public final class SGIAPManager: NSObject {
         super.init()
 
         SKPaymentQueue.default().add(self)
+
+        #if DEBUG
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+            self.requestProducts()
+        }
+        #else
         self.requestProducts()
+        #endif
     }
     
     deinit {
         SKPaymentQueue.default().remove(self)
     }
     
-    var canMakePayments: Bool {
+    public var canMakePayments: Bool {
         return SKPaymentQueue.canMakePayments()
     }
     
@@ -233,17 +241,14 @@ public final class SGIAPManager: NSObject {
         self.productRequest = productRequest
     }
     
-    public func restorePurchases(completion: @escaping (RestoreState) -> Void) {
+    public func restorePurchases(completion: @escaping () -> Void) {
         SGLogger.shared.log("SGIAP", "Restoring purchases...")
+        self.onRestoreCompletion = completion
 
         let paymentQueue = SKPaymentQueue.default()
         paymentQueue.restoreCompletedTransactions()
     }
-    
-    public enum RestoreState {
-        case succeed(Bool)
-        case failed
-    }
+
 }
 
 extension SGIAPManager: SKProductsRequestDelegate {
@@ -290,6 +295,15 @@ extension SGIAPManager: SKPaymentTransactionObserver {
                     SGLogger.shared.log("SGIAP", "Unknown transaction \(transaction.transactionIdentifier ?? "nil") state \(transaction.transactionState). Finishing transaction.")
                     SKPaymentQueue.default().finishTransaction(transaction)
             }
+        }
+    }
+    
+    public func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
+        SGLogger.shared.log("SGIAP", "Transactions restored")
+        
+        if let onRestoreCompletion = self.onRestoreCompletion {
+            self.onRestoreCompletion = nil
+            onRestoreCompletion()
         }
     }
 

@@ -7,75 +7,170 @@ import TelegramPresentationData
 
 @available(iOS 13.0, *)
 public class ObservedValue<T>: ObservableObject {
-    @Published var value: T
+    @Published public var value: T
 
-    init(_ value: T) {
+    public init(_ value: T) {
         self.value = value
     }
 }
 
 @available(iOS 13.0, *)
+public struct NavigationBarHeightKey: EnvironmentKey {
+    public static let defaultValue: CGFloat = 0
+}
+
+@available(iOS 13.0, *)
+public struct ContainerViewLayoutKey: EnvironmentKey {
+    public static let defaultValue: ContainerViewLayout? = nil
+}
+
+// Perhaps, affects Performance a lot
+//@available(iOS 13.0, *)
+//public struct ContainerViewLayoutUpdateCountKey: EnvironmentKey {
+//    public static let defaultValue: ObservedValue<Int64> = ObservedValue(0)
+//}
+
+@available(iOS 13.0, *)
+public extension EnvironmentValues {
+    var navigationBarHeight: CGFloat {
+        get { self[NavigationBarHeightKey.self] }
+        set { self[NavigationBarHeightKey.self] = newValue }
+    }
+    
+    var containerViewLayout: ContainerViewLayout? {
+        get { self[ContainerViewLayoutKey.self] }
+        set { self[ContainerViewLayoutKey.self] = newValue }
+    }
+    
+//    var containerViewLayoutUpdateCount: ObservedValue<Int64> {
+//        get { self[ContainerViewLayoutUpdateCountKey.self] }
+//        set { self[ContainerViewLayoutUpdateCountKey.self] = newValue }
+//    }
+}
+
+
+@available(iOS 13.0, *)
 public struct SGSwiftUIView<Content: View>: View {
     public let content: Content
+    public let manageSafeArea: Bool
 
     @ObservedObject var navigationBarHeight: ObservedValue<CGFloat>
     @ObservedObject var containerViewLayout: ObservedValue<ContainerViewLayout?>
+//    @ObservedObject var containerViewLayoutUpdateCount: ObservedValue<Int64>
 
     public init(
-        navigationBarHeight: ObservedValue<CGFloat>,
-        containerViewLayout: ObservedValue<ContainerViewLayout?>,
+        legacyController: LegacySwiftUIController,
+        manageSafeArea: Bool = false,
         @ViewBuilder content: () -> Content
     ) {
-        self.navigationBarHeight = navigationBarHeight
-        self.containerViewLayout = containerViewLayout
+        #if DEBUG
+        if manageSafeArea {
+            print("WARNING SGSwiftUIView: manageSafeArea is deprecated, use @Environment(\\.navigationBarHeight) and @Environment(\\.containerViewLayout)")
+        }
+        #endif
+        self.navigationBarHeight = legacyController.navigationBarHeightModel
+        self.containerViewLayout = legacyController.containerViewLayoutModel
+//        self.containerViewLayoutUpdateCount = legacyController.containerViewLayoutUpdateCountModel
+        self.manageSafeArea = manageSafeArea
         self.content = content()
     }
 
     public var body: some View {
         content
-            .modifier(CustomSafeAreaPadding(navigationBarHeight: navigationBarHeight, containerViewLayout: containerViewLayout))
+            .if(manageSafeArea) { $0.modifier(CustomSafeArea()) }
+            .environment(\.navigationBarHeight, navigationBarHeight.value)
+            .environment(\.containerViewLayout, containerViewLayout.value)
+//            .environment(\.containerViewLayoutUpdateCount, containerViewLayoutUpdateCount)
+//            .onReceive(containerViewLayoutUpdateCount.$value) { _ in
+//                // Make sure View is updated when containerViewLayoutUpdateCount changes,
+//                // in case it does not depend on containerViewLayout
+//            }
     }
+    
 }
 
 @available(iOS 13.0, *)
-public struct CustomSafeAreaPadding: ViewModifier {
-    @ObservedObject var navigationBarHeight: ObservedValue<CGFloat>
-    @ObservedObject var containerViewLayout: ObservedValue<ContainerViewLayout?>
+public struct CustomSafeArea: ViewModifier {
+    @Environment(\.navigationBarHeight) var navigationBarHeight: CGFloat
+    @Environment(\.containerViewLayout) var containerViewLayout: ContainerViewLayout?
 
     public func body(content: Content) -> some View {
         content
             .edgesIgnoringSafeArea(.all)
 //            .padding(.top, /*totalTopSafeArea > navigationBarHeight.value ? totalTopSafeArea :*/ navigationBarHeight.value)
-            .padding(.top, totalTopSafeArea > navigationBarHeight.value ? totalTopSafeArea : navigationBarHeight.value)
-            .padding(.bottom, (containerViewLayout.value?.safeInsets.bottom ?? 0) /*+ (containerViewLayout.value?.intrinsicInsets.bottom ?? 0)*/)
-            .padding(.leading, containerViewLayout.value?.safeInsets.left ?? 0)
-            .padding(.trailing, containerViewLayout.value?.safeInsets.right ?? 0)
+            .padding(.top, topInset)
+            .padding(.bottom, bottomInset)
+            .padding(.leading, leftInset)
+            .padding(.trailing, rightInset)
     }
 
-    var totalTopSafeArea: CGFloat {
-        (containerViewLayout.value?.safeInsets.top ?? 0) +
-            (containerViewLayout.value?.intrinsicInsets.top ?? 0)
+    private var topInset: CGFloat {
+        max(
+            (containerViewLayout?.safeInsets.top ?? 0) + (containerViewLayout?.intrinsicInsets.top ?? 0),
+            navigationBarHeight
+        )
+    }
+    
+    private var bottomInset: CGFloat {
+        (containerViewLayout?.safeInsets.bottom ?? 0)
+// DEPRECATED, do not change
+//        + (containerViewLayout.value?.intrinsicInsets.bottom ?? 0)
+    }
+    
+    private var leftInset: CGFloat {
+        containerViewLayout?.safeInsets.left ?? 0
+    }
+    
+    private var rightInset: CGFloat {
+        containerViewLayout?.safeInsets.right ?? 0
     }
 }
+
+@available(iOS 13.0, *)
+public extension View {
+    func sgTopSafeAreaInset(_ containerViewLayout: ContainerViewLayout?, _ navigationBarHeight: CGFloat) -> CGFloat {
+        return max(
+            (containerViewLayout?.safeInsets.top ?? 0) + (containerViewLayout?.intrinsicInsets.top ?? 0),
+            navigationBarHeight
+        )
+    }
+    
+    func sgBottomSafeAreaInset(_ containerViewLayout: ContainerViewLayout?) -> CGFloat {
+        return (containerViewLayout?.safeInsets.bottom ?? 0) + (containerViewLayout?.intrinsicInsets.bottom ?? 0)
+    }
+    
+    func sgLeftSafeAreaInset(_ containerViewLayout: ContainerViewLayout?) -> CGFloat {
+        return containerViewLayout?.safeInsets.left ?? 0
+    }
+
+    func sgRightSafeAreaInset(_ containerViewLayout: ContainerViewLayout?) -> CGFloat {
+        return containerViewLayout?.safeInsets.right ?? 0
+    }
+
+}
+
 
 @available(iOS 13.0, *)
 public final class LegacySwiftUIController: LegacyController {
     public var navigationBarHeightModel: ObservedValue<CGFloat>
     public var containerViewLayoutModel: ObservedValue<ContainerViewLayout?>
     public var inputHeightModel: ObservedValue<CGFloat?>
+//    public var containerViewLayoutUpdateCountModel: ObservedValue<Int64>
 
     override public init(presentation: LegacyControllerPresentation, theme: PresentationTheme? = nil, strings: PresentationStrings? = nil, initialLayout: ContainerViewLayout? = nil) {
         navigationBarHeightModel = ObservedValue<CGFloat>(0.0)
         containerViewLayoutModel = ObservedValue<ContainerViewLayout?>(initialLayout)
         inputHeightModel = ObservedValue<CGFloat?>(nil)
+//        containerViewLayoutUpdateCountModel = ObservedValue<Int64>(0)
         super.init(presentation: presentation, theme: theme, strings: strings, initialLayout: initialLayout)
     }
 
     override public func containerLayoutUpdated(_ layout: ContainerViewLayout, transition: ContainedViewLayoutTransition) {
         super.containerLayoutUpdated(layout, transition: transition)
-
+//        containerViewLayoutUpdateCountModel.value += 1
+        
         var newNavigationBarHeight = navigationLayout(layout: layout).navigationFrame.maxY
-        if !self.displayNavigationBar {
+        if !self.displayNavigationBar || self.navigationPresentation == .modal {
             newNavigationBarHeight = 0.0
         }
         if navigationBarHeightModel.value != newNavigationBarHeight {
@@ -237,7 +332,7 @@ public extension View {
 }
 
 @available(iOS 13.0, *)
-extension Color {
+public extension Color {
  
     func uiColor() -> UIColor {
 
@@ -263,5 +358,66 @@ extension Color {
             a = CGFloat(hexNumber & 0x000000ff) / 255
         }
         return (r, g, b, a)
+    }
+    
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 6: // RGB (No alpha)
+            (a, r, g, b) = (255, (int >> 16) & 0xff, (int >> 8) & 0xff, int & 0xff)
+        case 8: // ARGB
+            (a, r, g, b) = ((int >> 24) & 0xff, (int >> 16) & 0xff, (int >> 8) & 0xff, int & 0xff)
+        default:
+            (a, r, g, b) = (255, 0, 0, 0)
+        }
+        self.init(.sRGB, red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255, opacity: Double(a) / 255)
+    }
+}
+
+
+public enum BackgroundMaterial {
+    case ultraThinMaterial
+    case thinMaterial
+    case regularMaterial
+    case thickMaterial
+    case ultraThickMaterial
+    
+    @available(iOS 15.0, *)
+    var material: Material {
+        switch self {
+        case .ultraThinMaterial: return .ultraThinMaterial
+        case .thinMaterial: return .thinMaterial
+        case .regularMaterial: return .regularMaterial
+        case .thickMaterial: return .thickMaterial
+        case .ultraThickMaterial: return .ultraThickMaterial
+        }
+    }
+}
+
+
+@available(iOS 13.0, *)
+public extension View {
+    func fontWeightIfAvailable(_ weight: SwiftUI.Font.Weight) -> some View {
+        if #available(iOS 16.0, *) {
+            return self.fontWeight(weight)
+        } else {
+            return self
+        }
+    }
+    
+    func backgroundIfAvailable(material: BackgroundMaterial) -> some View {
+        if #available(iOS 15.0, *) {
+            return self.background(material.material)
+        } else {
+            return self.background(
+                Color(.systemBackground)
+                    .opacity(0.75)
+                    .blur(radius: 3)
+                    .overlay(Color.white.opacity(0.1))
+            )
+        }
     }
 }

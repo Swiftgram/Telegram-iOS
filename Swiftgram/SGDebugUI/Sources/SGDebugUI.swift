@@ -10,6 +10,7 @@ import ItemListUI
 import SwiftSignalKit
 import TelegramPresentationData
 import PresentationDataUtils
+import TelegramUIPreferences
 
 // Optional
 import SGSimpleSettings
@@ -648,8 +649,8 @@ public func sgSessionBackupManagerController(context: AccountContext, presentati
     legacyController.title = "Session Backup" //i18n("BackupManager.Title", strings.baseLanguageCode)
 
     let swiftUIView = SGSwiftUIView<SessionBackupManagerView>(
-        navigationBarHeight: legacyController.navigationBarHeightModel,
-        containerViewLayout: legacyController.containerViewLayoutModel,
+        legacyController: legacyController,
+        manageSafeArea: true,
         content: {
             SessionBackupManagerView(wrapperController: legacyController, context: context)
         }
@@ -984,7 +985,7 @@ public func sgDebugController(context: AccountContext) -> ViewController {
             #if DEBUG
             if #available(iOS 13.0, *) {
                 if let sgIAPManager = context.sharedContext.SGIAP {
-                    presentControllerImpl?(sgPayWallController(presentationData: presentationData, SGIAPManager: sgIAPManager), ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+                    presentControllerImpl?(sgPayWallController(accountManager: context.sharedContext.accountManager, presentationData: presentationData, SGIAPManager: sgIAPManager), ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
                 }
             } else {
                 presentControllerImpl?(UndoOverlayController(
