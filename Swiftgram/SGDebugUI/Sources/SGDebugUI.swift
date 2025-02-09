@@ -985,7 +985,12 @@ public func sgDebugController(context: AccountContext) -> ViewController {
             #if DEBUG
             if #available(iOS 13.0, *) {
                 if let sgIAPManager = context.sharedContext.SGIAP {
-                    presentControllerImpl?(sgPayWallController(accountManager: context.sharedContext.accountManager, presentationData: presentationData, SGIAPManager: sgIAPManager), ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+                    let statusStream = context.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.sgStatus])
+                    |> map { sharedData -> Int64 in
+                        let sgStatus = sharedData.entries[ApplicationSpecificSharedDataKeys.sgStatus] as? SGStatus ?? SGStatus.default
+                        return sgStatus.status
+                    }.awaitableStream()
+                    presentControllerImpl?(sgPayWallController(statusStream: statusStream, accountManager: context.sharedContext.accountManager, presentationData: presentationData, SGIAPManager: sgIAPManager), ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
                 }
             } else {
                 presentControllerImpl?(UndoOverlayController(

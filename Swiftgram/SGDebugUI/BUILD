@@ -32,7 +32,7 @@ swift_library(
         "//Swiftgram/SGSwiftUI:SGSwiftUI",
         "//Swiftgram/SGIAP:SGIAP",
         "//Swiftgram/SGPayWall:SGPayWall",
-        "//Swiftgram/TelegramUIPreferences:TelegramUIPreferences",
+        "//submodules/TelegramUIPreferences:TelegramUIPreferences",
         "//submodules/LegacyUI:LegacyUI",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/Postbox:Postbox",

@@ -12,7 +12,7 @@ import TelegramUIPreferences
 
 
 @available(iOS 13.0, *)
-public func sgPayWallController(accountManager: AccountMana presentationData: PresentationData? = nil, SGIAPManager: SGIAPManager) -> ViewController {
+public func sgPayWallController(statusStream: AsyncStream<Int64>, presentationData: PresentationData? = nil, SGIAPManager: SGIAPManager) -> ViewController {
     //    let theme = presentationData?.theme ?? (UITraitCollection.current.userInterfaceStyle == .dark ? defaultDarkColorPresentationTheme : defaultPresentationTheme)
     let theme = defaultDarkColorPresentationTheme
     let strings = presentationData?.strings ?? defaultPresentationStrings
@@ -26,20 +26,10 @@ public func sgPayWallController(accountManager: AccountMana presentationData: Pr
     legacyController.statusBar.statusBarStyle = .White
     legacyController.attemptNavigation = { _ in return false }
     
-    let statusSignal = accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.sgStatus])
-    |> take(1)
-    |> map { sharedData -> Int64 in
-        if let sgStatus = sharedData.entries[ApplicationSpecificSharedDataKeys.sgStatus] as? SGStatus {
-            return sgStatus.status
-        } else {
-            return SGStatus.default
-        }
-    }
-    
     let swiftUIView = SGSwiftUIView<SGPayWallView>(
         legacyController: legacyController,
         content: {
-            SGPayWallView(statusSignal: statusSignal, wrapperController: legacyController, SGIAP: SGIAPManager, lang: strings.baseLanguageCode)
+            SGPayWallView(wrapperController: legacyController, SGIAP: SGIAPManager, statusStream: statusStream, lang: strings.baseLanguageCode)
         }
     )
     let controller = UIHostingController(rootView: swiftUIView, ignoreSafeArea: true)
@@ -111,11 +101,13 @@ struct SGPayWallView: View {
     
     weak var wrapperController: LegacyController?
     let SGIAP: SGIAPManager
+    let statusStream: AsyncStream<Int64>
     let lang: String
     
     // State management
     @State private var product: SGIAPManager.SGProduct?
     @State private var isRestoringPurchases = false
+    @State private var currentStatus: Int64 = 1
     
     private let productsPub = NotificationCenter.default.publisher(for: .SGIAPHelperProductsUpdatedNotification, object: nil)
     
@@ -172,6 +164,12 @@ struct SGPayWallView: View {
         }
         .onAppear {
             updateSelectedProduct()
+            Task {
+                for await status in statusStream {
+                    print("SGPayWallView: status = \(status)")
+                    currentStatus = status
+                }
+            }
         }
     }
     
