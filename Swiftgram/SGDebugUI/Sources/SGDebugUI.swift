@@ -844,6 +844,7 @@ private enum SGDebugActions: String {
     case flexing
     case fileManager
     case clearRegDateCache
+    case resetIAP
 }
 
 private enum SGDebugToggles: String {
@@ -868,6 +869,7 @@ private func SGDebugControllerEntries(presentationData: PresentationData) -> [SG
     entries.append(.action(id: id.count, section: .base, actionType: .flexing, text: "FLEX", kind: .generic))
     entries.append(.action(id: id.count, section: .base, actionType: .fileManager, text: "FileManager", kind: .generic))
     entries.append(.disclosure(id: id.count, section: .base, link: .debugIAP, text: "Pro"))
+    entries.append(.action(id: id.count, section: .base, actionType: .resetIAP, text: "Reset Pro", kind: .destructive))
     #endif
     
     if SGSimpleSettings.shared.b {
@@ -985,12 +987,12 @@ public func sgDebugController(context: AccountContext) -> ViewController {
             #if DEBUG
             if #available(iOS 13.0, *) {
                 if let sgIAPManager = context.sharedContext.SGIAP {
-                    let statusStream = context.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.sgStatus])
+                    let statusSignal = context.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.sgStatus])
                     |> map { sharedData -> Int64 in
-                        let sgStatus = sharedData.entries[ApplicationSpecificSharedDataKeys.sgStatus] as? SGStatus ?? SGStatus.default
+                        let sgStatus = sharedData.entries[ApplicationSpecificSharedDataKeys.sgStatus]?.get(SGStatus.self) ?? SGStatus.default
                         return sgStatus.status
-                    }.awaitableStream()
-                    presentControllerImpl?(sgPayWallController(statusStream: statusStream, accountManager: context.sharedContext.accountManager, presentationData: presentationData, SGIAPManager: sgIAPManager), ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+                    }
+                    presentControllerImpl?(sgPayWallController(statusSignal: statusSignal, replacementController: sgDebugController(context: context), presentationData: presentationData, SGIAPManager: sgIAPManager), ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
                 }
             } else {
                 presentControllerImpl?(UndoOverlayController(
@@ -1046,6 +1048,23 @@ public func sgDebugController(context: AccountContext) -> ViewController {
                 ),
                 nil)
             }
+            #endif
+        case .resetIAP:
+            #if DEBUG
+            let updateSettingsSignal = updateSGStatusInteractively(accountManager: context.sharedContext.accountManager, { status in
+                var status = status
+                status.status = SGStatus.default.status
+                return status
+            })
+            let _ = (updateSettingsSignal |> deliverOnMainQueue).start(next: {
+                presentControllerImpl?(UndoOverlayController(
+                    presentationData: presentationData,
+                    content: .info(title: nil, text: "Status reset completed. You can now restore purchases.", timeout: nil, customUndoText: nil),
+                    elevatedLayout: false,
+                    action: { _ in return false }
+                ),
+                nil)
+            })
             #endif
         }
     })

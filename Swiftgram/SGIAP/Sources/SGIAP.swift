@@ -209,7 +209,7 @@ public final class SGIAPManager: NSObject {
         SKPaymentQueue.default().add(self)
 
         #if DEBUG
-        DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
             self.requestProducts()
         }
         #else
@@ -284,13 +284,15 @@ extension SGIAPManager: SKPaymentTransactionObserver {
                 case .purchasing, .deferred:
                     break
                 case .failed:
+                    var localizedError: String = ""
                     if let transactionError = transaction.error as NSError?,
                         let localizedDescription = transaction.error?.localizedDescription,
                         transactionError.code != SKError.paymentCancelled.rawValue {
-                        SGLogger.shared.log("SGIAP", "Transaction Error []: \(localizedDescription)")
+                        localizedError = localizedDescription
+                        SGLogger.shared.log("SGIAP", "Transaction Error [\(transaction.transactionIdentifier ?? "nil")]: \(localizedDescription)")
                     }
                     SGLogger.shared.log("SGIAP", "Sending SGIAPHelperErrorNotification for \(transaction.transactionIdentifier ?? "nil")")
-                    NotificationCenter.default.post(name: .SGIAPHelperErrorNotification, object: transaction)
+                    NotificationCenter.default.post(name: .SGIAPHelperErrorNotification, object: transaction, userInfo: ["localizedError": localizedError])
                 default:
                     SGLogger.shared.log("SGIAP", "Unknown transaction \(transaction.transactionIdentifier ?? "nil") state \(transaction.transactionState). Finishing transaction.")
                     SKPaymentQueue.default().finishTransaction(transaction)

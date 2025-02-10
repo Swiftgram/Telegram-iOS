@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import StoreKit
 import SGSwiftUI
 import SGIAP
 import TelegramPresentationData
@@ -12,7 +13,7 @@ import TelegramUIPreferences
 
 
 @available(iOS 13.0, *)
-public func sgPayWallController(statusStream: AsyncStream<Int64>, presentationData: PresentationData? = nil, SGIAPManager: SGIAPManager) -> ViewController {
+public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacementController: ViewController, presentationData: PresentationData? = nil, SGIAPManager: SGIAPManager) -> ViewController {
     //    let theme = presentationData?.theme ?? (UITraitCollection.current.userInterfaceStyle == .dark ? defaultDarkColorPresentationTheme : defaultPresentationTheme)
     let theme = defaultDarkColorPresentationTheme
     let strings = presentationData?.strings ?? defaultPresentationStrings
@@ -29,7 +30,7 @@ public func sgPayWallController(statusStream: AsyncStream<Int64>, presentationDa
     let swiftUIView = SGSwiftUIView<SGPayWallView>(
         legacyController: legacyController,
         content: {
-            SGPayWallView(wrapperController: legacyController, SGIAP: SGIAPManager, statusStream: statusStream, lang: strings.baseLanguageCode)
+            SGPayWallView(wrapperController: legacyController, replacementController: replacementController, SGIAP: SGIAPManager, statusSignal: statusSignal, lang: strings.baseLanguageCode)
         }
     )
     let controller = UIHostingController(rootView: swiftUIView, ignoreSafeArea: true)
@@ -100,28 +101,38 @@ struct SGPayWallView: View {
     @Environment(\.containerViewLayout) var containerViewLayout: ContainerViewLayout?
     
     weak var wrapperController: LegacyController?
+    let replacementController: ViewController
     let SGIAP: SGIAPManager
-    let statusStream: AsyncStream<Int64>
+    let statusSignal: Signal<Int64, NoError>
     let lang: String
+    
+    private enum PayWallState: Equatable {
+        case ready // ready to buy
+        case restoring
+        case purchasing
+        case validating
+        case purchaseError(String) // error purchasing
+    }
     
     // State management
     @State private var product: SGIAPManager.SGProduct?
-    @State private var isRestoringPurchases = false
     @State private var currentStatus: Int64 = 1
+    @State private var state: PayWallState = .ready
+    @State private var showConfetti: Bool = false
     
     private let productsPub = NotificationCenter.default.publisher(for: .SGIAPHelperProductsUpdatedNotification, object: nil)
+    private let buySuccessPub = NotificationCenter.default.publisher(for: .SGIAPHelperPurchaseNotification, object: nil)
+    private let buyErrorPub = NotificationCenter.default.publisher(for: .SGIAPHelperErrorNotification, object: nil)
     
-    // Loading state enum
-    private enum LoadingState {
-        case loading
-        case loaded
-        case error(String)
-    }
+    @State private var statusTask: Task<Void, Never>? = nil
+    
+    @State private var hapticFeedback: HapticFeedback?
+    private let confettiDuration: Double = 7.0
     
     var body: some View {
         ZStack {
             BackgroundView()
-            
+        
             ZStack(alignment: .bottom) {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
@@ -157,19 +168,71 @@ struct SGPayWallView: View {
                 purchaseSection
             }
         }
+        .confetti(isActive: $showConfetti, duration: confettiDuration)
         .overlay(closeButtonView)
         .colorScheme(.dark)
         .onReceive(productsPub) { _ in
             updateSelectedProduct()
         }
         .onAppear {
+            hapticFeedback = HapticFeedback()
             updateSelectedProduct()
-            Task {
+            statusTask = Task {
+                let statusStream = statusSignal.awaitableStream()
                 for await status in statusStream {
+                    #if DEBUG
                     print("SGPayWallView: status = \(status)")
+                    #endif
+                    if Task.isCancelled {
+                        #if DEBUG
+                        print("statusTask cancelled")
+                        #endif
+                        break
+                    }
+                    
+                    if currentStatus != status && status > 1 {
+                        handleUpgradedStatus()
+                    }
                     currentStatus = status
                 }
             }
+        }
+        .onDisappear {
+            #if DEBUG
+            print("Cancelling statusTask")
+            #endif
+            statusTask?.cancel()
+        }
+        .onReceive(buySuccessPub) { _ in
+            state = .validating
+        }
+        .onReceive(buyErrorPub) { notification in
+            if let userInfo = notification.userInfo, let error = userInfo["localizedError"] as? String, !error.isEmpty {
+                state = .purchaseError(error)
+            } else {
+                state = .ready
+            }
+        }
+        .alert(isPresented: Binding(get: {
+                if case .purchaseError = state {
+                    return true
+                }
+                return false
+            },
+            set: { _ in })
+        ) {
+            Alert(
+                title: Text("Error"),
+                message: {
+                    if case .purchaseError(let message) = state {
+                        return Text(message)
+                    }
+                    return Text("")
+                }(),
+                dismissButton: .default(Text("OK"), action: {
+                    state = .ready
+                })
+            )
         }
     }
     
@@ -210,8 +273,8 @@ struct SGPayWallView: View {
                 .fontWeight(.semibold)
                 .foregroundColor(Color(hex: accentColorHex))
         }
-        .disabled(isRestoringPurchases)
-        .opacity(isRestoringPurchases ? 1.0 : 0.5)
+        .disabled(state == .restoring)
+        .opacity(state == .restoring ? 0.5 : 1.0)
     }
     
     private var purchaseSection: some View {
@@ -227,8 +290,8 @@ struct SGPayWallView: View {
                     .foregroundColor(.white)
                     .cornerRadius(12)
             }
-            .disabled(!canPurchase)
-            .opacity(canPurchase ? 1.0 : 0.5)
+            .disabled((state != .ready || !canPurchase) && !(currentStatus > 1))
+            .opacity(((state != .ready || !canPurchase) && !(currentStatus > 1)) ? 0.5 : 1.0)
             .padding([.horizontal, .top])
             .padding(.bottom, sgBottomSafeAreaInset(containerViewLayout))
         }
@@ -242,22 +305,32 @@ struct SGPayWallView: View {
             Image(systemName: "xmark")
                 .font(.headline)
                 .foregroundColor(.secondary.opacity(0.6))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle()) // Improve tappable area
         }
         .padding([.top, .trailing], 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
     }
     
-    // MARK: - Computed Properties
-    
     private var buttonTitle: String {
-        if let product = product {
-            if !SGIAP.canMakePayments {
-                return "Payments unavailable"
-            } else {
-                return "Subscribe for \(product.price) / month"
-            }
+        if currentStatus > 1 {
+            return "Use Pro features"
         } else {
-            return "Contacting App Store..."
+            if state == .purchasing {
+                return "Purchasing..."
+            } else if state == .restoring {
+                return "Restoring Purchases..."
+            } else if state == .validating {
+                return "Validating Purchase..."
+            } else if let product = product {
+                if !SGIAP.canMakePayments {
+                    return "Payments unavailable"
+                } else {
+                    return "Subscribe for \(product.price) / month"
+                }
+            } else {
+                return "Contacting App Store..."
+            }
         }
     }
     
@@ -269,21 +342,34 @@ struct SGPayWallView: View {
         }
     }
     
-    // MARK: - Methods
-    
     private func updateSelectedProduct() {
         product = SGIAP.availableProducts.first { $0.id == SG_CONFIG.iaps.first ?? "" }
     }
     
     private func handlePurchase() {
-        guard let product = product else { return }
-        SGIAP.buyProduct(product.skProduct)
+        if currentStatus > 1 {
+            wrapperController?.replace(with: replacementController)
+        } else {
+            guard let product = product else { return }
+            state = .purchasing
+            SGIAP.buyProduct(product.skProduct)
+        }
     }
     
     private func handleRestorePurchases() {
-        isRestoringPurchases = true
+        state = .restoring
         SGIAP.restorePurchases {
-            isRestoringPurchases = false
+            state = .validating
+        }
+    }
+    
+    private func handleUpgradedStatus() {
+        DispatchQueue.main.async {
+            hapticFeedback?.success()
+            showConfetti = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + confettiDuration + 1.0) {
+                showConfetti = false
+            }
         }
     }
     
@@ -370,5 +456,190 @@ struct FeatureRow: View {
             )
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+
+
+// Confetti
+@available(iOS 13.0, *)
+struct ConfettiType {
+    let color: Color
+    let shape: ConfettiShape
+    
+    static func random() -> ConfettiType {
+        let colors: [Color] = [.red, .blue, .green, .yellow, .pink, .purple, .orange]
+        return ConfettiType(
+            color: colors.randomElement() ?? .blue,
+            shape: ConfettiShape.allCases.randomElement() ?? .circle
+        )
+    }
+}
+
+@available(iOS 13.0, *)
+enum ConfettiShape: CaseIterable {
+    case circle
+    case triangle
+    case square
+    case slimRectangle
+    case roundedCross
+    
+    @ViewBuilder
+    func view(color: Color) -> some View {
+        switch self {
+        case .circle:
+            Circle().fill(color)
+        case .triangle:
+            Triangle().fill(color)
+        case .square:
+            Rectangle().fill(color)
+        case .slimRectangle:
+            SlimRectangle().fill(color)
+        case .roundedCross:
+            RoundedCross().fill(color)
+        }
+    }
+}
+
+@available(iOS 13.0, *)
+struct Triangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+@available(iOS 13.0, *)
+public struct SlimRectangle: Shape {
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+
+        path.move(to: CGPoint(x: rect.minX, y: 4*rect.maxY/5))
+        path.addLine(to: CGPoint(x: rect.maxX, y: 4*rect.maxY/5))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+
+        return path
+    }
+}
+
+@available(iOS 13.0, *)
+public struct RoundedCross: Shape {
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+
+        path.move(to: CGPoint(x: rect.minX, y: rect.maxY/3))
+        path.addQuadCurve(to: CGPoint(x: rect.maxX/3, y: rect.minY), control: CGPoint(x: rect.maxX/3, y: rect.maxY/3))
+        path.addLine(to: CGPoint(x: 2*rect.maxX/3, y: rect.minY))
+        
+        path.addQuadCurve(to: CGPoint(x: rect.maxX, y: rect.maxY/3), control: CGPoint(x: 2*rect.maxX/3, y: rect.maxY/3))
+        path.addLine(to: CGPoint(x: rect.maxX, y: 2*rect.maxY/3))
+
+        path.addQuadCurve(to: CGPoint(x: 2*rect.maxX/3, y: rect.maxY), control: CGPoint(x: 2*rect.maxX/3, y: 2*rect.maxY/3))
+        path.addLine(to: CGPoint(x: rect.maxX/3, y: rect.maxY))
+
+        path.addQuadCurve(to: CGPoint(x: 2*rect.minX/3, y: 2*rect.maxY/3), control: CGPoint(x: rect.maxX/3, y: 2*rect.maxY/3))
+
+        return path
+    }
+}
+
+@available(iOS 13.0, *)
+struct ConfettiModifier: ViewModifier {
+    @Binding var isActive: Bool
+    let duration: Double
+    
+    func body(content: Content) -> some View {
+        content.overlay(
+            ZStack {
+                if isActive {
+                    ForEach(0..<70) { _ in
+                        ConfettiPiece(
+                            confettiType: .random(),
+                            duration: duration
+                        )
+                    }
+                }
+            }
+        )
+    }
+}
+
+@available(iOS 13.0, *)
+struct ConfettiPiece: View {
+    let confettiType: ConfettiType
+    let duration: Double
+    
+    @State private var isAnimating = false
+    @State private var rotation = Double.random(in: 0...1080)
+    
+    var body: some View {
+        confettiType.shape.view(color: confettiType.color)
+            .frame(width: 10, height: 10)
+            .rotationEffect(.degrees(rotation))
+            .position(
+                x: .random(in: 0...UIScreen.main.bounds.width),
+                y: 0 //-20
+            )
+            .modifier(FallingModifier(distance: UIScreen.main.bounds.height + 20, duration: duration))
+            .opacity(isAnimating ? 0 : 1)
+            .onAppear {
+                withAnimation(.linear(duration: duration)) {
+                    isAnimating = true
+                }
+            }
+    }
+}
+
+@available(iOS 13.0, *)
+struct FallingModifier: ViewModifier {
+    let distance: CGFloat
+    let duration: Double
+    
+    func body(content: Content) -> some View {
+        content.modifier(
+            MoveModifier(
+                offset: CGSize(
+                    width: .random(in: -100...100),
+                    height: distance
+                ),
+                duration: duration
+            )
+        )
+    }
+}
+
+@available(iOS 13.0, *)
+struct MoveModifier: ViewModifier {
+    let offset: CGSize
+    let duration: Double
+    
+    @State private var isAnimating = false
+    
+    func body(content: Content) -> some View {
+        content.offset(
+            x: isAnimating ? offset.width : 0,
+            y: isAnimating ? offset.height : 0
+        )
+        .onAppear {
+            withAnimation(
+                .linear(duration: duration)
+                .speed(.random(in: 0.5...2.5))
+            ) {
+                isAnimating = true
+            }
+        }
+    }
+}
+
+// Extension to make it easier to use
+@available(iOS 13.0, *)
+extension View {
+    func confetti(isActive: Binding<Bool>, duration: Double = 2.0) -> some View {
+        modifier(ConfettiModifier(isActive: isActive, duration: duration))
     }
 }
