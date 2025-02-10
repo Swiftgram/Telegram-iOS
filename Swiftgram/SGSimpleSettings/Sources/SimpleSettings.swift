@@ -1,7 +1,7 @@
 import Foundation
+import SGAppGroupIdentifier
 
-
-let appGroupIdentifier = "group.app.swiftgram.ios"
+let APP_GROUP_IDENTIFIER = sgAppGroupIdentifier()
 
 public class SGSimpleSettings {
     
@@ -16,7 +16,7 @@ public class SGSimpleSettings {
         UserDefaults.standard.register(defaults: SGSimpleSettings.defaultValues)
         // Just in case group defaults will be nil
         UserDefaults.standard.register(defaults: SGSimpleSettings.groupDefaultValues)
-        if let groupUserDefaults = UserDefaults(suiteName: appGroupIdentifier) {
+        if let groupUserDefaults = UserDefaults(suiteName: APP_GROUP_IDENTIFIER) {
             groupUserDefaults.register(defaults: SGSimpleSettings.groupDefaultValues)
         }
     }
@@ -55,7 +55,7 @@ public class SGSimpleSettings {
     }
     
     public func synchronizeShared() {
-        if let groupUserDefaults = UserDefaults(suiteName: appGroupIdentifier) {
+        if let groupUserDefaults = UserDefaults(suiteName: APP_GROUP_IDENTIFIER) {
             groupUserDefaults.synchronize()
         }
     }
@@ -423,8 +423,11 @@ public class SGSimpleSettings {
     @UserDefault(key: Keys.videoPIPSwipeDirection.rawValue)
     public var videoPIPSwipeDirection: String
 
-    @UserDefault(key: Keys.legacyNotificationsFix.rawValue, userDefaults: UserDefaults(suiteName: appGroupIdentifier) ?? .standard)
+    @UserDefault(key: Keys.legacyNotificationsFix.rawValue, userDefaults: UserDefaults(suiteName: APP_GROUP_IDENTIFIER) ?? .standard)
     public var legacyNotificationsFix: Bool
+    
+    @UserDefault(key: Keys.legacyNotificationsFix.rawValue, userDefaults: UserDefaults(suiteName: APP_GROUP_IDENTIFIER) ?? .standard)
+    public var status: Int64
     
     public var b: Bool = true
     
@@ -434,10 +437,10 @@ public class SGSimpleSettings {
     @UserDefault(key: Keys.inputToolbar.rawValue)
     public var inputToolbar: Bool
     
-    @UserDefault(key: Keys.pinnedMessageNotifications.rawValue, userDefaults: UserDefaults(suiteName: appGroupIdentifier) ?? .standard)
+    @UserDefault(key: Keys.pinnedMessageNotifications.rawValue, userDefaults: UserDefaults(suiteName: APP_GROUP_IDENTIFIER) ?? .standard)
     public var pinnedMessageNotifications: String
     
-    @UserDefault(key: Keys.mentionsAndRepliesNotifications.rawValue, userDefaults: UserDefaults(suiteName: appGroupIdentifier) ?? .standard)
+    @UserDefault(key: Keys.mentionsAndRepliesNotifications.rawValue, userDefaults: UserDefaults(suiteName: APP_GROUP_IDENTIFIER) ?? .standard)
     public var mentionsAndRepliesNotifications: String
     
     @UserDefault(key: Keys.primaryUserId.rawValue)

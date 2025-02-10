@@ -275,13 +275,15 @@ extension SGIAPManager: SKProductsRequestDelegate {
 extension SGIAPManager: SKPaymentTransactionObserver {
     public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         SGLogger.shared.log("SGIAP", "paymentQueue transactions \(transactions.count)")
+        var purchaceTransactions: [SKPaymentTransaction] = []
         for transaction in transactions {
             SGLogger.shared.log("SGIAP", "Transaction \(transaction.transactionIdentifier ?? "nil") state for product \(transaction.payment.productIdentifier): \(transaction.transactionState.description)")
             switch transaction.transactionState {
                 case .purchased, .restored:
-                    SGLogger.shared.log("SGIAP", "Sending SGIAPHelperPurchaseNotification for \(transaction.transactionIdentifier ?? "nil")")
-                    NotificationCenter.default.post(name: .SGIAPHelperPurchaseNotification, object: transaction)
+                    purchaceTransactions.append(transaction)
+                    break
                 case .purchasing, .deferred:
+                    // Ignoring
                     break
                 case .failed:
                     var localizedError: String = ""
@@ -297,6 +299,11 @@ extension SGIAPManager: SKPaymentTransactionObserver {
                     SGLogger.shared.log("SGIAP", "Unknown transaction \(transaction.transactionIdentifier ?? "nil") state \(transaction.transactionState). Finishing transaction.")
                     SKPaymentQueue.default().finishTransaction(transaction)
             }
+        }
+        
+        if !purchaceTransactions.isEmpty {
+            SGLogger.shared.log("SGIAP", "Sending SGIAPHelperPurchaseNotification for \(purchaceTransactions.map({ $0.transactionIdentifier ?? "nil" }).joined(separator: ", "))")
+            NotificationCenter.default.post(name: .SGIAPHelperPurchaseNotification, object: purchaceTransactions)
         }
     }
     

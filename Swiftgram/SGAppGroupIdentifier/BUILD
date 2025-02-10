@@ -1,16 +1,15 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
 swift_library(
-    name = "SGSimpleSettings",
-    module_name = "SGSimpleSettings",
+    name = "SGAppGroupIdentifier",
+    module_name = "SGAppGroupIdentifier",
     srcs = glob([
-		"Sources/**/*.swift",
+        "Sources/**/*.swift",
     ]),
     copts = [
         "-warnings-as-errors",
     ],
     deps = [
-        "//Swiftgram/SGAppGroupIdentifier:SGAppGroupIdentifier",
     ],
     visibility = [
         "//visibility:public",

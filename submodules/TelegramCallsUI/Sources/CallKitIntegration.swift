@@ -1,3 +1,4 @@
+import SGAppGroupIdentifier
 import Foundation
 import UIKit
 import CallKit
@@ -20,7 +21,7 @@ public final class CallKitIntegration {
         return false
         #else
         if #available(iOSApplicationExtension 10.0, iOS 10.0, *) {
-            return Locale.current.regionCode?.lowercased() != "cn" && !(UserDefaults(suiteName: "group.app.swiftgram.ios")?.bool(forKey: "legacyNotificationsFix") ?? false)
+            return Locale.current.regionCode?.lowercased() != "cn" && !(UserDefaults(suiteName: sgAppGroupIdentifier())?.bool(forKey: "legacyNotificationsFix") ?? false)
         } else {
             return false
         }
