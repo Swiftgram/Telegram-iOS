@@ -30,7 +30,7 @@ public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacemen
     let swiftUIView = SGSwiftUIView<SGPayWallView>(
         legacyController: legacyController,
         content: {
-            SGPayWallView(wrapperController: legacyController, replacementController: replacementController, SGIAP: SGIAPManager, statusSignal: statusSignal, lang: strings.baseLanguageCode)
+            SGPayWallView(wrapperController: legacyController, replacementController: replacementController, SGIAP: SGIAPManager, statusSignal: statusSignal)
         }
     )
     let controller = UIHostingController(rootView: swiftUIView, ignoreSafeArea: true)
@@ -99,35 +99,36 @@ struct BackgroundView: View {
 struct SGPayWallView: View {
     @Environment(\.navigationBarHeight) var navigationBarHeight: CGFloat
     @Environment(\.containerViewLayout) var containerViewLayout: ContainerViewLayout?
+    @Environment(\.lang) var lang: String
     
     weak var wrapperController: LegacyController?
     let replacementController: ViewController
     let SGIAP: SGIAPManager
     let statusSignal: Signal<Int64, NoError>
-    let lang: String
     
     private enum PayWallState: Equatable {
         case ready // ready to buy
         case restoring
         case purchasing
         case validating
-        case purchaseError(String) // error purchasing
     }
     
     // State management
     @State private var product: SGIAPManager.SGProduct?
     @State private var currentStatus: Int64 = 1
     @State private var state: PayWallState = .ready
+    @State private var showErrorAlert: Bool = false
     @State private var showConfetti: Bool = false
     
     private let productsPub = NotificationCenter.default.publisher(for: .SGIAPHelperProductsUpdatedNotification, object: nil)
-    private let buySuccessPub = NotificationCenter.default.publisher(for: .SGIAPHelperPurchaseNotification, object: nil)
+    private let buyOrRestoreSuccessPub = NotificationCenter.default.publisher(for: .SGIAPHelperPurchaseNotification, object: nil)
     private let buyErrorPub = NotificationCenter.default.publisher(for: .SGIAPHelperErrorNotification, object: nil)
+    private let validationErrorPub = NotificationCenter.default.publisher(for: .SGIAPHelperValidationErrorNotification, object: nil)
     
     @State private var statusTask: Task<Void, Never>? = nil
     
     @State private var hapticFeedback: HapticFeedback?
-    private let confettiDuration: Double = 7.0
+    private let confettiDuration: Double = 5.0
     
     var body: some View {
         ZStack {
@@ -146,7 +147,7 @@ struct SGPayWallView: View {
                                 .font(.largeTitle)
                                 .fontWeight(.bold)
                             
-                            Text("Supercharged with Pro features")
+                            Text("Supercharged with Pro features".i18n(lang))
                                 .font(.callout)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
@@ -179,9 +180,9 @@ struct SGPayWallView: View {
             updateSelectedProduct()
             statusTask = Task {
                 let statusStream = statusSignal.awaitableStream()
-                for await status in statusStream {
+                for await newStatus in statusStream {
                     #if DEBUG
-                    print("SGPayWallView: status = \(status)")
+                    print("SGPayWallView: newStatus = \(newStatus)")
                     #endif
                     if Task.isCancelled {
                         #if DEBUG
@@ -190,10 +191,13 @@ struct SGPayWallView: View {
                         break
                     }
                     
-                    if currentStatus != status && status > 1 {
-                        handleUpgradedStatus()
+                    if currentStatus != newStatus {
+                        currentStatus = newStatus
+
+                        if newStatus > 1 {
+                            handleUpgradedStatus()
+                        }
                     }
-                    currentStatus = status
                 }
             }
         }
@@ -203,36 +207,22 @@ struct SGPayWallView: View {
             #endif
             statusTask?.cancel()
         }
-        .onReceive(buySuccessPub) { _ in
+        .onReceive(buyOrRestoreSuccessPub) { _ in
             state = .validating
         }
         .onReceive(buyErrorPub) { notification in
             if let userInfo = notification.userInfo, let error = userInfo["localizedError"] as? String, !error.isEmpty {
-                state = .purchaseError(error)
-            } else {
-                state = .ready
+                showErrorAlert(error)
             }
         }
-        .alert(isPresented: Binding(get: {
-                if case .purchaseError = state {
-                    return true
+        .onReceive(validationErrorPub) { notification in
+            if state == .validating {
+                if let userInfo = notification.userInfo, let error = userInfo["error"] as? String, !error.isEmpty {
+                    showErrorAlert(error)
+                } else {
+                    showErrorAlert("Validation Error")
                 }
-                return false
-            },
-            set: { _ in })
-        ) {
-            Alert(
-                title: Text("Error"),
-                message: {
-                    if case .purchaseError(let message) = state {
-                        return Text(message)
-                    }
-                    return Text("")
-                }(),
-                dismissButton: .default(Text("OK"), action: {
-                    state = .ready
-                })
-            )
+            }
         }
     }
     
@@ -273,8 +263,8 @@ struct SGPayWallView: View {
                 .fontWeight(.semibold)
                 .foregroundColor(Color(hex: accentColorHex))
         }
-        .disabled(state == .restoring)
-        .opacity(state == .restoring ? 0.5 : 1.0)
+        .disabled(state == .restoring || product == nil)
+        .opacity((state == .restoring || product == nil) ? 0.5 : 1.0)
     }
     
     private var purchaseSection: some View {
@@ -301,7 +291,9 @@ struct SGPayWallView: View {
     }
     
     private var closeButtonView: some View {
-        Button(action: dismiss) {
+        Button(action: {
+            wrapperController?.dismiss(animated: true)
+        }) {
             Image(systemName: "xmark")
                 .font(.headline)
                 .foregroundColor(.secondary.opacity(0.6))
@@ -311,25 +303,25 @@ struct SGPayWallView: View {
         .padding([.top, .trailing], 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
     }
-    
+        
     private var buttonTitle: String {
         if currentStatus > 1 {
-            return "Use Pro features"
+            return "Use Pro features".i18n(lang)
         } else {
             if state == .purchasing {
-                return "Purchasing..."
+                return "Purchasing...".i18n(lang)
             } else if state == .restoring {
-                return "Restoring Purchases..."
+                return "Restoring Purchases...".i18n(lang)
             } else if state == .validating {
-                return "Validating Purchase..."
+                return "Validating Purchase...".i18n(lang)
             } else if let product = product {
                 if !SGIAP.canMakePayments {
-                    return "Payments unavailable"
+                    return "Payments unavailable".i18n(lang)
                 } else {
-                    return "Subscribe for \(product.price) / month"
+                    return "Subscribe for \(product.price) / month".i18n(lang, args: product.price)
                 }
             } else {
-                return "Contacting App Store..."
+                return "Contacting App Store...".i18n(lang)
             }
         }
     }
@@ -373,8 +365,14 @@ struct SGPayWallView: View {
         }
     }
     
-    private func dismiss() {
-        wrapperController?.dismiss(animated: true)
+    private func showErrorAlert(_ message: String) {
+        let alertController = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
+            state = .ready
+        }))
+        DispatchQueue.main.async {
+            wrapperController?.present(alertController, animated: true)
+        }
     }
 }
 

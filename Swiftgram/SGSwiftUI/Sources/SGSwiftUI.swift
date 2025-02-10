@@ -24,6 +24,11 @@ public struct ContainerViewLayoutKey: EnvironmentKey {
     public static let defaultValue: ContainerViewLayout? = nil
 }
 
+@available(iOS 13.0, *)
+public struct LangKey: EnvironmentKey {
+    public static let defaultValue: String = "en"
+}
+
 // Perhaps, affects Performance a lot
 //@available(iOS 13.0, *)
 //public struct ContainerViewLayoutUpdateCountKey: EnvironmentKey {
@@ -40,6 +45,11 @@ public extension EnvironmentValues {
     var containerViewLayout: ContainerViewLayout? {
         get { self[ContainerViewLayoutKey.self] }
         set { self[ContainerViewLayoutKey.self] = newValue }
+    }
+
+    var lang: String {
+        get { self[LangKey.self] }
+        set { self[LangKey.self] = newValue }
     }
     
 //    var containerViewLayoutUpdateCount: ObservedValue<Int64> {
@@ -58,6 +68,8 @@ public struct SGSwiftUIView<Content: View>: View {
     @ObservedObject var containerViewLayout: ObservedValue<ContainerViewLayout?>
 //    @ObservedObject var containerViewLayoutUpdateCount: ObservedValue<Int64>
 
+    private var lang: String
+    
     public init(
         legacyController: LegacySwiftUIController,
         manageSafeArea: Bool = false,
@@ -70,6 +82,7 @@ public struct SGSwiftUIView<Content: View>: View {
         #endif
         self.navigationBarHeight = legacyController.navigationBarHeightModel
         self.containerViewLayout = legacyController.containerViewLayoutModel
+        self.lang = legacyController.lang
 //        self.containerViewLayoutUpdateCount = legacyController.containerViewLayoutUpdateCountModel
         self.manageSafeArea = manageSafeArea
         self.content = content()
@@ -80,6 +93,7 @@ public struct SGSwiftUIView<Content: View>: View {
             .if(manageSafeArea) { $0.modifier(CustomSafeArea()) }
             .environment(\.navigationBarHeight, navigationBarHeight.value)
             .environment(\.containerViewLayout, containerViewLayout.value)
+            .environment(\.lang, lang)
 //            .environment(\.containerViewLayoutUpdateCount, containerViewLayoutUpdateCount)
 //            .onReceive(containerViewLayoutUpdateCount.$value) { _ in
 //                // Make sure View is updated when containerViewLayoutUpdateCount changes,
@@ -155,12 +169,14 @@ public final class LegacySwiftUIController: LegacyController {
     public var navigationBarHeightModel: ObservedValue<CGFloat>
     public var containerViewLayoutModel: ObservedValue<ContainerViewLayout?>
     public var inputHeightModel: ObservedValue<CGFloat?>
+    public let lang: String
 //    public var containerViewLayoutUpdateCountModel: ObservedValue<Int64>
 
     override public init(presentation: LegacyControllerPresentation, theme: PresentationTheme? = nil, strings: PresentationStrings? = nil, initialLayout: ContainerViewLayout? = nil) {
         navigationBarHeightModel = ObservedValue<CGFloat>(0.0)
         containerViewLayoutModel = ObservedValue<ContainerViewLayout?>(initialLayout)
         inputHeightModel = ObservedValue<CGFloat?>(nil)
+        lang = strings?.baseLanguageCode ?? "en"
 //        containerViewLayoutUpdateCountModel = ObservedValue<Int64>(0)
         super.init(presentation: presentation, theme: theme, strings: strings, initialLayout: initialLayout)
     }

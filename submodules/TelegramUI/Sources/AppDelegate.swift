@@ -3075,27 +3075,45 @@ extension AppDelegate {
         NotificationCenter.default.addObserver(forName: .SGIAPHelperPurchaseNotification, object: nil, queue: nil) { [weak self] notification in
             SGLogger.shared.log("SGIAP", "Got SGIAPHelperPurchaseNotification")
             guard let strongSelf = self else { return }
-            if let transaction = notification.object as? SKPaymentTransaction {
+            if let transactions = notification.object as? [SKPaymentTransaction] {
                 let _ = (strongSelf.context.get()
                 |> take(1)
-                |> deliverOnMainQueue).start(next: { context in
-                    SGLogger.shared.log("SGIAP", "Got context for SGIAPHelperPurchaseNotification")
+                |> deliverOnMainQueue).start(next: { [weak strongSelf] context in
+                    guard let veryStrongSelf = strongSelf else {
+                        SGLogger.shared.log("SGIAP", "Finishing transactions \(transactions.map({ $0.transactionIdentifier ?? "nil" }).joined(separator: ", "))")
+                        let defaultPaymentQueue = SKPaymentQueue.default()
+                        for transaction in transactions {
+                            defaultPaymentQueue.finishTransaction(transaction)
+                        }
+                        return
+                    }
                     guard let context = context else {
                         SGLogger.shared.log("SGIAP", "Empty app context (how?)")
                         
-                        SGLogger.shared.log("SGIAP", "Finishing transaction \(transaction.transactionIdentifier ?? "nil")")
-                        SKPaymentQueue.default().finishTransaction(transaction)
+                        SGLogger.shared.log("SGIAP", "Finishing transactions \(transactions.map({ $0.transactionIdentifier ?? "nil" }).joined(separator: ", "))")
+                        let defaultPaymentQueue = SKPaymentQueue.default()
+                        for transaction in transactions {
+                            defaultPaymentQueue.finishTransaction(transaction)
+                        }
                         return
                     }
+                    SGLogger.shared.log("SGIAP", "Got context for SGIAPHelperPurchaseNotification")
                     let _ = Task {
-                        await strongSelf.sendReceiptForVerification(primaryContext: context.context)
-                        await strongSelf.fetchSGStatus(primaryContext: context.context)
-                        SGLogger.shared.log("SGIAP", "Finishing transaction \(transaction.transactionIdentifier ?? "nil")")
-                        SKPaymentQueue.default().finishTransaction(transaction)
+                        await veryStrongSelf.sendReceiptForVerification(primaryContext: context.context)
+                        await veryStrongSelf.fetchSGStatus(primaryContext: context.context)
+                        
+                        SGLogger.shared.log("SGIAP", "Finishing transactions \(transactions.map({ $0.transactionIdentifier ?? "nil" }).joined(separator: ", "))")
+                        let defaultPaymentQueue = SKPaymentQueue.default()
+                        for transaction in transactions {
+                            defaultPaymentQueue.finishTransaction(transaction)
+                        }
                     }
                 })
             } else {
                 SGLogger.shared.log("SGIAP", "Wrong object in SGIAPHelperPurchaseNotification")
+                #if DEBUG
+                preconditionFailure("Wrong object in SGIAPHelperPurchaseNotification")
+                #endif
             }
         }
     }
@@ -3104,8 +3122,6 @@ extension AppDelegate {
         var primaryUserId: Int64 = Int64(SGSimpleSettings.shared.primaryUserId) ?? 0
         if primaryUserId == 0 {
             primaryUserId = context.account.peerId.id._internalGetInt64Value()
-            SGLogger.shared.log("SGIAP", "Setting new primary user id: \(primaryUserId)")
-            SGSimpleSettings.shared.primaryUserId = String(primaryUserId)
         }
 
         var primaryContext = try? await getContextForUserId(context: context, userId: primaryUserId).awaitable()
@@ -3115,9 +3131,7 @@ extension AppDelegate {
         } else {
             primaryContext = context
             let newPrimaryUserId = context.account.peerId.id._internalGetInt64Value()
-            SGLogger.shared.log("SGIAP", "Primary context for user id \(primaryUserId) is nil! Falling back to current context with user id: \(context.account.peerId.id._internalGetInt64Value())")
-            SGLogger.shared.log("SGIAP", "Setting new primary user id: \(primaryUserId)")
-            SGSimpleSettings.shared.primaryUserId = String(newPrimaryUserId)
+            SGLogger.shared.log("SGIAP", "Primary context for user id \(primaryUserId) is nil! Falling back to current context with user id: \(newPrimaryUserId)")
             return context
         }
     }
@@ -3172,6 +3186,9 @@ extension AppDelegate {
 //                SGLogger.shared.log("SGIAP", "Setting user id \(userId) keep connection back to false")
 //                primaryContext.account.network.shouldKeepConnection.set(.single(false))
 //            }
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .SGIAPHelperValidationErrorNotification, object: nil, userInfo: ["error": "PayWall.ValidationError.TryAgain"])
+            }
             return
         }
         SGLogger.shared.log("SGIAP", "Got IQTP response: \(iqtpResponse)")
@@ -3190,11 +3207,20 @@ extension AppDelegate {
             if value.status != newStatus {
                 SGLogger.shared.log("SGIAP", "Updating \(userId) status \(value.status) -> \(newStatus)")
                 if newStatus > 1 {
-                    SGSimpleSettings.shared.primaryUserId = String(userId)
+                    let stringUserId = String(userId)
+                    if SGSimpleSettings.shared.primaryUserId != stringUserId {
+                        SGLogger.shared.log("SGIAP", "Setting new primary user id: \(userId)")
+                        SGSimpleSettings.shared.primaryUserId = stringUserId
+                    }
                 }
                 value.status = newStatus
             } else {
                 SGLogger.shared.log("SGIAP", "Status \(value.status) for \(userId) hasn't changed")
+                if newStatus < 1 {
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: .SGIAPHelperValidationErrorNotification, object: nil, userInfo: ["error": "PayWall.ValidationError.Expired"])
+                    }
+                }
             }
             return value
         }).awaitable()

@@ -1054,6 +1054,7 @@ public func sgDebugController(context: AccountContext) -> ViewController {
             let updateSettingsSignal = updateSGStatusInteractively(accountManager: context.sharedContext.accountManager, { status in
                 var status = status
                 status.status = SGStatus.default.status
+                SGSimpleSettings.shared.primaryUserId = ""
                 return status
             })
             let _ = (updateSettingsSignal |> deliverOnMainQueue).start(next: {

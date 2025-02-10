@@ -119,3 +119,10 @@ public class SGLocalizationManager {
 }
 
 public let i18n = SGLocalizationManager.shared.localizedString
+
+
+public extension String {
+    func i18n(_ locale: String = SGFallbackLocale, args: CVarArg...) -> String {
+        return SGLocalizationManager.shared.localizedString(self, locale, args: args)
+    }
+}

@@ -91,6 +91,7 @@ public extension Notification.Name {
     static let SGIAPHelperPurchaseNotification = Notification.Name("SGIAPPurchaseNotification")
     static let SGIAPHelperErrorNotification = Notification.Name("SGIAPErrorNotification")
     static let SGIAPHelperProductsUpdatedNotification = Notification.Name("SGIAPProductsUpdatedNotification")
+    static let SGIAPHelperValidationErrorNotification = Notification.Name("SGIAPValidationErrorNotification")
 }
 
 public final class SGIAPManager: NSObject {
@@ -208,7 +209,7 @@ public final class SGIAPManager: NSObject {
 
         SKPaymentQueue.default().add(self)
 
-        #if DEBUG
+        #if DEBUG && false
         DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
             self.requestProducts()
         }
