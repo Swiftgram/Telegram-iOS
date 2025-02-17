@@ -941,7 +941,7 @@ class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDelegate, Ch
         self.addSubnode(self.clippingNode)
         
         // MARK: Swiftgram
-        self.initToolbarIfNeeded()
+        self.initToolbarIfNeeded(context: context)
         
         self.sendAsAvatarContainerNode.activated = { [weak self] gesture, _ in
             guard let strongSelf = self else {
@@ -5064,10 +5064,10 @@ private final class BoostSlowModeButton: HighlightTrackingButtonNode {
 // MARK: Swiftgram
 extension ChatTextInputPanelNode {
     
-    func initToolbarIfNeeded() {
+    func initToolbarIfNeeded(context: AccountContext) {
         guard #available(iOS 13.0, *) else { return }
         guard SGSimpleSettings.shared.inputToolbar else { return }
-        guard SGSimpleSettings.shared.b else { return }
+        guard context.sharedContext.immediateSGStatus.status > 1 else { return }
         guard self.toolbarNode == nil else { return }
         let toolbarView = ChatToolbarView(
             onQuote: { [weak self] in

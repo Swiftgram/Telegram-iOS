@@ -13,7 +13,7 @@ import TelegramUIPreferences
 
 
 @available(iOS 13.0, *)
-public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacementController: ViewController, presentationData: PresentationData? = nil, SGIAPManager: SGIAPManager) -> ViewController {
+public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacementController: ViewController, presentationData: PresentationData? = nil, SGIAPManager: SGIAPManager, openUrl: @escaping (String) -> Void) -> ViewController {
     //    let theme = presentationData?.theme ?? (UITraitCollection.current.userInterfaceStyle == .dark ? defaultDarkColorPresentationTheme : defaultPresentationTheme)
     let theme = defaultDarkColorPresentationTheme
     let strings = presentationData?.strings ?? defaultPresentationStrings
@@ -30,7 +30,7 @@ public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacemen
     let swiftUIView = SGSwiftUIView<SGPayWallView>(
         legacyController: legacyController,
         content: {
-            SGPayWallView(wrapperController: legacyController, replacementController: replacementController, SGIAP: SGIAPManager, statusSignal: statusSignal)
+            SGPayWallView(wrapperController: legacyController, replacementController: replacementController, SGIAP: SGIAPManager, statusSignal: statusSignal, openUrl: openUrl)
         }
     )
     let controller = UIHostingController(rootView: swiftUIView, ignoreSafeArea: true)
@@ -105,6 +105,7 @@ struct SGPayWallView: View {
     let replacementController: ViewController
     let SGIAP: SGIAPManager
     let statusSignal: Signal<Int64, NoError>
+    let openUrl: (String) -> Void
     
     private enum PayWallState: Equatable {
         case ready // ready to buy
@@ -147,7 +148,7 @@ struct SGPayWallView: View {
                                 .font(.largeTitle)
                                 .fontWeight(.bold)
                             
-                            Text("Supercharged with Pro features".i18n(lang))
+                            Text("PayWall.Text".i18n(lang))
                                 .font(.callout)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
@@ -156,14 +157,18 @@ struct SGPayWallView: View {
                         // Features
                         VStack(spacing: 8) {
                             featuresSection
+                            legalSection
                             restorePurchasesButton
                         }
+                        
                         
                         // Spacer for purchase buttons
                         Color.clear.frame(height: 50)
                     }
                     .padding(.vertical, 50)
                 }
+                .padding(.leading, max(innerShadowWidth + 8.0, sgLeftSafeAreaInset(containerViewLayout)))
+                .padding(.trailing, max(innerShadowWidth + 8.0, sgRightSafeAreaInset(containerViewLayout)))
                 
                 // Fixed purchase button at bottom
                 purchaseSection
@@ -220,7 +225,7 @@ struct SGPayWallView: View {
                 if let userInfo = notification.userInfo, let error = userInfo["error"] as? String, !error.isEmpty {
                     showErrorAlert(error)
                 } else {
-                    showErrorAlert("Validation Error")
+                    showErrorAlert("PayWall.ValidationError".i18n(lang))
                 }
             }
         }
@@ -230,35 +235,33 @@ struct SGPayWallView: View {
         VStack(spacing: 8) {
             FeatureRow(
                 icon: FeatureIcon(icon: "lock.fill", backgroundColor: .blue),
-                title: "Session Backup",
-                subtitle: "Restore sessions from encrypted local Apple Keychain backup."
+                title: "PayWall.SessionBackup.Title".i18n(lang),
+                subtitle: "PayWall.SessionBackup.Notice".i18n(lang)
             )
             
             FeatureRow(
                 icon: FeatureIcon(icon: "nosign", backgroundColor: .gray, fontWeight: .bold),
-                title: "Message Filter",
-                subtitle: "Reduce visibility of spam, promotions and annoying messages."
+                title: "PayWall.MessageFilter.Title".i18n(lang),
+                subtitle: "PayWall.MessageFilter.Notice".i18n(lang)
             )
             
             FeatureRow(
                 icon: FeatureIcon(icon: "bell.badge.slash.fill", backgroundColor: .red),
-                title: "Disable @mentions and replies",
-                subtitle: "Hide or silence non-important notifications."
+                title: "PayWall.Notifications.Title".i18n(lang),
+                subtitle: "PayWall.MessageFilter.Notice".i18n(lang)
             )
             
             FeatureRow(
                 icon: FeatureIcon(icon: "bold.underline", backgroundColor: .blue, iconSize: 16),
-                title: "Quick Formatting panel",
-                subtitle: "Save time preparing your posts with a panel right above your keyboard."
+                title: "PayWall.InputToolbar.Title".i18n(lang),
+                subtitle: "PayWall.InputToolbar.Notice".i18n(lang)
             )
         }
-        .padding(.leading, max(innerShadowWidth + 8.0, sgLeftSafeAreaInset(containerViewLayout)))
-        .padding(.trailing, max(innerShadowWidth + 8.0, sgRightSafeAreaInset(containerViewLayout)))
     }
     
     private var restorePurchasesButton: some View {
         Button(action: handleRestorePurchases) {
-            Text("Restore Purchases")
+            Text("PayWall.RestorePurchases".i18n(lang))
                 .font(.footnote)
                 .fontWeight(.semibold)
                 .foregroundColor(Color(hex: accentColorHex))
@@ -290,6 +293,41 @@ struct SGPayWallView: View {
         .shadow(radius: 8, y: -4)
     }
     
+    private var legalSection: some View {
+        Group {
+            if #available(iOS 15.0, *) {
+                Text(LocalizedStringKey("PayWall.Notice.Markdown".i18n(lang, args: "PayWall.TermsURL".i18n(lang), "PayWall.PrivacyURL".i18n(lang))))
+                    .font(.caption)
+                    .tint(Color(hex: accentColorHex))
+                    .foregroundColor(.secondary)
+                    .environment(\.openURL, OpenURLAction { url in
+                        openUrl(url.absoluteString)
+                        return .handled
+                    })
+            } else {
+                Text("PayWall.Notice.Raw".i18n(lang))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                HStack(alignment: .top, spacing: 8) {
+                    Button(action: {
+                        openUrl("PayWall.PrivacyURL".i18n(lang))
+                    }) {
+                        Text("PayWall.Privacy".i18n(lang))
+                            .font(.caption)
+                            .foregroundColor(Color(hex: accentColorHex))
+                    }
+                    Button(action: {
+                        openUrl("PayWall.TermsURL".i18n(lang))
+                    }) {
+                        Text("PayWall.Terms".i18n(lang))
+                            .font(.caption)
+                            .foregroundColor(Color(hex: accentColorHex))
+                    }
+                }
+            }
+        }
+    }
+    
     private var closeButtonView: some View {
         Button(action: {
             wrapperController?.dismiss(animated: true)
@@ -306,22 +344,22 @@ struct SGPayWallView: View {
         
     private var buttonTitle: String {
         if currentStatus > 1 {
-            return "Use Pro features".i18n(lang)
+            return "PayWall.Button.OpenPro".i18n(lang)
         } else {
             if state == .purchasing {
-                return "Purchasing...".i18n(lang)
+                return "PayWall.Button.Purchasing".i18n(lang)
             } else if state == .restoring {
-                return "Restoring Purchases...".i18n(lang)
+                return "PayWall.Button.Restoring".i18n(lang)
             } else if state == .validating {
-                return "Validating Purchase...".i18n(lang)
+                return "PayWall.Button.Validating".i18n(lang)
             } else if let product = product {
                 if !SGIAP.canMakePayments {
-                    return "Payments unavailable".i18n(lang)
+                    return "PayWall.Button.PaymentsUnavailable".i18n(lang)
                 } else {
-                    return "Subscribe for \(product.price) / month".i18n(lang, args: product.price)
+                    return "PayWall.Button.Subscribe".i18n(lang, args: product.price)
                 }
             } else {
-                return "Contacting App Store...".i18n(lang)
+                return "Paywall.Button.ContactingAppStore".i18n(lang)
             }
         }
     }

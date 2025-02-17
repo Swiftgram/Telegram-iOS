@@ -528,8 +528,8 @@ public final class MessageInputPanelComponent: Component {
         public var likeIconView: UIView? {
             return (self.likeButton.view as? MessageInputActionButtonComponent.View)?.likeIconView
         }
-        
-        override init(frame: CGRect) {
+        // MARK: Swifgtram
+        init(context: AccountContext, frame: CGRect) {
             self.fieldBackgroundView = BlurredBackgroundView(color: UIColor(white: 0.0, alpha: 0.5), enableBlur: true)
             
             self.vibrancyEffectView = UIVisualEffectView(effect: UIVibrancyEffect(blurEffect: UIBlurEffect(style: .dark)))
@@ -573,7 +573,7 @@ public final class MessageInputPanelComponent: Component {
             )
             
             // MARK: Swiftgram
-            self.initToolbarIfNeeded()
+            self.initToolbarIfNeeded(context: context)
         }
         
         required init?(coder: NSCoder) {
@@ -2277,7 +2277,7 @@ public final class MessageInputPanelComponent: Component {
     }
     
     public func makeView() -> View {
-        return View(frame: CGRect())
+        return View(context: self.context, frame: CGRect())
     }
     
     public func update(view: View, availableSize: CGSize, state: EmptyComponentState, environment: Environment<Empty>, transition: ComponentTransition) -> CGSize {
@@ -2328,10 +2328,10 @@ final class ViewForOverlayContent: UIView {
 
 
 extension MessageInputPanelComponent.View {
-    func initToolbarIfNeeded() {
+    func initToolbarIfNeeded(context: AccountContext) {
         guard #available(iOS 13.0, *) else { return }
         guard SGSimpleSettings.shared.inputToolbar else { return }
-        guard SGSimpleSettings.shared.b else { return }
+        guard context.sharedContext.immediateSGStatus.status > 1 else { return }
         guard self.toolbarView == nil else { return }
         let notificationName = Notification.Name("sgToolbarAction")
         let toolbar = ChatToolbarView(

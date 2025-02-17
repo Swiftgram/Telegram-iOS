@@ -339,7 +339,10 @@ alternate_icon_folders = [
     "SGNeonBlue",
     "SGGlass",
     "SGSparkling",
-    "SGBeta"
+    "SGBeta",
+    "SGPro",
+    "SGGold",
+    "SGDucky"
 ]
 
 [

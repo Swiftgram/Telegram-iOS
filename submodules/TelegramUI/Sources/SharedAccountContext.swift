@@ -1,5 +1,9 @@
 // MARK: Swiftgram
 import SGIAP
+import SGPayWall
+import SGProUI
+import SGSimpleSettings
+//
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -484,6 +488,8 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         |> deliverOnMainQueue).start(next: { sharedData in
             if let settings = sharedData.entries[ApplicationSpecificSharedDataKeys.sgStatus]?.get(SGStatus.self) {
                 let _ = immediateSGStatusValue.swap(settings)
+                SGSimpleSettings.shared.ephemeralStatus = settings.status
+                SGSimpleSettings.shared.status = settings.status
             }
         })
         self.initSGIAP(isMainApp: applicationBindings.isMainApp)
@@ -3049,5 +3055,40 @@ extension SharedAccountContextImpl {
         } else {
             self.SGIAP = nil
         }
+    }
+    
+    public func makeSGProController(context: AccountContext) -> ViewController {
+        let controller = sgProController(context: context)
+        return controller
+    }
+
+    public func makeSGPayWallController(context: AccountContext) -> ViewController? {
+        guard #available(iOS 13.0, *) else {
+            return nil
+        }
+        guard let sgIAP = self.SGIAP else {
+            return nil
+        }
+
+        let statusSignal = self.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.sgStatus])
+        |> map { sharedData -> Int64 in
+            let sgStatus = sharedData.entries[ApplicationSpecificSharedDataKeys.sgStatus]?.get(SGStatus.self) ?? SGStatus.default
+            return sgStatus.status
+        }
+
+        let proController = self.makeSGProController(context: context)
+        let payWallController = sgPayWallController(statusSignal: statusSignal, replacementController: proController, presentationData: self.currentPresentationData.with { $0 }, SGIAPManager: sgIAP, openUrl: self.applicationBindings.openUrl)
+        return payWallController
+    }
+    
+    public func makeSGUpdateIOSController() -> ViewController {
+        let presentationData = self.currentPresentationData.with { $0 }
+        let controller = UndoOverlayController(
+            presentationData: presentationData,
+            content: .info(title: nil, text: "Common.UpdateOS".i18n(presentationData.strings.baseLanguageCode), timeout: nil, customUndoText: nil),
+            elevatedLayout: false,
+            action: { _ in return false }
+        )
+        return controller
     }
 }

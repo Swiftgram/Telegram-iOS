@@ -504,6 +504,7 @@ private enum PeerInfoContextSubject {
 
 private enum PeerInfoSettingsSection {
     case swiftgram
+    case swiftgramPro
     case avatar
     case edit
     case proxy
@@ -947,7 +948,6 @@ private func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, conte
         }
     }
     
-    let sgSectionId = 0
     // let locale = presentationData.strings.baseLanguageCode
     // MARK: Swiftgram
     let hasNewSGFeatures = {
@@ -960,7 +960,10 @@ private func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, conte
         swiftgramLabel = .none
     }
     
-    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: sgSectionId, label: swiftgramLabel, text: "Swiftgram", icon: PresentationResourcesSettings.swiftgram, action: {
+    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 0, label: .titleBadge(presentationData.strings.Settings_New, presentationData.theme.list.itemAccentColor), text: "Swiftgram Pro", icon: PresentationResourcesSettings.swiftgramPro, action: {
+        interaction.openSettings(.swiftgramPro)
+    }))
+    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 1, label: swiftgramLabel, text: "Swiftgram", icon: PresentationResourcesSettings.swiftgram, action: {
         interaction.openSettings(.swiftgram)
     }))
 
@@ -10247,6 +10250,16 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         switch section {
         case .swiftgram:
             self.controller?.push(sgSettingsController(context: self.context))
+        case .swiftgramPro:
+            if self.context.sharedContext.immediateSGStatus.status > 1 {
+                self.controller?.push(self.context.sharedContext.makeSGProController(context: self.context))
+            } else {
+                if let payWallController = self.context.sharedContext.makeSGPayWallController(context: self.context) {
+                    self.controller?.present(payWallController, in: .window(.root), with: ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+                } else {
+                    self.controller?.present(self.context.sharedContext.makeSGUpdateIOSController(), animated: true)
+                }
+            }
         case .avatar:
             self.controller?.openAvatarForEditing()
         case .edit:

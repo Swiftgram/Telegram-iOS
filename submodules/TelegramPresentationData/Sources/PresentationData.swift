@@ -46,8 +46,10 @@ public struct PresentationAppIcon: Equatable {
     public let imageName: String
     public let isDefault: Bool
     public let isPremium: Bool
+    public let isSGPro: Bool
     
-    public init(name: String, imageName: String, isDefault: Bool = false, isPremium: Bool = false) {
+    public init(isSGPro: Bool = false, name: String, imageName: String, isDefault: Bool = false, isPremium: Bool = false) {
+        self.isSGPro = isSGPro
         self.name = name
         self.imageName = imageName
         self.isDefault = isDefault

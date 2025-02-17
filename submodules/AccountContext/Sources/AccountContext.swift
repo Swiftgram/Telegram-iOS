@@ -937,6 +937,10 @@ public protocol SharedAccountContext: AnyObject {
     // MARK: Swiftgram
     var immediateSGStatus: SGStatus { get }
     var SGIAP: SGIAPManager? { get }
+    func makeSGProController(context: AccountContext) -> ViewController
+    func makeSGPayWallController(context: AccountContext) -> ViewController?
+    func makeSGUpdateIOSController() -> ViewController
+
     var currentInAppNotificationSettings: Atomic<InAppNotificationSettings> { get }
     var currentMediaInputSettings: Atomic<MediaInputSettings> { get }
     var currentStickerSettings: Atomic<StickerSettings> { get }

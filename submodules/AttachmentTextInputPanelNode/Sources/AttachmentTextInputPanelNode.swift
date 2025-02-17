@@ -509,7 +509,7 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
         }
         
         // MARK: Swiftgram
-        self.initToolbarIfNeeded()
+        self.initToolbarIfNeeded(context: context)
     }
     
     public var sendPressed: ((NSAttributedString?) -> Void)?
@@ -636,7 +636,7 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
         textInputNode.view.addGestureRecognizer(recognizer)
         
         textInputNode.textView.accessibilityHint = self.textPlaceholderNode.attributedText?.string
-        self.initToolbarIfNeeded()
+        self.initToolbarIfNeeded(context: self.context)
     }
     
     private func textFieldMaxHeight(_ maxHeight: CGFloat, metrics: LayoutMetrics) -> CGFloat {
@@ -1914,10 +1914,10 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
 // MARK: Swiftgram
 extension AttachmentTextInputPanelNode {
     
-    func initToolbarIfNeeded() {
+    func initToolbarIfNeeded(context: AccountContext) {
         guard #available(iOS 13.0, *) else { return }
         guard SGSimpleSettings.shared.inputToolbar else { return }
-        guard SGSimpleSettings.shared.b else { return }
+        guard context.sharedContext.immediateSGStatus.status > 1 else { return }
         guard self.toolbarNode == nil else { return }
         let toolbarView = ChatToolbarView(
             onQuote: { [weak self] in

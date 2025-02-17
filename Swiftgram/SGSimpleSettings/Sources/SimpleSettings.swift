@@ -127,6 +127,7 @@ public class SGSimpleSettings {
         case pinnedMessageNotifications
         case mentionsAndRepliesNotifications
         case primaryUserId
+        case status
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -244,7 +245,8 @@ public class SGSimpleSettings {
     public static let groupDefaultValues: [String: Any] = [
         Keys.legacyNotificationsFix.rawValue: false,
         Keys.pinnedMessageNotifications.rawValue: PinnedMessageNotificationsSettings.default.rawValue,
-        Keys.mentionsAndRepliesNotifications.rawValue: MentionsAndRepliesNotificationsSettings.default.rawValue
+        Keys.mentionsAndRepliesNotifications.rawValue: MentionsAndRepliesNotificationsSettings.default.rawValue,
+        Keys.status.rawValue: 1
     ]
     
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
@@ -426,10 +428,10 @@ public class SGSimpleSettings {
     @UserDefault(key: Keys.legacyNotificationsFix.rawValue, userDefaults: UserDefaults(suiteName: APP_GROUP_IDENTIFIER) ?? .standard)
     public var legacyNotificationsFix: Bool
     
-    @UserDefault(key: Keys.legacyNotificationsFix.rawValue, userDefaults: UserDefaults(suiteName: APP_GROUP_IDENTIFIER) ?? .standard)
+    @UserDefault(key: Keys.status.rawValue, userDefaults: UserDefaults(suiteName: APP_GROUP_IDENTIFIER) ?? .standard)
     public var status: Int64
-    
-    public var b: Bool = true
+
+    public var ephemeralStatus: Int64 = 1
     
     @UserDefault(key: Keys.messageFilterKeywords.rawValue)
     public var messageFilterKeywords: [String]
