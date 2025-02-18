@@ -118,7 +118,7 @@
 
 "Settings.RecordingButton" = "Voice Recording Button";
 
-"Settings.DefaultEmojisFirst" = "Prioritize standard emojis";
+"Settings.DefaultEmojisFirst" = "Standard emojis first";
 "Settings.DefaultEmojisFirst.Notice" = "Show standard emojis before premium in emoji keyboard";
 
 /* Date when chat was created. "created: 24 May 2016" */
@@ -132,12 +132,12 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Double-tap to edit message";
 
 "Settings.wideChannelPosts" = "Wide posts in channels";
-"Settings.ForceEmojiTab" = "Emoji keyboard by default";
+"Settings.ForceEmojiTab" = "Emoji tab first";
 
 "Settings.forceBuiltInMic" = "Force Device Microphone";
 "Settings.forceBuiltInMic.Notice" = "If enabled, app will use only device microphone even if headphones are connected.";
 
-"Settings.hideChannelBottomButton" = "Hide Channel Bottom Panel";
+"Settings.showChannelBottomButton" = "Channel Bottom Panel";
 
 "Settings.CallConfirmation" = "Call Confirmation";
 "Settings.CallConfirmation.Notice" = "Swiftgram will ask for your confirmation before making a call.";
