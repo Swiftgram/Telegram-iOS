@@ -103,10 +103,11 @@
 "Settings.ChatSwipeOptions" = "Опции чатов при свайпе";
 "Settings.DeleteChatSwipeOption" = "Свайп для удаления чата";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
-"Settings.PullToNextChannel" = "Потянуть для перехода в канал";
+"Settings.PullToNextChannel" = "Свайп между каналами";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
-"Settings.PullToNextTopic" = "Потянуть для перехода к след. теме";
+"Settings.PullToNextTopic" = "Свайп между топиками";
 "Settings.GalleryCamera" = "Камера в галерее";
+"Settings.GalleryCameraPreview" = "Превью камеры в галерее";
 /* "Send Message As..." button */
 "Settings.SendAsButton" = "Кнопка \"%@\"";
 "Settings.SnapDeletionEffect" = "Эффекты удаления сообщений";
@@ -130,9 +131,9 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Редактирование двойным тапом";
 
 "Settings.wideChannelPosts" = "Широкие посты в каналах";
-"Settings.ForceEmojiTab" = "Клавиатура с эмодзи по умолчанию";
+"Settings.ForceEmojiTab" = "Панель эмодзи в начале";
 
-"Settings.forceBuiltInMic" = "Всегда использовать микрофон устройства";
+"Settings.forceBuiltInMic" = "Микрофон устройства";
 "Settings.forceBuiltInMic.Notice" = "Если включено, то приложение будет использовать только встроенный микрофон устройства, даже если подключены наушники.";
 
 "Settings.hideChannelBottomButton" = "Скрыть нижнюю панель в каналах";
