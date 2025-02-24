@@ -20,6 +20,7 @@ import SGLogging
 private enum SGProControllerSection: Int32, SGItemListSection {
     case base
     case notifications
+    case footer
 }
 
 private enum SGProDisclosureLink: String {
@@ -36,7 +37,11 @@ private enum SGProOneFromManySetting: String {
     case mentionsAndRepliesNotifications
 }
 
-private typealias SGProControllerEntry = SGItemListUIEntry<SGProControllerSection, SGProToggles, AnyHashable, SGProOneFromManySetting, SGProDisclosureLink, AnyHashable>
+private enum SGProAction {
+    case resetIAP
+}
+
+private typealias SGProControllerEntry = SGItemListUIEntry<SGProControllerSection, SGProToggles, AnyHashable, SGProOneFromManySetting, SGProDisclosureLink, SGProAction>
 
 private func SGProControllerEntries(presentationData: PresentationData) -> [SGProControllerEntry] {
     var entries: [SGProControllerEntry] = []
@@ -52,6 +57,10 @@ private func SGProControllerEntries(presentationData: PresentationData) -> [SGPr
     entries.append(.oneFromManySelector(id: id.count, section: .notifications, settingName: .pinnedMessageNotifications, text: "Notifications.PinnedMessages.Title".i18n(lang), value: "Notifications.PinnedMessages.value.\(SGSimpleSettings.shared.pinnedMessageNotifications)".i18n(lang), enabled: true))
     entries.append(.oneFromManySelector(id: id.count, section: .notifications, settingName: .mentionsAndRepliesNotifications, text: "Notifications.MentionsAndReplies.Title".i18n(lang), value: "Notifications.MentionsAndReplies.value.\(SGSimpleSettings.shared.mentionsAndRepliesNotifications)".i18n(lang), enabled: true))
 
+    #if DEBUG
+    entries.append(.action(id: id.count, section: .footer, actionType: .resetIAP, text: "Reset Pro", kind: .destructive))
+    #endif
+    
     return entries
 }
 
@@ -65,7 +74,7 @@ public func sgProController(context: AccountContext) -> ViewController {
 
     let simplePromise = ValuePromise(true, ignoreRepeated: false)
     
-    let arguments = SGItemListArguments<SGProToggles, AnyHashable, SGProOneFromManySetting, SGProDisclosureLink, AnyHashable>(context: context, setBoolValue: { toggleName, value in
+    let arguments = SGItemListArguments<SGProToggles, AnyHashable, SGProOneFromManySetting, SGProDisclosureLink, SGProAction>(context: context, setBoolValue: { toggleName, value in
         switch toggleName {
             case .inputToolbar:
                 SGSimpleSettings.shared.inputToolbar = value
@@ -127,8 +136,26 @@ public func sgProController(context: AccountContext) -> ViewController {
                     presentControllerImpl?(context.sharedContext.makeSGUpdateIOSController(), nil)
                 }
         }
-    }, action: { _ in
-    
+    }, action: { action in
+        let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+        switch action {
+            case .resetIAP:
+                let updateSettingsSignal = updateSGStatusInteractively(accountManager: context.sharedContext.accountManager, { status in
+                    var status = status
+                    status.status = SGStatus.default.status
+                    SGSimpleSettings.shared.primaryUserId = ""
+                    return status
+                })
+                let _ = (updateSettingsSignal |> deliverOnMainQueue).start(next: {
+                    presentControllerImpl?(UndoOverlayController(
+                        presentationData: presentationData,
+                        content: .info(title: nil, text: "Status reset completed. You can now restore purchases.", timeout: nil, customUndoText: nil),
+                        elevatedLayout: false,
+                        action: { _ in return false }
+                    ),
+                    nil)
+                })
+        }
     })
     
     let signal = combineLatest(context.sharedContext.presentationData, simplePromise.get())

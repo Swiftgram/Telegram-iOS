@@ -1013,6 +1013,18 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                                     lastViewController.present(ContactsController(context: context), in: .window(.root), with: ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
                                 }
                                 return
+                            case "pro", "premium", "buy":
+                                if context.sharedContext.immediateSGStatus.status > 1 {
+                                    navigationController?.pushViewController(context.sharedContext.makeSGProController(context: context))
+                                } else {
+                                    if let lastViewController = navigationController?.viewControllers.last as? ViewController {
+                                        if let payWallController = context.sharedContext.makeSGPayWallController(context: context) {
+                                            lastViewController.present(payWallController, in: .window(.root), with: ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+                                        } else {
+                                            lastViewController.present(context.sharedContext.makeSGUpdateIOSController(), animated: true)
+                                        }
+                                    }
+                                }
                             default:
                                 break
                         }

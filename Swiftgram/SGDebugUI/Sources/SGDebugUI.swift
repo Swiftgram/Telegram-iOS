@@ -152,7 +152,6 @@ public func sgDebugController(context: AccountContext) -> ViewController {
             }
             #endif
         case .resetIAP:
-            #if DEBUG
             let updateSettingsSignal = updateSGStatusInteractively(accountManager: context.sharedContext.accountManager, { status in
                 var status = status
                 status.status = SGStatus.default.status
@@ -168,7 +167,6 @@ public func sgDebugController(context: AccountContext) -> ViewController {
                 ),
                 nil)
             })
-            #endif
         }
     })
     

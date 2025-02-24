@@ -245,7 +245,7 @@ struct SessionBackupManagerView: View {
     private func performDelete(_ session: SessionBackup) {
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
         
-        let controller = textAlertController(context: context, title: "SessionBackup.DeleteSingle.Title".i18n(lang), text: "Sessionbackup.DeleteSingle.Text".i18n(lang, args: "\(session.name ?? "\(session.userId)")"), actions: [
+        let controller = textAlertController(context: context, title: "SessionBackup.DeleteSingle.Title".i18n(lang), text: "SessionBackup.DeleteSingle.Text".i18n(lang, args: "\(session.name ?? "\(session.userId)")"), actions: [
             TextAlertAction(type: .destructiveAction, title: presentationData.strings.Common_Delete, action: {
                 let controller = OverlayStatusController(theme: presentationData.theme, type: .loading(cancelled: nil))
                 wrapperController?.present(controller, in: .window(.root), with: nil)

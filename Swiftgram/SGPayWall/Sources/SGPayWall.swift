@@ -13,7 +13,7 @@ import TelegramUIPreferences
 
 
 @available(iOS 13.0, *)
-public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacementController: ViewController, presentationData: PresentationData? = nil, SGIAPManager: SGIAPManager, openUrl: @escaping (String) -> Void) -> ViewController {
+public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacementController: ViewController, presentationData: PresentationData? = nil, SGIAPManager: SGIAPManager, openUrl: @escaping (String) -> Void, paymentsEnabled: Bool) -> ViewController {
     //    let theme = presentationData?.theme ?? (UITraitCollection.current.userInterfaceStyle == .dark ? defaultDarkColorPresentationTheme : defaultPresentationTheme)
     let theme = defaultDarkColorPresentationTheme
     let strings = presentationData?.strings ?? defaultPresentationStrings
@@ -30,7 +30,7 @@ public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacemen
     let swiftUIView = SGSwiftUIView<SGPayWallView>(
         legacyController: legacyController,
         content: {
-            SGPayWallView(wrapperController: legacyController, replacementController: replacementController, SGIAP: SGIAPManager, statusSignal: statusSignal, openUrl: openUrl)
+            SGPayWallView(wrapperController: legacyController, replacementController: replacementController, SGIAP: SGIAPManager, statusSignal: statusSignal, openUrl: openUrl, paymentsEnabled: paymentsEnabled)
         }
     )
     let controller = UIHostingController(rootView: swiftUIView, ignoreSafeArea: true)
@@ -106,6 +106,7 @@ struct SGPayWallView: View {
     let SGIAP: SGIAPManager
     let statusSignal: Signal<Int64, NoError>
     let openUrl: (String) -> Void
+    let paymentsEnabled: Bool
     
     private enum PayWallState: Equatable {
         case ready // ready to buy
@@ -155,11 +156,23 @@ struct SGPayWallView: View {
                         }
                         
                         // Features
-                        VStack(spacing: 8) {
+                        VStack(spacing: 36) {
                             featuresSection
-                            legalSection
-                            restorePurchasesButton
-                        }
+                            
+                            aboutSection
+                            
+                            VStack(spacing: 8) {
+                                HStack {
+                                    legalSection
+                                    Spacer()
+                                }
+                                
+                                HStack {
+                                    restorePurchasesButton
+                                    Spacer()
+                                }
+                            }
+                    }
                         
                         
                         // Spacer for purchase buttons
@@ -256,6 +269,14 @@ struct SGPayWallView: View {
                 title: "PayWall.InputToolbar.Title".i18n(lang),
                 subtitle: "PayWall.InputToolbar.Notice".i18n(lang)
             )
+            
+            FeatureRow(
+                icon: Image("SwiftgramSettings")
+                    .resizable()
+                    .frame(width: 32, height: 32),
+                title: "PayWall.AppIcons.Title".i18n(lang),
+                subtitle: "PayWall.AppIcons.Notice".i18n(lang)
+            )
         }
     }
     
@@ -328,6 +349,25 @@ struct SGPayWallView: View {
         }
     }
     
+    
+    private var aboutSection: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Text("PayWall.About.Title".i18n(lang))
+                    .font(.headline)
+                    .fontWeight(.medium)
+                Spacer()
+            }
+            
+            HStack {
+                Text("PayWall.About.Notice".i18n(lang))
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+        }
+    }
+    
     private var closeButtonView: some View {
         Button(action: {
             wrapperController?.dismiss(animated: true)
@@ -353,7 +393,7 @@ struct SGPayWallView: View {
             } else if state == .validating {
                 return "PayWall.Button.Validating".i18n(lang)
             } else if let product = product {
-                if !SGIAP.canMakePayments {
+                if !SGIAP.canMakePayments || paymentsEnabled == false {
                     return "PayWall.Button.PaymentsUnavailable".i18n(lang)
                 } else {
                     return "PayWall.Button.Subscribe".i18n(lang, args: product.price)
@@ -365,7 +405,7 @@ struct SGPayWallView: View {
     }
     
     private var canPurchase: Bool {
-        if !SGIAP.canMakePayments {
+        if !SGIAP.canMakePayments || paymentsEnabled == false {
             return false
         } else {
             return product != nil
@@ -453,8 +493,8 @@ struct FeatureIcon: View {
 
 
 @available(iOS 13.0, *)
-struct FeatureRow: View {
-    let icon: FeatureIcon
+struct FeatureRow<IconContent: View>: View {
+    let icon: IconContent
     let title: String
     let subtitle: String
     
