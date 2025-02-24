@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import Postbox
 import SwiftSignalKit
@@ -141,6 +142,7 @@ private var dismissedSGSuggestions: Set<String> = Set() {
 
 public func dismissSGProvidedSuggestion(suggestionId: String) {
     dismissedSGSuggestions.insert(suggestionId)
+    SGSimpleSettings.shared.dismissedSGSuggestions.append(suggestionId)
 }
 
 public func getSGProvidedSuggestions(account: Account) -> Signal<Data?, NoError> {
@@ -165,7 +167,7 @@ public func getSGProvidedSuggestions(account: Account) -> Signal<Data?, NoError>
                     guard let id = suggestion["id"] as? String else {
                         return true
                     }
-                    return !dismissedSuggestionsValue.contains(id)
+                    return !dismissedSuggestionsValue.contains(id) && !SGSimpleSettings.shared.dismissedSGSuggestions.contains(id)
                 }
                 let modifiedData = try JSONSerialization.data(withJSONObject: filteredSuggestions, options: [])
                 return modifiedData

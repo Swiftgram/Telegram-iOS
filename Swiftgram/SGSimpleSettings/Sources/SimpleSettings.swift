@@ -42,7 +42,8 @@ public class SGSimpleSettings {
             { let _ = self.disableSnapDeletionEffect },
             { let _ = self.startTelescopeWithRearCam },
             { let _ = self.hideRecordingButton },
-            { let _ = self.inputToolbar }
+            { let _ = self.inputToolbar },
+            { let _ = self.dismissedSGSuggestions }
         ]
 
         tasks.forEach { task in
@@ -128,6 +129,7 @@ public class SGSimpleSettings {
         case mentionsAndRepliesNotifications
         case primaryUserId
         case status
+        case dismissedSGSuggestions
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -239,7 +241,8 @@ public class SGSimpleSettings {
         Keys.videoPIPSwipeDirection.rawValue: VideoPIPSwipeDirection.up.rawValue,
         Keys.messageFilterKeywords.rawValue: [],
         Keys.inputToolbar.rawValue: false,
-        Keys.primaryUserId.rawValue: ""
+        Keys.primaryUserId.rawValue: "",
+        Keys.dismissedSGSuggestions.rawValue: []
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -447,6 +450,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.primaryUserId.rawValue)
     public var primaryUserId: String
+
+    @UserDefault(key: Keys.dismissedSGSuggestions.rawValue)
+    public var dismissedSGSuggestions: [String]
 }
 
 extension SGSimpleSettings {
