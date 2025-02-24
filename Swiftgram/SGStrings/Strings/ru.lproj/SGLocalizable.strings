@@ -117,7 +117,7 @@
 
 "Settings.RecordingButton" = "Кнопка записи голоса";
 
-"Settings.DefaultEmojisFirst" = "Приоритизировать стандартные эмодзи";
+"Settings.DefaultEmojisFirst" = "iOS эмодзи в начале";
 "Settings.DefaultEmojisFirst.Notice" = "Показывать стандартные эмодзи перед Premium в эмодзи-клавиатуре";
 
 /* Date when chat was created. "created: 24 May 2016" */
