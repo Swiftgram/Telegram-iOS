@@ -852,7 +852,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                     PresentationAppIcon(name: "SGTitanium", imageName: "SGTitanium"),
                     PresentationAppIcon(isSGPro: true, name: "SGPro", imageName: "SGPro"),
                     PresentationAppIcon(isSGPro: true, name: "SGGold", imageName: "SGGold"),
-                    PresentationAppIcon(isSGPro: true, name: "SGDucky", imageName: "SGDucky"),
+                    SGSimpleSettings.shared.duckyAppIconAvailable ? PresentationAppIcon(isSGPro: true, name: "SGDucky", imageName: "SGDucky") : PresentationAppIcon(name: "", imageName: ""), // Empty
                     PresentationAppIcon(name: "", imageName: ""), // Empty
                     PresentationAppIcon(name: "SGNeon", imageName: "SGNeon"),
                     PresentationAppIcon(name: "SGNeonBlue", imageName: "SGNeonBlue"),
