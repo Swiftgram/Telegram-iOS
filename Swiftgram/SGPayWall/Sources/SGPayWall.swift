@@ -399,7 +399,7 @@ struct SGPayWallView: View {
                     return "PayWall.Button.Subscribe".i18n(lang, args: product.price)
                 }
             } else {
-                return "Paywall.Button.ContactingAppStore".i18n(lang)
+                return "PayWall.Button.ContactingAppStore".i18n(lang)
             }
         }
     }
