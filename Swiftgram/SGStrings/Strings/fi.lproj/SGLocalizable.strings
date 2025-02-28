@@ -195,7 +195,7 @@
 "PayWall.SessionBackup.Notice" = "Palauta istunnot salatusta paikallisesta Apple Keychain -varmuuskopiosta.";
 
 "PayWall.MessageFilter.Title" = "Viestisuodatin";
-"PayWall.MessageFilter.Notice" = "Vähennä roskapostin, mainosten ja ärsyttävien viestien näkyvyyttä.";
+"PayWall.MessageFilter.Notice" = "Piilota tai mykistä ei-tärkeitä ilmoituksia.";
 
 "PayWall.Notifications.Title" = "Poista @maininnat ja vastaukset käytöstä";
 "PayWall.MessageFilter.Notice" = "Piilota tai mykistä ei-tärkeitä ilmoituksia.";
