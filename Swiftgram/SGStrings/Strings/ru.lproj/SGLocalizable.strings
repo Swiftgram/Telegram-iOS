@@ -195,7 +195,7 @@
 "PayWall.SessionBackup.Notice" = "Восстановите сессии из зашифрованного локального бэкапа Keychain Apple.";
 
 "PayWall.MessageFilter.Title" = "Фильтр сообщений";
-"PayWall.MessageFilter.Notice" = "Снизьте видимость СПАМА, реклам и раздражающих сообщений.";
+"PayWall.MessageFilter.Notice" = "Скрыть или приглушить неважные уведомления.";
 
 "PayWall.Notifications.Title" = "Отключить @упоминания и ответы";
 "PayWall.MessageFilter.Notice" = "Скрыть или приглушить неважные уведомления.";
