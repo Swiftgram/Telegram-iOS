@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "上传加速";
 "Settings.DownloadsBoost" = "下载加速";
+"Settings.DownloadsBoost.Notice" = "增加并行连接数和文件块大小。如果您的网络无法承载，请尝试调整至适合您网络的选项。";
 "Settings.DownloadsBoost.none" = "停用";
 "Settings.DownloadsBoost.medium" = "中等";
 "Settings.DownloadsBoost.maximum" = "最大";
@@ -106,6 +107,7 @@
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
 "Settings.PullToNextTopic" = "上滑到下一个主题";
 "Settings.GalleryCamera" = "图库中的相机";
+"Settings.GalleryCameraPreview" = "图库中的相机预览";
 /* "Send Message As..." button */
 "Settings.SendAsButton" = "\"%@\" 按钮";
 "Settings.SnapDeletionEffect" = "删除消息的特效";
@@ -146,3 +148,6 @@
 "CallConfirmation.Video.Title" = "拨打视频通话？";
 
 "MutualContact.Label" = "双向联系人";
+
+"Settings.swipeForVideoPIP" = "上滑打开画中画";
+"Settings.swipeForVideoPIP.Notice" = "若启用，向上滑动视频将会以画中画模式打开。";
