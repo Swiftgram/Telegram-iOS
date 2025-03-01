@@ -158,10 +158,10 @@
 "SessionBackup.Actions.Backup" = "Бэкап в Keychain";
 "SessionBackup.Actions.Restore" = "Восстановить из Keychain";
 "SessionBackup.Actions.DeleteAll" = "Удалить Бэкап из Keychain";
-"SessionBackup.Actions.DeleteOne" = "Удалить из резервной копии";
+"SessionBackup.Actions.DeleteOne" = "Удалить из Бэкапа";
 "SessionBackup.Actions.RemoveFromApp" = "Удалить из приложения";
 "SessionBackup.LastBackupAt" = "Последний бэкап: %@";
-"SessionBackup.RestoreOK" = "ОК. Сессий восстановлено: %@";
+"SessionBackup.RestoreOK" = "ОК. Восстановлено: %@";
 "SessionBackup.LoggedIn" = "Залогинен";
 "SessionBackup.LoggedOut" = "Разлогинен";
 "SessionBackup.DeleteAll.Title" = "Удалить все сессии?";
@@ -173,9 +173,9 @@
 "SessionBackup.Notice" = "Сессии шифруются и хранятся в Keychain устройства. Сессии никогда не покидают ваше устройство. Важно: Сессии могут быть разлогинены самим Telegram или с другого устройства.";
 
 "MessageFilter.Title" = "Фильтр сообщений";
-"MessageFilter.SubTitle" = "Уберите отвлекающие факторы и уменьшите видимость сообщений, содержащих ключевые слова ниже.\nКлючевые слова чувствительны к регистру.";
+"MessageFilter.SubTitle" = "Убирает отвлекающие факторы и уменьшает видимость сообщений, содержащих ключевые слова ниже.\nКлючевые слова чувствительны к регистру.";
 "MessageFilter.Keywords.Title" = "Ключевые слова";
-"MessageFilter.InputPlaceholder" = "Введите ключевое слово";
+"MessageFilter.InputPlaceholder" = "Введите слово";
 
 "InputToolbar.Title" = "Панель форматирования";
 
@@ -192,30 +192,30 @@
 "PayWall.Text" = "Заряжен Pro функциями";
 
 "PayWall.SessionBackup.Title" = "Бэкап Сессий";
-"PayWall.SessionBackup.Notice" = "Восстановите сессии из зашифрованного локального бэкапа Keychain Apple.";
+"PayWall.SessionBackup.Notice" = "Восстановление сессии из зашифрованного бэкапа Keychain на вашем девайсе.";
 
 "PayWall.MessageFilter.Title" = "Фильтр сообщений";
-"PayWall.MessageFilter.Notice" = "Снизьте видимость СПАМА, реклам и раздражающих сообщений.";
+"PayWall.MessageFilter.Notice" = "Уменьшает видимость надоедливых сообщений со СПАМом или рекламой";
 
-"PayWall.Notifications.Title" = "Отключить @упоминания и ответы";
-"PayWall.MessageFilter.Notice" = "Скрыть или приглушить неважные уведомления.";
+"PayWall.Notifications.Title" = "Отключение @тэгов и ответов";
+"PayWall.MessageFilter.Notice" = "Скрывает или приглушает неважные уведомления.";
 
 "PayWall.InputToolbar.Title" = "Панель форматирования";
-"PayWall.InputToolbar.Notice" = "Сэкономьте время, подготавливая ваши посты с помощью панели прямо над вашей клавиатурой.";
+"PayWall.InputToolbar.Notice" = "Экономит время написания постов с помощью панели прямо над клавиатурой.";
 
 "PayWall.AppIcons.Title" = "Уникальные иконки приложений";
-"PayWall.AppIcons.Notice" = "Настройте внешний вид Swiftgram на главном экране.";
+"PayWall.AppIcons.Notice" = "Настройка внешнего вида Swiftgram на главном экране.";
 
 "PayWall.About.Title" = "О Swiftgram Pro";
 "PayWall.About.Notice" = "Бесплатная версия Swiftgram предлагает десятки функций и улучшений по сравнению с приложением Telegram. Новые функции и синхронизация Swiftgram с ежемесячными обновлениями Telegram — это огромные усилия, требующие много времени и дорогой техники.\n\nSwiftgram — это приложение с открытым исходным кодом, которое уважает вашу конфиденциальность и не беспокоит вас рекламой. Подписываясь на Swiftgram Pro, вы получаете доступ к эксклюзивным функциям и поддерживаете независимого разработчика.\n\n- @Kylmakalle";
 
 "PayWall.RestorePurchases" = "Восстановить покупки";
-"PayWall.Terms" = "Условия обслуживания";
+"PayWall.Terms" = "Условия использования";
 "PayWall.Privacy" = "Политика конфиденциальности";
 "PayWall.TermsURL" = "https://swiftgram.app/terms";
 "PayWall.PrivacyURL" = "https://swiftgram.app/privacy";
-"PayWall.Notice.Markdown" = "Подписываясь на Swiftgram Pro, вы соглашаетесь с [Условиями обслуживания Swiftgram](%1$@) и [Политикой конфиденциальности](%2$@).";
-"PayWall.Notice.Raw" = "Подписываясь на Swiftgram Pro, вы соглашаетесь с Условиями обслуживания и Политикой конфиденциальности Swiftgram.";
+"PayWall.Notice.Markdown" = "Подписываясь на Swiftgram Pro, вы соглашаетесь с [Условиями использования Swiftgram](%1$@) и [Политикой конфиденциальности](%2$@).";
+"PayWall.Notice.Raw" = "Подписываясь на Swiftgram Pro, вы соглашаетесь с Условиями использования и Политикой конфиденциальности Swiftgram.";
 
 "PayWall.Button.OpenPro" = "Pro функции";
 "PayWall.Button.Purchasing" = "Покупка...";
