@@ -198,7 +198,7 @@
 "PayWall.MessageFilter.Notice" = "Скрывает или приглушает неважные уведомления.";
 
 "PayWall.Notifications.Title" = "Отключение @тэгов и ответов";
-"PayWall.MessageFilter.Notice" = "Скрывает или приглушает неважные уведомления.";
+"PayWall.Notifications.Notice" = "Скрывает или приглушает неважные уведомления.";
 
 "PayWall.InputToolbar.Title" = "Панель форматирования";
 "PayWall.InputToolbar.Notice" = "Экономит время написания постов с помощью панели прямо над клавиатурой.";
