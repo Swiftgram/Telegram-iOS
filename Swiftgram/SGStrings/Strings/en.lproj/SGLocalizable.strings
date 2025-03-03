@@ -198,7 +198,7 @@
 "PayWall.MessageFilter.Notice" = "Reduce visibility of SPAM, promotions and annoying messages.";
 
 "PayWall.Notifications.Title" = "Disable @mentions and replies";
-"PayWall.MessageFilter.Notice" = "Hide or mute non-important notifications.";
+"PayWall.Notifications.Notice" = "Hide or mute non-important notifications.";
 
 "PayWall.InputToolbar.Title" = "Formatting Panel";
 "PayWall.InputToolbar.Notice" = "Save time preparing your posts with a panel right above your keyboard.";

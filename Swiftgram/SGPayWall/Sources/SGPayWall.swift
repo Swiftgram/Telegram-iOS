@@ -261,7 +261,7 @@ struct SGPayWallView: View {
             FeatureRow(
                 icon: FeatureIcon(icon: "bell.badge.slash.fill", backgroundColor: .red),
                 title: "PayWall.Notifications.Title".i18n(lang),
-                subtitle: "PayWall.MessageFilter.Notice".i18n(lang)
+                subtitle: "PayWall.Notifications.Notice".i18n(lang)
             )
             
             FeatureRow(
