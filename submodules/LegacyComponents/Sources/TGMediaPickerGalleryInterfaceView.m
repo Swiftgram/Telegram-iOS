@@ -1792,7 +1792,7 @@
             break;
             
         default:
-            frame = CGRectMake(muteButtonFrame.origin.x + muteButtonFrame.size.width + 5, screenEdges.bottom - TGPhotoEditorToolbarSize - [_captionMixin.inputPanel baseHeight] - 45 - _safeAreaInset.bottom - panelInset - (hasHeaderView ? 64.0 : 0.0), _telescopeButton.frame.size.width, _telescopeButton.frame.size.height);
+            frame = CGRectMake(muteButtonFrame.origin.x + muteButtonFrame.size.width + 5, screenEdges.bottom - TGPhotoEditorToolbarSize - [_captionMixin.inputPanel baseHeight] - 26 - _safeAreaInset.bottom - panelInset - (hasHeaderView ? 64.0 : 0.0), _telescopeButton.frame.size.width, _telescopeButton.frame.size.height);
             break;
     }
     
