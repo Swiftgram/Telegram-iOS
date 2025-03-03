@@ -153,7 +153,7 @@
 "Settings.swipeForVideoPIP" = "Видео PIP со свайпом";
 "Settings.swipeForVideoPIP.Notice" = "Если включено, свайп по видео откроет его в режиме «Картинка в картинке».";
 
-"SessionBackup.Title" = "Резервная копия сессии";
+"SessionBackup.Title" = "Бэкап Сессий";
 "SessionBackup.Sessions.Title" = "Сессии";
 "SessionBackup.Actions.Backup" = "Бэкап в Keychain";
 "SessionBackup.Actions.Restore" = "Восстановить из Keychain";
