@@ -960,9 +960,12 @@ private func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, conte
         swiftgramLabel = .none
     }
     
-    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 0, label: .titleBadge(presentationData.strings.Settings_New, presentationData.theme.list.itemAccentColor), text: "Swiftgram Pro", icon: PresentationResourcesSettings.swiftgramPro, action: {
-        interaction.openSettings(.swiftgramPro)
-    }))
+    
+    if context.currentAppConfiguration.with({ $0 }).sgWebSettings.global.paymentsEnabled || context.sharedContext.immediateSGStatus.status > 1 {
+        items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 0, label: .titleBadge(presentationData.strings.Settings_New, presentationData.theme.list.itemAccentColor), text: "Swiftgram Pro", icon: PresentationResourcesSettings.swiftgramPro, action: {
+            interaction.openSettings(.swiftgramPro)
+        }))
+    }
     items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 1, label: swiftgramLabel, text: "Swiftgram", icon: PresentationResourcesSettings.swiftgram, action: {
         interaction.openSettings(.swiftgram)
     }))
