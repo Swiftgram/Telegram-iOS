@@ -198,7 +198,7 @@
 "PayWall.MessageFilter.Notice" = "Piilota tai mykistä ei-tärkeitä ilmoituksia.";
 
 "PayWall.Notifications.Title" = "Poista @maininnat ja vastaukset käytöstä";
-"PayWall.MessageFilter.Notice" = "Piilota tai mykistä ei-tärkeitä ilmoituksia.";
+"PayWall.Notifications.Notice" = "Piilota tai mykistä ei-tärkeitä ilmoituksia.";
 
 "PayWall.InputToolbar.Title" = "Muotoilupaneeli";
 "PayWall.InputToolbar.Notice" = "Säästä aikaa valmistellessasi julkaisuja paneelilla juuri näppäimistösi yläpuolella.";
