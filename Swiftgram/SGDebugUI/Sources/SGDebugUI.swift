@@ -37,6 +37,7 @@ private enum SGDebugActions: String {
     case flexing
     case fileManager
     case clearRegDateCache
+    case restorePurchases
     case resetIAP
 }
 
@@ -65,6 +66,9 @@ private func SGDebugControllerEntries(presentationData: PresentationData) -> [SG
 
     entries.append(.action(id: id.count, section: .base, actionType: .clearRegDateCache, text: "Clear Regdate cache", kind: .generic))
     entries.append(.toggle(id: id.count, section: .base, settingName: .forceImmediateShareSheet, value: SGSimpleSettings.shared.forceSystemSharing, text: "Force System Share Sheet", enabled: true))
+    
+    entries.append(.action(id: id.count, section: .base, actionType: .restorePurchases, text: "PayWall.RestorePurchases".i18n(presentationData.strings.baseLanguageCode), kind: .generic))
+    
     entries.append(.action(id: id.count, section: .base, actionType: .resetIAP, text: "Reset Pro", kind: .destructive))
 
     entries.append(.toggle(id: id.count, section: .notifications, settingName: .legacyNotificationsFix, value: SGSimpleSettings.shared.legacyNotificationsFix, text: "[OLD] Fix empty notifications", enabled: true))
@@ -151,6 +155,18 @@ public func sgDebugController(context: AccountContext) -> ViewController {
                 nil)
             }
             #endif
+        case .restorePurchases:
+            context.sharedContext.SGIAP?.restorePurchases {
+                DispatchQueue.main.async {
+                    presentControllerImpl?(UndoOverlayController(
+                        presentationData: presentationData,
+                        content: .info(title: nil, text: "PayWall.Button.Restoring".i18n(args: context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode), timeout: nil, customUndoText: nil),
+                        elevatedLayout: false,
+                        action: { _ in return false }
+                    ),
+                    nil)
+                }
+            }
         case .resetIAP:
             let updateSettingsSignal = updateSGStatusInteractively(accountManager: context.sharedContext.accountManager, { status in
                 var status = status
