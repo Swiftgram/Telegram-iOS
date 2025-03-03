@@ -961,7 +961,8 @@ private func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, conte
     }
     
     
-    if context.currentAppConfiguration.with({ $0 }).sgWebSettings.global.paymentsEnabled || context.sharedContext.immediateSGStatus.status > 1 {
+    let sgWebSettings = context.currentAppConfiguration.with({ $0 }).sgWebSettings
+    if sgWebSettings.global.paymentsEnabled || context.sharedContext.immediateSGStatus.status > 1 {
         items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 0, label: .titleBadge(presentationData.strings.Settings_New, presentationData.theme.list.itemAccentColor), text: "Swiftgram Pro", icon: PresentationResourcesSettings.swiftgramPro, action: {
             interaction.openSettings(.swiftgramPro)
         }))
@@ -1067,11 +1068,11 @@ private func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, conte
             interaction.openSettings(.businessSetup)
         }))
         // MARK: Swiftgram
-        /*
-        items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 104, label: .text(""), text: presentationData.strings.Settings_SendGift, icon: PresentationResourcesSettings.premiumGift, action: {
-            interaction.openSettings(.premiumGift)
-        }))
-        */
+        if sgWebSettings.global.canGrant {
+            items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 104, label: .text(""), text: "Telegram Gifts", icon: PresentationResourcesSettings.premiumGift, action: {
+                interaction.openSettings(.premiumGift)
+            }))
+        }
     }
     
     if let settings = data.globalSettings {
@@ -6529,8 +6530,8 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                     }
                     
                     // MARK: Swiftgram
-                    if ({ return false }()) && strongSelf.peerId.namespace == Namespaces.Peer.CloudUser, !user.isDeleted && user.botInfo == nil && !user.flags.contains(.isSupport) {
-                        items.append(.action(ContextMenuActionItem(text: presentationData.strings.Profile_SendGift, icon: { theme in
+                    if strongSelf.context.currentAppConfiguration.with({ $0 }).sgWebSettings.global.canGrant && strongSelf.peerId.namespace == Namespaces.Peer.CloudUser, !user.isDeleted && user.botInfo == nil && !user.flags.contains(.isSupport) {
+                        items.append(.action(ContextMenuActionItem(text: "Telegram Gifts", icon: { theme in
                             generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Gift"), color: theme.contextMenu.primaryColor)
                         }, action: { [weak self] _, f in
                             f(.dismissWithoutContent)
@@ -6689,8 +6690,8 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                     }
                 } else if let channel = peer as? TelegramChannel {
                     if let cachedData = strongSelf.data?.cachedData as? CachedChannelData {
-                        if case .broadcast = channel.info, cachedData.flags.contains(.starGiftsAvailable) {
-                            items.append(.action(ContextMenuActionItem(text: presentationData.strings.Profile_SendGift, badge: nil, icon: { theme in
+                        if case .broadcast = channel.info, cachedData.flags.contains(.starGiftsAvailable), strongSelf.context.currentAppConfiguration.with({ $0 }).sgWebSettings.global.canGrant {
+                            items.append(.action(ContextMenuActionItem(text: "Telegram Gifts", badge: nil, icon: { theme in
                                 generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Gift"), color: theme.contextMenu.primaryColor)
                             }, action: { [weak self] _, f in
                                 f(.dismissWithoutContent)

@@ -519,10 +519,10 @@ struct FeatureRow<IconContent: View>: View {
                 }
                 
                 Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.secondary)
+                // TODO(swiftgram): uncomment
+//                Image(systemName: "chevron.right")
+//                    .font(.system(size: 12, weight: .semibold))
+//                    .foregroundColor(.secondary)
             }
             .padding()
             .background(

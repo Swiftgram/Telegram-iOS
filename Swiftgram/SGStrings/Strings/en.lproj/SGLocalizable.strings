@@ -170,7 +170,7 @@
 "SessionBackup.DeleteSingle.Text" = "%@ session will be removed from Keychain.\n\nAccount will not be logged out from Swiftgram.";
 "SessionBackup.RemoveFromApp.Title" = "Remove account from App?";
 "SessionBackup.RemoveFromApp.Text" = "%@ session WILL BE REMOVED from Swiftgram! Session will remain active, so you can restore it later.";
-"SessionBackup.Notice" = "Sessions are encrypted and stored in the device Keychain. Sessions never leave your device. NB: Sessions may still be revoked by Telegram or from another device.";
+"SessionBackup.Notice" = "Sessions are encrypted and stored in the device Keychain. Sessions never leave your device.\n\nIMPORTANT: To restore sessions on a new device or after an OS reset, you MUST enable encrypted backups, otherwise Keychain won't be transfered.\n\nNOTE: Sessions may still be revoked by Telegram or from another device.";
 
 "MessageFilter.Title" = "Message Filter";
 "MessageFilter.SubTitle" = "Remove distractions and reduce visibility of messages containing keywords below.\nKeywords are case-sensitive.";

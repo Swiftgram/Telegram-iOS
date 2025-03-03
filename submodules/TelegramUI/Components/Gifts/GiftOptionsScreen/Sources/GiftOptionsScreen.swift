@@ -730,8 +730,8 @@ final class GiftOptionsScreenComponent: Component {
             
             let optionSpacing: CGFloat = 10.0
             let optionWidth = (availableSize.width - sideInset * 2.0 - optionSpacing * 2.0) / 3.0
-            
-            if isSelfGift || isChannelGift {
+            // MARK: Swiftgram
+            if isSelfGift || isChannelGift || { return true }() {
                 contentHeight += 6.0
             } else {
                 if let premiumProducts = state.premiumProducts {
