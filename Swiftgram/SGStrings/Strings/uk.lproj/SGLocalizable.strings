@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "Прискорення вивантаження";
 "Settings.DownloadsBoost" = "Прискорення завантаження";
+"Settings.DownloadsBoost.Notice" = "Збільшує кількість паралельних з'єднань та розмір частин файлів. Якщо ваша мережа не може витримати навантаження, спробуйте різні опції, які підходять вашому з'єднанню.";
 "Settings.DownloadsBoost.none" = "Відключено";
 "Settings.DownloadsBoost.medium" = "Середнє";
 "Settings.DownloadsBoost.maximum" = "Максимальне";
@@ -83,6 +84,7 @@
 "Common.RestartNow" = "Перезавантажити";
 "Common.OpenTelegram" = "Відкрити Telegram";
 "Common.UseTelegramForPremium" = "Зверніть увагу, що для отримання Telegram Premium ви маєте використовувати офіційний додаток Telegram. Після отримання Telegram Premium, усі переваги стануть доступними у Swiftgram.";
+"Common.UpdateOS" = "Необхідне оновлення iOS";
 
 "Message.HoldToShowOrReport" = "Затисніть, щоб переглянути або поскаржитись.";
 
@@ -106,6 +108,7 @@
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
 "Settings.PullToNextTopic" = "Потягнути до наступної гілки";
 "Settings.GalleryCamera" = "Камера в галереї";
+"Settings.GalleryCameraPreview" = "Попередній перегляд камери в галереї";
 /* "Send Message As..." button */
 "Settings.SendAsButton" = "Кнопка \"%@\"";
 "Settings.SnapDeletionEffect" = "Ефекти видалення повідомлення";
@@ -134,7 +137,7 @@
 "Settings.forceBuiltInMic" = "Використовувати мікрофон пристрою";
 "Settings.forceBuiltInMic.Notice" = "Якщо увімкнено, застосунок використовуватиме лише мікрофон пристрою, навіть якщо підключені навушники.";
 
-"Settings.hideChannelBottomButton" = "Приховати нижню панель каналів";
+"Settings.showChannelBottomButton" = "Нижня панель каналу";
 
 "Settings.CallConfirmation" = "Підтвердження викликів";
 "Settings.CallConfirmation.Notice" = "Swiftgram запитуватиме дозвіл перед здійсненням виклику.";
@@ -146,3 +149,82 @@
 "CallConfirmation.Video.Title" = "Здійснити відеовиклик?";
 
 "MutualContact.Label" = "взаємний контакт";
+
+"Settings.swipeForVideoPIP" = "Відео PIP зі змахуванням";
+"Settings.swipeForVideoPIP.Notice" = "Якщо увімкнено, змахування відео відкриє його в режимі «Картинка в картинці».";
+
+"SessionBackup.Title" = "Резервне копіювання сесії";
+"SessionBackup.Sessions.Title" = "Сесії";
+"SessionBackup.Actions.Backup" = "Резервне копіювання в Keychain";
+"SessionBackup.Actions.Restore" = "Відновлення з Keychain";
+"SessionBackup.Actions.DeleteAll" = "Видалити резервну копію Keychain";
+"SessionBackup.Actions.DeleteOne" = "Видалити з резервної копії";
+"SessionBackup.Actions.RemoveFromApp" = "Видалити з додатку";
+"SessionBackup.LastBackupAt" = "Останнє резервне копіювання: %@";
+"SessionBackup.RestoreOK" = "ОК. Сесії відновлено: %@";
+"SessionBackup.LoggedIn" = "Увійшли";
+"SessionBackup.LoggedOut" = "Вийшли";
+"SessionBackup.DeleteAll.Title" = "Видалити всі сесії?";
+"SessionBackup.DeleteAll.Text" = "Всі сесії будуть видалені з Keychain.\n\nОблікові записи не будуть вийшли зі Swiftgram.";
+"SessionBackup.DeleteSingle.Title" = "Видалити 1 (одну) сесію?";
+"SessionBackup.DeleteSingle.Text" = "%@ сесія буде видалена з Keychain.\n\nОбліковий запис не буде вийшов зі Swiftgram.";
+"SessionBackup.RemoveFromApp.Title" = "Видалити обліковий запис з додатку?";
+"SessionBackup.RemoveFromApp.Text" = "%@ сесія БУДЕ ВИДАЛЕНА з Swiftgram! Сесія залишиться активною, щоб ви могли відновити її пізніше.";
+"SessionBackup.Notice" = "Сесії зашифровані та зберігаються на пристрої. Сесії ніколи не залишають ваш пристрій.\n\nВАЖЛИВО: Для відновлення сесій на іншому пристрої або після скидання налаштувань, ви повинні ввімкнути шифрування резервних копій, в іншому випадку ключі не будуть перенесені.\n\nТАКОЖ: Сесії можуть бути відкликані Telegram або з іншого пристрою.";
+
+"MessageFilter.Title" = "Фільтр повідомлень";
+"MessageFilter.SubTitle" = "Приховати відволікання та зменшити видимість повідомлень, що містять нижчевказані ключові слова.\nКлючові слова чутливі до регістру.";
+"MessageFilter.Keywords.Title" = "Ключові слова";
+"MessageFilter.InputPlaceholder" = "Введіть ключове слово";
+
+"InputToolbar.Title" = "Панель форматування";
+
+"Notifications.MentionsAndReplies.Title" = "@Згадай та відповіді";
+"Notifications.MentionsAndReplies.value.default" = "Типовий";
+"Notifications.MentionsAndReplies.value.silenced" = "Приглушено";
+"Notifications.MentionsAndReplies.value.disabled" = "Відключено";
+"Notifications.PinnedMessages.Title" = "Закріплені повідомлення";
+"Notifications.PinnedMessages.value.default" = "Типовий";
+"Notifications.PinnedMessages.value.silenced" = "Приглушено";
+"Notifications.PinnedMessages.value.disabled" = "Відключено";
+
+
+"PayWall.Text" = "Посилений функціями Pro";
+
+"PayWall.SessionBackup.Title" = "Резервне копіювання сесій";
+"PayWall.SessionBackup.Notice" = "Відновлюйте сесії з зашифрованого резервного копіювання локального Apple Keychain.";
+
+"PayWall.MessageFilter.Title" = "Фільтр повідомлень";
+"PayWall.MessageFilter.Notice" = "Зменшити видимість СПАМу, реклам та набридливих повідомлень.";
+
+"PayWall.Notifications.Title" = "Вимкнути @згадки та відповіді";
+"PayWall.Notifications.Notice" = "Сховати або приглушити непотрібні сповіщення.";
+
+"PayWall.InputToolbar.Title" = "Панель форматування";
+"PayWall.InputToolbar.Notice" = "Збережіть час на підготовці ваших публікацій за допомогою панелі, що знаходиться безпосередньо над вашою клавіатурою.";
+
+"PayWall.AppIcons.Title" = "Унікальні значки додатків";
+"PayWall.AppIcons.Notice" = "Налаштуйте вигляд Swiftgram на вашому домашньому екрані.";
+
+"PayWall.About.Title" = "Про Swiftgram Pro";
+"PayWall.About.Notice" = "Безкоштовна версія Swiftgram надає десятки функцій та покращень у порівнянні з додатком Telegram. Інновації та підтримка Swiftgram в актуальному стані з місячними оновленнями Telegram потребує величезних зусиль, що вимагають багато часу та дорогого обладнання.\n\nSwiftgram — це додаток з відкритим кодом, який поважає вашу конфіденційність і не турбує вас рекламою. Підписуючись на Swiftgram Pro, ви отримуєте доступ до ексклюзивних функцій і підтримуєте незалежного розробника.\n\n- @Kylmakalle";
+
+"PayWall.RestorePurchases" = "Відновити покупки";
+"PayWall.Terms" = "Умови обслуговування";
+"PayWall.Privacy" = "Політика конфіденційності";
+"PayWall.TermsURL" = "https://swiftgram.app/terms";
+"PayWall.PrivacyURL" = "https://swiftgram.app/privacy";
+"PayWall.Notice.Markdown" = "Підписуючись на Swiftgram Pro, ви погоджуєтеся з [Умовами обслуговування Swiftgram](%1$@) та [Політикою конфіденційності](%2$@).";
+"PayWall.Notice.Raw" = "Підписуючись на Swiftgram Pro, ви погоджуєтеся з Умовами обслуговування Swiftgram та Політикою конфіденційності.";
+
+"PayWall.Button.OpenPro" = "Використовувати функції Pro";
+"PayWall.Button.Purchasing" = "Придбання...";
+"PayWall.Button.Restoring" = "Відновлення покупок...";
+"PayWall.Button.Validating" = "Перевірка покупки...";
+"PayWall.Button.PaymentsUnavailable" = "Платежі недоступні";
+"PayWall.Button.Subscribe" = "Підписатися за %@ / місяць";
+"PayWall.Button.ContactingAppStore" = "Зв'язок з App Store...";
+
+"Paywall.Error.Title" = "Помилка";
+"PayWall.ValidationError" = "Помилка валідації";
+"PayWall.ValidationError.TryAgain" = "Щось пішло не так під час перевірки покупки. Не хвилюйтеся! Спробуйте відновити покупки трохи пізніше.";
