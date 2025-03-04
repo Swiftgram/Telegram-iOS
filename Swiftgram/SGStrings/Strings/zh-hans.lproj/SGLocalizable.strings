@@ -56,6 +56,7 @@
 
 "Settings.UploadsBoost" = "上传加速";
 "Settings.DownloadsBoost" = "下载加速";
+"Settings.DownloadsBoost.Notice" = "增加并行连接的数量和文件块的大小。如果您的网络无法承受负载，请尝试不同适合您连接的选项。";
 "Settings.DownloadsBoost.none" = "停用";
 "Settings.DownloadsBoost.medium" = "中等";
 "Settings.DownloadsBoost.maximum" = "最大";
@@ -83,6 +84,7 @@
 "Common.RestartNow" = "立即重启";
 "Common.OpenTelegram" = "打开 Telegram";
 "Common.UseTelegramForPremium" = "请注意，您必须使用官方的 Telegram 客户端才可购买 Telegram Premium，一旦您获得 Telegram Premium，其所有功能也将在 Swiftgram 中生效。";
+"Common.UpdateOS" = "需要 iOS 更新";
 
 "Message.HoldToShowOrReport" = "长按显示或举报";
 
@@ -106,6 +108,7 @@
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
 "Settings.PullToNextTopic" = "上滑到下一个主题";
 "Settings.GalleryCamera" = "图库中的相机";
+"Settings.GalleryCameraPreview" = "图库中的相机预览";
 /* "Send Message As..." button */
 "Settings.SendAsButton" = "\"%@\" 按钮";
 "Settings.SnapDeletionEffect" = "删除消息的特效";
@@ -134,7 +137,7 @@
 "Settings.forceBuiltInMic" = "强制使用设备麦克风";
 "Settings.forceBuiltInMic.Notice" = "若启用，即使已连接耳机，应用也只使用设备自身的麦克风。";
 
-"Settings.hideChannelBottomButton" = "隐藏频道底部面板";
+"Settings.showChannelBottomButton" = "频道底部面板";
 
 "Settings.CallConfirmation" = "通话确认";
 "Settings.CallConfirmation.Notice" = "Swiftgram 将在拨打电话前征求您的确认";
@@ -146,3 +149,82 @@
 "CallConfirmation.Video.Title" = "拨打视频通话？";
 
 "MutualContact.Label" = "双向联系人";
+
+"Settings.swipeForVideoPIP" = "上滑打开画中画";
+"Settings.swipeForVideoPIP.Notice" = "如果启用，滑动视频将以画中画模式打开。";
+
+"SessionBackup.Title" = "会话备份";
+"SessionBackup.Sessions.Title" = "会话";
+"SessionBackup.Actions.Backup" = "备份到钥匙串";
+"SessionBackup.Actions.Restore" = "从钥匙串恢复";
+"SessionBackup.Actions.DeleteAll" = "删除钥匙串备份";
+"SessionBackup.Actions.DeleteOne" = "从备份中删除";
+"SessionBackup.Actions.RemoveFromApp" = "从应用程序中移除";
+"SessionBackup.LastBackupAt" = "最后备份：%@";
+"SessionBackup.RestoreOK" = "确定。已恢复会话：%@";
+"SessionBackup.LoggedIn" = "已登录";
+"SessionBackup.LoggedOut" = "已登出";
+"SessionBackup.DeleteAll.Title" = "删除所有会话？";
+"SessionBackup.DeleteAll.Text" = "所有会话将从钥匙串中删除。\n\n帐号将不会从 Swiftgram 登出。";
+"SessionBackup.DeleteSingle.Title" = "删除 1 个会话？";
+"SessionBackup.DeleteSingle.Text" = "%@ 会话将从钥匙串中删除。\n\n帐号将不会从 Swiftgram 登出。";
+"SessionBackup.RemoveFromApp.Title" = "从应用程序中移除帐户？";
+"SessionBackup.RemoveFromApp.Text" = "%@ 会话将从 Swiftgram 中移除！会话将保持活动状态，以便稍后恢复。";
+"SessionBackup.Notice" = "会话已加密并存储在设备的钥匙串中。会话永远不会离开您的设备。\n\n重要提示：要在新设备或操作系统重置后恢复会话，您必须启用加密备份，否则钥匙串将无法转移。\n\n注意：会话仍可能被Telegram或另一台设备撤销。";
+
+"MessageFilter.Title" = "消息过滤器";
+"MessageFilter.SubTitle" = "移除干扰，减少包含以下关键字的消息的可见性。\n关键字区分大小写。";
+"MessageFilter.Keywords.Title" = "关键字";
+"MessageFilter.InputPlaceholder" = "输入关键字";
+
+"InputToolbar.Title" = "格式面板";
+
+"Notifications.MentionsAndReplies.Title" = "@提及和回复";
+"Notifications.MentionsAndReplies.value.default" = "默认";
+"Notifications.MentionsAndReplies.value.silenced" = "已静音";
+"Notifications.MentionsAndReplies.value.disabled" = "停用";
+"Notifications.PinnedMessages.Title" = "置顶消息";
+"Notifications.PinnedMessages.value.default" = "默认";
+"Notifications.PinnedMessages.value.silenced" = "已静音";
+"Notifications.PinnedMessages.value.disabled" = "停用";
+
+
+"PayWall.Text" = "增强了专业功能";
+
+"PayWall.SessionBackup.Title" = "会话备份";
+"PayWall.SessionBackup.Notice" = "从加密的本地 Apple 钥匙串备份中恢复会话。";
+
+"PayWall.MessageFilter.Title" = "消息过滤器";
+"PayWall.MessageFilter.Notice" = "减少 SPAM、促销和令人烦恼的消息的可见性。";
+
+"PayWall.Notifications.Title" = "禁用 @提及和回复";
+"PayWall.Notifications.Notice" = "隐藏或静音不重要的通知。";
+
+"PayWall.InputToolbar.Title" = "格式面板";
+"PayWall.InputToolbar.Notice" = "使用键盘上方的面板节省准备帖子所需的时间。";
+
+"PayWall.AppIcons.Title" = "独特的应用图标";
+"PayWall.AppIcons.Notice" = "自定义 Swiftgram 在主屏幕上的外观。";
+
+"PayWall.About.Title" = "关于 Swiftgram Pro";
+"PayWall.About.Notice" = "Swiftgram 的免费版本提供超过 Telegram 应用的多个功能和改进。创新并保持 Swiftgram 与每月的 Telegram 更新同步是一项庞大的工作，需要耗费大量的时间和昂贵的硬件。\n\nSwiftgram 是一个开源应用，尊重您的隐私，并且不打扰您广告。订阅 Swiftgram Pro，您将获得独享特性并支持独立开发者。\n\n- @Kylmakalle";
+
+"PayWall.RestorePurchases" = "恢复购买";
+"PayWall.Terms" = "服务条款";
+"PayWall.Privacy" = "隐私政策";
+"PayWall.TermsURL" = "https://swiftgram.app/terms";
+"PayWall.PrivacyURL" = "https://swiftgram.app/privacy";
+"PayWall.Notice.Markdown" = "通过订阅 Swiftgram Pro，您同意 [Swiftgram 服务条款](%1$@) 和 [隐私政策](%2$@)。";
+"PayWall.Notice.Raw" = "通过订阅 Swiftgram Pro，您同意 Swiftgram 服务条款和隐私政策。";
+
+"PayWall.Button.OpenPro" = "使用专业功能";
+"PayWall.Button.Purchasing" = "正在购买……";
+"PayWall.Button.Restoring" = "正在恢复购买……";
+"PayWall.Button.Validating" = "正在验证购买……";
+"PayWall.Button.PaymentsUnavailable" = "付款不可用";
+"PayWall.Button.Subscribe" = "订阅 %@ / 月";
+"PayWall.Button.ContactingAppStore" = "正在联系 App Store……";
+
+"Paywall.Error.Title" = "错误";
+"PayWall.ValidationError" = "验证错误";
+"PayWall.ValidationError.TryAgain" = "购买验证过程中出现问题。不用担心！稍后再试恢复购买。";
