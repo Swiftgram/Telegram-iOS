@@ -170,7 +170,7 @@
 "SessionBackup.DeleteSingle.Text" = "%@ istunto poistetaan Keychainista.\n\nTiliä ei kirjaudu ulos Swiftgramista.";
 "SessionBackup.RemoveFromApp.Title" = "Poista tili sovelluksesta?";
 "SessionBackup.RemoveFromApp.Text" = "%@ istunto POISTETAAN Swiftgramista! Istunto pysyy aktiivisena, joten voit palauttaa sen myöhemmin.";
-"SessionBackup.Notice" = "Istunnot ovat salattuja ja tallennettu laitteesi Keychainiin. Istunnot eivät koskaan poistu laitteestasi. Huom: Istuntoja voidaan silti mitätöidä Telegramista tai toiselta laitteelta.";
+"SessionBackup.Notice" = "Istunnot on salattu ja tallennettu laitteen Keychain. Istunnot eivät koskaan jätä laitettasi.\n\nTÄRKEÄÄ: Voit palauttaa istunnot uudelle laitteelle tai käyttöjärjestelmän palautuksen jälkeen sinun TÄYTYY ottaa salatut varmuuskopiot käyttöön, muuten Keychain ei siirretä.\n\nHUOMAUTUS: Istunnot voidaan silti peruuttaa Telegramin tai toisen laitteen kautta.";
 
 "MessageFilter.Title" = "Viestisuoja";
 "MessageFilter.SubTitle" = "Poista häiriötekijät ja vähennä näkyvyyttä viesteistä, jotka sisältävät alla olevia avainsanoja.\nAvainsanat ovat erikoismerkkien suhteen herkkiä.";
@@ -195,6 +195,7 @@
 "PayWall.SessionBackup.Notice" = "Palauta istunnot salatusta paikallisesta Apple Keychain -varmuuskopiosta.";
 
 "PayWall.MessageFilter.Title" = "Viestisuodatin";
+"PayWall.MessageFilter.Notice" = "Vähennä roskapostin, mainosten ja ärsyttävien viestien näkyvyyttä.";
 
 "PayWall.Notifications.Title" = "Poista @maininnat ja vastaukset käytöstä";
 "PayWall.Notifications.Notice" = "Piilota tai mykistä ei-tärkeitä ilmoituksia.";
