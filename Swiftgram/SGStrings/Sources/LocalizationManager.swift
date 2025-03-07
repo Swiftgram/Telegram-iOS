@@ -65,6 +65,12 @@ public class SGLocalizationManager {
     }
     
     public func downloadLocale(_ locale: String) {
+        #if DEBUG
+        SGLogger.shared.log("Strings", "DEBUG ignoring locale download: \(locale)")
+        if ({ return true }()) {
+            return
+        }
+        #endif
         let sanitizedLocale = self.sanitizeLocale(locale)
         guard let url = URL(string: self.getStringsUrl(for: sanitizedLocale)) else {
             SGLogger.shared.log("Strings", "Invalid URL for locale: \(sanitizedLocale)")

@@ -236,7 +236,7 @@ struct SGPayWallView: View {
         .onReceive(validationErrorPub) { notification in
             if state == .validating {
                 if let userInfo = notification.userInfo, let error = userInfo["error"] as? String, !error.isEmpty {
-                    showErrorAlert(error)
+                    showErrorAlert(error.i18n(lang))
                 } else {
                     showErrorAlert("PayWall.ValidationError".i18n(lang))
                 }
@@ -361,8 +361,18 @@ struct SGPayWallView: View {
             
             HStack {
                 Text("PayWall.About.Notice".i18n(lang))
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                Spacer()
+            }
+            HStack {
+                Button(action: {
+                    openUrl("PayWall.About.SignatureURL".i18n(lang))
+                }) {
+                    Text("PayWall.About.Signature".i18n(lang))
+                        .font(.caption)
+                        .foregroundColor(Color(hex: accentColorHex))
+                }
                 Spacer()
             }
         }
