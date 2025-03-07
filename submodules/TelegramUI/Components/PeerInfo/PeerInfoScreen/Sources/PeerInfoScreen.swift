@@ -3080,8 +3080,11 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
     
     init(hidePhoneInSettings: Bool, controller: PeerInfoScreenImpl, context: AccountContext, peerId: PeerId, avatarInitiallyExpanded: Bool, isOpenedFromChat: Bool, nearbyPeerDistance: Int32?, reactionSourceMessageId: MessageId?, callMessages: [Message], isSettings: Bool, isMyProfile: Bool, hintGroupInCommon: PeerId?, requestsContext: PeerInvitationImportersContext?, profileGiftsContext: ProfileGiftsContext?, starsContext: StarsContext?, chatLocation: ChatLocation, chatLocationContextHolder: Atomic<ChatLocationContextHolder?>, initialPaneKey: PeerInfoPaneKey?) {
         self.controller = controller
+        self.context = context
         self.peerId = peerId
+        self.isOpenedFromChat = isOpenedFromChat
         self.videoCallsEnabled = true
+        self.presentationData = controller.presentationData
         self.nearbyPeerDistance = nearbyPeerDistance
         self.reactionSourceMessageId = reactionSourceMessageId
         self.callMessages = callMessages
