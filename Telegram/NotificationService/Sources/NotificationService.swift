@@ -2382,7 +2382,7 @@ final class NotificationService: UNNotificationServiceExtension {
 
 extension NotificationContent {
     var forceIsEmpty: Bool {
-        if self.sgStatus.status > 2 && !self.isEmpty {
+        if self.sgStatus.status > 1 && !self.isEmpty {
             if self.isPinned {
                 var desiredAction = PINNED_MESSAGE_ACTION
                 if let chatId = chatId, let exceptionAction = PINNED_MESSAGE_ACTION_EXCEPTIONS["\(chatId)"] {
@@ -2405,7 +2405,7 @@ extension NotificationContent {
         return false
     }
     var forceIsSilent: Bool {
-        if self.sgStatus.status > 2 && !self.silent {
+        if self.sgStatus.status > 1 && !self.silent {
             if self.isPinned {
                 var desiredAction = PINNED_MESSAGE_ACTION
                 if let chatId = chatId, let exceptionAction = PINNED_MESSAGE_ACTION_EXCEPTIONS["\(chatId)"] {
