@@ -3,6 +3,7 @@ import SGDebugUI
 import SGSimpleSettings
 import SGSettingsUI
 import SGStrings
+import CountrySelectionUI
 import Foundation
 import UIKit
 import Display
@@ -2080,12 +2081,28 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
     }
     
     if SGSimpleSettings.shared.showDC {
-        var dcText = ""
+        var dcId: Int? = nil
+        var dcLocation: String = ""
+        var phoneCountryText = ""
+        
+        var dcLabel = ""
+        var dcText: String = ""
+        
+        if let cachedData = data.cachedData as? CachedUserData, let phoneCountry = cachedData.peerStatusSettings?.phoneCountry {
+            var countryName = ""
+            let countriesConfiguration = context.currentCountriesConfiguration.with { $0 }
+            if let country = countriesConfiguration.countries.first(where: { $0.id == phoneCountry }) {
+                countryName = country.localizedName ?? country.name
+            } else if phoneCountry == "FT" {
+                countryName = presentationData.strings.Chat_NonContactUser_AnonymousNumber
+            } else if phoneCountry == "TS" {
+                countryName = "Test"
+            }
+            phoneCountryText = emojiFlagForISOCountryCode(phoneCountry) + " " + countryName
+        }
         if let peer = data.peer, let smallProfileImage = peer.smallProfileImage, let cloudResource = smallProfileImage.resource as? CloudPeerPhotoSizeMediaResource {
+            dcId = cloudResource.datacenterId
             
-            let dcId = cloudResource.datacenterId
-            dcText = "\(cloudResource.datacenterId)"
-            let dcLocation: String?
             switch (dcId) {
                 case 1:
                     dcLocation = "Miami"
@@ -2098,15 +2115,26 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
                 case 5:
                     dcLocation = "Singapore"
                 default:
-                    dcLocation = nil
-            }
-            
-            if let dcLocation = dcLocation {
-                dcText += " \(dcLocation)"
+                    break
             }
         }
-        if !dcText.isEmpty {
-            items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: "dc: \(dcText)", text: "", textColor: .primary, action: nil, longTapAction: { sourceNode in
+        
+        if let dcId = dcId {
+            dcLabel = "dc: \(dcId)"
+            if phoneCountryText.isEmpty {
+                if !dcLocation.isEmpty {
+                    dcLabel += " \(dcLocation)"
+                }
+            } else {
+                dcText = "\(phoneCountryText)"
+            }
+        } else if !phoneCountryText.isEmpty {
+            dcLabel = "dc: ?"
+            dcText = phoneCountryText
+        }
+
+        if !dcText.isEmpty || !dcLabel.isEmpty {
+            items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: dcLabel, text: dcText, textColor: .primary, action: nil, longTapAction: { sourceNode in
                 interaction.openPeerInfoContextMenu(.aboutDC, sourceNode, nil)
             }, requestLayout: { _ in
                 interaction.requestLayout(false)
@@ -2138,9 +2166,17 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
     }
     
     if SGSimpleSettings.shared.showRegDate {
-        if let regDate = data.regDate {
+        var regDateString = ""
+        if let cachedData = data.cachedData as? CachedUserData, let registrationDate = cachedData.peerStatusSettings?.registrationDate {
+            let components = registrationDate.components(separatedBy: ".")
+            if components.count == 2, let first = Int32(components[0]), let second = Int32(components[1]) {
+                let month = first - 1
+                let year = second - 1900
+                regDateString = stringForMonth(strings: presentationData.strings, month: month, ofYear: year)
+            }
+        }
+        if let regDate = data.regDate, regDateString.isEmpty {
             let regTimestamp = Int32((regDate.from + regDate.to) / 2)
-            let regDateString: String
             switch (context.currentAppConfiguration.with { $0 }.sgWebSettings.global.regdateFormat) {
                 case "year":
                     regDateString = stringForDateWithoutDayAndMonth(date: Date(timeIntervalSince1970: Double(regTimestamp)), strings: presentationData.strings)
@@ -2149,6 +2185,8 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
                 default:
                     regDateString = stringForDate(timestamp: regTimestamp, strings: presentationData.strings)
             }
+        }
+        if !regDateString.isEmpty {
             items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: i18n("Chat.RegDate", presentationData.strings.baseLanguageCode), text: regDateString, action: nil, longTapAction: { sourceNode in
                 interaction.openPeerInfoContextMenu(.copy(regDateString), sourceNode, nil)
             }, requestLayout: { _ in
