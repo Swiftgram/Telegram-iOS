@@ -2082,7 +2082,7 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
     
     if SGSimpleSettings.shared.showDC {
         var dcId: Int? = nil
-        var dcLocation: String = ""
+//        var dcLocation: String = ""
         var phoneCountryText = ""
         
         var dcLabel = ""
@@ -2103,28 +2103,28 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
         if let peer = data.peer, let smallProfileImage = peer.smallProfileImage, let cloudResource = smallProfileImage.resource as? CloudPeerPhotoSizeMediaResource {
             dcId = cloudResource.datacenterId
             
-            switch (dcId) {
-                case 1:
-                    dcLocation = "Miami"
-                case 2:
-                    dcLocation = "Amsterdam"
-                case 3:
-                    dcLocation = "Miami"
-                case 4:
-                    dcLocation = "Amsterdam"
-                case 5:
-                    dcLocation = "Singapore"
-                default:
-                    break
-            }
+//            switch (dcId) {
+//                case 1:
+//                    dcLocation = "Miami"
+//                case 2:
+//                    dcLocation = "Amsterdam"
+//                case 3:
+//                    dcLocation = "Miami"
+//                case 4:
+//                    dcLocation = "Amsterdam"
+//                case 5:
+//                    dcLocation = "Singapore"
+//                default:
+//                    break
+//            }
         }
         
         if let dcId = dcId {
             dcLabel = "dc: \(dcId)"
             if phoneCountryText.isEmpty {
-                if !dcLocation.isEmpty {
-                    dcLabel += " \(dcLocation)"
-                }
+//                if !dcLocation.isEmpty {
+//                    dcLabel += " \(dcLocation)"
+//                }
             } else {
                 dcText = "\(phoneCountryText)"
             }
