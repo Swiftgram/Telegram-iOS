@@ -93,6 +93,7 @@ private enum SGBoolSetting: String {
     case wideChannelPosts
     case forceEmojiTab
     case forceBuiltInMic
+    case secondsInMessages
     case hideChannelBottomButton
     case confirmCalls
     case swipeForVideoPIP
@@ -260,6 +261,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .other, settingName: .wideChannelPosts, value: SGSimpleSettings.shared.wideChannelPosts, text: i18n("Settings.wideChannelPosts", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .forceBuiltInMic, value: SGSimpleSettings.shared.forceBuiltInMic, text: i18n("Settings.forceBuiltInMic", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.forceBuiltInMic.Notice", lang)))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .secondsInMessages, value: SGSimpleSettings.shared.secondsInMessages, text: i18n("Settings.secondsInMessages", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .messageDoubleTapActionOutgoingEdit, value: SGSimpleSettings.shared.messageDoubleTapActionOutgoing == SGSimpleSettings.MessageDoubleTapAction.edit.rawValue, text: i18n("Settings.messageDoubleTapActionOutgoingEdit", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hideRecordingButton, value: !SGSimpleSettings.shared.hideRecordingButton, text: i18n("Settings.RecordingButton", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableSnapDeletionEffect, value: !SGSimpleSettings.shared.disableSnapDeletionEffect, text: i18n("Settings.SnapDeletionEffect", lang), enabled: true))
@@ -465,6 +467,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.forceBuiltInMic = value
         case .hideChannelBottomButton:
             SGSimpleSettings.shared.hideChannelBottomButton = !value
+        case .secondsInMessages:
+            SGSimpleSettings.shared.secondsInMessages = value
         case .confirmCalls:
             SGSimpleSettings.shared.confirmCalls = value
         case .swipeForVideoPIP:
