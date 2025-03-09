@@ -139,7 +139,7 @@
 
 "Settings.showChannelBottomButton" = "Channel Bottom Panel";
 
-"Settings.secondsInMessages" = "Show seconds in messages";
+"Settings.secondsInMessages" = "Seconds in Messages";
 
 "Settings.CallConfirmation" = "Call Confirmation";
 "Settings.CallConfirmation.Notice" = "Swiftgram will ask for your confirmation before making a call.";

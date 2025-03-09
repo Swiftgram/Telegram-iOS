@@ -227,6 +227,7 @@ public func stringForDateWithoutDayAndMonth(date: Date, timeZone: TimeZone? = Ti
     return formatter.string(from: date)
 }
 
+// MARK: Swiftgram
 public func stringForShortTimestampWithSeconds(hours: Int32, minutes: Int32, seconds: Int32, dateTimeFormat: PresentationDateTimeFormat) -> String {
     switch dateTimeFormat.timeFormat {
     case .regular:
@@ -261,3 +262,4 @@ public func stringForShortTimestampWithSeconds(hours: Int32, minutes: Int32, sec
         return String(format: "%02d:%02d:%02d", arguments: [Int(hours), Int(minutes), Int(seconds)])
     }
 }
+//
