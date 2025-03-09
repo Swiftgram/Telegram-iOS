@@ -238,6 +238,7 @@ public class SGSimpleSettings {
         Keys.wideChannelPosts.rawValue: false,
         Keys.forceEmojiTab.rawValue: false,
         Keys.hideChannelBottomButton.rawValue: false,
+        Keys.secondsInMessages.rawValue: false,
         Keys.forceSystemSharing.rawValue: false,
         Keys.confirmCalls.rawValue: true,
         Keys.videoPIPSwipeDirection.rawValue: VideoPIPSwipeDirection.up.rawValue,
