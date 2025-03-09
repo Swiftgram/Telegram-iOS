@@ -118,6 +118,7 @@ public class SGSimpleSettings {
         case wideChannelPosts
         case forceEmojiTab
         case forceBuiltInMic
+        case secondsInMessages
         case hideChannelBottomButton
         case forceSystemSharing
         case confirmCalls
@@ -417,6 +418,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.forceBuiltInMic.rawValue)
     public var forceBuiltInMic: Bool
+    
+    @UserDefault(key: Keys.secondsInMessages.rawValue)
+    public var secondsInMessages: Bool
     
     @UserDefault(key: Keys.hideChannelBottomButton.rawValue)
     public var hideChannelBottomButton: Bool
