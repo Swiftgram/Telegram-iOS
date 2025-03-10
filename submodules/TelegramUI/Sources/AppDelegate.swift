@@ -3235,6 +3235,9 @@ extension AppDelegate {
         // TODO(swiftgram): Stuck on getting shouldKeepConnection
         // Perhaps, we can drop on some timeout?
 //        let currentShouldKeepConnection = await (primaryContext.account.network.shouldKeepConnection.get() |> take(1) |> deliverOnMainQueue).awaitable()
+        guard !primaryContext.account.testingEnvironment else {
+            return
+        }
         let currentShouldKeepConnection = false
         let userId = primaryContext.account.peerId.id._internalGetInt64Value()
 //        SGLogger.shared.log("SGIAP", "User id \(userId) currently keeps connection: \(currentShouldKeepConnection)")
