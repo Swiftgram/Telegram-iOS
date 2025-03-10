@@ -139,6 +139,8 @@
 
 "Settings.showChannelBottomButton" = "频道底部面板";
 
+"Settings.secondsInMessages" = "消息中的秒数";
+
 "Settings.CallConfirmation" = "通话确认";
 "Settings.CallConfirmation.Notice" = "Swiftgram 将在拨打电话前征求您的确认";
 
@@ -153,7 +155,7 @@
 "Settings.swipeForVideoPIP" = "上滑打开画中画";
 "Settings.swipeForVideoPIP.Notice" = "如果启用，滑动视频将以画中画模式打开。";
 
-"SessionBackup.Title" = "会话备份";
+"SessionBackup.Title" = "账号备份";
 "SessionBackup.Sessions.Title" = "会话";
 "SessionBackup.Actions.Backup" = "备份到钥匙串";
 "SessionBackup.Actions.Restore" = "从钥匙串恢复";
@@ -207,7 +209,10 @@
 "PayWall.AppIcons.Notice" = "自定义 Swiftgram 在主屏幕上的外观。";
 
 "PayWall.About.Title" = "关于 Swiftgram Pro";
-"PayWall.About.Notice" = "Swiftgram 的免费版本提供超过 Telegram 应用的多个功能和改进。创新并保持 Swiftgram 与每月的 Telegram 更新同步是一项庞大的工作，需要耗费大量的时间和昂贵的硬件。\n\nSwiftgram 是一个开源应用，尊重您的隐私，并且不打扰您广告。订阅 Swiftgram Pro，您将获得独享特性并支持独立开发者。\n\n- @Kylmakalle";
+"PayWall.About.Notice" = "Swiftgram 的免费版本在 Telegram 应用上提供了数十个功能和改进。 创新并保持Swiftgram与每月的 Telegram 同步是一项巨大的努力，需要大量的时间和昂贵的硬件。\n\nSwiftgram 是一个尊重您隐私且不会让您与广告纠缠的开源应用。 订阅 Swiftgram Pro 您可以访问独家功能并支持独立开发者。";
+"PayWall.About.Signature" = "@Kylmakalle";
+/* DO NOT TRANSLATE */
+"PayWall.About.SignatureURL" = "https://t.me/Kylmakalle";
 
 "PayWall.RestorePurchases" = "恢复购买";
 "PayWall.Terms" = "服务条款";
@@ -228,3 +233,4 @@
 "Paywall.Error.Title" = "错误";
 "PayWall.ValidationError" = "验证错误";
 "PayWall.ValidationError.TryAgain" = "购买验证过程中出现问题。不用担心！稍后再试恢复购买。";
+"PayWall.ValidationError.Expired" = "您的订阅已过期。再次订阅以重新获得专业版功能。";
