@@ -118,7 +118,7 @@
 
 "Settings.RecordingButton" = "Кнопка записи голоса";
 
-"Settings.DefaultEmojisFirst" = "Приоритизировать стандартные эмодзи";
+"Settings.DefaultEmojisFirst" = "Сначала стандартные смайлы";
 "Settings.DefaultEmojisFirst.Notice" = "Показывать стандартные эмодзи перед Premium в эмодзи-клавиатуре";
 
 /* Date when chat was created. "created: 24 May 2016" */
@@ -132,7 +132,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Редактирование двойным тапом";
 
 "Settings.wideChannelPosts" = "Широкие посты в каналах";
-"Settings.ForceEmojiTab" = "Панель эмодзи в начале";
+"Settings.ForceEmojiTab" = "Сначала вкладка смайлов";
 
 "Settings.forceBuiltInMic" = "Микрофон устройства";
 "Settings.forceBuiltInMic.Notice" = "Если включено, то приложение будет использовать только встроенный микрофон устройства, даже если подключены наушники.";
