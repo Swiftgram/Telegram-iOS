@@ -56,7 +56,7 @@
 
 "Settings.UploadsBoost" = "Ускорение загрузки";
 "Settings.DownloadsBoost" = "Ускорение скачивания";
-"Settings.DownloadsBoost.Notice" = "Увеличивает количество параллельных соединений и размер частей файлов. Если ваша сеть не может справиться с нагрузкой, попробуйте разные варианты, которые подойдут для вашего соединения.";
+"Settings.DownloadsBoost.Notice" = "Увеличивает количество параллельных соединений и размер частей файлов. Если ваша сеть не может справиться с нагрузкой, попробуйте разные опции, которые подойдут для вашего соединения.";
 "Settings.DownloadsBoost.none" = "Выключено";
 "Settings.DownloadsBoost.medium" = "Средне";
 "Settings.DownloadsBoost.maximum" = "Максимум";
@@ -139,6 +139,8 @@
 
 "Settings.showChannelBottomButton" = "Нижняя панель канала";
 
+"Settings.secondsInMessages" = "Секунды в Сообщениях";
+
 "Settings.CallConfirmation" = "Подтверждение вызова";
 "Settings.CallConfirmation.Notice" = "Swiftgram запросит подтверждение перед совершением звонка.";
 
@@ -150,10 +152,10 @@
 
 "MutualContact.Label" = "взаимный контакт";
 
-"Settings.swipeForVideoPIP" = "Видео PIP со свайпом";
-"Settings.swipeForVideoPIP.Notice" = "Если включено, свайп по видео откроет его в режиме «Картинка в картинке».";
+"Settings.swipeForVideoPIP" = "Видео PIP свайпом";
+"Settings.swipeForVideoPIP.Notice" = "Если включено, свайп видео откроет его в режиме «Картинка в картинке».";
 
-"SessionBackup.Title" = "Резервная копия сессии";
+"SessionBackup.Title" = "Бэкап Аккаунтов";
 "SessionBackup.Sessions.Title" = "Сессии";
 "SessionBackup.Actions.Backup" = "Бэкап в Keychain";
 "SessionBackup.Actions.Restore" = "Восстановить из Keychain";
@@ -195,6 +197,7 @@
 "PayWall.SessionBackup.Notice" = "Восстановление сессии из зашифрованного бэкапа Keychain на вашем девайсе.";
 
 "PayWall.MessageFilter.Title" = "Фильтр сообщений";
+"PayWall.MessageFilter.Notice" = "Уменьшает видимость надоедливых сообщений со СПАМом или рекламой";
 
 "PayWall.Notifications.Title" = "Отключение @тэгов и ответов";
 "PayWall.Notifications.Notice" = "Скрывает или приглушает неважные уведомления.";
@@ -206,7 +209,10 @@
 "PayWall.AppIcons.Notice" = "Настройка внешнего вида Swiftgram на главном экране.";
 
 "PayWall.About.Title" = "О Swiftgram Pro";
-"PayWall.About.Notice" = "Бесплатная версия Swiftgram предлагает десятки функций и улучшений по сравнению с приложением Telegram. Новые функции и синхронизация Swiftgram с ежемесячными обновлениями Telegram — это огромные усилия, требующие много времени и дорогой техники.\n\nSwiftgram — это приложение с открытым исходным кодом, которое уважает вашу конфиденциальность и не беспокоит вас рекламой. Подписываясь на Swiftgram Pro, вы получаете доступ к эксклюзивным функциям и поддерживаете независимого разработчика.\n\n- @Kylmakalle";
+"PayWall.About.Notice" = "Бесплатная версия Swiftgram предлагает десятки функций и улучшений по сравнению с приложением Telegram. Новые функции и синхронизация Swiftgram с ежемесячными обновлениями Telegram — это огромные усилия, требующие много времени и дорогой техники.\n\nSwiftgram — это приложение с открытым исходным кодом, которое уважает вашу конфиденциальность и не беспокоит вас рекламой. Подписываясь на Swiftgram Pro, вы получаете доступ к эксклюзивным функциям и поддерживаете независимого разработчика.";
+"PayWall.About.Signature" = "@Kylmakalle";
+/* DO NOT TRANSLATE */
+"PayWall.About.SignatureURL" = "https://t.me/Kylmakalle";
 
 "PayWall.RestorePurchases" = "Восстановить покупки";
 "PayWall.Terms" = "Условия использования";
@@ -226,4 +232,5 @@
 
 "Paywall.Error.Title" = "Ошибка";
 "PayWall.ValidationError" = "Ошибка проверки";
-"PayWall.ValidationError.TryAgain" = "Что-то пошло не так во время проверки покупки. Не волнуйтесь! Попробуйте Восстановить Покупки немного позже.";
+"PayWall.ValidationError.TryAgain" = "Что-то пошло не так во время проверки оплаты. Не волнуйтесь! Попробуйте Восстановить Покупки чуть позже.";
+"PayWall.ValidationError.Expired" = "Ваша подписка истекла. Подпишитесь снова, чтобы восстановить доступ к Pro функциям.";
