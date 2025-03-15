@@ -194,10 +194,10 @@
 "PayWall.Text" = "Заряжен Pro функциями";
 
 "PayWall.SessionBackup.Title" = "Бэкап Аккаунтов";
-"PayWall.SessionBackup.Notice" = "Вход в аккаунты без кодов, даже после переустановки. Безопасное хранение в Keychain на устройстве.";
+"PayWall.SessionBackup.Notice" = "Вход в аккаунты без кода, даже после переустановки. Безопасное хранение в Keychain на устройстве.";
 
 "PayWall.MessageFilter.Title" = "Фильтр сообщений";
-"PayWall.MessageFilter.Notice" = "Уменьшает видимость надоедливых сообщений со СПАМом или рекламой";
+"PayWall.MessageFilter.Notice" = "Уменьшает видимость надоедливых сообщений со СПАМом или рекламой.";
 
 "PayWall.Notifications.Title" = "Отключение @тэгов и ответов";
 "PayWall.Notifications.Notice" = "Скрывает или приглушает неважные уведомления.";
@@ -227,6 +227,7 @@
 "PayWall.Button.Restoring" = "Восстановление покупок...";
 "PayWall.Button.Validating" = "Проверка покупки...";
 "PayWall.Button.PaymentsUnavailable" = "Платежи недоступны";
+"PayWall.Button.BuyInAppStore" = "Подписаться в App Store версии";
 "PayWall.Button.Subscribe" = "Подписаться за %@ / месяц";
 "PayWall.Button.ContactingAppStore" = "Подключение к App Store...";
 
