@@ -193,8 +193,8 @@
 
 "PayWall.Text" = "Заряжен Pro функциями";
 
-"PayWall.SessionBackup.Title" = "Бэкап Сессий";
-"PayWall.SessionBackup.Notice" = "Восстановление сессии из зашифрованного бэкапа Keychain на вашем девайсе.";
+"PayWall.SessionBackup.Title" = "Бэкап Аккаунтов";
+"PayWall.SessionBackup.Notice" = "Вход в аккаунты без кодов, даже после переустановки. Безопасное хранение в Keychain на устройстве.";
 
 "PayWall.MessageFilter.Title" = "Фильтр сообщений";
 "PayWall.MessageFilter.Notice" = "Уменьшает видимость надоедливых сообщений со СПАМом или рекламой";
@@ -203,7 +203,7 @@
 "PayWall.Notifications.Notice" = "Скрывает или приглушает неважные уведомления.";
 
 "PayWall.InputToolbar.Title" = "Панель форматирования";
-"PayWall.InputToolbar.Notice" = "Экономит время написания постов с помощью панели прямо над клавиатурой.";
+"PayWall.InputToolbar.Notice" = "Экономит время, форматируя сообщения всего одним тапом.";
 
 "PayWall.AppIcons.Title" = "Уникальные иконки приложений";
 "PayWall.AppIcons.Notice" = "Настройка внешнего вида Swiftgram на главном экране.";
