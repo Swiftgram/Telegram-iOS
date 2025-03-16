@@ -738,9 +738,11 @@ struct FeatureRow<IconContent: View>: View {
                 }
                 
                 Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.secondary)
+                if #available(iOS 14.0, *) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.secondary)
+                } // Descriptions are not available on iOS 13
             }
             .padding()
             .background(
