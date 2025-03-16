@@ -127,9 +127,12 @@ struct SGPayWallFeatureDetails: View {
                     if #available(iOS 14.0, *) {
                         TabView {
                             ForEach(features) { feature in
-                                SGProFeatureView(
-                                    feature: feature
-                                )
+                                ScrollView(showsIndicators: false) {
+                                    SGProFeatureView(
+                                        feature: feature
+                                    )
+//                                    .padding(.bottom, bottomOffset)
+                                }
                             }
                         }
                         .tabViewStyle(.page)
@@ -204,7 +207,7 @@ struct SGProFeatureView: View {
             feature.image
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(maxWidth: .infinity, alignment: .top)
+                .frame(maxWidth: .infinity, maxHeight: 400.0, alignment: .top)
                 .clipped()
             
             VStack(alignment: .center, spacing: 8) {
@@ -322,7 +325,12 @@ struct SGPayWallView: View {
     @State private var hapticFeedback: HapticFeedback?
     private let confettiDuration: Double = 5.0
     
-    private let purchaseButtonBottomOffset: CGFloat = 50.0
+    @Environment(\.sizeCategory) var sizeCategory: ContentSizeCategory
+    private var purchaseButtonBottomOffset: CGFloat {
+        let baseOffset: CGFloat = 50.0
+        let sizeMultiplier = UIFontMetrics.default.scaledValue(for: 1.0)
+        return baseOffset * sizeMultiplier
+    }
     
     private var features: [SGProFeature]  {
         return [
@@ -615,7 +623,9 @@ struct SGPayWallView: View {
     }
     
     private func showDetailsForFeature(_ featureId: SGProFeatureId) {
-        showDetails = true
+        if #available(iOS 14.0, *) {
+            showDetails = true
+        } // pagination is not available on iOS 13
     }
     
     private func updateSelectedProduct() {
