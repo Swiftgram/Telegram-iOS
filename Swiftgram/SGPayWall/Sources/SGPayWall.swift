@@ -123,6 +123,7 @@ struct SGPayWallView: View {
     @State private var state: PayWallState = .ready
     @State private var showErrorAlert: Bool = false
     @State private var showConfetti: Bool = false
+    @State private var detailsPage: Int64 = 0
     
     private let productsPub = NotificationCenter.default.publisher(for: .SGIAPHelperProductsUpdatedNotification, object: nil)
     private let buyOrRestoreSuccessPub = NotificationCenter.default.publisher(for: .SGIAPHelperPurchaseNotification, object: nil)
@@ -251,25 +252,37 @@ struct SGPayWallView: View {
             FeatureRow(
                 icon: FeatureIcon(icon: "lock.fill", backgroundColor: .blue),
                 title: "PayWall.SessionBackup.Title".i18n(lang),
-                subtitle: "PayWall.SessionBackup.Notice".i18n(lang)
+                subtitle: "PayWall.SessionBackup.Notice".i18n(lang),
+                action: {
+                    showDetailsForFeature(0)
+                }
             )
             
             FeatureRow(
                 icon: FeatureIcon(icon: "nosign", backgroundColor: .gray, fontWeight: .bold),
                 title: "PayWall.MessageFilter.Title".i18n(lang),
-                subtitle: "PayWall.MessageFilter.Notice".i18n(lang)
+                subtitle: "PayWall.MessageFilter.Notice".i18n(lang),
+                action: {
+                    showDetailsForFeature(1)
+                }
             )
             
             FeatureRow(
                 icon: FeatureIcon(icon: "bell.badge.slash.fill", backgroundColor: .red),
                 title: "PayWall.Notifications.Title".i18n(lang),
-                subtitle: "PayWall.Notifications.Notice".i18n(lang)
+                subtitle: "PayWall.Notifications.Notice".i18n(lang),
+                action: {
+                    showDetailsForFeature(2)
+                }
             )
             
             FeatureRow(
                 icon: FeatureIcon(icon: "bold.underline", backgroundColor: .blue, iconSize: 16),
                 title: "PayWall.InputToolbar.Title".i18n(lang),
-                subtitle: "PayWall.InputToolbar.Notice".i18n(lang)
+                subtitle: "PayWall.InputToolbar.Notice".i18n(lang),
+                action: {
+                    showDetailsForFeature(3)
+                }
             )
             
             FeatureRow(
@@ -277,7 +290,10 @@ struct SGPayWallView: View {
                     .resizable()
                     .frame(width: 32, height: 32),
                 title: "PayWall.AppIcons.Title".i18n(lang),
-                subtitle: "PayWall.AppIcons.Notice".i18n(lang)
+                subtitle: "PayWall.AppIcons.Notice".i18n(lang),
+                action: {
+                    showDetailsForFeature(4)
+                }
             )
         }
     }
@@ -426,6 +442,11 @@ struct SGPayWallView: View {
         }
     }
     
+    private func showDetailsForFeature(_ feature: Int64) {
+        showDetails = true
+        detailsPage = feature
+    }
+    
     private func updateSelectedProduct() {
         product = SGIAP.availableProducts.first { $0.id == SG_CONFIG.iaps.first ?? "" }
     }
@@ -515,11 +536,10 @@ struct FeatureRow<IconContent: View>: View {
     let icon: IconContent
     let title: String
     let subtitle: String
+    let action: () -> Void
     
     var body: some View {
-        Button(action: {
-            // TODO(swiftgram): Feature row clarification
-        }) {
+        Button(action: action) {
             HStack(spacing: 16) {
                 
                 HStack(alignment: .top, spacing: 12) {
