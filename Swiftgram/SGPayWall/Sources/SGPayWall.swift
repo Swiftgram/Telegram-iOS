@@ -123,6 +123,7 @@ struct SGPayWallView: View {
     @State private var state: PayWallState = .ready
     @State private var showErrorAlert: Bool = false
     @State private var showConfetti: Bool = false
+    @State private var showDetails: Bool = false
     @State private var detailsPage: Int64 = 0
     
     private let productsPub = NotificationCenter.default.publisher(for: .SGIAPHelperProductsUpdatedNotification, object: nil)
