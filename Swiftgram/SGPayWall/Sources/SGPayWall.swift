@@ -136,6 +136,7 @@ struct SGPayWallFeatureDetails: View {
                                     )
                                 }
                                 .tag(feature.id)
+                                .scrollBounceBehaviorIfAvailable(.basedOnSize)
                             }
                         }
                         .tabViewStyle(.page)
@@ -152,6 +153,27 @@ struct SGPayWallFeatureDetails: View {
                 .cornerRadius(8, corners: [.topLeft, .topRight])
                 .padding(.bottom, bottomOffset)
                 .overlay(closeButtonView)
+                .offset(y: max(0, dragOffset))
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            // Only track downward movement
+                            if value.translation.height > 0 {
+                                dragOffset = value.translation.height
+                            }
+                        }
+                        .onEnded { value in
+                            // If dragged down more than 150 points or with significant velocity, dismiss
+                            if value.translation.height > 150 || value.predictedEndTranslation.height > 200 {
+                                dismissWithAnimation()
+                            } else {
+                                // Otherwise, reset position
+                                withAnimation(.spring()) {
+                                    dragOffset = 0
+                                }
+                            }
+                        }
+                )
                 .transition(.move(edge: .bottom))
             }
         }
@@ -173,6 +195,7 @@ struct SGPayWallFeatureDetails: View {
     private func dismissWithAnimation() {
         withAnimation(.spring()) {
             showContent = false
+            dragOffset = 0
         }
         
         withAnimation(.easeOut(duration: 0.2).delay(0.1)) {
