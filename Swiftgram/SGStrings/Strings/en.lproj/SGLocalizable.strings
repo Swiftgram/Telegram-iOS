@@ -195,15 +195,19 @@
 
 "PayWall.SessionBackup.Title" = "Accounts Backup";
 "PayWall.SessionBackup.Notice" = "Log-in to accounts without code, even after reinstall. Secure storage with on-device Keychain.";
+"PayWall.SessionBackup.Description" = "Changing device or deleting Swiftgram is no longer an issue. Restore all Sessions that are still Active on Telegram servers.";
 
 "PayWall.MessageFilter.Title" = "Message Filter";
 "PayWall.MessageFilter.Notice" = "Reduce visibility of SPAM, promotions and annoying messages.";
+"PayWall.MessageFilter.Description" = "Create a list of keywords you don't want to see often and Swiftgram will reduce distractions.";
 
 "PayWall.Notifications.Title" = "Disable @mentions and replies";
 "PayWall.Notifications.Notice" = "Hide or mute non-important notifications.";
+"PayWall.Notifications.Description" = "No more Pinned Messages or @mentions when you need some piece of mind.";
 
 "PayWall.InputToolbar.Title" = "Formatting Panel";
 "PayWall.InputToolbar.Notice" = "Save time formatting messages with just a single tap.";
+"PayWall.InputToolbar.Description" = "Apply and clear Formatting or insert new lines like a Pro.";
 
 "PayWall.AppIcons.Title" = "Unique App Icons";
 "PayWall.AppIcons.Notice" = "Customize Swiftgram look on your home screen.";

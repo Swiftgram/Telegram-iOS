@@ -101,7 +101,7 @@ struct SGPayWallFeatureDetails: View {
     
     let dismissAction: () -> Void
     var bottomOffset: CGFloat = 0.0
-    let contentHeight: CGFloat = 650.0
+    let contentHeight: CGFloat = 666.0 // heh
     let features: [SGProFeature]
     
     @State var shownFeature: SGProFeatureId?
@@ -134,12 +134,14 @@ struct SGPayWallFeatureDetails: View {
                                     SGProFeatureView(
                                         feature: feature
                                     )
+                                    Color.clear.frame(height: 8.0) // paginator padding
                                 }
                                 .tag(feature.id)
                                 .scrollBounceBehaviorIfAvailable(.basedOnSize)
                             }
                         }
                         .tabViewStyle(.page)
+                        .padding(.bottom, bottomOffset - 8.0)
                     }
                     
                     // Spacer for purchase buttons
@@ -149,9 +151,8 @@ struct SGPayWallFeatureDetails: View {
                 }
                 .zIndex(1)
                 .frame(maxHeight: contentHeight)
-                .background(Color(.systemGray6))
+                .background(Color(.black))
                 .cornerRadius(8, corners: [.topLeft, .topRight])
-                .padding(.bottom, bottomOffset)
                 .overlay(closeButtonView)
                 .offset(y: max(0, dragOffset))
                 .gesture(
@@ -241,7 +242,7 @@ struct SGProFeatureView: View {
                     .font(.title)
                     .fontWeight(.bold)
                     .multilineTextAlignment(.center)
-                Text(feature.description ?? feature.subtitle)
+                Text(featureSubtitle)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -250,6 +251,10 @@ struct SGProFeatureView: View {
 
             Spacer()
         }
+    }
+    
+    var featureSubtitle: String {
+        return feature.description ?? feature.subtitle
     }
 }
 
