@@ -104,9 +104,12 @@ struct SGPayWallFeatureDetails: View {
     let contentHeight: CGFloat = 650.0
     let features: [SGProFeature]
     
-    // Add animation states
+    @State var shownFeature: SGProFeatureId?
+     // Add animation states
     @State private var showBackground = false
     @State private var showContent = false
+    
+    @State private var dragOffset: CGFloat = 0
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -125,14 +128,14 @@ struct SGPayWallFeatureDetails: View {
             if showContent {
                 VStack {
                     if #available(iOS 14.0, *) {
-                        TabView {
+                        TabView(selection: $shownFeature) {
                             ForEach(features) { feature in
                                 ScrollView(showsIndicators: false) {
                                     SGProFeatureView(
                                         feature: feature
                                     )
-//                                    .padding(.bottom, bottomOffset)
                                 }
+                                .tag(feature.id)
                             }
                         }
                         .tabViewStyle(.page)
@@ -162,7 +165,7 @@ struct SGPayWallFeatureDetails: View {
             showBackground = true
         }
         
-        withAnimation(.spring()/*.delay(0.1)*/) {
+        withAnimation(.spring(duration: 0.3)/*.delay(0.1)*/) {
             showContent = true
         }
     }
@@ -314,6 +317,7 @@ struct SGPayWallView: View {
     @State private var showErrorAlert: Bool = false
     @State private var showConfetti: Bool = false
     @State private var showDetails: Bool = false
+    @State private var shownFeature: SGProFeatureId? = nil
     
     private let productsPub = NotificationCenter.default.publisher(for: .SGIAPHelperProductsUpdatedNotification, object: nil)
     private let buyOrRestoreSuccessPub = NotificationCenter.default.publisher(for: .SGIAPHelperPurchaseNotification, object: nil)
@@ -325,12 +329,7 @@ struct SGPayWallView: View {
     @State private var hapticFeedback: HapticFeedback?
     private let confettiDuration: Double = 5.0
     
-    @Environment(\.sizeCategory) var sizeCategory: ContentSizeCategory
-    private var purchaseButtonBottomOffset: CGFloat {
-        let baseOffset: CGFloat = 50.0
-        let sizeMultiplier = UIFontMetrics.default.scaledValue(for: 1.0)
-        return baseOffset * sizeMultiplier
-    }
+    @State private var purchaseSectionSize: CGSize = .zero
     
     private var features: [SGProFeature]  {
         return [
@@ -386,22 +385,24 @@ struct SGPayWallView: View {
                         
                         
                         // Spacer for purchase buttons
-                        Color.clear.frame(height: purchaseButtonBottomOffset)
+                        Color.clear.frame(height: (purchaseSectionSize.height / 2.0))
                     }
-                    .padding(.vertical, purchaseButtonBottomOffset)
+                    .padding(.vertical, (purchaseSectionSize.height / 2.0))
                 }
                 .padding(.leading, max(innerShadowWidth + 8.0, sgLeftSafeAreaInset(containerViewLayout)))
                 .padding(.trailing, max(innerShadowWidth + 8.0, sgRightSafeAreaInset(containerViewLayout)))
                 
                 if showDetails {
                     SGPayWallFeatureDetails(
-                        dismissAction: { showDetails = false },
-                        bottomOffset: purchaseButtonBottomOffset * 0.9, // reduced offset for paginator
-                        features: features)
+                        dismissAction: dismissDetails,
+                        bottomOffset: (purchaseSectionSize.height / 2.0)  * 0.9, // reduced offset for paginator
+                        features: features,
+                        shownFeature: shownFeature)
                 }
 
                 // Fixed purchase button at bottom
                 purchaseSection
+                    .trackSize($purchaseSectionSize)
             }
         }
         .confetti(isActive: $showConfetti, duration: confettiDuration)
@@ -624,8 +625,14 @@ struct SGPayWallView: View {
     
     private func showDetailsForFeature(_ featureId: SGProFeatureId) {
         if #available(iOS 14.0, *) {
+            shownFeature = featureId
             showDetails = true
         } // pagination is not available on iOS 13
+    }
+    
+    private func dismissDetails() {
+//        shownFeature = nil
+        showDetails = false
     }
     
     private func updateSelectedProduct() {
