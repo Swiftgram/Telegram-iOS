@@ -195,24 +195,32 @@
 
 "PayWall.SessionBackup.Title" = "Бэкап Аккаунтов";
 "PayWall.SessionBackup.Notice" = "Вход в аккаунты без кода, даже после переустановки. Безопасное хранение в Keychain на устройстве.";
+"PayWall.SessionBackup.Description" = "Смена устройства или удаление Swiftgram больше не проблема. Восстановите все ваши Сессии, которые активны на серверах Telegram.";
 
 "PayWall.MessageFilter.Title" = "Фильтр сообщений";
 "PayWall.MessageFilter.Notice" = "Уменьшает видимость надоедливых сообщений со СПАМом или рекламой.";
+"PayWall.MessageFilter.Description" = "Создайте список ключевых слов, которые вы не хотите встречать, и Swiftgram снизит их видимость.";
 
 "PayWall.Notifications.Title" = "Отключение @тэгов и ответов";
 "PayWall.Notifications.Notice" = "Скрывает или приглушает неважные уведомления.";
+"PayWall.Notifications.Description" = "Никаких больше Закрепов или @тэгов, когда вам нужно чуточку спокойствия.";
 
 "PayWall.InputToolbar.Title" = "Панель форматирования";
-"PayWall.InputToolbar.Notice" = "Экономит время, форматируя сообщения всего одним тапом.";
+"PayWall.InputToolbar.Notice" = "Экономит время, форматируя сообщения всего одним касанием.";
+"PayWall.InputToolbar.Description" = "Применяйте и очищайте форматирование, переносите абзацы как Pro.";
 
 "PayWall.AppIcons.Title" = "Уникальные иконки приложений";
 "PayWall.AppIcons.Notice" = "Настройка внешнего вида Swiftgram на главном экране.";
 
 "PayWall.About.Title" = "О Swiftgram Pro";
 "PayWall.About.Notice" = "Бесплатная версия Swiftgram предлагает десятки функций и улучшений по сравнению с приложением Telegram. Новые функции и синхронизация Swiftgram с ежемесячными обновлениями Telegram — это огромные усилия, требующие много времени и дорогой техники.\n\nSwiftgram — это приложение с открытым исходным кодом, которое уважает вашу конфиденциальность и не беспокоит вас рекламой. Подписываясь на Swiftgram Pro, вы получаете доступ к эксклюзивным функциям и поддерживаете независимого разработчика.";
+/* DO NOT TRANSLATE */
 "PayWall.About.Signature" = "@Kylmakalle";
 /* DO NOT TRANSLATE */
 "PayWall.About.SignatureURL" = "https://t.me/Kylmakalle";
+
+"PayWall.ProSupport.Title" = "Проблемы с оплатой?";
+"PayWall.ProSupport.Contact" = "Не беда!";
 
 "PayWall.RestorePurchases" = "Восстановить покупки";
 "PayWall.Terms" = "Условия использования";
