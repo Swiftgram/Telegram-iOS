@@ -118,7 +118,7 @@
 
 "Settings.RecordingButton" = "Botão de gravação de voz";
 
-"Settings.DefaultEmojisFirst" = "Emojis padrão primeiro";
+"Settings.DefaultEmojisFirst" = "Priorizar emojis padrão";
 "Settings.DefaultEmojisFirst.Notice" = "Mostrar emojis padrão antes dos premium no teclado de emojis";
 
 /* Date when chat was created. "created: 24 May 2016" */
@@ -132,12 +132,14 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Toque duplo para editar mensagem";
 
 "Settings.wideChannelPosts" = "Postagens amplas nos canais";
-"Settings.ForceEmojiTab" = "Aba de Emoji primeiro";
+"Settings.ForceEmojiTab" = "Teclado de emojis por padrão";
 
 "Settings.forceBuiltInMic" = "Forçar Microfone do Dispositivo";
 "Settings.forceBuiltInMic.Notice" = "Se ativado, o aplicativo usará apenas o microfone do dispositivo mesmo se os fones de ouvido estiverem conectados.";
 
 "Settings.showChannelBottomButton" = "Painel Inferior do Canal";
+
+"Settings.secondsInMessages" = "Segundos em Mensagens";
 
 "Settings.CallConfirmation" = "Confirmação de chamada";
 "Settings.CallConfirmation.Notice" = "O Swiftgram pedirá sua confirmação antes de fazer uma chamada.";
@@ -192,22 +194,33 @@
 "PayWall.Text" = "Supercarregado com recursos Pro";
 
 "PayWall.SessionBackup.Title" = "Backup de Sessão";
-"PayWall.SessionBackup.Notice" = "Restaure sessões de backup local do Keychain da Apple criptografado.";
+"PayWall.SessionBackup.Notice" = "Faça login em contas sem código, mesmo depois de reinstalar. Armazenamento seguro com Keychain no dispositivo.";
+"PayWall.SessionBackup.Description" = "Alterar o dispositivo ou excluir o Swiftgram não é mais um problema. Restaure todas as sessões que ainda estão ativas nos servidores do Telegram.";
 
 "PayWall.MessageFilter.Title" = "Filtro de Mensagens";
 "PayWall.MessageFilter.Notice" = "Reduza a visibilidade de SPAM, promoções e mensagens irritantes.";
+"PayWall.MessageFilter.Description" = "Crie uma lista de palavras-chave que você não quer ver frequentemente e o Swiftgram reduzirá as distrações.";
 
 "PayWall.Notifications.Title" = "Desativar @menções e respostas";
 "PayWall.Notifications.Notice" = "Oculte ou silencie notificações não importantes.";
+"PayWall.Notifications.Description" = "Não há mais mensagens fixadas ou @menções quando você precisa de alguma coisa.";
 
 "PayWall.InputToolbar.Title" = "Painel de Formatação";
-"PayWall.InputToolbar.Notice" = "Economize tempo preparando suas postagens com um painel logo acima do seu teclado.";
+"PayWall.InputToolbar.Notice" = "Economize tempo formatando as mensagens com apenas um único toque.";
+"PayWall.InputToolbar.Description" = "Aplique e limpe a formatação ou insira novas linhas como um profissional.";
 
 "PayWall.AppIcons.Title" = "Ícones de Aplicativos Exclusivos";
 "PayWall.AppIcons.Notice" = "Personalize a aparência do Swiftgram na sua tela inicial.";
 
 "PayWall.About.Title" = "Sobre o Swiftgram Pro";
-"PayWall.About.Notice" = "A versão gratuita do Swiftgram oferece dezenas de recursos e melhorias em relação ao aplicativo Telegram. Inovar e manter o Swiftgram em sincronia com as atualizações mensais do Telegram é um grande esforço que requer muito tempo e hardware caro.\n\nO Swiftgram é um aplicativo de código aberto que respeita sua privacidade e não incomoda você com anúncios. Ao se inscrever no Swiftgram Pro, você obtém acesso a recursos exclusivos e apoia um desenvolvedor independente.\n\n- @Kylmakalle";
+"PayWall.About.Notice" = "A versão gratuita do Swiftgram oferece dezenas de recursos e melhorias em relação ao aplicativo Telegram. Inovar e manter o Swiftgram em sincronia com as atualizações mensais do Telegram é um grande esforço que requer muito tempo e hardware caro.\n\nO Swiftgram é um aplicativo de código aberto que respeita sua privacidade e não incomoda você com anúncios. Ao se inscrever no Swiftgram Pro, você obtém acesso a recursos exclusivos e apoia um desenvolvedor independente.";
+/* DO NOT TRANSLATE */
+"PayWall.About.Signature" = "@Kylmakalle";
+/* DO NOT TRANSLATE */
+"PayWall.About.SignatureURL" = "https://t.me/Kylmakalle";
+
+"PayWall.ProSupport.Title" = "Problemas com pagamento?";
+"PayWall.ProSupport.Contact" = "Não se preocupe!";
 
 "PayWall.RestorePurchases" = "Restaurar Compras";
 "PayWall.Terms" = "Termos de Serviço";
@@ -222,9 +235,11 @@
 "PayWall.Button.Restoring" = "Restaurando Compras...";
 "PayWall.Button.Validating" = "Validando Compra...";
 "PayWall.Button.PaymentsUnavailable" = "Pagamentos indisponíveis";
+"PayWall.Button.BuyInAppStore" = "Inscrever-se na versão da App Store";
 "PayWall.Button.Subscribe" = "Assinar por %@ / mês";
 "PayWall.Button.ContactingAppStore" = "Contatando App Store...";
 
 "Paywall.Error.Title" = "Erro";
 "PayWall.ValidationError" = "Erro de Validação";
 "PayWall.ValidationError.TryAgain" = "Algo deu errado durante a validação da compra. Sem problemas! Tente Restaurar Compras um pouco mais tarde.";
+"PayWall.ValidationError.Expired" = "Sua assinatura expirou. Inscreva-se novamente para recuperar o acesso aos recursos Pro.";
