@@ -85,6 +85,7 @@
 "Common.OpenTelegram" = "Telegram を開く";
 "Common.UseTelegramForPremium" = "Telegram Premiumを登録するには、公式のTelegramアプリが必要です。
 登録すると、Swiftgram等の非公式アプリ含め、Telegram Premiumをサポートする全てのアプリでプレミアムメソッドを利用できます。";
+"Common.UpdateOS" = "iOSの更新が必要です";
 
 "Message.HoldToShowOrReport" = "表示または報告するために押し続ける。";
 
@@ -108,6 +109,7 @@
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
 "Settings.PullToNextTopic" = "次のトピックに移動する";
 "Settings.GalleryCamera" = "ギャラリーのカメラを隠す";
+"Settings.GalleryCameraPreview" = "ギャラリーのカメラプレビュー";
 /* "Send Message As..." button */
 "Settings.SendAsButton" = "\"%@\" ボタン";
 "Settings.SnapDeletionEffect" = "メッセージ削除のエフェクト";
@@ -136,7 +138,9 @@
 "Settings.forceBuiltInMic" = "デバイスのマイクを強制";
 "Settings.forceBuiltInMic.Notice" = "有効にすると、ヘッドフォンが接続されていてもアプリはデバイスのマイクのみを使用します。";
 
-"Settings.hideChannelBottomButton" = "チャンネルボトムパネルを非表示";
+"Settings.showChannelBottomButton" = "チャンネルボトムパネル";
+
+"Settings.secondsInMessages" = "メッセージ内の秒数";
 
 "Settings.CallConfirmation" = "コール確認";
 "Settings.CallConfirmation.Notice" = "Swiftgram は、通話を行う前にあなたの確認を求めます。";
@@ -151,3 +155,92 @@
 
 "Settings.swipeForVideoPIP" = "ビデオ PIP スワイプ";
 "Settings.swipeForVideoPIP.Notice" = "有効になっている場合、ビデオをスワイプするとピクチャーインピクチャーモードで開きます。";
+
+"SessionBackup.Title" = "アカウントのバックアップ";
+"SessionBackup.Sessions.Title" = "セッション";
+"SessionBackup.Actions.Backup" = "キーチェーンにバックアップ";
+"SessionBackup.Actions.Restore" = "キーチェーンから復元";
+"SessionBackup.Actions.DeleteAll" = "キーチェーンのバックアップを削除";
+"SessionBackup.Actions.DeleteOne" = "バックアップから削除";
+"SessionBackup.Actions.RemoveFromApp" = "アプリから削除";
+"SessionBackup.LastBackupAt" = "最終バックアップ: %@";
+"SessionBackup.RestoreOK" = "OK。復元されたセッション: %@";
+"SessionBackup.LoggedIn" = "ログイン中";
+"SessionBackup.LoggedOut" = "ログアウトしました";
+"SessionBackup.DeleteAll.Title" = "すべてのセッションを削除しますか？";
+"SessionBackup.DeleteAll.Text" = "すべてのセッションがキーチェーンから削除されます。\n\nアカウントはSwiftgramからログアウトされません。";
+"SessionBackup.DeleteSingle.Title" = "1つのセッションを削除しますか？";
+"SessionBackup.DeleteSingle.Text" = "%@のセッションがキーチェーンから削除されます。\n\nアカウントはSwiftgramからログアウトされません。";
+"SessionBackup.RemoveFromApp.Title" = "アプリからアカウントを削除しますか？";
+"SessionBackup.RemoveFromApp.Text" = "%@のセッションがSwiftgramから削除されます！セッションはアクティブなままなので、後で復元できます。";
+"SessionBackup.Notice" = "セッションは暗号化され、デバイスのキーチェーンに保存されます。セッションはあなたのデバイスを離れることはありません。\n\n重要: 新しいデバイスまたはOSのリセット後にセッションを復元するには、暗号化されたバックアップを有効にする必要があります。さもなければキーチェーンは移行されません。\n\n注意: セッションはTelegramや他のデバイスからも取り消される可能性があります。";
+
+"MessageFilter.Title" = "メッセージフィルター";
+"MessageFilter.SubTitle" = "下記のキーワードを含むメッセージの可視性を減少させ、気を散らさないようにします。\nキーワードは大文字と小文字を区別します。";
+"MessageFilter.Keywords.Title" = "キーワード";
+"MessageFilter.InputPlaceholder" = "キーワードを入力してください";
+
+"InputToolbar.Title" = "フォーマットパネル";
+
+"Notifications.MentionsAndReplies.Title" = "@メンションと返信";
+"Notifications.MentionsAndReplies.value.default" = "デフォルト";
+"Notifications.MentionsAndReplies.value.silenced" = "ミュート";
+"Notifications.MentionsAndReplies.value.disabled" = "無効";
+"Notifications.PinnedMessages.Title" = "固定メッセージ";
+"Notifications.PinnedMessages.value.default" = "デフォルト";
+"Notifications.PinnedMessages.value.silenced" = "ミュート";
+"Notifications.PinnedMessages.value.disabled" = "無効";
+
+
+"PayWall.Text" = "プロ機能で強化";
+
+"PayWall.SessionBackup.Title" = "アカウントのバックアップ";
+"PayWall.SessionBackup.Notice" = "コードなしでアカウントにログインできます。再インストール後も可能です。デバイス上のキーチェーンで安全に保存されています";
+"PayWall.SessionBackup.Description" = "デバイスを変更したりSwiftgramを削除したりしても、もはや問題にはなりません。Telegramサーバー上でまだアクティブなすべてのセッションを復元します";
+
+"PayWall.MessageFilter.Title" = "メッセージフィルター";
+"PayWall.MessageFilter.Notice" = "SPAM、プロモーション、および煩わしいメッセージの可視性を減少させます。";
+"PayWall.MessageFilter.Description" = "見たくないキーワードのリストを作成すると、Swiftgramがそのキーワードを非表示にします";
+
+"PayWall.Notifications.Title" = "@メンションと返信を無効にする";
+"PayWall.Notifications.Notice" = "重要でない通知を隠したりミュートしたりします。";
+"PayWall.Notifications.Description" = "気分を落ち着けたいときは、固定メッセージやメンションを非表示にできます";
+
+"PayWall.InputToolbar.Title" = "フォーマットパネル";
+"PayWall.InputToolbar.Notice" = "ワンタップでメッセージの書式設定を短縮";
+"PayWall.InputToolbar.Description" = "書式を適用・解除したり、新しい行を挿入したりと、プロのように操作できます";
+
+"PayWall.AppIcons.Title" = "ユニークなアプリアイコン";
+"PayWall.AppIcons.Notice" = "ホーム画面でSwiftgramの外観をカスタマイズします。";
+
+"PayWall.About.Title" = "Swiftgram Proについて";
+"PayWall.About.Notice" = "Swiftgramの無料版は、Telegramアプリ上で数十の機能と改善を提供します。 毎月のTelegramのアップデートとSwiftgramの同期を革新し、維持することは多くの時間と高価なハードウェアを必要とする膨大な努力です。\n\nSwiftgramはプライバシーを尊重し、広告を気にしないオープンソースのアプリです。 Swiftgram Proに登録すると、排他的な機能にアクセスでき、独立した開発者をサポートできます。";
+/* DO NOT TRANSLATE */
+"PayWall.About.Signature" = "@Kylmakalle";
+/* DO NOT TRANSLATE */
+"PayWall.About.SignatureURL" = "https://t.me/Kylmakalle";
+
+"PayWall.ProSupport.Title" = "お支払いに問題がありますか？";
+"PayWall.ProSupport.Contact" = "心配ないさ！";
+
+"PayWall.RestorePurchases" = "購入を復元する";
+"PayWall.Terms" = "利用規約";
+"PayWall.Privacy" = "プライバシーポリシー";
+"PayWall.TermsURL" = "https://swiftgram.app/terms";
+"PayWall.PrivacyURL" = "https://swiftgram.app/privacy";
+"PayWall.Notice.Markdown" = "Swiftgram Proに購読することで、[Swiftgram利用規約](%1$@)と[プライバシーポリシー](%2$@)に同意したことになります。";
+"PayWall.Notice.Raw" = "Swiftgram Proに購読することで、Swiftgramの利用規約とプライバシーポリシーに同意したことになります。";
+
+"PayWall.Button.OpenPro" = "プロ機能を使用する";
+"PayWall.Button.Purchasing" = "購入中…";
+"PayWall.Button.Restoring" = "購入を復元中…";
+"PayWall.Button.Validating" = "購入を検証中…";
+"PayWall.Button.PaymentsUnavailable" = "支払い不可";
+"PayWall.Button.BuyInAppStore" = "App Store版で登録";
+"PayWall.Button.Subscribe" = "%@ / 月で購読";
+"PayWall.Button.ContactingAppStore" = "App Storeに連絡中…";
+
+"Paywall.Error.Title" = "エラー";
+"PayWall.ValidationError" = "検証エラー";
+"PayWall.ValidationError.TryAgain" = "購入の検証中に問題が発生しました。心配しないでください！後で購入を復元してみてください。";
+"PayWall.ValidationError.Expired" = "サブスクリプションの有効期限が切れました。Pro機能へのアクセスを取り戻すには、再度サブスクリプションを登録してください。";
