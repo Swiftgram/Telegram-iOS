@@ -159,17 +159,14 @@ public func sgDebugController(context: AccountContext) -> ViewController {
             }
             #endif
         case .restorePurchases:
-            context.sharedContext.SGIAP?.restorePurchases {
-                DispatchQueue.main.async {
-                    presentControllerImpl?(UndoOverlayController(
-                        presentationData: presentationData,
-                        content: .info(title: nil, text: "PayWall.Button.Restoring".i18n(args: context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode), timeout: nil, customUndoText: nil),
-                        elevatedLayout: false,
-                        action: { _ in return false }
-                    ),
-                    nil)
-                }
-            }
+            presentControllerImpl?(UndoOverlayController(
+                presentationData: presentationData,
+                content: .info(title: nil, text: "PayWall.Button.Restoring".i18n(args: context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode), timeout: nil, customUndoText: nil),
+                elevatedLayout: false,
+                action: { _ in return false }
+            ),
+            nil)
+            context.sharedContext.SGIAP?.restorePurchases {}
         case .setIAP:
             #if DEBUG
             #endif

@@ -13,7 +13,7 @@ import TelegramUIPreferences
 
 
 @available(iOS 13.0, *)
-public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacementController: ViewController, presentationData: PresentationData? = nil, SGIAPManager: SGIAPManager, openUrl: @escaping (String) -> Void, paymentsEnabled: Bool, canBuyInBeta: Bool, openAppStorePage: @escaping () -> Void) -> ViewController {
+public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacementController: ViewController, presentationData: PresentationData? = nil, SGIAPManager: SGIAPManager, openUrl: @escaping (String, Bool) -> Void /* url, forceExternal */, paymentsEnabled: Bool, canBuyInBeta: Bool, openAppStorePage: @escaping () -> Void, proSupportUrl: String?) -> ViewController {
     //    let theme = presentationData?.theme ?? (UITraitCollection.current.userInterfaceStyle == .dark ? defaultDarkColorPresentationTheme : defaultPresentationTheme)
     let theme = defaultDarkColorPresentationTheme
     let strings = presentationData?.strings ?? defaultPresentationStrings
@@ -31,7 +31,7 @@ public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacemen
     let swiftUIView = SGSwiftUIView<SGPayWallView>(
         legacyController: legacyController,
         content: {
-            SGPayWallView(wrapperController: legacyController, replacementController: replacementController, SGIAP: SGIAPManager, statusSignal: statusSignal, openUrl: openUrl, openAppStorePage: openAppStorePage, paymentsEnabled: paymentsEnabled, canBuyInBeta: canBuyInBeta)
+            SGPayWallView(wrapperController: legacyController, replacementController: replacementController, SGIAP: SGIAPManager, statusSignal: statusSignal, openUrl: openUrl, openAppStorePage: openAppStorePage, paymentsEnabled: paymentsEnabled, canBuyInBeta: canBuyInBeta, proSupportUrl: proSupportUrl)
         }
     )
     let controller = UIHostingController(rootView: swiftUIView, ignoreSafeArea: true)
@@ -101,7 +101,7 @@ struct SGPayWallFeatureDetails: View {
     
     let dismissAction: () -> Void
     var bottomOffset: CGFloat = 0.0
-    let contentHeight: CGFloat = 666.0 // heh
+    let contentHeight: CGFloat = 690.0
     let features: [SGProFeature]
     
     @State var shownFeature: SGProFeatureId?
@@ -326,10 +326,11 @@ struct SGPayWallView: View {
     let replacementController: ViewController
     let SGIAP: SGIAPManager
     let statusSignal: Signal<Int64, NoError>
-    let openUrl: (String) -> Void
+    let openUrl: (String, Bool) -> Void // url, forceExternal
     let openAppStorePage: () -> Void
     let paymentsEnabled: Bool
     let canBuyInBeta: Bool
+    let proSupportUrl: String?
     
     private enum PayWallState: Equatable {
         case ready // ready to buy
@@ -519,20 +520,36 @@ struct SGPayWallView: View {
     private var purchaseSection: some View {
         VStack(spacing: 0) {
             Divider()
-            
-            Button(action: handlePurchase) {
-                Text(buttonTitle)
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color(hex: accentColorHex))
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
+            VStack(spacing: 8) {
+                Button(action: handlePurchase) {
+                    Text(buttonTitle)
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color(hex: accentColorHex))
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+                .disabled((state != .ready || !canPurchase) && !(currentStatus > 1))
+                .opacity(((state != .ready || !canPurchase) && !(currentStatus > 1)) ? 0.5 : 1.0)
+                
+                if let proSupportUrl = proSupportUrl {
+                    HStack(alignment: .center, spacing: 4) {
+                        Text("PayWall.ProSupport.Title".i18n(lang))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Button(action: {
+                            openUrl(proSupportUrl, false)
+                        }) {
+                            Text("PayWall.ProSupport.Contact".i18n(lang))
+                                .font(.caption)
+                                .foregroundColor(Color(hex: accentColorHex))
+                        }
+                    }
+                }
             }
-            .disabled((state != .ready || !canPurchase) && !(currentStatus > 1))
-            .opacity(((state != .ready || !canPurchase) && !(currentStatus > 1)) ? 0.5 : 1.0)
             .padding([.horizontal, .top])
-            .padding(.bottom, sgBottomSafeAreaInset(containerViewLayout))
+            .padding(.bottom, sgBottomSafeAreaInset(containerViewLayout) + 2.0)
         }
         .foregroundColor(Color.black)
         .backgroundIfAvailable(material: .ultraThinMaterial)
@@ -547,7 +564,7 @@ struct SGPayWallView: View {
                     .tint(Color(hex: accentColorHex))
                     .foregroundColor(.secondary)
                     .environment(\.openURL, OpenURLAction { url in
-                        openUrl(url.absoluteString)
+                        openUrl(url.absoluteString, false)
                         return .handled
                     })
             } else {
@@ -556,14 +573,14 @@ struct SGPayWallView: View {
                     .foregroundColor(.secondary)
                 HStack(alignment: .top, spacing: 8) {
                     Button(action: {
-                        openUrl("PayWall.PrivacyURL".i18n(lang))
+                        openUrl("PayWall.PrivacyURL".i18n(lang), true)
                     }) {
                         Text("PayWall.Privacy".i18n(lang))
                             .font(.caption)
                             .foregroundColor(Color(hex: accentColorHex))
                     }
                     Button(action: {
-                        openUrl("PayWall.TermsURL".i18n(lang))
+                        openUrl("PayWall.TermsURL".i18n(lang), true)
                     }) {
                         Text("PayWall.Terms".i18n(lang))
                             .font(.caption)
@@ -592,7 +609,7 @@ struct SGPayWallView: View {
             }
             HStack {
                 Button(action: {
-                    openUrl("PayWall.About.SignatureURL".i18n(lang))
+                    openUrl("PayWall.About.SignatureURL".i18n(lang), false)
                 }) {
                     Text("PayWall.About.Signature".i18n(lang))
                         .font(.caption)

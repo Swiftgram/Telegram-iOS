@@ -4,6 +4,8 @@ import SGConfig
 import SGSettingsUI
 import SGDebugUI
 import SFSafariViewControllerPlus
+import UndoUI
+//
 import ContactListUI
 import Foundation
 import Display
@@ -1041,6 +1043,33 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                                         }
                                     }
                                 }
+                            case "restart":
+                                let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                                let lang = presentationData.strings.baseLanguageCode
+                                context.sharedContext.presentGlobalController(
+                                    UndoOverlayController(
+                                        presentationData: presentationData,
+                                        content: .info(title: nil,
+                                            text: "Common.RestartRequired".i18n(lang),
+                                            timeout: nil,
+                                            customUndoText: "Common.RestartNow".i18n(lang)
+                                        ),
+                                        elevatedLayout: false,
+                                        action: { action in if action == .undo { exit(0) }; return true }
+                                    ),
+                                    nil
+                                )
+                            case "restore_purchases", "pro_restore", "validate", "restore":
+                                let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                                let lang = presentationData.strings.baseLanguageCode
+                                context.sharedContext.presentGlobalController(UndoOverlayController(
+                                        presentationData: presentationData,
+                                        content: .info(title: nil, text: "PayWall.Button.Restoring".i18n(lang), timeout: nil, customUndoText: nil),
+                                        elevatedLayout: false,
+                                        action: { _ in return false }
+                                    ),
+                                nil)
+                                context.sharedContext.SGIAP?.restorePurchases {}
                             default:
                                 break
                         }

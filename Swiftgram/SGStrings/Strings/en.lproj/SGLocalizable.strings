@@ -214,9 +214,13 @@
 
 "PayWall.About.Title" = "About Swiftgram Pro";
 "PayWall.About.Notice" = "Free version of Swiftgram provides dozens of features and improvements over Telegram app. Innovating and keeping Swiftgram in sync with monthly Telegram updates is a huge effort that requires a lot of time and expensive hardware.\n\nSwiftgram is an open-source app that respects your privacy and doesn't bother you with ads. Subscribing to Swiftgram Pro you get access to exclusive features and support an independent developer.";
+/* DO NOT TRANSLATE */
 "PayWall.About.Signature" = "@Kylmakalle";
 /* DO NOT TRANSLATE */
 "PayWall.About.SignatureURL" = "https://t.me/Kylmakalle";
+
+"PayWall.ProSupport.Title" = "Troubles with payment?";
+"PayWall.ProSupport.Contact" = "No worries!";
 
 "PayWall.RestorePurchases" = "Restore Purchases";
 "PayWall.Terms" = "Terms of Service";

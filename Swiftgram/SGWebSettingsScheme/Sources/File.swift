@@ -5,7 +5,7 @@ public struct SGWebSettings: Codable, Equatable {
     public let user: SGUserSettings
     
     public static var defaultValue: SGWebSettings {
-        return SGWebSettings(global: SGGlobalSettings(ytPip: true, qrLogin: true, storiesAvailable: false, canViewMessages: true, canEditSettings: false, canShowTelescope: false, announcementsData: nil, regdateFormat: "month", botMonkeys: [], forceReasons: [], unforceReasons: [], paymentsEnabled: true, duckyAppIconAvailable: true, canGrant: false), user: SGUserSettings(contentReasons: [], canSendTelescope: false, canBuyInBeta: true))
+        return SGWebSettings(global: SGGlobalSettings(ytPip: true, qrLogin: true, storiesAvailable: false, canViewMessages: true, canEditSettings: false, canShowTelescope: false, announcementsData: nil, regdateFormat: "month", botMonkeys: [], forceReasons: [], unforceReasons: [], paymentsEnabled: true, duckyAppIconAvailable: true, canGrant: false, proSupportUrl: nil), user: SGUserSettings(contentReasons: [], canSendTelescope: false, canBuyInBeta: true))
     }
 }
 
@@ -24,6 +24,7 @@ public struct SGGlobalSettings: Codable, Equatable {
     public let paymentsEnabled: Bool
     public let duckyAppIconAvailable: Bool
     public let canGrant: Bool
+    public let proSupportUrl: String?
 }
 
 public struct SGBotMonkeys: Codable, Equatable {
