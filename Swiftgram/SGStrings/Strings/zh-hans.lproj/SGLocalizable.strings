@@ -193,26 +193,34 @@
 
 "PayWall.Text" = "增强了专业功能";
 
-"PayWall.SessionBackup.Title" = "会话备份";
-"PayWall.SessionBackup.Notice" = "从加密的本地 Apple 钥匙串备份中恢复会话。";
+"PayWall.SessionBackup.Title" = "账号备份";
+"PayWall.SessionBackup.Notice" = "即使在重新安装后也可以登录到没有代码的帐户。使用设备上的密钥链来安全存储。";
+"PayWall.SessionBackup.Description" = "更改设备或删除 Swiftgram 已不再是一个问题。还原在Telegram 服务器上仍然活跃的所有会话。";
 
 "PayWall.MessageFilter.Title" = "消息过滤器";
 "PayWall.MessageFilter.Notice" = "减少 SPAM、促销和令人烦恼的消息的可见性。";
+"PayWall.MessageFilter.Description" = "创建一个您不想经常看到的关键字列表，而Swiftgram 会减少干扰。";
 
 "PayWall.Notifications.Title" = "禁用 @提及和回复";
 "PayWall.Notifications.Notice" = "隐藏或静音不重要的通知。";
+"PayWall.Notifications.Description" = "当你需要一点心情时，不再有固定的消息或 @reference.";
 
 "PayWall.InputToolbar.Title" = "格式面板";
-"PayWall.InputToolbar.Notice" = "使用键盘上方的面板节省准备帖子所需的时间。";
+"PayWall.InputToolbar.Notice" = "只需单击即可节省时间格式化消息。";
+"PayWall.InputToolbar.Description" = "应用并清除格式化或插入像专业版这样的新行。";
 
 "PayWall.AppIcons.Title" = "独特的应用图标";
 "PayWall.AppIcons.Notice" = "自定义 Swiftgram 在主屏幕上的外观。";
 
 "PayWall.About.Title" = "关于 Swiftgram Pro";
 "PayWall.About.Notice" = "Swiftgram 的免费版本在 Telegram 应用上提供了数十个功能和改进。 创新并保持Swiftgram与每月的 Telegram 同步是一项巨大的努力，需要大量的时间和昂贵的硬件。\n\nSwiftgram 是一个尊重您隐私且不会让您与广告纠缠的开源应用。 订阅 Swiftgram Pro 您可以访问独家功能并支持独立开发者。";
+/* DO NOT TRANSLATE */
 "PayWall.About.Signature" = "@Kylmakalle";
 /* DO NOT TRANSLATE */
 "PayWall.About.SignatureURL" = "https://t.me/Kylmakalle";
+
+"PayWall.ProSupport.Title" = "支付问题？";
+"PayWall.ProSupport.Contact" = "不用担心！";
 
 "PayWall.RestorePurchases" = "恢复购买";
 "PayWall.Terms" = "服务条款";
@@ -227,6 +235,7 @@
 "PayWall.Button.Restoring" = "正在恢复购买……";
 "PayWall.Button.Validating" = "正在验证购买……";
 "PayWall.Button.PaymentsUnavailable" = "付款不可用";
+"PayWall.Button.BuyInAppStore" = "订阅 App Store 版本";
 "PayWall.Button.Subscribe" = "订阅 %@ / 月";
 "PayWall.Button.ContactingAppStore" = "正在联系 App Store……";
 
