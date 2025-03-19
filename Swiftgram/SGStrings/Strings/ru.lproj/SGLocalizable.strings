@@ -203,13 +203,13 @@
 
 "PayWall.Notifications.Title" = "Отключение @тэгов и ответов";
 "PayWall.Notifications.Notice" = "Скрывает или приглушает неважные уведомления.";
-"PayWall.Notifications.Description" = "Никаких больше Закрепов или @тэгов, когда вам нужно чуточку спокойствия.";
+"PayWall.Notifications.Description" = "Никаких больше Закрепов или @тэгов, когда вам нужна чуточка спокойствия.";
 
 "PayWall.InputToolbar.Title" = "Панель форматирования";
 "PayWall.InputToolbar.Notice" = "Экономит время, форматируя сообщения всего одним касанием.";
 "PayWall.InputToolbar.Description" = "Применяйте и очищайте форматирование, переносите абзацы как Pro.";
 
-"PayWall.AppIcons.Title" = "Уникальные иконки приложений";
+"PayWall.AppIcons.Title" = "Уникальные иконки приложения";
 "PayWall.AppIcons.Notice" = "Настройка внешнего вида Swiftgram на главном экране.";
 
 "PayWall.About.Title" = "О Swiftgram Pro";
