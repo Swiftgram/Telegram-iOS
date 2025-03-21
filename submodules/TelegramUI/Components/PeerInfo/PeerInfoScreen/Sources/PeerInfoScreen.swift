@@ -6915,6 +6915,23 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                                 }
                             })
                         })))
+                        
+                    // MARK: Swiftgram
+                    } else {
+                        items.append(.action(ContextMenuActionItem(text: presentationData.strings.Group_Info_AdminLog, icon: { theme in
+                            generateTintedImage(image: UIImage(bundleImageName: "Peer Info/RefProgram/IntroListEye"), color: theme.contextMenu.primaryColor)
+                        }, action: { [weak self] c, f in
+                            f(.dismissWithoutContent)
+                            self?.openRecentActions()
+                        })))
+                    }
+                    if case .group = channel.info {
+                        items.append(.action(ContextMenuActionItem(text: presentationData.strings.GroupInfo_Administrators, icon: { theme in
+                            generateTintedImage(image: UIImage(bundleImageName: "Chat List/ProxyShieldIcon"), color: theme.contextMenu.primaryColor)
+                        }, action: { [weak self] c, f in
+                            f(.dismissWithoutContent)
+                            self?.openParticipantsSection(section: .admins)
+                        })))
                     }
                     
                     if canSetupAutoremoveTimeout {
