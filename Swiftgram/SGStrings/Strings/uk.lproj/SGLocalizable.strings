@@ -62,7 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Максимальне";
 
 "Settings.ShowProfileID" = "Показувати ID профілю";
-"Settings.ShowDC" = "Показувати датацентр";
+"Settings.ShowDC" = "Показувати дата-центр";
 "Settings.ShowCreationDate" = "Показувати дату створення чату";
 "Settings.ShowCreationDate.Notice" = "Дата створення може бути невідома для деяких чатів.";
 
@@ -139,6 +139,8 @@
 
 "Settings.showChannelBottomButton" = "Нижня панель каналу";
 
+"Settings.secondsInMessages" = "Секунди в Повідомленнях";
+
 "Settings.CallConfirmation" = "Підтвердження викликів";
 "Settings.CallConfirmation.Notice" = "Swiftgram запитуватиме дозвіл перед здійсненням виклику.";
 
@@ -191,23 +193,34 @@
 
 "PayWall.Text" = "Посилений функціями Pro";
 
-"PayWall.SessionBackup.Title" = "Резервне копіювання сесій";
-"PayWall.SessionBackup.Notice" = "Відновлюйте сесії з зашифрованого резервного копіювання локального Apple Keychain.";
+"PayWall.SessionBackup.Title" = "Резервне копіювання сесії";
+"PayWall.SessionBackup.Notice" = "Вхід до облікових записів без коду, навіть після перевстановлення. Безпечне сховище з Ключарем пристрою.";
+"PayWall.SessionBackup.Description" = "Зміна пристрою або видалення Swiftgram більше не проблема. Відновити всі сеанси, які досі активні на серверах Telegram.";
 
 "PayWall.MessageFilter.Title" = "Фільтр повідомлень";
 "PayWall.MessageFilter.Notice" = "Зменшити видимість СПАМу, реклам та набридливих повідомлень.";
+"PayWall.MessageFilter.Description" = "Створити список ключових слів, які ви не хочете бачити часто, а Swiftgram зменшить відволікання.";
 
 "PayWall.Notifications.Title" = "Вимкнути @згадки та відповіді";
 "PayWall.Notifications.Notice" = "Сховати або приглушити непотрібні сповіщення.";
+"PayWall.Notifications.Description" = "Більше не потрібно використовувати прикріплені повідомлення або @згадки, коли ви потребуєте розуму.";
 
 "PayWall.InputToolbar.Title" = "Панель форматування";
-"PayWall.InputToolbar.Notice" = "Збережіть час на підготовці ваших публікацій за допомогою панелі, що знаходиться безпосередньо над вашою клавіатурою.";
+"PayWall.InputToolbar.Notice" = "Зберігати час форматування повідомлень одним дотиком.";
+"PayWall.InputToolbar.Description" = "Застосувати і очистити форматування або вставити нові лінії, як Pro.";
 
 "PayWall.AppIcons.Title" = "Унікальні значки додатків";
 "PayWall.AppIcons.Notice" = "Налаштуйте вигляд Swiftgram на вашому домашньому екрані.";
 
 "PayWall.About.Title" = "Про Swiftgram Pro";
 "PayWall.About.Notice" = "Безкоштовна версія Swiftgram надає десятки функцій та покращень у порівнянні з додатком Telegram. Інновації та підтримка Swiftgram в актуальному стані з місячними оновленнями Telegram потребує величезних зусиль, що вимагають багато часу та дорогого обладнання.\n\nSwiftgram — це додаток з відкритим кодом, який поважає вашу конфіденційність і не турбує вас рекламою. Підписуючись на Swiftgram Pro, ви отримуєте доступ до ексклюзивних функцій і підтримуєте незалежного розробника.\n\n- @Kylmakalle";
+/* DO NOT TRANSLATE */
+"PayWall.About.Signature" = "@Kylmakalle";
+/* DO NOT TRANSLATE */
+"PayWall.About.SignatureURL" = "https://t.me/Kylmakalle";
+
+"PayWall.ProSupport.Title" = "Проблеми з оплатою?";
+"PayWall.ProSupport.Contact" = "Не хвилюйтеся!";
 
 "PayWall.RestorePurchases" = "Відновити покупки";
 "PayWall.Terms" = "Умови обслуговування";
@@ -222,9 +235,11 @@
 "PayWall.Button.Restoring" = "Відновлення покупок...";
 "PayWall.Button.Validating" = "Перевірка покупки...";
 "PayWall.Button.PaymentsUnavailable" = "Платежі недоступні";
+"PayWall.Button.BuyInAppStore" = "Підписатися на версію в App Store";
 "PayWall.Button.Subscribe" = "Підписатися за %@ / місяць";
 "PayWall.Button.ContactingAppStore" = "Зв'язок з App Store...";
 
 "Paywall.Error.Title" = "Помилка";
 "PayWall.ValidationError" = "Помилка валідації";
 "PayWall.ValidationError.TryAgain" = "Щось пішло не так під час перевірки покупки. Не хвилюйтеся! Спробуйте відновити покупки трохи пізніше.";
+"PayWall.ValidationError.Expired" = "Ваша підписка застаріла. Підпишіться, щоб відновити доступ до Pro-можливостей.";
