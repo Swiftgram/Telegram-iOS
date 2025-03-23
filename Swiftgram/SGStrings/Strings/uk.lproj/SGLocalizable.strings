@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Потрібен перезапуск";
 "Common.RestartNow" = "Перезавантажити";
 "Common.OpenTelegram" = "Відкрити Telegram";
-"Common.UseTelegramForPremium" = "Зверніть увагу, що для отримання Telegram Premium ви маєте використовувати офіційний додаток Telegram. Після отримання Telegram Premium, усі переваги стануть доступними у Swiftgram.";
+"Common.UseTelegramForPremium" = "Зверніть увагу, що для отримання Telegram Premium вам потрібен офіційний застосунок Telegram. Після отримання Telegram Premium, усі переваги стануть доступними у Swiftgram.";
 "Common.UpdateOS" = "Необхідне оновлення iOS";
 
 "Message.HoldToShowOrReport" = "Затисніть, щоб переглянути або поскаржитись.";
@@ -137,9 +137,9 @@
 "Settings.forceBuiltInMic" = "Використовувати мікрофон пристрою";
 "Settings.forceBuiltInMic.Notice" = "Якщо увімкнено, застосунок використовуватиме лише мікрофон пристрою, навіть якщо підключені навушники.";
 
-"Settings.showChannelBottomButton" = "Нижня панель каналу";
+"Settings.showChannelBottomButton" = "Нижня панель у каналах";
 
-"Settings.secondsInMessages" = "Секунди в Повідомленнях";
+"Settings.secondsInMessages" = "Секунди в повідомленнях";
 
 "Settings.CallConfirmation" = "Підтвердження викликів";
 "Settings.CallConfirmation.Notice" = "Swiftgram запитуватиме дозвіл перед здійсненням виклику.";
