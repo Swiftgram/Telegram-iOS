@@ -198,7 +198,7 @@
 "PayWall.SessionBackup.Description" = "Смена устройства или удаление Swiftgram больше не проблема. Восстановите все ваши Сессии, которые активны на серверах Telegram.";
 
 "PayWall.MessageFilter.Title" = "Фильтр сообщений";
-"PayWall.MessageFilter.Notice" = "Уменьшает видимость надоедливых сообщений со СПАМом или рекламой.";
+"PayWall.MessageFilter.Notice" = "Уменьшает видимость навязчивых сообщений со СПАМом или рекламой.";
 "PayWall.MessageFilter.Description" = "Создайте список ключевых слов, которые вы не хотите встречать, и Swiftgram снизит их видимость.";
 
 "PayWall.Notifications.Title" = "Отключение @тэгов и ответов";
