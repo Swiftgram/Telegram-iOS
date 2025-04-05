@@ -203,7 +203,7 @@
 
 "PayWall.Notifications.Title" = "Отключение @тэгов и ответов";
 "PayWall.Notifications.Notice" = "Скрывает или приглушает неважные уведомления.";
-"PayWall.Notifications.Description" = "Никаких больше Закрепов или @тэгов, когда вам нужна чуточка спокойствия.";
+"PayWall.Notifications.Description" = "Никаких больше Закрепов или @тэгов, когда нужно побыть в тишине.";
 
 "PayWall.InputToolbar.Title" = "Панель форматирования";
 "PayWall.InputToolbar.Notice" = "Экономит время, форматируя сообщения всего одним касанием.";
