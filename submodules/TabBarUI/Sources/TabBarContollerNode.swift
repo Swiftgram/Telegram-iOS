@@ -12,6 +12,7 @@ private extension ToolbarTheme {
 
 final class TabBarControllerNode: ASDisplayNode {
     private var navigationBarPresentationData: NavigationBarPresentationData
+    private let showTabNames: Bool // MARK: Swiftgram
     private var theme: TabBarControllerTheme
     let tabBarNode: TabBarNode
     private let disabledOverlayNode: ASDisplayNode
@@ -45,6 +46,7 @@ final class TabBarControllerNode: ASDisplayNode {
     
     init(showTabNames: Bool, theme: TabBarControllerTheme, navigationBarPresentationData: NavigationBarPresentationData, itemSelected: @escaping (Int, Bool, [ASDisplayNode]) -> Void, contextAction: @escaping (Int, ContextExtractedContentContainingNode, ContextGesture) -> Void, swipeAction: @escaping (Int, TabBarItemSwipeDirection) -> Void, toolbarActionSelected: @escaping (ToolbarActionOption) -> Void, disabledPressed: @escaping () -> Void) {
         self.theme = theme
+        self.showTabNames = showTabNames
         self.navigationBarPresentationData = navigationBarPresentationData
         self.tabBarNode = TabBarNode(showTabNames: showTabNames, theme: theme, itemSelected: itemSelected, contextAction: contextAction, swipeAction: swipeAction)
         self.tabBarNode.isHidden = SGSimpleSettings.shared.hideTabBar
@@ -106,6 +108,7 @@ final class TabBarControllerNode: ASDisplayNode {
         } else {
             tabBarHeight = 49.0 + bottomInset
         }
+        if !self.showTabNames { tabBarHeight -= 12.0 } // MARK: Swiftgram
         
         let tabBarFrame = CGRect(origin: CGPoint(x: 0.0, y: layout.size.height - (self.tabBarHidden ? 0.0 : tabBarHeight)), size: CGSize(width: layout.size.width, height: tabBarHeight))
         
