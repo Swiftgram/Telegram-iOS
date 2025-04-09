@@ -272,6 +272,7 @@ open class TabBarControllerImpl: ViewController, TabBarController {
                     } else {
                         tabBarHeight = 49.0 + bottomInset
                     }
+                    if !strongSelf.showTabNames { tabBarHeight -= 12.0 } // MARK: Swiftgram
                     updatedLayout.intrinsicInsets.bottom = tabBarHeight
                     
                     strongSelf.controllers[index].containerLayoutUpdated(updatedLayout, transition: .immediate)
@@ -448,8 +449,10 @@ open class TabBarControllerImpl: ViewController, TabBarController {
             let bottomInset: CGFloat = updatedLayout.insets(options: options).bottom
             if !updatedLayout.safeInsets.left.isZero {
                 tabBarHeight = 34.0 + bottomInset
+                if !self.showTabNames { tabBarHeight -= 6.0 } // MARK: Swiftgram
             } else {
                 tabBarHeight = 49.0 + bottomInset
+                if !self.showTabNames { tabBarHeight -= 12.0 } // MARK: Swiftgram
             }
             if !self.tabBarControllerNode.tabBarHidden {
                 updatedLayout.intrinsicInsets.bottom = tabBarHeight
@@ -477,8 +480,10 @@ open class TabBarControllerImpl: ViewController, TabBarController {
             let bottomInset: CGFloat = updatedLayout.insets(options: options).bottom
             if !updatedLayout.safeInsets.left.isZero {
                 tabBarHeight = 34.0 + bottomInset
+                if !self.showTabNames { tabBarHeight -= 6.0 } // MARK: Swiftgram
             } else {
                 tabBarHeight = 49.0 + bottomInset
+                if !self.showTabNames { tabBarHeight -= 12.0 } // MARK: Swiftgram
             }
             if !self.tabBarControllerNode.tabBarHidden {
                 updatedLayout.intrinsicInsets.bottom = tabBarHeight
