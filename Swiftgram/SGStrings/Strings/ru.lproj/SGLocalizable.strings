@@ -155,7 +155,7 @@
 "Settings.swipeForVideoPIP" = "Видео PIP свайпом";
 "Settings.swipeForVideoPIP.Notice" = "Если включено, свайп видео откроет его в режиме «Картинка в картинке».";
 
-"SessionBackup.Title" = "Резервная копия сессии";
+"SessionBackup.Title" = "Бэкап аккаунтов";
 "SessionBackup.Sessions.Title" = "Сессии";
 "SessionBackup.Actions.Backup" = "Бэкап в Keychain";
 "SessionBackup.Actions.Restore" = "Восстановить из Keychain";
@@ -172,7 +172,7 @@
 "SessionBackup.DeleteSingle.Text" = "%@ сессия будет удалена из Keychain.\n\nАккаунт не будет разлогинен из Swiftgram.";
 "SessionBackup.RemoveFromApp.Title" = "Удалить аккаунт из приложения?";
 "SessionBackup.RemoveFromApp.Text" = "%@ сессия БУДЕТ УДАЛЕНА из Swiftgram! Сессия останется активной, чтобы вы могли восстановить ее позже.";
-"SessionBackup.Notice" = "Сессии шифруются и хранятся в Keychain устройства. Сессии никогда не покидают ваше устройство. Важно: Сессии могут быть разлогинены самим Telegram или с другого устройства.";
+"SessionBackup.Notice" = "Сессии шифруются и хранятся в Keychain устройства. Сессии никогда не покидают ваше устройство.\n\nВАЖНО: Чтобы восстановить сессии на новом устройстве или после сброса системы, ОБЯЗАТЕЛЬНО включите шифрование резервных копий ОС, иначе Keychain будет утерян при восстановлении.\n\nПРИМЕЧАНИЕ: Сессии всё ещё могут быть разлогинены самим Telegram или с другого устройства.";
 
 "MessageFilter.Title" = "Фильтр сообщений";
 "MessageFilter.SubTitle" = "Убирает отвлекающие факторы и уменьшает видимость сообщений, содержащих ключевые слова ниже.\nКлючевые слова чувствительны к регистру.";
@@ -185,7 +185,7 @@
 "Notifications.MentionsAndReplies.value.default" = "По умолчанию";
 "Notifications.MentionsAndReplies.value.silenced" = "Без звука";
 "Notifications.MentionsAndReplies.value.disabled" = "Выключено";
-"Notifications.PinnedMessages.Title" = "Закрепленные сообщения";
+"Notifications.PinnedMessages.Title" = "Сообщение закреплено";
 "Notifications.PinnedMessages.value.default" = "По умолчанию";
 "Notifications.PinnedMessages.value.silenced" = "Без звука";
 "Notifications.PinnedMessages.value.disabled" = "Выключено";
