@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder.WatchKit.Storyboard" version="3.0" toolsVersion="17701" targetRuntime="watchKit" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="umr-Wa-jBL">
+<document type="com.apple.InterfaceBuilder.WatchKit.Storyboard" version="3.0" toolsVersion="23504" targetRuntime="watchKit" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="umr-Wa-jBL">
     <device id="watch38"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17703"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBWatchKitPlugin" version="17500"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBWatchKitPlugin" version="23501"/>
     </dependencies>
     <scenes>
         <!--TGNeoConversationController-->
@@ -264,12 +263,22 @@
                                                 </items>
                                                 <edgeInsets key="margins" left="0.0" right="0.0" top="0.0" bottom="0.0"/>
                                             </group>
-                                            <button width="1" alignment="left" title="Reply" id="2iG-T9-riG" userLabel="ReplyButton">
-                                                <fontDescription key="font" style="UICTFontTextStyleBody"/>
-                                                <connections>
-                                                    <action selector="bottomButtonPressedAction" destination="Sk9-TZ-rcT" id="Iax-Ma-NTR"/>
-                                                </connections>
-                                            </button>
+                                            <group width="1" alignment="left" id="ZjN-7L-y0i">
+                                                <items>
+                                                    <button width="0.5" alignment="left" title="Keyboard" id="ZjW-lA-1o2" userLabel="ReplyWithoutPresetButton">
+                                                        <fontDescription key="font" style="UICTFontTextStyleBody"/>
+                                                        <connections>
+                                                            <action selector="replyWithoutPresetButtonPressedAction" destination="Sk9-TZ-rcT" id="K6U-gx-bo2"/>
+                                                        </connections>
+                                                    </button>
+                                                    <button width="0.5" alignment="left" title="Reply" id="2iG-T9-riG" userLabel="ReplyButton">
+                                                        <fontDescription key="font" style="UICTFontTextStyleBody"/>
+                                                        <connections>
+                                                            <action selector="bottomButtonPressedAction" destination="Sk9-TZ-rcT" id="Iax-Ma-NTR"/>
+                                                        </connections>
+                                                    </button>
+                                                </items>
+                                            </group>
                                         </items>
                                         <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
                                         <edgeInsets key="margins" left="0.0" right="0.0" top="8" bottom="0.0"/>
@@ -280,6 +289,7 @@
                                         <outlet property="commandsButton" destination="RWg-g5-O0W" id="VQ3-Wi-utc"/>
                                         <outlet property="commandsIcon" destination="Sgd-li-bQM" id="aGs-kd-dMV"/>
                                         <outlet property="locationButton" destination="lgz-SW-48b" id="fvj-wX-YHJ"/>
+                                        <outlet property="replyWithoutPresetButton" destination="ZjW-lA-1o2" id="Cz3-iG-vxP"/>
                                         <outlet property="stickerButton" destination="DEI-rh-mkw" id="EIj-55-X1O"/>
                                         <outlet property="voiceButton" destination="A2D-tU-jC0" id="hGQ-R3-UfT"/>
                                     </connections>
@@ -1498,18 +1508,18 @@ contacts found.</string>
                                             </group>
                                             <group width="1" alignment="left" id="sNj-bH-Ixp">
                                                 <items>
-                                                    <button alignment="left" id="rBO-C4-etS" userLabel="ForwardButton">
-                                                        <group key="contentGroup" width="0.5" alignment="left" id="Ca2-qt-UAS">
+                                                    <button alignment="left" id="7b9-n9-kU0" userLabel="ReplyWithoutPresetButton">
+                                                        <group key="contentGroup" width="0.5" alignment="left" id="lrB-5A-88p">
                                                             <items>
-                                                                <label alignment="center" verticalAlignment="center" text="Forward" minimumScaleFactor="0.70000000000000007" id="gmz-9g-lxa">
+                                                                <label alignment="center" verticalAlignment="center" text="Keyboard" minimumScaleFactor="0.70000000000000007" id="8MZ-yJ-geC">
                                                                     <fontDescription key="font" style="UICTFontTextStyleBody"/>
                                                                 </label>
                                                             </items>
-                                                            <color key="backgroundColor" red="0.13532151281833649" green="0.13521988689899445" blue="0.13833095133304596" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                                            <color key="backgroundColor" red="0.13532151279999999" green="0.1352198869" blue="0.1383309513" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                             <edgeInsets key="margins" left="2" right="2" top="10" bottom="10"/>
                                                         </group>
                                                         <connections>
-                                                            <action selector="forwardButtonPressedAction" destination="1Hh-aR-wxz" id="Wfy-NV-rL2"/>
+                                                            <action selector="replyWithoutPresetButtonPressedAction" destination="1Hh-aR-wxz" id="RrA-Fx-gdM"/>
                                                         </connections>
                                                     </button>
                                                     <button alignment="left" id="tXA-Wr-kO8" userLabel="ReplyButton">
@@ -1528,6 +1538,20 @@ contacts found.</string>
                                                     </button>
                                                 </items>
                                             </group>
+                                            <button alignment="left" id="rBO-C4-etS" userLabel="ForwardButton">
+                                                <group key="contentGroup" width="1" alignment="left" id="Ca2-qt-UAS">
+                                                    <items>
+                                                        <label alignment="center" verticalAlignment="center" text="Forward" minimumScaleFactor="0.70000000000000007" id="gmz-9g-lxa">
+                                                            <fontDescription key="font" style="UICTFontTextStyleBody"/>
+                                                        </label>
+                                                    </items>
+                                                    <color key="backgroundColor" red="0.13532151281833649" green="0.13521988689899445" blue="0.13833095133304596" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                                    <edgeInsets key="margins" left="2" right="2" top="10" bottom="10"/>
+                                                </group>
+                                                <connections>
+                                                    <action selector="forwardButtonPressedAction" destination="1Hh-aR-wxz" id="Wfy-NV-rL2"/>
+                                                </connections>
+                                            </button>
                                             <button alignment="left" id="kvN-p0-r41" userLabel="ViewButton">
                                                 <group key="contentGroup" width="1" alignment="left" id="E4s-LH-3yD">
                                                     <items>
@@ -1552,6 +1576,8 @@ contacts found.</string>
                                         <outlet property="forwardLabel" destination="gmz-9g-lxa" id="nAb-Sb-AiC"/>
                                         <outlet property="replyButton" destination="tXA-Wr-kO8" id="qeP-D8-TJD"/>
                                         <outlet property="replyLabel" destination="vrf-Wa-mes" id="cZJ-F0-Un4"/>
+                                        <outlet property="replyWithoutPresetButton" destination="7b9-n9-kU0" id="Vcj-TQ-2zd"/>
+                                        <outlet property="replyWithoutPresetLabel" destination="8MZ-yJ-geC" id="n0b-sq-mrG"/>
                                         <outlet property="timeLabel" destination="Bg8-7r-Qar" id="XlK-Tz-a8j"/>
                                         <outlet property="viewButton" destination="kvN-p0-r41" id="dKv-Lh-y1m"/>
                                         <outlet property="viewLabel" destination="J8D-Ro-XwE" id="UPi-Lo-FNo"/>
@@ -1572,21 +1598,19 @@ contacts found.</string>
     </scenes>
     <color key="tintColor" red="0.15550534427165985" green="0.57037848234176636" blue="0.8720671534538269" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
     <resources>
-        <image name="BotCommandIcon" width="128" height="128"/>
-        <image name="BubbleNotification" width="128" height="128"/>
+        <image name="BotCommandIcon" width="18" height="18"/>
         <image name="File.png" width="128" height="128"/>
-        <image name="Location" width="128" height="128"/>
-        <image name="LocationIcon" width="128" height="128"/>
-        <image name="LoginIcon" width="128" height="128"/>
-        <image name="MediaAudioPlay" width="128" height="128"/>
+        <image name="LocationIcon" width="52" height="78"/>
+        <image name="LoginIcon" width="46" height="78"/>
+        <image name="MediaAudioPlay" width="18" height="18"/>
         <image name="MediaLocation" width="11" height="15"/>
-        <image name="MessageStatusDot" width="128" height="128"/>
-        <image name="MicAccessIcon" width="128" height="128"/>
-        <image name="MicIcon" width="128" height="128"/>
-        <image name="PickLocation" width="128" height="128"/>
-        <image name="RemotePlayVideo" width="128" height="128"/>
+        <image name="MessageStatusDot" width="5" height="5"/>
+        <image name="MicAccessIcon" width="52" height="78"/>
+        <image name="MicIcon" width="17" height="21"/>
+        <image name="PickLocation" width="17" height="20"/>
+        <image name="RemotePlayVideo" width="15" height="27"/>
         <image name="Spinner" width="128" height="128"/>
-        <image name="StickerIcon" width="128" height="128"/>
-        <image name="VerifiedProfile" width="128" height="128"/>
+        <image name="StickerIcon" width="18" height="18"/>
+        <image name="VerifiedProfile" width="15.5" height="15.5"/>
     </resources>
 </document>

@@ -1231,6 +1231,19 @@ const NSInteger TGNeoConversationControllerInitialRenderCount = 4 * 2;
             [strongSelf sendMessageWithText:text];
         }];
     };
+    // MARK: Swiftgram
+    controller.replyWithoutPresetPressed = ^
+    {
+        __strong TGNeoConversationController *strongSelf = weakSelf;
+        if (strongSelf == nil)
+            return;
+        
+        [TGInputController presentPlainInputControllerForInterfaceController:strongSelf completion:^(NSString *text)
+        {
+            [strongSelf sendMessageWithText:text];
+        }];
+    };
+    //
     controller.startPressed = ^
     {
         __strong TGNeoConversationController *strongSelf = weakSelf;
