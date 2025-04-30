@@ -145,7 +145,7 @@ genrule(
 )
 
 minimum_os_version = "12.0"
-minimum_watchos_version="9.0"
+minimum_watchos_version="7.0"
 
 notificationServiceExtensionVersion = "v1"
 
