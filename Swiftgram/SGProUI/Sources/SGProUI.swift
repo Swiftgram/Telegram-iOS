@@ -11,6 +11,9 @@ import SwiftSignalKit
 import TelegramPresentationData
 import PresentationDataUtils
 import TelegramUIPreferences
+import SettingsUI
+
+
 
 // Optional
 import SGSimpleSettings
@@ -20,12 +23,15 @@ import SGLogging
 private enum SGProControllerSection: Int32, SGItemListSection {
     case base
     case notifications
+    case appearance
     case footer
 }
 
 private enum SGProDisclosureLink: String {
     case sessionBackupManager
     case messageFilter
+    case appIcons
+    case appBages
 }
 
 private enum SGProToggles: String {
@@ -56,6 +62,10 @@ private func SGProControllerEntries(presentationData: PresentationData) -> [SGPr
     entries.append(.header(id: id.count, section: .notifications, text: presentationData.strings.Notifications_Title.uppercased(), badge: nil))
     entries.append(.oneFromManySelector(id: id.count, section: .notifications, settingName: .pinnedMessageNotifications, text: "Notifications.PinnedMessages.Title".i18n(lang), value: "Notifications.PinnedMessages.value.\(SGSimpleSettings.shared.pinnedMessageNotifications)".i18n(lang), enabled: true))
     entries.append(.oneFromManySelector(id: id.count, section: .notifications, settingName: .mentionsAndRepliesNotifications, text: "Notifications.MentionsAndReplies.Title".i18n(lang), value: "Notifications.MentionsAndReplies.value.\(SGSimpleSettings.shared.mentionsAndRepliesNotifications)".i18n(lang), enabled: true))
+    
+    entries.append(.header(id: id.count, section: .appearance, text: presentationData.strings.Appearance_Title.uppercased(), badge: nil))
+    entries.append(.disclosure(id: id.count, section: .appearance, link: .appIcons, text: "AppIcons.Title".i18n(lang)))
+    entries.append(.disclosure(id: id.count, section: .appearance, link: .appBages, text: "AppBadges.Title".i18n(lang)))
 
     #if DEBUG
     entries.append(.action(id: id.count, section: .footer, actionType: .resetIAP, text: "Reset Pro", kind: .destructive))
@@ -123,18 +133,31 @@ public func sgProController(context: AccountContext) -> ViewController {
     }, openDisclosureLink: { link in
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
         switch (link) {
-            case .sessionBackupManager:
-                if #available(iOS 13.0, *) {
-                    pushControllerImpl?(sgSessionBackupManagerController(context: context, presentationData: presentationData))
-                } else {
-                    presentControllerImpl?(context.sharedContext.makeSGUpdateIOSController(), nil)
-                }
-            case .messageFilter:
-                if #available(iOS 13.0, *) {
-                    pushControllerImpl?(sgMessageFilterController(presentationData: presentationData))
-                } else {
-                    presentControllerImpl?(context.sharedContext.makeSGUpdateIOSController(), nil)
-                }
+        case .sessionBackupManager:
+            if #available(iOS 13.0, *) {
+                pushControllerImpl?(sgSessionBackupManagerController(context: context, presentationData: presentationData))
+            } else {
+                presentControllerImpl?(context.sharedContext.makeSGUpdateIOSController(), nil)
+            }
+        case .messageFilter:
+            if #available(iOS 13.0, *) {
+                pushControllerImpl?(sgMessageFilterController(presentationData: presentationData))
+            } else {
+                presentControllerImpl?(context.sharedContext.makeSGUpdateIOSController(), nil)
+            }
+        case .appIcons:
+            if #available(iOS 13.0, *) {
+                pushControllerImpl?(themeSettingsController(context: context))
+            } else {
+                presentControllerImpl?(context.sharedContext.makeSGUpdateIOSController(), nil)
+            }
+        case .appBages:
+            if #available(iOS 14.0, *) {
+                pushControllerImpl?(sgBadgeSettingsController(context: context, presentationData: presentationData))
+            } else {
+                presentControllerImpl?(context.sharedContext.makeSGUpdateIOSController(), nil)
+            }
+            
         }
     }, action: { action in
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }

@@ -1,6 +1,12 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
 
+filegroup(
+    name = "SGProUIAssets",
+    srcs = glob(["Images.xcassets/**"]),
+    visibility = ["//visibility:public"],
+)
+
 swift_library(
     name = "SGProUI",
     module_name = "SGProUI",
@@ -34,6 +40,7 @@ swift_library(
         "//submodules/AppBundle:AppBundle",
         "//submodules/TelegramUI/Components/Settings/PeerNameColorScreen",
         "//submodules/UndoUI:UndoUI",
+        "//submodules/SettingsUI:SettingsUI"
     ],
     visibility = [
         "//visibility:public",

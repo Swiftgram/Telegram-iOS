@@ -243,3 +243,6 @@
 "PayWall.ValidationError" = "Validation Error";
 "PayWall.ValidationError.TryAgain" = "Something went wrong during purchase validation. No worries! Try to Restore Purchases a bit later.";
 "PayWall.ValidationError.Expired" = "Your subscription expired. Subscribe again to regain access to Pro features.";
+
+"AppIcons.Title" = "App Icon"
+"AppBadges.Title" = "App Badge"
