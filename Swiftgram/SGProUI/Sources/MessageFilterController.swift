@@ -179,3 +179,4 @@ public func sgMessageFilterController(presentationData: PresentationData? = nil)
 
     return legacyController
 }
+

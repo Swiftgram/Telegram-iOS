@@ -3,6 +3,7 @@ import UIKit
 import AsyncDisplayKit
 import SwiftSignalKit
 
+
 private struct WindowLayout: Equatable {
     let size: CGSize
     let metrics: LayoutMetrics

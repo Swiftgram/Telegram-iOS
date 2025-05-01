@@ -8,6 +8,7 @@ import TelegramCore
 import AccountContext
 import PasswordSetupUI
 
+
 public protocol SettingsController: AnyObject {
     func updateContext(context: AccountContext)
 }

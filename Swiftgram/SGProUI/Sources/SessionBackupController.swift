@@ -496,7 +496,7 @@ func backupSessionsFromView(_ view: AccountRecordsView<TelegramAccountManagerTyp
 public func sgSessionBackupManagerController(context: AccountContext, presentationData: PresentationData? = nil) -> ViewController {
     let theme = presentationData?.theme ?? (UITraitCollection.current.userInterfaceStyle == .dark ? defaultDarkColorPresentationTheme : defaultPresentationTheme)
     let strings = presentationData?.strings ?? defaultPresentationStrings
-
+    
     let legacyController = LegacySwiftUIController(
         presentation: .navigation,
         theme: theme,
@@ -505,7 +505,7 @@ public func sgSessionBackupManagerController(context: AccountContext, presentati
     legacyController.statusBar.statusBarStyle = theme.rootController
         .statusBarStyle.style
     legacyController.title = "SessionBackup.Title".i18n(strings.baseLanguageCode)
-
+    
     let swiftUIView = SGSwiftUIView<SessionBackupManagerView>(
         legacyController: legacyController,
         manageSafeArea: true,
@@ -515,6 +515,6 @@ public func sgSessionBackupManagerController(context: AccountContext, presentati
     )
     let controller = UIHostingController(rootView: swiftUIView, ignoreSafeArea: true)
     legacyController.bind(controller: controller)
-
+    
     return legacyController
 }

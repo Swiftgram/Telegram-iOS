@@ -499,6 +499,8 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             }
         })
         self.initSGIAP(isMainApp: applicationBindings.isMainApp)
+        
+        self.mainWindow?.badgeView.image = BadgeMabager.getBadgeImage()
         //
         
         let _ = self.contactDataManager?.personNameDisplayOrder().start(next: { order in
