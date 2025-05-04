@@ -132,6 +132,7 @@ public class SGSimpleSettings {
         case status
         case dismissedSGSuggestions
         case duckyAppIconAvailable
+        case mediaRecordingTooltip
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -246,7 +247,8 @@ public class SGSimpleSettings {
         Keys.inputToolbar.rawValue: false,
         Keys.primaryUserId.rawValue: "",
         Keys.dismissedSGSuggestions.rawValue: [],
-        Keys.duckyAppIconAvailable.rawValue: true
+        Keys.duckyAppIconAvailable.rawValue: true,
+        Keys.mediaRecordingTooltip.rawValue: true,
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -463,6 +465,9 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.duckyAppIconAvailable.rawValue)
     public var duckyAppIconAvailable: Bool
+    
+    @UserDefault(key: Keys.mediaRecordingTooltip.rawValue)
+    public var mediaRecordingTooltip: Bool
 }
 
 extension SGSimpleSettings {

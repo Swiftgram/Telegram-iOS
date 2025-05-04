@@ -10401,6 +10401,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     }
     
     func displayMediaRecordingTooltip() {
+        // MARK: Swiftgram
+        guard SGSimpleSettings.shared.mediaRecordingTooltip else { return }
+        
         guard let peer = self.presentationInterfaceState.renderedPeer?.peer else {
             return
         }
