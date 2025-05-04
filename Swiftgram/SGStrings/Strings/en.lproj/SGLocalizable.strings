@@ -155,6 +155,8 @@
 "Settings.swipeForVideoPIP" = "Video PIP with Swipe";
 "Settings.swipeForVideoPIP.Notice" = "If enabled, swiping video will open it in Picture-in-Picture mode.";
 
+"Settings.mediaRecordingTooltip" = "Media Recording Tooltip";
+
 "SessionBackup.Title" = "Accounts Backup";
 "SessionBackup.Sessions.Title" = "Sessions";
 "SessionBackup.Actions.Backup" = "Backup to Keychain";

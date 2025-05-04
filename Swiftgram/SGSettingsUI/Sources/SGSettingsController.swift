@@ -97,6 +97,7 @@ private enum SGBoolSetting: String {
     case hideChannelBottomButton
     case confirmCalls
     case swipeForVideoPIP
+    case mediaRecordingTooltip
 }
 
 private enum SGOneFromManySetting: String {
@@ -255,6 +256,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     
     id.increment(10000)
     entries.append(.header(id: id.count, section: .other, text: presentationData.strings.Appearance_Other.uppercased(), badge: nil))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .mediaRecordingTooltip, value: SGSimpleSettings.shared.mediaRecordingTooltip, text: i18n("Settings.mediaRecordingTooltip", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .swipeForVideoPIP, value: SGSimpleSettings.shared.videoPIPSwipeDirection == SGSimpleSettings.VideoPIPSwipeDirection.up.rawValue, text: i18n("Settings.swipeForVideoPIP", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.swipeForVideoPIP.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hideChannelBottomButton, value: !SGSimpleSettings.shared.hideChannelBottomButton, text: i18n("Settings.showChannelBottomButton", lang), enabled: true))
@@ -473,6 +475,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.confirmCalls = value
         case .swipeForVideoPIP:
             SGSimpleSettings.shared.videoPIPSwipeDirection = value ? SGSimpleSettings.VideoPIPSwipeDirection.up.rawValue : SGSimpleSettings.VideoPIPSwipeDirection.none.rawValue
+        case .mediaRecordingTooltip:
+            SGSimpleSettings.shared.mediaRecordingTooltip = value
         }
     }, updateSliderValue: { setting, value in
         switch (setting) {
