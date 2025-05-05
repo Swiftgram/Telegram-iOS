@@ -1337,9 +1337,8 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                     
                     // MARK: Swiftgram
                     updateSGWebSettingsInteractivelly(context: context.context)
-                    let _ = (context.context.sharedContext.presentationData.start(next: { presentationData in
-                        SGLocalizationManager.shared.downloadLocale(presentationData.strings.baseLanguageCode)
-                    }))
+                    let presentationData = context.context.sharedContext.currentPresentationData.with({ $0 })
+                    SGLocalizationManager.shared.downloadLocale(presentationData.strings.baseLanguageCode)
                     if #available(iOS 13.0, *) {
                         let _ = Task {
                             let primaryContext = await self.getPrimaryContext(anyContext: context.context)
