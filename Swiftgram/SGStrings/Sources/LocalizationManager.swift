@@ -65,43 +65,57 @@ public class SGLocalizationManager {
     }
     
     public func downloadLocale(_ locale: String) {
+        SGLogger.shared.log("DEBUG", "3.2")
         #if DEBUG
         SGLogger.shared.log("Strings", "DEBUG ignoring locale download: \(locale)")
         if ({ return true }()) {
             return
         }
         #endif
+        SGLogger.shared.log("DEBUG", "3.3")
         let sanitizedLocale = self.sanitizeLocale(locale)
+        SGLogger.shared.log("DEBUG", "3.4")
         guard let url = URL(string: self.getStringsUrl(for: sanitizedLocale)) else {
             SGLogger.shared.log("Strings", "Invalid URL for locale: \(sanitizedLocale)")
             return
         }
-        
+        SGLogger.shared.log("DEBUG", "3.5")
         DispatchQueue.global(qos: .background).async {
+            SGLogger.shared.log("DEBUG", "3.6")
             if let localeDict = NSDictionary(contentsOf: url) as? [String: String] {
+                SGLogger.shared.log("DEBUG", "3.7")
                 DispatchQueue.main.async {
+                    SGLogger.shared.log("DEBUG", "3.8")
                     self.webLocalizations[sanitizedLocale] = localeDict
+                    SGLogger.shared.log("DEBUG", "3.9")
                     SGLogger.shared.log("Strings", "Successfully downloaded locale \(sanitizedLocale)")
                 }
             } else {
+                SGLogger.shared.log("DEBUG", "3.10")
                 SGLogger.shared.log("Strings", "Failed to download \(sanitizedLocale)")
             }
         }
     }
     
     private func sanitizeLocale(_ locale: String) -> String {
+        SGLogger.shared.log("DEBUG", "3.3.1")
         var sanitizedLocale = locale
+        SGLogger.shared.log("DEBUG", "3.3.2")
         let rawSuffix = "-raw"
+        SGLogger.shared.log("DEBUG", "3.3.3")
         if locale.hasSuffix(rawSuffix) {
+            SGLogger.shared.log("DEBUG", "3.3.4")
             sanitizedLocale = String(locale.dropLast(rawSuffix.count))
         }
-
+        SGLogger.shared.log("DEBUG", "3.3.5")
         if sanitizedLocale == "pt-br" {
+            SGLogger.shared.log("DEBUG", "3.3.6")
             sanitizedLocale = "pt"
         } else if sanitizedLocale == "nb" {
+            SGLogger.shared.log("DEBUG", "3.3.7")
             sanitizedLocale = "no"
         }
-
+        SGLogger.shared.log("DEBUG", "3.3.8")
         return sanitizedLocale
     }
 

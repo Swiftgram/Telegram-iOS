@@ -1336,14 +1336,24 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                     self.resetIntentsIfNeeded(context: context.context)
                     
                     // MARK: Swiftgram
+                    SGLogger.shared.log("DEBUG", "iOS \(UIDevice.current.systemVersion), APP \(Bundle.main.infoDictionary?[kCFBundleVersionKey as String] ?? "")")
+                    SGLogger.shared.log("DEBUG", "1")
                     updateSGWebSettingsInteractivelly(context: context.context)
-                    let _ = (context.context.sharedContext.presentationData.start(next: { presentationData in
-                        SGLocalizationManager.shared.downloadLocale(presentationData.strings.baseLanguageCode)
-                    }))
+                    SGLogger.shared.log("DEBUG", "2")
+                    let presentationData = context.context.sharedContext.currentPresentationData.with({ $0 })
+                    SGLogger.shared.log("DEBUG", "3")
+                    let baseLanguageCode = presentationData.strings.baseLanguageCode
+                    SGLogger.shared.log("DEBUG", "3.1 baseLanguageCode \(baseLanguageCode)")
+                    SGLocalizationManager.shared.downloadLocale(baseLanguageCode)
+                    SGLogger.shared.log("DEBUG", "4")
                     if #available(iOS 13.0, *) {
+                        SGLogger.shared.log("DEBUG", "5")
                         let _ = Task {
+                            SGLogger.shared.log("DEBUG", "6")
                             let primaryContext = await self.getPrimaryContext(anyContext: context.context)
+                            SGLogger.shared.log("DEBUG", "7")
                             SGLogger.shared.log("SGIAP", "Verifying Status \(primaryContext.sharedContext.immediateSGStatus.status) for: \(primaryContext.account.peerId.id._internalGetInt64Value())")
+                            SGLogger.shared.log("DEBUG", "8")
                             let _ = await self.fetchSGStatus(primaryContext: primaryContext)
                         }
                     }
@@ -3398,13 +3408,18 @@ extension AppDelegate {
                         SGLogger.shared.log("SGIAP", "Setting new primary user id: \(userId)")
                         SGSimpleSettings.shared.primaryUserId = stringUserId
                     }
+                } else {
+                    SGLogger.shared.log("SGIAP", "Status expired")
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: .SGIAPHelperValidationErrorNotification, object: nil, userInfo: ["error": "PayWall.ValidationError.Expired"])
+                    }
                 }
                 value.status = newStatus
             } else {
                 SGLogger.shared.log("SGIAP", "Status \(value.status) for \(userId) hasn't changed")
-                if newStatus < 1 {
+                if newStatus < 2 {
                     DispatchQueue.main.async {
-                        NotificationCenter.default.post(name: .SGIAPHelperValidationErrorNotification, object: nil, userInfo: ["error": "PayWall.ValidationError.Expired"])
+                        NotificationCenter.default.post(name: .SGIAPHelperValidationErrorNotification, object: nil, userInfo: ["error": "PayWall.ValidationError.TryAgain"])
                     }
                 }
             }
