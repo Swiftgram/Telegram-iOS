@@ -156,7 +156,7 @@ class BazelCommandLine:
                 '--ios_multi_cpus=arm64',
 
                 # Always build universal Watch binaries.
-                '--watchos_cpus=arm64_32'
+                '--watchos_cpus=armv7k,arm64_32'
             ] + self.common_debug_args
         elif configuration == 'debug_sim_arm64':
             self.configuration_args = [
@@ -167,7 +167,7 @@ class BazelCommandLine:
                 '--ios_multi_cpus=sim_arm64',
 
                 # Always build universal Watch binaries.
-                '--watchos_cpus=arm64_32'
+                '--watchos_cpus=armv7k,arm64_32'
             ] + self.common_debug_args
         elif configuration == 'release_sim_arm64':
             self.configuration_args = [
@@ -178,7 +178,7 @@ class BazelCommandLine:
                 '--ios_multi_cpus=sim_arm64',
 
                 # Always build universal Watch binaries.
-                '--watchos_cpus=arm64_32'
+                '--watchos_cpus=armv7k,arm64_32'
             ] + self.common_debug_args
         elif configuration == 'release_arm64':
             self.configuration_args = [
@@ -189,7 +189,7 @@ class BazelCommandLine:
                 '--ios_multi_cpus=arm64',
 
                 # Always build universal Watch binaries.
-                '--watchos_cpus=arm64_32',
+                '--watchos_cpus=armv7k,arm64_32',
 
                 # Generate DSYM files when building.
                 '--apple_generate_dsym',
