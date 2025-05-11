@@ -2142,7 +2142,7 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
         var phoneCountryText = ""
         
         var dcLabel = ""
-//        var dcText: String = ""
+        var dcText: String = ""
         
         if let cachedData = data.cachedData as? CachedUserData, let phoneCountry = cachedData.peerStatusSettings?.phoneCountry {
             var countryName = ""
@@ -2176,21 +2176,21 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
         }
         
         if let dcId = dcId {
-            dcLabel = "\(dcId)"
-//            if phoneCountryText.isEmpty {
+            dcLabel = "dc: \(dcId)"
+            if phoneCountryText.isEmpty {
 //                if !dcLocation.isEmpty {
 //                    dcLabel += " \(dcLocation)"
 //                }
-//            } else {
-//                dcText = "\(phoneCountryText)"
-//            }
+            } else {
+                dcText = "\(phoneCountryText)"
+            }
         } else if !phoneCountryText.isEmpty {
-            dcLabel = "?"
-//            dcText = phoneCountryText
+            dcLabel = "dc: ?"
+            dcText = phoneCountryText
         }
 
         if !dcLabel.isEmpty {
-            items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, context: context, label: "dc", text: dcLabel, textColor: .primary, leftIcon: nil, icon: nil, action: { node, _ in
+            items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, context: context, label: dcLabel, text: dcText, textColor: .primary, leftIcon: nil, icon: nil, action: { node, _ in
                 openDcContextMenu(node, nil)
             }, longTapAction: nil, iconAction: nil, contextAction: { node, gesture, _ in
                 openDcContextMenu(node, gesture)
