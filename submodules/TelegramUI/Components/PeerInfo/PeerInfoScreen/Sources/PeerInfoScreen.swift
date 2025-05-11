@@ -555,6 +555,11 @@ private enum TopicsLimitedReason {
     case discussion
 }
 
+private enum SGContextMenuAction {
+    case copy(text: String, copyKey: String, copiedKey: String)
+    case openURL(url: String)
+}
+
 private final class PeerInfoInteraction {
     let notifyTextCopied: () -> Void
     let openChat: (EnginePeer.Id?) -> Void
@@ -623,11 +628,7 @@ private final class PeerInfoInteraction {
     let openWorkingHoursContextMenu: (ASDisplayNode, ContextGesture?) -> Void
     let openBusinessLocationContextMenu: (ASDisplayNode, ContextGesture?) -> Void
     let openBirthdayContextMenu: (ASDisplayNode, ContextGesture?) -> Void
-    let openIdContextMenu: (ASDisplayNode, ContextGesture?, String) -> Void
-    let openDcContextMenu: (ASDisplayNode, ContextGesture?) -> Void
-    let openCreationDateContextMenu: (ASDisplayNode, ContextGesture?, String) -> Void
-    let openJoinedContextMenu: (ASDisplayNode, ContextGesture?, String) -> Void
-    let openRegDateContextMenu: (ASDisplayNode, ContextGesture?, String) -> Void
+    let openSgContextMenu: (ASDisplayNode, ContextGesture?, SGContextMenuAction) -> Void
     let editingOpenAffiliateProgram: () -> Void
     let editingOpenVerifyAccounts: () -> Void
     let editingToggleAutoTranslate: (Bool) -> Void
@@ -702,11 +703,7 @@ private final class PeerInfoInteraction {
         openWorkingHoursContextMenu: @escaping (ASDisplayNode, ContextGesture?) -> Void,
         openBusinessLocationContextMenu: @escaping (ASDisplayNode, ContextGesture?) -> Void,
         openBirthdayContextMenu: @escaping (ASDisplayNode, ContextGesture?) -> Void,
-        openIdContextMenu: @escaping (ASDisplayNode, ContextGesture?, String) -> Void,
-        openDcContextMenu: @escaping (ASDisplayNode, ContextGesture?) -> Void,
-        openCreationDateContextMenu: @escaping (ASDisplayNode, ContextGesture?, String) -> Void,
-        openJoinedContextMenu: @escaping (ASDisplayNode, ContextGesture?, String) -> Void,
-        openRegDateContextMenu: @escaping (ASDisplayNode, ContextGesture?, String) -> Void,
+        openSgContextMenu: @escaping (ASDisplayNode, ContextGesture?, SGContextMenuAction) -> Void,
         editingOpenAffiliateProgram: @escaping () -> Void,
         editingOpenVerifyAccounts: @escaping () -> Void,
         editingToggleAutoTranslate: @escaping (Bool) -> Void,
@@ -780,11 +777,7 @@ private final class PeerInfoInteraction {
         self.openWorkingHoursContextMenu = openWorkingHoursContextMenu
         self.openBusinessLocationContextMenu = openBusinessLocationContextMenu
         self.openBirthdayContextMenu = openBirthdayContextMenu
-        self.openIdContextMenu = openIdContextMenu
-        self.openDcContextMenu = openDcContextMenu
-        self.openCreationDateContextMenu = openCreationDateContextMenu
-        self.openJoinedContextMenu = openJoinedContextMenu
-        self.openRegDateContextMenu = openRegDateContextMenu
+        self.openSgContextMenu = openSgContextMenu
         self.editingOpenAffiliateProgram = editingOpenAffiliateProgram
         self.editingOpenVerifyAccounts = editingOpenVerifyAccounts
         self.editingToggleAutoTranslate = editingToggleAutoTranslate
@@ -1371,20 +1364,8 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
     let birthdayContextAction: (ASDisplayNode, ContextGesture?, CGPoint?) -> Void = { node, gesture, _ in
         interaction.openBirthdayContextMenu(node, gesture)
     }
-    let openIdContextMenu: (ASDisplayNode, ContextGesture?, String) -> Void = { node, gesture, id in
-        interaction.openIdContextMenu(node, gesture, id)
-    }
-    let openDcContextMenu: (ASDisplayNode, ContextGesture?) -> Void = { node, gesture in
-        interaction.openDcContextMenu(node, gesture)
-    }
-    let openRegDateContextMenu: (ASDisplayNode, ContextGesture?, String) -> Void = { node, gesture, regDate in
-        interaction.openRegDateContextMenu(node, gesture, regDate)
-    }
-    let openCreationDateContextMenu: (ASDisplayNode, ContextGesture?, String) -> Void = { node, gesture, creationDate in
-        interaction.openCreationDateContextMenu(node, gesture, creationDate)
-    }
-    let openJoinedContextMenu: (ASDisplayNode, ContextGesture?, String) -> Void = { node, gesture, joinedDate in
-        interaction.openJoinedContextMenu(node, gesture, joinedDate)
+    let openSgContextMenu: (ASDisplayNode, ContextGesture?, SGContextMenuAction) -> Void = { node, gesture, action in
+        interaction.openSgContextMenu(node, gesture, action)
     }
     
     if let user = data.peer as? TelegramUser {
@@ -2135,9 +2116,9 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
     // MARK: Swiftgram
     if showProfileId {
         items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, context: context, label: i18n("Chat.ID", presentationData.strings.baseLanguageCode), text: idText, textColor: .primary, leftIcon: nil, icon: nil, action: { node, _ in
-            openIdContextMenu(node, nil, idText)
+            openSgContextMenu(node, nil, .copy(text: idText, copyKey: "Chat.ID.Copy", copiedKey: "Chat.ID.Copied"))
         }, longTapAction: nil, iconAction: nil, contextAction: { node, gesture, _ in
-            openIdContextMenu(node, gesture, idText)
+            openSgContextMenu(node, gesture, .copy(text: idText, copyKey: "Chat.ID.Copy", copiedKey: "Chat.ID.Copied"))
         }, requestLayout: { _ in }))
         sgItemId += 1
     }
@@ -2197,9 +2178,9 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
 
         if !dcLabel.isEmpty {
             items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, context: context, label: dcLabel, text: dcText, textColor: .primary, leftIcon: nil, icon: nil, action: { node, _ in
-                openDcContextMenu(node, nil)
+                openSgContextMenu(node, nil, .openURL(url: "https://core.telegram.org/api/datacenter"))
             }, longTapAction: nil, iconAction: nil, contextAction: { node, gesture, _ in
-                openDcContextMenu(node, gesture)
+                openSgContextMenu(node, gesture, .openURL(url: "https://core.telegram.org/api/datacenter"))
             }, requestLayout: { _ in }))
             sgItemId += 1
         }
@@ -2209,9 +2190,9 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
         if let channelCreationTimestamp = data.channelCreationTimestamp {
             let creationDateString = stringForDate(timestamp: channelCreationTimestamp, strings: presentationData.strings)
             items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, context: context, label: i18n("Chat.Created", presentationData.strings.baseLanguageCode), text: creationDateString, textColor: .primary, leftIcon: nil, icon: nil, action: { node, _ in
-                openCreationDateContextMenu(node, nil, creationDateString)
+                openSgContextMenu(node, nil, .copy(text: creationDateString, copyKey: "Chat.Created.Copy", copiedKey: "Chat.Created.Copied"))
             }, longTapAction: nil, iconAction: nil, contextAction: { node, gesture, _ in
-                openCreationDateContextMenu(node, gesture, creationDateString)
+                openSgContextMenu(node, nil, .copy(text: creationDateString, copyKey: "Chat.Created.Copy", copiedKey: "Chat.Created.Copied"))
             }, requestLayout: { _ in }))
             sgItemId += 1
         }
@@ -2220,9 +2201,9 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
     if let invitedAt = nearestChatParticipant.1 {
         let joinedDateString = stringForDate(timestamp: invitedAt, strings: presentationData.strings)
         items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, context: context, label: i18n("Chat.JoinedDateTitle", presentationData.strings.baseLanguageCode, nearestChatParticipant.0 ?? "chat"), text: joinedDateString, textColor: .primary, leftIcon: nil, icon: nil, action: { node, _ in
-            openJoinedContextMenu(node, nil, joinedDateString)
+            openSgContextMenu(node, nil, .copy(text: joinedDateString, copyKey: "Chat.JoinedDate.Copy", copiedKey: "Chat.JoinedDate.Copied"))
         }, longTapAction: nil, iconAction: nil, contextAction: { node, gesture, _ in
-            openJoinedContextMenu(node, gesture, joinedDateString)
+            openSgContextMenu(node, nil, .copy(text: joinedDateString, copyKey: "Chat.JoinedDate.Copy", copiedKey: "Chat.JoinedDate.Copied"))
         }, requestLayout: { _ in }))
         sgItemId += 1
     }
@@ -2250,9 +2231,9 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
         }
         if !regDateString.isEmpty {
             items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, context: context, label: i18n("Chat.RegDate", presentationData.strings.baseLanguageCode), text: regDateString, textColor: .primary, leftIcon: nil, icon: nil, action: { node, _ in
-                openRegDateContextMenu(node, nil, regDateString)
+                openSgContextMenu(node, nil, .copy(text: regDateString, copyKey: "Chat.RegDate.Copy", copiedKey: "Chat.RegDate.Copied"))
             }, longTapAction: nil, iconAction: nil, contextAction: { node, gesture, _ in
-                openRegDateContextMenu(node, gesture, regDateString)
+                openSgContextMenu(node, nil, .copy(text: regDateString, copyKey: "Chat.RegDate.Copy", copiedKey: "Chat.RegDate.Copied"))
             }, requestLayout: { _ in }))
             sgItemId += 1
         }
@@ -3486,22 +3467,12 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                     return
                 }
                 self.openBirthdayContextMenu(node: node, gesture: gesture)
-            }, openIdContextMenu: { [weak self] node, gesture, id in
-                guard let self else { return }
-                self.openIdContextMenu(node: node, gesture: gesture, id: id)
-            }, openDcContextMenu: { [weak self] node, gesture in
-                guard let self else { return }
-                self.openDcContextMenu(node: node, gesture: gesture)
-            }, openCreationDateContextMenu: { [weak self] node, gesture, creationDate in
-                guard let self else { return }
-                self.openCreationDateContextMenu(node: node, gesture: gesture, creationDate: creationDate)
-            }, openJoinedContextMenu: { [weak self] node, gesture, joinedDate in
-                guard let self else { return }
-                self.openJoinedContextMenu(node: node, gesture: gesture, joinedDate: joinedDate)
-            }, openRegDateContextMenu: { [weak self] node, gesture, regDate in
-                guard let self else { return }
-                self.openRegDateContextMenu(node: node, gesture: gesture, regDate: regDate)
-            }, editingOpenAffiliateProgram: { [weak self] in
+            }, openSgContextMenu: { [weak self] node, gesture, action in
+                guard let self else {
+                    return
+                }
+                self.openSgContextMenu(node: node, gesture: gesture, action: action)
+            },  editingOpenAffiliateProgram: { [weak self] in
                 guard let self else {
                     return
                 }
@@ -8276,17 +8247,25 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         self.controller?.present(contextController, in: .window(.root))
     }
     
-    private func openIdContextMenu(node: ASDisplayNode, gesture: ContextGesture?, id: String) {
+    private func openSgContextMenu(node: ASDisplayNode, gesture: ContextGesture?, action: SGContextMenuAction) {
         guard let sourceNode = node as? ContextExtractedContentContainingNode else { return }
-        let copyAction = { [weak self] in
-            guard let self else { return }
-            UIPasteboard.general.string = id
-            self.controller?.present(UndoOverlayController(presentationData: self.presentationData, content: .copy(text: i18n("Chat.ID.Copied", self.presentationData.strings.baseLanguageCode)), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .current)
-        }
         var items: [ContextMenuItem] = []
-        items.append(.action(ContextMenuActionItem(text: i18n("Chat.ID.Copy", self.presentationData.strings.baseLanguageCode), icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Copy"), color: theme.contextMenu.primaryColor) }, action: { c, _ in
-            c?.dismiss { copyAction() }
-        })))
+        switch action {
+        case let .copy(text, copyKey, copiedKey):
+            items.append(.action(ContextMenuActionItem(text: i18n(copyKey, self.presentationData.strings.baseLanguageCode), icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Copy"), color: theme.contextMenu.primaryColor) }, action: { [weak self] c, _ in
+                c?.dismiss { [weak self] in
+                    guard let self else { return }
+                    UIPasteboard.general.string = text
+                    self.controller?.present(UndoOverlayController(presentationData: self.presentationData, content: .copy(text: i18n(copiedKey, self.presentationData.strings.baseLanguageCode)), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .current)
+                }
+            })))
+        case let .openURL(url):
+            items.append(.action(ContextMenuActionItem(text: self.presentationData.strings.Passport_InfoLearnMore, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Browser"), color: theme.contextMenu.primaryColor) }, action: { [weak self] c, _ in
+                c?.dismiss { [weak self] in
+                    self?.openUrl(url: url, concealed: false, external: false)
+                }
+            })))
+        }
         let actions = ContextController.Items(content: .list(items))
         let contextController = ContextController(presentationData: self.presentationData, source: .extracted(PeerInfoContextExtractedContentSource(sourceNode: sourceNode)), items: .single(actions), gesture: gesture)
         self.controller?.present(contextController, in: .window(.root))
@@ -8300,54 +8279,6 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         var items: [ContextMenuItem] = []
         items.append(.action(ContextMenuActionItem(text: self.presentationData.strings.Passport_InfoLearnMore, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Browser"), color: theme.contextMenu.primaryColor) }, action: { c, _ in
             c?.dismiss { learnMoreAction() }
-        })))
-        let actions = ContextController.Items(content: .list(items))
-        let contextController = ContextController(presentationData: self.presentationData, source: .extracted(PeerInfoContextExtractedContentSource(sourceNode: sourceNode)), items: .single(actions), gesture: gesture)
-        self.controller?.present(contextController, in: .window(.root))
-    }
-    
-    private func openCreationDateContextMenu(node: ASDisplayNode, gesture: ContextGesture?, creationDate: String) {
-        guard let sourceNode = node as? ContextExtractedContentContainingNode else { return }
-        let copyAction = { [weak self] in
-            guard let self else { return }
-            UIPasteboard.general.string = creationDate
-            self.controller?.present(UndoOverlayController(presentationData: self.presentationData, content: .copy(text: i18n("Chat.Created.Copied", self.presentationData.strings.baseLanguageCode)), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .current)
-        }
-        var items: [ContextMenuItem] = []
-        items.append(.action(ContextMenuActionItem(text: i18n("Chat.Created.Copy", self.presentationData.strings.baseLanguageCode), icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Copy"), color: theme.contextMenu.primaryColor) }, action: { c, _ in
-            c?.dismiss { copyAction() }
-        })))
-        let actions = ContextController.Items(content: .list(items))
-        let contextController = ContextController(presentationData: self.presentationData, source: .extracted(PeerInfoContextExtractedContentSource(sourceNode: sourceNode)), items: .single(actions), gesture: gesture)
-        self.controller?.present(contextController, in: .window(.root))
-    }
-    
-    private func openJoinedContextMenu(node: ASDisplayNode, gesture: ContextGesture?, joinedDate: String) {
-        guard let sourceNode = node as? ContextExtractedContentContainingNode else { return }
-        let copyAction = { [weak self] in
-            guard let self else { return }
-            UIPasteboard.general.string = joinedDate
-            self.controller?.present(UndoOverlayController(presentationData: self.presentationData, content: .copy(text: i18n("Chat.JoinedDate.Copied", self.presentationData.strings.baseLanguageCode)), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .current)
-        }
-        var items: [ContextMenuItem] = []
-        items.append(.action(ContextMenuActionItem(text: i18n("Chat.JoinedDate.Copy", self.presentationData.strings.baseLanguageCode), icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Copy"), color: theme.contextMenu.primaryColor) }, action: { c, _ in
-            c?.dismiss { copyAction() }
-        })))
-        let actions = ContextController.Items(content: .list(items))
-        let contextController = ContextController(presentationData: self.presentationData, source: .extracted(PeerInfoContextExtractedContentSource(sourceNode: sourceNode)), items: .single(actions), gesture: gesture)
-        self.controller?.present(contextController, in: .window(.root))
-    }
-    
-    private func openRegDateContextMenu(node: ASDisplayNode, gesture: ContextGesture?, regDate: String) {
-        guard let sourceNode = node as? ContextExtractedContentContainingNode else { return }
-        let copyAction = { [weak self] in
-            guard let self else { return }
-            UIPasteboard.general.string = regDate
-            self.controller?.present(UndoOverlayController(presentationData: self.presentationData, content: .copy(text: i18n("Chat.RegDate.Copied", self.presentationData.strings.baseLanguageCode)), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .current)
-        }
-        var items: [ContextMenuItem] = []
-        items.append(.action(ContextMenuActionItem(text: i18n("Chat.RegDate.Copy", self.presentationData.strings.baseLanguageCode), icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Copy"), color: theme.contextMenu.primaryColor) }, action: { c, _ in
-            c?.dismiss { copyAction() }
         })))
         let actions = ContextController.Items(content: .list(items))
         let contextController = ContextController(presentationData: self.presentationData, source: .extracted(PeerInfoContextExtractedContentSource(sourceNode: sourceNode)), items: .single(actions), gesture: gesture)
