@@ -2045,7 +2045,7 @@ ios_application(
     alternate_icons = [
         ":{}".format(name) for name in alternate_icon_folders
     ],
-    ipa_post_processor = "//Swiftgram/FixConcurrencyBackport:CopyConcurrencyDylib",
+    #ipa_post_processor = ":AddAlternateIcons",
     resources = [
         ":LaunchScreen",
         ":DefaultAppIcon",
