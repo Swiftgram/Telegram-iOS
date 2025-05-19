@@ -1001,6 +1001,13 @@ genrule(
     cmd_bash =
 """
     echo 'for f in $$1/*.framework; do binary_name=`echo $$(basename $$f) | sed -e "s/\\\\.framework//"`; strip -ST $$f/$$binary_name; done;' > $(location StripFramework.sh)
+    # MARK: Swiftgram
+    echo 'find "$$1" -type f \\( -perm +111 -o -name "*.dylib" \\) | while read -r bin; do \
+        if otool -L "$$bin" | grep -q "/usr/lib/swift/libswift_Concurrency.dylib"; then \
+            echo "Patching concurrency backport in: $$bin"; \
+            install_name_tool -change /usr/lib/swift/libswift_Concurrency.dylib @rpath/libswift_Concurrency.dylib "$$bin"; \
+        fi; \
+    done;' >> $(location StripFramework.sh)
     echo '' >> $(location StripFramework.sh)
 """,
     outs = [
@@ -2038,7 +2045,7 @@ ios_application(
     alternate_icons = [
         ":{}".format(name) for name in alternate_icon_folders
     ],
-    #ipa_post_processor = ":AddAlternateIcons",
+    ipa_post_processor = "//Swiftgram/FixConcurrencyBackport:CopyConcurrencyDylib",
     resources = [
         ":LaunchScreen",
         ":DefaultAppIcon",
