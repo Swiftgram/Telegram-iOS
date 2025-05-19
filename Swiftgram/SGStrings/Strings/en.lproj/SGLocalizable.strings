@@ -121,13 +121,21 @@
 "Settings.DefaultEmojisFirst" = "Standard emojis first";
 "Settings.DefaultEmojisFirst.Notice" = "Show standard emojis before premium in emoji keyboard";
 
-/* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "created: %@";
-
+"Chat.Created" = "Created";
+"Chat.Created.Copy" = "Copy Creation Date";
+"Chat.Created.Copied" = "Creation Date copied to clipboard.";
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
 "Chat.JoinedDateTitle" = "Joined %@";
+"Chat.JoinedDate.Copy" = "Copy Joined Date";
+"Chat.JoinedDate.Copied" = "Joined Date copied to clipboard.";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
 "Chat.RegDate" = "Registered";
+"Chat.RegDate.Copy" = "Copy Registration Date";
+"Chat.RegDate.Copied" = "Registration Date copied to clipboard.";
+
+"Chat.ID" = "id";
+"Chat.ID.Copy" = "Copy ID";
+"Chat.ID.Copied" = "ID copied to clipboard.";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Double-tap to edit message";
 
