@@ -14,6 +14,12 @@
 #   fi
 # done
 
+# concurrency-dylib.patch must be applied in build-system/bazel-rules/rules_apple
+# cd Swiftgram/FixConcurrencyBackport
+# git apply ../../../Swiftgram/FixConcurrencyBackport/concurrency-dylib.patch
+# # Make a build
+# git apply -R ../../../Swiftgram/FixConcurrencyBackport/concurrency-dylib.patch
+
 # Refs:
 # https://stackoverflow.com/questions/79522371/when-building-the-project-with-xcode-16-2-the-app-crashes-due-to-an-incorrect-l
 # https://github.com/swiftlang/swift/issues/74303
