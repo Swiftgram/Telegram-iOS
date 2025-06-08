@@ -12,6 +12,12 @@ load("@build_bazel_rules_apple//apple:ios.bzl",
     "ios_ui_test",
 )
 
+# MARK: Swiftgram
+load("@build_bazel_rules_apple//apple:watchos.bzl",
+    "watchos_application",
+    "watchos_extension",
+)
+
 load("@build_bazel_rules_apple//apple:resources.bzl",
     "swift_intent_library",
 )
@@ -290,24 +296,10 @@ filegroup(
 )
 
 filegroup(
-    name = "AppIcons",
-    srcs = glob([
-        "Telegram-iOS/AppIcons.xcassets/**/*",
-    ], exclude = ["Telegram-iOS/AppIcons.xcassets/**/.*"]),
-)
-
-filegroup(
     name = "DefaultAppIcon",
     srcs = glob([
         "Telegram-iOS/DefaultAppIcon.xcassets/**/*",
     ], exclude = ["Telegram-iOS/DefaultAppIcon.xcassets/**/.*"]),
-)
-
-filegroup(
-    name = "DefaultIcon",
-    srcs = glob([
-        "Telegram-iOS/AppIcons.xcassets/BlueIcon.appiconset/*.png",
-    ]),
 )
 
 # MARK: Swiftgram alternative icons
@@ -616,12 +608,10 @@ objc_library(
     name = "TelegramWatchLib",
     srcs = glob([
         "Watch/Extension/**/*.m",
-        "Watch/SSignalKit/**/*.m",
         "Watch/Bridge/**/*.m",
         "Watch/WatchCommonWatch/**/*.m",
         "Watch/App/**/*.m",
         "Watch/Extension/**/*.h",
-        "Watch/SSignalKit/**/*.h",
         "Watch/Bridge/**/*.h",
         "Watch/WatchCommonWatch/**/*.h",
     ]),
@@ -2058,10 +2048,7 @@ ios_application(
             ":BroadcastUploadExtension",
         ],
     }),
-    watch_application = select({ # MARK: Swiftgram
-        ":disableExtensionsSetting": None,
-        "//conditions:default": ":TelegramWatchApp",
-    }) if telegram_enable_watch else None,
+    watch_application = ":TelegramWatchApp", # MARK: Swiftgram
     deps = [
         ":Main",
         ":Lib",
