@@ -95,10 +95,7 @@ extension ChatControllerImpl {
                 }
             }
             controller.multiplePeersSelected = { [weak self, weak controller] peers, peerMap, messageText, mode, forwardOptions, _ in
-                guard let strongSelf = self, let strongController = controller else {
-                    return
-                }
-                strongController.dismiss()
+                let peerIds = peers.map { $0.id }
                 
                 let _ = (context.engine.data.get(
                     EngineDataMap(

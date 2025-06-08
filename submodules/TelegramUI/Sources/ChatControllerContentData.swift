@@ -2093,7 +2093,7 @@ extension ChatControllerImpl {
                             }
                         }
                         |> distinctUntilChanged).startStrict(next: { [weak self] translationState in
-                        if let strongSelf = self, let translationState = translationState, strongSelf.predictedChatLanguage == nil {
+                        if let strongSelf = self, let translationState = translationState, strongSelf.state.predictedChatLanguage == nil {
                             let previousState = strongSelf.state
                         
                             strongSelf.state.predictedChatLanguage = translationState.fromLang

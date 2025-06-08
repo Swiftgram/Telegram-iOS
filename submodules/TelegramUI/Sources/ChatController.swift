@@ -558,6 +558,19 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     var translationStateDisposable: Disposable?
     var premiumGiftSuggestionDisposable: Disposable?
     
+    // MARK: Swiftgram
+    public var overlayTitle: String? {
+         var title: String?
+        if let threadInfo = self.contentData?.state.threadInfo {
+             title = threadInfo.title
+        } else if let peerView = self.contentData?.state.peerView {
+             if let peer = peerViewMainPeer(peerView) {
+                 title = EnginePeer(peer).displayTitle(strings: self.presentationData.strings, displayOrder: self.presentationData.nameDisplayOrder)
+             }
+         }
+         return title
+     }
+    
     var currentSpeechHolder: SpeechSynthesizerHolder?
     
     var powerSavingMonitoringDisposable: Disposable?
@@ -1469,7 +1482,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 if let chatPeerId = strongSelf.chatLocation.peerId {
                     result = SGSimpleSettings.shared.outgoingLanguageTranslation[SGSimpleSettings.makeOutgoingLanguageTranslationKey(accountId: strongSelf.context.account.peerId.id._internalGetInt64Value(), peerId: chatPeerId.id._internalGetInt64Value())]
                 }
-                return result ?? strongSelf.predictedChatLanguage
+                return result ?? strongSelf.contentData?.state.predictedChatLanguage
             }
             return nil
         }, sgStartMessageEdit: { [weak self] message in
