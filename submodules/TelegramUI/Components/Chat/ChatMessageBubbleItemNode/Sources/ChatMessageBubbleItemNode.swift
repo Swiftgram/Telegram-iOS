@@ -1734,6 +1734,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         }
         
         var needsShareButton = false
+        var mayHaveSeparateCommentsButton = false // MARK: Swiftgram
     
         if incoming, case let .customChatContents(contents) = item.associatedData.subject, case .hashTagSearch = contents.kind {
             needsShareButton = true
@@ -1786,7 +1787,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                     needsShareButton = true
                 }
             }
-            var mayHaveSeparateCommentsButton = false
+            // var mayHaveSeparateCommentsButton = false // MARK: Swiftgram
             if !needsShareButton {
                 loop: for media in item.message.media {
                     if media is TelegramMediaGame || media is TelegramMediaInvoice {
@@ -1857,7 +1858,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         tmpWidth -= deliveryFailedInset
         // MARK: Swifgram
         let renderWideChannelPosts: Bool
-        if let channel = item.message.peers[item.message.id.peerId] as? TelegramChannel, case .broadcast = channel.info, SGSimpleSettings.shared.wideChannelPosts, !hasSeparateCommentsButton {
+        if let channel = item.message.peers[item.message.id.peerId] as? TelegramChannel, case .broadcast = channel.info, SGSimpleSettings.shared.wideChannelPosts, !(mayHaveSeparateCommentsButton && hasCommentButton(item: item)) {
             renderWideChannelPosts = true
             
             tmpWidth = baseWidth
