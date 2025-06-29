@@ -7068,6 +7068,16 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                             self?.openParticipantsSection(section: .admins)
                         })))
                     }
+                    // MARK: Swiftgram
+                    items.append(.action(ContextMenuActionItem(text: presentationData.strings.Channel_AdminLogFilter_EventsPinned, icon: { theme in
+                        generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/PinnedList"), color: theme.contextMenu.primaryColor)
+                    }, action: { [weak self] c, f in
+                        f(.dismissWithoutContent)
+                        if let strongSelf = self {
+                            NotificationCenter.default.post(name: NSNotification.Name("SGShowHiddenPinnedMessages"), object: strongSelf.chatLocation.peerId)
+                            strongSelf.openChatForTranslation()
+                        }
+                    })))
                     
                     if canSetupAutoremoveTimeout {
                         let strings = strongSelf.presentationData.strings

@@ -559,6 +559,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     var premiumGiftSuggestionDisposable: Disposable?
     
     // MARK: Swiftgram
+    private var sgShowHiddenPinnedMessagesObserver: NSObjectProtocol?
     public var overlayTitle: String? {
          var title: String?
         if let threadInfo = self.contentData?.state.threadInfo {
@@ -5753,6 +5754,33 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 return state.updatedInterfaceState({ $0.withUpdatedSelectedMessages(messageIds) })
             })
         }
+
+        // MARK: Swiftgram
+        self.sgShowHiddenPinnedMessagesObserver = NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("SGShowHiddenPinnedMessages"),
+            object: nil,
+            queue: nil,
+            using: { [weak self] notification in
+                guard
+                    let self = self,
+                    let peerId = self.chatLocation.peerId,
+                    let notificationPeerId = notification.object as? PeerId,
+                    peerId == notificationPeerId
+                else {
+                    return
+                }
+
+                self.updateChatPresentationInterfaceState(animated: true, interactive: true, {
+                    $0.updatedInterfaceState {
+                        $0.withUpdatedMessageActionsState { value in
+                            var value = value
+                            value.closedPinnedMessageId = nil
+                            return value
+                        }
+                    }
+                })
+            }
+        )
     }
     
     required public init(coder aDecoder: NSCoder) {
@@ -5760,6 +5788,8 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     }
     
     deinit {
+        // MARK: Swiftgram
+        if let observer = sgShowHiddenPinnedMessagesObserver { NotificationCenter.default.removeObserver(observer) }
         let _ = ChatControllerCount.modify { value in
             return value - 1
         }
