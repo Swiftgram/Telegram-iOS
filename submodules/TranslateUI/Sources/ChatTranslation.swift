@@ -206,7 +206,7 @@ public func translateMessageIds(context: AccountContext, messageIds: [EngineMess
         if forQuickTranslate && messageIdsToTranslate.isEmpty { return .complete() } // Otherwise Telegram's API will return .never()
         return context.engine.messages.translateMessages(messageIds: messageIdsToTranslate, fromLang: fromLang, toLang: toLang, enableLocalIfPossible: context.sharedContext.immediateExperimentalUISettings.enableLocalTranslation)
         |> `catch` { _ -> Signal<Never, NoError> in
-            return .complete()
+            return translateMessageIds(context: context, messageIds: messageIdsToTranslate, fromLang: fromLang, toLang: toLang, viaText: true, forQuickTranslate: forQuickTranslate)
         }
         }
     } |> switchToLatest

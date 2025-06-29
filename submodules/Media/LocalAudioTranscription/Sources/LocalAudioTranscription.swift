@@ -70,17 +70,20 @@ private func transcribeAudio(path: String, locale: String) -> Signal<Transcripti
                         let task = speechRecognizer.recognitionTask(with: request, resultHandler: { result, error in
                             if let result = result {
                                 var confidence: Float = 0.0
+                                var segmentsCount = 0
                                 for segment in result.bestTranscription.segments {
                                     confidence += segment.confidence
+                                    segmentsCount += 1
                                 }
                                 confidence /= Float(result.bestTranscription.segments.count)
                                 subscriber.putNext(TranscriptionResult(text: result.bestTranscription.formattedString, confidence: confidence, isFinal: result.isFinal, locale: locale))
                                 
                                 if result.isFinal {
+                                    SGLogger.shared.log("LocalTranscription", "Transcription finalized. locale: \(locale), segments: \(segmentsCount), confidence: \(confidence)")
                                     subscriber.putCompletion()
                                 }
                             } else {
-                                SGLogger.shared.log("LocalTranscription", "transcribeAudio: locale: \(locale), error: \(String(describing: error))")
+                                SGLogger.shared.log("LocalTranscription", "Transcription failed. locale: \(locale), error: \(String(describing: error))")
                                 
                                 subscriber.putNext(nil)
                                 subscriber.putCompletion()

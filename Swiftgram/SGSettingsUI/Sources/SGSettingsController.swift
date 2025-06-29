@@ -34,6 +34,7 @@ private enum SGControllerSection: Int32, SGItemListSection {
     case profiles
     case stories
     case translation
+    case voiceMessages
     case photo
     case stickers
     case videoNotes
@@ -104,6 +105,8 @@ private enum SGOneFromManySetting: String {
     case downloadSpeedBoost
     case allChatsTitleLengthOverride
 //    case allChatsFolderPositionOverride
+    case translationBackend
+    case transcriptionBackend
 }
 
 private enum SGSliderSetting: String {
@@ -189,10 +192,18 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
 
     
     entries.append(.header(id: id.count, section: .translation, text: presentationData.strings.Localization_TranslateMessages.uppercased(), badge: nil))
+    entries.append(.oneFromManySelector(id: id.count, section: .translation, settingName: .translationBackend, text: i18n("Settings.Translation.Backend", lang), value: i18n("Settings.Translation.Backend.\(SGSimpleSettings.shared.translationBackend)", lang), enabled: true))
+    entries.append(.notice(id: id.count, section: .translation, text: i18n("Settings.Translation.Backend.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .translation, settingName: .quickTranslateButton, value: SGSimpleSettings.shared.quickTranslateButton, text: i18n("Settings.Translation.QuickTranslateButton", lang), enabled: true))
     entries.append(.disclosure(id: id.count, section: .translation, link: .languageSettings, text: presentationData.strings.Localization_TranslateEntireChat))
     entries.append(.notice(id: id.count, section: .translation, text: i18n("Common.NoTelegramPremiumNeeded", lang, presentationData.strings.Settings_Premium)))
-    
+
+    entries.append(.header(id: id.count, section: .voiceMessages, text: presentationData.strings.Privacy_VoiceMessages.uppercased(), badge: nil))
+    entries.append(.oneFromManySelector(id: id.count, section: .voiceMessages, settingName: .transcriptionBackend, text: i18n("Settings.Transcription.Backend", lang), value: i18n("Settings.Transcription.Backend.\(SGSimpleSettings.shared.transcriptionBackend)", lang), enabled: true))
+    entries.append(.notice(id: id.count, section: .voiceMessages, text: i18n("Settings.Transcription.Backend.Notice", lang)))
+    entries.append(.toggle(id: id.count, section: .voiceMessages, settingName: .forceBuiltInMic, value: SGSimpleSettings.shared.forceBuiltInMic, text: i18n("Settings.forceBuiltInMic", lang), enabled: true))
+    entries.append(.notice(id: id.count, section: .voiceMessages, text: i18n("Settings.forceBuiltInMic.Notice", lang)))
+
     entries.append(.header(id: id.count, section: .photo, text: presentationData.strings.NetworkUsageSettings_MediaImageDataSection, badge: nil))
     entries.append(.header(id: id.count, section: .photo, text: presentationData.strings.PhotoEditor_QualityTool.uppercased(), badge: nil))
     entries.append(.percentageSlider(id: id.count, section: .photo, settingName: .outgoingPhotoQuality, value: SGSimpleSettings.shared.outgoingPhotoQuality))
@@ -259,8 +270,6 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.swipeForVideoPIP.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hideChannelBottomButton, value: !SGSimpleSettings.shared.hideChannelBottomButton, text: i18n("Settings.showChannelBottomButton", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .wideChannelPosts, value: SGSimpleSettings.shared.wideChannelPosts, text: i18n("Settings.wideChannelPosts", lang), enabled: true))
-    entries.append(.toggle(id: id.count, section: .other, settingName: .forceBuiltInMic, value: SGSimpleSettings.shared.forceBuiltInMic, text: i18n("Settings.forceBuiltInMic", lang), enabled: true))
-    entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.forceBuiltInMic.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .secondsInMessages, value: SGSimpleSettings.shared.secondsInMessages, text: i18n("Settings.secondsInMessages", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .messageDoubleTapActionOutgoingEdit, value: SGSimpleSettings.shared.messageDoubleTapActionOutgoing == SGSimpleSettings.MessageDoubleTapAction.edit.rawValue, text: i18n("Settings.messageDoubleTapActionOutgoingEdit", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hideRecordingButton, value: !SGSimpleSettings.shared.hideRecordingButton, text: i18n("Settings.RecordingButton", lang), enabled: true))
@@ -576,6 +585,36 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
 //                    setAction(value.rawValue)
 //                }))
 //            }
+            case .translationBackend:
+                let setAction: (String) -> Void = { value in
+                    SGSimpleSettings.shared.translationBackend = value
+                    simplePromise.set(true)
+                }
+
+                for value in SGSimpleSettings.TranslationBackend.allCases {
+                    items.append(ActionSheetButtonItem(title: i18n("Settings.Translation.Backend.\(value.rawValue)", presentationData.strings.baseLanguageCode), color: .accent, action: { [weak actionSheet] in
+                        actionSheet?.dismissAnimated()
+                        setAction(value.rawValue)
+                    }))
+                }
+            case .transcriptionBackend:
+                let setAction: (String) -> Void = { value in
+                    SGSimpleSettings.shared.transcriptionBackend = value
+                    simplePromise.set(true)
+                }
+
+                for value in SGSimpleSettings.TranscriptionBackend.allCases {
+                    if #available(iOS 13.0, *) {
+                    } else {
+                        if value == .apple {
+                            continue // Apple recognition is not available on iOS 12
+                        }
+                    }
+                    items.append(ActionSheetButtonItem(title: i18n("Settings.Transcription.Backend.\(value.rawValue)", presentationData.strings.baseLanguageCode), color: .accent, action: { [weak actionSheet] in
+                        actionSheet?.dismissAnimated()
+                        setAction(value.rawValue)
+                    }))
+                }
         }
         
         actionSheet.setItemGroups([ActionSheetItemGroup(items: items), ActionSheetItemGroup(items: [

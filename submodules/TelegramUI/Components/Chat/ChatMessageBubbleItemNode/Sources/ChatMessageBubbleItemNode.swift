@@ -6162,7 +6162,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                     self.updateParentMessageIsTranslating(true)
                 }
                 // TODO(swiftgram): pass fromLang
-                let _ = translateMessageIds(context: item.context, messageIds: [item.message.id], fromLang: nil, toLang: translateToLanguage, viaText: !item.context.isPremium, forQuickTranslate: true).startStandalone(completed: { [weak self] in
+                let _ = translateMessageIds(context: item.context, messageIds: [item.message.id], fromLang: nil, toLang: translateToLanguage, viaText: !item.context.isPremium || SGSimpleSettings.shared.translationBackend == SGSimpleSettings.TranslationBackend.gtranslate.rawValue, forQuickTranslate: true).startStandalone(completed: { [weak self] in
                     if let strongSelf = self, let item = strongSelf.item {
                         let _ = (item.context.account.postbox.transaction { transaction in
                             transaction.updateMessage(item.message.id, update: { currentMessage in

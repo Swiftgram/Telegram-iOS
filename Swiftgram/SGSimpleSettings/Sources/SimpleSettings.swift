@@ -132,6 +132,8 @@ public class SGSimpleSettings {
         case status
         case dismissedSGSuggestions
         case duckyAppIconAvailable
+        case transcriptionBackend
+        case translationBackend
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -167,6 +169,16 @@ public class SGSimpleSettings {
         case up
         case down
         case none
+    }
+
+    public enum TranscriptionBackend: String, CaseIterable {
+        case `default`
+        case apple
+    }
+
+    public enum TranslationBackend: String, CaseIterable {
+        case `default`
+        case gtranslate
     }
         
     public enum PinnedMessageNotificationsSettings: String, CaseIterable {
@@ -246,7 +258,9 @@ public class SGSimpleSettings {
         Keys.inputToolbar.rawValue: false,
         Keys.primaryUserId.rawValue: "",
         Keys.dismissedSGSuggestions.rawValue: [],
-        Keys.duckyAppIconAvailable.rawValue: true
+        Keys.duckyAppIconAvailable.rawValue: true,
+        Keys.transcriptionBackend.rawValue: TranscriptionBackend.default.rawValue,
+        Keys.translationBackend.rawValue: TranslationBackend.default.rawValue
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -463,6 +477,12 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.duckyAppIconAvailable.rawValue)
     public var duckyAppIconAvailable: Bool
+
+    @UserDefault(key: Keys.transcriptionBackend.rawValue)
+    public var transcriptionBackend: String
+
+    @UserDefault(key: Keys.translationBackend.rawValue)
+    public var translationBackend: String
 }
 
 extension SGSimpleSettings {

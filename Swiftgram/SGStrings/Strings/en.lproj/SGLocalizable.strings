@@ -35,6 +35,15 @@
 "Settings.Stories.DisableSwipeToRecord" = "Disable Swipe to Record";
 
 "Settings.Translation.QuickTranslateButton" = "Quick Translate button";
+"Settings.Translation.Backend" = "Service";
+"Settings.Translation.Backend.default" = "Telegram";
+"Settings.Translation.Backend.gtranslate" = "GTranslate";
+"Settings.Translation.Backend.Notice" = "Swiftgram will fallback to other translation services in case Telegram is not available.";
+
+"Settings.Transcription.Backend" = "Service";
+"Settings.Transcription.Backend.default" = "Telegram";
+"Settings.Transcription.Backend.apple" = "Apple";
+"Settings.Transcription.Backend.Notice" = "Swiftgram will fallback to other transcription services in case Telegram is not available.";
 
 "Stories.Warning.Author" = "Author";
 "Stories.Warning.ViewStory" = "View Story?";
