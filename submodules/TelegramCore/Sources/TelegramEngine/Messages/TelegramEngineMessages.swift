@@ -559,11 +559,45 @@ public extension TelegramEngine {
         }
         
         public func translate(text: String, toLang: String, entities: [MessageTextEntity] = []) -> Signal<(String, [MessageTextEntity])?, TranslationError> {
+            // MARK: Swiftgram
+            if SGSimpleSettings.shared.translationBackend == SGSimpleSettings.TranslationBackend.gtranslate.rawValue { return gtranslate(text, toLang) |> map { translatedText in return (translatedText, []) } |> mapError { _ in return .generic }
+            }
             return _internal_translate(network: self.account.network, text: text, toLang: toLang, entities: entities)
+            // MARK: Swiftgram
+            |> `catch` { originalError -> Signal<(String, [MessageTextEntity])?, TranslationError> in
+                return gtranslate(text, toLang) |> map { translatedText in return (translatedText, []) } |> mapError { _ in return originalError }
+            }
         }
         
         public func translate(texts: [(String, [MessageTextEntity])], toLang: String) -> Signal<[(String, [MessageTextEntity])], TranslationError> {
+            // MARK: Swiftgram
+            if SGSimpleSettings.shared.translationBackend == SGSimpleSettings.TranslationBackend.gtranslate.rawValue {
+                let translatedSignals: [Signal<(String, [MessageTextEntity]), TranslationError>] = texts.map { (text, _) in
+                    gtranslate(text, toLang)
+                    |> map { translatedText -> (String, [MessageTextEntity]) in
+                        return (translatedText, [])
+                    }
+                    |> mapError { _ -> TranslationError in
+                        return .generic
+                    }
+                }
+                return combineLatest(translatedSignals)
+            }
+
+            // MARK: Swiftgram
             return _internal_translate_texts(network: self.account.network, texts: texts, toLang: toLang)
+            |> `catch` { originalError -> Signal<[(String, [MessageTextEntity])], TranslationError> in
+                let translatedSignals: [Signal<(String, [MessageTextEntity]), TranslationError>] = texts.map { (text, _) in
+                    gtranslate(text, toLang)
+                    |> map { translatedText -> (String, [MessageTextEntity]) in
+                        return (translatedText, [])
+                    }
+                    |> mapError { _ -> TranslationError in
+                        return originalError
+                    }
+                }
+                return combineLatest(translatedSignals)
+            }
         }
 
         // MARK: Swiftgram
