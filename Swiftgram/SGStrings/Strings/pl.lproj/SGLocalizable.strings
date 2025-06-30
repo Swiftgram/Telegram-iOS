@@ -20,7 +20,7 @@
 "Settings.Folders.CompactNames" = "Mniejszy odstęp";
 "Settings.Folders.AllChatsTitle" = "Tytuł \"Wszystkie czaty\"";
 "Settings.Folders.AllChatsTitle.short" = "Krótki";
-"Settings.Folders.AllChatsTitle.long" = "Długie";
+"Settings.Folders.AllChatsTitle.long" = "Długi";
 /* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
 "Settings.Folders.AllChatsTitle.none" = "Domyślny";
 
@@ -28,7 +28,7 @@
 "Settings.ChatList.Header" = "LISTA CZATU";
 "Settings.CompactChatList" = "Kompaktowa lista czatów";
 
-"Settings.Profiles.Header" = "PROFILES";
+"Settings.Profiles.Header" = "PROFILE";
 
 "Settings.Stories.Hide" = "Ukryj relacje";
 "Settings.Stories.WarnBeforeView" = "Pytaj przed wyświetleniem";
@@ -37,7 +37,7 @@
 "Settings.Translation.QuickTranslateButton" = "Przycisk Szybkie tłumaczenie";
 
 "Stories.Warning.Author" = "Autor";
-"Stories.Warning.ViewStory" = "Zobaczyć relację?";
+"Stories.Warning.ViewStory" = "Pokazać relację?";
 /* Author will be able to see that you viewed their Story */
 "Stories.Warning.Notice" = "%@ BĘDZIE WIEDZIAŁ, że obejrzano jego relację.";
 "Stories.Warning.NoticeStealth" = "%@ nie będzie wiedział, że obejrzano jego relację.";
@@ -56,7 +56,7 @@
 
 "Settings.UploadsBoost" = "Przyśpieszenie wysyłania";
 "Settings.DownloadsBoost" = "Przyśpieszenie pobierania";
-"Settings.DownloadsBoost.Notice" = "Zwiększa liczbę równoległych połączeń oraz rozmiar fragmentów plików. Jeśli Twoja sieć nie jest w stanie znieść obciążenia, wypróbuj różne opcje, które pasują do Twojego połączenia.";
+"Settings.DownloadsBoost.Notice" = "Zwiększa liczbę równoległych połączeń oraz rozmiar fragmentów plików. Jeśli twoja sieć nie jest w stanie znieść obciążenia, wypróbuj różne opcje, które pasują do twojego połączenia.";
 "Settings.DownloadsBoost.none" = "Wyłączone";
 "Settings.DownloadsBoost.medium" = "Średnie";
 "Settings.DownloadsBoost.maximum" = "Maksymalne";
@@ -64,7 +64,7 @@
 "Settings.ShowProfileID" = "Pokaż ID";
 "Settings.ShowDC" = "Pokaż centrum danych";
 "Settings.ShowCreationDate" = "Pokaż datę utworzenia czatu";
-"Settings.ShowCreationDate.Notice" = "Data utworzenia może być nieznana dla niektórych czatów.";
+"Settings.ShowCreationDate.Notice" = "Dla niektórych czatów data utworzenia może być nieznana.";
 
 "Settings.ShowRegDate" = "Pokaż datę rejestracji";
 "Settings.ShowRegDate.Notice" = "Data rejestracji jest przybliżona.";
@@ -83,7 +83,8 @@
 "Common.RestartRequired" = "Wymagany restart";
 "Common.RestartNow" = "Uruchom teraz ponownie";
 "Common.OpenTelegram" = "Otwórz Telegram";
-"Common.UseTelegramForPremium" = "Pamiętaj, że aby otrzymać Telegram Premium, musisz skorzystać z oficjalnej aplikacji Telegram. Po uzyskaniu Telegram Premium wszystkie jego funkcje staną się dostępne w Swiftgram.";
+"Common.UseTelegramForPremium" = "Aby otrzymać Telegram Premium, musisz skorzystać z oficjalnej aplikacji Telegram. Po uzyskaniu Telegram Premium wszystkie jego funkcje staną się dostępne w Swiftgram.";
+"Common.UpdateOS" = "Wymagana aktualizacja iOS";
 
 "Message.HoldToShowOrReport" = "Przytrzymaj, aby Pokazać lub Zgłosić.";
 
@@ -91,7 +92,7 @@
 "Auth.UnofficialAppCodeTitle" = "Kod można uzyskać tylko za pomocą oficjalnej aplikacji";
 
 "Settings.SmallReactions" = "Małe reakcje";
-"Settings.HideReactions" = "Ukryj Reakcje";
+"Settings.HideReactions" = "Ukryj reakcje";
 
 "ContextMenu.SaveToCloud" = "Zapisz w chmurze";
 "ContextMenu.SelectFromUser" = "Zaznacz od autora";
@@ -107,6 +108,7 @@
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
 "Settings.PullToNextTopic" = "Przeciągnij, aby przejść do następnego tematu";
 "Settings.GalleryCamera" = "Aparat w galerii";
+"Settings.GalleryCameraPreview" = "Podgląd aparatu w galerii";
 /* "Send Message As..." button */
 "Settings.SendAsButton" = "Przycisk „%@”";
 "Settings.SnapDeletionEffect" = "Efekty usuwania wiadomości";
@@ -116,29 +118,31 @@
 
 "Settings.RecordingButton" = "Przycisk głośności nagrywania";
 
-"Settings.DefaultEmojisFirst" = "Wybierz standardowe emotikony";
-"Settings.DefaultEmojisFirst.Notice" = "Pokaż standardowe emotikony przed premium na klawiaturze emotikonów";
+"Settings.DefaultEmojisFirst" = "Wybierz standardowe emoji";
+"Settings.DefaultEmojisFirst.Notice" = "Na klawiaturze emoji pokaż standardowe emoji przed Premium";
 
 /* Date when chat was created. "created: 24 May 2016" */
 "Chat.Created" = "utworzony: %@";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
-"Chat.JoinedDateTitle" = "Dołączył %@";
+"Chat.JoinedDateTitle" = "Dołączono %@";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
-"Chat.RegDate" = "Zarejestrowane";
+"Chat.RegDate" = "Zarejestrowano";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Podwójne stuknięcie, aby edytować wiadomość";
 
-"Settings.wideChannelPosts" = "Szerokie posty w kanałach";
+"Settings.wideChannelPosts" = "Szerokie wpisy w kanałach";
 "Settings.ForceEmojiTab" = "Klawiatura emoji domyślnie";
 
 "Settings.forceBuiltInMic" = "Wymuś mikrofon urządzenia";
-"Settings.forceBuiltInMic.Notice" = "Jeśli ta opcja jest włączona, aplikacja będzie korzystać tylko z mikrofonu urządzenia nawet jeśli są podłączone słuchawki.";
+"Settings.forceBuiltInMic.Notice" = "Jeśli ta opcja jest włączona, aplikacja będzie korzystać tylko z mikrofonu urządzenia, nawet jeśli są podłączone słuchawki.";
 
-"Settings.hideChannelBottomButton" = "Ukryj dolny panel kanału";
+"Settings.showChannelBottomButton" = "Dolny panel kanału";
+
+"Settings.secondsInMessages" = "Sekundy w wiadomościach";
 
 "Settings.CallConfirmation" = "Potwierdzenie połączenia";
-"Settings.CallConfirmation.Notice" = "Swiftgram poprosi o Twoje potwierdzenie przed wykonaniem połączenia.";
+"Settings.CallConfirmation.Notice" = "Swiftgram poprosi o twoje potwierdzenie przed wykonaniem połączenia.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Wykonać połączenie?";
@@ -146,7 +150,96 @@
 /* Confirmation before making a Video Call */
 "CallConfirmation.Video.Title" = "Wykonać połączenie wideo?";
 
-"MutualContact.Label" = "wspólny kontakt";
+"MutualContact.Label" = "wzajemny kontakt";
 
-"Settings.swipeForVideoPIP" = "Wideo PIP z przesunięciem";
-"Settings.swipeForVideoPIP.Notice" = "Jeśli włączone, przesunięcie wideo otworzy je w trybie obrazu w obrazie.";
+"Settings.swipeForVideoPIP" = "Wideo PIP po przesunięciu";
+"Settings.swipeForVideoPIP.Notice" = "Jeśli włączone, przesunięcie palcem otworzy film w trybie obrazu w obrazie.";
+
+"SessionBackup.Title" = "Kopia zapasowa kont";
+"SessionBackup.Sessions.Title" = "Sesje";
+"SessionBackup.Actions.Backup" = "Kopia zapasowa do pęku kluczy";
+"SessionBackup.Actions.Restore" = "Przywróć z pęku kluczy";
+"SessionBackup.Actions.DeleteAll" = "Usuń kopię zapasową pęku kluczy";
+"SessionBackup.Actions.DeleteOne" = "Usuń z kopii zapasowej";
+"SessionBackup.Actions.RemoveFromApp" = "Usuń z aplikacji";
+"SessionBackup.LastBackupAt" = "Ostatnia kopia zapasowa: %@";
+"SessionBackup.RestoreOK" = "OK. Przywrócono sesje: %@";
+"SessionBackup.LoggedIn" = "Zalogowano";
+"SessionBackup.LoggedOut" = "Wylogowano";
+"SessionBackup.DeleteAll.Title" = "Usunąć wszystkie sesje?";
+"SessionBackup.DeleteAll.Text" = "Wszystkie sesje zostaną usunięte z pęku kluczy.\n\nKonta nie zostaną wylogowane ze Swiftgram.";
+"SessionBackup.DeleteSingle.Title" = "Usunąć 1 (jedną) sesję?";
+"SessionBackup.DeleteSingle.Text" = "%@ sesja zostanie usunięta z pęku kluczy.\n\nKonto nie zostanie wylogowane ze Swiftgram.";
+"SessionBackup.RemoveFromApp.Title" = "Usunąć konto z aplikacji?";
+"SessionBackup.RemoveFromApp.Text" = "%@ sesja ZOSTANIE USUNIĘTA ze Swiftgram! Sesja pozostanie aktywna, więc możesz ją później przywrócić.";
+"SessionBackup.Notice" = "Sesje są szyfrowane i przechowywane w pęku kluczy urządzenia. Sesje nigdy nie opuszczają urządzenia.\n\nWAŻNE: Aby przywrócić sesje na nowym urządzeniu lub po zresetowaniu systemu operacyjnego, MUSISZ włączyć szyfrowane kopie zapasowe, w przeciwnym razie pęk kluczy nie zostanie przeniesiony.\n\nUWAGA: Sesje mogą zostać unieważnione przez Telegram lub z innego urządzenia.";
+
+"MessageFilter.Title" = "Filtr wiadomości";
+"MessageFilter.SubTitle" = "Usuń elementy rozpraszające uwagę i zmniejsz widoczność wiadomości zawierających poniższe słowa kluczowe.\nW słowach kluczowych rozróżniana jest wielkość liter.";
+"MessageFilter.Keywords.Title" = "Słowa kluczowe";
+"MessageFilter.InputPlaceholder" = "Wpisz słowo kluczowe";
+
+"InputToolbar.Title" = "Panel formatowania";
+
+"Notifications.MentionsAndReplies.Title" = "@Wzmianki i odpowiedzi";
+"Notifications.MentionsAndReplies.value.default" = "Domyślne";
+"Notifications.MentionsAndReplies.value.silenced" = "Wyciszone";
+"Notifications.MentionsAndReplies.value.disabled" = "Wyłączone";
+"Notifications.PinnedMessages.Title" = "Przypięte wiadomości";
+"Notifications.PinnedMessages.value.default" = "Domyślne";
+"Notifications.PinnedMessages.value.silenced" = "Wyciszone";
+"Notifications.PinnedMessages.value.disabled" = "Wyłączone";
+
+
+"PayWall.Text" = "Doładowany funkcjami Pro";
+
+"PayWall.SessionBackup.Title" = "Kopia zapasowa sesji";
+"PayWall.SessionBackup.Notice" = "Przywróć sesje z zaszyfrowanej lokalnej kopii zapasowej pęku kluczy Apple.";
+"PayWall.SessionBackup.Description" = "Zmiana urządzenia lub usunięcie Swiftgrama nie jest już problemem. Przywróć wszystkie sesje, które są nadal aktywne na serwerach Telegrama.";
+
+"PayWall.MessageFilter.Title" = "Filtr wiadomości";
+"PayWall.MessageFilter.Notice" = "Zmniejsz widoczność SPAM-u, promocji i irytujących wiadomości.";
+"PayWall.MessageFilter.Description" = "Utwórz listę słów kluczowych, których nie chcesz często widzieć, a Swiftgram zredukuje liczbę elementów rozpraszających uwagę.";
+
+"PayWall.Notifications.Title" = "Wyłącz @wzmianki i odpowiedzi";
+"PayWall.Notifications.Notice" = "Ukryj lub wycisz nieistotne powiadomienia.";
+"PayWall.Notifications.Description" = "Koniec z przypietymi wiadomościami i @wzmiankami, gdy potrzebujesz odrobiny spokoju.";
+
+"PayWall.InputToolbar.Title" = "Panel formatowania";
+"PayWall.InputToolbar.Notice" = "Oszczędź czas na przygotowywaniu wpisów dzięki panelowi tuż nad klawiaturą.";
+"PayWall.InputToolbar.Description" = "Zastosuj i wyczyść formatowanie lub wstaw nowe wiersze jak profesjonalista.";
+
+"PayWall.AppIcons.Title" = "Unikalne ikony aplikacji";
+"PayWall.AppIcons.Notice" = "Dostosuj wygląd Swiftgram na ekranie głównym.";
+
+"PayWall.About.Title" = "O Swiftgram Pro";
+"PayWall.About.Notice" = "Bezpłatna wersja Swiftgram oferuje dziesiątki funkcji i ulepszeń w stosunku do aplikacji Telegram. Innowacje i synchronizacja Swiftgram z miesięcznymi aktualizacjami Telegram to ogromny wysiłek, który wymaga dużo czasu i drogiego sprzętu.\n\nSwiftgram to aplikacja typu open source, która szanuje twoją prywatność i nie przeszkadza ci reklamami. Subskrybując Swiftgram Pro uzyskujesz dostęp do ekskluzywnych funkcji i wspierasz niezależnego programistę.";
+/* DO NOT TRANSLATE */
+"PayWall.About.Signature" = "@Kylmakalle";
+/* DO NOT TRANSLATE */
+"PayWall.About.SignatureURL" = "https://t.me/Kylmakalle";
+
+"PayWall.ProSupport.Title" = "Problemy z płatnością?";
+"PayWall.ProSupport.Contact" = "Nie martw się!";
+
+"PayWall.RestorePurchases" = "Przywróć zakup";
+"PayWall.Terms" = "Warunki korzystania z usługi";
+"PayWall.Privacy" = "Polityka prywatności";
+"PayWall.TermsURL" = "https://swiftgram.app/terms";
+"PayWall.PrivacyURL" = "https://swiftgram.app/privacy";
+"PayWall.Notice.Markdown" = "Subskrybując Swiftgram Pro akceptujesz [Warunki korzystania z usługi](%1$@) i [Politykę prywatności](%2$@) Swiftgram.";
+"PayWall.Notice.Raw" = "Subskrybując Swiftgram Pro akceptujesz Warunki korzystania z usługi i Politykę prywatności Swiftgram.";
+
+"PayWall.Button.OpenPro" = "Używaj funkcji Pro";
+"PayWall.Button.Purchasing" = "Kupowanie…";
+"PayWall.Button.Restoring" = "Przywracanie zakupu…";
+"PayWall.Button.Validating" = "Weryfikacja zakupu…";
+"PayWall.Button.PaymentsUnavailable" = "Płatności niedostępne";
+"PayWall.Button.BuyInAppStore" = "Subskrybuj w wersji z App Store";
+"PayWall.Button.Subscribe" = "Subskrybuj za %@ / miesiąc";
+"PayWall.Button.ContactingAppStore" = "Kontakt z App Store…";
+
+"Paywall.Error.Title" = "Błąd";
+"PayWall.ValidationError" = "Błąd weryfikacji";
+"PayWall.ValidationError.TryAgain" = "Coś poszło nie tak podczas weryfikacji zakupu. Nie martw się! Spróbuj przywrócić zakupy trochę później.";
+"PayWall.ValidationError.Expired" = "Twoja subskrypcja wygasła. Subskrybuj ponownie, aby odzyskać dostęp do funkcji Pro.";
