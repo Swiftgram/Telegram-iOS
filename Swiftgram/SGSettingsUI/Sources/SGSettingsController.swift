@@ -198,9 +198,10 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.disclosure(id: id.count, section: .translation, link: .languageSettings, text: presentationData.strings.Localization_TranslateEntireChat))
     entries.append(.notice(id: id.count, section: .translation, text: i18n("Common.NoTelegramPremiumNeeded", lang, presentationData.strings.Settings_Premium)))
 
-    entries.append(.header(id: id.count, section: .voiceMessages, text: presentationData.strings.Privacy_VoiceMessages.uppercased(), badge: nil))
+    entries.append(.header(id: id.count, section: .voiceMessages, text: "Settings.Transcription.Header".i18n(lang), badge: nil))
     entries.append(.oneFromManySelector(id: id.count, section: .voiceMessages, settingName: .transcriptionBackend, text: i18n("Settings.Transcription.Backend", lang), value: i18n("Settings.Transcription.Backend.\(SGSimpleSettings.shared.transcriptionBackend)", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .voiceMessages, text: i18n("Settings.Transcription.Backend.Notice", lang)))
+    entries.append(.header(id: id.count, section: .voiceMessages, text: presentationData.strings.Privacy_VoiceMessages.uppercased(), badge: nil))
     entries.append(.toggle(id: id.count, section: .voiceMessages, settingName: .forceBuiltInMic, value: SGSimpleSettings.shared.forceBuiltInMic, text: i18n("Settings.forceBuiltInMic", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .voiceMessages, text: i18n("Settings.forceBuiltInMic.Notice", lang)))
 

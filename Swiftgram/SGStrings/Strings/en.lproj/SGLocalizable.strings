@@ -40,6 +40,7 @@
 "Settings.Translation.Backend.gtranslate" = "GTranslate";
 "Settings.Translation.Backend.Notice" = "Swiftgram will fallback to other translation services in case Telegram is not available.";
 
+"Settings.Transcription.Header" = "VOICE-TO-TEXT";
 "Settings.Transcription.Backend" = "Service";
 "Settings.Transcription.Backend.default" = "Telegram";
 "Settings.Transcription.Backend.apple" = "Apple";

@@ -559,45 +559,11 @@ public extension TelegramEngine {
         }
         
         public func translate(text: String, toLang: String, entities: [MessageTextEntity] = []) -> Signal<(String, [MessageTextEntity])?, TranslationError> {
-            // MARK: Swiftgram
-            if SGSimpleSettings.shared.translationBackend == SGSimpleSettings.TranslationBackend.gtranslate.rawValue { return gtranslate(text, toLang) |> map { translatedText in return (translatedText, []) } |> mapError { _ in return .generic }
-            }
-            return _internal_translate(network: self.account.network, text: text, toLang: toLang, entities: entities)
-            // MARK: Swiftgram
-            |> `catch` { originalError -> Signal<(String, [MessageTextEntity])?, TranslationError> in
-                return gtranslate(text, toLang) |> map { translatedText in return (translatedText, []) } |> mapError { _ in return originalError }
-            }
+            return sgWrappedTranslateSingle(text: text, toLang: toLang, default: _internal_translate(network: self.account.network, text: text, toLang: toLang, entities: entities))
         }
         
         public func translate(texts: [(String, [MessageTextEntity])], toLang: String) -> Signal<[(String, [MessageTextEntity])], TranslationError> {
-            // MARK: Swiftgram
-            if SGSimpleSettings.shared.translationBackend == SGSimpleSettings.TranslationBackend.gtranslate.rawValue {
-                let translatedSignals: [Signal<(String, [MessageTextEntity]), TranslationError>] = texts.map { (text, _) in
-                    gtranslate(text, toLang)
-                    |> map { translatedText -> (String, [MessageTextEntity]) in
-                        return (translatedText, [])
-                    }
-                    |> mapError { _ -> TranslationError in
-                        return .generic
-                    }
-                }
-                return combineLatest(translatedSignals)
-            }
-
-            // MARK: Swiftgram
-            return _internal_translate_texts(network: self.account.network, texts: texts, toLang: toLang)
-            |> `catch` { originalError -> Signal<[(String, [MessageTextEntity])], TranslationError> in
-                let translatedSignals: [Signal<(String, [MessageTextEntity]), TranslationError>] = texts.map { (text, _) in
-                    gtranslate(text, toLang)
-                    |> map { translatedText -> (String, [MessageTextEntity]) in
-                        return (translatedText, [])
-                    }
-                    |> mapError { _ -> TranslationError in
-                        return originalError
-                    }
-                }
-                return combineLatest(translatedSignals)
-            }
+            return sgWrappedTranslateMultiple(texts: texts,toLang: toLang, default: _internal_translate_texts(network: self.account.network, texts: texts, toLang: toLang))
         }
 
         // MARK: Swiftgram
@@ -1631,4 +1597,67 @@ public extension TelegramEngine {
             return _internal_requestMessageAuthor(account: self.account, id: id)
         }
     }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// MARK: Swiftgram
+private func sgWrappedTranslateSingle(
+    text: String,
+    toLang: String,
+    `default`: Signal<(String, [MessageTextEntity])?, TranslationError>
+) -> Signal<(String, [MessageTextEntity])?, TranslationError> {
+    if SGSimpleSettings.shared.translationBackend == SGSimpleSettings.TranslationBackend.gtranslate.rawValue {
+        return gtranslate(text, toLang)
+            |> map { ($0, []) }
+            |> mapError { _ in .generic }
+    }
+
+    return `default`
+        |> `catch` { originalError in
+            gtranslate(text, toLang)
+                |> map { ($0, []) }
+                |> mapError { _ in originalError }
+        }
+}
+
+private func sgWrappedTranslateMultiple(
+    texts: [(String, [MessageTextEntity])],
+    toLang: String,
+    `default`: Signal<[(String, [MessageTextEntity])], TranslationError>
+) -> Signal<[(String, [MessageTextEntity])], TranslationError> {
+    if SGSimpleSettings.shared.translationBackend == SGSimpleSettings.TranslationBackend.gtranslate.rawValue {
+        let translatedSignals: [Signal<(String, [MessageTextEntity]), TranslationError>] = texts.map { (text, _) in
+            gtranslate(text, toLang)
+                |> map { ($0, []) }
+                |> mapError { _ in .generic }
+        }
+        return combineLatest(translatedSignals)
+    }
+
+    return `default`
+        |> `catch` { originalError in
+            let translatedSignals: [Signal<(String, [MessageTextEntity]), TranslationError>] = texts.map { (text, _) in
+                gtranslate(text, toLang)
+                    |> map { ($0, []) }
+                    |> mapError { _ in originalError }
+            }
+            return combineLatest(translatedSignals)
+        }
 }
