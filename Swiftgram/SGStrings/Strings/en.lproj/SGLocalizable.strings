@@ -36,13 +36,17 @@
 
 "Settings.Translation.QuickTranslateButton" = "Quick Translate button";
 "Settings.Translation.Backend" = "Service";
+/* Do not translate */
 "Settings.Translation.Backend.default" = "Telegram";
+/* Do not translate */
 "Settings.Translation.Backend.gtranslate" = "GTranslate";
 "Settings.Translation.Backend.Notice" = "Swiftgram will fallback to other translation services in case Telegram is not available.";
 
 "Settings.Transcription.Header" = "VOICE-TO-TEXT";
 "Settings.Transcription.Backend" = "Service";
+/* Do not translate */
 "Settings.Transcription.Backend.default" = "Telegram";
+/* Do not translate */
 "Settings.Transcription.Backend.apple" = "Apple";
 "Settings.Transcription.Backend.Notice" = "Swiftgram will fallback to other transcription services in case Telegram is not available.";
 
