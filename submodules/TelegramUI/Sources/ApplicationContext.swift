@@ -22,6 +22,7 @@ import TelegramPermissionsUI
 import PasscodeUI
 import ImageBlur
 import FastBlur
+import WatchBridge
 import SettingsUI
 import AppLock
 import AccountUtils
@@ -811,6 +812,54 @@ final class AuthorizedApplicationContext {
                     strongSelf.rootController.updateRootControllers(showContactsTab: showContactsTabValue, showCallsTab: showCallsTabValue)
                 }
             }
+        })
+        
+        let _ = (watchManagerArguments
+        |> deliverOnMainQueue).start(next: { [weak self] arguments in
+            guard let strongSelf = self else {
+                return
+            }
+            
+            let watchManager = WatchManagerImpl(arguments: arguments)
+            strongSelf.context.watchManager = watchManager
+            
+            strongSelf.watchNavigateToMessageDisposable.set((strongSelf.context.sharedContext.applicationBindings.applicationInForeground |> mapToSignal({ applicationInForeground -> Signal<(Bool, MessageId), NoError> in
+                return watchManager.navigateToMessageRequested
+                |> map { messageId in
+                    return (applicationInForeground, messageId)
+                }
+                |> deliverOnMainQueue
+            })).start(next: { [weak self] applicationInForeground, messageId in
+                if let strongSelf = self {
+                    if applicationInForeground {
+                        var chatIsVisible = false
+                        if let controller = strongSelf.rootController.viewControllers.last as? ChatControllerImpl, case .peer(messageId.peerId) = controller.chatLocation  {
+                            chatIsVisible = true
+                        }
+                        
+                        let navigateToMessage = {
+                            let _ = (strongSelf.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: messageId.peerId))
+                            |> deliverOnMainQueue).start(next: { peer in
+                                guard let peer = peer else {
+                                    return
+                                }
+                                
+                                strongSelf.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: strongSelf.rootController, context: strongSelf.context, chatLocation: .peer(peer), subject: .message(id: .id(messageId), highlight: ChatControllerSubject.MessageHighlight(quote: nil), timecode: nil, setupReply: false)))
+                            })
+                        }
+                        
+                        if chatIsVisible {
+                            navigateToMessage()
+                        } else {
+                            let presentationData = strongSelf.context.sharedContext.currentPresentationData.with { $0 }
+                            let controller = textAlertController(context: strongSelf.context, title: presentationData.strings.WatchRemote_AlertTitle, text: presentationData.strings.WatchRemote_AlertText, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_Cancel, action: {}), TextAlertAction(type: .genericAction, title: presentationData.strings.WatchRemote_AlertOpen, action:navigateToMessage)])
+                            (strongSelf.rootController.viewControllers.last as? ViewController)?.present(controller, in: .window(.root))
+                        }
+                    } else {
+                        //strongSelf.notificationManager.presentWatchContinuityNotification(context: strongSelf.context, messageId: messageId)
+                    }
+                }
+            }))
         })
         
         self.rootController.setForceInCallStatusBar((self.context.sharedContext as! SharedAccountContextImpl).currentCallStatusBarNode)
