@@ -256,7 +256,7 @@ public class Window1 {
     public let hostView: WindowHostView
     public let badgeView: UIImageView
     
-    private var deviceMetrics: DeviceMetrics
+    private(set) var deviceMetrics: DeviceMetrics
     
     public let statusBarHost: StatusBarHost?
     private let keyboardManager: KeyboardManager?
@@ -1219,7 +1219,7 @@ public class Window1 {
                 
                 if let image = self.badgeView.image {
                     self.updateBadgeVisibility()
-                    self.badgeView.frame = CGRect(origin: CGPoint(x: floorToScreenPixels((self.windowLayout.size.width - image.size.width) / 2.0), y: self.sgAppBadgeOffset(5.0)), size: image.size)
+                    self.badgeView.frame = CGRect(origin: CGPoint(x: floorToScreenPixels((self.windowLayout.size.width - image.size.width) / 2.0), y: self.deviceMetrics.sgAppBadgeOffset()), size: image.size)
                 }
             }
         }
