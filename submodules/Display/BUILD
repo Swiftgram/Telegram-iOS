@@ -4,6 +4,10 @@ sgsrc = [
     "//Swiftgram/SGAppBadgeOffset:SGAppBadgeOffset"
 ]
 
+sgdeps = [
+    "//submodules/Utils/DeviceModel"
+]
+
 swift_library(
     name = "Display",
     module_name = "Display",
@@ -13,7 +17,7 @@ swift_library(
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgdeps + [
     	"//submodules/ObjCRuntimeUtils:ObjCRuntimeUtils",
     	"//submodules/UIKitRuntimeUtils:UIKitRuntimeUtils",
         "//submodules/AppBundle:AppBundle",
