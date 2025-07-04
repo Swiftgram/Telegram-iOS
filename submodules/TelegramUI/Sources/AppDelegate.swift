@@ -31,6 +31,7 @@ import OverlayStatusController
 import UndoUI
 import LegacyUI
 import PassportUI
+import WatchBridge
 import SettingsUI
 import AppBundle
 import UrlHandling
