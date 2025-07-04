@@ -1219,25 +1219,7 @@ public class Window1 {
                 
                 if let image = self.badgeView.image {
                     self.updateBadgeVisibility()
-                    // MARK: Swiftgram
-                    var badgeOffset: CGFloat
-                    if case self.deviceMetrics = DeviceMetrics.iPhone14ProZoomed {
-                        badgeOffset = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone14ProZoomed.statusBarHeight
-                        if self.deviceMetrics.modelHasDynamicIsland {
-                            badgeOffset += 3.0
-                        }
-                    } else if case self.deviceMetrics = DeviceMetrics.iPhone14ProMaxZoomed {
-                        badgeOffset = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone14ProMaxZoomed.statusBarHeight
-                        if self.deviceMetrics.modelHasDynamicIsland {
-                            badgeOffset += 3.0
-                        }
-                    } else {
-                        badgeOffset = self.deviceMetrics.statusBarHeight - DeviceMetrics.iPhone13ProMax.statusBarHeight
-                    }
-                    if badgeOffset != 0 {
-                        badgeOffset += 3.0 // Centering badge in status bar for Dynamic island devices
-                    }
-                    self.badgeView.frame = CGRect(origin: CGPoint(x: floorToScreenPixels((self.windowLayout.size.width - image.size.width) / 2.0), y: 5.0 + badgeOffset), size: image.size)
+                    self.badgeView.frame = CGRect(origin: CGPoint(x: floorToScreenPixels((self.windowLayout.size.width - image.size.width) / 2.0), y: self.sgAppBadgeOffset(5.0)), size: image.size)
                 }
             }
         }
