@@ -2293,7 +2293,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                 buttonIcon = .message
             case .discussion:
                 buttonText = presentationData.strings.PeerInfo_ButtonDiscuss
-                buttonIcon = .message
+                buttonIcon = .discussion // MARK: Swiftgram
             case .call:
                 buttonText = presentationData.strings.PeerInfo_ButtonCall
                 buttonIcon = .call
