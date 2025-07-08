@@ -397,7 +397,7 @@ public func parseTranslateResponse(_ data: String) -> String {
     return ""
 }
 
-public func getGoogleLang(_ userLang: String) -> String {
+public func getGTranslateLang(_ userLang: String) -> String {
     var lang = userLang
     let rawSuffix =  "-raw"
     if lang.hasSuffix(rawSuffix) {
@@ -419,7 +419,11 @@ public func getGoogleLang(_ userLang: String) -> String {
 
 
     // Fix for pt-br and other regional langs
-    // https://cloud.google.com/translate/docs/languages
+    // https://cloud.go
+    // ogle.com/tran
+    // slate/do
+    // cs/lang
+    // uages
     lang = lang.components(separatedBy: "-")[0].components(separatedBy: "_")[0]
 
     return lang
@@ -480,7 +484,7 @@ public func requestTranslateUrl(url: URL) -> Signal<String, TranslateFetchError>
 
 public func gtranslate(_ text: String, _ toLang: String) -> Signal<String, TranslateFetchError> {
     return Signal { subscriber in
-        let urlString = getTranslateUrl(text, getGoogleLang(toLang))
+        let urlString = getTranslateUrl(text, getGTranslateLang(toLang))
         let url = URL(string: urlString)!
         let translateSignal = requestTranslateUrl(url: url)
         var translateDisposable: Disposable? = nil

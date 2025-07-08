@@ -179,6 +179,8 @@ public class SGSimpleSettings {
     public enum TranslationBackend: String, CaseIterable {
         case `default`
         case gtranslate
+        case system
+        // Make sure to update TranslationConfiguration
     }
         
     public enum PinnedMessageNotificationsSettings: String, CaseIterable {
@@ -492,6 +494,16 @@ extension SGSimpleSettings {
     
     public static func makeOutgoingLanguageTranslationKey(accountId: Int64, peerId: Int64) -> String {
         return "\(accountId):\(peerId)"
+    }
+}
+
+extension SGSimpleSettings {
+    public var translationBackendEnum: SGSimpleSettings.TranslationBackend {
+        return TranslationBackend(rawValue: translationBackend) ?? .default
+    }
+    
+    public var transcriptionBackendEnum: SGSimpleSettings.TranscriptionBackend {
+        return TranscriptionBackend(rawValue: transcriptionBackend) ?? .default
     }
 }
 
