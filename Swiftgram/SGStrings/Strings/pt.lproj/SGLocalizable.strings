@@ -35,6 +35,21 @@
 "Settings.Stories.DisableSwipeToRecord" = "Desativar deslize para gravar";
 
 "Settings.Translation.QuickTranslateButton" = "Botão de Tradução Rápida";
+"Settings.Translation.Backend" = "Serviço";
+/* Do not translate */
+"Settings.Translation.Backend.default" = "Telegram";
+/* Do not translate */
+"Settings.Translation.Backend.gtranslate" = "Google Tradutor";
+"Settings.Translation.Backend.system" = "Sistema";
+"Settings.Translation.Backend.Notice" = "O Swiftgram usará %@ caso o serviço de tradução selecionado não esteja disponível.";
+
+"Settings.Transcription.Header" = "VOZ PARA TEXTO";
+"Settings.Transcription.Backend" = "Serviço";
+/* Do not translate */
+"Settings.Transcription.Backend.default" = "Telegram";
+/* Do not translate */
+"Settings.Transcription.Backend.apple" = "Apple";
+"Settings.Transcription.Backend.Notice" = "O Swiftgram usará %@ caso o serviço de transcrição selecionado não esteja disponível.";
 
 "Stories.Warning.Author" = "Autor";
 "Stories.Warning.ViewStory" = "Ver Story?";
@@ -43,7 +58,7 @@
 "Stories.Warning.NoticeStealth" = "%@ não saberá que você viu a Story dele.";
 
 "Settings.Photo.Quality.Notice" = "Qualidade de fotos enviadas e photo-stories";
-"Settings.Photo.SendLarge" = "Enviar fotos grandes";
+"Settings.Photo.SendLarge" = "Enviar fotos em HD";
 "Settings.Photo.SendLarge.Notice" = "Aumentar o limite de tamanho de imagens comprimidas para 2560px";
 
 "Settings.VideoNotes.Header" = "VÍDEOS REDONDOS";
