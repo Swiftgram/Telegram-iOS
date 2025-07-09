@@ -43,7 +43,8 @@ public class SGSimpleSettings {
             { let _ = self.startTelescopeWithRearCam },
             { let _ = self.hideRecordingButton },
             { let _ = self.inputToolbar },
-            { let _ = self.dismissedSGSuggestions }
+            { let _ = self.dismissedSGSuggestions },
+            { let _ = self.customAppBadge }
         ]
 
         tasks.forEach { task in
@@ -134,6 +135,7 @@ public class SGSimpleSettings {
         case duckyAppIconAvailable
         case transcriptionBackend
         case translationBackend
+        case customAppBadge
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -262,7 +264,8 @@ public class SGSimpleSettings {
         Keys.dismissedSGSuggestions.rawValue: [],
         Keys.duckyAppIconAvailable.rawValue: true,
         Keys.transcriptionBackend.rawValue: TranscriptionBackend.default.rawValue,
-        Keys.translationBackend.rawValue: TranslationBackend.default.rawValue
+        Keys.translationBackend.rawValue: TranslationBackend.default.rawValue,
+        Keys.customAppBadge.rawValue: "",
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -485,6 +488,9 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.translationBackend.rawValue)
     public var translationBackend: String
+
+    @UserDefault(key: Keys.customAppBadge.rawValue)
+    public var customAppBadge: String
 }
 
 extension SGSimpleSettings {

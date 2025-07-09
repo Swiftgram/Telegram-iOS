@@ -12,7 +12,7 @@ import SwiftSignalKit
 import TelegramUIPreferences
 
 
-@available(iOS 13.0, *)
+
 public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacementController: ViewController, presentationData: PresentationData? = nil, SGIAPManager: SGIAPManager, openUrl: @escaping (String, Bool) -> Void /* url, forceExternal */, paymentsEnabled: Bool, canBuyInBeta: Bool, openAppStorePage: @escaping () -> Void, proSupportUrl: String?) -> ViewController {
     //    let theme = presentationData?.theme ?? (UITraitCollection.current.userInterfaceStyle == .dark ? defaultDarkColorPresentationTheme : defaultPresentationTheme)
     let theme = defaultDarkColorPresentationTheme
@@ -44,7 +44,7 @@ private let innerShadowWidth: CGFloat = 15.0
 private let accentColorHex: String = "F1552E"
 
 
-@available(iOS 13.0, *)
+
 struct BackgroundView: View {
     
     var body: some View {
@@ -96,7 +96,7 @@ struct BackgroundView: View {
 }
 
 
-@available(iOS 13.0, *)
+
 struct SGPayWallFeatureDetails: View {
     
     let dismissAction: () -> Void
@@ -225,7 +225,7 @@ struct SGPayWallFeatureDetails: View {
 }
 
 
-@available(iOS 13.0, *)
+
 struct SGProFeatureView: View {
     let feature: SGProFeature
     
@@ -267,7 +267,7 @@ enum SGProFeatureId: Hashable {
 }
 
 
-@available(iOS 13.0, *)
+
 struct SGProFeature: Identifiable {
     
     let id: SGProFeatureId
@@ -316,7 +316,7 @@ struct SGProFeature: Identifiable {
 }
 
 
-@available(iOS 13.0, *)
+
 struct SGPayWallView: View {
     @Environment(\.navigationBarHeight) var navigationBarHeight: CGFloat
     @Environment(\.containerViewLayout) var containerViewLayout: ContainerViewLayout?
@@ -362,11 +362,11 @@ struct SGPayWallView: View {
     
     private var features: [SGProFeature]  {
         return [
-            SGProFeature(id: .backup, title: "PayWall.SessionBackup.Title".i18n(lang), subtitle: "PayWall.SessionBackup.Notice".i18n(lang), description: "PayWall.SessionBackup.Description".i18n(lang)),
-            SGProFeature(id: .filter, title: "PayWall.MessageFilter.Title".i18n(lang), subtitle: "PayWall.MessageFilter.Notice".i18n(lang), description: "PayWall.MessageFilter.Description".i18n(lang)),
-            SGProFeature(id: .notifications, title: "PayWall.Notifications.Title".i18n(lang), subtitle: "PayWall.Notifications.Notice".i18n(lang), description: "PayWall.Notifications.Description".i18n(lang)),
             SGProFeature(id: .toolbar, title: "PayWall.InputToolbar.Title".i18n(lang), subtitle: "PayWall.InputToolbar.Notice".i18n(lang), description: "PayWall.InputToolbar.Description".i18n(lang)),
-            SGProFeature(id: .icons, title: "PayWall.AppIcons.Title".i18n(lang), subtitle: "PayWall.AppIcons.Notice".i18n(lang), description: nil)
+            SGProFeature(id: .filter, title: "PayWall.MessageFilter.Title".i18n(lang), subtitle: "PayWall.MessageFilter.Notice".i18n(lang), description: "PayWall.MessageFilter.Description".i18n(lang)),
+            SGProFeature(id: .icons, title: "PayWall.AppIcons.Title".i18n(lang), subtitle: "PayWall.AppIcons.Notice".i18n(lang), description: nil),
+            SGProFeature(id: .backup, title: "PayWall.SessionBackup.Title".i18n(lang), subtitle: "PayWall.SessionBackup.Notice".i18n(lang), description: "PayWall.SessionBackup.Description".i18n(lang)),
+            SGProFeature(id: .notifications, title: "PayWall.Notifications.Title".i18n(lang), subtitle: "PayWall.Notifications.Notice".i18n(lang), description: "PayWall.Notifications.Description".i18n(lang)),
         ]
     }
     
@@ -727,7 +727,7 @@ struct SGPayWallView: View {
 }
 
 
-@available(iOS 13.0, *)
+
 struct FeatureIcon: View {
     let icon: String
     let iconColor: Color
@@ -764,7 +764,7 @@ struct FeatureIcon: View {
 }
 
 
-@available(iOS 13.0, *)
+
 struct FeatureRow<IconContent: View>: View {
     let icon: IconContent
     let title: String
@@ -810,7 +810,7 @@ struct FeatureRow<IconContent: View>: View {
 
 
 // Confetti
-@available(iOS 13.0, *)
+
 struct ConfettiType {
     let color: Color
     let shape: ConfettiShape
@@ -824,7 +824,7 @@ struct ConfettiType {
     }
 }
 
-@available(iOS 13.0, *)
+
 enum ConfettiShape: CaseIterable {
     case circle
     case triangle
@@ -849,7 +849,7 @@ enum ConfettiShape: CaseIterable {
     }
 }
 
-@available(iOS 13.0, *)
+
 struct Triangle: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
@@ -861,7 +861,7 @@ struct Triangle: Shape {
     }
 }
 
-@available(iOS 13.0, *)
+
 public struct SlimRectangle: Shape {
     public func path(in rect: CGRect) -> Path {
         var path = Path()
@@ -875,7 +875,7 @@ public struct SlimRectangle: Shape {
     }
 }
 
-@available(iOS 13.0, *)
+
 public struct RoundedCross: Shape {
     public func path(in rect: CGRect) -> Path {
         var path = Path()
@@ -896,7 +896,7 @@ public struct RoundedCross: Shape {
     }
 }
 
-@available(iOS 13.0, *)
+
 struct ConfettiModifier: ViewModifier {
     @Binding var isActive: Bool
     let duration: Double
@@ -917,7 +917,7 @@ struct ConfettiModifier: ViewModifier {
     }
 }
 
-@available(iOS 13.0, *)
+
 struct ConfettiPiece: View {
     let confettiType: ConfettiType
     let duration: Double
@@ -943,7 +943,7 @@ struct ConfettiPiece: View {
     }
 }
 
-@available(iOS 13.0, *)
+
 struct FallingModifier: ViewModifier {
     let distance: CGFloat
     let duration: Double
@@ -961,7 +961,7 @@ struct FallingModifier: ViewModifier {
     }
 }
 
-@available(iOS 13.0, *)
+
 struct MoveModifier: ViewModifier {
     let offset: CGSize
     let duration: Double
@@ -985,7 +985,7 @@ struct MoveModifier: ViewModifier {
 }
 
 // Extension to make it easier to use
-@available(iOS 13.0, *)
+
 extension View {
     func confetti(isActive: Binding<Bool>, duration: Double = 2.0) -> some View {
         modifier(ConfettiModifier(isActive: isActive, duration: duration))

@@ -224,8 +224,8 @@
 "PayWall.InputToolbar.Notice" = "Bold, Italic, Links? Formatting with just a single tap.";
 "PayWall.InputToolbar.Description" = "Apply and clear Formatting or insert new lines like a Pro.";
 
-"PayWall.AppIcons.Title" = "Unique App Icons";
-"PayWall.AppIcons.Notice" = "Customize Swiftgram look on your home screen.";
+"PayWall.AppIcons.Title" = "Unique App Icons and Badges";
+"PayWall.AppIcons.Notice" = "Customize Swiftgram look on your home screen and screenshots.";
 
 "PayWall.About.Title" = "About Swiftgram Pro";
 "PayWall.About.Notice" = "Free version of Swiftgram provides dozens of features and improvements over Telegram app. Innovating and keeping Swiftgram in sync with monthly Telegram updates is a huge effort that requires a lot of time and expensive hardware.\n\nSwiftgram is an open-source app that respects your privacy and doesn't bother you with ads. Subscribing to Swiftgram Pro you get access to exclusive features and support an independent developer.";
@@ -258,3 +258,6 @@
 "PayWall.ValidationError" = "Validation Error";
 "PayWall.ValidationError.TryAgain" = "Something went wrong during purchase validation. No worries! Try to Restore Purchases a bit later.";
 "PayWall.ValidationError.Expired" = "Your subscription expired. Subscribe again to regain access to Pro features.";
+
+"AppBadge.Title" = "App Badge";
+"AppBadge.Notice" = "Customize App Badge shown on screenshots";

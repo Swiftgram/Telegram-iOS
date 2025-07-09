@@ -5,7 +5,8 @@ sgsrc = [
 ]
 
 sgdeps = [
-    "//submodules/Utils/DeviceModel"
+    "//submodules/Utils/DeviceModel",
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
 ]
 
 swift_library(

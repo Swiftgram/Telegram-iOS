@@ -62,6 +62,8 @@ public class UserDefault<T> /*where T: AllowedUserDefaultTypes*/ {
             return (userDefaults.bool(forKey: key) as! T)
         case is String.Type:
             return (userDefaults.string(forKey: key) as! T)
+        case is Int64.Type:
+            return (Int64(exactly: userDefaults.integer(forKey: key)) as! T)
         case is Int32.Type:
             return (Int32(exactly: userDefaults.integer(forKey: key)) as! T)
         case is Int.Type:

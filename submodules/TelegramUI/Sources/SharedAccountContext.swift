@@ -4099,12 +4099,8 @@ extension SharedAccountContextImpl {
     
     public func makeSGUpdateIOSController() -> ViewController {
         let presentationData = self.currentPresentationData.with { $0 }
-        let controller = UndoOverlayController(
-            presentationData: presentationData,
-            content: .info(title: nil, text: "Common.UpdateOS".i18n(presentationData.strings.baseLanguageCode), timeout: nil, customUndoText: nil),
-            elevatedLayout: false,
-            action: { _ in return false }
-        )
+        let controller = textAlertController(sharedContext: self, title: nil, text: "Common.UpdateOS".i18n(presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {
+        })])
         return controller
     }
 }
