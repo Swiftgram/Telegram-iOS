@@ -1415,7 +1415,7 @@ private func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId:
             }))
         }
         
-        if let phone = user.phone {
+        if let phone = user.phone, !(SGSimpleSettings.shared.hidePhoneInSettings && isMyProfile) {
             let formattedPhone = formatPhoneNumber(context: context, number: phone)
             let label: String
             if formattedPhone.hasPrefix("+888 ") {
