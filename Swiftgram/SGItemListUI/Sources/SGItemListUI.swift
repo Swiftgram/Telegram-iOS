@@ -212,10 +212,12 @@ public enum SGItemListUIEntry<Section: SGItemListSection, BoolSetting: Hashable,
         
         case let .oneFromManySelector(_, _, settingName, text, value, enabled):
             return ItemListDisclosureItem(presentationData: presentationData, title: text, enabled: enabled, label: value, sectionId: self.section, style: .blocks, action: {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil) // Closing search keyboard if active
                 arguments.setOneFromManyValue(settingName)
             })
         case let .action(_, _, actionType, text, kind):
             return ItemListActionItem(presentationData: presentationData, title: text, kind: kind, alignment: .natural, sectionId: self.section, style: .blocks, action: {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil) // Closing search keyboard if active
                     arguments.action(actionType)
             })
         case let .searchInput(_, _, title, text, placeholder):
