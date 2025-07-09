@@ -2380,7 +2380,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                     return CGSize(width: 256.0, height: 256.0)
                 }
                 return size
-            })
+            }/*, TODO(swiftgram): fillWidth: SGSimpleSettings.shared.wideChannelPosts */)
             // MARK: Swiftgram
             if innerSize.height > maxSize.height, maxDimensions.width != layoutConstants.image.maxDimensions.width {
                 maxDimensions.width = max(round(maxDimensions.width * maxSize.height / innerSize.height), layoutConstants.image.maxDimensions.width)
@@ -2390,7 +2390,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         return CGSize(width: 256.0, height: 256.0)
                     }
                     return size
-                })
+                }/*, TODO(swiftgram): fillWidth: SGSimpleSettings.shared.wideChannelPosts */)
             }
             
             let framesAndPositions = innerFramesAndPositions.map { ($0.0.offsetBy(dx: layoutConstants.image.bubbleInsets.left, dy: layoutConstants.image.bubbleInsets.top), $0.1) }
