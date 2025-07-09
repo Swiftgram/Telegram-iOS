@@ -11,6 +11,7 @@ import SwiftSignalKit
 import TelegramPresentationData
 import PresentationDataUtils
 import TelegramUIPreferences
+import SettingsUI
 
 // Optional
 import SGSimpleSettings
@@ -19,6 +20,7 @@ import SGLogging
 
 private enum SGProControllerSection: Int32, SGItemListSection {
     case base
+    case appearance
     case notifications
     case footer
 }
@@ -26,6 +28,8 @@ private enum SGProControllerSection: Int32, SGItemListSection {
 private enum SGProDisclosureLink: String {
     case sessionBackupManager
     case messageFilter
+    case appIcons
+    case appBages
 }
 
 private enum SGProToggles: String {
@@ -56,6 +60,10 @@ private func SGProControllerEntries(presentationData: PresentationData) -> [SGPr
     entries.append(.header(id: id.count, section: .notifications, text: presentationData.strings.Notifications_Title.uppercased(), badge: nil))
     entries.append(.oneFromManySelector(id: id.count, section: .notifications, settingName: .pinnedMessageNotifications, text: "Notifications.PinnedMessages.Title".i18n(lang), value: "Notifications.PinnedMessages.value.\(SGSimpleSettings.shared.pinnedMessageNotifications)".i18n(lang), enabled: true))
     entries.append(.oneFromManySelector(id: id.count, section: .notifications, settingName: .mentionsAndRepliesNotifications, text: "Notifications.MentionsAndReplies.Title".i18n(lang), value: "Notifications.MentionsAndReplies.value.\(SGSimpleSettings.shared.mentionsAndRepliesNotifications)".i18n(lang), enabled: true))
+    entries.append(.header(id: id.count, section: .appearance, text: presentationData.strings.Appearance_Title.uppercased(), badge: nil))
+    entries.append(.disclosure(id: id.count, section: .appearance, link: .appIcons, text: presentationData.strings.Appearance_AppIcon))
+    entries.append(.disclosure(id: id.count, section: .appearance, link: .appBages, text: "AppBadge.Title".i18n(lang)))
+    entries.append(.notice(id: id.count, section: .appearance, text: "AppBadge.Notice".i18n(lang)))
 
     #if DEBUG
     entries.append(.action(id: id.count, section: .footer, actionType: .resetIAP, text: "Reset Pro", kind: .destructive))
@@ -124,14 +132,14 @@ public func sgProController(context: AccountContext) -> ViewController {
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
         switch (link) {
             case .sessionBackupManager:
-                if #available(iOS 13.0, *) {
-                    pushControllerImpl?(sgSessionBackupManagerController(context: context, presentationData: presentationData))
-                } else {
-                    presentControllerImpl?(context.sharedContext.makeSGUpdateIOSController(), nil)
-                }
+                pushControllerImpl?(sgSessionBackupManagerController(context: context, presentationData: presentationData))
             case .messageFilter:
-                if #available(iOS 13.0, *) {
-                    pushControllerImpl?(sgMessageFilterController(presentationData: presentationData))
+                pushControllerImpl?(sgMessageFilterController(presentationData: presentationData))
+            case .appIcons:
+                pushControllerImpl?(themeSettingsController(context: context, focusOnItemTag: .icon))
+            case .appBages:
+                if #available(iOS 14.0, *) {
+                    pushControllerImpl?(sgAppBadgeSettingsController(context: context, presentationData: presentationData))
                 } else {
                     presentControllerImpl?(context.sharedContext.makeSGUpdateIOSController(), nil)
                 }

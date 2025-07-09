@@ -346,7 +346,7 @@ objc_library(
     ],
 )
 
-SGRESOURCES = ["//Swiftgram/SGSettingsUI:SGUIAssets", "//Swiftgram/SGPayWall:SGPayWallAssets"]
+SGRESOURCES = ["//Swiftgram/SGSettingsUI:SGUIAssets", "//Swiftgram/SGPayWall:SGPayWallAssets", "//Swiftgram/SGAppBadgeAssets:SGAppBadgeAssets"]
 
 swift_library(
     name = "Lib",
