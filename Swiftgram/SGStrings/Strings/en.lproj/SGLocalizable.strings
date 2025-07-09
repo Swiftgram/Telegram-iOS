@@ -58,7 +58,7 @@
 "Stories.Warning.NoticeStealth" = "%@ will not be able to see that you viewed their Story.";
 
 "Settings.Photo.Quality.Notice" = "Quality of uploaded photos and stories.";
-"Settings.Photo.SendLarge" = "Send Large Photos";
+"Settings.Photo.SendLarge" = "Send HD Photos";
 "Settings.Photo.SendLarge.Notice" = "Increase the side limit on compressed images to 2560px.";
 
 "Settings.VideoNotes.Header" = "ROUND VIDEOS";

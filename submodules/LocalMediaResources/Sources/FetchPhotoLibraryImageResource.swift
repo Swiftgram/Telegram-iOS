@@ -122,7 +122,7 @@ public func fetchPhotoLibraryResource(localIdentifier: String, width: Int32?, he
             if let width, let height {
                 size = CGSize(width: CGFloat(width), height: CGFloat(height))
             } else {
-                if hd || SGSimpleSettings.shared.sendLargePhotos /* MARK: Swiftgram */ {
+                if hd {
                     size = CGSize(width: 2560.0, height: 2560.0)
                 } else {
                     size = CGSize(width: 1280.0, height: 1280.0)
