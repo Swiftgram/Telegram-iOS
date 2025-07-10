@@ -39,7 +39,7 @@
 /* Do not translate */
 "Settings.Translation.Backend.default" = "Telegram";
 /* Do not translate */
-"Settings.Translation.Backend.gtranslate" = "Google Tradutor";
+"Settings.Translation.Backend.gtranslate" = "";
 "Settings.Translation.Backend.system" = "Sistema";
 "Settings.Translation.Backend.Notice" = "O Swiftgram usará %@ caso o serviço de tradução selecionado não esteja disponível.";
 
@@ -57,7 +57,7 @@
 "Stories.Warning.Notice" = "%@ SABERÁ que você viu a Story dele.";
 "Stories.Warning.NoticeStealth" = "%@ não saberá que você viu a Story dele.";
 
-"Settings.Photo.Quality.Notice" = "Qualidade de fotos enviadas e photo-stories";
+"Settings.Photo.Quality.Notice" = "Qualidade de fotos e Story enviados";
 "Settings.Photo.SendLarge" = "Enviar fotos em HD";
 "Settings.Photo.SendLarge.Notice" = "Aumentar o limite de tamanho de imagens comprimidas para 2560px";
 
