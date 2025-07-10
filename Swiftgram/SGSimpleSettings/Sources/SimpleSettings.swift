@@ -1,5 +1,6 @@
 import Foundation
 import SGAppGroupIdentifier
+import SGLogging
 
 let APP_GROUP_IDENTIFIER = sgAppGroupIdentifier()
 
@@ -9,6 +10,7 @@ public class SGSimpleSettings {
     
     private init() {
         setDefaultValues()
+        migrate()
         preCacheValues()
     }
     
@@ -18,6 +20,19 @@ public class SGSimpleSettings {
         UserDefaults.standard.register(defaults: SGSimpleSettings.groupDefaultValues)
         if let groupUserDefaults = UserDefaults(suiteName: APP_GROUP_IDENTIFIER) {
             groupUserDefaults.register(defaults: SGSimpleSettings.groupDefaultValues)
+        }
+    }
+    
+    private func migrate() {
+        let showRepostToStoryMigrationKey = "migrated_\(Keys.showRepostToStory.rawValue)"
+        if let groupUserDefaults = UserDefaults(suiteName: APP_GROUP_IDENTIFIER) {
+            if !groupUserDefaults.bool(forKey: showRepostToStoryMigrationKey) {
+                self.showRepostToStoryV2 = self.showRepostToStory
+                groupUserDefaults.set(true, forKey: showRepostToStoryMigrationKey)
+                SGLogger.shared.log("SGSimpleSettings", "Migrated showRepostToStory. \(self.showRepostToStory) -> \(self.showRepostToStoryV2)")
+            }
+        } else {
+            SGLogger.shared.log("SGSimpleSettings", "Unable to migrate showRepostToStory. Shared UserDefaults suite is not available for '\(APP_GROUP_IDENTIFIER)'.")
         }
     }
     
@@ -82,6 +97,7 @@ public class SGSimpleSettings {
         case outgoingLanguageTranslation
         case hideReactions
         case showRepostToStory
+        case showRepostToStoryV2
         case contextShowSelectFromUser
         case contextShowSaveToCloud
         case contextShowRestrict
@@ -272,7 +288,8 @@ public class SGSimpleSettings {
         Keys.legacyNotificationsFix.rawValue: false,
         Keys.pinnedMessageNotifications.rawValue: PinnedMessageNotificationsSettings.default.rawValue,
         Keys.mentionsAndRepliesNotifications.rawValue: MentionsAndRepliesNotificationsSettings.default.rawValue,
-        Keys.status.rawValue: 1
+        Keys.status.rawValue: 1,
+        Keys.showRepostToStoryV2.rawValue: true,
     ]
     
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
@@ -327,8 +344,12 @@ public class SGSimpleSettings {
     @UserDefault(key: Keys.hideReactions.rawValue)
     public var hideReactions: Bool
 
+    // @available(*, deprecated, message: "Use showRepostToStoryV2 instead")
     @UserDefault(key: Keys.showRepostToStory.rawValue)
     public var showRepostToStory: Bool
+
+    @UserDefault(key: Keys.showRepostToStoryV2.rawValue, userDefaults: UserDefaults(suiteName: APP_GROUP_IDENTIFIER) ?? .standard)
+    public var showRepostToStoryV2: Bool
 
     @UserDefault(key: Keys.contextShowRestrict.rawValue)
     public var contextShowRestrict: Bool

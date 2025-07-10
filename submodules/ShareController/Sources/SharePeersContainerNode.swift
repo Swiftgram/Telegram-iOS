@@ -164,7 +164,7 @@ final class SharePeersContainerNode: ASDisplayNode, ShareContentContainerNode {
         
         self.peersValue.set(.single(peers))
         
-        let canShareStory = controllerInteraction.shareStory != nil && SGSimpleSettings.shared.showRepostToStory
+        let canShareStory = controllerInteraction.shareStory != nil && SGSimpleSettings.shared.showRepostToStoryV2
         
         let items: Signal<[SharePeerEntry], NoError> = combineLatest(self.peersValue.get(), self.foundPeers.get(), self.tick.get(), self.themePromise.get())
         |> map { [weak controllerInteraction] initialPeers, foundPeers, _, theme -> [SharePeerEntry] in

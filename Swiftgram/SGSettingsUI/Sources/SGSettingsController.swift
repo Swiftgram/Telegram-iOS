@@ -182,7 +182,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .stories, settingName: .hideStories, value: SGSettings.hideStories, text: i18n("Settings.Stories.Hide", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .stories, settingName: .disableSwipeToRecordStory, value: SGSimpleSettings.shared.disableSwipeToRecordStory, text: i18n("Settings.Stories.DisableSwipeToRecord", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .stories, settingName: .warnOnStoriesOpen, value: SGSettings.warnOnStoriesOpen, text: i18n("Settings.Stories.WarnBeforeView", lang), enabled: true))
-    entries.append(.toggle(id: id.count, section: .stories, settingName: .showRepostToStory, value: SGSimpleSettings.shared.showRepostToStory, text: presentationData.strings.Share_RepostToStory.replacingOccurrences(of: "\n", with: " "), enabled: true))
+    entries.append(.toggle(id: id.count, section: .stories, settingName: .showRepostToStory, value: SGSimpleSettings.shared.showRepostToStoryV2, text: presentationData.strings.Share_RepostToStory.replacingOccurrences(of: "\n", with: " "), enabled: true))
     if SGSimpleSettings.shared.canUseStealthMode {
         entries.append(.toggle(id: id.count, section: .stories, settingName: .storyStealthMode, value: SGSimpleSettings.shared.storyStealthMode, text: presentationData.strings.Story_StealthMode_Title, enabled: true))
         entries.append(.notice(id: id.count, section: .stories, text: presentationData.strings.Story_StealthMode_ControlText))
@@ -410,7 +410,7 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
         case .hideReactions:
             SGSimpleSettings.shared.hideReactions = value
         case .showRepostToStory:
-            SGSimpleSettings.shared.showRepostToStory = value
+            SGSimpleSettings.shared.showRepostToStoryV2 = value
         case .contextShowSelectFromUser:
             SGSimpleSettings.shared.contextShowSelectFromUser = value
         case .contextShowSaveToCloud:

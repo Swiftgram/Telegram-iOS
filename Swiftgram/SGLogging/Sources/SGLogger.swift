@@ -12,14 +12,14 @@ private func rootPathForBasePath(_ appGroupPath: String) -> String {
     return appGroupPath + "/telegram-data"
 }
 
-public final class SGLogger {
-    private let queue = Queue(name: "app.swiftgram.ios.log", qos: .utility)
+public class SGLogger {
+    public let queue = Queue(name: "app.swiftgram.ios.log", qos: .utility)
     private let maxLength: Int = 2 * 1024 * 1024
     private let maxShortLength: Int = 1 * 1024 * 1024
     private let maxFiles: Int = 20
     
-    private let rootPath: String
-    private let basePath: String
+    public let rootPath: String
+    public let basePath: String
     private var file: (ManagedFile, Int)?
     private var shortFile: (ManagedFile, Int)?
     
@@ -64,59 +64,6 @@ public final class SGLogger {
     public init(rootPath: String, basePath: String) {
         self.rootPath = rootPath
         self.basePath = basePath
-    }
-    
-    public func collectLogs(prefix: String? = nil) -> Signal<[(String, String)], NoError> {
-        return Signal { subscriber in
-            self.queue.async {
-                let logsPath: String
-                if let prefix = prefix {
-                    logsPath = self.rootPath + prefix
-                } else {
-                    logsPath = self.basePath
-                }
-                
-                var result: [(Date, String, String)] = []
-                if let files = try? FileManager.default.contentsOfDirectory(at: URL(fileURLWithPath: logsPath), includingPropertiesForKeys: [URLResourceKey.creationDateKey], options: []) {
-                    for url in files {
-                        if url.lastPathComponent.hasPrefix("log-") {
-                            if let creationDate = (try? url.resourceValues(forKeys: Set([.creationDateKey])))?.creationDate {
-                                result.append((creationDate, url.lastPathComponent, url.path))
-                            }
-                        }
-                    }
-                }
-                result.sort(by: { $0.0 < $1.0 })
-                subscriber.putNext(result.map { ($0.1, $0.2) })
-                subscriber.putCompletion()
-            }
-            
-            return EmptyDisposable
-        }
-    }
-    
-    public func collectLogs(basePath: String) -> Signal<[(String, String)], NoError> {
-        return Signal { subscriber in
-            self.queue.async {
-                let logsPath: String = basePath
-                
-                var result: [(Date, String, String)] = []
-                if let files = try? FileManager.default.contentsOfDirectory(at: URL(fileURLWithPath: logsPath), includingPropertiesForKeys: [URLResourceKey.creationDateKey], options: []) {
-                    for url in files {
-                        if url.lastPathComponent.hasPrefix("log-") {
-                            if let creationDate = (try? url.resourceValues(forKeys: Set([.creationDateKey])))?.creationDate {
-                                result.append((creationDate, url.lastPathComponent, url.path))
-                            }
-                        }
-                    }
-                }
-                result.sort(by: { $0.0 < $1.0 })
-                subscriber.putNext(result.map { ($0.1, $0.2) })
-                subscriber.putCompletion()
-            }
-            
-            return EmptyDisposable
-        }
     }
     
     public func log(_ tag: String, _ what: @autoclosure () -> String) {

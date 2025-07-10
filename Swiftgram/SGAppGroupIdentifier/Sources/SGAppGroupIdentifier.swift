@@ -1,6 +1,6 @@
 import Foundation
 
-let fallbackBaseBundleId: String = "app.swiftgram.ios"
+public let FALLBACK_BASE_BUNDLE_ID: String = "app.swiftgram.ios"
 
 public func sgAppGroupIdentifier() -> String {
     let baseBundleId: String
@@ -9,13 +9,13 @@ public func sgAppGroupIdentifier() -> String {
             if let lastDotRange: Range<String.Index> = bundleId.range(of: ".", options: [.backwards]) {
                 baseBundleId = String(bundleId[..<lastDotRange.lowerBound])
             } else {
-                baseBundleId = fallbackBaseBundleId
+                baseBundleId = FALLBACK_BASE_BUNDLE_ID
             }
         } else {
             baseBundleId = bundleId
         }
     } else {
-        baseBundleId = fallbackBaseBundleId
+        baseBundleId = FALLBACK_BASE_BUNDLE_ID
     }
     
     let result: String = "group.\(baseBundleId)"

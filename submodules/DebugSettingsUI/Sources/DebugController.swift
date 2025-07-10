@@ -1,5 +1,6 @@
 // MARK: Swiftgram
 import SGLogging
+import SGLoggingComposer
 import SGSimpleSettings
 import SGDebugUI
 
