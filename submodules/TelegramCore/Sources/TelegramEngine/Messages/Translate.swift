@@ -359,7 +359,7 @@ public struct TranslateRule: Codable {
 }
 
 public func getTranslateUrl(_ message: String,_ toLang: String) -> String {
-    let sanitizedMessage = message.replaceCharactersFromSet(characterSet:CharacterSet.newlines, replacementString: "<br>")
+    let sanitizedMessage = message // message.replaceCharactersFromSet(characterSet:CharacterSet.newlines, replacementString: "<br>")
 
     var queryCharSet = NSCharacterSet.urlQueryAllowed
     queryCharSet.remove(charactersIn: "+&")
@@ -367,7 +367,8 @@ public func getTranslateUrl(_ message: String,_ toLang: String) -> String {
 }
 
 func prepareResultString(_ str: String) -> String {
-    return str.htmlDecoded.replacingOccurrences(of: "<br>", with: "\n").replacingOccurrences(of: "< br>", with: "\n").replacingOccurrences(of: "<br >", with: "\n")
+    return str
+//    return str.htmlDecoded.replacingOccurrences(of: "<br>", with: "\n").replacingOccurrences(of: "< br>", with: "\n").replacingOccurrences(of: "<br >", with: "\n")
 }
 
 var regexCache: [String: NSRegularExpression] = [:]
