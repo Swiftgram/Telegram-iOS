@@ -483,28 +483,32 @@ public func requestTranslateUrl(url: URL) -> Signal<String, TranslateFetchError>
 
 
 public func gtranslate(_ text: String, _ toLang: String) -> Signal<String, TranslateFetchError> {
-    let parts = gtranslateSplitTextBySentences(text)
-    
-    let translationSignals: [Signal<String, TranslateFetchError>] = parts.map { part in
-        return gtranslateSentence(part, toLang)
-    }
-    
-    return combineLatest(translationSignals)
-    |> map { results -> String in
-        var result: String = ""
-        
-        for translatedPart in results {
-            if !result.isEmpty {
-                result += " "
+    // 1) Preserve *all* line breaks, including empty ones
+    let lines = text.components(separatedBy: "\n")
+
+    // 2) Map each line to either a passthrough signal or a translate signal
+    let translationSignals: [Signal<String, TranslateFetchError>] = lines.map { rawLine in
+        // Grab the "core" text and its leading whitespace
+        let leadingWhitespace = rawLine.prefix { $0.isWhitespace }
+        let core = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // If there’s nothing to translate, just emit the line back
+        if core.isEmpty {
+            return .single(rawLine)
+        }
+
+        // Otherwise translate the core, then re-attach the indentation
+        return gtranslateSentence(core, toLang)
+            |> map { translatedCore in
+                return String(leadingWhitespace) + translatedCore
             }
-            result += translatedPart
-        }
+    }
 
-        if result.isEmpty {
-            return text // Fallback to original text if translation failed
-        }
-
-        return result
+    // 3) Combine them and re-join with newlines
+    return combineLatest(translationSignals)
+    |> map { results in
+        let joined = results.joined(separator: "\n")
+        return joined.isEmpty ? text : joined
     }
 }
 
