@@ -483,6 +483,33 @@ public func requestTranslateUrl(url: URL) -> Signal<String, TranslateFetchError>
 
 
 public func gtranslate(_ text: String, _ toLang: String) -> Signal<String, TranslateFetchError> {
+    let parts = gtranslateSplitTextBySentences(text)
+    
+    let translationSignals: [Signal<String, TranslateFetchError>] = parts.map { part in
+        return gtranslateSentence(part, toLang)
+    }
+    
+    return combineLatest(translationSignals)
+    |> map { results -> String in
+        var result: String = ""
+        
+        for translatedPart in results {
+            if !result.isEmpty {
+                result += " "
+            }
+            result += translatedPart
+        }
+
+        if result.isEmpty {
+            return text // Fallback to original text if translation failed
+        }
+
+        return result
+    }
+}
+
+
+public func gtranslateSentence(_ text: String, _ toLang: String) -> Signal<String, TranslateFetchError> {
     return Signal { subscriber in
         let urlString = getTranslateUrl(text, getGTranslateLang(toLang))
         let url = URL(string: urlString)!
@@ -492,10 +519,14 @@ public func gtranslate(_ text: String, _ toLang: String) -> Signal<String, Trans
         translateDisposable = translateSignal.start(next: {
             translatedHtml in
             #if DEBUG
+            print("urlString: \(urlString)")
             let startTime = CFAbsoluteTimeGetCurrent()
+            print("translatedHtml: \(translatedHtml)")
+            print("decodedHtml: \(translatedHtml.htmlDecoded)")
             #endif
             let result = parseTranslateResponse(translatedHtml)
             #if DEBUG
+            print("translatedResult: \(result)")
             SGtrace("translate", what: "Translation parsed in \(CFAbsoluteTimeGetCurrent() - startTime)")
             #endif
             if result.isEmpty {
@@ -514,6 +545,33 @@ public func gtranslate(_ text: String, _ toLang: String) -> Signal<String, Trans
             translateDisposable?.dispose()
         }
     }
+}
+
+public func gtranslateSplitTextBySentences(_ text: String, maxChunkLength: Int = 1500) -> [String] {
+    if text.count <= maxChunkLength {
+        return [text]
+    }
+    var chunks: [String] = []
+    var currentChunk = ""
+
+    text.enumerateSubstrings(in: text.startIndex..<text.endIndex, options: .bySentences) { (substring, _, _, _) in
+        guard let sentence = substring else { return }
+
+        if currentChunk.count + sentence.count + 1 < maxChunkLength {
+            currentChunk += sentence + " "
+        } else {
+            if !currentChunk.isEmpty {
+                chunks.append(currentChunk.trimmingCharacters(in: .whitespacesAndNewlines))
+            }
+            currentChunk = sentence + " "
+        }
+    }
+
+    if !currentChunk.isEmpty {
+        chunks.append(currentChunk.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+
+    return chunks
 }
 
 
