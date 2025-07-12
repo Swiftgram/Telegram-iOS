@@ -11,7 +11,7 @@ public func updateSGGHSettingsInteractivelly(context: AccountContext) {
     let _ = Task {
         do {
             let settings = try await fetchSGGHSettings(locale: locale)
-            await (context.account.postbox.transaction { transaction in
+            let _ = (context.account.postbox.transaction { transaction in
                 updateAppConfiguration(transaction: transaction, { configuration -> AppConfiguration in
                     var configuration = configuration
                     configuration.sgGHSettings = settings
@@ -37,7 +37,7 @@ enum SGGHFetchError: Error {
 
 func fetchSGGHSettings(locale: String) async throws -> SGGHSettings {
     let baseURL = "https://raw.githubusercontent.com/Swiftgram/settings/refs/heads/main"
-    var candidates = []
+    var candidates: [String] = []
     if let buildNumber = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
         if locale != "en" {
             candidates.append("\(buildNumber)_\(locale).json")
@@ -48,37 +48,39 @@ func fetchSGGHSettings(locale: String) async throws -> SGGHSettings {
         candidates.append("latest_\(locale).json")
     }
     candidates.append("latest.json")
-    
+
+    var lastError: Error?
     for candidate in candidates {
         let urlString = "\(baseURL)/\(candidate)"
         guard let url = URL(string: urlString) else {
-            SGLogger.shared.log("SGGHSettings", "Fetch failed for \(candidate). Invalid URL: \(urlString)")
+            SGLogger.shared.log("SGGHSettings", "[0] Fetch failed for \(candidate). Invalid URL: \(urlString)")
             continue
         }
 
-        var lastError: Error?
         for attempt in 1...maxRetries {
             do {
                 let (data, response) = try await URLSession.shared.data(from: url)
                 guard let httpResponse = response as? HTTPURLResponse else {
-                    SGLogger.shared.log("SGGHSettings", "Fetch failed for \(candidate). Invalid response type: \(response)")
+                    SGLogger.shared.log("SGGHSettings", "[\(attempt)] Fetch failed for \(candidate). Invalid response type: \(response)")
                     throw SGGHFetchError.fetchFailed(statusCode: -1)
                 }
 
                 switch httpResponse.statusCode {
                 case 200:
                     do {
-                        let settings = try JSONDecoder().decode(SGGHSettings.self, from: data)
-                        SGLogger.shared.log("SGGHSettings", "Fetched \(candidate). \(settings)")
+                        let jsonDecoder = JSONDecoder()
+                        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+                        let settings = try jsonDecoder.decode(SGGHSettings.self, from: data)
+                        SGLogger.shared.log("SGGHSettings", "[\(attempt)] Fetched \(candidate): \(settings)")
                         return settings
                     } catch {
-                        SGLogger.shared.log("SGGHSettings", "Failed to decode \(candidate). Error: \(error)")
+                        SGLogger.shared.log("SGGHSettings", "[\(attempt)] Failed to decode \(candidate): \(error)")
                         throw SGGHFetchError.decodingFailed
                     }
                 case 404:
                     break // Try the next fallback
                 default:
-                    SGLogger.shared.log("SGGHSettings", "Fetch failed for \(candidate). Status code: \(httpResponse.statusCode)")
+                    SGLogger.shared.log("SGGHSettings", "[\(attempt)] Fetch failed for \(candidate), status code: \(httpResponse.statusCode)")
                     throw SGGHFetchError.fetchFailed(statusCode: httpResponse.statusCode)
                 }
             } catch {
@@ -86,17 +88,11 @@ func fetchSGGHSettings(locale: String) async throws -> SGGHSettings {
                 if attempt == maxRetries {
                     break
                 }
-                try await Task.sleep(seconds: attempt * 2.0)
+                try await Task.sleep(nanoseconds: UInt64(attempt * 2 * 1_000_000_000))
             }
         }
     }
 
+    SGLogger.shared.log("SGGHSettings", "All attempts failed. Last error: \(String(describing: lastError))")
     throw SGGHFetchError.fetchFailed(statusCode: -1)
-}
-
-
-extension Task {
-    static func sleep(seconds: Double) async throws {
-        try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-    }
 }

@@ -6,6 +6,7 @@ import SGDeviceToken
 import SGAPIToken
 
 import SGActionRequestHandlerSanitizer
+import SGGHSettings
 import SGAPIWebSettings
 import SGLogging
 import SGStrings
