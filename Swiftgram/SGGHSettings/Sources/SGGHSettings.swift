@@ -11,13 +11,13 @@ public func updateSGGHSettingsInteractivelly(context: AccountContext) {
     let _ = Task {
         do {
             let settings = try await fetchSGGHSettings(locale: locale)
-            let _ = (context.account.postbox.transaction { transaction in
+            let _ = await (context.account.postbox.transaction { transaction in
                 updateAppConfiguration(transaction: transaction, { configuration -> AppConfiguration in
                     var configuration = configuration
                     configuration.sgGHSettings = settings
                     return configuration
                 })
-            }).task
+            }).task()
         } catch {
             return
         }
@@ -57,7 +57,7 @@ func fetchSGGHSettings(locale: String) async throws -> SGGHSettings {
             continue
         }
 
-        for attempt in 1...maxRetries {
+        attemptsOuter: for attempt in 1...maxRetries {
             do {
                 let (data, response) = try await URLSession.shared.data(from: url)
                 guard let httpResponse = response as? HTTPURLResponse else {
@@ -78,7 +78,8 @@ func fetchSGGHSettings(locale: String) async throws -> SGGHSettings {
                         throw SGGHFetchError.decodingFailed
                     }
                 case 404:
-                    break // Try the next fallback
+                    SGLogger.shared.log("SGGHSettings", "[\(attempt)] Not found \(candidate) on the remote.")
+                    break attemptsOuter
                 default:
                     SGLogger.shared.log("SGGHSettings", "[\(attempt)] Fetch failed for \(candidate), status code: \(httpResponse.statusCode)")
                     throw SGGHFetchError.fetchFailed(statusCode: httpResponse.statusCode)

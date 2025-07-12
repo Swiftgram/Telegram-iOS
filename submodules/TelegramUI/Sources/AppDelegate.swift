@@ -2012,7 +2012,10 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         SharedDisplayLinkDriver.shared.updateForegroundState(self.isActiveValue)
     }
     
-    func runForegroundTasks(onlySG: Bool = false) {
+    func runForegroundTasks() {
+        
+        
+        var sgTasksLaunched: Bool = false
         
         let _ = (self.sharedContextPromise.get()
         |> take(1)
@@ -2022,10 +2025,10 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
              |> deliverOnMainQueue).start(next: { activeAccounts in
                 for (_, context, _) in activeAccounts.accounts {
                     // MARK: Swiftgram
-                    updateSGWebSettingsInteractivelly(context: context)
-                    updateSGGHSettingsInteractivelly(context: context)
-                    if onlySG {
-                        continue
+                    if !sgTasksLaunched {
+                        updateSGWebSettingsInteractivelly(context: context)
+                        updateSGGHSettingsInteractivelly(context: context)
+                        sgTasksLaunched = true
                     }
                     (context.downloadedMediaStoreManager as? DownloadedMediaStoreManagerImpl)?.runTasks()
                 }
