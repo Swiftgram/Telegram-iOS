@@ -86,28 +86,26 @@ public extension Signal {
         }
     }
 
-    var task: () async throws -> T {
-        {
-            let disposable = MetaDisposable()
-            return try await withTaskCancellationHandler(operation: {
-                return try await withCheckedThrowingContinuation { continuation in
-                    disposable.set((self |> take(1)).startStandalone(
-                        next: { value in
-                            continuation.resume(returning: value)
-                        },
-                        error: { err in
-                            continuation.resume(throwing: SignalError(err))
-                        }
-                    ))
-                }
-            }, onCancel: {
-                disposable.dispose()
-            })
-        }
+    func task() async throws -> T {
+        let disposable = MetaDisposable()
+        return try await withTaskCancellationHandler(operation: {
+            return try await withCheckedThrowingContinuation { continuation in
+                disposable.set((self |> take(1)).startStandalone(
+                    next: { value in
+                        continuation.resume(returning: value)
+                    },
+                    error: { err in
+                        continuation.resume(throwing: SignalError(err))
+                    }
+                ))
+            }
+        }, onCancel: {
+            disposable.dispose()
+        })
     }
 
-    var stream: AsyncThrowingStream<T, Error> {
-        AsyncThrowingStream { continuation in
+    func stream() -> AsyncThrowingStream<T, Error> {
+        return AsyncThrowingStream { continuation in
             let disposable = self.startStandalone(
                 next: { value in
                     continuation.yield(value)
@@ -127,14 +125,12 @@ public extension Signal {
 }
 
 public extension Signal where E == NoError {
-    var task: () async -> T {
-        {
-            await self.get()
-        }
+    func task() async -> T {
+        return await self.get()
     }
 
-    var stream: AsyncStream<T> {
-        AsyncStream { continuation in
+    func stream() -> AsyncStream<T> {
+        return AsyncStream { continuation in
             let disposable = self.startStandalone(
                 next: { value in
                     continuation.yield(value)
