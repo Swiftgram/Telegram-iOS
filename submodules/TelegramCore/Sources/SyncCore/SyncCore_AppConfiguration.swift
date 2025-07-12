@@ -6,7 +6,7 @@ import SGGHSettingsScheme
 public struct AppConfiguration: Codable, Equatable {
     // MARK: Swiftgram
     public var sgWebSettings: SGWebSettings
-    public var sgGHSettings: SGGHSettingsScheme
+    public var sgGHSettings: SGGHSettings
     
     public var data: JSON?
     public var hash: Int32
