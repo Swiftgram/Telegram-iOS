@@ -229,35 +229,42 @@ public func getSGProvidedSuggestions(account: Account) -> Signal<Data?, NoError>
 
     return combineLatest(account.postbox.combinedView(keys: [key]), dismissedSGSuggestionsPromise.get())
     |> map { views, dismissedSuggestionsValue -> Data? in
-        guard let view = views.views[key] as? PreferencesView else {
+        guard let view = views.views[key] as? PreferencesView,
+              let appConfiguration = view.values[PreferencesKeys.appConfiguration]?.get(AppConfiguration.self) else {
             return nil
         }
-        guard let appConfiguration = view.values[PreferencesKeys.appConfiguration]?.get(AppConfiguration.self) else {
-            return nil
-        }
-        guard let announcementsString = appConfiguration.sgWebSettings.global.announcementsData,
-              let announcementsData = announcementsString.data(using: .utf8) else {
-            return nil
-        }
-        
-        do {
-            if let suggestions = try JSONSerialization.jsonObject(with: announcementsData, options: []) as? [[String: Any]] {
-                let filteredSuggestions = suggestions.filter { suggestion in
-                    guard let id = suggestion["id"] as? String else {
-                        return true
-                    }
-                    return !dismissedSuggestionsValue.contains(id) && !SGSimpleSettings.shared.dismissedSGSuggestions.contains(id)
-                }
-                let modifiedData = try JSONSerialization.data(withJSONObject: filteredSuggestions, options: [])
-                return modifiedData
-            } else {
-                return nil
+
+        func parseAnnouncements(from string: String?) -> [[String: Any]] {
+            guard let string = string,
+                  let data = string.data(using: .utf8),
+                  let json = try? JSONSerialization.jsonObject(with: data, options: []),
+                  let array = json as? [[String: Any]] else {
+                return []
             }
-        } catch {
+            return array
+        }
+
+        let ghSuggestions = parseAnnouncements(from: appConfiguration.sgGHSettings.announcementsData)
+        let webSuggestions = parseAnnouncements(from: appConfiguration.sgWebSettings.global.announcementsData)
+
+        let combinedSuggestions = ghSuggestions + webSuggestions
+
+        let filteredSuggestions = combinedSuggestions.filter { suggestion in
+            guard let id = suggestion["id"] as? String else {
+                return true
+            }
+            return !dismissedSuggestionsValue.contains(id) &&
+                   !SGSimpleSettings.shared.dismissedSGSuggestions.contains(id)
+        }
+
+        guard let modifiedData = try? JSONSerialization.data(withJSONObject: filteredSuggestions, options: []) else {
             return nil
         }
+
+        return modifiedData
     }
     |> distinctUntilChanged
 }
+
 
 

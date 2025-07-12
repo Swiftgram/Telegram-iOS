@@ -22,6 +22,7 @@ sgdeps = [
     "//Swiftgram/SGPayWall:SGPayWall",
     "//Swiftgram/SGProUI:SGProUI",
     "//Swiftgram/SGKeychainBackupManager:SGKeychainBackupManager",
+    "//Swiftgram/SGGHSettings:SGGHSettings",
     # "//Swiftgram/SGContentAnalysis:SGContentAnalysis"
 ]
 
