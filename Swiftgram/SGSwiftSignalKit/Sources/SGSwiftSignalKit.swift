@@ -42,7 +42,6 @@ public struct SignalCompleted: Error {}
 // NoError can be marked a
 // try? await signal.awaitable()
 public extension Signal {
-    @available(iOS 13.0, *)
     func awaitable(file: String = #file, line: Int = #line) async throws -> T {
         return try await withCheckedThrowingContinuation { continuation in
             var disposable: Disposable?
@@ -87,7 +86,6 @@ public extension Signal {
         }
     }
 
-    @available(iOS 13.0, *)
     var task: () async throws -> T {
         {
             let disposable = MetaDisposable()
@@ -107,8 +105,7 @@ public extension Signal {
             })
         }
     }
-    
-    @available(iOS 13.0, *)
+
     var stream: AsyncThrowingStream<T, Error> {
         AsyncThrowingStream { continuation in
             let disposable = self.startStandalone(
@@ -129,7 +126,6 @@ public extension Signal {
     }
 }
 
-@available(iOS 13.0, *)
 public extension Signal where E == NoError {
     var task: () async -> T {
         {
@@ -156,7 +152,6 @@ public extension Signal where E == NoError {
 
 // Extension for general Signal types - AsyncStream support
 public extension Signal {
-    @available(iOS 13.0, *)
     func awaitableStream() -> AsyncStream<T> {
         return AsyncStream { continuation in
             let disposable = self.start(
@@ -180,7 +175,6 @@ public extension Signal {
 
 // Extension for NoError Signal types - AsyncStream support
 public extension Signal where E == NoError {
-    @available(iOS 13.0, *)
     func awaitableStream() -> AsyncStream<T> {
         return AsyncStream { continuation in
             let disposable = self.start(
