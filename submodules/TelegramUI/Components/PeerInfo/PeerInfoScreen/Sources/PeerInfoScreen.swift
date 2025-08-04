@@ -1134,7 +1134,7 @@ private func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, conte
     }
     if let starsState = data.starsState {
         if (!isPremiumDisabled || starsState.balance > StarsAmount.zero) && sgWebSettings.global.canGrant {
-            items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 105, label: .text(""), text: presentationData.strings.Settings_SendGift, icon: PresentationResourcesSettings.premiumGift, action: {
+            items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 105, label: .text(""), text: "Telegram Gifts", icon: PresentationResourcesSettings.premiumGift, action: {
                 interaction.openSettings(.premiumGift)
             }))
         }
