@@ -54,11 +54,11 @@
 "Stories.Warning.Author" = "Autor";
 "Stories.Warning.ViewStory" = "Ver Story?";
 /* Author will be able to see that you viewed their Story */
-"Stories.Warning.Notice" = "%@ SABERÁ que você viu o Story dele.";
-"Stories.Warning.NoticeStealth" = "%@ não saberá que você viu o Story dele.";
+"Stories.Warning.Notice" = "%@ SABERÁ que você viu a Story dele.";
+"Stories.Warning.NoticeStealth" = "%@ não saberá que você viu a Story dele.";
 
-"Settings.Photo.Quality.Notice" = "Qualidade de fotos e Story enviados";
-"Settings.Photo.SendLarge" = "Enviar fotos em HD";
+"Settings.Photo.Quality.Notice" = "Qualidade de fotos enviadas e photo-stories";
+"Settings.Photo.SendLarge" = "Enviar fotos grandes";
 "Settings.Photo.SendLarge.Notice" = "Aumentar o limite de tamanho de imagens comprimidas para 2560px";
 
 "Settings.VideoNotes.Header" = "VÍDEOS REDONDOS";
@@ -224,8 +224,8 @@
 "PayWall.InputToolbar.Notice" = "Economize tempo formatando as mensagens com apenas um único toque.";
 "PayWall.InputToolbar.Description" = "Aplique e limpe a formatação ou insira novas linhas como um profissional.";
 
-"PayWall.AppIcons.Title" = "Ícones e Emblemas de Aplicativo Exclusivos";
-"PayWall.AppIcons.Notice" = "Personalize a aparência do Swiftgram na sua tela inicial e capturas de tela.";
+"PayWall.AppIcons.Title" = "Ícones de Aplicativos Exclusivos";
+"PayWall.AppIcons.Notice" = "Personalize a aparência do Swiftgram na sua tela inicial.";
 
 "PayWall.About.Title" = "Sobre o Swiftgram Pro";
 "PayWall.About.Notice" = "A versão gratuita do Swiftgram oferece dezenas de recursos e melhorias em relação ao aplicativo Telegram. Inovar e manter o Swiftgram em sincronia com as atualizações mensais do Telegram é um grande esforço que requer muito tempo e hardware caro.\n\nO Swiftgram é um aplicativo de código aberto que respeita sua privacidade e não incomoda você com anúncios. Ao se inscrever no Swiftgram Pro, você obtém acesso a recursos exclusivos e apoia um desenvolvedor independente.";
