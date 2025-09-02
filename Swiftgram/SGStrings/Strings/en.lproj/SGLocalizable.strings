@@ -100,6 +100,7 @@
 "Common.OpenTelegram" = "Open Telegram";
 "Common.UseTelegramForPremium" = "Please note that to get Telegram Premium, you must use the official Telegram app. Once you have obtained Telegram Premium, all its features will become available in Swiftgram.";
 "Common.UpdateOS" = "iOS update required";
+"Common.KnowWhatYouDo" = "Please, change these settings only if you know what they do.";
 
 "Message.HoldToShowOrReport" = "Hold to Show or Report.";
 
