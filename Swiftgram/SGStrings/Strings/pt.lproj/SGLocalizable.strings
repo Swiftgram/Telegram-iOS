@@ -35,6 +35,21 @@
 "Settings.Stories.DisableSwipeToRecord" = "Desativar deslize para gravar";
 
 "Settings.Translation.QuickTranslateButton" = "Botão de Tradução Rápida";
+"Settings.Translation.Backend" = "Serviço";
+/* Do not translate */
+"Settings.Translation.Backend.default" = "Telegram";
+/* Do not translate */
+"Settings.Translation.Backend.gtranslate" = "GTranslate";
+"Settings.Translation.Backend.system" = "Sistema";
+"Settings.Translation.Backend.Notice" = "O Swiftgram usará %@ caso o serviço de tradução selecionado não esteja disponível.";
+
+"Settings.Transcription.Header" = "VOZ PARA TEXTO";
+"Settings.Transcription.Backend" = "Serviço";
+/* Do not translate */
+"Settings.Transcription.Backend.default" = "Telegram";
+/* Do not translate */
+"Settings.Transcription.Backend.apple" = "Apple";
+"Settings.Transcription.Backend.Notice" = "O Swiftgram usará %@ caso o serviço de transcrição selecionado não esteja disponível.";
 
 "Stories.Warning.Author" = "Autor";
 "Stories.Warning.ViewStory" = "Ver Story?";
@@ -243,3 +258,6 @@
 "PayWall.ValidationError" = "Erro de Validação";
 "PayWall.ValidationError.TryAgain" = "Algo deu errado durante a validação da compra. Sem problemas! Tente Restaurar Compras um pouco mais tarde.";
 "PayWall.ValidationError.Expired" = "Sua assinatura expirou. Inscreva-se novamente para recuperar o acesso aos recursos Pro.";
+
+"AppBadge.Title" = "Emblema do Aplicativo";
+"AppBadge.Notice" = "Personalizar Emblema do Aplicativo Exibido nas capturas de tela";
