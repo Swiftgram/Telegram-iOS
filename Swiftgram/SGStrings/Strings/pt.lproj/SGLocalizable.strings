@@ -58,7 +58,7 @@
 "Stories.Warning.NoticeStealth" = "%@ não saberá que você viu a Story dele.";
 
 "Settings.Photo.Quality.Notice" = "Qualidade de fotos enviadas e photo-stories";
-"Settings.Photo.SendLarge" = "Enviar fotos grandes";
+"Settings.Photo.SendLarge" = "Enviar fotos em HD";
 "Settings.Photo.SendLarge.Notice" = "Aumentar o limite de tamanho de imagens comprimidas para 2560px";
 
 "Settings.VideoNotes.Header" = "VÍDEOS REDONDOS";
