@@ -118,6 +118,17 @@ private final class GlassButtonView: HighlightTrackingButton {
         }
     }
     
+    // MARK: Swiftgram
+    var image: UIImage? {
+        didSet {
+            self.iconView.image = image?.withRenderingMode(.alwaysTemplate)
+            if let params = self.params {
+                self.updateImpl(params: params, transition: .immediate)
+            }
+        }
+    }
+    //
+    
     override init(frame: CGRect) {
         self.backgroundView = GlassBackgroundView()
         self.backgroundView.isUserInteractionEnabled = false
@@ -235,7 +246,7 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
         self.cloudButton.accessibilityLabel = "Save To Cloud"
 
         self.forwardHideNamesButton = GlassButtonView()
-        self.forwardHideNamesButton.icon = "Avatar/AnonymousSenderIcon"
+        self.forwardHideNamesButton.image = generateTintedImage(image: UIImage(bundleImageName: "Avatar/AnonymousSenderIcon"), color: theme.chat.inputPanel.panelControlAccentColor, customSize: CGSize(width: 28.0, height: 28.0))
         self.forwardHideNamesButton.isAccessibilityElement = true
         self.forwardHideNamesButton.accessibilityLabel = "Hide Sender Name"
         //
@@ -262,6 +273,8 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
         self.view.addSubview(self.deleteButton)
         self.view.addSubview(self.reportButton)
         self.view.addSubview(self.forwardButton)
+        self.view.addSubview(self.cloudButton) // MARK: Swiftgram
+        self.view.addSubview(self.forwardHideNamesButton) // MARK: Swiftgram
         self.view.addSubview(self.shareButton)
         self.view.addSubview(self.tagButton)
         self.view.addSubview(self.tagEditButton)
