@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import Display
@@ -411,7 +412,7 @@ public final class TabBarComponent: Component {
                 }
             }
             
-            var itemSize = CGSize(width: floor((availableSize.width - innerInset * 2.0) / CGFloat(component.items.count)), height: 56.0)
+            var itemSize = CGSize(width: floor((availableSize.width - innerInset * 2.0) / CGFloat(component.items.count)), height: SGSimpleSettings.shared.showTabNames ? 56.0 : 40.0)
             itemSize.width = min(94.0, itemSize.width)
             
             if let itemContainer = nativeItemContainers[0] {
@@ -759,7 +760,7 @@ private final class ItemComponent: Component {
                 containerSize: CGSize(width: availableSize.width, height: 100.0)
             )
             let titleFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - titleSize.width) * 0.5), y: availableSize.height - 8.0 - titleSize.height), size: titleSize)
-            if let titleView = self.title.view {
+            if SGSimpleSettings.shared.showTabNames, let titleView = self.title.view {
                 if titleView.superview == nil {
                     self.contextContainerView.contentView.addSubview(titleView)
                 }
