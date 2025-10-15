@@ -7162,7 +7162,7 @@ private final class ChatListLocationContext {
                             }
                             if let rootController = self.context.sharedContext.mainWindow?.viewController as? TelegramRootControllerInterface {
                                 if let accountSettingsController = rootController.accountSettingsController {
-                                    accountSettingsController.tabBarItemContextAction(sourceView: sourceView, gesture: gesture)
+                                    accountSettingsController.tabBarItemContextActionRawUIView(sourceView: sourceView, gesture: gesture)
                                 }
                             }
                         }

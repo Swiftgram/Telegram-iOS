@@ -15723,7 +15723,7 @@ private func cancelContextGestures(view: UIView) {
 // MARK: Swiftgram
 extension PeerInfoScreenImpl {
 
-    public func tabBarItemContextAction(sourceView: UIView, gesture: ContextGesture?) {
+    public func tabBarItemContextActionRawUIView(sourceView: UIView, gesture: ContextGesture?) {
         guard let (maybePrimary, other) = self.accountsAndPeersValue, let primary = maybePrimary else {
             return
         }

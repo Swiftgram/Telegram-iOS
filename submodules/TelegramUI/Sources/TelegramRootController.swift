@@ -75,8 +75,6 @@ private class DetailsChatPlaceholderNode: ASDisplayNode, NavigationDetailsPlaceh
 public final class TelegramRootController: NavigationController, TelegramRootControllerInterface {
     private let context: AccountContext
     
-    private var showTabNames: Bool
-    
     public var rootTabController: TabBarController?
     
     public var contactsController: ContactsController?
@@ -102,10 +100,8 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
     
     public var minimizedContainerUpdated: (MinimizedContainer?) -> Void = { _ in }
         
-    public init(showTabNames: Bool, context: AccountContext) {
+    public init(context: AccountContext) {
         self.context = context
-        
-        self.showTabNames = showTabNames
         
         self.presentationData = context.sharedContext.currentPresentationData.with { $0 }
         

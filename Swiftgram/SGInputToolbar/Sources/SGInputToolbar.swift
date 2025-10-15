@@ -3,7 +3,6 @@ import Foundation
 
 
 // MARK: Swiftgram
-@available(iOS 13.0, *)
 public struct ChatToolbarView: View {
     var onQuote: () -> Void
     var onSpoiler: () -> Void
@@ -133,7 +132,6 @@ public struct ChatToolbarView: View {
     }
 }
 
-@available(iOS 13.0, *)
 struct ToolbarButtonStyle: ButtonStyle {
     
     func makeBody(configuration: Configuration) -> some View {
