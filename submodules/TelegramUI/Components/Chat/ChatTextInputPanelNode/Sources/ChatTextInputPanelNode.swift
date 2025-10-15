@@ -524,6 +524,9 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         }
         self.inputMenu = TextInputMenu(hasSpoilers: hasSpoilers, hasQuotes: hasQuotes)
         
+        // MARK: Swiftgram
+        self.sendWithReturnKey = SGUISettings.default.sendWithReturnKey
+        //
         self.clippingNode = ASDisplayNode()
         self.clippingNode.clipsToBounds = false
         
@@ -618,6 +621,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         self.slowModeButton.alpha = 0.0
         
         self.viewOnceButton = ChatRecordingViewOnceButtonNode(icon: .viewOnce)
+        self.recordMoreButton = ChatRecordingViewOnceButtonNode(icon: .recordMore)
         
         super.init()
         
@@ -2868,7 +2872,91 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             self.viewOnceButton.isHidden = true
         }
         
-        return panelHeight
+        transition.updateAlpha(node: self.recordMoreButton, alpha: recordMoreIsVisible ? 1.0 : 0.0)
+        transition.updateTransformScale(node: self.recordMoreButton, scale: recordMoreIsVisible ? 1.0 : 0.01)
+        
+        let contextPanelMaskInset: CGFloat = 32.0
+        let contextPanelBottomInset = floor(minimalInputHeight * 0.5)
+        let contextPanelFrame = CGRect(origin: CGPoint(x: textInputContainerBackgroundFrame.minX, y: contentHeight - maxOverlayHeight), size: CGSize(width: textInputContainerBackgroundFrame.width, height: max(0.0, maxOverlayHeight - contentHeight + contextPanelBottomInset)))
+        
+        if contextPanelNode !== previousContextPanel?.panel, let previousContextPanel {
+            let panelContainer = previousContextPanel.container
+            
+            transition.updateFrame(view: previousContextPanel.container, frame: contextPanelFrame)
+            transition.updateFrame(view: previousContextPanel.panel.view, frame: CGRect(origin: CGPoint(), size: contextPanelFrame.size))
+            transition.updateFrame(view: previousContextPanel.mask, frame: CGRect(origin: CGPoint(), size: contextPanelFrame.size).insetBy(dx: -contextPanelMaskInset, dy: -contextPanelMaskInset))
+            
+            previousContextPanel.panel.updateLayout(
+                size: contextPanelFrame.size,
+                leftInset: 0.0,
+                rightInset: 0.0,
+                bottomInset: contextPanelBottomInset,
+                transition: transition,
+                interfaceState: interfaceState
+            )
+            
+            previousContextPanel.panel.animateOut(completion: { [weak panelContainer] in
+                panelContainer?.removeFromSuperview()
+            })
+            self.contextPanel = nil
+        }
+        if let contextPanelNode {
+            if self.contextPanel == nil {
+                self.contextPanel = (UIView(), UIImageView(), contextPanelNode)
+            }
+        }
+        
+        if let contextPanel = self.contextPanel {
+            let previousContextPanelFrame = CGRect(origin: CGPoint(x: previousTextInputContainerBackgroundFrame.minX, y: contentHeight - maxOverlayHeight), size: CGSize(width: previousTextInputContainerBackgroundFrame.width, height: max(0.0, maxOverlayHeight - contentHeight + contextPanelBottomInset)))
+            
+            if contextPanel.container.superview == nil {
+                self.view.insertSubview(contextPanel.container, belowSubview: self.clippingNode.view)
+                contextPanel.container.addSubview(contextPanel.panel.view)
+                contextPanel.container.mask = contextPanel.mask
+                let maskSize = floor(minimalInputHeight)
+                contextPanel.mask.image = generateImage(CGSize(width: maskSize + contextPanelMaskInset * 2.0, height: maskSize + contextPanelMaskInset * 2.0), rotatedContext: { size, context in
+                    context.setFillColor(UIColor.black.cgColor)
+                    context.fill(CGRect(origin: CGPoint(), size: size))
+                    context.setBlendMode(.copy)
+                    context.setFillColor(UIColor.clear.cgColor)
+                    context.fillEllipse(in: CGRect(origin: CGPoint(x: contextPanelMaskInset, y: contextPanelMaskInset + maskSize * 0.5), size: CGSize(width: maskSize, height: maskSize)))
+                    context.fill(CGRect(origin: CGPoint(x: 0.0, y: contextPanelMaskInset + maskSize), size: CGSize(width: maskSize + contextPanelMaskInset * 2.0, height: maskSize + contextPanelMaskInset)))
+                })?.stretchableImage(withLeftCapWidth: Int(contextPanelMaskInset) + Int(maskSize) / 2, topCapHeight: Int(contextPanelMaskInset) + 1)
+                
+                contextPanel.container.frame = previousContextPanelFrame
+                contextPanel.panel.view.frame = CGRect(origin: CGPoint(), size: previousContextPanelFrame.size)
+                contextPanel.mask.frame = CGRect(origin: CGPoint(), size: previousContextPanelFrame.size).insetBy(dx: -contextPanelMaskInset, dy: -contextPanelMaskInset)
+                
+                contextPanel.panel.updateLayout(
+                    size: previousContextPanelFrame.size,
+                    leftInset: 0.0,
+                    rightInset: 0.0,
+                    bottomInset: contextPanelBottomInset,
+                    transition: .immediate,
+                    interfaceState: interfaceState
+                )
+            }
+            
+            transition.updateFrame(view: contextPanel.container, frame: contextPanelFrame)
+            transition.updateFrame(view: contextPanel.panel.view, frame: CGRect(origin: CGPoint(), size: contextPanelFrame.size))
+            transition.updateFrame(view: contextPanel.mask, frame: CGRect(origin: CGPoint(), size: contextPanelFrame.size).insetBy(dx: -contextPanelMaskInset, dy: -contextPanelMaskInset))
+            
+            contextPanel.panel.updateLayout(
+                size: contextPanelFrame.size,
+                leftInset: 0.0,
+                rightInset: 0.0,
+                bottomInset: contextPanelBottomInset,
+                transition: transition,
+                interfaceState: interfaceState
+            )
+        }
+        
+        
+        // MARK: Swiftgram
+        var toolbarOffset: CGFloat = 0.0
+        toolbarOffset = layoutToolbar(transition: transition, panelHeight: contentHeight, width: width, leftInset: originalLeftInset, rightInset: rightInset, displayBotStartButton: displayBotStartButton)
+        
+        return contentHeight + toolbarOffset
     }
     
     @objc private func slowModeButtonPressed() {
