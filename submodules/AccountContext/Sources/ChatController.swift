@@ -990,7 +990,7 @@ public protocol PeerInfoScreen: ViewController {
     var privacySettings: Promise<AccountPrivacySettings?> { get }
     
     func openBirthdaySetup()
-    func tabBarItemContextAction(sourceView: UIView, gesture: ContextGesture?)
+    func tabBarItemContextActionRawUIView(sourceView: UIView, gesture: ContextGesture?)
     func toggleStorySelection(ids: [Int32], isSelected: Bool)
     func togglePaneIsReordering(isReordering: Bool)
     func cancelItemSelection()
