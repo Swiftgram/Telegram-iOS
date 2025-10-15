@@ -4990,7 +4990,7 @@ extension ChatTextInputPanelNode {
                     transition.updateAlpha(node: toolbarNode, alpha: 0.0)
                 } else {
                     toolbarHeight = 44.0
-                    toolbarSpacing = 1.0
+                    toolbarSpacing = 6.0
                     transition.updateFrame(node: toolbarNode, frame: CGRect(origin: CGPoint(x: leftInset, y: panelHeight + toolbarSpacing), size: CGSize(width: width - rightInset - leftInset, height: toolbarHeight)))
                     transition.updateAlpha(node: toolbarNode, alpha: 1.0)
                 }

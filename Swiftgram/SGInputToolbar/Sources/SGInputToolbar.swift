@@ -132,16 +132,78 @@ public struct ChatToolbarView: View {
     }
 }
 
+
+// iOS 13–14 blur fallback
 @available(iOS 13.0, *)
-struct ToolbarButtonStyle: ButtonStyle {
-    
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 17))
-            .frame(width: 36, height: 36, alignment: .center)
-            .background(Color(UIColor.tertiarySystemBackground))
-            .cornerRadius(8)
-            // TODO(swiftgram): Does not work for fast taps (like mine)
-            .opacity(configuration.isPressed ? 0.4 : 1.0)
+struct BlurView: UIViewRepresentable {
+    let style: UIBlurEffect.Style
+    func makeUIView(context: Context) -> UIVisualEffectView {
+        UIVisualEffectView(effect: UIBlurEffect(style: style))
+    }
+    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {
+        uiView.effect = UIBlurEffect(style: style)
     }
 }
+
+// Simple glass background (now supports round + adaptive brightness)
+@available(iOS 13.0, *)
+struct Glass: View {
+    var cornerRadius: CGFloat?
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        let isDark = colorScheme == .dark
+
+        Group {
+            if #available(iOS 15.0, *) {
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        Circle()
+                            .fill(
+                                Color.white.opacity(isDark ? 0.05 : 0.25)
+                            )
+                    )
+            } else {
+                Circle()
+                    .fill(Color.clear)
+                    .background(
+                        BlurView(style: .systemThinMaterial)
+                            .clipShape(Circle())
+                    )
+                    .overlay(
+                        Circle()
+                            .fill(
+                                Color.white.opacity(isDark ? 0.05 : 0.25)
+                            )
+                    )
+            }
+        }
+        .overlay(
+            Circle()
+                .stroke(Color.white.opacity(0.25), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+    }
+
+}
+
+// Button style
+@available(iOS 13.0, *)
+struct ToolbarButtonStyle: ButtonStyle {
+    var size: CGFloat = 39
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(width: size, height: size)
+            .contentShape(Circle())
+            .background(Glass())
+            .overlay(
+                Circle()
+                    .fill(Color.black.opacity(configuration.isPressed ? 0.08 : 0))
+            )
+            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .animation(nil, value: configuration.isPressed)
+    }
+}
+
