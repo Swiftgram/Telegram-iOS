@@ -323,7 +323,7 @@ alternate_icon_folders = [
     "SGDay"
 ]
 
-composer_icon_folders = ["Telegram"]
+composer_icon_folders = ["Swiftgram"]
 
 [
     filegroup(
