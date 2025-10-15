@@ -723,7 +723,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         // MARK: Swiftgram
         let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(self.attachmentButtonLongPressed(_:)))
         longPressGesture.minimumPressDuration = 1.0
-        self.attachmentButton.view.addGestureRecognizer(longPressGesture)
+        self.attachmentButton.addGestureRecognizer(longPressGesture)
   
         self.sendActionButtons.sendButtonLongPressed = { [weak self] node, gesture in
             self?.interfaceInteraction?.displaySendMessageOptions(node, gesture)
@@ -4527,10 +4527,6 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
     // MARK: Swiftgram
     @objc func attachmentButtonLongPressed(_ gesture: UILongPressGestureRecognizer) {
         guard gesture.state == .began else { return }
-        guard let _ = self.interfaceInteraction?.chatController() as? ChatControllerImpl else {
-            return
-        }
-        // controller.openStickerEditor()
     }
     
     @objc func searchLayoutClearButtonPressed() {

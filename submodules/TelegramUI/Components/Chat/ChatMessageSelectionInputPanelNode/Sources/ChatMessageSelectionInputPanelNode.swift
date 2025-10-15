@@ -181,8 +181,8 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
     private let reportButton: GlassButtonView
     private let forwardButton: GlassButtonView
     // MARK: Swiftgram
-    private let cloudButton: HighlightableButtonNode
-    private let forwardHideNamesButton: HighlightableButtonNode
+    private let cloudButton: GlassButtonView
+    private let forwardHideNamesButton: GlassButtonView
     //
     private let shareButton: GlassButtonView
     private let tagButton: GlassButtonView
@@ -237,7 +237,7 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
         self.forwardHideNamesButton = GlassButtonView()
         self.forwardHideNamesButton.icon = "Avatar/AnonymousSenderIcon"
         self.forwardHideNamesButton.isAccessibilityElement = true
-        self.forwardHideNamesButtonforwardHideNamesButton.accessibilityLabel = "Hide Sender Name"
+        self.forwardHideNamesButton.accessibilityLabel = "Hide Sender Name"
         //
         
         self.shareButton = GlassButtonView()
@@ -581,7 +581,7 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
             tagButton = self.tagEditButton
         }
         
-        let buttons: [GlassButtonView]
+        var buttons: [GlassButtonView] = []
         if self.reportButton.isHidden {
             if let tagButton {
                 buttons = [
