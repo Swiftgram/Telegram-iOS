@@ -543,8 +543,8 @@ public final class TabBarComponent: Component {
             
             transition.setFrame(view: self.backgroundView, frame: CGRect(origin: CGPoint(), size: size))
             self.backgroundView.update(size: size, cornerRadius: size.height * 0.5, isDark: component.theme.overallDarkAppearance, tintColor: .init(kind: .panel, color: component.theme.chat.inputPanel.inputBackgroundColor.withMultipliedAlpha(0.7)), transition: transition)
-            
-            transition.setFrame(view: self.contextGestureContainerView, frame: CGRect(origin: CGPoint(), size: size))
+            let contextGestureContainerView = self.nativeTabBar != nil ? CGSize(width: size.width + itemSize.width, height: size.height) : size // MARK: Swiftgram
+            transition.setFrame(view: self.contextGestureContainerView, frame: CGRect(origin: CGPoint(), size: contextGestureContainerView))
             
             if self.nativeTabBar != nil {
                 return CGSize(width: availableSize.width, height: 62.0)
