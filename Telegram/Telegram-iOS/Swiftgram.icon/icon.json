@@ -1,24 +1,54 @@
 {
-  "fill-specializations" : [
-    {
-      "value" : {
-        "linear-gradient" : [
-          "display-p3:0.97647,0.59216,0.32157,1.00000",
-          "srgb:0.93725,0.28235,0.15294,1.00000"
-        ]
+  "fill" : {
+    "linear-gradient" : [
+      "display-p3:0.96863,0.53333,0.29020,1.00000",
+      "srgb:0.92941,0.21961,0.11765,1.00000"
+    ],
+    "orientation" : {
+      "start" : {
+        "x" : 0.5,
+        "y" : 0
+      },
+      "stop" : {
+        "x" : 0.5,
+        "y" : 0.7
       }
-    },
-    {
-      "appearance" : "dark",
-      "value" : "automatic"
     }
-  ],
+  },
   "groups" : [
     {
       "layers" : [
         {
-          "image-name" : "Swiftgram Lightning.svg",
-          "name" : "Swiftgram Lightning"
+          "blend-mode-specializations" : [
+            {
+              "value" : "normal"
+            },
+            {
+              "appearance" : "dark",
+              "value" : "normal"
+            }
+          ],
+          "fill-specializations" : [
+            {
+              "value" : "automatic"
+            },
+            {
+              "appearance" : "dark",
+              "value" : "none"
+            }
+          ],
+          "glass" : true,
+          "image-name" : "Default@3x 2.svg",
+          "name" : "Default@3x 2",
+          "opacity-specializations" : [
+            {
+              "value" : 1
+            },
+            {
+              "appearance" : "dark",
+              "value" : 0.9
+            }
+          ]
         }
       ],
       "shadow" : {
