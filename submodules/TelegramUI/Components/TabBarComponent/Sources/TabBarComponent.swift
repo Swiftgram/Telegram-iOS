@@ -371,7 +371,7 @@ public final class TabBarComponent: Component {
             if let nativeTabBar = self.nativeTabBar {
                 if previousComponent?.items.map(\.item.title) != component.items.map(\.item.title) {
                     nativeTabBar.items = (0 ..< component.items.count).map { i in
-                        return UITabBarItem(title: component.items[i].item.title, image: nil, tag: i)
+                        return UITabBarItem(title: SGSimpleSettings.shared.showTabNames ? component.items[i].item.title : nil, image: nil, tag: i)
                     }
                     for (_, itemView) in self.itemViews {
                         itemView.view?.removeFromSuperview()
@@ -384,7 +384,7 @@ public final class TabBarComponent: Component {
                     }
                 }
                 
-                nativeTabBar.frame = CGRect(origin: CGPoint(), size: CGSize(width: availableSize.width, height: component.isTablet ? 74.0 : 83.0))
+                nativeTabBar.frame = CGRect(origin: CGPoint(), size: CGSize(width: availableSize.width, height: (component.isTablet ? 74.0 : 83.0) - (SGSimpleSettings.shared.showTabNames ? 0.0 : 16.0)))
                 nativeTabBar.layoutSubviews()
             }
             
