@@ -659,6 +659,29 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         
         // MARK: Swiftgram
         self.initToolbarIfNeeded(context: context)
+        // MARK: Swiftgram
+         let sendWithReturnKeySignal = context.account.postbox.preferencesView(keys: [ApplicationSpecificPreferencesKeys.SGUISettings])
+         |> map { view -> Bool in
+             let settings: SGUISettings = view.values[ApplicationSpecificPreferencesKeys.SGUISettings]?.get(SGUISettings.self) ?? .default
+             return settings.sendWithReturnKey
+         }
+         |> distinctUntilChanged
+         
+         self.sendWithReturnKeyDisposable = (sendWithReturnKeySignal
+         |> deliverOnMainQueue).startStrict(next: { [weak self] value in
+             if let strongSelf = self {
+                 strongSelf.sendWithReturnKey = value
+                 if let textInputNode = strongSelf.textInputNode {
+                     textInputNode.textView.returnKeyType = strongSelf.sendWithReturnKey ? .send : .default
+                     textInputNode.textView.reloadInputViews()
+                 }
+                 // TODO(swiftgram): Fix call to setShowNewLine via ASDisplayNode
+ //                if #available(iOS 13.0, *), let toolbar = strongSelf.toolbarHostingController as? UIHostingController<ChatToolbarView> {
+ //                    toolbar.rootView.setShowNewLine(value)
+ //                }
+             }
+         })
+        //
         
         self.sendAsAvatarContainerNode.activated = { [weak self] gesture, _ in
             guard let strongSelf = self else {
