@@ -2162,8 +2162,20 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                 }
                 
                 if let subtitleRatingView = self.subtitleRating?.view, let subtitleRatingSize {
-                    let subtitleBadgeFrame: CGRect
-                    subtitleBadgeFrame = CGRect(origin: CGPoint(x: (-subtitleSize.width) * 0.5 - subtitleRatingSize.width + 1.0, y: subtitleOffset + floor((-subtitleRatingSize.height) * 0.5)), size: subtitleRatingSize)
+                    let xPosition: CGFloat
+                    if subtitleSize.width.isZero {
+                        // No subtitle (username/phone hidden). Center the level badge under the name.
+                        xPosition = -subtitleRatingSize.width * 0.5
+                    } else {
+                        xPosition = (-subtitleSize.width) * 0.5 - subtitleRatingSize.width + 1.0
+                    }
+                    let subtitleBadgeFrame: CGRect = CGRect(
+                        origin: CGPoint(
+                            x: xPosition,
+                            y: subtitleOffset + floor((-subtitleRatingSize.height) * 0.5)
+                        ),
+                        size: subtitleRatingSize
+                    )
                     transition.updateFrameAdditive(view: subtitleRatingView, frame: subtitleBadgeFrame)
                     transition.updateAlpha(layer: subtitleRatingView.layer, alpha: subtitleAlpha * (1.0 - transitionFraction))
                 }
@@ -2220,7 +2232,14 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                 }
                 
                 if let subtitleRatingView = self.subtitleRating?.view, let subtitleRatingSize {
-                    let subtitleBadgeFrame = CGRect(origin: CGPoint(x: (-subtitleSize.width) * 0.5 - subtitleRatingSize.width + 1.0, y: floor((-subtitleRatingSize.height) * 0.5)), size: subtitleRatingSize)
+                    let xPosition: CGFloat = subtitleSize.width.isZero ? (-subtitleRatingSize.width * 0.5) : ((-subtitleSize.width) * 0.5 - subtitleRatingSize.width + 1.0)
+                    let subtitleBadgeFrame = CGRect(
+                        origin: CGPoint(
+                            x: xPosition,
+                            y: floor((-subtitleRatingSize.height) * 0.5)
+                        ),
+                        size: subtitleRatingSize
+                    )
                     
                     if subtitleRatingView.frame.isEmpty {
                         subtitleRatingView.frame = subtitleBadgeFrame
