@@ -2255,7 +2255,6 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         }
         // MARK: Swiftgram
         let originalLeftInset = leftInset
-        var leftInset = leftInset
         //
         
         let textInputBackgroundWidthOffset: CGFloat = 0.0

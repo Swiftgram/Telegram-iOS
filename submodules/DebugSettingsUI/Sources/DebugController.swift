@@ -420,8 +420,8 @@ private enum DebugControllerEntry: ItemListNodeEntry {
                 fileName = "Log-iOS-Swiftgram.txt"
                 appName = "Swiftgram"
             }
-            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: title, sectionId: self.section, style: .blocks, action: {
-                let _ = (Logger.shared.collectLogs()
+            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: title, label: "", sectionId: self.section, style: .blocks, action: {
+                let _ = (logCollectionSignal
                     |> deliverOnMainQueue).start(next: { logs in
                         let presentationData = arguments.sharedContext.currentPresentationData.with { $0 }
                         let actionSheet = ActionSheetController(presentationData: presentationData)
