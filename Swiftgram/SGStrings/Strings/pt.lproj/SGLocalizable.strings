@@ -57,8 +57,8 @@
 "Stories.Warning.Notice" = "%@ SABERÁ que você viu a Story dele.";
 "Stories.Warning.NoticeStealth" = "%@ não saberá que você viu a Story dele.";
 
-"Settings.Photo.Quality.Notice" = "Qualidade de fotos e Story enviados";
-"Settings.Photo.SendLarge" = "Enviar fotos em HD";
+"Settings.Photo.Quality.Notice" = "Qualidade de fotos enviadas e photo-stories";
+"Settings.Photo.SendLarge" = "Enviar fotos grandes";
 "Settings.Photo.SendLarge.Notice" = "Aumentar o limite de tamanho de imagens comprimidas para 2560px";
 
 "Settings.VideoNotes.Header" = "VÍDEOS REDONDOS";
@@ -71,7 +71,7 @@
 
 "Settings.UploadsBoost" = "Aceleração de Uploads";
 "Settings.DownloadsBoost" = "Aceleração de Downloads";
-"Settings.DownloadsBoost.Notice" = "Aumenta o número de conexões paralelas e o tamanho dos blocos de arquivo. Caso sua rede não consiga suportar a carga, tente opções diferentes que sejam adequadas à sua conexão.";
+"Settings.DownloadsBoost.Notice" = "Aumenta o número de conexões paralelas e o tamanho dos pedaços de arquivo. Se sua rede não conseguir lidar com a carga, tente diferentes opções que se adequem à sua conexão.";
 "Settings.DownloadsBoost.none" = "Desativado";
 "Settings.DownloadsBoost.medium" = "Médio";
 "Settings.DownloadsBoost.maximum" = "Máximo";
