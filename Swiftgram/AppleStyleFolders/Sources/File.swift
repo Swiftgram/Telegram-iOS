@@ -234,8 +234,8 @@ private final class ItemNode: ASDisplayNode {
         self.shortTitleNode.visibility = title.enableAnimations
         
         if themeUpdated || titleUpdated {
-            self.titleNode.attributedText = title.attributedString(font: Font.bold(17.0), textColor: isSelected ? presentationData.theme.contextMenu.badgeForegroundColor : presentationData.theme.list.itemSecondaryTextColor)
-            self.shortTitleNode.attributedText = shortTitle.attributedString(font: Font.bold(17.0), textColor: isSelected ? presentationData.theme.contextMenu.badgeForegroundColor : presentationData.theme.list.itemSecondaryTextColor)
+            self.titleNode.attributedText = title.attributedString(font: Font.medium(14.0), textColor: isSelected ? presentationData.theme.contextMenu.badgeForegroundColor : presentationData.theme.list.itemSecondaryTextColor)
+            self.shortTitleNode.attributedText = shortTitle.attributedString(font: Font.medium(14.0), textColor: isSelected ? presentationData.theme.contextMenu.badgeForegroundColor : presentationData.theme.list.itemSecondaryTextColor)
             
         }
         //

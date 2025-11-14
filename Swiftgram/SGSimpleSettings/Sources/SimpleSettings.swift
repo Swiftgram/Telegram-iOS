@@ -313,8 +313,14 @@ public class SGSimpleSettings {
     @UserDefault(key: Keys.rememberLastFolder.rawValue)
     public var rememberLastFolder: Bool
     
-    @UserDefault(key: Keys.bottomTabStyle.rawValue)
-    public var bottomTabStyle: String
+    // Disabled while Telegram is migrating to Glass
+    // @UserDefault(key: Keys.bottomTabStyle.rawValue)
+    public var bottomTabStyle: String {
+        set {}
+        get {
+            return BottomTabStyleValues.ios.rawValue
+        }
+    }
     
     public var lastAccountFolders = UserDefaultsBackedDictionary<String, Int32>(userDefaultsKey: Keys.lastAccountFolders.rawValue, threadSafe: false)
     
