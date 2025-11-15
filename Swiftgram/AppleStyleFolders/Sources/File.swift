@@ -155,7 +155,7 @@ private final class ItemNode: ASDisplayNode {
             }
             
             if isExtracted {
-                strongSelf.extractedBackgroundNode.image = generateStretchableFilledCircleImage(diameter: 32.0, color: strongSelf.isSelected ? UIColor(rgb: 0xbbbbbb) : UIColor(rgb: 0xf1f1f1))
+                strongSelf.extractedBackgroundNode.image = generateStretchableFilledCircleImage(diameter: 32.0, color: strongSelf.theme?.chatList.pinnedItemHighlightedBackgroundColor ?? UIColor.lightGray)
             }
             transition.updateAlpha(node: strongSelf.extractedBackgroundNode, alpha: isExtracted ? 1.0 : 0.0, completion: { _ in
                 if !isExtracted {
@@ -403,7 +403,7 @@ public final class AppleStyleFoldersNode: ASDisplayNode {
     private let context: AccountContext
     private let scrollNode: ASScrollNode
     private let itemsBackgroundView: UIVisualEffectView
-    private let itemsBackgroundTintNode: ASImageNode
+//    private let itemsBackgroundTintNode: ASImageNode
     
     private let selectedBackgroundNode: ASImageNode
     private var itemNodePairs: [ChatListFilterTabEntryId: ItemNodePair] = [:]
@@ -446,9 +446,9 @@ public final class AppleStyleFoldersNode: ASDisplayNode {
         self.itemsBackgroundView.clipsToBounds = true
         self.itemsBackgroundView.layer.cornerRadius = 20.0
         
-        self.itemsBackgroundTintNode = ASImageNode()
-        self.itemsBackgroundTintNode.displaysAsynchronously = false
-        self.itemsBackgroundTintNode.displayWithoutProcessing = true
+//        self.itemsBackgroundTintNode = ASImageNode()
+//        self.itemsBackgroundTintNode.displaysAsynchronously = false
+//        self.itemsBackgroundTintNode.displayWithoutProcessing = true
         
         self.selectedBackgroundNode = ASImageNode()
         self.selectedBackgroundNode.displaysAsynchronously = false
@@ -474,7 +474,7 @@ public final class AppleStyleFoldersNode: ASDisplayNode {
         
         self.addSubnode(self.scrollNode)
         self.scrollNode.view.addSubview(self.itemsBackgroundView)
-        self.scrollNode.addSubnode(self.itemsBackgroundTintNode)
+//        self.scrollNode.addSubnode(self.itemsBackgroundTintNode)
         self.scrollNode.addSubnode(self.itemsContainer)
         self.scrollNode.addSubnode(self.selectedBackgroundNode)
         self.scrollNode.addSubnode(self.highlightedItemsClippingContainer)
@@ -616,19 +616,13 @@ public final class AppleStyleFoldersNode: ASDisplayNode {
         
         if self.currentParams?.presentationData.theme !== presentationData.theme {
             if presentationData.theme.rootController.keyboardColor == .dark {
-                self.itemsBackgroundView.effect = UIBlurEffect(style: .dark)
+                self.itemsBackgroundView.effect = UIBlurEffect(style: .systemThickMaterialDark)
             } else {
-                self.itemsBackgroundView.effect = UIBlurEffect(style: .light)
+                self.itemsBackgroundView.effect = UIBlurEffect(style: .systemThickMaterialLight)
             }
-            self.itemsBackgroundTintNode.image = generateStretchableFilledCircleImage(diameter: 40.0, color: presentationData.theme.rootController.tabBar.backgroundColor)
+//            self.itemsBackgroundTintNode.image = generateStretchableFilledCircleImage(diameter: 40.0, color: presentationData.theme.rootController.tabBar.backgroundColor)
             
-            let selectedFilterColor: UIColor
-            if presentationData.theme.rootController.keyboardColor == .dark {
-                selectedFilterColor = presentationData.theme.list.itemAccentColor
-            } else {
-                selectedFilterColor = presentationData.theme.chatList.unreadBadgeInactiveBackgroundColor
-            }
-            self.selectedBackgroundNode.image = generateStretchableFilledCircleImage(diameter: 32.0, color: selectedFilterColor)
+            self.selectedBackgroundNode.image = generateStretchableFilledCircleImage(diameter: 32.0, color: presentationData.theme.chatList.pinnedItemHighlightedBackgroundColor)
         }
         
         if isReordering {
@@ -795,7 +789,7 @@ public final class AppleStyleFoldersNode: ASDisplayNode {
             }
         }
         // TODO(swiftgram): Support compact layout
-        let minSpacing: CGFloat = 30.0
+        let minSpacing: CGFloat = 30.0 / (SGSimpleSettings.shared.compactFolderNames ? 2.5 : 1.0)
         
         let resolvedInitialSideInset: CGFloat = 8.0 + 14.0 + 4.0 + sideInset
         
@@ -814,9 +808,9 @@ public final class AppleStyleFoldersNode: ASDisplayNode {
         
         let resolvedSideInset = max(resolvedInitialSideInset, floor((size.width - rawContentWidth) / 2.0))
         
-        var leftOffset: CGFloat = resolvedSideInset
+        var leftOffset: CGFloat = resolvedSideInset / (SGSimpleSettings.shared.compactFolderNames ? 1.5 : 1.0)
         
-        let itemsBackgroundLeftX = leftOffset - 14.0 - 4.0
+        let itemsBackgroundLeftX = leftOffset - (14.0 / (SGSimpleSettings.shared.compactFolderNames ? 2.5 : 1.0)) - 4.0
         
         for i in 0 ..< tabSizes.count {
             let (itemId, paneNodeLongSize, paneNodeShortSize, itemNodePair, wasAdded) = tabSizes[i]
@@ -866,13 +860,13 @@ public final class AppleStyleFoldersNode: ASDisplayNode {
             leftOffset += paneNodeSize.width + minSpacing
         }
         leftOffset -= minSpacing
-        let itemsBackgroundRightX = leftOffset + 14.0 + 4.0
+        let itemsBackgroundRightX = leftOffset + (14.0 / (SGSimpleSettings.shared.compactFolderNames ? 2.5 : 1.0)) + 4.0
         
         leftOffset += resolvedSideInset
         
         let backgroundFrame = CGRect(origin: CGPoint(x: itemsBackgroundLeftX, y: 0.0), size: CGSize(width: itemsBackgroundRightX - itemsBackgroundLeftX, height: size.height))
         transition.updateFrame(view: self.itemsBackgroundView, frame: backgroundFrame)
-        transition.updateFrame(node: self.itemsBackgroundTintNode, frame: backgroundFrame)
+//        transition.updateFrame(node: self.itemsBackgroundTintNode, frame: backgroundFrame)
         
         self.scrollNode.view.contentSize = CGSize(width: itemsBackgroundRightX + 8.0, height: size.height)
 
@@ -900,7 +894,7 @@ public final class AppleStyleFoldersNode: ASDisplayNode {
         if let selectedFrame = selectedFrame {
             let wasAdded = self.selectedBackgroundNode.isHidden
             self.selectedBackgroundNode.isHidden = false
-            let lineFrame = CGRect(origin: CGPoint(x: selectedFrame.minX - 14.0, y: floor((size.height - 32.0) / 2.0)), size: CGSize(width: selectedFrame.width + 14.0 * 2.0, height: 32.0))
+            let lineFrame = CGRect(origin: CGPoint(x: selectedFrame.minX - (14.0 /  (SGSimpleSettings.shared.compactFolderNames ? 2.5 : 1.0)), y: floor((size.height - 32.0) / 2.0)), size: CGSize(width: selectedFrame.width + (14.0 * 2.0 / (SGSimpleSettings.shared.compactFolderNames ? 2.5 : 1.0)), height: 32.0))
             if wasAdded {
                 self.selectedBackgroundNode.frame = lineFrame
                 self.selectedBackgroundNode.alpha = 0.0
