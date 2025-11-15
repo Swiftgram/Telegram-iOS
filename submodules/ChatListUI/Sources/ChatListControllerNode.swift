@@ -1673,7 +1673,16 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         
         // MARK: Swiftgram
         transition.updateFrame(node: self.inlineTabContainerNode, frame: CGRect(origin: CGPoint(x: 0.0, y: layout.size.height - layout.intrinsicInsets.bottom - 46.0), size: CGSize(width: layout.size.width, height: 46.0)))
-        transition.updateFrame(node: self.appleStyleTabContainerNode, frame: CGRect(origin: CGPoint(x: 0.0, y: layout.size.height - layout.intrinsicInsets.bottom - 8.0 - 40.0), size: CGSize(width: layout.size.width, height: 40.0)))
+        print("Updating frame. Layout size: \(layout.size), intrinsicInsets.bottom: \(layout.intrinsicInsets.bottom)")
+        let maxBottomInsetFallback: CGFloat
+        if SGSimpleSettings.shared.hideTabBar {
+            maxBottomInsetFallback = 48.0
+        } else if !SGSimpleSettings.shared.showTabNames {
+            maxBottomInsetFallback = 83.0
+        } else {
+            maxBottomInsetFallback = 96.0
+        }
+        transition.updateFrame(node: self.appleStyleTabContainerNode, frame: CGRect(origin: CGPoint(x: 0.0, y: layout.size.height - max(layout.intrinsicInsets.bottom, maxBottomInsetFallback) - 8.0 - 40.0), size: CGSize(width: layout.size.width, height: 40.0)))
         self.tapRecognizer?.isEnabled = self.isReorderingFilters
         
         if let searchDisplayController = self.searchDisplayController {
