@@ -1673,7 +1673,7 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         
         // MARK: Swiftgram
         transition.updateFrame(node: self.inlineTabContainerNode, frame: CGRect(origin: CGPoint(x: 0.0, y: layout.size.height - layout.intrinsicInsets.bottom - 46.0), size: CGSize(width: layout.size.width, height: 46.0)))
-        print("Updating frame. Layout size: \(layout.size), intrinsicInsets.bottom: \(layout.intrinsicInsets.bottom)")
+//        print("Updating frame. Layout size: \(layout.size), intrinsicInsets.bottom: \(layout.intrinsicInsets.bottom)")
         let maxBottomInsetFallback: CGFloat
         if SGSimpleSettings.shared.hideTabBar {
             maxBottomInsetFallback = 48.0
