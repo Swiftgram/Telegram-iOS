@@ -2436,7 +2436,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         if additionalSideInsets.right > 0.0 {
             textFieldInsets.right += additionalSideInsets.right / 3.0
         }
-        if inputHasText || self.extendedSearchLayout || hasMediaDraft || hasForward {
+        if SGSimpleSettings.shared.hideRecordingButton || inputHasText || self.extendedSearchLayout || hasMediaDraft || hasForward {
         } else {
             if let customRightAction = self.customRightAction, case .empty = customRightAction {
                 textFieldInsets.right = 8.0
@@ -4373,8 +4373,8 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         let blurTransitionOut: ComponentTransition = transition.isAnimated ? .easeInOut(duration: 0.18) : .immediate
         let sendButtonBlurOut: CGFloat = 4.0
         
-        var hideMicButton = false
-        var hideMicButtonBackground = false
+        var hideMicButton = SGSimpleSettings.shared.hideRecordingButton
+        var hideMicButtonBackground = SGSimpleSettings.shared.hideRecordingButton
         
         if self.customRightAction != nil {
             self.mediaActionButtons.isHidden = true
@@ -4452,7 +4452,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
                 }
             }
             
-            if (hasText || keepSendButtonEnabled && !mediaInputIsActive && !hasSlowModeButton) {
+            if (SGSimpleSettings.shared.hideRecordingButton || hasText || keepSendButtonEnabled && !mediaInputIsActive && !hasSlowModeButton) {
                 if self.sendActionButtons.sendContainerNode.alpha.isZero && self.rightSlowModeInset.isZero {
                     alphaTransition.updateAlpha(node: self.sendActionButtons.sendContainerNode, alpha: 1.0)
                     blurTransitionIn.animateBlur(layer: self.sendActionButtons.sendContainerNode.layer, fromRadius: sendButtonBlurOut, toRadius: 0.0)
