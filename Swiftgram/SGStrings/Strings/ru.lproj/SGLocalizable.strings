@@ -4,6 +4,8 @@
 "Settings.Tabs.HideTabBar" = "Скрыть панель вкладок";
 "Settings.Tabs.ShowContacts" = "Вкладка «Контакты»";
 "Settings.Tabs.ShowNames" = "Имена вкладок";
+"Settings.Tabs.WideTabBar" = "Широкая панель";
+"Settings.Tabs.WideTabBar.Notice" = "Сохраняет полную ширину панели вкладок, когда некоторые вкладки скрыты.";
 
 "Settings.Folders.BottomTab" = "Папки снизу";
 "Settings.Folders.BottomTabStyle" = "Стиль папок внизу";
@@ -35,6 +37,21 @@
 "Settings.Stories.DisableSwipeToRecord" = "Отключить свайп для записи";
 
 "Settings.Translation.QuickTranslateButton" = "Кнопка быстрого перевода";
+"Settings.Translation.Backend" = "Сервис";
+/* Do not translate */
+"Settings.Translation.Backend.default" = "Telegram";
+/* Do not translate */
+"Settings.Translation.Backend.gtranslate" = "GTranslate";
+"Settings.Translation.Backend.system" = "Система";
+"Settings.Translation.Backend.Notice" = "Swiftgram будет использовать %@, если выбранный сервис перевода недоступен.";
+
+"Settings.Transcription.Header" = "ГОЛОС В ТЕКСТ";
+"Settings.Transcription.Backend" = "Сервис";
+/* Do not translate */
+"Settings.Transcription.Backend.default" = "Telegram";
+/* Do not translate */
+"Settings.Transcription.Backend.apple" = "Apple";
+"Settings.Transcription.Backend.Notice" = "Swiftgram будет использовать %@, если выбранный сервис транскрипции недоступен.";
 
 "Stories.Warning.Author" = "Автор";
 "Stories.Warning.ViewStory" = "Просмотреть историю?";
@@ -85,6 +102,7 @@
 "Common.OpenTelegram" = "Открыть Telegram";
 "Common.UseTelegramForPremium" = "Обратите внимание, что для получения Telegram Premium, вы должны использовать официальное приложение Telegram. Как только вы получите Telegram Premium, все его функции станут доступны в Swiftgram.";
 "Common.UpdateOS" = "Требуется обновление iOS";
+"Common.KnowWhatYouDo" = "Пожалуйста, меняйте эти настройки только если вы знаете, что они делают.";
 
 "Message.HoldToShowOrReport" = "Удерживайте для Показа или Жалобы.";
 
@@ -243,3 +261,13 @@
 "PayWall.ValidationError" = "Ошибка проверки";
 "PayWall.ValidationError.TryAgain" = "Что-то пошло не так во время проверки оплаты. Не волнуйтесь! Попробуйте Восстановить Покупки чуть позже.";
 "PayWall.ValidationError.Expired" = "Ваша подписка истекла. Подпишитесь снова, чтобы восстановить доступ к Pro функциям.";
+
+"AppBadge.Title" = "Бэйдж приложения";
+"AppBadge.Notice" = "Настройка Бэйджа приложения на скриншотах";
+
+"Settings.NY.Header" = "НОВОГОДНИЕ ЭФФЕКТЫ";
+"Settings.NY.Style" = "Стиль";
+"Settings.NY.Style.default" = "Выключено";
+"Settings.NY.Style.snow" = "Снег";
+"Settings.NY.Style.lightning" = "Молнии";
+"Settings.NY.Notice" = "Доступны только на ограниченное время!";
