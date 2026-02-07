@@ -4,6 +4,9 @@
 "Settings.Tabs.HideTabBar" = "Ocultar Abas de Guias";
 "Settings.Tabs.ShowContacts" = "Mostrar Aba dos Contatos";
 "Settings.Tabs.ShowNames" = "Mostrar nomes das abas";
+"Settings.Tabs.SearchButton" = "Botão de pesquisa";
+"Settings.Tabs.WideTabBar" = "Ocultar Abas de Guias";
+"Settings.Tabs.WideTabBar.Notice" = "Mantém a largura total da barra de abas quando algumas abas estão ocultas.";
 
 "Settings.Folders.BottomTab" = "Pastas embaixo";
 "Settings.Folders.BottomTabStyle" = "Estilos de Pastas Inferiores";
@@ -100,6 +103,7 @@
 "Common.OpenTelegram" = "Abrir Telegram";
 "Common.UseTelegramForPremium" = "Observe que para obter o Telegram Premium, você precisa usar o aplicativo oficial do Telegram. Depois de obter o Telegram Premium, todos os seus recursos ficarão disponíveis no Swiftgram.";
 "Common.UpdateOS" = "Atualização do iOS necessária";
+"Common.KnowWhatYouDo" = "Por favor, mude estas configurações apenas se souber o que elas fazem.";
 
 "Message.HoldToShowOrReport" = "Segure para Mostrar ou Denunciar.";
 
@@ -261,3 +265,10 @@
 
 "AppBadge.Title" = "Emblema do Aplicativo";
 "AppBadge.Notice" = "Personalizar Emblema do Aplicativo Exibido nas capturas de tela";
+
+"Settings.NY.Header" = "EFEITOS DE FERIADO";
+"Settings.NY.Style" = "Estilo";
+"Settings.NY.Style.default" = "Desativado";
+"Settings.NY.Style.snow" = "Neve";
+"Settings.NY.Style.lightning" = "Raio";
+"Settings.NY.Notice" = "Disponível por tempo limitado!";
