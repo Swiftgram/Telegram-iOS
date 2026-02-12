@@ -106,6 +106,7 @@ public enum ParsedInternalUrl {
     case joinCall(String)
     case localization(String)
     case proxy(host: String, port: Int32, username: String?, password: String?, secret: Data?)
+    case juicityProxy(host: String, port: Int32, uuid: String, password: String, sni: String, allowInsecure: Bool, congestionControl: String)
     case internalInstantView(url: String)
     case confirmationCode(Int)
     case cancelAccountReset(phone: String, hash: String)
@@ -1161,6 +1162,8 @@ private func resolveInternalUrl(context: AccountContext, url: ParsedInternalUrl)
             return .single(.result(.localization(identifier)))
         case let .proxy(host, port, username, password, secret):
             return .single(.result(.proxy(host: host, port: port, username: username, password: password, secret: secret)))
+        case let .juicityProxy(host, port, uuid, password, sni, allowInsecure, congestionControl):
+            return .single(.result(.juicityProxy(host: host, port: port, uuid: uuid, password: password, sni: sni, allowInsecure: allowInsecure, congestionControl: congestionControl)))
         case let .internalInstantView(url):
             return resolveInstantViewUrl(account: context.account, url: url)
             |> map { result in
@@ -1288,6 +1291,19 @@ public func isTelegraPhLink(_ url: String) -> Bool {
 }
 
 public func parseProxyUrl(sharedContext: SharedAccountContext, url: String) -> (host: String, port: Int32, username: String?, password: String?, secret: Data?)? {
+    // Handle juicity:// URLs
+    if url.lowercased().hasPrefix("juicity://") {
+        let httpURL = "http://" + String(url.dropFirst("juicity://".count))
+        if let components = URLComponents(string: httpURL),
+           let host = components.host, !host.isEmpty,
+           let port = components.port, port > 0,
+           let uuid = components.user, !uuid.isEmpty,
+           let password = components.password, !password.isEmpty {
+            // Return uuid as username and password as password for juicity
+            return (host, Int32(port), uuid, password, nil)
+        }
+    }
+
     let schemes = ["http://", "https://", ""]
     for basePath in baseTelegramMePaths {
         for scheme in schemes {
@@ -1304,7 +1320,7 @@ public func parseProxyUrl(sharedContext: SharedAccountContext, url: String) -> (
             return (host, port, username, password, secret)
         }
     }
-    
+
     return nil
 }
 
@@ -1427,6 +1443,43 @@ public func resolveUrlImpl(context: AccountContext, peerId: PeerId?, url: String
                 }
             }
             
+            // Handle juicity:// URLs
+            if url.lowercased().hasPrefix("juicity://") {
+                let httpURL = "http://" + String(url.dropFirst("juicity://".count))
+                if let components = URLComponents(string: httpURL),
+                   let host = components.host, !host.isEmpty,
+                   let port = components.port, port > 0,
+                   let uuid = components.user, !uuid.isEmpty,
+                   let password = components.password, !password.isEmpty {
+                    var sni = ""
+                    var allowInsecure = false
+                    var congestionControl = "bbr"
+                    if let queryItems = components.queryItems {
+                        for item in queryItems {
+                            switch item.name {
+                            case "sni":
+                                sni = item.value ?? ""
+                            case "allow_insecure":
+                                allowInsecure = item.value == "1"
+                            case "congestion_control":
+                                congestionControl = item.value ?? "bbr"
+                            default:
+                                break
+                            }
+                        }
+                    }
+                    return .single(.result(.juicityProxy(
+                        host: host,
+                        port: Int32(port),
+                        uuid: uuid,
+                        password: password,
+                        sni: sni,
+                        allowInsecure: allowInsecure,
+                        congestionControl: congestionControl
+                    )))
+                }
+            }
+
             var url = url
             if !url.contains("://") && !url.hasPrefix("tel:") && !url.hasPrefix("mailto:") && !url.hasPrefix("calshow:") {
                 if !(url.hasPrefix("http") || url.hasPrefix("https")) {

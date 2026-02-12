@@ -22,6 +22,21 @@ private func shareLink(for server: ProxyServerSettings) -> String {
     case let .socks5(username, password):
         link = "https://t.me/socks?server=\(server.host)&port=\(server.port)"
         link += "&user=\(username?.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryValueAllowed) ?? "")&pass=\(password?.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryValueAllowed) ?? "")"
+    case let .juicity(uuid, password, sni, allowInsecure, congestionControl):
+        link = "juicity://\(uuid):\(password)@\(server.host):\(server.port)"
+        var queryParts: [String] = []
+        if !congestionControl.isEmpty {
+            queryParts.append("congestion_control=\(congestionControl)")
+        }
+        if !sni.isEmpty {
+            queryParts.append("sni=\(sni.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryValueAllowed) ?? sni)")
+        }
+        if allowInsecure {
+            queryParts.append("allow_insecure=1")
+        }
+        if !queryParts.isEmpty {
+            link += "?" + queryParts.joined(separator: "&")
+        }
     }
     return link
 }
@@ -49,36 +64,44 @@ private enum ProxySettingsSection: Int32 {
 private enum ProxySettingsEntry: ItemListNodeEntry {
     case usePasteboardSettings(PresentationTheme, String)
     case usePasteboardInfo(PresentationTheme, String)
-    
+
     case modeSocks5(PresentationTheme, String, Bool)
     case modeMtp(PresentationTheme, String, Bool)
-    
+    case modeJuicity(PresentationTheme, String, Bool)
+
     case connectionHeader(PresentationTheme, String)
     case connectionServer(PresentationTheme, PresentationStrings, String, String)
     case connectionPort(PresentationTheme, PresentationStrings, String, String)
-    
+
     case credentialsHeader(PresentationTheme, String)
     case credentialsUsername(PresentationTheme, PresentationStrings, String, String)
     case credentialsPassword(PresentationTheme, PresentationStrings, String, String)
     case credentialsSecret(PresentationTheme, PresentationStrings, String, String)
-    
+    case credentialsJuicityUUID(PresentationTheme, PresentationStrings, String, String)
+    case credentialsJuicityPassword(PresentationTheme, PresentationStrings, String, String)
+    case credentialsJuicitySNI(PresentationTheme, PresentationStrings, String, String)
+    case credentialsJuicityAllowInsecure(PresentationTheme, String, Bool)
+    case credentialsJuicityCongestion(PresentationTheme, PresentationStrings, String, String)
+
     case share(PresentationTheme, String, Bool)
-    
+
     var section: ItemListSectionId {
         switch self {
             case .usePasteboardSettings, .usePasteboardInfo:
                 return ProxySettingsSection.pasteboard.rawValue
-            case .modeSocks5, .modeMtp:
+            case .modeSocks5, .modeMtp, .modeJuicity:
                 return ProxySettingsSection.mode.rawValue
             case .connectionHeader, .connectionServer, .connectionPort:
                 return ProxySettingsSection.connection.rawValue
-            case .credentialsHeader, .credentialsUsername, .credentialsPassword, .credentialsSecret:
+            case .credentialsHeader, .credentialsUsername, .credentialsPassword, .credentialsSecret,
+                 .credentialsJuicityUUID, .credentialsJuicityPassword, .credentialsJuicitySNI,
+                 .credentialsJuicityAllowInsecure, .credentialsJuicityCongestion:
                 return ProxySettingsSection.credentials.rawValue
             case .share:
                 return ProxySettingsSection.share.rawValue
         }
     }
-    
+
     var stableId: Int32 {
         switch self {
             case .usePasteboardSettings:
@@ -89,22 +112,34 @@ private enum ProxySettingsEntry: ItemListNodeEntry {
                 return 2
             case .modeMtp:
                 return 3
-            case .connectionHeader:
+            case .modeJuicity:
                 return 4
-            case .connectionServer:
+            case .connectionHeader:
                 return 5
-            case .connectionPort:
+            case .connectionServer:
                 return 6
-            case .credentialsHeader:
+            case .connectionPort:
                 return 7
-            case .credentialsUsername:
+            case .credentialsHeader:
                 return 8
-            case .credentialsPassword:
+            case .credentialsUsername:
                 return 9
-            case .credentialsSecret:
+            case .credentialsPassword:
                 return 10
-            case .share:
+            case .credentialsSecret:
+                return 11
+            case .credentialsJuicityUUID:
                 return 12
+            case .credentialsJuicityPassword:
+                return 13
+            case .credentialsJuicitySNI:
+                return 14
+            case .credentialsJuicityAllowInsecure:
+                return 15
+            case .credentialsJuicityCongestion:
+                return 16
+            case .share:
+                return 17
         }
     }
     
@@ -134,6 +169,14 @@ private enum ProxySettingsEntry: ItemListNodeEntry {
                     arguments.updateState { state in
                         var state = state
                         state.mode = .mtp
+                        return state
+                    }
+                })
+            case let .modeJuicity(_, text, value):
+                return ItemListCheckboxItem(presentationData: presentationData, systemStyle: .glass, title: text, style: .left, checked: value, zeroSeparatorInsets: false, sectionId: self.section, action: {
+                    arguments.updateState { state in
+                        var state = state
+                        state.mode = .juicity
                         return state
                     }
                 })
@@ -181,6 +224,46 @@ private enum ProxySettingsEntry: ItemListNodeEntry {
                         return state
                     }
                 }, action: {})
+            case let .credentialsJuicityUUID(_, _, placeholder, text):
+                return ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(), text: text, placeholder: placeholder, type: .regular(capitalization: false, autocorrection: false), sectionId: self.section, textUpdated: { value in
+                    arguments.updateState { current in
+                        var state = current
+                        state.juicityUUID = value
+                        return state
+                    }
+                }, action: {})
+            case let .credentialsJuicityPassword(_, _, placeholder, text):
+                return ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(), text: text, placeholder: placeholder, type: .password, sectionId: self.section, textUpdated: { value in
+                    arguments.updateState { current in
+                        var state = current
+                        state.juicityPassword = value
+                        return state
+                    }
+                }, action: {})
+            case let .credentialsJuicitySNI(_, _, placeholder, text):
+                return ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(), text: text, placeholder: placeholder, type: .regular(capitalization: false, autocorrection: false), sectionId: self.section, textUpdated: { value in
+                    arguments.updateState { current in
+                        var state = current
+                        state.juicitySNI = value
+                        return state
+                    }
+                }, action: {})
+            case let .credentialsJuicityAllowInsecure(_, text, value):
+                return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { value in
+                    arguments.updateState { current in
+                        var state = current
+                        state.juicityAllowInsecure = value
+                        return state
+                    }
+                })
+            case let .credentialsJuicityCongestion(_, _, placeholder, text):
+                return ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(), text: text, placeholder: placeholder, type: .regular(capitalization: false, autocorrection: false), sectionId: self.section, textUpdated: { value in
+                    arguments.updateState { current in
+                        var state = current
+                        state.juicityCongestion = value
+                        return state
+                    }
+                }, action: {})
             case let .share(_, text, enabled):
                 return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: text, kind: enabled ? .generic : .disabled, alignment: .natural, sectionId: self.section, style: .blocks, action: {
                     arguments.share()
@@ -192,6 +275,7 @@ private enum ProxySettingsEntry: ItemListNodeEntry {
 private enum ProxyServerSettingsControllerMode {
     case socks5
     case mtp
+    case juicity
 }
 
 private struct ProxyServerSettingsControllerState: Equatable {
@@ -201,7 +285,12 @@ private struct ProxyServerSettingsControllerState: Equatable {
     var username: String
     var password: String
     var secret: String
-    
+    var juicityUUID: String
+    var juicityPassword: String
+    var juicitySNI: String
+    var juicityAllowInsecure: Bool
+    var juicityCongestion: String
+
     var isComplete: Bool {
         if self.host.isEmpty || self.port.isEmpty || Int(self.port) == nil {
             return false
@@ -212,6 +301,10 @@ private struct ProxyServerSettingsControllerState: Equatable {
             case .mtp:
                 let secretIsValid = MTProxySecret.parse(self.secret) != nil
                 if !secretIsValid {
+                    return false
+                }
+            case .juicity:
+                if self.juicityUUID.isEmpty || self.juicityPassword.isEmpty {
                     return false
                 }
         }
@@ -228,11 +321,12 @@ private func proxyServerSettingsControllerEntries(presentationData: Presentation
     
     entries.append(.modeSocks5(presentationData.theme, presentationData.strings.SocksProxySetup_ProxySocks5, state.mode == .socks5))
     entries.append(.modeMtp(presentationData.theme, presentationData.strings.SocksProxySetup_ProxyTelegram, state.mode == .mtp))
-    
+    entries.append(.modeJuicity(presentationData.theme, "Juicity (QUIC)", state.mode == .juicity))
+
     entries.append(.connectionHeader(presentationData.theme, presentationData.strings.SocksProxySetup_Connection.uppercased()))
     entries.append(.connectionServer(presentationData.theme, presentationData.strings, presentationData.strings.SocksProxySetup_Hostname, state.host))
     entries.append(.connectionPort(presentationData.theme, presentationData.strings, presentationData.strings.SocksProxySetup_Port, state.port))
-    
+
     switch state.mode {
         case .socks5:
             entries.append(.credentialsHeader(presentationData.theme, presentationData.strings.SocksProxySetup_Credentials))
@@ -241,6 +335,13 @@ private func proxyServerSettingsControllerEntries(presentationData: Presentation
         case .mtp:
             entries.append(.credentialsHeader(presentationData.theme, presentationData.strings.SocksProxySetup_RequiredCredentials))
             entries.append(.credentialsSecret(presentationData.theme, presentationData.strings, presentationData.strings.SocksProxySetup_SecretPlaceholder, state.secret))
+        case .juicity:
+            entries.append(.credentialsHeader(presentationData.theme, "JUICITY"))
+            entries.append(.credentialsJuicityUUID(presentationData.theme, presentationData.strings, "UUID", state.juicityUUID))
+            entries.append(.credentialsJuicityPassword(presentationData.theme, presentationData.strings, "Password", state.juicityPassword))
+            entries.append(.credentialsJuicitySNI(presentationData.theme, presentationData.strings, "SNI (optional)", state.juicitySNI))
+            entries.append(.credentialsJuicityAllowInsecure(presentationData.theme, "Allow Insecure", state.juicityAllowInsecure))
+            entries.append(.credentialsJuicityCongestion(presentationData.theme, presentationData.strings, "Congestion Control (bbr)", state.juicityCongestion))
     }
     
     entries.append(.share(presentationData.theme, presentationData.strings.Conversation_ContextMenuShare, state.isComplete))
@@ -258,6 +359,15 @@ private func proxyServerSettings(with state: ProxyServerSettingsControllerState)
                 if let parsedSecret = parsedSecret {
                     return ProxyServerSettings(host: state.host, port: port, connection: .mtp(secret: parsedSecret.serialize()))
                 }
+            case .juicity:
+                let congestion = state.juicityCongestion.isEmpty ? "bbr" : state.juicityCongestion
+                return ProxyServerSettings(host: state.host, port: port, connection: .juicity(
+                    uuid: state.juicityUUID,
+                    password: state.juicityPassword,
+                    sni: state.juicitySNI,
+                    allowInsecure: state.juicityAllowInsecure,
+                    congestionControl: congestion
+                ))
         }
     }
     return nil
@@ -273,6 +383,11 @@ func proxyServerSettingsController(sharedContext: SharedAccountContext, context:
     var currentUsername: String?
     var currentPassword: String?
     var currentSecret: String?
+    var currentJuicityUUID: String?
+    var currentJuicityPassword: String?
+    var currentJuicitySNI: String?
+    var currentJuicityAllowInsecure: Bool = false
+    var currentJuicityCongestion: String?
     var pasteboardSettings: ProxyServerSettings?
     if let currentSettings = currentSettings {
         switch currentSettings.connection {
@@ -283,6 +398,13 @@ func proxyServerSettingsController(sharedContext: SharedAccountContext, context:
             case let .mtp(secret):
                 currentSecret = hexString(secret)
                 currentMode = .mtp
+            case let .juicity(uuid, password, sni, allowInsecure, congestionControl):
+                currentJuicityUUID = uuid
+                currentJuicityPassword = password
+                currentJuicitySNI = sni
+                currentJuicityAllowInsecure = allowInsecure
+                currentJuicityCongestion = congestionControl
+                currentMode = .juicity
         }
     } else {
         if let proxy = parseProxyUrl(sharedContext: sharedContext, url: UIPasteboard.general.string ?? "") {
@@ -294,7 +416,7 @@ func proxyServerSettingsController(sharedContext: SharedAccountContext, context:
         }
     }
 
-    let initialState = ProxyServerSettingsControllerState(mode: currentMode, host: currentSettings?.host ?? "", port: (currentSettings?.port).flatMap { "\($0)" } ?? "", username: currentUsername ?? "", password: currentPassword ?? "", secret: currentSecret ?? "")
+    let initialState = ProxyServerSettingsControllerState(mode: currentMode, host: currentSettings?.host ?? "", port: (currentSettings?.port).flatMap { "\($0)" } ?? "", username: currentUsername ?? "", password: currentPassword ?? "", secret: currentSecret ?? "", juicityUUID: currentJuicityUUID ?? "", juicityPassword: currentJuicityPassword ?? "", juicitySNI: currentJuicitySNI ?? "", juicityAllowInsecure: currentJuicityAllowInsecure, juicityCongestion: currentJuicityCongestion ?? "")
     let stateValue = Atomic(value: initialState)
     let statePromise = ValuePromise(initialState, ignoreRepeated: true)
     let updateState: ((ProxyServerSettingsControllerState) -> ProxyServerSettingsControllerState) -> Void = { f in
@@ -324,6 +446,13 @@ func proxyServerSettingsController(sharedContext: SharedAccountContext, context:
                     case let .mtp(secret):
                         state.mode = .mtp
                         state.secret = hexString(secret)
+                    case let .juicity(uuid, password, sni, allowInsecure, congestionControl):
+                        state.mode = .juicity
+                        state.juicityUUID = uuid
+                        state.juicityPassword = password
+                        state.juicitySNI = sni
+                        state.juicityAllowInsecure = allowInsecure
+                        state.juicityCongestion = congestionControl
                 }
                 return state
             }

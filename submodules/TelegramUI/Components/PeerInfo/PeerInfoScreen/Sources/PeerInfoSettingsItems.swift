@@ -189,6 +189,8 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
                     proxyType = presentationData.strings.SocksProxySetup_ProxyTelegram
                 case .socks5:
                     proxyType = presentationData.strings.SocksProxySetup_ProxySocks5
+                case .juicity:
+                    proxyType = "Juicity"
                 }
             } else {
                 proxyType = presentationData.strings.Settings_ProxyDisabled

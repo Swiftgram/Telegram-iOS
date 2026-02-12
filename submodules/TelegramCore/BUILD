@@ -26,6 +26,7 @@ swift_library(
     deps = sgdeps + [
         "//submodules/TelegramApi:TelegramApi",
         "//submodules/MtProtoKit:MtProtoKit",
+        "//submodules/JuicityClient:JuicityClient",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/Postbox:Postbox",
         "//submodules/CloudData:CloudData",

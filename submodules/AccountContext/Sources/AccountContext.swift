@@ -299,6 +299,7 @@ public enum ResolvedUrl {
     case stickerPack(name: String, type: StickerPackUrlType)
     case instantView(TelegramMediaWebpage, String?)
     case proxy(host: String, port: Int32, username: String?, password: String?, secret: Data?)
+    case juicityProxy(host: String, port: Int32, uuid: String, password: String, sni: String, allowInsecure: Bool, congestionControl: String)
     case join(String)
     case joinCall(String)
     case localization(String)

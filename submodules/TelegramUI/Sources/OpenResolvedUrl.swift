@@ -487,7 +487,20 @@ func openResolvedUrlImpl(
             }
 
             dismissInput()
-        
+
+            let controller = ProxyServerPreviewScreen(context: context, server: server)
+            navigationController?.pushViewController(controller)
+        case let .juicityProxy(host, port, uuid, password, sni, allowInsecure, congestionControl):
+            let server = ProxyServerSettings(host: host, port: abs(port), connection: .juicity(
+                uuid: uuid,
+                password: password,
+                sni: sni,
+                allowInsecure: allowInsecure,
+                congestionControl: congestionControl
+            ))
+
+            dismissInput()
+
             let controller = ProxyServerPreviewScreen(context: context, server: server)
             navigationController?.pushViewController(controller)
         case let .confirmationCode(code):

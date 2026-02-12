@@ -946,6 +946,9 @@ public final class OngoingCallContext {
                         voipProxyServer = VoipProxyServerWebrtc(host: proxyServer.host, port: proxyServer.port, username: username, password: password)
                     case .mtp:
                         break
+                    case .juicity:
+                        // Juicity runs a local SOCKS5 proxy; use it for VoIP calls
+                        voipProxyServer = VoipProxyServerWebrtc(host: "127.0.0.1", port: 0, username: nil, password: nil)
                     }
                 }
                 

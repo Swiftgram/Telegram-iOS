@@ -16,7 +16,20 @@ extension ProxyServerSettings {
                 return MTSocksProxySettings(ip: self.host, port: UInt16(clamping: self.port), username: username, password: password, secret: nil)
             case let .mtp(secret):
                 return MTSocksProxySettings(ip: self.host, port: UInt16(clamping: self.port), username: nil, password: nil, secret: secret)
+            case .juicity:
+                // Juicity runs a local SOCKS5 proxy. The actual SOCKS5 settings
+                // (127.0.0.1:localPort) are set dynamically by JuicityProxyBridge
+                // when the connection is activated. This is a placeholder.
+                return MTSocksProxySettings(ip: "127.0.0.1", port: 0, username: nil, password: nil, secret: nil)
         }
+    }
+
+    /// Whether this proxy server uses the Juicity protocol.
+    public var isJuicity: Bool {
+        if case .juicity = self.connection {
+            return true
+        }
+        return false
     }
 }
 

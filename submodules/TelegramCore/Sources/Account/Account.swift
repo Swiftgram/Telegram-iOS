@@ -5,6 +5,7 @@ import MtProtoKit
 import TelegramApi
 import CryptoUtils
 import EncryptionProvider
+import JuicityClient
 
 private let accountRecordToActiveKeychainId = Atomic<[AccountRecordId: Int]>(value: [:])
 
@@ -1456,6 +1457,39 @@ public class Account {
             }
         }
         |> distinctUntilChanged).start(next: { activeServer in
+            // Handle Juicity proxy: start/stop the local SOCKS5 tunnel
+            if let activeServer = activeServer, case let .juicity(uuid, password, sni, allowInsecure, congestionControl) = activeServer.connection {
+                JuicityProxyBridge.shared.activate(
+                    host: activeServer.host,
+                    port: activeServer.port,
+                    uuid: uuid,
+                    password: password,
+                    sni: sni,
+                    allowInsecure: allowInsecure,
+                    congestionControl: congestionControl,
+                    completion: { localHost, localPort in
+                        let updated = MTSocksProxySettings(ip: localHost, port: localPort, username: nil, password: nil, secret: nil)
+                        network.context.updateApiEnvironment { environment in
+                            network.dropConnectionStatus()
+                            return environment?.withUpdatedSocksProxySettings(updated)
+                        }
+                    },
+                    onError: { error in
+                        print("[JuicityProxy] Failed to start: \(error)")
+                        network.context.updateApiEnvironment { environment in
+                            network.dropConnectionStatus()
+                            return environment?.withUpdatedSocksProxySettings(nil)
+                        }
+                    }
+                )
+                return
+            } else {
+                // Stop juicity if it was running and we switched to a different proxy or disabled
+                if JuicityProxyBridge.shared.isActive {
+                    JuicityProxyBridge.shared.deactivate()
+                }
+            }
+
             let updated = activeServer.flatMap { activeServer -> MTSocksProxySettings? in
                 return activeServer.mtProxySettings
             }

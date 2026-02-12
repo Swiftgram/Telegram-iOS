@@ -4,7 +4,8 @@ import Postbox
 public enum ProxyServerConnection: Equatable, Hashable, Codable {
     case socks5(username: String?, password: String?)
     case mtp(secret: Data)
-    
+    case juicity(uuid: String, password: String, sni: String, allowInsecure: Bool, congestionControl: String)
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: StringCodingKey.self)
 
@@ -13,11 +14,19 @@ public enum ProxyServerConnection: Equatable, Hashable, Codable {
                 self = .socks5(username: try container.decodeIfPresent(String.self, forKey: "username"), password: try container.decodeIfPresent(String.self, forKey: "password"))
             case 1:
                 self = .mtp(secret: try container.decode(Data.self, forKey: "secret"))
+            case 2:
+                self = .juicity(
+                    uuid: try container.decode(String.self, forKey: "juicity_uuid"),
+                    password: try container.decode(String.self, forKey: "juicity_password"),
+                    sni: (try? container.decode(String.self, forKey: "juicity_sni")) ?? "",
+                    allowInsecure: ((try? container.decode(Int32.self, forKey: "juicity_allow_insecure")) ?? 0) != 0,
+                    congestionControl: (try? container.decode(String.self, forKey: "juicity_congestion")) ?? "bbr"
+                )
             default:
                 self = .socks5(username: nil, password: nil)
         }
     }
-    
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: StringCodingKey.self)
 
@@ -29,6 +38,13 @@ public enum ProxyServerConnection: Equatable, Hashable, Codable {
             case let .mtp(secret):
                 try container.encode(1 as Int32, forKey: "_t")
                 try container.encode(secret, forKey: "secret")
+            case let .juicity(uuid, password, sni, allowInsecure, congestionControl):
+                try container.encode(2 as Int32, forKey: "_t")
+                try container.encode(uuid, forKey: "juicity_uuid")
+                try container.encode(password, forKey: "juicity_password")
+                try container.encode(sni, forKey: "juicity_sni")
+                try container.encode((allowInsecure ? 1 : 0) as Int32, forKey: "juicity_allow_insecure")
+                try container.encode(congestionControl, forKey: "juicity_congestion")
         }
     }
 }

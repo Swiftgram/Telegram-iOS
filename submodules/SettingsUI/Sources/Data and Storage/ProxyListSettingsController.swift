@@ -333,6 +333,8 @@ private func proxySettingsControllerEntries(theme: PresentationTheme, strings: P
                     text = strings.ChatSettings_ConnectionType_UseSocks5
                 case .mtp:
                     text = strings.SocksProxySetup_ProxyTelegram
+                case .juicity:
+                    text = "Juicity (QUIC)"
             }
             switch status {
                 case .notAvailable:
@@ -354,9 +356,14 @@ private func proxySettingsControllerEntries(theme: PresentationTheme, strings: P
         entries.append(.shareProxyList(theme, strings.SocksProxySetup_ShareProxyList))
     }
     
-    if let activeServer = proxySettings.activeServer, case .socks5 = activeServer.connection {
-        entries.append(.useForCalls(theme, strings.SocksProxySetup_UseForCalls, proxySettings.useForCalls))
-        entries.append(.useForCallsInfo(theme, strings.SocksProxySetup_UseForCallsHelp))
+    if let activeServer = proxySettings.activeServer {
+        switch activeServer.connection {
+        case .socks5, .juicity:
+            entries.append(.useForCalls(theme, strings.SocksProxySetup_UseForCalls, proxySettings.useForCalls))
+            entries.append(.useForCallsInfo(theme, strings.SocksProxySetup_UseForCallsHelp))
+        case .mtp:
+            break
+        }
     }
     
     return entries
@@ -611,6 +618,21 @@ public func proxySettingsController(accountManager: AccountManager<TelegramAccou
                         string = "https://t.me/socks?server=\(server.host)&port=\(server.port)"
                         if let username = username, let password = password {
                             string += "&user=\((username as NSString).addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryValueAllowed) ?? "")&pass=\((password as NSString).addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryValueAllowed) ?? "")"
+                        }
+                    case let .juicity(uuid, password, sni, allowInsecure, congestionControl):
+                        string = "juicity://\(uuid):\(password)@\(server.host):\(server.port)"
+                        var queryParts: [String] = []
+                        if !congestionControl.isEmpty {
+                            queryParts.append("congestion_control=\(congestionControl)")
+                        }
+                        if !sni.isEmpty {
+                            queryParts.append("sni=\(sni)")
+                        }
+                        if allowInsecure {
+                            queryParts.append("allow_insecure=1")
+                        }
+                        if !queryParts.isEmpty {
+                            string += "?" + queryParts.joined(separator: "&")
                         }
                     }
                     

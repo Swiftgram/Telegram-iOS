@@ -181,6 +181,26 @@ private final class ProxyServerInfoItemNode: ActionSheetItemNode {
                 passwordTextNode.displaysAsynchronously = false
                 passwordTextNode.attributedText = NSAttributedString(string: "•••••", font: textFont, textColor: theme.primaryTextColor)
                 fieldNodes.append((passwordTitleNode, passwordTextNode))
+            case let .juicity(uuid, _, _, _, _):
+                let uuidTitleNode = ImmediateTextNode()
+                uuidTitleNode.isUserInteractionEnabled = false
+                uuidTitleNode.displaysAsynchronously = false
+                uuidTitleNode.attributedText = NSAttributedString(string: "UUID", font: textFont, textColor: theme.secondaryTextColor)
+                let uuidTextNode = ImmediateTextNode()
+                uuidTextNode.isUserInteractionEnabled = false
+                uuidTextNode.displaysAsynchronously = false
+                uuidTextNode.attributedText = NSAttributedString(string: uuid, font: textFont, textColor: theme.primaryTextColor)
+                fieldNodes.append((uuidTitleNode, uuidTextNode))
+
+                let passwordTitleNode = ImmediateTextNode()
+                passwordTitleNode.isUserInteractionEnabled = false
+                passwordTitleNode.displaysAsynchronously = false
+                passwordTitleNode.attributedText = NSAttributedString(string: strings.SocksProxySetup_Password, font: textFont, textColor: theme.secondaryTextColor)
+                let passwordTextNode = ImmediateTextNode()
+                passwordTextNode.isUserInteractionEnabled = false
+                passwordTextNode.displaysAsynchronously = false
+                passwordTextNode.attributedText = NSAttributedString(string: "•••••", font: textFont, textColor: theme.primaryTextColor)
+                fieldNodes.append((passwordTitleNode, passwordTextNode))
         }
         
         let statusTitleNode = ImmediateTextNode()

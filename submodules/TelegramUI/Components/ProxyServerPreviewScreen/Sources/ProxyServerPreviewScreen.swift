@@ -317,6 +317,39 @@ private final class ProxyServerPreviewSheetContent: CombinedComponent {
                         MultilineTextComponent(text: .plain(NSAttributedString(string: "•••••", font: tableFont, textColor: tableTextColor)))
                     )
                 ))
+            case let .juicity(uuid, _, sni, _, congestionControl):
+                tableItems.append(.init(
+                    id: "uuid",
+                    title: "UUID",
+                    component: AnyComponent(
+                        MultilineTextComponent(text: .plain(NSAttributedString(string: uuid, font: tableFont, textColor: tableTextColor)))
+                    )
+                ))
+                tableItems.append(.init(
+                    id: "password",
+                    title: strings.SocksProxySetup_Password,
+                    component: AnyComponent(
+                        MultilineTextComponent(text: .plain(NSAttributedString(string: "•••••", font: tableFont, textColor: tableTextColor)))
+                    )
+                ))
+                if !sni.isEmpty {
+                    tableItems.append(.init(
+                        id: "sni",
+                        title: "SNI",
+                        component: AnyComponent(
+                            MultilineTextComponent(text: .plain(NSAttributedString(string: sni, font: tableFont, textColor: tableTextColor)))
+                        )
+                    ))
+                }
+                if !congestionControl.isEmpty {
+                    tableItems.append(.init(
+                        id: "congestion",
+                        title: "Congestion",
+                        component: AnyComponent(
+                            MultilineTextComponent(text: .plain(NSAttributedString(string: congestionControl, font: tableFont, textColor: tableTextColor)))
+                        )
+                    ))
+                }
             }
             
             var statusText = strings.SocksProxySetup_CheckStatus
