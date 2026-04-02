@@ -606,7 +606,7 @@ public final class TabBarComponent: Component {
                 case 2:
                     widthReducer = 1.5
                 case 3:
-                    widthReducer = 1.25
+                    widthReducer = 1.0
                 case 4:
                     widthReducer = 1.0
                 default:
