@@ -135,3 +135,4 @@
 "Settings.forceBuiltInMic.Notice" = "Si activé, l'application utilisera uniquement le microphone de l'appareil même si des écouteurs sont connectés.";
 
 "Settings.hideChannelBottomButton" = "Masquer le panneau inférieur du canal";
+"Settings.videoControlsInFooter" = "Contrôles vidéo dans le pied de page";

@@ -150,3 +150,4 @@
 
 "Settings.swipeForVideoPIP" = "Videoyu kaydırarak PIP";
 "Settings.swipeForVideoPIP.Notice" = "Eğer etkinleştirildi ise videoyu kaydırmak, Piksel içinde Piksel modunda açılacaktır.";
+"Settings.videoControlsInFooter" = "Alt bilgide video kontrolleri";

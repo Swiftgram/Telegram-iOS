@@ -150,3 +150,4 @@
 
 "Settings.swipeForVideoPIP" = "וידאו PIP עם החלקה";
 "Settings.swipeForVideoPIP.Notice" = "אם מופעל, החלקת הווידאו תפתח אותו במצב תמונה בתוך תמונה.";
+"Settings.videoControlsInFooter" = "פקדי וידאו בכותרת התחתונה";
