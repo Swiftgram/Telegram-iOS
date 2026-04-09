@@ -8,6 +8,7 @@ import SwiftSignalKit
 import Photos
 import TelegramPresentationData
 import TelegramUIPreferences
+import SGSimpleSettings
 import TextFormat
 import TelegramStringFormatting
 import AccountContext
@@ -32,6 +33,7 @@ import TelegramNotices
 import SolidRoundedButtonNode
 import UrlHandling
 import GlassControls
+import VideoPlaybackControlsComponent
 import ComponentFlow
 import ComponentDisplayAdapters
 import EdgeEffect
@@ -154,6 +156,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
     private var buttonNode: SolidRoundedButtonNode?
     private var buttonIconNode: ASImageNode?
     private let buttonPanel = ComponentView<Empty>()
+    private let playbackButtonPanel = ComponentView<Empty>()
     
     private var textSelectionNode: TextSelectionNode?
     
@@ -285,6 +288,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                         self.statusButtonNode.isHidden = true
                         self.statusNode.isHidden = true
                 }
+                self.requestLayout?(.animated(duration: 0.2, curve: .easeInOut))
             }
         }
     }
@@ -1306,6 +1310,8 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         var leftControlItems: [GlassControlGroupComponent.Item] = []
         var rightControlItems: [GlassControlGroupComponent.Item] = []
         var centerControlItems: [GlassControlGroupComponent.Item] = []
+        let videoControlsInFooter = SGSimpleSettings.shared.videoControlsInFooter
+        let playbackControlsVisible = videoControlsInFooter && (!self.playbackControlButton.isHidden || self.hasSeekControls)
         
         if let buttonsState = self.buttonsState {
             if buttonsState.displayActionButton {
@@ -1320,7 +1326,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                     }
                 ))
             }
-            if buttonsState.displayPictureInPictureButton {
+            if !videoControlsInFooter && buttonsState.displayPictureInPictureButton {
                 centerControlItems.append(GlassControlGroupComponent.Item(
                     id: AnyHashable("pip"),
                     content: .icon("Media Gallery/PictureInPictureButton"),
@@ -1332,7 +1338,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                     }
                 ))
             }
-            if let settingsButtonState = buttonsState.settingsButtonState {
+            if !videoControlsInFooter, let settingsButtonState = buttonsState.settingsButtonState {
                 centerControlItems.append(GlassControlGroupComponent.Item(
                     id: AnyHashable("settings"),
                     content: .customIcon(id: AnyHashable("settings"), component: AnyComponent(SettingsNavigationIconComponent(
@@ -1419,6 +1425,32 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
             centerControlItems = []
         }
         
+        var playbackPanelSize = CGSize()
+        if playbackControlsVisible {
+            playbackPanelSize = self.playbackButtonPanel.update(
+                transition: ComponentTransition(transition),
+                component: AnyComponent(VideoPlaybackControlsComponent(
+                    layoutParams: .init(sideButtonSize: 44.0, centerButtonSize: 44.0, spacing: 12.0),
+                    isFooter: true,
+                    isVisible: playbackControlsVisible,
+                    isPlaying: !self.currentIsPaused,
+                    displaySeekControls: self.hasSeekControls,
+                    togglePlayback: { [weak self] in
+                        self?.playbackControlPressed()
+                    },
+                    seek: { [weak self] isForward in
+                        if isForward {
+                            self?.forwardButtonPressed()
+                        } else {
+                            self?.backwardButtonPressed()
+                        }
+                    }
+                )),
+                environment: {},
+                containerSize: CGSize(width: width - buttonPanelInsets.left - buttonPanelInsets.right, height: 44.0)
+            )
+        }
+
         let buttonPanelSize = self.buttonPanel.update(
             transition: ComponentTransition(transition),
             component: AnyComponent(GlassControlPanelComponent(
@@ -1458,6 +1490,16 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         self.playbackControlButton.frame = CGRect(origin: CGPoint(x: floor((width - 44.0) / 2.0), y: panelHeight - buttonPanelInsets.bottom - 44.0 + floorToScreenPixels((44.0 - 44.0) * 0.5)), size: CGSize(width: 44.0, height: 44.0))
         self.playPauseIconNode.frame = self.playbackControlButton.bounds.offsetBy(dx: 2.0, dy: -2.0)
         
+        if playbackControlsVisible, let playbackButtonPanelView = self.playbackButtonPanel.view {
+            if playbackButtonPanelView.superview == nil {
+                self.contentNode.view.addSubview(playbackButtonPanelView)
+            }
+            let playbackPanelFrame = CGRect(origin: CGPoint(x: floor((width - playbackPanelSize.width) * 0.5), y: buttonPanelFrame.minY), size: playbackPanelSize)
+            ComponentTransition(transition).setFrame(view: playbackButtonPanelView, frame: playbackPanelFrame)
+        } else if let playbackButtonPanelView = self.playbackButtonPanel.view, playbackButtonPanelView.superview != nil {
+            playbackButtonPanelView.removeFromSuperview()
+        }
+
         let statusSize = CGSize(width: 28.0, height: 28.0)
         transition.updateFrame(node: self.statusNode, frame: CGRect(origin: CGPoint(x: floor((width - statusSize.width) / 2.0), y: panelHeight - bottomInset - statusSize.height - 8.0), size: statusSize))
         
@@ -1517,6 +1559,9 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         if let buttonPanelView = self.buttonPanel.view {
             buttonPanelView.alpha = 1.0
         }
+        if let playbackButtonPanelView = self.playbackButtonPanel.view {
+            playbackButtonPanelView.alpha = 1.0
+        }
         
         self.backwardButton.alpha = self.hasSeekControls ? 1.0 : 0.0
         self.forwardButton.alpha = self.hasSeekControls ? 1.0 : 0.0
@@ -1545,6 +1590,9 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         
         if let buttonPanelView = self.buttonPanel.view {
             buttonPanelView.alpha = 0.0
+        }
+        if let playbackButtonPanelView = self.playbackButtonPanel.view {
+            playbackButtonPanelView.alpha = 0.0
         }
         
         self.backwardButton.alpha = 0.0
