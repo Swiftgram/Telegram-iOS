@@ -150,3 +150,4 @@
 
 "Settings.swipeForVideoPIP" = "वीडियो PIP स्वाइप के साथ";
 "Settings.swipeForVideoPIP.Notice" = "यदि सक्षम है, तो वीडियो को स्वाइप करने से यह चित्र-इन-चित्र मोड में खोला जाएगा।";
+"Settings.videoControlsInFooter" = "फ़ुटर में वीडियो नियंत्रण";

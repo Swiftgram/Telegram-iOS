@@ -243,3 +243,4 @@
 "PayWall.ValidationError" = "Помилка валідації";
 "PayWall.ValidationError.TryAgain" = "Щось пішло не так під час перевірки покупки. Не хвилюйтеся! Спробуйте відновити покупки трохи пізніше.";
 "PayWall.ValidationError.Expired" = "Ваша підписка застаріла. Підпишіться, щоб відновити доступ до Pro-можливостей.";
+"Settings.videoControlsInFooter" = "Елементи керування відео у футері";

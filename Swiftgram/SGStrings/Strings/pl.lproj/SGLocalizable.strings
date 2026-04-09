@@ -243,3 +243,4 @@
 "PayWall.ValidationError" = "Błąd weryfikacji";
 "PayWall.ValidationError.TryAgain" = "Coś poszło nie tak podczas weryfikacji zakupu. Nie martw się! Spróbuj przywrócić zakupy trochę później.";
 "PayWall.ValidationError.Expired" = "Twoja subskrypcja wygasła. Subskrybuj ponownie, aby odzyskać dostęp do funkcji Pro.";
+"Settings.videoControlsInFooter" = "Elementy sterujące wideo w stopce";

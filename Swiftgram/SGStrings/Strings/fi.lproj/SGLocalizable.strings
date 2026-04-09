@@ -228,3 +228,4 @@
 "Paywall.Error.Title" = "Virhe";
 "PayWall.ValidationError" = "Vahvistusvirhe";
 "PayWall.ValidationError.TryAgain" = "Ostovahvistuksessa tapahtui jokin virhe. Ei hätää! Yritä palauttaa ostot hieman myöhemmin.";
+"Settings.videoControlsInFooter" = "Videon säätimet alatunnisteessa";
