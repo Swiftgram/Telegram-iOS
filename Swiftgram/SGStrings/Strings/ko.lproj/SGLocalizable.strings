@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "클라우드에 저장";
 "ContextMenu.SelectFromUser" = "사용자에서 선택";
+"Settings.MessageSelection.Header" = "메시지 선택";
+"Settings.Selection.SaveToCloudButton" = "클라우드에 저장 버튼";
+"Settings.Selection.HideSenderNamesButton" = "보낸 사람 이름 숨기기 버튼";
 
 "Settings.ContextMenu" = "컨텍스트 메뉴";
 "Settings.ContextMenu.Notice" = "'Swiftgram' 하위 메뉴에서 비활성화된 항목을 사용할 수 있습니다.";

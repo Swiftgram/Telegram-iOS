@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "Salvează în Cloud";
 "ContextMenu.SelectFromUser" = "Selectați din autor";
+"Settings.MessageSelection.Header" = "SELECTAREA MESAJELOR";
+"Settings.Selection.SaveToCloudButton" = "Buton Salvează în Cloud";
+"Settings.Selection.HideSenderNamesButton" = "Buton Ascunde numele expeditorilor";
 
 "Settings.ContextMenu" = "MENIU CONTEXTUAL";
 "Settings.ContextMenu.Notice" = "Intrările dezactivate vor fi disponibile în submeniul 'Swiftgram'.";
