@@ -115,6 +115,9 @@
 
 "ContextMenu.SaveToCloud" = "Сохранить в Избранное";
 "ContextMenu.SelectFromUser" = "Выбрать от Автора";
+"Settings.MessageSelection.Header" = "ВЫБОР СООБЩЕНИЙ";
+"Settings.Selection.SaveToCloudButton" = "Кнопка «Сохранить в Избранное»";
+"Settings.Selection.HideSenderNamesButton" = "Кнопка «Скрыть имена отправителей»";
 
 "Settings.ContextMenu" = "КОНТЕКСТНОЕ МЕНЮ";
 "Settings.ContextMenu.Notice" = "Выключенные пункты будут доступны в подменю «Swiftgram».";

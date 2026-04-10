@@ -16,6 +16,7 @@ import TopMessageReactions
 import GlassBackgroundComponent
 import ComponentFlow
 import ComponentDisplayAdapters
+import SGSimpleSettings
 
 private final class ChatMessageSelectionInputPanelNodeViewForOverlayContent: UIView, ChatInputPanelViewForOverlayContent {
     var reactionContextNode: ReactionContextNode?
@@ -260,11 +261,13 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
         self.cloudButton.icon = "SaveToCloud"
         self.cloudButton.isAccessibilityElement = true
         self.cloudButton.accessibilityLabel = "Save To Cloud"
+        self.cloudButton.isHidden = !SGSimpleSettings.shared.selectionShowSaveToCloudButton
 
         self.forwardHideNamesButton = GlassButtonView()
         self.forwardHideNamesButton.image = generateTintedImage(image: UIImage(bundleImageName: "Avatar/AnonymousSenderIcon"), color: theme.chat.inputPanel.panelControlAccentColor, customSize: CGSize(width: 28.0, height: 28.0))
         self.forwardHideNamesButton.isAccessibilityElement = true
-        self.forwardHideNamesButton.accessibilityLabel = "Hide Sender Name"
+        self.forwardHideNamesButton.accessibilityLabel = strings.Conversation_ForwardOptions_HideSendersNames
+        self.forwardHideNamesButton.isHidden = !SGSimpleSettings.shared.selectionShowHideForwardNameButton
         //
         
         self.shareButton = GlassButtonView()
