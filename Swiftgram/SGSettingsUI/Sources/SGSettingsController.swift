@@ -40,6 +40,7 @@ private enum SGControllerSection: Int32, SGItemListSection {
     case photo
     case stickers
     case videoNotes
+    case messageSelection
     case contextMenu
     case accountColors
     case other
@@ -68,7 +69,9 @@ private enum SGBoolSetting: String {
     case showRepostToStory
     case contextShowSelectFromUser
     case contextShowSaveToCloud
+    case selectionShowSaveToCloudButton
     case contextShowHideForwardName
+    case selectionShowHideForwardNameButton
     case contextShowRestrict
     case contextShowReport
     case contextShowReply
@@ -258,6 +261,10 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     
     entries.append(.header(id: id.count, section: .videoNotes, text: i18n("Settings.VideoNotes.Header", lang), badge: nil))
     entries.append(.toggle(id: id.count, section: .videoNotes, settingName: .startTelescopeWithRearCam, value: SGSimpleSettings.shared.startTelescopeWithRearCam, text: i18n("Settings.VideoNotes.StartWithRearCam", lang), enabled: true))
+
+    entries.append(.header(id: id.count, section: .messageSelection, text: i18n("Settings.MessageSelection.Header", lang), badge: nil))
+    entries.append(.toggle(id: id.count, section: .messageSelection, settingName: .selectionShowSaveToCloudButton, value: SGSimpleSettings.shared.selectionShowSaveToCloudButton, text: i18n("Settings.Selection.SaveToCloudButton", lang), enabled: true))
+    entries.append(.toggle(id: id.count, section: .messageSelection, settingName: .selectionShowHideForwardNameButton, value: SGSimpleSettings.shared.selectionShowHideForwardNameButton, text: i18n("Settings.Selection.HideSenderNamesButton", lang), enabled: true))
     
     entries.append(.header(id: id.count, section: .contextMenu, text: i18n("Settings.ContextMenu", lang), badge: nil))
     entries.append(.notice(id: id.count, section: .contextMenu, text: i18n("Settings.ContextMenu.Notice", lang)))
@@ -426,10 +433,14 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.contextShowSelectFromUser = value
         case .contextShowSaveToCloud:
             SGSimpleSettings.shared.contextShowSaveToCloud = value
+        case .selectionShowSaveToCloudButton:
+            SGSimpleSettings.shared.selectionShowSaveToCloudButton = value
         case .contextShowRestrict:
             SGSimpleSettings.shared.contextShowRestrict = value
         case .contextShowHideForwardName:
             SGSimpleSettings.shared.contextShowHideForwardName = value
+        case .selectionShowHideForwardNameButton:
+            SGSimpleSettings.shared.selectionShowHideForwardNameButton = value
         case .disableScrollToNextChannel:
             SGSimpleSettings.shared.disableScrollToNextChannel = !value
         case .disableScrollToNextTopic:
