@@ -159,10 +159,6 @@ enum PeerInfoMemberAction {
 }
 
 enum PeerInfoContextSubject {
-    // MARK: Swiftgram
-    case copy(String)
-    case aboutDC
-    //
     case bio
     case phone(String)
     case link(customLink: String?)
