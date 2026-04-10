@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Μέγιστο";
 
 "Settings.ShowProfileID" = "Εμφάνιση Αναγνωριστικού Προφίλ";
+"Settings.ShowSwiftgramSubMenu" = "Υπομενού \"Swiftgram\"";
 "Settings.ShowDC" = "Εμφάνιση Κέντρου Δεδομένων";
 "Settings.ShowCreationDate" = "Εμφάνιση Ημερομηνίας Δημιουργίας Συνομιλίας";
 "Settings.ShowCreationDate.Notice" = "Η ημερομηνία δημιουργίας μπορεί να είναι άγνωστη για μερικές συνομιλίες.";

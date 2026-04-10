@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Maksimum";
 
 "Settings.ShowProfileID" = "Profil Id'ni ko'rsatish";
+"Settings.ShowSwiftgramSubMenu" = "\"Swiftgram\" quyi menyusi";
 "Settings.ShowDC" = "Ma'lumotlar bazasini ko'rsatish";
 "Settings.ShowCreationDate" = "Suxbat yaratilgan sanani ko'rsatish";
 "Settings.ShowCreationDate.Notice" = "Ba'zi sahifalarning yaratilish sanasi ma'lum emas.";

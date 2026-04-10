@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "En fazla";
 
 "Settings.ShowProfileID" = "Profil ID'sini Göster";
+"Settings.ShowSwiftgramSubMenu" = "\"Swiftgram\" alt menüsü";
 "Settings.ShowDC" = "Veri Merkezini Göster";
 "Settings.ShowCreationDate" = "Sohbet Oluşturma Tarihini Göster";
 "Settings.ShowCreationDate.Notice" = "Bazı sohbetler için oluşturma tarihi bilinmeyebilir.";

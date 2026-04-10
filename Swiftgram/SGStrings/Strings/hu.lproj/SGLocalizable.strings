@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Maximális";
 
 "Settings.ShowProfileID" = "Profil azonosító megjelenítése";
+"Settings.ShowSwiftgramSubMenu" = "\"Swiftgram\" almenü";
 "Settings.ShowDC" = "Adatközpont megjelenítése";
 "Settings.ShowCreationDate" = "Beszélgetés létrehozásának dátumának megjelenítése";
 "Settings.ShowCreationDate.Notice" = "A beszélgetés létrehozásának dátuma ismeretlen lehet néhány csevegésnél.";
