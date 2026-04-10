@@ -409,39 +409,45 @@ extension ChatControllerImpl {
                 }
             })))
         } else {
-            items.append(.action(ContextMenuActionItem(text: strings.Chat_CreateTopic, icon: { theme in
-                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Edit"), color: theme.contextMenu.primaryColor)
-            }, action: { [weak self] action in
-                guard let self else {
-                    return
-                }
-                
-                action.dismissWithResult(.default)
-                
-                let controller = ForumCreateTopicScreen(context: self.context, peerId: peerId, mode: .create)
-                controller.navigationPresentation = .modal
-                
-                controller.completion = { [weak self, weak controller] title, fileId, iconColor, _ in
-                    controller?.isInProgress = true
-                    controller?.view.endEditing(true)
-                    
+            var canCreateTopics = false
+            if let peer = self.presentationInterfaceState.renderedPeer?.chatMainPeer as? TelegramUser, let botInfo = peer.botInfo, botInfo.flags.contains(.forumManagedByUser) {
+                canCreateTopics = true
+            }
+            if canCreateTopics {
+                items.append(.action(ContextMenuActionItem(text: strings.Chat_CreateTopic, icon: { theme in
+                    return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Edit"), color: theme.contextMenu.primaryColor)
+                }, action: { [weak self] action in
                     guard let self else {
                         return
                     }
                     
-                    let _ = (self.context.engine.peers.createForumChannelTopic(id: peerId, title: title, iconColor: iconColor, iconFileId: fileId)
-                             |> deliverOnMainQueue).startStandalone(next: { [weak self, weak controller] topicId in
+                    action.dismissWithResult(.default)
+                    
+                    let controller = ForumCreateTopicScreen(context: self.context, peerId: peerId, mode: .create)
+                    controller.navigationPresentation = .modal
+                    
+                    controller.completion = { [weak self, weak controller] title, fileId, iconColor, _ in
+                        controller?.isInProgress = true
+                        controller?.view.endEditing(true)
+                        
                         guard let self else {
                             return
                         }
-                        self.updateChatLocationThread(threadId: topicId)
-                        controller?.dismiss()
-                    }, error: { _ in
-                        controller?.isInProgress = false
-                    })
-                }
-                self.push(controller)
-            })))
+                        
+                        let _ = (self.context.engine.peers.createForumChannelTopic(id: peerId, title: title, iconColor: iconColor, iconFileId: fileId)
+                                 |> deliverOnMainQueue).startStandalone(next: { [weak self, weak controller] topicId in
+                            guard let self else {
+                                return
+                            }
+                            self.updateChatLocationThread(threadId: topicId)
+                            controller?.dismiss()
+                        }, error: { _ in
+                            controller?.isInProgress = false
+                        })
+                    }
+                    self.push(controller)
+                })))
+            }
         }
 
         let presentationData = self.presentationData

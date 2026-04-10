@@ -3801,6 +3801,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
                     badgeStrokeColor: .clear,
                     badgeTextColor: .clear,
                     accentButtonColor: self.presentationData.theme.list.itemCheckColors.fillColor,
+                    accentDisabledButtonColor: self.presentationData.theme.chat.inputPanel.panelControlDisabledColor,
                     accentForegroundColor: self.presentationData.theme.list.itemCheckColors.foregroundColor
                 ),
                 strings: NavigationBarStrings(back: "", close: "")
