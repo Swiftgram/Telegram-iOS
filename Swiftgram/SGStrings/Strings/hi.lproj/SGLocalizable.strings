@@ -120,12 +120,21 @@
 "Settings.DefaultEmojisFirst.Notice" = "इमोजी कीबोर्ड में प्रीमियम से पहले मानक इमोजी दिखाएं";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "बनाया गया: %@";
+"Chat.Created.Label" = "बनाया गया";
+"Chat.Created.Copy" = "निर्माण तिथि कॉपी करें";
+"Chat.Created.Copied" = "निर्माण तिथि क्लिपबोर्ड पर कॉपी हो गई।";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
 "Chat.JoinedDateTitle" = "%@ में शामिल हो गया";
+"Chat.JoinedDate.Copy" = "जुड़ने की तारीख कॉपी करें";
+"Chat.JoinedDate.Copied" = "जुड़ने की तारीख क्लिपबोर्ड पर कॉपी हो गई।";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
 "Chat.RegDate" = "पंजीकृत";
+"Chat.RegDate.Copy" = "पंजीकरण तिथि कॉपी करें";
+"Chat.RegDate.Copied" = "पंजीकरण तिथि क्लिपबोर्ड पर कॉपी हो गई।";
+"Chat.ID" = "आईडी";
+"Chat.ID.Copy" = "आईडी कॉपी करें";
+"Chat.ID.Copied" = "आईडी क्लिपबोर्ड पर कॉपी हो गई।";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "संदेश संपादित करने के लिए दो बार टैप करें";
 

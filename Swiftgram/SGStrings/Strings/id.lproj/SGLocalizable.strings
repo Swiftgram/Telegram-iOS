@@ -120,12 +120,21 @@
 "Settings.DefaultEmojisFirst.Notice" = "Tampilkan emoji standar sebelum emoji premium di papan tombol emoji";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "dibuat: %@";
+"Chat.Created.Label" = "Dibuat";
+"Chat.Created.Copy" = "Salin tanggal pembuatan";
+"Chat.Created.Copied" = "Tanggal pembuatan disalin ke papan klip.";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
 "Chat.JoinedDateTitle" = "Bergabung %@";
+"Chat.JoinedDate.Copy" = "Salin tanggal bergabung";
+"Chat.JoinedDate.Copied" = "Tanggal bergabung disalin ke papan klip.";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
 "Chat.RegDate" = "Terdaftar";
+"Chat.RegDate.Copy" = "Salin tanggal pendaftaran";
+"Chat.RegDate.Copied" = "Tanggal pendaftaran disalin ke papan klip.";
+"Chat.ID" = "ID";
+"Chat.ID.Copy" = "Salin ID";
+"Chat.ID.Copied" = "ID disalin ke papan klip.";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Ketuk dua kali untuk mengedit pesan";
 
