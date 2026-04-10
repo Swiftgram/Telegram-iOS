@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "In Cloud speichern";
 "ContextMenu.SelectFromUser" = "Vom Autor auswählen";
+"Settings.MessageSelection.Header" = "NACHRICHTENAUSWAHL";
+"Settings.Selection.SaveToCloudButton" = "Schaltfläche In Cloud speichern";
+"Settings.Selection.HideSenderNamesButton" = "Schaltfläche Absendernamen verbergen";
 
 "Settings.ContextMenu" = "KONTEXTMENÜ";
 "Settings.ContextMenu.Notice" = "Deaktivierte Einträge sind im 'Swiftgram'-Untermenü verfügbar.";

@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "Simpan ke Cloud";
 "ContextMenu.SelectFromUser" = "Pilih dari Penulis";
+"Settings.MessageSelection.Header" = "PILIHAN PESAN";
+"Settings.Selection.SaveToCloudButton" = "Tombol Simpan ke Cloud";
+"Settings.Selection.HideSenderNamesButton" = "Tombol Sembunyikan Nama Pengirim";
 
 "Settings.ContextMenu" = "MENU KONTEKS";
 "Settings.ContextMenu.Notice" = "Entri yang dinonaktifkan akan tersedia di sub-menu \"Swiftgram\".";

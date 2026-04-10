@@ -96,6 +96,9 @@
 
 "ContextMenu.SaveToCloud" = "Zapisz w chmurze";
 "ContextMenu.SelectFromUser" = "Zaznacz od autora";
+"Settings.MessageSelection.Header" = "WYBÓR WIADOMOŚCI";
+"Settings.Selection.SaveToCloudButton" = "Przycisk Zapisz w chmurze";
+"Settings.Selection.HideSenderNamesButton" = "Przycisk Ukryj nazwy nadawców";
 
 "Settings.ContextMenu" = "MENU KONTEKSTOWE";
 "Settings.ContextMenu.Notice" = "Wyłączone wpisy będą dostępne w podmenu „Swiftgram”.";

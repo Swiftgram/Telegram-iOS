@@ -12,3 +12,6 @@
 "Chat.ID" = "id";
 "Chat.ID.Copy" = "Kopírovať ID";
 "Chat.ID.Copied" = "ID skopírované";
+"Settings.MessageSelection.Header" = "VÝBER SPRÁV";
+"Settings.Selection.SaveToCloudButton" = "Tlačidlo Uložiť na Cloud";
+"Settings.Selection.HideSenderNamesButton" = "Tlačidlo Skryť mená odosielateľov";

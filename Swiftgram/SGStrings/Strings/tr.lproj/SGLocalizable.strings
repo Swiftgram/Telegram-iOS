@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "Buluta Kaydet";
 "ContextMenu.SelectFromUser" = "Yazardan Seç";
+"Settings.MessageSelection.Header" = "MESAJ SEÇİMİ";
+"Settings.Selection.SaveToCloudButton" = "Buluta Kaydet düğmesi";
+"Settings.Selection.HideSenderNamesButton" = "Gönderen adlarını gizle düğmesi";
 
 "Settings.ContextMenu" = "BAĞLAM MENÜSÜ";
 "Settings.ContextMenu.Notice" = "Devre dışı bırakılmış girişler \"Swiftgram\" alt menüsünde mevcut olacaktır.";
