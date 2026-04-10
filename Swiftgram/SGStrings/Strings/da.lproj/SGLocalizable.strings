@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Maksimum";
 
 "Settings.ShowProfileID" = "Profil-ID anzeigen";
+"Settings.ShowSwiftgramSubMenu" = "\"Swiftgram\"-undermenu";
 "Settings.ShowDC" = "Vis Datacenter";
 "Settings.ShowCreationDate" = "Vis Chattens Oprettelsesdato";
 "Settings.ShowCreationDate.Notice" = "Oprettelsesdatoen kan være ukendt for nogle chats.";

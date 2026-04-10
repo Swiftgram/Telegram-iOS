@@ -80,6 +80,7 @@
 "Settings.DownloadsBoost.maximum" = "Máximo";
 
 "Settings.ShowProfileID" = "Mostrar perfil";
+"Settings.ShowSwiftgramSubMenu" = "Submenu \"Swiftgram\"";
 "Settings.ShowDC" = "Mostrar Centro de Dados";
 "Settings.ShowCreationDate" = "Mostrar data de criação do chat";
 "Settings.ShowCreationDate.Notice" = "A data de criação pode ser desconhecida para alguns chats.";

@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "최대";
 
 "Settings.ShowProfileID" = "프로필 ID 표시";
+"Settings.ShowSwiftgramSubMenu" = "\"Swiftgram\" 하위 메뉴";
 "Settings.ShowDC" = "데이터센터보기";
 "Settings.ShowCreationDate" = "채팅 생성 날짜 표시";
 "Settings.ShowCreationDate.Notice" = "몇몇 채팅에 대해서는 생성 날짜를 알 수 없을 수 있습니다.";

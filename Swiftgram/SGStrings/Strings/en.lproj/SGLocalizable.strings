@@ -85,6 +85,7 @@
 "Settings.DownloadsBoost.maximum" = "Maximum";
 
 "Settings.ShowProfileID" = "Show Profile ID";
+"Settings.ShowSwiftgramSubMenu" = "\"Swiftgram\" sub-menu";
 "Settings.ShowDC" = "Show Data Center";
 "Settings.ShowCreationDate" = "Show Chat Creation Date";
 "Settings.ShowCreationDate.Notice" = "The creation date may be unknown for some chats.";

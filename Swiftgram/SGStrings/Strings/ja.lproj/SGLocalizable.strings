@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "最大";
 
 "Settings.ShowProfileID" = "プロフィールIDを表示";
+"Settings.ShowSwiftgramSubMenu" = "「Swiftgram」サブメニュー";
 "Settings.ShowDC" = "データセンターを表示";
 "Settings.ShowCreationDate" = "チャットの作成日を表示";
 "Settings.ShowCreationDate.Notice" = "作成日が不明なチャットがあります。";

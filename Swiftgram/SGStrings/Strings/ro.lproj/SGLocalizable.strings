@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Maxim";
 
 "Settings.ShowProfileID" = "Arată ID-ul profilului";
+"Settings.ShowSwiftgramSubMenu" = "Submeniul „Swiftgram”";
 "Settings.ShowDC" = "Arată Centrul de date";
 "Settings.ShowCreationDate" = "Arată data creării chat-ului";
 "Settings.ShowCreationDate.Notice" = "Data creării poate fi necunoscută pentru unele conversații.";

@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Maksimi";
 
 "Settings.ShowProfileID" = "Näytä profiilin ID";
+"Settings.ShowSwiftgramSubMenu" = "\"Swiftgram\"-alivalikko";
 "Settings.ShowDC" = "Näytä tietokeskus";
 "Settings.ShowCreationDate" = "Näytä keskustelun luontipäivä";
 "Settings.ShowCreationDate.Notice" = "Keskustelun luontipäivä voi olla tuntematon joillekin keskusteluille.";

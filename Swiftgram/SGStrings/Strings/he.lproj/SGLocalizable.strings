@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "מרבי";
 
 "Settings.ShowProfileID" = "הצג מזהה פרופיל";
+"Settings.ShowSwiftgramSubMenu" = "תת-תפריט \"Swiftgram\"";
 "Settings.ShowDC" = "הצג מרכז מידע";
 "Settings.ShowCreationDate" = "הצג תאריך יצירת צ'אט";
 "Settings.ShowCreationDate.Notice" = "ייתכן שתאריך היצירה אינו ידוע עבור חלק מהצ'אטים.";
