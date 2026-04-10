@@ -673,6 +673,11 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                     return
                 }
                 self.openBirthdayContextMenu(node: node, gesture: gesture)
+            }, openSgContextMenu: { [weak self] node, gesture, action in
+                guard let self else {
+                    return
+                }
+                self.openSgContextMenu(node: node, gesture: gesture, action: action)
             }, openMemberContextMenu: { [weak self] member, node, gesture in
                 guard let self else {
                     return
