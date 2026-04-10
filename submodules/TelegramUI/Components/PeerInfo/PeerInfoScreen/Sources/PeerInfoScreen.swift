@@ -150,8 +150,6 @@ enum PeerInfoMemberAction {
 }
 
 enum PeerInfoContextSubject {
-    case copy(String)
-    case aboutDC
     case bio
     case phone(String)
     case link(customLink: String?)
