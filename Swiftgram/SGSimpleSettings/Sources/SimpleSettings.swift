@@ -136,6 +136,7 @@ public class SGSimpleSettings {
         case stickerTimestamp
         case hideRecordingButton
         case hideTabBar
+        case showSwiftgramSubMenu
         case showDC
         case showCreationDate
         case showRegDate
@@ -294,6 +295,7 @@ public class SGSimpleSettings {
         Keys.stickerTimestamp.rawValue: true,
         Keys.hideRecordingButton.rawValue: false,
         Keys.hideTabBar.rawValue: false,
+        Keys.showSwiftgramSubMenu.rawValue: true,
         Keys.showDC.rawValue: false,
         Keys.showCreationDate.rawValue: true,
         Keys.showRegDate.rawValue: true,
@@ -478,6 +480,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.hideTabBar.rawValue)
     public var hideTabBar: Bool
+
+    @UserDefault(key: Keys.showSwiftgramSubMenu.rawValue)
+    public var showSwiftgramSubMenu: Bool
 
     @UserDefault(key: Keys.showProfileId.rawValue)
     public var showProfileId: Bool
