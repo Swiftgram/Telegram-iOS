@@ -97,6 +97,9 @@
 
 "ContextMenu.SaveToCloud" = "メッセージを保存";
 "ContextMenu.SelectFromUser" = "全て選択";
+"Settings.MessageSelection.Header" = "メッセージ選択";
+"Settings.Selection.SaveToCloudButton" = "「メッセージを保存」ボタン";
+"Settings.Selection.HideSenderNamesButton" = "「送信者名を隠す」ボタン";
 
 "Settings.ContextMenu" = "コンテキスト メニュー";
 "Settings.ContextMenu.Notice" = "無効化されたエントリは、「Swiftgram」サブメニューから利用できます。";

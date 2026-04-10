@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "שמור בענן";
 "ContextMenu.SelectFromUser" = "בחר מהמשתמש";
+"Settings.MessageSelection.Header" = "בחירת הודעות";
+"Settings.Selection.SaveToCloudButton" = "כפתור שמירה בענן";
+"Settings.Selection.HideSenderNamesButton" = "כפתור הסתרת שמות השולחים";
 
 "Settings.ContextMenu" = "תפריט הקשר";
 "Settings.ContextMenu.Notice" = "פריטים מבוטלים יהיו זמינים בתת-תפריט 'Swiftgram'.";

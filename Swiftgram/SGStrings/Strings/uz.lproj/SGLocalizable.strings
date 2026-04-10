@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "Bulutga saqlash";
 "ContextMenu.SelectFromUser" = "Avtordan tanlash";
+"Settings.MessageSelection.Header" = "XABARLARNI TANLASH";
+"Settings.Selection.SaveToCloudButton" = "Bulutga saqlash tugmasi";
+"Settings.Selection.HideSenderNamesButton" = "Yuboruvchilar nomini yashirish tugmasi";
 
 "Settings.ContextMenu" = "KONTEKS MENYU";
 "Settings.ContextMenu.Notice" = "O'chirilgan kirishlar \"Swiftgram\" pastki menudasiga o'tkaziladi.";

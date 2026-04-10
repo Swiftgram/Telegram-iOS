@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "क्लाउड में सहेजें";
 "ContextMenu.SelectFromUser" = "लेखक में से चुनें";
+"Settings.MessageSelection.Header" = "संदेश चयन";
+"Settings.Selection.SaveToCloudButton" = "क्लाउड में सहेजें बटन";
+"Settings.Selection.HideSenderNamesButton" = "प्रेषकों के नाम छिपाने का बटन";
 
 "Settings.ContextMenu" = "संदर्भ मेनू";
 "Settings.ContextMenu.Notice" = "अक्षम प्रविष्टियाँ \"स्विफ्टग्राम\" उप-मेनू में उपलब्ध होंगी।";

@@ -96,6 +96,9 @@
 
 "ContextMenu.SaveToCloud" = "Переслати в Збережене";
 "ContextMenu.SelectFromUser" = "Вибрати від автора";
+"Settings.MessageSelection.Header" = "ВИБІР ПОВІДОМЛЕНЬ";
+"Settings.Selection.SaveToCloudButton" = "Кнопка Переслати в Збережене";
+"Settings.Selection.HideSenderNamesButton" = "Кнопка Приховати імена відправників";
 
 "Settings.ContextMenu" = "КОНТЕКСТНЕ МЕНЮ";
 "Settings.ContextMenu.Notice" = "Вимкнені елементи будуть доступні в підменю \"Swiftgram\".";

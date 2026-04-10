@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "Lagre til skyen";
 "ContextMenu.SelectFromUser" = "Velg fra forfatter";
+"Settings.MessageSelection.Header" = "MELDINGSVALG";
+"Settings.Selection.SaveToCloudButton" = "Lagre til skyen-knapp";
+"Settings.Selection.HideSenderNamesButton" = "Skjul avsendernavn-knapp";
 
 "Settings.ContextMenu" = "KONTEKSTMENY";
 "Settings.ContextMenu.Notice" = "Deaktiverte oppføringer vil være tilgjengelige i 'Swiftgram'-undermenyen.";
