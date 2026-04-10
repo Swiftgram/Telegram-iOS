@@ -577,9 +577,7 @@ func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId: Bool, d
                     icon: .qrCode,
                     action: { _, progress in
                         interaction.openUsername(linkText, true, progress)
-                    }, longTapAction: { sourceNode in
-                        interaction.openPeerInfoContextMenu(.link(customLink: linkText), sourceNode, nil)
-                    }, linkItemAction: { type, item, _, _, progress in
+                    }, longTapAction: nil, linkItemAction: { type, item, _, _, progress in
                         if case .tap = type {
                             if case let .mention(username) = item {
                                 interaction.openUsername(String(username.suffix(from: username.index(username.startIndex, offsetBy: 1))), false, progress)
@@ -587,6 +585,8 @@ func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId: Bool, d
                         }
                     }, iconAction: {
                         interaction.openQrCode()
+                    }, contextAction: { sourceNode, gesture, _ in
+                        openSgContextMenu(sourceNode, gesture, .copyLink(text: linkText))
                     }, requestLayout: { animated in
                         interaction.requestLayout(animated)
                     }
@@ -630,20 +630,20 @@ func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId: Bool, d
                         icon: .qrCode,
                         action: { _, progress in
                             interaction.openUsername(mainUsername, true, progress)
-                        }, longTapAction: { sourceNode in
-                            interaction.openPeerInfoContextMenu(.link(customLink: nil), sourceNode, nil)
-                        }, linkItemAction: { type, item, sourceNode, sourceRect, progress in
+                        }, longTapAction: nil, linkItemAction: { type, item, sourceNode, _, progress in
                             if case .tap = type {
                                 if case let .mention(username) = item {
                                     interaction.openUsername(String(username.suffix(from: username.index(username.startIndex, offsetBy: 1))), false, progress)
                                 }
                             } else if case .longTap = type {
                                 if case let .mention(username) = item {
-                                    interaction.openPeerInfoContextMenu(.link(customLink: username), sourceNode, sourceRect)
+                                    openSgContextMenu(sourceNode, nil, .copyLink(text: username))
                                 }
                             }
                         }, iconAction: {
                             interaction.openQrCode()
+                        }, contextAction: { sourceNode, gesture, _ in
+                            openSgContextMenu(sourceNode, gesture, .copyLink(text: "https://t.me/\(mainUsername)"))
                         }, requestLayout: { animated in
                             interaction.requestLayout(animated)
                         }
