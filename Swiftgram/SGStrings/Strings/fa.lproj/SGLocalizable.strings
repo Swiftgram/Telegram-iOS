@@ -7,3 +7,13 @@
 "Settings.ShowProfileID" = "نمایش ایدی پروفایل";
 "Settings.Translation.QuickTranslateButton" = "دکمه ترجمه سریع";
 "ContextMenu.SaveToCloud" = "ذخیره در فضای ابری";
+"Chat.Created.Label" = "ایجاد شد";
+"Chat.Created.Copy" = "کپی تاریخ ایجاد";
+"Chat.Created.Copied" = "تاریخ ایجاد در کلیپ‌بورد کپی شد.";
+"Chat.JoinedDate.Copy" = "کپی تاریخ پیوستن";
+"Chat.JoinedDate.Copied" = "تاریخ پیوستن در کلیپ‌بورد کپی شد.";
+"Chat.RegDate.Copy" = "کپی تاریخ ثبت‌نام";
+"Chat.RegDate.Copied" = "تاریخ ثبت‌نام در کلیپ‌بورد کپی شد.";
+"Chat.ID" = "شناسه";
+"Chat.ID.Copy" = "کپی شناسه";
+"Chat.ID.Copied" = "شناسه در کلیپ‌بورد کپی شد.";

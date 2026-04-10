@@ -120,12 +120,21 @@
 "Settings.DefaultEmojisFirst.Notice" = "Vis standard emojis før premium på emoji-tastaturet";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "opprettet: %@";
+"Chat.Created.Label" = "Opprettet";
+"Chat.Created.Copy" = "Kopier opprettelsesdato";
+"Chat.Created.Copied" = "Opprettelsesdato kopiert til utklippstavlen.";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
 "Chat.JoinedDateTitle" = "Ble med %@";
+"Chat.JoinedDate.Copy" = "Kopier innmeldingsdato";
+"Chat.JoinedDate.Copied" = "Innmeldingsdato kopiert til utklippstavlen.";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
 "Chat.RegDate" = "Registrert";
+"Chat.RegDate.Copy" = "Kopier registreringsdato";
+"Chat.RegDate.Copied" = "Registreringsdato kopiert til utklippstavlen.";
+"Chat.ID" = "ID";
+"Chat.ID.Copy" = "Kopier ID";
+"Chat.ID.Copied" = "ID kopiert til utklippstavlen.";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Dobbelttrykk for å redigere meldingen";
 

@@ -120,12 +120,21 @@
 "Settings.DefaultEmojisFirst.Notice" = "عرض الرموز التعبيرية الافتراضية قبل الرموز المتميزة في لوحة المفاتيح";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "تم إنشاؤه: %@";
+"Chat.Created.Label" = "تم إنشاؤه";
+"Chat.Created.Copy" = "نسخ تاريخ الإنشاء";
+"Chat.Created.Copied" = "تم نسخ تاريخ الإنشاء إلى الحافظة.";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
 "Chat.JoinedDateTitle" = "انضم %@";
+"Chat.JoinedDate.Copy" = "نسخ تاريخ الانضمام";
+"Chat.JoinedDate.Copied" = "تم نسخ تاريخ الانضمام إلى الحافظة.";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
 "Chat.RegDate" = "مسجل";
+"Chat.RegDate.Copy" = "نسخ تاريخ التسجيل";
+"Chat.RegDate.Copied" = "تم نسخ تاريخ التسجيل إلى الحافظة.";
+"Chat.ID" = "المعرّف";
+"Chat.ID.Copy" = "نسخ المعرّف";
+"Chat.ID.Copied" = "تم نسخ المعرّف إلى الحافظة.";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "اضغط مزدوجًا لتحرير الرسالة";
 
