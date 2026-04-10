@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "Desar al Núvol";
 "ContextMenu.SelectFromUser" = "Seleccionar de l'Autor";
+"Settings.MessageSelection.Header" = "SELECCIÓ DE MISSATGES";
+"Settings.Selection.SaveToCloudButton" = "Botó de Desar al Núvol";
+"Settings.Selection.HideSenderNamesButton" = "Botó d'Amagar els Noms dels Remitents";
 
 "Settings.ContextMenu" = "MENÚ CONTEXTUAL";
 "Settings.ContextMenu.Notice" = "Les entrades desactivades estaran disponibles al submenú \"Swiftgram\".";

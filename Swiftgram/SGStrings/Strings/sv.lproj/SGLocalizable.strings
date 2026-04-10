@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "Spara till Molnet";
 "ContextMenu.SelectFromUser" = "Välj från Författaren";
+"Settings.MessageSelection.Header" = "MEDDELANDEVAL";
+"Settings.Selection.SaveToCloudButton" = "Knappen Spara till Molnet";
+"Settings.Selection.HideSenderNamesButton" = "Knappen Dölj avsändarnamn";
 
 "Settings.ContextMenu" = "KONTEXTMENY";
 "Settings.ContextMenu.Notice" = "Inaktiverade poster kommer att vara tillgängliga i 'Swiftgram'-undermenyn.";
