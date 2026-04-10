@@ -120,12 +120,21 @@
 "Settings.DefaultEmojisFirst.Notice" = "이모지 키보드에서 프리미엄 이모지보다 표준 이모지 우선 표시";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "생성됨: %@";
+"Chat.Created.Label" = "생성됨";
+"Chat.Created.Copy" = "생성 날짜 복사";
+"Chat.Created.Copied" = "생성 날짜가 클립보드에 복사되었습니다.";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
 "Chat.JoinedDateTitle" = "%@에 가입함";
+"Chat.JoinedDate.Copy" = "참여 날짜 복사";
+"Chat.JoinedDate.Copied" = "참여 날짜가 클립보드에 복사되었습니다.";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
 "Chat.RegDate" = "가입함";
+"Chat.RegDate.Copy" = "등록 날짜 복사";
+"Chat.RegDate.Copied" = "등록 날짜가 클립보드에 복사되었습니다.";
+"Chat.ID" = "ID";
+"Chat.ID.Copy" = "ID 복사";
+"Chat.ID.Copied" = "ID가 클립보드에 복사되었습니다.";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "메시지 수정을 위해 두 번 탭";
 

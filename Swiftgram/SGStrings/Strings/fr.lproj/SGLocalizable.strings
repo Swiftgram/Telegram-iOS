@@ -119,12 +119,21 @@
 "Settings.DefaultEmojisFirst.Notice" = "Afficher les emojis standard avant les emojis premium dans le clavier emoji";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "créé: %@";
+"Chat.Created.Label" = "Créé";
+"Chat.Created.Copy" = "Copier la date de création";
+"Chat.Created.Copied" = "La date de création a été copiée dans le presse-papiers.";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
 "Chat.JoinedDateTitle" = "Rejoint %@";
+"Chat.JoinedDate.Copy" = "Copier la date d'adhésion";
+"Chat.JoinedDate.Copied" = "La date d'adhésion a été copiée dans le presse-papiers.";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
 "Chat.RegDate" = "Enregistré";
+"Chat.RegDate.Copy" = "Copier la date d'inscription";
+"Chat.RegDate.Copied" = "La date d'inscription a été copiée dans le presse-papiers.";
+"Chat.ID" = "ID";
+"Chat.ID.Copy" = "Copier l'ID";
+"Chat.ID.Copied" = "L'ID a été copié dans le presse-papiers.";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Appuyez deux fois pour modifier le message";
 
