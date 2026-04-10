@@ -2390,14 +2390,12 @@ final class TextContentItemLayer: SimpleLayer {
         let size: CGSize
         let item: TextContentItem
         let mask: RenderMask?
-        let maxGlyphDrawCount: Int?
-        
-        init(size: CGSize, item: TextContentItem, mask: RenderMask?, maxGlyphDrawCount: Int?) {
+
+        init(size: CGSize, item: TextContentItem, mask: RenderMask?) {
             self.size = size
             self.item = item
             self.mask = mask
-            self.maxGlyphDrawCount = maxGlyphDrawCount
-            
+
             super.init()
         }
     }
@@ -2476,8 +2474,6 @@ final class TextContentItemLayer: SimpleLayer {
                 let offset = params.item.contentOffset
                 let alignment: NSTextAlignment = .left
                 
-                var drawnGlyphCount = 0
-                
                 for i in 0 ..< params.item.segment.lines.count {
                     let line = params.item.segment.lines[i]
                     
@@ -2507,14 +2503,6 @@ final class TextContentItemLayer: SimpleLayer {
                         for run in glyphRuns {
                             let run = run as! CTRun
                             let glyphCount = CTRunGetGlyphCount(run)
-                            
-                            var runDrawGlyphCount = glyphCount
-                            if let maxGlyphDrawCount = params.maxGlyphDrawCount {
-                                if drawnGlyphCount >= maxGlyphDrawCount {
-                                    break
-                                }
-                                runDrawGlyphCount = CFIndex(max(0, min(Int(glyphCount), maxGlyphDrawCount - drawnGlyphCount)))
-                            }
                             
                             let attributes = CTRunGetAttributes(run) as NSDictionary
                             if attributes["Attribute__EmbeddedItem"] != nil {
@@ -2565,14 +2553,12 @@ final class TextContentItemLayer: SimpleLayer {
                                 let stringRange = CTRunGetStringRange(run)
                                 if line.attachments.contains(where: { $0.range.contains(stringRange.location) }) {
                                 } else {
-                                    CTRunDraw(run, context, CFRangeMake(0, runDrawGlyphCount))
+                                    CTRunDraw(run, context, CFRangeMake(0, glyphCount))
                                 }
                             } else {
-                                CTRunDraw(run, context, CFRangeMake(0, runDrawGlyphCount))
+                                CTRunDraw(run, context, CFRangeMake(0, glyphCount))
                             }
-                            
-                            drawnGlyphCount += Int(glyphCount)
-                            
+
                             if fixDoubleEmoji {
                                 context.setBlendMode(.normal)
                             }
@@ -2740,8 +2726,9 @@ final class TextContentItemLayer: SimpleLayer {
     }
     
     private(set) var params: Params?
-    
+
     let renderNode: RenderNode
+    private let renderNodeContainer: SimpleLayer
     private var contentMaskNode: ASImageNode?
     
     private var overlayContentLayer: SimpleLayer?
@@ -2755,21 +2742,26 @@ final class TextContentItemLayer: SimpleLayer {
     private var currentAnimationId: Int = 0
     private var isAnimating: Bool = false
     private var currentContentMask: RenderMask?
-    
+    private var revealMaskLayer: SimpleLayer?
+    private var revealLineMaskLayers: [SimpleLayer] = []
+
     private var maxGlyphDrawCount: Int?
     
     init(displaysAsynchronously: Bool) {
         self.renderNode = RenderNode()
         self.renderNode.displaysAsynchronously = displaysAsynchronously
-        
+        self.renderNodeContainer = SimpleLayer()
+
         super.init()
-        
-        self.addSublayer(self.renderNode.layer)
+
+        self.renderNodeContainer.addSublayer(self.renderNode.layer)
+        self.addSublayer(self.renderNodeContainer)
     }
-    
+
     override init(layer: Any) {
         self.renderNode = RenderNode()
-        
+        self.renderNodeContainer = SimpleLayer()
+
         super.init(layer: layer)
     }
     
@@ -2778,13 +2770,155 @@ final class TextContentItemLayer: SimpleLayer {
     }
     
     func updateMaxGlyphDrawCount(value: Int?) {
-        if self.maxGlyphDrawCount != value {
-            self.maxGlyphDrawCount = value
-            
-            if let renderParams = self.renderNode.params {
-                self.renderNode.params = RenderParams(size: renderParams.size, item: renderParams.item, mask: renderParams.mask, maxGlyphDrawCount: self.maxGlyphDrawCount)
-                self.renderNode.displayImmediately()
+        if self.maxGlyphDrawCount == value {
+            return
+        }
+        self.maxGlyphDrawCount = value
+        self.updateRevealMask()
+    }
+
+    private func updateRevealMask() {
+        guard let params = self.params else {
+            return
+        }
+
+        guard let maxGlyphDrawCount = self.maxGlyphDrawCount else {
+            if let _ = self.revealMaskLayer {
+                self.renderNodeContainer.mask = nil
+                self.revealMaskLayer = nil
+                self.revealLineMaskLayers.removeAll()
             }
+            return
+        }
+
+        let item = params.item
+        let lines = item.segment.lines
+        let layerSize = item.size
+        let offset = item.contentOffset
+
+        let revealMaskLayer: SimpleLayer
+        if let existing = self.revealMaskLayer {
+            revealMaskLayer = existing
+        } else {
+            revealMaskLayer = SimpleLayer()
+            revealMaskLayer.backgroundColor = UIColor.clear.cgColor
+            self.revealMaskLayer = revealMaskLayer
+            self.renderNodeContainer.mask = revealMaskLayer
+        }
+        revealMaskLayer.frame = CGRect(origin: CGPoint(), size: layerSize)
+
+        // First pass: compute per-line state
+        struct LineInfo {
+            let minY: CGFloat
+            let maxY: CGFloat
+            let maskFrame: CGRect // only meaningful for partial lines
+            let isFull: Bool
+        }
+
+        var lineInfos: [LineInfo] = []
+        var remainingGlyphs = maxGlyphDrawCount
+
+        for i in 0 ..< lines.count {
+            let line = lines[i]
+
+            var lineFrame = line.frame
+            lineFrame.origin.y += offset.y
+
+            if line.isRTL {
+                lineFrame.origin.x = offset.x + floor(layerSize.width - lineFrame.width)
+                lineFrame = displayLineFrame(frame: lineFrame, isRTL: true, boundingRect: CGRect(origin: CGPoint(), size: layerSize), cutout: nil)
+            } else {
+                lineFrame.origin.x += offset.x
+            }
+
+            let lineHeight = line.ascent + line.descent
+
+            if remainingGlyphs <= 0 {
+                // Empty line — skip, no mask rect needed
+                continue
+            }
+
+            var lineGlyphCount = 0
+            var revealedWidth: CGFloat = 0.0
+            let glyphRuns = CTLineGetGlyphRuns(line.line) as NSArray
+
+            for run in glyphRuns {
+                let run = run as! CTRun
+                let glyphCount = Int(CTRunGetGlyphCount(run))
+                lineGlyphCount += glyphCount
+
+                if remainingGlyphs > 0 {
+                    let revealCount = min(glyphCount, remainingGlyphs)
+
+                    var advances = [CGSize](repeating: CGSize(), count: revealCount)
+                    CTRunGetAdvances(run, CFRangeMake(0, revealCount), &advances)
+
+                    for j in 0 ..< revealCount {
+                        revealedWidth += advances[j].width
+                    }
+
+                    remainingGlyphs -= glyphCount
+                }
+            }
+
+            let isFull = remainingGlyphs >= 0
+            revealedWidth = ceil(revealedWidth)
+
+            let maskFrame: CGRect
+            if isFull {
+                maskFrame = CGRect(x: 0.0, y: lineFrame.minY, width: layerSize.width, height: lineHeight)
+            } else if line.isRTL {
+                maskFrame = CGRect(x: lineFrame.maxX - revealedWidth, y: lineFrame.minY, width: revealedWidth, height: lineHeight)
+            } else {
+                maskFrame = CGRect(x: lineFrame.minX, y: lineFrame.minY, width: revealedWidth, height: lineHeight)
+            }
+
+            lineInfos.append(LineInfo(minY: lineFrame.minY, maxY: lineFrame.minY + lineHeight, maskFrame: maskFrame, isFull: isFull))
+        }
+
+        // Second pass: merge consecutive fully-filled lines into single rects
+        var maskRects: [CGRect] = []
+        var mergeStartY: CGFloat?
+        var mergeEndY: CGFloat?
+
+        for info in lineInfos {
+            if info.isFull {
+                if mergeStartY != nil {
+                    mergeEndY = info.maxY
+                } else {
+                    mergeStartY = info.minY
+                    mergeEndY = info.maxY
+                }
+            } else {
+                // Flush any pending merged full-lines
+                if let startY = mergeStartY, let endY = mergeEndY {
+                    maskRects.append(CGRect(x: 0.0, y: startY, width: layerSize.width, height: endY - startY))
+                    mergeStartY = nil
+                    mergeEndY = nil
+                }
+                // Add the partial line
+                maskRects.append(info.maskFrame)
+            }
+        }
+        // Flush trailing merged full-lines
+        if let startY = mergeStartY, let endY = mergeEndY {
+            maskRects.append(CGRect(x: 0.0, y: startY, width: layerSize.width, height: endY - startY))
+        }
+
+        // Update mask child layers to match the number of rects
+        while self.revealLineMaskLayers.count < maskRects.count {
+            let childLayer = SimpleLayer()
+            childLayer.backgroundColor = UIColor.white.cgColor
+            revealMaskLayer.addSublayer(childLayer)
+            self.revealLineMaskLayers.append(childLayer)
+        }
+        while self.revealLineMaskLayers.count > maskRects.count {
+            let removed = self.revealLineMaskLayers.removeLast()
+            removed.removeFromSuperlayer()
+        }
+
+        for i in 0 ..< maskRects.count {
+            self.revealLineMaskLayers[i].frame = maskRects[i]
         }
     }
     
@@ -2923,7 +3057,8 @@ final class TextContentItemLayer: SimpleLayer {
             }
         }
         
-        animation.animator.updateFrame(layer: self.renderNode.layer, frame: effectiveContentFrame, completion: nil)
+        animation.animator.updateFrame(layer: self.renderNodeContainer, frame: effectiveContentFrame, completion: nil)
+        animation.animator.updateFrame(layer: self.renderNode.layer, frame: CGRect(origin: CGPoint(), size: effectiveContentFrame.size), completion: nil)
         
         var staticContentMask = contentMask
         if let contentMask, self.isAnimating {
@@ -3040,10 +3175,11 @@ final class TextContentItemLayer: SimpleLayer {
         
         self.currentContentMask = contentMask
         
-        self.renderNode.params = RenderParams(size: contentFrame.size, item: params.item, mask: staticContentMask, maxGlyphDrawCount: self.maxGlyphDrawCount)
+        self.renderNode.params = RenderParams(size: contentFrame.size, item: params.item, mask: staticContentMask)
+        self.updateRevealMask()
         if synchronously {
             if let spoilerExpandRect, animation.isAnimated {
-                let localSpoilerExpandRect = spoilerExpandRect.offsetBy(dx: -self.renderNode.frame.minX, dy: -self.renderNode.frame.minY)
+                let localSpoilerExpandRect = spoilerExpandRect.offsetBy(dx: -self.renderNodeContainer.frame.minX, dy: -self.renderNodeContainer.frame.minY)
                 
                 let revealAnimationDuration: CGFloat = 0.55
                 
@@ -3051,7 +3187,7 @@ final class TextContentItemLayer: SimpleLayer {
                 
                 let previousContents = self.renderNode.layer.contents
                 let copyContentsLayer = SimpleLayer()
-                copyContentsLayer.frame = self.renderNode.frame
+                copyContentsLayer.frame = self.renderNodeContainer.frame
                 copyContentsLayer.contents = previousContents
                 copyContentsLayer.masksToBounds = self.renderNode.layer.masksToBounds
                 copyContentsLayer.contentsGravity = self.renderNode.layer.contentsGravity
@@ -3073,7 +3209,7 @@ final class TextContentItemLayer: SimpleLayer {
                     
                     copyContentsLayer.addSublayer(copySublayer)
                 }
-                self.renderNode.layer.superlayer?.insertSublayer(copyContentsLayer, below: self.renderNode.layer)
+                self.renderNodeContainer.superlayer?.insertSublayer(copyContentsLayer, below: self.renderNodeContainer)
                 
                 self.renderNode.displayImmediately()
                 

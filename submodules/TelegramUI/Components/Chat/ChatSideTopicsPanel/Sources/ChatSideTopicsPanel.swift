@@ -1502,7 +1502,6 @@ public final class ChatSideTopicsPanel: Component {
             self.scrollContainerView = UIView()
             self.scrollViewMask = UIImageView()
             self.scrollContainerView.mask = self.scrollViewMask
-            //self.scrollContainerView.addSubview(self.scrollViewMask)
             
             super.init(frame: frame)
             

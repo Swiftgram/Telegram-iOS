@@ -78,6 +78,9 @@ func leftNavigationButtonForChatInterfaceState(_ presentationInterfaceState: Cha
 }
 
 func rightNavigationButtonForChatInterfaceState(context: AccountContext, presentationInterfaceState: ChatPresentationInterfaceState, strings: PresentationStrings, currentButton: ChatNavigationButton?, target: Any?, selector: Selector?, chatInfoNavigationButton: ChatNavigationButton?, moreInfoNavigationButton: ChatNavigationButton?) -> ChatNavigationButton? {
+    if case .standard(.previewing) = presentationInterfaceState.mode {
+        return nil
+    }
     var hasMessages = false
     if let chatHistoryState = presentationInterfaceState.chatHistoryState {
         if case .loaded(false, _) = chatHistoryState {
