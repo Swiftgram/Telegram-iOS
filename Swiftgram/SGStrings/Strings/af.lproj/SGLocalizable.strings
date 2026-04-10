@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Maksimum";
 
 "Settings.ShowProfileID" = "Wys profiel ID";
+"Settings.ShowSwiftgramSubMenu" = "\"Swiftgram\"-subkieslys";
 "Settings.ShowDC" = "Wys Data Sentrum";
 "Settings.ShowCreationDate" = "Wys Geskep Datum van Geselskap";
 "Settings.ShowCreationDate.Notice" = "Die skeppingsdatum mag onbekend wees vir sommige gesprekke.";

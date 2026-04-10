@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "الحد الاقصى";
 
 "Settings.ShowProfileID" = "إظهار معرف الملف الشخصي ID";
+"Settings.ShowSwiftgramSubMenu" = "القائمة الفرعية \"Swiftgram\"";
 "Settings.ShowDC" = "إظهار مركز البيانات";
 "Settings.ShowCreationDate" = "إظهار تاريخ إنشاء المحادثة";
 "Settings.ShowCreationDate.Notice" = "قد يكون تاريخ الإنشاء مفقوداً لبضع المحادثات.";
