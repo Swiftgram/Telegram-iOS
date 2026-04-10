@@ -1,5 +1,6 @@
 import SGDebugUI
 import SGSettingsUI
+import SGSimpleSettings
 import SGStrings
 import UndoUI
 //
@@ -193,7 +194,7 @@ func sgMakeSelectFromUserContextMenuAction(context: AccountContext, chatPresenta
 }
 
 func sgInsertContextMenu(actions: inout [ContextMenuItem], sgActions: inout [ContextMenuItem], index: Int?, chatPresentationInterfaceState: ChatPresentationInterfaceState) {
-    guard !sgActions.isEmpty else {
+    guard SGSimpleSettings.shared.showSwiftgramSubMenu, !sgActions.isEmpty else {
         return
     }
     if !actions.isEmpty {
