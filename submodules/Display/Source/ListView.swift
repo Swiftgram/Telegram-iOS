@@ -3136,19 +3136,10 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
                 } else if self.snapToBottomInsetUntilFirstInteraction {
                     offsetFix = -updateSizeAndInsets.insets.bottom + self.insets.bottom
                 } else {
-                    /*if let visualInsets = self.visualInsets, animated, (visualInsets.top == updateSizeAndInsets.insets.top || visualInsets.top == self.insets.top) {
-                        offsetFix = 0.0
-                    } else {*/
-                        offsetFix = updateSizeAndInsets.insets.top - self.insets.top
-                    //}
+                    offsetFix = updateSizeAndInsets.insets.top - self.insets.top
                 }
                 
                 offsetFix += additionalScrollDistance
-                
-                /*if let topItemNode = self.itemNodes.first(where: { $0.index == 0 }) {
-                    let topEdge = self.scroller.contentOffset.y + updateSizeAndInsets.insets.top
-                    offsetFix = -(topEdge - topItemNode.apparentFrame.minY)
-                }*/
                 
                 self.insets = updateSizeAndInsets.insets
                 self.headerInsets = updateSizeAndInsets.headerInsets ?? self.insets
@@ -3239,16 +3230,18 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
                             animation = basicAnimation
                     }
                     
-                    deferredUpdateVisible = true
-                    animation.completion = { [weak self] _ in
-                        self?.updateItemNodesVisibilities(onlyPositive: false)
-                    }
-                    self.layer.add(animation, forKey: nil)
-                    if !completeOffset.isZero {
-                        for itemNode in self.itemNodes {
-                            itemNode.applyAbsoluteOffset(value: CGPoint(x: 0.0, y: -completeOffset), animationCurve: animationCurve, duration: animationDuration)
+                    if customAnimationTransition == nil {
+                        deferredUpdateVisible = true
+                        animation.completion = { [weak self] _ in
+                            self?.updateItemNodesVisibilities(onlyPositive: false)
                         }
-                        self.didScrollWithOffset?(-completeOffset, ContainedViewLayoutTransition.animated(duration: animationDuration, curve: animationCurve), nil, self.isTrackingOrDecelerating)
+                        self.layer.add(animation, forKey: nil)
+                        if !completeOffset.isZero {
+                            for itemNode in self.itemNodes {
+                                itemNode.applyAbsoluteOffset(value: CGPoint(x: 0.0, y: -completeOffset), animationCurve: animationCurve, duration: animationDuration)
+                            }
+                            self.didScrollWithOffset?(-completeOffset, ContainedViewLayoutTransition.animated(duration: animationDuration, curve: animationCurve), nil, self.isTrackingOrDecelerating)
+                        }
                     }
                 } else {
                     self.didScrollWithOffset?(-completeOffset, .immediate, nil, self.isTrackingOrDecelerating)

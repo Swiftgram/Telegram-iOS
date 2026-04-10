@@ -484,8 +484,13 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
     guard let interfaceInteraction = interfaceInteraction, let controllerInteraction = controllerInteraction else {
         return .single(ContextController.Items(content: .list([])))
     }
-    if let message = messages.first, message.id.namespace < 0 {
-        return .single(ContextController.Items(content: .list([])))
+    if let message = messages.first {
+        if message.id.namespace < 0 {
+            return .single(ContextController.Items(content: .list([])))
+        }
+        if message.id.namespace == Namespaces.Message.Local && message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+            return .single(ContextController.Items(content: .list([])))
+        }
     }
     
     var isEmbeddedMode = false

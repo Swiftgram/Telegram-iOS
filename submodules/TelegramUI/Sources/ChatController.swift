@@ -2281,78 +2281,112 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 guard let strongSelf else {
                     return
                 }
-                strongSelf.chatDisplayNode.setupSendActionOnViewUpdate({
-                    if let strongSelf = self {
-                        strongSelf.chatDisplayNode.collapseInput()
-                        
-                        strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: false, { current in
-                            var current = current
-                            current = current.updatedInterfaceState { interfaceState in
-                                var interfaceState = interfaceState
-                                interfaceState = interfaceState.withUpdatedReplyMessageSubject(nil).withUpdatedSendMessageEffect(nil).withUpdatedPostSuggestionState(nil)
-                                if clearInput {
-                                    interfaceState = interfaceState.withUpdatedComposeInputState(ChatTextInputState(inputText: NSAttributedString()))
-                                }
-                                return interfaceState
-                            }.updatedInputMode { current in
-                                if case let .media(mode, maybeExpanded, focused) = current, maybeExpanded != nil {
-                                    return .media(mode: mode, expanded: nil, focused: focused)
-                                }
-                                return current
-                            }
-                            
-                            return current
-                        })
-                    }
-                }, shouldAnimateMessageTransition ? correlationId : nil)
                 
-                if shouldAnimateMessageTransition {
-                    if let sourceNode = sourceView?.asyncdisplaykit_node as? ChatMediaInputStickerGridItemNode {
-                        strongSelf.chatDisplayNode.messageTransitionNode.add(correlationId: correlationId, source: .stickerMediaInput(input: .inputPanel(itemNode: sourceNode), replyPanel: replyPanel), initiated: {
-                            guard let strongSelf = self else {
-                                return
-                            }
-                            strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: false, { current in
-                                var current = current
-                                current = current.updatedInputMode { current in
-                                    if case let .media(mode, maybeExpanded, focused) = current, maybeExpanded != nil {
-                                        return .media(mode: mode, expanded: nil, focused: focused)
-                                    }
-                                    return current
+                let addToTransitionNodeIfNeeded: () -> Void = {
+                    guard let strongSelf = self else {
+                        return
+                    }
+                    if shouldAnimateMessageTransition {
+                        if let sourceNode = sourceView?.asyncdisplaykit_node as? ChatMediaInputStickerGridItemNode {
+                            strongSelf.chatDisplayNode.messageTransitionNode.add(correlationId: correlationId, source: .stickerMediaInput(input: .inputPanel(itemNode: sourceNode), replyPanel: replyPanel), initiated: {
+                                guard let strongSelf = self else {
+                                    return
                                 }
-                                
-                                return current
-                            })
-                        })
-                    } else if let sourceNode = sourceView?.asyncdisplaykit_node as? HorizontalStickerGridItemNode {
-                        strongSelf.chatDisplayNode.messageTransitionNode.add(correlationId: correlationId, source: .stickerMediaInput(input: .mediaPanel(itemNode: sourceNode), replyPanel: replyPanel), initiated: {})
-                    } else if let sourceNode = sourceView?.asyncdisplaykit_node as? ChatEmptyNodeStickerContentNode {
-                        strongSelf.chatDisplayNode.messageTransitionNode.add(correlationId: correlationId, source: .stickerMediaInput(input: .emptyPanel(itemNode: sourceNode), replyPanel: nil), initiated: {})
-                    } else if let sourceLayer, let sourceView, let sourceRect {
-                        strongSelf.chatDisplayNode.messageTransitionNode.add(correlationId: correlationId, source: .stickerMediaInput(input: .universal(sourceContainerView: sourceView, sourceRect: sourceRect, sourceLayer: sourceLayer), replyPanel: replyPanel), initiated: {
-                            guard let strongSelf = self else {
-                                return
-                            }
-                            strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: false, { current in
-                                var current = current
-                                current = current.updatedInputMode { current in
-                                    if case let .media(mode, maybeExpanded, focused) = current, maybeExpanded != nil {
-                                        return .media(mode: mode, expanded: nil, focused: focused)
+                                strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: false, { current in
+                                    var current = current
+                                    current = current.updatedInputMode { current in
+                                        if case let .media(mode, maybeExpanded, focused) = current, maybeExpanded != nil {
+                                            return .media(mode: mode, expanded: nil, focused: focused)
+                                        }
+                                        return current
                                     }
+                                    
                                     return current
-                                }
-                                
-                                return current
+                                })
                             })
-                        })
+                        } else if let sourceNode = sourceView?.asyncdisplaykit_node as? HorizontalStickerGridItemNode {
+                            strongSelf.chatDisplayNode.messageTransitionNode.add(correlationId: correlationId, source: .stickerMediaInput(input: .mediaPanel(itemNode: sourceNode), replyPanel: replyPanel), initiated: {})
+                        } else if let sourceNode = sourceView?.asyncdisplaykit_node as? ChatEmptyNodeStickerContentNode {
+                            strongSelf.chatDisplayNode.messageTransitionNode.add(correlationId: correlationId, source: .stickerMediaInput(input: .emptyPanel(itemNode: sourceNode), replyPanel: nil), initiated: {})
+                        } else if let sourceLayer, let sourceView, let sourceRect {
+                            strongSelf.chatDisplayNode.messageTransitionNode.add(correlationId: correlationId, source: .stickerMediaInput(input: .universal(sourceContainerView: sourceView, sourceRect: sourceRect, sourceLayer: sourceLayer), replyPanel: replyPanel), initiated: {
+                                guard let strongSelf = self else {
+                                    return
+                                }
+                                strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: false, { current in
+                                    var current = current
+                                    current = current.updatedInputMode { current in
+                                        if case let .media(mode, maybeExpanded, focused) = current, maybeExpanded != nil {
+                                            return .media(mode: mode, expanded: nil, focused: focused)
+                                        }
+                                        return current
+                                    }
+                                    
+                                    return current
+                                })
+                            })
+                        }
                     }
                 }
                 
-                let messages: [EnqueueMessage]  = [.message(text: "", attributes: attributes, inlineStickers: [:], mediaReference: fileReference.abstract, threadId: strongSelf.chatLocation.threadId, replyToMessageId: strongSelf.presentationInterfaceState.interfaceState.replyMessageSubject?.subjectModel, replyToStoryId: nil, localGroupingKey: nil, correlationId: correlationId, bubbleUpEmojiOrStickersets: bubbleUpEmojiOrStickersets)]
+                let replyMessageSubject = strongSelf.presentationInterfaceState.interfaceState.replyMessageSubject
+                
+                let messages: [EnqueueMessage]  = [.message(text: "", attributes: attributes, inlineStickers: [:], mediaReference: fileReference.abstract, threadId: strongSelf.chatLocation.threadId, replyToMessageId: replyMessageSubject?.subjectModel, replyToStoryId: nil, localGroupingKey: nil, correlationId: correlationId, bubbleUpEmojiOrStickersets: bubbleUpEmojiOrStickersets)]
                 if silentPosting {
+                    strongSelf.chatDisplayNode.setupSendActionOnViewUpdate({
+                        if let strongSelf = self {
+                            strongSelf.chatDisplayNode.collapseInput()
+                            
+                            strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: false, { current in
+                                var current = current
+                                current = current.updatedInterfaceState { interfaceState in
+                                    var interfaceState = interfaceState
+                                    interfaceState = interfaceState.withUpdatedReplyMessageSubject(nil).withUpdatedSendMessageEffect(nil).withUpdatedPostSuggestionState(nil)
+                                    if clearInput {
+                                        interfaceState = interfaceState.withUpdatedComposeInputState(ChatTextInputState(inputText: NSAttributedString()))
+                                    }
+                                    return interfaceState
+                                }.updatedInputMode { current in
+                                    if case let .media(mode, maybeExpanded, focused) = current, maybeExpanded != nil {
+                                        return .media(mode: mode, expanded: nil, focused: focused)
+                                    }
+                                    return current
+                                }
+                                
+                                return current
+                            })
+                        }
+                    }, shouldAnimateMessageTransition ? correlationId : nil)
+                    
+                    addToTransitionNodeIfNeeded()
                     let transformedMessages = strongSelf.transformEnqueueMessages(messages, silentPosting: silentPosting, postpone: postpone)
                     strongSelf.sendMessages(transformedMessages)
                 } else if schedule {
+                    strongSelf.chatDisplayNode.setupSendActionOnViewUpdate({
+                        if let strongSelf = self {
+                            strongSelf.chatDisplayNode.collapseInput()
+                            
+                            strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: false, { current in
+                                var current = current
+                                current = current.updatedInterfaceState { interfaceState in
+                                    var interfaceState = interfaceState
+                                    interfaceState = interfaceState.withUpdatedReplyMessageSubject(nil).withUpdatedSendMessageEffect(nil).withUpdatedPostSuggestionState(nil)
+                                    if clearInput {
+                                        interfaceState = interfaceState.withUpdatedComposeInputState(ChatTextInputState(inputText: NSAttributedString()))
+                                    }
+                                    return interfaceState
+                                }.updatedInputMode { current in
+                                    if case let .media(mode, maybeExpanded, focused) = current, maybeExpanded != nil {
+                                        return .media(mode: mode, expanded: nil, focused: focused)
+                                    }
+                                    return current
+                                }
+                                
+                                return current
+                            })
+                        }
+                    }, shouldAnimateMessageTransition ? correlationId : nil)
+                    
                     strongSelf.presentScheduleTimePicker(completion: { [weak self] scheduleTime, repeatPeriod in
                         if let strongSelf = self {
                             let transformedMessages = strongSelf.transformEnqueueMessages(messages, silentPosting: false, scheduleTime: scheduleTime, repeatPeriod: repeatPeriod, postpone: postpone)
@@ -2360,8 +2394,90 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                         }
                     })
                 } else {
-                    let transformedMessages = strongSelf.transformEnqueueMessages(messages, postpone: postpone)
-                    strongSelf.sendMessages(transformedMessages)
+                    let messages = strongSelf.transformEnqueueMessages(messages, postpone: postpone)
+                    
+                    var targetThreadId: Int64?
+                    var clearMainThreadForward = false
+                    if strongSelf.chatLocation.threadId == nil, let user = strongSelf.presentationInterfaceState.renderedPeer?.peer as? TelegramUser, let botInfo = user.botInfo, botInfo.flags.contains(.hasForum), botInfo.flags.contains(.forumManagedByUser) {
+                        if let message = messages.first {
+                            switch message {
+                            case let .message(_, _, _, _, _, replyToMessageId, _, _, _, _):
+                                if let _ = replyToMessageId {
+                                    if let replyMessage = strongSelf.presentationInterfaceState.replyMessage {
+                                        targetThreadId = replyMessage.threadId
+                                    }
+                                } else {
+                                    targetThreadId = EngineMessage.newTopicThreadId
+                                }
+                            case let .forward(_, threadId, _, _, _):
+                                if let threadId {
+                                    targetThreadId = threadId
+                                } else {
+                                    targetThreadId = EngineMessage.newTopicThreadId
+                                    clearMainThreadForward = true
+                                }
+                            }
+                        }
+                    }
+                    
+                    let doSend: (Int64?) -> Void = { [weak self] overrideThreadId in
+                        guard let strongSelf = self else {
+                            return
+                        }
+
+                        var messages = messages
+                        if let overrideThreadId {
+                            messages = messages.map { message in
+                                return message.withUpdatedThreadId(overrideThreadId)
+                            }
+                        }
+
+                        strongSelf.chatDisplayNode.setupSendActionOnViewUpdate({
+                            if let strongSelf = self {
+                                strongSelf.chatDisplayNode.collapseInput()
+
+                                strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: false, { current in
+                                    var current = current
+                                    current = current.updatedInterfaceState { interfaceState in
+                                        var interfaceState = interfaceState
+                                        interfaceState = interfaceState.withUpdatedReplyMessageSubject(nil).withUpdatedSendMessageEffect(nil).withUpdatedPostSuggestionState(nil)
+                                        if clearInput {
+                                            interfaceState = interfaceState.withUpdatedComposeInputState(ChatTextInputState(inputText: NSAttributedString()))
+                                        }
+                                        return interfaceState
+                                    }.updatedInputMode { current in
+                                        if case let .media(mode, maybeExpanded, focused) = current, maybeExpanded != nil {
+                                            return .media(mode: mode, expanded: nil, focused: focused)
+                                        }
+                                        return current
+                                    }
+
+                                    return current
+                                })
+                            }
+                        }, shouldAnimateMessageTransition ? correlationId : nil)
+
+                        addToTransitionNodeIfNeeded()
+
+                        strongSelf.sendMessages(messages.map { $0.withUpdatedReplyToMessageId(replyMessageSubject?.subjectModel) })
+                    }
+                    
+                    if let targetThreadId {
+                        strongSelf.chatDisplayNode.historyNode.stopHistoryUpdates()
+                        strongSelf.updateChatLocationThread(threadId: targetThreadId, animationDirection: .right, transferInputState: true, completion: { [weak strongSelf] in
+                            guard let strongSelf else {
+                                return
+                            }
+                            doSend(targetThreadId)
+                            if clearMainThreadForward, let peerId = strongSelf.chatLocation.peerId {
+                                let _ = ChatInterfaceState.update(engine: strongSelf.context.engine, peerId: peerId, threadId: nil, { current in
+                                    return current.withUpdatedForwardMessageIds(nil)
+                                }).startStandalone()
+                            }
+                        })
+                    } else {
+                        doSend(nil)
+                    }
                 }
             })
             return true
@@ -8689,10 +8805,58 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                     
                     mappedMessages.append(message)
                 }
+                
+                let messages = strongSelf.transformEnqueueMessages(mappedMessages, silentPosting: silentPosting, scheduleTime: scheduleTime, postpone: postpone)
+                let replyMessageSubject = replyToSubject ?? strongSelf.presentationInterfaceState.interfaceState.replyMessageSubject
+                
+                var targetThreadId: Int64?
+                var clearMainThreadForward = false
+                if strongSelf.chatLocation.threadId == nil, let user = strongSelf.presentationInterfaceState.renderedPeer?.peer as? TelegramUser, let botInfo = user.botInfo, botInfo.flags.contains(.hasForum), botInfo.flags.contains(.forumManagedByUser) {
+                    if let message = messages.first {
+                        switch message {
+                        case let .message(_, _, _, _, _, replyToMessageId, _, _, _, _):
+                            if let _ = replyToMessageId {
+                                if let replyMessage = strongSelf.presentationInterfaceState.replyMessage {
+                                    targetThreadId = replyMessage.threadId
+                                }
+                            } else {
+                                targetThreadId = EngineMessage.newTopicThreadId
+                            }
+                        case let .forward(_, threadId, _, _, _):
+                            if let threadId {
+                                targetThreadId = threadId
+                            } else {
+                                targetThreadId = EngineMessage.newTopicThreadId
+                                clearMainThreadForward = true
+                            }
+                        }
+                    }
+                }
                         
-                if addedTransitions.count > 1 {
-                    var transitions: [(Int64, ChatMessageTransitionNodeImpl.Source, () -> Void)] = []
-                    for (correlationId, uniqueIds, initiated) in addedTransitions {
+                let addTransitionNodes: () -> Void = {
+                    guard let strongSelf = self else {
+                        return
+                    }
+                    
+                    if addedTransitions.count > 1 {
+                        var transitions: [(Int64, ChatMessageTransitionNodeImpl.Source, () -> Void)] = []
+                        for (correlationId, uniqueIds, initiated) in addedTransitions {
+                            var source: ChatMessageTransitionNodeImpl.Source?
+                            if uniqueIds.count > 1 {
+                                source = .groupedMediaInput(ChatMessageTransitionNodeImpl.Source.GroupedMediaInput(extractSnapshots: {
+                                    return uniqueIds.compactMap({ getAnimatedTransitionSource?($0) })
+                                }))
+                            } else if let uniqueId = uniqueIds.first {
+                                source = .mediaInput(ChatMessageTransitionNodeImpl.Source.MediaInput(extractSnapshot: {
+                                    return getAnimatedTransitionSource?(uniqueId)
+                                }))
+                            }
+                            if let source = source {
+                                transitions.append((correlationId, source, initiated))
+                            }
+                        }
+                        strongSelf.chatDisplayNode.messageTransitionNode.add(grouped: transitions)
+                    } else if let (correlationId, uniqueIds, initiated) = addedTransitions.first {
                         var source: ChatMessageTransitionNodeImpl.Source?
                         if uniqueIds.count > 1 {
                             source = .groupedMediaInput(ChatMessageTransitionNodeImpl.Source.GroupedMediaInput(extractSnapshots: {
@@ -8704,25 +8868,10 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             }))
                         }
                         if let source = source {
-                            transitions.append((correlationId, source, initiated))
+                            strongSelf.chatDisplayNode.messageTransitionNode.add(correlationId: correlationId, source: source, initiated: {
+                                initiated()
+                            })
                         }
-                    }
-                    strongSelf.chatDisplayNode.messageTransitionNode.add(grouped: transitions)
-                } else if let (correlationId, uniqueIds, initiated) = addedTransitions.first {
-                    var source: ChatMessageTransitionNodeImpl.Source?
-                    if uniqueIds.count > 1 {
-                        source = .groupedMediaInput(ChatMessageTransitionNodeImpl.Source.GroupedMediaInput(extractSnapshots: {
-                            return uniqueIds.compactMap({ getAnimatedTransitionSource?($0) })
-                        }))
-                    } else if let uniqueId = uniqueIds.first {
-                        source = .mediaInput(ChatMessageTransitionNodeImpl.Source.MediaInput(extractSnapshot: {
-                            return getAnimatedTransitionSource?(uniqueId)
-                        }))
-                    }
-                    if let source = source {
-                        strongSelf.chatDisplayNode.messageTransitionNode.add(correlationId: correlationId, source: source, initiated: {
-                            initiated()
-                        })
                     }
                 }
                 
@@ -8740,21 +8889,50 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                         return
                     }
                 }
-                                                    
-                let messages = strongSelf.transformEnqueueMessages(mappedMessages, silentPosting: silentPosting, scheduleTime: scheduleTime, postpone: postpone)
-                let replyMessageSubject = replyToSubject ?? strongSelf.presentationInterfaceState.interfaceState.replyMessageSubject
-                strongSelf.chatDisplayNode.setupSendActionOnViewUpdate({
-                    if let strongSelf = self {
-                        strongSelf.chatDisplayNode.collapseInput()
-                        
-                        strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: false, {
-                            $0.updatedInterfaceState { $0.withUpdatedReplyMessageSubject(nil).withUpdatedSendMessageEffect(nil).withUpdatedPostSuggestionState(nil) }
-                        })
+                
+                let doSend: (Int64?) -> Void = { [weak strongSelf] overrideThreadId in
+                    guard let strongSelf else {
+                        return
                     }
-                    completionImpl?()
-                }, usedCorrelationId)
+                    
+                    var messages = messages
+                    if let overrideThreadId {
+                        messages = messages.map { message in
+                            return message.withUpdatedThreadId(overrideThreadId)
+                        }
+                    }
+                    
+                    strongSelf.chatDisplayNode.setupSendActionOnViewUpdate({
+                        if let strongSelf = self {
+                            strongSelf.chatDisplayNode.collapseInput()
 
-                strongSelf.sendMessages(messages.map { $0.withUpdatedReplyToMessageId(replyMessageSubject?.subjectModel) }, media: true)
+                            strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: false, {
+                                $0.updatedInterfaceState { $0.withUpdatedReplyMessageSubject(nil).withUpdatedSendMessageEffect(nil).withUpdatedPostSuggestionState(nil) }
+                            })
+                        }
+                        completionImpl?()
+                    }, usedCorrelationId)
+
+                    addTransitionNodes()
+                    strongSelf.sendMessages(messages.map { $0.withUpdatedReplyToMessageId(replyMessageSubject?.subjectModel) }, media: true)
+                }
+                
+                if let targetThreadId {
+                    strongSelf.chatDisplayNode.historyNode.stopHistoryUpdates()
+                    strongSelf.updateChatLocationThread(threadId: targetThreadId, animationDirection: .right, transferInputState: true, completion: { [weak strongSelf] in
+                        guard let strongSelf else {
+                            return
+                        }
+                        doSend(targetThreadId)
+                        if clearMainThreadForward, let peerId = strongSelf.chatLocation.peerId {
+                            let _ = ChatInterfaceState.update(engine: strongSelf.context.engine, peerId: peerId, threadId: nil, { current in
+                                return current.withUpdatedForwardMessageIds(nil)
+                            }).startStandalone()
+                        }
+                    })
+                } else {
+                    doSend(nil)
+                }
                 
                 if let _ = scheduleTime {
                     completion()

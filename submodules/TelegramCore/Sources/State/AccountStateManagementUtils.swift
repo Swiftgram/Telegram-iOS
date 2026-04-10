@@ -4011,7 +4011,7 @@ func replayFinalState(
         case cancel
     }
     
-    var liveTypingDraftUpdates: [PeerAndThreadId: LiveTypingDraftUpdate] = [:]
+    var liveTypingDraftUpdates: [PeerAndThreadId: [LiveTypingDraftUpdate]] = [:]
 
     for operation in finalState.state.operations {
         switch operation {
@@ -4226,11 +4226,11 @@ func replayFinalState(
                         let allKey = PeerAndThreadId(peerId: chatPeerId, threadId: nil)
                         
                         if liveTypingDraftUpdates[key] != nil {
-                            liveTypingDraftUpdates[key] = .cancel
-                            liveTypingDraftUpdates[allKey] = .cancel
+                            liveTypingDraftUpdates[key] = [.cancel]
+                            liveTypingDraftUpdates[allKey] = [.cancel]
                         } else if let currentDraft = transaction.getCurrentTypingDraft(location: key) {
-                            liveTypingDraftUpdates[key] = .cancel
-                            liveTypingDraftUpdates[allKey] = .cancel
+                            liveTypingDraftUpdates[key] = [.cancel]
+                            liveTypingDraftUpdates[allKey] = [.cancel]
                             messages[i] = messages[i].withUpdatedCustomStableId(currentDraft.stableId)
                         }
                     }
@@ -4930,23 +4930,30 @@ func replayFinalState(
                     updatedSecretChatTypingActivities.insert(chatPeerId.peerId)
                 }
             case let .AddPeerLiveTypingDraftUpdate(peerAndThreadId, id, timestamp, authorId, text, entities):
-                liveTypingDraftUpdates[peerAndThreadId] = .update(LiveTypingDraftUpdate.Update(
+                if liveTypingDraftUpdates[peerAndThreadId] == nil {
+                    liveTypingDraftUpdates[peerAndThreadId] = []
+                }
+                liveTypingDraftUpdates[peerAndThreadId]?.append(.update(LiveTypingDraftUpdate.Update(
                     id: id,
                     threadId: peerAndThreadId.threadId,
                     authorId: authorId,
                     timestamp: timestamp,
                     text: text,
                     entities: entities
-                ))
+                )))
                 if peerAndThreadId.threadId != nil {
-                    liveTypingDraftUpdates[PeerAndThreadId(peerId: peerAndThreadId.peerId, threadId: nil)] = .update(LiveTypingDraftUpdate.Update(
+                    let allKey = PeerAndThreadId(peerId: peerAndThreadId.peerId, threadId: nil)
+                    if liveTypingDraftUpdates[allKey] == nil {
+                        liveTypingDraftUpdates[allKey] = []
+                    }
+                    liveTypingDraftUpdates[allKey]?.append(.update(LiveTypingDraftUpdate.Update(
                         id: id,
                         threadId: peerAndThreadId.threadId,
                         authorId: authorId,
                         timestamp: timestamp,
                         text: text,
                         entities: entities
-                    ))
+                    )))
                 }
             case let .UpdatePinnedItemIds(groupId, pinnedOperation):
                 switch pinnedOperation {
@@ -6049,11 +6056,26 @@ func replayFinalState(
     
     if !liveTypingDraftUpdates.isEmpty {
         transaction.combineTypingDrafts(locations: Set(liveTypingDraftUpdates.keys), update: { key, current in
-            guard let update = liveTypingDraftUpdates[key] else {
+            guard let update = liveTypingDraftUpdates[key]?.max(by: { lhs, rhs in
+                switch lhs {
+                case .cancel:
+                    return false
+                case let .update(lhsUpdate):
+                    switch rhs {
+                    case .cancel:
+                        return true
+                    case let .update(rhsUpdate):
+                        return lhsUpdate.timestamp < rhsUpdate.timestamp
+                    }
+                }
+            }) else {
                 return current
             }
             switch update {
             case let .update(update):
+                if let current, current.id > update.id {
+                    return current
+                }
                 return (
                     update.id,
                     Namespaces.Message.Cloud,
