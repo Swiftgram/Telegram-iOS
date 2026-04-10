@@ -126,12 +126,21 @@
 "Settings.DefaultEmojisFirst.Notice" = "在表情列表中将标准表情符号置于高级表情符号之前";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "创建日期: %@";
+"Chat.Created.Label" = "创建日期";
+"Chat.Created.Copy" = "复制创建日期";
+"Chat.Created.Copied" = "创建日期已复制到剪贴板。";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
 "Chat.JoinedDateTitle" = "加入 %@ 的日期";
+"Chat.JoinedDate.Copy" = "复制加入日期";
+"Chat.JoinedDate.Copied" = "加入日期已复制到剪贴板。";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
 "Chat.RegDate" = "注册日期";
+"Chat.RegDate.Copy" = "复制注册日期";
+"Chat.RegDate.Copied" = "注册日期已复制到剪贴板。";
+"Chat.ID" = "ID";
+"Chat.ID.Copy" = "复制 ID";
+"Chat.ID.Copied" = "ID 已复制到剪贴板。";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "双击编辑消息";
 

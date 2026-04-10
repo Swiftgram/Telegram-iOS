@@ -120,12 +120,21 @@
 "Settings.DefaultEmojisFirst.Notice" = "Zobrazit standardní emoji před prémiovými na klávesnici s emoji";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "vytvořeno: %@";
+"Chat.Created.Label" = "Vytvořeno";
+"Chat.Created.Copy" = "Kopírovat datum vytvoření";
+"Chat.Created.Copied" = "Datum vytvoření bylo zkopírováno do schránky.";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
 "Chat.JoinedDateTitle" = "Připojeno k %@";
+"Chat.JoinedDate.Copy" = "Kopírovat datum připojení";
+"Chat.JoinedDate.Copied" = "Datum připojení bylo zkopírováno do schránky.";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
 "Chat.RegDate" = "Registrováno";
+"Chat.RegDate.Copy" = "Kopírovat datum registrace";
+"Chat.RegDate.Copied" = "Datum registrace bylo zkopírováno do schránky.";
+"Chat.ID" = "ID";
+"Chat.ID.Copy" = "Kopírovat ID";
+"Chat.ID.Copied" = "ID bylo zkopírováno do schránky.";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Dvojitým klepnutím upravte zprávu";
 
