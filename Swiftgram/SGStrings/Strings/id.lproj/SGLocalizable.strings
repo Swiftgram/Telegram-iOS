@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Maksimal";
 
 "Settings.ShowProfileID" = "Tampilkan ID Profil";
+"Settings.ShowSwiftgramSubMenu" = "Submenu \"Swiftgram\"";
 "Settings.ShowDC" = "Tampilkan Pusat Data";
 "Settings.ShowCreationDate" = "Tampilkan Tanggal Pembuatan Obrolan";
 "Settings.ShowCreationDate.Notice" = "Tanggal pembuatan mungkin tidak diketahui untuk beberapa obrolan.";
