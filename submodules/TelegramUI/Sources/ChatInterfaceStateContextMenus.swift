@@ -2216,7 +2216,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         }
 
         // MARK: Swiftgram
-        if !sgActions.isEmpty {
+        if SGSimpleSettings.shared.showSwiftgramSubMenu && !sgActions.isEmpty {
             if !actions.isEmpty {
                 if let sgActionsIndex = sgActionsIndex {
                     actions.insert(.separator, at: sgActionsIndex)

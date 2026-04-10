@@ -66,6 +66,7 @@
 "Settings.DownloadsBoost.maximum" = "最大";
 
 "Settings.ShowProfileID" = "显示用户 UID";
+"Settings.ShowSwiftgramSubMenu" = "\"Swiftgram\" 子菜单";
 "Settings.ShowDC" = "显示数据中心";
 "Settings.ShowCreationDate" = "显示群组或频道的创建日期";
 "Settings.ShowCreationDate.Notice" = "某些群组或频道可能缺少创建日期";

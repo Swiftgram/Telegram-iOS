@@ -86,6 +86,7 @@ private enum SGBoolSetting: String {
     case stickerTimestamp
     case hideRecordingButton
     case hideTabBar
+    case showSwiftgramSubMenu
     case showDC
     case showCreationDate
     case showRegDate
@@ -260,6 +261,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .videoNotes, settingName: .startTelescopeWithRearCam, value: SGSimpleSettings.shared.startTelescopeWithRearCam, text: i18n("Settings.VideoNotes.StartWithRearCam", lang), enabled: true))
     
     entries.append(.header(id: id.count, section: .contextMenu, text: i18n("Settings.ContextMenu", lang), badge: nil))
+    entries.append(.toggle(id: id.count, section: .contextMenu, settingName: .showSwiftgramSubMenu, value: SGSimpleSettings.shared.showSwiftgramSubMenu, text: i18n("Settings.ShowSwiftgramSubMenu", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .contextMenu, text: i18n("Settings.ContextMenu.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .contextMenu, settingName: .contextShowSaveToCloud, value: SGSimpleSettings.shared.contextShowSaveToCloud, text: i18n("ContextMenu.SaveToCloud", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .contextMenu, settingName: .contextShowHideForwardName, value: SGSimpleSettings.shared.contextShowHideForwardName, text: strings.Conversation_ForwardOptions_HideSendersNames, enabled: true))
@@ -470,6 +472,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.hideTabBar = value
             simplePromise.set(true) // Trigger update for 'enabled' field of other toggles
             askForRestart?()
+        case .showSwiftgramSubMenu:
+            SGSimpleSettings.shared.showSwiftgramSubMenu = value
         case .showDC:
             SGSimpleSettings.shared.showDC = value
         case .showCreationDate:

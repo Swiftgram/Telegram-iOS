@@ -80,6 +80,7 @@
 "Settings.DownloadsBoost.maximum" = "Максимум";
 
 "Settings.ShowProfileID" = "ID профилей";
+"Settings.ShowSwiftgramSubMenu" = "Подменю \"Swiftgram\"";
 "Settings.ShowDC" = "Показать дата-центр (DC)";
 "Settings.ShowCreationDate" = "Показать дату создания чата";
 "Settings.ShowCreationDate.Notice" = "Дата создания может быть неизвестна для некоторых чатов.";
