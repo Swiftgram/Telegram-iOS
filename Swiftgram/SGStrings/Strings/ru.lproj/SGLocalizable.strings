@@ -141,12 +141,21 @@
 "Settings.DefaultEmojisFirst.Notice" = "Показывать стандартные эмодзи перед Premium в эмодзи-клавиатуре";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "создан: %@";
+"Chat.Created.Label" = "Создан";
+"Chat.Created.Copy" = "Копировать дату создания";
+"Chat.Created.Copied" = "Дата создания скопирована в буфер обмена.";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
 "Chat.JoinedDateTitle" = "Присоединился к %@";
+"Chat.JoinedDate.Copy" = "Копировать дату вступления";
+"Chat.JoinedDate.Copied" = "Дата вступления скопирована в буфер обмена.";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
 "Chat.RegDate" = "Дата регистрации";
+"Chat.RegDate.Copy" = "Копировать дату регистрации";
+"Chat.RegDate.Copied" = "Дата регистрации скопирована в буфер обмена.";
+"Chat.ID" = "ID";
+"Chat.ID.Copy" = "Копировать ID";
+"Chat.ID.Copied" = "ID скопирован в буфер обмена.";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Редактирование двойным тапом";
 
