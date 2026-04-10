@@ -8,6 +8,7 @@ import SGStrings
 
 enum SGContextMenuAction {
     case copy(text: String, copyKey: String, copiedKey: String)
+    case copyLink(text: String)
     case openURL(url: String)
 }
 
@@ -29,6 +30,18 @@ extension PeerInfoScreenNode {
                     }
                     UIPasteboard.general.string = text
                     self.controller?.present(UndoOverlayController(presentationData: self.presentationData, content: .copy(text: i18n(copiedKey, self.presentationData.strings.baseLanguageCode)), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .current)
+                }
+            })))
+        case let .copyLink(text):
+            items.append(.action(ContextMenuActionItem(text: self.presentationData.strings.Conversation_ContextMenuCopy, icon: { theme in
+                generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Copy"), color: theme.contextMenu.primaryColor)
+            }, action: { [weak self] c, _ in
+                c?.dismiss {
+                    guard let self else {
+                        return
+                    }
+                    UIPasteboard.general.string = text
+                    self.controller?.present(UndoOverlayController(presentationData: self.presentationData, content: .linkCopied(title: nil, text: self.presentationData.strings.Conversation_LinkCopied), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .current)
                 }
             })))
         case let .openURL(url):
