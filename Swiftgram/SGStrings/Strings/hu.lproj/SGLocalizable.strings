@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "Mentés a Felhőbe";
 "ContextMenu.SelectFromUser" = "Kiválasztás a Szerzőtől";
+"Settings.MessageSelection.Header" = "ÜZENETEK KIJELÖLÉSE";
+"Settings.Selection.SaveToCloudButton" = "Mentés a Felhőbe gomb";
+"Settings.Selection.HideSenderNamesButton" = "Feladónevek elrejtése gomb";
 
 "Settings.ContextMenu" = "KONTEXTUS MENÜ";
 "Settings.ContextMenu.Notice" = "A kikapcsolt bejegyzések elérhetők lesznek a 'Swiftgram' almenüjében.";

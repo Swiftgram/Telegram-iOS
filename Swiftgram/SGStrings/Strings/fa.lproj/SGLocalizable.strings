@@ -8,3 +8,6 @@
 "Settings.Translation.QuickTranslateButton" = "دکمه ترجمه سریع";
 "ContextMenu.SaveToCloud" = "ذخیره در فضای ابری";
 "Settings.videoControlsInFooter" = "کنترل‌های ویدیو در پایین";
+"Settings.MessageSelection.Header" = "انتخاب پیام‌ها";
+"Settings.Selection.SaveToCloudButton" = "دکمه ذخیره در فضای ابری";
+"Settings.Selection.HideSenderNamesButton" = "دکمه پنهان کردن نام فرستندگان";
