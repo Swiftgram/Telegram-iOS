@@ -193,6 +193,10 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
     
     private var codeHighlightState: (id: EngineMessage.Id, specs: [CachedMessageSyntaxHighlight.Spec], disposable: Disposable)?
     
+    var displayFullscreenButtonInItems: Bool {
+        return self.buttonsState?.displayFullscreenButton == true
+    }
+
     var playbackControl: (() -> Void)?
     var seekBackward: ((Double) -> Void)?
     var seekForward: ((Double) -> Void)?
@@ -1394,7 +1398,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                     }
                 ))
             }
-            if buttonsState.displayFullscreenButton && !metrics.isTablet {
+            if !videoControlsInFooter && buttonsState.displayFullscreenButton && !metrics.isTablet {
                 centerControlItems.append(GlassControlGroupComponent.Item(
                     id: AnyHashable("fullscreen"),
                     content: .icon(isLandscape ? "Chat/Context Menu/Collapse" : "Chat/Context Menu/Expand"),
