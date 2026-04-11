@@ -240,7 +240,7 @@ public final class VideoPlaybackControlsComponent: Component {
                 self.centerButtonBackgroundView.contentView.addSubview(centerButtonIconNode.view)
                 centerButtonIconNode.enqueueState(component.isPlaying ? .pause : .play, animated: false)
             }
-            transition.setFrame(view: centerButtonIconNode.view, frame: centerButtonIconSize.centered(in: CGRect(origin: CGPoint(), size: centerButtonFrame.size)).offsetBy(dx: component.isPlaying || isFooter ? 0.0 : 5.0, dy: 0.0))
+            transition.setFrame(view: centerButtonIconNode.view, frame: centerButtonIconSize.centered(in: CGRect(origin: CGPoint(), size: centerButtonFrame.size)).offsetBy(dx: isFooter ? (component.isPlaying ? 0.0 : 2.0) : (component.isPlaying ? 0.0 : 5.0), dy: 0.0))
             centerButtonIconNode.enqueueState(component.isPlaying ? .pause : .play, animated: !transition.animation.isImmediate && component.isVisible && !isVisibleChanged)
             transition.setAlpha(view: centerButtonIconNode.view, alpha: component.isVisible ? 1.0 : 0.0)
             transition.setBlur(layer: centerButtonIconNode.layer, radius: component.isVisible ? 0.0 : 10.0)
