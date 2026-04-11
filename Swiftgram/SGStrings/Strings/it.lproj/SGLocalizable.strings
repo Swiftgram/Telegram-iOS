@@ -150,3 +150,4 @@
 
 "Settings.swipeForVideoPIP" = "Video PIP con scorrimento";
 "Settings.swipeForVideoPIP.Notice" = "Se abilitato, scorrendo il video si aprirà in modalità Picture-in-Picture.";
+"Settings.videoControlsInFooter" = "Controlli video nel piè di pagina";

@@ -150,3 +150,4 @@
 
 "Settings.swipeForVideoPIP" = "Video PIP med Swipe";
 "Settings.swipeForVideoPIP.Notice" = "Hvis aktiveret, vil sletning af video åbne den i billede-i-billede-tilstand.";
+"Settings.videoControlsInFooter" = "Videokontroller i sidefoden";

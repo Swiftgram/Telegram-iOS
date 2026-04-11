@@ -150,3 +150,4 @@
 
 "Settings.swipeForVideoPIP" = "Video PIP met veeg";
 "Settings.swipeForVideoPIP.Notice" = "Als ingeschakeld, opent het swipen van video het in de modus Beeld-in-Beeld.";
+"Settings.videoControlsInFooter" = "Videobediening in de voettekst";
