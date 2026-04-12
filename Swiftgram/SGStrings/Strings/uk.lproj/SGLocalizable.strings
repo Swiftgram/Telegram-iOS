@@ -132,6 +132,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Ред. повідомлення подвійним дотиком";
 
 "Settings.wideChannelPosts" = "Широкі пости в каналах";
+"Settings.wideGlassTextField" = "Широке скляне поле вводу";
 "Settings.ForceEmojiTab" = "Клавіатура емодзі за замовчуванням";
 
 "Settings.forceBuiltInMic" = "Використовувати мікрофон пристрою";
