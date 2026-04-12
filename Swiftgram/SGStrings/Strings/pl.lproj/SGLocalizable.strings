@@ -132,6 +132,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Podwójne stuknięcie, aby edytować wiadomość";
 
 "Settings.wideChannelPosts" = "Szerokie wpisy w kanałach";
+"Settings.wideGlassTextField" = "Szerokie szklane pole tekstowe";
 "Settings.ForceEmojiTab" = "Klawiatura emoji domyślnie";
 
 "Settings.forceBuiltInMic" = "Wymuś mikrofon urządzenia";
