@@ -1332,7 +1332,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
     }
 
     private func calculateWideGlassLayout(interfaceState: ChatPresentationInterfaceState, displayMediaButton: Bool, hasMediaRecording: Bool, inputHasText: Bool, hasForward: Bool, hasMediaDraft: Bool, hasSlowmodeButton: Bool) -> WideGlassLayout {
-        guard SGSimpleSettings.shared.wideGlass else {
+        guard SGSimpleSettings.shared.wideGlassTextField else {
             return .disabled
         }
         
