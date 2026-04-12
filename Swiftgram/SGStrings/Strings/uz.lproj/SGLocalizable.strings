@@ -130,6 +130,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Xabarni tahrirlash uchun ikki marta bosing";
 
 "Settings.wideChannelPosts" = "Keng postlar kanallarda";
+"Settings.wideGlassTextField" = "Keng shishali matn maydoni";
 "Settings.ForceEmojiTab" = "Emoji klaviatura sukutiga";
 
 "Settings.forceBuiltInMic" = "Qurilma Mikrofonini Kuchaytirish";

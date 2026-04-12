@@ -133,6 +133,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "メッセージを編集するにはタップをダブルタップ";
 
 "Settings.wideChannelPosts" = "チャンネル内の幅広い投稿";
+"Settings.wideGlassTextField" = "幅広のガラステキストフィールド";
 "Settings.ForceEmojiTab" = "デフォルトで絵文字キーボード";
 
 "Settings.forceBuiltInMic" = "デバイスのマイクを強制";
