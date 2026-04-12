@@ -149,7 +149,7 @@ public class SGSimpleSettings {
         case defaultEmojisFirst
         case messageDoubleTapActionOutgoing
         case wideChannelPosts
-        case wideGlass
+        case wideGlassTextField
         case forceEmojiTab
         case forceBuiltInMic
         case secondsInMessages
@@ -308,7 +308,7 @@ public class SGSimpleSettings {
         Keys.defaultEmojisFirst.rawValue: false,
         Keys.messageDoubleTapActionOutgoing.rawValue: MessageDoubleTapAction.default.rawValue,
         Keys.wideChannelPosts.rawValue: false,
-        Keys.wideGlass.rawValue: false,
+        Keys.wideGlassTextField.rawValue: false,
         Keys.forceEmojiTab.rawValue: false,
         Keys.hideChannelBottomButton.rawValue: false,
         Keys.secondsInMessages.rawValue: false,
@@ -521,8 +521,8 @@ public class SGSimpleSettings {
     @UserDefault(key: Keys.wideChannelPosts.rawValue)
     public var wideChannelPosts: Bool
     
-    @UserDefault(key: Keys.wideGlass.rawValue)
-    public var wideGlass: Bool
+    @UserDefault(key: Keys.wideGlassTextField.rawValue)
+    public var wideGlassTextField: Bool
 
     @UserDefault(key: Keys.forceEmojiTab.rawValue)
     public var forceEmojiTab: Bool
