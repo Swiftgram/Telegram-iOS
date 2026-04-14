@@ -252,7 +252,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         } else {
             currentMaxGlyphCount = nil
         }
-        let previousGlyphCount = self.textNode.textNode.getCharacterToGlyphMapping().count
+        let previousGlyphCount = self.textNode.textNode.cachedLayout?.attributedString?.length ?? 0
         
         return { item, layoutConstants, _, _, _, _ in
             let contentProperties = ChatMessageBubbleContentProperties(hidesSimpleAuthorHeader: false, headerSpacing: 0.0, hidesBackground: .never, forceFullCorners: false, forceAlignment: .none)
@@ -711,7 +711,8 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     lineColor: messageTheme.accentControlColor,
                     displayContentsUnderSpoilers: displayContentsUnderSpoilers.value,
                     customTruncationToken: customTruncationToken,
-                    expandedBlocks: expandedBlockIds
+                    expandedBlocks: expandedBlockIds,
+                    computeCharacterRects: true
                 ))
                 
                 var hasDraft = false
@@ -729,7 +730,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                 }
                 var clippedGlyphCountLayout: TextNodeLayout.LayoutInfo?
                 if let maxGlyphCount {
-                    clippedGlyphCountLayout = textLayout.layoutForGlyphCount(glyphCount: maxGlyphCount)
+                    clippedGlyphCountLayout = textLayout.layoutForCharacterCount(characterCount: maxGlyphCount)
                 }
             
                 var statusSuggestedWidthAndContinue: (CGFloat, (CGFloat) -> (CGSize, (ListViewItemUpdateAnimation) -> ChatMessageDateAndStatusNode))?
@@ -826,7 +827,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                             
                             var previousAnimateGlyphCount: Int?
                             if hasDraft || hadDraft {
-                                previousAnimateGlyphCount = strongSelf.textNode.textNode.getCharacterToGlyphMapping().count
+                                previousAnimateGlyphCount = strongSelf.textNode.textNode.cachedLayout?.attributedString?.length ?? 0
                             }
                             
                             strongSelf.textNode.textNode.displaysAsynchronously = !item.presentationData.isPreview
@@ -1052,8 +1053,8 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                             }
                             
                             if previousAnimateGlyphCount != nil || strongSelf.textRevealAnimationState != nil || hasDraft || hadDraft {
-                                if strongSelf.textNode.textNode.revealGlyphCount == nil {
-                                    strongSelf.textNode.textNode.updateRevealGlyphCount(count: previousAnimateGlyphCount ?? 0)
+                                if strongSelf.textNode.textNode.revealCharacterCount == nil {
+                                    strongSelf.textNode.textNode.updateRevealCharacterCount(count: previousAnimateGlyphCount ?? 0, animated: false)
                                 }
                                 strongSelf.updateTextRevealAnimation(previousGlyphCount: previousAnimateGlyphCount ?? 0)
                             }
@@ -1066,7 +1067,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
     
     private func updateTextRevealAnimation(previousGlyphCount: Int) {
         var fromCount = previousGlyphCount
-        let toCount = self.textNode.textNode.getCharacterToGlyphMapping().count
+        let toCount = self.textNode.textNode.cachedLayout?.attributedString?.length ?? 0
         let timestamp = CACurrentMediaTime()
         if let textRevealAnimationState = self.textRevealAnimationState {
             if textRevealAnimationState.toCount == toCount {
@@ -1078,7 +1079,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
             if self.textRevealAnimationState != nil {
                 self.textRevealAnimationState = nil
                 self.textRevealLink = nil
-                self.textNode.textNode.updateRevealGlyphCount(count: nil)
+                self.textNode.textNode.updateRevealCharacterCount(count: nil, animated: false)
             }
             return
         }
@@ -1106,14 +1107,14 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     self.textRevealAnimationState = nil
                     self.textRevealLink = nil
                     
-                    self.textNode.textNode.updateRevealGlyphCount(count: nil)
+                    self.textNode.textNode.updateRevealCharacterCount(count: nil, animated: false)
                     self.requestFullUpdate?()
                 } else {
                     var requestUpdate = false
                     let glyphCount = textRevealAnimationState.glyphCount(timestamp: timestamp)
-                    if let previousRevealGlyphCount = self.textNode.textNode.revealGlyphCount, previousRevealGlyphCount != glyphCount {
+                    if let previousRevealGlyphCount = self.textNode.textNode.revealCharacterCount, previousRevealGlyphCount != glyphCount {
                         if let cachedLayout = self.textNode.textNode.cachedLayout {
-                            if cachedLayout.sizeForGlyphCount(glyphCount: previousRevealGlyphCount) != cachedLayout.sizeForGlyphCount(glyphCount: glyphCount) {
+                            if cachedLayout.sizeForCharacterCount(characterCount: previousRevealGlyphCount) != cachedLayout.sizeForCharacterCount(characterCount: glyphCount) {
                                 requestUpdate = true
                             }
                         } else {
@@ -1123,7 +1124,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                             //print("glyphCount: request update")
                         }
                         
-                        self.textNode.textNode.updateRevealGlyphCount(count: glyphCount)
+                        self.textNode.textNode.updateRevealCharacterCount(count: glyphCount, animated: true)
                     }
                     
                     if requestUpdate {

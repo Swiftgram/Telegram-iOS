@@ -2985,15 +2985,40 @@ final class TextContentItemLayer: SimpleLayer {
                     self.addSublayer(snippetLayer)
                     self.animatingSnippetLayers.append(snippetLayer)
 
-                    snippetLayer.animateAlpha(from: 0.0, to: 1.0, duration: 0.1)
-                    snippetLayer.animateSpring(from: 0.001, to: 1.0, keyPath: "transform.scale", duration: 0.5, completion: { [weak self, weak snippetLayer] _ in
-                        guard let self, let snippetLayer else {
-                            return
-                        }
-                        snippetLayer.removeFromSuperlayer()
-                        self.animatingSnippetLayers.removeAll(where: { $0 === snippetLayer })
-                        self.updateRevealMask(animateNewSegments: false)
-                    })
+                    if !"".isEmpty {
+                        //ComponentTransition(animation: .curve(duration: 0.3, curve: .easeInOut)).animateBlur(layer: snippetLayer, fromRadius: 10.0, toRadius: 0.0)
+                        
+                        snippetLayer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
+                        snippetLayer.animateScale(from: 0.1, to: 1.0, duration: 0.2, completion: { [weak self, weak snippetLayer] _ in
+                            guard let self, let snippetLayer else {
+                                return
+                            }
+                            snippetLayer.removeFromSuperlayer()
+                            self.animatingSnippetLayers.removeAll(where: { $0 === snippetLayer })
+                            self.updateRevealMask(animateNewSegments: false)
+                        })
+                    } else if "".isEmpty {
+                        ComponentTransition(animation: .curve(duration: 0.25, curve: .easeInOut)).animateBlur(layer: snippetLayer, fromRadius: 8.0, toRadius: 0.0)
+                        snippetLayer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
+                        snippetLayer.animatePosition(from: CGPoint(x: 0.0, y: 10.0), to: CGPoint(), duration: 0.2, additive: true)
+                        snippetLayer.animateScale(from: 0.5, to: 1.0, duration: 0.2, completion: { [weak self, weak snippetLayer] _ in
+                            guard let self, let snippetLayer else {
+                                return
+                            }
+                            snippetLayer.removeFromSuperlayer()
+                            self.animatingSnippetLayers.removeAll(where: { $0 === snippetLayer })
+                            self.updateRevealMask(animateNewSegments: false)
+                        })
+                    } else {
+                        snippetLayer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2, completion: { [weak self, weak snippetLayer] _ in
+                            guard let self, let snippetLayer else {
+                                return
+                            }
+                            snippetLayer.removeFromSuperlayer()
+                            self.animatingSnippetLayers.removeAll(where: { $0 === snippetLayer })
+                            self.updateRevealMask(animateNewSegments: false)
+                        })
+                    }
                 }
                 globalCharIndex += lineCharCount
             }

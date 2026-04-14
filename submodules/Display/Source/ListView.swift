@@ -3981,6 +3981,12 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
                                 } else {
                                     headerNode.layer.animateBoundsOriginAdditive(from: offset, to: CGPoint(), duration: duration, mediaTimingFunction: CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut))
                                 }
+                            case .easeIn:
+                                if transition.1 {
+                                    headerNode.layer.animateBoundsOriginAdditive(from: offset, to: CGPoint(), duration: duration, mediaTimingFunction: ContainedViewLayoutTransitionCurve.slide.mediaTimingFunction)
+                                } else {
+                                    headerNode.layer.animateBoundsOriginAdditive(from: offset, to: CGPoint(), duration: duration, mediaTimingFunction: CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeIn))
+                                }
                         }
                 }
                 
