@@ -277,4 +277,31 @@ final class WebAppWebView: WKWebView {
     override var inputAccessoryView: UIView? {
         return nil
     }
+    
+    var origin: String? {
+        guard let url = self.url, let scheme = url.scheme, let host = url.host else {
+            return nil
+        }
+        let port = url.port
+        var origin = "\(scheme)://\(host)"
+        if let port {
+            origin += ":\(port)"
+        }
+        return origin
+    }
+}
+
+extension WKFrameInfo {
+    var securityOriginString: String {
+        let securityOrigin = self.securityOrigin
+        var origin = ""
+        origin.append(securityOrigin.protocol)
+        origin.append("://")
+        origin.append(securityOrigin.host)
+        if securityOrigin.port != 0 {
+            origin.append(":")
+            origin.append("\(securityOrigin.port)")
+        }
+        return origin
+    }
 }

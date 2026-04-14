@@ -5963,44 +5963,64 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                                 disableDefaultPressAnimation = true
                             }
                         case let .phone(number):
-                            return .action(InternalBubbleTapAction.Action({ [weak self] in
-                                guard let self, let contentNode = self.contextContentNodeForLink(number, rects: rects) else {
-                                    return
-                                }
-                                item.controllerInteraction.longTap(.phone(number), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                            }, contextMenuOnLongPress: !tapAction.hasLongTapAction))
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    guard let self, let contentNode = self.contextContentNodeForLink(number, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.phone(number), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
                         case let .peerMention(peerId, mention, _):
-                            return .action(InternalBubbleTapAction.Action { [weak self] in
-                                guard let self, let contentNode = self.contextContentNodeForLink(mention, rects: rects) else {
-                                    return
-                                }
-                                item.controllerInteraction.longTap(.peerMention(peerId, mention), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                            })
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    guard let self, let contentNode = self.contextContentNodeForLink(mention, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.peerMention(peerId, mention), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
                         case let .textMention(name):
-                            return .action(InternalBubbleTapAction.Action { [weak self] in
-                                guard let self, let contentNode = self.contextContentNodeForLink(name, rects: rects) else {
-                                    return
-                                }
-                                item.controllerInteraction.longTap(.mention(name), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                            })
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    guard let self, let contentNode = self.contextContentNodeForLink(name, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.mention(name), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
                         case let .botCommand(command):
-                            return .action(InternalBubbleTapAction.Action { [weak self] in
-                                guard let self, let contentNode = self.contextContentNodeForLink(command, rects: rects) else {
-                                    return
-                                }
-                                item.controllerInteraction.longTap(.command(command), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                            })
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    guard let self, let contentNode = self.contextContentNodeForLink(command, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.command(command), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
                         case let .hashtag(peerName, hashtag):
                             var fullHashtag = hashtag
                             if let peerName {
                                 fullHashtag += "@\(peerName)"
                             }
-                            return .action(InternalBubbleTapAction.Action { [weak self] in
-                                guard let self, let contentNode = self.contextContentNodeForLink(fullHashtag, rects: rects) else {
-                                    return
-                                }
-                                item.controllerInteraction.longTap(.hashtag(fullHashtag), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                            })
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    guard let self, let contentNode = self.contextContentNodeForLink(fullHashtag, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.hashtag(fullHashtag), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
                         case .instantPage:
                             break
                         case .wallpaper:
@@ -6014,21 +6034,29 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         case .openMessage:
                             break
                         case let .timecode(timecode, text):
-                            if let mediaMessage = mediaMessage {
-                                return .action(InternalBubbleTapAction.Action { [weak self] in
-                                    guard let self, let contentNode = self.contextContentNodeForLink(text, rects: rects) else {
-                                        return
-                                    }
-                                    item.controllerInteraction.longTap(.timecode(timecode, text), ChatControllerInteraction.LongTapParams(message: mediaMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                                })
+                            if let mediaMessage {
+                                if tapAction.hasLongTapAction {
+                                    return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                        guard let self, let contentNode = self.contextContentNodeForLink(text, rects: rects) else {
+                                            return
+                                        }
+                                        item.controllerInteraction.longTap(.timecode(timecode, text), ChatControllerInteraction.LongTapParams(message: mediaMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                    }, contextMenuOnLongPress: false))
+                                } else {
+                                    disableDefaultPressAnimation = true
+                                }
                             }
                         case let .bankCard(number):
-                            return .action(InternalBubbleTapAction.Action { [weak self] in
-                                guard let self, let contentNode = self.contextContentNodeForLink(number, rects: rects) else {
-                                    return
-                                }
-                                item.controllerInteraction.longTap(.bankCard(number), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                            })
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    guard let self, let contentNode = self.contextContentNodeForLink(number, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.bankCard(number), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
                         case .tooltip:
                             break
                         case .openPollResults:
@@ -6040,13 +6068,17 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         case .customEmoji:
                             break
                         case let .date(date, _):
-                            return .action(InternalBubbleTapAction.Action { [weak self] in
-                                let fullDate = stringForEntityFormattedDate(timestamp: date, format: .full(timeFormat: .short, dateFormat: .long, dayOfWeek: false), strings: item.presentationData.strings, dateTimeFormat: item.presentationData.dateTimeFormat)
-                                guard let self, let contentNode = self.contextContentNodeForLink(fullDate, rects: rects) else {
-                                    return
-                                }
-                                item.controllerInteraction.longTap(.date(date), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                            })
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    let fullDate = stringForEntityFormattedDate(timestamp: date, format: .full(timeFormat: .short, dateFormat: .long, dayOfWeek: false), strings: item.presentationData.strings, dateTimeFormat: item.presentationData.dateTimeFormat)
+                                    guard let self, let contentNode = self.contextContentNodeForLink(fullDate, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.date(date), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
                         case .custom:
                             break
                         }

@@ -536,7 +536,7 @@ private final class VideoMessageCameraScreenComponent: CombinedComponent {
             let availableSize = context.component.containerSize
             
             var sideInset: CGFloat = 8.0
-            if component.safeInsets.bottom <= 32.0 {
+            if component.safeInsets.bottom <= 32.0 && environment.inputHeight == 0.0 {
                 sideInset += 18.0
             }
             

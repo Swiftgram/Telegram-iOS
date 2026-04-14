@@ -423,16 +423,8 @@ final class BrowserWebContent: UIView, BrowserContent, WKNavigationDelegate, WKU
         case "oauth_request":
             let url = json?["url"] as? String
             if let url {
-                let securityOrigin = message.frameInfo.securityOrigin
-                var origin = ""
-                origin.append(securityOrigin.protocol)
-                origin.append("://")
-                origin.append(securityOrigin.host)
-                if securityOrigin.port != 0 {
-                    origin.append(":")
-                    origin.append("\(securityOrigin.port)")
-                }
-                                
+                let origin = message.frameInfo.securityOriginString
+                
                 let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
                 let subject: MessageActionUrlSubject = .url(url: url, inAppOrigin: origin)
                 let _ = (self.context.engine.messages.requestMessageActionUrlAuth(subject: subject)
@@ -2033,5 +2025,20 @@ private func findScrollView(view: UIView?) -> UIScrollView? {
         return findScrollView(view: view.superview)
     } else {
         return nil
+    }
+}
+
+private extension WKFrameInfo {
+    var securityOriginString: String {
+        let securityOrigin = self.securityOrigin
+        var origin = ""
+        origin.append(securityOrigin.protocol)
+        origin.append("://")
+        origin.append(securityOrigin.host)
+        if securityOrigin.port != 0 {
+            origin.append(":")
+            origin.append("\(securityOrigin.port)")
+        }
+        return origin
     }
 }

@@ -2765,7 +2765,7 @@ final class ShareWithPeersScreenComponent: Component {
             let navigationLeftButtonSize = self.navigationLeftButton.update(
                 transition: transition,
                 component: AnyComponent(GlassBarButtonComponent(
-                    size: CGSize(width: 40.0, height: 40.0),
+                    size: CGSize(width: 44.0, height: 44.0),
                     backgroundColor: environment.theme.rootController.navigationBar.glassBarButtonBackgroundColor,
                     isDark: environment.theme.overallDarkAppearance,
                     state: .generic,

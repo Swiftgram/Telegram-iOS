@@ -716,7 +716,8 @@ public final class ListActionItemComponent: Component {
                 }
             }
             
-            if case .arrow = component.accessory {
+            switch component.accessory {
+            case .arrow:
                 let arrowView: UIImageView
                 var arrowTransition = transition
                 if let current = self.arrowView {
@@ -735,14 +736,7 @@ public final class ListActionItemComponent: Component {
                     let arrowFrame = CGRect(origin: CGPoint(x: availableSize.width - 7.0 - image.size.width, y: floor((contentHeight - image.size.height) * 0.5)), size: image.size)
                     arrowTransition.setFrame(view: arrowView, frame: arrowFrame)
                 }
-            } else {
-                if let arrowView = self.arrowView {
-                    self.arrowView = nil
-                    arrowView.removeFromSuperview()
-                }
-            }
-            
-            if case .expandArrows = component.accessory {
+            case .expandArrows:
                 let arrowView: UIImageView
                 var arrowTransition = transition
                 if let current = self.arrowView {
@@ -761,7 +755,7 @@ public final class ListActionItemComponent: Component {
                     let arrowFrame = CGRect(origin: CGPoint(x: availableSize.width - 16.0 - image.size.width, y: floor((contentHeight - image.size.height) * 0.5)), size: image.size)
                     arrowTransition.setFrame(view: arrowView, frame: arrowFrame)
                 }
-            } else {
+            default:
                 if let arrowView = self.arrowView {
                     self.arrowView = nil
                     arrowView.removeFromSuperview()

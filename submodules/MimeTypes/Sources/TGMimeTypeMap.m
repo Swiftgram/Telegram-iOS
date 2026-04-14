@@ -95,7 +95,7 @@ static void initializeMapping()
         mimeToExtension[@"application/x-dms"] = @"dms"; extensionToMime[@"dms"] = @"application/x-dms";
         mimeToExtension[@"application/x-doom"] = @"wad"; extensionToMime[@"wad"] = @"application/x-doom";
         mimeToExtension[@"application/x-dvi"] = @"dvi"; extensionToMime[@"dvi"] = @"application/x-dvi";
-        mimeToExtension[@"application/x-flac"] = @"flac"; extensionToMime[@"flac"] = @"application/x-flac";
+        mimeToExtension[@"audio/flac"] = @"flac"; extensionToMime[@"flac"] = @"audio/flac";
         mimeToExtension[@"application/x-font"] = @"pfa"; extensionToMime[@"pfa"] = @"application/x-font";
         mimeToExtension[@"application/x-font"] = @"pfb"; extensionToMime[@"pfb"] = @"application/x-font";
         mimeToExtension[@"application/x-font"] = @"gsf"; extensionToMime[@"gsf"] = @"application/x-font";
