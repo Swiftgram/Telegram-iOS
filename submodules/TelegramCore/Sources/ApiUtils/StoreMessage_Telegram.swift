@@ -1341,6 +1341,8 @@ extension StoreMessage {
                             attributes.append(ReplyMessageAttribute(messageId: MessageId(peerId: replyPeerId, namespace: Namespaces.Message.Cloud, id: replyToMsgId), threadMessageId: threadMessageId, quote: quote, isQuote: isQuote, innerSubject: innerSubject))
                         } else if let replyHeader = replyHeader {
                             attributes.append(QuotedReplyMessageAttribute(apiHeader: replyHeader, quote: quote, isQuote: isQuote))
+                        } else if let replyToTopId, peerIsForum {
+                            threadId = Int64(replyToTopId)
                         }
                     case let .messageReplyStoryHeader(messageReplyStoryHeaderData):
                         let (peer, storyId) = (messageReplyStoryHeaderData.peer, messageReplyStoryHeaderData.storyId)

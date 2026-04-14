@@ -6459,6 +6459,7 @@ public final class PeerInfoScreenImpl: ViewController, PeerInfoScreen, KeyShortc
                 badgeStrokeColor: baseNavigationBarPresentationData.theme.badgeStrokeColor,
                 badgeTextColor: baseNavigationBarPresentationData.theme.badgeTextColor,
                 accentButtonColor: baseNavigationBarPresentationData.theme.accentButtonColor,
+                accentDisabledButtonColor: baseNavigationBarPresentationData.theme.accentDisabledButtonColor,
                 accentForegroundColor: baseNavigationBarPresentationData.theme.accentForegroundColor
         ), strings: baseNavigationBarPresentationData.strings))
         

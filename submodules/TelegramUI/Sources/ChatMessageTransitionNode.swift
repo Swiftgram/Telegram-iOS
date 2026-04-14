@@ -388,9 +388,9 @@ public final class ChatMessageTransitionNodeImpl: ASDisplayNode, ChatMessageTran
         func beginAnimation() {
             if let portalTargetView = self.portalTargetView {
                 portalTargetView.view.alpha = 0.0
-                portalTargetView.view.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.15)
+                portalTargetView.view.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.15, delay: 0.15)
                 
-                self.portalSourceView.layer.animateAlpha(from: 0.01, to: 1.0, duration: 0.12)
+                self.portalSourceView.layer.animateAlpha(from: 0.01, to: 1.0, duration: 0.12, delay: 0.15)
             }
             
             let verticalDuration: Double = ChatMessageTransitionNodeImpl.animationDuration

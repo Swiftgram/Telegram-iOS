@@ -249,7 +249,6 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         let currentMaxGlyphCount: Int?
         if let textRevealAnimationState = self.textRevealAnimationState {
             currentMaxGlyphCount = textRevealAnimationState.glyphCount(timestamp: CACurrentMediaTime())
-            //print("currentMaxGlyphCount(\(textRevealAnimationState.fromCount) -> \(textRevealAnimationState.toCount)) fraction: \(textRevealAnimationState.fraction(timestamp: CACurrentMediaTime()))")
         } else {
             currentMaxGlyphCount = nil
         }
@@ -792,7 +791,6 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                 
                 if let clippedGlyphCountLayout {
                     textFrame.size = clippedGlyphCountLayout.size
-                    //print("currentMaxGlyphCount: \(currentMaxGlyphCount), size: \(textFrame.size.height)")
                     textFrameWithoutInsets.size = CGSize(width: textFrame.width - textInsets.left - textInsets.right, height: textFrame.height - textInsets.top - textInsets.bottom)
                 }
                 
@@ -1053,7 +1051,10 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                                 codeHighlightState.disposable.dispose()
                             }
                             
-                            if previousAnimateGlyphCount != nil || strongSelf.textRevealAnimationState != nil || hadDraft {
+                            if previousAnimateGlyphCount != nil || strongSelf.textRevealAnimationState != nil || hasDraft || hadDraft {
+                                if strongSelf.textNode.textNode.revealGlyphCount == nil {
+                                    strongSelf.textNode.textNode.updateRevealGlyphCount(count: previousAnimateGlyphCount ?? 0)
+                                }
                                 strongSelf.updateTextRevealAnimation(previousGlyphCount: previousAnimateGlyphCount ?? 0)
                             }
                         }
@@ -1092,7 +1093,6 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
             duration: duration
         )
         if self.textRevealLink == nil, self.textRevealAnimationState != nil {
-            var lastLineUpdateTimestamp = timestamp
             self.textRevealLink = SharedDisplayLinkDriver.shared.add { [weak self] _ in
                 guard let self else {
                     return
@@ -1109,22 +1109,22 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     self.textNode.textNode.updateRevealGlyphCount(count: nil)
                     self.requestFullUpdate?()
                 } else {
-                    let lineUpdateTimeout = timestamp - lastLineUpdateTimestamp
-                    
                     var requestUpdate = false
                     let glyphCount = textRevealAnimationState.glyphCount(timestamp: timestamp)
-                    if let revealGlyphCount = self.textNode.textNode.revealGlyphCount, let cachedLayout = self.textNode.textNode.cachedLayout {
-                        let previousLayout = cachedLayout.layoutForGlyphCount(glyphCount: revealGlyphCount)
-                        let updatedLayout = cachedLayout.layoutForGlyphCount(glyphCount: glyphCount)
-                        
-                        if updatedLayout.size.height != previousLayout.size.height || abs(updatedLayout.size.width - previousLayout.size.width) > 8.0 {
-                            if lineUpdateTimeout >= 0.0 {
-                                lastLineUpdateTimestamp = timestamp
+                    if let previousRevealGlyphCount = self.textNode.textNode.revealGlyphCount, previousRevealGlyphCount != glyphCount {
+                        if let cachedLayout = self.textNode.textNode.cachedLayout {
+                            if cachedLayout.sizeForGlyphCount(glyphCount: previousRevealGlyphCount) != cachedLayout.sizeForGlyphCount(glyphCount: glyphCount) {
                                 requestUpdate = true
                             }
+                        } else {
+                            requestUpdate = true
                         }
+                        if requestUpdate {
+                            //print("glyphCount: request update")
+                        }
+                        
+                        self.textNode.textNode.updateRevealGlyphCount(count: glyphCount)
                     }
-                    self.textNode.textNode.updateRevealGlyphCount(count: glyphCount)
                     
                     if requestUpdate {
                         self.requestFullUpdate?()

@@ -721,6 +721,12 @@ public final class NavigationBarImpl: ASDisplayNode, NavigationBar {
                 }
             }
         }
+        self.leftButtonNodeImpl.requestUpdate = { [weak self] in
+            guard let self else {
+                return
+            }
+            self.requestLayout()
+        }
         
         self.rightButtonNodeImpl.pressed = { [weak self] index in
             if let item = self?.item {
@@ -732,6 +738,12 @@ public final class NavigationBarImpl: ASDisplayNode, NavigationBar {
                     rightBarButtonItem.performActionOnTarget()
                 }
             }
+        }
+        self.rightButtonNodeImpl.requestUpdate = { [weak self] in
+            guard let self else {
+                return
+            }
+            self.requestLayout()
         }
     }
     
@@ -906,6 +918,9 @@ public final class NavigationBarImpl: ASDisplayNode, NavigationBar {
             case .accent:
                 self.leftButtonNodeImpl.color = self.presentationData.theme.accentForegroundColor
                 self.leftButtonNodeImpl.disabledColor = self.presentationData.theme.accentForegroundColor.withMultipliedAlpha(0.5)
+            case .accentDisabled:
+                self.leftButtonNodeImpl.color = self.presentationData.theme.accentForegroundColor
+                self.leftButtonNodeImpl.disabledColor = self.presentationData.theme.accentForegroundColor.withMultipliedAlpha(0.5)
             case .generic:
                 self.leftButtonNodeImpl.color = self.presentationData.theme.buttonColor
                 self.leftButtonNodeImpl.disabledColor = self.presentationData.theme.disabledButtonColor
@@ -944,6 +959,9 @@ public final class NavigationBarImpl: ASDisplayNode, NavigationBar {
         if self.rightButtonNodeImpl.view.superview != nil {
             switch self.rightButtonNodeImpl.commonContentType {
             case .accent:
+                self.rightButtonNodeImpl.color = self.presentationData.theme.accentForegroundColor
+                self.rightButtonNodeImpl.disabledColor = self.presentationData.theme.accentForegroundColor.withMultipliedAlpha(0.5)
+            case .accentDisabled:
                 self.rightButtonNodeImpl.color = self.presentationData.theme.accentForegroundColor
                 self.rightButtonNodeImpl.disabledColor = self.presentationData.theme.accentForegroundColor.withMultipliedAlpha(0.5)
             case .generic:
@@ -994,6 +1012,8 @@ public final class NavigationBarImpl: ASDisplayNode, NavigationBar {
             switch self.leftButtonNodeImpl.commonContentType {
             case .accent:
                 leftButtonsColor = .init(kind: .custom(style: self.presentationData.theme.glassStyle == .clear ? .clear : .default, color: self.presentationData.theme.accentButtonColor))
+            case .accentDisabled:
+                leftButtonsColor = .init(kind: .custom(style: self.presentationData.theme.glassStyle == .clear ? .clear : .default, color: self.presentationData.theme.accentDisabledButtonColor))
             case .generic:
                 break
             }
@@ -1028,6 +1048,8 @@ public final class NavigationBarImpl: ASDisplayNode, NavigationBar {
                 switch self.rightButtonNodeImpl.commonContentType {
                 case .accent:
                     rightButtonsColor = .init(kind: .custom(style: self.presentationData.theme.glassStyle == .clear ? .clear : .default, color: self.presentationData.theme.accentButtonColor))
+                case .accentDisabled:
+                    rightButtonsColor = .init(kind: .custom(style: self.presentationData.theme.glassStyle == .clear ? .clear : .default, color: self.presentationData.theme.accentDisabledButtonColor))
                 case .generic:
                     break
                 }
