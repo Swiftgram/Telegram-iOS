@@ -117,6 +117,10 @@ public let listViewAnimationCurveEaseInOut: (CGFloat) -> CGFloat = { t in
     return bezierPoint(0.42, 0.0, 0.58, 1.0, t)
 }
 
+public let listViewAnimationCurveEaseIn: (CGFloat) -> CGFloat = { t in
+    return bezierPoint(0.42, 0.0, 1.0, 1.0, t)
+}
+
 #if os(iOS)
 public func listViewAnimationCurveFromAnimationOptions(animationOptions: UIView.AnimationOptions) -> (CGFloat) -> CGFloat {
     if animationOptions.rawValue == UInt(7 << 16) {

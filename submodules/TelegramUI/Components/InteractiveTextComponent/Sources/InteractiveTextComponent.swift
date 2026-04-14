@@ -127,8 +127,9 @@ private final class InteractiveTextNodeLine {
     var embeddedItems: [InteractiveTextNodeEmbeddedItem]
     var attachments: [InteractiveTextNodeAttachment]
     let additionalTrailingLine: (CTLine, Double)?
-    
-    init(line: CTLine, constrainedWidth: CGFloat, frame: CGRect, intrinsicWidth: CGFloat, ascent: CGFloat, descent: CGFloat, range: NSRange?, isTruncated: Bool, isRTL: Bool, strikethroughs: [InteractiveTextNodeStrikethrough], underlines: [InteractiveTextNodeStrikethrough], spoilers: [InteractiveTextNodeSpoiler], spoilerWords: [InteractiveTextNodeSpoiler], embeddedItems: [InteractiveTextNodeEmbeddedItem], attachments: [InteractiveTextNodeAttachment], additionalTrailingLine: (CTLine, Double)?) {
+    let characterRects: [CGRect]?
+
+    init(line: CTLine, constrainedWidth: CGFloat, frame: CGRect, intrinsicWidth: CGFloat, ascent: CGFloat, descent: CGFloat, range: NSRange?, isTruncated: Bool, isRTL: Bool, strikethroughs: [InteractiveTextNodeStrikethrough], underlines: [InteractiveTextNodeStrikethrough], spoilers: [InteractiveTextNodeSpoiler], spoilerWords: [InteractiveTextNodeSpoiler], embeddedItems: [InteractiveTextNodeEmbeddedItem], attachments: [InteractiveTextNodeAttachment], additionalTrailingLine: (CTLine, Double)?, characterRects: [CGRect]?) {
         self.line = line
         self.constrainedWidth = constrainedWidth
         self.frame = frame
@@ -145,6 +146,7 @@ private final class InteractiveTextNodeLine {
         self.embeddedItems = embeddedItems
         self.attachments = attachments
         self.additionalTrailingLine = additionalTrailingLine
+        self.characterRects = characterRects
     }
 }
 
@@ -295,7 +297,8 @@ public final class InteractiveTextNodeLayoutArguments {
     public let displayContentsUnderSpoilers: Bool
     public let customTruncationToken: ((UIFont, Bool) -> NSAttributedString?)?
     public let expandedBlocks: Set<Int>
-    
+    public let computeCharacterRects: Bool
+
     public init(
         attributedString: NSAttributedString?,
         backgroundColor: UIColor? = nil,
@@ -314,7 +317,8 @@ public final class InteractiveTextNodeLayoutArguments {
         textStroke: (UIColor, CGFloat)? = nil,
         displayContentsUnderSpoilers: Bool = false,
         customTruncationToken: ((UIFont, Bool) -> NSAttributedString?)? = nil,
-        expandedBlocks: Set<Int> = Set()
+        expandedBlocks: Set<Int> = Set(),
+        computeCharacterRects: Bool = false
     ) {
         self.attributedString = attributedString
         self.backgroundColor = backgroundColor
@@ -334,8 +338,9 @@ public final class InteractiveTextNodeLayoutArguments {
         self.displayContentsUnderSpoilers = displayContentsUnderSpoilers
         self.customTruncationToken = customTruncationToken
         self.expandedBlocks = expandedBlocks
+        self.computeCharacterRects = computeCharacterRects
     }
-    
+
     public func withAttributedString(_ attributedString: NSAttributedString?) -> InteractiveTextNodeLayoutArguments {
         return InteractiveTextNodeLayoutArguments(
             attributedString: attributedString,
@@ -355,7 +360,8 @@ public final class InteractiveTextNodeLayoutArguments {
             textStroke: self.textStroke,
             displayContentsUnderSpoilers: self.displayContentsUnderSpoilers,
             customTruncationToken: self.customTruncationToken,
-            expandedBlocks: self.expandedBlocks
+            expandedBlocks: self.expandedBlocks,
+            computeCharacterRects: self.computeCharacterRects
         )
     }
 }
@@ -418,7 +424,6 @@ public final class InteractiveTextNodeLayout: NSObject {
     fileprivate let textStroke: (UIColor, CGFloat)?
     public let displayContentsUnderSpoilers: Bool
     fileprivate let expandedBlocks: Set<Int>
-    fileprivate var characterToGlyphMapping: [Int]?
     
     fileprivate init(
         attributedString: NSAttributedString?,
@@ -1041,94 +1046,73 @@ public final class InteractiveTextNodeLayout: NSObject {
         return nil
     }
     
-    public func layoutForGlyphCount(glyphCount: Int) -> TextNodeLayout.LayoutInfo {
+    public func layoutForCharacterCount(characterCount: Int) -> TextNodeLayout.LayoutInfo {
         var height: CGFloat = 0.0
         if !self.segments.isEmpty, let line = self.segments[0].lines.first {
             height = line.frame.maxY
         }
-        
-        var actualCount = 0
-        var itemCount = 0
-        for item in self.getCharacterToGlyphMapping() {
-            if itemCount >= glyphCount {
-                break
-            }
-            actualCount = item
-            itemCount += 1
-        }
-        let glyphCount = actualCount
-        
+
         var width: CGFloat = 0.0
-        var count = 0
         var trailingLineWidth: CGFloat = 0.0
         var lineCount = 0
+        var remainingCharacters = characterCount
+
         for segment in self.segments {
             for line in segment.lines {
-                if count >= glyphCount {
+                if remainingCharacters <= 0 {
                     break
                 }
-                let lineWidth: CGFloat
-                let glyphRuns = CTLineGetGlyphRuns(line.line) as NSArray
-                var maxGlyphUpperIndex: CFIndex = 0
-                for run in glyphRuns {
-                    let run = run as! CTRun
-                    let rangeGlyphCount = CTRunGetGlyphCount(run)
-                    let stringRange = CTRunGetStringRange(run)
-                    if count + Int(rangeGlyphCount) > glyphCount {
-                        if count < glyphCount {
-                            let remainingGlyphCount = stringRange.location + glyphCount - count
-                            if remainingGlyphCount > 0 {
-                                var indices: [CFIndex] = Array(repeating: 0, count: remainingGlyphCount)
-                                CTRunGetStringIndices(run, CFRangeMake(stringRange.location, stringRange.location + glyphCount - count), &indices)
-                                if let maxIndex = indices.max() {
-                                    maxGlyphUpperIndex = max(maxIndex, maxGlyphUpperIndex)
-                                }
-                            } else {
-                                assertionFailure()
-                            }
-                        }
-                    } else {
-                        if stringRange.length != 0 {
-                            maxGlyphUpperIndex = max(stringRange.location + stringRange.length, maxGlyphUpperIndex)
-                        }
-                    }
-                    count += Int(rangeGlyphCount)
-                }
-                height = max(height, line.frame.maxY)
-                if maxGlyphUpperIndex != 0 {
-                    let lineRange = CTLineGetStringRange(line.line)
-                    if maxGlyphUpperIndex < lineRange.location + lineRange.length {
-                        let rightOffset = CTLineGetOffsetForStringIndex(line.line, maxGlyphUpperIndex + 1, nil)
-                        lineWidth = rightOffset
-                    } else {
-                        lineWidth = line.frame.width
-                    }
+
+                let lineCharCount: Int
+                if let characterRects = line.characterRects {
+                    lineCharCount = characterRects.count
+                } else if let range = line.range {
+                    lineCharCount = range.length
                 } else {
-                    lineWidth = line.frame.width
+                    let ctRange = CTLineGetStringRange(line.line)
+                    lineCharCount = ctRange.length
                 }
-                
+
+                let lineWidth: CGFloat
+                if remainingCharacters >= lineCharCount {
+                    lineWidth = line.frame.width
+                } else {
+                    let lineRange: NSRange
+                    if let range = line.range {
+                        lineRange = range
+                    } else {
+                        let ctRange = CTLineGetStringRange(line.line)
+                        lineRange = NSRange(location: ctRange.location, length: ctRange.length)
+                    }
+                    let cutStringIndex = lineRange.location + remainingCharacters
+                    lineWidth = CGFloat(CTLineGetOffsetForStringIndex(line.line, cutStringIndex, nil))
+                }
+
+                height = max(height, line.frame.maxY)
                 width = max(width, lineWidth)
                 trailingLineWidth = lineWidth + self.insets.left + self.insets.right + 4.0
                 lineCount += 1
+                remainingCharacters -= lineCharCount
             }
         }
+
         width = ceil(width) + self.insets.left + self.insets.right
         if lineCount > 1 {
             width = self.size.width
         }
-        
+
         height += self.insets.top + self.insets.bottom + 2.0
         return TextNodeLayout.LayoutInfo(
             size: CGSize(width: width, height: ceil(height)),
             trailingLineWidth: trailingLineWidth
         )
     }
-    
-    public func sizeForGlyphCount(glyphCount: Int) -> CGSize {
-        return self.layoutForGlyphCount(glyphCount: glyphCount).size
+
+    public func sizeForCharacterCount(characterCount: Int) -> CGSize {
+        return self.layoutForCharacterCount(characterCount: characterCount).size
     }
     
-    public func getCharacterToGlyphMapping() -> [Int] {
+    /*public func getCharacterToGlyphMapping() -> [Int] {
         guard let attributedString = self.attributedString else {
             return []
         }
@@ -1182,7 +1166,7 @@ public final class InteractiveTextNodeLayout: NSObject {
         self.characterToGlyphMapping = result
         
         return result
-    }
+    }*/
 }
 
 private func addSpoiler(line: InteractiveTextNodeLine, ascent: CGFloat, descent: CGFloat, startIndex: Int, endIndex: Int) {
@@ -1257,6 +1241,52 @@ private func addAttachment(attachment: UIImage, line: InteractiveTextNodeLine, a
     line.attachments.append(InteractiveTextNodeAttachment(range: NSMakeRange(startIndex, endIndex - startIndex), frame: CGRect(x: min(leftOffset, rightOffset), y: descent - (ascent + descent), width: abs(rightOffset - leftOffset) + rightInset, height: ascent + descent), attachment: attachment))
 }
 
+private func computeCharacterRectsForLine(line: CTLine, lineRange: NSRange) -> [CGRect] {
+    var result = [CGRect](repeating: CGRect.zero, count: lineRange.length)
+
+    let glyphRuns = CTLineGetGlyphRuns(line) as NSArray
+    for run in glyphRuns {
+        let run = run as! CTRun
+        let glyphCount = CTRunGetGlyphCount(run)
+        if glyphCount == 0 {
+            continue
+        }
+
+        var glyphs = [CGGlyph](repeating: 0, count: glyphCount)
+        CTRunGetGlyphs(run, CFRangeMake(0, glyphCount), &glyphs)
+
+        var positions = [CGPoint](repeating: CGPoint.zero, count: glyphCount)
+        CTRunGetPositions(run, CFRangeMake(0, glyphCount), &positions)
+
+        var stringIndices = [CFIndex](repeating: 0, count: glyphCount)
+        CTRunGetStringIndices(run, CFRangeMake(0, glyphCount), &stringIndices)
+
+        let attributes = CTRunGetAttributes(run) as NSDictionary
+        guard let font = attributes[kCTFontAttributeName] as! CTFont? else {
+            continue
+        }
+
+        var boundingRects = [CGRect](repeating: CGRect.zero, count: glyphCount)
+        CTFontGetBoundingRectsForGlyphs(font, .default, &glyphs, &boundingRects, glyphCount)
+
+        for i in 0 ..< glyphCount {
+            let charIndex = stringIndices[i] - lineRange.location
+            if charIndex >= 0 && charIndex < lineRange.length {
+                let pos = positions[i]
+                let bbox = boundingRects[i]
+                result[charIndex] = CGRect(
+                    x: pos.x + bbox.origin.x,
+                    y: pos.y + bbox.origin.y,
+                    width: bbox.width,
+                    height: bbox.height
+                )
+            }
+        }
+    }
+
+    return result
+}
+
 open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecognizerDelegate {
     public final class ApplyArguments {
         public let animation: ListViewItemUpdateAnimation
@@ -1309,7 +1339,7 @@ open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecogn
     }
     
     public internal(set) var cachedLayout: InteractiveTextNodeLayout?
-    public internal(set) var revealGlyphCount: Int?
+    public internal(set) var revealCharacterCount: Int?
     public var renderContentTypes: RenderContentTypes = .all
     private var contentItemLayers: [Int: TextContentItemLayer] = [:]
     
@@ -1443,7 +1473,8 @@ open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecogn
         textStroke: (UIColor, CGFloat)?,
         displayContentsUnderSpoilers: Bool,
         customTruncationToken: ((UIFont, Bool) -> NSAttributedString?)?,
-        expandedBlocks: Set<Int>
+        expandedBlocks: Set<Int>,
+        computeCharacterRects: Bool = false
     ) -> InteractiveTextNodeLayout {
         let blockQuoteLeftInset: CGFloat = 9.0
         let blockQuoteRightInset: CGFloat = 0.0
@@ -1627,7 +1658,8 @@ open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecogn
                         spoilerWords: [],
                         embeddedItems: [],
                         attachments: [],
-                        additionalTrailingLine: nil
+                        additionalTrailingLine: nil,
+                        characterRects: nil
                     )
                     additionalSegmentRightInset = 0.0
                 }
@@ -1669,9 +1701,10 @@ open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecogn
                         spoilerWords: [],
                         embeddedItems: [],
                         attachments: [],
-                        additionalTrailingLine: nil
+                        additionalTrailingLine: nil,
+                        characterRects: computeCharacterRects ? computeCharacterRectsForLine(line: line, lineRange: NSRange(location: currentLineStartIndex, length: lineCharacterCount)) : nil
                     ))
-                    
+
                     remainingLines -= 1
                     if remainingLines <= 0 {
                         break
@@ -1728,7 +1761,8 @@ open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecogn
                             spoilerWords: [],
                             embeddedItems: [],
                             attachments: [],
-                            additionalTrailingLine: (truncationToken, 0.0)
+                            additionalTrailingLine: (truncationToken, 0.0),
+                            characterRects: computeCharacterRects ? computeCharacterRectsForLine(line: updatedLine, lineRange: lastLine.range ?? NSRange()) : nil
                         )
                     }
                 }
@@ -1783,7 +1817,8 @@ open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecogn
                         spoilerWords: [],
                         embeddedItems: [],
                         attachments: [],
-                        additionalTrailingLine: (truncationToken, truncationTokenWidth)
+                        additionalTrailingLine: (truncationToken, truncationTokenWidth),
+                        characterRects: computeCharacterRects ? computeCharacterRectsForLine(line: updatedLine, lineRange: lastLine.range ?? NSRange()) : nil
                     )
                 }
             }
@@ -2037,12 +2072,12 @@ open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecogn
         )
     }
     
-    static func calculateLayout(attributedString: NSAttributedString?, minimumNumberOfLines: Int, maximumNumberOfLines: Int, truncationType: CTLineTruncationType, backgroundColor: UIColor?, constrainedSize: CGSize, alignment: NSTextAlignment, verticalAlignment: TextVerticalAlignment, lineSpacingFactor: CGFloat, cutout: TextNodeCutout?, insets: UIEdgeInsets, lineColor: UIColor?, textShadowColor: UIColor?, textShadowBlur: CGFloat?, textStroke: (UIColor, CGFloat)?, displayContentsUnderSpoilers: Bool, customTruncationToken: ((UIFont, Bool) -> NSAttributedString?)?, expandedBlocks: Set<Int>) -> InteractiveTextNodeLayout {
+    static func calculateLayout(attributedString: NSAttributedString?, minimumNumberOfLines: Int, maximumNumberOfLines: Int, truncationType: CTLineTruncationType, backgroundColor: UIColor?, constrainedSize: CGSize, alignment: NSTextAlignment, verticalAlignment: TextVerticalAlignment, lineSpacingFactor: CGFloat, cutout: TextNodeCutout?, insets: UIEdgeInsets, lineColor: UIColor?, textShadowColor: UIColor?, textShadowBlur: CGFloat?, textStroke: (UIColor, CGFloat)?, displayContentsUnderSpoilers: Bool, customTruncationToken: ((UIFont, Bool) -> NSAttributedString?)?, expandedBlocks: Set<Int>, computeCharacterRects: Bool = false) -> InteractiveTextNodeLayout {
         guard let attributedString else {
             return InteractiveTextNodeLayout(attributedString: attributedString, maximumNumberOfLines: maximumNumberOfLines, truncationType: truncationType, constrainedSize: constrainedSize, explicitAlignment: alignment, resolvedAlignment: alignment, verticalAlignment: verticalAlignment, lineSpacing: lineSpacingFactor, cutout: cutout, insets: insets, size: CGSize(), rawTextSize: CGSize(), truncated: false, firstLineOffset: 0.0, segments: [], backgroundColor: backgroundColor, lineColor: lineColor, textShadowColor: textShadowColor, textShadowBlur: textShadowBlur, textStroke: textStroke, displayContentsUnderSpoilers: displayContentsUnderSpoilers, expandedBlocks: expandedBlocks)
         }
         
-        return calculateLayoutV2(attributedString: attributedString, minimumNumberOfLines: minimumNumberOfLines, maximumNumberOfLines: maximumNumberOfLines, truncationType: truncationType, backgroundColor: backgroundColor, constrainedSize: constrainedSize, alignment: alignment, verticalAlignment: verticalAlignment, lineSpacingFactor: lineSpacingFactor, cutout: cutout, insets: insets, lineColor: lineColor, textShadowColor: textShadowColor, textShadowBlur: textShadowBlur, textStroke: textStroke, displayContentsUnderSpoilers: displayContentsUnderSpoilers, customTruncationToken: customTruncationToken, expandedBlocks: expandedBlocks)
+        return calculateLayoutV2(attributedString: attributedString, minimumNumberOfLines: minimumNumberOfLines, maximumNumberOfLines: maximumNumberOfLines, truncationType: truncationType, backgroundColor: backgroundColor, constrainedSize: constrainedSize, alignment: alignment, verticalAlignment: verticalAlignment, lineSpacingFactor: lineSpacingFactor, cutout: cutout, insets: insets, lineColor: lineColor, textShadowColor: textShadowColor, textShadowBlur: textShadowBlur, textStroke: textStroke, displayContentsUnderSpoilers: displayContentsUnderSpoilers, customTruncationToken: customTruncationToken, expandedBlocks: expandedBlocks, computeCharacterRects: computeCharacterRects)
     }
     
     private func updateContentItems(arguments: ApplyArguments) {
@@ -2215,10 +2250,10 @@ open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecogn
                         layout = layout.withUpdatedDisplayContentsUnderSpoilers(arguments.displayContentsUnderSpoilers)
                     }
                 } else {
-                    layout = InteractiveTextNode.calculateLayout(attributedString: arguments.attributedString, minimumNumberOfLines: arguments.minimumNumberOfLines, maximumNumberOfLines: arguments.maximumNumberOfLines, truncationType: arguments.truncationType, backgroundColor: arguments.backgroundColor, constrainedSize: arguments.constrainedSize, alignment: arguments.alignment, verticalAlignment: arguments.verticalAlignment, lineSpacingFactor: arguments.lineSpacing, cutout: arguments.cutout, insets: arguments.insets, lineColor: arguments.lineColor, textShadowColor: arguments.textShadowColor, textShadowBlur: arguments.textShadowBlur, textStroke: arguments.textStroke, displayContentsUnderSpoilers: arguments.displayContentsUnderSpoilers, customTruncationToken: arguments.customTruncationToken, expandedBlocks: arguments.expandedBlocks)
+                    layout = InteractiveTextNode.calculateLayout(attributedString: arguments.attributedString, minimumNumberOfLines: arguments.minimumNumberOfLines, maximumNumberOfLines: arguments.maximumNumberOfLines, truncationType: arguments.truncationType, backgroundColor: arguments.backgroundColor, constrainedSize: arguments.constrainedSize, alignment: arguments.alignment, verticalAlignment: arguments.verticalAlignment, lineSpacingFactor: arguments.lineSpacing, cutout: arguments.cutout, insets: arguments.insets, lineColor: arguments.lineColor, textShadowColor: arguments.textShadowColor, textShadowBlur: arguments.textShadowBlur, textStroke: arguments.textStroke, displayContentsUnderSpoilers: arguments.displayContentsUnderSpoilers, customTruncationToken: arguments.customTruncationToken, expandedBlocks: arguments.expandedBlocks, computeCharacterRects: arguments.computeCharacterRects)
                 }
             } else {
-                layout = InteractiveTextNode.calculateLayout(attributedString: arguments.attributedString, minimumNumberOfLines: arguments.minimumNumberOfLines, maximumNumberOfLines: arguments.maximumNumberOfLines, truncationType: arguments.truncationType, backgroundColor: arguments.backgroundColor, constrainedSize: arguments.constrainedSize, alignment: arguments.alignment, verticalAlignment: arguments.verticalAlignment, lineSpacingFactor: arguments.lineSpacing, cutout: arguments.cutout, insets: arguments.insets, lineColor: arguments.lineColor, textShadowColor: arguments.textShadowColor, textShadowBlur: arguments.textShadowBlur, textStroke: arguments.textStroke, displayContentsUnderSpoilers: arguments.displayContentsUnderSpoilers, customTruncationToken: arguments.customTruncationToken, expandedBlocks: arguments.expandedBlocks)
+                layout = InteractiveTextNode.calculateLayout(attributedString: arguments.attributedString, minimumNumberOfLines: arguments.minimumNumberOfLines, maximumNumberOfLines: arguments.maximumNumberOfLines, truncationType: arguments.truncationType, backgroundColor: arguments.backgroundColor, constrainedSize: arguments.constrainedSize, alignment: arguments.alignment, verticalAlignment: arguments.verticalAlignment, lineSpacingFactor: arguments.lineSpacing, cutout: arguments.cutout, insets: arguments.insets, lineColor: arguments.lineColor, textShadowColor: arguments.textShadowColor, textShadowBlur: arguments.textShadowBlur, textStroke: arguments.textStroke, displayContentsUnderSpoilers: arguments.displayContentsUnderSpoilers, customTruncationToken: arguments.customTruncationToken, expandedBlocks: arguments.expandedBlocks, computeCharacterRects: arguments.computeCharacterRects)
             }
             
             let node = maybeNode ?? InteractiveTextNode()
@@ -2255,58 +2290,42 @@ open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecogn
         return count
     }
 
-    public func getCharacterToGlyphMapping() -> [Int] {
-        guard let cachedLayout = self.cachedLayout else {
-            return []
-        }
-        return cachedLayout.getCharacterToGlyphMapping()
-    }
-
-    public func updateRevealGlyphCount(count: Int?) {
+    public func updateRevealCharacterCount(count: Int?, animated: Bool) {
+        self.revealCharacterCount = count
+        
         guard let cachedLayout = self.cachedLayout else {
             return
         }
-        
-        self.revealGlyphCount = count
-        
-        if var count {
-            var actualCount = 0
-            var itemCount = 0
-            for item in self.getCharacterToGlyphMapping() {
-                if itemCount >= count {
-                    break
-                }
-                actualCount = item
-                itemCount += 1
-            }
-            count = actualCount
-            
+
+        if let count {
             var nextItemId = 0
             var currentCount = 0
             for segment in cachedLayout.segments {
                 let itemId = nextItemId
                 nextItemId += 1
-                
-                var segmentGlyphCount = 0
+
+                var segmentCharCount = 0
                 for line in segment.lines {
-                    let glyphRuns = CTLineGetGlyphRuns(line.line) as NSArray
-                    for run in glyphRuns {
-                        let run = run as! CTRun
-                        let glyphCount = CTRunGetGlyphCount(run)
-                        segmentGlyphCount += Int(glyphCount)
+                    if let characterRects = line.characterRects {
+                        segmentCharCount += characterRects.count
+                    } else if let range = line.range {
+                        segmentCharCount += range.length
+                    } else {
+                        let ctRange = CTLineGetStringRange(line.line)
+                        segmentCharCount += ctRange.length
                     }
                 }
-                
-                let segmentInnerCount = min(max(0, count - currentCount), segmentGlyphCount)
+
+                let segmentInnerCount = min(max(0, count - currentCount), segmentCharCount)
                 if let item = self.contentItemLayers[itemId] {
-                    item.updateMaxGlyphDrawCount(value: segmentInnerCount)
+                    item.updateMaxCharacterDrawCount(value: segmentInnerCount, animated: animated)
                 }
-                
-                currentCount += segmentGlyphCount
+
+                currentCount += segmentCharCount
             }
         } else {
             for (_, item) in self.contentItemLayers {
-                item.updateMaxGlyphDrawCount(value: nil)
+                item.updateMaxCharacterDrawCount(value: nil, animated: animated)
             }
         }
     }
@@ -2725,6 +2744,19 @@ final class TextContentItemLayer: SimpleLayer {
         }
     }
     
+    private final class SnippetLayer: SimpleLayer {
+        let characterIndex: Int
+
+        init(characterIndex: Int) {
+            self.characterIndex = characterIndex
+            super.init()
+        }
+
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+    }
+    
     private(set) var params: Params?
 
     let renderNode: RenderNode
@@ -2745,8 +2777,10 @@ final class TextContentItemLayer: SimpleLayer {
     private var revealMaskLayer: SimpleLayer?
     private var revealLineMaskLayers: [SimpleLayer] = []
 
-    private var maxGlyphDrawCount: Int?
-    
+    private var maxCharacterDrawCount: Int?
+    private var previousMaxCharacterDrawCount: Int = 0
+    private var animatingSnippetLayers: [SnippetLayer] = []
+
     init(displaysAsynchronously: Bool) {
         self.renderNode = RenderNode()
         self.renderNode.displaysAsynchronously = displaysAsynchronously
@@ -2769,54 +2803,25 @@ final class TextContentItemLayer: SimpleLayer {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func updateMaxGlyphDrawCount(value: Int?) {
-        if self.maxGlyphDrawCount == value {
+    func updateMaxCharacterDrawCount(value: Int?, animated: Bool) {
+        if self.maxCharacterDrawCount == value {
             return
         }
-        self.maxGlyphDrawCount = value
-        self.updateRevealMask()
+        self.maxCharacterDrawCount = value
+        self.updateRevealMask(animateNewSegments: animated)
     }
 
-    private func updateRevealMask() {
-        guard let params = self.params else {
-            return
-        }
+    private struct RevealLineInfo {
+        let lineFrame: CGRect
+        let lineHeight: CGFloat
+        let revealedWidth: CGFloat
+        let isFull: Bool
+        let isRTL: Bool
+    }
 
-        guard let maxGlyphDrawCount = self.maxGlyphDrawCount else {
-            if let _ = self.revealMaskLayer {
-                self.renderNodeContainer.mask = nil
-                self.revealMaskLayer = nil
-                self.revealLineMaskLayers.removeAll()
-            }
-            return
-        }
-
-        let item = params.item
-        let lines = item.segment.lines
-        let layerSize = item.size
-        let offset = item.contentOffset
-
-        let revealMaskLayer: SimpleLayer
-        if let existing = self.revealMaskLayer {
-            revealMaskLayer = existing
-        } else {
-            revealMaskLayer = SimpleLayer()
-            revealMaskLayer.backgroundColor = UIColor.clear.cgColor
-            self.revealMaskLayer = revealMaskLayer
-            self.renderNodeContainer.mask = revealMaskLayer
-        }
-        revealMaskLayer.frame = CGRect(origin: CGPoint(), size: layerSize)
-
-        // First pass: compute per-line state
-        struct LineInfo {
-            let minY: CGFloat
-            let maxY: CGFloat
-            let maskFrame: CGRect // only meaningful for partial lines
-            let isFull: Bool
-        }
-
-        var lineInfos: [LineInfo] = []
-        var remainingGlyphs = maxGlyphDrawCount
+    private func computeRevealedLines(lines: [InteractiveTextNodeLine], layerSize: CGSize, offset: CGPoint, characterLimit: Int) -> [RevealLineInfo] {
+        var result: [RevealLineInfo] = []
+        var remainingCharacters = characterLimit
 
         for i in 0 ..< lines.count {
             let line = lines[i]
@@ -2833,79 +2838,216 @@ final class TextContentItemLayer: SimpleLayer {
 
             let lineHeight = line.ascent + line.descent
 
-            if remainingGlyphs <= 0 {
-                // Empty line — skip, no mask rect needed
+            guard let characterRects = line.characterRects else {
+                result.append(RevealLineInfo(lineFrame: lineFrame, lineHeight: lineHeight, revealedWidth: remainingCharacters > 0 ? lineFrame.width : 0.0, isFull: remainingCharacters > 0, isRTL: line.isRTL))
                 continue
             }
 
-            var lineGlyphCount = 0
+            if remainingCharacters <= 0 {
+                result.append(RevealLineInfo(lineFrame: lineFrame, lineHeight: lineHeight, revealedWidth: 0.0, isFull: false, isRTL: line.isRTL))
+                continue
+            }
+
+            let revealCount = min(characterRects.count, remainingCharacters)
             var revealedWidth: CGFloat = 0.0
-            let glyphRuns = CTLineGetGlyphRuns(line.line) as NSArray
-
-            for run in glyphRuns {
-                let run = run as! CTRun
-                let glyphCount = Int(CTRunGetGlyphCount(run))
-                lineGlyphCount += glyphCount
-
-                if remainingGlyphs > 0 {
-                    let revealCount = min(glyphCount, remainingGlyphs)
-
-                    var advances = [CGSize](repeating: CGSize(), count: revealCount)
-                    CTRunGetAdvances(run, CFRangeMake(0, revealCount), &advances)
-
-                    for j in 0 ..< revealCount {
-                        revealedWidth += advances[j].width
-                    }
-
-                    remainingGlyphs -= glyphCount
+            for j in 0 ..< revealCount {
+                let rect = characterRects[j]
+                if !rect.isEmpty {
+                    revealedWidth = max(revealedWidth, rect.maxX)
                 }
             }
-
-            let isFull = remainingGlyphs >= 0
             revealedWidth = ceil(revealedWidth)
 
-            let maskFrame: CGRect
-            if isFull {
-                maskFrame = CGRect(x: 0.0, y: lineFrame.minY, width: layerSize.width, height: lineHeight)
-            } else if line.isRTL {
-                maskFrame = CGRect(x: lineFrame.maxX - revealedWidth, y: lineFrame.minY, width: revealedWidth, height: lineHeight)
-            } else {
-                maskFrame = CGRect(x: lineFrame.minX, y: lineFrame.minY, width: revealedWidth, height: lineHeight)
-            }
+            remainingCharacters -= characterRects.count
+            let isFull = remainingCharacters >= 0
 
-            lineInfos.append(LineInfo(minY: lineFrame.minY, maxY: lineFrame.minY + lineHeight, maskFrame: maskFrame, isFull: isFull))
+            result.append(RevealLineInfo(lineFrame: lineFrame, lineHeight: lineHeight, revealedWidth: revealedWidth, isFull: isFull, isRTL: line.isRTL))
         }
 
-        // Second pass: merge consecutive fully-filled lines into single rects
+        return result
+    }
+
+    private func updateRevealMask(animateNewSegments: Bool) {
+        guard let params = self.params else {
+            return
+        }
+        
+        let item = params.item
+        let lines = item.segment.lines
+        let layerSize = item.size
+        let offset = item.contentOffset
+
+        let effectiveCharacterDrawCount: Int
+        if let maxCharacterDrawCount = self.maxCharacterDrawCount {
+            effectiveCharacterDrawCount = maxCharacterDrawCount
+        } else {
+            if self.previousMaxCharacterDrawCount > 0 || !self.animatingSnippetLayers.isEmpty {
+                // Reveal finished — compute total character count so mask and snippets
+                // can continue updating until all snippet animations complete
+                var totalCharCount = 0
+                for line in lines {
+                    if let characterRects = line.characterRects {
+                        totalCharCount += characterRects.count
+                    } else if let range = line.range {
+                        totalCharCount += range.length
+                    } else {
+                        let ctRange = CTLineGetStringRange(line.line)
+                        totalCharCount += ctRange.length
+                    }
+                }
+                effectiveCharacterDrawCount = totalCharCount
+            } else {
+                // Nothing left to animate — remove the mask
+                if let _ = self.revealMaskLayer {
+                    self.renderNodeContainer.mask = nil
+                    self.revealMaskLayer = nil
+                    self.revealLineMaskLayers.removeAll()
+                }
+                self.previousMaxCharacterDrawCount = 0
+                return
+            }
+        }
+
+        // Create or reuse the container mask layer
+        let revealMaskLayer: SimpleLayer
+        if let existing = self.revealMaskLayer {
+            revealMaskLayer = existing
+        } else {
+            revealMaskLayer = SimpleLayer()
+            revealMaskLayer.backgroundColor = UIColor.clear.cgColor
+            self.revealMaskLayer = revealMaskLayer
+            self.renderNodeContainer.mask = revealMaskLayer
+        }
+        revealMaskLayer.frame = CGRect(origin: CGPoint(), size: layerSize)
+
+        // Compute current and previous reveal states
+        let currentLineInfos = self.computeRevealedLines(lines: lines, layerSize: layerSize, offset: offset, characterLimit: effectiveCharacterDrawCount)
+
+        // Create snippet layers for newly revealed character rects
+        if self.previousMaxCharacterDrawCount < effectiveCharacterDrawCount, let contents = self.renderNode.layer.contents {
+            let containerOrigin = self.renderNodeContainer.frame.origin
+
+            var previousRemaining = self.previousMaxCharacterDrawCount
+            var currentRemaining = effectiveCharacterDrawCount
+            var globalCharIndex = 0
+
+            for i in 0 ..< lines.count {
+                let line = lines[i]
+                let lineInfo = currentLineInfos[i]
+
+                guard let characterRects = line.characterRects else {
+                    continue
+                }
+
+                let lineCharCount = characterRects.count
+                let prevCount = min(max(0, previousRemaining), lineCharCount)
+                let curCount = min(max(0, currentRemaining), lineCharCount)
+
+                previousRemaining -= lineCharCount
+                currentRemaining -= lineCharCount
+
+                if curCount <= prevCount {
+                    globalCharIndex += lineCharCount
+                    continue
+                }
+
+                for j in prevCount ..< curCount {
+                    let charRect = characterRects[j]
+                    if charRect.isEmpty {
+                        continue
+                    }
+
+                    let snippetRect = CGRect(
+                        x: lineInfo.lineFrame.minX + charRect.origin.x,
+                        y: lineInfo.lineFrame.minY,
+                        width: charRect.width,
+                        height: lineInfo.lineHeight
+                    )
+
+                    if snippetRect.width < 0.5 {
+                        continue
+                    }
+
+                    let contentsRect = CGRect(
+                        x: snippetRect.minX / layerSize.width,
+                        y: snippetRect.minY / layerSize.height,
+                        width: snippetRect.width / layerSize.width,
+                        height: snippetRect.height / layerSize.height
+                    )
+
+                    let snippetLayer = SnippetLayer(characterIndex: globalCharIndex + j)
+                    snippetLayer.contents = contents
+                    snippetLayer.contentsRect = contentsRect
+                    snippetLayer.contentsScale = self.renderNode.layer.contentsScale
+                    snippetLayer.contentsGravity = self.renderNode.layer.contentsGravity
+                    snippetLayer.frame = snippetRect.offsetBy(dx: containerOrigin.x, dy: containerOrigin.y)
+
+                    self.addSublayer(snippetLayer)
+                    self.animatingSnippetLayers.append(snippetLayer)
+
+                    snippetLayer.animateAlpha(from: 0.0, to: 1.0, duration: 0.1)
+                    snippetLayer.animateSpring(from: 0.001, to: 1.0, keyPath: "transform.scale", duration: 0.5, completion: { [weak self, weak snippetLayer] _ in
+                        guard let self, let snippetLayer else {
+                            return
+                        }
+                        snippetLayer.removeFromSuperlayer()
+                        self.animatingSnippetLayers.removeAll(where: { $0 === snippetLayer })
+                        self.updateRevealMask(animateNewSegments: false)
+                    })
+                }
+                globalCharIndex += lineCharCount
+            }
+        }
+
+        // Build mask rects — use the lowest animating snippet index as the mask limit
+        // so the mask never extends past any character still being animated
+        let maskCharacterLimit: Int
+        if let lowestAnimating = self.animatingSnippetLayers.min(by: { $0.characterIndex < $1.characterIndex })?.characterIndex {
+            maskCharacterLimit = lowestAnimating
+        } else {
+            maskCharacterLimit = self.previousMaxCharacterDrawCount
+        }
+        let maskLineInfos = self.computeRevealedLines(lines: lines, layerSize: layerSize, offset: offset, characterLimit: maskCharacterLimit)
+
         var maskRects: [CGRect] = []
         var mergeStartY: CGFloat?
         var mergeEndY: CGFloat?
 
-        for info in lineInfos {
+        for info in maskLineInfos {
+            if info.revealedWidth <= 0.0 {
+                continue
+            }
+
+            let maskFrame: CGRect
+            if info.isFull {
+                maskFrame = CGRect(x: 0.0, y: info.lineFrame.minY, width: layerSize.width, height: info.lineHeight)
+            } else if info.isRTL {
+                maskFrame = CGRect(x: info.lineFrame.maxX - info.revealedWidth, y: info.lineFrame.minY, width: info.revealedWidth, height: info.lineHeight)
+            } else {
+                maskFrame = CGRect(x: info.lineFrame.minX, y: info.lineFrame.minY, width: info.revealedWidth, height: info.lineHeight)
+            }
+
             if info.isFull {
                 if mergeStartY != nil {
-                    mergeEndY = info.maxY
+                    mergeEndY = maskFrame.maxY
                 } else {
-                    mergeStartY = info.minY
-                    mergeEndY = info.maxY
+                    mergeStartY = maskFrame.minY
+                    mergeEndY = maskFrame.maxY
                 }
             } else {
-                // Flush any pending merged full-lines
                 if let startY = mergeStartY, let endY = mergeEndY {
                     maskRects.append(CGRect(x: 0.0, y: startY, width: layerSize.width, height: endY - startY))
                     mergeStartY = nil
                     mergeEndY = nil
                 }
-                // Add the partial line
-                maskRects.append(info.maskFrame)
+                maskRects.append(maskFrame)
             }
         }
-        // Flush trailing merged full-lines
         if let startY = mergeStartY, let endY = mergeEndY {
             maskRects.append(CGRect(x: 0.0, y: startY, width: layerSize.width, height: endY - startY))
         }
 
-        // Update mask child layers to match the number of rects
+        // Update mask child layers
         while self.revealLineMaskLayers.count < maskRects.count {
             let childLayer = SimpleLayer()
             childLayer.backgroundColor = UIColor.white.cgColor
@@ -2920,8 +3062,18 @@ final class TextContentItemLayer: SimpleLayer {
         for i in 0 ..< maskRects.count {
             self.revealLineMaskLayers[i].frame = maskRects[i]
         }
+
+        self.previousMaxCharacterDrawCount = effectiveCharacterDrawCount
+
+        // If maxCharacterDrawCount is nil and all snippet animations have finished, clean up
+        if self.maxCharacterDrawCount == nil && self.animatingSnippetLayers.isEmpty {
+            self.renderNodeContainer.mask = nil
+            self.revealMaskLayer = nil
+            self.revealLineMaskLayers.removeAll()
+            self.previousMaxCharacterDrawCount = 0
+        }
     }
-    
+
     func update(
         params: Params,
         animation: ListViewItemUpdateAnimation,
@@ -3176,7 +3328,7 @@ final class TextContentItemLayer: SimpleLayer {
         self.currentContentMask = contentMask
         
         self.renderNode.params = RenderParams(size: contentFrame.size, item: params.item, mask: staticContentMask)
-        self.updateRevealMask()
+        self.updateRevealMask(animateNewSegments: false)
         if synchronously {
             if let spoilerExpandRect, animation.isAnimated {
                 let localSpoilerExpandRect = spoilerExpandRect.offsetBy(dx: -self.renderNodeContainer.frame.minX, dy: -self.renderNodeContainer.frame.minY)
