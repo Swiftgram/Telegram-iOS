@@ -95,10 +95,31 @@ private func descriptionWithUrl(_ url: URL) -> ICloudFileDescription? {
         }
         
         var audioMetadata: ICloudFileDescription.AudioMetadata?
-        if ["mp3", "m4a"].contains(url.pathExtension.lowercased()) {
+        let fileExtension = url.pathExtension.lowercased()
+        if ["mp3", "m4a"].contains(fileExtension) {
             let asset = AVURLAsset(url: url)
             let title = AVMetadataItem.metadataItems(from: asset.commonMetadata, withKey: AVMetadataKey.commonKeyTitle, keySpace: AVMetadataKeySpace.common).first?.stringValue
             let performer = AVMetadataItem.metadataItems(from: asset.commonMetadata, withKey: AVMetadataKey.commonKeyArtist, keySpace: AVMetadataKeySpace.common).first?.stringValue
+            let duration = CMTimeGetSeconds(asset.duration)
+            if duration > 0 {
+                audioMetadata = ICloudFileDescription.AudioMetadata(title: title, performer: performer, duration: Int(duration))
+            }
+        } else if fileExtension == "flac" {
+            let asset = AVURLAsset(url: url)
+            var title: String?
+            var performer: String?
+            let vorbisComment = AVMetadataFormat(rawValue: "org.xiph.vorbis-comment")
+            if asset.availableMetadataFormats.contains(vorbisComment) {
+                let items = asset.metadata(forFormat: vorbisComment)
+                for item in items {
+                    if item.commonKey == AVMetadataKey.commonKeyTitle {
+                        title = item.stringValue
+                    }
+                    if item.commonKey == AVMetadataKey.commonKeyArtist {
+                        performer = item.stringValue
+                    }
+                }
+            }
             let duration = CMTimeGetSeconds(asset.duration)
             if duration > 0 {
                 audioMetadata = ICloudFileDescription.AudioMetadata(title: title, performer: performer, duration: Int(duration))
