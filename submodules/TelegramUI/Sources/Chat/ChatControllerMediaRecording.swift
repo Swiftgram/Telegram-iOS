@@ -606,7 +606,11 @@ extension ChatControllerImpl {
             }
         }
         
-        let location = CGRect(origin: CGPoint(x: screenWidth - layout.safeInsets.right - 50.0, y: layout.size.height - insets.bottom - 128.0), size: CGSize())
+        var sideOffset: CGFloat = 18.0
+        if let inputHeight = layout.inputHeight, inputHeight > 0.0 {
+            sideOffset = 0.0
+        }
+        let location = CGRect(origin: CGPoint(x: screenWidth - layout.safeInsets.right - 50.0 - sideOffset, y: layout.size.height - insets.bottom - 128.0), size: CGSize())
         
         let tooltipController = TooltipScreen(
             account: self.context.account,
