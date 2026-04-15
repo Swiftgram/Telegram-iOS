@@ -36,6 +36,8 @@ swift_library(
         "//submodules/TelegramUI/Components/ChatControllerInteraction",
         "//submodules/RadialStatusNode",
         "//submodules/TelegramUI/Components/ComposePollScreen",
+        "//submodules/UndoUI",
+        "//submodules/TelegramStringFormatting",
     ],
     visibility = [
         "//visibility:public",

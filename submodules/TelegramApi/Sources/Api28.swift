@@ -1,4 +1,612 @@
 public extension Api {
+    enum Theme: TypeConstructorDescription {
+        public class Cons_theme: TypeConstructorDescription {
+            public var flags: Int32
+            public var id: Int64
+            public var accessHash: Int64
+            public var slug: String
+            public var title: String
+            public var document: Api.Document?
+            public var settings: [Api.ThemeSettings]?
+            public var emoticon: String?
+            public var installsCount: Int32?
+            public init(flags: Int32, id: Int64, accessHash: Int64, slug: String, title: String, document: Api.Document?, settings: [Api.ThemeSettings]?, emoticon: String?, installsCount: Int32?) {
+                self.flags = flags
+                self.id = id
+                self.accessHash = accessHash
+                self.slug = slug
+                self.title = title
+                self.document = document
+                self.settings = settings
+                self.emoticon = emoticon
+                self.installsCount = installsCount
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("theme", [("flags", ConstructorParameterDescription(self.flags)), ("id", ConstructorParameterDescription(self.id)), ("accessHash", ConstructorParameterDescription(self.accessHash)), ("slug", ConstructorParameterDescription(self.slug)), ("title", ConstructorParameterDescription(self.title)), ("document", ConstructorParameterDescription(self.document)), ("settings", ConstructorParameterDescription(self.settings)), ("emoticon", ConstructorParameterDescription(self.emoticon)), ("installsCount", ConstructorParameterDescription(self.installsCount))])
+            }
+        }
+        case theme(Cons_theme)
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .theme(let _data):
+                if boxed {
+                    buffer.appendInt32(-1609668650)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                serializeInt64(_data.id, buffer: buffer, boxed: false)
+                serializeInt64(_data.accessHash, buffer: buffer, boxed: false)
+                serializeString(_data.slug, buffer: buffer, boxed: false)
+                serializeString(_data.title, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 2) != 0 {
+                    _data.document!.serialize(buffer, true)
+                }
+                if Int(_data.flags) & Int(1 << 3) != 0 {
+                    buffer.appendInt32(481674261)
+                    buffer.appendInt32(Int32(_data.settings!.count))
+                    for item in _data.settings! {
+                        item.serialize(buffer, true)
+                    }
+                }
+                if Int(_data.flags) & Int(1 << 6) != 0 {
+                    serializeString(_data.emoticon!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 4) != 0 {
+                    serializeInt32(_data.installsCount!, buffer: buffer, boxed: false)
+                }
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .theme(let _data):
+                return ("theme", [("flags", ConstructorParameterDescription(_data.flags)), ("id", ConstructorParameterDescription(_data.id)), ("accessHash", ConstructorParameterDescription(_data.accessHash)), ("slug", ConstructorParameterDescription(_data.slug)), ("title", ConstructorParameterDescription(_data.title)), ("document", ConstructorParameterDescription(_data.document)), ("settings", ConstructorParameterDescription(_data.settings)), ("emoticon", ConstructorParameterDescription(_data.emoticon)), ("installsCount", ConstructorParameterDescription(_data.installsCount))])
+            }
+        }
+
+        public static func parse_theme(_ reader: BufferReader) -> Theme? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Int64?
+            _2 = reader.readInt64()
+            var _3: Int64?
+            _3 = reader.readInt64()
+            var _4: String?
+            _4 = parseString(reader)
+            var _5: String?
+            _5 = parseString(reader)
+            var _6: Api.Document?
+            if Int(_1!) & Int(1 << 2) != 0 {
+                if let signature = reader.readInt32() {
+                    _6 = Api.parse(reader, signature: signature) as? Api.Document
+                }
+            }
+            var _7: [Api.ThemeSettings]?
+            if Int(_1!) & Int(1 << 3) != 0 {
+                if let _ = reader.readInt32() {
+                    _7 = Api.parseVector(reader, elementSignature: 0, elementType: Api.ThemeSettings.self)
+                }
+            }
+            var _8: String?
+            if Int(_1!) & Int(1 << 6) != 0 {
+                _8 = parseString(reader)
+            }
+            var _9: Int32?
+            if Int(_1!) & Int(1 << 4) != 0 {
+                _9 = reader.readInt32()
+            }
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            let _c3 = _3 != nil
+            let _c4 = _4 != nil
+            let _c5 = _5 != nil
+            let _c6 = (Int(_1!) & Int(1 << 2) == 0) || _6 != nil
+            let _c7 = (Int(_1!) & Int(1 << 3) == 0) || _7 != nil
+            let _c8 = (Int(_1!) & Int(1 << 6) == 0) || _8 != nil
+            let _c9 = (Int(_1!) & Int(1 << 4) == 0) || _9 != nil
+            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 && _c7 && _c8 && _c9 {
+                return Api.Theme.theme(Cons_theme(flags: _1!, id: _2!, accessHash: _3!, slug: _4!, title: _5!, document: _6, settings: _7, emoticon: _8, installsCount: _9))
+            }
+            else {
+                return nil
+            }
+        }
+    }
+}
+public extension Api {
+    enum ThemeSettings: TypeConstructorDescription {
+        public class Cons_themeSettings: TypeConstructorDescription {
+            public var flags: Int32
+            public var baseTheme: Api.BaseTheme
+            public var accentColor: Int32
+            public var outboxAccentColor: Int32?
+            public var messageColors: [Int32]?
+            public var wallpaper: Api.WallPaper?
+            public init(flags: Int32, baseTheme: Api.BaseTheme, accentColor: Int32, outboxAccentColor: Int32?, messageColors: [Int32]?, wallpaper: Api.WallPaper?) {
+                self.flags = flags
+                self.baseTheme = baseTheme
+                self.accentColor = accentColor
+                self.outboxAccentColor = outboxAccentColor
+                self.messageColors = messageColors
+                self.wallpaper = wallpaper
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("themeSettings", [("flags", ConstructorParameterDescription(self.flags)), ("baseTheme", ConstructorParameterDescription(self.baseTheme)), ("accentColor", ConstructorParameterDescription(self.accentColor)), ("outboxAccentColor", ConstructorParameterDescription(self.outboxAccentColor)), ("messageColors", ConstructorParameterDescription(self.messageColors)), ("wallpaper", ConstructorParameterDescription(self.wallpaper))])
+            }
+        }
+        case themeSettings(Cons_themeSettings)
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .themeSettings(let _data):
+                if boxed {
+                    buffer.appendInt32(-94849324)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                _data.baseTheme.serialize(buffer, true)
+                serializeInt32(_data.accentColor, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 3) != 0 {
+                    serializeInt32(_data.outboxAccentColor!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 0) != 0 {
+                    buffer.appendInt32(481674261)
+                    buffer.appendInt32(Int32(_data.messageColors!.count))
+                    for item in _data.messageColors! {
+                        serializeInt32(item, buffer: buffer, boxed: false)
+                    }
+                }
+                if Int(_data.flags) & Int(1 << 1) != 0 {
+                    _data.wallpaper!.serialize(buffer, true)
+                }
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .themeSettings(let _data):
+                return ("themeSettings", [("flags", ConstructorParameterDescription(_data.flags)), ("baseTheme", ConstructorParameterDescription(_data.baseTheme)), ("accentColor", ConstructorParameterDescription(_data.accentColor)), ("outboxAccentColor", ConstructorParameterDescription(_data.outboxAccentColor)), ("messageColors", ConstructorParameterDescription(_data.messageColors)), ("wallpaper", ConstructorParameterDescription(_data.wallpaper))])
+            }
+        }
+
+        public static func parse_themeSettings(_ reader: BufferReader) -> ThemeSettings? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Api.BaseTheme?
+            if let signature = reader.readInt32() {
+                _2 = Api.parse(reader, signature: signature) as? Api.BaseTheme
+            }
+            var _3: Int32?
+            _3 = reader.readInt32()
+            var _4: Int32?
+            if Int(_1!) & Int(1 << 3) != 0 {
+                _4 = reader.readInt32()
+            }
+            var _5: [Int32]?
+            if Int(_1!) & Int(1 << 0) != 0 {
+                if let _ = reader.readInt32() {
+                    _5 = Api.parseVector(reader, elementSignature: -1471112230, elementType: Int32.self)
+                }
+            }
+            var _6: Api.WallPaper?
+            if Int(_1!) & Int(1 << 1) != 0 {
+                if let signature = reader.readInt32() {
+                    _6 = Api.parse(reader, signature: signature) as? Api.WallPaper
+                }
+            }
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            let _c3 = _3 != nil
+            let _c4 = (Int(_1!) & Int(1 << 3) == 0) || _4 != nil
+            let _c5 = (Int(_1!) & Int(1 << 0) == 0) || _5 != nil
+            let _c6 = (Int(_1!) & Int(1 << 1) == 0) || _6 != nil
+            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 {
+                return Api.ThemeSettings.themeSettings(Cons_themeSettings(flags: _1!, baseTheme: _2!, accentColor: _3!, outboxAccentColor: _4, messageColors: _5, wallpaper: _6))
+            }
+            else {
+                return nil
+            }
+        }
+    }
+}
+public extension Api {
+    enum Timezone: TypeConstructorDescription {
+        public class Cons_timezone: TypeConstructorDescription {
+            public var id: String
+            public var name: String
+            public var utcOffset: Int32
+            public init(id: String, name: String, utcOffset: Int32) {
+                self.id = id
+                self.name = name
+                self.utcOffset = utcOffset
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("timezone", [("id", ConstructorParameterDescription(self.id)), ("name", ConstructorParameterDescription(self.name)), ("utcOffset", ConstructorParameterDescription(self.utcOffset))])
+            }
+        }
+        case timezone(Cons_timezone)
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .timezone(let _data):
+                if boxed {
+                    buffer.appendInt32(-7173643)
+                }
+                serializeString(_data.id, buffer: buffer, boxed: false)
+                serializeString(_data.name, buffer: buffer, boxed: false)
+                serializeInt32(_data.utcOffset, buffer: buffer, boxed: false)
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .timezone(let _data):
+                return ("timezone", [("id", ConstructorParameterDescription(_data.id)), ("name", ConstructorParameterDescription(_data.name)), ("utcOffset", ConstructorParameterDescription(_data.utcOffset))])
+            }
+        }
+
+        public static func parse_timezone(_ reader: BufferReader) -> Timezone? {
+            var _1: String?
+            _1 = parseString(reader)
+            var _2: String?
+            _2 = parseString(reader)
+            var _3: Int32?
+            _3 = reader.readInt32()
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            let _c3 = _3 != nil
+            if _c1 && _c2 && _c3 {
+                return Api.Timezone.timezone(Cons_timezone(id: _1!, name: _2!, utcOffset: _3!))
+            }
+            else {
+                return nil
+            }
+        }
+    }
+}
+public extension Api {
+    enum TodoCompletion: TypeConstructorDescription {
+        public class Cons_todoCompletion: TypeConstructorDescription {
+            public var id: Int32
+            public var completedBy: Api.Peer
+            public var date: Int32
+            public init(id: Int32, completedBy: Api.Peer, date: Int32) {
+                self.id = id
+                self.completedBy = completedBy
+                self.date = date
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("todoCompletion", [("id", ConstructorParameterDescription(self.id)), ("completedBy", ConstructorParameterDescription(self.completedBy)), ("date", ConstructorParameterDescription(self.date))])
+            }
+        }
+        case todoCompletion(Cons_todoCompletion)
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .todoCompletion(let _data):
+                if boxed {
+                    buffer.appendInt32(572241380)
+                }
+                serializeInt32(_data.id, buffer: buffer, boxed: false)
+                _data.completedBy.serialize(buffer, true)
+                serializeInt32(_data.date, buffer: buffer, boxed: false)
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .todoCompletion(let _data):
+                return ("todoCompletion", [("id", ConstructorParameterDescription(_data.id)), ("completedBy", ConstructorParameterDescription(_data.completedBy)), ("date", ConstructorParameterDescription(_data.date))])
+            }
+        }
+
+        public static func parse_todoCompletion(_ reader: BufferReader) -> TodoCompletion? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Api.Peer?
+            if let signature = reader.readInt32() {
+                _2 = Api.parse(reader, signature: signature) as? Api.Peer
+            }
+            var _3: Int32?
+            _3 = reader.readInt32()
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            let _c3 = _3 != nil
+            if _c1 && _c2 && _c3 {
+                return Api.TodoCompletion.todoCompletion(Cons_todoCompletion(id: _1!, completedBy: _2!, date: _3!))
+            }
+            else {
+                return nil
+            }
+        }
+    }
+}
+public extension Api {
+    enum TodoItem: TypeConstructorDescription {
+        public class Cons_todoItem: TypeConstructorDescription {
+            public var id: Int32
+            public var title: Api.TextWithEntities
+            public init(id: Int32, title: Api.TextWithEntities) {
+                self.id = id
+                self.title = title
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("todoItem", [("id", ConstructorParameterDescription(self.id)), ("title", ConstructorParameterDescription(self.title))])
+            }
+        }
+        case todoItem(Cons_todoItem)
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .todoItem(let _data):
+                if boxed {
+                    buffer.appendInt32(-878074577)
+                }
+                serializeInt32(_data.id, buffer: buffer, boxed: false)
+                _data.title.serialize(buffer, true)
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .todoItem(let _data):
+                return ("todoItem", [("id", ConstructorParameterDescription(_data.id)), ("title", ConstructorParameterDescription(_data.title))])
+            }
+        }
+
+        public static func parse_todoItem(_ reader: BufferReader) -> TodoItem? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Api.TextWithEntities?
+            if let signature = reader.readInt32() {
+                _2 = Api.parse(reader, signature: signature) as? Api.TextWithEntities
+            }
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            if _c1 && _c2 {
+                return Api.TodoItem.todoItem(Cons_todoItem(id: _1!, title: _2!))
+            }
+            else {
+                return nil
+            }
+        }
+    }
+}
+public extension Api {
+    enum TodoList: TypeConstructorDescription {
+        public class Cons_todoList: TypeConstructorDescription {
+            public var flags: Int32
+            public var title: Api.TextWithEntities
+            public var list: [Api.TodoItem]
+            public init(flags: Int32, title: Api.TextWithEntities, list: [Api.TodoItem]) {
+                self.flags = flags
+                self.title = title
+                self.list = list
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("todoList", [("flags", ConstructorParameterDescription(self.flags)), ("title", ConstructorParameterDescription(self.title)), ("list", ConstructorParameterDescription(self.list))])
+            }
+        }
+        case todoList(Cons_todoList)
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .todoList(let _data):
+                if boxed {
+                    buffer.appendInt32(1236871718)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                _data.title.serialize(buffer, true)
+                buffer.appendInt32(481674261)
+                buffer.appendInt32(Int32(_data.list.count))
+                for item in _data.list {
+                    item.serialize(buffer, true)
+                }
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .todoList(let _data):
+                return ("todoList", [("flags", ConstructorParameterDescription(_data.flags)), ("title", ConstructorParameterDescription(_data.title)), ("list", ConstructorParameterDescription(_data.list))])
+            }
+        }
+
+        public static func parse_todoList(_ reader: BufferReader) -> TodoList? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Api.TextWithEntities?
+            if let signature = reader.readInt32() {
+                _2 = Api.parse(reader, signature: signature) as? Api.TextWithEntities
+            }
+            var _3: [Api.TodoItem]?
+            if let _ = reader.readInt32() {
+                _3 = Api.parseVector(reader, elementSignature: 0, elementType: Api.TodoItem.self)
+            }
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            let _c3 = _3 != nil
+            if _c1 && _c2 && _c3 {
+                return Api.TodoList.todoList(Cons_todoList(flags: _1!, title: _2!, list: _3!))
+            }
+            else {
+                return nil
+            }
+        }
+    }
+}
+public extension Api {
+    enum TopPeer: TypeConstructorDescription {
+        public class Cons_topPeer: TypeConstructorDescription {
+            public var peer: Api.Peer
+            public var rating: Double
+            public init(peer: Api.Peer, rating: Double) {
+                self.peer = peer
+                self.rating = rating
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("topPeer", [("peer", ConstructorParameterDescription(self.peer)), ("rating", ConstructorParameterDescription(self.rating))])
+            }
+        }
+        case topPeer(Cons_topPeer)
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .topPeer(let _data):
+                if boxed {
+                    buffer.appendInt32(-305282981)
+                }
+                _data.peer.serialize(buffer, true)
+                serializeDouble(_data.rating, buffer: buffer, boxed: false)
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .topPeer(let _data):
+                return ("topPeer", [("peer", ConstructorParameterDescription(_data.peer)), ("rating", ConstructorParameterDescription(_data.rating))])
+            }
+        }
+
+        public static func parse_topPeer(_ reader: BufferReader) -> TopPeer? {
+            var _1: Api.Peer?
+            if let signature = reader.readInt32() {
+                _1 = Api.parse(reader, signature: signature) as? Api.Peer
+            }
+            var _2: Double?
+            _2 = reader.readDouble()
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            if _c1 && _c2 {
+                return Api.TopPeer.topPeer(Cons_topPeer(peer: _1!, rating: _2!))
+            }
+            else {
+                return nil
+            }
+        }
+    }
+}
+public extension Api {
+    enum TopPeerCategory: TypeConstructorDescription {
+        case topPeerCategoryBotsApp
+        case topPeerCategoryBotsInline
+        case topPeerCategoryBotsPM
+        case topPeerCategoryChannels
+        case topPeerCategoryCorrespondents
+        case topPeerCategoryForwardChats
+        case topPeerCategoryForwardUsers
+        case topPeerCategoryGroups
+        case topPeerCategoryPhoneCalls
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .topPeerCategoryBotsApp:
+                if boxed {
+                    buffer.appendInt32(-39945236)
+                }
+                break
+            case .topPeerCategoryBotsInline:
+                if boxed {
+                    buffer.appendInt32(344356834)
+                }
+                break
+            case .topPeerCategoryBotsPM:
+                if boxed {
+                    buffer.appendInt32(-1419371685)
+                }
+                break
+            case .topPeerCategoryChannels:
+                if boxed {
+                    buffer.appendInt32(371037736)
+                }
+                break
+            case .topPeerCategoryCorrespondents:
+                if boxed {
+                    buffer.appendInt32(104314861)
+                }
+                break
+            case .topPeerCategoryForwardChats:
+                if boxed {
+                    buffer.appendInt32(-68239120)
+                }
+                break
+            case .topPeerCategoryForwardUsers:
+                if boxed {
+                    buffer.appendInt32(-1472172887)
+                }
+                break
+            case .topPeerCategoryGroups:
+                if boxed {
+                    buffer.appendInt32(-1122524854)
+                }
+                break
+            case .topPeerCategoryPhoneCalls:
+                if boxed {
+                    buffer.appendInt32(511092620)
+                }
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .topPeerCategoryBotsApp:
+                return ("topPeerCategoryBotsApp", [])
+            case .topPeerCategoryBotsInline:
+                return ("topPeerCategoryBotsInline", [])
+            case .topPeerCategoryBotsPM:
+                return ("topPeerCategoryBotsPM", [])
+            case .topPeerCategoryChannels:
+                return ("topPeerCategoryChannels", [])
+            case .topPeerCategoryCorrespondents:
+                return ("topPeerCategoryCorrespondents", [])
+            case .topPeerCategoryForwardChats:
+                return ("topPeerCategoryForwardChats", [])
+            case .topPeerCategoryForwardUsers:
+                return ("topPeerCategoryForwardUsers", [])
+            case .topPeerCategoryGroups:
+                return ("topPeerCategoryGroups", [])
+            case .topPeerCategoryPhoneCalls:
+                return ("topPeerCategoryPhoneCalls", [])
+            }
+        }
+
+        public static func parse_topPeerCategoryBotsApp(_ reader: BufferReader) -> TopPeerCategory? {
+            return Api.TopPeerCategory.topPeerCategoryBotsApp
+        }
+        public static func parse_topPeerCategoryBotsInline(_ reader: BufferReader) -> TopPeerCategory? {
+            return Api.TopPeerCategory.topPeerCategoryBotsInline
+        }
+        public static func parse_topPeerCategoryBotsPM(_ reader: BufferReader) -> TopPeerCategory? {
+            return Api.TopPeerCategory.topPeerCategoryBotsPM
+        }
+        public static func parse_topPeerCategoryChannels(_ reader: BufferReader) -> TopPeerCategory? {
+            return Api.TopPeerCategory.topPeerCategoryChannels
+        }
+        public static func parse_topPeerCategoryCorrespondents(_ reader: BufferReader) -> TopPeerCategory? {
+            return Api.TopPeerCategory.topPeerCategoryCorrespondents
+        }
+        public static func parse_topPeerCategoryForwardChats(_ reader: BufferReader) -> TopPeerCategory? {
+            return Api.TopPeerCategory.topPeerCategoryForwardChats
+        }
+        public static func parse_topPeerCategoryForwardUsers(_ reader: BufferReader) -> TopPeerCategory? {
+            return Api.TopPeerCategory.topPeerCategoryForwardUsers
+        }
+        public static func parse_topPeerCategoryGroups(_ reader: BufferReader) -> TopPeerCategory? {
+            return Api.TopPeerCategory.topPeerCategoryGroups
+        }
+        public static func parse_topPeerCategoryPhoneCalls(_ reader: BufferReader) -> TopPeerCategory? {
+            return Api.TopPeerCategory.topPeerCategoryPhoneCalls
+        }
+    }
+}
+public extension Api {
     enum TopPeerCategoryPeers: TypeConstructorDescription {
         public class Cons_topPeerCategoryPeers: TypeConstructorDescription {
             public var category: Api.TopPeerCategory
@@ -173,6 +781,23 @@ public extension Api {
             }
             public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
                 return ("updateBotEditBusinessMessage", [("flags", ConstructorParameterDescription(self.flags)), ("connectionId", ConstructorParameterDescription(self.connectionId)), ("message", ConstructorParameterDescription(self.message)), ("replyToMessage", ConstructorParameterDescription(self.replyToMessage)), ("qts", ConstructorParameterDescription(self.qts))])
+            }
+        }
+        public class Cons_updateBotGuestChatQuery: TypeConstructorDescription {
+            public var flags: Int32
+            public var queryId: Int64
+            public var message: Api.Message
+            public var referenceMessages: [Api.Message]?
+            public var qts: Int32
+            public init(flags: Int32, queryId: Int64, message: Api.Message, referenceMessages: [Api.Message]?, qts: Int32) {
+                self.flags = flags
+                self.queryId = queryId
+                self.message = message
+                self.referenceMessages = referenceMessages
+                self.qts = qts
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("updateBotGuestChatQuery", [("flags", ConstructorParameterDescription(self.flags)), ("queryId", ConstructorParameterDescription(self.queryId)), ("message", ConstructorParameterDescription(self.message)), ("referenceMessages", ConstructorParameterDescription(self.referenceMessages)), ("qts", ConstructorParameterDescription(self.qts))])
             }
         }
         public class Cons_updateBotInlineQuery: TypeConstructorDescription {
@@ -1883,6 +2508,7 @@ public extension Api {
                 return ("updateWebViewResultSent", [("queryId", ConstructorParameterDescription(self.queryId))])
             }
         }
+        case updateAiComposeTones
         case updateAttachMenuBots
         case updateAutoSaveSettings
         case updateBotBusinessConnect(Cons_updateBotBusinessConnect)
@@ -1892,6 +2518,7 @@ public extension Api {
         case updateBotCommands(Cons_updateBotCommands)
         case updateBotDeleteBusinessMessage(Cons_updateBotDeleteBusinessMessage)
         case updateBotEditBusinessMessage(Cons_updateBotEditBusinessMessage)
+        case updateBotGuestChatQuery(Cons_updateBotGuestChatQuery)
         case updateBotInlineQuery(Cons_updateBotInlineQuery)
         case updateBotInlineSend(Cons_updateBotInlineSend)
         case updateBotMenuButton(Cons_updateBotMenuButton)
@@ -2040,6 +2667,11 @@ public extension Api {
 
         public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
             switch self {
+            case .updateAiComposeTones:
+                if boxed {
+                    buffer.appendInt32(-1945136645)
+                }
+                break
             case .updateAttachMenuBots:
                 if boxed {
                     buffer.appendInt32(397910539)
@@ -2127,6 +2759,22 @@ public extension Api {
                 _data.message.serialize(buffer, true)
                 if Int(_data.flags) & Int(1 << 0) != 0 {
                     _data.replyToMessage!.serialize(buffer, true)
+                }
+                serializeInt32(_data.qts, buffer: buffer, boxed: false)
+                break
+            case .updateBotGuestChatQuery(let _data):
+                if boxed {
+                    buffer.appendInt32(-841742019)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                serializeInt64(_data.queryId, buffer: buffer, boxed: false)
+                _data.message.serialize(buffer, true)
+                if Int(_data.flags) & Int(1 << 0) != 0 {
+                    buffer.appendInt32(481674261)
+                    buffer.appendInt32(Int32(_data.referenceMessages!.count))
+                    for item in _data.referenceMessages! {
+                        item.serialize(buffer, true)
+                    }
                 }
                 serializeInt32(_data.qts, buffer: buffer, boxed: false)
                 break
@@ -3485,6 +4133,8 @@ public extension Api {
 
         public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
             switch self {
+            case .updateAiComposeTones:
+                return ("updateAiComposeTones", [])
             case .updateAttachMenuBots:
                 return ("updateAttachMenuBots", [])
             case .updateAutoSaveSettings:
@@ -3503,6 +4153,8 @@ public extension Api {
                 return ("updateBotDeleteBusinessMessage", [("connectionId", ConstructorParameterDescription(_data.connectionId)), ("peer", ConstructorParameterDescription(_data.peer)), ("messages", ConstructorParameterDescription(_data.messages)), ("qts", ConstructorParameterDescription(_data.qts))])
             case .updateBotEditBusinessMessage(let _data):
                 return ("updateBotEditBusinessMessage", [("flags", ConstructorParameterDescription(_data.flags)), ("connectionId", ConstructorParameterDescription(_data.connectionId)), ("message", ConstructorParameterDescription(_data.message)), ("replyToMessage", ConstructorParameterDescription(_data.replyToMessage)), ("qts", ConstructorParameterDescription(_data.qts))])
+            case .updateBotGuestChatQuery(let _data):
+                return ("updateBotGuestChatQuery", [("flags", ConstructorParameterDescription(_data.flags)), ("queryId", ConstructorParameterDescription(_data.queryId)), ("message", ConstructorParameterDescription(_data.message)), ("referenceMessages", ConstructorParameterDescription(_data.referenceMessages)), ("qts", ConstructorParameterDescription(_data.qts))])
             case .updateBotInlineQuery(let _data):
                 return ("updateBotInlineQuery", [("flags", ConstructorParameterDescription(_data.flags)), ("queryId", ConstructorParameterDescription(_data.queryId)), ("userId", ConstructorParameterDescription(_data.userId)), ("query", ConstructorParameterDescription(_data.query)), ("geo", ConstructorParameterDescription(_data.geo)), ("peerType", ConstructorParameterDescription(_data.peerType)), ("offset", ConstructorParameterDescription(_data.offset))])
             case .updateBotInlineSend(let _data):
@@ -3796,6 +4448,9 @@ public extension Api {
             }
         }
 
+        public static func parse_updateAiComposeTones(_ reader: BufferReader) -> Update? {
+            return Api.Update.updateAiComposeTones
+        }
         public static func parse_updateAttachMenuBots(_ reader: BufferReader) -> Update? {
             return Api.Update.updateAttachMenuBots
         }
@@ -3976,6 +4631,35 @@ public extension Api {
             let _c5 = _5 != nil
             if _c1 && _c2 && _c3 && _c4 && _c5 {
                 return Api.Update.updateBotEditBusinessMessage(Cons_updateBotEditBusinessMessage(flags: _1!, connectionId: _2!, message: _3!, replyToMessage: _4, qts: _5!))
+            }
+            else {
+                return nil
+            }
+        }
+        public static func parse_updateBotGuestChatQuery(_ reader: BufferReader) -> Update? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Int64?
+            _2 = reader.readInt64()
+            var _3: Api.Message?
+            if let signature = reader.readInt32() {
+                _3 = Api.parse(reader, signature: signature) as? Api.Message
+            }
+            var _4: [Api.Message]?
+            if Int(_1!) & Int(1 << 0) != 0 {
+                if let _ = reader.readInt32() {
+                    _4 = Api.parseVector(reader, elementSignature: 0, elementType: Api.Message.self)
+                }
+            }
+            var _5: Int32?
+            _5 = reader.readInt32()
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            let _c3 = _3 != nil
+            let _c4 = (Int(_1!) & Int(1 << 0) == 0) || _4 != nil
+            let _c5 = _5 != nil
+            if _c1 && _c2 && _c3 && _c4 && _c5 {
+                return Api.Update.updateBotGuestChatQuery(Cons_updateBotGuestChatQuery(flags: _1!, queryId: _2!, message: _3!, referenceMessages: _4, qts: _5!))
             }
             else {
                 return nil

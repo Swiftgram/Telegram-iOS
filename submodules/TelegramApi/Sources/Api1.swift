@@ -43,6 +43,151 @@ public extension Api {
     }
 }
 public extension Api {
+    enum AiComposeTone: TypeConstructorDescription {
+        public class Cons_aiComposeTone: TypeConstructorDescription {
+            public var flags: Int32
+            public var id: Int64
+            public var accessHash: Int64
+            public var slug: String
+            public var title: String
+            public var emojiId: Int64?
+            public var prompt: String
+            public var installsCount: Int32?
+            public var authorId: Int64?
+            public init(flags: Int32, id: Int64, accessHash: Int64, slug: String, title: String, emojiId: Int64?, prompt: String, installsCount: Int32?, authorId: Int64?) {
+                self.flags = flags
+                self.id = id
+                self.accessHash = accessHash
+                self.slug = slug
+                self.title = title
+                self.emojiId = emojiId
+                self.prompt = prompt
+                self.installsCount = installsCount
+                self.authorId = authorId
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("aiComposeTone", [("flags", ConstructorParameterDescription(self.flags)), ("id", ConstructorParameterDescription(self.id)), ("accessHash", ConstructorParameterDescription(self.accessHash)), ("slug", ConstructorParameterDescription(self.slug)), ("title", ConstructorParameterDescription(self.title)), ("emojiId", ConstructorParameterDescription(self.emojiId)), ("prompt", ConstructorParameterDescription(self.prompt)), ("installsCount", ConstructorParameterDescription(self.installsCount)), ("authorId", ConstructorParameterDescription(self.authorId))])
+            }
+        }
+        public class Cons_aiComposeToneDefault: TypeConstructorDescription {
+            public var tone: String
+            public var emojiId: Int64
+            public var title: String
+            public init(tone: String, emojiId: Int64, title: String) {
+                self.tone = tone
+                self.emojiId = emojiId
+                self.title = title
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("aiComposeToneDefault", [("tone", ConstructorParameterDescription(self.tone)), ("emojiId", ConstructorParameterDescription(self.emojiId)), ("title", ConstructorParameterDescription(self.title))])
+            }
+        }
+        case aiComposeTone(Cons_aiComposeTone)
+        case aiComposeToneDefault(Cons_aiComposeToneDefault)
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .aiComposeTone(let _data):
+                if boxed {
+                    buffer.appendInt32(317330533)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                serializeInt64(_data.id, buffer: buffer, boxed: false)
+                serializeInt64(_data.accessHash, buffer: buffer, boxed: false)
+                serializeString(_data.slug, buffer: buffer, boxed: false)
+                serializeString(_data.title, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 1) != 0 {
+                    serializeInt64(_data.emojiId!, buffer: buffer, boxed: false)
+                }
+                serializeString(_data.prompt, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 2) != 0 {
+                    serializeInt32(_data.installsCount!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 3) != 0 {
+                    serializeInt64(_data.authorId!, buffer: buffer, boxed: false)
+                }
+                break
+            case .aiComposeToneDefault(let _data):
+                if boxed {
+                    buffer.appendInt32(-1683135468)
+                }
+                serializeString(_data.tone, buffer: buffer, boxed: false)
+                serializeInt64(_data.emojiId, buffer: buffer, boxed: false)
+                serializeString(_data.title, buffer: buffer, boxed: false)
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .aiComposeTone(let _data):
+                return ("aiComposeTone", [("flags", ConstructorParameterDescription(_data.flags)), ("id", ConstructorParameterDescription(_data.id)), ("accessHash", ConstructorParameterDescription(_data.accessHash)), ("slug", ConstructorParameterDescription(_data.slug)), ("title", ConstructorParameterDescription(_data.title)), ("emojiId", ConstructorParameterDescription(_data.emojiId)), ("prompt", ConstructorParameterDescription(_data.prompt)), ("installsCount", ConstructorParameterDescription(_data.installsCount)), ("authorId", ConstructorParameterDescription(_data.authorId))])
+            case .aiComposeToneDefault(let _data):
+                return ("aiComposeToneDefault", [("tone", ConstructorParameterDescription(_data.tone)), ("emojiId", ConstructorParameterDescription(_data.emojiId)), ("title", ConstructorParameterDescription(_data.title))])
+            }
+        }
+
+        public static func parse_aiComposeTone(_ reader: BufferReader) -> AiComposeTone? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Int64?
+            _2 = reader.readInt64()
+            var _3: Int64?
+            _3 = reader.readInt64()
+            var _4: String?
+            _4 = parseString(reader)
+            var _5: String?
+            _5 = parseString(reader)
+            var _6: Int64?
+            if Int(_1!) & Int(1 << 1) != 0 {
+                _6 = reader.readInt64()
+            }
+            var _7: String?
+            _7 = parseString(reader)
+            var _8: Int32?
+            if Int(_1!) & Int(1 << 2) != 0 {
+                _8 = reader.readInt32()
+            }
+            var _9: Int64?
+            if Int(_1!) & Int(1 << 3) != 0 {
+                _9 = reader.readInt64()
+            }
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            let _c3 = _3 != nil
+            let _c4 = _4 != nil
+            let _c5 = _5 != nil
+            let _c6 = (Int(_1!) & Int(1 << 1) == 0) || _6 != nil
+            let _c7 = _7 != nil
+            let _c8 = (Int(_1!) & Int(1 << 2) == 0) || _8 != nil
+            let _c9 = (Int(_1!) & Int(1 << 3) == 0) || _9 != nil
+            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 && _c7 && _c8 && _c9 {
+                return Api.AiComposeTone.aiComposeTone(Cons_aiComposeTone(flags: _1!, id: _2!, accessHash: _3!, slug: _4!, title: _5!, emojiId: _6, prompt: _7!, installsCount: _8, authorId: _9))
+            }
+            else {
+                return nil
+            }
+        }
+        public static func parse_aiComposeToneDefault(_ reader: BufferReader) -> AiComposeTone? {
+            var _1: String?
+            _1 = parseString(reader)
+            var _2: Int64?
+            _2 = reader.readInt64()
+            var _3: String?
+            _3 = parseString(reader)
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            let _c3 = _3 != nil
+            if _c1 && _c2 && _c3 {
+                return Api.AiComposeTone.aiComposeToneDefault(Cons_aiComposeToneDefault(tone: _1!, emojiId: _2!, title: _3!))
+            }
+            else {
+                return nil
+            }
+        }
+    }
+}
+public extension Api {
     enum AttachMenuBot: TypeConstructorDescription {
         public class Cons_attachMenuBot: TypeConstructorDescription {
             public var flags: Int32
@@ -1462,100 +1607,6 @@ public extension Api {
         }
         public static func parse_botAppNotModified(_ reader: BufferReader) -> BotApp? {
             return Api.BotApp.botAppNotModified
-        }
-    }
-}
-public extension Api {
-    enum BotAppSettings: TypeConstructorDescription {
-        public class Cons_botAppSettings: TypeConstructorDescription {
-            public var flags: Int32
-            public var placeholderPath: Buffer?
-            public var backgroundColor: Int32?
-            public var backgroundDarkColor: Int32?
-            public var headerColor: Int32?
-            public var headerDarkColor: Int32?
-            public init(flags: Int32, placeholderPath: Buffer?, backgroundColor: Int32?, backgroundDarkColor: Int32?, headerColor: Int32?, headerDarkColor: Int32?) {
-                self.flags = flags
-                self.placeholderPath = placeholderPath
-                self.backgroundColor = backgroundColor
-                self.backgroundDarkColor = backgroundDarkColor
-                self.headerColor = headerColor
-                self.headerDarkColor = headerDarkColor
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("botAppSettings", [("flags", ConstructorParameterDescription(self.flags)), ("placeholderPath", ConstructorParameterDescription(self.placeholderPath)), ("backgroundColor", ConstructorParameterDescription(self.backgroundColor)), ("backgroundDarkColor", ConstructorParameterDescription(self.backgroundDarkColor)), ("headerColor", ConstructorParameterDescription(self.headerColor)), ("headerDarkColor", ConstructorParameterDescription(self.headerDarkColor))])
-            }
-        }
-        case botAppSettings(Cons_botAppSettings)
-
-        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
-            switch self {
-            case .botAppSettings(let _data):
-                if boxed {
-                    buffer.appendInt32(-912582320)
-                }
-                serializeInt32(_data.flags, buffer: buffer, boxed: false)
-                if Int(_data.flags) & Int(1 << 0) != 0 {
-                    serializeBytes(_data.placeholderPath!, buffer: buffer, boxed: false)
-                }
-                if Int(_data.flags) & Int(1 << 1) != 0 {
-                    serializeInt32(_data.backgroundColor!, buffer: buffer, boxed: false)
-                }
-                if Int(_data.flags) & Int(1 << 2) != 0 {
-                    serializeInt32(_data.backgroundDarkColor!, buffer: buffer, boxed: false)
-                }
-                if Int(_data.flags) & Int(1 << 3) != 0 {
-                    serializeInt32(_data.headerColor!, buffer: buffer, boxed: false)
-                }
-                if Int(_data.flags) & Int(1 << 4) != 0 {
-                    serializeInt32(_data.headerDarkColor!, buffer: buffer, boxed: false)
-                }
-                break
-            }
-        }
-
-        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-            switch self {
-            case .botAppSettings(let _data):
-                return ("botAppSettings", [("flags", ConstructorParameterDescription(_data.flags)), ("placeholderPath", ConstructorParameterDescription(_data.placeholderPath)), ("backgroundColor", ConstructorParameterDescription(_data.backgroundColor)), ("backgroundDarkColor", ConstructorParameterDescription(_data.backgroundDarkColor)), ("headerColor", ConstructorParameterDescription(_data.headerColor)), ("headerDarkColor", ConstructorParameterDescription(_data.headerDarkColor))])
-            }
-        }
-
-        public static func parse_botAppSettings(_ reader: BufferReader) -> BotAppSettings? {
-            var _1: Int32?
-            _1 = reader.readInt32()
-            var _2: Buffer?
-            if Int(_1!) & Int(1 << 0) != 0 {
-                _2 = parseBytes(reader)
-            }
-            var _3: Int32?
-            if Int(_1!) & Int(1 << 1) != 0 {
-                _3 = reader.readInt32()
-            }
-            var _4: Int32?
-            if Int(_1!) & Int(1 << 2) != 0 {
-                _4 = reader.readInt32()
-            }
-            var _5: Int32?
-            if Int(_1!) & Int(1 << 3) != 0 {
-                _5 = reader.readInt32()
-            }
-            var _6: Int32?
-            if Int(_1!) & Int(1 << 4) != 0 {
-                _6 = reader.readInt32()
-            }
-            let _c1 = _1 != nil
-            let _c2 = (Int(_1!) & Int(1 << 0) == 0) || _2 != nil
-            let _c3 = (Int(_1!) & Int(1 << 1) == 0) || _3 != nil
-            let _c4 = (Int(_1!) & Int(1 << 2) == 0) || _4 != nil
-            let _c5 = (Int(_1!) & Int(1 << 3) == 0) || _5 != nil
-            let _c6 = (Int(_1!) & Int(1 << 4) == 0) || _6 != nil
-            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 {
-                return Api.BotAppSettings.botAppSettings(Cons_botAppSettings(flags: _1!, placeholderPath: _2, backgroundColor: _3, backgroundDarkColor: _4, headerColor: _5, headerDarkColor: _6))
-            }
-            else {
-                return nil
-            }
         }
     }
 }

@@ -1580,6 +1580,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         
         let fontSize = floor(item.presentationData.fontSize.baseDisplaySize * 14.0 / 17.0)
         let nameFont = Font.semibold(fontSize)
+        let regularFont = Font.regular(fontSize)
 
         let inlineBotPrefixFont = Font.regular(fontSize - 1.0)
         let boostBadgeFont = Font.regular(fontSize - 1.0)
@@ -1659,6 +1660,10 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                 ignoreForward = true
                 effectiveAuthor = author
                 displayAuthorInfo = !mergedTop.merged && incoming
+            } else if let _ = item.content.firstMessage.guestChatAttribute {
+                effectiveAuthor = firstMessage.author
+                displayAuthorInfo = !mergedTop.merged && incoming
+                hasAvatar = true
             } else {
                 effectiveAuthor = firstMessage.author
                 
@@ -2009,6 +2014,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                 break
         }
         
+        var guestChatViaFromNameString: String?
         var inlineBotNameString: String?
         var replyMessage: Message?
         var replyForward: QuotedReplyMessageAttribute?
@@ -2019,7 +2025,11 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         var authorNameColor: UIColor?
         
         for attribute in firstMessage.attributes {
-            if let attribute = attribute as? InlineBotMessageAttribute {
+            if let attribute = attribute as? GuestChatMessageAttribute {
+                if let peer = firstMessage.peers[attribute.peerId] {
+                    guestChatViaFromNameString = EnginePeer(peer).compactDisplayTitle
+                }
+            } else if let attribute = attribute as? InlineBotMessageAttribute {
                 if let peerId = attribute.peerId, let bot = firstMessage.peers[peerId] as? TelegramUser {
                     inlineBotNameString = bot.addressName
                 } else {
@@ -2398,6 +2408,9 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             if authorNameString != nil {
                 displayHeader = true
             }
+            if guestChatViaFromNameString != nil {
+                displayHeader = true
+            }
             if inlineBotNameString != nil {
                 displayHeader = true
             }
@@ -2644,6 +2657,13 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                     let bodyAttributes = MarkdownAttributeSet(font: nameFont, textColor: inlineBotNameColor)
                     let boldAttributes = MarkdownAttributeSet(font: inlineBotPrefixFont, textColor: inlineBotNameColor)
                     let botString = addAttributesToStringWithRanges(item.presentationData.strings.Conversation_MessageViaUser("@\(inlineBotNameString)")._tuple, body: bodyAttributes, argumentAttributes: [0: boldAttributes])
+                    mutableString.append(botString)
+                    attributedString = mutableString
+                    viaSuffix = botString
+                } else if let authorNameString = authorNameString, let authorNameColor = authorNameColor, let guestChatViaFromNameString = guestChatViaFromNameString {
+                    let mutableString = NSMutableAttributedString(string: "\(authorNameString) ", attributes: [NSAttributedString.Key.font: nameFont, NSAttributedString.Key.foregroundColor: authorNameColor])
+                    let bodyAttributes = MarkdownAttributeSet(font: regularFont, textColor: authorNameColor)
+                    let botString = addAttributesToStringWithRanges(item.presentationData.strings.Conversation_MessageGuestChatForUser(guestChatViaFromNameString)._tuple, body: bodyAttributes, argumentAttributes: [:])
                     mutableString.append(botString)
                     attributedString = mutableString
                     viaSuffix = botString

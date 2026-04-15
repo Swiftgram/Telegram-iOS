@@ -1086,6 +1086,7 @@ public extension Api {
             public var fwdFrom: Api.MessageFwdHeader?
             public var viaBotId: Int64?
             public var viaBusinessBotId: Int64?
+            public var guestchatViaFrom: Api.Peer?
             public var replyTo: Api.MessageReplyHeader?
             public var date: Int32
             public var message: String
@@ -1109,7 +1110,7 @@ public extension Api {
             public var suggestedPost: Api.SuggestedPost?
             public var scheduleRepeatPeriod: Int32?
             public var summaryFromLanguage: String?
-            public init(flags: Int32, flags2: Int32, id: Int32, fromId: Api.Peer?, fromBoostsApplied: Int32?, fromRank: String?, peerId: Api.Peer, savedPeerId: Api.Peer?, fwdFrom: Api.MessageFwdHeader?, viaBotId: Int64?, viaBusinessBotId: Int64?, replyTo: Api.MessageReplyHeader?, date: Int32, message: String, media: Api.MessageMedia?, replyMarkup: Api.ReplyMarkup?, entities: [Api.MessageEntity]?, views: Int32?, forwards: Int32?, replies: Api.MessageReplies?, editDate: Int32?, postAuthor: String?, groupedId: Int64?, reactions: Api.MessageReactions?, restrictionReason: [Api.RestrictionReason]?, ttlPeriod: Int32?, quickReplyShortcutId: Int32?, effect: Int64?, factcheck: Api.FactCheck?, reportDeliveryUntilDate: Int32?, paidMessageStars: Int64?, suggestedPost: Api.SuggestedPost?, scheduleRepeatPeriod: Int32?, summaryFromLanguage: String?) {
+            public init(flags: Int32, flags2: Int32, id: Int32, fromId: Api.Peer?, fromBoostsApplied: Int32?, fromRank: String?, peerId: Api.Peer, savedPeerId: Api.Peer?, fwdFrom: Api.MessageFwdHeader?, viaBotId: Int64?, viaBusinessBotId: Int64?, guestchatViaFrom: Api.Peer?, replyTo: Api.MessageReplyHeader?, date: Int32, message: String, media: Api.MessageMedia?, replyMarkup: Api.ReplyMarkup?, entities: [Api.MessageEntity]?, views: Int32?, forwards: Int32?, replies: Api.MessageReplies?, editDate: Int32?, postAuthor: String?, groupedId: Int64?, reactions: Api.MessageReactions?, restrictionReason: [Api.RestrictionReason]?, ttlPeriod: Int32?, quickReplyShortcutId: Int32?, effect: Int64?, factcheck: Api.FactCheck?, reportDeliveryUntilDate: Int32?, paidMessageStars: Int64?, suggestedPost: Api.SuggestedPost?, scheduleRepeatPeriod: Int32?, summaryFromLanguage: String?) {
                 self.flags = flags
                 self.flags2 = flags2
                 self.id = id
@@ -1121,6 +1122,7 @@ public extension Api {
                 self.fwdFrom = fwdFrom
                 self.viaBotId = viaBotId
                 self.viaBusinessBotId = viaBusinessBotId
+                self.guestchatViaFrom = guestchatViaFrom
                 self.replyTo = replyTo
                 self.date = date
                 self.message = message
@@ -1146,7 +1148,7 @@ public extension Api {
                 self.summaryFromLanguage = summaryFromLanguage
             }
             public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("message", [("flags", ConstructorParameterDescription(self.flags)), ("flags2", ConstructorParameterDescription(self.flags2)), ("id", ConstructorParameterDescription(self.id)), ("fromId", ConstructorParameterDescription(self.fromId)), ("fromBoostsApplied", ConstructorParameterDescription(self.fromBoostsApplied)), ("fromRank", ConstructorParameterDescription(self.fromRank)), ("peerId", ConstructorParameterDescription(self.peerId)), ("savedPeerId", ConstructorParameterDescription(self.savedPeerId)), ("fwdFrom", ConstructorParameterDescription(self.fwdFrom)), ("viaBotId", ConstructorParameterDescription(self.viaBotId)), ("viaBusinessBotId", ConstructorParameterDescription(self.viaBusinessBotId)), ("replyTo", ConstructorParameterDescription(self.replyTo)), ("date", ConstructorParameterDescription(self.date)), ("message", ConstructorParameterDescription(self.message)), ("media", ConstructorParameterDescription(self.media)), ("replyMarkup", ConstructorParameterDescription(self.replyMarkup)), ("entities", ConstructorParameterDescription(self.entities)), ("views", ConstructorParameterDescription(self.views)), ("forwards", ConstructorParameterDescription(self.forwards)), ("replies", ConstructorParameterDescription(self.replies)), ("editDate", ConstructorParameterDescription(self.editDate)), ("postAuthor", ConstructorParameterDescription(self.postAuthor)), ("groupedId", ConstructorParameterDescription(self.groupedId)), ("reactions", ConstructorParameterDescription(self.reactions)), ("restrictionReason", ConstructorParameterDescription(self.restrictionReason)), ("ttlPeriod", ConstructorParameterDescription(self.ttlPeriod)), ("quickReplyShortcutId", ConstructorParameterDescription(self.quickReplyShortcutId)), ("effect", ConstructorParameterDescription(self.effect)), ("factcheck", ConstructorParameterDescription(self.factcheck)), ("reportDeliveryUntilDate", ConstructorParameterDescription(self.reportDeliveryUntilDate)), ("paidMessageStars", ConstructorParameterDescription(self.paidMessageStars)), ("suggestedPost", ConstructorParameterDescription(self.suggestedPost)), ("scheduleRepeatPeriod", ConstructorParameterDescription(self.scheduleRepeatPeriod)), ("summaryFromLanguage", ConstructorParameterDescription(self.summaryFromLanguage))])
+                return ("message", [("flags", ConstructorParameterDescription(self.flags)), ("flags2", ConstructorParameterDescription(self.flags2)), ("id", ConstructorParameterDescription(self.id)), ("fromId", ConstructorParameterDescription(self.fromId)), ("fromBoostsApplied", ConstructorParameterDescription(self.fromBoostsApplied)), ("fromRank", ConstructorParameterDescription(self.fromRank)), ("peerId", ConstructorParameterDescription(self.peerId)), ("savedPeerId", ConstructorParameterDescription(self.savedPeerId)), ("fwdFrom", ConstructorParameterDescription(self.fwdFrom)), ("viaBotId", ConstructorParameterDescription(self.viaBotId)), ("viaBusinessBotId", ConstructorParameterDescription(self.viaBusinessBotId)), ("guestchatViaFrom", ConstructorParameterDescription(self.guestchatViaFrom)), ("replyTo", ConstructorParameterDescription(self.replyTo)), ("date", ConstructorParameterDescription(self.date)), ("message", ConstructorParameterDescription(self.message)), ("media", ConstructorParameterDescription(self.media)), ("replyMarkup", ConstructorParameterDescription(self.replyMarkup)), ("entities", ConstructorParameterDescription(self.entities)), ("views", ConstructorParameterDescription(self.views)), ("forwards", ConstructorParameterDescription(self.forwards)), ("replies", ConstructorParameterDescription(self.replies)), ("editDate", ConstructorParameterDescription(self.editDate)), ("postAuthor", ConstructorParameterDescription(self.postAuthor)), ("groupedId", ConstructorParameterDescription(self.groupedId)), ("reactions", ConstructorParameterDescription(self.reactions)), ("restrictionReason", ConstructorParameterDescription(self.restrictionReason)), ("ttlPeriod", ConstructorParameterDescription(self.ttlPeriod)), ("quickReplyShortcutId", ConstructorParameterDescription(self.quickReplyShortcutId)), ("effect", ConstructorParameterDescription(self.effect)), ("factcheck", ConstructorParameterDescription(self.factcheck)), ("reportDeliveryUntilDate", ConstructorParameterDescription(self.reportDeliveryUntilDate)), ("paidMessageStars", ConstructorParameterDescription(self.paidMessageStars)), ("suggestedPost", ConstructorParameterDescription(self.suggestedPost)), ("scheduleRepeatPeriod", ConstructorParameterDescription(self.scheduleRepeatPeriod)), ("summaryFromLanguage", ConstructorParameterDescription(self.summaryFromLanguage))])
             }
         }
         public class Cons_messageEmpty: TypeConstructorDescription {
@@ -1197,7 +1199,7 @@ public extension Api {
             switch self {
             case .message(let _data):
                 if boxed {
-                    buffer.appendInt32(988112002)
+                    buffer.appendInt32(-1779470549)
                 }
                 serializeInt32(_data.flags, buffer: buffer, boxed: false)
                 serializeInt32(_data.flags2, buffer: buffer, boxed: false)
@@ -1223,6 +1225,9 @@ public extension Api {
                 }
                 if Int(_data.flags2) & Int(1 << 0) != 0 {
                     serializeInt64(_data.viaBusinessBotId!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags2) & Int(1 << 19) != 0 {
+                    _data.guestchatViaFrom!.serialize(buffer, true)
                 }
                 if Int(_data.flags) & Int(1 << 3) != 0 {
                     _data.replyTo!.serialize(buffer, true)
@@ -1339,7 +1344,7 @@ public extension Api {
         public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
             switch self {
             case .message(let _data):
-                return ("message", [("flags", ConstructorParameterDescription(_data.flags)), ("flags2", ConstructorParameterDescription(_data.flags2)), ("id", ConstructorParameterDescription(_data.id)), ("fromId", ConstructorParameterDescription(_data.fromId)), ("fromBoostsApplied", ConstructorParameterDescription(_data.fromBoostsApplied)), ("fromRank", ConstructorParameterDescription(_data.fromRank)), ("peerId", ConstructorParameterDescription(_data.peerId)), ("savedPeerId", ConstructorParameterDescription(_data.savedPeerId)), ("fwdFrom", ConstructorParameterDescription(_data.fwdFrom)), ("viaBotId", ConstructorParameterDescription(_data.viaBotId)), ("viaBusinessBotId", ConstructorParameterDescription(_data.viaBusinessBotId)), ("replyTo", ConstructorParameterDescription(_data.replyTo)), ("date", ConstructorParameterDescription(_data.date)), ("message", ConstructorParameterDescription(_data.message)), ("media", ConstructorParameterDescription(_data.media)), ("replyMarkup", ConstructorParameterDescription(_data.replyMarkup)), ("entities", ConstructorParameterDescription(_data.entities)), ("views", ConstructorParameterDescription(_data.views)), ("forwards", ConstructorParameterDescription(_data.forwards)), ("replies", ConstructorParameterDescription(_data.replies)), ("editDate", ConstructorParameterDescription(_data.editDate)), ("postAuthor", ConstructorParameterDescription(_data.postAuthor)), ("groupedId", ConstructorParameterDescription(_data.groupedId)), ("reactions", ConstructorParameterDescription(_data.reactions)), ("restrictionReason", ConstructorParameterDescription(_data.restrictionReason)), ("ttlPeriod", ConstructorParameterDescription(_data.ttlPeriod)), ("quickReplyShortcutId", ConstructorParameterDescription(_data.quickReplyShortcutId)), ("effect", ConstructorParameterDescription(_data.effect)), ("factcheck", ConstructorParameterDescription(_data.factcheck)), ("reportDeliveryUntilDate", ConstructorParameterDescription(_data.reportDeliveryUntilDate)), ("paidMessageStars", ConstructorParameterDescription(_data.paidMessageStars)), ("suggestedPost", ConstructorParameterDescription(_data.suggestedPost)), ("scheduleRepeatPeriod", ConstructorParameterDescription(_data.scheduleRepeatPeriod)), ("summaryFromLanguage", ConstructorParameterDescription(_data.summaryFromLanguage))])
+                return ("message", [("flags", ConstructorParameterDescription(_data.flags)), ("flags2", ConstructorParameterDescription(_data.flags2)), ("id", ConstructorParameterDescription(_data.id)), ("fromId", ConstructorParameterDescription(_data.fromId)), ("fromBoostsApplied", ConstructorParameterDescription(_data.fromBoostsApplied)), ("fromRank", ConstructorParameterDescription(_data.fromRank)), ("peerId", ConstructorParameterDescription(_data.peerId)), ("savedPeerId", ConstructorParameterDescription(_data.savedPeerId)), ("fwdFrom", ConstructorParameterDescription(_data.fwdFrom)), ("viaBotId", ConstructorParameterDescription(_data.viaBotId)), ("viaBusinessBotId", ConstructorParameterDescription(_data.viaBusinessBotId)), ("guestchatViaFrom", ConstructorParameterDescription(_data.guestchatViaFrom)), ("replyTo", ConstructorParameterDescription(_data.replyTo)), ("date", ConstructorParameterDescription(_data.date)), ("message", ConstructorParameterDescription(_data.message)), ("media", ConstructorParameterDescription(_data.media)), ("replyMarkup", ConstructorParameterDescription(_data.replyMarkup)), ("entities", ConstructorParameterDescription(_data.entities)), ("views", ConstructorParameterDescription(_data.views)), ("forwards", ConstructorParameterDescription(_data.forwards)), ("replies", ConstructorParameterDescription(_data.replies)), ("editDate", ConstructorParameterDescription(_data.editDate)), ("postAuthor", ConstructorParameterDescription(_data.postAuthor)), ("groupedId", ConstructorParameterDescription(_data.groupedId)), ("reactions", ConstructorParameterDescription(_data.reactions)), ("restrictionReason", ConstructorParameterDescription(_data.restrictionReason)), ("ttlPeriod", ConstructorParameterDescription(_data.ttlPeriod)), ("quickReplyShortcutId", ConstructorParameterDescription(_data.quickReplyShortcutId)), ("effect", ConstructorParameterDescription(_data.effect)), ("factcheck", ConstructorParameterDescription(_data.factcheck)), ("reportDeliveryUntilDate", ConstructorParameterDescription(_data.reportDeliveryUntilDate)), ("paidMessageStars", ConstructorParameterDescription(_data.paidMessageStars)), ("suggestedPost", ConstructorParameterDescription(_data.suggestedPost)), ("scheduleRepeatPeriod", ConstructorParameterDescription(_data.scheduleRepeatPeriod)), ("summaryFromLanguage", ConstructorParameterDescription(_data.summaryFromLanguage))])
             case .messageEmpty(let _data):
                 return ("messageEmpty", [("flags", ConstructorParameterDescription(_data.flags)), ("id", ConstructorParameterDescription(_data.id)), ("peerId", ConstructorParameterDescription(_data.peerId))])
             case .messageService(let _data):
@@ -1392,111 +1397,117 @@ public extension Api {
             if Int(_2!) & Int(1 << 0) != 0 {
                 _11 = reader.readInt64()
             }
-            var _12: Api.MessageReplyHeader?
+            var _12: Api.Peer?
+            if Int(_2!) & Int(1 << 19) != 0 {
+                if let signature = reader.readInt32() {
+                    _12 = Api.parse(reader, signature: signature) as? Api.Peer
+                }
+            }
+            var _13: Api.MessageReplyHeader?
             if Int(_1!) & Int(1 << 3) != 0 {
                 if let signature = reader.readInt32() {
-                    _12 = Api.parse(reader, signature: signature) as? Api.MessageReplyHeader
+                    _13 = Api.parse(reader, signature: signature) as? Api.MessageReplyHeader
                 }
             }
-            var _13: Int32?
-            _13 = reader.readInt32()
-            var _14: String?
-            _14 = parseString(reader)
-            var _15: Api.MessageMedia?
+            var _14: Int32?
+            _14 = reader.readInt32()
+            var _15: String?
+            _15 = parseString(reader)
+            var _16: Api.MessageMedia?
             if Int(_1!) & Int(1 << 9) != 0 {
                 if let signature = reader.readInt32() {
-                    _15 = Api.parse(reader, signature: signature) as? Api.MessageMedia
+                    _16 = Api.parse(reader, signature: signature) as? Api.MessageMedia
                 }
             }
-            var _16: Api.ReplyMarkup?
+            var _17: Api.ReplyMarkup?
             if Int(_1!) & Int(1 << 6) != 0 {
                 if let signature = reader.readInt32() {
-                    _16 = Api.parse(reader, signature: signature) as? Api.ReplyMarkup
+                    _17 = Api.parse(reader, signature: signature) as? Api.ReplyMarkup
                 }
             }
-            var _17: [Api.MessageEntity]?
+            var _18: [Api.MessageEntity]?
             if Int(_1!) & Int(1 << 7) != 0 {
                 if let _ = reader.readInt32() {
-                    _17 = Api.parseVector(reader, elementSignature: 0, elementType: Api.MessageEntity.self)
+                    _18 = Api.parseVector(reader, elementSignature: 0, elementType: Api.MessageEntity.self)
                 }
-            }
-            var _18: Int32?
-            if Int(_1!) & Int(1 << 10) != 0 {
-                _18 = reader.readInt32()
             }
             var _19: Int32?
             if Int(_1!) & Int(1 << 10) != 0 {
                 _19 = reader.readInt32()
             }
-            var _20: Api.MessageReplies?
+            var _20: Int32?
+            if Int(_1!) & Int(1 << 10) != 0 {
+                _20 = reader.readInt32()
+            }
+            var _21: Api.MessageReplies?
             if Int(_1!) & Int(1 << 23) != 0 {
                 if let signature = reader.readInt32() {
-                    _20 = Api.parse(reader, signature: signature) as? Api.MessageReplies
+                    _21 = Api.parse(reader, signature: signature) as? Api.MessageReplies
                 }
             }
-            var _21: Int32?
+            var _22: Int32?
             if Int(_1!) & Int(1 << 15) != 0 {
-                _21 = reader.readInt32()
+                _22 = reader.readInt32()
             }
-            var _22: String?
+            var _23: String?
             if Int(_1!) & Int(1 << 16) != 0 {
-                _22 = parseString(reader)
+                _23 = parseString(reader)
             }
-            var _23: Int64?
+            var _24: Int64?
             if Int(_1!) & Int(1 << 17) != 0 {
-                _23 = reader.readInt64()
+                _24 = reader.readInt64()
             }
-            var _24: Api.MessageReactions?
+            var _25: Api.MessageReactions?
             if Int(_1!) & Int(1 << 20) != 0 {
                 if let signature = reader.readInt32() {
-                    _24 = Api.parse(reader, signature: signature) as? Api.MessageReactions
+                    _25 = Api.parse(reader, signature: signature) as? Api.MessageReactions
                 }
             }
-            var _25: [Api.RestrictionReason]?
+            var _26: [Api.RestrictionReason]?
             if Int(_1!) & Int(1 << 22) != 0 {
                 if let _ = reader.readInt32() {
-                    _25 = Api.parseVector(reader, elementSignature: 0, elementType: Api.RestrictionReason.self)
+                    _26 = Api.parseVector(reader, elementSignature: 0, elementType: Api.RestrictionReason.self)
                 }
-            }
-            var _26: Int32?
-            if Int(_1!) & Int(1 << 25) != 0 {
-                _26 = reader.readInt32()
             }
             var _27: Int32?
-            if Int(_1!) & Int(1 << 30) != 0 {
+            if Int(_1!) & Int(1 << 25) != 0 {
                 _27 = reader.readInt32()
             }
-            var _28: Int64?
-            if Int(_2!) & Int(1 << 2) != 0 {
-                _28 = reader.readInt64()
+            var _28: Int32?
+            if Int(_1!) & Int(1 << 30) != 0 {
+                _28 = reader.readInt32()
             }
-            var _29: Api.FactCheck?
+            var _29: Int64?
+            if Int(_2!) & Int(1 << 2) != 0 {
+                _29 = reader.readInt64()
+            }
+            var _30: Api.FactCheck?
             if Int(_2!) & Int(1 << 3) != 0 {
                 if let signature = reader.readInt32() {
-                    _29 = Api.parse(reader, signature: signature) as? Api.FactCheck
+                    _30 = Api.parse(reader, signature: signature) as? Api.FactCheck
                 }
             }
-            var _30: Int32?
+            var _31: Int32?
             if Int(_2!) & Int(1 << 5) != 0 {
-                _30 = reader.readInt32()
+                _31 = reader.readInt32()
             }
-            var _31: Int64?
+            var _32: Int64?
             if Int(_2!) & Int(1 << 6) != 0 {
-                _31 = reader.readInt64()
+                _32 = reader.readInt64()
             }
-            var _32: Api.SuggestedPost?
+            var _33: Api.SuggestedPost?
             if Int(_2!) & Int(1 << 7) != 0 {
                 if let signature = reader.readInt32() {
-                    _32 = Api.parse(reader, signature: signature) as? Api.SuggestedPost
+                    _33 = Api.parse(reader, signature: signature) as? Api.SuggestedPost
                 }
             }
-            var _33: Int32?
+            var _34: Int32?
             if Int(_2!) & Int(1 << 10) != 0 {
-                _33 = reader.readInt32()
+                _34 = reader.readInt32()
             }
-            var _34: String?
+            var _35: String?
             if Int(_2!) & Int(1 << 11) != 0 {
-                _34 = parseString(reader)
+                _35 = parseString(reader)
             }
             let _c1 = _1 != nil
             let _c2 = _2 != nil
@@ -1509,31 +1520,32 @@ public extension Api {
             let _c9 = (Int(_1!) & Int(1 << 2) == 0) || _9 != nil
             let _c10 = (Int(_1!) & Int(1 << 11) == 0) || _10 != nil
             let _c11 = (Int(_2!) & Int(1 << 0) == 0) || _11 != nil
-            let _c12 = (Int(_1!) & Int(1 << 3) == 0) || _12 != nil
-            let _c13 = _13 != nil
+            let _c12 = (Int(_2!) & Int(1 << 19) == 0) || _12 != nil
+            let _c13 = (Int(_1!) & Int(1 << 3) == 0) || _13 != nil
             let _c14 = _14 != nil
-            let _c15 = (Int(_1!) & Int(1 << 9) == 0) || _15 != nil
-            let _c16 = (Int(_1!) & Int(1 << 6) == 0) || _16 != nil
-            let _c17 = (Int(_1!) & Int(1 << 7) == 0) || _17 != nil
-            let _c18 = (Int(_1!) & Int(1 << 10) == 0) || _18 != nil
+            let _c15 = _15 != nil
+            let _c16 = (Int(_1!) & Int(1 << 9) == 0) || _16 != nil
+            let _c17 = (Int(_1!) & Int(1 << 6) == 0) || _17 != nil
+            let _c18 = (Int(_1!) & Int(1 << 7) == 0) || _18 != nil
             let _c19 = (Int(_1!) & Int(1 << 10) == 0) || _19 != nil
-            let _c20 = (Int(_1!) & Int(1 << 23) == 0) || _20 != nil
-            let _c21 = (Int(_1!) & Int(1 << 15) == 0) || _21 != nil
-            let _c22 = (Int(_1!) & Int(1 << 16) == 0) || _22 != nil
-            let _c23 = (Int(_1!) & Int(1 << 17) == 0) || _23 != nil
-            let _c24 = (Int(_1!) & Int(1 << 20) == 0) || _24 != nil
-            let _c25 = (Int(_1!) & Int(1 << 22) == 0) || _25 != nil
-            let _c26 = (Int(_1!) & Int(1 << 25) == 0) || _26 != nil
-            let _c27 = (Int(_1!) & Int(1 << 30) == 0) || _27 != nil
-            let _c28 = (Int(_2!) & Int(1 << 2) == 0) || _28 != nil
-            let _c29 = (Int(_2!) & Int(1 << 3) == 0) || _29 != nil
-            let _c30 = (Int(_2!) & Int(1 << 5) == 0) || _30 != nil
-            let _c31 = (Int(_2!) & Int(1 << 6) == 0) || _31 != nil
-            let _c32 = (Int(_2!) & Int(1 << 7) == 0) || _32 != nil
-            let _c33 = (Int(_2!) & Int(1 << 10) == 0) || _33 != nil
-            let _c34 = (Int(_2!) & Int(1 << 11) == 0) || _34 != nil
-            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 && _c7 && _c8 && _c9 && _c10 && _c11 && _c12 && _c13 && _c14 && _c15 && _c16 && _c17 && _c18 && _c19 && _c20 && _c21 && _c22 && _c23 && _c24 && _c25 && _c26 && _c27 && _c28 && _c29 && _c30 && _c31 && _c32 && _c33 && _c34 {
-                return Api.Message.message(Cons_message(flags: _1!, flags2: _2!, id: _3!, fromId: _4, fromBoostsApplied: _5, fromRank: _6, peerId: _7!, savedPeerId: _8, fwdFrom: _9, viaBotId: _10, viaBusinessBotId: _11, replyTo: _12, date: _13!, message: _14!, media: _15, replyMarkup: _16, entities: _17, views: _18, forwards: _19, replies: _20, editDate: _21, postAuthor: _22, groupedId: _23, reactions: _24, restrictionReason: _25, ttlPeriod: _26, quickReplyShortcutId: _27, effect: _28, factcheck: _29, reportDeliveryUntilDate: _30, paidMessageStars: _31, suggestedPost: _32, scheduleRepeatPeriod: _33, summaryFromLanguage: _34))
+            let _c20 = (Int(_1!) & Int(1 << 10) == 0) || _20 != nil
+            let _c21 = (Int(_1!) & Int(1 << 23) == 0) || _21 != nil
+            let _c22 = (Int(_1!) & Int(1 << 15) == 0) || _22 != nil
+            let _c23 = (Int(_1!) & Int(1 << 16) == 0) || _23 != nil
+            let _c24 = (Int(_1!) & Int(1 << 17) == 0) || _24 != nil
+            let _c25 = (Int(_1!) & Int(1 << 20) == 0) || _25 != nil
+            let _c26 = (Int(_1!) & Int(1 << 22) == 0) || _26 != nil
+            let _c27 = (Int(_1!) & Int(1 << 25) == 0) || _27 != nil
+            let _c28 = (Int(_1!) & Int(1 << 30) == 0) || _28 != nil
+            let _c29 = (Int(_2!) & Int(1 << 2) == 0) || _29 != nil
+            let _c30 = (Int(_2!) & Int(1 << 3) == 0) || _30 != nil
+            let _c31 = (Int(_2!) & Int(1 << 5) == 0) || _31 != nil
+            let _c32 = (Int(_2!) & Int(1 << 6) == 0) || _32 != nil
+            let _c33 = (Int(_2!) & Int(1 << 7) == 0) || _33 != nil
+            let _c34 = (Int(_2!) & Int(1 << 10) == 0) || _34 != nil
+            let _c35 = (Int(_2!) & Int(1 << 11) == 0) || _35 != nil
+            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 && _c7 && _c8 && _c9 && _c10 && _c11 && _c12 && _c13 && _c14 && _c15 && _c16 && _c17 && _c18 && _c19 && _c20 && _c21 && _c22 && _c23 && _c24 && _c25 && _c26 && _c27 && _c28 && _c29 && _c30 && _c31 && _c32 && _c33 && _c34 && _c35 {
+                return Api.Message.message(Cons_message(flags: _1!, flags2: _2!, id: _3!, fromId: _4, fromBoostsApplied: _5, fromRank: _6, peerId: _7!, savedPeerId: _8, fwdFrom: _9, viaBotId: _10, viaBusinessBotId: _11, guestchatViaFrom: _12, replyTo: _13, date: _14!, message: _15!, media: _16, replyMarkup: _17, entities: _18, views: _19, forwards: _20, replies: _21, editDate: _22, postAuthor: _23, groupedId: _24, reactions: _25, restrictionReason: _26, ttlPeriod: _27, quickReplyShortcutId: _28, effect: _29, factcheck: _30, reportDeliveryUntilDate: _31, paidMessageStars: _32, suggestedPost: _33, scheduleRepeatPeriod: _34, summaryFromLanguage: _35))
             }
             else {
                 return nil

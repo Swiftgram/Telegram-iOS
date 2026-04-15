@@ -608,6 +608,114 @@ public extension Api {
     }
 }
 public extension Api {
+    enum InputAiComposeTone: TypeConstructorDescription {
+        public class Cons_inputAiComposeToneDefault: TypeConstructorDescription {
+            public var tone: String
+            public init(tone: String) {
+                self.tone = tone
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("inputAiComposeToneDefault", [("tone", ConstructorParameterDescription(self.tone))])
+            }
+        }
+        public class Cons_inputAiComposeToneID: TypeConstructorDescription {
+            public var id: Int64
+            public var accessHash: Int64
+            public init(id: Int64, accessHash: Int64) {
+                self.id = id
+                self.accessHash = accessHash
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("inputAiComposeToneID", [("id", ConstructorParameterDescription(self.id)), ("accessHash", ConstructorParameterDescription(self.accessHash))])
+            }
+        }
+        public class Cons_inputAiComposeToneSlug: TypeConstructorDescription {
+            public var slug: String
+            public init(slug: String) {
+                self.slug = slug
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("inputAiComposeToneSlug", [("slug", ConstructorParameterDescription(self.slug))])
+            }
+        }
+        case inputAiComposeToneDefault(Cons_inputAiComposeToneDefault)
+        case inputAiComposeToneID(Cons_inputAiComposeToneID)
+        case inputAiComposeToneSlug(Cons_inputAiComposeToneSlug)
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .inputAiComposeToneDefault(let _data):
+                if boxed {
+                    buffer.appendInt32(535407039)
+                }
+                serializeString(_data.tone, buffer: buffer, boxed: false)
+                break
+            case .inputAiComposeToneID(let _data):
+                if boxed {
+                    buffer.appendInt32(125026432)
+                }
+                serializeInt64(_data.id, buffer: buffer, boxed: false)
+                serializeInt64(_data.accessHash, buffer: buffer, boxed: false)
+                break
+            case .inputAiComposeToneSlug(let _data):
+                if boxed {
+                    buffer.appendInt32(530584407)
+                }
+                serializeString(_data.slug, buffer: buffer, boxed: false)
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .inputAiComposeToneDefault(let _data):
+                return ("inputAiComposeToneDefault", [("tone", ConstructorParameterDescription(_data.tone))])
+            case .inputAiComposeToneID(let _data):
+                return ("inputAiComposeToneID", [("id", ConstructorParameterDescription(_data.id)), ("accessHash", ConstructorParameterDescription(_data.accessHash))])
+            case .inputAiComposeToneSlug(let _data):
+                return ("inputAiComposeToneSlug", [("slug", ConstructorParameterDescription(_data.slug))])
+            }
+        }
+
+        public static func parse_inputAiComposeToneDefault(_ reader: BufferReader) -> InputAiComposeTone? {
+            var _1: String?
+            _1 = parseString(reader)
+            let _c1 = _1 != nil
+            if _c1 {
+                return Api.InputAiComposeTone.inputAiComposeToneDefault(Cons_inputAiComposeToneDefault(tone: _1!))
+            }
+            else {
+                return nil
+            }
+        }
+        public static func parse_inputAiComposeToneID(_ reader: BufferReader) -> InputAiComposeTone? {
+            var _1: Int64?
+            _1 = reader.readInt64()
+            var _2: Int64?
+            _2 = reader.readInt64()
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            if _c1 && _c2 {
+                return Api.InputAiComposeTone.inputAiComposeToneID(Cons_inputAiComposeToneID(id: _1!, accessHash: _2!))
+            }
+            else {
+                return nil
+            }
+        }
+        public static func parse_inputAiComposeToneSlug(_ reader: BufferReader) -> InputAiComposeTone? {
+            var _1: String?
+            _1 = parseString(reader)
+            let _c1 = _1 != nil
+            if _c1 {
+                return Api.InputAiComposeTone.inputAiComposeToneSlug(Cons_inputAiComposeToneSlug(slug: _1!))
+            }
+            else {
+                return nil
+            }
+        }
+    }
+}
+public extension Api {
     enum InputAppEvent: TypeConstructorDescription {
         public class Cons_inputAppEvent: TypeConstructorDescription {
             public var time: Double
@@ -1710,72 +1818,6 @@ public extension Api {
             let _c4 = _4 != nil
             if _c1 && _c2 && _c3 && _c4 {
                 return Api.InputBotInlineResult.inputBotInlineResultPhoto(Cons_inputBotInlineResultPhoto(id: _1!, type: _2!, photo: _3!, sendMessage: _4!))
-            }
-            else {
-                return nil
-            }
-        }
-    }
-}
-public extension Api {
-    enum InputBusinessAwayMessage: TypeConstructorDescription {
-        public class Cons_inputBusinessAwayMessage: TypeConstructorDescription {
-            public var flags: Int32
-            public var shortcutId: Int32
-            public var schedule: Api.BusinessAwayMessageSchedule
-            public var recipients: Api.InputBusinessRecipients
-            public init(flags: Int32, shortcutId: Int32, schedule: Api.BusinessAwayMessageSchedule, recipients: Api.InputBusinessRecipients) {
-                self.flags = flags
-                self.shortcutId = shortcutId
-                self.schedule = schedule
-                self.recipients = recipients
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("inputBusinessAwayMessage", [("flags", ConstructorParameterDescription(self.flags)), ("shortcutId", ConstructorParameterDescription(self.shortcutId)), ("schedule", ConstructorParameterDescription(self.schedule)), ("recipients", ConstructorParameterDescription(self.recipients))])
-            }
-        }
-        case inputBusinessAwayMessage(Cons_inputBusinessAwayMessage)
-
-        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
-            switch self {
-            case .inputBusinessAwayMessage(let _data):
-                if boxed {
-                    buffer.appendInt32(-2094959136)
-                }
-                serializeInt32(_data.flags, buffer: buffer, boxed: false)
-                serializeInt32(_data.shortcutId, buffer: buffer, boxed: false)
-                _data.schedule.serialize(buffer, true)
-                _data.recipients.serialize(buffer, true)
-                break
-            }
-        }
-
-        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-            switch self {
-            case .inputBusinessAwayMessage(let _data):
-                return ("inputBusinessAwayMessage", [("flags", ConstructorParameterDescription(_data.flags)), ("shortcutId", ConstructorParameterDescription(_data.shortcutId)), ("schedule", ConstructorParameterDescription(_data.schedule)), ("recipients", ConstructorParameterDescription(_data.recipients))])
-            }
-        }
-
-        public static func parse_inputBusinessAwayMessage(_ reader: BufferReader) -> InputBusinessAwayMessage? {
-            var _1: Int32?
-            _1 = reader.readInt32()
-            var _2: Int32?
-            _2 = reader.readInt32()
-            var _3: Api.BusinessAwayMessageSchedule?
-            if let signature = reader.readInt32() {
-                _3 = Api.parse(reader, signature: signature) as? Api.BusinessAwayMessageSchedule
-            }
-            var _4: Api.InputBusinessRecipients?
-            if let signature = reader.readInt32() {
-                _4 = Api.parse(reader, signature: signature) as? Api.InputBusinessRecipients
-            }
-            let _c1 = _1 != nil
-            let _c2 = _2 != nil
-            let _c3 = _3 != nil
-            let _c4 = _4 != nil
-            if _c1 && _c2 && _c3 && _c4 {
-                return Api.InputBusinessAwayMessage.inputBusinessAwayMessage(Cons_inputBusinessAwayMessage(flags: _1!, shortcutId: _2!, schedule: _3!, recipients: _4!))
             }
             else {
                 return nil
