@@ -506,6 +506,8 @@ public final class MessageInlineBlockBackgroundView: UIView {
                         thirdColor: params.thirdColor,
                         backgroundColor: params.backgroundColor,
                         pattern: params.pattern,
+                        patternTopRightPosition: params.patternTopRightPosition,
+                        patternAlpha: params.patternAlpha,
                         animation: .None
                     )
                 }

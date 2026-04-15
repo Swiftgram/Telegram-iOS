@@ -532,6 +532,9 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
     public var heightUpdated: ((Bool) -> Void)?
     public var timerUpdated: ((NSNumber?) -> Void)?
     public var captionIsAboveUpdated: ((Bool) -> Void)?
+    public var additionalInputHeight: CGFloat {
+        return 0.0
+    }
     
     public func updateLayoutSize(_ size: CGSize, keyboardHeight: CGFloat, sideInset: CGFloat, animated: Bool) -> CGFloat {
         guard let presentationInterfaceState = self.presentationInterfaceState else {

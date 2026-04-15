@@ -39,7 +39,6 @@ swift_library(
         "//submodules/FeaturedStickersScreen:FeaturedStickersScreen",
         "//submodules/TelegramUI/Components/EntityKeyboardGifContent:EntityKeyboardGifContent",
         "//submodules/TelegramUI/Components/LegacyMessageInputPanelInputView:LegacyMessageInputPanelInputView",
-        "//submodules/AttachmentTextInputPanelNode",
         "//submodules/TelegramUI/Components/BatchVideoRendering",
         "//submodules/TelegramUI/Components/GlassBackgroundComponent",
         "//submodules/TelegramUI/Components/SubcodecAnimationCacheImpl:SubcodecAnimationCacheImpl",

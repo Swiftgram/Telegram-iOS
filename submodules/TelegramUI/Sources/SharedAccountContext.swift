@@ -2756,19 +2756,18 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return makeAttachmentFileControllerImpl(context: context, updatedPresentationData: updatedPresentationData, mode: audio ? .audio(.chat) : .recent, bannedSendMedia: bannedSendMedia, presentGallery: presentGallery, presentFiles: presentFiles, presentDocumentScanner: presentDocumentScanner, send: send)
     }
     
-    public func makeGalleryCaptionPanelView(context: AccountContext, chatLocation: ChatLocation, isScheduledMessages: Bool, isFile: Bool, hasTimer: Bool, customEmojiAvailable: Bool, pushViewController: @escaping (ViewController) -> Void, present: @escaping (ViewController) -> Void, presentInGlobalOverlay: @escaping (ViewController) -> Void) -> NSObject? {
+    public func makeGalleryCaptionPanelView(context: AccountContext, chatLocation: ChatLocation, isScheduledMessages: Bool, isFile: Bool, hasTimer: Bool, customEmojiAvailable: Bool, pushViewController: @escaping (ViewController) -> Void, present: @escaping (ViewController) -> Void, presentInGlobalOverlay: @escaping (ViewController) -> Void, getNavigationController: @escaping () -> NavigationController?) -> NSObject? {
         let inputPanelNode = LegacyMessageInputPanelNode(
             context: context,
             chatLocation: chatLocation,
             isScheduledMessages: isScheduledMessages,
             isFile: isFile,
             hasTimer: hasTimer,
+            customEmojiAvailable: customEmojiAvailable,
             pushViewController: pushViewController,
             present: present,
             presentInGlobalOverlay: presentInGlobalOverlay,
-            makeEntityInputView: {
-                return EntityInputView(context: context, isDark: true, areCustomEmojiEnabled: customEmojiAvailable)
-            }
+            getNavigationController: getNavigationController
         )
         return inputPanelNode
     }

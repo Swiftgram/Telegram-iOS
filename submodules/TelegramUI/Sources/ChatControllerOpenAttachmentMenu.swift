@@ -302,22 +302,17 @@ extension ChatControllerImpl {
                 }
                 return
             }
-            
+
             let inputText = strongSelf.presentationInterfaceState.interfaceState.effectiveInputState.inputText
-            
+
             let currentMediaController = Atomic<MediaPickerScreenImpl?>(value: nil)
             let currentFilesController = Atomic<AttachmentFileControllerImpl?>(value: nil)
             let currentAudioController = Atomic<AttachmentFileControllerImpl?>(value: nil)
             let currentLocationController = Atomic<LocationPickerController?>(value: nil)
-            
+
             strongSelf.canReadHistory.set(false)
-            
-            let attachmentController = AttachmentController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, style: .glass, chatLocation: strongSelf.chatLocation, isScheduledMessages: isScheduledMessages, buttons: buttons, initialButton: initialButton, makeEntityInputView: { [weak self] in
-                guard let strongSelf = self else {
-                    return nil
-                }
-                return EntityInputView(context: strongSelf.context, isDark: false, areCustomEmojiEnabled: strongSelf.presentationInterfaceState.customEmojiAvailable)
-            })
+
+            let attachmentController = AttachmentController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, style: .glass, chatLocation: strongSelf.chatLocation, isScheduledMessages: isScheduledMessages, buttons: buttons, initialButton: initialButton, customEmojiAvailable: strongSelf.presentationInterfaceState.customEmojiAvailable)
             attachmentController.attachmentButton = strongSelf.chatDisplayNode.getAttachmentButton()
             attachmentController.shouldMinimizeOnSwipe = { [weak attachmentController] button in
                 if case .app = button {
@@ -1899,6 +1894,8 @@ extension ChatControllerImpl {
                 return
             }
             self.presentInGlobalOverlay(c)
+        }, getNavigationController: { [weak self] in
+            return self?.navigationController as? NavigationController
         }) as? TGCaptionPanelView
     }
     
