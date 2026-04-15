@@ -7,6 +7,7 @@ import MultilineTextComponent
 import TelegramCore
 import EmojiStatusComponent
 import AccountContext
+import BundleIconComponent
 
 final class TextProcessingStyleSelectionComponent: Component {
     let context: AccountContext
@@ -14,7 +15,9 @@ final class TextProcessingStyleSelectionComponent: Component {
     let strings: PresentationStrings
     let styles: [TextProcessingScreen.Style]
     let selectedStyle: TelegramComposeAIMessageMode.StyleId
-    let updateStyle: (TelegramComposeAIMessageMode.StyleId) -> Void
+    let updateStyle: (TelegramComposeAIMessageMode.StyleReference) -> Void
+    let createStyle: () -> Void
+    let editStyle: (TelegramComposeAIMessageMode.CloudStyle.Id) -> Void
 
     init(
         context: AccountContext,
@@ -22,7 +25,9 @@ final class TextProcessingStyleSelectionComponent: Component {
         strings: PresentationStrings,
         styles: [TextProcessingScreen.Style],
         selectedStyle: TelegramComposeAIMessageMode.StyleId,
-        updateStyle: @escaping (TelegramComposeAIMessageMode.StyleId) -> Void
+        updateStyle: @escaping (TelegramComposeAIMessageMode.StyleReference) -> Void,
+        createStyle: @escaping () -> Void,
+        editStyle: @escaping (TelegramComposeAIMessageMode.CloudStyle.Id) -> Void
     ) {
         self.context = context
         self.theme = theme
@@ -30,6 +35,8 @@ final class TextProcessingStyleSelectionComponent: Component {
         self.styles = styles
         self.selectedStyle = selectedStyle
         self.updateStyle = updateStyle
+        self.createStyle = createStyle
+        self.editStyle = editStyle
     }
 
     static func ==(lhs: TextProcessingStyleSelectionComponent, rhs: TextProcessingStyleSelectionComponent) -> Bool {
@@ -61,6 +68,7 @@ final class TextProcessingStyleSelectionComponent: Component {
 
         private let scrollView: ScrollView
         private var itemViews: [TelegramComposeAIMessageMode.StyleId: ComponentView<Empty>] = [:]
+        private let createStyleItemView = ComponentView<Empty>()
         private let selectedBackgroundView: UIImageView
 
         override init(frame: CGRect) {
@@ -103,11 +111,18 @@ final class TextProcessingStyleSelectionComponent: Component {
                             if component.selectedStyle == id {
                                 component.updateStyle(.neutral)
                             } else {
-                                component.updateStyle(id)
+                                if let style = component.styles.first(where: { .style($0.reference.id) == id }) {
+                                    component.updateStyle(.style(style.reference))
+                                }
                             }
                             self.scrollView.scrollRectToVisible(itemComponentView.frame.insetBy(dx: -100.0, dy: 0.0), animated: true)
                             break
                         }
+                    }
+                }
+                if let itemComponentView = self.createStyleItemView.view {
+                    if itemComponentView.bounds.contains(self.scrollView.convert(recognizer.location(in: self.scrollView), to: itemComponentView)) {
+                        component.createStyle()
                     }
                 }
             }
@@ -135,12 +150,12 @@ final class TextProcessingStyleSelectionComponent: Component {
                 let style = component.styles[i]
                 let itemView: ComponentView<Empty>
                 var itemTransition = transition
-                if let current = self.itemViews[style.id] {
+                if let current = self.itemViews[.style(style.reference.id)] {
                     itemView = current
                 } else {
                     itemTransition = itemTransition.withAnimation(.none)
                     itemView = ComponentView()
-                    self.itemViews[style.id] = itemView
+                    self.itemViews[.style(style.reference.id)] = itemView
                 }
                 let measuredSize = itemView.update(
                     transition: itemTransition,
@@ -154,18 +169,30 @@ final class TextProcessingStyleSelectionComponent: Component {
                     environment: {},
                     containerSize: CGSize(width: maxItemWidth, height: availableSize.height)
                 )
-                itemSizes[style.id] = measuredSize
+                itemSizes[.style(style.reference.id)] = measuredSize
             }
+            
+            let createStyleItemSize: CGSize = self.createStyleItemView.update(
+                transition: transition,
+                component: AnyComponent(CreateItemComponent(
+                    theme: component.theme,
+                    strings: component.strings
+                )),
+                environment: {},
+                containerSize: CGSize(width: maxItemWidth, height: availableSize.height)
+            )
 
             // Compute uniform slot width from largest item
             var largestItemWidth: CGFloat = 0.0
             for (_, size) in itemSizes {
                 largestItemWidth = max(largestItemWidth, size.width)
             }
+            largestItemWidth = max(largestItemWidth, createStyleItemSize.width)
+            
             let contentBasedWidth = min(maxSlotWidth, max(minSlotWidth, largestItemWidth + itemPadding))
             let slotWidth: CGFloat
-            if CGFloat(component.styles.count) * contentBasedWidth <= availableSize.width {
-                slotWidth = floor(availableSize.width / CGFloat(component.styles.count))
+            if CGFloat(component.styles.count + 1) * contentBasedWidth <= availableSize.width {
+                slotWidth = floor(availableSize.width / CGFloat(component.styles.count + 1))
             } else {
                 var resolved: CGFloat = contentBasedWidth
                 var targetVisible: CGFloat = min(7.5, floor((availableSize.width + 16.0) / (contentBasedWidth + 10.0)) + 0.5)
@@ -179,7 +206,7 @@ final class TextProcessingStyleSelectionComponent: Component {
                 }
                 slotWidth = resolved
             }
-            let contentWidth = slotWidth * CGFloat(component.styles.count)
+            let contentWidth = slotWidth * CGFloat(component.styles.count + 1)
 
             self.scrollView.frame = CGRect(origin: CGPoint(), size: availableSize)
             self.scrollView.contentSize = CGSize(width: contentWidth, height: availableSize.height)
@@ -189,8 +216,8 @@ final class TextProcessingStyleSelectionComponent: Component {
             var selectedItemFrame: CGRect?
             for i in 0 ..< component.styles.count {
                 let style = component.styles[i]
-                guard let itemView = self.itemViews[style.id],
-                      let naturalSize = itemSizes[style.id] else {
+                guard let itemView = self.itemViews[.style(style.reference.id)],
+                      let naturalSize = itemSizes[.style(style.reference.id)] else {
                     continue
                 }
                 let slotOriginX = CGFloat(i) * slotWidth
@@ -202,14 +229,27 @@ final class TextProcessingStyleSelectionComponent: Component {
                     }
                     transition.setFrame(view: itemComponentView, frame: itemFrame)
                 }
-                if style.id == component.selectedStyle {
+                if .style(style.reference.id) == component.selectedStyle {
                     selectedItemFrame = CGRect(origin: CGPoint(x: slotOriginX, y: -5.0), size: CGSize(width: slotWidth, height: availableSize.height + 5.0 + 3.0))
+                }
+            }
+            
+            do {
+                let naturalSize = createStyleItemSize
+                let slotOriginX = CGFloat(component.styles.count) * slotWidth
+                let itemX = slotOriginX + floor((slotWidth - naturalSize.width) * 0.5)
+                let itemFrame = CGRect(origin: CGPoint(x: itemX, y: 0.0), size: naturalSize)
+                if let itemComponentView = self.createStyleItemView.view {
+                    if itemComponentView.superview == nil {
+                        self.scrollView.addSubview(itemComponentView)
+                    }
+                    transition.setFrame(view: itemComponentView, frame: itemFrame)
                 }
             }
 
             var removedIds: [TelegramComposeAIMessageMode.StyleId] = []
             for (id, itemView) in self.itemViews {
-                if !component.styles.contains(where: { $0.id == id }) {
+                if !component.styles.contains(where: { .style($0.reference.id) == id }) {
                     removedIds.append(id)
                     itemView.view?.removeFromSuperview()
                 }
@@ -384,6 +424,100 @@ private final class ItemComponent: Component {
                     self.addSubview(imageIconView)
                 }
                 iconTransition.setFrame(view: imageIconView, frame: iconFrame)
+            }
+
+            let titleFrame = CGRect(origin: CGPoint(x: floor((contentWidth - titleSize.width) * 0.5), y: availableSize.height - 5.0 - titleSize.height), size: titleSize)
+            if let titleView = self.title.view {
+                if titleView.superview == nil {
+                    self.addSubview(titleView)
+                }
+                titleView.frame = titleFrame
+            }
+
+            return CGSize(width: contentWidth, height: availableSize.height)
+        }
+    }
+    
+    func makeView() -> View {
+        return View(frame: CGRect())
+    }
+    
+    func update(view: View, availableSize: CGSize, state: EmptyComponentState, environment: Environment<Empty>, transition: ComponentTransition) -> CGSize {
+        return view.update(component: self, availableSize: availableSize, state: state, environment: environment, transition: transition)
+    }
+}
+
+private final class CreateItemComponent: Component {
+    let theme: PresentationTheme
+    let strings: PresentationStrings
+    
+    init(
+        theme: PresentationTheme,
+        strings: PresentationStrings
+    ) {
+        self.theme = theme
+        self.strings = strings
+    }
+    
+    static func ==(lhs: CreateItemComponent, rhs: CreateItemComponent) -> Bool {
+        if lhs.theme !== rhs.theme {
+            return false
+        }
+        if lhs.strings !== rhs.strings {
+            return false
+        }
+        return true
+    }
+    
+    final class View: UIView {
+        private let icon = ComponentView<Empty>()
+        private let title = ComponentView<Empty>()
+        
+        private var component: CreateItemComponent?
+        private weak var state: EmptyComponentState?
+
+        override init(frame: CGRect) {
+            super.init(frame: frame)
+        }
+
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+        
+        func update(component: CreateItemComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<Empty>, transition: ComponentTransition) -> CGSize {
+            self.component = component
+            self.state = state
+
+            let iconTintColor = component.theme.list.itemPrimaryTextColor
+
+            let iconSize = self.icon.update(
+                transition: .immediate,
+                component: AnyComponent(BundleIconComponent(
+                    name: "Chat/Context Menu/Add",
+                    tintColor: iconTintColor
+                )),
+                environment: {},
+                containerSize: CGSize(width: 100.0, height: 100.0)
+            )
+            
+            //TODO:localize
+            let titleSize = self.title.update(
+                transition: .immediate,
+                component: AnyComponent(MultilineTextComponent(
+                    text: .plain(NSAttributedString(string: "Add Style", font: Font.medium(10.0), textColor: iconTintColor))
+                )),
+                environment: {},
+                containerSize: CGSize(width: availableSize.width, height: 100.0)
+            )
+
+            let contentWidth = max(iconSize.width, titleSize.width)
+
+            let iconFrame = CGRect(origin: CGPoint(x: floor((contentWidth - iconSize.width) * 0.5), y: -3.0), size: iconSize)
+            if let iconView = self.icon.view {
+                if iconView.superview == nil {
+                    self.addSubview(iconView)
+                }
+                transition.setFrame(view: iconView, frame: iconFrame)
             }
 
             let titleFrame = CGRect(origin: CGPoint(x: floor((contentWidth - titleSize.width) * 0.5), y: availableSize.height - 5.0 - titleSize.height), size: titleSize)

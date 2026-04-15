@@ -38,6 +38,7 @@ swift_library(
         "//submodules/TelegramUI/Components/ToastComponent",
         "//submodules/TelegramUI/Components/InteractiveTextComponent",
         "//submodules/TelegramUI/Components/EmojiStatusComponent",
+        "//submodules/TelegramUI/Components/ListMultilineTextFieldItemComponent",
         "//submodules/TelegramNotices",
         "//submodules/Markdown",
         "//submodules/TelegramUIPreferences",

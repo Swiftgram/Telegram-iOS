@@ -1,4 +1,98 @@
 public extension Api {
+    enum BotAppSettings: TypeConstructorDescription {
+        public class Cons_botAppSettings: TypeConstructorDescription {
+            public var flags: Int32
+            public var placeholderPath: Buffer?
+            public var backgroundColor: Int32?
+            public var backgroundDarkColor: Int32?
+            public var headerColor: Int32?
+            public var headerDarkColor: Int32?
+            public init(flags: Int32, placeholderPath: Buffer?, backgroundColor: Int32?, backgroundDarkColor: Int32?, headerColor: Int32?, headerDarkColor: Int32?) {
+                self.flags = flags
+                self.placeholderPath = placeholderPath
+                self.backgroundColor = backgroundColor
+                self.backgroundDarkColor = backgroundDarkColor
+                self.headerColor = headerColor
+                self.headerDarkColor = headerDarkColor
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("botAppSettings", [("flags", ConstructorParameterDescription(self.flags)), ("placeholderPath", ConstructorParameterDescription(self.placeholderPath)), ("backgroundColor", ConstructorParameterDescription(self.backgroundColor)), ("backgroundDarkColor", ConstructorParameterDescription(self.backgroundDarkColor)), ("headerColor", ConstructorParameterDescription(self.headerColor)), ("headerDarkColor", ConstructorParameterDescription(self.headerDarkColor))])
+            }
+        }
+        case botAppSettings(Cons_botAppSettings)
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .botAppSettings(let _data):
+                if boxed {
+                    buffer.appendInt32(-912582320)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 0) != 0 {
+                    serializeBytes(_data.placeholderPath!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 1) != 0 {
+                    serializeInt32(_data.backgroundColor!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 2) != 0 {
+                    serializeInt32(_data.backgroundDarkColor!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 3) != 0 {
+                    serializeInt32(_data.headerColor!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 4) != 0 {
+                    serializeInt32(_data.headerDarkColor!, buffer: buffer, boxed: false)
+                }
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .botAppSettings(let _data):
+                return ("botAppSettings", [("flags", ConstructorParameterDescription(_data.flags)), ("placeholderPath", ConstructorParameterDescription(_data.placeholderPath)), ("backgroundColor", ConstructorParameterDescription(_data.backgroundColor)), ("backgroundDarkColor", ConstructorParameterDescription(_data.backgroundDarkColor)), ("headerColor", ConstructorParameterDescription(_data.headerColor)), ("headerDarkColor", ConstructorParameterDescription(_data.headerDarkColor))])
+            }
+        }
+
+        public static func parse_botAppSettings(_ reader: BufferReader) -> BotAppSettings? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Buffer?
+            if Int(_1!) & Int(1 << 0) != 0 {
+                _2 = parseBytes(reader)
+            }
+            var _3: Int32?
+            if Int(_1!) & Int(1 << 1) != 0 {
+                _3 = reader.readInt32()
+            }
+            var _4: Int32?
+            if Int(_1!) & Int(1 << 2) != 0 {
+                _4 = reader.readInt32()
+            }
+            var _5: Int32?
+            if Int(_1!) & Int(1 << 3) != 0 {
+                _5 = reader.readInt32()
+            }
+            var _6: Int32?
+            if Int(_1!) & Int(1 << 4) != 0 {
+                _6 = reader.readInt32()
+            }
+            let _c1 = _1 != nil
+            let _c2 = (Int(_1!) & Int(1 << 0) == 0) || _2 != nil
+            let _c3 = (Int(_1!) & Int(1 << 1) == 0) || _3 != nil
+            let _c4 = (Int(_1!) & Int(1 << 2) == 0) || _4 != nil
+            let _c5 = (Int(_1!) & Int(1 << 3) == 0) || _5 != nil
+            let _c6 = (Int(_1!) & Int(1 << 4) == 0) || _6 != nil
+            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 {
+                return Api.BotAppSettings.botAppSettings(Cons_botAppSettings(flags: _1!, placeholderPath: _2, backgroundColor: _3, backgroundDarkColor: _4, headerColor: _5, headerDarkColor: _6))
+            }
+            else {
+                return nil
+            }
+        }
+    }
+}
+public extension Api {
     enum BotBusinessConnection: TypeConstructorDescription {
         public class Cons_botBusinessConnection: TypeConstructorDescription {
             public var flags: Int32
@@ -1656,94 +1750,6 @@ public extension Api {
             let _c1 = _1 != nil
             if _c1 {
                 return Api.BusinessBotRights.businessBotRights(Cons_businessBotRights(flags: _1!))
-            }
-            else {
-                return nil
-            }
-        }
-    }
-}
-public extension Api {
-    enum BusinessChatLink: TypeConstructorDescription {
-        public class Cons_businessChatLink: TypeConstructorDescription {
-            public var flags: Int32
-            public var link: String
-            public var message: String
-            public var entities: [Api.MessageEntity]?
-            public var title: String?
-            public var views: Int32
-            public init(flags: Int32, link: String, message: String, entities: [Api.MessageEntity]?, title: String?, views: Int32) {
-                self.flags = flags
-                self.link = link
-                self.message = message
-                self.entities = entities
-                self.title = title
-                self.views = views
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("businessChatLink", [("flags", ConstructorParameterDescription(self.flags)), ("link", ConstructorParameterDescription(self.link)), ("message", ConstructorParameterDescription(self.message)), ("entities", ConstructorParameterDescription(self.entities)), ("title", ConstructorParameterDescription(self.title)), ("views", ConstructorParameterDescription(self.views))])
-            }
-        }
-        case businessChatLink(Cons_businessChatLink)
-
-        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
-            switch self {
-            case .businessChatLink(let _data):
-                if boxed {
-                    buffer.appendInt32(-1263638929)
-                }
-                serializeInt32(_data.flags, buffer: buffer, boxed: false)
-                serializeString(_data.link, buffer: buffer, boxed: false)
-                serializeString(_data.message, buffer: buffer, boxed: false)
-                if Int(_data.flags) & Int(1 << 0) != 0 {
-                    buffer.appendInt32(481674261)
-                    buffer.appendInt32(Int32(_data.entities!.count))
-                    for item in _data.entities! {
-                        item.serialize(buffer, true)
-                    }
-                }
-                if Int(_data.flags) & Int(1 << 1) != 0 {
-                    serializeString(_data.title!, buffer: buffer, boxed: false)
-                }
-                serializeInt32(_data.views, buffer: buffer, boxed: false)
-                break
-            }
-        }
-
-        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-            switch self {
-            case .businessChatLink(let _data):
-                return ("businessChatLink", [("flags", ConstructorParameterDescription(_data.flags)), ("link", ConstructorParameterDescription(_data.link)), ("message", ConstructorParameterDescription(_data.message)), ("entities", ConstructorParameterDescription(_data.entities)), ("title", ConstructorParameterDescription(_data.title)), ("views", ConstructorParameterDescription(_data.views))])
-            }
-        }
-
-        public static func parse_businessChatLink(_ reader: BufferReader) -> BusinessChatLink? {
-            var _1: Int32?
-            _1 = reader.readInt32()
-            var _2: String?
-            _2 = parseString(reader)
-            var _3: String?
-            _3 = parseString(reader)
-            var _4: [Api.MessageEntity]?
-            if Int(_1!) & Int(1 << 0) != 0 {
-                if let _ = reader.readInt32() {
-                    _4 = Api.parseVector(reader, elementSignature: 0, elementType: Api.MessageEntity.self)
-                }
-            }
-            var _5: String?
-            if Int(_1!) & Int(1 << 1) != 0 {
-                _5 = parseString(reader)
-            }
-            var _6: Int32?
-            _6 = reader.readInt32()
-            let _c1 = _1 != nil
-            let _c2 = _2 != nil
-            let _c3 = _3 != nil
-            let _c4 = (Int(_1!) & Int(1 << 0) == 0) || _4 != nil
-            let _c5 = (Int(_1!) & Int(1 << 1) == 0) || _5 != nil
-            let _c6 = _6 != nil
-            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 {
-                return Api.BusinessChatLink.businessChatLink(Cons_businessChatLink(flags: _1!, link: _2!, message: _3!, entities: _4, title: _5, views: _6!))
             }
             else {
                 return nil

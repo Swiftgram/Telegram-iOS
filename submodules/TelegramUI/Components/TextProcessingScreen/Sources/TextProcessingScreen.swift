@@ -47,7 +47,8 @@ final class TextProcessingContentComponent: Component {
     let shouldDisplayStyleNotice: Bool
     let copyCurrentResult: (() -> Void)?
     let translateChat: ((String) -> Void)?
-    let displayLanguageSelectionMenu: (UIView, String, TelegramComposeAIMessageMode.StyleId, Bool,  @escaping (String, TelegramComposeAIMessageMode.StyleId) -> Void) -> Void
+    let displayLanguageSelectionMenu: (UIView, String, TelegramComposeAIMessageMode.StyleId, Bool,  @escaping (String, TelegramComposeAIMessageMode.StyleReference) -> Void) -> Void
+    let newStyleAdded: (TelegramComposeAIMessageMode.CloudStyle) -> Void
 
     init(
         externalState: ExternalState,
@@ -60,7 +61,8 @@ final class TextProcessingContentComponent: Component {
         shouldDisplayStyleNotice: Bool,
         copyCurrentResult: (() -> Void)?,
         translateChat: ((String) -> Void)?,
-        displayLanguageSelectionMenu: @escaping (UIView, String, TelegramComposeAIMessageMode.StyleId, Bool, @escaping (String, TelegramComposeAIMessageMode.StyleId) -> Void) -> Void
+        displayLanguageSelectionMenu: @escaping (UIView, String, TelegramComposeAIMessageMode.StyleId, Bool, @escaping (String, TelegramComposeAIMessageMode.StyleReference) -> Void) -> Void,
+        newStyleAdded: @escaping (TelegramComposeAIMessageMode.CloudStyle) -> Void
     ) {
         self.externalState = externalState
         self.styles = styles
@@ -73,9 +75,13 @@ final class TextProcessingContentComponent: Component {
         self.copyCurrentResult = copyCurrentResult
         self.translateChat = translateChat
         self.displayLanguageSelectionMenu = displayLanguageSelectionMenu
+        self.newStyleAdded = newStyleAdded
     }
 
     static func ==(lhs: TextProcessingContentComponent, rhs: TextProcessingContentComponent) -> Bool {
+        if lhs.styles != rhs.styles {
+            return false
+        }
         return true
     }
     
@@ -357,6 +363,8 @@ final class TextProcessingContentComponent: Component {
                     mode: .translate(ignoredLanguages: component.ignoredTranslationLanguages),
                     copyAction: component.copyCurrentResult,
                     displayLanguageSelectionMenu: component.displayLanguageSelectionMenu,
+                    createStyle: {},
+                    editStyle: { _ in },
                     present: { [weak self] c, a in
                         self?.environment?.controller()?.present(c, in: .window(.root), with: a)
                     },
@@ -375,6 +383,23 @@ final class TextProcessingContentComponent: Component {
                     mode: .stylize,
                     copyAction: component.copyCurrentResult,
                     displayLanguageSelectionMenu: component.displayLanguageSelectionMenu,
+                    createStyle: { [weak self] in
+                        guard let self, let component = self.component, let environment = self.environment else {
+                            return
+                        }
+                        environment.controller()?.push(TextStyleEditScreen(
+                            context: component.context,
+                            initialText: nil,
+                            completion: { [weak self] style in
+                                guard let self, let component = self.component else {
+                                    return
+                                }
+                                component.newStyleAdded(style)
+                            }
+                        ))
+                    },
+                    editStyle: { _ in
+                    },
                     present: { [weak self] c, a in
                         self?.environment?.controller()?.present(c, in: .window(.root), with: a)
                     },
@@ -393,6 +418,8 @@ final class TextProcessingContentComponent: Component {
                     mode: .fix,
                     copyAction: component.copyCurrentResult,
                     displayLanguageSelectionMenu: component.displayLanguageSelectionMenu,
+                    createStyle: {},
+                    editStyle: { _ in },
                     present: { [weak self] c, a in
                         self?.environment?.controller()?.present(c, in: .window(.root), with: a)
                     },
@@ -531,7 +558,7 @@ private final class TextProcessingSheetComponent: Component {
     let context: AccountContext
     let mode: TextProcessingScreen.Mode
     let ignoredTranslationLanguages: [String]
-    let styles: [TextProcessingScreen.Style]
+    let initialStyles: [TextProcessingScreen.Style]
     let inputText: TextWithEntities
     let initialEditState: TextProcessingScreen.EditState?
     let shouldDisplayStyleNotice: Bool
@@ -542,7 +569,7 @@ private final class TextProcessingSheetComponent: Component {
         context: AccountContext,
         mode: TextProcessingScreen.Mode,
         ignoredTranslationLanguages: [String],
-        styles: [TextProcessingScreen.Style],
+        initialStyles: [TextProcessingScreen.Style],
         inputText: TextWithEntities,
         initialEditState: TextProcessingScreen.EditState?,
         shouldDisplayStyleNotice: Bool,
@@ -552,7 +579,7 @@ private final class TextProcessingSheetComponent: Component {
         self.context = context
         self.mode = mode
         self.ignoredTranslationLanguages = ignoredTranslationLanguages
-        self.styles = styles
+        self.initialStyles = initialStyles
         self.inputText = inputText
         self.initialEditState = initialEditState
         self.shouldDisplayStyleNotice = shouldDisplayStyleNotice
@@ -570,15 +597,17 @@ private final class TextProcessingSheetComponent: Component {
         private var languageSelectionMenu: ComponentView<Empty>?
         private let animateOut = ActionSlot<Action<Void>>()
         private let contentExternalState = TextProcessingContentComponent.ExternalState()
+        
+        private var styles: [TextProcessingScreen.Style] = []
 
         private final class LanguageSelectionMenuData {
             let sourceView: UIView
             let currentLanguage: String
             let currentStyle: TelegramComposeAIMessageMode.StyleId
             let displayStyle: Bool
-            let completion: (String, TelegramComposeAIMessageMode.StyleId) -> Void
+            let completion: (String, TelegramComposeAIMessageMode.StyleReference) -> Void
 
-            init(sourceView: UIView, currentLanguage: String, currentStyle: TelegramComposeAIMessageMode.StyleId, displayStyle: Bool, completion: @escaping (String, TelegramComposeAIMessageMode.StyleId) -> Void) {
+            init(sourceView: UIView, currentLanguage: String, currentStyle: TelegramComposeAIMessageMode.StyleId, displayStyle: Bool, completion: @escaping (String, TelegramComposeAIMessageMode.StyleReference) -> Void) {
                 self.sourceView = sourceView
                 self.currentLanguage = currentLanguage
                 self.currentStyle = currentStyle
@@ -717,6 +746,10 @@ private final class TextProcessingSheetComponent: Component {
         }
 
         func update(component: TextProcessingSheetComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<ViewControllerComponentContainer.Environment>, transition: ComponentTransition) -> CGSize {
+            if self.component == nil {
+                self.styles = component.initialStyles
+            }
+            
             self.component = component
             self.state = state
 
@@ -816,7 +849,7 @@ private final class TextProcessingSheetComponent: Component {
                         externalState: self.contentExternalState,
                         context: component.context,
                         mode: component.mode,
-                        styles: component.styles,
+                        styles: self.styles,
                         inputText: component.inputText,
                         initialEditState: component.initialEditState,
                         ignoredTranslationLanguages: component.ignoredTranslationLanguages,
@@ -831,8 +864,17 @@ private final class TextProcessingSheetComponent: Component {
                             }
                         },
                         displayLanguageSelectionMenu: { [weak self] sourceView, currentLanguage, currentStyle, displayStyle, completion in
-                            guard let self else { return }
+                            guard let self else {
+                                return
+                            }
                             self.languageSelectionMenuData = LanguageSelectionMenuData(sourceView: sourceView, currentLanguage: currentLanguage, currentStyle: currentStyle, displayStyle: displayStyle, completion: completion)
+                            self.state?.updated(transition: .immediate)
+                        },
+                        newStyleAdded: { [weak self] style in
+                            guard let self else {
+                                return
+                            }
+                            self.styles.append(TextProcessingScreen.Style(cloudStyle: style))
                             self.state?.updated(transition: .immediate)
                         }
                     )),
@@ -1017,10 +1059,12 @@ private final class TextProcessingSheetComponent: Component {
                         topLanguages: [],
                         selectedLanguageCode: languageSelectionMenuDataValue.currentLanguage,
                         currentStyle: languageSelectionMenuDataValue.currentStyle,
-                        displayStyles: languageSelectionMenuDataValue.displayStyle ? component.styles : nil,
+                        displayStyles: languageSelectionMenuDataValue.displayStyle ? self.styles : nil,
                         completion: languageSelectionMenuDataValue.completion,
                         dismissed: { [weak self] in
-                            guard let self else { return }
+                            guard let self else {
+                                return
+                            }
                             self.languageSelectionMenuData = nil
                             self.state?.updated(transition: .immediate)
                         },
@@ -1067,21 +1111,56 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
         }
     }
     
-    public struct Style: Equatable {
-        public let type: String
+    public final class Style: Equatable {
+        public let reference: TelegramComposeAIMessageMode.CloudStyle.Reference
         public let title: String
         public let emojiFileId: Int64?
         public let emojiFile: TelegramMediaFile?
         
-        public var id: TelegramComposeAIMessageMode.StyleId {
-            return .style(self.type)
+        public var id: TelegramComposeAIMessageMode.StyleReference {
+            return .style(self.reference)
         }
         
-        public init(type: String, title: String, emojiFileId: Int64?, emojiFile: TelegramMediaFile?) {
-            self.type = type
+        public init(reference: TelegramComposeAIMessageMode.CloudStyle.Reference, title: String, emojiFileId: Int64?, emojiFile: TelegramMediaFile?) {
+            self.reference = reference
             self.title = title
             self.emojiFileId = emojiFileId
             self.emojiFile = emojiFile
+        }
+        
+        convenience init(cloudStyle: TelegramComposeAIMessageMode.CloudStyle) {
+            let title: String
+            let emojiFileId: Int64?
+            switch cloudStyle.content {
+            case let .standard(standard):
+                title = standard.title
+                emojiFileId = standard.emojiFileId
+            case let .custom(custom):
+                title = custom.title
+                emojiFileId = custom.emojiFileId
+            }
+            self.init(
+                reference: cloudStyle.reference,
+                title: title,
+                emojiFileId: emojiFileId,
+                emojiFile: nil
+            )
+        }
+        
+        public static func ==(lhs: Style, rhs: Style) -> Bool {
+            if lhs.reference != rhs.reference {
+                return false
+            }
+            if lhs.title != rhs.title {
+                return false
+            }
+            if lhs.emojiFileId != rhs.emojiFileId {
+                return false
+            }
+            if lhs.emojiFile != rhs.emojiFile {
+                return false
+            }
+            return true
         }
     }
     
@@ -1099,13 +1178,30 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
         
         let rawStyles = await context.engine.messages.composeAIMessageStyles().get()
         var styles: [Style] = []
-        let resolvedEmojiFiles: [Int64: TelegramMediaFile] = await context.engine.stickers.resolveInlineStickersLocal(fileIds: Array(Set(rawStyles.compactMap({ $0.emojiFileId })))).get()
+        let resolvedEmojiFiles: [Int64: TelegramMediaFile] = await context.engine.stickers.resolveInlineStickersLocal(fileIds: Array(Set(rawStyles.compactMap({ style in
+            switch style.content {
+            case let .standard(standard):
+                return standard.emojiFileId
+            case let .custom(custom):
+                return custom.emojiFileId
+            }
+        })))).get()
         for value in rawStyles {
+            let title: String
+            let emojiFileId: Int64?
+            switch value.content {
+            case let .standard(standard):
+                title = standard.title
+                emojiFileId = standard.emojiFileId
+            case let .custom(custom):
+                title = custom.title
+                emojiFileId = custom.emojiFileId
+            }
             styles.append(Style(
-                type: value.type,
-                title: value.title,
-                emojiFileId: value.emojiFileId,
-                emojiFile: value.emojiFileId.flatMap { resolvedEmojiFiles[$0] }
+                reference: value.reference,
+                title: title,
+                emojiFileId: emojiFileId,
+                emojiFile: emojiFileId.flatMap { resolvedEmojiFiles[$0] }
             ))
         }
         
@@ -1132,7 +1228,7 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
                 context: context,
                 mode: mode,
                 ignoredTranslationLanguages: translationSettings.ignoredLanguages ?? [],
-                styles: styles,
+                initialStyles: styles,
                 inputText: inputText,
                 initialEditState: initialEditState,
                 shouldDisplayStyleNotice: shouldDisplayStyleNotice,

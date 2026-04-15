@@ -376,7 +376,7 @@ func mediaContentToUpload(accountPeerId: PeerId, network: Network, postbox: Post
         if solutionInputMedia != nil {
             pollMediaFlags |= 1 << 2
         }
-        let inputPoll = Api.InputMedia.inputMediaPoll(.init(flags: pollMediaFlags, poll: .poll(.init(id: 0, flags: pollFlags, question: .textWithEntities(.init( text: poll.text, entities: apiEntitiesFromMessageTextEntities(poll.textEntities, associatedPeers: SimpleDictionary()) )), answers: apiAnswers, closePeriod: poll.deadlineTimeout, closeDate: poll.deadlineDate, hash: 0)), correctAnswers: correctAnswers, attachedMedia: attachedInputMedia, solution: mappedSolution, solutionEntities: mappedSolutionEntities, solutionMedia: solutionInputMedia))
+        let inputPoll = Api.InputMedia.inputMediaPoll(.init(flags: pollMediaFlags, poll: .poll(.init(id: 0, flags: pollFlags, question: .textWithEntities(.init( text: poll.text, entities: apiEntitiesFromMessageTextEntities(poll.textEntities, associatedPeers: SimpleDictionary()) )), answers: apiAnswers, closePeriod: poll.deadlineTimeout, closeDate: poll.deadlineDate, countriesIso2: nil, hash: 0)), correctAnswers: correctAnswers, attachedMedia: attachedInputMedia, solution: mappedSolution, solutionEntities: mappedSolutionEntities, solutionMedia: solutionInputMedia))
         return .single(.content(PendingMessageUploadedContentAndReuploadInfo(content: .media(inputPoll, text), reuploadInfo: nil, cacheReferenceKey: nil)))
     } else if let todo = media as? TelegramMediaTodo {
         var flags: Int32 = 0

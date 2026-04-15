@@ -70,7 +70,7 @@ final class TextProcessingTranslateContentComponent: Component {
         
         fileprivate(set) var emojify: Bool = false
         fileprivate(set) var isSourceTextExpanded: Bool = false
-        fileprivate(set) var style: TelegramComposeAIMessageMode.StyleId = .neutral
+        fileprivate(set) var style: TelegramComposeAIMessageMode.StyleReference = .neutral
         var displayStyleTooltip: Bool = false
         
         fileprivate(set) var isProcessing: Bool = false {
@@ -103,7 +103,9 @@ final class TextProcessingTranslateContentComponent: Component {
     let externalState: ExternalState
     let mode: Mode
     let copyAction: (() -> Void)?
-    let displayLanguageSelectionMenu: (UIView, String, TelegramComposeAIMessageMode.StyleId, Bool,  @escaping (String, TelegramComposeAIMessageMode.StyleId) -> Void) -> Void
+    let displayLanguageSelectionMenu: (UIView, String, TelegramComposeAIMessageMode.StyleId, Bool,  @escaping (String, TelegramComposeAIMessageMode.StyleReference) -> Void) -> Void
+    let createStyle: () -> Void
+    let editStyle: (TelegramComposeAIMessageMode.CloudStyle.Id) -> Void
     let present: (ViewController, Any?) -> Void
     let rootViewForTextSelection: () -> UIView?
 
@@ -116,7 +118,9 @@ final class TextProcessingTranslateContentComponent: Component {
         inputText: TextWithEntities,
         mode: Mode,
         copyAction: (() -> Void)?,
-        displayLanguageSelectionMenu: @escaping (UIView, String, TelegramComposeAIMessageMode.StyleId, Bool, @escaping (String, TelegramComposeAIMessageMode.StyleId) -> Void) -> Void,
+        displayLanguageSelectionMenu: @escaping (UIView, String, TelegramComposeAIMessageMode.StyleId, Bool, @escaping (String, TelegramComposeAIMessageMode.StyleReference) -> Void) -> Void,
+        createStyle: @escaping () -> Void,
+        editStyle: @escaping (TelegramComposeAIMessageMode.CloudStyle.Id) -> Void,
         present: @escaping (ViewController, Any?) -> Void,
         rootViewForTextSelection: @escaping () -> UIView?
     ) {
@@ -129,6 +133,8 @@ final class TextProcessingTranslateContentComponent: Component {
         self.mode = mode
         self.copyAction = copyAction
         self.displayLanguageSelectionMenu = displayLanguageSelectionMenu
+        self.createStyle = createStyle
+        self.editStyle = editStyle
         self.present = present
         self.rootViewForTextSelection = rootViewForTextSelection
     }
@@ -365,7 +371,7 @@ final class TextProcessingTranslateContentComponent: Component {
                         theme: component.theme,
                         strings: component.strings,
                         styles: component.styles,
-                        selectedStyle: component.externalState.style,
+                        selectedStyle: component.externalState.style.id,
                         updateStyle: { [weak self] style in
                             guard let self, let component = self.component else {
                                 return
@@ -381,6 +387,18 @@ final class TextProcessingTranslateContentComponent: Component {
                                     }
                                 }
                             }
+                        },
+                        createStyle: { [weak self] in
+                            guard let self, let component = self.component else {
+                                return
+                            }
+                            component.createStyle()
+                        },
+                        editStyle: { [weak self] styleId in
+                            guard let self, let component = self.component else {
+                                return
+                            }
+                            component.editStyle(styleId)
                         }
                     )),
                     environment: {},
@@ -462,7 +480,7 @@ final class TextProcessingTranslateContentComponent: Component {
                         guard let self, let component = self.component, let result = component.externalState.result else {
                             return
                         }
-                        component.displayLanguageSelectionMenu(sourceView, result.language, component.externalState.style, true, { [weak self] language, style in
+                        component.displayLanguageSelectionMenu(sourceView, result.language, component.externalState.style.id, true, { [weak self] language, style in
                             guard let self, let component = self.component else {
                                 return
                             }

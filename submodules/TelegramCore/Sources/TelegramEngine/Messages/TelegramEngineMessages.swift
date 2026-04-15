@@ -655,8 +655,12 @@ public extension TelegramEngine {
             }
         }
         
-        public func composeMessageWithAI(text: String, entities: [MessageTextEntity], proofread: Bool = false, translateToLang: String? = nil, changeTone: String? = nil, emojify: Bool = false) -> Signal<(String, [MessageTextEntity]), TranslationError> {
-            return _internal_composeMessageWithAI(network: self.account.network, text: text, entities: entities, proofread: proofread, translateToLang: translateToLang, changeTone: changeTone, emojify: emojify)
+        public func composeMessageWithAI(text: String, entities: [MessageTextEntity], proofread: Bool = false, translateToLang: String? = nil, changeStyle: TelegramComposeAIMessageMode.CloudStyle.Reference? = nil, emojify: Bool = false) -> Signal<(String, [MessageTextEntity]), TranslationError> {
+            return _internal_composeMessageWithAI(account: self.account, text: text, entities: entities, proofread: proofread, translateToLang: translateToLang, changeStyle: changeStyle, emojify: emojify)
+        }
+        
+        public func createAITextStyle(displayAuthor: Bool, emojiFileId: Int64?, title: String, prompt: String) -> Signal<TelegramComposeAIMessageMode.CloudStyle, CreateAITextStyleError> {
+            return _internal_createAITextStyle(account: self.account, displayAuthor: displayAuthor, emojiFileId: emojiFileId, title: title, prompt: prompt)
         }
 
         public func translate(texts: [(String, [MessageTextEntity])], toLang: String, tone: TranslationTone = .neutral) -> Signal<[(String, [MessageTextEntity])], TranslationError> {
@@ -1788,8 +1792,11 @@ public extension TelegramEngine {
             |> ignoreValues
         }
         
-        public func composeAIMessageStyles() -> Signal<[TelegramComposeAIMessageMode.Style], NoError> {
-            return _internal_composeAIMessageStyles(account: self.account)
+        public func composeAIMessageStyles() -> Signal<[TelegramComposeAIMessageMode.CloudStyle], NoError> {
+            return _internal_cachedCloudAITextStyles(postbox: self.account.postbox)
+            |> map { value in
+                return value?.items ?? []
+            }
         }
         
         public func composeAIMessage(text: TextWithEntities, mode: TelegramComposeAIMessageMode) -> Signal<TelegramAIComposeMessageResult, TelegramAIComposeMessageError> {
