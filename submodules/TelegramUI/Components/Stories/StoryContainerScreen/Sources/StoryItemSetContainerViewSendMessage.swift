@@ -1850,8 +1850,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                     updatedPresentationData: updatedPresentationData,
                     chatLocation: .peer(id: peer.id),
                     buttons: buttons,
-                    initialButton: initialButton,
-                    customEmojiAvailable: true
+                    initialButton: initialButton
                 )
                 attachmentController.didDismiss = { [weak self, weak view] in
                     guard let self, let view else {
