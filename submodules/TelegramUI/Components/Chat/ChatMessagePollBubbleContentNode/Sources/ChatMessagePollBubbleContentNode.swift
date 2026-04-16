@@ -2623,17 +2623,7 @@ public class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
                     votersString = " "
                 }
                 let (votersLayout, votersApply) = makeVotersLayout(TextNodeLayoutArguments(attributedString: NSAttributedString(string: votersString ?? "", font: labelsFont, textColor: messageTheme.secondaryTextColor), backgroundColor: nil, maximumNumberOfLines: 0, truncationType: .end, constrainedSize: textConstrainedSize, alignment: .natural, cutout: nil, insets: textInsets))
-                
-                var hasVoted = false
-                if let poll, let voters = poll.results.voters {
-                    for voter in voters {
-                        if voter.selected {
-                            hasVoted = true
-                            break
-                        }
-                    }
-                }
-                
+                                
                 let viewResultsString: String
                 if let poll, let totalVoters = poll.results.totalVoters {
                     if case .public = poll.publicity {
