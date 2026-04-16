@@ -3248,44 +3248,41 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
             }
             
             if unreadCount.unread {
-                if !isPeerGroup, let message = messages.last, message.tags.contains(.unseenPersonalMessage), unreadCount.count == 1 {
+                let badgeTextColor: UIColor
+                if unreadCount.muted {
+                    if unreadCount.isProvisonal, case .forum = item.chatListLocation {
+                        badgeTextColor = theme.unreadBadgeInactiveBackgroundColor
+                        currentBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundInactiveProvisional(item.presentationData.theme, diameter: badgeDiameter)
+                        currentAvatarBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundInactiveProvisional(item.presentationData.theme, diameter: avatarBadgeDiameter)
+                    } else {
+                        badgeTextColor = theme.unreadBadgeInactiveTextColor
+                        currentBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundInactive(item.presentationData.theme, diameter: badgeDiameter)
+                        currentAvatarBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundInactive(item.presentationData.theme, diameter: avatarBadgeDiameter)
+                    }
                 } else {
-                    let badgeTextColor: UIColor
-                    if unreadCount.muted {
-                        if unreadCount.isProvisonal, case .forum = item.chatListLocation {
-                            badgeTextColor = theme.unreadBadgeInactiveBackgroundColor
-                            currentBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundInactiveProvisional(item.presentationData.theme, diameter: badgeDiameter)
-                            currentAvatarBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundInactiveProvisional(item.presentationData.theme, diameter: avatarBadgeDiameter)
-                        } else {
-                            badgeTextColor = theme.unreadBadgeInactiveTextColor
-                            currentBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundInactive(item.presentationData.theme, diameter: badgeDiameter)
-                            currentAvatarBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundInactive(item.presentationData.theme, diameter: avatarBadgeDiameter)
-                        }
+                    if unreadCount.isProvisonal, case .forum = item.chatListLocation {
+                        badgeTextColor = theme.unreadBadgeActiveBackgroundColor
+                        currentBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundActiveProvisional(item.presentationData.theme, diameter: badgeDiameter)
+                        currentAvatarBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundActiveProvisional(item.presentationData.theme, diameter: avatarBadgeDiameter)
                     } else {
-                        if unreadCount.isProvisonal, case .forum = item.chatListLocation {
-                            badgeTextColor = theme.unreadBadgeActiveBackgroundColor
-                            currentBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundActiveProvisional(item.presentationData.theme, diameter: badgeDiameter)
-                            currentAvatarBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundActiveProvisional(item.presentationData.theme, diameter: avatarBadgeDiameter)
-                        } else {
-                            badgeTextColor = theme.unreadBadgeActiveTextColor
-                            currentBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundActive(item.presentationData.theme, diameter: badgeDiameter)
-                            currentAvatarBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundActive(item.presentationData.theme, diameter: avatarBadgeDiameter)
-                        }
+                        badgeTextColor = theme.unreadBadgeActiveTextColor
+                        currentBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundActive(item.presentationData.theme, diameter: badgeDiameter)
+                        currentAvatarBadgeBackgroundImage = PresentationResourcesChatList.badgeBackgroundActive(item.presentationData.theme, diameter: avatarBadgeDiameter)
                     }
-                    let unreadCountText = compactNumericCountString(Int(unreadCount.count), decimalSeparator: item.presentationData.dateTimeFormat.decimalSeparator)
-                    if unreadCount.count > 0 {
-                        badgeContent = .text(NSAttributedString(string: unreadCountText, font: badgeFont, textColor: badgeTextColor))
-                    } else if isPeerGroup {
-                        badgeContent = .none
-                    } else {
-                        badgeContent = .blank
-                    }
-                    
-                    if let mutedCount = unreadCount.mutedCount, mutedCount > 0 {
-                        let mutedUnreadCountText = compactNumericCountString(Int(mutedCount), decimalSeparator: item.presentationData.dateTimeFormat.decimalSeparator)
-                        currentMentionBadgeImage = PresentationResourcesChatList.badgeBackgroundInactive(item.presentationData.theme, diameter: badgeDiameter)
-                        mentionBadgeContent = .text(NSAttributedString(string: mutedUnreadCountText, font: badgeFont, textColor: theme.unreadBadgeInactiveTextColor))
-                    }
+                }
+                let unreadCountText = compactNumericCountString(Int(unreadCount.count), decimalSeparator: item.presentationData.dateTimeFormat.decimalSeparator)
+                if unreadCount.count > 0 {
+                    badgeContent = .text(NSAttributedString(string: unreadCountText, font: badgeFont, textColor: badgeTextColor))
+                } else if isPeerGroup {
+                    badgeContent = .none
+                } else {
+                    badgeContent = .blank
+                }
+                
+                if let mutedCount = unreadCount.mutedCount, mutedCount > 0 {
+                    let mutedUnreadCountText = compactNumericCountString(Int(mutedCount), decimalSeparator: item.presentationData.dateTimeFormat.decimalSeparator)
+                    currentMentionBadgeImage = PresentationResourcesChatList.badgeBackgroundInactive(item.presentationData.theme, diameter: badgeDiameter)
+                    mentionBadgeContent = .text(NSAttributedString(string: mutedUnreadCountText, font: badgeFont, textColor: theme.unreadBadgeInactiveTextColor))
                 }
             }
 

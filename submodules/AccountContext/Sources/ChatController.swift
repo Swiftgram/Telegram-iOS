@@ -66,6 +66,7 @@ public final class ChatMessageItemAssociatedData: Equatable {
     public let showSensitiveContent: Bool
     public let isSuspiciousPeer: Bool
     public let showTextAsPlaceholder: Bool
+    public let accountCountry: String?
     
     public init(
         automaticDownloadPeerType: MediaAutoDownloadPeerType,
@@ -102,7 +103,8 @@ public final class ChatMessageItemAssociatedData: Equatable {
         isInline: Bool = false,
         showSensitiveContent: Bool = false,
         isSuspiciousPeer: Bool = false,
-        showTextAsPlaceholder: Bool = false
+        showTextAsPlaceholder: Bool = false,
+        accountCountry: String? = nil
     ) {
         self.automaticDownloadPeerType = automaticDownloadPeerType
         self.automaticDownloadPeerId = automaticDownloadPeerId
@@ -139,6 +141,7 @@ public final class ChatMessageItemAssociatedData: Equatable {
         self.showSensitiveContent = showSensitiveContent
         self.isSuspiciousPeer = isSuspiciousPeer
         self.showTextAsPlaceholder = showTextAsPlaceholder
+        self.accountCountry = accountCountry
     }
     
     public static func == (lhs: ChatMessageItemAssociatedData, rhs: ChatMessageItemAssociatedData) -> Bool {
@@ -233,6 +236,9 @@ public final class ChatMessageItemAssociatedData: Equatable {
             return false
         }
         if lhs.isSuspiciousPeer != rhs.isSuspiciousPeer {
+            return false
+        }
+        if lhs.accountCountry != rhs.accountCountry {
             return false
         }
         return true

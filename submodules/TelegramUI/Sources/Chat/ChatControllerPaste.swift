@@ -10,7 +10,6 @@ import MediaPickerUI
 import MediaPasteboardUI
 import LegacyMediaPickerUI
 import MediaEditor
-import ChatEntityKeyboardInputNode
 
 extension ChatControllerImpl {
     func displayPasteMenu(_ subjects: [MediaPickerScreenImpl.Subject.Media]) {
@@ -39,12 +38,7 @@ extension ChatControllerImpl {
                         }
                     },
                     getSourceRect: nil,
-                    makeEntityInputView: { [weak self] in
-                        guard let self else {
-                            return nil
-                        }
-                        return EntityInputView(context: self.context, isDark: false, areCustomEmojiEnabled: self.presentationInterfaceState.customEmojiAvailable)
-                    }
+                    customEmojiAvailable: strongSelf.presentationInterfaceState.customEmojiAvailable
                 )
                 controller.navigationPresentation = .flatModal
                 strongSelf.push(controller)

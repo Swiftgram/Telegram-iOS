@@ -477,6 +477,9 @@ extension ChatControllerImpl {
             if let _ = self.presentationInterfaceState.inputTextPanelState.mediaRecordingState {
                 self.dismissMediaRecorder(pause ? .pause : .preview)
             } else {
+                if case .video = self.presentationInterfaceState.interfaceState.mediaDraftState {
+                    return
+                }
                 self.videoRecorder.set(.single(nil))
             }
         }
@@ -495,6 +498,10 @@ extension ChatControllerImpl {
                 }.updatedInterfaceState { $0.withUpdatedMediaDraftState(nil) }
             })
         } else {
+            if case .video = self.presentationInterfaceState.interfaceState.mediaDraftState {
+                return
+            }
+
             let proceed = {
                 self.withAudioRecorder(resuming: true, { audioRecorder in
                     audioRecorder.resume()
@@ -773,7 +780,10 @@ extension ChatControllerImpl {
             
             donateSendMessageIntent(account: self.context.account, sharedContext: self.context.sharedContext, intentContext: .chat, peerIds: [peerId])
         case .video:
-            self.videoRecorderValue?.sendVideoRecording(silentPosting: silentPosting, scheduleTime: scheduleTime, messageEffect: messageEffect)
+            guard let videoRecorderValue = self.videoRecorderValue else {
+                return
+            }
+            videoRecorderValue.sendVideoRecording(silentPosting: silentPosting, scheduleTime: scheduleTime, messageEffect: messageEffect)
         }
     }
 }

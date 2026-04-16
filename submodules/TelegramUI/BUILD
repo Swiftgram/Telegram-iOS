@@ -522,6 +522,7 @@ swift_library(
         "//submodules/TelegramUI/Components/ChatParticipantRightsScreen",
         "//submodules/TelegramUI/Components/PeerInfo/PeerCopyProtectionInfoScreen",
         "//submodules/TelegramUI/Components/Chat/ChatRankInfoScreen",
+        "//submodules/TelegramUI/Components/PollStatsScreen",
         "//submodules/TelegramUI/Components/RankChatPreviewItem",
         "//submodules/TelegramUI/Components/TextProcessingScreen",
         "//submodules/TelegramUI/Components/CreateBotScreen",

@@ -9653,7 +9653,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         
         if let tooltipController = self.mediaRecordingModeTooltipController {
             tooltipController.updateContent(.text(text), animated: true, extendTimer: true)
-        } else if let rect = rect {
+        } else if let rect {
             let tooltipController = TooltipController(content: .text(text), baseFontSize: self.presentationData.listsFontSize.baseDisplaySize, padding: 2.0)
             self.mediaRecordingModeTooltipController = tooltipController
             tooltipController.dismissed = { [weak self, weak tooltipController] _ in

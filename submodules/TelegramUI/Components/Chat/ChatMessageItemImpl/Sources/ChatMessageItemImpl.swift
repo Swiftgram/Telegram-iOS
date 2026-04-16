@@ -327,6 +327,10 @@ public final class ChatMessageItemImpl: ChatMessageItem, CustomStringConvertible
                 }
                 displayAuthorInfo = incoming && peerId.isGroupOrChannel && effectiveAuthor != nil
                 
+                if let _ = content.firstMessage.guestChatAttribute {
+                    displayAuthorInfo = true
+                }
+                
                 if let chatPeer = content.firstMessage.peers[content.firstMessage.id.peerId], chatPeer.isForumOrMonoForum {
                     if case .replyThread = chatLocation {
                         if chatPeer.isMonoForum && chatLocation.threadId != context.account.peerId.toInt64() {

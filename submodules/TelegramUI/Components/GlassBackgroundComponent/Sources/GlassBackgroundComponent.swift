@@ -1165,19 +1165,22 @@ public final class GlassBackgroundComponent: Component {
     private let isDark: Bool
     private let tintColor: GlassBackgroundView.TintColor
     private let isInteractive: Bool
+    private let isVisible: Bool
     
     public init(
         size: CGSize,
         cornerRadius: CGFloat,
         isDark: Bool,
         tintColor: GlassBackgroundView.TintColor,
-        isInteractive: Bool = false
+        isInteractive: Bool = false,
+        isVisible: Bool = true
     ) {
         self.size = size
         self.cornerRadius = cornerRadius
         self.isDark = isDark
         self.tintColor = tintColor
         self.isInteractive = isInteractive
+        self.isVisible = isVisible
     }
     
     public static func == (lhs: GlassBackgroundComponent, rhs: GlassBackgroundComponent) -> Bool {
@@ -1196,12 +1199,15 @@ public final class GlassBackgroundComponent: Component {
         if lhs.isInteractive != rhs.isInteractive {
             return false
         }
+        if lhs.isVisible != rhs.isVisible {
+            return false
+        }
         return true
     }
     
     public final class View: GlassBackgroundView {
         func update(component: GlassBackgroundComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<Empty>, transition: ComponentTransition) -> CGSize {
-            self.update(size: component.size, cornerRadius: component.cornerRadius, isDark: component.isDark, tintColor: component.tintColor, isInteractive: component.isInteractive, transition: transition)
+            self.update(size: component.size, cornerRadius: component.cornerRadius, isDark: component.isDark, tintColor: component.tintColor, isInteractive: component.isInteractive, isVisible: component.isVisible, transition: transition)
             
             return component.size
         }

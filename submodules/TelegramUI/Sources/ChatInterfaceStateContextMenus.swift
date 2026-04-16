@@ -1660,7 +1660,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             }
         }
         
-        if let activePoll = activePoll, messages[0].forwardInfo == nil {
+        if let activePoll, messages[0].forwardInfo == nil {
             var canStopPoll = false
             if !messages[0].flags.contains(.Incoming) {
                 canStopPoll = true
@@ -1867,6 +1867,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         }
         
         var clearCacheAsDelete = false
+        var hasViewStats = false
         if let channel = message.peers[message.id.peerId] as? TelegramChannel, case .broadcast = channel.info, !isMigrated {
             var views: Int = 0
             var forwards: Int = 0
@@ -1887,9 +1888,26 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                         controllerInteraction.openMessageStats(messages[0].id)
                     })
                 })))
+                hasViewStats = true
             }
             
             clearCacheAsDelete = true
+        }
+        
+        if !hasViewStats, messages[0].forwardInfo == nil {
+            for media in message.media {
+                if let poll = media as? TelegramMediaPoll, message.id.namespace == Namespaces.Message.Cloud, poll.pollId.namespace == Namespaces.Media.CloudPoll, poll.results.canViewStats {
+                    actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Conversation_ViewPollStats, icon: { theme in
+                        return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Statistics"), color: theme.actionSheet.primaryTextColor)
+                    }, action: { c, _ in
+                        c?.dismiss(completion: {
+                            let controller = context.sharedContext.makePollStatsScreen(context: context, messageId: messages[0].id)
+                            controllerInteraction.navigationController()?.pushViewController(controller)
+                        })
+                    })))
+                    break
+                }
+            }
         }
         
         if message.id.namespace == Namespaces.Message.Cloud, let channel = message.peers[message.id.peerId] as? TelegramChannel, case .broadcast = channel.info, canEditFactCheck(appConfig: appConfig) {
@@ -2263,6 +2281,53 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                 }
             case .businessLinkSetup:
                 actions.removeAll()
+            }
+        }
+        
+        for media in message.media {
+            if let poll = media as? TelegramMediaPoll, message.id.namespace == Namespaces.Message.Cloud, poll.pollId.namespace == Namespaces.Media.CloudPoll {
+                var restrictionText: String = ""
+                let peerName: String = chatPresentationInterfaceState.renderedPeer?.peer.flatMap(EnginePeer.init)?.compactDisplayTitle ?? ""
+                
+                if !poll.countries.isEmpty {
+                    let locale = localeWithStrings(chatPresentationInterfaceState.strings)
+                    let countryNames = poll.countries.map { id in
+                        if let countryName = locale.localizedString(forRegionCode: id) {
+                            return countryName
+                        } else {
+                            return id
+                        }
+                    }
+                    var countries: String = ""
+                    if countryNames.count == 1, let country = countryNames.first {
+                        countries = "**\(country)**"
+                    } else {
+                        for i in 0 ..< countryNames.count {
+                            countries.append("**\(countryNames[i])**")
+                            if i == countryNames.count - 2 {
+                                countries.append(chatPresentationInterfaceState.strings.Chat_Poll_Restriction_Country_CountriesLastDelimiter)
+                            } else if i < countryNames.count - 2 {
+                                countries.append(chatPresentationInterfaceState.strings.Chat_Poll_Restriction_Country_CountriesDelimiter)
+                            }
+                        }
+                    }
+                    if poll.restrictToSubscribers {
+                        restrictionText = chatPresentationInterfaceState.strings.Chat_Poll_Restriction_SubscribersCountry(peerName, countries).string
+                    } else {
+                        restrictionText = chatPresentationInterfaceState.strings.Chat_Poll_Restriction_Country(countries).string
+                    }
+                } else if poll.restrictToSubscribers {
+                    restrictionText = chatPresentationInterfaceState.strings.Chat_Poll_Restriction_Subscribers(peerName).string
+                }
+                
+                if !restrictionText.isEmpty {
+                    actions.append(.separator)
+                    let noAction: ((ContextMenuActionItem.Action) -> Void)? = nil
+                    actions.append(
+                        .action(ContextMenuActionItem(text: restrictionText, textLayout: .multiline, textFont: .small, parseMarkdown: true, icon: { _ in return nil }, action: noAction))
+                    )
+                }
+                break
             }
         }
         

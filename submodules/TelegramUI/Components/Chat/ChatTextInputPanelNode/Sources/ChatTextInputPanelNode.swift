@@ -5600,12 +5600,8 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
     }
     
     public func frameForInputActionButton() -> CGRect? {
-        if !self.mediaActionButtons.alpha.isZero {
-            if self.mediaActionButtons.micButton.alpha.isZero {
-                return self.mediaActionButtons.frame.insetBy(dx: 0.0, dy: -4.0).offsetBy(dx: -3.0, dy: 0.0)
-            } else {
-                return self.mediaActionButtons.frame.insetBy(dx: 0.0, dy: -4.0).offsetBy(dx: -3.0, dy: 0.0)
-            }
+        if !self.mediaActionButtons.alpha.isZero && self.mediaActionButtons.frame.minX < self.bounds.width {
+            return self.mediaActionButtons.frame.insetBy(dx: 0.0, dy: -4.0).offsetBy(dx: -3.0, dy: 0.0)
         }
         return nil
     }

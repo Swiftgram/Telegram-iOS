@@ -2262,7 +2262,7 @@ extension ChatControllerImpl {
                 } else {
                     cachedData = .single((nil, [:]))
                 }
-                
+                                
                 self.cachedDataDisposable?.dispose()
                 self.cachedDataDisposable = combineLatest(queue: .mainQueue(),
                     cachedData,

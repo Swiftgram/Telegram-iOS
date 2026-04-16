@@ -99,6 +99,7 @@ import GiftCraftScreen
 import ChatParticipantRightsScreen
 import PeerCopyProtectionInfoScreen
 import ChatRankInfoScreen
+import PollStatsScreen
 import RankChatPreviewItem
 import TextProcessingScreen
 import CreateBotScreen
@@ -2756,19 +2757,18 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return makeAttachmentFileControllerImpl(context: context, updatedPresentationData: updatedPresentationData, mode: audio ? .audio(.chat) : .recent, bannedSendMedia: bannedSendMedia, presentGallery: presentGallery, presentFiles: presentFiles, presentDocumentScanner: presentDocumentScanner, send: send)
     }
     
-    public func makeGalleryCaptionPanelView(context: AccountContext, chatLocation: ChatLocation, isScheduledMessages: Bool, isFile: Bool, hasTimer: Bool, customEmojiAvailable: Bool, pushViewController: @escaping (ViewController) -> Void, present: @escaping (ViewController) -> Void, presentInGlobalOverlay: @escaping (ViewController) -> Void) -> NSObject? {
+    public func makeGalleryCaptionPanelView(context: AccountContext, chatLocation: ChatLocation, isScheduledMessages: Bool, isFile: Bool, hasTimer: Bool, customEmojiAvailable: Bool, pushViewController: @escaping (ViewController) -> Void, present: @escaping (ViewController) -> Void, presentInGlobalOverlay: @escaping (ViewController) -> Void, getNavigationController: @escaping () -> NavigationController?) -> NSObject? {
         let inputPanelNode = LegacyMessageInputPanelNode(
             context: context,
             chatLocation: chatLocation,
             isScheduledMessages: isScheduledMessages,
             isFile: isFile,
             hasTimer: hasTimer,
+            customEmojiAvailable: customEmojiAvailable,
             pushViewController: pushViewController,
             present: present,
             presentInGlobalOverlay: presentInGlobalOverlay,
-            makeEntityInputView: {
-                return EntityInputView(context: context, isDark: true, areCustomEmojiEnabled: customEmojiAvailable)
-            }
+            getNavigationController: getNavigationController
         )
         return inputPanelNode
     }
@@ -3988,6 +3988,9 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return messageStatsController(context: context, updatedPresentationData: updatedPresentationData, subject: .message(id: messageId))
     }
     
+    public func makePollStatsScreen(context: AccountContext, messageId: EngineMessage.Id) -> ViewController {
+        return PollStatsScreen(context: context, messageId: messageId)
+    }
     public func makeStoryStatsController(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, peerId: EnginePeer.Id, storyId: Int32, storyItem: EngineStoryItem, fromStory: Bool) -> ViewController {
         return messageStatsController(context: context, updatedPresentationData: updatedPresentationData, subject: .story(peerId: peerId, id: storyId, item: storyItem, fromStory: fromStory))
     }
