@@ -33,7 +33,7 @@ public struct StandaloneSendMessagesError {
     public var peerId: PeerId
     public var reason: PendingMessageFailureReason?
     
-    init(
+    public init(
         peerId: PeerId,
         reason: PendingMessageFailureReason?
     ) {

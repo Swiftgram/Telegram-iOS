@@ -265,10 +265,19 @@ private enum ChannelMembersEntry: ItemListNodeEntry {
     func item(presentationData: ItemListPresentationData, arguments: Any) -> ListViewItem {
         let arguments = arguments as! ChannelMembersControllerArguments
         switch self {
-            case let .hideMembers(text, disabledReason, isInteractive, value):
-                return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: text, value: value, enableInteractiveChanges: isInteractive, enabled: true, displayLocked: !value && disabledReason != nil, sectionId: self.section, style: .blocks, updated: { value in
+            case let .hideMembers(text, disabledReason, isInteractive, currentValue):
+                return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: text, value: currentValue, enableInteractiveChanges: isInteractive, enabled: true, displayLocked: !currentValue && disabledReason != nil, sectionId: self.section, style: .blocks, updated: { value in
                     if let disabledReason {
-                        arguments.displayHideMembersTip(disabledReason)
+                        switch disabledReason {
+                        case .notEnoughMembers:
+                            if currentValue && !value {
+                                arguments.updateHideMembers(value)
+                            } else {
+                                arguments.displayHideMembersTip(disabledReason)
+                            }
+                        case .notAllowed:
+                            arguments.displayHideMembersTip(disabledReason)
+                        }
                     } else {
                         arguments.updateHideMembers(value)
                     }

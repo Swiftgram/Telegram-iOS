@@ -1591,7 +1591,7 @@ public extension TelegramEngine {
         }
         
         public func subscribeIsPremiumRequiredForMessaging(id: EnginePeer.Id) -> Signal<Bool, NoError> {
-            if id.namespace != Namespaces.Peer.CloudUser {
+            if id == self.account.peerId || id.namespace != Namespaces.Peer.CloudUser {
                 return .single(false)
             }
             

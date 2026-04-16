@@ -2333,11 +2333,13 @@ func availableActionsForMemberOfPeer(accountPeerId: PeerId, peer: Peer?, member:
                 result.insert(.editRank)
             case .admin:
                 switch member {
-                case let .legacyGroupMember(_, _, invitedBy, _, _, _):
-                    result.insert(.restrict)
-                    if invitedBy == accountPeerId {
-                        result.insert(.promote)
-                        result.insert(.editRank)
+                case let .legacyGroupMember(_, role, invitedBy, _, _, _):
+                    if case .member = role {
+                        result.insert(.restrict)
+                        if invitedBy == accountPeerId {
+                            result.insert(.promote)
+                            result.insert(.editRank)
+                        }
                     }
                 case .channelMember:
                     break
@@ -2346,8 +2348,8 @@ func availableActionsForMemberOfPeer(accountPeerId: PeerId, peer: Peer?, member:
                 }
             case .member:
                 switch member {
-                case let .legacyGroupMember(_, _, invitedBy, _, _, _):
-                    if invitedBy == accountPeerId {
+                case let .legacyGroupMember(_, role, invitedBy, _, _, _):
+                    if case .member = role, invitedBy == accountPeerId {
                         result.insert(.restrict)
                         result.insert(.editRank)
                     }

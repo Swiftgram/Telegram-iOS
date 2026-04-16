@@ -286,7 +286,7 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
 
     public let inputModeView: ComponentHostView<Empty>
 
-    private var validLayout: (width: CGFloat, leftInset: CGFloat, rightInset: CGFloat, bottomInset: CGFloat, keyboardHeight: CGFloat, additionalSideInsets: UIEdgeInsets, maxHeight: CGFloat, metrics: LayoutMetrics, isSecondary: Bool)?
+    private var validLayout: (width: CGFloat, leftInset: CGFloat, rightInset: CGFloat, bottomInset: CGFloat, keyboardHeight: CGFloat, additionalSideInsets: UIEdgeInsets, textFieldMaxHeight: CGFloat, availableHeight: CGFloat, metrics: LayoutMetrics, isSecondary: Bool)?
     private var currentInputMode: AttachmentTextInputMode = .text
     private var currentAdditionalInputHeight: CGFloat = 0.0
     private var currentSafeAreaInset: UIEdgeInsets = .zero
@@ -626,7 +626,7 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
         guard let presentationInterfaceState = self.presentationInterfaceState else {
             return 0.0
         }
-        return self.updateLayout(width: size.width, leftInset: sideInset, rightInset: sideInset, bottomInset: 0.0, keyboardHeight: keyboardHeight, additionalSideInsets: UIEdgeInsets(), maxHeight: size.height, isSecondary: false, transition: animated ? .animated(duration: 0.2, curve: .easeInOut) : .immediate, interfaceState: presentationInterfaceState, metrics: LayoutMetrics(widthClass: .compact, heightClass: .compact, orientation: nil), isMediaInputExpanded: false)
+        return self.updateLayout(width: size.width, leftInset: sideInset, rightInset: sideInset, bottomInset: 0.0, keyboardHeight: keyboardHeight, additionalSideInsets: UIEdgeInsets(), textFieldMaxHeight: size.height, availableHeight: size.height, isSecondary: false, transition: animated ? .animated(duration: 0.2, curve: .easeInOut) : .immediate, interfaceState: presentationInterfaceState, metrics: LayoutMetrics(widthClass: .compact, heightClass: .compact, orientation: nil), isMediaInputExpanded: false)
     }
 
     @objc(updateContainerLayoutSize:safeAreaInset:bottomInset:keyboardHeight:animated:)
@@ -637,7 +637,7 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
         guard let presentationInterfaceState = self.presentationInterfaceState else {
             return 0.0
         }
-        return self.updateLayout(width: size.width, leftInset: 0.0, rightInset: 0.0, bottomInset: 0.0, keyboardHeight: keyboardHeight, additionalSideInsets: UIEdgeInsets(), maxHeight: size.height, isSecondary: false, transition: animated ? .animated(duration: 0.4, curve: .spring) : .immediate, interfaceState: presentationInterfaceState, metrics: LayoutMetrics(widthClass: .compact, heightClass: .compact, orientation: nil), isMediaInputExpanded: false)
+        return self.updateLayout(width: size.width, leftInset: 0.0, rightInset: 0.0, bottomInset: safeAreaInset.bottom, keyboardHeight: keyboardHeight, additionalSideInsets: UIEdgeInsets(), textFieldMaxHeight: size.height, availableHeight: size.height, isSecondary: false, transition: animated ? .animated(duration: 0.4, curve: .spring) : .immediate, interfaceState: presentationInterfaceState, metrics: LayoutMetrics(widthClass: .compact, heightClass: .compact, orientation: nil), isMediaInputExpanded: false)
     }
 
     public func setCaption(_ caption: NSAttributedString?) {
@@ -873,13 +873,17 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
     }
 
     public func updateLayout(width: CGFloat, leftInset: CGFloat, rightInset: CGFloat, bottomInset: CGFloat, additionalSideInsets: UIEdgeInsets, maxHeight: CGFloat, isSecondary: Bool, transition: ContainedViewLayoutTransition, interfaceState: ChatPresentationInterfaceState, metrics: LayoutMetrics, isMediaInputExpanded: Bool) -> CGFloat {
-        self.updateLayout(width: width, leftInset: leftInset, rightInset: rightInset, bottomInset: bottomInset, keyboardHeight: 0.0, additionalSideInsets: additionalSideInsets, maxHeight: maxHeight, isSecondary: isSecondary, transition: transition, interfaceState: interfaceState, metrics: metrics, isMediaInputExpanded: isMediaInputExpanded)
+        self.updateLayout(width: width, leftInset: leftInset, rightInset: rightInset, bottomInset: bottomInset, keyboardHeight: 0.0, additionalSideInsets: additionalSideInsets, textFieldMaxHeight: maxHeight, availableHeight: maxHeight, isSecondary: isSecondary, transition: transition, interfaceState: interfaceState, metrics: metrics, isMediaInputExpanded: isMediaInputExpanded)
     }
 
     public func updateLayout(width: CGFloat, leftInset: CGFloat, rightInset: CGFloat, bottomInset: CGFloat, keyboardHeight: CGFloat, additionalSideInsets: UIEdgeInsets, maxHeight: CGFloat, isSecondary: Bool, transition: ContainedViewLayoutTransition, interfaceState: ChatPresentationInterfaceState, metrics: LayoutMetrics, isMediaInputExpanded: Bool) -> CGFloat {
+        self.updateLayout(width: width, leftInset: leftInset, rightInset: rightInset, bottomInset: bottomInset, keyboardHeight: keyboardHeight, additionalSideInsets: additionalSideInsets, textFieldMaxHeight: maxHeight, availableHeight: maxHeight, isSecondary: isSecondary, transition: transition, interfaceState: interfaceState, metrics: metrics, isMediaInputExpanded: isMediaInputExpanded)
+    }
+
+    public func updateLayout(width: CGFloat, leftInset: CGFloat, rightInset: CGFloat, bottomInset: CGFloat, keyboardHeight: CGFloat, additionalSideInsets: UIEdgeInsets, textFieldMaxHeight: CGFloat, availableHeight: CGFloat, isSecondary: Bool, transition: ContainedViewLayoutTransition, interfaceState: ChatPresentationInterfaceState, metrics: LayoutMetrics, isMediaInputExpanded: Bool) -> CGFloat {
         let hadLayout = self.validLayout != nil
         let previousLayout = self.validLayout
-        self.validLayout = (width: width, leftInset: leftInset, rightInset: rightInset, bottomInset: bottomInset, keyboardHeight: keyboardHeight, additionalSideInsets: additionalSideInsets, maxHeight: maxHeight, metrics: metrics, isSecondary: isSecondary)
+        self.validLayout = (width: width, leftInset: leftInset, rightInset: rightInset, bottomInset: bottomInset, keyboardHeight: keyboardHeight, additionalSideInsets: additionalSideInsets, textFieldMaxHeight: textFieldMaxHeight, availableHeight: availableHeight, metrics: metrics, isSecondary: isSecondary)
 
         let previousAdditionalSideInsets = previousLayout?.additionalSideInsets
         let leftInset = leftInset + 8.0
@@ -1006,8 +1010,8 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
             }
         }
 
-        let isLandscape = width > maxHeight
-        let deviceMetrics = DeviceMetrics(screenSize: CGSize(width: width, height: maxHeight), scale: UIScreen.main.scale, statusBarHeight: 0.0, onScreenNavigationHeight: nil)
+        let isLandscape = width > availableHeight
+        let deviceMetrics = DeviceMetrics(screenSize: CGSize(width: width, height: availableHeight), scale: UIScreen.main.scale, statusBarHeight: 0.0, onScreenNavigationHeight: nil)
         let standardInputHeight = deviceMetrics.standardInputHeight(inLandscape: isLandscape)
         if keyboardHeight > 0.0 || !self.isFocused {
             self.isTransitioningToTextKeyboard = false
@@ -1020,7 +1024,7 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
         let minimalHeight: CGFloat = 14.0 + textFieldMinHeight
 
         let baseWidth = width - leftInset - rightInset
-        let (_, textFieldHeight) = self.calculateTextFieldMetrics(width: baseWidth, maxHeight: maxHeight, metrics: metrics)
+        let (_, textFieldHeight) = self.calculateTextFieldMetrics(width: baseWidth, maxHeight: textFieldMaxHeight, metrics: metrics)
         var panelContentHeight = self.panelHeight(textFieldHeight: textFieldHeight, metrics: metrics)
 
         var inputHasText = false
@@ -1103,10 +1107,10 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
                 width: width,
                 leftInset: 0.0,
                 rightInset: 0.0,
-                bottomInset: 0.0,
+                bottomInset: bottomInset,
                 standardInputHeight: standardInputHeight,
                 inputHeight: 0.0,
-                maximumHeight: maxHeight,
+                maximumHeight: availableHeight,
                 inputPanelHeight: 0.0,
                 transition: .immediate,
                 interfaceState: interfaceState,
@@ -1129,9 +1133,9 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
                 let targetOriginY: CGFloat
                 if self.usesContainerLayout {
                     if dismissingInputHeight > 0.0 {
-                        targetOriginY = maxHeight - dismissingInputHeight
+                        targetOriginY = availableHeight - dismissingInputHeight
                     } else {
-                        targetOriginY = maxHeight
+                        targetOriginY = availableHeight
                     }
                 } else if dismissingInputHeight > 0.0 {
                     targetOriginY = inputPanelHeight
@@ -1164,7 +1168,7 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
             totalHeight += retainedInputHeight
         }
 
-        let isLandscapePhone = width > maxHeight && UIDevice.current.userInterfaceIdiom != .pad
+        let isLandscapePhone = width > availableHeight && UIDevice.current.userInterfaceIdiom != .pad
         let collapsedCaptionTopInset = self.currentSafeAreaInset.top + 48.0
         let expandedCaptionTopInset = self.currentSafeAreaInset.top + 8.0
 
@@ -1172,10 +1176,10 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
         var inputMediaFrame = CGRect(origin: CGPoint(x: 0.0, y: inputPanelHeight), size: CGSize(width: width, height: inputMediaHeight))
         if self.usesContainerLayout {
             if isLandscapePhone {
-                panelOriginY = maxHeight + 16.0
-                inputMediaFrame.origin.y = maxHeight + 16.0
+                panelOriginY = availableHeight + 16.0
+                inputMediaFrame.origin.y = availableHeight + 16.0
             } else if case .emoji = self.currentInputMode {
-                inputMediaFrame.origin.y = maxHeight - inputMediaHeight
+                inputMediaFrame.origin.y = availableHeight - inputMediaHeight
                 if self.currentIsCaptionAbove {
                     panelOriginY = expandedCaptionTopInset
                 } else {
@@ -1186,9 +1190,9 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
                     panelOriginY = (retainedInputHeight > 0.0 ? expandedCaptionTopInset : collapsedCaptionTopInset)
                 } else {
                     let bottomOffset = max(self.currentContainerBottomInset, retainedInputHeight)
-                    panelOriginY = maxHeight - inputPanelHeight - bottomOffset
+                    panelOriginY = availableHeight - inputPanelHeight - bottomOffset
                 }
-                inputMediaFrame.origin.y = maxHeight
+                inputMediaFrame.origin.y = availableHeight
             }
         }
 
@@ -1897,14 +1901,14 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
             let leftInset = layout.leftInset + 8.0
             let rightInset = layout.rightInset + 8.0
 
-            let (_, textFieldHeight) = self.calculateTextFieldMetrics(width: layout.width - leftInset - rightInset - layout.additionalSideInsets.right, maxHeight: layout.maxHeight, metrics: layout.metrics)
-            let panelHeight = self.panelHeight(textFieldHeight: textFieldHeight, metrics: layout.metrics) + (self.glass ? 11.0 : 0.0)
-            let totalHeight = panelHeight + self.currentAdditionalInputHeight
+            let (_, textFieldHeight) = self.calculateTextFieldMetrics(width: layout.width - leftInset - rightInset - layout.additionalSideInsets.right, maxHeight: layout.textFieldMaxHeight, metrics: layout.metrics)
+            let panelContentHeight = self.panelHeight(textFieldHeight: textFieldHeight, metrics: layout.metrics)
+            let totalHeight = panelContentHeight + (self.glass ? 11.0 : 0.0) + self.currentAdditionalInputHeight
             if self.currentHeight != totalHeight {
                 self.updateHeight(animated)
                 self.heightUpdated?(animated)
             }
-            return panelHeight
+            return panelContentHeight
         } else {
             return nil
         }

@@ -378,21 +378,23 @@ public final class AccountContextImpl: AccountContext {
                 }).start()
             }
         })
+                
+        let queue = Queue()
+        self.deviceSpecificContactImportContexts = QueueLocalObject(queue: queue, generate: {
+            return DeviceSpecificContactImportContexts(queue: queue)
+        })
         
         let langCode = sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode
         self.currentCountriesConfiguration = Atomic(value: CountriesConfiguration(countries: loadCountryCodes()))
         if !temp {
             let currentCountriesConfiguration = self.currentCountriesConfiguration
             self.countriesConfigurationDisposable = (self.engine.localization.getCountriesList(accountManager: sharedContext.accountManager, langCode: langCode)
-            |> deliverOnMainQueue).start(next: { value in
-                let _ = currentCountriesConfiguration.swap(CountriesConfiguration(countries: value))
+            |> deliverOnMainQueue).start(next: { [weak self] value in
+                let configuration = CountriesConfiguration(countries: value)
+                let _ = currentCountriesConfiguration.swap(configuration)
+                self?._countriesConfiguration.set(.single(configuration))
             })
         }
-        
-        let queue = Queue()
-        self.deviceSpecificContactImportContexts = QueueLocalObject(queue: queue, generate: {
-            return DeviceSpecificContactImportContexts(queue: queue)
-        })
         
         if let contactDataManager = sharedContext.contactDataManager {
             let deviceSpecificContactImportContexts = self.deviceSpecificContactImportContexts

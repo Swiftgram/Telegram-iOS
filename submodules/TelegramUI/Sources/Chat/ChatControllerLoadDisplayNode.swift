@@ -1171,7 +1171,7 @@ extension ChatControllerImpl {
                     }
                     return updatedState
                 })
-                self.searchResult.set(.single((results, state, .general(scope: .channels, tags: nil, minDate: nil, maxDate: nil, folderId: nil))))
+                self.searchResult.set(.single((results, state, .general(scope: .channels, groupId: nil, tags: nil, minDate: nil, maxDate: nil, folderId: nil))))
             }
         }
         
@@ -2160,15 +2160,17 @@ extension ChatControllerImpl {
                 }
                 
                 var invertedMediaAttribute: InvertMediaMessageAttribute?
-                if let attribute = message.attributes.first(where: { $0 is InvertMediaMessageAttribute }) {
-                    invertedMediaAttribute = attribute as? InvertMediaMessageAttribute
-                }
-                
-                if let mediaCaptionIsAbove = editMessage.mediaCaptionIsAbove {
-                    if mediaCaptionIsAbove {
-                        invertedMediaAttribute = InvertMediaMessageAttribute()
-                    } else {
-                        invertedMediaAttribute = nil
+                if webpagePreviewAttribute == nil {
+                    if let attribute = message.attributes.first(where: { $0 is InvertMediaMessageAttribute }) {
+                        invertedMediaAttribute = attribute as? InvertMediaMessageAttribute
+                    }
+                    
+                    if let mediaCaptionIsAbove = editMessage.mediaCaptionIsAbove {
+                        if mediaCaptionIsAbove {
+                            invertedMediaAttribute = InvertMediaMessageAttribute()
+                        } else {
+                            invertedMediaAttribute = nil
+                        }
                     }
                 }
                 

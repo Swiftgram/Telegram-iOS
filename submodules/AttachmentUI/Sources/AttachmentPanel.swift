@@ -2475,6 +2475,7 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
         let defaultPanelSideInset: CGFloat = glassPanelSideInset
         let panelSideInset: CGFloat = (isSelecting ? textPanelSideInset : defaultPanelSideInset) + layout.safeInsets.left
         var textPanelHeight: CGFloat = 0.0
+        var visualTextPanelHeight: CGFloat = 0.0
         var textPanelWidth: CGFloat = 0.0
         if let textInputPanelNode = self.textInputPanelNode {
             textInputPanelNode.isUserInteractionEnabled = isSelecting
@@ -2483,7 +2484,7 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
             if textInputPanelNode.frame.width.isZero {
                 panelTransition = .immediate
             }
-            let panelHeight = textInputPanelNode.updateLayout(width: layout.size.width, leftInset: insets.left + layout.safeInsets.left, rightInset: insets.right + layout.safeInsets.right, bottomInset: 0.0, keyboardHeight: layout.inputHeight ?? 0.0, additionalSideInsets: UIEdgeInsets(), maxHeight: layout.size.height / 2.0, isSecondary: false, transition: panelTransition, interfaceState: self.presentationInterfaceState, metrics: layout.metrics, isMediaInputExpanded: false)
+            let panelHeight = textInputPanelNode.updateLayout(width: layout.size.width, leftInset: insets.left + layout.safeInsets.left, rightInset: insets.right + layout.safeInsets.right, bottomInset: layout.safeInsets.bottom, keyboardHeight: layout.inputHeight ?? 0.0, additionalSideInsets: UIEdgeInsets(), textFieldMaxHeight: layout.size.height / 2.0, availableHeight: layout.size.height, isSecondary: false, transition: panelTransition, interfaceState: self.presentationInterfaceState, metrics: layout.metrics, isMediaInputExpanded: false)
             let panelFrame = CGRect(x: 0.0, y: topAccessoryHeight, width: layout.size.width, height: panelHeight)
             if textInputPanelNode.frame.width.isZero {
                 textInputPanelNode.frame = panelFrame
@@ -2491,8 +2492,10 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
             transition.updateFrame(node: textInputPanelNode, frame: panelFrame)
             if panelFrame.height > 0.0 {
                 textPanelHeight = panelFrame.height
+                visualTextPanelHeight = max(0.0, textPanelHeight - textInputPanelNode.additionalInputHeight)
             } else {
                 textPanelHeight = self.panelStyle == .glass ? 40.0 : 45.0
+                visualTextPanelHeight = textPanelHeight
             }
             textPanelWidth = layout.size.width - panelSideInset * 2.0
         }
@@ -2545,7 +2548,7 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
                 buttonsPanelWidth = layout.size.width - layout.safeInsets.left - layout.safeInsets.right - panelSideInset * 2.0
             }
 
-            let basePanelHeight = isSelecting ? max(0.0, textPanelHeight - 11.0) : glassPanelHeight
+            let basePanelHeight = isSelecting ? max(0.0, visualTextPanelHeight - 11.0) : glassPanelHeight
             var panelSize = CGSize(width: isSelecting ? textPanelWidth : buttonsPanelWidth, height: basePanelHeight + topAccessoryHeight)
             if !isSelecting && (buttons.count == 1 || hideButtons) && topAccessoryHeight > 0.0 {
                 panelSize.height = topAccessoryHeight
@@ -2605,6 +2608,13 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
             self.backgroundView?.isHidden = true
         }
 
+        let effectiveBottomInset: CGFloat
+        if let textInputPanelNode = self.textInputPanelNode, textInputPanelNode.additionalInputHeight > 0.0 {
+            effectiveBottomInset = 0.0
+        } else {
+            effectiveBottomInset = insets.bottom
+        }
+
         if isAnyButtonVisible {
             var height: CGFloat
             if layout.intrinsicInsets.bottom > 0.0 && (layout.inputHeight ?? 0.0).isZero {
@@ -2632,7 +2642,7 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
             }
             containerFrame = CGRect(origin: CGPoint(), size: CGSize(width: bounds.width, height: height))
         } else if isSelecting {
-            containerFrame = CGRect(origin: CGPoint(), size: CGSize(width: bounds.width, height: textPanelHeight + insets.bottom + topAccessoryHeight))
+            containerFrame = CGRect(origin: CGPoint(), size: CGSize(width: bounds.width, height: textPanelHeight + effectiveBottomInset + topAccessoryHeight))
         } else {
             containerFrame = bounds
         }
@@ -2661,8 +2671,8 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
                 if let textInputPanelNode = self.textInputPanelNode {
                     textInputPanelNode.isUserInteractionEnabled = true
                     if case .glass = self.panelStyle {
-                        var textInputPanelHeight = textInputPanelNode.frame.height
-                        if textInputPanelHeight < 1.0 {
+                        var textInputPanelHeight = visualTextPanelHeight
+                        if textInputPanelNode.frame.height < 1.0 {
                             textInputPanelHeight = 51.0
                         }
                         let heightDelta = glassPanelHeight - textInputPanelHeight
@@ -2699,8 +2709,8 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
                 if let textInputPanelNode = self.textInputPanelNode {
                     textInputPanelNode.isUserInteractionEnabled = false
                     if case .glass = self.panelStyle {
-                        var textInputPanelHeight = textInputPanelNode.frame.height
-                        if textInputPanelHeight < 1.0 {
+                        var textInputPanelHeight = visualTextPanelHeight
+                        if textInputPanelNode.frame.height < 1.0 {
                             textInputPanelHeight = 51.0
                         }
                         let heightDelta = glassPanelHeight - textInputPanelHeight

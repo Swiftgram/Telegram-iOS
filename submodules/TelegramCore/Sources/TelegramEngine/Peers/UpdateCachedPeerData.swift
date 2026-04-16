@@ -302,7 +302,7 @@ func _internal_fetchAndUpdateCachedPeerData(accountPeerId: PeerId, peerId rawPee
                                         let unofficialSecurityRisk = (userFullFlags2 & (1 << 26)) != 0
                                     
                                         var flags: CachedUserFlags = previous.flags
-                                        if premiumRequired {
+                                        if premiumRequired && peerId != accountPeerId {
                                             flags.insert(.premiumRequired)
                                         } else {
                                             flags.remove(.premiumRequired)
