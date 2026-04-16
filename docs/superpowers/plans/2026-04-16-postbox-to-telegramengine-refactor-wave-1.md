@@ -21,6 +21,7 @@ There are no unit tests in this project (`CLAUDE.md`: "No tests are used at the 
 Run from the repo root (`/Users/ali/build/telegram/telegram-ios`):
 
 ```bash
+source ~/.zshrc 2>/dev/null; \
 PATH=/opt/homebrew/opt/ruby/bin:`gem environment gemdir`/bin:$PATH \
   python3 build-system/Make/Make.py --overrideXcodeVersion \
   --cacheDir ~/telegram-bazel-cache \
@@ -32,6 +33,8 @@ PATH=/opt/homebrew/opt/ruby/bin:`gem environment gemdir`/bin:$PATH \
   --buildNumber 1 \
   --configuration debug_sim_arm64
 ```
+
+(`source ~/.zshrc` picks up `TELEGRAM_CODESIGNING_GIT_PASSWORD` and other env exports that the Claude Code bash shell doesn't inherit by default.)
 
 It is slow. Do not shortcut it with `bazel build //submodules/X` — the spec chose full build per module.
 
@@ -99,24 +102,26 @@ When the full build fails after a consumer edit:
 - Read the **first** compiler error in the build output.
 - If it's a name-resolution or type error in the module file being refactored, fix the mapping in that file and rebuild.
 - If it's in a **different** module that depends on the module being refactored, a public signature changed unexpectedly. Either (a) revert that signature change so the public surface stays identical, or (b) if the new surface is genuinely better, extend the fix to the downstream call site **in the same commit**.
-- If fixing would require editing a module outside the wave-1 list, revert all changes from the current task and skip to the next fallback module listed in "The 10 modules" above. Do not pull extra modules into the wave.
+- If fixing would require editing a module outside the wave-1 list — or would require aliasing an umbrella type banned by spec rule 2 (`Postbox`, `Account`, `MediaBox`) — revert all changes from the current task and mark the module **Abandoned** in its task body with a one-line reason. Do NOT substitute a different module; the wave's done-count simply goes down by one.
 
 ### The 10 modules (from the spec's deterministic selection rule)
 
 Reverse-dep count (over the 30-candidate pool) ascending, alphabetical tiebreak. Verified by running the selection script in Task 0:
 
-1. ActionSheetPeerItem — `submodules/ActionSheetPeerItem/Sources/ActionSheetPeerItem.swift`
-2. ChatInterfaceState — `submodules/ChatInterfaceState/Sources/ChatInterfaceState.swift`
-3. ChatListSearchRecentPeersNode — `submodules/ChatListSearchRecentPeersNode/Sources/ChatListSearchRecentPeersNode.swift`
+1. ActionSheetPeerItem — **ABANDONED** (see Task 1 body). Public init takes `postbox: Postbox`; ShareController caller is out-of-wave.
+2. ChatInterfaceState — `submodules/ChatInterfaceState/Sources/ChatInterfaceState.swift` — DONE
+3. ChatListSearchRecentPeersNode — **ABANDONED** (see Task 3 body). Public init takes `postbox: Postbox`; ShareController + ChatListUI callers are out-of-wave.
 4. ChatSendMessageActionUI — `submodules/ChatSendMessageActionUI/Sources/ChatSendMessageContextScreen.swift`
 5. ContactListUI — `submodules/ContactListUI/Sources/ContactListNode.swift`
-6. DirectMediaImageCache — `submodules/DirectMediaImageCache/Sources/DirectMediaImageCache.swift`
+6. DirectMediaImageCache — **ABANDONED** (see Task 6 body). Public init takes `account: Account`; six out-of-wave callers.
 7. DrawingUI — `submodules/DrawingUI/Sources/DrawingScreen.swift`
-8. FetchManagerImpl — `submodules/FetchManagerImpl/Sources/FetchManagerImpl.swift`
-9. GalleryData — `submodules/GalleryData/Sources/GalleryData.swift`
-10. ICloudResources — `submodules/ICloudResources/Sources/ICloudResources.swift`
+8. FetchManagerImpl — **ABANDONED** (see Task 8 body). Public init takes `postbox: Postbox`; TelegramUI caller is out-of-wave.
+9. GalleryData — **ABANDONED** (see Task 9 body). Four public functions take `Media`/`Message` as parameters; refactor cascades into many out-of-wave downstream types (`AvatarGalleryEntry`, `MessageReference`, etc.). Good candidate for a bespoke future wave that migrates the domain types together.
+10. ICloudResources — **ABANDONED** (see Task 10 body). Class conforms to `TelegramMediaResource` and inherits `isEqual(to: MediaResource)`; overriding that without aliasing the `MediaResource` protocol isn't possible.
 
-If one of these hits a blocker (see spec §Risks), skip it, flag it in commit history/plan notes, and move to the next single-import candidate in the same sort order: HorizontalPeerItem, PhotoResources, PromptUI, SelectablePeerNode, TelegramIntents, ItemListAvatarAndNameInfoItem, InAppPurchaseManager, InstantPageCache, InviteLinksUI, ItemListStickerPackItem, MapResourceToAvatarSizes, PlatformRestrictionMatching, SaveToCameraRoll, ShareItems, SoftwareVideo, StickerPeekUI. The goal is 10 completed modules.
+**Wave-1 done-count: 4** (Tasks 2, 4, 5, 7 done; Tasks 1, 3, 6, 8, 9, 10 abandoned).
+
+Per the spec's **abandonment protocol**, if a module hits an unresolvable blocker (requires aliasing an umbrella type such as `Postbox`/`Account`/`MediaBox`, or requires editing a module outside the wave-1 list), it is marked Abandoned in its task body and **not substituted**. The wave's done-count goes down by one; fallback modules are not pulled into the wave mid-execution. A later wave can revisit the abandoned module with tools not available in wave 1 (e.g. a real engine wrapper rather than a typealias, or a refactor that migrates the caller first).
 
 ---
 
@@ -160,7 +165,13 @@ Task 0 produces no code changes.
 
 ---
 
-## Task 1: Refactor `ActionSheetPeerItem`
+## Task 1: Refactor `ActionSheetPeerItem` — **ABANDONED**
+
+**Status:** Abandoned for wave 1. No code changes in this repo from this task.
+
+**Reason:** Refactoring this module requires either (a) typealiasing the `Postbox` class itself (banned — see spec §Guiding rules rule 2: umbrella-type typealiases rename without encapsulating) or (b) editing `submodules/ShareController/` which is not in the wave-1 list. The module's designated init takes `postbox: Postbox` as a parameter and its sole out-of-wave caller (ShareController) passes `info.account.stateManager.postbox` directly, so there is no path to drop the `import Postbox` here without crossing the wave boundary or violating rule 2. Per the spec's **abandonment protocol**, the module is skipped for this wave. Wave-1 done-count is therefore 9, not 10.
+
+**Original task body (retained for audit trail, do not implement):**
 
 **Files:**
 - Modify: `submodules/ActionSheetPeerItem/Sources/ActionSheetPeerItem.swift`
@@ -168,7 +179,7 @@ Task 0 produces no code changes.
 
 **Starting inventory** (computed during planning):
 
-Grep for common Postbox API/type names in `ActionSheetPeerItem.swift` returned zero hits on `mediaBox`, `transaction`, `PostboxView`, `combinedView`, `PeerId`, `MessageId`, `MediaResource`, `CachedPeerData`, etc. The `import Postbox` line appears unused. Confirm this during inventory — it's the most likely case, but other Postbox symbols (e.g. types referenced inside a parameter type) may still be present.
+Grep for common Postbox API/type names in `ActionSheetPeerItem.swift` returned zero hits on `mediaBox`, `transaction`, `PostboxView`, `combinedView`, `PeerId`, `MessageId`, `MediaResource`, `CachedPeerData`, etc. The `import Postbox` line appears unused. Confirm this during inventory — it's the most likely case, but other Postbox symbols (e.g. types referenced inside a parameter type) may still be present. (Subsequent inventory discovered the module does take `postbox: Postbox` as a parameter type — this is what makes the module unrefactorable under the wave-1 rules.)
 
 - [ ] **Step 1: Inventory**
 
@@ -328,7 +339,13 @@ EOF
 
 ---
 
-## Task 3: Refactor `ChatListSearchRecentPeersNode`
+## Task 3: Refactor `ChatListSearchRecentPeersNode` — **ABANDONED**
+
+**Status:** Abandoned for wave 1. No code changes in this repo from this task.
+
+**Reason:** The module's public `init` at line 207 takes `postbox: Postbox` as a parameter. Two out-of-wave callers (`submodules/ShareController/Sources/ShareControllerRecentPeersGridItem.swift`, `submodules/ChatListUI/Sources/ChatListRecentPeersListItem.swift`) use this init. Refactoring requires either typealiasing the `Postbox` class (banned by spec rule 2) or editing those two out-of-wave modules (banned by wave boundary). Per the abandonment protocol, the module is skipped.
+
+**Original task body (retained for audit trail, do not implement):**
 
 **Files:**
 - Modify: `submodules/ChatListSearchRecentPeersNode/Sources/ChatListSearchRecentPeersNode.swift`
@@ -565,7 +582,13 @@ EOF
 
 ---
 
-## Task 6: Refactor `DirectMediaImageCache`
+## Task 6: Refactor `DirectMediaImageCache` — **ABANDONED**
+
+**Status:** Abandoned for wave 1. No code changes in this repo from this task.
+
+**Reason:** The module's public `init(account: Account)` at line 241 takes `account: Account` (an umbrella type banned by spec rule 2). Out-of-wave callers include `submodules/CalendarMessageScreen/`, four TelegramUI components (`StoryContainerScreen`, `ShareWithPeersScreen`, `PeerInfoVisualMediaPaneNode` × 2), and `submodules/TelegramUI/Sources/AccountContext.swift`. Refactoring requires either aliasing `Account` (banned) or editing all those out-of-wave callers (banned). Per the abandonment protocol, the module is skipped.
+
+**Original task body (retained for audit trail, do not implement):**
 
 **Files:**
 - Modify: `submodules/DirectMediaImageCache/Sources/DirectMediaImageCache.swift`
@@ -697,7 +720,13 @@ EOF
 
 ---
 
-## Task 8: Refactor `FetchManagerImpl`
+## Task 8: Refactor `FetchManagerImpl` — **ABANDONED**
+
+**Status:** Abandoned for wave 1. No code changes in this repo from this task.
+
+**Reason:** The module's public `init(postbox: Postbox, storeManager: DownloadedMediaStoreManager?)` at line 708 takes `postbox: Postbox`. Out-of-wave caller: `submodules/TelegramUI/Sources/AccountContext.swift:296`. Refactoring requires either aliasing the `Postbox` class (banned by spec rule 2) or editing TelegramUI (banned by wave boundary). Per the abandonment protocol, the module is skipped.
+
+**Original task body (retained for audit trail, do not implement):**
 
 **Files:**
 - Modify: `submodules/FetchManagerImpl/Sources/FetchManagerImpl.swift`
@@ -765,7 +794,13 @@ EOF
 
 ---
 
-## Task 9: Refactor `GalleryData`
+## Task 9: Refactor `GalleryData` — **ABANDONED**
+
+**Status:** Abandoned for wave 1. No code changes in this repo from this task.
+
+**Reason:** Four public functions take `Media` (Postbox protocol) and/or `Message` (Postbox class) as parameters, called from TelegramUI and ChatListUI (out-of-wave). Refactoring to `EngineMedia` / `EngineMessage` requires `.init(_:)` / `._asMedia()` / `._asMessage()` coercions threaded through many local variables (e.g. `var galleryMedia: Media?` in `chatMessageGalleryControllerData` is reassigned from various `TelegramMedia*` casts and passed to `MessageReference(...)` chains and enum cases), which would cascade into `AvatarGalleryEntry`, `MessageReference`, and other out-of-wave types. The narrow-utility alias path is ruled out because `Media` and especially `Message` are domain types, not utilities. Per the abandonment protocol, the module is skipped.
+
+**Original task body (retained for audit trail, do not implement):**
 
 **Files:**
 - Modify: `submodules/GalleryData/Sources/GalleryData.swift`
@@ -827,7 +862,15 @@ EOF
 
 ---
 
-## Task 10: Refactor `ICloudResources`
+## Task 10: Refactor `ICloudResources` — **ABANDONED**
+
+**Status:** Abandoned for wave 1. No code changes in this repo from this task.
+
+**Reason:** The module declares `public class ICloudFileResource: TelegramMediaResource` and thus must implement `func isEqual(to: MediaResource) -> Bool` (protocol requirement inherited from `MediaResource`). That override's parameter type is fixed at `MediaResource`, which can only be named by importing Postbox or adding a typealias for the raw `MediaResource` protocol. The protocol-alias would be borderline per rule 2; user directed to skip. Per the abandonment protocol, the module is skipped.
+
+**Original task body (retained for audit trail, do not implement):**
+
+### Original Task 10
 
 **Files:**
 - Modify: `submodules/ICloudResources/Sources/ICloudResources.swift`

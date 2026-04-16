@@ -576,6 +576,27 @@ public extension TelegramEngine.EngineData.Item {
             }
         }
         
+        public struct ContactsSettings: TelegramEngineDataItem, PostboxViewDataItem {
+            public typealias Result = TelegramCore.ContactsSettings
+
+            public init() {
+            }
+
+            var key: PostboxViewKey {
+                return .preferences(keys: Set([PreferencesKeys.contactsSettings]))
+            }
+
+            func extract(view: PostboxView) -> Result {
+                guard let view = view as? PreferencesView else {
+                    preconditionFailure()
+                }
+                guard let value = view.values[PreferencesKeys.contactsSettings]?.get(TelegramCore.ContactsSettings.self) else {
+                    return TelegramCore.ContactsSettings.defaultSettings
+                }
+                return value
+            }
+        }
+
         public struct EmojiGame: TelegramEngineDataItem, PostboxViewDataItem {
             public typealias Result = EmojiGameInfo
 

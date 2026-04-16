@@ -18,11 +18,16 @@ This spec covers **wave 1**: the first 10 single-import leaf modules, refactored
 ## Guiding rules
 
 1. Consumers only. `TelegramCore` does **not** `@_exported import Postbox`, so once a module drops its Postbox import every remaining Postbox-type reference must be switched to the engine-typealiased equivalent (`PeerId` → `EnginePeer.Id`, `MessageId` → `EngineMessage.Id`, `MessageIndex` → `EngineMessage.Index`, `MessageTags` → `EngineMessage.Tags`, `MediaId` → `EngineMedia.Id`, etc.). These aliases are identical to their Postbox originals, so the swap is behavior-preserving.
-2. Prefer existing `Engine*` wrapper types (`EnginePeer`, `EngineMessage`, `EngineMediaResource`) and engine methods; add new engine wrappers only when a call site clearly needs one.
-3. Before adding any new engine wrapper, search `submodules/TelegramCore/Sources/TelegramEngine/` for an equivalent by name and shape. Record the search result in the commit that adds the wrapper.
-4. Bottom-up dependency order across modules.
-5. Full project build after each module, using the command from the global `CLAUDE.md`.
-6. A module is done when: no `import Postbox` in its `.swift` files, no `//submodules/Postbox:Postbox` entry in its `BUILD`, full build green, commits landed.
+2. **Never typealias the `Postbox` class itself** (or other large umbrella API surfaces such as `Account` or `MediaBox`). Aliasing an umbrella type with something like `EnginePostbox = Postbox` renames without encapsulating — the consumer still has access to the full Postbox API through the alias. It defeats the purpose of the refactor. Narrow utility typealiases (`MemoryBuffer`, `PostboxDecoder`, `PostboxEncoder`, `AdaptedPostboxDecoder`, `MediaResource`, etc.) remain allowed and expected; the ban is specifically on aliasing the large facade types.
+3. Prefer existing `Engine*` wrapper types (`EnginePeer`, `EngineMessage`, `EngineMediaResource`) and engine methods; add new engine wrappers only when a call site clearly needs one.
+4. Before adding any new engine wrapper, search `submodules/TelegramCore/Sources/TelegramEngine/` for an equivalent by name and shape. Record the search result in the commit that adds the wrapper.
+5. Bottom-up dependency order across modules.
+6. Full project build after each module, using the command from the global `CLAUDE.md`.
+7. A module is done when: no `import Postbox` in its `.swift` files, no `//submodules/Postbox:Postbox` entry in its `BUILD`, full build green, commits landed.
+
+### Abandonment protocol
+
+If a module can only be refactored by either (a) typealiasing an umbrella type banned by rule 2, or (b) editing a module outside the wave-1 list, the module is **abandoned for this wave**. Record it in the plan (mark the task Abandoned with the reason) and reduce the wave's done-count accordingly. Do not substitute a new module mid-wave; the wave's scope is fixed at plan time.
 
 ## Wave-1 scope: selecting the 10 modules
 
@@ -160,6 +165,6 @@ Before writing any new wrapper, search `submodules/TelegramCore/Sources/Telegram
 
 ## Done definition for this spec
 
-- 10 leaf modules have zero `import Postbox` in their sources and no `//submodules/Postbox:Postbox` in their `BUILD`.
+- Every module in the wave-1 list is either **done** (zero `import Postbox` in its sources, no `//submodules/Postbox:Postbox` in its `BUILD`) or explicitly marked **abandoned** with a recorded reason in the plan.
 - Full project build is green at wave end.
 - Any new engine wrappers added along the way are documented in their commits.

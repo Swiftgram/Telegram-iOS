@@ -7,7 +7,6 @@ import TelegramPresentationData
 import AccountContext
 import ContextUI
 import TelegramCore
-import Postbox
 import TextFormat
 import ReactionSelectionNode
 import ViewControllerComponent
@@ -970,7 +969,7 @@ final class ChatSendMessageContextScreenComponent: Component {
                                 })
                             }
                             
-                            var customEffectResource: (FileMediaReference, MediaResource)?
+                            var customEffectResource: (FileMediaReference, TelegramMediaResource)?
                             if let effectAnimation = messageEffect.effectAnimation?._parse() {
                                 customEffectResource = (FileMediaReference.standalone(media: effectAnimation), effectAnimation.resource)
                             } else {
