@@ -11,17 +11,18 @@ This spec covers **wave 1**: the first 10 single-import leaf modules, refactored
 - No refactor inside `TelegramCore` itself — it owns `TelegramEngine` and will keep importing Postbox.
 - No refactor inside `Postbox`.
 - No behavior or UX changes. No unrelated cleanup.
-- No switch to `Engine*` types in modules outside this wave.
-- No migration away from Postbox-defined primitive types (`PeerId`, `MessageId`, `Media`, etc.) beyond what a specific call site in a wave-1 module forces.
+- No edits to modules outside the 10 chosen by the selection rule.
+- Within wave-1 modules, switching Postbox-typed names to their engine typealiases (`PeerId` → `EnginePeer.Id`, etc.) is required and in scope; introducing new engine *wrapper types* that re-encode data is out of scope.
 - No generic `engine.transaction { postbox in … }` escape hatch.
 
 ## Guiding rules
 
-1. Consumers only. Prefer existing `Engine*` types (`EnginePeer`, `EngineMessage`, `EnginePeer.Id`, …); add new engine wrappers only when a call site clearly needs one.
-2. Before adding any new engine wrapper, search `submodules/TelegramCore/Sources/TelegramEngine/` for an equivalent by name and shape. Record the search result in the commit that adds the wrapper.
-3. Bottom-up dependency order across modules.
-4. Full project build after each module, using the command from the global `CLAUDE.md`.
-5. A module is done when: no `import Postbox` in its `.swift` files, no `//submodules/Postbox:Postbox` entry in its `BUILD`, full build green, commits landed.
+1. Consumers only. `TelegramCore` does **not** `@_exported import Postbox`, so once a module drops its Postbox import every remaining Postbox-type reference must be switched to the engine-typealiased equivalent (`PeerId` → `EnginePeer.Id`, `MessageId` → `EngineMessage.Id`, `MessageIndex` → `EngineMessage.Index`, `MessageTags` → `EngineMessage.Tags`, `MediaId` → `EngineMedia.Id`, etc.). These aliases are identical to their Postbox originals, so the swap is behavior-preserving.
+2. Prefer existing `Engine*` wrapper types (`EnginePeer`, `EngineMessage`, `EngineMediaResource`) and engine methods; add new engine wrappers only when a call site clearly needs one.
+3. Before adding any new engine wrapper, search `submodules/TelegramCore/Sources/TelegramEngine/` for an equivalent by name and shape. Record the search result in the commit that adds the wrapper.
+4. Bottom-up dependency order across modules.
+5. Full project build after each module, using the command from the global `CLAUDE.md`.
+6. A module is done when: no `import Postbox` in its `.swift` files, no `//submodules/Postbox:Postbox` entry in its `BUILD`, full build green, commits landed.
 
 ## Wave-1 scope: selecting the 10 modules
 
@@ -116,7 +117,8 @@ When a call site has no existing engine equivalent, the wrapper is added in `Tel
 ### Rules for the wrapper itself
 
 - Minimal pass-through. No caching, no extra signal plumbing, no bonus features.
-- Return engine-typed values (`EnginePeer`, `EngineMessage`, `EngineMediaResource`, …) only where such types already exist. Otherwise return the underlying Postbox type unchanged — this wave does not introduce new engine type wrappers.
+- Return type must be nameable from the consumer **without** importing Postbox. That means: an existing `Engine*` wrapper type (`EnginePeer`, `EngineMessage`, `EngineMediaResource`), an existing engine typealias (`EnginePeer.Id`, `EngineMessage.Id`, …), a Swift primitive, or a new `Engine*` typealias added in the same commit. Do **not** return a bare Postbox type.
+- Do not introduce new engine wrapper *structs/classes* that re-encode data (those are out of scope for this wave). A new typealias to make an existing Postbox type reachable under an `Engine*` name is allowed and expected.
 - Public.
 - Consumer must not need anything else from Postbox after the wrapper is in place.
 - No deprecation shim. Existing Postbox-using code paths elsewhere in the codebase stay untouched.
@@ -147,6 +149,7 @@ Before writing any new wrapper, search `submodules/TelegramCore/Sources/Telegram
 - **Public signature changes in a leaf module break an unexpected caller.** Mitigated by the full build per module. Fix at the call site in the same commit, or skip and move on if the fix would pull in scope beyond the wave.
 - **A Postbox view has no equivalent engine data item.** Add a new `EngineData.Item` per the wrapper policy. If the mapping is non-trivial (needs its own result type), skip the module and flag it for a future spec.
 - **Transitive Postbox usage through a type the module re-exposes publicly.** Caught during Inventory (step 1). If fixing would require editing another module in the wave's dependency graph, skip.
+- **A Postbox type has no engine typealias.** Add the typealias in `TelegramCore` (`EngineXxx = Xxx`) in the preparatory commit, then use it in the consumer. Typealias-only additions are explicitly allowed and cheap.
 - **Build times.** Full project build per module is slow but accepted — it gives the strongest signal.
 
 ## Follow-ups (not this spec)
