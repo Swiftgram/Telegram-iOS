@@ -673,6 +673,7 @@ private func channelAdminControllerEntries(presentationData: PresentationData, s
                         .direct(.canManageRanks),
                         .direct(.canPinMessages),
                         .direct(.canManageTopics),
+                        .sub(.stories, storiesRelatedFlags),
                         .direct(.canManageCalls),
                         .direct(.canBeAnonymous),
                         .direct(.canAddAdmins)
@@ -1553,6 +1554,7 @@ public func channelAdminController(context: AccountContext, updatedPresentationD
                             
                             dismissImpl?()
                         }, completed: {
+                            updated(TelegramChatAdminRights(rights: updateFlags))
                             dismissImpl?()
                         }))
                     } else if updateFlags != defaultFlags || updateRank != nil {

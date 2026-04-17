@@ -120,6 +120,15 @@ func openResolvedUrlImpl(
                     }
                 )
             }
+            let isStartGroup: Bool
+            switch peerType {
+            case .group?:
+                isStartGroup = true
+            default:
+                isStartGroup = false
+            }
+            let shouldForceStartGroupStartFlow = isStartGroup && !payload.isEmpty && adminRights == nil
+            let shouldCheckExistingGroupAdmin = isStartGroup && !payload.isEmpty && adminRights != nil
         
             var filter: ChatListNodePeersFilter = [.onlyGroupsAndChannels, .onlyManageable, .excludeDisabled, .excludeRecent, .doNotSearchMessages]
             var title: String = presentationData.strings.Bot_AddToChat_Title
@@ -198,9 +207,34 @@ func openResolvedUrlImpl(
                                 }
                             }),
                             TextAlertAction(type: .genericAction, title: strings.Common_Cancel, action: {})
-                        ]
+                        ],
+                        actionLayout: .vertical
                     )
                     present(alertController, nil)
+                }
+                let openAdminControllerImpl: (TelegramChatAdminRightsFlags?) -> Void = { initialAdminRights in
+                    let adminController = channelAdminController(context: context, peerId: peerId, adminId: botPeerId, initialParticipant: nil, invite: true, initialAdminRights: initialAdminRights, updated: { _ in
+                        if shouldCheckExistingGroupAdmin {
+                            Queue.mainQueue().after(0.1) {
+                                addMemberImpl()
+                            }
+                        } else {
+                            controller?.dismiss()
+                        }
+                    }, upgradedToSupergroup: { _, _ in }, transferedOwnership: { _ in })
+                    navigationController?.pushViewController(adminController)
+                }
+                let openAdminControllerWithResolvedRightsImpl: (Bool) -> Void = { isGroup in
+                    if adminRights == nil {
+                        let _ = (defaultAdminRights.get()
+                        |> take(1)
+                        |> deliverOnMainQueue).start(next: { defaultAdminRights in
+                            let initialAdminRights = isGroup ? defaultAdminRights?.group?.rights : defaultAdminRights?.channel?.rights
+                            openAdminControllerImpl(initialAdminRights)
+                        })
+                    } else {
+                        openAdminControllerImpl(adminRights?.chatAdminRights)
+                    }
                 }
                 
                 if case let .channel(peer) = peer {
@@ -208,32 +242,65 @@ func openResolvedUrlImpl(
                     if case .group = peer.info {
                         isGroup = true
                     }
-                    if peer.flags.contains(.isCreator) || peer.adminRights?.rights.contains(.canAddAdmins) == true {
-                        let _ = (defaultAdminRights.get()
-                        |> take(1)
-                        |> deliverOnMainQueue).start(next: { defaultAdminRights in
-                            let initialAdminRights = adminRights?.chatAdminRights ?? (isGroup ? defaultAdminRights?.group?.rights : defaultAdminRights?.channel?.rights)
-                            let controller = channelAdminController(context: context, peerId: peerId, adminId: botPeerId, initialParticipant: nil, invite: true, initialAdminRights: initialAdminRights, updated: { _ in
-                                controller?.dismiss()
-                            }, upgradedToSupergroup: { _, _ in }, transferedOwnership: { _ in })
-                            navigationController?.pushViewController(controller)
-                        })
+                    if shouldForceStartGroupStartFlow {
+                        addMemberImpl()
+                    } else if peer.flags.contains(.isCreator) || peer.adminRights?.rights.contains(.canAddAdmins) == true {
+                        if shouldCheckExistingGroupAdmin && isGroup {
+                            let _ = (context.engine.peers.fetchChannelParticipant(peerId: peerId, participantId: botPeerId)
+                            |> deliverOnMainQueue).start(next: { participant in
+                                let isBotAlreadyAdmin: Bool
+                                if let participant = participant {
+                                    switch participant {
+                                    case .creator:
+                                        isBotAlreadyAdmin = true
+                                    case let .member(_, _, adminInfo, _, _, _):
+                                        isBotAlreadyAdmin = adminInfo != nil
+                                    }
+                                } else {
+                                    isBotAlreadyAdmin = false
+                                }
+                                if isBotAlreadyAdmin {
+                                    addMemberImpl()
+                                } else {
+                                    openAdminControllerWithResolvedRightsImpl(isGroup)
+                                }
+                            })
+                        } else {
+                            openAdminControllerWithResolvedRightsImpl(isGroup)
+                        }
                     } else {
                         addMemberImpl()
                     }
                 } else if case let .legacyGroup(peer) = peer {
-                    if case .member = peer.role {
+                    if shouldForceStartGroupStartFlow {
                         addMemberImpl()
-                    } else {
-                        let _ = (defaultAdminRights.get()
-                        |> take(1)
-                        |> deliverOnMainQueue).start(next: { defaultAdminRights in
-                            let initialAdminRights = adminRights?.chatAdminRights ?? defaultAdminRights?.group?.rights
-                            let controller = channelAdminController(context: context, peerId: peerId, adminId: botPeerId, initialParticipant: nil, invite: true, initialAdminRights: initialAdminRights, updated: { _ in
-                                controller?.dismiss()
-                            }, upgradedToSupergroup: { _, _ in }, transferedOwnership: { _ in })
-                            navigationController?.pushViewController(controller)
+                    } else if case .member = peer.role {
+                        addMemberImpl()
+                    } else if shouldCheckExistingGroupAdmin {
+                        let _ = (context.engine.peers.fetchAndUpdateCachedPeerData(peerId: peerId)
+                        |> mapToSignal { _ in
+                            context.engine.data.get(TelegramEngine.EngineData.Item.Peer.LegacyGroupParticipants(id: peerId))
+                        }
+                        |> deliverOnMainQueue).start(next: { participants in
+                            let isBotAlreadyAdmin: Bool
+                            if let participant = participants.knownValue?.first(where: { $0.peerId == botPeerId }) {
+                                switch participant {
+                                case .creator, .admin:
+                                    isBotAlreadyAdmin = true
+                                case .member:
+                                    isBotAlreadyAdmin = false
+                                }
+                            } else {
+                                isBotAlreadyAdmin = false
+                            }
+                            if isBotAlreadyAdmin {
+                                addMemberImpl()
+                            } else {
+                                openAdminControllerWithResolvedRightsImpl(true)
+                            }
                         })
+                    } else {
+                        openAdminControllerWithResolvedRightsImpl(true)
                     }
                 }
             }
@@ -788,7 +855,7 @@ func openResolvedUrlImpl(
                         navigationController?.pushViewController(controller)
                     default:
                         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-                        present(textAlertController(context: context, updatedPresentationData: updatedPresentationData, title: presentationData.strings.AccessDenied_Title, text: presentationData.strings.Contacts_AccessDeniedError, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_NotNow, action: {}), TextAlertAction(type: .genericAction, title: presentationData.strings.AccessDenied_Settings, action: {
+                        present(textAlertController(context: context, updatedPresentationData: updatedPresentationData, title: presentationData.strings.AccessDenied_Title, text: presentationData.strings.Contacts_AccessDeniedError, actions: [TextAlertAction(type: .genericAction, title: presentationData.strings.Common_NotNow, action: {}), TextAlertAction(type: .defaultAction, title: presentationData.strings.AccessDenied_Settings, action: {
                             context.sharedContext.applicationBindings.openSettings()
                         })]), nil)
                     }

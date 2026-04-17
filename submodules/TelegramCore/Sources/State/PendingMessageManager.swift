@@ -1038,10 +1038,22 @@ public final class PendingMessageManager {
                 
                 var flags: Int32 = 0
                 
+                var topMsgId: Int32?
+                var monoforumPeerId: Api.InputPeer?
+                if let threadId = messages[0].0.threadId {
+                    if let channel = peer as? TelegramChannel, channel.flags.contains(.isMonoforum) {
+                        if let linkedMonoforumId = channel.linkedMonoforumId, let mainChannel = transaction.getPeer(linkedMonoforumId) as? TelegramChannel, mainChannel.hasPermission(.manageDirect) {
+                            monoforumPeerId = transaction.getPeer(PeerId(threadId)).flatMap(apiInputPeer)
+                        }
+                    } else {
+                        topMsgId = Int32(clamping: threadId)
+                    }
+                }
+                
                 for attribute in messages[0].0.attributes {
                     if let replyAttribute = attribute as? ReplyMessageAttribute {
                         replyMessageId = replyAttribute.messageId.id
-                        if peerId != replyAttribute.messageId.peerId {
+                        if peerId != replyAttribute.messageId.peerId || (replyAttribute.threadMessageId != nil && replyAttribute.threadMessageId?.id != topMsgId) {
                             replyPeerId = replyAttribute.messageId.peerId
                         }
                         if replyAttribute.isQuote {
@@ -1134,19 +1146,10 @@ public final class PendingMessageManager {
                         }
                     }
                     
-                    var topMsgId: Int32?
-                    var monoforumPeerId: Api.InputPeer?
-                    if let threadId = messages[0].0.threadId {
-                        if let channel = peer as? TelegramChannel, channel.flags.contains(.isMonoforum) {
-                            if let linkedMonoforumId = channel.linkedMonoforumId, let mainChannel = transaction.getPeer(linkedMonoforumId) as? TelegramChannel, mainChannel.hasPermission(.manageDirect) {
-                                monoforumPeerId = transaction.getPeer(PeerId(threadId)).flatMap(apiInputPeer)
-                            }
-                        } else {
-                            flags |= Int32(1 << 9)
-                            topMsgId = Int32(clamping: threadId)
-                        }
+                    if topMsgId != nil {
+                        flags |= Int32(1 << 9)
                     }
-                    
+                                        
                     var quickReplyShortcut: Api.InputQuickReplyShortcut?
                     if let quickReply {
                         if let threadId = messages[0].0.threadId {
@@ -1233,20 +1236,7 @@ public final class PendingMessageManager {
                     if bubbleUpEmojiOrStickersets {
                         flags |= Int32(1 << 15)
                     }
-                    
-                    var topMsgId: Int32?
-                    var monoforumPeerId: Api.InputPeer?
-                    if let threadId = messages[0].0.threadId {
-                        if let channel = peer as? TelegramChannel, channel.flags.contains(.isMonoforum) {
-                            if let linkedMonoforumId = channel.linkedMonoforumId, let mainChannel = transaction.getPeer(linkedMonoforumId) as? TelegramChannel, mainChannel.hasPermission(.manageDirect) {
-                                monoforumPeerId = transaction.getPeer(PeerId(threadId)).flatMap(apiInputPeer)
-                            }
-                        } else {
-                            flags |= Int32(1 << 9)
-                            topMsgId = Int32(clamping: threadId)
-                        }
-                    }
-                    
+                                        
                     var replyTo: Api.InputReplyTo?
                     if let replyMessageId = replyMessageId {
                         flags |= 1 << 0
@@ -1571,7 +1561,7 @@ public final class PendingMessageManager {
                 for attribute in message.attributes {
                     if let replyAttribute = attribute as? ReplyMessageAttribute {
                         replyMessageId = replyAttribute.messageId.id
-                        if peer.id != replyAttribute.messageId.peerId {
+                        if peer.id != replyAttribute.messageId.peerId || (replyAttribute.threadMessageId != nil && replyAttribute.threadMessageId?.id != topMsgId) {
                             replyPeerId = replyAttribute.messageId.peerId
                         }
                         if replyAttribute.isQuote {
@@ -1851,19 +1841,9 @@ public final class PendingMessageManager {
                         sendMessageRequest = network.request(Api.functions.messages.sendMedia(flags: flags, peer: inputPeer, replyTo: replyTo, media: inputMedia, message: text, randomId: uniqueId, replyMarkup: nil, entities: messageEntities, scheduleDate: scheduleTime, scheduleRepeatPeriod: scheduleRepeatPeriod, sendAs: sendAsInputPeer, quickReplyShortcut: quickReplyShortcut, effect: messageEffectId, allowPaidStars: allowPaidStars, suggestedPost: suggestedPost), tag: dependencyTag)
                         |> map(NetworkRequestResult.result)
                     case let .forward(sourceInfo):
-                        var topMsgId: Int32?
-                        var monoforumPeerId: Api.InputPeer?
-                        if let threadId = message.threadId {
-                            if let channel = peer as? TelegramChannel, channel.flags.contains(.isMonoforum) {
-                                if let linkedMonoforumId = channel.linkedMonoforumId, let mainChannel = transaction.getPeer(linkedMonoforumId) as? TelegramChannel, mainChannel.hasPermission(.manageDirect) {
-                                    monoforumPeerId = transaction.getPeer(PeerId(threadId)).flatMap(apiInputPeer)
-                                }
-                            } else {
-                                flags |= Int32(1 << 9)
-                                topMsgId = Int32(clamping: threadId)
-                            }
+                        if topMsgId != nil {
+                            flags |= Int32(1 << 9)
                         }
-                    
                         var quickReplyShortcut: Api.InputQuickReplyShortcut?
                         if let quickReply {
                             if let threadId = message.threadId {

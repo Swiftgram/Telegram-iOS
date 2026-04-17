@@ -794,10 +794,12 @@ public final class ChatEntityKeyboardInputNode: ChatInputNode {
                         if let emojiAttribute = emojiAttribute {
                             AudioServicesPlaySystemSound(0x450)
                             interaction.insertText(NSAttributedString(string: text, attributes: [ChatTextInputAttributes.customEmoji: emojiAttribute]))
+                            (strongSelf.entityKeyboardView.view as? EntityKeyboardComponent.View)?.revealHiddenPanels()
                         }
                     } else if case let .staticEmoji(staticEmoji) = item.content {
                         AudioServicesPlaySystemSound(0x450)
                         interaction.insertText(NSAttributedString(string: staticEmoji, attributes: [:]))
+                        (strongSelf.entityKeyboardView.view as? EntityKeyboardComponent.View)?.revealHiddenPanels()
                     }
                 })
             },

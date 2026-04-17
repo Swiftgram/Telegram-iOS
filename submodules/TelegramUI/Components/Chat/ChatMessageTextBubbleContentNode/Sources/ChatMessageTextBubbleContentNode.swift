@@ -1803,7 +1803,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         guard let textSelectionNode = self.textSelectionNode else {
             return nil
         }
-        guard let range = customRange ?? textSelectionNode.getSelection() else {
+        guard let rawRange = customRange ?? textSelectionNode.getSelection() else {
             return nil
         }
         guard let item = self.item else {
@@ -1813,6 +1813,17 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
             return nil
         }
         
+        func normalizedSelectionRange(_ range: NSRange, length: Int) -> NSRange {
+            let location = min(max(range.location, 0), length)
+            let upperBound = min(max(location, range.location + range.length), length)
+            return NSRange(location: location, length: upperBound - location)
+        }
+        
+        let range = normalizedSelectionRange(rawRange, length: string.length)
+        guard range.length > 0 else {
+            return nil
+        }
+
         let nsString = string.string as NSString
         let substring = nsString.substring(with: range)
         let offset = range.location

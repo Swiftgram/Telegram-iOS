@@ -10304,21 +10304,35 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         self.present(controller, in: .window(.root))
     }
     
-    func presentVoiceMessageDiscardAlert(action: @escaping () -> Void = {}, alertAction: (() -> Void)? = nil, delay: Bool = false, performAction: Bool = true) -> Bool {
-        if let _ = self.presentationInterfaceState.inputTextPanelState.mediaRecordingState {
+    func presentVoiceMessageDiscardAlert(
+        action: @escaping () -> Void = {},
+        alertAction: (() -> Void)? = nil,
+        discardIfVideo: Bool = false,
+        delay: Bool = false,
+        performAction: Bool = true
+    ) -> Bool {
+        if let mediaRecordingState = self.presentationInterfaceState.inputTextPanelState.mediaRecordingState {
+            var discard = false
+            if discardIfVideo, case .video = mediaRecordingState {
+                discard = true
+            }
             alertAction?()
             Queue.mainQueue().after(delay ? 0.2 : 0.0) {
                 let alertController = textAlertController(
                     context: self.context,
                     updatedPresentationData: self.updatedPresentationData,
                     title: nil,
-                    text: self.presentationData.strings.Conversation_StopVoiceMessageDescription,
+                    text: discard ? self.presentationData.strings.Conversation_DiscardRecordedVoiceMessageDescription : self.presentationData.strings.Conversation_StopVoiceMessageDescription,
                     actions: [
                         TextAlertAction(
                             type: .defaultAction,
-                            title: self.presentationData.strings.Conversation_StopVoiceMessagePauseAction,
+                            title: discard ? self.presentationData.strings.Conversation_DiscardRecordedVoiceMessageAction : self.presentationData.strings.Conversation_StopVoiceMessagePauseAction,
                             action: { [weak self] in
-                                self?.stopMediaRecorder(pause: true)
+                                if discard {
+                                    self?.dismissMediaRecorder(.dismiss)
+                                } else {
+                                    self?.stopMediaRecorder(pause: true)
+                                }
                                 Queue.mainQueue().after(0.1) {
                                     action()
                                 }
@@ -10343,26 +10357,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         }
         return false
     }
-    
-    func presentRecordedVoiceMessageDiscardAlert(action: @escaping () -> Void = {}, alertAction: (() -> Void)? = nil, delay: Bool = false, performAction: Bool = true) -> Bool {
-        if let _ = self.presentationInterfaceState.interfaceState.mediaDraftState {
-            alertAction?()
-            Queue.mainQueue().after(delay ? 0.2 : 0.0) {
-                self.present(textAlertController(context: self.context, updatedPresentationData: self.updatedPresentationData, title: nil, text: self.presentationData.strings.Conversation_DiscardRecordedVoiceMessageDescription, actions: [TextAlertAction(type: .genericAction, title: self.presentationData.strings.Common_Cancel, action: {}), TextAlertAction(type: .defaultAction, title: self.presentationData.strings.Conversation_DiscardRecordedVoiceMessageAction, action: { [weak self] in
-                    self?.stopMediaRecorder()
-                    Queue.mainQueue().after(0.1) {
-                        action()
-                    }
-                })]), in: .window(.root))
-            }
-            
-            return true
-        } else if performAction {
-            action()
-        }
-        return false
-    }
-    
+        
     func presentAutoremoveSetup() {
         guard let peer = self.presentationInterfaceState.renderedPeer?.peer else {
             return
