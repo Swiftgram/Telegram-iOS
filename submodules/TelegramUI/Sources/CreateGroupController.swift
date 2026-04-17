@@ -805,7 +805,7 @@ public func createGroupControllerImpl(context: AccountContext, peerIds: [PeerId]
                         }
                         if let _ = updatingAvatar {
                             return context.engine.peers.updatePeerPhoto(peerId: result.peerId, photo: uploadedAvatar.get(), video: uploadedVideoAvatar?.0.get(), videoStartTimestamp: uploadedVideoAvatar?.1, mapResourceToAvatarSizes: { resource, representations in
-                                return mapResourceToAvatarSizes(postbox: context.account.postbox, resource: resource, representations: representations)
+                                return mapResourceToAvatarSizes(engine: context.engine, resource: resource, representations: representations)
                             })
                             |> ignoreValues
                             |> `catch` { _ -> Signal<Never, CreateGroupError> in
@@ -922,7 +922,7 @@ public func createGroupControllerImpl(context: AccountContext, peerIds: [PeerId]
                     let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
                     context.account.postbox.mediaBox.storeResourceData(resource.id, data: data)
                     let representation = TelegramMediaImageRepresentation(dimensions: PixelDimensions(width: 640, height: 640), resource: resource, progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false)
-                    uploadedAvatar.set(context.engine.peers.uploadedPeerPhoto(resource: resource))
+                    uploadedAvatar.set(context.engine.peers.uploadedPeerPhoto(resource: EngineMediaResource(resource)))
                     uploadedVideoAvatar = nil
                     updateState { current in
                         var current = current
@@ -1024,8 +1024,8 @@ public func createGroupControllerImpl(context: AccountContext, peerIds: [PeerId]
                         }
                     }
                     
-                    uploadedAvatar.set(context.engine.peers.uploadedPeerPhoto(resource: photoResource))
-                    
+                    uploadedAvatar.set(context.engine.peers.uploadedPeerPhoto(resource: EngineMediaResource(photoResource)))
+
                     let promise = Promise<UploadedPeerPhotoData?>()
                     promise.set(signal
                     |> `catch` { _ -> Signal<TelegramMediaResource?, NoError> in
@@ -1033,7 +1033,7 @@ public func createGroupControllerImpl(context: AccountContext, peerIds: [PeerId]
                     }
                     |> mapToSignal { resource -> Signal<UploadedPeerPhotoData?, NoError> in
                         if let resource = resource {
-                            return context.engine.peers.uploadedPeerVideo(resource: resource) |> map(Optional.init)
+                            return context.engine.peers.uploadedPeerVideo(resource: EngineMediaResource(resource)) |> map(Optional.init)
                         } else {
                             return .single(nil)
                         }

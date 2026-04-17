@@ -1159,7 +1159,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                     let avatarVideo: Signal<UploadedPeerPhotoData?, NoError>?
                     if let avatarAsset = avatarAsset as? AVAsset {
                         let engine = strongSelf.engine
-                        avatarVideo = Signal<TelegramMediaResource?, NoError> { subscriber in
+                        avatarVideo = Signal<EngineMediaResource?, NoError> { subscriber in
                             let entityRenderer: LegacyPaintEntityRenderer? = avatarAdjustments.flatMap { adjustments in
                                 if let paintingData = adjustments.paintingData, paintingData.hasAnimation {
                                     return LegacyPaintEntityRenderer(postbox: nil, adjustments: adjustments)
@@ -1178,7 +1178,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                                         if let data = try? Data(contentsOf: result.fileURL) {
                                             let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
                                             engine.account.postbox.mediaBox.storeResourceData(resource.id, data: data, synchronous: true)
-                                            subscriber.putNext(resource)
+                                            subscriber.putNext(EngineMediaResource(resource))
                                             
                                             EngineTempBox.shared.dispose(tempFile)
                                         }

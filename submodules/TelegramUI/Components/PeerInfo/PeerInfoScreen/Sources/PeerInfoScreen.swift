@@ -5267,7 +5267,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                     return
                 }
                 strongSelf.updateAvatarDisposable.set((strongSelf.context.engine.contacts.updateContactPhoto(peerId: strongSelf.peerId, resource: nil, videoResource: nil, videoStartTimestamp: nil, markup: nil, mode: .custom, mapResourceToAvatarSizes: { resource, representations in
-                    mapResourceToAvatarSizes(postbox: strongSelf.context.account.postbox, resource: resource, representations: representations)
+                    mapResourceToAvatarSizes(engine: strongSelf.context.engine, resource: resource, representations: representations)
                 })
                 |> deliverOnMainQueue).startStrict(next: { [weak self] _ in
                     guard let strongSelf = self else {

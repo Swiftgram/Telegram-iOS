@@ -33,6 +33,7 @@ A gradual migration is underway to eliminate direct `import Postbox` from consum
 4. **Discovery first:** before adding any new engine wrapper/typealias, grep `submodules/TelegramCore/Sources/TelegramEngine/` for existing equivalents. Record the search result in the commit message.
 5. **Abandonment protocol:** if a module can only be refactored by violating rule 2 or by editing a module outside the current wave's list, mark the task Abandoned with a recorded reason. Do NOT substitute a new module mid-wave.
 6. Full project build per module. No unit tests exist in this project.
+7. **TelegramCore never imports UIKit/Display.** `TelegramCore` is shared with the Telegram-Mac codebase; its Bazel `deps` and source files must not reference UIKit, Display, or any Apple-UI framework. UIKit-needing helpers (image scaling, rendering, etc.) stay in consumer-side submodules.
 
 ### Engine typealias cheat sheet (existing aliases)
 
@@ -55,6 +56,21 @@ AdaptedPostboxDecoder → EngineAdaptedPostboxDecoder (added 2026-04)
 ```
 
 For the `MediaResource` Postbox protocol, prefer the TelegramCore subtype `TelegramMediaResource` when the consumer's usage allows (note: `EngineMediaResource` is a wrapper **class**, not a typealias, so it is not interchangeable with the protocol).
+
+### MediaResource → EngineMediaResource consumer migration
+
+`EngineMediaResource` is a `final class` in `TelegramCore` wrapping a `MediaResource` value. Unlike the typealiases above it is **not** interchangeable with the protocol, but it does provide wrap/unwrap helpers:
+
+- `EngineMediaResource(rawResource)` — wrap a raw `MediaResource`.
+- `engineResource._asResource()` — unwrap to the raw `MediaResource`.
+- `EngineMediaResource.ResourceData(rawResourceData)` — wrap `MediaResourceData`.
+- `EngineMediaResource.Id(rawMediaResourceId)` — wrap `MediaResourceId`.
+
+**Pattern for facade functions:** when a `TelegramEngine.<Area>` method leaks raw `MediaResource` in its public signature, **change the facade signature in place** to `EngineMediaResource` (and change any closure parameter types the same way). Bridge inside the facade body by calling the existing `_internal_*` function with `engineResource._asResource()` / wrapping raw inputs from inner closures with `EngineMediaResource(rawResource)`. Update all call sites in the same commit. The `_internal_*` function stays on raw `MediaResource` — it is the Postbox-facing layer.
+
+Do **not** add opt-in `EngineMediaResource` overloads alongside raw-`MediaResource` overloads. Duplicate signatures fragment the public API and leave the leak in place forever.
+
+For consumer modules, prefer `EngineMediaResource` as the type in properties, locals, generic arguments and function parameters when the usage is a pure type reference. Do **not** try to use `EngineMediaResource` where a class must conform to `TelegramMediaResource` (Postbox protocol) or override `isEqual(to: MediaResource)` — those remain `import Postbox`.
 
 ### Wave-selection guidance (learned from wave 1)
 

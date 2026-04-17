@@ -701,16 +701,18 @@ public extension TelegramEngine {
             return _internal_removeRecentlyUsedApp(account: self.account, peerId: peerId)
         }
 
-        public func uploadedPeerPhoto(resource: MediaResource) -> Signal<UploadedPeerPhotoData, NoError> {
-            return _internal_uploadedPeerPhoto(postbox: self.account.postbox, network: self.account.network, resource: resource)
+        public func uploadedPeerPhoto(resource: EngineMediaResource) -> Signal<UploadedPeerPhotoData, NoError> {
+            return _internal_uploadedPeerPhoto(postbox: self.account.postbox, network: self.account.network, resource: resource._asResource())
         }
 
-        public func uploadedPeerVideo(resource: MediaResource) -> Signal<UploadedPeerPhotoData, NoError> {
-            return _internal_uploadedPeerVideo(postbox: self.account.postbox, network: self.account.network, messageMediaPreuploadManager: self.account.messageMediaPreuploadManager, resource: resource)
+        public func uploadedPeerVideo(resource: EngineMediaResource) -> Signal<UploadedPeerPhotoData, NoError> {
+            return _internal_uploadedPeerVideo(postbox: self.account.postbox, network: self.account.network, messageMediaPreuploadManager: self.account.messageMediaPreuploadManager, resource: resource._asResource())
         }
 
-        public func updatePeerPhoto(peerId: PeerId, photo: Signal<UploadedPeerPhotoData, NoError>?, video: Signal<UploadedPeerPhotoData?, NoError>? = nil, videoStartTimestamp: Double? = nil, markup: UploadPeerPhotoMarkup? = nil, mapResourceToAvatarSizes: @escaping (MediaResource, [TelegramMediaImageRepresentation]) -> Signal<[Int: Data], NoError>) -> Signal<UpdatePeerPhotoStatus, UploadPeerPhotoError> {
-            return _internal_updatePeerPhoto(postbox: self.account.postbox, network: self.account.network, stateManager: self.account.stateManager, accountPeerId: self.account.peerId, peerId: peerId, photo: photo, video: video, videoStartTimestamp: videoStartTimestamp, markup: markup, mapResourceToAvatarSizes: mapResourceToAvatarSizes)
+        public func updatePeerPhoto(peerId: PeerId, photo: Signal<UploadedPeerPhotoData, NoError>?, video: Signal<UploadedPeerPhotoData?, NoError>? = nil, videoStartTimestamp: Double? = nil, markup: UploadPeerPhotoMarkup? = nil, mapResourceToAvatarSizes: @escaping (EngineMediaResource, [TelegramMediaImageRepresentation]) -> Signal<[Int: Data], NoError>) -> Signal<UpdatePeerPhotoStatus, UploadPeerPhotoError> {
+            return _internal_updatePeerPhoto(postbox: self.account.postbox, network: self.account.network, stateManager: self.account.stateManager, accountPeerId: self.account.peerId, peerId: peerId, photo: photo, video: video, videoStartTimestamp: videoStartTimestamp, markup: markup, mapResourceToAvatarSizes: { rawResource, representations in
+                return mapResourceToAvatarSizes(EngineMediaResource(rawResource), representations)
+            })
         }
 
         public func requestUpdateChatListFilter(id: Int32, filter: ChatListFilter?) -> Signal<Never, RequestUpdateChatListFilterError> {
