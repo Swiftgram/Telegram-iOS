@@ -10285,7 +10285,11 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 }
             )
             strongSelf.chatDisplayNode.dismissInput()
-            strongSelf.push(controller)
+            if strongSelf.videoRecorderValue != nil {
+                strongSelf.present(controller, in: .window(.root))
+            } else {
+                strongSelf.push(controller)
+            }
         })
     }
     

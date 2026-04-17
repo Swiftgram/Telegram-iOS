@@ -1079,12 +1079,9 @@ final class PeerSelectionControllerNode: ASDisplayNode {
             if textInputPanelNode.frame.width.isZero {
                 panelTransition = .immediate
             }
-            var panelHeight = textInputPanelNode.updateLayout(width: layout.size.width, leftInset: layout.safeInsets.left, rightInset: layout.safeInsets.right, bottomInset: layout.intrinsicInsets.bottom, keyboardHeight: layout.inputHeight ?? 0.0, additionalSideInsets: UIEdgeInsets(), maxHeight: layout.size.height / 2.0, isSecondary: false, transition: panelTransition, interfaceState: self.presentationInterfaceState, metrics: layout.metrics, isMediaInputExpanded: false)
-            if self.searchDisplayController == nil {
-                panelHeight += insets.bottom
-            } else {
-                panelHeight += cleanInsets.bottom
-            }
+            var panelHeight = textInputPanelNode.updateLayout(width: layout.size.width, leftInset: layout.safeInsets.left, rightInset: layout.safeInsets.right, bottomInset: layout.safeInsets.bottom, keyboardHeight: layout.inputHeight ?? 0.0, additionalSideInsets: UIEdgeInsets(), textFieldMaxHeight: layout.size.height / 2.0, availableHeight: layout.size.height, isSecondary: false, transition: panelTransition, interfaceState: self.presentationInterfaceState, metrics: layout.metrics, isMediaInputExpanded: false)
+            let effectiveBottomInset = textInputPanelNode.additionalInputHeight > 0.0 ? 0.0 : (self.searchDisplayController == nil ? insets.bottom : cleanInsets.bottom)
+            panelHeight += effectiveBottomInset
             textPanelHeight = panelHeight
 
             let panelFrame = CGRect(x: 0.0, y: layout.size.height - panelHeight, width: layout.size.width, height: panelHeight)

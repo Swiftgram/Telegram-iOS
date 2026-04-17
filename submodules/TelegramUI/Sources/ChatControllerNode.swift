@@ -1395,6 +1395,13 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                         data: mediaPlayback,
                         controller: { [weak self] in
                             return self?.controller
+                        },
+                        shouldPerformAction: { [weak self] action in
+                            guard let controller = self?.controller else {
+                                action()
+                                return
+                            }
+                            let _ = controller.presentVoiceMessageDiscardAlert(action: action)
                         }
                     )))
                 )

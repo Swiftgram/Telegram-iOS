@@ -2070,7 +2070,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
         
         var defaultFoundRemoteMessagesSignal: Signal<([FoundRemoteMessages], Bool), NoError> = .single(([FoundRemoteMessages(messages: [], readCounters: [:], threadsData: [:], totalCount: 0)], false))
         if key == .globalPosts, let data = context.currentAppConfiguration.with({ $0 }).data, let value = data["ios_load_empty_global_posts"] as? Double, value != 0.0 {
-            let searchSignal = context.engine.messages.searchMessages(location: .general(scope: .globalPosts(allowPaidStars: nil), tags: nil, minDate: nil, maxDate: nil, folderId: nil), query: "", state: nil, limit: 50)
+            let searchSignal = context.engine.messages.searchMessages(location: .general(scope: .globalPosts(allowPaidStars: nil), groupId: nil, tags: nil, minDate: nil, maxDate: nil, folderId: nil), query: "", state: nil, limit: 50)
             |> map { resultData -> ChatListSearchMessagesResult in
                 let (result, updatedState) = resultData
                     
@@ -2606,28 +2606,28 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
             }
             let searchLocations: [SearchMessagesLocation]
             if key == .globalPosts {
-                searchLocations = [SearchMessagesLocation.general(scope: .globalPosts(allowPaidStars: approvedGlobalPostQueryState?.price), tags: nil, minDate: nil, maxDate: nil, folderId: nil)]
+                searchLocations = [SearchMessagesLocation.general(scope: .globalPosts(allowPaidStars: approvedGlobalPostQueryState?.price), groupId: nil, tags: nil, minDate: nil, maxDate: nil, folderId: nil)]
             } else if let options {
                 if case let .forum(peerId) = location {
-                    searchLocations = [.peer(peerId: peerId, fromId: nil, tags: tagMask, reactions: nil, threadId: nil, minDate: options.date?.0, maxDate: options.date?.1), .general(scope: .everywhere, tags: tagMask, minDate: options.date?.0, maxDate: options.date?.1, folderId: nil)]
+                    searchLocations = [.peer(peerId: peerId, fromId: nil, tags: tagMask, reactions: nil, threadId: nil, minDate: options.date?.0, maxDate: options.date?.1), .general(scope: .everywhere, groupId: nil, tags: tagMask, minDate: options.date?.0, maxDate: options.date?.1, folderId: nil)]
                 } else if let (peerId, _, _) = options.peer {
                     searchLocations = [.peer(peerId: peerId, fromId: nil, tags: tagMask, reactions: nil, threadId: nil, minDate: options.date?.0, maxDate: options.date?.1)]
                 } else {
-                    if case let .chatList(groupId) = location, case .archive = groupId {
-                        searchLocations = [.group(groupId: groupId._asGroup(), tags: tagMask, minDate: options.date?.0, maxDate: options.date?.1)]
+                    if case let .chatList(groupId) = location {
+                        searchLocations = [.general(scope: searchScope, groupId: groupId._asGroup(), tags: tagMask, minDate: options.date?.0, maxDate: options.date?.1, folderId: options.folder?.0)]
                     } else {
-                        searchLocations = [.general(scope: searchScope, tags: tagMask, minDate: options.date?.0, maxDate: options.date?.1, folderId: options.folder?.0)]
+                        searchLocations = [.general(scope: searchScope, groupId: nil, tags: tagMask, minDate: options.date?.0, maxDate: options.date?.1, folderId: options.folder?.0)]
                     }
                 }
             } else {
                 if case .channels = key {
-                    searchLocations = [.general(scope: .channels, tags: tagMask, minDate: nil, maxDate: nil, folderId: nil)]
+                    searchLocations = [.general(scope: .channels, groupId: nil, tags: tagMask, minDate: nil, maxDate: nil, folderId: nil)]
                 } else if case let .forum(peerId) = location {
-                    searchLocations = [.peer(peerId: peerId, fromId: nil, tags: tagMask, reactions: nil, threadId: nil, minDate: nil, maxDate: nil), .general(scope: .everywhere, tags: tagMask, minDate: nil, maxDate: nil, folderId: nil)]
-                } else if case let .chatList(groupId) = location, case .archive = groupId {
-                    searchLocations = [.group(groupId: groupId._asGroup(), tags: tagMask, minDate: nil, maxDate: nil)]
+                    searchLocations = [.peer(peerId: peerId, fromId: nil, tags: tagMask, reactions: nil, threadId: nil, minDate: nil, maxDate: nil), .general(scope: .everywhere, groupId: nil, tags: tagMask, minDate: nil, maxDate: nil, folderId: nil)]
+                } else if case let .chatList(groupId) = location {
+                    searchLocations = [.general(scope: searchScope, groupId: groupId._asGroup(), tags: tagMask, minDate: nil, maxDate: nil, folderId: nil)]
                 } else {
-                    searchLocations = [.general(scope: searchScope, tags: tagMask, minDate: nil, maxDate: nil, folderId: nil)]
+                    searchLocations = [.general(scope: searchScope, groupId: nil, tags: tagMask, minDate: nil, maxDate: nil, folderId: nil)]
                 }
             }
             
@@ -2726,7 +2726,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                 let searchSignals: [Signal<(SearchMessagesResult, SearchMessagesState), NoError>]
                 
                 if key == .globalPosts {
-                    searchSignals = [context.engine.messages.searchMessages(location: .general(scope: .globalPosts(allowPaidStars: approvedGlobalPostQueryState?.price), tags: nil, minDate: nil, maxDate: nil, folderId: nil), query: finalQuery, state: nil, limit: 50)]
+                    searchSignals = [context.engine.messages.searchMessages(location: .general(scope: .globalPosts(allowPaidStars: approvedGlobalPostQueryState?.price), groupId: nil, tags: nil, minDate: nil, maxDate: nil, folderId: nil), query: finalQuery, state: nil, limit: 50)]
                 } else {
                     searchSignals = searchLocations.map { searchLocation in
                         return context.engine.messages.searchMessages(location: searchLocation, query: finalQuery, state: nil, limit: 50)

@@ -1267,8 +1267,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                     panelSubtitleString = (panelStatusData.text, MultiScaleTextState.Attributes(font: Font.regular(17.0), color: subtitleColor))
                 }
             } else if let _ = threadData {
-                let subtitleColor: UIColor
-                subtitleColor = UIColor.white
+                let subtitleColor: UIColor = .white
                 
                 let statusText: String
                 if let user = peer as? TelegramUser, user.isForum {
@@ -1364,6 +1363,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
         ], mainState: TitleNodeStateRegular)
         self.subtitleNode.accessibilityLabel = subtitleStringText
         
+        var subtitleButtonHorizontalOffset: CGFloat = 0.0
         if subtitleIsButton {
             let subtitleBackgroundNode: ASDisplayNode
             if let current = self.subtitleBackgroundNode {
@@ -1400,20 +1400,21 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             let subtitleArrowNode: ASImageNode
             if let current = self.subtitleArrowNode {
                 subtitleArrowNode = current
-                if themeUpdated {
-                    subtitleArrowNode.image = generateTintedImage(image: UIImage(bundleImageName: "Item List/DisclosureArrow"), color: .white)?.withRenderingMode(.alwaysTemplate)
-                }
             } else {
                 subtitleArrowNode = ASImageNode()
                 self.subtitleArrowNode = subtitleArrowNode
                 self.subtitleNode.insertSubnode(subtitleArrowNode, at: 1)
-                
-                subtitleArrowNode.image = generateTintedImage(image: UIImage(bundleImageName: "Item List/DisclosureArrow"), color: .white)?.withRenderingMode(.alwaysTemplate)
             }
-            subtitleBackgroundNode.backgroundColor = .white.withMultipliedAlpha(0.1)
+            if subtitleArrowNode.image == nil || themeUpdated {
+                subtitleArrowNode.image = generateTintedImage(image: UIImage(bundleImageName: "Item List/DisclosureArrow"), color: presentationData.theme.list.itemSecondaryTextColor)
+            }
+            self.subtitleNode.updateTintColor(color: presentationData.theme.list.itemSecondaryTextColor, transition: navigationTransition)
+            
+            transition.updateBackgroundColor(node: subtitleBackgroundNode, color: contentButtonBackgroundColor)
             let subtitleSize = subtitleNodeLayout[TitleNodeStateRegular]!.size
-            var subtitleBackgroundFrame = CGRect(origin: CGPoint(), size: subtitleSize).offsetBy(dx: -subtitleSize.width * 0.5, dy: -subtitleSize.height * 0.5).insetBy(dx: -6.0, dy: -4.0)
+            var subtitleBackgroundFrame = CGRect(origin: CGPoint(), size: subtitleSize).offsetBy(dx: -subtitleSize.width * 0.5, dy: -subtitleSize.height * 0.5).insetBy(dx: -8.0, dy: -4.0)
             subtitleBackgroundFrame.size.width += 12.0
+            subtitleButtonHorizontalOffset = subtitleBackgroundFrame.midX
             transition.updateFrame(node: subtitleBackgroundNode, frame: subtitleBackgroundFrame)
             transition.updateCornerRadius(node: subtitleBackgroundNode, cornerRadius: subtitleBackgroundFrame.height * 0.5)
             
@@ -1620,7 +1621,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             titleOffset = -min(titleCollapseOffset, contentOffset)
             titleCollapseFraction = max(0.0, min(1.0, contentOffset / titleCollapseOffset))
             
-            subtitleFrame = CGRect(origin: CGPoint(x: 16.0, y: minTitleFrame.maxY + 2.0), size: subtitleSize)
+            subtitleFrame = CGRect(origin: CGPoint(x: 16.0 - subtitleButtonHorizontalOffset * (1.0 - titleCollapseFraction), y: minTitleFrame.maxY + 2.0), size: subtitleSize)
             if self.subtitleRating != nil {
                 subtitleFrame.origin.x += 22.0
             }
@@ -1642,10 +1643,10 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             
             let totalSubtitleWidth = effectiveSubtitleWidth + usernameSpacing + usernameSize.width
             if usernameSize.width == 0.0 {
-                subtitleFrame = CGRect(origin: CGPoint(x: floorToScreenPixels((width - effectiveSubtitleWidth) / 2.0), y: titleFrame.maxY + 1.0), size: subtitleSize)
+                subtitleFrame = CGRect(origin: CGPoint(x: floorToScreenPixels((width - effectiveSubtitleWidth) / 2.0) - subtitleButtonHorizontalOffset * (1.0 - titleCollapseFraction), y: titleFrame.maxY + 1.0), size: subtitleSize)
                 usernameFrame = CGRect(origin: CGPoint(x: floorToScreenPixels((width - usernameSize.width) / 2.0), y: subtitleFrame.maxY + 1.0), size: usernameSize)
             } else {
-                subtitleFrame = CGRect(origin: CGPoint(x: floorToScreenPixels((width - totalSubtitleWidth) / 2.0), y: titleFrame.maxY + 1.0), size: subtitleSize)
+                subtitleFrame = CGRect(origin: CGPoint(x: floorToScreenPixels((width - totalSubtitleWidth) / 2.0) - subtitleButtonHorizontalOffset * (1.0 - titleCollapseFraction), y: titleFrame.maxY + 1.0), size: subtitleSize)
                 usernameFrame = CGRect(origin: CGPoint(x: subtitleFrame.maxX + usernameSpacing, y: titleFrame.maxY + 1.0), size: usernameSize)
             }
         }
@@ -2859,4 +2860,3 @@ final class PeerInfoHeaderNode: ASDisplayNode {
         transition.updateAnchorPoint(layer: self.avatarListNode.maskNode.layer, anchorPoint: maskAnchorPoint)
     }
 }
-
