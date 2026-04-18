@@ -212,6 +212,7 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
     
     public final var rotated = false
     public final var experimentalSnapScrollToItem = false
+    public final var experimentalSnapScrollToPinnedItem = false
     public final var useMainQueueTransactions = false
     
     public final var scrollEnabled: Bool = true {
@@ -863,6 +864,7 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
             self.snapToBottomInsetUntilFirstInteraction = false
         }
         self.scrolledToItem = nil
+        self.experimentalSnapScrollToPinnedItem = false
 
         self.scroller.forceDecelerating = false
         self.isDragging = true
@@ -2670,6 +2672,9 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
             if self.experimentalSnapScrollToItem {
                 self.scrolledToItem = (originalScrollToItem.index, originalScrollToItem.position)
             }
+            if self.items[originalScrollToItem.index].pinToEdgeWithInset {
+                self.experimentalSnapScrollToPinnedItem = true
+            }
         } else if let scrolledToItem = self.scrolledToItem, self.experimentalSnapScrollToItem {
             var curve: ListViewAnimationCurve = .Default(duration: nil)
             var animated = false
@@ -2679,6 +2684,23 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
             }
             scrollToItem = ListViewScrollToItem(index: scrolledToItem.0, position: scrolledToItem.1, animated: animated, curve: curve, directionHint: .Down)
             isExperimentalSnapToScrollToItem = true
+        } else if self.experimentalSnapScrollToPinnedItem {
+            if let index = self.items.firstIndex(where: { $0.pinToEdgeWithInset }) {
+                isExperimentalSnapToScrollToItem = true
+                var curve: ListViewAnimationCurve = .Default(duration: nil)
+                var animated = false
+                if let updateSizeAndInsets = updateSizeAndInsets {
+                    curve = updateSizeAndInsets.curve
+                    animated = !updateSizeAndInsets.duration.isZero
+                }
+                scrollToItem = ListViewScrollToItem(index: index, position: self.rotated ? .bottom(0.0) : .top(0.0), animated: animated, curve: curve, directionHint: .Down)
+            }
+        }
+        
+        if scrollToItem == nil {
+            if self.itemNodes.isEmpty, self.items.contains(where: { $0.pinToEdgeWithInset }) {
+                scrollToItem = ListViewScrollToItem(index: 0, position: self.rotated ? .bottom(0.0) : .top(0.0), animated: false, curve: .Default(duration: 0.0), directionHint: .Down)
+            }
         }
         
         weak var highlightedItemNode: ListViewItemNode?
@@ -4851,7 +4873,7 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
         }
         
         if requestUpdateVisibleItems {
-            self.enqueueUpdateVisibleItems(synchronous: false)
+            self.enqueueUpdateVisibleItems(synchronous: self.experimentalSnapScrollToPinnedItem)
         }
         
         if scrollingForReorder {
