@@ -1,4 +1,115 @@
 public extension Api {
+    enum BotApp: TypeConstructorDescription {
+        public class Cons_botApp: TypeConstructorDescription {
+            public var flags: Int32
+            public var id: Int64
+            public var accessHash: Int64
+            public var shortName: String
+            public var title: String
+            public var description: String
+            public var photo: Api.Photo
+            public var document: Api.Document?
+            public var hash: Int64
+            public init(flags: Int32, id: Int64, accessHash: Int64, shortName: String, title: String, description: String, photo: Api.Photo, document: Api.Document?, hash: Int64) {
+                self.flags = flags
+                self.id = id
+                self.accessHash = accessHash
+                self.shortName = shortName
+                self.title = title
+                self.description = description
+                self.photo = photo
+                self.document = document
+                self.hash = hash
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("botApp", [("flags", ConstructorParameterDescription(self.flags)), ("id", ConstructorParameterDescription(self.id)), ("accessHash", ConstructorParameterDescription(self.accessHash)), ("shortName", ConstructorParameterDescription(self.shortName)), ("title", ConstructorParameterDescription(self.title)), ("description", ConstructorParameterDescription(self.description)), ("photo", ConstructorParameterDescription(self.photo)), ("document", ConstructorParameterDescription(self.document)), ("hash", ConstructorParameterDescription(self.hash))])
+            }
+        }
+        case botApp(Cons_botApp)
+        case botAppNotModified
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .botApp(let _data):
+                if boxed {
+                    buffer.appendInt32(-1778593322)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                serializeInt64(_data.id, buffer: buffer, boxed: false)
+                serializeInt64(_data.accessHash, buffer: buffer, boxed: false)
+                serializeString(_data.shortName, buffer: buffer, boxed: false)
+                serializeString(_data.title, buffer: buffer, boxed: false)
+                serializeString(_data.description, buffer: buffer, boxed: false)
+                _data.photo.serialize(buffer, true)
+                if Int(_data.flags) & Int(1 << 0) != 0 {
+                    _data.document!.serialize(buffer, true)
+                }
+                serializeInt64(_data.hash, buffer: buffer, boxed: false)
+                break
+            case .botAppNotModified:
+                if boxed {
+                    buffer.appendInt32(1571189943)
+                }
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .botApp(let _data):
+                return ("botApp", [("flags", ConstructorParameterDescription(_data.flags)), ("id", ConstructorParameterDescription(_data.id)), ("accessHash", ConstructorParameterDescription(_data.accessHash)), ("shortName", ConstructorParameterDescription(_data.shortName)), ("title", ConstructorParameterDescription(_data.title)), ("description", ConstructorParameterDescription(_data.description)), ("photo", ConstructorParameterDescription(_data.photo)), ("document", ConstructorParameterDescription(_data.document)), ("hash", ConstructorParameterDescription(_data.hash))])
+            case .botAppNotModified:
+                return ("botAppNotModified", [])
+            }
+        }
+
+        public static func parse_botApp(_ reader: BufferReader) -> BotApp? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Int64?
+            _2 = reader.readInt64()
+            var _3: Int64?
+            _3 = reader.readInt64()
+            var _4: String?
+            _4 = parseString(reader)
+            var _5: String?
+            _5 = parseString(reader)
+            var _6: String?
+            _6 = parseString(reader)
+            var _7: Api.Photo?
+            if let signature = reader.readInt32() {
+                _7 = Api.parse(reader, signature: signature) as? Api.Photo
+            }
+            var _8: Api.Document?
+            if Int(_1!) & Int(1 << 0) != 0 {
+                if let signature = reader.readInt32() {
+                    _8 = Api.parse(reader, signature: signature) as? Api.Document
+                }
+            }
+            var _9: Int64?
+            _9 = reader.readInt64()
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            let _c3 = _3 != nil
+            let _c4 = _4 != nil
+            let _c5 = _5 != nil
+            let _c6 = _6 != nil
+            let _c7 = _7 != nil
+            let _c8 = (Int(_1!) & Int(1 << 0) == 0) || _8 != nil
+            let _c9 = _9 != nil
+            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 && _c7 && _c8 && _c9 {
+                return Api.BotApp.botApp(Cons_botApp(flags: _1!, id: _2!, accessHash: _3!, shortName: _4!, title: _5!, description: _6!, photo: _7!, document: _8, hash: _9!))
+            }
+            else {
+                return nil
+            }
+        }
+        public static func parse_botAppNotModified(_ reader: BufferReader) -> BotApp? {
+            return Api.BotApp.botAppNotModified
+        }
+    }
+}
+public extension Api {
     enum BotAppSettings: TypeConstructorDescription {
         public class Cons_botAppSettings: TypeConstructorDescription {
             public var flags: Int32
@@ -1634,126 +1745,6 @@ public extension Api {
         }
         public static func parse_businessAwayMessageScheduleOutsideWorkHours(_ reader: BufferReader) -> BusinessAwayMessageSchedule? {
             return Api.BusinessAwayMessageSchedule.businessAwayMessageScheduleOutsideWorkHours
-        }
-    }
-}
-public extension Api {
-    enum BusinessBotRecipients: TypeConstructorDescription {
-        public class Cons_businessBotRecipients: TypeConstructorDescription {
-            public var flags: Int32
-            public var users: [Int64]?
-            public var excludeUsers: [Int64]?
-            public init(flags: Int32, users: [Int64]?, excludeUsers: [Int64]?) {
-                self.flags = flags
-                self.users = users
-                self.excludeUsers = excludeUsers
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("businessBotRecipients", [("flags", ConstructorParameterDescription(self.flags)), ("users", ConstructorParameterDescription(self.users)), ("excludeUsers", ConstructorParameterDescription(self.excludeUsers))])
-            }
-        }
-        case businessBotRecipients(Cons_businessBotRecipients)
-
-        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
-            switch self {
-            case .businessBotRecipients(let _data):
-                if boxed {
-                    buffer.appendInt32(-1198722189)
-                }
-                serializeInt32(_data.flags, buffer: buffer, boxed: false)
-                if Int(_data.flags) & Int(1 << 4) != 0 {
-                    buffer.appendInt32(481674261)
-                    buffer.appendInt32(Int32(_data.users!.count))
-                    for item in _data.users! {
-                        serializeInt64(item, buffer: buffer, boxed: false)
-                    }
-                }
-                if Int(_data.flags) & Int(1 << 6) != 0 {
-                    buffer.appendInt32(481674261)
-                    buffer.appendInt32(Int32(_data.excludeUsers!.count))
-                    for item in _data.excludeUsers! {
-                        serializeInt64(item, buffer: buffer, boxed: false)
-                    }
-                }
-                break
-            }
-        }
-
-        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-            switch self {
-            case .businessBotRecipients(let _data):
-                return ("businessBotRecipients", [("flags", ConstructorParameterDescription(_data.flags)), ("users", ConstructorParameterDescription(_data.users)), ("excludeUsers", ConstructorParameterDescription(_data.excludeUsers))])
-            }
-        }
-
-        public static func parse_businessBotRecipients(_ reader: BufferReader) -> BusinessBotRecipients? {
-            var _1: Int32?
-            _1 = reader.readInt32()
-            var _2: [Int64]?
-            if Int(_1!) & Int(1 << 4) != 0 {
-                if let _ = reader.readInt32() {
-                    _2 = Api.parseVector(reader, elementSignature: 570911930, elementType: Int64.self)
-                }
-            }
-            var _3: [Int64]?
-            if Int(_1!) & Int(1 << 6) != 0 {
-                if let _ = reader.readInt32() {
-                    _3 = Api.parseVector(reader, elementSignature: 570911930, elementType: Int64.self)
-                }
-            }
-            let _c1 = _1 != nil
-            let _c2 = (Int(_1!) & Int(1 << 4) == 0) || _2 != nil
-            let _c3 = (Int(_1!) & Int(1 << 6) == 0) || _3 != nil
-            if _c1 && _c2 && _c3 {
-                return Api.BusinessBotRecipients.businessBotRecipients(Cons_businessBotRecipients(flags: _1!, users: _2, excludeUsers: _3))
-            }
-            else {
-                return nil
-            }
-        }
-    }
-}
-public extension Api {
-    enum BusinessBotRights: TypeConstructorDescription {
-        public class Cons_businessBotRights: TypeConstructorDescription {
-            public var flags: Int32
-            public init(flags: Int32) {
-                self.flags = flags
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("businessBotRights", [("flags", ConstructorParameterDescription(self.flags))])
-            }
-        }
-        case businessBotRights(Cons_businessBotRights)
-
-        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
-            switch self {
-            case .businessBotRights(let _data):
-                if boxed {
-                    buffer.appendInt32(-1604170505)
-                }
-                serializeInt32(_data.flags, buffer: buffer, boxed: false)
-                break
-            }
-        }
-
-        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-            switch self {
-            case .businessBotRights(let _data):
-                return ("businessBotRights", [("flags", ConstructorParameterDescription(_data.flags))])
-            }
-        }
-
-        public static func parse_businessBotRights(_ reader: BufferReader) -> BusinessBotRights? {
-            var _1: Int32?
-            _1 = reader.readInt32()
-            let _c1 = _1 != nil
-            if _c1 {
-                return Api.BusinessBotRights.businessBotRights(Cons_businessBotRights(flags: _1!))
-            }
-            else {
-                return nil
-            }
         }
     }
 }

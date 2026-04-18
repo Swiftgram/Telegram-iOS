@@ -453,6 +453,66 @@ public extension Api.auth {
     }
 }
 public extension Api.bots {
+    enum AccessSettings: TypeConstructorDescription {
+        public class Cons_accessSettings: TypeConstructorDescription {
+            public var flags: Int32
+            public var addUsers: [Api.User]?
+            public init(flags: Int32, addUsers: [Api.User]?) {
+                self.flags = flags
+                self.addUsers = addUsers
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("accessSettings", [("flags", ConstructorParameterDescription(self.flags)), ("addUsers", ConstructorParameterDescription(self.addUsers))])
+            }
+        }
+        case accessSettings(Cons_accessSettings)
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .accessSettings(let _data):
+                if boxed {
+                    buffer.appendInt32(-585121901)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 1) != 0 {
+                    buffer.appendInt32(481674261)
+                    buffer.appendInt32(Int32(_data.addUsers!.count))
+                    for item in _data.addUsers! {
+                        item.serialize(buffer, true)
+                    }
+                }
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .accessSettings(let _data):
+                return ("accessSettings", [("flags", ConstructorParameterDescription(_data.flags)), ("addUsers", ConstructorParameterDescription(_data.addUsers))])
+            }
+        }
+
+        public static func parse_accessSettings(_ reader: BufferReader) -> AccessSettings? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: [Api.User]?
+            if Int(_1!) & Int(1 << 1) != 0 {
+                if let _ = reader.readInt32() {
+                    _2 = Api.parseVector(reader, elementSignature: 0, elementType: Api.User.self)
+                }
+            }
+            let _c1 = _1 != nil
+            let _c2 = (Int(_1!) & Int(1 << 1) == 0) || _2 != nil
+            if _c1 && _c2 {
+                return Api.bots.AccessSettings.accessSettings(Cons_accessSettings(flags: _1!, addUsers: _2))
+            }
+            else {
+                return nil
+            }
+        }
+    }
+}
+public extension Api.bots {
     enum BotInfo: TypeConstructorDescription {
         public class Cons_botInfo: TypeConstructorDescription {
             public var name: String
@@ -1645,145 +1705,6 @@ public extension Api.chatlists {
             let _c3 = _3 != nil
             if _c1 && _c2 && _c3 {
                 return Api.chatlists.ExportedInvites.exportedInvites(Cons_exportedInvites(invites: _1!, chats: _2!, users: _3!))
-            }
-            else {
-                return nil
-            }
-        }
-    }
-}
-public extension Api.contacts {
-    enum Blocked: TypeConstructorDescription {
-        public class Cons_blocked: TypeConstructorDescription {
-            public var blocked: [Api.PeerBlocked]
-            public var chats: [Api.Chat]
-            public var users: [Api.User]
-            public init(blocked: [Api.PeerBlocked], chats: [Api.Chat], users: [Api.User]) {
-                self.blocked = blocked
-                self.chats = chats
-                self.users = users
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("blocked", [("blocked", ConstructorParameterDescription(self.blocked)), ("chats", ConstructorParameterDescription(self.chats)), ("users", ConstructorParameterDescription(self.users))])
-            }
-        }
-        public class Cons_blockedSlice: TypeConstructorDescription {
-            public var count: Int32
-            public var blocked: [Api.PeerBlocked]
-            public var chats: [Api.Chat]
-            public var users: [Api.User]
-            public init(count: Int32, blocked: [Api.PeerBlocked], chats: [Api.Chat], users: [Api.User]) {
-                self.count = count
-                self.blocked = blocked
-                self.chats = chats
-                self.users = users
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("blockedSlice", [("count", ConstructorParameterDescription(self.count)), ("blocked", ConstructorParameterDescription(self.blocked)), ("chats", ConstructorParameterDescription(self.chats)), ("users", ConstructorParameterDescription(self.users))])
-            }
-        }
-        case blocked(Cons_blocked)
-        case blockedSlice(Cons_blockedSlice)
-
-        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
-            switch self {
-            case .blocked(let _data):
-                if boxed {
-                    buffer.appendInt32(182326673)
-                }
-                buffer.appendInt32(481674261)
-                buffer.appendInt32(Int32(_data.blocked.count))
-                for item in _data.blocked {
-                    item.serialize(buffer, true)
-                }
-                buffer.appendInt32(481674261)
-                buffer.appendInt32(Int32(_data.chats.count))
-                for item in _data.chats {
-                    item.serialize(buffer, true)
-                }
-                buffer.appendInt32(481674261)
-                buffer.appendInt32(Int32(_data.users.count))
-                for item in _data.users {
-                    item.serialize(buffer, true)
-                }
-                break
-            case .blockedSlice(let _data):
-                if boxed {
-                    buffer.appendInt32(-513392236)
-                }
-                serializeInt32(_data.count, buffer: buffer, boxed: false)
-                buffer.appendInt32(481674261)
-                buffer.appendInt32(Int32(_data.blocked.count))
-                for item in _data.blocked {
-                    item.serialize(buffer, true)
-                }
-                buffer.appendInt32(481674261)
-                buffer.appendInt32(Int32(_data.chats.count))
-                for item in _data.chats {
-                    item.serialize(buffer, true)
-                }
-                buffer.appendInt32(481674261)
-                buffer.appendInt32(Int32(_data.users.count))
-                for item in _data.users {
-                    item.serialize(buffer, true)
-                }
-                break
-            }
-        }
-
-        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-            switch self {
-            case .blocked(let _data):
-                return ("blocked", [("blocked", ConstructorParameterDescription(_data.blocked)), ("chats", ConstructorParameterDescription(_data.chats)), ("users", ConstructorParameterDescription(_data.users))])
-            case .blockedSlice(let _data):
-                return ("blockedSlice", [("count", ConstructorParameterDescription(_data.count)), ("blocked", ConstructorParameterDescription(_data.blocked)), ("chats", ConstructorParameterDescription(_data.chats)), ("users", ConstructorParameterDescription(_data.users))])
-            }
-        }
-
-        public static func parse_blocked(_ reader: BufferReader) -> Blocked? {
-            var _1: [Api.PeerBlocked]?
-            if let _ = reader.readInt32() {
-                _1 = Api.parseVector(reader, elementSignature: 0, elementType: Api.PeerBlocked.self)
-            }
-            var _2: [Api.Chat]?
-            if let _ = reader.readInt32() {
-                _2 = Api.parseVector(reader, elementSignature: 0, elementType: Api.Chat.self)
-            }
-            var _3: [Api.User]?
-            if let _ = reader.readInt32() {
-                _3 = Api.parseVector(reader, elementSignature: 0, elementType: Api.User.self)
-            }
-            let _c1 = _1 != nil
-            let _c2 = _2 != nil
-            let _c3 = _3 != nil
-            if _c1 && _c2 && _c3 {
-                return Api.contacts.Blocked.blocked(Cons_blocked(blocked: _1!, chats: _2!, users: _3!))
-            }
-            else {
-                return nil
-            }
-        }
-        public static func parse_blockedSlice(_ reader: BufferReader) -> Blocked? {
-            var _1: Int32?
-            _1 = reader.readInt32()
-            var _2: [Api.PeerBlocked]?
-            if let _ = reader.readInt32() {
-                _2 = Api.parseVector(reader, elementSignature: 0, elementType: Api.PeerBlocked.self)
-            }
-            var _3: [Api.Chat]?
-            if let _ = reader.readInt32() {
-                _3 = Api.parseVector(reader, elementSignature: 0, elementType: Api.Chat.self)
-            }
-            var _4: [Api.User]?
-            if let _ = reader.readInt32() {
-                _4 = Api.parseVector(reader, elementSignature: 0, elementType: Api.User.self)
-            }
-            let _c1 = _1 != nil
-            let _c2 = _2 != nil
-            let _c3 = _3 != nil
-            let _c4 = _4 != nil
-            if _c1 && _c2 && _c3 && _c4 {
-                return Api.contacts.Blocked.blockedSlice(Cons_blockedSlice(count: _1!, blocked: _2!, chats: _3!, users: _4!))
             }
             else {
                 return nil

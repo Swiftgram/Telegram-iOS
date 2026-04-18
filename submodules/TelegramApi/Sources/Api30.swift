@@ -1,5 +1,14 @@
 public extension Api {
     indirect enum WebPageAttribute: TypeConstructorDescription {
+        public class Cons_webPageAttributeAiComposeTone: TypeConstructorDescription {
+            public var emojiId: Int64
+            public init(emojiId: Int64) {
+                self.emojiId = emojiId
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("webPageAttributeAiComposeTone", [("emojiId", ConstructorParameterDescription(self.emojiId))])
+            }
+        }
         public class Cons_webPageAttributeStarGiftAuction: TypeConstructorDescription {
             public var gift: Api.StarGift
             public var endDate: Int32
@@ -68,6 +77,7 @@ public extension Api {
                 return ("webPageAttributeUniqueStarGift", [("gift", ConstructorParameterDescription(self.gift))])
             }
         }
+        case webPageAttributeAiComposeTone(Cons_webPageAttributeAiComposeTone)
         case webPageAttributeStarGiftAuction(Cons_webPageAttributeStarGiftAuction)
         case webPageAttributeStarGiftCollection(Cons_webPageAttributeStarGiftCollection)
         case webPageAttributeStickerSet(Cons_webPageAttributeStickerSet)
@@ -77,6 +87,12 @@ public extension Api {
 
         public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
             switch self {
+            case .webPageAttributeAiComposeTone(let _data):
+                if boxed {
+                    buffer.appendInt32(2005007896)
+                }
+                serializeInt64(_data.emojiId, buffer: buffer, boxed: false)
+                break
             case .webPageAttributeStarGiftAuction(let _data):
                 if boxed {
                     buffer.appendInt32(29770178)
@@ -143,6 +159,8 @@ public extension Api {
 
         public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
             switch self {
+            case .webPageAttributeAiComposeTone(let _data):
+                return ("webPageAttributeAiComposeTone", [("emojiId", ConstructorParameterDescription(_data.emojiId))])
             case .webPageAttributeStarGiftAuction(let _data):
                 return ("webPageAttributeStarGiftAuction", [("gift", ConstructorParameterDescription(_data.gift)), ("endDate", ConstructorParameterDescription(_data.endDate))])
             case .webPageAttributeStarGiftCollection(let _data):
@@ -158,6 +176,17 @@ public extension Api {
             }
         }
 
+        public static func parse_webPageAttributeAiComposeTone(_ reader: BufferReader) -> WebPageAttribute? {
+            var _1: Int64?
+            _1 = reader.readInt64()
+            let _c1 = _1 != nil
+            if _c1 {
+                return Api.WebPageAttribute.webPageAttributeAiComposeTone(Cons_webPageAttributeAiComposeTone(emojiId: _1!))
+            }
+            else {
+                return nil
+            }
+        }
         public static func parse_webPageAttributeStarGiftAuction(_ reader: BufferReader) -> WebPageAttribute? {
             var _1: Api.StarGift?
             if let signature = reader.readInt32() {
@@ -1731,104 +1760,6 @@ public extension Api.account {
             let _c1 = _1 != nil
             if _c1 {
                 return Api.account.ResetPasswordResult.resetPasswordRequestedWait(Cons_resetPasswordRequestedWait(untilDate: _1!))
-            }
-            else {
-                return nil
-            }
-        }
-    }
-}
-public extension Api.account {
-    enum ResolvedBusinessChatLinks: TypeConstructorDescription {
-        public class Cons_resolvedBusinessChatLinks: TypeConstructorDescription {
-            public var flags: Int32
-            public var peer: Api.Peer
-            public var message: String
-            public var entities: [Api.MessageEntity]?
-            public var chats: [Api.Chat]
-            public var users: [Api.User]
-            public init(flags: Int32, peer: Api.Peer, message: String, entities: [Api.MessageEntity]?, chats: [Api.Chat], users: [Api.User]) {
-                self.flags = flags
-                self.peer = peer
-                self.message = message
-                self.entities = entities
-                self.chats = chats
-                self.users = users
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("resolvedBusinessChatLinks", [("flags", ConstructorParameterDescription(self.flags)), ("peer", ConstructorParameterDescription(self.peer)), ("message", ConstructorParameterDescription(self.message)), ("entities", ConstructorParameterDescription(self.entities)), ("chats", ConstructorParameterDescription(self.chats)), ("users", ConstructorParameterDescription(self.users))])
-            }
-        }
-        case resolvedBusinessChatLinks(Cons_resolvedBusinessChatLinks)
-
-        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
-            switch self {
-            case .resolvedBusinessChatLinks(let _data):
-                if boxed {
-                    buffer.appendInt32(-1708937439)
-                }
-                serializeInt32(_data.flags, buffer: buffer, boxed: false)
-                _data.peer.serialize(buffer, true)
-                serializeString(_data.message, buffer: buffer, boxed: false)
-                if Int(_data.flags) & Int(1 << 0) != 0 {
-                    buffer.appendInt32(481674261)
-                    buffer.appendInt32(Int32(_data.entities!.count))
-                    for item in _data.entities! {
-                        item.serialize(buffer, true)
-                    }
-                }
-                buffer.appendInt32(481674261)
-                buffer.appendInt32(Int32(_data.chats.count))
-                for item in _data.chats {
-                    item.serialize(buffer, true)
-                }
-                buffer.appendInt32(481674261)
-                buffer.appendInt32(Int32(_data.users.count))
-                for item in _data.users {
-                    item.serialize(buffer, true)
-                }
-                break
-            }
-        }
-
-        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-            switch self {
-            case .resolvedBusinessChatLinks(let _data):
-                return ("resolvedBusinessChatLinks", [("flags", ConstructorParameterDescription(_data.flags)), ("peer", ConstructorParameterDescription(_data.peer)), ("message", ConstructorParameterDescription(_data.message)), ("entities", ConstructorParameterDescription(_data.entities)), ("chats", ConstructorParameterDescription(_data.chats)), ("users", ConstructorParameterDescription(_data.users))])
-            }
-        }
-
-        public static func parse_resolvedBusinessChatLinks(_ reader: BufferReader) -> ResolvedBusinessChatLinks? {
-            var _1: Int32?
-            _1 = reader.readInt32()
-            var _2: Api.Peer?
-            if let signature = reader.readInt32() {
-                _2 = Api.parse(reader, signature: signature) as? Api.Peer
-            }
-            var _3: String?
-            _3 = parseString(reader)
-            var _4: [Api.MessageEntity]?
-            if Int(_1!) & Int(1 << 0) != 0 {
-                if let _ = reader.readInt32() {
-                    _4 = Api.parseVector(reader, elementSignature: 0, elementType: Api.MessageEntity.self)
-                }
-            }
-            var _5: [Api.Chat]?
-            if let _ = reader.readInt32() {
-                _5 = Api.parseVector(reader, elementSignature: 0, elementType: Api.Chat.self)
-            }
-            var _6: [Api.User]?
-            if let _ = reader.readInt32() {
-                _6 = Api.parseVector(reader, elementSignature: 0, elementType: Api.User.self)
-            }
-            let _c1 = _1 != nil
-            let _c2 = _2 != nil
-            let _c3 = _3 != nil
-            let _c4 = (Int(_1!) & Int(1 << 0) == 0) || _4 != nil
-            let _c5 = _5 != nil
-            let _c6 = _6 != nil
-            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 {
-                return Api.account.ResolvedBusinessChatLinks.resolvedBusinessChatLinks(Cons_resolvedBusinessChatLinks(flags: _1!, peer: _2!, message: _3!, entities: _4, chats: _5!, users: _6!))
             }
             else {
                 return nil

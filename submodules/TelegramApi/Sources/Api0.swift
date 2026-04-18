@@ -57,8 +57,9 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[0x0929C32F] = { return parseInt256($0) }
     dict[-1255641564] = { return parseString($0) }
     dict[-1194283041] = { return Api.AccountDaysTTL.parse_accountDaysTTL($0) }
-    dict[317330533] = { return Api.AiComposeTone.parse_aiComposeTone($0) }
+    dict[-805945687] = { return Api.AiComposeTone.parse_aiComposeTone($0) }
     dict[-1683135468] = { return Api.AiComposeTone.parse_aiComposeToneDefault($0) }
+    dict[-1461961831] = { return Api.AiComposeToneExample.parse_aiComposeToneExample($0) }
     dict[-653423106] = { return Api.AttachMenuBot.parse_attachMenuBot($0) }
     dict[-1297663893] = { return Api.AttachMenuBotIcon.parse_attachMenuBotIcon($0) }
     dict[1165423600] = { return Api.AttachMenuBotIconColor.parse_attachMenuBotIconColor($0) }
@@ -1294,6 +1295,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[555358088] = { return Api.WebPage.parse_webPageEmpty($0) }
     dict[1930545681] = { return Api.WebPage.parse_webPageNotModified($0) }
     dict[-1328464313] = { return Api.WebPage.parse_webPagePending($0) }
+    dict[2005007896] = { return Api.WebPageAttribute.parse_webPageAttributeAiComposeTone($0) }
     dict[29770178] = { return Api.WebPageAttribute.parse_webPageAttributeStarGiftAuction($0) }
     dict[835375875] = { return Api.WebPageAttribute.parse_webPageAttributeStarGiftCollection($0) }
     dict[1355547603] = { return Api.WebPageAttribute.parse_webPageAttributeStickerSet($0) }
@@ -1340,7 +1342,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[-842824308] = { return Api.account.WallPapers.parse_wallPapers($0) }
     dict[471437699] = { return Api.account.WallPapers.parse_wallPapersNotModified($0) }
     dict[-313079300] = { return Api.account.WebAuthorizations.parse_webAuthorizations($0) }
-    dict[1696028994] = { return Api.aicompose.Tones.parse_tones($0) }
+    dict[1822232318] = { return Api.aicompose.Tones.parse_tones($0) }
     dict[-1040948989] = { return Api.aicompose.Tones.parse_tonesNotModified($0) }
     dict[782418132] = { return Api.auth.Authorization.parse_authorization($0) }
     dict[1148485274] = { return Api.auth.Authorization.parse_authorizationSignUpRequired($0) }
@@ -1370,6 +1372,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[-1073693790] = { return Api.auth.SentCodeType.parse_sentCodeTypeSms($0) }
     dict[-1284008785] = { return Api.auth.SentCodeType.parse_sentCodeTypeSmsPhrase($0) }
     dict[-1542017919] = { return Api.auth.SentCodeType.parse_sentCodeTypeSmsWord($0) }
+    dict[-585121901] = { return Api.bots.AccessSettings.parse_accessSettings($0) }
     dict[-391678544] = { return Api.bots.BotInfo.parse_botInfo($0) }
     dict[1012971041] = { return Api.bots.ExportedBotToken.parse_exportedBotToken($0) }
     dict[428978491] = { return Api.bots.PopularAppBots.parse_popularAppBots($0) }
@@ -1685,6 +1688,8 @@ public extension Api {
         case let _1 as Api.AccountDaysTTL:
             _1.serialize(buffer, boxed)
         case let _1 as Api.AiComposeTone:
+            _1.serialize(buffer, boxed)
+        case let _1 as Api.AiComposeToneExample:
             _1.serialize(buffer, boxed)
         case let _1 as Api.AttachMenuBot:
             _1.serialize(buffer, boxed)
@@ -2513,6 +2518,8 @@ public extension Api {
         case let _1 as Api.auth.SentCode:
             _1.serialize(buffer, boxed)
         case let _1 as Api.auth.SentCodeType:
+            _1.serialize(buffer, boxed)
+        case let _1 as Api.bots.AccessSettings:
             _1.serialize(buffer, boxed)
         case let _1 as Api.bots.BotInfo:
             _1.serialize(buffer, boxed)
