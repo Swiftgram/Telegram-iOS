@@ -2998,9 +2998,9 @@ final class TextContentItemLayer: SimpleLayer {
                             self.updateRevealMask(animateNewSegments: false)
                         })
                     } else if "".isEmpty {
-                        ComponentTransition(animation: .curve(duration: 0.25, curve: .easeInOut)).animateBlur(layer: snippetLayer, fromRadius: 8.0, toRadius: 0.0)
+                        ComponentTransition(animation: .curve(duration: 0.22, curve: .easeInOut)).animateBlur(layer: snippetLayer, fromRadius: 3.0, toRadius: 0.0)
                         snippetLayer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
-                        snippetLayer.animatePosition(from: CGPoint(x: 0.0, y: 10.0), to: CGPoint(), duration: 0.2, additive: true)
+                        snippetLayer.animatePosition(from: CGPoint(x: 0.0, y: 6.0), to: CGPoint(), duration: 0.2, additive: true)
                         snippetLayer.animateScale(from: 0.5, to: 1.0, duration: 0.2, completion: { [weak self, weak snippetLayer] _ in
                             guard let self, let snippetLayer else {
                                 return

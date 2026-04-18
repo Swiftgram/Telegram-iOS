@@ -24,6 +24,7 @@ import TelegramNotices
 import Markdown
 import TelegramUIPreferences
 import ChatSendMessageActionUI
+import ContextUI
 
 final class TextProcessingContentComponent: Component {
     typealias EnvironmentType = ViewControllerComponentContainer.Environment
@@ -49,6 +50,8 @@ final class TextProcessingContentComponent: Component {
     let translateChat: ((String) -> Void)?
     let displayLanguageSelectionMenu: (UIView, String, TelegramComposeAIMessageMode.StyleId, Bool,  @escaping (String, TelegramComposeAIMessageMode.StyleReference) -> Void) -> Void
     let newStyleAdded: (TelegramComposeAIMessageMode.CloudStyle) -> Void
+    let styleUpdated: (TelegramComposeAIMessageMode.CloudStyle) -> Void
+    let styleDeleted: (TelegramComposeAIMessageMode.StyleId) -> Void
 
     init(
         externalState: ExternalState,
@@ -62,7 +65,9 @@ final class TextProcessingContentComponent: Component {
         copyCurrentResult: (() -> Void)?,
         translateChat: ((String) -> Void)?,
         displayLanguageSelectionMenu: @escaping (UIView, String, TelegramComposeAIMessageMode.StyleId, Bool, @escaping (String, TelegramComposeAIMessageMode.StyleReference) -> Void) -> Void,
-        newStyleAdded: @escaping (TelegramComposeAIMessageMode.CloudStyle) -> Void
+        newStyleAdded: @escaping (TelegramComposeAIMessageMode.CloudStyle) -> Void,
+        styleUpdated: @escaping (TelegramComposeAIMessageMode.CloudStyle) -> Void,
+        styleDeleted: @escaping (TelegramComposeAIMessageMode.StyleId) -> Void
     ) {
         self.externalState = externalState
         self.styles = styles
@@ -76,6 +81,8 @@ final class TextProcessingContentComponent: Component {
         self.translateChat = translateChat
         self.displayLanguageSelectionMenu = displayLanguageSelectionMenu
         self.newStyleAdded = newStyleAdded
+        self.styleUpdated = styleUpdated
+        self.styleDeleted = styleDeleted
     }
 
     static func ==(lhs: TextProcessingContentComponent, rhs: TextProcessingContentComponent) -> Bool {
@@ -200,6 +207,158 @@ final class TextProcessingContentComponent: Component {
                     return EnginePreferencesEntry(state)
                 })
             }
+        }
+        
+        private func requestShareStyle(id: TelegramComposeAIMessageMode.StyleReference) {
+            guard let component = self.component else {
+                return
+            }
+            guard let style = component.styles.first(where: { .style($0.reference.id) == id.id }) else {
+                return
+            }
+            guard let slug = style.slug else {
+                return
+            }
+            let shareController = component.context.sharedContext.makeShareController(context: component.context, params: ShareControllerParams(subject: .url("https://t.me/addstyle/\(slug)")))
+            self.environment?.controller()?.present(shareController, in: .window(.root))
+        }
+        
+        private func requestEditStyle(id: TelegramComposeAIMessageMode.StyleReference) {
+            Task { @MainActor [weak self] in
+                guard let self else {
+                    return
+                }
+                guard let component = self.component, let environment = self.environment else {
+                    return
+                }
+                guard let style = component.styles.first(where: { .style($0.reference.id) == id.id }) else {
+                    return
+                }
+                environment.controller()?.push(await TextStyleEditScreen(
+                    context: component.context,
+                    mode: .edit(style.cloudStyle),
+                    completion: { [weak self] style in
+                        guard let self, let component = self.component else {
+                            return
+                        }
+                        component.styleUpdated(style)
+                    }
+                ))
+            }
+        }
+        
+        private func requestDeleteStyle(id: TelegramComposeAIMessageMode.StyleReference) {
+            guard let component = self.component, let environment = self.environment else {
+                return
+            }
+            guard let style = component.styles.first(where: { .style($0.reference.id) == id.id }) else {
+                return
+            }
+            guard case let .custom(style) = style.cloudStyle.content else {
+                return
+            }
+            
+            environment.controller()?.push(textAlertController(
+                context: component.context,
+                title: "Delete Style",
+                text: "Are you sure you want to delete this style? It will be removed for everyone who installed it.",
+                actions: [
+                    TextAlertAction(type: .genericAction, title: environment.strings.Common_Cancel, action: {}),
+                    TextAlertAction(type: .destructiveAction, title: environment.strings.Common_Delete, action: { [weak self] in
+                        guard let self, let component = self.component else {
+                            return
+                        }
+                        let _ = component.context.engine.messages.deleteAITextStyle(id: style.id, accessHash: style.accessHash).startStandalone()
+                        component.styleDeleted(id.id)
+                    }),
+                ]
+            ))
+        }
+        
+        private func openStyleContextMenu(id: TelegramComposeAIMessageMode.StyleReference, gesture:  ContextGesture, sourceView: ContextExtractedContentContainingView) {
+            guard let component = self.component, let environment = self.environment else {
+                return
+            }
+            
+            guard let style = component.styles.first(where: { .style($0.reference.id) == id.id }) else {
+                return
+            }
+            
+            var items: [ContextMenuItem] = []
+            if style.isAuthor {
+                items.append(.action(ContextMenuActionItem(
+                    text: "Edit Style",
+                    icon: { theme in
+                        return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Edit"), color: theme.contextMenu.primaryColor)
+                    },
+                    action: { [weak self] c, _ in
+                        c?.dismiss(completion: { [weak self] in
+                            guard let self else {
+                                return
+                            }
+                            self.requestEditStyle(id: id)
+                        })
+                    })
+                ))
+            }
+            items.append(.action(ContextMenuActionItem(
+                text: "Share Style",
+                icon: { theme in
+                    return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Forward"), color: theme.contextMenu.primaryColor)
+                },
+                action: { [weak self] c, _ in
+                    c?.dismiss(completion: { [weak self] in
+                        guard let self else {
+                            return
+                        }
+                        self.requestShareStyle(id: id)
+                    })
+                })
+            ))
+            if style.isAuthor {
+                items.append(.action(ContextMenuActionItem(
+                    text: "Delete Style",
+                    textColor: .destructive,
+                    icon: { theme in
+                        return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Delete"), color: theme.contextMenu.destructiveColor)
+                    },
+                    action: { [weak self] c, _ in
+                        c?.dismiss(completion: { [weak self] in
+                            guard let self else {
+                                return
+                            }
+                            self.requestDeleteStyle(id: id)
+                        })
+                    })
+                ))
+            }
+            
+            final class ContextExtractedContentSourceImpl: ContextExtractedContentSource {
+                let keepInPlace: Bool = false
+                let ignoreContentTouches: Bool = false
+                let blurBackground: Bool = false
+                
+                private let contentView: ContextExtractedContentContainingView
+                
+                init(contentView: ContextExtractedContentContainingView) {
+                    self.contentView = contentView
+                }
+                
+                func takeView() -> ContextControllerTakeViewInfo? {
+                    return ContextControllerTakeViewInfo(containingItem: .view(self.contentView), contentAreaInScreenSpace: UIScreen.main.bounds)
+                }
+                
+                func putBack() -> ContextControllerPutBackViewInfo? {
+                    return ContextControllerPutBackViewInfo(contentAreaInScreenSpace: UIScreen.main.bounds)
+                }
+            }
+            
+            let presentationData = component.context.sharedContext.currentPresentationData.with({ $0 })
+            let controller = makeContextController(
+                presentationData: presentationData,
+                source: .extracted(ContextExtractedContentSourceImpl(contentView: sourceView)), items: .single(ContextController.Items(content: .list(items))), recognizer: nil, gesture: gesture
+            )
+            environment.controller()?.presentInGlobalOverlay(controller)
         }
 
         func update(component: TextProcessingContentComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<ViewControllerComponentContainer.Environment>, transition: ComponentTransition) -> CGSize {
@@ -363,8 +522,10 @@ final class TextProcessingContentComponent: Component {
                     mode: .translate(ignoredLanguages: component.ignoredTranslationLanguages),
                     copyAction: component.copyCurrentResult,
                     displayLanguageSelectionMenu: component.displayLanguageSelectionMenu,
-                    createStyle: {},
-                    editStyle: { _ in },
+                    createStyle: {
+                    },
+                    openStyleContextMenu: { _, _, _ in
+                    },
                     present: { [weak self] c, a in
                         self?.environment?.controller()?.present(c, in: .window(.root), with: a)
                     },
@@ -384,21 +545,30 @@ final class TextProcessingContentComponent: Component {
                     copyAction: component.copyCurrentResult,
                     displayLanguageSelectionMenu: component.displayLanguageSelectionMenu,
                     createStyle: { [weak self] in
-                        guard let self, let component = self.component, let environment = self.environment else {
+                        Task { @MainActor in
+                            guard let self else {
+                                return
+                            }
+                            guard let component = self.component, let environment = self.environment else {
+                                return
+                            }
+                            environment.controller()?.push(await TextStyleEditScreen(
+                                context: component.context,
+                                mode: .create,
+                                completion: { [weak self] style in
+                                    guard let self, let component = self.component else {
+                                        return
+                                    }
+                                    component.newStyleAdded(style)
+                                }
+                            ))
+                        }
+                    },
+                    openStyleContextMenu: { [weak self] styleId, gesture, sourceView in
+                        guard let self else {
                             return
                         }
-                        environment.controller()?.push(TextStyleEditScreen(
-                            context: component.context,
-                            initialText: nil,
-                            completion: { [weak self] style in
-                                guard let self, let component = self.component else {
-                                    return
-                                }
-                                component.newStyleAdded(style)
-                            }
-                        ))
-                    },
-                    editStyle: { _ in
+                        self.openStyleContextMenu(id: styleId, gesture: gesture, sourceView: sourceView)
                     },
                     present: { [weak self] c, a in
                         self?.environment?.controller()?.present(c, in: .window(.root), with: a)
@@ -418,8 +588,10 @@ final class TextProcessingContentComponent: Component {
                     mode: .fix,
                     copyAction: component.copyCurrentResult,
                     displayLanguageSelectionMenu: component.displayLanguageSelectionMenu,
-                    createStyle: {},
-                    editStyle: { _ in },
+                    createStyle: {
+                    },
+                    openStyleContextMenu: { _, _, _ in
+                    },
                     present: { [weak self] c, a in
                         self?.environment?.controller()?.present(c, in: .window(.root), with: a)
                     },
@@ -875,7 +1047,27 @@ private final class TextProcessingSheetComponent: Component {
                                 return
                             }
                             self.styles.append(TextProcessingScreen.Style(cloudStyle: style))
+                            self.state?.updated(transition: .spring(duration: 0.4))
+                        },
+                        styleUpdated: { [weak self] style in
+                            guard let self else {
+                                return
+                            }
+                            guard let index = self.styles.firstIndex(where: { $0.id.id == style.id }) else {
+                                return
+                            }
+                            self.styles[index] = TextProcessingScreen.Style(cloudStyle: style)
                             self.state?.updated(transition: .immediate)
+                        },
+                        styleDeleted: { [weak self] id in
+                            guard let self else {
+                                return
+                            }
+                            guard let index = self.styles.firstIndex(where: { $0.id.id == id }) else {
+                                return
+                            }
+                            self.styles.remove(at: index)
+                            self.state?.updated(transition: .spring(duration: 0.4))
                         }
                     )),
                     titleItem: AnyComponent(TitleComponent(
@@ -1116,21 +1308,29 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
         public let title: String
         public let emojiFileId: Int64?
         public let emojiFile: TelegramMediaFile?
+        public let isAuthor: Bool
+        public let slug: String?
+        public let cloudStyle: TelegramComposeAIMessageMode.CloudStyle
         
         public var id: TelegramComposeAIMessageMode.StyleReference {
             return .style(self.reference)
         }
         
-        public init(reference: TelegramComposeAIMessageMode.CloudStyle.Reference, title: String, emojiFileId: Int64?, emojiFile: TelegramMediaFile?) {
+        public init(reference: TelegramComposeAIMessageMode.CloudStyle.Reference, title: String, emojiFileId: Int64?, emojiFile: TelegramMediaFile?, isAuthor: Bool, slug: String?, cloudStyle: TelegramComposeAIMessageMode.CloudStyle) {
             self.reference = reference
             self.title = title
             self.emojiFileId = emojiFileId
             self.emojiFile = emojiFile
+            self.isAuthor = isAuthor
+            self.slug = slug
+            self.cloudStyle = cloudStyle
         }
         
         convenience init(cloudStyle: TelegramComposeAIMessageMode.CloudStyle) {
             let title: String
             let emojiFileId: Int64?
+            var isAuthor = false
+            var slug: String?
             switch cloudStyle.content {
             case let .standard(standard):
                 title = standard.title
@@ -1138,12 +1338,17 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
             case let .custom(custom):
                 title = custom.title
                 emojiFileId = custom.emojiFileId
+                isAuthor = custom.isCreator
+                slug = custom.slug
             }
             self.init(
                 reference: cloudStyle.reference,
                 title: title,
                 emojiFileId: emojiFileId,
-                emojiFile: nil
+                emojiFile: nil,
+                isAuthor: isAuthor,
+                slug: slug,
+                cloudStyle: cloudStyle
             )
         }
         
@@ -1158,6 +1363,9 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
                 return false
             }
             if lhs.emojiFile != rhs.emojiFile {
+                return false
+            }
+            if lhs.cloudStyle != rhs.cloudStyle {
                 return false
             }
             return true
@@ -1189,6 +1397,8 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
         for value in rawStyles {
             let title: String
             let emojiFileId: Int64?
+            var isAuthor = false
+            var slug: String?
             switch value.content {
             case let .standard(standard):
                 title = standard.title
@@ -1196,12 +1406,17 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
             case let .custom(custom):
                 title = custom.title
                 emojiFileId = custom.emojiFileId
+                isAuthor = custom.isCreator
+                slug = custom.slug
             }
             styles.append(Style(
                 reference: value.reference,
                 title: title,
                 emojiFileId: emojiFileId,
-                emojiFile: emojiFileId.flatMap { resolvedEmojiFiles[$0] }
+                emojiFile: emojiFileId.flatMap { resolvedEmojiFiles[$0] },
+                isAuthor: isAuthor,
+                slug: slug,
+                cloudStyle: value
             ))
         }
         

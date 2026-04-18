@@ -1054,6 +1054,9 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                             
                             if previousAnimateGlyphCount != nil || strongSelf.textRevealAnimationState != nil || hasDraft || hadDraft {
                                 if strongSelf.textNode.textNode.revealCharacterCount == nil {
+                                    if hasDraft {
+                                        strongSelf.statusNode?.alpha = 0.0
+                                    }
                                     strongSelf.textNode.textNode.updateRevealCharacterCount(count: previousAnimateGlyphCount ?? 0, animated: false)
                                 }
                                 strongSelf.updateTextRevealAnimation(previousGlyphCount: previousAnimateGlyphCount ?? 0)
@@ -1084,8 +1087,8 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
             return
         }
         
-        var duration: Double = Double(toCount - fromCount) / 20.0
-        duration = max(0.1, min(duration, 5.0))
+        var duration: Double = Double(toCount - fromCount) / 40.0
+        duration = max(0.1, min(duration, 1.0))
         
         self.textRevealAnimationState = TextRevealAnimationState(
             fromCount: fromCount,
@@ -1108,6 +1111,11 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     self.textRevealLink = nil
                     
                     self.textNode.textNode.updateRevealCharacterCount(count: nil, animated: false)
+                    
+                    if let statusNode = self.statusNode {
+                        ContainedViewLayoutTransition.animated(duration: 0.2, curve: .easeInOut).updateAlpha(node: statusNode, alpha: 1.0)
+                    }
+                    
                     self.requestFullUpdate?()
                 } else {
                     var requestUpdate = false

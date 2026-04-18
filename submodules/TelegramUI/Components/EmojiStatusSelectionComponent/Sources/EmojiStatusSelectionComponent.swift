@@ -1430,12 +1430,7 @@ public final class EmojiStatusSelectionController: ViewController {
         }
     }
     
-    public enum Mode {
-        case statusSelection
-        case backgroundSelection(completion: (TelegramMediaFile?) -> Void)
-        case customStatusSelection(completion: (TelegramMediaFile?, Int32?) -> Void)
-        case quickReactionSelection(completion: () -> Void)
-    }
+    public typealias Mode = EmojiStatusSelectionControllerMode
     
     private let context: AccountContext
     private weak var sourceView: UIView?

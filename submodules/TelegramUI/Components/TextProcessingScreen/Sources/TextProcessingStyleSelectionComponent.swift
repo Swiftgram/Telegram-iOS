@@ -17,7 +17,7 @@ final class TextProcessingStyleSelectionComponent: Component {
     let selectedStyle: TelegramComposeAIMessageMode.StyleId
     let updateStyle: (TelegramComposeAIMessageMode.StyleReference) -> Void
     let createStyle: () -> Void
-    let editStyle: (TelegramComposeAIMessageMode.CloudStyle.Id) -> Void
+    let openStyleContextMenu: (TelegramComposeAIMessageMode.StyleReference, ContextGesture, ContextExtractedContentContainingView) -> Void
 
     init(
         context: AccountContext,
@@ -27,7 +27,7 @@ final class TextProcessingStyleSelectionComponent: Component {
         selectedStyle: TelegramComposeAIMessageMode.StyleId,
         updateStyle: @escaping (TelegramComposeAIMessageMode.StyleReference) -> Void,
         createStyle: @escaping () -> Void,
-        editStyle: @escaping (TelegramComposeAIMessageMode.CloudStyle.Id) -> Void
+        openStyleContextMenu: @escaping (TelegramComposeAIMessageMode.StyleReference, ContextGesture, ContextExtractedContentContainingView) -> Void
     ) {
         self.context = context
         self.theme = theme
@@ -36,7 +36,7 @@ final class TextProcessingStyleSelectionComponent: Component {
         self.selectedStyle = selectedStyle
         self.updateStyle = updateStyle
         self.createStyle = createStyle
-        self.editStyle = editStyle
+        self.openStyleContextMenu = openStyleContextMenu
     }
 
     static func ==(lhs: TextProcessingStyleSelectionComponent, rhs: TextProcessingStyleSelectionComponent) -> Bool {
@@ -66,12 +66,19 @@ final class TextProcessingStyleSelectionComponent: Component {
         private weak var state: EmptyComponentState?
         private var isUpdating: Bool = false
 
+        private let contextGestureContainerView: ContextControllerSourceView
         private let scrollView: ScrollView
         private var itemViews: [TelegramComposeAIMessageMode.StyleId: ComponentView<Empty>] = [:]
         private let createStyleItemView = ComponentView<Empty>()
         private let selectedBackgroundView: UIImageView
+        
+        private var itemWithActiveContextGesture: TelegramComposeAIMessageMode.StyleId?
 
         override init(frame: CGRect) {
+            self.contextGestureContainerView = ContextControllerSourceView()
+            self.contextGestureContainerView.isGestureEnabled = true
+            self.contextGestureContainerView.useSublayerTransformForActivation = true
+            
             self.scrollView = ScrollView()
             self.selectedBackgroundView = UIImageView()
             self.selectedBackgroundView.isHidden = true
@@ -89,15 +96,78 @@ final class TextProcessingStyleSelectionComponent: Component {
             self.scrollView.alwaysBounceVertical = false
             self.scrollView.scrollsToTop = false
             self.scrollView.clipsToBounds = false
-            self.addSubview(self.scrollView)
-
+            self.addSubview(self.contextGestureContainerView)
+            
             self.scrollView.addSubview(self.selectedBackgroundView)
+            self.contextGestureContainerView.addSubview(self.scrollView)
 
             self.scrollView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.onTapGesture(_:))))
+            
+            self.contextGestureContainerView.shouldBegin = { [weak self] point in
+                guard let self, let component = self.component else {
+                    return false
+                }
+                guard let (itemId, itemView) = self.item(at: point) else {
+                    return false
+                }
+                guard let item = component.styles.first(where: { .style($0.reference.id) == itemId }) else {
+                    return false
+                }
+                guard case .custom = item.reference else {
+                    return false
+                }
+                
+                self.itemWithActiveContextGesture = itemId
+                self.contextGestureContainerView.targetLayerForActivationProgress = itemView.view?.layer
+                
+                let startPoint = point
+                self.contextGestureContainerView.contextGesture?.externalUpdated = { [weak self] _, point in
+                    guard let self else {
+                        return
+                    }
+                    
+                    let dist = sqrt(pow(startPoint.x - point.x, 2.0) + pow(startPoint.y - point.y, 2.0))
+                    if dist > 10.0 {
+                        self.contextGestureContainerView.contextGesture?.cancel()
+                    }
+                }
+                
+                return true
+            }
+            self.contextGestureContainerView.activated = { [weak self] gesture, _ in
+                guard let self, let component = self.component else {
+                    return
+                }
+                guard let itemWithActiveContextGesture = self.itemWithActiveContextGesture else {
+                    return
+                }
+                
+                var itemView: ItemComponent.View?
+                itemView = self.itemViews[itemWithActiveContextGesture]?.view as? ItemComponent.View
+                
+                guard let itemView else {
+                    return
+                }
+                guard let item = component.styles.first(where: { .style($0.reference.id) == itemWithActiveContextGesture }) else {
+                    return
+                }
+                component.openStyleContextMenu(item.id, gesture, itemView.contextContainerView)
+            }
         }
         
         required init?(coder: NSCoder) {
             preconditionFailure()
+        }
+        
+        private func item(at point: CGPoint) -> (id: TelegramComposeAIMessageMode.StyleId, itemView: ComponentView<Empty>)? {
+            for (id, itemView) in self.itemViews {
+                if let itemComponentView = itemView.view {
+                    if itemComponentView.bounds.contains(self.scrollView.convert(self.convert(point, to: self.scrollView), to: itemComponentView)) {
+                        return (id, itemView)
+                    }
+                }
+            }
+            return nil
         }
 
         @objc private func onTapGesture(_ recognizer: UITapGestureRecognizer) {
@@ -211,6 +281,7 @@ final class TextProcessingStyleSelectionComponent: Component {
             self.scrollView.frame = CGRect(origin: CGPoint(), size: availableSize)
             self.scrollView.contentSize = CGSize(width: contentWidth, height: availableSize.height)
             self.scrollView.alwaysBounceHorizontal = contentWidth > availableSize.width
+            self.contextGestureContainerView.frame = CGRect(origin: CGPoint(), size: availableSize)
 
             // Second pass: position items centered in their slots
             var selectedItemFrame: CGRect?
@@ -223,11 +294,16 @@ final class TextProcessingStyleSelectionComponent: Component {
                 let slotOriginX = CGFloat(i) * slotWidth
                 let itemX = slotOriginX + floor((slotWidth - naturalSize.width) * 0.5)
                 let itemFrame = CGRect(origin: CGPoint(x: itemX, y: 0.0), size: naturalSize)
-                if let itemComponentView = itemView.view {
+                if let itemComponentView = itemView.view as? ItemComponent.View {
+                    var itemTransition = transition
                     if itemComponentView.superview == nil {
                         self.scrollView.addSubview(itemComponentView)
+                        itemTransition = itemTransition.withAnimation(.none)
+                        transition.animateScale(view: itemComponentView, from: 0.001, to: 1.0)
+                        transition.animateAlpha(view: itemComponentView, from: 0.0, to: 1.0)
                     }
-                    transition.setFrame(view: itemComponentView, frame: itemFrame)
+                    itemTransition.setFrame(view: itemComponentView, frame: itemFrame)
+                    itemComponentView.applySize(measuredSize: naturalSize, size: itemFrame.size, transition: itemTransition)
                 }
                 if .style(style.reference.id) == component.selectedStyle {
                     selectedItemFrame = CGRect(origin: CGPoint(x: slotOriginX, y: -5.0), size: CGSize(width: slotWidth, height: availableSize.height + 5.0 + 3.0))
@@ -251,7 +327,12 @@ final class TextProcessingStyleSelectionComponent: Component {
             for (id, itemView) in self.itemViews {
                 if !component.styles.contains(where: { .style($0.reference.id) == id }) {
                     removedIds.append(id)
-                    itemView.view?.removeFromSuperview()
+                    if let itemComponentView = itemView.view {
+                        transition.setAlpha(view: itemComponentView, alpha: 0.0, completion: { [weak itemComponentView] _ in
+                            itemComponentView?.removeFromSuperview()
+                        })
+                        transition.setScale(view: itemComponentView, scale: 0.001)
+                    }
                 }
             }
             for id in removedIds {
@@ -333,6 +414,9 @@ private final class ItemComponent: Component {
     }
     
     final class View: UIView {
+        let contextContainerView: ContextExtractedContentContainingView
+        let containerView: UIView
+        
         private var imageIcon: ComponentView<Empty>?
         private let title = ComponentView<Empty>()
         
@@ -340,11 +424,24 @@ private final class ItemComponent: Component {
         private weak var state: EmptyComponentState?
 
         override init(frame: CGRect) {
+            self.contextContainerView = ContextExtractedContentContainingView()
+            self.containerView = UIView()
+            
             super.init(frame: frame)
+            
+            self.addSubview(self.contextContainerView)
+            self.contextContainerView.contentView.addSubview(self.containerView)
         }
 
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
+        }
+        
+        func applySize(measuredSize: CGSize, size: CGSize, transition: ComponentTransition) {
+            transition.setFrame(view: self.containerView, frame: measuredSize.centered(in: CGRect(origin: CGPoint(), size: size)))
+            transition.setFrame(view: self.contextContainerView, frame: CGRect(origin: CGPoint(), size: size))
+            transition.setFrame(view: self.contextContainerView.contentView, frame: CGRect(origin: CGPoint(), size: size))
+            self.contextContainerView.contentRect = CGRect(origin: CGPoint(x: 0.0, y: -5.0), size: CGSize(width: size.width, height: size.height + 5.0 + 3.0))
         }
         
         func update(component: ItemComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<Empty>, transition: ComponentTransition) -> CGSize {
@@ -421,7 +518,7 @@ private final class ItemComponent: Component {
             let iconFrame = CGRect(origin: CGPoint(x: floor((contentWidth - iconSize.width) * 0.5), y: -3.0), size: iconSize)
             if let imageIconView = imageIcon.view {
                 if imageIconView.superview == nil {
-                    self.addSubview(imageIconView)
+                    self.containerView.addSubview(imageIconView)
                 }
                 iconTransition.setFrame(view: imageIconView, frame: iconFrame)
             }
@@ -429,12 +526,13 @@ private final class ItemComponent: Component {
             let titleFrame = CGRect(origin: CGPoint(x: floor((contentWidth - titleSize.width) * 0.5), y: availableSize.height - 5.0 - titleSize.height), size: titleSize)
             if let titleView = self.title.view {
                 if titleView.superview == nil {
-                    self.addSubview(titleView)
+                    self.containerView.addSubview(titleView)
                 }
                 titleView.frame = titleFrame
             }
-
-            return CGSize(width: contentWidth, height: availableSize.height)
+            
+            let size = CGSize(width: contentWidth, height: availableSize.height)
+            return size
         }
     }
     
@@ -493,7 +591,7 @@ private final class CreateItemComponent: Component {
             let iconSize = self.icon.update(
                 transition: .immediate,
                 component: AnyComponent(BundleIconComponent(
-                    name: "Chat/Context Menu/Add",
+                    name: "TextProcessing/NewStyle",
                     tintColor: iconTintColor
                 )),
                 environment: {},

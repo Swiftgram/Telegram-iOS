@@ -1321,6 +1321,13 @@ public enum TextProcessingScreenMode {
     case translate(fromLanguage: String?)
 }
 
+public enum EmojiStatusSelectionControllerMode {
+    case statusSelection
+    case backgroundSelection(completion: (TelegramMediaFile?) -> Void)
+    case customStatusSelection(completion: (TelegramMediaFile?, Int32?) -> Void)
+    case quickReactionSelection(completion: () -> Void)
+}
+
 public protocol SharedAccountContext: AnyObject {
     var sharedContainerPath: String { get }
     var basePath: String { get }
@@ -1575,6 +1582,7 @@ public protocol SharedAccountContext: AnyObject {
         openAutomatically: Bool,
         completion: @escaping (EnginePeer.Id?) -> Void
     ) async -> ViewController?
+    func makeEmojiStatusSelectionController(context: AccountContext, mode: EmojiStatusSelectionControllerMode, sourceView: UIView, emojiContent: Signal<AnyObject, NoError>, currentSelection: Int64?, color: UIColor?, destinationItemView: @escaping () -> UIView?) -> ViewController
     
     func navigateToCurrentCall()
     var hasOngoingCall: ValuePromise<Bool> { get }

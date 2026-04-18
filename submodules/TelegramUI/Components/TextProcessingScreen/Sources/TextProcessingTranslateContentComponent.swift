@@ -105,7 +105,7 @@ final class TextProcessingTranslateContentComponent: Component {
     let copyAction: (() -> Void)?
     let displayLanguageSelectionMenu: (UIView, String, TelegramComposeAIMessageMode.StyleId, Bool,  @escaping (String, TelegramComposeAIMessageMode.StyleReference) -> Void) -> Void
     let createStyle: () -> Void
-    let editStyle: (TelegramComposeAIMessageMode.CloudStyle.Id) -> Void
+    let openStyleContextMenu: (TelegramComposeAIMessageMode.StyleReference, ContextGesture, ContextExtractedContentContainingView) -> Void
     let present: (ViewController, Any?) -> Void
     let rootViewForTextSelection: () -> UIView?
 
@@ -120,7 +120,7 @@ final class TextProcessingTranslateContentComponent: Component {
         copyAction: (() -> Void)?,
         displayLanguageSelectionMenu: @escaping (UIView, String, TelegramComposeAIMessageMode.StyleId, Bool, @escaping (String, TelegramComposeAIMessageMode.StyleReference) -> Void) -> Void,
         createStyle: @escaping () -> Void,
-        editStyle: @escaping (TelegramComposeAIMessageMode.CloudStyle.Id) -> Void,
+        openStyleContextMenu: @escaping (TelegramComposeAIMessageMode.StyleReference, ContextGesture, ContextExtractedContentContainingView) -> Void,
         present: @escaping (ViewController, Any?) -> Void,
         rootViewForTextSelection: @escaping () -> UIView?
     ) {
@@ -134,7 +134,7 @@ final class TextProcessingTranslateContentComponent: Component {
         self.copyAction = copyAction
         self.displayLanguageSelectionMenu = displayLanguageSelectionMenu
         self.createStyle = createStyle
-        self.editStyle = editStyle
+        self.openStyleContextMenu = openStyleContextMenu
         self.present = present
         self.rootViewForTextSelection = rootViewForTextSelection
     }
@@ -394,11 +394,11 @@ final class TextProcessingTranslateContentComponent: Component {
                             }
                             component.createStyle()
                         },
-                        editStyle: { [weak self] styleId in
+                        openStyleContextMenu: { [weak self] styleId, gesture, sourceView in
                             guard let self, let component = self.component else {
                                 return
                             }
-                            component.editStyle(styleId)
+                            component.openStyleContextMenu(styleId, gesture, sourceView)
                         }
                     )),
                     environment: {},

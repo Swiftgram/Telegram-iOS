@@ -522,6 +522,8 @@ public final class ChatMessageWebpageBubbleContentNode: ChatMessageBubbleContent
                             actionTitle = item.presentationData.strings.Chat_ContactChannel
                         case "telegram_newbot":
                             actionTitle = item.presentationData.strings.Chat_CreateBotLink
+                        case "telegram_aicomposetone":
+                            actionTitle = "VIEW STYLE"
                         default:
                             break
                     }

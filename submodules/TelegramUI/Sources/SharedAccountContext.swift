@@ -103,6 +103,8 @@ import PollStatsScreen
 import RankChatPreviewItem
 import TextProcessingScreen
 import CreateBotScreen
+import EmojiStatusSelectionComponent
+import EntityKeyboard
 
 private final class AccountUserInterfaceInUseContext {
     let subscribers = Bag<(Bool) -> Void>()
@@ -4413,6 +4415,18 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             initialTitle: initialTitle,
             openAutomatically: openAutomatically,
             completion: completion
+        )
+    }
+    
+    public func makeEmojiStatusSelectionController(context: AccountContext, mode: EmojiStatusSelectionControllerMode, sourceView: UIView, emojiContent: Signal<AnyObject, NoError>, currentSelection: Int64?, color: UIColor?, destinationItemView: @escaping () -> UIView?) -> ViewController {
+        return EmojiStatusSelectionController(
+            context: context,
+            mode: mode,
+            sourceView: sourceView,
+            emojiContent: emojiContent |> map { $0 as! EmojiPagerContentComponent },
+            currentSelection: currentSelection,
+            color: color,
+            destinationItemView: destinationItemView
         )
     }
 }

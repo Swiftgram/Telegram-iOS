@@ -19,6 +19,10 @@ import ListSectionComponent
 import Markdown
 import TelegramUIPreferences
 import ListMultilineTextFieldItemComponent
+import CheckComponent
+import PlainButtonComponent
+import EntityKeyboard
+import EmojiStatusComponent
 
 final class TextStyleEditContentComponent: Component {
     typealias EnvironmentType = ViewControllerComponentContainer.Environment
@@ -26,20 +30,22 @@ final class TextStyleEditContentComponent: Component {
     final class ExternalState {
         let titleInputState = ListMultilineTextFieldItemComponent.ExternalState()
         let textInputState = ListMultilineTextFieldItemComponent.ExternalState()
+        var isLinkToProfileEnabled: Bool = false
+        var emojiFile: TelegramMediaFile?
     }
     
     let externalState: ExternalState
     let context: AccountContext
-    let initialText: TextWithEntities?
+    let mode: TextStyleEditScreen.Mode
 
     init(
         externalState: ExternalState,
         context: AccountContext,
-        initialText: TextWithEntities?
+        mode: TextStyleEditScreen.Mode
     ) {
         self.externalState = externalState
         self.context = context
-        self.initialText = initialText
+        self.mode = mode
     }
 
     static func ==(lhs: TextStyleEditContentComponent, rhs: TextStyleEditContentComponent) -> Bool {
@@ -59,9 +65,11 @@ final class TextStyleEditContentComponent: Component {
         private var isUpdating: Bool = false
         
         private let iconBackground = ComponentView<Empty>()
-        private let icon = ComponentView<Empty>()
+        private let emptyIcon = ComponentView<Empty>()
+        private var emojiIcon: ComponentView<Empty>?
         private let titleSection = ComponentView<Empty>()
         private let textSection = ComponentView<Empty>()
+        private let linkOption = ComponentView<Empty>()
         
         override init(frame: CGRect) {
             super.init(frame: frame)
@@ -85,7 +93,10 @@ final class TextStyleEditContentComponent: Component {
             var resetText: String?
             if self.component == nil {
                 resetTitle = ""
-                resetText = component.initialText?.text
+                if case let .edit(style) = component.mode, case let .custom(style) = style.content {
+                    resetTitle = style.title
+                    resetText = style.prompt ?? ""
+                }
             }
             
             self.component = component
@@ -102,10 +113,60 @@ final class TextStyleEditContentComponent: Component {
             let iconBackgroundSize = CGSize(width: 100.0, height: 100.0)
             let _ = self.iconBackground.update(
                 transition: transition,
-                component: AnyComponent(FilledRoundedRectangleComponent(
-                    color: environment.theme.list.itemBlocksBackgroundColor,
-                    cornerRadius: .minEdge,
-                    smoothCorners: false
+                component: AnyComponent(PlainButtonComponent(
+                    content: AnyComponent(FilledRoundedRectangleComponent(
+                        color: environment.theme.list.itemBlocksBackgroundColor,
+                        cornerRadius: .minEdge,
+                        smoothCorners: false
+                    )),
+                    action: { [weak self] in
+                        guard let self, let component = self.component else {
+                            return
+                        }
+                        guard let iconBackgroundView = self.iconBackground.view else {
+                            return
+                        }
+                        self.environment?.controller()?.present(component.context.sharedContext.makeEmojiStatusSelectionController(
+                            context: component.context,
+                            mode: .backgroundSelection(completion: { [weak self] file in
+                                guard let self, let component = self.component else {
+                                    return
+                                }
+                                component.externalState.emojiFile = file
+                                self.state?.updated(transition: .immediate)
+                                DispatchQueue.main.async { [weak self] in
+                                    guard let self else {
+                                        return
+                                    }
+                                    self.state?.updated(transition: .immediate)
+                                }
+                            }),
+                            sourceView: iconBackgroundView,
+                            emojiContent: EmojiPagerContentComponent.emojiInputData(
+                                context: component.context,
+                                animationCache: component.context.animationCache,
+                                animationRenderer: component.context.animationRenderer,
+                                isStandalone: false,
+                                subject: .emoji,
+                                hasTrending: false,
+                                topReactionItems: [],
+                                areUnicodeEmojiEnabled: false,
+                                areCustomEmojiEnabled: true,
+                                chatPeerId: component.context.account.peerId,
+                                selectedItems: Set()
+                            ) |> map { $0 },
+                            currentSelection: nil,
+                            color: nil,
+                            destinationItemView: { [weak self] in
+                                guard let self else {
+                                    return nil
+                                }
+                                return self.emojiIcon?.view
+                            }
+                        ), in: .window(.root))
+                    },
+                    animateAlpha: false,
+                    animateScale: false,
                 )),
                 environment: {},
                 containerSize: iconBackgroundSize
@@ -118,20 +179,73 @@ final class TextStyleEditContentComponent: Component {
                 transition.setFrame(view: iconBackgroundView, frame: iconBackgroundFrame)
             }
             
-            let iconSize = self.icon.update(
+            let emptyIconSize = self.emptyIcon.update(
                 transition: .immediate,
-                component: AnyComponent(MultilineTextComponent(
-                    text: .plain(NSAttributedString(string: "📝", font: Font.regular(42.0), textColor: .black))
+                component: AnyComponent(BundleIconComponent(
+                    name: "TextProcessing/EditEmojiPlaceholder",
+                    tintColor: environment.theme.list.controlSecondaryColor
                 )),
                 environment: {},
                 containerSize: iconBackgroundFrame.size
             )
-            let iconFrame = iconSize.centered(in: iconBackgroundFrame)
-            if let iconView = self.icon.view {
-                if iconView.superview == nil {
-                    self.addSubview(iconView)
+            let emptyIconFrame = emptyIconSize.centered(in: iconBackgroundFrame)
+            if let emptyIconView = self.emptyIcon.view {
+                if emptyIconView.superview == nil {
+                    self.addSubview(emptyIconView)
+                    emptyIconView.isUserInteractionEnabled = false
                 }
-                transition.setFrame(view: iconView, frame: iconFrame)
+                transition.setFrame(view: emptyIconView, frame: emptyIconFrame)
+                transition.setAlpha(view: emptyIconView, alpha: component.externalState.emojiFile == nil ? 1.0 : 0.0)
+            }
+            
+            if let emojiFile = component.externalState.emojiFile {
+                var emojiIconTransition = transition
+                let emojiIcon: ComponentView<Empty>
+                if let current = self.emojiIcon {
+                    emojiIcon = current
+                } else {
+                    emojiIconTransition = emojiIconTransition.withAnimation(.none)
+                    emojiIcon = ComponentView()
+                    self.emojiIcon = emojiIcon
+                }
+                let emojiSize = CGSize(width: 70.0, height: 70.0)
+                let emojiIconSize = emojiIcon.update(
+                    transition: emojiIconTransition,
+                    component: AnyComponent(EmojiStatusComponent(
+                        context: component.context,
+                        animationCache: component.context.animationCache,
+                        animationRenderer: component.context.animationRenderer,
+                        content: .animation(
+                            content: .file(file: emojiFile),
+                            size: emojiSize,
+                            placeholderColor: environment.theme.list.mediaPlaceholderColor,
+                            themeColor: environment.theme.list.itemPrimaryTextColor,
+                            loopMode: .count(1)
+                        ),
+                        isVisibleForAnimations: true,
+                        action: nil
+                    )),
+                    environment: {},
+                    containerSize: emojiSize
+                )
+                let emojiIconFrame = emojiIconSize.centered(in: iconBackgroundFrame)
+                if let emojiIconView = emojiIcon.view {
+                    if emojiIconView.superview == nil {
+                        self.addSubview(emojiIconView)
+                        emojiIconView.isUserInteractionEnabled = false
+                    }
+                    emojiIconTransition.setFrame(view: emojiIconView, frame: emojiIconFrame)
+                }
+            } else {
+                if let emojiIcon = self.emojiIcon {
+                    self.emojiIcon = nil
+                    if let emojiIconView = emojiIcon.view {
+                        transition.setAlpha(view: emojiIconView, alpha: 0.0, completion: { [weak emojiIconView] _ in
+                            emojiIconView?.removeFromSuperview()
+                        })
+                        transition.setScale(view: emojiIconView, scale: 0.001)
+                    }
+                }
             }
             
             contentHeight += iconBackgroundSize.height + iconSpacing
@@ -148,7 +262,7 @@ final class TextStyleEditContentComponent: Component {
                 resetText: resetTitle.flatMap { resetTitle in
                     return ListMultilineTextFieldItemComponent.ResetText(value: resetTitle)
                 },
-                placeholder: "Title",
+                placeholder: "Style Name (for example, \"Pirate\")",
                 autocapitalizationType: .none,
                 autocorrectionType: .no,
                 characterLimit: 256,
@@ -192,7 +306,8 @@ final class TextStyleEditContentComponent: Component {
                 resetText: resetText.flatMap { resetText in
                     return ListMultilineTextFieldItemComponent.ResetText(value: resetText)
                 },
-                placeholder: "Text",
+                placeholder: "Instructions (for example, \"Write like a swashbuckling pirate. Use arr, ye, matey, and talk about treasure, the sea, and rum\")",
+                placeholderDefinesMinHeight: true,
                 autocapitalizationType: .none,
                 autocorrectionType: .no,
                 characterLimit: 4096,
@@ -222,8 +337,57 @@ final class TextStyleEditContentComponent: Component {
                 transition.setFrame(view: textSectionView, frame: textSectionFrame)
             }
             contentHeight += textSectionSize.height
+            contentHeight += 23.0
             
-            contentHeight += 106.0
+            let checkTheme = CheckComponent.Theme(
+                backgroundColor: environment.theme.list.itemCheckColors.fillColor,
+                strokeColor: environment.theme.list.itemCheckColors.foregroundColor,
+                borderColor: environment.theme.list.itemCheckColors.strokeColor,
+                overlayBorder: false,
+                hasInset: false,
+                hasShadow: false
+            )
+            let linkOptionSize = self.linkOption.update(
+                transition: transition,
+                component: AnyComponent(PlainButtonComponent(
+                    content: AnyComponent(HStack([
+                        AnyComponentWithIdentity(id: AnyHashable(0), component: AnyComponent(CheckComponent(
+                            theme: checkTheme,
+                            size: CGSize(width: 18.0, height: 18.0),
+                            selected: component.externalState.isLinkToProfileEnabled
+                        ))),
+                        AnyComponentWithIdentity(id: AnyHashable(1), component: AnyComponent(MultilineTextComponent(
+                            text: .plain(NSAttributedString(string: "Add a link to my account", font: Font.regular(13.0), textColor: environment.theme.list.freeTextColor))
+                        )))
+                    ], spacing: 10.0)),
+                    effectAlignment: .center,
+                    action: { [weak self] in
+                        guard let self else {
+                            return
+                        }
+                        component.externalState.isLinkToProfileEnabled = !component.externalState.isLinkToProfileEnabled
+                        
+                        if !self.isUpdating {
+                            self.state?.updated(transition: .spring(duration: 0.4))
+                        }
+                    },
+                    animateAlpha: false,
+                    animateScale: false
+                )),
+                environment: {
+                },
+                containerSize: CGSize(width: availableSize.width - sideInset * 2.0, height: 1000.0)
+            )
+            let linkOptionFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - linkOptionSize.width) * 0.5), y: contentHeight), size: linkOptionSize)
+            if let linkOptionView = self.linkOption.view {
+                if linkOptionView.superview == nil {
+                    self.addSubview(linkOptionView)
+                }
+                transition.setFrame(view: linkOptionView, frame: linkOptionFrame)
+            }
+            contentHeight += linkOptionSize.height
+            
+            contentHeight += 104.0
             
             let _ = alphaTransition
 
@@ -244,16 +408,19 @@ private final class TextStyleEditSheetComponent: Component {
     typealias EnvironmentType = ViewControllerComponentContainer.Environment
 
     let context: AccountContext
-    let initialText: TextWithEntities?
+    let mode: TextStyleEditScreen.Mode
+    let initialEmojiFile: TelegramMediaFile?
     let completion: (TelegramComposeAIMessageMode.CloudStyle) -> Void
 
     init(
         context: AccountContext,
-        initialText: TextWithEntities?,
+        mode: TextStyleEditScreen.Mode,
+        initialEmojiFile: TelegramMediaFile?,
         completion: @escaping (TelegramComposeAIMessageMode.CloudStyle) -> Void
     ) {
         self.context = context
-        self.initialText = initialText
+        self.mode = mode
+        self.initialEmojiFile = initialEmojiFile
         self.completion = completion
     }
 
@@ -302,36 +469,78 @@ private final class TextStyleEditSheetComponent: Component {
             if self.contentState.titleInputState.text.string.isEmpty || self.contentState.textInputState.text.string.isEmpty {
                 return
             }
+            guard let emojiFile = self.contentState.emojiFile else {
+                return
+            }
             
             self.createDisposable?.dispose()
-            self.createDisposable = (component.context.engine.messages.createAITextStyle(
-                displayAuthor: false,
-                emojiFileId: nil,
-                title: self.contentState.titleInputState.text.string,
-                prompt: self.contentState.textInputState.text.string
-            )
-            |> deliverOnMainQueue).startStrict(next: { [weak self] result in
-                guard let self, let component = self.component, let environment = self.environment else {
-                    return
-                }
-                let controller = environment.controller
-                
-                self.animateOut.invoke(Action { _ in
-                    if let controller = controller() {
-                        controller.dismiss(completion: nil)
+            
+            switch component.mode {
+            case .create:
+                self.createDisposable = (component.context.engine.messages.createAITextStyle(
+                    displayAuthor: self.contentState.isLinkToProfileEnabled,
+                    emojiFileId: emojiFile.fileId.id,
+                    title: self.contentState.titleInputState.text.string,
+                    prompt: self.contentState.textInputState.text.string
+                )
+                |> deliverOnMainQueue).startStrict(next: { [weak self] result in
+                    guard let self, let component = self.component, let environment = self.environment else {
+                        return
                     }
+                    let controller = environment.controller
+                    
+                    self.animateOut.invoke(Action { _ in
+                        if let controller = controller() {
+                            controller.dismiss(completion: nil)
+                        }
+                    })
+                    
+                    component.completion(result)
+                }, error: { [weak self] error in
+                    guard let self else {
+                        return
+                    }
+                    let _ = self
                 })
-                
-                component.completion(result)
-            }, error: { [weak self] error in
-                guard let self else {
+            case let .edit(style):
+                guard case let .custom(style) = style.content else {
                     return
                 }
-                let _ = self
-            })
+                self.createDisposable = (component.context.engine.messages.editAITextStyle(
+                    id: style.id,
+                    accessHash: style.accessHash,
+                    displayAuthor: self.contentState.isLinkToProfileEnabled,
+                    emojiFileId: emojiFile.fileId.id,
+                    title: self.contentState.titleInputState.text.string,
+                    prompt: self.contentState.textInputState.text.string
+                )
+                |> deliverOnMainQueue).startStrict(next: { [weak self] result in
+                    guard let self, let component = self.component, let environment = self.environment else {
+                        return
+                    }
+                    let controller = environment.controller
+                    
+                    self.animateOut.invoke(Action { _ in
+                        if let controller = controller() {
+                            controller.dismiss(completion: nil)
+                        }
+                    })
+                    
+                    component.completion(result)
+                }, error: { [weak self] error in
+                    guard let self else {
+                        return
+                    }
+                    let _ = self
+                })
+            }
         }
 
         func update(component: TextStyleEditSheetComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<ViewControllerComponentContainer.Environment>, transition: ComponentTransition) -> CGSize {
+            if self.component == nil {
+                self.contentState.emojiFile = component.initialEmojiFile
+            }
+            
             self.component = component
             self.state = state
 
@@ -360,10 +569,17 @@ private final class TextStyleEditSheetComponent: Component {
                 }
                 self.performCreateStyle()
             }
-            let isMainActionEnabled = self.contentState.titleInputState.hasText && self.contentState.textInputState.hasText
-            let actionButtonTitle: String = "Create"
-
-            let titleString: String = "New Style"
+            let isMainActionEnabled = self.contentState.titleInputState.hasText && self.contentState.textInputState.hasText && self.contentState.emojiFile != nil
+            let actionButtonTitle: String
+            let titleString: String
+            switch component.mode {
+            case .create:
+                titleString = "New Style"
+                actionButtonTitle = "Create"
+            case .edit:
+                titleString = "Edit Style"
+                actionButtonTitle = "Save"
+            }
 
             let sheetSize = self.sheet.update(
                 transition: transition,
@@ -371,7 +587,7 @@ private final class TextStyleEditSheetComponent: Component {
                     content: AnyComponent<ViewControllerComponentContainer.Environment>(TextStyleEditContentComponent(
                         externalState: self.contentState,
                         context: component.context,
-                        initialText: component.initialText
+                        mode: component.mode
                     )),
                     titleItem: AnyComponent(TitleComponent(
                         theme: theme,
@@ -448,21 +664,32 @@ private final class TextStyleEditSheetComponent: Component {
 }
 
 public class TextStyleEditScreen: ViewControllerComponentContainer {
+    public enum Mode {
+        case create
+        case edit(TelegramComposeAIMessageMode.CloudStyle)
+    }
+    
     private let context: AccountContext
 
     public init(
         context: AccountContext,
         theme: PresentationTheme? = nil,
-        initialText: TextWithEntities?,
+        mode: Mode,
         completion: @escaping (TelegramComposeAIMessageMode.CloudStyle) -> Void
-    ) {
+    ) async {
         self.context = context
+        
+        var initialEmojiFile: TelegramMediaFile?
+        if case let .edit(style) = mode, case let .custom(style) = style.content, let emojiFileId = style.emojiFileId {
+            initialEmojiFile = await context.engine.stickers.resolveInlineStickers(fileIds: [emojiFileId]).get()[emojiFileId]
+        }
         
         super.init(
             context: context,
             component: TextStyleEditSheetComponent(
                 context: context,
-                initialText: initialText,
+                mode: mode,
+                initialEmojiFile: initialEmojiFile,
                 completion: completion
             ),
             navigationBarAppearance: .none,
