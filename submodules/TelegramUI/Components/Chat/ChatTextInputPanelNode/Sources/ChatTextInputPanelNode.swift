@@ -3377,21 +3377,14 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             sendActionButtonsFrame.origin.x += (sendActionButtonsSize.width - 3.0 * 2.0) * 0.5 - 3.0
         }
         
-        let sendActionButtonsDisplayFrame: CGRect
-        if wideGlassLayout.mergeRightSlot {
-            sendActionButtonsDisplayFrame = sendActionButtonsFrame.offsetBy(dx: -textInputContainerBackgroundFrame.minX, dy: -textInputContainerBackgroundFrame.minY)
-        } else {
-            sendActionButtonsDisplayFrame = sendActionButtonsFrame
-        }
-        let sendActionButtonsParentView = wideGlassLayout.mergeRightSlot ? self.textInputContainerBackgroundView.contentView : self.glassBackgroundContainer.contentView
+        let sendActionButtonsDisplayFrame = sendActionButtonsFrame.offsetBy(dx: -textInputContainerBackgroundFrame.minX, dy: -textInputContainerBackgroundFrame.minY)
+        let sendActionButtonsParentView = self.textInputContainerBackgroundView.contentView
         if self.sendActionButtons.view.superview !== sendActionButtonsParentView {
             self.sendActionButtons.view.layer.removeAllAnimations()
             self.sendActionButtons.view.frame = sendActionButtonsDisplayFrame
             sendActionButtonsParentView.addSubview(self.sendActionButtons.view)
         }
-        if wideGlassLayout.mergeRightSlot {
-            sendActionButtonsParentView.bringSubviewToFront(self.sendActionButtons.view)
-        }
+        sendActionButtonsParentView.bringSubviewToFront(self.sendActionButtons.view)
         
         transition.updateTransformScale(node: self.sendActionButtons, scale: CGPoint(x: sendActionsScale, y: sendActionsScale))
         transition.updatePosition(node: self.sendActionButtons, position: sendActionButtonsDisplayFrame.center)
