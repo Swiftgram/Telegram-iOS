@@ -496,11 +496,11 @@ public enum TelegramComposeAIMessageMode {
             public let slug: String
             public let emojiFileId: Int64?
             public let title: String
-            public let prompt: String
+            public let prompt: String?
             public let userCount: Int?
             public let authorId: EnginePeer.Id?
             
-            public init(isCreator: Bool, id: Int64, accessHash: Int64, slug: String, emojiFileId: Int64?, title: String, prompt: String, userCount: Int?, authorId: EnginePeer.Id?) {
+            public init(isCreator: Bool, id: Int64, accessHash: Int64, slug: String, emojiFileId: Int64?, title: String, prompt: String?, userCount: Int?, authorId: EnginePeer.Id?) {
                 self.isCreator = isCreator
                 self.id = id
                 self.accessHash = accessHash
@@ -521,7 +521,7 @@ public enum TelegramComposeAIMessageMode {
                 self.slug = try container.decode(String.self, forKey: .slug)
                 self.emojiFileId = try container.decodeIfPresent(Int64.self, forKey: .emojiFileId)
                 self.title = try container.decode(String.self, forKey: .title)
-                self.prompt = try container.decode(String.self, forKey: .prompt)
+                self.prompt = try container.decodeIfPresent(String.self, forKey: .prompt)
                 self.userCount = try container.decodeIfPresent(Int32.self, forKey: .userCount).flatMap(Int.init)
                 self.authorId = try container.decodeIfPresent(EnginePeer.Id.self, forKey: .authorId)
             }
@@ -535,7 +535,7 @@ public enum TelegramComposeAIMessageMode {
                 try container.encode(self.slug, forKey: .slug)
                 try container.encodeIfPresent(self.emojiFileId, forKey: .emojiFileId)
                 try container.encode(self.title, forKey: .title)
-                try container.encode(self.prompt, forKey: .prompt)
+                try container.encodeIfPresent(self.prompt, forKey: .prompt)
                 try container.encodeIfPresent(self.userCount.flatMap(Int32.init(clamping:)), forKey: .userCount)
                 try container.encodeIfPresent(self.authorId, forKey: .authorId)
             }
@@ -802,13 +802,10 @@ public enum CreateAITextStyleError {
     case generic
 }
 
-func _internal_createAITextStyle(account: Account, displayAuthor: Bool, emojiFileId: Int64?, title: String, prompt: String) -> Signal<TelegramComposeAIMessageMode.CloudStyle, CreateAITextStyleError> {
+func _internal_createAITextStyle(account: Account, displayAuthor: Bool, emojiFileId: Int64, title: String, prompt: String) -> Signal<TelegramComposeAIMessageMode.CloudStyle, CreateAITextStyleError> {
     var flags: Int32 = 0
     if displayAuthor {
         flags |= (1 << 0)
-    }
-    if emojiFileId != nil {
-        flags |= (1 << 1)
     }
     return account.network.request(Api.functions.aicompose.createTone(
         flags: flags,
@@ -830,6 +827,62 @@ func _internal_createAITextStyle(account: Account, displayAuthor: Bool, emojiFil
             return style
         }
         |> castError(CreateAITextStyleError.self)
+    }
+}
+
+public enum EditAITextStyleError {
+    case generic
+}
+
+func _internal_editAITextStyle(account: Account, id: Int64, accessHash: Int64, displayAuthor: Bool, emojiFileId: Int64, title: String, prompt: String) -> Signal<TelegramComposeAIMessageMode.CloudStyle, EditAITextStyleError> {
+    var flags: Int32 = 0
+    flags |= (1 << 0)
+    flags |= (1 << 1)
+    flags |= (1 << 2)
+    flags |= (1 << 3)
+    return account.network.request(Api.functions.aicompose.updateTone(
+        flags: flags,
+        tone: .inputAiComposeToneID(Api.InputAiComposeTone.Cons_inputAiComposeToneID(id: id, accessHash: accessHash)),
+        displayAuthor: displayAuthor ? .boolTrue : .boolFalse,
+        emojiId: emojiFileId,
+        title: title,
+        prompt: prompt
+    ))
+    |> mapError { _ -> EditAITextStyleError in
+        return .generic
+    }
+    |> mapToSignal { result -> Signal<TelegramComposeAIMessageMode.CloudStyle, EditAITextStyleError> in
+        return account.postbox.transaction { transaction -> TelegramComposeAIMessageMode.CloudStyle in
+            let style = TelegramComposeAIMessageMode.CloudStyle(apiTone: result)
+            
+            let styles = _internal_cachedCloudAITextStyles(transaction: transaction)
+            var items = styles?.items ?? []
+            items.append(style)
+            _internal_setCachedCloudAITextStyles(transaction: transaction, styles: CachedCloudAITextStyles(items: items, hash: 0))
+            return style
+        }
+        |> castError(EditAITextStyleError.self)
+    }
+}
+
+public enum DeleteAITextStyleError {
+    case generic
+}
+
+func _internal_deleteAITextStyle(account: Account, id: Int64, accessHash: Int64) -> Signal<Never, DeleteAITextStyleError> {
+    return account.network.request(Api.functions.aicompose.deleteTone(tone: .inputAiComposeToneID(Api.InputAiComposeTone.Cons_inputAiComposeToneID(id: id, accessHash: accessHash))))
+    |> mapError { _ -> DeleteAITextStyleError in
+        return .generic
+    }
+    |> mapToSignal { result -> Signal<Never, DeleteAITextStyleError> in
+        return account.postbox.transaction { transaction -> Void in
+            let styles = _internal_cachedCloudAITextStyles(transaction: transaction)
+            var items = styles?.items ?? []
+            items.removeAll(where: { $0.id == .style(.custom(id)) })
+            _internal_setCachedCloudAITextStyles(transaction: transaction, styles: CachedCloudAITextStyles(items: items, hash: 0))
+        }
+        |> castError(DeleteAITextStyleError.self)
+        |> ignoreValues
     }
 }
 

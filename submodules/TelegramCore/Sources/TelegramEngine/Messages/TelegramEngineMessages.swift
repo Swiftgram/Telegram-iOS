@@ -659,8 +659,16 @@ public extension TelegramEngine {
             return _internal_composeMessageWithAI(account: self.account, text: text, entities: entities, proofread: proofread, translateToLang: translateToLang, changeStyle: changeStyle, emojify: emojify)
         }
         
-        public func createAITextStyle(displayAuthor: Bool, emojiFileId: Int64?, title: String, prompt: String) -> Signal<TelegramComposeAIMessageMode.CloudStyle, CreateAITextStyleError> {
+        public func createAITextStyle(displayAuthor: Bool, emojiFileId: Int64, title: String, prompt: String) -> Signal<TelegramComposeAIMessageMode.CloudStyle, CreateAITextStyleError> {
             return _internal_createAITextStyle(account: self.account, displayAuthor: displayAuthor, emojiFileId: emojiFileId, title: title, prompt: prompt)
+        }
+        
+        public func editAITextStyle(id: Int64, accessHash: Int64, displayAuthor: Bool, emojiFileId: Int64, title: String, prompt: String) -> Signal<TelegramComposeAIMessageMode.CloudStyle, EditAITextStyleError> {
+            return _internal_editAITextStyle(account: self.account, id: id, accessHash: accessHash, displayAuthor: displayAuthor, emojiFileId: emojiFileId, title: title, prompt: prompt)
+        }
+        
+        public func deleteAITextStyle(id: Int64, accessHash: Int64) -> Signal<Never, DeleteAITextStyleError> {
+            return _internal_deleteAITextStyle(account: self.account, id: id, accessHash: accessHash)
         }
 
         public func translate(texts: [(String, [MessageTextEntity])], toLang: String, tone: TranslationTone = .neutral) -> Signal<[(String, [MessageTextEntity])], TranslationError> {
