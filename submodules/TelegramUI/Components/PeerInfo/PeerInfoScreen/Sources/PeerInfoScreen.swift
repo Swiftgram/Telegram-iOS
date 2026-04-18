@@ -682,6 +682,11 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                     return
                 }
                 self.displayAutoTranslateLocked()
+            }, editingOpenBusinessChatBots: { [weak self] in
+                guard let self else {
+                    return
+                }
+                self.editingOpenBusinessChatBots()
             },
             getController: { [weak self] in
                 return self?.controller
@@ -3984,6 +3989,17 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                 
                 self.controller?.present(UndoOverlayController(presentationData: self.presentationData, content: .actionSucceeded(title: nil, text: toastText, cancel: nil, destructive: false), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .current)
             }))
+        })
+    }
+    
+    private func editingOpenBusinessChatBots() {
+        let _ = (self.context.sharedContext.makeChatbotSetupScreenInitialData(context: self.context)
+        |> take(1)
+        |> deliverOnMainQueue).start(next: { [weak self] initialData in
+            guard let self else {
+                return
+            }
+            self.controller?.push(self.context.sharedContext.makeChatbotSetupScreen(context: self.context, initialData: initialData))
         })
     }
         

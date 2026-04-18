@@ -131,12 +131,12 @@ public func legacyStoryMediaEditor(context: AccountContext, item: TGMediaEditabl
     
     present(legacyController, nil)
     
-    TGPhotoVideoEditor.present(with: legacyController.context, controller: emptyController, caption: NSAttributedString(), withItem: item, paint: false, adjustments: false, recipientName: "", stickersContext: paintStickersContext, from: .zero, mainSnapshot: nil, snapshots: [] as [Any], immediate: true, activateInput: false, isGif: false, appeared: {
+    TGPhotoVideoEditor.present(with: legacyController.context, controller: emptyController, caption: NSAttributedString(), withItem: item, paint: false, adjustments: false, recipientName: "", stickersContext: paintStickersContext, from: .zero, mainSnapshot: nil, snapshots: [] as [Any], immediate: true, activateInput: false, isGif: false, hasSilentPosting: false, hasSchedule: false, reminder: false, presentSchedulePicker: { _, _ in }, appeared: {
         
-    }, completion: { result, editingContext in
+    }, completion: { result, editingContext, _, _ in
         var completionResult: Signal<StoryMediaEditorResult, NoError>
         if let photo = result as? TGCameraCapturedPhoto {
-            if let _ = editingContext?.adjustments(for: result) {
+            if let _ = editingContext.adjustments(for: result) {
                 completionResult = .single(.image(photo.existingImage))
             } else {
                 completionResult = .single(.image(photo.existingImage))
@@ -167,6 +167,10 @@ public func legacyMediaEditor(
     snapshots: [UIView],
     transitionCompletion: (() -> Void)?,
     getCaptionPanelView: @escaping () -> TGCaptionPanelView?,
+    hasSilentPosting: Bool = false,
+    hasSchedule: Bool = false,
+    reminder: Bool = false,
+    presentSchedulePicker: @escaping (Bool, @escaping (Int32) -> Void) -> Void = { _, _ in },
     sendMessagesWithSignals: @escaping ([Any]?, Bool, Int32, Bool) -> Void,
     present: @escaping (ViewController, Any?) -> Void
 ) {
@@ -209,32 +213,87 @@ public func legacyMediaEditor(
             legacyController?.view.disablesInteractiveTransitionGestureRecognizer = true
         }
 
-        let emptyController = LegacyEmptyController(context: legacyController.context)!
-        emptyController.navigationBarShouldBeHidden = true
-        let navigationController = makeLegacyNavigationController(rootController: emptyController)
-        navigationController.setNavigationBarHidden(true, animated: false)
-        legacyController.bind(controller: navigationController)
-
-        legacyController.enableSizeClassSignal = true
-        
-        present(legacyController, nil)
-        
-        TGPhotoVideoEditor.present(with: legacyController.context, controller: emptyController, caption: initialCaption, withItem: item, paint: mode == .draw, adjustments: mode == .adjustments, recipientName: recipientName, stickersContext: paintStickersContext, from: .zero, mainSnapshot: nil, snapshots: snapshots as [Any], immediate: transitionCompletion != nil, activateInput: mode == .caption, isGif: isGif, appeared: {
+        let schedulePicker: (Bool, @escaping (Int32) -> Void) -> Void = { media, done in
+            presentSchedulePicker(media, done)
+        }
+        let appeared: () -> Void = {
             transitionCompletion?()
-        }, completion: { result, editingContext in
+        }
+        let completion: (TGMediaEditableItem, TGMediaEditingContext, Bool, Int32) -> Void = { result, editingContext, silentPosting, scheduleTime in
             let nativeGenerator = legacyAssetPickerItemGenerator()
             var selectableResult: TGMediaSelectableItem?
-            if let result = result {
-                selectableResult = unsafeDowncast(result, to: TGMediaSelectableItem.self)
-            }
+            selectableResult = unsafeDowncast(result, to: TGMediaSelectableItem.self)
+            
             let signals = TGCameraController.resultSignals(for: nil, editingContext: editingContext, currentItem: selectableResult, storeAssets: false, saveEditedPhotos: false, descriptionGenerator: { _1, _2, _3 in
                 nativeGenerator(_1, _2, _3, nil)
             })
-            let isCaptionAbove = editingContext?.isCaptionAbove() ?? false
-            sendMessagesWithSignals(signals, false, 0, isCaptionAbove)
-        }, dismissed: { [weak legacyController] in
+            let isCaptionAbove = editingContext.isCaptionAbove()
+            sendMessagesWithSignals(signals, silentPosting, scheduleTime, isCaptionAbove)
+        }
+        let dismissed: () -> Void = { [weak legacyController] in
             legacyController?.dismiss()
-        })
+        }
+        
+        legacyController.enableSizeClassSignal = true
+        
+        if isGif {
+            let galleryController = TGPhotoVideoEditor.controller(
+                with: legacyController.context,
+                caption: initialCaption,
+                withItem: item,
+                paint: mode == .draw,
+                adjustments: mode == .adjustments,
+                recipientName: recipientName,
+                stickersContext: paintStickersContext,
+                from: .zero,
+                mainSnapshot: nil,
+                snapshots: snapshots as [Any],
+                immediate: transitionCompletion != nil,
+                activateInput: mode == .caption,
+                isGif: true,
+                hasSilentPosting: hasSilentPosting,
+                hasSchedule: hasSchedule,
+                reminder: reminder,
+                presentSchedulePicker: schedulePicker,
+                appeared: appeared,
+                completion: completion,
+                dismissed: dismissed
+            )
+            legacyController.bind(controller: galleryController)
+            present(legacyController, nil)
+        } else {
+            let emptyController = LegacyEmptyController(context: legacyController.context)!
+            emptyController.navigationBarShouldBeHidden = true
+            let navigationController = makeLegacyNavigationController(rootController: emptyController)
+            navigationController.setNavigationBarHidden(true, animated: false)
+            legacyController.bind(controller: navigationController)
+            
+            present(legacyController, nil)
+            
+            TGPhotoVideoEditor.present(
+                with: legacyController.context,
+                controller: emptyController,
+                caption: initialCaption,
+                withItem: item,
+                paint: mode == .draw,
+                adjustments: mode == .adjustments,
+                recipientName: recipientName,
+                stickersContext: paintStickersContext,
+                from: .zero,
+                mainSnapshot: nil,
+                snapshots: snapshots as [Any],
+                immediate: transitionCompletion != nil,
+                activateInput: mode == .caption,
+                isGif: false,
+                hasSilentPosting: hasSilentPosting,
+                hasSchedule: hasSchedule,
+                reminder: reminder,
+                presentSchedulePicker: schedulePicker,
+                appeared: appeared,
+                completion: completion,
+                dismissed: dismissed
+            )
+        }
     })
 }
     
@@ -530,13 +589,11 @@ public func legacyAttachmentMenu(
                 
                 present(legacyController, nil)
                 
-                TGPhotoVideoEditor.present(with: legacyController.context, controller: emptyController, caption: initialCaption, withItem: item, paint: false, adjustments: false, recipientName: recipientName, stickersContext: paintStickersContext, from: .zero, mainSnapshot: nil, snapshots: [], immediate: false, activateInput: false, isGif: false, appeared: {
-                }, completion: { result, editingContext in
+                TGPhotoVideoEditor.present(with: legacyController.context, controller: emptyController, caption: initialCaption, withItem: item, paint: false, adjustments: false, recipientName: recipientName, stickersContext: paintStickersContext, from: .zero, mainSnapshot: nil, snapshots: [], immediate: false, activateInput: false, isGif: false, hasSilentPosting: false, hasSchedule: false, reminder: false, presentSchedulePicker: { _, _ in }, appeared: {
+                }, completion: { result, editingContext, _, _ in
                     let nativeGenerator = legacyAssetPickerItemGenerator()
-                    var selectableResult: TGMediaSelectableItem?
-                    if let result = result {
-                        selectableResult = unsafeDowncast(result, to: TGMediaSelectableItem.self)
-                    }
+                    let selectableResult: TGMediaSelectableItem? = unsafeDowncast(result, to: TGMediaSelectableItem.self)
+                    
                     let signals = TGCameraController.resultSignals(for: nil, editingContext: editingContext, currentItem: selectableResult, storeAssets: false, saveEditedPhotos: false, descriptionGenerator: { _1, _2, _3 in
                         nativeGenerator(_1, _2, _3, nil)
                     })

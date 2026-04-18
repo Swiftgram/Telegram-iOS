@@ -7287,7 +7287,7 @@ private final class ChatListLocationContext {
                 dateTimeFormat: presentationData.dateTimeFormat,
                 nameDisplayOrder: presentationData.nameDisplayOrder,
                 displayBackground: false,
-                content: .peer(peerView: ChatTitleContent.PeerData(peerView: peerView), customTitle: nil, customSubtitle: nil, onlineMemberCount: onlineMemberCount, isScheduledMessages: false, isMuted: nil, customMessageCount: nil, isEnabled: true),
+                content: .peer(peerView: ChatTitleContent.PeerData(peerView: peerView), customTitle: nil, customSubtitle: nil, onlineMemberCount: onlineMemberCount, isScheduledMessages: false, isMuted: nil, customMessageCount: nil, hidePeerStatus: false, isEnabled: true),
                 activities: nil,
                 networkState: nil,
                 tapped: { [weak self] in

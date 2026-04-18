@@ -645,13 +645,13 @@ final class ChatbotSetupScreenComponent: Component {
             let navigationTitleSize = self.navigationTitle.update(
                 transition: transition,
                 component: AnyComponent(MultilineTextComponent(
-                    text: .plain(NSAttributedString(string: environment.strings.ChatbotSetup_TitleItem, font: Font.semibold(17.0), textColor: environment.theme.rootController.navigationBar.primaryTextColor)),
+                    text: .plain(NSAttributedString(string: environment.strings.ChatbotSetup_TitleItem, font: Font.bold(24.0), textColor: environment.theme.rootController.navigationBar.primaryTextColor)),
                     horizontalAlignment: .center
                 )),
                 environment: {},
                 containerSize: CGSize(width: availableSize.width, height: 100.0)
             )
-            let navigationTitleFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - navigationTitleSize.width) / 2.0), y: environment.statusBarHeight + floor((environment.navigationHeight - environment.statusBarHeight - navigationTitleSize.height) / 2.0)), size: navigationTitleSize)
+            let navigationTitleFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - navigationTitleSize.width) / 2.0), y: environment.navigationHeight + 76.0), size: navigationTitleSize)
             if let navigationTitleView = self.navigationTitle.view {
                 if navigationTitleView.superview == nil {
                     if let controller = self.environment?.controller(), let navigationBar = controller.navigationBar {
@@ -681,7 +681,7 @@ final class ChatbotSetupScreenComponent: Component {
                 environment: {},
                 containerSize: CGSize(width: 100.0, height: 100.0)
             )
-            let iconFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - iconSize.width) * 0.5), y: contentHeight + 8.0), size: iconSize)
+            let iconFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - iconSize.width) * 0.5), y: contentHeight - 30.0), size: iconSize)
             if let iconView = self.icon.view as? LottieComponent.View {
                 if iconView.superview == nil {
                     self.scrollView.addSubview(iconView)
@@ -691,11 +691,11 @@ final class ChatbotSetupScreenComponent: Component {
                 iconView.bounds = CGRect(origin: CGPoint(), size: iconFrame.size)
             }
             
-            contentHeight += 129.0
+            contentHeight += 115.0
             
             let subtitleString = NSMutableAttributedString(attributedString: parseMarkdownIntoAttributedString(environment.strings.ChatbotSetup_Text, attributes: MarkdownAttributes(
-                body: MarkdownAttributeSet(font: Font.regular(15.0), textColor: environment.theme.list.freeTextColor),
-                bold: MarkdownAttributeSet(font: Font.semibold(15.0), textColor: environment.theme.list.freeTextColor),
+                body: MarkdownAttributeSet(font: Font.regular(15.0), textColor: environment.theme.list.itemPrimaryTextColor),
+                bold: MarkdownAttributeSet(font: Font.semibold(15.0), textColor: environment.theme.list.itemPrimaryTextColor),
                 link: MarkdownAttributeSet(font: Font.regular(15.0), textColor: environment.theme.list.itemAccentColor),
                 linkAttribute: { attributes in
                     return ("URL", "")
@@ -732,7 +732,7 @@ final class ChatbotSetupScreenComponent: Component {
                     }
                 )),
                 environment: {},
-                containerSize: CGSize(width: availableSize.width - sideInset * 2.0, height: 1000.0)
+                containerSize: CGSize(width: availableSize.width - sideInset * 2.0 - 64.0, height: 1000.0)
             )
             let subtitleFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - subtitleSize.width) * 0.5), y: contentHeight), size: subtitleSize)
             if let subtitleView = self.subtitle.view {

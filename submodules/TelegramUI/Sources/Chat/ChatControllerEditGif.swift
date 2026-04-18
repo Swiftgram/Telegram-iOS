@@ -14,6 +14,8 @@ extension ChatControllerImpl {
         guard let peer = self.presentationInterfaceState.renderedPeer?.peer else {
             return
         }
+        let hasSilentPosting = peer.id != self.context.account.peerId
+        let hasSchedule = self.presentationInterfaceState.subject != .scheduledMessages && peer.id.namespace != Namespaces.Peer.SecretChat && self.presentationInterfaceState.sendPaidMessageStars == nil
         legacyMediaEditor(
             context: self.context,
             peer: peer,
@@ -27,7 +29,24 @@ extension ChatControllerImpl {
             getCaptionPanelView: { [weak self] in
                 return self?.getCaptionPanelView(isFile: false, hasTimer: false)
             },
-            sendMessagesWithSignals: { [weak self] signals, _, _, isCaptionAbove in
+            hasSilentPosting: hasSilentPosting,
+            hasSchedule: hasSchedule,
+            reminder: peer.id == self.context.account.peerId,
+            presentSchedulePicker: { [weak self] _, done in
+                guard let self else {
+                    return
+                }
+                self.presentScheduleTimePicker(style: .media, completion: { [weak self] time, _ in
+                    guard let self else {
+                        return
+                    }
+                    done(time)
+                    if self.presentationInterfaceState.subject != .scheduledMessages && time != scheduleWhenOnlineTimestamp {
+                        self.openScheduledMessages()
+                    }
+                })
+            },
+            sendMessagesWithSignals: { [weak self] signals, silentPosting, scheduleTime, isCaptionAbove in
                 guard let self else {
                     return
                 }
@@ -39,8 +58,8 @@ extension ChatControllerImpl {
                     fromGallery: false,
                     signals: signals,
                     originalMediaReference: file.abstract,
-                    silentPosting: false,
-                    scheduleTime: nil,
+                    silentPosting: silentPosting,
+                    scheduleTime: scheduleTime == 0 ? nil : scheduleTime,
                     replyToSubject: nil,
                     parameters: parameters,
                     getAnimatedTransitionSource: nil,
@@ -48,7 +67,8 @@ extension ChatControllerImpl {
                 )
             },
             present: { [weak self] c, a in
-                self?.present(c, in: .window(.root), with: a)
+                c.navigationPresentation = .flatModal
+                self?.push(c)
             }
         )
     }

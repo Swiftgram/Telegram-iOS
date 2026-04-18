@@ -792,9 +792,10 @@ public final class ResizableSheetComponent<ChildEnvironmentType: Sendable & Equa
             let scrollContentHeight = max(topInset + contentHeight + containerInset, availableSize.height - containerInset)
             
             self.scrollContentClippingView.layer.cornerRadius = 38.0
-            
-            self.itemLayout = ItemLayout(containerSize: availableSize, containerInset: containerInset, containerCornerRadius: sheetEnvironment.deviceMetrics.screenCornerRadius, bottomInset: sheetEnvironment.safeInsets.bottom, topInset: topInset, fillingSize: fillingSize, isTablet: sheetEnvironment.metrics.isTablet)
-            
+
+            let containerCornerRadius = max(22.0, sheetEnvironment.deviceMetrics.screenCornerRadius)
+            self.itemLayout = ItemLayout(containerSize: availableSize, containerInset: containerInset, containerCornerRadius: containerCornerRadius, bottomInset: sheetEnvironment.safeInsets.bottom, topInset: topInset, fillingSize: fillingSize, isTablet: sheetEnvironment.metrics.isTablet)
+
             transition.setFrame(view: self.scrollContentView, frame: CGRect(origin: CGPoint(x: 0.0, y: topInset + containerInset), size: CGSize(width: availableSize.width, height: contentHeight)))
             
             transition.setPosition(layer: self.backgroundLayer, position: CGPoint(x: availableSize.width / 2.0, y: availableSize.height / 2.0))

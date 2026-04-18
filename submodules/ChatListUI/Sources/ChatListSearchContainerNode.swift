@@ -110,6 +110,7 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
     private let navigationController: NavigationController?
     
     var dismissSearch: (() -> Void)?
+    var dismissSearchImmediately: (() -> Void)?
     var openAdInfo: ((ASDisplayNode, AdPeer) -> Void)?
     
     private let edgeEffectView: EdgeEffectView
@@ -1657,7 +1658,7 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
                             if let strongSelf = self {
                                 let proceed: (ChatController) -> Void = { chatController in
                                     chatController.purposefulAction = { [weak self] in
-                                        self?.cancel?()
+                                        self?.dismissSearchImmediately?()
                                     }
                                     if let navigationController = strongSelf.navigationController {
                                         var viewControllers = navigationController.viewControllers

@@ -1052,6 +1052,7 @@ public final class ChatTextInputPanelComponent: Component {
                 transition: transition.containedViewLayoutTransition,
                 interfaceState: presentationInterfaceState,
                 metrics: LayoutMetrics(widthClass: .compact, heightClass: .compact, orientation: nil),
+                deviceMetrics: DeviceMetrics.iPhone16Pro,
                 isMediaInputExpanded: false
             )
             
