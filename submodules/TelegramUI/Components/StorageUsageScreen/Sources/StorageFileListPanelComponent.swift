@@ -631,11 +631,11 @@ final class StorageFileListPanelComponent: Component {
     typealias EnvironmentType = StorageUsagePanelEnvironment
     
     final class Item: Equatable {
-        let message: Message
+        let message: EngineMessage
         let size: Int64
-        
+
         init(
-            message: Message,
+            message: EngineMessage,
             size: Int64
         ) {
             self.message = message

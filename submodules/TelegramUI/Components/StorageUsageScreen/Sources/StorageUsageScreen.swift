@@ -223,7 +223,7 @@ final class StorageUsageScreenComponent: Component {
             return true
         }
         
-        func togglePeer(id: EnginePeer.Id, availableMessages: [EngineMessage.Id: Message]) -> SelectionState {
+        func togglePeer(id: EnginePeer.Id, availableMessages: [EngineMessage.Id: EngineMessage]) -> SelectionState {
             var selectedPeers = self.selectedPeers
             var selectedMessages = self.selectedMessages
             
@@ -351,32 +351,32 @@ final class StorageUsageScreenComponent: Component {
         let peerId: EnginePeer.Id?
         let stats: AllStorageUsageStats
         let contextStats: StorageUsageStats
-        let messages: [MessageId: Message]
-        
+        let messages: [EngineMessage.Id: EngineMessage]
+
         var isSelectingPeers: Bool = false
         private(set) var selectionState: SelectionState
-        
+
         let existingCategories: Set<Category>
         private(set) var selectedCategories: Set<Category>
-        
+
         let peerItems: StoragePeerListPanelComponent.Items?
         let imageItems: StorageMediaGridPanelComponent.Items?
         let fileItems: StorageFileListPanelComponent.Items?
         let musicItems: StorageFileListPanelComponent.Items?
-        
+
         private let allPhotos: Set<EngineMessage.Id>
         private let allVideos: Set<EngineMessage.Id>
         private let allFiles: Set<EngineMessage.Id>
         private let allMusic: Set<EngineMessage.Id>
-        
+
         private(set) var selectedSize: Int64 = 0
-        private(set) var clearIncludeMessages: [Message] = []
-        private(set) var clearExcludeMessages: [Message] = []
-        
+        private(set) var clearIncludeMessages: [EngineMessage] = []
+        private(set) var clearExcludeMessages: [EngineMessage] = []
+
         init(
             peerId: EnginePeer.Id?,
             stats: AllStorageUsageStats,
-            messages: [MessageId: Message],
+            messages: [EngineMessage.Id: EngineMessage],
             peerItems: StoragePeerListPanelComponent.Items?,
             imageItems: StorageMediaGridPanelComponent.Items?,
             fileItems: StorageFileListPanelComponent.Items?,
@@ -581,16 +581,16 @@ final class StorageUsageScreenComponent: Component {
                     }
                 }
                 
-                var clearIncludeMessages: [Message] = []
-                var clearExcludeMessages: [Message] = []
-                
+                var clearIncludeMessages: [EngineMessage] = []
+                var clearExcludeMessages: [EngineMessage] = []
+
                 if self.selectedCategories.contains(.photos) {
                     let deselectedPhotos = self.allPhotos.subtracting(self.selectionState.selectedMessages)
                     if !deselectedPhotos.isEmpty, let imageItems = self.imageItems {
                         for item in imageItems.items {
                             if deselectedPhotos.contains(item.message.id) {
                                 selectedSize -= item.size
-                                clearExcludeMessages.append(item.message._asMessage())
+                                clearExcludeMessages.append(item.message)
                             }
                         }
                     }
@@ -600,19 +600,19 @@ final class StorageUsageScreenComponent: Component {
                         for item in imageItems.items {
                             if selectedPhotos.contains(item.message.id) {
                                 selectedSize += item.size
-                                clearIncludeMessages.append(item.message._asMessage())
+                                clearIncludeMessages.append(item.message)
                             }
                         }
                     }
                 }
-                
+
                 if self.selectedCategories.contains(.videos) {
                     let deselectedVideos = self.allVideos.subtracting(self.selectionState.selectedMessages)
                     if !deselectedVideos.isEmpty, let imageItems = self.imageItems {
                         for item in imageItems.items {
                             if deselectedVideos.contains(item.message.id) {
                                 selectedSize -= item.size
-                                clearExcludeMessages.append(item.message._asMessage())
+                                clearExcludeMessages.append(item.message)
                             }
                         }
                     }
@@ -622,12 +622,12 @@ final class StorageUsageScreenComponent: Component {
                         for item in imageItems.items {
                             if selectedVideos.contains(item.message.id) {
                                 selectedSize += item.size
-                                clearIncludeMessages.append(item.message._asMessage())
+                                clearIncludeMessages.append(item.message)
                             }
                         }
                     }
                 }
-                
+
                 if self.selectedCategories.contains(.files) {
                     let deselectedFiles = self.allFiles.subtracting(self.selectionState.selectedMessages)
                     if !deselectedFiles.isEmpty, let fileItems = self.fileItems {
@@ -649,7 +649,7 @@ final class StorageUsageScreenComponent: Component {
                         }
                     }
                 }
-                
+
                 if self.selectedCategories.contains(.music) {
                     let deselectedMusic = self.allMusic.subtracting(self.selectionState.selectedMessages)
                     if !deselectedMusic.isEmpty, let musicItems = self.musicItems {
@@ -2388,16 +2388,15 @@ final class StorageUsageScreenComponent: Component {
                 }
                 
                 class RenderResult {
-                    var messages: [MessageId: Message] = [:]
+                    var messages: [EngineMessage.Id: EngineMessage] = [:]
                     var imageItems: [StorageMediaGridPanelComponent.Item] = []
                     var fileItems: [StorageFileListPanelComponent.Item] = []
                     var musicItems: [StorageFileListPanelComponent.Item] = []
                 }
-                
-                self.messagesDisposable = (component.context.engine.resources.renderStorageUsageStatsMessages(stats: contextStats, categories: [.files, .photos, .videos, .music], existingMessages: (self.aggregatedData?.messages ?? [:]).mapValues(EngineMessage.init))
+
+                self.messagesDisposable = (component.context.engine.resources.renderStorageUsageStatsMessages(stats: contextStats, categories: [.files, .photos, .videos, .music], existingMessages: self.aggregatedData?.messages ?? [:])
                 |> deliverOn(Queue())
-                |> map { engineMessages -> RenderResult in
-                    let messages = engineMessages.mapValues { $0._asMessage() }
+                |> map { messages -> RenderResult in
                     let result = RenderResult()
 
                     result.messages = messages
@@ -2430,7 +2429,7 @@ final class StorageUsageScreenComponent: Component {
                                 
                                 if matches {
                                     result.imageItems.append(StorageMediaGridPanelComponent.Item(
-                                        message: EngineMessage(message),
+                                        message: message,
                                         size: messageSize
                                     ))
                                 }
@@ -2566,7 +2565,7 @@ final class StorageUsageScreenComponent: Component {
                 chatLocation: .peer(id: message.id.peerId),
                 chatFilterTag: nil,
                 chatLocationContextHolder: nil,
-                message: message,
+                message: message._asMessage(),
                 standalone: true,
                 reverseMessageGalleryOrder: false,
                 navigationController: self.controller?()?.navigationController as? NavigationController
@@ -2765,25 +2764,21 @@ final class StorageUsageScreenComponent: Component {
             self.controller?()?.presentInGlobalOverlay(controller)
         }
         
-        private func openMessage(message: Message) {
+        private func openMessage(message: EngineMessage) {
             guard let component = self.component else {
                 return
             }
             guard let controller = self.controller?(), let navigationController = controller.navigationController as? NavigationController else {
                 return
             }
-            let foundGalleryMessage: Message? = message
-            guard let galleryMessage = foundGalleryMessage else {
-                return
-            }
             self.endEditing(true)
-            
+
             let _ = component.context.sharedContext.openChatMessage(OpenChatMessageParams(
                 context: component.context,
                 chatLocation: .peer(id: message.id.peerId),
                 chatFilterTag: nil,
                 chatLocationContextHolder: nil,
-                message: galleryMessage,
+                message: message._asMessage(),
                 standalone: true,
                 reverseMessageGalleryOrder: true,
                 navigationController: navigationController,
@@ -2954,7 +2949,7 @@ final class StorageUsageScreenComponent: Component {
                 
                 let totalSize = aggregatedData.selectedSize
                 
-                let _ = (component.context.engine.resources.clearStorage(peerId: component.peer?.id, categories: mappedCategories, includeMessages: aggregatedData.clearIncludeMessages.map(EngineMessage.init), excludeMessages: aggregatedData.clearExcludeMessages.map(EngineMessage.init))
+                let _ = (component.context.engine.resources.clearStorage(peerId: component.peer?.id, categories: mappedCategories, includeMessages: aggregatedData.clearIncludeMessages, excludeMessages: aggregatedData.clearExcludeMessages)
                 |> deliverOnMainQueue).start(next: { [weak self] progress in
                     guard let self else {
                         return
@@ -3068,9 +3063,9 @@ final class StorageUsageScreenComponent: Component {
                         }
                     }
                     
-                    var includeMessages: [Message] = []
-                    var excludeMessages: [Message] = []
-                    
+                    var includeMessages: [EngineMessage] = []
+                    var excludeMessages: [EngineMessage] = []
+
                     for (id, message) in aggregatedData.messages {
                         if aggregatedData.selectionState.selectedPeers.contains(id.peerId) {
                             if !aggregatedData.selectionState.selectedMessages.contains(id) {
@@ -3082,8 +3077,8 @@ final class StorageUsageScreenComponent: Component {
                             }
                         }
                     }
-                    
-                    let _ = (component.context.engine.resources.clearStorage(peerIds: aggregatedData.selectionState.selectedPeers, includeMessages: includeMessages.map(EngineMessage.init), excludeMessages: excludeMessages.map(EngineMessage.init))
+
+                    let _ = (component.context.engine.resources.clearStorage(peerIds: aggregatedData.selectionState.selectedPeers, includeMessages: includeMessages, excludeMessages: excludeMessages)
                     |> deliverOnMainQueue).start(next: { [weak self] progress in
                         guard let self else {
                             return
