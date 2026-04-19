@@ -9,7 +9,6 @@ import ComponentDisplayAdapters
 import TelegramPresentationData
 import AccountContext
 import TelegramCore
-import Postbox
 import MultilineTextComponent
 import EmojiStatusComponent
 import Markdown
@@ -1044,17 +1043,11 @@ final class StorageUsageScreenComponent: Component {
             
             if self.statsDisposable == nil {
                 let context = component.context
-                let viewKey: PostboxViewKey = .preferences(keys: Set([PreferencesKeys.accountSpecificCacheStorageSettings]))
-                let cacheSettingsExceptionCount: Signal<[CacheStorageSettings.PeerStorageCategory: Int32], NoError> = component.context.account.postbox.combinedView(keys: [viewKey])
-                |> map { views -> AccountSpecificCacheStorageSettings in
-                    let cacheSettings: AccountSpecificCacheStorageSettings
-                    if let view = views.views[viewKey] as? PreferencesView, let value = view.values[PreferencesKeys.accountSpecificCacheStorageSettings]?.get(AccountSpecificCacheStorageSettings.self) {
-                        cacheSettings = value
-                    } else {
-                        cacheSettings = AccountSpecificCacheStorageSettings.defaultSettings
-                    }
-                    
-                    return cacheSettings
+                let cacheSettingsExceptionCount: Signal<[CacheStorageSettings.PeerStorageCategory: Int32], NoError> = context.engine.data.subscribe(
+                    TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.accountSpecificCacheStorageSettings)
+                )
+                |> map { preferencesEntry -> AccountSpecificCacheStorageSettings in
+                    return preferencesEntry?.get(AccountSpecificCacheStorageSettings.self) ?? AccountSpecificCacheStorageSettings.defaultSettings
                 }
                 |> distinctUntilChanged
                 |> mapToSignal { accountSpecificSettings -> Signal<[CacheStorageSettings.PeerStorageCategory: Int32], NoError> in
@@ -2401,7 +2394,7 @@ final class StorageUsageScreenComponent: Component {
 
                     result.messages = messages
                     
-                    var mergedMedia: [MessageId: Int64] = [:]
+                    var mergedMedia: [EngineMessage.Id: Int64] = [:]
                     if let categoryStats = contextStats.categories[.photos] {
                         mergedMedia = categoryStats.messages
                     }
@@ -3128,69 +3121,52 @@ final class StorageUsageScreenComponent: Component {
                 self.controller?()?.presentInGlobalOverlay(c, with: nil)
             }
             
-            let viewKey: PostboxViewKey = .preferences(keys: Set([PreferencesKeys.accountSpecificCacheStorageSettings]))
-            let accountSpecificSettings: Signal<AccountSpecificCacheStorageSettings, NoError> = context.account.postbox.combinedView(keys: [viewKey])
-            |> map { views -> AccountSpecificCacheStorageSettings in
-                let cacheSettings: AccountSpecificCacheStorageSettings
-                if let view = views.views[viewKey] as? PreferencesView, let value = view.values[PreferencesKeys.accountSpecificCacheStorageSettings]?.get(AccountSpecificCacheStorageSettings.self) {
-                    cacheSettings = value
-                } else {
-                    cacheSettings = AccountSpecificCacheStorageSettings.defaultSettings
-                }
-
-                return cacheSettings
+            let accountSpecificSettings: Signal<AccountSpecificCacheStorageSettings, NoError> = context.engine.data.subscribe(
+                TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.accountSpecificCacheStorageSettings)
+            )
+            |> map { preferencesEntry -> AccountSpecificCacheStorageSettings in
+                return preferencesEntry?.get(AccountSpecificCacheStorageSettings.self) ?? AccountSpecificCacheStorageSettings.defaultSettings
             }
             |> distinctUntilChanged
-            
-            let peerExceptions: Signal<[(peer: FoundPeer, value: Int32)], NoError> = accountSpecificSettings
-            |> mapToSignal { accountSpecificSettings -> Signal<[(peer: FoundPeer, value: Int32)], NoError> in
-                return context.account.postbox.transaction { transaction -> [(peer: FoundPeer, value: Int32)] in
-                    var result: [(peer: FoundPeer, value: Int32)] = []
-                    
+
+            let peerExceptions: Signal<[(peer: EnginePeer, value: Int32)], NoError> = accountSpecificSettings
+            |> mapToSignal { accountSpecificSettings -> Signal<[(peer: EnginePeer, value: Int32)], NoError> in
+                return context.engine.data.get(
+                    EngineDataMap(accountSpecificSettings.peerStorageTimeoutExceptions.map(\.key).map(TelegramEngine.EngineData.Item.Peer.Peer.init(id:)))
+                )
+                |> map { peers -> [(peer: EnginePeer, value: Int32)] in
+                    var result: [(peer: EnginePeer, value: Int32)] = []
+
                     for item in accountSpecificSettings.peerStorageTimeoutExceptions {
-                        let peerId = item.key
-                        let value = item.value
-                        
-                        guard let peer = transaction.getPeer(peerId) else {
+                        guard let peer = peers[item.key] ?? nil else {
                             continue
                         }
                         let peerCategory: CacheStorageSettings.PeerStorageCategory
-                        var subscriberCount: Int32?
-                        if peer is TelegramUser {
+                        switch peer {
+                        case .user, .secretChat:
                             peerCategory = .privateChats
-                        } else if peer is TelegramGroup {
+                        case .legacyGroup:
                             peerCategory = .groups
-                            
-                            if let cachedData = transaction.getPeerCachedData(peerId: peerId) as? CachedGroupData {
-                                subscriberCount = (cachedData.participants?.participants.count).flatMap(Int32.init)
-                            }
-                        } else if let channel = peer as? TelegramChannel {
+                        case let .channel(channel):
                             if case .group = channel.info {
                                 peerCategory = .groups
                             } else {
                                 peerCategory = .channels
                             }
-                            if peerCategory == mappedCategory {
-                                if let cachedData = transaction.getPeerCachedData(peerId: peerId) as? CachedChannelData {
-                                    subscriberCount = cachedData.participantsSummary.memberCount
-                                }
-                            }
-                        } else {
-                            continue
                         }
-                            
+
                         if peerCategory != mappedCategory {
                             continue
                         }
-                        
-                        result.append((peer: FoundPeer(peer: peer, subscribers: subscriberCount), value: value))
+
+                        result.append((peer: peer, value: item.value))
                     }
-                    
+
                     return result.sorted(by: { lhs, rhs in
                         if lhs.value != rhs.value {
                             return lhs.value < rhs.value
                         }
-                        return lhs.peer.peer.debugDisplayTitle < rhs.peer.peer.debugDisplayTitle
+                        return lhs.peer.debugDisplayTitle < rhs.peer.debugDisplayTitle
                     })
                 }
             }
@@ -3285,7 +3261,7 @@ final class StorageUsageScreenComponent: Component {
                             }
                         })))
                     } else {
-                        subItems.append(.custom(MultiplePeerAvatarsContextItem(context: context, peers: peerExceptions.prefix(3).map { EnginePeer($0.peer.peer) }, totalCount: peerExceptions.count, action: { c, _ in
+                        subItems.append(.custom(MultiplePeerAvatarsContextItem(context: context, peers: peerExceptions.prefix(3).map { $0.peer }, totalCount: peerExceptions.count, action: { c, _ in
                             c.dismiss(completion: {
                                 
                             })
