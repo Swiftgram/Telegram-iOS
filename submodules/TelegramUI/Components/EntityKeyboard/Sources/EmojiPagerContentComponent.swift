@@ -4068,7 +4068,7 @@ public final class EmojiPagerContentComponent: Component {
         }
         
         private func maybeLoadMore() {
-            guard let component = self.component else {
+            guard let component = self.component, !self.isUpdating else {
                 return
             }
             guard component.canLoadMore, let contentId = component.itemContentUniqueId else {
