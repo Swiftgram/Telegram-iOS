@@ -34,6 +34,10 @@ public extension TelegramEngine {
             return _internal_searchStickers(account: self.account, query: query, emoticon: emoticon, inputLanguageCode: inputLanguageCode, scope: scope)
         }
         
+        public func stickerSearchContext(query: String?, emoticon: [String], inputLanguageCode: String = "", scope: SearchStickersScope = [.installed, .remote]) -> StickerSearchContext {
+            return StickerSearchContext(account: self.account, query: query, emoticon: emoticon, inputLanguageCode: inputLanguageCode, scope: scope)
+        }
+        
         public func searchStickers(category: EmojiSearchCategories.Group, scope: SearchStickersScope = [.installed, .remote]) -> Signal<(items: [FoundStickerItem], isFinalResult: Bool), NoError> {
             return _internal_searchStickers(account: self.account, category: category, scope: scope)
         }
@@ -292,6 +296,10 @@ public extension TelegramEngine {
             |> map { items, isFinalResult -> (items: [TelegramMediaFile], isFinalResult: Bool) in
                 return (items.map(\.file), isFinalResult)
             }
+        }
+        
+        public func emojiSearchContext(query: String?, emoticon: [String], inputLanguageCode: String = "", scope: SearchStickersScope = [.installed, .remote]) -> EmojiSearchContext {
+            return EmojiSearchContext(account: self.account, query: query, emoticon: emoticon, inputLanguageCode: inputLanguageCode, scope: scope)
         }
         
         public func searchEmoji(category: EmojiSearchCategories.Group) -> Signal<(items: [TelegramMediaFile], isFinalResult: Bool), NoError> {

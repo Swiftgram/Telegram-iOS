@@ -116,6 +116,12 @@ private struct StickerPaneSearchGridTransition {
     let animated: Bool
 }
 
+private struct StickerPaneSearchStickerState {
+    let context: StickerSearchContext?
+    let items: [FoundStickerItem]
+    let isLoadingMore: Bool
+}
+
 private func preparedChatMediaInputGridEntryTransition(context: AccountContext, theme: PresentationTheme, strings: PresentationStrings, from fromEntries: [StickerSearchEntry], to toEntries: [StickerSearchEntry], interaction: StickerPaneSearchInteraction, inputNodeInteraction: ChatMediaInputNodeInteraction) -> StickerPaneSearchGridTransition {
     let stationaryItems: GridNodeStationaryItems = .none
     let scrollToItem: GridNodeScrollToItem? = nil
@@ -156,6 +162,8 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
     private let queue = Queue()
     private let currentEntries = Atomic<[StickerSearchEntry]?>(value: nil)
     private let currentRemotePacks = Atomic<FoundStickerSets?>(value: nil)
+    private var stickerSearchContext: StickerSearchContext?
+    private var currentStickerCount: Int = 0
     
     private let _ready = Promise<Void>()
     var ready: Signal<Void, NoError> {
@@ -211,6 +219,17 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
         self.gridNode.scrollView.alwaysBounceVertical = true
         self.gridNode.scrollingInitiated = { [weak self] in
             self?.deactivateSearchBar?()
+        }
+        self.gridNode.visibleItemsUpdated = { [weak self] visibleItems in
+            guard let self, let (bottomVisible, _) = visibleItems.bottomVisible else {
+                return
+            }
+            guard self.currentStickerCount != 0 else {
+                return
+            }
+            if bottomVisible >= max(0, self.currentStickerCount - 8) {
+                self.stickerSearchContext?.loadMore()
+            }
         }
         
         self.trendingPane.scrollingInitiated = { [weak self] in
@@ -353,56 +372,48 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
     }
     
     func updateText(_ text: String, languageCode: String?) {
-        let signal: Signal<([(String?, FoundStickerItem)], FoundStickerSets, Bool, FoundStickerSets?)?, NoError>
+        self.stickerSearchContext = nil
+        self.currentStickerCount = 0
+        let _ = self.currentRemotePacks.swap(nil)
+        
+        let signal: Signal<(StickerPaneSearchStickerState, FoundStickerSets, Bool, FoundStickerSets?)?, NoError>
         if !text.isEmpty {
             let context = self.context
-            let stickers: Signal<([(String?, FoundStickerItem)], Bool), NoError> = Signal { subscriber in
-                var signals: Signal<[Signal<(String?, [FoundStickerItem], Bool), NoError>], NoError> = .single([])
-                
-                let query = text.trimmingCharacters(in: .whitespacesAndNewlines)
-                if query.isSingleEmoji {
-                    signals = .single([context.engine.stickers.searchStickers(query: nil, emoticon: [text.basicEmoji.0])
-                    |> map { (nil, $0.items, $0.isFinalResult) }])
-                } else if query.count > 1, let languageCode = languageCode, !languageCode.isEmpty && languageCode != "emoji" {
-                    var signal = context.engine.stickers.searchEmojiKeywords(inputLanguageCode: languageCode, query: query.lowercased(), completeMatch: query.count < 3)
-                    if !languageCode.lowercased().hasPrefix("en") {
-                        signal = signal
-                        |> mapToSignal { keywords in
-                            return .single(keywords)
-                            |> then(
-                                context.engine.stickers.searchEmojiKeywords(inputLanguageCode: "en-US", query: query.lowercased(), completeMatch: query.count < 3)
-                                |> map { englishKeywords in
-                                    return keywords + englishKeywords
-                                }
-                            )
-                        }
-                    }
-                    signals = signal
-                    |> map { keywords -> [Signal<(String?, [FoundStickerItem], Bool), NoError>] in
-                        let emoticon = keywords.flatMap { $0.emoticons }.map { $0.basicEmoji.0 }
-                        return [context.engine.stickers.searchStickers(query: query, emoticon: emoticon, inputLanguageCode: languageCode)
-                        |> map { (nil, $0.items, $0.isFinalResult) }]
+            let query = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            let stickers: Signal<StickerPaneSearchStickerState, NoError>
+            if query.isSingleEmoji {
+                let searchContext = context.engine.stickers.stickerSearchContext(query: nil, emoticon: [text.basicEmoji.0])
+                stickers = searchContext.state
+                |> map { state -> StickerPaneSearchStickerState in
+                    return StickerPaneSearchStickerState(context: searchContext, items: state.items, isLoadingMore: state.isLoadingMore)
+                }
+            } else if query.count > 1, let languageCode = languageCode, !languageCode.isEmpty && languageCode != "emoji" {
+                var keywords = context.engine.stickers.searchEmojiKeywords(inputLanguageCode: languageCode, query: query.lowercased(), completeMatch: query.count < 3)
+                if !languageCode.lowercased().hasPrefix("en") {
+                    keywords = keywords
+                    |> mapToSignal { keywords in
+                        return .single(keywords)
+                        |> then(
+                            context.engine.stickers.searchEmojiKeywords(inputLanguageCode: "en-US", query: query.lowercased(), completeMatch: query.count < 3)
+                            |> map { englishKeywords in
+                                return keywords + englishKeywords
+                            }
+                        )
                     }
                 }
-                
-                return (signals
-                |> mapToSignal { signals in
-                    return combineLatest(signals)
-                }).start(next: { results in
-                    var result: [(String?, FoundStickerItem)] = []
-                    var allAreFinal = true
-                    for (emoji, stickers, isFinal) in results {
-                        for sticker in stickers {
-                            result.append((emoji, sticker))
-                        }
-                        if !isFinal {
-                            allAreFinal = false
-                        }
+                stickers = .single(StickerPaneSearchStickerState(context: nil, items: [], isLoadingMore: true))
+                |> then(
+                    keywords
+                |> mapToSignal { keywords -> Signal<StickerPaneSearchStickerState, NoError> in
+                    let emoticon = keywords.flatMap { $0.emoticons }.map { $0.basicEmoji.0 }
+                    let searchContext = context.engine.stickers.stickerSearchContext(query: query, emoticon: emoticon, inputLanguageCode: languageCode)
+                    return searchContext.state
+                    |> map { state -> StickerPaneSearchStickerState in
+                        return StickerPaneSearchStickerState(context: searchContext, items: state.items, isLoadingMore: state.isLoadingMore)
                     }
-                    subscriber.putNext((result, allAreFinal))
-                }, completed: {
-//                    subscriber.putCompletion()
                 })
+            } else {
+                stickers = .single(StickerPaneSearchStickerState(context: nil, items: [], isLoadingMore: false))
             }
             
             let local = context.engine.stickers.searchStickerSets(query: text)
@@ -460,10 +471,9 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
             }
             
             signal = combineLatest(stickers, packs)
-            |> map { stickers, packs -> ([(String?, FoundStickerItem)], FoundStickerSets, Bool, FoundStickerSets?)? in
-                return (stickers.0, packs.0, packs.1 && stickers.1, packs.2)
+            |> map { stickers, packs -> (StickerPaneSearchStickerState, FoundStickerSets, Bool, FoundStickerSets?)? in
+                return (stickers, packs.0, packs.1 && !stickers.isLoadingMore, packs.2)
             }
-            self.updateActivity?(true)
         } else {
             signal = .single(nil)
             self.updateActivity?(false)
@@ -478,50 +488,27 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
                 
                 var entries: [StickerSearchEntry] = []
                 if let (stickers, packs, final, remote) = result {
+                    strongSelf.stickerSearchContext = stickers.context
+                    strongSelf.currentStickerCount = stickers.items.count
+                    strongSelf.updateActivity?(stickers.items.isEmpty && stickers.isLoadingMore)
+                    
                     if let remote = remote {
                         let _ = strongSelf.currentRemotePacks.swap(remote)
                     }
                     strongSelf.gridNode.isHidden = false
                     strongSelf.trendingPane.isHidden = true
                     
-                    if final {
-                        strongSelf.updateActivity?(false)
-                    }
-                    
-                    var index = 0
-                    var existingStickerIds = Set<MediaId>()
-                    var previousCode: String?
-                    for (code, sticker) in stickers {
-                        if let id = sticker.file.id, !existingStickerIds.contains(id) {
-                            entries.append(.sticker(index: index, code: code != previousCode ? code : nil, stickerItem: sticker, theme: strongSelf.theme))
-                            index += 1
-                            
-                            previousCode = code
-                            existingStickerIds.insert(id)
-                        }
-                    }
-                    var isFirstGlobal = true
-                    for (collectionId, info, _, installed) in packs.infos {
-                        if let info = info as? StickerPackCollectionInfo {
-                            var topItems: [StickerPackItem] = []
-                            for e in packs.entries {
-                                if let item = e.item as? StickerPackItem {
-                                    if e.index.collectionId == collectionId {
-                                        topItems.append(item)
-                                    }
-                                }
-                            }
-                            entries.append(.global(index: index, info: info, topItems: topItems, installed: installed, topSeparator: !isFirstGlobal))
-                            isFirstGlobal = false
-                            index += 1
-                        }
-                    }
+                    entries = strongSelf.entries(stickers: stickers.items, packs: packs)
                     
                     if final || !entries.isEmpty {
                         strongSelf.notFoundNode.isHidden = !entries.isEmpty
+                    } else {
+                        strongSelf.notFoundNode.isHidden = true
                     }
                 } else {
                     let _ = strongSelf.currentRemotePacks.swap(nil)
+                    strongSelf.stickerSearchContext = nil
+                    strongSelf.currentStickerCount = 0
                     strongSelf.updateActivity?(false)
                     strongSelf.gridNode.isHidden = true
                     strongSelf.notFoundNode.isHidden = true
@@ -533,6 +520,36 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
                 strongSelf.enqueueTransition(transition)
             }
         }))
+    }
+    
+    private func entries(stickers: [FoundStickerItem], packs: FoundStickerSets) -> [StickerSearchEntry] {
+        var entries: [StickerSearchEntry] = []
+        var index = 0
+        var existingStickerIds = Set<MediaId>()
+        for sticker in stickers {
+            if let id = sticker.file.id, !existingStickerIds.contains(id) {
+                entries.append(.sticker(index: index, code: nil, stickerItem: sticker, theme: self.theme))
+                index += 1
+                existingStickerIds.insert(id)
+            }
+        }
+        
+        var isFirstGlobal = true
+        for (collectionId, info, _, installed) in packs.infos {
+            if let info = info as? StickerPackCollectionInfo {
+                var topItems: [StickerPackItem] = []
+                for entry in packs.entries {
+                    if let item = entry.item as? StickerPackItem, entry.index.collectionId == collectionId {
+                        topItems.append(item)
+                    }
+                }
+                entries.append(.global(index: index, info: info, topItems: topItems, installed: installed, topSeparator: !isFirstGlobal))
+                isFirstGlobal = false
+                index += 1
+            }
+        }
+        
+        return entries
     }
     
     func updateThemeAndStrings(theme: PresentationTheme, strings: PresentationStrings) {
