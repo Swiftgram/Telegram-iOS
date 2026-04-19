@@ -225,6 +225,7 @@ public struct ResolvedBotAdminRights: OptionSet {
     public static let manageVideoChats = ResolvedBotAdminRights(rawValue: 512)
     public static let canBeAnonymous = ResolvedBotAdminRights(rawValue: 1024)
     public static let manageChat = ResolvedBotAdminRights(rawValue: 2048)
+    public static let manageTopics = ResolvedBotAdminRights(rawValue: 4096)
     
     public var chatAdminRights: TelegramChatAdminRightsFlags? {
         var flags = TelegramChatAdminRightsFlags()
@@ -258,6 +259,9 @@ public struct ResolvedBotAdminRights: OptionSet {
         }
         if self.contains(ResolvedBotAdminRights.canBeAnonymous) {
             flags.insert(.canBeAnonymous)
+        }
+        if self.contains(ResolvedBotAdminRights.manageTopics) {
+            flags.insert(.canManageTopics)
         }
         
         if flags.isEmpty && !self.contains(ResolvedBotAdminRights.manageChat) {

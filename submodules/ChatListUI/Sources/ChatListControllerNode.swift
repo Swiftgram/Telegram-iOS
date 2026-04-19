@@ -1986,6 +1986,9 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         contentNode.dismissSearch = { [weak self] in
             self?.dismissSearch?()
         }
+        contentNode.dismissSearchImmediately = { [weak self] in
+            self?.controller?.deactivateSearch(animated: false)
+        }
         contentNode.openAdInfo = { [weak self] node, adPeer in
             self?.controller?.openAdInfo(node: node, adPeer: adPeer)
         }

@@ -16199,3 +16199,8 @@ Error: %8$@";
 "Chat.Poll.Restriction.Country.CountriesLastDelimiter" = " and ";
 
 "Conversation.MessageGuestChatForUser" = "for %@";
+
+"Settings.About.PrivacyHelpEmpty" = "A few words about you.";
+"Settings.About.PrivacyHelpEveryone" = "Everyone can see your bio. [Change >]()";
+"Settings.About.PrivacyHelpContacts" = "Only uour contacts can see your bio. [Change >]()";
+"Settings.About.PrivacyHelpNobody" = "Nobody can see your bio. [Change >]()";

@@ -3923,19 +3923,33 @@ public func avatarMediaPickerController(
         final class PickerDelegate: NSObject, PHPickerViewControllerDelegate {
             var completion: ((Any?, UIView?, CGRect, UIImage?, Bool, @escaping (Bool?) -> (UIView, CGRect)?, @escaping () -> Void) -> Void)?
             
-            func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-                picker.dismiss(animated: true)
-
-                for item in results {
-                    if item.itemProvider.canLoadObject(ofClass: UIImage.self) {
-                        item.itemProvider.loadObject(ofClass: UIImage.self) { image, error in
-                            if let uiImage = image as? UIImage {
-                                Queue.mainQueue().async {
-                                    self.completion?(uiImage, nil, CGRect(), nil, false, { _ in return nil }, {})
-                                }
+            private func resolveResult(_ result: PHPickerResult) {
+                if let assetIdentifier = result.assetIdentifier {
+                    let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetIdentifier], options: nil)
+                    if let asset = fetchResult.firstObject {
+                        Queue.mainQueue().async {
+                            self.completion?(asset, nil, CGRect(), nil, false, { _ in return nil }, {})
+                        }
+                        return
+                    }
+                }
+                
+                if result.itemProvider.canLoadObject(ofClass: UIImage.self) {
+                    result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, _ in
+                        if let uiImage = image as? UIImage {
+                            Queue.mainQueue().async {
+                                self?.completion?(uiImage, nil, CGRect(), nil, false, { _ in return nil }, {})
                             }
                         }
                     }
+                }
+            }
+            
+            func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+                picker.dismiss(animated: true)
+                
+                if let result = results.first {
+                    self.resolveResult(result)
                 }
             }
         }
@@ -3945,7 +3959,7 @@ public func avatarMediaPickerController(
         
         let openMediaPicker = {
             var configuration = PHPickerConfiguration(photoLibrary: .shared())
-            configuration.filter = .images
+            configuration.filter = .any(of: [.images, .videos])
             configuration.selectionLimit = 1
             
             let picker = PHPickerViewController(configuration: configuration)

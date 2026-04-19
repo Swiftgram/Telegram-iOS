@@ -107,11 +107,9 @@ public func legacyAvatarEditor(context: AccountContext, media: AnyMediaReference
         present(legacyController, nil)
         
         TGPhotoVideoEditor.present(with: legacyController.context, parentController: emptyController, image: image.0, video: video.0, stickersContext: paintStickersContext, transitionView: transitionView, senderName: senderName, didFinishWithImage: { image in
-            if let image = image {
-                imageCompletion(image)
-            }
+            imageCompletion(image)
         }, didFinishWithVideo: { image, url, adjustments in
-            if let image = image, let url = url, let adjustments = adjustments {
+            if let adjustments = adjustments {
                 videoCompletion(image, url, adjustments)
             }
         }, dismissed: { [weak legacyController] in

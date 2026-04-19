@@ -54,6 +54,9 @@ extension ResolvedBotAdminRights {
         if components.contains("manage_chat") {
             rawValue |= ResolvedBotAdminRights.manageChat.rawValue
         }
+        if components.contains("manage_topics") {
+            rawValue |= ResolvedBotAdminRights.manageTopics.rawValue
+        }
         if components.contains("anonymous") {
             rawValue |= ResolvedBotAdminRights.canBeAnonymous.rawValue
         }

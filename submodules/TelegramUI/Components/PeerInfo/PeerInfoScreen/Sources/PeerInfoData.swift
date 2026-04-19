@@ -425,6 +425,7 @@ final class PeerInfoScreenData {
     let savedMusicContext: ProfileSavedMusicContext?
     let savedMusicState: ProfileSavedMusicContext.State?
     let managedByBot: EnginePeer?
+    let businessConnectedBot: EnginePeer?
     
     let _isContact: Bool
     var forceIsContact: Bool = false
@@ -480,7 +481,8 @@ final class PeerInfoScreenData {
         webAppPermissions: WebAppPermissionsState?,
         savedMusicContext: ProfileSavedMusicContext?,
         savedMusicState: ProfileSavedMusicContext.State?,
-        managedByBot: EnginePeer?
+        managedByBot: EnginePeer?,
+        businessConnectedBot: EnginePeer?
     ) {
         self.peer = peer
         self.chatPeer = chatPeer
@@ -525,6 +527,7 @@ final class PeerInfoScreenData {
         self.savedMusicContext = savedMusicContext
         self.savedMusicState = savedMusicState
         self.managedByBot = managedByBot
+        self.businessConnectedBot = businessConnectedBot
     }
 }
 
@@ -931,6 +934,20 @@ func peerInfoScreenSettingsData(context: AccountContext, peerId: EnginePeer.Id, 
     
     let profileGiftsContext = ProfileGiftsContext(account: context.account, peerId: peerId)
     
+    let businessConnectedBot = context.engine.data.subscribe(
+        TelegramEngine.EngineData.Item.Peer.BusinessConnectedBot(id: context.account.peerId)
+    )
+    |> map { bot -> EnginePeer.Id? in
+        return bot?.id
+    }
+    |> distinctUntilChanged
+    |> mapToSignal { botPeerId -> Signal<EnginePeer?, NoError> in
+        guard let botPeerId else {
+            return .single(nil)
+        }
+        return context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: botPeerId))
+    }
+    
     return combineLatest(
         context.account.viewTracker.peerView(peerId, updateData: true),
         accountsAndPeers,
@@ -956,9 +973,10 @@ func peerInfoScreenSettingsData(context: AccountContext, peerId: EnginePeer.Id, 
         bots,
         peerInfoPersonalOrLinkedChannel(context: context, peerId: peerId, isSettings: true),
         starsState,
-        tonState
+        tonState,
+        businessConnectedBot
     )
-    |> map { peerView, accountsAndPeers, accountSessions, privacySettings, sharedPreferences, notifications, stickerPacks, hasPassport, accountPreferences, suggestions, limits, hasPassword, isPowerSavingEnabled, hasStories, bots, personalChannel, starsState, tonState -> PeerInfoScreenData in
+    |> map { peerView, accountsAndPeers, accountSessions, privacySettings, sharedPreferences, notifications, stickerPacks, hasPassport, accountPreferences, suggestions, limits, hasPassword, isPowerSavingEnabled, hasStories, bots, personalChannel, starsState, tonState, businessConnectedBot -> PeerInfoScreenData in
         let (notificationExceptions, notificationsAuthorizationStatus, notificationsWarningSuppressed) = notifications
         let (featuredStickerPacks, archivedStickerPacks) = stickerPacks
         
@@ -1048,7 +1066,8 @@ func peerInfoScreenSettingsData(context: AccountContext, peerId: EnginePeer.Id, 
             webAppPermissions: nil,
             savedMusicContext: nil,
             savedMusicState: nil,
-            managedByBot: nil
+            managedByBot: nil,
+            businessConnectedBot: businessConnectedBot
         )
     }
 }
@@ -1120,7 +1139,8 @@ func peerInfoScreenData(
                 webAppPermissions: nil,
                 savedMusicContext: nil,
                 savedMusicState: nil,
-                managedByBot: nil
+                managedByBot: nil,
+                businessConnectedBot: nil
             ))
         case let .user(userPeerId, secretChatId, kind):
             let groupsInCommon: GroupsInCommonContext?
@@ -1446,7 +1466,26 @@ func peerInfoScreenData(
             }
             
             let savedMusicContext = ProfileSavedMusicContext(account: context.account, peerId: peerId)
-                     
+               
+            let businessConnectedBot: Signal<EnginePeer?, NoError>
+            if isMyProfile {
+                businessConnectedBot = context.engine.data.subscribe(
+                    TelegramEngine.EngineData.Item.Peer.BusinessConnectedBot(id: context.account.peerId)
+                )
+                |> map { bot -> EnginePeer.Id? in
+                    return bot?.id
+                }
+                |> distinctUntilChanged
+                |> mapToSignal { botPeerId -> Signal<EnginePeer?, NoError> in
+                    guard let botPeerId else {
+                        return .single(nil)
+                    }
+                    return context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: botPeerId))
+                }
+            } else {
+                businessConnectedBot = .single(nil)
+            }
+            
             return combineLatest(
                 context.account.viewTracker.peerView(peerId, updateData: true),
                 peerInfoAvailableMediaPanes(context: context, peerId: peerId, chatLocation: chatLocation, isMyProfile: isMyProfile, chatLocationContextHolder: chatLocationContextHolder, sharedMediaFromForumTopic: sharedMediaFromForumTopic),
@@ -1468,9 +1507,10 @@ func peerInfoScreenData(
                 revenueContextAndState,
                 premiumGiftOptions,
                 webAppPermissions,
-                savedMusicContext.state
+                savedMusicContext.state,
+                businessConnectedBot
             )
-            |> map { peerView, availablePanes, globalNotificationSettings, encryptionKeyFingerprint, status, hasStories, hasStoryArchive, recommendedBots, accountIsPremium, savedMessagesPeer, hasSavedMessagesChats, hasSavedMessages, hasSavedMessageTags, hasBotPreviewItems, personalChannel, privacySettings, starsRevenueContextAndState, revenueContextAndState, premiumGiftOptions, webAppPermissions, savedMusicState -> PeerInfoScreenData in
+            |> map { peerView, availablePanes, globalNotificationSettings, encryptionKeyFingerprint, status, hasStories, hasStoryArchive, recommendedBots, accountIsPremium, savedMessagesPeer, hasSavedMessagesChats, hasSavedMessages, hasSavedMessageTags, hasBotPreviewItems, personalChannel, privacySettings, starsRevenueContextAndState, revenueContextAndState, premiumGiftOptions, webAppPermissions, savedMusicState, businessConnectedBot -> PeerInfoScreenData in
                 var availablePanes = availablePanes
                 if isMyProfile {
                     availablePanes?.insert(.stories, at: 0)
@@ -1616,7 +1656,8 @@ func peerInfoScreenData(
                     webAppPermissions: webAppPermissions,
                     savedMusicContext: savedMusicContext,
                     savedMusicState: savedMusicState,
-                    managedByBot: managedByBot
+                    managedByBot: managedByBot,
+                    businessConnectedBot: businessConnectedBot
                 )
             }
         case .channel:
@@ -1862,7 +1903,8 @@ func peerInfoScreenData(
                     webAppPermissions: nil,
                     savedMusicContext: nil,
                     savedMusicState: nil,
-                    managedByBot: nil
+                    managedByBot: nil,
+                    businessConnectedBot: nil
                 )
             }
         case let .group(groupId):
@@ -2199,7 +2241,8 @@ func peerInfoScreenData(
                     webAppPermissions: nil,
                     savedMusicContext: nil,
                     savedMusicState: nil,
-                    managedByBot: nil
+                    managedByBot: nil,
+                    businessConnectedBot: nil
                 ))
             }
         }

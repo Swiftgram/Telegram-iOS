@@ -83,6 +83,7 @@ final class PeerInfoInteraction {
     let editingOpenVerifyAccounts: () -> Void
     let editingToggleAutoTranslate: (Bool) -> Void
     let displayAutoTranslateLocked: () -> Void
+    let editingOpenBusinessChatBots: () -> Void
     let getController: () -> ViewController?
     
     init(
@@ -160,6 +161,7 @@ final class PeerInfoInteraction {
         editingOpenVerifyAccounts: @escaping () -> Void,
         editingToggleAutoTranslate: @escaping (Bool) -> Void,
         displayAutoTranslateLocked: @escaping () -> Void,
+        editingOpenBusinessChatBots: @escaping () -> Void,
         getController: @escaping () -> ViewController?
     ) {
         self.openUsername = openUsername
@@ -236,6 +238,7 @@ final class PeerInfoInteraction {
         self.editingOpenVerifyAccounts = editingOpenVerifyAccounts
         self.editingToggleAutoTranslate = editingToggleAutoTranslate
         self.displayAutoTranslateLocked = displayAutoTranslateLocked
+        self.editingOpenBusinessChatBots = editingOpenBusinessChatBots
         self.getController = getController
     }
 }

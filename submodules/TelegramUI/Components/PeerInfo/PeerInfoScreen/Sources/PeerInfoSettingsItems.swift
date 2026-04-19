@@ -370,6 +370,8 @@ func settingsEditingItems(data: PeerInfoScreenData?, state: PeerInfoState, conte
     let ItemBirthdayRemove = 11
     let ItemBirthdayHelp = 12
     let ItemPeerPersonalChannel = 13
+    let ItemPeerChatAutomation = 14
+    let ItemPeerChatAutomationHelp = 15
     
     items[.help]!.append(PeerInfoScreenCommentItem(id: ItemNameHelp, text: presentationData.strings.EditProfile_NameAndPhotoOrVideoHelp))
     
@@ -400,7 +402,7 @@ func settingsEditingItems(data: PeerInfoScreenData?, state: PeerInfoState, conte
     }
     
     let isEditingBirthDate = state.isEditingBirthDate
-    items[.birthday]!.append(PeerInfoScreenDisclosureItem(id: ItemBirthday, label: .coloredText(birthDateString, isEditingBirthDate ? .accent : .generic), text: presentationData.strings.Settings_Birthday, icon: nil, hasArrow: false, action: {
+    items[.birthday]!.append(PeerInfoScreenDisclosureItem(id: ItemBirthday, label: .coloredText(birthDateString, isEditingBirthDate ? .accent : .generic), text: presentationData.strings.Settings_Birthday, icon: PresentationResourcesSettings.birthday, hasArrow: false, action: {
         interaction.updateIsEditingBirthdate(!isEditingBirthDate)
     }))
     if isEditingBirthDate, let birthday {
@@ -423,7 +425,7 @@ func settingsEditingItems(data: PeerInfoScreenData?, state: PeerInfoState, conte
     }))
     
     if let user = data.peer as? TelegramUser {
-        items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPhoneNumber, label: .text(user.phone.flatMap({ formatPhoneNumber(context: context, number: $0) }) ?? ""), text: presentationData.strings.Settings_PhoneNumber, action: {
+        items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPhoneNumber, label: .text(user.phone.flatMap({ formatPhoneNumber(context: context, number: $0) }) ?? ""), text: presentationData.strings.Settings_PhoneNumber, icon: PresentationResourcesSettings.recentCalls, action: {
             interaction.openSettings(.phoneNumber)
         }))
     }
@@ -431,7 +433,7 @@ func settingsEditingItems(data: PeerInfoScreenData?, state: PeerInfoState, conte
     if let addressName = data.peer?.addressName, !addressName.isEmpty {
         username = "@\(addressName)"
     }
-    items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemUsername, label: .text(username), text: presentationData.strings.Settings_Username, action: {
+    items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemUsername, label: .text(username), text: presentationData.strings.Settings_Username, icon: PresentationResourcesSettings.email, action: {
           interaction.openSettings(.username)
     }))
     
@@ -452,7 +454,7 @@ func settingsEditingItems(data: PeerInfoScreenData?, state: PeerInfoState, conte
         }
         let colorImage = generateSettingsMenuPeerColorsLabelIcon(colors: colors)
         
-        items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPeerColor, label: .image(colorImage, colorImage.size), text: presentationData.strings.Settings_YourColor, icon: nil, action: {
+        items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPeerColor, label: .image(colorImage, colorImage.size), text: presentationData.strings.Settings_YourColor, icon: PresentationResourcesSettings.yourColor, action: {
             interaction.editingOpenNameColorSetup()
         }))
         
@@ -468,10 +470,24 @@ func settingsEditingItems(data: PeerInfoScreenData?, state: PeerInfoState, conte
                 personalChannelTitle = peer.compactDisplayTitle
             }
             
-            items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPeerPersonalChannel, label: .text(personalChannelTitle ?? presentationData.strings.Settings_PersonalChannelEmptyValue), text: presentationData.strings.Settings_PersonalChannelItem, icon: nil, action: {
+            items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPeerPersonalChannel, label: .text(personalChannelTitle ?? presentationData.strings.Settings_PersonalChannelEmptyValue), text: presentationData.strings.Settings_PersonalChannelItem, icon: PresentationResourcesSettings.channels, action: {
                 interaction.editingOpenPersonalChannel()
             }))
         }
+    }
+    
+    if "".isEmpty {
+        //TODO:localize
+        let automationBotTitle: String
+        if let botPeer = data.businessConnectedBot {
+            automationBotTitle = "@\(botPeer.compactDisplayTitle)"
+        } else {
+            automationBotTitle = "Off"
+        }
+        items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPeerChatAutomation, label: .text(automationBotTitle), text: "Chat Automation", icon: PresentationResourcesSettings.aiTools, action: {
+            interaction.editingOpenBusinessChatBots()
+        }))
+        items[.info]!.append(PeerInfoScreenCommentItem(id: ItemPeerChatAutomationHelp, text: "Add a bot to reply to messages on your behalf."))
     }
     
     items[.account]!.append(PeerInfoScreenActionItem(id: ItemAddAccount, text: presentationData.strings.Settings_AddAnotherAccount, alignment: .center, action: {

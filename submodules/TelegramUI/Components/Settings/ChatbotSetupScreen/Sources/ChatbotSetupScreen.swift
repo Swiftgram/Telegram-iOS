@@ -15,6 +15,7 @@ import ViewControllerComponent
 import MultilineTextComponent
 import BalancedTextComponent
 import BackButtonComponent
+import EdgeEffect
 import ListSectionComponent
 import ListActionItemComponent
 import ListTextFieldItemComponent
@@ -144,6 +145,7 @@ final class ChatbotSetupScreenComponent: Component {
         private let scrollView: ScrollView
         
         private let navigationTitle = ComponentView<Empty>()
+        private let titleTransformContainer: UIView
         private let icon = ComponentView<Empty>()
         private let subtitle = ComponentView<Empty>()
         private let nameSection = ComponentView<Empty>()
@@ -190,6 +192,9 @@ final class ChatbotSetupScreenComponent: Component {
             }
             self.scrollView.alwaysBounceVertical = true
             
+            self.titleTransformContainer = UIView()
+            self.titleTransformContainer.isUserInteractionEnabled = false
+            
             super.init(frame: frame)
             
             self.scrollView.delegate = self
@@ -203,6 +208,7 @@ final class ChatbotSetupScreenComponent: Component {
         }
         
         deinit {
+            self.titleTransformContainer.removeFromSuperview()
         }
 
         func scrollToTop() {
@@ -251,33 +257,29 @@ final class ChatbotSetupScreenComponent: Component {
             self.updateScrolling(transition: .immediate)
         }
         
-        var scrolledUp = true
         private func updateScrolling(transition: ComponentTransition) {
-            let navigationRevealOffsetY: CGFloat = 0.0
-            
-            let navigationAlphaDistance: CGFloat = 16.0
-            let navigationAlpha: CGFloat = max(0.0, min(1.0, (self.scrollView.contentOffset.y - navigationRevealOffsetY) / navigationAlphaDistance))
-            if let controller = self.environment?.controller(), let navigationBar = controller.navigationBar {
-                transition.setAlpha(layer: navigationBar.backgroundNode.layer, alpha: navigationAlpha)
-                transition.setAlpha(layer: navigationBar.stripeNode.layer, alpha: navigationAlpha)
+            guard let environment = self.environment else {
+                return
             }
             
-            var scrolledUp = false
-            if navigationAlpha < 0.5 {
-                scrolledUp = true
-            } else if navigationAlpha > 0.5 {
-                scrolledUp = false
-            }
+            let titleCenterY: CGFloat = environment.statusBarHeight + (environment.navigationHeight - environment.statusBarHeight) * 0.5
+            let titleTransformDistance: CGFloat = 20.0
+            let titleY: CGFloat = max(titleCenterY, self.titleTransformContainer.center.y - self.scrollView.contentOffset.y)
             
-            if self.scrolledUp != scrolledUp {
-                self.scrolledUp = scrolledUp
-                if !self.isUpdating {
-                    self.state?.updated()
-                }
-            }
+            transition.setSublayerTransform(view: self.titleTransformContainer, transform: CATransform3DMakeTranslation(0.0, titleY - self.titleTransformContainer.center.y, 0.0))
             
+            let titleYDistance: CGFloat = titleY - titleCenterY
+            let titleTransformFraction: CGFloat = 1.0 - max(0.0, min(1.0, titleYDistance / titleTransformDistance))
+            let titleMinScale: CGFloat = 17.0 / 24.0
+            let titleScale: CGFloat = 1.0 * (1.0 - titleTransformFraction) + titleMinScale * titleTransformFraction
             if let navigationTitleView = self.navigationTitle.view {
-                transition.setAlpha(view: navigationTitleView, alpha: 1.0)
+                transition.setScale(view: navigationTitleView, scale: titleScale)
+            }
+            
+            if let controller = environment.controller(), let navigationBar = controller.navigationBar, let edgeEffectView = navigationBar.edgeEffectView {
+                let edgeEffectAlphaDistance = max(1.0, self.titleTransformContainer.center.y - titleCenterY)
+                let edgeEffectAlpha = max(0.0, min(1.0, self.scrollView.contentOffset.y / edgeEffectAlphaDistance))
+                transition.setAlpha(view: edgeEffectView, alpha: edgeEffectAlpha)
             }
         }
         
@@ -645,20 +647,37 @@ final class ChatbotSetupScreenComponent: Component {
             let navigationTitleSize = self.navigationTitle.update(
                 transition: transition,
                 component: AnyComponent(MultilineTextComponent(
-                    text: .plain(NSAttributedString(string: environment.strings.ChatbotSetup_TitleItem, font: Font.semibold(17.0), textColor: environment.theme.rootController.navigationBar.primaryTextColor)),
+                    text: .plain(NSAttributedString(string: environment.strings.ChatbotSetup_TitleItem, font: Font.bold(24.0), textColor: environment.theme.rootController.navigationBar.primaryTextColor)),
                     horizontalAlignment: .center
                 )),
                 environment: {},
                 containerSize: CGSize(width: availableSize.width, height: 100.0)
             )
-            let navigationTitleFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - navigationTitleSize.width) / 2.0), y: environment.statusBarHeight + floor((environment.navigationHeight - environment.statusBarHeight - navigationTitleSize.height) / 2.0)), size: navigationTitleSize)
-            if let navigationTitleView = self.navigationTitle.view {
-                if navigationTitleView.superview == nil {
-                    if let controller = self.environment?.controller(), let navigationBar = controller.navigationBar {
-                        navigationBar.view.addSubview(navigationTitleView)
+            let navigationTitleFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - navigationTitleSize.width) / 2.0), y: environment.navigationHeight + 76.0), size: navigationTitleSize)
+            let overlaySuperview: UIView?
+            if let controller = environment.controller(), let navigationBar = controller.navigationBar, let navigationBarSuperview = navigationBar.view.superview {
+                overlaySuperview = navigationBarSuperview
+            } else {
+                overlaySuperview = self
+            }
+            if let overlaySuperview {
+                if self.titleTransformContainer.superview !== overlaySuperview {
+                    self.titleTransformContainer.removeFromSuperview()
+                    if let controller = environment.controller(), let navigationBar = controller.navigationBar, overlaySuperview === navigationBar.view.superview {
+                        overlaySuperview.insertSubview(self.titleTransformContainer, aboveSubview: navigationBar.view)
+                    } else {
+                        overlaySuperview.addSubview(self.titleTransformContainer)
                     }
                 }
-                transition.setFrame(view: navigationTitleView, frame: navigationTitleFrame)
+            }
+            if let navigationTitleView = self.navigationTitle.view {
+                if navigationTitleView.superview !== self.titleTransformContainer {
+                    navigationTitleView.removeFromSuperview()
+                    self.titleTransformContainer.addSubview(navigationTitleView)
+                }
+                transition.setPosition(view: self.titleTransformContainer, position: navigationTitleFrame.center)
+                transition.setBounds(view: self.titleTransformContainer, bounds: CGRect(origin: CGPoint(), size: navigationTitleFrame.size))
+                transition.setFrame(view: navigationTitleView, frame: CGRect(origin: CGPoint(), size: navigationTitleFrame.size))
             }
             
             let bottomContentInset: CGFloat = 24.0
@@ -681,7 +700,7 @@ final class ChatbotSetupScreenComponent: Component {
                 environment: {},
                 containerSize: CGSize(width: 100.0, height: 100.0)
             )
-            let iconFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - iconSize.width) * 0.5), y: contentHeight + 8.0), size: iconSize)
+            let iconFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - iconSize.width) * 0.5), y: contentHeight - 30.0), size: iconSize)
             if let iconView = self.icon.view as? LottieComponent.View {
                 if iconView.superview == nil {
                     self.scrollView.addSubview(iconView)
@@ -691,11 +710,11 @@ final class ChatbotSetupScreenComponent: Component {
                 iconView.bounds = CGRect(origin: CGPoint(), size: iconFrame.size)
             }
             
-            contentHeight += 129.0
+            contentHeight += 115.0
             
             let subtitleString = NSMutableAttributedString(attributedString: parseMarkdownIntoAttributedString(environment.strings.ChatbotSetup_Text, attributes: MarkdownAttributes(
-                body: MarkdownAttributeSet(font: Font.regular(15.0), textColor: environment.theme.list.freeTextColor),
-                bold: MarkdownAttributeSet(font: Font.semibold(15.0), textColor: environment.theme.list.freeTextColor),
+                body: MarkdownAttributeSet(font: Font.regular(15.0), textColor: environment.theme.list.itemPrimaryTextColor),
+                bold: MarkdownAttributeSet(font: Font.semibold(15.0), textColor: environment.theme.list.itemPrimaryTextColor),
                 link: MarkdownAttributeSet(font: Font.regular(15.0), textColor: environment.theme.list.itemAccentColor),
                 linkAttribute: { attributes in
                     return ("URL", "")
@@ -732,7 +751,7 @@ final class ChatbotSetupScreenComponent: Component {
                     }
                 )),
                 environment: {},
-                containerSize: CGSize(width: availableSize.width - sideInset * 2.0, height: 1000.0)
+                containerSize: CGSize(width: availableSize.width - sideInset * 2.0 - 64.0, height: 1000.0)
             )
             let subtitleFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - subtitleSize.width) * 0.5), y: contentHeight), size: subtitleSize)
             if let subtitleView = self.subtitle.view {

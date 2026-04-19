@@ -1173,7 +1173,8 @@ public class AttachmentController: ViewController, MinimizableController {
                         localGlassView.contentView.addSubview(buttonIcon)
                         ComponentTransition(buttonTransition).animateBlur(layer: buttonIcon.layer, fromRadius: 0.0, toRadius: 10.0)
 
-                        containerView.update(bounds: CGRect(origin: .zero, size: targetFrame.size), topCornerRadius: 38.0, bottomCornerRadius: layout.deviceMetrics.screenCornerRadius - 2.0, boundsTransition: scaleTransition, cornersTransition: cornersTransition)
+                        let containerCornerRadius = max(24.0, layout.deviceMetrics.screenCornerRadius)
+                        containerView.update(bounds: CGRect(origin: .zero, size: targetFrame.size), topCornerRadius: 38.0, bottomCornerRadius: containerCornerRadius - 2.0, boundsTransition: scaleTransition, cornersTransition: cornersTransition)
                         scaleTransition.animateBounds(layer: containerView.layer, from: CGRect(origin: .zero, size: CGSize(width: targetFrame.width, height: targetFrame.width)))
                         scaleTransition.animateTransformScale(view: containerView, from: sourceButtonScale)
                         positionTransition.animatePosition(layer: containerView.layer, from: sourceButtonFrame.center, to: containerView.center, completion: { _ in
@@ -1241,7 +1242,9 @@ public class AttachmentController: ViewController, MinimizableController {
                     if let sourceGlassView = findParentGlassBackgroundView(attachmentButton), let glassParams = sourceGlassView.params {
                         let containerView = ClipContainerView()
                         containerView.frame = initialFrame
-                        containerView.update(bounds: CGRect(origin: .zero, size: initialFrame.size), topCornerRadius: 38.0, bottomCornerRadius: layout.deviceMetrics.screenCornerRadius - 2.0, boundsTransition: .immediate, cornersTransition: .immediate)
+                        
+                        let containerCornerRadius = max(24.0, layout.deviceMetrics.screenCornerRadius)
+                        containerView.update(bounds: CGRect(origin: .zero, size: initialFrame.size), topCornerRadius: 38.0, bottomCornerRadius: containerCornerRadius - 2.0, boundsTransition: .immediate, cornersTransition: .immediate)
                         self.view.addSubview(containerView)
 
                         let localGlassView = GlassBackgroundView()

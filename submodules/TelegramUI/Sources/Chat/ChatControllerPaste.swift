@@ -23,6 +23,7 @@ extension ChatControllerImpl {
                 if strongSelf.presentationInterfaceState.interfaceState.postSuggestionState != nil {
                     enableMultiselection = false
                 }
+                let inputText = strongSelf.presentationInterfaceState.interfaceState.effectiveInputState.inputText
                 
                 strongSelf.chatDisplayNode.dismissInput()
                 let controller = mediaPasteboardScreen(
@@ -32,7 +33,15 @@ extension ChatControllerImpl {
                     subjects: subjects,
                     presentMediaPicker: { [weak self] subject, saveEditedPhotos, bannedSendPhotos, bannedSendVideos, present in
                         if let strongSelf = self {
-                            strongSelf.presentMediaPicker(subject: subject, saveEditedPhotos: saveEditedPhotos, bannedSendPhotos: bannedSendPhotos, bannedSendVideos: bannedSendVideos, enableMultiselection: enableMultiselection, present: present, updateMediaPickerContext: { _ in }, completion: { [weak self] fromGallery, signals, silentPosting, scheduleTime, parameters, getAnimatedTransitionSource, completion in
+                            strongSelf.presentMediaPicker(subject: subject, saveEditedPhotos: saveEditedPhotos, bannedSendPhotos: bannedSendPhotos, bannedSendVideos: bannedSendVideos, enableMultiselection: enableMultiselection, present: { controller, mediaPickerContext in
+                                if !inputText.string.isEmpty {
+                                    mediaPickerContext?.setCaption(inputText)
+                                }
+                                present(controller, mediaPickerContext)
+                            }, updateMediaPickerContext: { _ in }, completion: { [weak self] fromGallery, signals, silentPosting, scheduleTime, parameters, getAnimatedTransitionSource, completion in
+                                if !inputText.string.isEmpty {
+                                    self?.clearInputText()
+                                }
                                 self?.enqueueMediaMessages(fromGallery: fromGallery, signals: signals, silentPosting: silentPosting, scheduleTime: scheduleTime, parameters: parameters, getAnimatedTransitionSource: getAnimatedTransitionSource, completion: completion)
                             })
                         }

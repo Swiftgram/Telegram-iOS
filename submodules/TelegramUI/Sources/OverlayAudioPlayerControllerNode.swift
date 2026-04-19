@@ -840,7 +840,9 @@ final class OverlayAudioPlayerControllerNode: ViewControllerTracingNode, ASGestu
         containerTransform = CATransform3DScale(containerTransform, scale, scale, scale)
         
         transition.updateTransform(layer: self.containerContainingNode.layer, transform: containerTransform)
-        transition.updateCornerRadius(node: self.containerContainingNode, cornerRadius: layout.deviceMetrics.screenCornerRadius)
+        
+        let containerCornerRadius = max(22.0, layout.deviceMetrics.screenCornerRadius)
+        transition.updateCornerRadius(node: self.containerContainingNode, cornerRadius: containerCornerRadius)
     }
     
     private var effectiveHeaderHeight: CGFloat {

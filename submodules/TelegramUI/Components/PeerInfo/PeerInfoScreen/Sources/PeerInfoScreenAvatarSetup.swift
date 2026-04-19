@@ -665,7 +665,11 @@ extension PeerInfoScreenImpl {
                     
                 }
                 if mainController is ActionSheetController {
-                    self.present(mainController, in: .window(.root))
+                    if let navigationController = self.navigationController, let topController = navigationController.topViewController as? ViewController {
+                        topController.present(mainController, in: .window(.root))
+                    } else {
+                        self.present(mainController, in: .window(.root))
+                    }
                 } else {
                     mainController.navigationPresentation = .flatModal
                     mainController.supportedOrientations = ViewControllerSupportedOrientations(regularSize: .all, compactSize: .portrait)
