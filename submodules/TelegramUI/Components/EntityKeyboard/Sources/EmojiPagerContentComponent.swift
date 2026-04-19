@@ -4926,7 +4926,6 @@ public final class EmojiPagerContentComponent: Component {
             }
             
             self.updateVisibleItems(transition: itemTransition, attemptSynchronousLoads: attemptSynchronousLoads, previousItemPositions: previousItemPositions, previousAbsoluteItemPositions: previousAbsoluteItemPositions, updatedItemPositions: updatedItemPositions, hintDisappearingGroupFrame: hintDisappearingGroupFrame)
-            self.maybeLoadMore()
             
             if animateContentCrossfade {
                 for (_, itemLayer) in self.visibleItemLayers {

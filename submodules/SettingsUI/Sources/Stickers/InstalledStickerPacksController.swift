@@ -657,7 +657,7 @@ public func installedStickerPacksController(context: AccountContext, mode: Insta
     
     if focusOnItemTag == InstalledStickerPacksEntryTag.edit {
         updateState {
-            $0.withUpdatedEditing(true)
+            $0.withUpdatedEditing(true).withUpdatedSelectedPackIds(Set())
         }
     }
     
@@ -836,7 +836,8 @@ public func installedStickerPacksController(context: AccountContext, mode: Insta
         }).start()
     }, togglePackSelected: { packId in
         updateState { state in
-            if var selectedPackIds = state.selectedPackIds {
+            if state.editing {
+                var selectedPackIds = state.selectedPackIds ?? Set()
                 if selectedPackIds.contains(packId) {
                     selectedPackIds.remove(packId)
                 } else {
@@ -989,7 +990,7 @@ public func installedStickerPacksController(context: AccountContext, mode: Insta
                        
                         if case .modal = mode {
                             updateState {
-                                $0.withUpdatedEditing(true).withUpdatedSelectedPackIds(nil)
+                                $0.withUpdatedEditing(true).withUpdatedSelectedPackIds(Set())
                             }
                         } else {
                             updateState {
@@ -1020,7 +1021,7 @@ public func installedStickerPacksController(context: AccountContext, mode: Insta
                        
                         if case .modal = mode {
                             updateState {
-                                $0.withUpdatedEditing(true).withUpdatedSelectedPackIds(nil)
+                                $0.withUpdatedEditing(true).withUpdatedSelectedPackIds(Set())
                             }
                         } else {
                             updateState {
@@ -1046,7 +1047,7 @@ public func installedStickerPacksController(context: AccountContext, mode: Insta
                 }), .init(title: presentationData.strings.StickerPacks_ActionShare, isEnabled: selectedCount > 0, action: {
                     if case .modal = mode {
                         updateState {
-                            $0.withUpdatedEditing(true).withUpdatedSelectedPackIds(nil)
+                            $0.withUpdatedEditing(true).withUpdatedSelectedPackIds(Set())
                         }
                     } else {
                         updateState {

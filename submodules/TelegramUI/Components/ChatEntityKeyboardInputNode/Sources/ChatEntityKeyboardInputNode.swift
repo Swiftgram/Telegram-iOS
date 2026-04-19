@@ -1131,7 +1131,7 @@ public final class ChatEntityKeyboardInputNode: ChatInputNode {
                         var version = 0
                         self.emojiSearchStateValue.isSearching = true
                         self.emojiSearchDisposable.set((resultSignal
-                        |> delay(0.15, queue: .mainQueue())
+                        |> delay(0.25, queue: .mainQueue())
                         |> deliverOnMainQueue).start(next: { [weak self] result in
                             guard let self else {
                                 return
