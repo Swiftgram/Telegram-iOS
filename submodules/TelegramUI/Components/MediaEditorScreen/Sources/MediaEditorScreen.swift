@@ -8094,15 +8094,16 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
                     return .single((.progress(progress * 0.5), nil))
                 case let .complete(resource):
                     if let resource = resource as? CloudDocumentMediaResource {
-                        return .single((.progress(1.0), nil)) |> then(.single((.complete(resource, mimeType), nil)))
+                        return .single((.progress(1.0), nil)) |> then(.single((.complete(EngineMediaResource(resource), mimeType), nil)))
                     } else {
-                        return context.engine.stickers.uploadSticker(peer: peer._asPeer(), resource: resource, thumbnail: file.previewRepresentations.first?.resource, alt: "", dimensions: dimensions, duration: duration, mimeType: mimeType)
+                        return context.engine.stickers.uploadSticker(peer: peer, resource: EngineMediaResource(resource), thumbnail: file.previewRepresentations.first.flatMap { EngineMediaResource($0.resource) }, alt: "", dimensions: dimensions, duration: duration, mimeType: mimeType)
                         |> mapToSignal { status -> Signal<(UploadStickerStatus, (StickerPackReference, String)?), UploadStickerError> in
                             switch status {
                             case let .progress(progress):
                                 return .single((.progress(isVideo ? 0.5 + progress * 0.5 : progress), nil))
                             case let .complete(resource, _):
-                                let file = stickerFile(resource: resource, thumbnailResource: file.previewRepresentations.first?.resource, size: file.size ?? 0, dimensions: dimensions, duration: file.duration, isVideo: isVideo)
+                                let rawResource = resource._asResource() as! TelegramMediaResource
+                                let file = stickerFile(resource: rawResource, thumbnailResource: file.previewRepresentations.first?.resource, size: file.size ?? 0, dimensions: dimensions, duration: file.duration, isVideo: isVideo)
                                 switch action {
                                 case .send:
                                     return .single((status, nil))
@@ -8116,7 +8117,7 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
                                     }
                                 case let .createStickerPack(title):
                                     let sticker = ImportSticker(
-                                        resource: .standalone(resource: resource),
+                                        resource: .standalone(resource: rawResource),
                                         emojis: emojis,
                                         dimensions: dimensions,
                                         duration: duration,
@@ -8136,7 +8137,7 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
                                     }
                                 case let .addToStickerPack(pack, title):
                                     let sticker = ImportSticker(
-                                        resource: .standalone(resource: resource),
+                                        resource: .standalone(resource: rawResource),
                                         emojis: emojis,
                                         dimensions: dimensions,
                                         duration: duration,
@@ -8174,14 +8175,15 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
                     self?.stickerUploadDisposable.set(nil)
                 })
             case let .complete(resource, _):
+                let rawResource = resource._asResource() as! TelegramMediaResource
                 let navigationController = self.effectiveNavigationController as? NavigationController
-                
+
                 let result: MediaEditorScreenImpl.Result
                 switch action {
                 case .update:
                     result = MediaEditorScreenImpl.Result(media: .sticker(file: file, emoji: emojis))
                 case .upload, .send:
-                    let file = stickerFile(resource: resource, thumbnailResource: file.previewRepresentations.first?.resource, size: resource.size ?? 0, dimensions: dimensions, duration: self.preferredStickerDuration(), isVideo: isVideo)
+                    let file = stickerFile(resource: rawResource, thumbnailResource: file.previewRepresentations.first?.resource, size: rawResource.size ?? 0, dimensions: dimensions, duration: self.preferredStickerDuration(), isVideo: isVideo)
                     result = MediaEditorScreenImpl.Result(media: .sticker(file: file, emoji: emojis))
                 default:
                     result = MediaEditorScreenImpl.Result()

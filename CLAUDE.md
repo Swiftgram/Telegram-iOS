@@ -76,7 +76,7 @@ Do **not** add opt-in `EngineMediaResource` overloads alongside raw-`MediaResour
 
 For consumer modules, prefer `EngineMediaResource` as the type in properties, locals, generic arguments and function parameters when the usage is a pure type reference. Do **not** try to use `EngineMediaResource` where a class must conform to `TelegramMediaResource` (Postbox protocol) or override `isEqual(to: MediaResource)` — those remain `import Postbox`.
 
-### Wave-selection guidance (learned from waves 1 and 2)
+### Wave-selection guidance (learned from waves 1, 2, and 4)
 
 The "leaf module, drop Postbox in isolation" approach only works for modules whose **public API doesn't leak Postbox domain types**. Most candidate leaf modules DO leak such types (`postbox: Postbox` / `account: Account` in public inits, `Media`/`Message` in public function parameters). Those modules need paired caller-migration waves, not isolated refactors.
 
@@ -87,6 +87,8 @@ Before selecting a wave's module list, grep each candidate for:
 **Inventory at execution time, not just planning time.** Wave 2's `SaveToCameraRoll` task was planned from a narrow grep that only matched `MediaResource`/`TelegramMediaResource` and missed three `postbox: Postbox` public-function leaks plus multiple `postbox.mediaBox.*` bodies. Planning-time inventory should grep the full set `\b(postbox|mediaBox|transaction|PostboxView|combinedView|MediaResource|PostboxDecoder|PostboxEncoder|MemoryBuffer)\b|^import Postbox` over the module's Sources, not just the tokens specific to that wave's goal. If the planning inventory under-counts, the executor should re-inventory at Task-1 time and abandon early before editing code.
 
 **Two feasible wave shapes.** Wave 1 tried "per-module Postbox drop". Wave 2 tried "per-engine-facade-API migrate MediaResource to EngineMediaResource (modify in place, update all call sites in one commit)". The second shape worked well: narrow, clean commits, no abandonment cascade. Prefer it when the refactor target is an API surface that multiple consumer modules depend on.
+
+**Enum-payload migrations need a full case-site grep, not just a facade call-site grep.** If a wave changes the payload type of a public enum (wave 4 changed `UploadStickerStatus.complete`'s payload from `CloudDocumentMediaResource` to `EngineMediaResource`), inventory ALL construction and destructure sites of the enum across TelegramCore, not just call sites of the facade that returns it. Wave 4's plan undercounted by 6 consumer sites inside `ImportStickers.swift` itself (3 shortcut `.complete(...)` constructions in guard branches, 3 destructure+field-access sites using `CloudDocumentMediaResource`-specific members). For enum-payload waves, grep `case \.|let \.|\.<caseName>\(` over the enum's defining module before execution and add those sites to the plan.
 
 ### Wave 1 outcome (2026-04-16)
 
@@ -122,6 +124,24 @@ No tasks abandoned. Shape validated: "per-engine-facade-API migration + full con
 
 Plan: `docs/superpowers/plans/2026-04-18-postbox-to-telegramengine-wave-3.md`
 
+### Wave 4 outcome (2026-04-18)
+
+1 `TelegramEngine` facade migrated in place to `EnginePeer` + `EngineMediaResource` (signature changed; `_internal_uploadSticker` keeps its raw `Peer`/`MediaResource` parameter list):
+
+- `TelegramEngine.Stickers.uploadSticker(peer: Peer → EnginePeer, resource: MediaResource → EngineMediaResource, thumbnail: MediaResource? → EngineMediaResource?, …)`
+
+1 public enum payload migrated: `UploadStickerStatus.complete(CloudDocumentMediaResource, String)` → `.complete(EngineMediaResource, String)`. `_internal_uploadSticker` wraps `EngineMediaResource(uploadedResource)` at its one `.complete(...)` result-construction site — a narrow, spec-allowed one-line deviation from "internal Postbox-facing stays raw", taken to keep `UploadStickerStatus` as a single public enum.
+
+**Plan-time inventory undercount** — worth recording as a lesson. The spec and plan enumerated 2 external call sites and 1 internal construction site. Execution uncovered 6 additional consumer sites inside `ImportStickers.swift` itself that also needed adapting: 3 shortcut `.complete(...)` construction sites (lines 204, 371, 492, each emitting `.complete(CloudDocumentMediaResource, String)` directly from `as? CloudDocumentMediaResource` guards) and 3 destructure sites (lines 216, 384, 505) that accessed `CloudDocumentMediaResource`-specific fields. Each construction site now wraps via `EngineMediaResource(resource)`; each destructure site unwraps with `let rawResource = resource._asResource() as? CloudDocumentMediaResource`. MediaEditorScreen's two `stickerFile(resource:)` calls also needed `as! TelegramMediaResource` casts because `_asResource()` returns the Postbox `MediaResource` protocol while `stickerFile` takes the TelegramCore `TelegramMediaResource` sub-protocol. **Future planning-time inventory for enum-payload migrations should grep not only call-sites of the facade but every `case .complete` / `case let .complete` of the migrated enum across the whole TelegramCore source tree.**
+
+2 external call sites migrated atomically with the facade:
+- `submodules/ImportStickerPackUI/Sources/ImportStickerPackController.swift:91` (plus a `peer: Peer → EnginePeer(peer)` wrap, since the local `peer` comes from `postbox.loadedPeerWithId(...)` which returns raw `Peer`)
+- `submodules/TelegramUI/Components/MediaEditorScreen/Sources/MediaEditorScreen.swift:8099` (plus 6 cascading sites inside the enclosing block for the new `UploadStickerStatus.complete` payload)
+
+No module becomes Postbox-free in this wave (both caller files import Postbox for unrelated reasons).
+
+Plan: `docs/superpowers/plans/2026-04-18-postbox-to-telegramengine-wave-4.md`
+
 ### Modules currently free of `import Postbox` (running tally)
 
 Consumer modules that no longer import Postbox, across all waves and standalone commits:
@@ -140,7 +160,6 @@ Consumer modules that no longer import Postbox, across all waves and standalone 
 
 Surfaced by the wave-2 final review:
 
-- `TelegramEngine.Stickers.uploadSticker(peer: Peer, resource: MediaResource, thumbnail: MediaResource?, …)` — same MediaResource migration as wave 2, plus `peer: Peer` which would naturally migrate to `EnginePeer` at the same time. Self-contained to a small number of call sites.
 - `submodules/TelegramCore/Sources/TelegramEngine/SecureId/UploadSecureIdFile.swift: public func uploadSecureIdFile(…, postbox: Postbox, …, resource: MediaResource)` — rule-2-sensitive (umbrella-type leak). Needs a paired wave with its caller(s).
 - Classes conforming to `TelegramMediaResource` (need `isEqual(to: MediaResource)` override) remain **permanently blocked** from consumer-side migration: `ICloudFileResource`, `InstantPageExternalMediaResource`, `VideoLibraryMediaResource`, `YoutubeEmbedStoryboardMediaResource`. Either move the class into `TelegramCore` or keep `import Postbox` in its module.
 
