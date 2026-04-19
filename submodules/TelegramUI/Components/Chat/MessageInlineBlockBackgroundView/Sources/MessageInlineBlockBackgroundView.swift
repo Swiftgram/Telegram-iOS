@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import Display
 import HierarchyTrackingLayer
-import Postbox
 import TelegramCore
 import AnimationCache
 import MultiAnimationRenderer

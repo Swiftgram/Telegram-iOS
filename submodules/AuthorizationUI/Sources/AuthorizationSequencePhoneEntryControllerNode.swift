@@ -8,7 +8,6 @@ import PhoneInputNode
 import CountrySelectionUI
 import QrCode
 import SwiftSignalKit
-import Postbox
 import AccountContext
 import AnimatedStickerNode
 import TelegramAnimatedStickerNode

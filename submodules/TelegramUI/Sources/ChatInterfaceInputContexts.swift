@@ -1,7 +1,6 @@
 import Foundation
 import UIKit
 import TelegramCore
-import Postbox
 import Display
 import AccountContext
 import Emoji

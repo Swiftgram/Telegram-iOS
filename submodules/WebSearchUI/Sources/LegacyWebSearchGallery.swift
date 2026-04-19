@@ -11,7 +11,6 @@ import AccountContext
 import PhotoResources
 import LegacyUI
 import LegacyMediaPickerUI
-import Postbox
 
 class LegacyWebSearchItem: NSObject, TGMediaEditableItem, TGMediaSelectableItem {
     var isVideo: Bool {

@@ -5,7 +5,6 @@ import ComponentFlow
 import PagerComponent
 import TelegramPresentationData
 import TelegramCore
-import Postbox
 
 public final class EntityKeyboardTopContainerPanelEnvironment: Equatable {
     let isContentInFocus: Bool

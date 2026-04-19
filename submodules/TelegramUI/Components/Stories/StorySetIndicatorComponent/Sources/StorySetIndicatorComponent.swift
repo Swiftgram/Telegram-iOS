@@ -4,7 +4,6 @@ import Display
 import ComponentFlow
 import TelegramPresentationData
 import TelegramCore
-import Postbox
 import SwiftSignalKit
 import AccountContext
 import PhotoResources
