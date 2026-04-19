@@ -141,8 +141,11 @@ public extension TelegramEngine {
             return _internal_searchHashtagPosts(account: self.account, hashtag: hashtag, state: state, limit: limit)
         }
 
-        public func downloadMessage(messageId: MessageId) -> Signal<Message?, NoError> {
+        public func downloadMessage(messageId: EngineMessage.Id) -> Signal<EngineMessage?, NoError> {
             return _internal_downloadMessage(accountPeerId: self.account.peerId, postbox: self.account.postbox, network: self.account.network, messageId: messageId)
+            |> map { message -> EngineMessage? in
+                return message.flatMap(EngineMessage.init)
+            }
         }
 
         public func searchMessageIdByTimestamp(peerId: PeerId, threadId: Int64?, timestamp: Int32) -> Signal<MessageId?, NoError> {
@@ -461,8 +464,11 @@ public extension TelegramEngine {
             return _internal_recentlyUsedHashtags(postbox: self.account.postbox)
         }
 
-        public func topPeerActiveLiveLocationMessages(peerId: PeerId) -> Signal<(Peer?, [Message]), NoError> {
+        public func topPeerActiveLiveLocationMessages(peerId: EnginePeer.Id) -> Signal<(EnginePeer?, [EngineMessage]), NoError> {
             return _internal_topPeerActiveLiveLocationMessages(viewTracker: self.account.viewTracker, accountPeerId: self.account.peerId, peerId: peerId)
+            |> map { peer, messages -> (EnginePeer?, [EngineMessage]) in
+                return (peer.flatMap(EnginePeer.init), messages.map(EngineMessage.init))
+            }
         }
 
         public func chatList(group: EngineChatList.Group, count: Int) -> Signal<EngineChatList, NoError> {
@@ -931,12 +937,6 @@ public extension TelegramEngine {
             |> ignoreValues
         }
         
-        public func getSynchronizeAutosaveItemOperations() -> Signal<[(index: Int32, message: Message, mediaId: MediaId)], NoError> {
-            return self.account.postbox.transaction { transaction -> [(index: Int32, message: Message, mediaId: MediaId)] in
-                return _internal_getSynchronizeAutosaveItemOperations(transaction: transaction)
-            }
-        }
-
         func removeSyncrhonizeAutosaveItemOperations(indices: [Int32]) {
             let _ = (self.account.postbox.transaction { transaction -> Void in
                 _internal_removeSyncrhonizeAutosaveItemOperations(transaction: transaction, indices: indices)

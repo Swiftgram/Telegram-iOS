@@ -391,7 +391,7 @@ final class LocationViewControllerNode: ViewControllerTracingNode, CLLocationMan
         
         let liveLocations = context.engine.messages.topPeerActiveLiveLocationMessages(peerId: subject.id.peerId)
         |> map { _, messages -> [EngineMessage] in
-            return messages.map(EngineMessage.init)
+            return messages
         }
         
         setupProximityNotificationImpl = { reset in

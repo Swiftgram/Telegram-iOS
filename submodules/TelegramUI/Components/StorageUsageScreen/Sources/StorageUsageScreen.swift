@@ -2394,11 +2394,12 @@ final class StorageUsageScreenComponent: Component {
                     var musicItems: [StorageFileListPanelComponent.Item] = []
                 }
                 
-                self.messagesDisposable = (component.context.engine.resources.renderStorageUsageStatsMessages(stats: contextStats, categories: [.files, .photos, .videos, .music], existingMessages: self.aggregatedData?.messages ?? [:])
+                self.messagesDisposable = (component.context.engine.resources.renderStorageUsageStatsMessages(stats: contextStats, categories: [.files, .photos, .videos, .music], existingMessages: (self.aggregatedData?.messages ?? [:]).mapValues(EngineMessage.init))
                 |> deliverOn(Queue())
-                |> map { messages -> RenderResult in
+                |> map { engineMessages -> RenderResult in
+                    let messages = engineMessages.mapValues { $0._asMessage() }
                     let result = RenderResult()
-                    
+
                     result.messages = messages
                     
                     var mergedMedia: [MessageId: Int64] = [:]
@@ -2953,7 +2954,7 @@ final class StorageUsageScreenComponent: Component {
                 
                 let totalSize = aggregatedData.selectedSize
                 
-                let _ = (component.context.engine.resources.clearStorage(peerId: component.peer?.id, categories: mappedCategories, includeMessages: aggregatedData.clearIncludeMessages, excludeMessages: aggregatedData.clearExcludeMessages)
+                let _ = (component.context.engine.resources.clearStorage(peerId: component.peer?.id, categories: mappedCategories, includeMessages: aggregatedData.clearIncludeMessages.map(EngineMessage.init), excludeMessages: aggregatedData.clearExcludeMessages.map(EngineMessage.init))
                 |> deliverOnMainQueue).start(next: { [weak self] progress in
                     guard let self else {
                         return
@@ -3082,7 +3083,7 @@ final class StorageUsageScreenComponent: Component {
                         }
                     }
                     
-                    let _ = (component.context.engine.resources.clearStorage(peerIds: aggregatedData.selectionState.selectedPeers, includeMessages: includeMessages, excludeMessages: excludeMessages)
+                    let _ = (component.context.engine.resources.clearStorage(peerIds: aggregatedData.selectionState.selectedPeers, includeMessages: includeMessages.map(EngineMessage.init), excludeMessages: excludeMessages.map(EngineMessage.init))
                     |> deliverOnMainQueue).start(next: { [weak self] progress in
                         guard let self else {
                             return

@@ -2822,9 +2822,6 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                 |> mapToSignal { resolvedUrl -> Signal<EngineMessage?, NoError> in
                     if case let .channelMessage(_, messageId, _) = resolvedUrl {
                         return context.engine.messages.downloadMessage(messageId: messageId)
-                        |> map { message -> EngineMessage? in
-                            return message.flatMap(EngineMessage.init)
-                        }
                     } else {
                         return .single(nil)
                     }

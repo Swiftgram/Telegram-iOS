@@ -253,20 +253,24 @@ public extension TelegramEngine {
             return _internal_collectStorageUsageStats(account: self.account)
         }
 
-        public func renderStorageUsageStatsMessages(stats: StorageUsageStats, categories: [StorageUsageStats.CategoryKey], existingMessages: [EngineMessage.Id: Message]) -> Signal<[EngineMessage.Id: Message], NoError> {
-            return _internal_renderStorageUsageStatsMessages(account: self.account, stats: stats, categories: categories, existingMessages: existingMessages)
+        public func renderStorageUsageStatsMessages(stats: StorageUsageStats, categories: [StorageUsageStats.CategoryKey], existingMessages: [EngineMessage.Id: EngineMessage]) -> Signal<[EngineMessage.Id: EngineMessage], NoError> {
+            let rawExisting = existingMessages.mapValues { $0._asMessage() }
+            return _internal_renderStorageUsageStatsMessages(account: self.account, stats: stats, categories: categories, existingMessages: rawExisting)
+            |> map { rawResult -> [EngineMessage.Id: EngineMessage] in
+                return rawResult.mapValues(EngineMessage.init)
+            }
         }
-        
-        public func clearStorage(peerId: EnginePeer.Id?, categories: [StorageUsageStats.CategoryKey], includeMessages: [Message], excludeMessages: [Message]) -> Signal<Float, NoError> {
-            return _internal_clearStorage(account: self.account, peerId: peerId, categories: categories, includeMessages: includeMessages, excludeMessages: excludeMessages)
+
+        public func clearStorage(peerId: EnginePeer.Id?, categories: [StorageUsageStats.CategoryKey], includeMessages: [EngineMessage], excludeMessages: [EngineMessage]) -> Signal<Float, NoError> {
+            return _internal_clearStorage(account: self.account, peerId: peerId, categories: categories, includeMessages: includeMessages.map { $0._asMessage() }, excludeMessages: excludeMessages.map { $0._asMessage() })
         }
-        
-        public func clearStorage(peerIds: Set<EnginePeer.Id>, includeMessages: [Message], excludeMessages: [Message]) -> Signal<Float, NoError> {
-            _internal_clearStorage(account: self.account, peerIds: peerIds, includeMessages: includeMessages, excludeMessages: excludeMessages)
+
+        public func clearStorage(peerIds: Set<EnginePeer.Id>, includeMessages: [EngineMessage], excludeMessages: [EngineMessage]) -> Signal<Float, NoError> {
+            _internal_clearStorage(account: self.account, peerIds: peerIds, includeMessages: includeMessages.map { $0._asMessage() }, excludeMessages: excludeMessages.map { $0._asMessage() })
         }
-        
-        public func clearStorage(messages: [Message]) -> Signal<Never, NoError> {
-            _internal_clearStorage(account: self.account, messages: messages)
+
+        public func clearStorage(messages: [EngineMessage]) -> Signal<Never, NoError> {
+            _internal_clearStorage(account: self.account, messages: messages.map { $0._asMessage() })
         }
 
         public func clearCachedMediaResources(mediaResourceIds: Set<MediaResourceId>) -> Signal<Float, NoError> {

@@ -251,8 +251,9 @@ public extension TelegramEngine {
             }
         }
 
-        public func updatedRemotePeer(peer: PeerReference) -> Signal<Peer, UpdatedRemotePeerError> {
+        public func updatedRemotePeer(peer: PeerReference) -> Signal<EnginePeer, UpdatedRemotePeerError> {
             return _internal_updatedRemotePeer(accountPeerId: self.account.peerId, postbox: self.account.postbox, network: self.account.network, peer: peer)
+            |> map(EnginePeer.init)
         }
 
         public func chatOnlineMembers(peerId: PeerId) -> Signal<Int32, NoError> {
