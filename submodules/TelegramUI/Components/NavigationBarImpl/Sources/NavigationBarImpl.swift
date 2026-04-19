@@ -583,11 +583,14 @@ public final class NavigationBarImpl: ASDisplayNode, NavigationBar {
     public var secondaryContentHeight: CGFloat
     
     private var edgeEffectExtension: CGFloat = 0.0
-    private var edgeEffectView: EdgeEffectView?
+    private var edgeEffectViewImpl: EdgeEffectView?
+    public var edgeEffectView: UIView? {
+        return self.edgeEffectViewImpl
+    }
     private var backgroundContainer: GlassBackgroundContainerView?
     
     public var backgroundView: UIView {
-        if let edgeEffectView = self.edgeEffectView {
+        if let edgeEffectView = self.edgeEffectViewImpl {
             return edgeEffectView
         } else {
             return self.backgroundNode.view
@@ -654,7 +657,7 @@ public final class NavigationBarImpl: ASDisplayNode, NavigationBar {
         if case .glass = presentationData.theme.style {
             let edgeEffectView = EdgeEffectView()
             edgeEffectView.isUserInteractionEnabled = false
-            self.edgeEffectView = edgeEffectView
+            self.edgeEffectViewImpl = edgeEffectView
             self.view.addSubview(edgeEffectView)
             
             let backgroundContainer = GlassBackgroundContainerView()
@@ -818,7 +821,7 @@ public final class NavigationBarImpl: ASDisplayNode, NavigationBar {
             backgroundContainer.update(size: backgroundContainerFrame.size, isDark: self.presentationData.theme.overallDarkAppearance, transition: ComponentTransition(transition))
         }
         
-        if let edgeEffectView = self.edgeEffectView {
+        if let edgeEffectView = self.edgeEffectViewImpl {
             if let edgeEffectColor = self.presentationData.theme.edgeEffectColor, edgeEffectColor.alpha == 0.0 {
                 edgeEffectView.isHidden = true
             } else {
@@ -1131,7 +1134,7 @@ public final class NavigationBarImpl: ASDisplayNode, NavigationBar {
     }
     
     private func applyEdgeEffectExtension(transition: ContainedViewLayoutTransition) {
-        if let edgeEffectView = self.edgeEffectView {
+        if let edgeEffectView = self.edgeEffectViewImpl {
             transition.updateTransform(layer: edgeEffectView.layer, transform: CATransform3DMakeTranslation(0.0, max(0.0, min(20.0, self.edgeEffectExtension)), 0.0))
         }
     }

@@ -179,6 +179,7 @@ public protocol NavigationBar: ASDisplayNode {
     var leftButtonNode: NavigationButtonNode { get }
     var rightButtonNode: NavigationButtonNode { get }
     var additionalContentNode: SparseNode { get }
+    var edgeEffectView: UIView? { get }
 
     func reattachAdditionalContentNode()
     
