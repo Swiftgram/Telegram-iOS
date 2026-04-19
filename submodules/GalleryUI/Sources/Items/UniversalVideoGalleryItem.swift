@@ -3761,7 +3761,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                                         let stringSaved = self.presentationData.strings.Story_TooltipSaved
                                         
                                         let saveFileReference: AnyMediaReference = qualityFile.abstract
-                                        let saveSignal = SaveToCameraRoll.saveToCameraRoll(context: self.context, postbox: self.context.account.postbox, userLocation: .peer(message.id.peerId), mediaReference: saveFileReference)
+                                        let saveSignal = SaveToCameraRoll.saveToCameraRoll(context: self.context, userLocation: .peer(message.id.peerId), mediaReference: saveFileReference)
                                         
                                         let disposable = (saveSignal
                                         |> deliverOnMainQueue).start(next: { [weak saveScreen] progress in
@@ -3807,7 +3807,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                             
                             switch self.fetchStatus {
                             case .Local:
-                                let _ = (SaveToCameraRoll.saveToCameraRoll(context: self.context, postbox: self.context.account.postbox, userLocation: .peer(message.id.peerId), mediaReference: .message(message: MessageReference(message), media: file))
+                                let _ = (SaveToCameraRoll.saveToCameraRoll(context: self.context, userLocation: .peer(message.id.peerId), mediaReference: .message(message: MessageReference(message), media: file))
                                 |> deliverOnMainQueue).start(completed: { [weak self] in
                                     guard let self else {
                                         return
@@ -3864,7 +3864,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                     items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.Gallery_SaveImage, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Download"), color: theme.actionSheet.primaryTextColor) }, action: { [weak self] _, f in
                         f(.default)
                         
-                        let _ = (SaveToCameraRoll.saveToCameraRoll(context: context, postbox: context.account.postbox, userLocation: .peer(message.id.peerId), mediaReference: .message(message: MessageReference(message), media: image), video: videoReference)
+                        let _ = (SaveToCameraRoll.saveToCameraRoll(context: context, userLocation: .peer(message.id.peerId), mediaReference: .message(message: MessageReference(message), media: image), video: videoReference)
                         |> deliverOnMainQueue).start(completed: { [weak self] in
                             guard let strongSelf = self else {
                                 return

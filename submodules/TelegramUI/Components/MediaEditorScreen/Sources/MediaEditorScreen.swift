@@ -5135,7 +5135,6 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
                     }
                     let _ = (fetchMediaData(
                         context: self.context,
-                        postbox: self.context.account.postbox,
                         userLocation: .other,
                         mediaReference: file
                     ) |> deliverOnMainQueue).start(next: { [weak self] state, _ in

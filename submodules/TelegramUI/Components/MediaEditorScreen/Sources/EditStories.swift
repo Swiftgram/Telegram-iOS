@@ -34,9 +34,9 @@ public extension MediaEditorScreenImpl {
                 return .single(.draft(source, Int64(storyItem.id)))
             } else {
                 let media = storyItem.media._asMedia()
-                return fetchMediaData(context: context, postbox: context.account.postbox, userLocation: .peer(peerReference.id), customUserContentType: .story, mediaReference: .story(peer: peerReference, id: storyItem.id, media: media))
+                return fetchMediaData(context: context, userLocation: .peer(peerReference.id), customUserContentType: .story, mediaReference: .story(peer: peerReference, id: storyItem.id, media: media))
                 |> mapToSignal { (value, isImage) -> Signal<MediaEditorScreenImpl.Subject?, NoError> in
-                    guard case let .data(data) = value, data.complete else {
+                    guard case let .data(data) = value, data.isComplete else {
                         return .complete()
                     }
                     if let image = UIImage(contentsOfFile: data.path) {

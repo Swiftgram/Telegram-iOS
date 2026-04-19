@@ -265,7 +265,7 @@ final class PeerInfoStoryGridScreenComponent: Component {
                 for (_, item) in sortedItems {
                     let itemOffset = progressStart
                     progressStart += valueNorm
-                    signals.append(saveToCameraRoll(context: component.context, postbox: component.context.account.postbox, userLocation: .other, mediaReference: .story(peer: peerReference, id: item.id, media: item.media._asMedia()))
+                    signals.append(saveToCameraRoll(context: component.context, userLocation: .other, mediaReference: .story(peer: peerReference, id: item.id, media: item.media._asMedia()))
                     |> map { progress -> Float in
                         return itemOffset + progress * valueNorm
                     })

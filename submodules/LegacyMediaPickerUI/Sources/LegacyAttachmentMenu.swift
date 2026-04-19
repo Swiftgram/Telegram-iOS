@@ -170,9 +170,9 @@ public func legacyMediaEditor(
     sendMessagesWithSignals: @escaping ([Any]?, Bool, Int32, Bool) -> Void,
     present: @escaping (ViewController, Any?) -> Void
 ) {
-    let _ = (fetchMediaData(context: context, postbox: context.account.postbox, userLocation: .other, mediaReference: media)
+    let _ = (fetchMediaData(context: context, userLocation: .other, mediaReference: media)
     |> deliverOnMainQueue).start(next: { (value, isImage) in
-        guard case let .data(data) = value, data.complete else {
+        guard case let .data(data) = value, data.isComplete else {
             return
         }
         
@@ -487,9 +487,9 @@ public func legacyAttachmentMenu(
         let editCurrentItem = TGMenuSheetButtonItemView(title: title, type: TGMenuSheetButtonTypeDefault, fontSize: fontSize, action: { [weak controller] in
             controller?.dismiss(animated: true)
             
-            let _ = (fetchMediaData(context: context, postbox: context.account.postbox, userLocation: .other, mediaReference: editCurrentMedia)
+            let _ = (fetchMediaData(context: context, userLocation: .other, mediaReference: editCurrentMedia)
             |> deliverOnMainQueue).start(next: { (value, isImage) in
-                guard case let .data(data) = value, data.complete else {
+                guard case let .data(data) = value, data.isComplete else {
                     return
                 }
                 

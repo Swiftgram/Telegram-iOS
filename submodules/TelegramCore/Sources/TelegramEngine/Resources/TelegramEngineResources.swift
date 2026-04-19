@@ -415,5 +415,38 @@ public extension TelegramEngine {
         public func applicationIcons() -> Signal<TelegramApplicationIcons, NoError> {
             return _internal_applicationIcons(account: account)
         }
+
+        public func fetch(
+            reference: MediaResourceReference,
+            userLocation: MediaResourceUserLocation,
+            userContentType: MediaResourceUserContentType
+        ) -> Signal<FetchResourceSourceType, FetchResourceError> {
+            return fetchedMediaResource(
+                mediaBox: self.account.postbox.mediaBox,
+                userLocation: userLocation,
+                userContentType: userContentType,
+                reference: reference
+            )
+        }
+
+        public func status(
+            resource: EngineMediaResource
+        ) -> Signal<EngineMediaResource.FetchStatus, NoError> {
+            return self.account.postbox.mediaBox.resourceStatus(resource._asResource())
+            |> map { EngineMediaResource.FetchStatus($0) }
+        }
+
+        public func data(
+            resource: EngineMediaResource,
+            pathExtension: String?,
+            waitUntilFetchStatus: Bool
+        ) -> Signal<EngineMediaResource.ResourceData, NoError> {
+            return self.account.postbox.mediaBox.resourceData(
+                resource._asResource(),
+                pathExtension: pathExtension,
+                option: .complete(waitUntilFetchStatus: waitUntilFetchStatus)
+            )
+            |> map { EngineMediaResource.ResourceData($0) }
+        }
     }
 }

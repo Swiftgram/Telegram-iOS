@@ -1024,12 +1024,12 @@ final class InstantPageControllerNode: ASDisplayNode, ASScrollViewDelegate {
         let controller = makeContextMenuController(actions: [ContextMenuAction(content: .text(title: self.strings.Conversation_ContextMenuCopy, accessibilityLabel: self.strings.Conversation_ContextMenuCopy), action: { [weak self] in
             if let strongSelf = self, case let .image(image) = media.media {
                 let media = TelegramMediaImage(imageId: MediaId(namespace: 0, id: 0), representations: image.representations, immediateThumbnailData: image.immediateThumbnailData, reference: nil, partialReference: nil, flags: [])
-                let _ = copyToPasteboard(context: strongSelf.context, postbox: strongSelf.context.account.postbox, userLocation: strongSelf.sourceLocation.userLocation, mediaReference: .standalone(media: media)).start()
+                let _ = copyToPasteboard(context: strongSelf.context, userLocation: strongSelf.sourceLocation.userLocation, mediaReference: .standalone(media: media)).start()
             }
         }), ContextMenuAction(content: .text(title: self.strings.Conversation_LinkDialogSave, accessibilityLabel: self.strings.Conversation_LinkDialogSave), action: { [weak self] in
             if let strongSelf = self, case let .image(image) = media.media {
                 let media = TelegramMediaImage(imageId: MediaId(namespace: 0, id: 0), representations: image.representations, immediateThumbnailData: image.immediateThumbnailData, reference: nil, partialReference: nil, flags: [])
-                let _ = saveToCameraRoll(context: strongSelf.context, postbox: strongSelf.context.account.postbox, userLocation: strongSelf.sourceLocation.userLocation, mediaReference: .standalone(media: media)).start()
+                let _ = saveToCameraRoll(context: strongSelf.context, userLocation: strongSelf.sourceLocation.userLocation, mediaReference: .standalone(media: media)).start()
             }
         }), ContextMenuAction(content: .text(title: self.strings.Conversation_ContextMenuShare, accessibilityLabel: self.strings.Conversation_ContextMenuShare), action: { [weak self] in
             if let strongSelf = self, let (webPage, _) = strongSelf.webPage, case let .image(image) = media.media {

@@ -5977,7 +5977,7 @@ public final class StoryItemSetContainerComponent: Component {
             let stringSaving = component.strings.Story_TooltipSaving
             let stringSaved = component.strings.Story_TooltipSaved
             
-            let disposable = (saveToCameraRoll(context: component.context, postbox: component.context.account.postbox, userLocation: .peer(peerReference.id), customUserContentType: .story, mediaReference: .story(peer: peerReference, id: component.slice.item.storyItem.id, media: component.slice.item.storyItem.media._asMedia()))
+            let disposable = (saveToCameraRoll(context: component.context, userLocation: .peer(peerReference.id), customUserContentType: .story, mediaReference: .story(peer: peerReference, id: component.slice.item.storyItem.id, media: component.slice.item.storyItem.media._asMedia()))
             |> deliverOnMainQueue).start(next: { [weak saveScreen] progress in
                 guard let saveScreen else {
                     return

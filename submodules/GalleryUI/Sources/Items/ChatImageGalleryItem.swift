@@ -729,9 +729,9 @@ final class ChatImageGalleryItemNode: ZoomableContentGalleryItemNode {
                         guard let self else {
                             return
                         }
-                        let _ = (fetchMediaData(context: context, postbox: context.account.postbox, userLocation: .other, mediaReference: media)
+                        let _ = (fetchMediaData(context: context, userLocation: .other, mediaReference: media)
                         |> deliverOnMainQueue).start(next: { [weak self] (value, isImage) in
-                            guard let self, case let .data(data) = value, data.complete, isImage, let image = UIImage(contentsOfFile: data.path) else {
+                            guard let self, case let .data(data) = value, data.isComplete, isImage, let image = UIImage(contentsOfFile: data.path) else {
                                 return
                             }
                             let sendSticker = self.sendSticker
@@ -755,7 +755,7 @@ final class ChatImageGalleryItemNode: ZoomableContentGalleryItemNode {
                     items.append(.action(ContextMenuActionItem(text: self.presentationData.strings.Gallery_SaveImage, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Download"), color: theme.actionSheet.primaryTextColor) }, action: { [weak self] _, f in
                         f(.default)
                                                 
-                        let _ = (SaveToCameraRoll.saveToCameraRoll(context: context, postbox: context.account.postbox, userLocation: .peer(message.id.peerId), mediaReference: media)
+                        let _ = (SaveToCameraRoll.saveToCameraRoll(context: context, userLocation: .peer(message.id.peerId), mediaReference: media)
                         |> deliverOnMainQueue).start(completed: { [weak self] in
                             guard let strongSelf = self else {
                                 return

@@ -2502,9 +2502,9 @@ private enum RenderVideoResult {
 }
 
 private func renderVideo(context: AccountContext, backgroundImage: UIImage, userLocation: MediaResourceUserLocation, media: TelegramMediaFile, videoFrame: CGRect, completion: @escaping (URL?) -> Void) {
-    let _ = (fetchMediaData(context: context, postbox: context.account.postbox, userLocation: userLocation, mediaReference: AnyMediaReference.standalone(media: media))
+    let _ = (fetchMediaData(context: context, userLocation: userLocation, mediaReference: AnyMediaReference.standalone(media: media))
     |> deliverOnMainQueue).startStandalone(next: { value, isImage in
-        guard case let .data(data) = value, data.complete else {
+        guard case let .data(data) = value, data.isComplete else {
             return
         }
         

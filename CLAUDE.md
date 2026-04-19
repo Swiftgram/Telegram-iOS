@@ -107,6 +107,21 @@ Before selecting a wave's module list, grep each candidate for:
 
 1 task abandoned with recorded reason in the wave-2 plan: `SaveToCameraRoll` (full-module Postbox coupling, needs its own wave).
 
+### Wave 3 outcome (2026-04-18)
+
+3 thin forwarders added on `TelegramEngine.Resources` over `MediaBox`:
+- `fetch(reference:userLocation:userContentType:)` → `Signal<FetchResourceSourceType, FetchResourceError>` (Postbox return types remain a documented accepted leak)
+- `status(resource: EngineMediaResource)` → `Signal<EngineMediaResource.FetchStatus, NoError>`
+- `data(resource: EngineMediaResource, pathExtension:, waitUntilFetchStatus:)` → `Signal<EngineMediaResource.ResourceData, NoError>` (takes a `Bool` rather than exposing `ResourceDataRequestOption`, per YAGNI)
+
+1 consumer submodule fully de-Postboxed: `SaveToCameraRoll`. Public signatures changed from `(context:, postbox: Postbox, userLocation:, …)` to `(context:, userLocation:, …)`; `FetchMediaDataState.data` payload changed from `MediaResourceData` to `EngineMediaResource.ResourceData`; internals rewired through `context.engine.resources.*`. 23 call sites across 14 files migrated atomically with the module.
+
+Pre-flight verified that `ShareController.swift:2406`'s `self.currentContext.stateManager.postbox` is equivalent to `context.account.postbox` in the `ShareControllerAppAccountContext` path (because `AccountStateManager` is constructed with the account's own `postbox`), so the `postbox:` argument could be dropped without behavior change.
+
+No tasks abandoned. Shape validated: "per-engine-facade-API migration + full consumer module rewrite" (the wave-2 shape, scaled up to a full module drop).
+
+Plan: `docs/superpowers/plans/2026-04-18-postbox-to-telegramengine-wave-3.md`
+
 ### Modules currently free of `import Postbox` (running tally)
 
 Consumer modules that no longer import Postbox, across all waves and standalone commits:
@@ -119,6 +134,7 @@ Consumer modules that no longer import Postbox, across all waves and standalone 
 - `PromptUI` (standalone cleanup)
 - `PresentationDataUtils` (standalone cleanup)
 - `MapResourceToAvatarSizes` (wave 2)
+- `SaveToCameraRoll` (wave 3)
 
 ### Known future-wave candidates
 
@@ -126,7 +142,6 @@ Surfaced by the wave-2 final review:
 
 - `TelegramEngine.Stickers.uploadSticker(peer: Peer, resource: MediaResource, thumbnail: MediaResource?, …)` — same MediaResource migration as wave 2, plus `peer: Peer` which would naturally migrate to `EnginePeer` at the same time. Self-contained to a small number of call sites.
 - `submodules/TelegramCore/Sources/TelegramEngine/SecureId/UploadSecureIdFile.swift: public func uploadSecureIdFile(…, postbox: Postbox, …, resource: MediaResource)` — rule-2-sensitive (umbrella-type leak). Needs a paired wave with its caller(s).
-- `SaveToCameraRoll` (wave-2 Task 8 abandonment) — three public functions take `postbox: Postbox`, plus internal `postbox.mediaBox.*` calls. Needs a full module-migration wave.
 - Classes conforming to `TelegramMediaResource` (need `isEqual(to: MediaResource)` override) remain **permanently blocked** from consumer-side migration: `ICloudFileResource`, `InstantPageExternalMediaResource`, `VideoLibraryMediaResource`, `YoutubeEmbedStoryboardMediaResource`. Either move the class into `TelegramCore` or keep `import Postbox` in its module.
 
 ### Build environment quirk

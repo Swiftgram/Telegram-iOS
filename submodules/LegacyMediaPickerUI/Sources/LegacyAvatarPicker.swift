@@ -55,18 +55,18 @@ public func presentLegacyAvatarPicker(holder: Atomic<NSObject?>, signup: Bool, t
 public func legacyAvatarEditor(context: AccountContext, media: AnyMediaReference, transitionView: UIView?, senderName: String? = nil, present: @escaping (ViewController, Any?) -> Void, imageCompletion: @escaping (UIImage) -> Void, videoCompletion: @escaping (UIImage, URL, TGVideoEditAdjustments) -> Void) {
     let isVideo = !((media.media as? TelegramMediaImage)?.videoRepresentations.isEmpty ?? true)
     
-    let imageSignal = fetchMediaData(context: context, postbox: context.account.postbox, userLocation: .other, mediaReference: media, forceVideo: false)
+    let imageSignal = fetchMediaData(context: context, userLocation: .other, mediaReference: media, forceVideo: false)
     |> map { (value, _) -> (UIImage?, Bool) in
-        if case let .data(data) = value, data.complete {
+        if case let .data(data) = value, data.isComplete {
             return (UIImage(contentsOfFile: data.path), true)
         } else {
             return (nil, false)
         }
     }
     
-    let videoSignal = isVideo ? fetchMediaData(context: context, postbox: context.account.postbox, userLocation: .other, mediaReference: media, forceVideo: true)
+    let videoSignal = isVideo ? fetchMediaData(context: context, userLocation: .other, mediaReference: media, forceVideo: true)
     |> map { (value, isImage) -> (URL?, Bool) in
-        if case let .data(data) = value, data.complete && !isImage {
+        if case let .data(data) = value, data.isComplete && !isImage {
             return (URL(fileURLWithPath: data.path), true)
         } else {
             return (nil, false)
