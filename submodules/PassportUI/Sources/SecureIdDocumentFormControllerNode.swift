@@ -2169,7 +2169,7 @@ final class SecureIdDocumentFormControllerNode: FormControllerNode<SecureIdDocum
         
         var updateImpl: ((Int64, SecureIdVerificationLocalDocumentState) -> Void)?
         
-        self.uploadContext = SecureIdVerificationDocumentsContext(postbox: self.context.account.postbox, network: self.context.account.network, context: self.secureIdContext, update: { id, state in
+        self.uploadContext = SecureIdVerificationDocumentsContext(engine: self.context.engine, context: self.secureIdContext, update: { id, state in
             updateImpl?(id, state)
         })
         

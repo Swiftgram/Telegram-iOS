@@ -142,6 +142,18 @@ No module becomes Postbox-free in this wave (both caller files import Postbox fo
 
 Plan: `docs/superpowers/plans/2026-04-18-postbox-to-telegramengine-wave-4.md`
 
+### Wave 5 outcome (2026-04-18)
+
+Completes the last explicitly-named future-wave candidate from the wave-2 final review.
+
+`uploadSecureIdFile(context: SecureIdAccessContext, postbox: Postbox, network: Network, resource: MediaResource)` migrated in place to `(context:, engine: TelegramEngine, resource: EngineMediaResource)`. Function body accesses raw Postbox types via `engine.account.postbox` / `engine.account.network` (internal Postbox-facing layer stays raw per the standing rule).
+
+1 consumer submodule fully de-Postboxed: `SecureIdVerificationDocumentsContext` (PassportUI/Sources). Signature changed from `(postbox: Postbox, network: Network, context: SecureIdAccessContext, update: ...)` to `(engine: TelegramEngine, context: SecureIdAccessContext, update: ...)`; stored props collapsed into a single `engine: TelegramEngine` field. One instantiation site updated in the same commit.
+
+After this wave, the "Known future-wave candidates" list contains only the 4 permanently-blocked classes conforming to `TelegramMediaResource`.
+
+Plan: `docs/superpowers/plans/2026-04-18-postbox-to-telegramengine-wave-5.md`
+
 ### Modules currently free of `import Postbox` (running tally)
 
 Consumer modules that no longer import Postbox, across all waves and standalone commits:
@@ -155,12 +167,12 @@ Consumer modules that no longer import Postbox, across all waves and standalone 
 - `PresentationDataUtils` (standalone cleanup)
 - `MapResourceToAvatarSizes` (wave 2)
 - `SaveToCameraRoll` (wave 3)
+- `SecureIdVerificationDocumentsContext` (wave 5)
 
 ### Known future-wave candidates
 
 Surfaced by the wave-2 final review:
 
-- `submodules/TelegramCore/Sources/TelegramEngine/SecureId/UploadSecureIdFile.swift: public func uploadSecureIdFile(…, postbox: Postbox, …, resource: MediaResource)` — rule-2-sensitive (umbrella-type leak). Needs a paired wave with its caller(s).
 - Classes conforming to `TelegramMediaResource` (need `isEqual(to: MediaResource)` override) remain **permanently blocked** from consumer-side migration: `ICloudFileResource`, `InstantPageExternalMediaResource`, `VideoLibraryMediaResource`, `YoutubeEmbedStoryboardMediaResource`. Either move the class into `TelegramCore` or keep `import Postbox` in its module.
 
 ### Build environment quirk
