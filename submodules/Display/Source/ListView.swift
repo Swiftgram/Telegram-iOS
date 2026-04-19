@@ -1073,22 +1073,49 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
                 if remainingFactor.isLessThanOrEqualTo(0.0) {
                     break
                 }
-                
+
                 let itemFactor: CGFloat
                 if CGFloat(1.0).isLessThanOrEqualTo(remainingFactor) {
                     itemFactor = 1.0
                 } else {
                     itemFactor = remainingFactor
                 }
-                
+
                 additionalInverseTopInset += floor(itemNode.apparentBounds.height * itemFactor)
-                
+
                 remainingFactor -= 1.0
             }
         }
         return additionalInverseTopInset
     }
-    
+
+    private func calculatePinToEdgeTopInset() -> CGFloat {
+        var lowestPinnedIndex: Int = Int.max
+        for itemNode in self.itemNodes {
+            guard let index = itemNode.index, index >= 0, index < self.items.count else { continue }
+            if index < lowestPinnedIndex && self.items[index].pinToEdgeWithInset {
+                lowestPinnedIndex = index
+            }
+        }
+        guard lowestPinnedIndex != Int.max else { return 0.0 }
+
+        var totalAboveAndPinned: CGFloat = 0.0
+        var sawIndexZero = false
+        for itemNode in self.itemNodes {
+            guard let index = itemNode.index else { continue }
+            if index == 0 {
+                sawIndexZero = true
+            }
+            if index <= lowestPinnedIndex {
+                totalAboveAndPinned += itemNode.apparentBounds.height
+            }
+        }
+        guard sawIndexZero else { return 0.0 }
+
+        let visibleArea = self.visibleSize.height - self.insets.top - self.insets.bottom
+        return max(0.0, visibleArea - totalAboveAndPinned)
+    }
+
     private func areAllItemsOnScreen() -> Bool {
         if self.itemNodes.count == 0 {
             return true
@@ -1183,7 +1210,11 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
             let additionalInverseTopInset = self.calculateAdditionalTopInverseInset()
             effectiveInsets.top = max(effectiveInsets.top, self.visibleSize.height - additionalInverseTopInset)
         }
-        
+        let pinToEdgeTopInset = self.calculatePinToEdgeTopInset()
+        if pinToEdgeTopInset > 0.0 {
+            effectiveInsets.top = max(effectiveInsets.top, self.insets.top + pinToEdgeTopInset)
+        }
+
         if topItemFound {
             topItemEdge = self.itemNodes[0].apparentFrame.origin.y - self.tempTopInset
         }
@@ -1614,7 +1645,11 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
                 let additionalInverseTopInset = self.calculateAdditionalTopInverseInset()
                 effectiveInsets.top = max(effectiveInsets.top, self.visibleSize.height - additionalInverseTopInset)
             }
-            
+            let pinToEdgeTopInset = self.calculatePinToEdgeTopInset()
+            if pinToEdgeTopInset > 0.0 {
+                effectiveInsets.top = max(effectiveInsets.top, self.insets.top + pinToEdgeTopInset)
+            }
+
             completeHeight = effectiveInsets.top + effectiveInsets.bottom
             
             if let index = self.itemNodes[self.itemNodes.count - 1].index, index == self.items.count - 1 {
@@ -3022,13 +3057,31 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
         
         if let scrollToItem = scrollToItem, !self.areAllItemsOnScreen() || !sizeOrInsetsUpdated {
             self.stopScrolling()
-            
+
             for itemNode in self.itemNodes {
                 if let index = itemNode.index, index == scrollToItem.index {
                     let insets = self.insets// updateSizeAndInsets?.insets ?? self.insets
-                    
+
+                    var isPinToEdgeTarget = false
+                    if self.calculatePinToEdgeTopInset() > 0.0,
+                       index >= 0, index < self.items.count,
+                       self.items[index].pinToEdgeWithInset {
+                        isPinToEdgeTarget = true
+                        for otherNode in self.itemNodes {
+                            guard let otherIndex = otherNode.index else { continue }
+                            guard otherIndex >= 0, otherIndex < self.items.count else { continue }
+                            if otherIndex < index, self.items[otherIndex].pinToEdgeWithInset {
+                                isPinToEdgeTarget = false
+                                break
+                            }
+                        }
+                    }
+
                     var offset: CGFloat
-                    switch scrollToItem.position {
+                    if isPinToEdgeTarget {
+                        offset = (self.visibleSize.height - insets.bottom) - itemNode.apparentFrame.maxY + itemNode.scrollPositioningInsets.bottom
+                    } else {
+                        switch scrollToItem.position {
                         case let .bottom(additionalOffset):
                             offset = (self.visibleSize.height - insets.bottom) - itemNode.apparentFrame.maxY + itemNode.scrollPositioningInsets.bottom + additionalOffset
                         case let .top(additionalOffset):
@@ -3066,8 +3119,9 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
                                     offset = 0.0
                                 }
                             }
+                        }
                     }
-                    
+
                     for itemNode in self.itemNodes {
                         var frame = itemNode.frame
                         frame.origin.y += offset
@@ -3126,10 +3180,12 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
         
         if let updateSizeAndInsets = updateSizeAndInsets {
             if self.insets != updateSizeAndInsets.insets || self.headerInsets != updateSizeAndInsets.headerInsets || !self.visibleSize.height.isEqual(to: updateSizeAndInsets.size.height) {
+                let previousPinToEdgeTopInset = self.calculatePinToEdgeTopInset()
                 let previousVisibleSize = self.visibleSize
                 self.visibleSize = updateSizeAndInsets.size
-                
+
                 var offsetFix: CGFloat
+                var offsetFixUsesEffectiveTopInset = false
                 let insetDeltaOffsetFix: CGFloat = 0.0
                 if (self.isTracking && !self.allowInsetFixWhileTracking) || isExperimentalSnapToScrollToItem {
                     offsetFix = 0.0
@@ -3137,17 +3193,23 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
                     offsetFix = -updateSizeAndInsets.insets.bottom + self.insets.bottom
                 } else {
                     offsetFix = updateSizeAndInsets.insets.top - self.insets.top
+                    offsetFixUsesEffectiveTopInset = true
                 }
-                
+
                 offsetFix += additionalScrollDistance
-                
+
                 self.insets = updateSizeAndInsets.insets
                 self.headerInsets = updateSizeAndInsets.headerInsets ?? self.insets
                 self.scrollIndicatorInsets = updateSizeAndInsets.scrollIndicatorInsets ?? self.insets
                 self.itemOffsetInsets = updateSizeAndInsets.itemOffsetInsets
                 self.ensureTopInsetForOverlayHighlightedItems = updateSizeAndInsets.ensureTopInsetForOverlayHighlightedItems
                 self.visibleSize = updateSizeAndInsets.size
-                
+
+                if offsetFixUsesEffectiveTopInset {
+                    let updatedPinToEdgeTopInset = self.calculatePinToEdgeTopInset()
+                    offsetFix += updatedPinToEdgeTopInset - previousPinToEdgeTopInset
+                }
+
                 for itemNode in self.itemNodes {
                     itemNode.updateFrame(itemNode.frame.offsetBy(dx: 0.0, dy: offsetFix), within: self.visibleSize, transition: customAnimationTransition)
                 }
