@@ -637,7 +637,7 @@ final class ImportStickerPackControllerNode: ViewControllerTracingNode, ASScroll
                 dimensions = PixelDimensions(image.size)
             }
             let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
-            self.context.account.postbox.mediaBox.storeResourceData(resource.id, data: thumbnail.data)
+            self.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: thumbnail.data)
             thumbnailSticker = ImportSticker(resource: .standalone(resource: resource), emojis: [], dimensions: dimensions, duration: nil, mimeType: thumbnail.mimeType, keywords: thumbnail.keywords)
         }
         
@@ -796,7 +796,7 @@ final class ImportStickerPackControllerNode: ViewControllerTracingNode, ASScroll
                 item.resource = resource
             } else {
                 let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
-                self.context.account.postbox.mediaBox.storeResourceData(resource.id, data: item.data)
+                self.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: item.data)
                 item.resource = EngineMediaResource(resource)
                 self.stickerResources[item.uuid] = EngineMediaResource(resource)
             }

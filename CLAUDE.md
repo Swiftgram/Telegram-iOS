@@ -564,6 +564,47 @@ Net: 14 files changed. TelegramEngineResources.swift: +4 / -0. Consumer files: +
 
 Plan / record: `memory/project_postbox_wave21_plan.md` (deleted post-commit per the plan's own housekeeping instructions).
 
+### Wave 22 outcome (2026-04-21)
+
+Follows wave 21's pattern: facade addition + consumer sweep in a single atomic commit. Adds `TelegramEngine.Resources.storeResourceData(id: EngineMediaResource.Id, data: Data, synchronous: Bool = false)` facade; sweeps 46 consumer sites across 17 files.
+
+**Facade added at `TelegramCore/Sources/TelegramEngine/Resources/TelegramEngineResources.swift:464`.** Body: `self.account.postbox.mediaBox.storeResourceData(MediaResourceId(id.stringRepresentation), data: data, synchronous: synchronous)`. Wraps Postbox's `MediaBox.storeResourceData(_ id: MediaResourceId, data: Data, synchronous: Bool)` full-file overload. The range-store overload (`MediaBox.storeResourceData(_:range:data:)`) is used at a single site inside `HLSVideoJSNativeContentNode.swift:302` via a local `postbox: Postbox` field (Shape D), which is out of scope for this wave; the range overload gets no facade wrapper this round.
+
+**46 Shape-A consumer sites migrated:**
+- `ImportStickerPackUI/Sources/ImportStickerPackControllerNode.swift` (2)
+- `DebugSettingsUI/Sources/DebugController.swift` (8 — 6 identical `gzippedData` batched via `replace_all=true`; `logData`, `allStatsData` handled individually)
+- `BrowserUI/Sources/BrowserWebContent.swift` (1)
+- `TelegramUI/Sources/CreateChannelController.swift` (4)
+- `TelegramUI/Sources/CreateGroupController.swift` (4)
+- `TelegramUI/Sources/Chat/ChatControllerPaste.swift` (1)
+- `TelegramUI/Sources/Chat/ChatControllerOpenDocumentScanner.swift` (3)
+- `TelegramUI/Sources/Chat/ChatControllerMediaRecording.swift` (2)
+- `TelegramUI/Components/LegacyInstantVideoController/Sources/LegacyInstantVideoController.swift` (2)
+- `TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoScreenAvatarSetup.swift` (2)
+- `TelegramUI/Components/Settings/WallpaperGridScreen/Sources/WallpaperUtils.swift` (6 — 3 `thumbnailResource`, 3 `resource`; both handled via `replace_all=true`)
+- `SettingsUI/Sources/Themes/ThemePreviewController.swift` (1)
+- `SettingsUI/Sources/Themes/EditThemeController.swift` (1)
+- `TelegramUI/Components/Stories/StoryContainerScreen/Sources/StoryItemSetContainerViewSendMessage.swift` (3)
+- `TelegramUI/Components/VideoMessageCameraScreen/Sources/VideoMessageCameraScreen.swift` (2)
+- `TelegramUI/Components/MediaEditorScreen/Sources/CreateLinkOptions.swift` (1)
+- `TelegramUI/Components/MediaEditorScreen/Sources/MediaEditorScreen.swift` (3)
+
+**Out of scope — not migrated this wave:**
+- `accountManager.mediaBox.storeResourceData(...)` sites (Account-manager-scoped, not account-scoped) — 13+ sites across WallpaperGalleryItem, WallpaperGalleryController, ThemeAccentColorController, WallpaperUtils, WebBrowserSettingsController, ThemeUpdateManager, OpenResolvedUrl, and others. These are a different migration path entirely (not a `TelegramEngine.Resources.*` target) and stay raw.
+- `account.postbox.mediaBox.storeResourceData(...)` (raw `Account`, no `AccountContext`) — ~9 sites in LegacyMediaPickerUI, TelegramCallsUI, InAppPurchaseManager, AuthorizationUI, PeerInfoScreenAvatarSetup closures, WallpaperResources. Shape C from wave-21 taxonomy. Needs per-module rework.
+- `self.postbox.mediaBox.storeResourceData(...)` / `postbox.mediaBox.storeResourceData(...)` inside TelegramCore internals (`TransformOutgoingMessageMedia.swift`, `AccountStateManager.swift`, `AvailableReactions.swift`, `SaveSecureIdValue.swift`, `PeerPhotoUpdater.swift`, `NotificationSoundList.swift`, `Stories.swift`, `Authorization.swift`, `WebpagePreview.swift`). These are Postbox-internal layer by design — keep as-is.
+- `HLSVideoJSNativeContentNode.swift:302` — uses the range-store overload via local `postbox: Postbox` field. Out of scope.
+
+**No modules became Postbox-free.** Matches waves 19/20/21 expectation — each consumer has other Postbox usage.
+
+**Build validation.** `bazel build Telegram/Telegram --keep_going` — clean first-pass build (571 processes, 1554 action cache hits + 30 local + 532 worker, 229s, 0 errors, `Telegram.ipa` up-to-date).
+
+**Pattern validation.** Wave-shape G (facade + consumer sweep in one commit) scales well up to 46 sites in 17 files when the pattern is mechanical. Heavy `replace_all=true` usage where call-text is identical across sites (DebugController's 6 `gzippedData` sites, WallpaperUtils' 6 sites split into 2 batches by first-arg variable, ChatControllerOpenDocumentScanner's identical `(resource.id, data: data, synchronous: true)` pattern) keeps diff noise to the minimum. 46 sites, mostly done via replace_all + a few individual edits.
+
+Net: 17 consumer files + 1 TelegramCore file + CLAUDE.md. TelegramEngineResources.swift: +4 / -0. Consumer files: +46 / -46 (mechanical rewrite).
+
+Plan / record: (no plan doc this wave — mechanical sweep following wave-21 recipe).
+
 ### Modules currently free of `import Postbox` (running tally)
 
 Consumer modules that no longer import Postbox, across all waves and standalone commits:

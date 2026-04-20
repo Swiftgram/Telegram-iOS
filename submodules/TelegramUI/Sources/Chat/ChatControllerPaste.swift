@@ -106,7 +106,7 @@ extension ChatControllerImpl {
         self.enqueueMediaMessageDisposable.set((convertToWebP(image: image, targetSize: size, targetBoundingSize: size, quality: 0.9) |> deliverOnMainQueue).startStrict(next: { [weak self] data in
             if let strongSelf = self, !data.isEmpty {
                 let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
-                strongSelf.context.account.postbox.mediaBox.storeResourceData(resource.id, data: data)
+                strongSelf.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data)
                 
                 var fileAttributes: [TelegramMediaFileAttribute] = []
                 fileAttributes.append(.FileName(fileName: "sticker.webp"))

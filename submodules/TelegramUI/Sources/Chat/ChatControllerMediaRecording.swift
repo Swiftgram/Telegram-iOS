@@ -311,7 +311,7 @@ extension ChatControllerImpl {
                                 } else if let waveform = data.waveform {
                                     if resource == nil {
                                         resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max), size: Int64(data.compressedData.count))
-                                        strongSelf.context.account.postbox.mediaBox.storeResourceData(resource!.id, data: data.compressedData)
+                                        strongSelf.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource!.id), data: data.compressedData)
                                     }
                                     
                                     let audioWaveform: AudioWaveform
@@ -361,7 +361,7 @@ extension ChatControllerImpl {
                             let randomId = Int64.random(in: Int64.min ... Int64.max)
                             
                             let resource = LocalFileMediaResource(fileId: randomId)
-                            strongSelf.context.account.postbox.mediaBox.storeResourceData(resource.id, data: data.compressedData)
+                            strongSelf.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data.compressedData)
                             
                             let waveformBuffer: Data? = data.waveform
                             

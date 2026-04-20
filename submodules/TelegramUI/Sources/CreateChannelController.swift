@@ -501,7 +501,7 @@ public func createChannelController(context: AccountContext, mode: CreateChannel
             let completedChannelPhotoImpl: (UIImage) -> Void = { image in
                 if let data = image.jpegData(compressionQuality: 0.6) {
                     let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
-                    context.account.postbox.mediaBox.storeResourceData(resource.id, data: data)
+                    context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data)
                     let representation = TelegramMediaImageRepresentation(dimensions: PixelDimensions(width: 640, height: 640), resource: resource, progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false)
                     uploadedAvatar.set(context.engine.peers.uploadedPeerPhoto(resource: EngineMediaResource(resource)))
                     uploadedVideoAvatar = nil
@@ -516,7 +516,7 @@ public func createChannelController(context: AccountContext, mode: CreateChannel
             let completedChannelVideoImpl: (UIImage, Any?, TGVideoEditAdjustments?) -> Void = { image, asset, adjustments in
                 if let data = image.jpegData(compressionQuality: 0.6) {
                     let photoResource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
-                    context.account.postbox.mediaBox.storeResourceData(photoResource.id, data: data)
+                    context.engine.resources.storeResourceData(id: EngineMediaResource.Id(photoResource.id), data: data)
                     let representation = TelegramMediaImageRepresentation(dimensions: PixelDimensions(width: 640, height: 640), resource: photoResource, progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false)
                     updateState { state in
                         var state = state
@@ -569,7 +569,7 @@ public func createChannelController(context: AccountContext, mode: CreateChannel
                         let signalDisposable = signal.start(next: { next in
                             if let result = next as? TGMediaVideoConversionResult {
                                 if let image = result.coverImage, let data = image.jpegData(compressionQuality: 0.7) {
-                                    context.account.postbox.mediaBox.storeResourceData(photoResource.id, data: data)
+                                    context.engine.resources.storeResourceData(id: EngineMediaResource.Id(photoResource.id), data: data)
                                 }
                                 
                                 if let timestamp = videoStartTimestamp {
@@ -585,7 +585,7 @@ public func createChannelController(context: AccountContext, mode: CreateChannel
                                         } else {
                                             resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
                                         }
-                                        context.account.postbox.mediaBox.storeResourceData(resource.id, data: data, synchronous: true)
+                                        context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data, synchronous: true)
                                         subscriber.putNext(resource)
                                         
                                         EngineTempBox.shared.dispose(tempFile)

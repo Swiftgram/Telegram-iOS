@@ -460,5 +460,9 @@ public extension TelegramEngine {
         public func completedResourcePath(id: EngineMediaResource.Id, pathExtension: String? = nil) -> String? {
             return self.account.postbox.mediaBox.completedResourcePath(id: MediaResourceId(id.stringRepresentation), pathExtension: pathExtension)
         }
+
+        public func storeResourceData(id: EngineMediaResource.Id, data: Data, synchronous: Bool = false) {
+            self.account.postbox.mediaBox.storeResourceData(MediaResourceId(id.stringRepresentation), data: data, synchronous: synchronous)
+        }
     }
 }

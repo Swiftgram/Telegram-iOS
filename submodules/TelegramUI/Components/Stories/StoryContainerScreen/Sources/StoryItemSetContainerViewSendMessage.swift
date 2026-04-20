@@ -1059,7 +1059,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         let _ = (convertToWebP(image: image, targetSize: size, targetBoundingSize: size, quality: 0.9) |> deliverOnMainQueue).start(next: { [weak self, weak view] data in
             if let self, let view, !data.isEmpty {
                 let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
-                component.context.account.postbox.mediaBox.storeResourceData(resource.id, data: data)
+                component.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data)
 
                 var fileAttributes: [TelegramMediaFileAttribute] = []
                 fileAttributes.append(.FileName(fileName: "sticker.webp"))
@@ -1173,7 +1173,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                             let randomId = Int64.random(in: Int64.min ... Int64.max)
 
                             let resource = LocalFileMediaResource(fileId: randomId)
-                            component.context.account.postbox.mediaBox.storeResourceData(resource.id, data: data.compressedData)
+                            component.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data.compressedData)
 
                             let waveformBuffer: Data? = data.waveform
 
@@ -1228,7 +1228,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                 } else if let waveform = data.waveform {
                     let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max), size: Int64(data.compressedData.count))
 
-                    component.context.account.postbox.mediaBox.storeResourceData(resource.id, data: data.compressedData)
+                    component.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data.compressedData)
                     self.recordedAudioPreview = .audio(ChatRecordedMediaPreview.Audio(resource: resource, fileSize: Int32(data.compressedData.count), duration: Int32(data.duration), waveform: AudioWaveform(bitstream: waveform, bitsPerSample: 5)))
                     view.state?.updated(transition: ComponentTransition(animation: .curve(duration: 0.3, curve: .spring)))
                 }

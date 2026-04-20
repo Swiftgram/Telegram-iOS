@@ -101,11 +101,11 @@ public func uploadCustomWallpaper(context: AccountContext, wallpaper: WallpaperG
         if let data = croppedImage.jpegData(compressionQuality: 0.8), let thumbnailImage = thumbnailImage, let thumbnailData = thumbnailImage.jpegData(compressionQuality: 0.4) {
             let thumbnailResource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
             context.sharedContext.accountManager.mediaBox.storeResourceData(thumbnailResource.id, data: thumbnailData, synchronous: true)
-            context.account.postbox.mediaBox.storeResourceData(thumbnailResource.id, data: thumbnailData, synchronous: true)
+            context.engine.resources.storeResourceData(id: EngineMediaResource.Id(thumbnailResource.id), data: thumbnailData, synchronous: true)
             
             let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
             context.sharedContext.accountManager.mediaBox.storeResourceData(resource.id, data: data, synchronous: true)
-            context.account.postbox.mediaBox.storeResourceData(resource.id, data: data, synchronous: true)
+            context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data, synchronous: true)
             
             let autoNightModeTriggered = context.sharedContext.currentPresentationData.with {$0 }.autoNightModeTriggered
             let accountManager = context.sharedContext.accountManager
@@ -235,11 +235,11 @@ public func getTemporaryCustomPeerWallpaper(context: AccountContext, wallpaper: 
         if let data = croppedImage.jpegData(compressionQuality: 0.8), let thumbnailImage = thumbnailImage, let thumbnailData = thumbnailImage.jpegData(compressionQuality: 0.4) {
             let thumbnailResource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
             context.sharedContext.accountManager.mediaBox.storeResourceData(thumbnailResource.id, data: thumbnailData, synchronous: true)
-            context.account.postbox.mediaBox.storeResourceData(thumbnailResource.id, data: thumbnailData, synchronous: true)
+            context.engine.resources.storeResourceData(id: EngineMediaResource.Id(thumbnailResource.id), data: thumbnailData, synchronous: true)
             
             let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
             context.sharedContext.accountManager.mediaBox.storeResourceData(resource.id, data: data, synchronous: true)
-            context.account.postbox.mediaBox.storeResourceData(resource.id, data: data, synchronous: true)
+            context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data, synchronous: true)
             
             let _ = context.sharedContext.accountManager.mediaBox.cachedResourceRepresentation(resource, representation: CachedBlurredWallpaperRepresentation(), complete: true, fetch: true).start()
             
@@ -348,11 +348,11 @@ public func uploadCustomPeerWallpaper(context: AccountContext, wallpaper: Wallpa
         if let data = croppedImage.jpegData(compressionQuality: 0.8), let thumbnailImage = thumbnailImage, let thumbnailData = thumbnailImage.jpegData(compressionQuality: 0.4) {
             let thumbnailResource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
             context.sharedContext.accountManager.mediaBox.storeResourceData(thumbnailResource.id, data: thumbnailData, synchronous: true)
-            context.account.postbox.mediaBox.storeResourceData(thumbnailResource.id, data: thumbnailData, synchronous: true)
+            context.engine.resources.storeResourceData(id: EngineMediaResource.Id(thumbnailResource.id), data: thumbnailData, synchronous: true)
             
             let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
             context.sharedContext.accountManager.mediaBox.storeResourceData(resource.id, data: data, synchronous: true)
-            context.account.postbox.mediaBox.storeResourceData(resource.id, data: data, synchronous: true)
+            context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data, synchronous: true)
             
             let _ = context.sharedContext.accountManager.mediaBox.cachedResourceRepresentation(resource, representation: CachedBlurredWallpaperRepresentation(), complete: true, fetch: true).start()
             
