@@ -224,7 +224,7 @@ public final class HorizontalPeerItemNode: ListViewItemNode {
                     } else {
                         strongSelf.peerNode.compact = false
                     }
-                    strongSelf.peerNode.setup(accountPeerId: item.accountPeerId, postbox: item.stateManager.postbox, network: item.stateManager.network, energyUsageSettings: item.energyUsageSettings, contentSettings: item.contentSettings, animationCache: item.animationCache, animationRenderer: item.animationRenderer, resolveInlineStickers: item.resolveInlineStickers, theme: item.theme, strings: item.strings, peer: EngineRenderedPeer(peer: item.peer), requiresPremiumForMessaging: false, numberOfLines: 1, synchronousLoad: synchronousLoads)
+                    strongSelf.peerNode.setup(accountPeerId: item.accountPeerId, stateManager: item.stateManager, energyUsageSettings: item.energyUsageSettings, contentSettings: item.contentSettings, animationCache: item.animationCache, animationRenderer: item.animationRenderer, resolveInlineStickers: item.resolveInlineStickers, theme: item.theme, strings: item.strings, peer: EngineRenderedPeer(peer: item.peer), requiresPremiumForMessaging: false, numberOfLines: 1, synchronousLoad: synchronousLoads)
                     strongSelf.peerNode.frame = CGRect(origin: CGPoint(), size: itemLayout.size)
                     strongSelf.peerNode.updateSelection(selected: item.isPeerSelected(item.peer.id), animated: false)
                     
