@@ -18,7 +18,7 @@ public func uploadCustomWallpaper(context: AccountContext, wallpaper: WallpaperG
         case let .wallpaper(wallpaper, _):
             switch wallpaper {
                 case let .file(file):
-                    if let path = context.account.postbox.mediaBox.completedResourcePath(file.file.resource), let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
+                    if let path = context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(file.file.resource.id)), let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                         context.sharedContext.accountManager.mediaBox.storeResourceData(file.file.resource.id, data: data)
                         let _ = context.sharedContext.accountManager.mediaBox.cachedResourceRepresentation(file.file.resource, representation: CachedScaledImageRepresentation(size: CGSize(width: 720.0, height: 720.0), mode: .aspectFit), complete: true, fetch: true).start()
                         let _ = context.sharedContext.accountManager.mediaBox.cachedResourceRepresentation(file.file.resource, representation: CachedBlurredWallpaperRepresentation(), complete: true, fetch: true).start()
@@ -26,7 +26,7 @@ public func uploadCustomWallpaper(context: AccountContext, wallpaper: WallpaperG
                 case let .image(representations, _):
                     for representation in representations {
                         let resource = representation.resource
-                        if let path = context.account.postbox.mediaBox.completedResourcePath(resource), let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
+                        if let path = context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(resource.id)), let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                             context.sharedContext.accountManager.mediaBox.storeResourceData(resource.id, data: data)
                             let _ = context.sharedContext.accountManager.mediaBox.cachedResourceRepresentation(resource, representation: CachedScaledImageRepresentation(size: CGSize(width: 720.0, height: 720.0), mode: .aspectFit), complete: true, fetch: true).start()
                         }
@@ -64,7 +64,7 @@ public func uploadCustomWallpaper(context: AccountContext, wallpaper: WallpaperG
             }
             
             if let imageResource = imageResource {
-                imageSignal = .single(context.account.postbox.mediaBox.completedResourcePath(imageResource))
+                imageSignal = .single(context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(imageResource.id)))
                 |> mapToSignal { path -> Signal<UIImage, NoError> in
                     if let path = path, let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: [.mappedIfSafe]), let image = UIImage(data: data) {
                         return .single(image)
@@ -198,7 +198,7 @@ public func getTemporaryCustomPeerWallpaper(context: AccountContext, wallpaper: 
             }
             
             if let imageResource = imageResource {
-                imageSignal = .single(context.account.postbox.mediaBox.completedResourcePath(imageResource))
+                imageSignal = .single(context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(imageResource.id)))
                 |> mapToSignal { path -> Signal<UIImage, NoError> in
                     if let path = path, let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: [.mappedIfSafe]), let image = UIImage(data: data) {
                         return .single(image)
@@ -264,7 +264,7 @@ public func uploadCustomPeerWallpaper(context: AccountContext, wallpaper: Wallpa
             imageSignal = .complete()
             switch wallpaper {
                 case let .file(file):
-                    if let path = context.account.postbox.mediaBox.completedResourcePath(file.file.resource), let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead), let image = UIImage(data: data) {
+                    if let path = context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(file.file.resource.id)), let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead), let image = UIImage(data: data) {
                         context.sharedContext.accountManager.mediaBox.storeResourceData(file.file.resource.id, data: data, synchronous: true)
                         let _ = context.sharedContext.accountManager.mediaBox.cachedResourceRepresentation(file.file.resource, representation: CachedScaledImageRepresentation(size: CGSize(width: 720.0, height: 720.0), mode: .aspectFit), complete: true, fetch: true).start()
                         let _ = context.sharedContext.accountManager.mediaBox.cachedResourceRepresentation(file.file.resource, representation: CachedBlurredWallpaperRepresentation(), complete: true, fetch: true).start()
@@ -274,7 +274,7 @@ public func uploadCustomPeerWallpaper(context: AccountContext, wallpaper: Wallpa
                 case let .image(representations, _):
                     for representation in representations {
                         let resource = representation.resource
-                        if let path = context.account.postbox.mediaBox.completedResourcePath(resource), let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
+                        if let path = context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(resource.id)), let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                             context.sharedContext.accountManager.mediaBox.storeResourceData(resource.id, data: data, synchronous: true)
                             let _ = context.sharedContext.accountManager.mediaBox.cachedResourceRepresentation(resource, representation: CachedScaledImageRepresentation(size: CGSize(width: 720.0, height: 720.0), mode: .aspectFit), complete: true, fetch: true).start()
                         }
@@ -311,7 +311,7 @@ public func uploadCustomPeerWallpaper(context: AccountContext, wallpaper: Wallpa
             }
             
             if let imageResource = imageResource {
-                imageSignal = .single(context.account.postbox.mediaBox.completedResourcePath(imageResource))
+                imageSignal = .single(context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(imageResource.id)))
                 |> mapToSignal { path -> Signal<UIImage, NoError> in
                     if let path = path, let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: [.mappedIfSafe]), let image = UIImage(data: data) {
                         return .single(image)

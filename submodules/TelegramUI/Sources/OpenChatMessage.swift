@@ -460,7 +460,7 @@ func openChatMessageImpl(_ params: OpenChatMessageParams) -> Bool {
                 }), .window(.root))
             case let .theme(media):
                 params.dismissInput()
-                let path = params.context.account.postbox.mediaBox.completedResourcePath(media.resource)
+                let path = params.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(media.resource.id))
                 var previewTheme: PresentationTheme?
                 if let path = path, let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedIfSafe) {
                     previewTheme = makePresentationTheme(data: data)

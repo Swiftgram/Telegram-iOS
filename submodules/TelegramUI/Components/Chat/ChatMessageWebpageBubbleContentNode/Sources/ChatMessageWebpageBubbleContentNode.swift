@@ -270,7 +270,7 @@ public final class ChatMessageWebpageBubbleContentNode: ChatMessageBubbleContent
                     if case .full = automaticDownload {
                         automaticPlayback = true
                     } else {
-                        automaticPlayback = item.context.account.postbox.mediaBox.completedResourcePath(file.resource) != nil
+                        automaticPlayback = item.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(file.resource.id)) != nil
                     }
                 }
                 

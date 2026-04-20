@@ -131,7 +131,7 @@ extension ChatControllerImpl {
             }
             
             var resumeData: AudioRecorderResumeData?
-            if let existingDraft, let path = self.context.account.postbox.mediaBox.completedResourcePath(existingDraft.resource), let compressedData = try? Data(contentsOf: URL(fileURLWithPath: path), options: [.mappedIfSafe]), let recorderResumeData = existingDraft.resumeData {
+            if let existingDraft, let path = self.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(existingDraft.resource.id)), let compressedData = try? Data(contentsOf: URL(fileURLWithPath: path), options: [.mappedIfSafe]), let recorderResumeData = existingDraft.resumeData {
                 resumeData = AudioRecorderResumeData(compressedData: compressedData, resumeData: recorderResumeData)
             }
             

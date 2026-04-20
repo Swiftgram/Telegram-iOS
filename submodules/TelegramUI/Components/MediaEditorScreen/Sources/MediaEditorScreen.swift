@@ -3750,7 +3750,7 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
                         return
                     }
                     var messageFile: TelegramMediaFile?
-                    if let maybeFile = messages.first?.media.first(where: { $0 is TelegramMediaFile }) as? TelegramMediaFile, maybeFile.isVideo, let _ = self.context.account.postbox.mediaBox.completedResourcePath(maybeFile.resource, pathExtension: nil) {
+                    if let maybeFile = messages.first?.media.first(where: { $0 is TelegramMediaFile }) as? TelegramMediaFile, maybeFile.isVideo, let _ = self.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(maybeFile.resource.id), pathExtension: nil) {
                         messageFile = maybeFile
                     }
                     if "".isEmpty {

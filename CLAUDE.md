@@ -529,6 +529,41 @@ Net: 16 files changed, all edits mechanical (before → after): +22 insertions /
 
 Plan / record: (no plan doc this wave — mechanical sweep).
 
+### Wave 21 outcome (2026-04-21)
+
+Combined wave-19+wave-20 shape: facade addition + consumer sweep in a single atomic commit. Adds `TelegramEngine.Resources.completedResourcePath(id: EngineMediaResource.Id, pathExtension: String? = nil) -> String?` facade; sweeps 29 consumer sites across 14 files.
+
+**Facade added at `TelegramCore/Sources/TelegramEngine/Resources/TelegramEngineResources.swift:460`.** Body: `self.account.postbox.mediaBox.completedResourcePath(id: MediaResourceId(id.stringRepresentation), pathExtension: pathExtension)`. Wraps the Postbox `MediaBox.completedResourcePath(id: MediaResourceId, pathExtension: String?)` overload; consumers that previously called the resource-taking overload (`MediaBox.completedResourcePath(_ resource: MediaResource, …)`) migrate through the id path (`.resource.id` is already `MediaResourceId`).
+
+**28 Shape-A consumer sites + 1 Shape-B (already-id-overload) migrated:**
+- `SettingsUI/Sources/Themes/EditThemeController.swift` (1 site)
+- `BrowserUI/Sources/BrowserPdfContent.swift` (1 site)
+- `BrowserUI/Sources/BrowserDocumentContent.swift` (1 site)
+- `GalleryUI/Sources/SecretMediaPreviewController.swift` (1 site)
+- `TelegramUI/Components/MediaEditor/Sources/MediaEditor.swift` (1 site, `pathExtension: "mp4"`)
+- `TelegramUI/Components/Settings/WallpaperGridScreen/Sources/WallpaperUtils.swift` (7 sites across 3 functions; 4 unique expression templates, handled via `replace_all=true` where identical)
+- `TelegramUI/Components/Settings/ThemeAccentColorScreen/Sources/ThemeAccentColorController.swift` (1 site)
+- `TelegramUI/Components/Settings/WallpaperGalleryScreen/Sources/WallpaperGalleryController.swift` (5 sites; 4 used `resource` expr identically via `replace_all=true`, 1 used `file.file.resource`)
+- `TelegramUI/Components/MediaEditorScreen/Sources/MediaEditorScreen.swift` (1 site, `pathExtension: nil`)
+- `TelegramUI/Components/Chat/ChatMessageWebpageBubbleContentNode/Sources/ChatMessageWebpageBubbleContentNode.swift` (1 site)
+- `TelegramUI/Components/Chat/ChatMessageMediaBubbleContentNode/Sources/ChatMessageMediaBubbleContentNode.swift` (7 sites, all identical `telegramFile.resource` — handled via `replace_all=true`)
+- `TelegramUI/Components/Chat/ChatMessageAttachedContentNode/Sources/ChatMessageAttachedContentNode.swift` (1 site)
+- `TelegramUI/Sources/OpenChatMessage.swift` (1 site)
+- `TelegramUI/Sources/Chat/ChatControllerMediaRecording.swift` (1 site)
+- `TelegramUI/Components/Stories/StoryContainerScreen/Sources/StoryItemImageView.swift` (1 site, Shape B — was already using the `id:` overload; migrated identically to `EngineMediaResource.Id(...)`)
+
+**8 sites intentionally skipped (Shape C/D).** Listed in the plan — 5 Shape-C sites that access a raw `account: Account` parameter (no `.engine` on `Account`) and 3 Shape-D sites that carry a local `postbox: Postbox` stored field. Both shapes need module-scoped init-signature rework rather than per-site sweep; defer to future waves.
+
+**No modules became Postbox-free.** Each consumer has other Postbox usage (signatures, transactions, other mediaBox calls). Matches waves 19/20's expectation.
+
+**Build validation.** `bazel build Telegram/Telegram --keep_going` — clean first-pass build (569 processes, 1556 action cache hits + 30 local + 532 worker, 240s, 0 errors, `Telegram.ipa` up-to-date).
+
+**Pattern validation.** Wave-shape G (facade addition + consumer sweep in a single commit) works well when the consumer pool is bounded and mechanical. 29 sites in 14 files is comfortably within the threshold. Kept waves 19 and 20 separate because 25+ sites across that many modules was at the edge of reviewability; wave 21's similar fan-out fits because the plan pre-classified every site by shape. When the plan does the classification work upfront, combined waves are cheaper to review and ship.
+
+Net: 14 files changed. TelegramEngineResources.swift: +4 / -0. Consumer files: +29 / -29 (mechanical rewrite at each site). CLAUDE.md: +outcome paragraph.
+
+Plan / record: `memory/project_postbox_wave21_plan.md` (deleted post-commit per the plan's own housekeeping instructions).
+
 ### Modules currently free of `import Postbox` (running tally)
 
 Consumer modules that no longer import Postbox, across all waves and standalone commits:

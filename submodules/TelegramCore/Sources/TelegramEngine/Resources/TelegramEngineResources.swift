@@ -456,5 +456,9 @@ public extension TelegramEngine {
         public func shortLivedResourceCachePathPrefix(id: EngineMediaResource.Id) -> String {
             return self.account.postbox.mediaBox.shortLivedResourceCachePathPrefix(MediaResourceId(id.stringRepresentation))
         }
+
+        public func completedResourcePath(id: EngineMediaResource.Id, pathExtension: String? = nil) -> String? {
+            return self.account.postbox.mediaBox.completedResourcePath(id: MediaResourceId(id.stringRepresentation), pathExtension: pathExtension)
+        }
     }
 }
