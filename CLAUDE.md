@@ -57,6 +57,9 @@ MemoryBuffer        → EngineMemoryBuffer           (added 2026-04)
 PostboxDecoder      → EnginePostboxDecoder         (added 2026-04)
 PostboxEncoder      → EnginePostboxEncoder         (added 2026-04)
 AdaptedPostboxDecoder → EngineAdaptedPostboxDecoder (added 2026-04)
+ItemCollectionId    → EngineItemCollectionId       (added 2026-04-20)
+FetchResourceSourceType → EngineFetchResourceSourceType (added 2026-04-20)
+FetchResourceError  → EngineFetchResourceError     (added 2026-04-20)
 ```
 
 For the `MediaResource` Postbox protocol, prefer the TelegramCore subtype `TelegramMediaResource` when the consumer's usage allows (note: `EngineMediaResource` is a wrapper **class**, not a typealias, so it is not interchangeable with the protocol).
@@ -448,6 +451,38 @@ Net: 3 files changed, +4 / -5 lines (ItemListAvatarAndNameItem.swift: +2 / -3, D
 
 Plan / record: (plan doc `project_postbox_wave17_plan.md` deleted post-commit per the plan's own post-commit housekeeping instructions).
 
+### Wave 18 outcome (2026-04-20)
+
+Mixed-shape wave targeting `ItemListStickerPackItem`. Originally shortlisted (post-wave-17) as "likely wave-11 shape", but plan-writing-time inspection invalidated that hypothesis — the module's public API doesn't take `postbox:`/`network:`. Actual shape combined three existing wave patterns plus a narrow typealias addition. Module becomes fully Postbox-free (source + BUILD).
+
+**Three narrow typealiases added to TelegramCore.** `submodules/TelegramCore/Sources/TelegramEngine/Utils/EnginePostboxCoding.swift` grew by 3 lines:
+
+- `EngineItemCollectionId = ItemCollectionId` — needed at public closure-param positions.
+- `EngineFetchResourceSourceType = FetchResourceSourceType` — needed at `var updatedFetchSignal` type annotation.
+- `EngineFetchResourceError = FetchResourceError` — same.
+
+Per CLAUDE.md rule 1 these narrow-utility typealiases are explicitly allowed (same shape as the existing `EngineMemoryBuffer`/`EnginePostboxDecoder`/… batch). Cheat sheet updated.
+
+**Wave-4 enum-payload migration on `StickerPackThumbnailItem`.** Public enum case `animated(MediaResource, PixelDimensions, Bool, Bool)` → `animated(EngineMediaResource, PixelDimensions, Bool, Bool)`. Equatable `==` simplified: `lhsResource.isEqual(to: rhsResource)` → `lhsResource == rhsResource` (uses `EngineMediaResource.==` which has identical semantics). Two construction sites wrapped via `EngineMediaResource(thumbnail.resource)` / `EngineMediaResource(itemFile.resource)`. Two destructure-and-forward sites unwrap via `resource._asResource()` when handing off to `chatMessageStickerPackThumbnail(resource: MediaResource)` and `AnimatedStickerResourceSource(account:, resource: MediaResource, …)`. One `resource.id` site (for `shortLivedResourceCachePathPrefix`) needs the raw `MediaResourceId`, handled by a local `let rawResource = resource._asResource()` that serves both the `.id` read and the `AnimatedStickerResourceSource` init in the same block.
+
+**Wave-3 facade swap.** `fetchedMediaResource(mediaBox: item.context.account.postbox.mediaBox, userLocation: .other, userContentType: .sticker, reference: resourceReference)` → `item.context.engine.resources.fetch(reference: resourceReference, userLocation: .other, userContentType: .sticker)`. Engine facade (`TelegramEngine.Resources.fetch`) already exists from wave 3; no new TelegramEngine API needed.
+
+**External-caller check confirmed zero source edits needed.** `StickerPackThumbnailItem` has no external consumers (UndoUI declares its own nested-private same-named enum). The 6 external `ItemListStickerPackItem(setPackIdWithRevealedOptions:)` caller sites all pass closures with inferred param types; `EngineItemCollectionId` being a typealias to `ItemCollectionId` makes the types interchangeable. The 3 module-field declarations outside the target module that name `(ItemCollectionId?, ItemCollectionId?) -> Void` explicitly (`SettingsUI/Stickers/ArchivedStickerPacksController.swift:27`, `SettingsUI/Stickers/InstalledStickerPacksController.swift:27`, and the init at L32/L42 of those same files) compile unchanged — those modules still import Postbox for their own reasons, and `EngineItemCollectionId == ItemCollectionId` so no rename is required.
+
+**BUILD dep dropped.** `//submodules/Postbox:Postbox` removed from `submodules/ItemListStickerPackItem/BUILD`.
+
+**Pre-existing `ChatMessageInteractiveMediaNode.swift` WIP still present at build time — no longer failing.** The uncommitted change introduces an `allowSticker` validation around secret-chat sticker playback (~30 lines added in the `currentReplaceAnimatedStickerNode` block). Per wave-17's note it had failed to compile; on this wave's full build (`bazel build Telegram/Telegram`, 565 actions, 258s, 0 errors) it compiled and linked without issue. Either the user fixed it between waves 17 and 18, or the bazel dependency graph simply needed a full rebuild. Either way, wave 18's build was clean end-to-end — `Telegram.ipa` target built successfully, zero errors across the entire project.
+
+**Pattern-consistency note.** Wave 18 is the third wave (after 3 and 9) where the cheapest path requires adding narrow TelegramCore-side typealiases rather than keeping `import Postbox` in the consumer. The threshold is: if the consumer needs to NAME a Postbox-defined type (not just use it via inference), and no engine-prefixed alias exists, adding a narrow typealias is preferred over `import Postbox`. The alternative of refactoring the code to avoid naming the type (e.g., reshaping `var foo: Signal<T, E>?` to infer from first assignment) is usually unwieldy when the var is conditionally-assigned; typealiases win on readability.
+
+Net: 3 files changed.
+- `submodules/TelegramCore/Sources/TelegramEngine/Utils/EnginePostboxCoding.swift`: +3 / -0.
+- `submodules/ItemListStickerPackItem/Sources/ItemListStickerPackItem.swift`: ~13 lines touched across 9 sites; net +4 / -4.
+- `submodules/ItemListStickerPackItem/BUILD`: 0 / -1.
+- `CLAUDE.md`: +3 cheat-sheet lines + this outcome paragraph.
+
+Plan / record: `memory/project_postbox_wave18_plan.md` (deleted post-commit per the plan's own housekeeping instructions).
+
 ### Modules currently free of `import Postbox` (running tally)
 
 Consumer modules that no longer import Postbox, across all waves and standalone commits:
@@ -468,6 +503,7 @@ Consumer modules that no longer import Postbox, across all waves and standalone 
 - `HorizontalPeerItem` (wave 12; applies wave-11 pattern)
 - `SelectablePeerNode` (wave 15; applies wave-11 pattern; ShareExtension-boundary stateManager fallback)
 - `ItemListAvatarAndNameInfoItem` (wave 17; applies wave-11 pattern; ShareExtension-boundary stateManager fallback)
+- `ItemListStickerPackItem` (wave 18; mixed-shape — 3 narrow TelegramCore typealiases + wave-4 enum-payload migration + wave-3 facade swap)
 - `AttachmentTextInputPanelNode` BUILD cleanup (wave 13; source was already clean from wave 6)
 - **Wave 14 BUILD-dep sweep: 98 modules' BUILDs cleaned** — same modules as the wave-6 batch; this sweep fixed their leftover `//submodules/Postbox:Postbox` BUILD deps. Candidate list in `/tmp/postbox-dep-candidates.txt` at commit time; derivable by the script in "Wave 14 outcome".
 
