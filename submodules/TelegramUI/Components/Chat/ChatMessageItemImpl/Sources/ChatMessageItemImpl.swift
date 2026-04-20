@@ -278,12 +278,13 @@ public final class ChatMessageItemImpl: ChatMessageItem, CustomStringConvertible
     }
     
     public var pinToEdgeWithInset: Bool {
-        switch self.content {
+        return false
+        /*switch self.content {
         case let .message(message, _, _, _, _):
             return !message.effectivelyIncoming(self.context.account.peerId)
         case let .group(messages):
             return !messages[0].0.effectivelyIncoming(self.context.account.peerId)
-        }
+        }*/
     }
     
     public init(presentationData: ChatPresentationData, context: AccountContext, chatLocation: ChatLocation, associatedData: ChatMessageItemAssociatedData, controllerInteraction: ChatControllerInteraction, content: ChatMessageItemContent, disableDate: Bool = false, additionalContent: ChatMessageItemAdditionalContent? = nil) {

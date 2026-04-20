@@ -1098,7 +1098,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         )
         if self.textRevealLink == nil, self.textRevealAnimationState != nil {
             self.textRevealLink = SharedDisplayLinkDriver.shared.add { [weak self] _ in
-                guard let self else {
+                guard let self, let item = self.item else {
                     return
                 }
                 guard let textRevealAnimationState = self.textRevealAnimationState else {
@@ -1112,7 +1112,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     
                     self.textNode.textNode.updateRevealCharacterCount(count: nil, animated: false)
                     
-                    if let statusNode = self.statusNode {
+                    if let statusNode = self.statusNode, !item.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
                         ContainedViewLayoutTransition.animated(duration: 0.2, curve: .easeInOut).updateAlpha(node: statusNode, alpha: 1.0)
                     }
                     
@@ -1145,17 +1145,23 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
     
     override public func animateInsertion(_ currentTimestamp: Double, duration: Double) {
         self.textNode.textNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
-        self.statusNode?.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
+        if let statusNode = self.statusNode, statusNode.alpha != 0.0 {
+            statusNode.layer.animateAlpha(from: 0.0, to: statusNode.alpha, duration: 0.2)
+        }
     }
     
     override public func animateAdded(_ currentTimestamp: Double, duration: Double) {
         self.textNode.textNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
-        self.statusNode?.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
+        if let statusNode = self.statusNode, statusNode.alpha != 0.0 {
+            statusNode.layer.animateAlpha(from: 0.0, to: statusNode.alpha, duration: 0.2)
+        }
     }
     
     override public func animateRemoved(_ currentTimestamp: Double, duration: Double) {
         self.textNode.textNode.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false)
-        self.statusNode?.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false)
+        if let statusNode = self.statusNode, statusNode.alpha != 0.0 {
+            statusNode.layer.animateAlpha(from: statusNode.alpha, to: 0.0, duration: 0.2, removeOnCompletion: false)
+        }
     }
     
     override public func tapActionAtPoint(_ point: CGPoint, gesture: TapLongTapOrDoubleTapGesture, isEstimating: Bool) -> ChatMessageBubbleContentTapAction {
