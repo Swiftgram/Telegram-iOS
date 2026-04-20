@@ -12,7 +12,6 @@ swift_library(
     deps = [
         "//submodules/Display",
         "//submodules/Components/HierarchyTrackingLayer",
-        "//submodules/Postbox",
         "//submodules/TelegramCore",
         "//submodules/TelegramUI/Components/AnimationCache",
         "//submodules/TelegramUI/Components/MultiAnimationRenderer",

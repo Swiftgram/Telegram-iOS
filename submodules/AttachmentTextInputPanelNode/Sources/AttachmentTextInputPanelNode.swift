@@ -433,7 +433,7 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
         self.animationRenderer = context.animationRenderer
 
         var hasSpoilers = true
-        if presentationInterfaceState.chatLocation.peerId?.namespace == Namespaces.Peer.SecretChat {
+        if presentationInterfaceState.chatLocation.peerId?.isSecretChat == true {
             hasSpoilers = false
         }
         self.inputMenu = TextInputMenu(hasSpoilers: hasSpoilers)
@@ -2099,7 +2099,7 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
             ]
 
             var hasSpoilers = true
-            if self.presentationInterfaceState?.chatLocation.peerId?.namespace == Namespaces.Peer.SecretChat {
+            if self.presentationInterfaceState?.chatLocation.peerId?.isSecretChat == true {
                 hasSpoilers = false
             }
 

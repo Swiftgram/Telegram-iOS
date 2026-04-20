@@ -1145,8 +1145,7 @@ public final class ShareController: ViewController {
             for info in strongSelf.switchableAccounts {
                 items.append(ActionSheetPeerItem(
                     accountPeerId: info.account.accountPeerId,
-                    postbox: info.account.stateManager.postbox,
-                    network: info.account.stateManager.network,
+                    stateManager: info.account.stateManager,
                     contentSettings: info.account.contentSettings,
                     peer: EnginePeer(info.peer),
                     title: EnginePeer(info.peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder),
