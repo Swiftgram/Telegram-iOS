@@ -452,5 +452,9 @@ public extension TelegramEngine {
             )
             |> map { EngineMediaResource.ResourceData($0) }
         }
+
+        public func shortLivedResourceCachePathPrefix(id: EngineMediaResource.Id) -> String {
+            return self.account.postbox.mediaBox.shortLivedResourceCachePathPrefix(MediaResourceId(id.stringRepresentation))
+        }
     }
 }
