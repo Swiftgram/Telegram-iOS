@@ -495,6 +495,40 @@ Net: 1 file changed, +4 / -0.
 
 Plan / record: (no plan doc this wave — single-method addition, target pre-identified in `project_postbox_refactor_next_wave.md`).
 
+### Wave 20 outcome (2026-04-21)
+
+Consumer sweep for the wave-19 `shortLivedResourceCachePathPrefix` facade. 22 call sites across 16 modules migrated atomically. Pattern (repeated identically at every site): `X.context.account.postbox.mediaBox.shortLivedResourceCachePathPrefix(Y.resource.id)` → `X.context.engine.resources.shortLivedResourceCachePathPrefix(id: EngineMediaResource.Id(Y.resource.id))`.
+
+**Modules migrated (alphabetical):**
+- `AvatarVideoNode/Sources/AvatarVideoNode.swift` (1 site)
+- `ChatSendMessageActionUI/Sources/ChatSendMessageContextScreen.swift` (1 site)
+- `DrawingUI/Sources/DrawingStickerEntityView.swift` (1 site)
+- `ItemListStickerPackItem/Sources/ItemListStickerPackItem.swift` (1 site; simplified from wave-18's `let rawResource = resource._asResource(); …shortLivedResourceCachePathPrefix(rawResource.id)` + `AnimatedStickerResourceSource(…, resource: rawResource, …)` to `…shortLivedResourceCachePathPrefix(id: resource.id)` + `AnimatedStickerResourceSource(…, resource: resource._asResource(), …)` — drops the intermediate `let rawResource`)
+- `PremiumUI/Sources/StickersCarouselComponent.swift` (2 sites)
+- `ReactionSelectionNode/Sources/ReactionContextNode.swift` (2 sites)
+- `ReactionSelectionNode/Sources/ReactionSelectionNode.swift` (6 sites — 4 unique expression templates, handled via targeted Edits against the unique argument expression at each call)
+- `SettingsUI/Sources/ThemePickerGridItem.swift` (1 site)
+- `TelegramUI/Components/Chat/ChatMessageAnimatedStickerItemNode/Sources/ChatMessageAnimatedStickerItemNode.swift` (2 sites)
+- `TelegramUI/Components/Chat/ChatMessageItemView/Sources/ChatMessageItemView.swift` (1 site)
+- `TelegramUI/Components/Chat/ChatQrCodeScreen/Sources/ChatQrCodeScreen.swift` (1 site)
+- `TelegramUI/Components/ChatThemeScreen/Sources/ChatThemeScreen.swift` (1 site)
+- `TelegramUI/Components/Gifts/GiftAnimationComponent/Sources/GiftCompositionComponent.swift` (3 sites)
+- `TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoBirthdayOverlay.swift` (2 sites)
+- `TelegramUI/Components/Settings/SettingsThemeWallpaperNode/Sources/SettingsThemeWallpaperNode.swift` (1 site)
+- `TelegramUI/Components/Settings/ThemeCarouselItem/Sources/ThemeCarouselItem.swift` (1 site)
+
+**One site intentionally skipped:** `TelegramUI/Components/MediaEditor/Sources/MediaEditorComposerEntity.swift:245`. That site uses a local `postbox: Postbox` init-parameter, not `context.account.postbox`, so the migration would require changing the init's parameter from `postbox:` to something engine-based and fanning out to its callers. Out of scope — handled by a future module-scoped wave.
+
+**No modules became Postbox-free this wave.** Each of the 16 migrated modules still has other Postbox usage (raw `Postbox` types in signatures, `fetchedMediaResource(mediaBox:)` calls, `postbox.transaction`, etc.). Consumer-side `shortLivedResourceCachePathPrefix` closure is just one of several reasons these modules import Postbox. Future wave-shape: module-scoped de-Postbox per-module inventory.
+
+**Pattern validation.** This is the most mechanical consumer sweep to date — all 22 sites followed identical shape, allowing `replace_all=true` for sites with duplicate identical call expressions (ReactionSelectionNode hit this at 3 sites for `largeListAnimation`, 2 for `stillAnimation`, 1 for `listAnimation`). First-pass build was clean (35 actions, 0 errors) — no iteration loop. Confirms the wave-19 facade shape is sound.
+
+**Build verification.** `bazel build Telegram/Telegram --keep_going` — 2042 action cache hits + 35 new actions, 0 errors, `Telegram.ipa` up-to-date.
+
+Net: 16 files changed, all edits mechanical (before → after): +22 insertions / -22 deletions at migrated sites, plus 1 deletion in ItemListStickerPackItem (wave-18 `let rawResource` line dropped). Approximate total: +22 / -23.
+
+Plan / record: (no plan doc this wave — mechanical sweep).
+
 ### Modules currently free of `import Postbox` (running tally)
 
 Consumer modules that no longer import Postbox, across all waves and standalone commits:

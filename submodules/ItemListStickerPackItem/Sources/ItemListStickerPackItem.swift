@@ -829,9 +829,8 @@ class ItemListStickerPackItemNode: ItemListRevealOptionsItemNode {
                                     strongSelf.animationNode = animationNode
                                     strongSelf.addSubnode(animationNode)
 
-                                    let rawResource = resource._asResource()
-                                    let pathPrefix = item.context.account.postbox.mediaBox.shortLivedResourceCachePathPrefix(rawResource.id)
-                                    animationNode.setup(source: AnimatedStickerResourceSource(account: item.context.account, resource: rawResource, isVideo: isVideo), width: 80, height: 80, playbackMode: .loop, mode: .direct(cachePathPrefix: pathPrefix))
+                                    let pathPrefix = item.context.engine.resources.shortLivedResourceCachePathPrefix(id: resource.id)
+                                    animationNode.setup(source: AnimatedStickerResourceSource(account: item.context.account, resource: resource._asResource(), isVideo: isVideo), width: 80, height: 80, playbackMode: .loop, mode: .direct(cachePathPrefix: pathPrefix))
                                 }
                                 animationNode.visibility = strongSelf.visibility != .none && item.playAnimatedStickers
                                 animationNode.isHidden = !item.playAnimatedStickers

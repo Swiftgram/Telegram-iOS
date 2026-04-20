@@ -2769,7 +2769,7 @@ public final class ReactionContextNode: ASDisplayNode, ASScrollViewDelegate {
             }
             
             let additionalAnimationFile = additionalAnimation._parse()
-            additionalAnimationNodeValue.setup(source: AnimatedStickerResourceSource(account: itemNode.context.account, resource: additionalAnimationFile.resource), width: Int(effectFrame.width * 2.0), height: Int(effectFrame.height * 2.0), playbackMode: .once, mode: .direct(cachePathPrefix: self.context.account.postbox.mediaBox.shortLivedResourceCachePathPrefix(additionalAnimationFile.resource.id)))
+            additionalAnimationNodeValue.setup(source: AnimatedStickerResourceSource(account: itemNode.context.account, resource: additionalAnimationFile.resource), width: Int(effectFrame.width * 2.0), height: Int(effectFrame.height * 2.0), playbackMode: .once, mode: .direct(cachePathPrefix: self.context.engine.resources.shortLivedResourceCachePathPrefix(id: EngineMediaResource.Id(additionalAnimationFile.resource.id))))
             additionalAnimationNodeValue.frame = effectFrame
             additionalAnimationNodeValue.updateLayout(size: effectFrame.size)
             self.addSubnode(additionalAnimationNodeValue)
@@ -3921,7 +3921,7 @@ public final class StandaloneReactionAnimation: ASDisplayNode {
                 }
             }
             
-            additionalAnimationNodeValue.setup(source: AnimatedStickerResourceSource(account: context.account, resource: additionalAnimation.resource), width: Int(effectFrame.width * 2.0), height: Int(effectFrame.height * 2.0), playbackMode: .once, mode: .direct(cachePathPrefix: context.account.postbox.mediaBox.shortLivedResourceCachePathPrefix(additionalAnimation.resource.id)))
+            additionalAnimationNodeValue.setup(source: AnimatedStickerResourceSource(account: context.account, resource: additionalAnimation.resource), width: Int(effectFrame.width * 2.0), height: Int(effectFrame.height * 2.0), playbackMode: .once, mode: .direct(cachePathPrefix: context.engine.resources.shortLivedResourceCachePathPrefix(id: EngineMediaResource.Id(additionalAnimation.resource.id))))
             additionalAnimationNodeValue.frame = effectFrame
             additionalAnimationNodeValue.updateLayout(size: effectFrame.size)
             self.addSubnode(additionalAnimationNodeValue)
