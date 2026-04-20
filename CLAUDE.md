@@ -605,6 +605,29 @@ Net: 17 consumer files + 1 TelegramCore file + CLAUDE.md. TelegramEngineResource
 
 Plan / record: (no plan doc this wave — mechanical sweep following wave-21 recipe).
 
+### Wave 23 outcome (2026-04-21)
+
+Smallest wave so far: `cancelInteractiveResourceFetch` facade addition + consumer sweep. Same shape as waves 21/22.
+
+**Facade added at `TelegramCore/Sources/TelegramEngine/Resources/TelegramEngineResources.swift:468`.** Body: `self.account.postbox.mediaBox.cancelInteractiveResourceFetch(resourceId: MediaResourceId(id.stringRepresentation))`. Wraps Postbox's `MediaBox.cancelInteractiveResourceFetch(resourceId: MediaResourceId)` overload (the `_ resource: MediaResource` overload delegates to the id version anyway).
+
+**5 of 7 Shape-A consumer sites migrated:**
+- `PeerAvatarGalleryUI/Sources/PeerAvatarImageGalleryItem.swift` (1)
+- `GalleryUI/Sources/Items/ChatAnimationGalleryItem.swift` (1)
+- `GalleryUI/Sources/Items/ChatImageGalleryItem.swift` (1)
+- `GalleryUI/Sources/Items/ChatDocumentGalleryItem.swift` (1)
+- `GalleryUI/Sources/Items/ChatExternalFileGalleryItem.swift` (1)
+
+**2 sites intentionally skipped:** `ChatMessageInteractiveMediaNode.swift:1474, 1709` — this file has pre-existing uncommitted WIP (the `allowSticker` validation around secret-chat sticker playback, carried forward since before wave 17). Editing the 2 sites would mix my wave-23 changes with the user's WIP in a single git diff, which `git add` can't cleanly separate. Deferred until the WIP lands or a narrow follow-up wave intentionally includes both. Note: a future wave that aims to drop those 2 sites should first either (a) wait for the WIP to be committed or (b) use `git stash --keep-index` + targeted edits + selective staging to split the diff cleanly.
+
+**Pattern note on WIP interference.** This is the first wave to hit this failure mode — previous waves' mechanical sweeps happened not to touch `ChatMessageInteractiveMediaNode.swift`. Future sweeps should grep their candidate set against `git status`'s modified-files list before starting, and either (a) defer sites in WIP files, (b) wait for the WIP to commit, or (c) stage selectively via `git add --patch`-equivalent paths.
+
+**Build validation.** `bazel build Telegram/Telegram --keep_going` — clean first-pass build (558 processes, 1567 action cache hits + 19 local + 532 worker, 236s, 0 errors, `Telegram.ipa` up-to-date).
+
+Net: 5 consumer files + 1 TelegramCore file + CLAUDE.md. TelegramEngineResources.swift: +4 / -0. Consumer files: +5 / -5.
+
+Plan / record: (no plan doc this wave — mechanical sweep).
+
 ### Modules currently free of `import Postbox` (running tally)
 
 Consumer modules that no longer import Postbox, across all waves and standalone commits:

@@ -341,7 +341,7 @@ final class ChatAnimationGalleryItemNode: ZoomableContentGalleryItemNode {
             if let resource = resource {
                 switch status {
                     case .Fetching:
-                        self.context.account.postbox.mediaBox.cancelInteractiveResourceFetch(resource.resource)
+                        self.context.engine.resources.cancelInteractiveResourceFetch(id: EngineMediaResource.Id(resource.resource.id))
                     case .Remote:
                     self.fetchDisposable.set(fetchedMediaResource(mediaBox: self.context.account.postbox.mediaBox, userLocation: (self.message?.id.peerId).flatMap(MediaResourceUserLocation.peer) ?? .other, userContentType: .file, reference: resource, statsCategory: statsCategory ?? .generic).start())
                     default:

@@ -599,7 +599,7 @@ final class PeerAvatarImageGalleryItemNode: ZoomableContentGalleryItemNode {
         if let entry = self.entry, let largestSize = largestImageRepresentation(entry.representations.map({ $0.representation })), let status = self.status {
             switch status {
                 case .Fetching:
-                    self.context.account.postbox.mediaBox.cancelInteractiveResourceFetch(largestSize.resource)
+                    self.context.engine.resources.cancelInteractiveResourceFetch(id: EngineMediaResource.Id(largestSize.resource.id))
                 case .Remote:
                     let representations: [ImageRepresentationWithReference]
                     switch entry {
