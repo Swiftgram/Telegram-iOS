@@ -2076,7 +2076,7 @@ public func chatMessagePhotoStatus(context: AccountContext, messageId: MessageId
         if let range = representationFetchRangeForDisplayAtSize(representation: largestRepresentation, dimension: displayAtSize) {
             return combineLatest(
                 context.fetchManager.fetchStatus(category: .image, location: .chat(messageId.peerId), locationKey: .messageId(messageId), resource: largestRepresentation.resource),
-                context.account.postbox.mediaBox.resourceRangesStatus(largestRepresentation.resource)
+                context.engine.resources.resourceRangesStatus(resource: EngineMediaResource(largestRepresentation.resource))
             )
             |> map { status, rangeStatus -> MediaResourceStatus in
                 if rangeStatus.isSuperset(of: RangeSet<Int64>(range)) {

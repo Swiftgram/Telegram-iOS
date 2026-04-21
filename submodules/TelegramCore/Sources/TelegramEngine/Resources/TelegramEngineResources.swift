@@ -2,6 +2,7 @@ import Foundation
 import SwiftSignalKit
 import Postbox
 import TelegramApi
+import RangeSet
 
 public enum MediaResourceUserContentType: UInt8, Equatable {
     case other = 0
@@ -483,6 +484,14 @@ public extension TelegramEngine {
 
         public func copyResourceData(from: EngineMediaResource.Id, to: EngineMediaResource.Id, synchronous: Bool = false) {
             self.account.postbox.mediaBox.copyResourceData(from: MediaResourceId(from.stringRepresentation), to: MediaResourceId(to.stringRepresentation), synchronous: synchronous)
+        }
+
+        public func resourceRangesStatus(resource: EngineMediaResource) -> Signal<RangeSet<Int64>, NoError> {
+            return self.account.postbox.mediaBox.resourceRangesStatus(resource._asResource())
+        }
+
+        public func removeCachedResources(ids: [EngineMediaResource.Id], force: Bool = false, notify: Bool = false) -> Signal<Float, NoError> {
+            return self.account.postbox.mediaBox.removeCachedResources(ids.map { MediaResourceId($0.stringRepresentation) }, force: force, notify: notify)
         }
     }
 }
