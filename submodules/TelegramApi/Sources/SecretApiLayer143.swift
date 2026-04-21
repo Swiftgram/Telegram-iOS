@@ -231,38 +231,38 @@ public struct SecretApi143 {
             var _4: String?
             _4 = parseString(reader)
             var _5: SecretApi143.DecryptedMessageMedia?
-            if Int(_1!) & Int(1 << 9) != 0 {
+            if Int(_1 ?? 0) & Int(1 << 9) != 0 {
                 if let signature = reader.readInt32() {
                     _5 = SecretApi143.parse(reader, signature: signature) as? SecretApi143.DecryptedMessageMedia
                 }
             }
             var _6: [SecretApi143.MessageEntity]?
-            if Int(_1!) & Int(1 << 7) != 0 {
+            if Int(_1 ?? 0) & Int(1 << 7) != 0 {
                 if let _ = reader.readInt32() {
                     _6 = SecretApi143.parseVector(reader, elementSignature: 0, elementType: SecretApi143.MessageEntity.self)
                 }
             }
             var _7: String?
-            if Int(_1!) & Int(1 << 11) != 0 {
+            if Int(_1 ?? 0) & Int(1 << 11) != 0 {
                 _7 = parseString(reader)
             }
             var _8: Int64?
-            if Int(_1!) & Int(1 << 3) != 0 {
+            if Int(_1 ?? 0) & Int(1 << 3) != 0 {
                 _8 = reader.readInt64()
             }
             var _9: Int64?
-            if Int(_1!) & Int(1 << 17) != 0 {
+            if Int(_1 ?? 0) & Int(1 << 17) != 0 {
                 _9 = reader.readInt64()
             }
             let _c1 = _1 != nil
             let _c2 = _2 != nil
             let _c3 = _3 != nil
             let _c4 = _4 != nil
-            let _c5 = (Int(_1!) & Int(1 << 9) == 0) || _5 != nil
-            let _c6 = (Int(_1!) & Int(1 << 7) == 0) || _6 != nil
-            let _c7 = (Int(_1!) & Int(1 << 11) == 0) || _7 != nil
-            let _c8 = (Int(_1!) & Int(1 << 3) == 0) || _8 != nil
-            let _c9 = (Int(_1!) & Int(1 << 17) == 0) || _9 != nil
+            let _c5 = (Int(_1 ?? 0) & Int(1 << 9) == 0) || _5 != nil
+            let _c6 = (Int(_1 ?? 0) & Int(1 << 7) == 0) || _6 != nil
+            let _c7 = (Int(_1 ?? 0) & Int(1 << 11) == 0) || _7 != nil
+            let _c8 = (Int(_1 ?? 0) & Int(1 << 3) == 0) || _8 != nil
+            let _c9 = (Int(_1 ?? 0) & Int(1 << 17) == 0) || _9 != nil
             if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 && _c7 && _c8 && _c9 {
                 return SecretApi143.DecryptedMessage.decryptedMessage(flags: _1!, randomId: _2!, ttl: _3!, message: _4!, media: _5, entities: _6, viaBotName: _7, replyToRandomId: _8, groupedId: _9)
             }
@@ -1048,22 +1048,22 @@ public struct SecretApi143 {
             var _2: Int32?
             _2 = reader.readInt32()
             var _3: String?
-            if Int(_1!) & Int(1 << 0) != 0 {
+            if Int(_1 ?? 0) & Int(1 << 0) != 0 {
                 _3 = parseString(reader)
             }
             var _4: String?
-            if Int(_1!) & Int(1 << 1) != 0 {
+            if Int(_1 ?? 0) & Int(1 << 1) != 0 {
                 _4 = parseString(reader)
             }
             var _5: Buffer?
-            if Int(_1!) & Int(1 << 2) != 0 {
+            if Int(_1 ?? 0) & Int(1 << 2) != 0 {
                 _5 = parseBytes(reader)
             }
             let _c1 = _1 != nil
             let _c2 = _2 != nil
-            let _c3 = (Int(_1!) & Int(1 << 0) == 0) || _3 != nil
-            let _c4 = (Int(_1!) & Int(1 << 1) == 0) || _4 != nil
-            let _c5 = (Int(_1!) & Int(1 << 2) == 0) || _5 != nil
+            let _c3 = (Int(_1 ?? 0) & Int(1 << 0) == 0) || _3 != nil
+            let _c4 = (Int(_1 ?? 0) & Int(1 << 1) == 0) || _4 != nil
+            let _c5 = (Int(_1 ?? 0) & Int(1 << 2) == 0) || _5 != nil
             if _c1 && _c2 && _c3 && _c4 && _c5 {
                 return SecretApi143.DocumentAttribute.documentAttributeAudio(flags: _1!, duration: _2!, title: _3, performer: _4, waveform: _5)
             }

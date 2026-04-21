@@ -223,33 +223,33 @@ public struct SecretApi45 {
             var _4: String?
             _4 = parseString(reader)
             var _5: SecretApi45.DecryptedMessageMedia?
-            if Int(_1!) & Int(1 << 9) != 0 {
+            if Int(_1 ?? 0) & Int(1 << 9) != 0 {
                 if let signature = reader.readInt32() {
                     _5 = SecretApi45.parse(reader, signature: signature) as? SecretApi45.DecryptedMessageMedia
                 }
             }
             var _6: [SecretApi45.MessageEntity]?
-            if Int(_1!) & Int(1 << 7) != 0 {
+            if Int(_1 ?? 0) & Int(1 << 7) != 0 {
                 if let _ = reader.readInt32() {
                     _6 = SecretApi45.parseVector(reader, elementSignature: 0, elementType: SecretApi45.MessageEntity.self)
                 }
             }
             var _7: String?
-            if Int(_1!) & Int(1 << 11) != 0 {
+            if Int(_1 ?? 0) & Int(1 << 11) != 0 {
                 _7 = parseString(reader)
             }
             var _8: Int64?
-            if Int(_1!) & Int(1 << 3) != 0 {
+            if Int(_1 ?? 0) & Int(1 << 3) != 0 {
                 _8 = reader.readInt64()
             }
             let _c1 = _1 != nil
             let _c2 = _2 != nil
             let _c3 = _3 != nil
             let _c4 = _4 != nil
-            let _c5 = (Int(_1!) & Int(1 << 9) == 0) || _5 != nil
-            let _c6 = (Int(_1!) & Int(1 << 7) == 0) || _6 != nil
-            let _c7 = (Int(_1!) & Int(1 << 11) == 0) || _7 != nil
-            let _c8 = (Int(_1!) & Int(1 << 3) == 0) || _8 != nil
+            let _c5 = (Int(_1 ?? 0) & Int(1 << 9) == 0) || _5 != nil
+            let _c6 = (Int(_1 ?? 0) & Int(1 << 7) == 0) || _6 != nil
+            let _c7 = (Int(_1 ?? 0) & Int(1 << 11) == 0) || _7 != nil
+            let _c8 = (Int(_1 ?? 0) & Int(1 << 3) == 0) || _8 != nil
             if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 && _c7 && _c8 {
                 return SecretApi45.DecryptedMessage.decryptedMessage(flags: _1!, randomId: _2!, ttl: _3!, message: _4!, media: _5, entities: _6, viaBotName: _7, replyToRandomId: _8)
             }
