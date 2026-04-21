@@ -2094,6 +2094,32 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
                                 }
                                 
                                 if currentReplaceAnimatedStickerNode, let updatedAnimatedStickerFile = updateAnimatedStickerFile {
+                                    var allowSticker = false
+                                    if message.id.peerId.namespace == Namespaces.Peer.SecretChat {
+                                        if updatedAnimatedStickerFile.fileId.namespace == Namespaces.Media.CloudFile {
+                                            var isValidated = false
+                                            for attribute in updatedAnimatedStickerFile.attributes {
+                                                if case .hintIsValidated = attribute {
+                                                    isValidated = true
+                                                    break
+                                                }
+                                            }
+                                            
+                                            inner: for attribute in updatedAnimatedStickerFile.attributes {
+                                                if case let .Sticker(_, packReference, _) = attribute {
+                                                    if case .name = packReference {
+                                                        allowSticker = true
+                                                    } else if isValidated {
+                                                        allowSticker = true
+                                                    }
+                                                    break inner
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        allowSticker = true
+                                    }
+                                    
                                     let animatedStickerNode = DefaultAnimatedStickerNodeImpl()
                                     animatedStickerNode.isUserInteractionEnabled = false
                                     animatedStickerNode.started = {
@@ -2105,7 +2131,9 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
                                     strongSelf.animatedStickerNode = animatedStickerNode
                                     let dimensions = updatedAnimatedStickerFile.dimensions ?? PixelDimensions(width: 512, height: 512)
                                     let fittedDimensions = dimensions.cgSize.aspectFitted(CGSize(width: 384.0, height: 384.0))
-                                    animatedStickerNode.setup(source: AnimatedStickerResourceSource(account: context.account, resource: updatedAnimatedStickerFile.resource, isVideo: updatedAnimatedStickerFile.isVideo), width: Int(fittedDimensions.width), height: Int(fittedDimensions.height), mode: .direct(cachePathPrefix: nil))
+                                    if allowSticker {
+                                        animatedStickerNode.setup(source: AnimatedStickerResourceSource(account: context.account, resource: updatedAnimatedStickerFile.resource, isVideo: updatedAnimatedStickerFile.isVideo), width: Int(fittedDimensions.width), height: Int(fittedDimensions.height), mode: .direct(cachePathPrefix: nil))
+                                    }
                                     strongSelf.pinchContainerNode.contentNode.insertSubnode(animatedStickerNode, aboveSubnode: strongSelf.imageNode)
                                     animatedStickerNode.visibility = strongSelf.visibility
                                 }
