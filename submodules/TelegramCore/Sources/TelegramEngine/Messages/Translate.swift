@@ -800,6 +800,7 @@ func _internal_composeAIMessage(account: Account, text: TextWithEntities, mode: 
 
 public enum CreateAITextStyleError {
     case generic
+    case premiumRequired
 }
 
 func _internal_createAITextStyle(account: Account, displayAuthor: Bool, emojiFileId: Int64, title: String, prompt: String) -> Signal<TelegramComposeAIMessageMode.CloudStyle, CreateAITextStyleError> {
@@ -813,7 +814,10 @@ func _internal_createAITextStyle(account: Account, displayAuthor: Bool, emojiFil
         title: title,
         prompt: prompt
     ))
-    |> mapError { _ -> CreateAITextStyleError in
+    |> mapError { error -> CreateAITextStyleError in
+        if error.errorDescription == "TONES_SAVED_TOO_MANY" {
+            return .premiumRequired
+        }
         return .generic
     }
     |> mapToSignal { result -> Signal<TelegramComposeAIMessageMode.CloudStyle, CreateAITextStyleError> in
@@ -865,6 +869,42 @@ func _internal_editAITextStyle(account: Account, id: Int64, accessHash: Int64, d
     }
 }
 
+public struct TelegramAIComposeToneExample: Equatable {
+    public let from: TextWithEntities
+    public let to: TextWithEntities
+    public init(from: TextWithEntities, to: TextWithEntities) {
+        self.from = from
+        self.to = to
+    }
+}
+
+private func _internal_mapToneExample(_ apiExample: Api.AiComposeToneExample) -> TelegramAIComposeToneExample {
+    switch apiExample {
+    case let .aiComposeToneExample(data):
+        return TelegramAIComposeToneExample(from: TextWithEntities(apiValue: data.from), to: TextWithEntities(apiValue: data.to))
+    }
+}
+
+func _internal_getAIComposeToneExample(network: Network, tone: TelegramComposeAIMessageMode.CloudStyle.Reference, num: Int32) -> Signal<TelegramAIComposeToneExample?, NoError> {
+    return network.request(Api.functions.aicompose.getToneExample(tone: tone.apiInputStyle, num: num))
+    |> map { apiExample -> TelegramAIComposeToneExample? in
+        return _internal_mapToneExample(apiExample)
+    }
+    |> `catch` { _ -> Signal<TelegramAIComposeToneExample?, NoError> in
+        return .single(nil)
+    }
+}
+
+func _internal_getAIComposeToneExample(network: Network, slug: String, num: Int32) -> Signal<TelegramAIComposeToneExample?, NoError> {
+    return network.request(Api.functions.aicompose.getToneExample(tone: .inputAiComposeToneSlug(Api.InputAiComposeTone.Cons_inputAiComposeToneSlug(slug: slug)), num: num))
+    |> map { apiExample -> TelegramAIComposeToneExample? in
+        return _internal_mapToneExample(apiExample)
+    }
+    |> `catch` { _ -> Signal<TelegramAIComposeToneExample?, NoError> in
+        return .single(nil)
+    }
+}
+
 public enum DeleteAITextStyleError {
     case generic
 }
@@ -875,6 +915,23 @@ func _internal_deleteAITextStyle(account: Account, id: Int64, accessHash: Int64)
         return .generic
     }
     |> mapToSignal { result -> Signal<Never, DeleteAITextStyleError> in
+        return account.postbox.transaction { transaction -> Void in
+            let styles = _internal_cachedCloudAITextStyles(transaction: transaction)
+            var items = styles?.items ?? []
+            items.removeAll(where: { $0.id == .style(.custom(id)) })
+            _internal_setCachedCloudAITextStyles(transaction: transaction, styles: CachedCloudAITextStyles(items: items, hash: 0))
+        }
+        |> castError(DeleteAITextStyleError.self)
+        |> ignoreValues
+    }
+}
+
+func _internal_unsaveAITextStyle(account: Account, id: Int64, accessHash: Int64) -> Signal<Never, DeleteAITextStyleError> {
+    return account.network.request(Api.functions.aicompose.saveTone(tone: .inputAiComposeToneID(Api.InputAiComposeTone.Cons_inputAiComposeToneID(id: id, accessHash: accessHash)), unsave: .boolTrue))
+    |> mapError { _ -> DeleteAITextStyleError in
+        return .generic
+    }
+    |> mapToSignal { _ -> Signal<Never, DeleteAITextStyleError> in
         return account.postbox.transaction { transaction -> Void in
             let styles = _internal_cachedCloudAITextStyles(transaction: transaction)
             var items = styles?.items ?? []

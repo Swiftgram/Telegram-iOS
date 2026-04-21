@@ -677,6 +677,18 @@ public extension TelegramEngine {
             return _internal_deleteAITextStyle(account: self.account, id: id, accessHash: accessHash)
         }
 
+        public func unsaveAITextStyle(id: Int64, accessHash: Int64) -> Signal<Never, DeleteAITextStyleError> {
+            return _internal_unsaveAITextStyle(account: self.account, id: id, accessHash: accessHash)
+        }
+
+        public func getAIComposeToneExample(slug: String, num: Int32) -> Signal<TelegramAIComposeToneExample?, NoError> {
+            return _internal_getAIComposeToneExample(network: self.account.network, slug: slug, num: num)
+        }
+
+        public func getAIComposeToneExample(reference: TelegramComposeAIMessageMode.CloudStyle.Reference, num: Int32) -> Signal<TelegramAIComposeToneExample?, NoError> {
+            return _internal_getAIComposeToneExample(network: self.account.network, tone: reference, num: num)
+        }
+
         public func translate(texts: [(String, [MessageTextEntity])], toLang: String, tone: TranslationTone = .neutral) -> Signal<[(String, [MessageTextEntity])], TranslationError> {
             return _internal_translateTexts(network: self.account.network, texts: texts, toLang: toLang, tone: tone)
         }
