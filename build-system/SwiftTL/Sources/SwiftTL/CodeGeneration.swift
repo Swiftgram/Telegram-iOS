@@ -462,7 +462,7 @@ enum CodeGenerator {
                         guard let fieldIndex = constructor.arguments.filter({ if case .boolTrue = $0.type { return false } else { return true } }).firstIndex(where: { $0.name == condition.fieldName }) else {
                             throw CodeGenerationError(text: "Condition field \(condition.fieldName) not found")
                         }
-                        writer.line("if Int(_\(fieldIndex + 1)!) & Int(1 << \(condition.bitIndex)) != 0 {")
+                        writer.line("if Int(_\(fieldIndex + 1) ?? 0) & Int(1 << \(condition.bitIndex)) != 0 {")
                         writer.indent()
                         try generateFieldParsing(apiPrefix: structName, writer: &writer, typeMap: typeMap, argument: argument, argumentAccessor: "_\(argumentIndex + 1)")
                         writer.dedent()
@@ -488,7 +488,7 @@ enum CodeGenerator {
                         guard let fieldIndex = constructor.arguments.filter({ if case .boolTrue = $0.type { return false } else { return true } }).firstIndex(where: { $0.name == condition.fieldName }) else {
                             throw CodeGenerationError(text: "Condition field \(condition.fieldName) not found")
                         }
-                        writer.line("let _c\(checkIndex + 1) = (Int(_\(fieldIndex + 1)!) & Int(1 << \(condition.bitIndex)) == 0) || _\(checkIndex + 1) != nil")
+                        writer.line("let _c\(checkIndex + 1) = (Int(_\(fieldIndex + 1) ?? 0) & Int(1 << \(condition.bitIndex)) == 0) || _\(checkIndex + 1) != nil")
                     } else {
                         writer.line("let _c\(checkIndex + 1) = _\(checkIndex + 1) != nil")
                     }
@@ -1000,7 +1000,7 @@ enum CodeGenerator {
                                 throw CodeGenerationError(text: "Condition field \(condition.fieldName) not found")
                             }
 
-                            writer.line("if Int(_\(fieldIndex + 1)!) & Int(1 << \(condition.bitIndex)) != 0 {")
+                            writer.line("if Int(_\(fieldIndex + 1) ?? 0) & Int(1 << \(condition.bitIndex)) != 0 {")
                             writer.indent()
                             try generateFieldParsing(apiPrefix: apiPrefix, writer: &writer, typeMap: typeMap, argument: argument, argumentAccessor: "_\(argumentIndex + 1)")
                             writer.dedent()
@@ -1036,7 +1036,7 @@ enum CodeGenerator {
                                 throw CodeGenerationError(text: "Condition field \(condition.fieldName) not found")
                             }
 
-                            writer.line("let _c\(checkIndex + 1) = (Int(_\(fieldIndex + 1)!) & Int(1 << \(condition.bitIndex)) == 0) || _\(checkIndex + 1) != nil")
+                            writer.line("let _c\(checkIndex + 1) = (Int(_\(fieldIndex + 1) ?? 0) & Int(1 << \(condition.bitIndex)) == 0) || _\(checkIndex + 1) != nil")
                         } else {
                             writer.line("let _c\(checkIndex + 1) = _\(checkIndex + 1) != nil")
                         }
