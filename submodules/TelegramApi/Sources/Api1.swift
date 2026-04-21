@@ -206,9 +206,9 @@ public extension Api {
 public extension Api {
     enum AiComposeToneExample: TypeConstructorDescription {
         public class Cons_aiComposeToneExample: TypeConstructorDescription {
-            public var from: String
-            public var to: String
-            public init(from: String, to: String) {
+            public var from: Api.TextWithEntities
+            public var to: Api.TextWithEntities
+            public init(from: Api.TextWithEntities, to: Api.TextWithEntities) {
                 self.from = from
                 self.to = to
             }
@@ -222,10 +222,10 @@ public extension Api {
             switch self {
             case .aiComposeToneExample(let _data):
                 if boxed {
-                    buffer.appendInt32(-1461961831)
+                    buffer.appendInt32(-237623060)
                 }
-                serializeString(_data.from, buffer: buffer, boxed: false)
-                serializeString(_data.to, buffer: buffer, boxed: false)
+                _data.from.serialize(buffer, true)
+                _data.to.serialize(buffer, true)
                 break
             }
         }
@@ -238,10 +238,14 @@ public extension Api {
         }
 
         public static func parse_aiComposeToneExample(_ reader: BufferReader) -> AiComposeToneExample? {
-            var _1: String?
-            _1 = parseString(reader)
-            var _2: String?
-            _2 = parseString(reader)
+            var _1: Api.TextWithEntities?
+            if let signature = reader.readInt32() {
+                _1 = Api.parse(reader, signature: signature) as? Api.TextWithEntities
+            }
+            var _2: Api.TextWithEntities?
+            if let signature = reader.readInt32() {
+                _2 = Api.parse(reader, signature: signature) as? Api.TextWithEntities
+            }
             let _c1 = _1 != nil
             let _c2 = _2 != nil
             if _c1 && _c2 {
