@@ -84,7 +84,7 @@ final class StoryItemImageView: UIView {
                 dimensions = representation.dimensions.cgSize
                 
                 if isMediaUpdated {
-                    if attemptSynchronous, let path = context.account.postbox.mediaBox.completedResourcePath(id: representation.resource.id, pathExtension: nil) {
+                    if attemptSynchronous, let path = context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(representation.resource.id), pathExtension: nil) {
                         if #available(iOS 15.0, *) {
                             if let image = UIImage(contentsOfFile: path)?.preparingForDisplay() {
                                 self.updateImage(image: image, isCaptureProtected: isCaptureProtected)

@@ -990,7 +990,7 @@ final class ComposePollScreenComponent: Component {
                         switch result {
                         case let .media(resultMedia):
                             if let resultImage = resultMedia.media as? TelegramMediaImage, let resultLargest = largestImageRepresentation(resultImage.representations) {
-                                component.context.account.postbox.mediaBox.moveResourceData(from: largest.resource.id, to: resultLargest.resource.id, synchronous: true)
+                                component.context.engine.resources.moveResourceData(from: EngineMediaResource.Id(largest.resource.id), to: EngineMediaResource.Id(resultLargest.resource.id), synchronous: true)
                             }
                             
                             media.media = resultMedia
@@ -1029,7 +1029,7 @@ final class ComposePollScreenComponent: Component {
                         switch result {
                         case let .media(resultMedia):
                             if let resultFile = resultMedia.media as? TelegramMediaFile {
-                                component.context.account.postbox.mediaBox.moveResourceData(from: file.resource.id, to: resultFile.resource.id, synchronous: true)
+                                component.context.engine.resources.moveResourceData(from: EngineMediaResource.Id(file.resource.id), to: EngineMediaResource.Id(resultFile.resource.id), synchronous: true)
                             }
                             media.media = resultMedia
                             media.progress = nil

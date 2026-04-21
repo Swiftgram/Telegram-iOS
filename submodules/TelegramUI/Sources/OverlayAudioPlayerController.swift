@@ -211,7 +211,7 @@ final class OverlayAudioPlayerControllerImpl: ViewController, OverlayAudioPlayer
                                         switch result {
                                         case let .media(resultMedia):
                                             if let resultFile = resultMedia.media as? TelegramMediaFile {
-                                                self.context.account.postbox.mediaBox.moveResourceData(from: file.resource.id, to: resultFile.resource.id, synchronous: true)
+                                                self.context.engine.resources.moveResourceData(from: EngineMediaResource.Id(file.resource.id), to: EngineMediaResource.Id(resultFile.resource.id), synchronous: true)
                                                 self.controllerNode.addToSavedMusic(file: .standalone(media: file))
                                             }
                                         }

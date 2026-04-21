@@ -1955,7 +1955,7 @@ public class VideoMessageCameraScreen: ViewController {
                 }
                 if !hasAdjustments, let liveUploadData, let data = try? Data(contentsOf: URL(fileURLWithPath: video.videoPath)) {
                     resource = LocalFileMediaResource(fileId: liveUploadData.id)
-                    self.context.account.postbox.mediaBox.storeResourceData(resource.id, data: data, synchronous: true)
+                    self.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data, synchronous: true)
                 } else {
                     resource = LocalFileVideoMediaResource(randomId: Int64.random(in: Int64.min ... Int64.max), paths: videoPaths, adjustments: resourceAdjustments)
                 }
@@ -1965,7 +1965,7 @@ public class VideoMessageCameraScreen: ViewController {
                 let thumbnailResource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
                 let thumbnailSize = video.dimensions.cgSize.aspectFitted(CGSize(width: 320.0, height: 320.0))
                 if let thumbnailData = scaleImageToPixelSize(image: thumbnailImage, size: thumbnailSize)?.jpegData(compressionQuality: 0.4) {
-                    self.context.account.postbox.mediaBox.storeResourceData(thumbnailResource.id, data: thumbnailData)
+                    self.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(thumbnailResource.id), data: thumbnailData)
                     previewRepresentations.append(TelegramMediaImageRepresentation(dimensions: PixelDimensions(thumbnailSize), resource: thumbnailResource, progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false))
                 }
                 

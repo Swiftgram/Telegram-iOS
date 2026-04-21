@@ -120,8 +120,7 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
             for (peerAccountContext, peer, badgeCount) in settings.accountsAndPeers {
                 let mappedContext = ItemListPeerItem.Context.custom(ItemListPeerItem.Context.Custom(
                     accountPeerId: peerAccountContext.account.peerId,
-                    postbox: peerAccountContext.account.postbox,
-                    network: peerAccountContext.account.network,
+                    engine: peerAccountContext.engine,
                     animationCache: context.animationCache,
                     animationRenderer: context.animationRenderer,
                     isPremiumDisabled: false,

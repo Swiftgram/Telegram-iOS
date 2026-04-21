@@ -2091,7 +2091,7 @@ public func waitUntilStoryMediaPreloaded(context: AccountContext, peerId: Engine
             }
             
             statusSignals.append(
-                context.account.postbox.mediaBox.resourceRangesStatus(file.resource)
+                context.engine.resources.resourceRangesStatus(resource: EngineMediaResource(file.resource))
                 |> filter { ranges in
                     if let fetchRange {
                         return ranges.isSuperset(of: RangeSet(fetchRange.0))

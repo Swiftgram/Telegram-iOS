@@ -2,6 +2,7 @@ import Foundation
 import SwiftSignalKit
 import Postbox
 import TelegramApi
+import RangeSet
 
 public enum MediaResourceUserContentType: UInt8, Equatable {
     case other = 0
@@ -451,6 +452,46 @@ public extension TelegramEngine {
                 option: .complete(waitUntilFetchStatus: waitUntilFetchStatus)
             )
             |> map { EngineMediaResource.ResourceData($0) }
+        }
+
+        public func shortLivedResourceCachePathPrefix(id: EngineMediaResource.Id) -> String {
+            return self.account.postbox.mediaBox.shortLivedResourceCachePathPrefix(MediaResourceId(id.stringRepresentation))
+        }
+
+        public func completedResourcePath(id: EngineMediaResource.Id, pathExtension: String? = nil) -> String? {
+            return self.account.postbox.mediaBox.completedResourcePath(id: MediaResourceId(id.stringRepresentation), pathExtension: pathExtension)
+        }
+
+        public func storeResourceData(id: EngineMediaResource.Id, data: Data, synchronous: Bool = false) {
+            self.account.postbox.mediaBox.storeResourceData(MediaResourceId(id.stringRepresentation), data: data, synchronous: synchronous)
+        }
+
+        public func cancelInteractiveResourceFetch(id: EngineMediaResource.Id) {
+            self.account.postbox.mediaBox.cancelInteractiveResourceFetch(resourceId: MediaResourceId(id.stringRepresentation))
+        }
+
+        public func moveResourceData(id: EngineMediaResource.Id, toTempPath: String) {
+            self.account.postbox.mediaBox.moveResourceData(MediaResourceId(id.stringRepresentation), toTempPath: toTempPath)
+        }
+
+        public func moveResourceData(from: EngineMediaResource.Id, to: EngineMediaResource.Id, synchronous: Bool = false) {
+            self.account.postbox.mediaBox.moveResourceData(from: MediaResourceId(from.stringRepresentation), to: MediaResourceId(to.stringRepresentation), synchronous: synchronous)
+        }
+
+        public func copyResourceData(id: EngineMediaResource.Id, fromTempPath: String) {
+            self.account.postbox.mediaBox.copyResourceData(MediaResourceId(id.stringRepresentation), fromTempPath: fromTempPath)
+        }
+
+        public func copyResourceData(from: EngineMediaResource.Id, to: EngineMediaResource.Id, synchronous: Bool = false) {
+            self.account.postbox.mediaBox.copyResourceData(from: MediaResourceId(from.stringRepresentation), to: MediaResourceId(to.stringRepresentation), synchronous: synchronous)
+        }
+
+        public func resourceRangesStatus(resource: EngineMediaResource) -> Signal<RangeSet<Int64>, NoError> {
+            return self.account.postbox.mediaBox.resourceRangesStatus(resource._asResource())
+        }
+
+        public func removeCachedResources(ids: [EngineMediaResource.Id], force: Bool = false, notify: Bool = false) -> Signal<Float, NoError> {
+            return self.account.postbox.mediaBox.removeCachedResources(ids.map { MediaResourceId($0.stringRepresentation) }, force: force, notify: notify)
         }
     }
 }

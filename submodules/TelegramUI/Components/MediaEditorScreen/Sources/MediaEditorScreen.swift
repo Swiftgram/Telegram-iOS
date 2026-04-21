@@ -3750,7 +3750,7 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
                         return
                     }
                     var messageFile: TelegramMediaFile?
-                    if let maybeFile = messages.first?.media.first(where: { $0 is TelegramMediaFile }) as? TelegramMediaFile, maybeFile.isVideo, let _ = self.context.account.postbox.mediaBox.completedResourcePath(maybeFile.resource, pathExtension: nil) {
+                    if let maybeFile = messages.first?.media.first(where: { $0 is TelegramMediaFile }) as? TelegramMediaFile, maybeFile.isVideo, let _ = self.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(maybeFile.resource.id), pathExtension: nil) {
                         messageFile = maybeFile
                     }
                     if "".isEmpty {
@@ -7732,10 +7732,10 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
         let imagesReady = ValuePromise<Bool>(false, ignoreRepeated: true)
         Queue.concurrentDefaultQueue().async {
             if !isVideo, let data = try? WebP.convert(toWebP: image, quality: 90.0) {
-                self.context.account.postbox.mediaBox.storeResourceData(isVideo ? thumbnailResource.id : resource.id, data: data, synchronous: true)
+                self.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(isVideo ? thumbnailResource.id : resource.id), data: data, synchronous: true)
             }
             if let thumbnailImage = generateScaledImage(image: image, size: CGSize(width: 320.0, height: 320.0), opaque: false, scale: 1.0), let data = try? WebP.convert(toWebP: thumbnailImage, quality: 90.0) {
-                self.context.account.postbox.mediaBox.storeResourceData(thumbnailResource.id, data: data, synchronous: true)
+                self.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(thumbnailResource.id), data: data, synchronous: true)
             }
             imagesReady.set(true)
         }
@@ -8444,7 +8444,7 @@ public final class MediaEditorScreenImpl: ViewController, MediaEditorScreen, UID
                             self.videoExport = nil
                             if let toStickerResource {
                                 if let data = try? Data(contentsOf: URL(fileURLWithPath: outputPath)) {
-                                    self.context.account.postbox.mediaBox.storeResourceData(toStickerResource.id, data: data, synchronous: true)
+                                    self.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(toStickerResource.id), data: data, synchronous: true)
                                 }
                             } else {
                                 saveToPhotos(outputPath, true)

@@ -2672,7 +2672,7 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
             if self.experimentalSnapScrollToItem {
                 self.scrolledToItem = (originalScrollToItem.index, originalScrollToItem.position)
             }
-            if self.items[originalScrollToItem.index].pinToEdgeWithInset {
+            if originalScrollToItem.index < self.items.count && self.items[originalScrollToItem.index].pinToEdgeWithInset {
                 self.experimentalSnapScrollToPinnedItem = true
             }
         } else if let scrolledToItem = self.scrolledToItem, self.experimentalSnapScrollToItem {

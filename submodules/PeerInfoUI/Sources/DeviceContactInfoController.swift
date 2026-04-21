@@ -410,7 +410,7 @@ private enum DeviceContactInfoEntry: ItemListNodeEntry {
                 if let context = arguments.context as? ShareControllerAppAccountContext {
                     itemContext = .accountContext(context.context)
                 } else {
-                    itemContext = .other(accountPeerId: arguments.context.accountPeerId, postbox: arguments.context.stateManager.postbox, network: arguments.context.stateManager.network)
+                    itemContext = .other(accountPeerId: arguments.context.accountPeerId, stateManager: arguments.context.stateManager)
                 }
                 return ItemListAvatarAndNameInfoItem(itemContext: itemContext, presentationData: presentationData, dateTimeFormat: dateTimeFormat, mode: .contact, peer: peer, presence: nil, label: jobSummary, memberCount: nil, state: state, sectionId: self.section, style: arguments.isPlain ? .plain : .blocks(withTopInset: false, withExtendedBottomInset: true), editingNameUpdated: { editingName in
                     arguments.updateEditingName(editingName)

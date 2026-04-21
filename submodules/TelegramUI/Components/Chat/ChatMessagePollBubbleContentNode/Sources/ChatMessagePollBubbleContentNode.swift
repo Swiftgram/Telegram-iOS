@@ -2283,7 +2283,7 @@ public class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
                 case let .result(result):
                     if case let .media(resultMedia) = result {
                         if let resultImage = resultMedia.media as? TelegramMediaImage, let resultLargest = largestImageRepresentation(resultImage.representations) {
-                            item.context.account.postbox.mediaBox.moveResourceData(from: largest.resource.id, to: resultLargest.resource.id, synchronous: true)
+                            item.context.engine.resources.moveResourceData(from: EngineMediaResource.Id(largest.resource.id), to: EngineMediaResource.Id(resultLargest.resource.id), synchronous: true)
                         }
                         media.media = resultMedia
                         media.progress = nil
@@ -2316,7 +2316,7 @@ public class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
                 case let .result(result):
                     if case let .media(resultMedia) = result {
                         if let resultFile = resultMedia.media as? TelegramMediaFile {
-                            item.context.account.postbox.mediaBox.moveResourceData(from: file.resource.id, to: resultFile.resource.id, synchronous: true)
+                            item.context.engine.resources.moveResourceData(from: EngineMediaResource.Id(file.resource.id), to: EngineMediaResource.Id(resultFile.resource.id), synchronous: true)
                         }
                         media.media = resultMedia
                         media.progress = nil

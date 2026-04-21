@@ -1673,7 +1673,7 @@ final class BrowserWebContent: UIView, BrowserContent, WKNavigationDelegate, WKU
                         
                         if let favicon, let imageData = favicon.pngData() {
                             let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
-                            self.context.account.postbox.mediaBox.storeResourceData(resource.id, data: imageData)
+                            self.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: imageData)
                             image = TelegramMediaImage(
                                 imageId: MediaId(namespace: Namespaces.Media.LocalImage, id: Int64.random(in: Int64.min ... Int64.max)),
                                 representations: [

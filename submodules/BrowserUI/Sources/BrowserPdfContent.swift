@@ -82,7 +82,7 @@ final class BrowserPdfContent: UIView, BrowserContent, UIScrollViewDelegate, PDF
         
         var title = "file"
         var url = ""
-        if let path = self.context.account.postbox.mediaBox.completedResourcePath(file.media.resource) {
+        if let path = self.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(file.media.resource.id)) {
             var updatedPath = path
             if let fileName = file.media.fileName {
                 let tempFile = TempBox.shared.file(path: path, fileName: fileName)

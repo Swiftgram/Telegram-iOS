@@ -377,7 +377,7 @@ public final class ChatMessageAttachedContentNode: ASDisplayNode {
                             if case .full = contentMediaAutomaticDownload {
                                 willDownloadOrLocal = true
                             } else {
-                                willDownloadOrLocal = context.account.postbox.mediaBox.completedResourcePath(file.resource) != nil
+                                willDownloadOrLocal = context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(file.resource.id)) != nil
                             }
                             if willDownloadOrLocal {
                                 contentMediaAutomaticPlayback = true

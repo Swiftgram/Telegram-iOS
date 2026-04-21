@@ -229,7 +229,7 @@ public final class AvatarVideoNode: ASDisplayNode {
         if isVisible, let animationNode = self.animationNode, let file = self.animationFile {
             if !self.didSetupAnimation {
                 self.didSetupAnimation = true
-                let pathPrefix = self.context.account.postbox.mediaBox.shortLivedResourceCachePathPrefix(file.resource.id)
+                let pathPrefix = self.context.engine.resources.shortLivedResourceCachePathPrefix(id: EngineMediaResource.Id(file.resource.id))
                 let dimensions = file.dimensions ?? PixelDimensions(width: 512, height: 512)
                 let fittedDimensions = dimensions.cgSize.aspectFitted(CGSize(width: 384.0, height: 384.0))
                 let source = AnimatedStickerResourceSource(account: self.context.account, resource: file.resource, isVideo: file.isVideoSticker || file.mimeType == "video/webm")

@@ -268,7 +268,7 @@ private final class ThemeGridThemeItemIconNode : ASDisplayNode {
                 }
                 self.animatedStickerNode = animatedStickerNode
                 self.emojiContainerNode.insertSubnode(animatedStickerNode, belowSubnode: self.placeholderNode)
-                let pathPrefix = item.context.account.postbox.mediaBox.shortLivedResourceCachePathPrefix(file.resource.id)
+                let pathPrefix = item.context.engine.resources.shortLivedResourceCachePathPrefix(id: EngineMediaResource.Id(file.resource.id))
                 animatedStickerNode.setup(source: AnimatedStickerResourceSource(account: item.context.account, resource: file.resource), width: 128, height: 128, playbackMode: .still(.start), mode: .direct(cachePathPrefix: pathPrefix))
                 
                 animatedStickerNode.anchorPoint = CGPoint(x: 0.5, y: 1.0)

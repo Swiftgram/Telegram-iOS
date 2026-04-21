@@ -386,7 +386,7 @@ class ChatDocumentGalleryItemNode: ZoomableContentGalleryItemNode, WKNavigationD
         if let (context, fileReference) = self.contextAndFile, let status = self.status {
             switch status {
                 case .Fetching:
-                    context.account.postbox.mediaBox.cancelInteractiveResourceFetch(fileReference.media.resource)
+                    context.engine.resources.cancelInteractiveResourceFetch(id: EngineMediaResource.Id(fileReference.media.resource.id))
                 case .Remote:
                     self.fetchDisposable.set(fetchedMediaResource(mediaBox: context.account.postbox.mediaBox, userLocation: (self.message?.id.peerId).flatMap(MediaResourceUserLocation.peer) ?? .other, userContentType: .file, reference: fileReference.resourceReference(fileReference.media.resource)).start())
                 default:

@@ -565,7 +565,7 @@ public class WallpaperGalleryController: ViewController {
                                 if let resource = resource {
                                     let representation = CachedBlurredWallpaperRepresentation()
                                     var data: Data?
-                                    if let path = strongSelf.context.account.postbox.mediaBox.completedResourcePath(resource), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
+                                    if let path = strongSelf.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(resource.id)), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                                         data = maybeData
                                     } else if let path = strongSelf.context.sharedContext.accountManager.mediaBox.completedResourcePath(resource), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                                         data = maybeData
@@ -654,7 +654,7 @@ public class WallpaperGalleryController: ViewController {
                                         if let resource = resource {
                                             let representation = CachedBlurredWallpaperRepresentation()
                                             var data: Data?
-                                            if let path = strongSelf.context.account.postbox.mediaBox.completedResourcePath(resource), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
+                                            if let path = strongSelf.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(resource.id)), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                                                 data = maybeData
                                             } else if let path = strongSelf.context.sharedContext.accountManager.mediaBox.completedResourcePath(resource), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                                                 data = maybeData
@@ -674,7 +674,7 @@ public class WallpaperGalleryController: ViewController {
                                         if wallpaper.isPattern, !file.settings.colors.isEmpty, let _ = file.settings.intensity {
                                             var data: Data?
                                             var thumbnailData: Data?
-                                            if let path = strongSelf.context.account.postbox.mediaBox.completedResourcePath(resource), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
+                                            if let path = strongSelf.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(resource.id)), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                                                 data = maybeData
                                             } else if let path = strongSelf.context.sharedContext.accountManager.mediaBox.completedResourcePath(resource), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                                                 data = maybeData
@@ -683,7 +683,7 @@ public class WallpaperGalleryController: ViewController {
                                             let thumbnailResource = file.file.previewRepresentations.first?.resource
 
                                             if let resource = thumbnailResource {
-                                                if let path = strongSelf.context.account.postbox.mediaBox.completedResourcePath(resource), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
+                                                if let path = strongSelf.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(resource.id)), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                                                     thumbnailData = maybeData
                                                 } else if let path = strongSelf.context.sharedContext.accountManager.mediaBox.completedResourcePath(resource), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                                                     thumbnailData = maybeData
@@ -697,7 +697,7 @@ public class WallpaperGalleryController: ViewController {
                                                 }
                                                 completion(wallpaper)
                                             }
-                                        } else if let path = strongSelf.context.account.postbox.mediaBox.completedResourcePath(file.file.resource), let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
+                                        } else if let path = strongSelf.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(file.file.resource.id)), let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                                                 strongSelf.context.sharedContext.accountManager.mediaBox.storeResourceData(file.file.resource.id, data: data)
                                                 completion(wallpaper)
                                         }
