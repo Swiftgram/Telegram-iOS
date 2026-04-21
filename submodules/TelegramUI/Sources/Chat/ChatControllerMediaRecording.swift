@@ -747,7 +747,7 @@ extension ChatControllerImpl {
                 let randomId = Int64.random(in: Int64.min ... Int64.max)
                 let tempPath = NSTemporaryDirectory() + "\(Int64.random(in: 0 ..< .max)).ogg"
                 resource = LocalFileAudioMediaResource(randomId: randomId, path: tempPath, trimRange: trimRange)
-                self.context.account.postbox.mediaBox.moveResourceData(audio.resource.id, toTempPath: tempPath)
+                self.context.engine.resources.moveResourceData(id: EngineMediaResource.Id(audio.resource.id), toTempPath: tempPath)
                 waveform = waveform.subwaveform(from: trimRange.lowerBound / Double(audio.duration), to: trimRange.upperBound / Double(audio.duration))
                 finalDuration = Int(trimRange.upperBound - trimRange.lowerBound)
             } else {

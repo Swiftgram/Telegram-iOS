@@ -628,6 +628,28 @@ Net: 5 consumer files + 1 TelegramCore file + CLAUDE.md. TelegramEngineResources
 
 Plan / record: (no plan doc this wave — mechanical sweep).
 
+### Wave 24 outcome (2026-04-21)
+
+`moveResourceData` facade additions + consumer sweep. Same shape as waves 21-23.
+
+**Two facades added at `TelegramCore/Sources/TelegramEngine/Resources/TelegramEngineResources.swift`:**
+- `moveResourceData(id: EngineMediaResource.Id, toTempPath: String)` wraps the `(MediaResourceId, toTempPath:)` overload.
+- `moveResourceData(from: EngineMediaResource.Id, to: EngineMediaResource.Id, synchronous: Bool = false)` wraps the `(from: MediaResourceId, to: MediaResourceId, synchronous:)` overload.
+
+Postbox's third overload `(MediaResourceId, fromTempPath:)` has no consumer-side usage; no facade added this wave (YAGNI).
+
+**6 Shape-A consumer sites migrated (5 files):**
+- `TelegramUI/Sources/Chat/ChatControllerMediaRecording.swift` (1, `toTempPath:`)
+- `TelegramUI/Sources/OverlayAudioPlayerController.swift` (1, `from:to:synchronous:`)
+- `TelegramUI/Components/ComposePollScreen/Sources/ComposePollScreen.swift` (2)
+- `TelegramUI/Components/Chat/ChatMessagePollBubbleContentNode/Sources/ChatMessagePollBubbleContentNode.swift` (2)
+
+**Build validation.** `bazel build Telegram/Telegram --keep_going` — clean first-pass build (563 processes, 272s, 0 errors).
+
+Net: 5 consumer files + 1 TelegramCore file + CLAUDE.md. TelegramEngineResources.swift: +8 / -0. Consumer files: +6 / -6.
+
+Plan / record: (no plan doc this wave — mechanical sweep).
+
 ### Modules currently free of `import Postbox` (running tally)
 
 Consumer modules that no longer import Postbox, across all waves and standalone commits:

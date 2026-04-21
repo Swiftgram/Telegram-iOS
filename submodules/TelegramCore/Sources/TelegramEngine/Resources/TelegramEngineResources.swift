@@ -468,5 +468,13 @@ public extension TelegramEngine {
         public func cancelInteractiveResourceFetch(id: EngineMediaResource.Id) {
             self.account.postbox.mediaBox.cancelInteractiveResourceFetch(resourceId: MediaResourceId(id.stringRepresentation))
         }
+
+        public func moveResourceData(id: EngineMediaResource.Id, toTempPath: String) {
+            self.account.postbox.mediaBox.moveResourceData(MediaResourceId(id.stringRepresentation), toTempPath: toTempPath)
+        }
+
+        public func moveResourceData(from: EngineMediaResource.Id, to: EngineMediaResource.Id, synchronous: Bool = false) {
+            self.account.postbox.mediaBox.moveResourceData(from: MediaResourceId(from.stringRepresentation), to: MediaResourceId(to.stringRepresentation), synchronous: synchronous)
+        }
     }
 }
