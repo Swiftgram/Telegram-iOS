@@ -119,6 +119,24 @@ grep -rhoE "\b($(cat /tmp/postbox-public-types.txt | tr '\n' '|' | sed 's/|$//')
 
 Any hit in a public-surface position (field type, init param type, enum payload type, generic arg) that isn't already a documented typealias is a blocker. "Engine"-prefixed types can still be Postbox-defined — don't trust naming conventions, grep for the defining module. If the module hits only `Postbox` itself (i.e., literal `Postbox`/`Network` pair), it's a clean wave-11 candidate. Otherwise, decide per leak: (a) move the type to TelegramCore if it's a namespace-only class (wave 16a pattern — prototype: `EngineMessageHistoryThread`), (b) accept that the module can't become Postbox-free and ship a partial `engine:`/`stateManager:` collapse that keeps `import Postbox` (wave 16b pattern — `PeerStoryStats` is too baked into Postbox views to move cleanly), (c) abandon the candidate.
 
+**Wave-shape G: facade addition + consumer sweep in one commit.** Validated at scale across waves 19-26. Six consecutive sessions migrated ~95 consumer sites and added ~15 mediaBox facades, all with clean first-pass builds (exception: wave 26 needed a second pass to add `import RangeSet`). Shape recipe:
+
+1. **Target:** a `MediaBox` (or similar Postbox type) method where Postbox's signature uses clean leaf types (`MediaResourceId`, `Data`, `String`, `Bool`) and the return type is either non-Postbox or has an existing `Engine*` wrapper.
+2. **Pre-flight inventory:** grep `context\.account\.postbox\.mediaBox\.<methodName>` over `submodules/` (excluding TelegramCore/Postbox/TelegramApi). Classify each hit:
+   - **Shape A**: `context.account.postbox.mediaBox.X(...)` → migratable.
+   - **Shape B**: `context.account.postbox.mediaBox.X(id: ...)` (different overload) → migratable with identical pattern.
+   - **Shape C**: `account.postbox.mediaBox.X(...)` where `account: Account` is a local (not `AccountContext`) → skip this wave (needs per-module rework).
+   - **Shape D**: `self.postbox.mediaBox.X(...)` where `postbox: Postbox` is a stored field → skip this wave.
+   - Plus: check for `accountManager.mediaBox.X(...)` which is Account-manager-scoped, a different migration path entirely. Never migrate via `TelegramEngine.Resources.*`.
+3. **Facade design rules:**
+   - Signatures take `EngineMediaResource.Id` (`MediaResourceId` aliased at call site via `EngineMediaResource.Id(x.id)`) or `EngineMediaResource` (wraps `resource` when the Postbox overload takes a resource with members accessed via `.id`).
+   - Parameters with `Bool` defaults (`synchronous: Bool = false`) preserve defaults on the facade.
+   - Return types: prefer `Void`, `String`, `String?`, `Signal<T, NoError>` where `T` is a non-Postbox type or an `Engine*` wrapper. Where Postbox return types are wrapped (e.g., `Signal<MediaResourceData, NoError>` → `Signal<EngineMediaResource.ResourceData, NoError>`), confirm the `Engine*` wrapper exists and decide whether consumer-side field-access rewrites are acceptable for the wave.
+4. **WIP interference check:** before starting, `git status --short | grep -v "^??"` to list modified files. If any Shape-A site is in a WIP file, either skip those sites (document the skip in the outcome) or wait for the WIP to commit. Wave 23 hit this in `ChatMessageInteractiveMediaNode.swift`.
+5. **Name collision check:** if a facade return type names a Swift stdlib type that has availability restrictions (e.g., `RangeSet` — iOS 18+), verify the third-party module import is present in `TelegramEngineResources.swift`. Wave 26 needed `import RangeSet`.
+6. **Replace_all usage:** for files with duplicate identical call text, `replace_all=true` on the exact call expression (without leading whitespace) batches the migration. When leading whitespace varies across identical-call sites within a file, the tool still matches if the unchanged prefix (`context.account.postbox.mediaBox.X(...)`) is unique enough — but verify via post-edit grep.
+7. **Cheapness:** ~5-50 sites per wave, single atomic commit, expected first-pass-clean build. If post-migration grep for `context\.account\.postbox\.mediaBox\.<methodName>` returns empty (exclude Shape-C/D) and build is green, commit.
+
 ### Wave 1 outcome (2026-04-16)
 
 4 modules done: `ChatInterfaceState`, `ChatSendMessageActionUI`, `ContactListUI`, `DrawingUI`.
@@ -718,11 +736,51 @@ Consumer modules that no longer import Postbox, across all waves and standalone 
 - `AttachmentTextInputPanelNode` BUILD cleanup (wave 13; source was already clean from wave 6)
 - **Wave 14 BUILD-dep sweep: 98 modules' BUILDs cleaned** — same modules as the wave-6 batch; this sweep fixed their leftover `//submodules/Postbox:Postbox` BUILD deps. Candidate list in `/tmp/postbox-dep-candidates.txt` at commit time; derivable by the script in "Wave 14 outcome".
 
+### TelegramEngine.Resources facade inventory (as of wave 26)
+
+All mediaBox methods with clean signatures (no Postbox-protocol leaks, no complex return-type migrations) have been migrated to `TelegramEngine.Resources`. Quick reference for consumers — all of these live in `submodules/TelegramCore/Sources/TelegramEngine/Resources/TelegramEngineResources.swift`:
+
+| Facade | Wave | Wraps |
+|---|---|---|
+| `fetch(reference:userLocation:userContentType:)` | 3 | `fetchedMediaResource` |
+| `status(resource:)` | 3 | `MediaBox.resourceStatus` |
+| `data(resource:, pathExtension:, waitUntilFetchStatus:)` | 3 | `MediaBox.resourceData` (resource-based) |
+| `data(id:, attemptSynchronously:)` | 3 | `MediaBox.resourceData` (id-based, defaults to `.complete(waitUntilFetchStatus: false)`) |
+| `custom(id:, fetch:, cacheTimeout:, attemptSynchronously:)` | pre-wave-21 | `MediaBox.customResourceData` |
+| `httpData(url:, preserveExactUrl:)` | pre-wave-21 | `fetchHttpResource` |
+| `shortLivedResourceCachePathPrefix(id:)` | 19 | `MediaBox.shortLivedResourceCachePathPrefix` |
+| `completedResourcePath(id:, pathExtension:)` | 21 | `MediaBox.completedResourcePath(id:, pathExtension:)` |
+| `storeResourceData(id:, data:, synchronous:)` | 22 | `MediaBox.storeResourceData(_ id:, data:, synchronous:)` |
+| `cancelInteractiveResourceFetch(id:)` | 23 | `MediaBox.cancelInteractiveResourceFetch(resourceId:)` |
+| `moveResourceData(id:, toTempPath:)` | 24 | `MediaBox.moveResourceData(_ id:, toTempPath:)` |
+| `moveResourceData(from:, to:, synchronous:)` | 24 | `MediaBox.moveResourceData(from:, to:, synchronous:)` |
+| `copyResourceData(id:, fromTempPath:)` | 25 | `MediaBox.copyResourceData(_ id:, fromTempPath:)` |
+| `copyResourceData(from:, to:, synchronous:)` | 25 | `MediaBox.copyResourceData(from:, to:, synchronous:)` |
+| `resourceRangesStatus(resource:)` | 26 | `MediaBox.resourceRangesStatus(_ resource:)` |
+| `removeCachedResources(ids:, force:, notify:)` | 26 | `MediaBox.removeCachedResources(_ ids:, force:, notify:)` |
+
+**Facade-shape convention:** all of these take `EngineMediaResource.Id` or `EngineMediaResource` (never raw `MediaResourceId`/`MediaResource`). Return types either don't leak Postbox (`Void`, `String`, `String?`, `Signal<RangeSet<Int64>, NoError>`, `Signal<Float, NoError>`) or wrap via TelegramCore type (`Signal<EngineMediaResource.ResourceData, NoError>`).
+
+**Swift-stdlib-vs-third-party-module name collisions** (learned in wave 26): `RangeSet<Int64>` collides with Swift stdlib's `RangeSet` (iOS 18+ only). Fix: `import RangeSet` at the file top of any TelegramCore file that names `RangeSet` in a signature. `TelegramCore/BUILD` already depends on `//submodules/Utils/RangeSet:RangeSet`. Future facade additions in TelegramEngineResources.swift should re-check this if new signature types are introduced.
+
 ### Known future-wave candidates
 
-Surfaced by the wave-2 final review:
+**Permanently blocked** (surfaced by the wave-2 final review):
+- 4 classes conforming to `TelegramMediaResource` that override `isEqual(to: MediaResource)`: `ICloudFileResource`, `InstantPageExternalMediaResource`, `VideoLibraryMediaResource`, `YoutubeEmbedStoryboardMediaResource`. Either move the class into `TelegramCore` or keep `import Postbox` in its module.
 
-- Classes conforming to `TelegramMediaResource` (need `isEqual(to: MediaResource)` override) remain **permanently blocked** from consumer-side migration: `ICloudFileResource`, `InstantPageExternalMediaResource`, `VideoLibraryMediaResource`, `YoutubeEmbedStoryboardMediaResource`. Either move the class into `TelegramCore` or keep `import Postbox` in its module.
+**Higher-friction mediaBox methods** (not yet migrated, as of wave 26):
+- `cachedResourceRepresentation`, `cachedRepresentationCompletePath`, `storeCachedResourceRepresentation` — ~9 sites total. All take `CachedMediaResourceRepresentation` (Postbox protocol) as a parameter, so any facade either leaks the protocol or requires moving the protocol (plus every concrete conformer like `CachedPreparedSvgRepresentation`, `CachedVideoFirstFrameRepresentation`, `CachedScaledImageRepresentation`) into TelegramCore. Also: `cachedResourceRepresentation` returns `Signal<MediaResourceData, NoError>` which consumers currently access via `.path`/`.size`/`.complete` — facade would return `Signal<EngineMediaResource.ResourceData, NoError>` (fields become `.path`/`.availableSize`/`.isComplete`), each consumer call site needs per-site field-access rewrite.
+- `resourceData` (raw) consumer sweep — ~29 sites. Existing facades at lines 291 and 443 return `EngineMediaResource.ResourceData` not `MediaResourceData`. Same field-access-rewrite cost per site as above.
+- `resourceStatus` consumer sweep — ~26 sites. Facade at line 436 returns `EngineMediaResource.FetchStatus` not raw `MediaResourceStatus`. Consumers pattern-match on cases like `.Local`, `.Remote`, `.Fetching`, `.Paused` — engine wrapper has the same case names (confirm per site), so pattern migrations are usually 1:1 but need inspection.
+- `storageBox.totalSize()` / `storageBox.reset()` / `cacheStorageBox.totalSize()` — 6 sites. Wrapping `storageBox`/`cacheStorageBox` would require exposing a narrow `EngineResourceStorageBox` class; probably its own small wave.
+
+**Non-mediaBox, established pattern (wave 9 pattern):**
+- `preferencesView` consumer sweep — ~36 sites. Pattern: `postbox.combinedView(keys: [.preferences(keys: Set([<key>]))]) + PreferencesView` → `engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: <key>))`. Each site needs analysis to confirm what's subscribed and how values are extracted.
+- `loadedPeerWithId` — ~59 sites. Engine pattern: `engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id:))`. Many sites inside `transaction` blocks can't use the Signal pattern and need different handling.
+
+**Standalone Postbox-class-move opportunities** (wave-16a pattern): audit `submodules/TelegramCore/Sources/` for `public extension <ClassName>` where `<ClassName>` is a Postbox-defined outer class with no semantic content. `EngineMessageHistoryThread` was the prototype (wave 16a).
+
+**Unused-import sweep re-run** (wave-6 pattern): after every 2-3 facade-migration waves, run the source-level `import Postbox` sweep methodology. After waves 21-26 added 15+ facades covering ~95 consumer sites, a fresh sweep could peel off modules whose last Postbox coupling was one of the migrated methods. Script in "Wave 14 outcome" above identifies candidates; run it, speculatively drop, iterate build.
 
 (The seven `TelegramEngine.*` facade leaks surfaced by the 2026-04-20 post-wave-6 scouting pass — `downloadMessage`, `topPeerActiveLiveLocationMessages`, `getSynchronizeAutosaveItemOperations`, `updatedRemotePeer`, `renderStorageUsageStatsMessages`, and three `clearStorage` overloads — landed in wave 7; see "Wave 7 outcome" above.)
 
