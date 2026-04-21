@@ -650,6 +650,25 @@ Net: 5 consumer files + 1 TelegramCore file + CLAUDE.md. TelegramEngineResources
 
 Plan / record: (no plan doc this wave — mechanical sweep).
 
+### Wave 25 outcome (2026-04-21)
+
+`copyResourceData` facade additions + consumer sweep. Same shape as waves 21-24.
+
+**Two facades added:** `copyResourceData(id: EngineMediaResource.Id, fromTempPath: String)` and `copyResourceData(from: EngineMediaResource.Id, to: EngineMediaResource.Id, synchronous: Bool = false)`.
+
+**4 Shape-A consumer sites migrated (3 files):**
+- `PeerAvatarGalleryUI/Sources/AvatarGalleryController.swift` (2, `from:to:synchronous:`)
+- `ImportStickerPackUI/Sources/ImportStickerPackControllerNode.swift` (1, `from:to:` — simplified from `localResource._asResource().id` to `localResource.id` since operands are `EngineMediaResource`)
+- `TelegramUI/Sources/Chat/ChatControllerPaste.swift` (1, `id:fromTempPath:`)
+
+**Minor simplification lesson.** When a consumer already has an `EngineMediaResource`-typed local (e.g., from a wave-18-migrated callee), prefer `localResource.id` over `EngineMediaResource.Id(localResource._asResource().id)` — the two are semantically equivalent since `EngineMediaResource.id` is defined as `Id(self.resource.id)`. This halves the verbosity at the call site and removes a redundant unwrap-and-rewrap.
+
+**Build validation.** Clean first-pass build (563 processes, 242s, 0 errors).
+
+Net: 3 consumer files + 1 TelegramCore file + CLAUDE.md. TelegramEngineResources.swift: +8 / -0.
+
+Plan / record: (no plan doc this wave — mechanical sweep).
+
 ### Modules currently free of `import Postbox` (running tally)
 
 Consumer modules that no longer import Postbox, across all waves and standalone commits:

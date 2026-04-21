@@ -623,7 +623,7 @@ final class ImportStickerPackControllerNode: ViewControllerTracingNode, ASScroll
             }
             if let resource = self.uploadedStickerResources[item.stickerItem.uuid] {
                 if let localResource = item.stickerItem.resource {
-                    self.context.account.postbox.mediaBox.copyResourceData(from: localResource._asResource().id, to: resource._asResource().id)
+                    self.context.engine.resources.copyResourceData(from: localResource.id, to: resource.id)
                 }
                 stickers.append(ImportSticker(resource: .standalone(resource: resource._asResource()), emojis: item.stickerItem.emojis, dimensions: dimensions, duration: nil, mimeType: item.stickerItem.mimeType, keywords: item.stickerItem.keywords))
             } else if let resource = item.stickerItem.resource {

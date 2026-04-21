@@ -476,5 +476,13 @@ public extension TelegramEngine {
         public func moveResourceData(from: EngineMediaResource.Id, to: EngineMediaResource.Id, synchronous: Bool = false) {
             self.account.postbox.mediaBox.moveResourceData(from: MediaResourceId(from.stringRepresentation), to: MediaResourceId(to.stringRepresentation), synchronous: synchronous)
         }
+
+        public func copyResourceData(id: EngineMediaResource.Id, fromTempPath: String) {
+            self.account.postbox.mediaBox.copyResourceData(MediaResourceId(id.stringRepresentation), fromTempPath: fromTempPath)
+        }
+
+        public func copyResourceData(from: EngineMediaResource.Id, to: EngineMediaResource.Id, synchronous: Bool = false) {
+            self.account.postbox.mediaBox.copyResourceData(from: MediaResourceId(from.stringRepresentation), to: MediaResourceId(to.stringRepresentation), synchronous: synchronous)
+        }
     }
 }

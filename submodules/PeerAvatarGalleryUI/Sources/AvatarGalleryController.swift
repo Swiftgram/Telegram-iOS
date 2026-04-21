@@ -821,12 +821,12 @@ public class AvatarGalleryController: ViewController, StandalonePresentableContr
                                 
                                 for (lhs, rhs) in zip(firstEntry.representations, updatedEntry.representations) {
                                     if lhs.representation.dimensions == rhs.representation.dimensions {
-                                        strongSelf.context.account.postbox.mediaBox.copyResourceData(from: lhs.representation.resource.id, to: rhs.representation.resource.id, synchronous: true)
+                                        strongSelf.context.engine.resources.copyResourceData(from: EngineMediaResource.Id(lhs.representation.resource.id), to: EngineMediaResource.Id(rhs.representation.resource.id), synchronous: true)
                                     }
                                 }
                                 for (lhs, rhs) in zip(firstEntry.videoRepresentations, updatedEntry.videoRepresentations) {
                                     if lhs.representation.dimensions == rhs.representation.dimensions {
-                                        strongSelf.context.account.postbox.mediaBox.copyResourceData(from: lhs.representation.resource.id, to: rhs.representation.resource.id, synchronous: true)
+                                        strongSelf.context.engine.resources.copyResourceData(from: EngineMediaResource.Id(lhs.representation.resource.id), to: EngineMediaResource.Id(rhs.representation.resource.id), synchronous: true)
                                     }
                                 }
                                 
