@@ -27,26 +27,15 @@ if CommandLine.arguments.count < 3 {
 
 let schemeFilePath = CommandLine.arguments[1]
 let outputDirectoryPath = CommandLine.arguments[2]
+var apiPrefix = "Api"
 
-var stubFunctions = false
-var printConstructorsRange: (start: Int, end: Int)? = nil
-for arg in CommandLine.arguments {
-    if arg == "--stub-functions" {
-        stubFunctions = true
-    }
-    if arg.hasPrefix("--print-constructors=") {
-        let value = String(arg.dropFirst("--print-constructors=".count))
-        let parts = value.split(separator: "-")
-        if parts.count == 2, let start = Int(parts[0]), let end = Int(parts[1]) {
-            if start > end {
-                print("Error: Invalid range for --print-constructors: start (\(start)) must be <= end (\(end))")
-                exit(1)
-            }
-            printConstructorsRange = (start, end)
-        } else {
-            print("Error: Invalid format for --print-constructors. Expected: --print-constructors=N-M (e.g., --print-constructors=0-10)")
-            exit(1)
-        }
+for arg in CommandLine.arguments[3...] {
+    if arg.hasPrefix("--api-prefix=") {
+        let value = String(arg.dropFirst("--api-prefix=".count))
+        apiPrefix = value
+    } else {
+        print("Error: Unknown argument: \(arg)")
+        exit(1)
     }
 }
 
@@ -66,27 +55,6 @@ do {
     var typeOrder: [(types: [(typeName: QualifiedName, constructorNames: [String])], functions: [QualifiedName])] = []
     
     let sortedTypes = resolvedTypes.sorted(by: { $0.name < $1.name })
-
-    if let range = printConstructorsRange {
-        print("--- CONSTRUCTORS ---")
-        for (index, type) in sortedTypes.enumerated() {
-            if index >= range.start && index < range.end {
-                for constructor in type.constructors.values.sorted(by: { $0.name < $1.name }) {
-                    let storedArguments = constructor.arguments.filter {
-                        if case .boolTrue = $0.type { return false }
-                        return true
-                    }
-                    if !storedArguments.isEmpty {
-                        let fieldNames = storedArguments.map { $0.name.camelCased }
-                        print("\(constructor.name.value):\(fieldNames.joined(separator: ","))")
-                    }
-                }
-            }
-        }
-        print("--- END CONSTRUCTORS ---")
-        print("Total types: \(sortedTypes.count)")
-        exit(0)
-    }
 
     for type in sortedTypes {
         for constructor in type.constructors.values.sorted(by: { $0.name < $1.name }) {
@@ -118,7 +86,7 @@ do {
     
     try FileManager.default.createDirectory(at: URL(fileURLWithPath: outputDirectoryPath), withIntermediateDirectories: true, attributes: nil)
     
-    let generatedFiles = try CodeGenerator.generate(types: resolvedTypes, functions: resolvedFunctions, constructorOrder: constructorOrder, typeOrder: typeOrder, stubFunctions: stubFunctions)
+    let generatedFiles = try CodeGenerator.generate(apiPrefix: apiPrefix, types: resolvedTypes, functions: resolvedFunctions, constructorOrder: constructorOrder, typeOrder: typeOrder)
     
     for (name, fileData) in generatedFiles {
         let filePath = URL(fileURLWithPath: outputDirectoryPath).appendingPathComponent(name).path

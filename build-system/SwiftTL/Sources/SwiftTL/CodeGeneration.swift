@@ -87,7 +87,7 @@ private struct CodeWriter {
     }
 }*/
 
-private func typeReferenceRepresentation(_ type: Resolver.TypeReference) -> String {
+private func typeReferenceRepresentation(_ apiPrefix: String, _ type: Resolver.TypeReference) -> String {
     switch type {
     case .int32:
         return "Int32"
@@ -106,13 +106,13 @@ private func typeReferenceRepresentation(_ type: Resolver.TypeReference) -> Stri
     case .boolTrue:
         return "bool"
     case let .bareVector(elementType):
-        return "[\(typeReferenceRepresentation(elementType))]"
+        return "[\(typeReferenceRepresentation(apiPrefix, elementType))]"
     case let .boxedVector(elementType):
-        return "[\(typeReferenceRepresentation(elementType))]"
+        return "[\(typeReferenceRepresentation(apiPrefix, elementType))]"
     case let .bareConstructor(typeName, _):
-        return "Api.\(typeName)"
+        return "\(apiPrefix).\(typeName)"
     case let .boxedType(typeName):
-        return "Api.\(typeName)"
+        return "\(apiPrefix).\(typeName)"
     }
 }
 
@@ -184,22 +184,22 @@ enum CodeGenerator {
         }
     }
     
-    static func generate(types: [Resolver.SumType], functions: [Resolver.Function], constructorOrder: [(typeName: QualifiedName, constructorName: String)], typeOrder: [(types: [(typeName: QualifiedName, constructorNames: [String])], functions: [QualifiedName])], stubFunctions: Bool = false) throws -> [String: String] {
+    static func generate(apiPrefix: String, types: [Resolver.SumType], functions: [Resolver.Function], constructorOrder: [(typeName: QualifiedName, constructorName: String)], typeOrder: [(types: [(typeName: QualifiedName, constructorNames: [String])], functions: [QualifiedName])]) throws -> [String: String] {
         var files: [String: String] = [:]
         
         var functions = functions
         functions.append(Resolver.Function(name: QualifiedName(namespace: "help", value: "test"), id: UInt32(bitPattern: -1058929929), arguments: [], result: .boxedType(QualifiedName(namespace: nil, value: "Bool"))))
 
-        files["Api0.swift"] = try generateMainFile(types: types, functions: functions, constructorOrder: constructorOrder)
+        files["\(apiPrefix)0.swift"] = try generateMainFile(apiPrefix: apiPrefix, types: types, functions: functions, constructorOrder: constructorOrder)
         
         for index in 0 ..< typeOrder.count {
-            files["Api\(index + 1).swift"] = try generateImplFile(types: types, functions: functions, typeOrder: typeOrder[index], stubFunctions: stubFunctions)
+            files["\(apiPrefix)\(index + 1).swift"] = try generateImplFile(apiPrefix: apiPrefix, types: types, functions: functions, typeOrder: typeOrder[index])
         }
         
         return files
     }
     
-    private static func generateMainFile(types: [Resolver.SumType], functions: [Resolver.Function], constructorOrder: [(typeName: QualifiedName, constructorName: String)]) throws -> String {
+    private static func generateMainFile(apiPrefix: String, types: [Resolver.SumType], functions: [Resolver.Function], constructorOrder: [(typeName: QualifiedName, constructorName: String)]) throws -> String {
         var writer = CodeWriter()
 
         writer.line()
@@ -218,7 +218,7 @@ enum CodeGenerator {
             }
         }
 
-        writer.line("public enum Api {")
+        writer.line("public enum \(apiPrefix) {")
         writer.indent()
         for namespace in namespaces.sorted(by: { $0 < $1 }) {
             writer.line("public enum \(namespace) {}")
@@ -258,7 +258,7 @@ enum CodeGenerator {
             for (_, constructor) in type.constructors {
                 if constructor.name.value == constructorName {
                     found = true
-                    writer.line("dict[\(Int32(bitPattern: constructor.id))] = { return Api.\(type.name).parse_\(constructor.name.value)($0) }")
+                    writer.line("dict[\(Int32(bitPattern: constructor.id))] = { return \(apiPrefix).\(type.name).parse_\(constructor.name.value)($0) }")
                     break
                 }
             }
@@ -274,7 +274,7 @@ enum CodeGenerator {
 
         writer.line()
 
-        writer.line("public extension Api {")
+        writer.line("public extension \(apiPrefix) {")
         writer.indent()
 
         writer.line("static func parse(_ buffer: Buffer) -> Any? {")
@@ -344,7 +344,7 @@ enum CodeGenerator {
         writer.dedent()
         writer.line("} else {")
         writer.indent()
-        writer.line("if let item = Api.parse(reader, signature: signature) as? T {")
+        writer.line("if let item = \(apiPrefix).parse(reader, signature: signature) as? T {")
         writer.indent()
         writer.line("array.append(item)")
         writer.dedent()
@@ -378,7 +378,7 @@ enum CodeGenerator {
                 throw CodeGenerationError(text: "Type \(typeName) not found")
             }
 
-            writer.line("case let _1 as Api.\(type.name):")
+            writer.line("case let _1 as \(apiPrefix).\(type.name):")
             writer.indent()
             writer.line("_1.serialize(buffer, boxed)")
             writer.dedent()
@@ -398,7 +398,7 @@ enum CodeGenerator {
         return writer.output()
     }
     
-    private static func generateImplFile(types: [Resolver.SumType], functions: [Resolver.Function], typeOrder: (types: [(typeName: QualifiedName, constructorNames: [String])], functions: [QualifiedName]), stubFunctions: Bool) throws -> String {
+    private static func generateImplFile(apiPrefix: String, types: [Resolver.SumType], functions: [Resolver.Function], typeOrder: (types: [(typeName: QualifiedName, constructorNames: [String])], functions: [QualifiedName])) throws -> String {
         var writer = CodeWriter()
 
         var typeMap: [QualifiedName: Resolver.SumType] = [:]
@@ -407,7 +407,7 @@ enum CodeGenerator {
         }
 
         for (typeName, constructorNames) in typeOrder.types {
-            writer.line("public extension Api\(typeName.namespace.flatMap { "." + $0 } ?? "") {")
+            writer.line("public extension \(apiPrefix)\(typeName.namespace.flatMap { "." + $0 } ?? "") {")
             writer.indent()
 
             guard let type = typeMap[typeName] else {
@@ -448,7 +448,7 @@ enum CodeGenerator {
                         }
 
                         let fieldName = argument.name.camelCasedAndEscaped
-                        let fieldType = typeReferenceRepresentation(argument.type) + (argument.condition != nil ? "?" : "")
+                        let fieldType = typeReferenceRepresentation(apiPrefix, argument.type) + (argument.condition != nil ? "?" : "")
 
                         if !fieldsString.isEmpty {
                             fieldsString.append("\n")
@@ -509,7 +509,7 @@ enum CodeGenerator {
 
                         argumentsString.append(argument.name.camelCased)
                         argumentsString.append(": ")
-                        argumentsString.append(typeReferenceRepresentation(argument.type))
+                        argumentsString.append(typeReferenceRepresentation(apiPrefix, argument.type))
                         if argument.condition != nil {
                             argumentsString.append("?")
                         }
@@ -522,13 +522,6 @@ enum CodeGenerator {
             writer.line()
             writer.line("public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {")
             writer.indent()
-            if stubFunctions {
-                writer.line("#if DEBUG")
-                writer.line("preconditionFailure()")
-                writer.line("#else")
-                writer.line("error")
-                writer.line("#endif")
-            } else {
             writer.line("switch self {")
 
             for constructor in sortedConstructors {
@@ -608,20 +601,12 @@ enum CodeGenerator {
             }
 
             writer.line("}")
-            } // end if !stubFunctions
             writer.dedent()
             writer.line("}")
 
             writer.line()
             writer.line("public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {")
             writer.indent()
-            if stubFunctions {
-                writer.line("#if DEBUG")
-                writer.line("preconditionFailure()")
-                writer.line("#else")
-                writer.line("error")
-                writer.line("#endif")
-            } else {
             writer.line("switch self {")
 
             for constructor in sortedConstructors {
@@ -673,7 +658,6 @@ enum CodeGenerator {
             }
 
             writer.line("}")
-            } // end if !stubFunctions for descriptionFields
             writer.dedent()
             writer.line("}")
 
@@ -682,14 +666,6 @@ enum CodeGenerator {
             for constructor in sortedConstructors {
                 writer.line("public static func parse_\(constructor.name.value)(_ reader: BufferReader) -> \(typeName.value)? {")
                 writer.indent()
-                if stubFunctions {
-                    writer.line("#if DEBUG")
-                    writer.line("preconditionFailure()")
-                    writer.line("#else")
-                    writer.line("error")
-                    writer.line("#endif")
-                } else {
-
                 if constructor.arguments.contains(where: { if case .boolTrue = $0.type { return false } else { return true } }) {
                     var argumentIndex = 0
                     var argumentCheckString = ""
@@ -699,7 +675,7 @@ enum CodeGenerator {
                             continue
                         }
 
-                        writer.line("var _\(argumentIndex + 1): \(typeReferenceRepresentation(argument.type))?")
+                        writer.line("var _\(argumentIndex + 1): \(typeReferenceRepresentation(apiPrefix, argument.type))?")
 
                         if let condition = argument.condition {
                             guard let fieldIndex = constructor.arguments.filter({ if case .boolTrue = $0.type { return false } else { return true } }).firstIndex(where: { $0.name == condition.fieldName }) else {
@@ -708,11 +684,11 @@ enum CodeGenerator {
 
                             writer.line("if Int(_\(fieldIndex + 1)!) & Int(1 << \(condition.bitIndex)) != 0 {")
                             writer.indent()
-                            try generateFieldParsing(writer: &writer, typeMap: typeMap, argument: argument, argumentAccessor: "_\(argumentIndex + 1)")
+                            try generateFieldParsing(apiPrefix: apiPrefix, writer: &writer, typeMap: typeMap, argument: argument, argumentAccessor: "_\(argumentIndex + 1)")
                             writer.dedent()
                             writer.line("}")
                         } else {
-                            try generateFieldParsing(writer: &writer, typeMap: typeMap, argument: argument, argumentAccessor: "_\(argumentIndex + 1)")
+                            try generateFieldParsing(apiPrefix: apiPrefix, writer: &writer, typeMap: typeMap, argument: argument, argumentAccessor: "_\(argumentIndex + 1)")
                         }
 
                         if !argumentCheckString.isEmpty {
@@ -753,9 +729,9 @@ enum CodeGenerator {
                     writer.line("if \(argumentCheckString) {")
                     writer.indent()
                     if useStructPattern && !argumentCollectionString.isEmpty {
-                        writer.line("return Api.\(typeName).\(constructor.name.value)(Cons_\(constructor.name.value)(\(argumentCollectionString)))")
+                        writer.line("return \(apiPrefix).\(typeName).\(constructor.name.value)(Cons_\(constructor.name.value)(\(argumentCollectionString)))")
                     } else {
-                        writer.line("return Api.\(typeName).\(constructor.name.value)\(argumentCollectionString.isEmpty ? "" : "(\(argumentCollectionString))")")
+                        writer.line("return \(apiPrefix).\(typeName).\(constructor.name.value)\(argumentCollectionString.isEmpty ? "" : "(\(argumentCollectionString))")")
                     }
                     writer.dedent()
                     writer.line("}")
@@ -765,10 +741,9 @@ enum CodeGenerator {
                     writer.dedent()
                     writer.line("}")
                 } else {
-                    writer.line("return Api.\(typeName).\(constructor.name.value)")
+                    writer.line("return \(apiPrefix).\(typeName).\(constructor.name.value)")
                 }
 
-                } // end if !stubFunctions
                 writer.dedent()
                 writer.line("}")
             }
@@ -781,7 +756,7 @@ enum CodeGenerator {
 
         if !typeOrder.functions.isEmpty {
             for functionName in typeOrder.functions {
-                writer.line("public extension Api.functions\(functionName.namespace.flatMap { "." + $0 } ?? "") {")
+                writer.line("public extension \(apiPrefix).functions\(functionName.namespace.flatMap { "." + $0 } ?? "") {")
                 writer.indent()
 
                 var foundFunction: Resolver.Function?
@@ -807,13 +782,13 @@ enum CodeGenerator {
 
                     argumentsString.append(argument.name.camelCasedAndEscaped)
                     argumentsString.append(": ")
-                    argumentsString.append(typeReferenceRepresentation(argument.type))
+                    argumentsString.append(typeReferenceRepresentation(apiPrefix, argument.type))
                     if argument.condition != nil {
                         argumentsString.append("?")
                     }
                 }
 
-                writer.line("static func \(function.name.value)(\(argumentsString)) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<\(typeReferenceRepresentation(function.result))>) {")
+                writer.line("static func \(function.name.value)(\(argumentsString)) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<\(typeReferenceRepresentation(apiPrefix, function.result))>) {")
                 writer.indent()
                 writer.line("let buffer = Buffer()")
                 writer.line("buffer.appendInt32(\(Int32(bitPattern: function.id)))")
@@ -847,12 +822,12 @@ enum CodeGenerator {
                     argumentSerializationString.append("(\"\(argument.name.camelCasedAndEscaped)\", ConstructorParameterDescription(\(argument.name.camelCasedAndEscaped)))")
                 }
 
-                writer.line("return (FunctionDescription(name: \"\(function.name)\", parameters: [\(argumentSerializationString)]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> \(typeReferenceRepresentation(function.result))? in")
+                writer.line("return (FunctionDescription(name: \"\(function.name)\", parameters: [\(argumentSerializationString)]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> \(typeReferenceRepresentation(apiPrefix, function.result))? in")
                 writer.indent()
                 writer.line("let reader = BufferReader(buffer)")
-                writer.line("var result: \(typeReferenceRepresentation(function.result))?")
+                writer.line("var result: \(typeReferenceRepresentation(apiPrefix, function.result))?")
 
-                try generateFieldParsing(writer: &writer, typeMap: typeMap, argument: Resolver.Argument(name: "result", type: function.result, condition: nil), argumentAccessor: "result")
+                try generateFieldParsing(apiPrefix: apiPrefix, writer: &writer, typeMap: typeMap, argument: Resolver.Argument(name: "result", type: function.result, condition: nil), argumentAccessor: "result")
 
                 writer.line("return result")
                 writer.dedent()
@@ -904,7 +879,7 @@ enum CodeGenerator {
         }
     }
     
-    private static func generateFieldParsing(writer: inout CodeWriter, typeMap: [QualifiedName: Resolver.SumType], argument: Resolver.Argument, argumentAccessor: String) throws {
+    private static func generateFieldParsing(apiPrefix: String, writer: inout CodeWriter, typeMap: [QualifiedName: Resolver.SumType], argument: Resolver.Argument, argumentAccessor: String) throws {
         switch argument.type {
         case .int32:
             writer.line("\(argumentAccessor) = reader.readInt32()")
@@ -961,11 +936,11 @@ enum CodeGenerator {
             if case .boxedVector = argument.type {
                 writer.line("if let _ = reader.readInt32() {")
                 writer.indent()
-                writer.line("\(argumentAccessor) = Api.parseVector(reader, elementSignature: \(elementSignature), elementType: \(typeReferenceRepresentation(elementType)).self)")
+                writer.line("\(argumentAccessor) = \(apiPrefix).parseVector(reader, elementSignature: \(elementSignature), elementType: \(typeReferenceRepresentation(apiPrefix, elementType)).self)")
                 writer.dedent()
                 writer.line("}")
             } else {
-                writer.line("\(argumentAccessor) = Api.parseVector(reader, elementSignature: \(elementSignature), elementType: \(typeReferenceRepresentation(elementType)).self)")
+                writer.line("\(argumentAccessor) = \(apiPrefix).parseVector(reader, elementSignature: \(elementSignature), elementType: \(typeReferenceRepresentation(apiPrefix, elementType)).self)")
             }
         case let .bareConstructor(typeName, name):
             guard let type = typeMap[typeName] else {
@@ -974,11 +949,11 @@ enum CodeGenerator {
             guard let constructor = type.constructors[name] else {
                 throw CodeGenerationError(text: "Type \(typeName) not found")
             }
-            writer.line("\(argumentAccessor) = Api.parse(reader, signature: \(Int32(bitPattern: constructor.id)) as? \(typeReferenceRepresentation(argument.type))")
+            writer.line("\(argumentAccessor) = \(apiPrefix).parse(reader, signature: \(Int32(bitPattern: constructor.id)) as? \(typeReferenceRepresentation(apiPrefix, argument.type))")
         case .boxedType:
             writer.line("if let signature = reader.readInt32() {")
             writer.indent()
-            writer.line("\(argumentAccessor) = Api.parse(reader, signature: signature) as? \(typeReferenceRepresentation(argument.type))")
+            writer.line("\(argumentAccessor) = \(apiPrefix).parse(reader, signature: signature) as? \(typeReferenceRepresentation(apiPrefix, argument.type))")
             writer.dedent()
             writer.line("}")
         }
