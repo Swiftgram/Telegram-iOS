@@ -229,7 +229,39 @@ public final class FFMpegMediaVideoFrameDecoder: MediaTrackFrameDecoder {
         }
     }
     
+    private static func isPlanarYUV420Safe(_ frame: FFMpegAVFrame) -> Bool {
+        // Layout must be a planar YUV/YUVA 420 variant. Anything else (BGRA, NV12, gray8,
+        // YUV422P, …) must not reach the planar 420 vImage conversion or the planar copy
+        // path that force-unwraps data[1]/data[2].
+        let format = frame.pixelFormat
+        guard format == .YUV || format == .YUVA else {
+            return false
+        }
+        // Reject bottom-up / negative-stride frames before any row-copy loop — ffmpeg
+        // rawdec flips linesize[0] for codec_tag WRAW/cyuv/BottomUp, and other decoders
+        // (dxtory, mimic, mjpegdec, scpr) flip the chroma planes too.
+        if frame.lineSize[0] < 0 || frame.lineSize[1] < 0 || frame.lineSize[2] < 0 {
+            return false
+        }
+        if format == .YUVA && frame.lineSize[3] < 0 {
+            return false
+        }
+        if frame.data[0] == nil || frame.data[1] == nil || frame.data[2] == nil {
+            return false
+        }
+        if format == .YUVA && frame.data[3] == nil {
+            return false
+        }
+        if frame.width <= 0 || frame.height <= 0 {
+            return false
+        }
+        return true
+    }
+
     private func convertVideoFrameToImage(_ frame: FFMpegAVFrame) -> UIImage? {
+        guard FFMpegMediaVideoFrameDecoder.isPlanarYUV420Safe(frame) else {
+            return nil
+        }
         var info = vImage_YpCbCrToARGB()
         
         var pixelRange: vImage_YpCbCrPixelRange
@@ -314,7 +346,7 @@ public final class FFMpegMediaVideoFrameDecoder: MediaTrackFrameDecoder {
             return MediaTrackFrame(type: .video, sampleBuffer: sampleBuffer!, resetDecoder: resetDecoder, decoded: true)
         }
         
-        if frame.data[0] == nil {
+        guard FFMpegMediaVideoFrameDecoder.isPlanarYUV420Safe(frame) else {
             return nil
         }
         if frame.lineSize[1] != frame.lineSize[2] {

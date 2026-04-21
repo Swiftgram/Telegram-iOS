@@ -101,8 +101,11 @@
     switch (_impl->format) {
         case AV_PIX_FMT_YUVA420P:
             return FFMpegAVFramePixelFormatYUVA;
-        default:
+        case AV_PIX_FMT_YUV420P:
+        case AV_PIX_FMT_YUVJ420P:
             return FFMpegAVFramePixelFormatYUV;
+        default:
+            return FFMpegAVFramePixelFormatUnsupported;
     }
 }
 
