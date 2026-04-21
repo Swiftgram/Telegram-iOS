@@ -3,7 +3,23 @@
 This file provides guidance to AI assistants when working with code in this repository.
 
 ## Build
-The app is built using Bazel.
+
+The app is built using Bazel via the `Make.py` wrapper. There is no selective per-module build — the only supported invocation builds the full `Telegram/Telegram` target.
+
+**Command:**
+
+```sh
+python3 build-system/Make/Make.py --overrideXcodeVersion \
+ --cacheDir ~/telegram-bazel-cache \
+ build \
+ --configurationPath build-system/appstore-configuration.json \
+ --gitCodesigningRepository git@gitlab.com:peter-iakovlev/fastlanematch.git \
+ --gitCodesigningType development --gitCodesigningUseCurrent --buildNumber=1 --configuration=debug_sim_arm64
+```
+
+Add `--continueOnError` after `build` (forwards to bazel's `--keep_going`) when verifying changes that may surface errors in many files at once — it lets the full set of errors land in one pass instead of stopping at the first failing target.
+
+The build needs `TELEGRAM_CODESIGNING_GIT_PASSWORD` in the environment. It is set in `~/.zshrc` but Claude Code's bash tool does NOT source shell config by default. Prefix build commands with `source ~/.zshrc 2>/dev/null;` to pick it up.
 
 ## Code Style Guidelines
 - **Naming**: PascalCase for types, camelCase for variables/methods
@@ -784,6 +800,6 @@ All mediaBox methods with clean signatures (no Postbox-protocol leaks, no comple
 
 (The seven `TelegramEngine.*` facade leaks surfaced by the 2026-04-20 post-wave-6 scouting pass — `downloadMessage`, `topPeerActiveLiveLocationMessages`, `getSynchronizeAutosaveItemOperations`, `updatedRemotePeer`, `renderStorageUsageStatsMessages`, and three `clearStorage` overloads — landed in wave 7; see "Wave 7 outcome" above.)
 
-### Build environment quirk
+### Build command
 
-The build needs `TELEGRAM_CODESIGNING_GIT_PASSWORD` in the environment. It is set in `~/.zshrc` but Claude Code's bash tool does NOT source shell config by default. Prefix build commands with `source ~/.zshrc 2>/dev/null;` to pick it up.
+See the top-of-file `## Build` section for the full `Make.py` invocation, the `--continueOnError` flag, and the `source ~/.zshrc` requirement.
