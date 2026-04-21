@@ -29,6 +29,8 @@
             case FFMpegAVFramePixelFormatYUVA:
                 _impl->format = AV_PIX_FMT_YUVA420P;
                 break;
+            case FFMpegAVFramePixelFormatUnsupported:
+                return nil;
         }
         _impl->width = width;
         _impl->height = height;
