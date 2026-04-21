@@ -784,12 +784,12 @@ public final class ResizableSheetComponent<ChildEnvironmentType: Sendable & Equa
              
             clippingY = availableSize.height
             
-            var topInset: CGFloat = max(0.0, availableSize.height - containerInset - initialContentHeight)
+            var topInset: CGFloat = max(0.0, availableSize.height - containerInset - initialContentHeight - sheetEnvironment.inputHeight)
             if component.isFullscreen {
                 topInset = 0.0
             }
             
-            let scrollContentHeight = max(topInset + contentHeight + containerInset, availableSize.height - containerInset)
+            let scrollContentHeight = max(topInset + contentHeight + containerInset + sheetEnvironment.inputHeight, availableSize.height - containerInset)
             
             self.scrollContentClippingView.layer.cornerRadius = 38.0
 

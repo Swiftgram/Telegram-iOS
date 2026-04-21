@@ -25,6 +25,7 @@ import Markdown
 import TelegramUIPreferences
 import ChatSendMessageActionUI
 import ContextUI
+import EmojiStatusComponent
 
 final class TextProcessingContentComponent: Component {
     typealias EnvironmentType = ViewControllerComponentContainer.Environment
@@ -41,6 +42,7 @@ final class TextProcessingContentComponent: Component {
     let externalState: ExternalState
     let context: AccountContext
     let mode: TextProcessingScreen.Mode
+    let previewIconFile: TelegramMediaFile?
     let styles: [TextProcessingScreen.Style]
     let inputText: TextWithEntities
     let initialEditState: TextProcessingScreen.EditState?
@@ -52,11 +54,13 @@ final class TextProcessingContentComponent: Component {
     let newStyleAdded: (TelegramComposeAIMessageMode.CloudStyle) -> Void
     let styleUpdated: (TelegramComposeAIMessageMode.CloudStyle) -> Void
     let styleDeleted: (TelegramComposeAIMessageMode.StyleId) -> Void
+    let dismiss: (@escaping () -> Void) -> Void
 
     init(
         externalState: ExternalState,
         context: AccountContext,
         mode: TextProcessingScreen.Mode,
+        previewIconFile: TelegramMediaFile?,
         styles: [TextProcessingScreen.Style],
         inputText: TextWithEntities,
         initialEditState: TextProcessingScreen.EditState?,
@@ -67,12 +71,14 @@ final class TextProcessingContentComponent: Component {
         displayLanguageSelectionMenu: @escaping (UIView, String, TelegramComposeAIMessageMode.StyleId, Bool, @escaping (String, TelegramComposeAIMessageMode.StyleReference) -> Void) -> Void,
         newStyleAdded: @escaping (TelegramComposeAIMessageMode.CloudStyle) -> Void,
         styleUpdated: @escaping (TelegramComposeAIMessageMode.CloudStyle) -> Void,
-        styleDeleted: @escaping (TelegramComposeAIMessageMode.StyleId) -> Void
+        styleDeleted: @escaping (TelegramComposeAIMessageMode.StyleId) -> Void,
+        dismiss: @escaping (@escaping () -> Void) -> Void
     ) {
         self.externalState = externalState
         self.styles = styles
         self.context = context
         self.mode = mode
+        self.previewIconFile = previewIconFile
         self.inputText = inputText
         self.initialEditState = initialEditState
         self.ignoredTranslationLanguages = ignoredTranslationLanguages
@@ -83,6 +89,7 @@ final class TextProcessingContentComponent: Component {
         self.newStyleAdded = newStyleAdded
         self.styleUpdated = styleUpdated
         self.styleDeleted = styleDeleted
+        self.dismiss = dismiss
     }
 
     static func ==(lhs: TextProcessingContentComponent, rhs: TextProcessingContentComponent) -> Bool {
@@ -107,8 +114,14 @@ final class TextProcessingContentComponent: Component {
         private let modeTabs = ComponentView<Empty>()
         private let actionsSection = ComponentView<Empty>()
         
+        private var previewIcon: ComponentView<Empty>?
+        private var previewTitle: ComponentView<Empty>?
+        private var previewDescription: ComponentView<Empty>?
+        
         private let currentContentBackground: UIImageView
         private let currentContentContainer: UIView
+        private var currentContentHeader: (id: AnyHashable, view: ComponentView<Empty>)?
+        private var currentContentFooter: (id: AnyHashable, view: ComponentView<Empty>)?
         
         private let translateState = TextProcessingTranslateContentComponent.ExternalState()
         private let stylizeState = TextProcessingTranslateContentComponent.ExternalState()
@@ -117,6 +130,10 @@ final class TextProcessingContentComponent: Component {
         private var currentContent: (mode: Mode, view: ComponentView<Empty>)?
         
         private var currentMode: Mode = .translate
+        
+        private var isRequestingStylePreview: Bool = false
+        private var currentStylePreview: AIMessageStylePreview?
+        private var currentStylePreviewDisposable: Disposable?
         
         override init(frame: CGRect) {
             self.currentContentBackground = UIImageView()
@@ -159,6 +176,10 @@ final class TextProcessingContentComponent: Component {
         
         required init?(coder: NSCoder) {
             preconditionFailure()
+        }
+        
+        deinit {
+            self.currentStylePreviewDisposable?.dispose()
         }
         
         private func externalStatesUpdated() {
@@ -242,6 +263,12 @@ final class TextProcessingContentComponent: Component {
                             return
                         }
                         component.styleUpdated(style)
+                    },
+                    styleDeleted: { [weak self] in
+                        guard let self, let component = self.component else {
+                            return
+                        }
+                        component.styleDeleted(style.id.id)
                     }
                 ))
             }
@@ -337,6 +364,7 @@ final class TextProcessingContentComponent: Component {
                 let keepInPlace: Bool = false
                 let ignoreContentTouches: Bool = false
                 let blurBackground: Bool = false
+                let actionsHorizontalAlignment: ContextActionsHorizontalAlignment = .center
                 
                 private let contentView: ContextExtractedContentContainingView
                 
@@ -360,6 +388,41 @@ final class TextProcessingContentComponent: Component {
             )
             environment.controller()?.presentInGlobalOverlay(controller)
         }
+        
+        private func requestStylePreview() {
+            guard let component = self.component else {
+                return
+            }
+            guard case let .preview(style, _, _, _) = component.mode else {
+                return
+            }
+            
+            var index = 0
+            if let currentStylePreview = self.currentStylePreview, let currentIndex = currentStylePreview.index {
+                var maxPreviewCount = 3
+                if let data = component.context.currentAppConfiguration.with({ $0 }).data, let value = data["aicompose_tone_examples_num"] as? Double {
+                    maxPreviewCount = max(1, Int(value))
+                }
+                index = (currentIndex + 1) % maxPreviewCount
+            }
+            
+            self.isRequestingStylePreview = true
+            if !self.isUpdating {
+                self.state?.updated(transition: .spring(duration: 0.4))
+            }
+            
+            self.currentStylePreviewDisposable?.dispose()
+            self.currentStylePreviewDisposable = (component.context.engine.messages.requestAIMessageStylePreview(reference: TelegramComposeAIMessageMode.CloudStyle(content: .custom(style)).reference, index: index) |> deliverOnMainQueue).startStrict(next: { [weak self] result in
+                guard let self, let result else {
+                    return
+                }
+                self.isRequestingStylePreview = false
+                self.currentStylePreview = result
+                if !self.isUpdating {
+                    self.state?.updated(transition: .spring(duration: 0.4))
+                }
+            })
+        }
 
         func update(component: TextProcessingContentComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<ViewControllerComponentContainer.Environment>, transition: ComponentTransition) -> CGSize {
             self.isUpdating = true
@@ -371,24 +434,132 @@ final class TextProcessingContentComponent: Component {
             
             let environment = environment[ViewControllerComponentContainer.Environment.self].value
             
-            if self.component == nil {
-                self.stylizeState.displayStyleTooltip = component.shouldDisplayStyleNotice
-                switch component.mode {
-                case .edit:
-                    self.currentMode = .stylize
-                case .translate:
-                    self.currentMode = .translate
-                }
-            }
+            let isFirstTime = self.component == nil
             
             self.component = component
             self.environment = environment
             self.state = state
             
+            if isFirstTime {
+                self.stylizeState.displayStyleTooltip = component.shouldDisplayStyleNotice
+                switch component.mode {
+                case .edit:
+                    self.currentMode = .stylize
+                case let .preview(_, _, initialPreview, _):
+                    self.currentMode = .stylize
+                    self.currentStylePreview = initialPreview
+                    self.requestStylePreview()
+                case .translate:
+                    self.currentMode = .translate
+                }
+            }
+            
             let sideInset: CGFloat = 16.0
 
             var contentHeight: CGFloat = 0.0
-            contentHeight += 82.0
+            
+            if case let .preview(style, _, _, _) = component.mode {
+                contentHeight += 40.0
+                if let previewIconFile = component.previewIconFile {
+                    let previewIcon: ComponentView<Empty>
+                    if let current = self.previewIcon {
+                        previewIcon = current
+                    } else {
+                        previewIcon = ComponentView()
+                        self.previewIcon = previewIcon
+                    }
+                    let previewIconSize = CGSize(width: 60.0, height: 60.0)
+                    let _ = previewIcon.update(
+                        transition: transition,
+                        component: AnyComponent(EmojiStatusComponent(
+                            context: component.context,
+                            animationCache: component.context.animationCache,
+                            animationRenderer: component.context.animationRenderer,
+                            content: .animation(
+                                content: .file(file: previewIconFile),
+                                size: previewIconSize,
+                                placeholderColor: environment.theme.list.mediaPlaceholderColor,
+                                themeColor: environment.theme.list.itemPrimaryTextColor,
+                                loopMode: .count(1)
+                            ),
+                            isVisibleForAnimations: true,
+                            action: nil
+                        )),
+                        environment: {},
+                        containerSize: previewIconSize
+                    )
+                    let previewIconFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - previewIconSize.width) * 0.5), y: contentHeight), size: previewIconSize)
+                    if let previewIconView = previewIcon.view {
+                        if previewIconView.superview == nil {
+                            self.addSubview(previewIconView)
+                            previewIconView.isUserInteractionEnabled = false
+                        }
+                        transition.setFrame(view: previewIconView, frame: previewIconFrame)
+                    }
+                    contentHeight += previewIconSize.height
+                    contentHeight += 10.0
+                }
+                
+                let previewTitle: ComponentView<Empty>
+                if let current = self.previewTitle {
+                    previewTitle = current
+                } else {
+                    previewTitle = ComponentView()
+                    self.previewTitle = previewTitle
+                }
+                
+                let previewDescription: ComponentView<Empty>
+                if let current = self.previewDescription {
+                    previewDescription = current
+                } else {
+                    previewDescription = ComponentView()
+                    self.previewDescription = previewDescription
+                }
+                
+                let titleSize = previewTitle.update(
+                    transition: .immediate,
+                    component: AnyComponent(MultilineTextComponent(
+                        text: .plain(NSAttributedString(string: style.title, font: Font.bold(30.0), textColor: environment.theme.list.itemPrimaryTextColor))
+                    )),
+                    environment: {},
+                    containerSize: CGSize(width: availableSize.width, height: 100.0)
+                )
+                let titleFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - titleSize.width) * 0.5), y: contentHeight), size: titleSize)
+                if let previewTitleView = previewTitle.view {
+                    if previewTitleView.superview == nil {
+                        previewTitleView.isUserInteractionEnabled = false
+                        self.addSubview(previewTitleView)
+                    }
+                    transition.setPosition(view: previewTitleView, position: titleFrame.center)
+                    previewTitleView.bounds = CGRect(origin: CGPoint(), size: titleFrame.size)
+                }
+                contentHeight += titleSize.height + 5.0
+                
+                let descriptionSize = previewDescription.update(
+                    transition: .immediate,
+                    component: AnyComponent(MultilineTextComponent(
+                        text: .plain(NSAttributedString(string: "Add this style to instantly\nrewrite your messages.", font: Font.regular(15.0), textColor: environment.theme.list.itemPrimaryTextColor)),
+                        horizontalAlignment: .center,
+                        maximumNumberOfLines: 0,
+                        lineSpacing: 0.12
+                    )),
+                    environment: {},
+                    containerSize: CGSize(width: availableSize.width, height: 100.0)
+                )
+                let descriptionFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - descriptionSize.width) * 0.5), y: contentHeight), size: descriptionSize)
+                if let previewDescriptionView = previewDescription.view {
+                    if previewDescriptionView.superview == nil {
+                        previewDescriptionView.isUserInteractionEnabled = false
+                        self.addSubview(previewDescriptionView)
+                    }
+                    transition.setPosition(view: previewDescriptionView, position: descriptionFrame.center)
+                    previewDescriptionView.bounds = CGRect(origin: CGPoint(), size: descriptionFrame.size)
+                }
+                contentHeight += descriptionSize.height
+                contentHeight += 30.0
+            } else {
+                contentHeight += 82.0
+            }
             
             switch component.mode {
             case .edit:
@@ -496,7 +667,7 @@ final class TextProcessingContentComponent: Component {
                 }
                 contentHeight += modeTabsSize.height
                 contentHeight += 24.0
-            case .translate:
+            case .translate, .preview:
                 break
             }
             
@@ -509,9 +680,11 @@ final class TextProcessingContentComponent: Component {
                 self.currentContent = nil
             }
             
+            let contentExternalState: TextProcessingTranslateContentComponent.ExternalState
             let contentComponent: AnyComponent<Empty>
             switch self.currentMode {
             case .translate:
+                contentExternalState = self.translateState
                 contentComponent = AnyComponent(TextProcessingTranslateContentComponent(
                     context: component.context,
                     theme: environment.theme,
@@ -531,17 +704,41 @@ final class TextProcessingContentComponent: Component {
                     },
                     rootViewForTextSelection: { [weak self] in
                         return self?.environment?.controller()?.view
+                    },
+                    openPeer: { _ in
+                    },
+                    requestAnotherPreviewExample: {
                     }
                 ))
             case .stylize:
+                var inputText = component.inputText
+                var isPreview = false
+                var fromText: TextWithEntities?
+                var toText: TextWithEntities?
+                var isRequestingPreview: Bool = false
+                var authorPeer: EnginePeer?
+                var userCount: Int = 0
+                if case let .preview(style, authorPeerValue, _, _) = component.mode {
+                    isPreview = true
+                    inputText = TextWithEntities(text: "", entities: [])
+                    authorPeer = authorPeerValue
+                    userCount = style.userCount ?? 0
+                    isRequestingPreview = self.isRequestingStylePreview
+                    if let currentStylePreview = self.currentStylePreview {
+                        fromText = currentStylePreview.from
+                        toText = currentStylePreview.to
+                    }
+                }
+                
+                contentExternalState = self.stylizeState
                 contentComponent = AnyComponent(TextProcessingTranslateContentComponent(
                     context: component.context,
                     theme: environment.theme,
                     strings: environment.strings,
                     styles: component.styles,
                     externalState: self.stylizeState,
-                    inputText: component.inputText,
-                    mode: .stylize,
+                    inputText: inputText,
+                    mode: isPreview ? .preview(from: fromText, to: toText, authorPeer: authorPeer, userCount: userCount, isRequesting: isRequestingPreview) : .stylize,
                     copyAction: component.copyCurrentResult,
                     displayLanguageSelectionMenu: component.displayLanguageSelectionMenu,
                     createStyle: { [weak self] in
@@ -559,7 +756,14 @@ final class TextProcessingContentComponent: Component {
                                     guard let self, let component = self.component else {
                                         return
                                     }
+                                    
+                                    if let contentComponentView = self.currentContent?.view.view as? TextProcessingTranslateContentComponent.View {
+                                        contentComponentView.scrollStylesToStart()
+                                    }
+                                    
                                     component.newStyleAdded(style)
+                                },
+                                styleDeleted: {
                                 }
                             ))
                         }
@@ -575,9 +779,33 @@ final class TextProcessingContentComponent: Component {
                     },
                     rootViewForTextSelection: { [weak self] in
                         return self?.environment?.controller()?.view
+                    },
+                    openPeer: { [weak self] peer in
+                        guard let self, let component = self.component, let environment = self.environment else {
+                            return
+                        }
+                        guard let navigationController = environment.controller()?.navigationController as? NavigationController else {
+                            return
+                        }
+                        let context = component.context
+                        component.dismiss({ [weak context, weak navigationController] in
+                            guard let context, let navigationController else {
+                                return
+                            }
+                            if let peerInfoController = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+                                navigationController.pushViewController(peerInfoController)
+                            }
+                        })
+                    },
+                    requestAnotherPreviewExample: { [weak self] in
+                        guard let self else {
+                            return
+                        }
+                        self.requestStylePreview()
                     }
                 ))
             case .fix:
+                contentExternalState = self.fixState
                 contentComponent = AnyComponent(TextProcessingTranslateContentComponent(
                     context: component.context,
                     theme: environment.theme,
@@ -597,8 +825,61 @@ final class TextProcessingContentComponent: Component {
                     },
                     rootViewForTextSelection: { [weak self] in
                         return self?.environment?.controller()?.view
+                    },
+                    openPeer: { _ in
+                    },
+                    requestAnotherPreviewExample: {
                     }
                 ))
+            }
+            
+            if let sectionHeader = contentExternalState.sectionHeader {
+                let headerView: ComponentView<Empty>
+                var headerTransition = transition
+                if let current = self.currentContentHeader, current.id == sectionHeader.id {
+                    headerView = current.view
+                } else {
+                    headerTransition = headerTransition.withAnimation(.none)
+                    
+                    if let currentContentHeader = self.currentContentHeader {
+                        self.currentContentHeader = nil
+                        if let componentView = currentContentHeader.view.view {
+                            alphaTransition.setAlpha(view: componentView, alpha: 0.0, completion: { [weak componentView] _ in
+                                componentView?.removeFromSuperview()
+                            })
+                        }
+                    }
+                    
+                    headerView = ComponentView()
+                    self.currentContentHeader = (sectionHeader.id, headerView)
+                }
+                let headerSideInset: CGFloat = sideInset + 16.0
+                let headerSize = headerView.update(
+                    transition: .immediate,
+                    component: sectionHeader.component,
+                    environment: {},
+                    containerSize: CGSize(width: availableSize.width - headerSideInset * 2.0, height: 10000.0)
+                )
+                let headerFrame = CGRect(origin: CGPoint(x: headerSideInset, y: contentHeight), size: headerSize)
+                if let headerComponentView = headerView.view {
+                    if headerComponentView.superview == nil {
+                        headerComponentView.layer.anchorPoint = CGPoint()
+                        self.addSubview(headerComponentView)
+                        alphaTransition.animateAlpha(view: headerComponentView, from: 0.0, to: 1.0)
+                    }
+                    headerTransition.setPosition(view: headerComponentView, position: headerFrame.origin)
+                    headerComponentView.bounds = CGRect(origin: CGPoint(), size: headerFrame.size)
+                }
+                contentHeight += headerSize.height + 7.0
+            } else {
+                if let currentContentHeader = self.currentContentHeader {
+                    self.currentContentHeader = nil
+                    if let componentView = currentContentHeader.view.view {
+                        alphaTransition.setAlpha(view: componentView, alpha: 0.0, completion: { [weak componentView] _ in
+                            componentView?.removeFromSuperview()
+                        })
+                    }
+                }
             }
             
             let content: ComponentView<Empty>
@@ -634,8 +915,59 @@ final class TextProcessingContentComponent: Component {
             }
             self.currentContentBackground.tintColor = environment.theme.list.itemBlocksBackgroundColor
             transition.setFrame(view: self.currentContentBackground, frame: contentFrame)
-            
             contentHeight += contentSize.height
+            
+            if let sectionFooter = contentExternalState.sectionFooter {
+                let footerView: ComponentView<Empty>
+                var footerTransition = transition
+                if let current = self.currentContentFooter, current.id == sectionFooter.id {
+                    footerView = current.view
+                } else {
+                    footerTransition = footerTransition.withAnimation(.none)
+                    
+                    if let currentContentFooter = self.currentContentFooter {
+                        self.currentContentFooter = nil
+                        if let componentView = currentContentFooter.view.view {
+                            alphaTransition.setAlpha(view: componentView, alpha: 0.0, completion: { [weak componentView] _ in
+                                componentView?.removeFromSuperview()
+                            })
+                        }
+                    }
+                    
+                    footerView = ComponentView()
+                    self.currentContentFooter = (sectionFooter.id, footerView)
+                }
+                let headerSideInset: CGFloat = sideInset + 16.0
+                let footerSize = footerView.update(
+                    transition: .immediate,
+                    component: sectionFooter.component,
+                    environment: {},
+                    containerSize: CGSize(width: availableSize.width - headerSideInset * 2.0, height: 10000.0)
+                )
+                if contentHeight != 0.0 {
+                    contentHeight += 8.0 - UIScreenPixel
+                }
+                let footerFrame = CGRect(origin: CGPoint(x: headerSideInset, y: contentHeight), size: footerSize)
+                if let footerComponentView = footerView.view {
+                    if footerComponentView.superview == nil {
+                        footerComponentView.layer.anchorPoint = CGPoint()
+                        self.addSubview(footerComponentView)
+                        alphaTransition.animateAlpha(view: footerComponentView, from: 0.0, to: 1.0)
+                    }
+                    footerTransition.setPosition(view: footerComponentView, position: footerFrame.origin)
+                    footerComponentView.bounds = CGRect(origin: CGPoint(), size: footerFrame.size)
+                }
+                contentHeight += footerSize.height
+            } else {
+                if let currentContentFooter = self.currentContentFooter {
+                    self.currentContentFooter = nil
+                    if let componentView = currentContentFooter.view.view {
+                        alphaTransition.setAlpha(view: componentView, alpha: 0.0, completion: { [weak componentView] _ in
+                            componentView?.removeFromSuperview()
+                        })
+                    }
+                }
+            }
             
             var actionsSectionItems: [AnyComponentWithIdentity<Empty>] = []
             if case .translate = component.mode {
@@ -734,6 +1066,7 @@ private final class TextProcessingSheetComponent: Component {
     let inputText: TextWithEntities
     let initialEditState: TextProcessingScreen.EditState?
     let shouldDisplayStyleNotice: Bool
+    let previewIconFile: TelegramMediaFile?
     let copyCurrentResult: ((TextWithEntities) -> Void)?
     let translateChat: ((String) -> Void)?
 
@@ -745,6 +1078,7 @@ private final class TextProcessingSheetComponent: Component {
         inputText: TextWithEntities,
         initialEditState: TextProcessingScreen.EditState?,
         shouldDisplayStyleNotice: Bool,
+        previewIconFile: TelegramMediaFile?,
         copyCurrentResult: ((TextWithEntities) -> Void)?,
         translateChat: ((String) -> Void)?
     ) {
@@ -755,6 +1089,7 @@ private final class TextProcessingSheetComponent: Component {
         self.inputText = inputText
         self.initialEditState = initialEditState
         self.shouldDisplayStyleNotice = shouldDisplayStyleNotice
+        self.previewIconFile = previewIconFile
         self.copyCurrentResult = copyCurrentResult
         self.translateChat = translateChat
     }
@@ -792,6 +1127,10 @@ private final class TextProcessingSheetComponent: Component {
         private var component: TextProcessingSheetComponent?
         private var environment: ViewControllerComponentContainer.Environment?
         private weak var state: EmptyComponentState?
+        private var isUpdating: Bool = false
+        
+        private var actionDisposable: Disposable?
+        private var isPerformingMainAction: Bool = false
 
         override init(frame: CGRect) {
             super.init(frame: frame)
@@ -799,6 +1138,10 @@ private final class TextProcessingSheetComponent: Component {
 
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
+        }
+        
+        deinit {
+            self.actionDisposable?.dispose()
         }
         
         private func displayLongPressSendMenu(sourceSendButton: UIView) {
@@ -918,6 +1261,11 @@ private final class TextProcessingSheetComponent: Component {
         }
 
         func update(component: TextProcessingSheetComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<ViewControllerComponentContainer.Environment>, transition: ComponentTransition) -> CGSize {
+            self.isUpdating = true
+            defer {
+                self.isUpdating = false
+            }
+            
             if self.component == nil {
                 self.styles = component.initialStyles
             }
@@ -993,6 +1341,32 @@ private final class TextProcessingSheetComponent: Component {
                     performMainAction = {
                         dismiss(true)
                     }
+                case let .preview(style, _, _, added):
+                    actionButtonTitle = "Add Style"
+                    isMainActionEnabled = !self.isPerformingMainAction
+                    performMainAction = { [weak self] in
+                        guard let self, let component = self.component else {
+                            return
+                        }
+                        self.isPerformingMainAction = true
+                        if !self.isUpdating {
+                            self.state?.updated(transition: .spring(duration: 0.4))
+                        }
+                        
+                        self.actionDisposable?.dispose()
+                        self.actionDisposable = (component.context.engine.messages.installAIMessageStyle(style: style) |> deliverOnMainQueue).startStrict(error: { [weak self] _ in
+                            guard let self else {
+                                return
+                            }
+                            self.isPerformingMainAction = false
+                            if !self.isUpdating {
+                                self.state?.updated(transition: .spring(duration: 0.4))
+                            }
+                        }, completed: {
+                            dismiss(true)
+                            added()
+                        })
+                    }
                 }
             }
             let copyCurrentResult = component.copyCurrentResult
@@ -1006,13 +1380,18 @@ private final class TextProcessingSheetComponent: Component {
                 }
             }
 
+            var displayInfoButton = true
             let titleString: String
             switch component.mode {
             case .edit:
                 titleString = environmentValue.strings.TextProcessing_TitleEdit
             case .translate:
                 titleString = environmentValue.strings.TextProcessing_TitleTranslate
+            case .preview:
+                titleString = ""
+                displayInfoButton = false
             }
+            
 
             let sheetSize = self.sheet.update(
                 transition: transition,
@@ -1021,6 +1400,7 @@ private final class TextProcessingSheetComponent: Component {
                         externalState: self.contentExternalState,
                         context: component.context,
                         mode: component.mode,
+                        previewIconFile: component.previewIconFile,
                         styles: self.styles,
                         inputText: component.inputText,
                         initialEditState: component.initialEditState,
@@ -1043,21 +1423,37 @@ private final class TextProcessingSheetComponent: Component {
                             self.state?.updated(transition: .immediate)
                         },
                         newStyleAdded: { [weak self] style in
-                            guard let self else {
-                                return
+                            Task { @MainActor in
+                                guard let self, let component = self.component else {
+                                    return
+                                }
+                                var authorPeer: EnginePeer?
+                                if case let .custom(style) = style.content, let authorId = style.authorId {
+                                    authorPeer = await component.context.engine.data.get(
+                                        TelegramEngine.EngineData.Item.Peer.Peer(id: authorId)
+                                    ).get()
+                                }
+                                self.styles.insert(TextProcessingScreen.Style(cloudStyle: style, authorPeer: authorPeer), at: 0)
+                                self.state?.updated(transition: .spring(duration: 0.4))
                             }
-                            self.styles.append(TextProcessingScreen.Style(cloudStyle: style))
-                            self.state?.updated(transition: .spring(duration: 0.4))
                         },
                         styleUpdated: { [weak self] style in
-                            guard let self else {
-                                return
+                            Task { @MainActor in
+                                guard let self, let component = self.component else {
+                                    return
+                                }
+                                guard let index = self.styles.firstIndex(where: { $0.id.id == style.id }) else {
+                                    return
+                                }
+                                var authorPeer: EnginePeer?
+                                if case let .custom(style) = style.content, let authorId = style.authorId {
+                                    authorPeer = await component.context.engine.data.get(
+                                        TelegramEngine.EngineData.Item.Peer.Peer(id: authorId)
+                                    ).get()
+                                }
+                                self.styles[index] = TextProcessingScreen.Style(cloudStyle: style, authorPeer: authorPeer)
+                                self.state?.updated(transition: .immediate)
                             }
-                            guard let index = self.styles.firstIndex(where: { $0.id.id == style.id }) else {
-                                return
-                            }
-                            self.styles[index] = TextProcessingScreen.Style(cloudStyle: style)
-                            self.state?.updated(transition: .immediate)
                         },
                         styleDeleted: { [weak self] id in
                             guard let self else {
@@ -1068,9 +1464,17 @@ private final class TextProcessingSheetComponent: Component {
                             }
                             self.styles.remove(at: index)
                             self.state?.updated(transition: .spring(duration: 0.4))
+                        },
+                        dismiss: { [weak self] completion in
+                            self?.animateOut.invoke(Action { _ in
+                                if let controller = controller() {
+                                    controller.dismiss(completion: nil)
+                                }
+                                completion()
+                            })
                         }
                     )),
-                    titleItem: AnyComponent(TitleComponent(
+                    titleItem: titleString.isEmpty ? nil : AnyComponent(TitleComponent(
                         theme: theme,
                         title: titleString,
                         isProcessing: self.contentExternalState.isProcessing
@@ -1092,7 +1496,7 @@ private final class TextProcessingSheetComponent: Component {
                             }
                         )
                     ),
-                    rightItem: AnyComponent(
+                    rightItem: displayInfoButton ? AnyComponent(
                         GlassBarButtonComponent(
                             size: CGSize(width: 44.0, height: 44.0),
                             backgroundColor: nil,
@@ -1111,7 +1515,8 @@ private final class TextProcessingSheetComponent: Component {
                                 environment.controller()?.push(component.context.sharedContext.makeCocoonInfoScreen(context: component.context))
                             }
                         )
-                    ),
+                    ) : nil,
+                    hasTopEdgeEffect: displayInfoButton,
                     bottomItem: AnyComponent(
                         ActionButtonsComponent(
                             theme: theme,
@@ -1311,12 +1716,13 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
         public let isAuthor: Bool
         public let slug: String?
         public let cloudStyle: TelegramComposeAIMessageMode.CloudStyle
+        public let authorPeer: EnginePeer?
         
         public var id: TelegramComposeAIMessageMode.StyleReference {
             return .style(self.reference)
         }
         
-        public init(reference: TelegramComposeAIMessageMode.CloudStyle.Reference, title: String, emojiFileId: Int64?, emojiFile: TelegramMediaFile?, isAuthor: Bool, slug: String?, cloudStyle: TelegramComposeAIMessageMode.CloudStyle) {
+        public init(reference: TelegramComposeAIMessageMode.CloudStyle.Reference, title: String, emojiFileId: Int64?, emojiFile: TelegramMediaFile?, isAuthor: Bool, slug: String?, cloudStyle: TelegramComposeAIMessageMode.CloudStyle, authorPeer: EnginePeer?) {
             self.reference = reference
             self.title = title
             self.emojiFileId = emojiFileId
@@ -1324,9 +1730,10 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
             self.isAuthor = isAuthor
             self.slug = slug
             self.cloudStyle = cloudStyle
+            self.authorPeer = authorPeer
         }
         
-        convenience init(cloudStyle: TelegramComposeAIMessageMode.CloudStyle) {
+        convenience init(cloudStyle: TelegramComposeAIMessageMode.CloudStyle, authorPeer: EnginePeer?) {
             let title: String
             let emojiFileId: Int64?
             var isAuthor = false
@@ -1348,7 +1755,8 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
                 emojiFile: nil,
                 isAuthor: isAuthor,
                 slug: slug,
-                cloudStyle: cloudStyle
+                cloudStyle: cloudStyle,
+                authorPeer: authorPeer
             )
         }
         
@@ -1399,6 +1807,7 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
             let emojiFileId: Int64?
             var isAuthor = false
             var slug: String?
+            var authorPeer: EnginePeer?
             switch value.content {
             case let .standard(standard):
                 title = standard.title
@@ -1408,6 +1817,11 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
                 emojiFileId = custom.emojiFileId
                 isAuthor = custom.isCreator
                 slug = custom.slug
+                if let authorId = custom.authorId {
+                    authorPeer = await context.engine.data.get(
+                        TelegramEngine.EngineData.Item.Peer.Peer(id: authorId)
+                    ).get()
+                }
             }
             styles.append(Style(
                 reference: value.reference,
@@ -1416,11 +1830,20 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
                 emojiFile: emojiFileId.flatMap { resolvedEmojiFiles[$0] },
                 isAuthor: isAuthor,
                 slug: slug,
-                cloudStyle: value
+                cloudStyle: value,
+                authorPeer: authorPeer
             ))
         }
         
-        let shouldDisplayStyleNotice = await ApplicationSpecificNotice.getAITextProcessingStyleSelection(accountManager: context.sharedContext.accountManager).get() < 3
+        var shouldDisplayStyleNotice = false
+        var previewIconFile: TelegramMediaFile?
+        if case let .preview(style, _, _, _) = mode {
+            if let emojiFileId = style.emojiFileId {
+                previewIconFile = await context.engine.stickers.resolveInlineStickersLocal(fileIds: [emojiFileId]).get().first?.value
+            }
+        } else {
+            shouldDisplayStyleNotice = await ApplicationSpecificNotice.getAITextProcessingStyleSelection(accountManager: context.sharedContext.accountManager).get() < 3
+        }
         
         var initialEditState: EditState?
         if case let .edit(saveRestoreStateId, _, _, _) = mode, let saveRestoreStateId {
@@ -1447,6 +1870,7 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
                 inputText: inputText,
                 initialEditState: initialEditState,
                 shouldDisplayStyleNotice: shouldDisplayStyleNotice,
+                previewIconFile: previewIconFile,
                 copyCurrentResult: copyResult,
                 translateChat: translateChat
             ),

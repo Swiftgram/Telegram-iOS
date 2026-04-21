@@ -2038,5 +2038,27 @@ func openResolvedUrlImpl(
                 }
                 navigationController?.pushViewController(controller)
             }
+        case let .textStyle(style, initialPreview):
+            Task { @MainActor in
+                var authorPeer: EnginePeer?
+                if let authorId = style.authorId {
+                    authorPeer = await context.engine.data.get(
+                        TelegramEngine.EngineData.Item.Peer.Peer(id: authorId)
+                    ).get()
+                }
+                
+                let controller = await context.sharedContext.makeTextProcessingScreen(context: context, theme: nil, mode: .preview(style: style, authorPeer: authorPeer, initialPreview: initialPreview, added: {
+                    Task { @MainActor in
+                        guard let emojiFileId = style.emojiFileId, let file = await context.engine.stickers.resolveInlineStickers(fileIds: [emojiFileId]).get().first?.value else {
+                            return
+                        }
+                        //TODO:localize
+                        present(UndoOverlayController(presentationData: presentationData, content: .customEmoji(context: context, file: file, loop: false, title: "Style Added", text: "Tap 'AI' → '\(style.title)' when typing your next long message.", undoText: nil, customAction: nil), elevatedLayout: false, animateInAsReplacement: false, action: { _ in
+                            return true
+                        }), nil)
+                    }
+                }), inputText: TextWithEntities(text: "", entities: []), copyResult: nil, translateChat: nil)
+                navigationController?.pushViewController(controller)
+            }
     }
 }

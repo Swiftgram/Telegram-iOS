@@ -14,11 +14,12 @@ import TelegramCore
 import PresentationDataUtils
 import ResizableSheetComponent
 import GlassBarButtonComponent
-import LottieComponent
 import ListSectionComponent
 import Markdown
 import TelegramUIPreferences
 import ListMultilineTextFieldItemComponent
+import TextFieldComponent
+import ListActionItemComponent
 import CheckComponent
 import PlainButtonComponent
 import EntityKeyboard
@@ -37,15 +38,18 @@ final class TextStyleEditContentComponent: Component {
     let externalState: ExternalState
     let context: AccountContext
     let mode: TextStyleEditScreen.Mode
+    let styleDeleted: () -> Void
 
     init(
         externalState: ExternalState,
         context: AccountContext,
-        mode: TextStyleEditScreen.Mode
+        mode: TextStyleEditScreen.Mode,
+        styleDeleted: @escaping () -> Void
     ) {
         self.externalState = externalState
         self.context = context
         self.mode = mode
+        self.styleDeleted = styleDeleted
     }
 
     static func ==(lhs: TextStyleEditContentComponent, rhs: TextStyleEditContentComponent) -> Bool {
@@ -69,14 +73,84 @@ final class TextStyleEditContentComponent: Component {
         private var emojiIcon: ComponentView<Empty>?
         private let titleSection = ComponentView<Empty>()
         private let textSection = ComponentView<Empty>()
+        private let deleteSection = ComponentView<Empty>()
         private let linkOption = ComponentView<Empty>()
-        
+
+        private let titleFieldTag = ListMultilineTextFieldItemComponent.Tag()
+        private let textFieldTag = ListMultilineTextFieldItemComponent.Tag()
+
         override init(frame: CGRect) {
             super.init(frame: frame)
         }
         
         required init?(coder: NSCoder) {
             preconditionFailure()
+        }
+
+        private func recenterCaret(hintView: UIView, transition: ComponentTransition) {
+            var fieldView: ListMultilineTextFieldItemComponent.View?
+            var ancestor: UIView? = hintView
+            while let current = ancestor {
+                if let candidate = current as? ListMultilineTextFieldItemComponent.View {
+                    fieldView = candidate
+                    break
+                }
+                ancestor = current.superview
+            }
+            guard let fieldView else {
+                return
+            }
+            if !(fieldView.matches(tag: self.titleFieldTag) || fieldView.matches(tag: self.textFieldTag)) {
+                return
+            }
+            guard let inputTextView = fieldView.textFieldView?.inputTextView else {
+                return
+            }
+            let caretPosition = inputTextView.selectedTextRange?.end ?? inputTextView.endOfDocument
+            let caretRect = inputTextView.caretRect(for: caretPosition)
+            if caretRect.isNull || caretRect.isInfinite {
+                return
+            }
+
+            var scrollAncestor: UIView? = self.superview
+            var scrollView: UIScrollView?
+            while let current = scrollAncestor {
+                if let candidate = current as? UIScrollView {
+                    scrollView = candidate
+                    break
+                }
+                scrollAncestor = current.superview
+            }
+            guard let scrollView, let environment = self.environment else {
+                return
+            }
+
+            let caretInScroll = inputTextView.convert(caretRect, to: scrollView)
+
+            // ResizableSheetComponent bottom action button (52pt) + gap above it (8pt).
+            let bottomActionAreaHeight: CGFloat = 60.0
+            let caretTopInset: CGFloat = 24.0
+            let caretBottomInset: CGFloat = 24.0
+            let visibleTop = scrollView.bounds.minY + caretTopInset
+            let visibleBottom = scrollView.bounds.maxY - environment.inputHeight - bottomActionAreaHeight - caretBottomInset
+
+            let previousBounds = scrollView.bounds
+            var newBounds = previousBounds
+            if caretInScroll.maxY > visibleBottom {
+                newBounds.origin.y += (caretInScroll.maxY - visibleBottom)
+            } else if caretInScroll.minY < visibleTop {
+                newBounds.origin.y -= (visibleTop - caretInScroll.minY)
+            }
+            let maxOriginY = max(0.0, scrollView.contentSize.height - scrollView.bounds.height)
+            newBounds.origin.y = min(max(0.0, newBounds.origin.y), maxOriginY)
+
+            if newBounds != previousBounds {
+                scrollView.bounds = newBounds
+                if !transition.animation.isImmediate {
+                    let offsetY = previousBounds.origin.y - newBounds.origin.y
+                    transition.animateBoundsOrigin(view: scrollView, from: CGPoint(x: 0.0, y: offsetY), to: CGPoint(), additive: true)
+                }
+            }
         }
 
         func update(component: TextStyleEditContentComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<ViewControllerComponentContainer.Environment>, transition: ComponentTransition) -> CGSize {
@@ -96,6 +170,7 @@ final class TextStyleEditContentComponent: Component {
                 if case let .edit(style) = component.mode, case let .custom(style) = style.content {
                     resetTitle = style.title
                     resetText = style.prompt ?? ""
+                    component.externalState.isLinkToProfileEnabled = style.authorId != nil
                 }
             }
             
@@ -269,7 +344,7 @@ final class TextStyleEditContentComponent: Component {
                 emptyLineHandling: .notAllowed,
                 updated: nil,
                 textUpdateTransition: .spring(duration: 0.4),
-                tag: nil
+                tag: self.titleFieldTag
             ))))
             let titleSectionSize = self.titleSection.update(
                 transition: transition,
@@ -314,7 +389,7 @@ final class TextStyleEditContentComponent: Component {
                 emptyLineHandling: .allowed,
                 updated: nil,
                 textUpdateTransition: .spring(duration: 0.4),
-                tag: nil
+                tag: self.textFieldTag
             ))))
             let textSectionSize = self.textSection.update(
                 transition: transition,
@@ -337,6 +412,67 @@ final class TextStyleEditContentComponent: Component {
                 transition.setFrame(view: textSectionView, frame: textSectionFrame)
             }
             contentHeight += textSectionSize.height
+            
+            if case let .edit(style) = component.mode, case let .custom(style) = style.content {
+                contentHeight += sectionSpacing
+                
+                let deleteSectionSize = self.deleteSection.update(
+                    transition: transition,
+                    component: AnyComponent(ListSectionComponent(
+                        theme: environment.theme,
+                        style: .glass,
+                        header: nil,
+                        footer: nil,
+                        items: [AnyComponentWithIdentity(id: 0, component: AnyComponent(ListActionItemComponent(
+                            theme: environment.theme,
+                            style: .glass,
+                            title: AnyComponent(VStack([
+                                AnyComponentWithIdentity(id: AnyHashable(0), component: AnyComponent(MultilineTextComponent(
+                                    text: .plain(NSAttributedString(
+                                        string: "Delete Style",
+                                        font: Font.regular(17.0),
+                                        textColor: environment.theme.list.itemDestructiveColor
+                                    )),
+                                    maximumNumberOfLines: 1
+                                ))),
+                            ], alignment: .center, spacing: 2.0, fillWidth: true)),
+                            accessory: nil,
+                            action: { [weak self] _ in
+                                guard let self, let component = self.component, let environment = self.environment else {
+                                    return
+                                }
+                                environment.controller()?.push(textAlertController(
+                                    context: component.context,
+                                    title: "Delete Style",
+                                    text: "Are you sure you want to delete this style? It will be removed for everyone who installed it.",
+                                    actions: [
+                                        TextAlertAction(type: .genericAction, title: environment.strings.Common_Cancel, action: {}),
+                                        TextAlertAction(type: .destructiveAction, title: environment.strings.Common_Delete, action: { [weak self] in
+                                            guard let self, let component = self.component else {
+                                                return
+                                            }
+                                            let _ = component.context.engine.messages.deleteAITextStyle(id: style.id, accessHash: style.accessHash).startStandalone()
+                                            component.styleDeleted()
+                                        }),
+                                    ]
+                                ))
+                            }
+                        )))]
+                    )),
+                    environment: {},
+                    containerSize: CGSize(width: availableSize.width - sideInset * 2.0, height: 10000.0)
+                )
+                let deleteSectionFrame = CGRect(origin: CGPoint(x: sideInset, y: contentHeight), size: deleteSectionSize)
+                if let deleteSectionView = self.deleteSection.view {
+                    if deleteSectionView.superview == nil {
+                        self.addSubview(deleteSectionView)
+                        self.deleteSection.parentState = state
+                    }
+                    transition.setFrame(view: deleteSectionView, frame: deleteSectionFrame)
+                }
+                contentHeight += deleteSectionSize.height
+            }
+            
             contentHeight += 23.0
             
             let checkTheme = CheckComponent.Theme(
@@ -388,8 +524,12 @@ final class TextStyleEditContentComponent: Component {
             contentHeight += linkOptionSize.height
             
             contentHeight += 104.0
-            
+
             let _ = alphaTransition
+
+            if let hint = transition.userData(TextFieldComponent.AnimationHint.self), case .textChanged = hint.kind, let hintView = hint.view {
+                self.recenterCaret(hintView: hintView, transition: transition)
+            }
 
             return CGSize(width: availableSize.width, height: contentHeight)
         }
@@ -411,17 +551,20 @@ private final class TextStyleEditSheetComponent: Component {
     let mode: TextStyleEditScreen.Mode
     let initialEmojiFile: TelegramMediaFile?
     let completion: (TelegramComposeAIMessageMode.CloudStyle) -> Void
+    let styleDeleted: () -> Void
 
     init(
         context: AccountContext,
         mode: TextStyleEditScreen.Mode,
         initialEmojiFile: TelegramMediaFile?,
-        completion: @escaping (TelegramComposeAIMessageMode.CloudStyle) -> Void
+        completion: @escaping (TelegramComposeAIMessageMode.CloudStyle) -> Void,
+        styleDeleted: @escaping () -> Void
     ) {
         self.context = context
         self.mode = mode
         self.initialEmojiFile = initialEmojiFile
         self.completion = completion
+        self.styleDeleted = styleDeleted
     }
 
     static func ==(lhs: TextStyleEditSheetComponent, rhs: TextStyleEditSheetComponent) -> Bool {
@@ -435,9 +578,11 @@ private final class TextStyleEditSheetComponent: Component {
         private var component: TextStyleEditSheetComponent?
         private var environment: ViewControllerComponentContainer.Environment?
         private weak var state: EmptyComponentState?
+        private var isUpdating: Bool = false
         
         private let contentState = TextStyleEditContentComponent.ExternalState()
         
+        private var isActionInProgress: Bool = false
         private var createDisposable: Disposable?
 
         override init(frame: CGRect) {
@@ -477,6 +622,11 @@ private final class TextStyleEditSheetComponent: Component {
             
             switch component.mode {
             case .create:
+                self.isActionInProgress = true
+                if !self.isUpdating {
+                    self.state?.updated(transition: .spring(duration: 0.4))
+                }
+                
                 self.createDisposable = (component.context.engine.messages.createAITextStyle(
                     displayAuthor: self.contentState.isLinkToProfileEnabled,
                     emojiFileId: emojiFile.fileId.id,
@@ -500,11 +650,19 @@ private final class TextStyleEditSheetComponent: Component {
                     guard let self else {
                         return
                     }
-                    let _ = self
+                    
+                    self.isActionInProgress = false
+                    if !self.isUpdating {
+                        self.state?.updated(transition: .spring(duration: 0.4))
+                    }
                 })
             case let .edit(style):
                 guard case let .custom(style) = style.content else {
                     return
+                }
+                self.isActionInProgress = true
+                if !self.isUpdating {
+                    self.state?.updated(transition: .spring(duration: 0.4))
                 }
                 self.createDisposable = (component.context.engine.messages.editAITextStyle(
                     id: style.id,
@@ -531,7 +689,11 @@ private final class TextStyleEditSheetComponent: Component {
                     guard let self else {
                         return
                     }
-                    let _ = self
+                    
+                    self.isActionInProgress = false
+                    if !self.isUpdating {
+                        self.state?.updated(transition: .spring(duration: 0.4))
+                    }
                 })
             }
         }
@@ -569,7 +731,7 @@ private final class TextStyleEditSheetComponent: Component {
                 }
                 self.performCreateStyle()
             }
-            let isMainActionEnabled = self.contentState.titleInputState.hasText && self.contentState.textInputState.hasText && self.contentState.emojiFile != nil
+            let isMainActionEnabled = !self.contentState.titleInputState.text.string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !self.contentState.textInputState.text.string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && self.contentState.emojiFile != nil && !self.isActionInProgress
             let actionButtonTitle: String
             let titleString: String
             switch component.mode {
@@ -587,7 +749,8 @@ private final class TextStyleEditSheetComponent: Component {
                     content: AnyComponent<ViewControllerComponentContainer.Environment>(TextStyleEditContentComponent(
                         externalState: self.contentState,
                         context: component.context,
-                        mode: component.mode
+                        mode: component.mode,
+                        styleDeleted: component.styleDeleted
                     )),
                     titleItem: AnyComponent(TitleComponent(
                         theme: theme,
@@ -628,7 +791,7 @@ private final class TextStyleEditSheetComponent: Component {
                         theme: theme,
                         statusBarHeight: environmentValue.statusBarHeight,
                         safeInsets: environmentValue.safeInsets,
-                        inputHeight: 0.0,
+                        inputHeight: environmentValue.inputHeight,
                         metrics: environmentValue.metrics,
                         deviceMetrics: environmentValue.deviceMetrics,
                         isDisplaying: environmentValue.isVisible,
@@ -675,7 +838,8 @@ public class TextStyleEditScreen: ViewControllerComponentContainer {
         context: AccountContext,
         theme: PresentationTheme? = nil,
         mode: Mode,
-        completion: @escaping (TelegramComposeAIMessageMode.CloudStyle) -> Void
+        completion: @escaping (TelegramComposeAIMessageMode.CloudStyle) -> Void,
+        styleDeleted: @escaping () -> Void
     ) async {
         self.context = context
         
@@ -690,7 +854,8 @@ public class TextStyleEditScreen: ViewControllerComponentContainer {
                 context: context,
                 mode: mode,
                 initialEmojiFile: initialEmojiFile,
-                completion: completion
+                completion: completion,
+                styleDeleted: styleDeleted
             ),
             navigationBarAppearance: .none,
             statusBarStyle: .ignore,

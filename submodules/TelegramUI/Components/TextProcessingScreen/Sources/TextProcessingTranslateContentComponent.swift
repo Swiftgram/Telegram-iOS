@@ -11,6 +11,8 @@ import BundleIconComponent
 import TelegramCore
 import TranslateUI
 import TooltipComponent
+import Markdown
+import PlainButtonComponent
 
 private let languageRecognizer = NLLanguageRecognizer()
 
@@ -54,10 +56,13 @@ final class TextProcessingTranslateContentComponent: Component {
         case translate(ignoredLanguages: [String])
         case stylize
         case fix
+        case preview(from: TextWithEntities?, to: TextWithEntities?, authorPeer: EnginePeer?, userCount: Int, isRequesting: Bool)
     }
     
     final class ExternalState {
         fileprivate(set) var sourceLanguage: String?
+        fileprivate(set) var sectionHeader: AnyComponentWithIdentity<Empty>?
+        fileprivate(set) var sectionFooter: AnyComponentWithIdentity<Empty>?
         
         fileprivate(set) var result: (language: String, text: TextWithEntities?, textCorrectionRanges: [Range<Int>])? = nil {
             didSet {
@@ -108,6 +113,8 @@ final class TextProcessingTranslateContentComponent: Component {
     let openStyleContextMenu: (TelegramComposeAIMessageMode.StyleReference, ContextGesture, ContextExtractedContentContainingView) -> Void
     let present: (ViewController, Any?) -> Void
     let rootViewForTextSelection: () -> UIView?
+    let openPeer: (EnginePeer) -> Void
+    let requestAnotherPreviewExample: () -> Void
 
     init(
         context: AccountContext,
@@ -122,7 +129,9 @@ final class TextProcessingTranslateContentComponent: Component {
         createStyle: @escaping () -> Void,
         openStyleContextMenu: @escaping (TelegramComposeAIMessageMode.StyleReference, ContextGesture, ContextExtractedContentContainingView) -> Void,
         present: @escaping (ViewController, Any?) -> Void,
-        rootViewForTextSelection: @escaping () -> UIView?
+        rootViewForTextSelection: @escaping () -> UIView?,
+        openPeer: @escaping (EnginePeer) -> Void,
+        requestAnotherPreviewExample: @escaping () -> Void
     ) {
         self.context = context
         self.theme = theme
@@ -137,6 +146,8 @@ final class TextProcessingTranslateContentComponent: Component {
         self.openStyleContextMenu = openStyleContextMenu
         self.present = present
         self.rootViewForTextSelection = rootViewForTextSelection
+        self.openPeer = openPeer
+        self.requestAnotherPreviewExample = requestAnotherPreviewExample
     }
 
     static func ==(lhs: TextProcessingTranslateContentComponent, rhs: TextProcessingTranslateContentComponent) -> Bool {
@@ -228,6 +239,8 @@ final class TextProcessingTranslateContentComponent: Component {
                     } else {
                         mappedMode = .stylize(emojify: component.externalState.emojify, style: component.externalState.style)
                     }
+                case .preview:
+                    mappedMode = nil
                 case .fix:
                     mappedMode = .proofread
                 }
@@ -259,6 +272,12 @@ final class TextProcessingTranslateContentComponent: Component {
                         }
                     })
                 }
+            }
+        }
+        
+        func scrollStylesToStart() {
+            if let styleSelectionView = self.styleSelection.view as? TextProcessingStyleSelectionComponent.View {
+                styleSelectionView.scrollToStart()
             }
         }
 
@@ -324,6 +343,8 @@ final class TextProcessingTranslateContentComponent: Component {
                 case .fix:
                     component.externalState.result = ("", nil, [])
                     self.beginTranslationIfNecessary(reset: false)
+                case .preview:
+                    component.externalState.result = ("", component.inputText, [])
                 }
             }
             
@@ -360,6 +381,142 @@ final class TextProcessingTranslateContentComponent: Component {
                     toFormat = component.strings.TextProcessing_ResultBadge
                 }
                 toTitle = ""
+            case .preview:
+                //TODO:localize
+                fromFormat = "Before"
+                toFormat = "After"
+                toTitle = ""
+            }
+            
+            var fromText: TextWithEntities? = component.inputText
+            var fromTextMeasurementString: String?
+            var toTextMeasurementString: String?
+            var toText: TextWithEntities? = component.externalState.result?.text
+            var isPreview = false
+            if case let .preview(from, to, _, _, isRequesting) = component.mode {
+                isPreview = true
+                if isRequesting {
+                    fromText = nil
+                    toText = nil
+                } else {
+                    fromText = from
+                    toText = to
+                }
+                fromTextMeasurementString = from?.text
+                toTextMeasurementString = to?.text
+            }
+            
+            if case .stylize = component.mode {
+                //TODO:localize
+                if case .style = component.externalState.style, let style = component.styles.first(where: { $0.id == component.externalState.style }), let authorPeer = style.authorPeer {
+                    let footerText: String
+                    //TODO:localize
+                    if let addressName = authorPeer.addressName {
+                        footerText = "Style by [@\(addressName)](\(authorPeer.id.toInt64()))"
+                    } else {
+                        footerText = "Style by [\(authorPeer.displayTitle(strings: component.strings, displayOrder: .firstLast))](\(authorPeer.id.toInt64()))"
+                    }
+                    component.externalState.sectionFooter = AnyComponentWithIdentity(id: "style_by_\(authorPeer.id.toInt64())", component: AnyComponent(MultilineTextComponent(
+                        text: .markdown(text: footerText, attributes: MarkdownAttributes(
+                            body: MarkdownAttributeSet(font: Font.regular(13.0), textColor: component.theme.list.freeTextColor),
+                            bold: MarkdownAttributeSet(font: Font.semibold(13.0), textColor: component.theme.list.freeTextColor),
+                            link: MarkdownAttributeSet(font: Font.regular(13.0), textColor: component.theme.list.itemAccentColor),
+                            linkAttribute: { url in
+                                return ("URL", url)
+                            }
+                        )),
+                        highlightColor: component.theme.list.itemAccentColor.withAlphaComponent(0.1),
+                        highlightAction: { attributes in
+                            if let _ = attributes[NSAttributedString.Key(rawValue: "URL")] {
+                                return NSAttributedString.Key(rawValue: "URL")
+                            } else {
+                                return nil
+                            }
+                        },
+                        tapAction: { [weak self] attributes, _ in
+                            guard let self, let component = self.component else {
+                                return
+                            }
+                            if let _ = attributes[NSAttributedString.Key(rawValue: "URL")] as? String {
+                                component.openPeer(authorPeer)
+                            }
+                        }
+                    )))
+                } else {
+                    component.externalState.sectionFooter = nil
+                }
+            } else if case let .preview(_, _, authorPeer, userCount, _) = component.mode {
+                component.externalState.sectionHeader = AnyComponentWithIdentity(id: "preview", component: AnyComponent(HStack([
+                    AnyComponentWithIdentity(id: 0, component: AnyComponent(MultilineTextComponent(
+                        text: .markdown(text: "EXAMPLE", attributes: MarkdownAttributes(
+                            body: MarkdownAttributeSet(font: Font.regular(13.0), textColor: component.theme.list.freeTextColor),
+                            bold: MarkdownAttributeSet(font: Font.semibold(13.0), textColor: component.theme.list.freeTextColor),
+                            link: MarkdownAttributeSet(font: Font.regular(13.0), textColor: component.theme.list.itemAccentColor),
+                            linkAttribute: { url in
+                                return ("URL", url)
+                            }
+                        ))
+                    ))),
+                    AnyComponentWithIdentity(id: 1, component: AnyComponent(PlainButtonComponent(
+                        content: AnyComponent(HStack([
+                            AnyComponentWithIdentity(id: 0, component: AnyComponent(BundleIconComponent(
+                                name: "Settings/Refresh",
+                                tintColor: component.theme.list.itemAccentColor
+                            ))),
+                            AnyComponentWithIdentity(id: 1, component: AnyComponent(MultilineTextComponent(
+                                text: .plain(NSAttributedString(string: "ANOTHER EXAMPLE", font: Font.regular(13.0), textColor: component.theme.list.itemAccentColor))
+                            )))
+                        ], spacing: 2.0)),
+                        action: { [weak self] in
+                            guard let self, let component = self.component else {
+                                return
+                            }
+                            component.requestAnotherPreviewExample()
+                        },
+                        animateScale: false,
+                        animateContents: false
+                    ))),
+                ], spacing: 8.0, alignment: .alternatingLeftRight)))
+                
+                let userCountString = userCount == 1 ? "Used by 1 person" : "Used by \(userCount) people"
+                
+                let footerText: String
+                //TODO:localize
+                if let authorPeer {
+                    if let addressName = authorPeer.addressName {
+                        footerText = "\(userCountString). Created by [@\(addressName)](\(authorPeer.id.toInt64()))"
+                    } else {
+                        footerText = "\(userCountString). Created by [\(authorPeer.displayTitle(strings: component.strings, displayOrder: .firstLast))](\(authorPeer.id.toInt64()))"
+                    }
+                } else {
+                    footerText = "\(userCountString)."
+                }
+                component.externalState.sectionFooter = AnyComponentWithIdentity(id: "style_by_\(authorPeer?.id.toInt64() ?? 0)", component: AnyComponent(MultilineTextComponent(
+                    text: .markdown(text: footerText, attributes: MarkdownAttributes(
+                        body: MarkdownAttributeSet(font: Font.regular(13.0), textColor: component.theme.list.freeTextColor),
+                        bold: MarkdownAttributeSet(font: Font.semibold(13.0), textColor: component.theme.list.freeTextColor),
+                        link: MarkdownAttributeSet(font: Font.regular(13.0), textColor: component.theme.list.itemAccentColor),
+                        linkAttribute: { url in
+                            return ("URL", url)
+                        }
+                    )),
+                    highlightColor: component.theme.list.itemAccentColor.withAlphaComponent(0.1),
+                    highlightAction: { attributes in
+                        if let _ = attributes[NSAttributedString.Key(rawValue: "URL")] {
+                            return NSAttributedString.Key(rawValue: "URL")
+                        } else {
+                            return nil
+                        }
+                    },
+                    tapAction: { [weak self] attributes, _ in
+                        guard let self, let component = self.component else {
+                            return
+                        }
+                        if let authorPeer, let _ = attributes[NSAttributedString.Key(rawValue: "URL")] as? String {
+                            component.openPeer(authorPeer)
+                        }
+                    }
+                )))
             }
             
             contentHeight += topInset
@@ -425,7 +582,7 @@ final class TextProcessingTranslateContentComponent: Component {
                         titleFormat: fromFormat,
                         title: fromTitle,
                         titleAction: nil,
-                        isExpanded: (
+                        isExpanded: isPreview ? nil : (
                             component.externalState.isSourceTextExpanded,
                             { [weak self] in
                                 guard let self, let component = self.component else {
@@ -439,8 +596,8 @@ final class TextProcessingTranslateContentComponent: Component {
                         ),
                         copyAction: nil,
                         emojify: nil,
-                        text: component.inputText,
-                        loadingStateMeasuringText: nil,
+                        text: fromText,
+                        loadingStateMeasuringText: fromTextMeasurementString,
                         textCorrectionRanges: [],
                         present: component.present,
                         rootViewForTextSelection: component.rootViewForTextSelection
@@ -517,8 +674,8 @@ final class TextProcessingTranslateContentComponent: Component {
                             }
                         }
                     ) : nil,
-                    text: component.externalState.result?.text,
-                    loadingStateMeasuringText: component.inputText.text,
+                    text: toText,
+                    loadingStateMeasuringText: toTextMeasurementString ?? component.inputText.text,
                     textCorrectionRanges: component.mode == .fix ? (component.externalState.result?.textCorrectionRanges ?? []) : [],
                     present: component.present,
                     rootViewForTextSelection: component.rootViewForTextSelection

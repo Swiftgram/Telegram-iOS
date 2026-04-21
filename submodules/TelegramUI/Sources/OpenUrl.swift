@@ -693,6 +693,10 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                             handleResolvedUrl(.createBot(parentBot: peer.id, username: params["username"], title: params["name"]))
                         })
                     }
+                case "textStyle":
+                    if let slug = params["slug"] {
+                        convertedUrl = makeTelegramUrl("/addstyle/\(slug)")
+                    }
                 default:
                     break
                 }

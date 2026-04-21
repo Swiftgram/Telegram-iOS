@@ -270,21 +270,20 @@ public final class ChatMessageItemImpl: ChatMessageItem, CustomStringConvertible
     
     public var failed: Bool {
         switch self.content {
-            case let .message(message, _, _, _, _):
-                return message.flags.contains(.Failed)
-            case let .group(messages):
-                return messages[0].0.flags.contains(.Failed)
+        case let .message(message, _, _, _, _):
+            return message.flags.contains(.Failed)
+        case let .group(messages):
+            return messages[0].0.flags.contains(.Failed)
         }
     }
     
     public var pinToEdgeWithInset: Bool {
-        return false
-        /*switch self.content {
-        case let .message(message, _, _, _, _):
-            return !message.effectivelyIncoming(self.context.account.peerId)
+        switch self.content {
+        case let .message(_, _, _, attributes, _):
+            return attributes.pinToTop
         case let .group(messages):
-            return !messages[0].0.effectivelyIncoming(self.context.account.peerId)
-        }*/
+            return messages[0].3.pinToTop
+        }
     }
     
     public init(presentationData: ChatPresentationData, context: AccountContext, chatLocation: ChatLocation, associatedData: ChatMessageItemAssociatedData, controllerInteraction: ChatControllerInteraction, content: ChatMessageItemContent, disableDate: Bool = false, additionalContent: ChatMessageItemAdditionalContent? = nil) {

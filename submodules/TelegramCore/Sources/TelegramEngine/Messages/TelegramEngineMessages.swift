@@ -1807,8 +1807,20 @@ public extension TelegramEngine {
             }
         }
         
+        public func requestAIMessageStyle(slug: String) -> Signal<(style: TelegramComposeAIMessageMode.CloudStyle, initialPreview: AIMessageStylePreview?)?, NoError> {
+            return _internal_requestAIMessageStyle(account: self.account, slug: slug)
+        }
+        
+        public func installAIMessageStyle(style: TelegramComposeAIMessageMode.CloudStyle.Custom) -> Signal<Never, InstallAIMessageStyleError> {
+            return _internal_installAIMessageStyle(account: self.account, style: style)
+        }
+        
         public func composeAIMessage(text: TextWithEntities, mode: TelegramComposeAIMessageMode) -> Signal<TelegramAIComposeMessageResult, TelegramAIComposeMessageError> {
             return _internal_composeAIMessage(account: self.account, text: text, mode: mode)
+        }
+        
+        public func requestAIMessageStylePreview(reference: TelegramComposeAIMessageMode.CloudStyle.Reference, index: Int) -> Signal<AIMessageStylePreview?, NoError> {
+            return _internal_requestAIMessageStylePreview(account: self.account, reference: reference, index: index)
         }
         
         public func requestMiniAppButton(peerId: EnginePeer.Id, requestId: String) -> Signal<ReplyMarkupButton?, NoError> {

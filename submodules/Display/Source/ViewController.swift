@@ -306,14 +306,7 @@ public protocol CustomViewControllerNavigationDataSummary: AnyObject {
         return self._ready
     }
     
-    private var scrollToTopView: ScrollToTopView?
-    public var scrollToTop: (() -> Void)? {
-        didSet {
-            if self.isViewLoaded {
-                self.updateScrollToTopView()
-            }
-        }
-    }
+    public var scrollToTop: (() -> Void)?
     public var scrollToTopWithTabBar: (() -> Void)?
     public var longTapWithTabBar: (() -> Void)?
     
@@ -355,24 +348,6 @@ public protocol CustomViewControllerNavigationDataSummary: AnyObject {
     }
     
     open func didAppearInContextPreview() {
-    }
-    
-    private func updateScrollToTopView() {
-        /*if self.scrollToTop != nil {
-            if let displayNode = self._displayNode , self.scrollToTopView == nil {
-                let scrollToTopView = ScrollToTopView(frame: CGRect(x: 0.0, y: -1.0, width: displayNode.bounds.size.width, height: 1.0))
-                scrollToTopView.action = { [weak self] in
-                    if let scrollToTop = self?.scrollToTop {
-                        scrollToTop()
-                    }
-                }
-                self.scrollToTopView = scrollToTopView
-                self.view.addSubview(scrollToTopView)
-            }
-        } else*/ if let scrollToTopView = self.scrollToTopView {
-            scrollToTopView.removeFromSuperview()
-            self.scrollToTopView = nil
-        }
     }
     
     public var titleSignal: Signal<String?, NoError> {
@@ -514,10 +489,6 @@ public protocol CustomViewControllerNavigationDataSummary: AnyObject {
         if self.automaticallyControlPresentationContextLayout {
             self.presentationContext.containerLayoutUpdated(layout, transition: transition)
         }
-        
-        if let scrollToTopView = self.scrollToTopView {
-            scrollToTopView.frame = CGRect(x: 0.0, y: 0.0, width: layout.size.width, height: 10.0)
-        }
     }
     
     open func navigationStackConfigurationUpdated(next: [ViewController]) {
@@ -541,7 +512,6 @@ public protocol CustomViewControllerNavigationDataSummary: AnyObject {
     }
     
     open func displayNodeDidLoad() {
-        self.updateScrollToTopView()
         if let backgroundColor = self.displayNode.backgroundColor, backgroundColor.alpha.isEqual(to: 1.0) {
             self.blocksBackgroundWhenInOverlay = true
             self.isOpaqueWhenInOverlay = true

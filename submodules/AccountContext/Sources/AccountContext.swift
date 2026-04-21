@@ -332,6 +332,7 @@ public enum ResolvedUrl {
     case unknownDeepLink(path: String)
     case oauth(url: String)
     case createBot(parentBot: PeerId, username: String?, title: String?)
+    case textStyle(style: TelegramComposeAIMessageMode.CloudStyle.Custom, initialPreview: AIMessageStylePreview?)
     
     public enum ResolvedCollectible {
         case gift(StarGift.UniqueGift)
@@ -1323,6 +1324,7 @@ public final class TextProcessingScreenSendContextActions {
 public enum TextProcessingScreenMode {
     case edit(saveRestoreStateId: EnginePeer.Id?, completion: (TextWithEntities) -> Void, send: ((TextWithEntities) -> Void)?, sendContextActions: TextProcessingScreenSendContextActions?)
     case translate(fromLanguage: String?)
+    case preview(style: TelegramComposeAIMessageMode.CloudStyle.Custom, authorPeer: EnginePeer?, initialPreview: AIMessageStylePreview?, added: () -> Void)
 }
 
 public enum EmojiStatusSelectionControllerMode {

@@ -8,6 +8,8 @@ import TelegramCore
 import EmojiStatusComponent
 import AccountContext
 import BundleIconComponent
+import GlassBackgroundComponent
+import ComponentDisplayAdapters
 
 final class TextProcessingStyleSelectionComponent: Component {
     let context: AccountContext
@@ -116,9 +118,12 @@ final class TextProcessingStyleSelectionComponent: Component {
                 guard case .custom = item.reference else {
                     return false
                 }
+                guard let itemComponentView = itemView.view as? ItemComponent.View else {
+                    return false
+                }
                 
                 self.itemWithActiveContextGesture = itemId
-                self.contextGestureContainerView.targetLayerForActivationProgress = itemView.view?.layer
+                self.contextGestureContainerView.targetLayerForActivationProgress = itemComponentView.containerView.layer
                 
                 let startPoint = point
                 self.contextGestureContainerView.contextGesture?.externalUpdated = { [weak self] _, point in
@@ -196,6 +201,11 @@ final class TextProcessingStyleSelectionComponent: Component {
                     }
                 }
             }
+        }
+        
+        func scrollToStart() {
+            let transition: ComponentTransition = .spring(duration: 0.4)
+            transition.setBounds(view: self.scrollView, bounds: CGRect(origin: CGPoint(), size: self.scrollView.bounds.size))
         }
         
         func update(component: TextProcessingStyleSelectionComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<Empty>, transition: ComponentTransition) -> CGSize {
@@ -291,9 +301,8 @@ final class TextProcessingStyleSelectionComponent: Component {
                       let naturalSize = itemSizes[.style(style.reference.id)] else {
                     continue
                 }
-                let slotOriginX = CGFloat(i) * slotWidth
-                let itemX = slotOriginX + floor((slotWidth - naturalSize.width) * 0.5)
-                let itemFrame = CGRect(origin: CGPoint(x: itemX, y: 0.0), size: naturalSize)
+                let itemSize = CGSize(width: slotWidth, height: naturalSize.height)
+                let itemFrame = CGRect(origin: CGPoint(x: CGFloat(i) * slotWidth, y: 0.0), size: itemSize)
                 if let itemComponentView = itemView.view as? ItemComponent.View {
                     var itemTransition = transition
                     if itemComponentView.superview == nil {
@@ -303,10 +312,10 @@ final class TextProcessingStyleSelectionComponent: Component {
                         transition.animateAlpha(view: itemComponentView, from: 0.0, to: 1.0)
                     }
                     itemTransition.setFrame(view: itemComponentView, frame: itemFrame)
-                    itemComponentView.applySize(measuredSize: naturalSize, size: itemFrame.size, transition: itemTransition)
+                    itemComponentView.applySize(measuredSize: naturalSize, size: itemSize, transition: itemTransition)
                 }
                 if .style(style.reference.id) == component.selectedStyle {
-                    selectedItemFrame = CGRect(origin: CGPoint(x: slotOriginX, y: -5.0), size: CGSize(width: slotWidth, height: availableSize.height + 5.0 + 3.0))
+                    selectedItemFrame = CGRect(origin: CGPoint(x: itemFrame.minX, y: -5.0), size: CGSize(width: slotWidth, height: availableSize.height + 5.0 + 3.0))
                 }
             }
             
@@ -416,6 +425,8 @@ private final class ItemComponent: Component {
     final class View: UIView {
         let contextContainerView: ContextExtractedContentContainingView
         let containerView: UIView
+        private let backgroundContainer: GlassBackgroundContainerView
+        private let backgroundView: GlassBackgroundView
         
         private var imageIcon: ComponentView<Empty>?
         private let title = ComponentView<Empty>()
@@ -427,10 +438,28 @@ private final class ItemComponent: Component {
             self.contextContainerView = ContextExtractedContentContainingView()
             self.containerView = UIView()
             
+            self.backgroundContainer = GlassBackgroundContainerView()
+            self.backgroundContainer.alpha = 0.0
+            self.backgroundView = GlassBackgroundView()
+            self.backgroundContainer.contentView.addSubview(self.backgroundView)
+            
             super.init(frame: frame)
             
             self.addSubview(self.contextContainerView)
+            self.contextContainerView.contentView.addSubview(self.backgroundContainer)
             self.contextContainerView.contentView.addSubview(self.containerView)
+            
+            self.contextContainerView.willUpdateIsExtractedToContextPreview = { [weak self] isExtracted, transition in
+                guard let self else {
+                    return
+                }
+                let transition: ComponentTransition = transition.isAnimated ? .easeInOut(duration: 0.25) : .immediate
+                if isExtracted {
+                    transition.setAlpha(view: self.backgroundContainer, alpha: 1.0)
+                } else {
+                    transition.setAlpha(view: self.backgroundContainer, alpha: 0.001)
+                }
+            }
         }
 
         required init?(coder: NSCoder) {
@@ -438,10 +467,20 @@ private final class ItemComponent: Component {
         }
         
         func applySize(measuredSize: CGSize, size: CGSize, transition: ComponentTransition) {
-            transition.setFrame(view: self.containerView, frame: measuredSize.centered(in: CGRect(origin: CGPoint(), size: size)))
+            guard let component = self.component else {
+                return
+            }
+            let containerFrame = CGRect(origin: CGPoint(x: floor((size.width - measuredSize.width) * 0.5), y: floor((measuredSize.height - size.height) * 0.5)), size: measuredSize)
+            let contentRect = CGRect(origin: CGPoint(x: 0.0, y: -5.0 - 4.0), size: CGSize(width: size.width + 0.0, height: size.height + 5.0 + 3.0 + 6.0))
+            transition.setFrame(view: self.backgroundContainer, frame: contentRect)
+            self.backgroundContainer.update(size: contentRect.size, isDark: component.theme.overallDarkAppearance, transition: transition)
+            transition.setFrame(view: self.backgroundView, frame: CGRect(origin: CGPoint(), size: contentRect.size))
+            self.backgroundView.update(size: contentRect.size, cornerRadius: 20.0, isDark: component.theme.overallDarkAppearance, tintColor: .init(kind: .panel), transition: transition)
+            
+            transition.setFrame(view: self.containerView, frame: containerFrame)
             transition.setFrame(view: self.contextContainerView, frame: CGRect(origin: CGPoint(), size: size))
             transition.setFrame(view: self.contextContainerView.contentView, frame: CGRect(origin: CGPoint(), size: size))
-            self.contextContainerView.contentRect = CGRect(origin: CGPoint(x: 0.0, y: -5.0), size: CGSize(width: size.width, height: size.height + 5.0 + 3.0))
+            self.contextContainerView.contentRect = contentRect.insetBy(dx: -2.0, dy: -2.0)
         }
         
         func update(component: ItemComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<Empty>, transition: ComponentTransition) -> CGSize {

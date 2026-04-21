@@ -64,6 +64,14 @@ public enum TelegramMediaWebpageAttribute: PostboxCoding, Equatable {
             encoder.encodeObject(attribute, forKey: "a")
         }
     }
+    
+    public var mediaIds: [MediaId] {
+        if case let .aiTextStyle(attribute) = self {
+            return [MediaId(namespace: Namespaces.Media.CloudFile, id: attribute.emojiFileId)]
+        } else {
+            return []
+        }
+    }
 }
 
 public final class TelegraMediaWebpageThemeAttribute: PostboxCoding, Equatable {
@@ -585,6 +593,17 @@ public final class TelegramMediaWebpage: Media, Equatable {
         } else {
             return []
         }
+    }
+    
+    public var mediaIds: [MediaId] {
+        guard case let .Loaded(content) = self.content else {
+            return []
+        }
+        var result: [MediaId] = []
+        for attribute in content.attributes {
+            result.append(contentsOf: attribute.mediaIds)
+        }
+        return result
     }
     
     public let webpageId: MediaId

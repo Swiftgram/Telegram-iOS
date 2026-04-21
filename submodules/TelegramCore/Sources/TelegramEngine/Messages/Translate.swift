@@ -574,8 +574,8 @@ public enum TelegramComposeAIMessageMode {
         
         public enum Content: Equatable, Codable {
             private enum CodingKeys: String, CodingKey {
-                case standard = "s"
-                case custom = "c"
+                case discriminator = "d"
+                case value = "v"
             }
             
             case standard(Standard)
@@ -584,11 +584,12 @@ public enum TelegramComposeAIMessageMode {
             public init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 
-                if let standard = try? container.decode(Standard.self, forKey: .standard) {
-                    self = .standard(standard)
-                } else if let custom = try? container.decode(Custom.self, forKey: .custom) {
-                    self = .custom(custom)
-                } else {
+                switch try container.decode(Int32.self, forKey: .discriminator) {
+                case 0:
+                    self = .standard(try container.decode(Standard.self, forKey: .value))
+                case 1:
+                    self = .custom(try container.decode(Custom.self, forKey: .value))
+                default:
                     throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: [], debugDescription: ""))
                 }
             }
@@ -598,9 +599,11 @@ public enum TelegramComposeAIMessageMode {
                 
                 switch self {
                 case let .standard(standard):
-                    try container.encode(standard, forKey: .standard)
+                    try container.encode(0 as Int32, forKey: .discriminator)
+                    try container.encode(standard, forKey: .value)
                 case let .custom(custom):
-                    try container.encode(custom, forKey: .custom)
+                    try container.encode(1 as Int32, forKey: .discriminator)
+                    try container.encode(custom, forKey: .value)
                 }
             }
         }
@@ -798,6 +801,44 @@ func _internal_composeAIMessage(account: Account, text: TextWithEntities, mode: 
     }
 }
 
+public final class AIMessageStylePreview {
+    public let from: TextWithEntities
+    public let to: TextWithEntities
+    public let index: Int?
+    
+    public init(from: TextWithEntities, to: TextWithEntities, index: Int?) {
+        self.from = from
+        self.to = to
+        self.index = index
+    }
+}
+
+extension AIMessageStylePreview {
+    convenience init(apiPreview: Api.AiComposeToneExample, index: Int) {
+        switch apiPreview {
+        case let .aiComposeToneExample(aiComposeToneExample):
+            self.init(from: TextWithEntities(apiValue: aiComposeToneExample.from), to: TextWithEntities(apiValue: aiComposeToneExample.to), index: index)
+        }
+    }
+}
+
+public func _internal_requestAIMessageStylePreview(account: Account, reference: TelegramComposeAIMessageMode.CloudStyle.Reference, index: Int) -> Signal<AIMessageStylePreview?, NoError> {
+    return account.network.request(Api.functions.aicompose.getToneExample(tone: reference.apiInputStyle, num: Int32(index)))
+    |> map(Optional.init)
+    |> `catch` { _ -> Signal<Api.AiComposeToneExample?, NoError> in
+        return .single(nil)
+    }
+    |> map { result -> AIMessageStylePreview? in
+        guard let result else {
+            return nil
+        }
+        return AIMessageStylePreview(
+            apiPreview: result,
+            index: index
+        )
+    }
+}
+
 public enum CreateAITextStyleError {
     case generic
 }
@@ -822,7 +863,7 @@ func _internal_createAITextStyle(account: Account, displayAuthor: Bool, emojiFil
             
             let styles = _internal_cachedCloudAITextStyles(transaction: transaction)
             var items = styles?.items ?? []
-            items.append(style)
+            items.insert(style, at: 0)
             _internal_setCachedCloudAITextStyles(transaction: transaction, styles: CachedCloudAITextStyles(items: items, hash: 0))
             return style
         }
@@ -920,6 +961,60 @@ func _internal_setCachedCloudAITextStyles(transaction: Transaction, styles: Cach
     
     if let entry = CodableEntry(styles) {
         transaction.putItemCacheEntry(id: ItemCacheEntryId(collectionId: Namespaces.CachedItemCollection.cachedCloudAITextStyles, key: key), entry: entry)
+    }
+}
+
+func _internal_requestAIMessageStyle(account: Account, slug: String) -> Signal<(style: TelegramComposeAIMessageMode.CloudStyle, initialPreview: AIMessageStylePreview?)?, NoError> {
+    return account.network.request(Api.functions.aicompose.getTone(tone: .inputAiComposeToneSlug(Api.InputAiComposeTone.Cons_inputAiComposeToneSlug(slug: slug))))
+    |> map(Optional.init)
+    |> `catch` { _ -> Signal<Api.aicompose.Tones?, NoError> in
+        return .single(nil)
+    }
+    |> mapToSignal { result -> Signal<(style: TelegramComposeAIMessageMode.CloudStyle, initialPreview: AIMessageStylePreview?)?, NoError> in
+        guard let result else {
+            return .single(nil)
+        }
+        return account.postbox.transaction { transaction -> (style: TelegramComposeAIMessageMode.CloudStyle, initialPreview: AIMessageStylePreview?)? in
+            switch result {
+            case let .tones(tones):
+                guard let tone = tones.tones.first else {
+                    return nil
+                }
+                updatePeers(transaction: transaction, accountPeerId: account.peerId, peers: AccumulatedPeers(users: tones.users))
+                return (TelegramComposeAIMessageMode.CloudStyle(apiTone: tone), nil)
+            case .tonesNotModified:
+                return nil
+            }
+        }
+    }
+}
+
+public enum InstallAIMessageStyleError {
+    case generic
+}
+
+func _internal_installAIMessageStyle(account: Account, style: TelegramComposeAIMessageMode.CloudStyle.Custom) -> Signal<Never, InstallAIMessageStyleError> {
+    return account.network.request(Api.functions.aicompose.saveTone(tone: .inputAiComposeToneID(Api.InputAiComposeTone.Cons_inputAiComposeToneID(id: style.id, accessHash: style.accessHash)), unsave: .boolFalse))
+    |> map(Optional.init)
+    |> `catch` { _ -> Signal<Api.Bool?, NoError> in
+        return .single(nil)
+    }
+    |> castError(InstallAIMessageStyleError.self)
+    |> mapToSignal { result -> Signal<Never, InstallAIMessageStyleError> in
+        if result != nil {
+            return account.postbox.transaction { transaction -> Void in
+                var items = _internal_cachedCloudAITextStyles(transaction: transaction)?.items ?? []
+                if let index = items.firstIndex(where: { $0.id == .style(.custom(style.id)) }) {
+                    items.remove(at: index)
+                }
+                items.insert(TelegramComposeAIMessageMode.CloudStyle(content: .custom(style)), at: 0)
+                _internal_setCachedCloudAITextStyles(transaction: transaction, styles: CachedCloudAITextStyles(items: items, hash: 0))
+            }
+            |> ignoreValues
+            |> castError(InstallAIMessageStyleError.self)
+        } else {
+            return .fail(.generic)
+        }
     }
 }
 
