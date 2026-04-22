@@ -1969,6 +1969,10 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                             profilePhoto = maybePhoto
                             isKnown = true
                         }
+                        if profilePhoto == nil, case let .known(maybePhoto) = cachedPeerData.fallbackPhoto {
+                            profilePhoto = maybePhoto
+                            isKnown = true
+                        }
                     }
                     
                     if isKnown {

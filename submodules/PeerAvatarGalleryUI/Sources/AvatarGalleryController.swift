@@ -20,6 +20,28 @@ public enum AvatarGalleryEntryId: Hashable {
     case resource(String)
 }
 
+private func avatarGalleryEntryMatchesImage(_ entry: AvatarGalleryEntry, _ image: TelegramMediaImage) -> Bool {
+    guard
+        let entryRepresentation = largestImageRepresentation(entry.representations.map({ $0.representation })),
+        let imageRepresentation = largestImageRepresentation(image.representations)
+    else {
+        return false
+    }
+    guard let entryResource = entryRepresentation.resource as? CloudPeerPhotoSizeMediaResource, let imageResource = imageRepresentation.resource as? CloudPhotoSizeMediaResource else {
+        return false
+    }
+    return entryResource.photoId == imageResource.photoId
+}
+
+private func avatarGalleryEntryWithVideoRepresentations(_ entry: AvatarGalleryEntry, videoRepresentations: [VideoRepresentationWithReference], immediateThumbnailData: Data?) -> AvatarGalleryEntry {
+    switch entry {
+    case let .topImage(representations, _, peer, indexData, _, category):
+        return .topImage(representations, videoRepresentations, peer, indexData, immediateThumbnailData, category)
+    default:
+        return entry
+    }
+}
+
 public func peerInfoProfilePhotos(context: AccountContext, peerId: EnginePeer.Id) -> Signal<Any, NoError> {
     return context.engine.data.subscribe(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
     |> mapToSignal { peer -> Signal<[AvatarGalleryEntry]?, NoError> in
@@ -48,6 +70,12 @@ public func peerInfoProfilePhotos(context: AccountContext, peerId: EnginePeer.Id
                             }
                             if case let .known(photo) = cachedData.fallbackPhoto {
                                 lastEntry = photo
+                                if let photo, firstEntry.videoRepresentations.isEmpty, !photo.videoRepresentations.isEmpty, avatarGalleryEntryMatchesImage(firstEntry, photo), let peerReference = PeerReference(peer) {
+                                    let videoRepresentations = photo.videoRepresentations.map {
+                                        VideoRepresentationWithReference(representation: $0, reference: MediaResourceReference.avatar(peer: peerReference, resource: $0.resource))
+                                    }
+                                    firstEntry = avatarGalleryEntryWithVideoRepresentations(firstEntry, videoRepresentations: videoRepresentations, immediateThumbnailData: firstEntry.immediateThumbnailData ?? photo.immediateThumbnailData)
+                                }
                             }
                         }
                         return fetchedAvatarGalleryEntries(engine: context.engine, account: context.account, peer: EnginePeer(peer), firstEntry: firstEntry, secondEntry: secondEntry, lastEntry: lastEntry)
@@ -311,6 +339,12 @@ public func fetchedAvatarGalleryEntries(engine: TelegramEngine, account: Account
             let initialEntries = [firstEntry]
             if photos.isEmpty {
                 result = initialEntries
+                if let lastEntry, let firstEntry = result.first, firstEntry.videoRepresentations.isEmpty, !lastEntry.videoRepresentations.isEmpty, avatarGalleryEntryMatchesImage(firstEntry, lastEntry), let peerReference = PeerReference(peer._asPeer()) {
+                    let videoRepresentations = lastEntry.videoRepresentations.map {
+                        VideoRepresentationWithReference(representation: $0, reference: MediaResourceReference.avatar(peer: peerReference, resource: $0.resource))
+                    }
+                    result[0] = avatarGalleryEntryWithVideoRepresentations(firstEntry, videoRepresentations: videoRepresentations, immediateThumbnailData: firstEntry.immediateThumbnailData ?? lastEntry.immediateThumbnailData)
+                }
             } else if let peerReference = PeerReference(peer._asPeer()) {
                 var index: Int32 = 0
                 

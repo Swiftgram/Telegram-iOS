@@ -356,7 +356,7 @@ final class LocationViewControllerNode: ViewControllerTracingNode, CLLocationMan
     
         super.init()
         
-        self.backgroundColor = .red // self.presentationData.theme.list.plainBackgroundColor
+        self.backgroundColor = self.presentationData.theme.list.plainBackgroundColor
         
         if !self.isPreview {
             self.addSubnode(self.listNode)
@@ -656,7 +656,7 @@ final class LocationViewControllerNode: ViewControllerTracingNode, CLLocationMan
                 let transition = preparedTransition(from: previousEntries ?? [], to: entries, context: context, presentationData: presentationData, interaction: strongSelf.interaction, gotTravelTimes: !travelTimes.isEmpty && !previousHadTravelTimes, animated: animated)
                 strongSelf.enqueueTransition(transition)
                 
-                strongSelf.headerNode.updateState(mapMode: state.mapMode, trackingMode: state.trackingMode, displayingMapModeOptions: state.displayingMapModeOptions, displayingPlacesButton: false, proximityNotification: proximityNotification, animated: false)
+                strongSelf.headerNode.updateState(mapMode: state.mapMode, trackingMode: state.trackingMode, displayingMapModeOptions: state.displayingMapModeOptions, displayingPlacesButton: false, proximityNotification: proximityNotification, animated: true)
                 
                 if let proximityNotification = proximityNotification, !proximityNotification && !strongSelf.displayedProximityAlertTooltip {
                     strongSelf.displayedProximityAlertTooltip = true
@@ -813,7 +813,7 @@ final class LocationViewControllerNode: ViewControllerTracingNode, CLLocationMan
         self.presentationData = presentationData
         self.presentationDataPromise.set(.single(presentationData))
         
-        self.backgroundColor = .red //self.presentationData.theme.list.plainBackgroundColor
+        self.backgroundColor = self.presentationData.theme.list.plainBackgroundColor
         self.listNode.backgroundColor = .clear // self.presentationData.theme.list.plainBackgroundColor
         self.headerNode.updatePresentationData(self.presentationData)
     }
