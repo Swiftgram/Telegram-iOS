@@ -2232,7 +2232,7 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                 additionalOffset = 80.0
             }
             if let _ = inputPanelSize {
-                inputPanelHideOffset += -48.0 - additionalOffset
+                inputPanelHideOffset += -56.0 - additionalOffset
             }
             if let accessoryPanelSize = accessoryPanelSize {
                 inputPanelHideOffset += -accessoryPanelSize.height - additionalOffset

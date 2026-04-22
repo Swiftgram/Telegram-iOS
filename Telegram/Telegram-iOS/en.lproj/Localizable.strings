@@ -16202,5 +16202,9 @@ Error: %8$@";
 
 "Settings.About.PrivacyHelpEmpty" = "A few words about you.";
 "Settings.About.PrivacyHelpEveryone" = "Everyone can see your bio. [Change >]()";
-"Settings.About.PrivacyHelpContacts" = "Only uour contacts can see your bio. [Change >]()";
+"Settings.About.PrivacyHelpContacts" = "Only your contacts can see your bio. [Change >]()";
 "Settings.About.PrivacyHelpNobody" = "Nobody can see your bio. [Change >]()";
+
+"Settings.Birthday.PrivacyHelpEveryone" = "Everyone can see your birthday. [Change >]()";
+"Settings.Birthday.PrivacyHelpContacts" = "Only your contacts can see your birthday. [Change >]()";
+"Settings.Birthday.PrivacyHelpNobody" = "Nobody can see your birthday. [Change >]()";

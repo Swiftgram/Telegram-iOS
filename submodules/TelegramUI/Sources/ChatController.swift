@@ -10270,7 +10270,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             if peerId == strongSelf.context.account.peerId {
                 mode = .reminders
             } else {
-                mode = .scheduledMessages(sendWhenOnlineAvailable: sendWhenOnlineAvailable)
+                mode = .scheduledMessages(peerId: peer.id, sendWhenOnlineAvailable: sendWhenOnlineAvailable)
             }
             
             let controller = ChatScheduleTimeScreen(

@@ -240,8 +240,6 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
     private let cancelButtonNode: WebAppCancelButtonNode
     
     private var buttons: ComponentView<Empty>?
-    private var cancelButton: ComponentView<Empty>?
-    private var rightButton: ComponentView<Empty>?
     private let moreButtonPlayOnce = ActionSlot<Void>()
     
     private let moreButtonNode: MoreButtonNode
@@ -2104,7 +2102,6 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
         }
         
         if case .glass = style {
-            self.cancelButton = ComponentView()
             self.buttons = ComponentView()
         }
         self.cancelButtonNode = WebAppCancelButtonNode(theme: self.presentationData.theme, strings: self.presentationData.strings)

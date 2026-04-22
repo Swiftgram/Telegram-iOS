@@ -13,10 +13,12 @@ import SheetComponent
 import ButtonComponent
 import PlainButtonComponent
 import BundleIconComponent
+import LottieAnimationComponent
 import GlassBackgroundComponent
 import GlassBarButtonComponent
 import DatePickerNode
 import UndoUI
+import TooltipUI
 
 private let calendar = Calendar(identifier: .gregorian)
 
@@ -66,6 +68,8 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
     
     final class View: UIView {
         private let cancel = ComponentView<Empty>()
+        private let silent = ComponentView<Empty>()
+        
         private let title = ComponentView<Empty>()
         private let button = ComponentView<Empty>()
         private let secondaryButton = ComponentView<Empty>()
@@ -93,13 +97,15 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
         
         private var monthHeight: CGFloat?
         
+        private var isSilentPosting = false
+        
         private var date: Date?
         private var minDate: Date?
         private var maxDate: Date?
         
         private var isPickingTime = false
         private var isPickingRepeatPeriod = false
-        
+                
         private var repeatPeriod: Int32?
         
         private let dateFormatter: DateFormatter
@@ -144,6 +150,65 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
             }
         }
         
+        private func presentSilentPostingTooltip() {
+            guard let component = self.component, let sourceView = self.silent.view else {
+                return
+            }
+
+            let peerId: EnginePeer.Id?
+            switch component.mode {
+            case let .scheduledMessages(peerIdValue, _):
+                peerId = peerIdValue
+            case .reminders:
+                peerId = component.context.account.peerId
+            default:
+                peerId = nil
+            }
+            guard let peerId else {
+                return
+            }
+            
+            let isSilentPosting = self.isSilentPosting
+            let _ = (component.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
+            |> deliverOnMainQueue).start(next: { [weak self] peer in
+                guard let self, let peer, let controller = self.environment?.controller() else {
+                    return
+                }
+                
+                var isChannel = false
+                if case let .channel(channel) = peer, case .broadcast = channel.info {
+                    isChannel = true
+                }
+                
+                //TODO:localize
+                let text: String
+                if case .user = peer {
+                    if isSilentPosting {
+                        text = "\(peer.compactDisplayTitle) will receive a silent notification"
+                    } else {
+                        text = "\(peer.compactDisplayTitle) will be notified"
+                    }
+                } else if isChannel {
+                    if isSilentPosting {
+                        text = "Subscribers will receive a silent notification"
+                    } else {
+                        text = "Subscribers will be notified"
+                    }
+                } else {
+                    if isSilentPosting {
+                        text = "Members will receive a silent notification"
+                    } else {
+                        text = "Members will be notified"
+                    }
+                }
+
+                let sourceFrame = sourceView.convert(sourceView.bounds, to: nil)
+                controller.present(TooltipScreen(account: component.context.account, sharedContext: component.context.sharedContext, text: .plain(text: text), style: .default, icon: .none, location: .point(sourceFrame, .bottom), shouldDismissOnTouch: { _, _ in
+                    return .dismiss(consume: false)
+                }), in: .window(.root))
+            })
+        }
+        
         func update(component: ChatScheduleTimeSheetContentComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<EnvironmentType>, transition: ComponentTransition) -> CGSize {
             self.isUpdating = true
             defer {
@@ -184,40 +249,6 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
             var contentHeight: CGFloat = 0.0
             contentHeight += 30.0
                         
-            let barButtonSize = CGSize(width: 44.0, height: 44.0)
-            let cancelSize = self.cancel.update(
-                transition: transition,
-                component: AnyComponent(
-                    GlassBarButtonComponent(
-                        size: barButtonSize,
-                        backgroundColor: nil,
-                        isDark: environment.theme.overallDarkAppearance,
-                        state: .glass,
-                        component: AnyComponentWithIdentity(id: "close", component: AnyComponent(
-                            BundleIconComponent(
-                                name: "Navigation/Close",
-                                tintColor: environment.theme.chat.inputPanel.panelControlColor
-                            )
-                        )),
-                        action: { [weak self] _ in
-                            guard let self, let component = self.component else {
-                                return
-                            }
-                            component.dismiss()
-                        }
-                    )
-                ),
-                environment: {},
-                containerSize: barButtonSize
-            )
-            let cancelFrame = CGRect(origin: CGPoint(x: 16.0, y: 16.0), size: cancelSize)
-            if let cancelView = self.cancel.view {
-                if cancelView.superview == nil {
-                    self.addSubview(cancelView)
-                }
-                transition.setFrame(view: cancelView, frame: cancelFrame)
-            }
-            
             let title: String
             switch component.mode {
             case .scheduledMessages:
@@ -595,7 +626,7 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
                     transition.setFrame(view: buttonView, frame: buttonFrame)
                 }
                 contentHeight += buttonSize.height
-            } else if case .scheduledMessages(true) = component.mode {
+            } else if case .scheduledMessages(_, true) = component.mode {
                 contentHeight += 8.0
                 
                 let buttonSize = self.secondaryButton.update(
@@ -784,6 +815,87 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
             
             component.externalState.repeatValueFrame = repeatValueFrame
             
+            let barButtonSize = CGSize(width: 44.0, height: 44.0)
+            let cancelSize = self.cancel.update(
+                transition: transition,
+                component: AnyComponent(
+                    GlassBarButtonComponent(
+                        size: barButtonSize,
+                        backgroundColor: nil,
+                        isDark: environment.theme.overallDarkAppearance,
+                        state: .glass,
+                        component: AnyComponentWithIdentity(id: "close", component: AnyComponent(
+                            BundleIconComponent(
+                                name: "Navigation/Close",
+                                tintColor: environment.theme.chat.inputPanel.panelControlColor
+                            )
+                        )),
+                        action: { [weak self] _ in
+                            guard let self, let component = self.component else {
+                                return
+                            }
+                            component.dismiss()
+                        }
+                    )
+                ),
+                environment: {},
+                containerSize: barButtonSize
+            )
+            let cancelFrame = CGRect(origin: CGPoint(x: 16.0, y: 16.0), size: cancelSize)
+            if let cancelView = self.cancel.view {
+                if cancelView.superview == nil {
+                    self.addSubview(cancelView)
+                }
+                transition.setFrame(view: cancelView, frame: cancelFrame)
+            }
+            
+            switch component.mode {
+            case .scheduledMessages, .reminders:
+                let silentSize = self.silent.update(
+                    transition: transition,
+                    component: AnyComponent(
+                        GlassBarButtonComponent(
+                            size: barButtonSize,
+                            backgroundColor: nil,
+                            isDark: environment.theme.overallDarkAppearance,
+                            state: .glass,
+                            component: AnyComponentWithIdentity(id: "silent", component: AnyComponent(
+                                LottieAnimationComponent(
+                                    animation: LottieAnimationComponent.AnimationItem(
+                                        name: self.isSilentPosting ? "NavigationMuteOn" : "NavigationMuteOff",
+                                        mode: !transition.animation.isImmediate ? .animating(loop: false) : .still(position: .end),
+                                        range: nil,
+                                        waitForCompletion: false
+                                    ),
+                                    colors: ["__allcolors__": environment.theme.chat.inputPanel.panelControlColor],
+                                    size: CGSize(width: 30.0, height: 30.0)
+                                )
+                            )),
+                            action: { [weak self] _ in
+                                guard let self else {
+                                    return
+                                }
+                                self.isSilentPosting = !self.isSilentPosting
+                                self.state?.updated(transition: .easeInOut(duration: 0.2))
+                                
+                                self.presentSilentPostingTooltip()
+                            }
+                        )
+                    ),
+                    environment: {},
+                    containerSize: barButtonSize
+                )
+                let silentFrame = CGRect(origin: CGPoint(x: availableSize.width - 16.0 - silentSize.width, y: 16.0), size: silentSize)
+                if let silentView = self.silent.view {
+                    if silentView.superview == nil {
+                        self.addSubview(silentView)
+                    }
+                    transition.setFrame(view: silentView, frame: silentFrame)
+                }
+            default:
+                break
+            }
+            
             return contentSize
         }
     }
@@ -958,7 +1070,7 @@ private final class ChatScheduleTimeScreenComponent: Component {
 
 public class ChatScheduleTimeScreen: ViewControllerComponentContainer {
     public enum Mode: Equatable {
-        case scheduledMessages(sendWhenOnlineAvailable: Bool)
+        case scheduledMessages(peerId: EnginePeer.Id, sendWhenOnlineAvailable: Bool)
         case reminders
         case format
         case poll

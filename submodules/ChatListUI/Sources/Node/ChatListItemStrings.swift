@@ -311,7 +311,7 @@ public func chatListItemStrings(strings: PresentationStrings, nameDisplayOrder: 
                     case _ as TelegramMediaContact:
                         messageText = strings.Message_Contact
                     case let game as TelegramMediaGame:
-                        messageText = "🎮 \(game.title)"
+                        messageText = game.title
                     case let invoice as TelegramMediaInvoice:
                         messageText = invoice.title
                     case let action as TelegramMediaAction:
@@ -438,15 +438,11 @@ public func chatListItemStrings(strings: PresentationStrings, nameDisplayOrder: 
                             messageText = content.displayUrl
                         }
                     case let todo as TelegramMediaTodo:
-                        let pollPrefix = "☑️ "
-                        let entityOffset = (pollPrefix as NSString).length
-                        messageText = "\(pollPrefix)\(todo.text)"
+                        messageText = todo.text
+                        customEmojiRanges = []
                         for entity in todo.textEntities {
                             if case let .CustomEmoji(_, fileId) = entity.type {
-                                if customEmojiRanges == nil {
-                                    customEmojiRanges = []
-                                }
-                                let range = NSRange(location: entityOffset + entity.range.lowerBound, length: entity.range.upperBound - entity.range.lowerBound)
+                                let range = NSRange(location: entity.range.lowerBound, length: entity.range.upperBound - entity.range.lowerBound)
                                 let attribute = ChatTextInputTextCustomEmojiAttribute(interactivelySelectedFromPackId: nil, fileId: fileId, file: message.associatedMedia[EngineMedia.Id(namespace: Namespaces.Media.CloudFile, id: fileId)] as? TelegramMediaFile)
                                 customEmojiRanges?.append((range, attribute))
                             }

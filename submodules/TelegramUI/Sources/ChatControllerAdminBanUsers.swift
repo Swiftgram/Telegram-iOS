@@ -238,7 +238,7 @@ extension ChatControllerImpl {
         }))
     }
     
-    func presentBanMessageOptions(accountPeerId: PeerId, author: Peer, messageIds: Set<MessageId>, options: ChatAvailableMessageActionOptions) {
+    func presentBanMessageOptions(accountPeerId: PeerId, author: Peer, messageIds: Set<MessageId>, options: ChatAvailableMessageActionOptions, reaction: Bool = false) {
         guard let peerId = self.chatLocation.peerId else {
             return
         }
@@ -325,14 +325,17 @@ extension ChatControllerImpl {
                         initialUserBannedRights[participant.peerId] = InitialBannedRights(value: nil)
                     }
                 }
-                self.push(AdminUserActionsSheet(
-                    context: self.context,
-                    chatPeer: chatPeer,
-                    peers: [RenderedChannelParticipant(
-                        participant: participant,
-                        peer: authorPeer._asPeer()
-                    )],
-                    mode: .chat(
+                
+                let mode: AdminUserActionsSheet.Mode
+                if reaction {
+                    mode = .chatReaction(completion: { [weak self] result in
+                        guard let self else {
+                            return
+                        }
+                        self.applyAdminUserActionsResult(messageIds: messageIds, result: result, initialUserBannedRights: initialUserBannedRights)
+                    })
+                } else {
+                    mode = .chat(
                         messageCount: messageIds.count,
                         deleteAllMessageCount: deleteAllMessageCount,
                         completion: { [weak self] result in
@@ -342,6 +345,16 @@ extension ChatControllerImpl {
                             self.applyAdminUserActionsResult(messageIds: messageIds, result: result, initialUserBannedRights: initialUserBannedRights)
                         }
                     )
+                }
+                
+                self.push(AdminUserActionsSheet(
+                    context: self.context,
+                    chatPeer: chatPeer,
+                    peers: [RenderedChannelParticipant(
+                        participant: participant,
+                        peer: authorPeer._asPeer()
+                    )],
+                    mode: mode
                 ))
             })
         }))

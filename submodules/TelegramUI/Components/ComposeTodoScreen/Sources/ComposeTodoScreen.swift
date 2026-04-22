@@ -975,6 +975,12 @@ final class ComposeTodoScreenComponent: Component {
                             }
                         }
                     },
+                    present: { [weak self] c in
+                        guard let controller = self?.environment?.controller() else {
+                            return
+                        }
+                        controller.present(c, in: .window(.root))
+                    },
                     tag: todoItem.textFieldTag
                 ))))
                 

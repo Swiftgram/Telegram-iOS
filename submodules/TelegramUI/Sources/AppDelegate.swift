@@ -45,6 +45,7 @@ import RecaptchaEnterprise
 import NavigationBarImpl
 import ContextUI
 import ContextControllerImpl
+import AutomationBridge
 
 #if canImport(AppCenter)
 import AppCenter
@@ -1687,6 +1688,13 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                 }))
             }
         })
+        
+        #if DEBUG
+        AutomationRuntime.shared.setHierarchyProvider {
+            AutomationPassiveHierarchyBuilder.build()
+        }
+        AutomationRuntime.shared.startIfNeeded(stateProvider: nil)
+        #endif
         
         return true
     }

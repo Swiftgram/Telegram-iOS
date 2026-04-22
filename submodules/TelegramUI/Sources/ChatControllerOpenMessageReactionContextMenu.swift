@@ -198,13 +198,41 @@ extension ChatControllerImpl {
                         animationCache: self.controllerInteraction!.presentationContext.animationCache,
                         animationRenderer: self.controllerInteraction!.presentationContext.animationRenderer,
                         message: EngineMessage(message),
-                        reaction: value, readStats: nil, back: nil, openPeer: { peer, hasReaction in
+                        reaction: value,
+                        readStats: nil,
+                        back: nil,
+                        openPeer: { peer, hasReaction in
                             dismissController?({ [weak self] in
                                 guard let self else {
                                     return
                                 }
                                 
                                 self.openPeer(peer: peer, navigation: .default, fromMessage: MessageReference(message), fromReactionMessageId: hasReaction ? message.id : nil)
+                            })
+                        },
+                        deleteReaction: { [weak self] peer, _ in
+                            dismissController?({ [weak self] in
+                                guard let self, self.chatLocation.peerId?.namespace == Namespaces.Peer.CloudChannel else {
+                                    return
+                                }
+                                let _ = (self.context.sharedContext.chatAvailableMessageActions(
+                                    engine: self.context.engine,
+                                    accountPeerId: self.context.account.peerId,
+                                    messageIds: Set([message.id]),
+                                    keepUpdated: false
+                                )
+                                |> deliverOnMainQueue).startStandalone(next: { [weak self] actions in
+                                    guard let self, !actions.options.isEmpty else {
+                                        return
+                                    }
+                                    self.presentBanMessageOptions(
+                                        accountPeerId: self.context.account.peerId,
+                                        author: peer._asPeer(),
+                                        messageIds: Set([message.id]),
+                                        options: actions.options,
+                                        reaction: true
+                                    )
+                                })
                             })
                         }
                     )))
@@ -297,7 +325,9 @@ extension ChatControllerImpl {
                 let presentationContext = self.controllerInteraction?.presentationContext
                 let premiumConfiguration = PremiumConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 })
                 
-                if !packReferences.isEmpty && !premiumConfiguration.isPremiumDisabled {
+                if "".isEmpty {
+                    items.tip = .deleteReaction
+                } else if !packReferences.isEmpty && !premiumConfiguration.isPremiumDisabled {
                     items.tip = .animatedEmoji(text: nil, arguments: nil, file: nil, action: nil)
                     
                     if packReferences.count > 1 {

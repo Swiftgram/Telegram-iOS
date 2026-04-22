@@ -2,6 +2,7 @@ import Foundation
 import UIKit
 import AsyncDisplayKit
 import Display
+import SearchBarNode
 import SwiftSignalKit
 import Postbox
 import TelegramCore
@@ -16,7 +17,23 @@ import StickerPeekUI
 import EntityKeyboardGifContent
 import BatchVideoRendering
 
-private let searchBarHeight: CGFloat = 52.0
+private let searchBarHeight: CGFloat = 76.0
+private let searchBarTopInset: CGFloat = 16.0
+private let searchBarFieldHeight: CGFloat = 44.0
+
+private func paneSearchBarTheme(_ theme: PresentationTheme) -> SearchBarNodeTheme {
+    return SearchBarNodeTheme(
+        background: .clear,
+        separator: .clear,
+        inputFill: .clear,
+        primaryText: theme.chat.inputPanel.panelControlColor,
+        placeholder: theme.chat.inputPanel.inputPlaceholderColor,
+        inputIcon: theme.chat.inputPanel.inputControlColor,
+        inputClear: theme.chat.inputPanel.panelControlColor,
+        accent: theme.chat.inputPanel.panelControlAccentColor,
+        keyboard: theme.rootController.keyboardColor
+    )
+}
 
 public protocol PaneSearchContentNode {
     var ready: Signal<Void, NoError> { get }
@@ -43,9 +60,10 @@ public final class PaneSearchContainerNode: ASDisplayNode, EntitySearchContainer
     private let peekBehavior: EmojiContentPeekBehavior?
     
     private let backgroundNode: ASDisplayNode
-    private let searchBar: PaneSearchBarNode
+    private let searchBar: SearchBarNode
     
     private var validLayout: CGSize?
+    private weak var animatedPlaceholder: PaneSearchBarPlaceholderNode?
     
     public var onCancel: (() -> Void)?
     
@@ -69,7 +87,13 @@ public final class PaneSearchContainerNode: ASDisplayNode, EntitySearchContainer
         }
         self.backgroundNode = ASDisplayNode()
         
-        self.searchBar = PaneSearchBarNode()
+        self.searchBar = SearchBarNode(
+            theme: paneSearchBarTheme(theme),
+            presentationTheme: theme,
+            strings: strings,
+            fieldStyle: .glass,
+            displayBackground: false
+        )
         
         super.init()
         
@@ -87,9 +111,8 @@ public final class PaneSearchContainerNode: ASDisplayNode, EntitySearchContainer
         }
         
         self.searchBar.cancel = { [weak self] in
+            self?.searchBar.deactivate(clear: false)
             cancel()
-            
-            self?.searchBar.view.endEditing(true)
             self?.onCancel?()
         }
         self.searchBar.activate()
@@ -150,7 +173,7 @@ public final class PaneSearchContainerNode: ASDisplayNode, EntitySearchContainer
     public func updateThemeAndStrings(theme: PresentationTheme, strings: PresentationStrings) {
         self.backgroundNode.backgroundColor = theme.chat.inputMediaPanel.stickersBackgroundColor.withAlphaComponent(1.0)
         self.contentNode.updateThemeAndStrings(theme: theme, strings: strings)
-        self.searchBar.updateThemeAndStrings(theme: theme, strings: strings)
+        self.searchBar.updateThemeAndStrings(theme: paneSearchBarTheme(theme), presentationTheme: theme, strings: strings)
         
         let placeholder: String
         switch mode {
@@ -159,11 +182,11 @@ public final class PaneSearchContainerNode: ASDisplayNode, EntitySearchContainer
         case .sticker, .trending:
             placeholder = strings.Stickers_Search
         }
-        self.searchBar.placeholderString = NSAttributedString(string: placeholder, font: Font.regular(17.0), textColor: theme.chat.inputMediaPanel.stickersSearchPlaceholderColor)
+        self.searchBar.placeholderString = NSAttributedString(string: placeholder, font: Font.regular(17.0), textColor: theme.rootController.navigationSearchBar.inputPlaceholderTextColor)
     }
     
     public func updateQuery(_ query: String) {
-        self.searchBar.updateQuery(query)
+        self.searchBar.text = query
     }
     
     public func itemAt(point: CGPoint) -> (ASDisplayNode, Any)? {
@@ -174,8 +197,9 @@ public final class PaneSearchContainerNode: ASDisplayNode, EntitySearchContainer
         self.validLayout = size
         transition.updateFrame(node: self.backgroundNode, frame: CGRect(origin: CGPoint(), size: size))
         
-        transition.updateFrame(node: self.searchBar, frame: CGRect(origin: CGPoint(), size: CGSize(width: size.width, height: searchBarHeight)))
-        self.searchBar.updateLayout(boundingSize: CGSize(width: size.width, height: searchBarHeight), leftInset: leftInset, rightInset: rightInset, transition: transition)
+        let searchBarFrame = CGRect(origin: CGPoint(x: 0.0, y: searchBarTopInset), size: CGSize(width: size.width, height: searchBarFieldHeight))
+        transition.updateFrame(node: self.searchBar, frame: searchBarFrame)
+        self.searchBar.updateLayout(boundingSize: searchBarFrame.size, leftInset: leftInset, rightInset: rightInset, transition: transition)
         
         let contentFrame = CGRect(origin: CGPoint(x: leftInset, y: searchBarHeight), size: CGSize(width: size.width - leftInset - rightInset, height: size.height - searchBarHeight))
         
@@ -190,6 +214,9 @@ public final class PaneSearchContainerNode: ASDisplayNode, EntitySearchContainer
     public func animateIn(from placeholder: PaneSearchBarPlaceholderNode?, anchorTop: CGPoint, anhorTopView: UIView, transition: ContainedViewLayoutTransition, completion: @escaping () -> Void) {
         var verticalOrigin: CGFloat = anhorTopView.convert(anchorTop, to: self.view).y
         if let placeholder = placeholder {
+            self.animatedPlaceholder = placeholder
+            placeholder.isHidden = true
+            
             let placeholderFrame = placeholder.view.convert(placeholder.bounds, to: self.view)
             verticalOrigin = placeholderFrame.minY - 4.0
             self.contentNode.animateIn(additivePosition: verticalOrigin, transition: transition)
@@ -197,33 +224,65 @@ public final class PaneSearchContainerNode: ASDisplayNode, EntitySearchContainer
             self.contentNode.animateIn(additivePosition: 0.0, transition: transition)
         }
         
+        let searchBarFrame = self.searchBar.frame
+        let initialSearchBarFrame = CGRect(origin: CGPoint(x: searchBarFrame.minX, y: verticalOrigin), size: searchBarFrame.size)
+        
         switch transition {
             case let .animated(duration, curve):
                 self.backgroundNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: duration / 2.0)
-                if let placeholder = placeholder {
-                    self.searchBar.animateIn(from: placeholder, duration: duration, timingFunction: curve.timingFunction, completion: completion)
-                } else {
-                    self.searchBar.alpha = 0.0
-                    transition.updateAlpha(node: self.searchBar, alpha: 1.0)
-                }
+                
+                self.searchBar.alpha = 1.0
+                self.searchBar.layer.animateAlpha(from: 0.0, to: 1.0, duration: duration, timingFunction: curve.timingFunction, completion: { _ in
+                    completion()
+                })
+                self.searchBar.layer.animateFrame(from: initialSearchBarFrame, to: searchBarFrame, duration: duration, timingFunction: curve.timingFunction)
+                
                 if let size = self.validLayout {
                     let initialBackgroundFrame = CGRect(origin: CGPoint(x: 0.0, y: verticalOrigin), size: CGSize(width: size.width, height: max(0.0, size.height - verticalOrigin)))
                     self.backgroundNode.layer.animateFrame(from: initialBackgroundFrame, to: self.backgroundNode.frame, duration: duration, timingFunction: curve.timingFunction)
                 }
             case .immediate:
+                completion()
                 break
         }
     }
     
     public func animateOut(to placeholder: PaneSearchBarPlaceholderNode, animateOutSearchBar: Bool, transition: ContainedViewLayoutTransition, completion: @escaping () -> Void) {
+        let finish: () -> Void = { [weak self] in
+            placeholder.isHidden = false
+            if let self, self.animatedPlaceholder === placeholder {
+                self.animatedPlaceholder = nil
+            }
+            completion()
+        }
+        
         if case let .animated(duration, curve) = transition {
+            let placeholderFrame = placeholder.view.convert(placeholder.bounds, to: self.view)
+            let verticalOrigin = placeholderFrame.minY - 4.0
+            let targetSearchBarFrame = CGRect(origin: CGPoint(x: self.searchBar.frame.minX, y: verticalOrigin), size: self.searchBar.frame.size)
+            
             if let size = self.validLayout {
-                let placeholderFrame = placeholder.view.convert(placeholder.bounds, to: self.view)
-                let verticalOrigin = placeholderFrame.minY - 4.0
                 self.backgroundNode.layer.animateFrame(from: self.backgroundNode.frame, to: CGRect(origin: CGPoint(x: 0.0, y: verticalOrigin), size: CGSize(width: size.width, height: max(0.0, size.height - verticalOrigin))), duration: duration, timingFunction: curve.timingFunction, removeOnCompletion: false)
             }
+            
+            self.searchBar.layer.animateFrame(from: self.searchBar.frame, to: targetSearchBarFrame, duration: duration, timingFunction: curve.timingFunction, removeOnCompletion: false)
+            if animateOutSearchBar {
+                self.searchBar.alpha = 0.0
+                self.searchBar.layer.animateAlpha(from: 1.0, to: 0.0, duration: duration, timingFunction: curve.timingFunction, removeOnCompletion: false, completion: { _ in
+                    finish()
+                })
+            } else {
+                self.searchBar.layer.animateAlpha(from: self.searchBar.alpha, to: self.searchBar.alpha, duration: duration, timingFunction: curve.timingFunction, removeOnCompletion: false, completion: { _ in
+                    finish()
+                })
+            }
+        } else {
+            if animateOutSearchBar {
+                self.searchBar.alpha = 0.0
+            }
+            finish()
         }
-        self.searchBar.transitionOut(to: placeholder, transition: transition, completion: completion)
+        
         transition.updateAlpha(node: self.backgroundNode, alpha: 0.0)
         if animateOutSearchBar {
             transition.updateAlpha(node: self.searchBar, alpha: 0.0)

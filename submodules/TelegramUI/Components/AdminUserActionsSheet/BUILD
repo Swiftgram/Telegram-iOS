@@ -17,6 +17,7 @@ swift_library(
         "//submodules/ComponentFlow",
         "//submodules/Components/ViewControllerComponent",
         "//submodules/Components/ComponentDisplayAdapters",
+        "//submodules/Components/ResizableSheetComponent",
         "//submodules/Components/MultilineTextComponent",
         "//submodules/Components/BundleIconComponent",
         "//submodules/TelegramPresentationData",

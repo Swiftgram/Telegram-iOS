@@ -375,16 +375,29 @@ func settingsEditingItems(data: PeerInfoScreenData?, state: PeerInfoState, conte
     items[.help]!.append(PeerInfoScreenCommentItem(id: ItemNameHelp, text: presentationData.strings.EditProfile_NameAndPhotoOrVideoHelp))
     
     if let cachedData = data.cachedData as? CachedUserData {
-        items[.bio]!.append(PeerInfoScreenMultilineInputItem(id: ItemBio, text: state.updatingBio ?? (cachedData.about ?? ""), placeholder: presentationData.strings.UserInfo_About_Placeholder, textUpdated: { updatedText in
+        let currentBio = state.updatingBio ?? (cachedData.about ?? "")
+        items[.bio]!.append(PeerInfoScreenMultilineInputItem(id: ItemBio, text: currentBio, placeholder: presentationData.strings.UserInfo_About_Placeholder, textUpdated: { updatedText in
             interaction.updateBio(updatedText)
         }, action: {
             interaction.dismissInput()
         }, maxLength: Int(data.globalSettings?.userLimits.maxAboutLength ?? 70)))
-        items[.bio]!.append(PeerInfoScreenCommentItem(id: ItemBioHelp, text: presentationData.strings.Settings_About_PrivacyHelp, linkAction: { _ in
+        
+        
+        var bioPrivacyInfo = presentationData.strings.Settings_About_PrivacyHelpEmpty
+        if let bioPrivacy = data.globalSettings?.privacySettings?.bio, !currentBio.isEmpty {
+            switch bioPrivacy {
+            case .enableEveryone:
+                bioPrivacyInfo = presentationData.strings.Settings_About_PrivacyHelpEveryone
+            case .enableContacts:
+                bioPrivacyInfo = presentationData.strings.Settings_About_PrivacyHelpContacts
+            case .disableEveryone:
+                bioPrivacyInfo = presentationData.strings.Settings_About_PrivacyHelpNobody
+            }
+        }
+        items[.bio]!.append(PeerInfoScreenCommentItem(id: ItemBioHelp, text: bioPrivacyInfo, linkAction: { _ in
             interaction.openBioPrivacy()
         }))
     }
-    
     
     var birthday: TelegramBirthday?
     if let updatingBirthDate = state.updatingBirthDate {
@@ -414,14 +427,22 @@ func settingsEditingItems(data: PeerInfoScreenData?, state: PeerInfoState, conte
         }))
     }
     
-    
-    var birthdayIsForContactsOnly = false
-    if let birthdayPrivacy = data.globalSettings?.privacySettings?.birthday, case .enableContacts = birthdayPrivacy {
-        birthdayIsForContactsOnly = true
+    var birthdayPrivacyInfo = ""
+    if let birthdayPrivacy = data.globalSettings?.privacySettings?.birthday {
+        switch birthdayPrivacy {
+        case .enableEveryone:
+            birthdayPrivacyInfo = presentationData.strings.Settings_Birthday_PrivacyHelpEveryone
+        case .enableContacts:
+            birthdayPrivacyInfo = presentationData.strings.Settings_Birthday_PrivacyHelpContacts
+        case .disableEveryone:
+            birthdayPrivacyInfo = presentationData.strings.Settings_Birthday_PrivacyHelpNobody
+        }
     }
-    items[.birthday]!.append(PeerInfoScreenCommentItem(id: ItemBirthdayHelp, text: birthdayIsForContactsOnly ? presentationData.strings.Settings_Birthday_ContactsHelp : presentationData.strings.Settings_Birthday_Help, linkAction: { _ in
-        interaction.openBirthdatePrivacy()
-    }))
+    if !birthdayPrivacyInfo.isEmpty {
+        items[.birthday]!.append(PeerInfoScreenCommentItem(id: ItemBirthdayHelp, text: birthdayPrivacyInfo, linkAction: { _ in
+            interaction.openBirthdatePrivacy()
+        }))
+    }
     
     if let user = data.peer as? TelegramUser {
         items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPhoneNumber, label: .text(user.phone.flatMap({ formatPhoneNumber(context: context, number: $0) }) ?? ""), text: presentationData.strings.Settings_PhoneNumber, icon: PresentationResourcesSettings.recentCalls, action: {

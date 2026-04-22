@@ -383,8 +383,15 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
             private var iconFrame: CGRect?
             private var file: TelegramMediaFile?
             private var fileDisposable: Disposable?
+            private var longTapRecognizer: UILongPressGestureRecognizer?
+            private var skipNextTapAction = false
             
             let action: () -> Void
+            var longTapAction: (() -> Void)? {
+                didSet {
+                    self.longTapRecognizer?.isEnabled = self.longTapAction != nil
+                }
+            }
             
             private var item: EngineMessageReactionListContext.Item?
             
@@ -422,6 +429,12 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
                 self.view.addSubview(self.readIconView)
                 
                 self.addTarget(self, action: #selector(self.pressed), forControlEvents: .touchUpInside)
+                
+                let longTapRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(self.longTapGesture(_:)))
+                longTapRecognizer.isEnabled = false
+                longTapRecognizer.cancelsTouchesInView = true
+                self.view.addGestureRecognizer(longTapRecognizer)
+                self.longTapRecognizer = longTapRecognizer
             }
             
             deinit {
@@ -429,7 +442,28 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
             }
             
             @objc private func pressed() {
+                if self.skipNextTapAction {
+                    self.skipNextTapAction = false
+                    return
+                }
                 self.action()
+            }
+            
+            @objc private func longTapGesture(_ recognizer: UILongPressGestureRecognizer) {
+                switch recognizer.state {
+                case .began:
+                    guard let item = self.item, item.reaction != nil else {
+                        return
+                    }
+                    self.skipNextTapAction = true
+                    self.longTapAction?()
+                case .cancelled, .ended, .failed:
+                    DispatchQueue.main.async { [weak self] in
+                        self?.skipNextTapAction = false
+                    }
+                default:
+                    break
+                }
             }
             
             private func updateReactionLayer() {
@@ -771,6 +805,7 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
         private let requestUpdate: (ReactionsTabNode, ContainedViewLayoutTransition) -> Void
         private let requestUpdateApparentHeight: (ReactionsTabNode, ContainedViewLayoutTransition) -> Void
         private let openPeer: (EnginePeer, Bool) -> Void
+        private let deleteReaction: ((EnginePeer, MessageReaction.Reaction) -> Void)?
         
         private var hasMore: Bool = false
         
@@ -804,7 +839,8 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
             readStats: MessageReadStats?,
             requestUpdate: @escaping (ReactionsTabNode, ContainedViewLayoutTransition) -> Void,
             requestUpdateApparentHeight: @escaping (ReactionsTabNode, ContainedViewLayoutTransition) -> Void,
-            openPeer: @escaping (EnginePeer, Bool) -> Void
+            openPeer: @escaping (EnginePeer, Bool) -> Void,
+            deleteReaction: ((EnginePeer, MessageReaction.Reaction) -> Void)?
         ) {
             self.context = context
             self.displayReadTimestamps = displayReadTimestamps
@@ -816,6 +852,7 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
             self.requestUpdate = requestUpdate
             self.requestUpdateApparentHeight = requestUpdateApparentHeight
             self.openPeer = openPeer
+            self.deleteReaction = deleteReaction
             
             self.listContext = context.engine.messages.messageReactionList(message: message, readStats: readStats, reaction: reaction)
             self.state = ItemsState(listState: EngineMessageReactionListContext.State(message: message, readStats: readStats, reaction: reaction), readStats: readStats)
@@ -928,6 +965,14 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
                         }
                         
                         itemNode.update(size: itemFrame.size, presentationData: presentationData, item: item, isLast: self.state.item(at: index + 1) == nil, syncronousLoad: syncronousLoad)
+                        if let deleteReaction = self.deleteReaction, let reaction = item.reaction {
+                            let peer = item.peer
+                            itemNode.longTapAction = {
+                                deleteReaction(peer, reaction)
+                            }
+                        } else {
+                            itemNode.longTapAction = nil
+                        }
                         itemNode.frame = itemFrame
                     } else if index < self.state.totalCount {
                         validPlaceholderIds.insert(index)
@@ -1079,6 +1124,7 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
         private let reactions: [(MessageReaction.Reaction?, Int)]
         private let requestUpdate: (ContainedViewLayoutTransition) -> Void
         private let requestUpdateApparentHeight: (ContainedViewLayoutTransition) -> Void
+        private let deleteReaction: ((EnginePeer, MessageReaction.Reaction) -> Void)?
         
         private var presentationData: PresentationData
         
@@ -1111,7 +1157,8 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
             requestUpdate: @escaping (ContainedViewLayoutTransition) -> Void,
             requestUpdateApparentHeight: @escaping (ContainedViewLayoutTransition) -> Void,
             back: (() -> Void)?,
-            openPeer: @escaping (EnginePeer, Bool) -> Void
+            openPeer: @escaping (EnginePeer, Bool) -> Void,
+            deleteReaction: ((EnginePeer, MessageReaction.Reaction) -> Void)?
         ) {
             self.context = context
             self.displayReadTimestamps = displayReadTimestamps
@@ -1126,6 +1173,7 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
             
             self.requestUpdate = requestUpdate
             self.requestUpdateApparentHeight = requestUpdateApparentHeight
+            self.deleteReaction = deleteReaction
             
             if let back = back {
                 self.backButtonNode = BackButtonNode()
@@ -1332,7 +1380,8 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
                                 strongSelf.requestUpdateApparentHeight(transition)
                             }
                         },
-                        openPeer: self.openPeer
+                        openPeer: self.openPeer,
+                        deleteReaction: self.deleteReaction
                     )
                     self.addSubnode(tabNode)
                     self.visibleTabNodes[index] = tabNode
@@ -1426,6 +1475,7 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
     let readStats: MessageReadStats?
     let back: (() -> Void)?
     let openPeer: (EnginePeer, Bool) -> Void
+    let deleteReaction: ((EnginePeer, MessageReaction.Reaction) -> Void)?
     
     public init(
         context: AccountContext,
@@ -1437,7 +1487,8 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
         reaction: MessageReaction.Reaction?,
         readStats: MessageReadStats?,
         back: (() -> Void)?,
-        openPeer: @escaping (EnginePeer, Bool) -> Void
+        openPeer: @escaping (EnginePeer, Bool) -> Void,
+        deleteReaction: ((EnginePeer, MessageReaction.Reaction) -> Void)? = nil
     ) {
         self.context = context
         self.displayReadTimestamps = displayReadTimestamps
@@ -1449,6 +1500,7 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
         self.readStats = readStats
         self.back = back
         self.openPeer = openPeer
+        self.deleteReaction = deleteReaction
     }
     
     public func node(
@@ -1467,7 +1519,8 @@ public final class ReactionListContextMenuContent: ContextControllerItemsContent
             requestUpdate: requestUpdate,
             requestUpdateApparentHeight: requestUpdateApparentHeight,
             back: self.back,
-            openPeer: self.openPeer
+            openPeer: self.openPeer,
+            deleteReaction: self.deleteReaction
         )
     }
 }
