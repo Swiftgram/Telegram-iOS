@@ -3702,7 +3702,14 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
     }
     
     func performBotCommand(command: PeerInfoBotCommand) {
-        let _ = (self.context.account.postbox.loadedPeerWithId(peerId)
+        let _ = (self.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
+        |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+            if let peer {
+                return .single(peer)
+            } else {
+                return .never()
+            }
+        }
         |> deliverOnMainQueue).startStandalone(next: { [weak self] peer in
             guard let strongSelf = self else {
                 return

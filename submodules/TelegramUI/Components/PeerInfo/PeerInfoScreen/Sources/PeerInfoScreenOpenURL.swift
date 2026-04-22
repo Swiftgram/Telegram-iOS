@@ -171,8 +171,15 @@ extension PeerInfoScreenNode {
                 return .single(peer?._asPeer())
             }
         } else {
-            resolveSignal = self.context.account.postbox.loadedPeerWithId(self.peerId)
-            |> map(Optional.init)
+            resolveSignal = self.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: self.peerId))
+            |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                if let peer {
+                    return .single(peer)
+                } else {
+                    return .never()
+                }
+            }
+            |> map { Optional($0._asPeer()) }
         }
         var cancelImpl: (() -> Void)?
         let presentationData = self.presentationData

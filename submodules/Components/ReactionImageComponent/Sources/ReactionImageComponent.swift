@@ -158,13 +158,13 @@ public final class ReactionImageNode: ASDisplayNode {
             
             super.init()
             
-            self.disposable = (context.account.postbox.mediaBox.resourceData(file.resource)
+            self.disposable = (context.engine.resources.data(resource: EngineMediaResource(file.resource))
             |> deliverOnMainQueue).start(next: { [weak self] data in
                 guard let strongSelf = self else {
                     return
                 }
-                
-                if data.complete, let dataValue = try? Data(contentsOf: URL(fileURLWithPath: data.path)) {
+
+                if data.isComplete, let dataValue = try? Data(contentsOf: URL(fileURLWithPath: data.path)) {
                     if let image = WebP.convert(fromWebP: dataValue) {
                         strongSelf.iconNode.image = image
                     }

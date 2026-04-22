@@ -179,7 +179,15 @@ extension ChatControllerImpl {
                                 if let messageId = fromMessage?.id {
                                     peerSignal = loadedPeerFromMessage(account: self.context.account, peerId: peer.id, messageId: messageId)
                                 } else {
-                                    peerSignal = self.context.account.postbox.loadedPeerWithId(peer.id) |> map(Optional.init)
+                                    peerSignal = self.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peer.id))
+                                    |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                                        if let peer {
+                                            return .single(peer)
+                                        } else {
+                                            return .never()
+                                        }
+                                    }
+                                    |> map { Optional($0._asPeer()) }
                                 }
                                 self.navigationActionDisposable.set((peerSignal |> take(1) |> deliverOnMainQueue).startStrict(next: { [weak self] peer in
                                     if let strongSelf = self, let peer = peer {

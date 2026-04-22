@@ -1600,10 +1600,17 @@ public func channelVisibilityController(context: AccountContext, updatedPresenta
             let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.ExportedInvitation(id: peerId))
             |> deliverOnMainQueue).start(next: { invite in
                 if let invite = invite {
-                    let _ = (context.account.postbox.loadedPeerWithId(peerId)
+                    let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
+                    |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                        if let peer {
+                            return .single(peer)
+                        } else {
+                            return .never()
+                        }
+                    }
                     |> deliverOnMainQueue).start(next: { peer in
                         let isGroup: Bool
-                        if let peer = peer as? TelegramChannel, case .broadcast = peer.info {
+                        if case let .channel(channel) = peer, case .broadcast = channel.info {
                             isGroup = false
                         } else {
                             isGroup = true
@@ -1619,10 +1626,17 @@ public func channelVisibilityController(context: AccountContext, updatedPresenta
         }, action: { _, f in
             f(.dismissWithoutContent)
         
-            let _ = (context.account.postbox.loadedPeerWithId(peerId)
+            let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
+            |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                if let peer {
+                    return .single(peer)
+                } else {
+                    return .never()
+                }
+            }
             |> deliverOnMainQueue).start(next: { peer in
                 let isGroup: Bool
-                if let peer = peer as? TelegramChannel, case .broadcast = peer.info {
+                if case let .channel(channel) = peer, case .broadcast = channel.info {
                     isGroup = false
                 } else {
                     isGroup = true

@@ -922,15 +922,22 @@ final class LocationViewControllerNode: ViewControllerTracingNode, CLLocationMan
             return
         }
         
-        let _ = (self.context.account.postbox.loadedPeerWithId(self.subject.id.peerId)
+        let _ = (self.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: self.subject.id.peerId))
+        |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+            if let peer {
+                return .single(peer)
+            } else {
+                return .never()
+            }
+        }
         |> deliverOnMainQueue).start(next: { [weak self] peer in
             guard let strongSelf = self else {
                 return
             }
-          
+
             var text: String = strongSelf.presentationData.strings.Location_ProximityGroupTip
             if peer.id.namespace == Namespaces.Peer.CloudUser {
-                text = strongSelf.presentationData.strings.Location_ProximityTip(EnginePeer(peer).compactDisplayTitle).string
+                text = strongSelf.presentationData.strings.Location_ProximityTip(peer.compactDisplayTitle).string
             }
             
             strongSelf.interaction.present(TooltipScreen(account: strongSelf.context.account, sharedContext: strongSelf.context.sharedContext, text: .plain(text: text), icon: nil, location: .point(location.offsetBy(dx: -9.0, dy: 0.0), .right), displayDuration: .custom(3.0), shouldDismissOnTouch: { _, _ in

@@ -753,9 +753,9 @@ func openResolvedUrlImpl(
                                 let loadedData = try? Data(contentsOf: URL(fileURLWithPath: maybeData.path), options: [])
                                 return .single(loadedData)
                             } else {
-                                return context.account.postbox.mediaBox.resourceData(resource, option: .complete(waitUntilFetchStatus: false), attemptSynchronously: false)
+                                return context.engine.resources.data(resource: EngineMediaResource(resource))
                                 |> map { next -> Data? in
-                                    if next.size > 0, let data = try? Data(contentsOf: URL(fileURLWithPath: next.path), options: []) {
+                                    if next.availableSize > 0, let data = try? Data(contentsOf: URL(fileURLWithPath: next.path), options: []) {
                                         context.sharedContext.accountManager.mediaBox.storeResourceData(resource.id, data: data)
                                         return data
                                     } else {

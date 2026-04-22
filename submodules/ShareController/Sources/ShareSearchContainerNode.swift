@@ -286,7 +286,16 @@ final class ShareSearchContainerNode: ASDisplayNode, ShareContentContainerNode {
         let foundItems = combineLatest(self.searchQuery.get(), self.themePromise.get())
         |> mapToSignal { query, theme -> Signal<([ShareSearchPeerEntry]?, Bool), NoError> in
             if !query.isEmpty {
-                let accountPeer = context.stateManager.postbox.loadedPeerWithId(context.accountPeerId) |> take(1)
+                let accountPeer = context.engineData.get(TelegramEngine.EngineData.Item.Peer.Peer(id: context.accountPeerId))
+                |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                    if let peer {
+                        return .single(peer)
+                    } else {
+                        return .never()
+                    }
+                }
+                |> map { $0._asPeer() }
+                |> take(1)
                 let foundLocalPeers = context.stateManager.postbox.searchPeers(query: query.lowercased())
                 let foundRemotePeers: Signal<([FoundPeer], [FoundPeer], Bool), NoError> = .single(([], [], true))
                 |> then(
@@ -326,12 +335,12 @@ final class ShareSearchContainerNode: ASDisplayNode, ShareContentContainerNode {
                     }
                     
                     for peer in foundPeers.foundRemotePeers.0 {
-                        if let user = peer.peer as? TelegramUser, user.flags.contains(.requirePremium) {
+                        if case let .user(user) = peer.peer, user.flags.contains(.requirePremium) {
                             result.insert(user.id)
                         }
                     }
                     for peer in foundPeers.foundRemotePeers.1 {
-                        if let user = peer.peer as? TelegramUser, user.flags.contains(.requirePremium) {
+                        if case let .user(user) = peer.peer, user.flags.contains(.requirePremium) {
                             result.insert(user.id)
                         }
                     }
@@ -390,18 +399,18 @@ final class ShareSearchContainerNode: ASDisplayNode, ShareContentContainerNode {
                     } else {
                         for foundPeer in foundRemotePeers.0 {
                             let peer = foundPeer.peer
-                            if !existingPeerIds.contains(peer.id) && canSendMessagesToPeer(peer) {
+                            if !existingPeerIds.contains(peer.id) && canSendMessagesToPeer(peer._asPeer()) {
                                 existingPeerIds.insert(peer.id)
-                                entries.append(ShareSearchPeerEntry(index: index, peer: EngineRenderedPeer(peer: EnginePeer(foundPeer.peer)), presence: nil, requiresPremiumForMessaging: peerRequiresPremiumForMessaging[peer.id] ?? false, requiresStars: nil, theme: theme, strings: strings, isGlobal: false))
+                                entries.append(ShareSearchPeerEntry(index: index, peer: EngineRenderedPeer(peer: foundPeer.peer), presence: nil, requiresPremiumForMessaging: peerRequiresPremiumForMessaging[peer.id] ?? false, requiresStars: nil, theme: theme, strings: strings, isGlobal: false))
                                 index += 1
                             }
                         }
-                        
+
                         for foundPeer in foundRemotePeers.1 {
                             let peer = foundPeer.peer
-                            if !existingPeerIds.contains(peer.id) && canSendMessagesToPeer(peer) {
+                            if !existingPeerIds.contains(peer.id) && canSendMessagesToPeer(peer._asPeer()) {
                                 existingPeerIds.insert(peer.id)
-                                entries.append(ShareSearchPeerEntry(index: index, peer: EngineRenderedPeer(peer: EnginePeer(peer)), presence: nil, requiresPremiumForMessaging: peerRequiresPremiumForMessaging[peer.id] ?? false, requiresStars: nil, theme: theme, strings: strings, isGlobal: true))
+                                entries.append(ShareSearchPeerEntry(index: index, peer: EngineRenderedPeer(peer: peer), presence: nil, requiresPremiumForMessaging: peerRequiresPremiumForMessaging[peer.id] ?? false, requiresStars: nil, theme: theme, strings: strings, isGlobal: true))
                                 index += 1
                             }
                         }

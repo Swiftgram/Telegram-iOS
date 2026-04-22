@@ -75,8 +75,8 @@ public func cutoutAvailability(context: AccountContext) -> Signal<CutoutAvailabi
                                         
                     let fetchStatus = Signal<FetchStatus, NoError> { subscriber in
                         let fetchedDisposable = fetchedData.start()
-                        let resourceDataDisposable = context.account.postbox.mediaBox.resourceData(file.resource, attemptSynchronously: false).start(next: { next in
-                            if next.complete {
+                        let resourceDataDisposable = context.engine.resources.data(resource: EngineMediaResource(file.resource)).start(next: { next in
+                            if next.isComplete {
                                 SSZipArchive.unzipFile(atPath: next.path, toDestination: NSTemporaryDirectory())
                                 subscriber.putNext(.completed(compiledModelPath))
                                 subscriber.putCompletion()

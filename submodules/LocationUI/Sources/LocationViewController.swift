@@ -265,17 +265,24 @@ public final class LocationViewController: ViewController {
                     }
                     strongSelf.controllerNode.setProximityIndicator(radius: 0)
                     
-                    let _ = (strongSelf.context.account.postbox.loadedPeerWithId(strongSelf.subject.id.peerId)
+                    let _ = (strongSelf.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: strongSelf.subject.id.peerId))
+                    |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                        if let peer {
+                            return .single(peer)
+                        } else {
+                            return .never()
+                        }
+                    }
                     |> deliverOnMainQueue).start(next: { [weak self] peer in
                         guard let strongSelf = self else {
                             return
                         }
-                        
+
                         var compactDisplayTitle: String?
-                        if let peer = peer as? TelegramUser {
-                            compactDisplayTitle = EnginePeer(peer).compactDisplayTitle
+                        if case .user = peer {
+                            compactDisplayTitle = peer.compactDisplayTitle
                         }
-                        
+
                         let controller = LocationDistancePickerScreen(context: context, style: .default, compactDisplayTitle: compactDisplayTitle, distances: strongSelf.controllerNode.headerNode.mapNode.distancesToAllAnnotations, updated: { [weak self] distance in
                             guard let strongSelf = self else {
                                 return
@@ -370,17 +377,24 @@ public final class LocationViewController: ViewController {
                         params.sendLiveLocation(TelegramMediaMap(coordinate: coordinate, liveBroadcastingTimeout: 30 * 60, proximityNotificationRadius: distance))
                     })
                     
-                    let _ = (strongSelf.context.account.postbox.loadedPeerWithId(strongSelf.subject.id.peerId)
+                    let _ = (strongSelf.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: strongSelf.subject.id.peerId))
+                    |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                        if let peer {
+                            return .single(peer)
+                        } else {
+                            return .never()
+                        }
+                    }
                     |> deliverOnMainQueue).start(next: { [weak self] peer in
                         guard let strongSelf = self else {
                             return
                         }
-                        
+
                         var compactDisplayTitle: String?
-                        if let peer = peer as? TelegramUser {
-                            compactDisplayTitle = EnginePeer(peer).compactDisplayTitle
+                        if case .user = peer {
+                            compactDisplayTitle = peer.compactDisplayTitle
                         }
-                        
+
                         var text: String
                         let distanceString = shortStringForDistance(strings: strongSelf.presentationData.strings, distance: distance)
                         if let compactDisplayTitle = compactDisplayTitle {
@@ -407,7 +421,14 @@ public final class LocationViewController: ViewController {
                         )
                     })
                 } else {
-                    let _  = (context.account.postbox.loadedPeerWithId(subject.id.peerId)
+                    let _  = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: subject.id.peerId))
+                    |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                        if let peer {
+                            return .single(peer)
+                        } else {
+                            return .never()
+                        }
+                    }
                     |> deliverOnMainQueue).start(next: { peer in
                         let controller = ActionSheetController(presentationData: strongSelf.presentationData)
                         var title: String
@@ -415,8 +436,8 @@ public final class LocationViewController: ViewController {
                             title = strongSelf.presentationData.strings.Map_LiveLocationExtendDescription
                         } else {
                             title = strongSelf.presentationData.strings.Map_LiveLocationGroupNewDescription
-                            if let user = peer as? TelegramUser {
-                                title = strongSelf.presentationData.strings.Map_LiveLocationPrivateNewDescription(EnginePeer(user).compactDisplayTitle).string
+                            if case .user = peer {
+                                title = strongSelf.presentationData.strings.Map_LiveLocationPrivateNewDescription(peer.compactDisplayTitle).string
                             }
                         }
                         

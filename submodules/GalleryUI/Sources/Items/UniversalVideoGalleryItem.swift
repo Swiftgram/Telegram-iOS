@@ -3704,7 +3704,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                             allFiles.append(contentsOf: qualitySet.qualityFiles.values)
                             
                             let qualitySignals = allFiles.map { file -> Signal<(fileId: MediaId, isCached: Bool), NoError> in
-                                return self.context.account.postbox.mediaBox.resourceStatus(file.media.resource)
+                                return self.context.engine.resources.status(resource: EngineMediaResource(file.media.resource))
                                 |> take(1)
                                 |> map { status -> (fileId: MediaId, isCached: Bool) in
                                     return (file.media.fileId, status == .Local)

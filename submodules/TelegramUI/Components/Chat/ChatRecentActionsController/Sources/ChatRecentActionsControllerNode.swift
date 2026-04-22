@@ -357,8 +357,15 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
                     return .single(peer?._asPeer())
                 }
             } else {
-                resolveSignal = context.account.postbox.loadedPeerWithId(strongSelf.peer.id)
-                |> map(Optional.init)
+                resolveSignal = context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: strongSelf.peer.id))
+                |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                    if let peer {
+                        return .single(peer)
+                    } else {
+                        return .never()
+                    }
+                }
+                |> map { Optional($0._asPeer()) }
             }
             strongSelf.resolvePeerByNameDisposable.set((resolveSignal
             |> deliverOnMainQueue).startStrict(next: { peer in

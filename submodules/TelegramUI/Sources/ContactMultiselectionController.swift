@@ -383,7 +383,7 @@ class ContactMultiselectionControllerImpl: ViewController, ContactMultiselection
                                     displayCountAlert = true
                                     updatedState = updatedState.withToggledPeerId(.peer(peer.id))
                                 } else {
-                                    addedToken = EditableTokenListToken(id: peer.id, title: peerTokenTitle(accountPeerId: accountPeerId, peer: peer, strings: strongSelf.presentationData.strings, nameDisplayOrder: strongSelf.presentationData.nameDisplayOrder), fixedPosition: nil, subject: .peer(EnginePeer(peer)))
+                                    addedToken = EditableTokenListToken(id: peer.id, title: peerTokenTitle(accountPeerId: accountPeerId, peer: peer._asPeer(), strings: strongSelf.presentationData.strings, nameDisplayOrder: strongSelf.presentationData.nameDisplayOrder), fixedPosition: nil, subject: .peer(peer))
                                 }
                             }
                             updatedCount = updatedState.selectedPeerIndices.count
@@ -400,7 +400,7 @@ class ContactMultiselectionControllerImpl: ViewController, ContactMultiselection
                             state.selectedPeerIds.remove(peer.id)
                             removedTokenId = peer.id
                         } else {
-                            addedToken = EditableTokenListToken(id: peer.id, title: peerTokenTitle(accountPeerId: accountPeerId, peer: peer, strings: strongSelf.presentationData.strings, nameDisplayOrder: strongSelf.presentationData.nameDisplayOrder), fixedPosition: nil, subject: .peer(EnginePeer(peer)))
+                            addedToken = EditableTokenListToken(id: peer.id, title: peerTokenTitle(accountPeerId: accountPeerId, peer: peer._asPeer(), strings: strongSelf.presentationData.strings, nameDisplayOrder: strongSelf.presentationData.nameDisplayOrder), fixedPosition: nil, subject: .peer(peer))
                             state.selectedPeerIds.insert(peer.id)
                         }
                         updatedCount = state.selectedPeerIds.count
@@ -448,7 +448,7 @@ class ContactMultiselectionControllerImpl: ViewController, ContactMultiselection
 
         if !self.params.initialSelectedPeers.isEmpty {
             for peer in self.params.initialSelectedPeers {
-                self.contactsNode.openPeer?(.peer(peer: peer._asPeer(), isGlobal: false, participantCount: nil))
+                self.contactsNode.openPeer?(.peer(peer: peer, isGlobal: false, participantCount: nil))
             }
             /*if case let .contacts(contactsNode) = self.contactsNode.contentNode {
                 contactsNode.updateSelectionState { state in
@@ -478,7 +478,7 @@ class ContactMultiselectionControllerImpl: ViewController, ContactMultiselection
                 a(.default)
               
                 if let self {
-                    self.params.sendMessage?(EnginePeer(peer))
+                    self.params.sendMessage?(peer)
                 }
             })))
             
@@ -488,7 +488,7 @@ class ContactMultiselectionControllerImpl: ViewController, ContactMultiselection
                 a(.default)
 
                 if let self {
-                    self.params.openProfile?(EnginePeer(peer))
+                    self.params.openProfile?(peer)
                 }
             })))
             

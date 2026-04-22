@@ -158,10 +158,17 @@ func handleTextLinkActionImpl(context: AccountContext, peerId: EnginePeer.Id?, n
                     openPeerMentionImpl(mention)
                 case let .hashtag(_, hashtag):
                     if let peerId = peerId {
-                        let peerSignal = context.account.postbox.loadedPeerWithId(peerId)
+                        let peerSignal = context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
+                        |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                            if let peer {
+                                return .single(peer)
+                            } else {
+                                return .never()
+                            }
+                        }
                         let _ = (peerSignal
                         |> deliverOnMainQueue).start(next: { peer in
-                            let searchController = HashtagSearchController(context: context, peer: EnginePeer(peer), query: hashtag)
+                            let searchController = HashtagSearchController(context: context, peer: peer, query: hashtag)
                             (controller.navigationController as? NavigationController)?.pushViewController(searchController)
                         })
                     }

@@ -161,9 +161,9 @@ public final class WebSearchController: ViewController {
             }
         }
         
-        let gifProvider = self.context.account.postbox.preferencesView(keys: [PreferencesKeys.appConfiguration])
-        |> map { view -> String? in
-            guard let appConfiguration = view.values[PreferencesKeys.appConfiguration]?.get(AppConfiguration.self) else {
+        let gifProvider = self.context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.appConfiguration))
+        |> map { preferencesEntry -> String? in
+            guard let appConfiguration = preferencesEntry?.get(AppConfiguration.self) else {
                 return nil
             }
             let configuration = WebSearchConfiguration(appConfiguration: appConfiguration)

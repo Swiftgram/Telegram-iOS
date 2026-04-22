@@ -2073,11 +2073,11 @@ private func privacySearchableItems(context: AccountContext, privacySettings: Ac
         }
         let callsSignal: Signal<(VoiceCallSettings, VoipConfiguration)?, NoError>
         if case .voiceCalls = kind {
-            callsSignal = combineLatest(context.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.voiceCallSettings]), context.account.postbox.preferencesView(keys: [PreferencesKeys.voipConfiguration]))
+            callsSignal = combineLatest(context.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.voiceCallSettings]), context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.voipConfiguration)))
             |> take(1)
             |> map { sharedData, view -> (VoiceCallSettings, VoipConfiguration)? in
                 let voiceCallSettings: VoiceCallSettings = sharedData.entries[ApplicationSpecificSharedDataKeys.voiceCallSettings]?.get(VoiceCallSettings.self) ?? .defaultSettings
-                let voipConfiguration = view.values[PreferencesKeys.voipConfiguration]?.get(VoipConfiguration.self) ?? .defaultValue
+                let voipConfiguration = view?.get(VoipConfiguration.self) ?? .defaultValue
                 return (voiceCallSettings, voipConfiguration)
             }
         } else {
@@ -4317,11 +4317,11 @@ func settingsSearchableItems(
         return accountsAndPeers.1.count + 1 < maximumNumberOfAccounts
     }
     
-    let notificationSettings = context.account.postbox.preferencesView(keys: [PreferencesKeys.globalNotifications])
+    let notificationSettings = context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.globalNotifications))
     |> take(1)
     |> map { view -> GlobalNotificationSettingsSet in
         let viewSettings: GlobalNotificationSettingsSet
-        if let settings = view.values[PreferencesKeys.globalNotifications]?.get(GlobalNotificationSettings.self) {
+        if let settings = view?.get(GlobalNotificationSettings.self) {
             viewSettings = settings.effective
         } else {
             viewSettings = GlobalNotificationSettingsSet.defaultSettings

@@ -441,15 +441,25 @@ public extension TelegramEngine {
             |> map { EngineMediaResource.FetchStatus($0) }
         }
 
+        public func status(
+            id: EngineMediaResource.Id,
+            resourceSize: Int64
+        ) -> Signal<EngineMediaResource.FetchStatus, NoError> {
+            return self.account.postbox.mediaBox.resourceStatus(MediaResourceId(id.stringRepresentation), resourceSize: resourceSize)
+            |> map { EngineMediaResource.FetchStatus($0) }
+        }
+
         public func data(
             resource: EngineMediaResource,
-            pathExtension: String?,
-            waitUntilFetchStatus: Bool
+            pathExtension: String? = nil,
+            waitUntilFetchStatus: Bool = false,
+            attemptSynchronously: Bool = false
         ) -> Signal<EngineMediaResource.ResourceData, NoError> {
             return self.account.postbox.mediaBox.resourceData(
                 resource._asResource(),
                 pathExtension: pathExtension,
-                option: .complete(waitUntilFetchStatus: waitUntilFetchStatus)
+                option: .complete(waitUntilFetchStatus: waitUntilFetchStatus),
+                attemptSynchronously: attemptSynchronously
             )
             |> map { EngineMediaResource.ResourceData($0) }
         }

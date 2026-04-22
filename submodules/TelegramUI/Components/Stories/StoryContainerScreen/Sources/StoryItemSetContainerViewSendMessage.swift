@@ -246,7 +246,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
 
                 var availablePeers: [SendAsPeer] = []
                 availablePeers.append(SendAsPeer(
-                    peer: accountPeer._asPeer(),
+                    peer: accountPeer,
                     subscribers: nil,
                     isPremiumRequired: false
                 ))
@@ -2038,7 +2038,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                                     var media: TelegramMediaContact?
                                     switch peer {
                                     case let .peer(contact, _, _):
-                                        guard let contact = contact as? TelegramUser, let phoneNumber = contact.phone else {
+                                        guard case let .user(contact) = contact, let phoneNumber = contact.phone else {
                                             continue
                                         }
                                         let contactData = DeviceContactExtendedData(basicData: DeviceContactBasicData(firstName: contact.firstName ?? "", lastName: contact.lastName ?? "", phoneNumbers: [DeviceContactPhoneNumberData(label: "_$!<Mobile>!$_", value: phoneNumber)]), middleName: "", prefix: "", suffix: "", organization: "", jobTitle: "", department: "", emailAddresses: [], urls: [], addresses: [], birthdayDate: nil, socialProfiles: [], instantMessagingProfiles: [], note: "")
@@ -2071,7 +2071,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                                 let dataSignal: Signal<(EnginePeer?, DeviceContactExtendedData?), NoError>
                                 switch peer {
                                 case let .peer(contact, _, _):
-                                    guard let contact = contact as? TelegramUser, let phoneNumber = contact.phone else {
+                                    guard case let .user(contact) = contact, let phoneNumber = contact.phone else {
                                         return
                                     }
                                     let contactData = DeviceContactExtendedData(basicData: DeviceContactBasicData(firstName: contact.firstName ?? "", lastName: contact.lastName ?? "", phoneNumbers: [DeviceContactPhoneNumberData(label: "_$!<Mobile>!$_", value: phoneNumber)]), middleName: "", prefix: "", suffix: "", organization: "", jobTitle: "", department: "", emailAddresses: [], urls: [], addresses: [], birthdayDate: nil, socialProfiles: [], instantMessagingProfiles: [], note: "")
@@ -3108,11 +3108,18 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                         }))
                     }
                 case .info:
-                    let _ = (context.account.postbox.loadedPeerWithId(peerId.id)
+                    let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId.id))
+                    |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                        if let peer {
+                            return .single(peer)
+                        } else {
+                            return .never()
+                        }
+                    }
                     |> take(1)
                     |> deliverOnMainQueue).start(next: { [weak navigationController] peer in
                         if peer.restrictionText(platform: "ios", contentSettings: context.currentContentSettings.with { $0 }) == nil {
-                            if let infoController = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+                            if let infoController = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                                 navigationController?.pushViewController(infoController)
                             }
                         }
@@ -3262,8 +3269,15 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                 }
             }
         } else {
-            resolveSignal = component.context.account.postbox.loadedPeerWithId(peerId)
-            |> map(Optional.init)
+            resolveSignal = component.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
+            |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                if let peer {
+                    return .single(peer)
+                } else {
+                    return .never()
+                }
+            }
+            |> map { Optional($0._asPeer()) }
         }
         var cancelImpl: (() -> Void)?
         let presentationData = component.context.sharedContext.currentPresentationData.with { $0 }
@@ -3339,7 +3353,15 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
             return
         }
 
-        let peerSignal: Signal<Peer?, NoError> = component.context.account.postbox.loadedPeerWithId(peer.id) |> map(Optional.init)
+        let peerSignal: Signal<EnginePeer?, NoError> = component.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peer.id))
+        |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+            if let peer {
+                return .single(peer)
+            } else {
+                return .never()
+            }
+        }
+        |> map(Optional.init)
         self.navigationActionDisposable.set((peerSignal |> take(1) |> deliverOnMainQueue).start(next: { [weak view] peer in
             guard let view, let component = view.component, let peer else {
                 return
@@ -3352,7 +3374,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
             if component.metrics.widthClass == .regular {
                 expandAvatar = false
             }
-            if let infoController = component.context.sharedContext.makePeerInfoController(context: component.context, updatedPresentationData: nil, peer: peer, mode: mode, avatarInitiallyExpanded: expandAvatar, fromChat: false, requestsContext: nil) {
+            if let infoController = component.context.sharedContext.makePeerInfoController(context: component.context, updatedPresentationData: nil, peer: peer._asPeer(), mode: mode, avatarInitiallyExpanded: expandAvatar, fromChat: false, requestsContext: nil) {
                 component.controller()?.push(infoController)
             }
         }))
@@ -4055,8 +4077,8 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
             let initialData = await ChatSendStarsScreen.initialData(
                 context: component.context,
                 peerId: peerId,
-                myPeer: (sendAsPeer?.peer).flatMap(EnginePeer.init),
-                reactSubject: .liveStream(peerId: peerId, storyId: focusedItem.storyItem.id, minAmount: Int(minAmount), liveChatMessageParams: LiveChatMessageParams(appConfig: component.context.currentAppConfiguration.with({ $0 })), availableSendAsPeers: component.isEmbeddedInCamera ? [] : (self.sendAsData?.availablePeers.map({ EnginePeer($0.peer) }) ?? []), isDisplayOnly: component.isEmbeddedInCamera),
+                myPeer: sendAsPeer?.peer,
+                reactSubject: .liveStream(peerId: peerId, storyId: focusedItem.storyItem.id, minAmount: Int(minAmount), liveChatMessageParams: LiveChatMessageParams(appConfig: component.context.currentAppConfiguration.with({ $0 })), availableSendAsPeers: component.isEmbeddedInCamera ? [] : (self.sendAsData?.availablePeers.map({ $0.peer }) ?? []), isDisplayOnly: component.isEmbeddedInCamera),
                 topPeers: topPeers,
                 completion: { [weak self, weak view] amount, privacy, _, _ in
                     guard let self, let view else {

@@ -632,6 +632,32 @@ Net: 3 consumer files + 1 TelegramCore file + CLAUDE.md. TelegramEngineResources
 
 Plan / record: (no plan doc this wave — mechanical sweep).
 
+## Wave 27 outcome (2026-04-22)
+
+`preferencesView` consumer sweep (wave-9 pattern continuation). No new TelegramCore facades — leverages existing `TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key:)`.
+
+**Shape.** Replace `context.account.postbox.preferencesView(keys: [<key>])` — returning `Signal<PreferencesView, NoError>` — with `context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: <key>))` — returning `Signal<PreferencesEntry?, NoError>`. Downstream, rename `<name>.values[<key>]?.get(<Type>.self)` → `<name>?.get(<Type>.self)` at each closure parameter.
+
+**30 consumer files, ~40 call sites migrated** across ChatListUI, ContactListUI, DebugSettingsUI, GalleryUI, PeersNearbyUI, SettingsUI, TelegramCallsUI, TelegramUI, TelegramUI/Components, WebSearchUI. Full list in `git show --stat <wave-27-commit>`.
+
+**Multi-key sites (PresentationCallManager).** 3 sites used `preferencesView(keys: [voipConfiguration, appConfiguration])`. Migrated via the two-arg `engine.data.subscribe(itemA, itemB) |> take(1)` overload, which returns `Signal<(PreferencesEntry?, PreferencesEntry?), NoError>`. Closures that accessed `preferences.values[X]?.get(...)` rewritten to `preferences.0?.get(...)` and `preferences.1?.get(...)`.
+
+**Direct-postbox-param helper migrated.** `AccountContext.swift`'s `getAppConfiguration(postbox: Postbox)` helper (one internal caller only) was rewritten to `getAppConfiguration(engine: TelegramEngine)` in the same commit, switching its single call site from `getAppConfiguration(postbox: account.postbox)` to `getAppConfiguration(engine: self.engine)`.
+
+**Annotation update in NotificationExceptionControllerNode.swift.** An explicit signal type `Signal<(…, PreferencesView, …), NoError>` in a `mapToSignal` return was updated to `Signal<(…, PreferencesEntry?, …), NoError>`. The file still imports Postbox because `PreferencesEntry` is (for now) a Postbox-defined type surfaced through TelegramCore's `EnginePreferencesEntry` typealias — a future wave-6-style `import Postbox` sweep would clean up such imports where they're now the only Postbox reference.
+
+**Deliberately skipped in this wave.**
+- `TelegramPermissionsUI/Sources/PermissionSplitTest.swift:100` — `permissionUISplitTest(postbox: Postbox)` is a public API whose product value `PermissionUISplitTest` itself stores `postbox: Postbox` to satisfy the `SplitTest` protocol. Proper migration requires a protocol-level refactor (or wholesale rewrite of the SplitTest abstraction) beyond this wave's scope.
+- 5 TelegramCore-internal `postbox.preferencesView(...)` sites (ChatListFiltering × 3, ContentSettings × 1, ManagedGlobalNotificationSettings × 1) — the refactor only migrates consumer modules, not TelegramCore internals.
+
+**Build validation.** Clean first-pass build (748 processes, 227s, 0 errors). No new facades to test, shape was validated across 30 files on the first attempt.
+
+**Lesson — multi-key preferencesView migration.** `engine.data.subscribe(itemA, itemB)` exists and returns a Swift tuple. When a Postbox `preferencesView(keys: [K1, K2])` call is inside a `combineLatest(...)` whose downstream closure accesses `.values[K1]` and `.values[K2]`, prefer the two-arg subscribe form (vs. two separate subscribes combined externally) — it preserves `combineLatest` arity exactly. Rewrite `.values[K1]?.get(T.self)` → `.0?.get(T.self)`, `.values[K2]?.get(T.self)` → `.1?.get(T.self)`. The closure parameter name stays (e.g., `preferences`) because the tuple destructure preserves the variable-name semantics at the call site.
+
+Net: 30 consumer files. No TelegramCore changes. CLAUDE.md facade-inventory table unchanged (no new facades).
+
+Plan / record: `memory/project_postbox_wave27_plan.md` (deleted post-wave).
+
 ## Wave 26 outcome (2026-04-21)
 
 `resourceRangesStatus` + `removeCachedResources` facade additions + consumer sweep. Combines two independent small sweeps into one commit.
@@ -656,6 +682,267 @@ For `ChatListSearchContainerNode.swift:1398`, the caller uses a `Set<MediaResour
 Net: 3 consumer files + 1 TelegramCore file + CLAUDE.md. TelegramEngineResources.swift: +9 / -0 (including `import RangeSet`).
 
 Plan / record: (no plan doc this wave — mechanical sweep).
+
+## Wave 31 outcome (2026-04-23)
+
+Second build-verified `^import Postbox$` sweep on consumer modules since wave 6 (2026-04-19). Same methodology: speculative-drop + `--continueOnError` build loop with pattern-based preemptive restores.
+
+**Candidate set narrowing.** Initial candidate grep `grep -rl "^import Postbox$" submodules --include="*.swift"` returned **1184** files. 606 of those live in `submodules/TelegramCore/Sources/` — TelegramCore legitimately `import Postbox`; the TelegramCore files were accidentally included and had to be reverted via `git checkout -- submodules/TelegramCore/Sources/` before re-seeding the drop. Final consumer candidate set: **578** files. **Lesson for future sweep invocations: the candidate-set grep must filter out `submodules/TelegramCore/` as well as `submodules/Postbox/` / `submodules/TelegramApi/`.** Wave 6's methodology note at step 1 (line 37) already calls this out, but the TelegramCore carve-out is easy to miss because TelegramCore doesn't `@_exported import Postbox`, so from a pure re-exports perspective it's indistinguishable from a consumer.
+
+**9 build iterations to convergence** (plus 1 aborted first iteration for the TelegramCore scope error). Per-iteration failure counts: 18 → 2 → 9 → 12 → 1 → 1 → 3 → 1 → 4 → 0. Surfacing pattern was typical of a speculative-drop sweep: errors bubble one dependency-graph layer at a time.
+
+**Per-iteration symbol expansion.** The wave-6 preemptive-restore symbol list (CLAUDE.md's "Unused-import sweeps" guidance) needed extensions for this sweep:
+- Iter 3 surfaced `CodableEntry`, `CachedMediaResourceRepresentation`, `CachedMediaRepresentationKeepDuration`.
+- Iter 4 surfaced `PostboxViewKey`, `OrderedItemListView`, `UnreadMessageCountsItem`, `ChatListEntrySummaryComponents`, `PeerStoryStats`, `ItemCollectionId` (note: typealias `EngineItemCollectionId` exists but raw name still requires `import Postbox`), and broadened `\bMedia\b`, `\bMessage\b`, `\bPeer\b`.
+- Iter 5 surfaced `FetchResourceSourceType` (same typealias caveat).
+- Iter 6 surfaced `StoryId`.
+- Iter 7 surfaced `ChatListIndex`.
+- Iter 8 surfaced `PreferencesEntry` (typealias caveat), `PeerView`, `RenderedPeer`.
+- Iter 9 surfaced `declareEncodable`.
+- Iter 10 surfaced `ItemCollectionItemIndex`, `ValueBoxEncryptionParameters`, `fileSize`, plus a restore-script bug (see below).
+
+**Restore-script bug: `#if canImport(...)` blocks.** The naive restore inserter picks the last `^import ` line and appends `import Postbox` after it. If the last import sits inside an `#if canImport(AppCenter) ... #endif` preprocessor block, the restored `import Postbox` lands inside that block and is only active under that configuration. `AppDelegate.swift` in `submodules/TelegramUI/Sources/` hit this (original had `import Postbox` at line 7; drop + restore put it inside the `#if canImport(AppCenter)` block at line 51); the build failed in iter10 on `cannot find type 'Postbox' in scope` errors even though a literal `grep ^import Postbox$` matched. Fixed by manually moving the import out of the `#if` block. **Lesson for future restore-script work: insert the restored `import Postbox` BEFORE the first `#if` or `#endif` line, not after the last `import` line, to avoid preprocessor-scope traps.**
+
+**Results: 9 source-level surviving drops + 2 duplicate-import dedups.** Final diff: 11 files changed, +2 / -13.
+
+Surviving drops:
+- `submodules/AuthorizationUI/Sources/AuthorizationSequencePhoneEntryController.swift`
+- `submodules/AuthorizationUI/Sources/AuthorizationSequenceSplashController.swift`
+- `submodules/DebugSettingsUI/Sources/DebugAccountsController.swift`
+- `submodules/LegacyDataImport/Sources/LegacyPreferencesImport.swift`
+- `submodules/MediaPlayer/Sources/ChunkMediaPlayerDirectFetchSourceImpl.swift`
+- `submodules/TelegramUI/Components/Stories/StoryContainerScreen/Sources/StoryItemImageView.swift`
+- `submodules/TelegramUI/Sources/ChatLinkPreview.swift`
+- `submodules/TelegramUI/Sources/ChatSearchResultsController.swift`
+- `submodules/TelegramUI/Sources/MediaManager.swift`
+
+Duplicate-import dedups (files had two `^import Postbox$` lines; kept exactly one — unrelated-but-latent cleanup surfaced incidentally by the sweep):
+- `submodules/TelegramUI/Components/ChatControllerInteraction/Sources/ChatControllerInteraction.swift` (2 imports → 1)
+- `submodules/TelegramUI/Sources/ChatHistoryListNode.swift` (2 imports → 1)
+
+**Spurious-diff cleanup step (new procedure, adopted this wave).** After convergence, `git diff --numstat` showed 564 modified files but only 9 were genuine drops. The other 553 were "1 addition + 1 deletion" — files where the original `import Postbox` at line X was deleted by the drop and re-inserted at line Y by the restore (different position because restore inserts after "last import line" regardless of original placement). These aren't semantic changes but do produce noisy diffs. Identified via `git diff --numstat | awk '$1 == 1 && $2 == 1 {print $3}'` and reverted via `xargs -I{} git checkout -- {}`. **Lesson: the wave-6 methodology should add a post-convergence "revert 1-add-1-del spurious diffs" step before committing. Alternative: improve the restore script to insert at the exact original line. Either way, the final diff should be limited to real semantic changes.**
+
+**No modules became fully Postbox-free this wave.** Each of the five containing modules still has other files importing Postbox (TelegramUI: 350 remaining, LegacyDataImport: 4, MediaPlayer: 9, AuthorizationUI: 2, DebugSettingsUI: 1). By this point most trivially-droppable imports have been drained; the remaining Postbox-importing files mostly carry real usage. **Re-run cadence lesson: yield per re-run is declining.** Wave 6 yielded 183 drops + 189 modules freed; wave 31 yielded 9 drops + 0 modules freed. Consider spacing future sweeps to every 4–6 facade waves rather than 2–3.
+
+**Wave 14 BUILD-dep sweep companion: 0 drops.** Ran the wave-14-style `find submodules -name BUILD | filter-by-no-source-import` check: **0 BUILD candidates**. The 191 BUILDs still listing `//submodules/Postbox` all have at least one Sources/*.swift that actually imports Postbox. One outlier (`submodules/SpotlightSupport/BUILD`) has zero source files but a non-trivial `deps = [...]` list including `//submodules/Postbox`; deliberately left alone (stale-BUILD-on-empty-module is a different class of cleanup and carries unknown side effects).
+
+Net: 11 files changed (9 + 2), +2 / -13 lines. Clean first-attempt verification build without `--continueOnError` (880 actions, 1354 action cache hits, 262s).
+
+Plan / record: (no plan doc this wave — mechanical sweep).
+
+## Wave 32 outcome (2026-04-24)
+
+`resourceStatus` residue sweep. One new facade overload (`status(id:resourceSize:)`) + 4 migrated sites across 2 consumer files. Commit `289fc908bc`.
+
+**Facade added** in `TelegramEngineResources.swift`:
+- `status(id: EngineMediaResource.Id, resourceSize: Int64) -> Signal<EngineMediaResource.FetchStatus, NoError>` wraps Postbox's `resourceStatus(MediaResourceId, resourceSize:)` overload. Body mirrors the existing `status(resource:)` facade, converting id via `MediaResourceId(id.stringRepresentation)` and mapping the result via `EngineMediaResource.FetchStatus.init`.
+
+**4 migrated sites (2 files):**
+- `ChatListSearchContainerNode.swift:1059` — new `status(id:resourceSize:)` overload. Caller supplies `EngineMediaResource.Id(downloadResource.id)` directly (String initializer; `downloadResource.id: String`) — no raw `MediaResourceId(...)` wrap needed. Mirrors the pre-existing `EngineMediaResource.Id(downloadResource.id)` usage at line 1107.
+- `ChatMessageInteractiveMediaNode.swift:1769` — existing `status(resource:)` facade (wave 3).
+- `ChatMessageInteractiveMediaNode.swift:1799` — same.
+- `ChatMessageInteractiveMediaNode.swift:1809` — existing `resourceRangesStatus(resource:)` facade (wave 26).
+
+**Local preserved deliberately.** `let postbox = context.account.postbox` at `ChatMessageInteractiveMediaNode.swift:1767` stays because line 1793 feeds `postbox` to `HLSVideoContent.minimizedHLSQualityPreloadData(postbox: Postbox, ...)` — that is a third-party-function boundary needing raw `Postbox`. Only the `resourceStatus`/`resourceRangesStatus` call sites within that scope migrate.
+
+**Case-pattern sharing.** `MediaResourceStatus` (raw Postbox) and `EngineMediaResource.FetchStatus` (engine wrapper) have identical case names (`.Fetching`, `.Paused`, `.Local`, `.Remote`). The inner `switch status` at 1770-1779 keeps its `MediaResourceStatus` return type annotation — input case matching works for the engine type, constructed `MediaResourceStatus` return values still compile (`MediaResourceStatus` is in scope via `import Postbox` on line 4). This is the wave-29/30 lesson in action: no enum-case edits required.
+
+**Inventory scope narrowing from memory's prediction.** The memory's `wave 32+ candidates` section predicted ~12 Shape-B/C sites in the residue sweep. Execution-time re-grep reclassified most of them:
+- **Coupled to `accountManager.mediaBox.resourceStatus` siblings (6 sites in 3 files):** `ThemePreviewControllerNode:271+277`, `WallpaperGalleryItem:799+805+834+840`, `SettingsThemeWallpaperNode:284+285`. Each pair has an `accountManager`-sourced fallback whose return type is raw `Signal<MediaResourceStatus, NoError>`. Migrating only the `account.postbox` branch breaks the shared sibling type at the `mapToSignal`/`combineLatest` merge point. Deferred until accountManager-side has an engine facade.
+- **Shape-C init-param refactor (3 sites in 3 files):** `LegacyWebSearchGallery:248` (free function `legacyWebSearchItem(account: Account, ...)`), `NativeVideoContent:455` (init takes `postbox: Postbox`), `VerticalListContextResultsChatInputPanelItem:229` (item stores `account: Account`). Each needs an init-param change + caller threading — per-module mini-refactor, not wave-shape-G territory.
+- **`approximateSynchronousValue` overload:** only call site (`SettingsThemeWallpaperNode:284`) is in the accountManager-coupled bucket above. Adding the facade now would land dead code.
+
+Effective wave scope: 4 sites (the uncoupled subset). Still worth committing as its own wave — closes the `resourceStatus` arc for every site where migration is currently unblocked.
+
+**Build validation.** Clean build (558 processes, 236s, 0 errors). No `--continueOnError` needed — first attempt green.
+
+**Lesson — siblings-define-scope in resource-status migrations.** When an assignment uses `A.resourceStatus(...)` in one branch and `B.resourceStatus(...)` in another (via `if`/`mapToSignal`/`combineLatest`), the branches' return types must match. If `A` has an engine facade but `B` does not (e.g., `accountManager.mediaBox` has no engine wrapper yet), neither branch is migratable in isolation — the whole group must wait. Pre-flight sibling-check for each `resourceStatus` hit: is the enclosing `statusSignal = ...` expression a single source or a multi-source merge?
+
+**Lesson — Shape-B/C classification requires read, not grep.** The memory's wave-32 candidate table classified sites by single-line grep ("`account.postbox.mediaBox.resourceStatus`"). That pattern matches both the fully-migratable `context.account.postbox.mediaBox.X` form (Shape-A via AccountContext) AND the `(local) account.postbox.mediaBox.X` Shape-C form (requires init-param refactor). Distinguishing requires reading 5-10 lines of context to find the `account` binding: field? local? init param? closure capture? Add this as a mandatory step in the per-site inventory for future residue waves.
+
+Plan / record: (no plan doc this wave — small residue sweep).
+
+---
+
+## Wave 33 outcome (2026-04-24)
+
+`loadedPeerWithId` consumer sweep. 60 sites migrated across 37 consumer files. No new facades, no typealiases. Commit `16d017853a`.
+
+**Migration pattern** (per user's explicit direction):
+
+```swift
+context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
+|> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+    if let peer {
+        return .single(peer)
+    } else {
+        return .never()
+    }
+}
+```
+
+This replaces `context.account.postbox.loadedPeerWithId(peerId)` while preserving signature shape. The `mapToSignal` wrapper is critical: Postbox's `loadedPeerWithId` returns `.never()` (signal never emits) when the peer is missing — it does NOT wait for loading. The engine-data equivalent `get(Peer.Peer(id:))` returns `Signal<EnginePeer?, NoError>` (optional snapshot). Unwrapping with `.never()`-on-nil preserves original semantics exactly, while keeping the outer shape `Signal<EnginePeer, NoError>` non-optional so callers' closures don't have to cascade new optional handling.
+
+**Category distribution (per pre-flight Explore catalog, 60 sites):**
+
+| Category | Count | Body change |
+|---|---|---|
+| Cat-A (trivial) | 22 | Only EnginePeer-compatible members; type swap only. |
+| Cat-B (concrete-type cast) | 25 | `peer as? TelegramUser/Group/Channel/SecretChat` → `if case let .user(user)` (etc.). |
+| Cat-C (feeds Peer-typed API) | 13 | `peer._asPeer()` at call point (`makePeerInfoController`, `makeChatRecentActionsController`, `makeChatQrCodeScreen`, `FoundPeer.init`, `SendAsPeer.init`). |
+
+(Cat-B + Cat-C bumped slightly from Explore's catalog after in-edit reclassifications.)
+
+**Engine-access variations:**
+- Most consumer modules use `context.engine.data.get(...)` on `AccountContext`.
+- `ShareSearchContainerNode.swift` uses `context.engineData.get(...)` because `ShareControllerAccountContext` exposes `engineData: TelegramEngine.EngineData` but not a full `engine`.
+- `CallStatusBarNode.swift` (has raw `account: Account` from switch case) constructs `TelegramEngine(account: account)` inline.
+- `PresentationGroupCall.swift` uses `self.accountContext.engine.data` instead of the stored `self.account.postbox`.
+
+**TelegramCore internal sites (36) unchanged.** `Postbox.swift` (2 defs), `State/AccountViewTracker.swift`, `State/FetchChatList.swift`, `State/SynchronizePeerReadState.swift`, `Suggestions.swift`, and all `TelegramCore/Sources/TelegramEngine/` internal `_internal_*` helpers still call `postbox.loadedPeerWithId(...)` — they are the Postbox-facing layer.
+
+**Pre-flight efficiency.** An Explore subagent cataloged all 60 sites by category from a single prompt (one-line-per-site output). That catalog made the sweep straightforward: most files fell into identical patterns, enabling template-substitution Edits. Total context spent on discovery was small compared to doing 60 per-site full reads in the main thread.
+
+**Build validation.** First-pass clean build (47 actions, 70s) after sweep completion. Earlier pilot (2 sites, 20s) validated pattern before scaling to all 60.
+
+**Lessons:**
+
+- **`loadedPeerWithId` returns `.never()` on missing peer, not a pending Signal.** Old common misreading: treating it as a "wait-until-loaded" primitive. Actual Postbox source at `Postbox.swift:3925`: `if let peer = self.peerTable.get(id) { return .single(peer) } else { return .never() }`. Preserve this by wrapping `engine.data.get` in `mapToSignal` with the `.never()` fallback — don't replace with plain `|> compactMap { $0 }` (which would drop the signal entirely rather than completing immediately when peer exists).
+
+- **"Keep the signatures to help the typechecker" as a migration principle.** The user (2026-04-24) explicitly directed: keep call-site outer Signal signatures stable (`Signal<EnginePeer, NoError>` non-optional), even at the cost of a 6-line inline `mapToSignal` wrapper at each site. Rationale: 60 sites × optional-cascade body changes > 60 × 6-line wrapper. This is a general principle for sweeps — if the alternative is rewriting every body to handle optionals, prefer the signal-level wrapper to contain the change.
+
+- **Pre-flight cataloging via Explore subagent.** For sweeps with variable per-site body shapes (unlike facade-migration-with-identical-call-expression sweeps), a dispatch to `Explore` with a category-classification prompt collapses inventory cost. Explore's output is small (~60 one-line entries); avoids pulling 60 file fragments into the main thread's context. Required for wave shapes where inventory is non-uniform.
+
+- **Shape-C peer-fed-to-API pattern needs `_asPeer()` at call, not facade.** Because `makePeerInfoController(peer: Peer)` / `FoundPeer(peer: Peer, ...)` / `SendAsPeer(peer: Peer, ...)` / `makeChatQrCodeScreen(peer: Peer, ...)` all stay on raw `Peer` (they're AccountContext-protocol or TelegramCore struct-init APIs whose migration is its own multi-wave effort), the bridge is a single `._asPeer()` at the call. Don't try to also migrate those APIs in the sweep — blast radius too large.
+
+- **Engine-access varies by containing context.** Plain `context.engine.data` works for ~85% of sites; the remainder need `TelegramEngine(account: account)` construction or `engineData` protocol property. Build a per-site `context` type check into pre-flight for call-site categories where `AccountContext` isn't guaranteed.
+
+Plan / record: no plan doc this wave — user specified the migration pattern directly; the Explore catalog + commit message captured decisions.
+
+---
+
+## Wave 34 outcome (2026-04-24)
+
+`FoundPeer.peer: Peer → EnginePeer`. Public field-type migration on the struct in `submodules/TelegramCore/Sources/TelegramEngine/Peers/SearchPeers.swift`. Atomic 12-file commit `fdd5b93998`. ~135 insertions / ~134 deletions.
+
+**Migration shape.** The field-type change is necessarily atomic (half-migrated FoundPeer doesn't compile across consumers), so all edits land in one commit. `_internal_searchPeers` keeps `import Postbox` (still calls `postbox.transaction` etc.) and wraps raw peer values with `EnginePeer(peer)` at the FoundPeer constructor sites. `==` body changes from `lhs.peer.isEqual(rhs.peer)` to `lhs.peer == rhs.peer`.
+
+**Final scope (vs planned ~70 semantic edits → actual ~135 line insertions):**
+- 5 `._asPeer()` bridge-drops at FoundPeer constructor sites (e.g., `FoundPeer(peer: peer._asPeer(), ...)` → `FoundPeer(peer: peer, ...)`)
+- 22+ redundant `EnginePeer(peer.peer)` wrap drops (the field is now EnginePeer; `EnginePeer.init(_ peer: Peer)` doesn't accept an EnginePeer argument so the wrap fails to compile)
+- 30+ Postbox-concrete-type downcasts (`peer.peer as? TelegramX` / `is TelegramX`) rewritten to `if case let .X(x) = peer.peer` enum-pattern form
+- ~10 `._asPeer()` outflow bridges added where `peer.peer` flows into APIs that still take raw `Peer`: `ContactListPeer.peer(peer:)`, `canSendMessagesToPeer(_:)`, `EngineRenderedPeer(peer:)` legacy paths
+
+**Inventory undercounting — pattern.** Original Explore inventory pass missed 4 of 12 final consumer files. The grep `grep -rln "FoundPeer\b"` only catches files that name `FoundPeer` as a literal type. Files that USE `peer.peer` access on FoundPeer values without naming the type itself were invisible to that grep. The build verification pass surfaced them:
+
+| File | Surfaced by | Edits needed |
+|---|---|---|
+| `TelegramCore/Calls/GroupCalls.swift` | iter 1 | 2 internal FoundPeer constructors needed `EnginePeer(peer)` wraps |
+| `ShareController/ShareSearchContainerNode.swift` | iter 2 | 4 errors: 2 C2 downcasts + 2 outflow-bridge needs |
+| `ContactListUI/ContactsSearchContainerNode.swift` | iter 3 | 7 errors: nested `if !(peer is X)` rewrite + multiple downcasts/outflows |
+| `PeerInfoUI/ChannelMembersSearchContainerNode.swift` | iter 4 | 6 errors across 2 near-identical loop blocks |
+| `ChatListUI/ChatListSearchListPaneNode.swift` (extra site) | iter 5 | 1 missed C2 site at line 3723 (in `.globalPeer(foundPeer, …)` enum case body, far from the other ChatListUI edits) |
+
+5 build iterations total before clean (each iteration: edit → re-build, ~50–60s incremental). First-pass would have needed a much wider pre-flight grep — see lessons.
+
+**Lessons:**
+
+- **Inventory grep must include the access pattern, not just the type name.** For a field-type migration, ALL of:
+  - `<Type>(peer:` constructors
+  - `<x>.peer.<member>` reads (verify `<x>` type is `<Type>`, not RenderedPeer/SendAsPeer/etc.)
+  - `<x>.peer as?` / `<x>.peer is` downcasts
+  - `<api>(<x>.peer)` arg passes (where `<api>` may take the old protocol)
+  
+  Use `for x in Y` binding-tracing to determine if `<x>` is the migrated type. The wave-34 pre-flight ran the first three but not the fourth (outflow-arg sites), and partially missed the second (because the Explore agent classified by literal `FoundPeer` token rather than by `peer.peer` semantics in context).
+
+- **`if !(peer is A || peer is B)` rewrite uses `switch case A, B: break / default: ...`.** When the original Postbox code uses a negated disjunction of type-checks, the cleanest enum-pattern equivalent is a `switch` with combined cases in one arm — not nested `if case`s. (Used in ChatListSearchListPaneNode:1024 and ContactsSearchContainerNode:502/544.)
+
+- **Inner `peer` shadowing.** Many `else if let peer = peer.peer as? TelegramChannel` Postbox patterns shadow the loop variable. The enum-pattern rewrite renames the inner binding to `channel` to avoid double-shadowing the EnginePeer outer loop var. Block-internal references to `.info` etc. then move from `peer.info` to `channel.info`.
+
+- **Build iteration = inventory completion.** When the inventory undercounting becomes apparent (build surfaces 5+ unexpected sites), don't abandon — iterate. Each build is fast (~50s incremental) and each error is actionable (`error: cast from EnginePeer to unrelated type X always fails` → C2 rewrite; `argument type EnginePeer does not conform to expected type Peer` → outflow bridge). The inventory grows by file, fix-then-rebuild converges in 5 iterations even when ~30% of sites were missed up front.
+
+- **Bridge sites generated by this wave point to next-ring migration targets.** The ~10 `._asPeer()` outflow bridges land at `ContactListPeer.peer(peer:)`, `canSendMessagesToPeer(_:)`, and `EngineRenderedPeer(peer:)` (legacy raw-Peer constructor in some paths — e.g., `EngineRenderedPeer(peer: foundPeer.peer)` doesn't need a bridge in newer EnginePeer-aware paths but does where the local var was already raw-Peer-extracted). These three signatures are the obvious wave-35+ candidates for the next ring of migration.
+
+**Plan / record:** `docs/superpowers/plans/2026-04-24-foundpeer-engine-peer-migration.md`. Spec: `docs/superpowers/specs/2026-04-24-foundpeer-engine-peer-migration-design.md`.
+
+---
+
+## Wave 35 outcome (2026-04-24)
+
+`SendAsPeer.peer: Peer → EnginePeer`. Public field-type migration on the struct in `submodules/TelegramCore/Sources/TelegramEngine/Messages/SendAsPeers.swift`. Atomic 7-file commit `583c8b1f7c`. 22 insertions / 26 deletions.
+
+**Migration shape.** Same atomic-field-type pattern as wave 34 but scoped to a smaller consumer surface. The `_internal_*SendAsAvailablePeers` functions keep `import Postbox` and wrap raw peer values with `EnginePeer(peer)` at the 4 SendAsPeer constructor sites. Manual `==` body dropped in favor of synthesized Equatable (`EnginePeer: Equatable`, `Int32?` and `Bool` already Equatable).
+
+**Final scope (vs planned ~15 semantic edits → actual 22/26 line diff):**
+- 3 `._asPeer()` bridge-drops at SendAsPeer constructor sites (ChatControllerLoadDisplayNode:772, ChatTextInputPanelComponent:848, StoryItemSetContainerViewSendMessage:249)
+- 7 redundant `EnginePeer(peer.peer)` / `EnginePeer($0.peer)` / `EnginePeer(value.peer)` wrap drops across ChatSendAsPeerListContextItem (4 sites), ChatTextInputPanelNode (1), StoryItemSetContainerViewSendMessage (1), StoryItemSetContainerComponent (1)
+- 1 `peer.peer as? TelegramChannel` downcast rewritten to `if case let .channel(channel) = peer.peer` (ChatSendAsPeerListContextItem:73) with `peer.info → channel.info` rename in the shadowed scope
+- 2 `EnginePeer(channel)` wraps added where raw `TelegramChannel` is constructed into `SendAsPeer(peer: ...)` (ChatControllerLoadDisplayNode:805, 823)
+- 1 signal-chain simplification: `(sendAsPeer?.peer).flatMap(EnginePeer.init)` → `sendAsPeer?.peer` at StoryItemSetContainerViewSendMessage:4080
+- 1 signal-chain simplification: `.map({ EnginePeer($0.peer) })` → `.map({ $0.peer })` at StoryItemSetContainerViewSendMessage:4081
+
+**Inventory undercount = 1 site (vs wave 34's 5).** The pre-flight Explore catalog missed `StoryItemSetContainerComponent.swift:3069` (`currentPeer: EnginePeer(value.peer)` → `value.peer`). The implementer caught it during the edit phase before the build, so no iteration was needed. The wave-34 explicit pattern grep (including `.peer as?`/`is`/outflow-args/`EnginePeer(.peer)`/`._asPeer()`) dramatically reduced undercounting — 1/7 sites missed (~14%) vs wave 34's 4/12 (~33%).
+
+**First-pass clean build.** No errors surfaced by the Bazel build at all. 461 total actions, 196.583s elapsed, `INFO: Build completed successfully`. Contrast with wave 34's 5 build-iterations-to-converge.
+
+**Lessons:**
+
+- **Wave 34's explicit-pattern pre-flight inventory works.** For future Peer-typed-API waves, the minimum grep pattern set is: `<Type>\b` literal token, `\.<fieldName>\s+(as\?|is)\s+Telegram`, `EnginePeer\(\w+\.<fieldName>\)`, `<api>\(<x>\.<fieldName>` for known outflow APIs, and `\._asPeer\(\)` (to catch bridge-drop opportunities). Wave 35 used this full pattern set and hit ~14% undercount vs wave 34's ~33%.
+
+- **Smaller target + validated pattern = faster wave.** Wave 35 went from spec-commit (`72d4384af0`) to outcome-commit in a single session with one clean build, versus wave 34's multi-iteration convergence. When the wave is a replay of a just-validated pattern on a smaller surface, expect minimal iteration.
+
+- **Inner-peer shadowing rename works.** The wave-34 lesson about renaming `peer` → `channel` in `if case let .channel(channel) = peer.peer` applied cleanly. Single instance this wave (ChatSendAsPeerListContextItem:73) — no issues.
+
+- **Name collisions remain a scope hazard.** Pre-flight identified `sendAsPeers: [EnginePeer]` (LiveStreamSettingsScreen, ShareWithPeersScreen) and `availableSendAsPeers: [EnginePeer]` (ChatSendStarsScreen) as name-only collisions — different type, same identifier. Confirmed these stayed untouched and out of scope. Future Peer-typed-API waves should continue the name-collision disambiguation pass.
+
+- **Bridge sites generated by this wave — zero new outflow bridges.** Unlike wave 34 (which added ~10 `._asPeer()` outflow bridges pointing to `ContactListPeer.peer(peer:)` / `canSendMessagesToPeer(_:)` / `EngineRenderedPeer(peer:)` as next-ring targets), wave 35 added no outflow bridges. All consumer-side `.peer` flows either stayed as `.peer.id` accesses (PeerId unchanged) or were simplifications of existing `EnginePeer(.peer)` wraps. Net: no new next-ring targets surfaced from wave 35.
+
+**Plan / record:** `docs/superpowers/plans/2026-04-24-sendaspeer-engine-peer-migration.md`. Spec: `docs/superpowers/specs/2026-04-24-sendaspeer-engine-peer-migration-design.md`.
+
+---
+
+## Wave 36 outcome (2026-04-24)
+
+`ContactListPeer.peer(peer: Peer, isGlobal:, participantCount:) → peer: EnginePeer`. Enum-case payload migration on the public type in `submodules/AccountContext/Sources/ContactSelectionController.swift`. Atomic 15-file commit `069a060de1`. 57 insertions / 59 deletions.
+
+**Migration shape.** Same atomic-payload-type pattern as wave 34/35 but wider: 15 consumer files vs wave 35's 7, vs wave 34's 12. Beyond the payload change, the cascading `ContactListPeer.indexName` return type changed from `PeerIndexNameRepresentation` to `EnginePeer.IndexName` — an unexpected discovery during plan-writing that dropped 2 additional `EnginePeer.IndexName(...)` wraps at ContactListNode:517.
+
+**Final scope (vs planned 8 files / ~41 semantic edits → actual 15 files / 57/59 diff):**
+
+- **Definition (1 file):** `AccountContext/ContactSelectionController.swift` — case payload type, indexName return type, `==` operator body (`lhsPeer.isEqual(rhsPeer)` → `lhsPeer == rhsPeer`).
+- **20 `._asPeer()` outflow bridge-drops** across ContactListNode (12), ContactsSearchContainerNode (3), ContactMultiselectionController (2), ContactMultiselectionControllerNode (1), ContactSelectionControllerNode (2). `replace_all=true` on `._asPeer(), isGlobal:` was the unifying substring.
+- **20+ `EnginePeer(peer)` inflow wrap-drops** at destructure sites across ContactListNode (4), ContactsController (1), ContactsSearchContainerNode (4), ContactMultiselectionController (4), ContactMultiselectionControllerNode (1), ContactSelectionController (2), PeerSelectionControllerNode (3), SharedAccountContext (2).
+- **2 `EnginePeer.IndexName(...)` wrap-drops** at the sort-comparator at ContactListNode:517 (enabled by the cascading return-type change).
+- **8 Postbox-concrete cast rewrites** to EnginePeer case patterns across ContactListNode:182-186/1968 (4 sites, including the 3-branch user/group/channel cast-chain), CallController:524/542 (the intermediate `let peer = EnginePeer(peer)` lines became redundant after migration), StoryItemSetContainerViewSendMessage:2041/2074, DeviceContactInfoController:1419, ChatSendAudioMessageContextPreview:89, ChatControllerOpenAttachmentMenu:557/610/1746/1788 (4 identical sites, `replace_all` on the full line).
+- **2 `._asPeer()` outflow bridges ADDED** at ContactMultiselectionController:386/403 where the destructured peer flows into `peerTokenTitle(peer: Peer)` (out-of-scope callee; future-wave bridge target).
+
+**Inventory undercount = 7 files / ~20 sites (vs wave 35's 1 site).** Much higher miss rate than wave 35 — ~46% by file count. Root cause: the pre-flight grep for ContactListPeer destructures used literal `\(peer, _, _\)` binding; binding names varied in practice (`contact`, `lhsPeer`, `rhsPeer`, `contactPeer`, `id`). Files missed:
+
+1. `DeviceContactInfoController.swift:1418/1419` — `case let .peer(contact, _, _)` + `contact as? TelegramUser`
+2. `CallController.swift:523/541` — `case let .peer(peer, _, _)` + redundant `let peer = EnginePeer(peer)` pattern
+3. `ChatSendAudioMessageContextPreview.swift:88/89` — `case let .peer(contact, _, _)` + `contact as? TelegramUser`
+4. `PeerSelectionControllerNode.swift:901-903/1590-1592` — 2 destructures with `EnginePeer(peer)` inflow wraps
+5. `StoryItemSetContainerViewSendMessage.swift:2040-2041/2073-2074` — 2 `contact as? TelegramUser` casts
+6. `ChatControllerOpenAttachmentMenu.swift:556-1787` — 4 `contact as? TelegramUser` casts
+7. `SharedAccountContext.swift:3295-3302` — `case let .peer(peer, _, _)` + 2 `EnginePeer(peer)` inflow wraps
+
+**Six build iterations to converge** vs wave 35's single first-pass-clean. Iterations 1-6 surfaced errors in batches of 2-8 errors; each was a mechanical fix (drop wrap, rewrite cast, add `._asPeer()` bridge for outflow to out-of-scope `peerTokenTitle`). Final iteration (#6) clean.
+
+**Lessons:**
+
+- **Pre-flight grep must use `\(\w+, _, _\)` not `\(peer, _, _\)` for enum-payload destructures.** Swift destructure patterns bind the payload to any legal identifier; the variable name is not semantic. Future Peer-typed-enum-payload waves should use `case let \.<caseName>\((\w+),` (or similar wildcard binding) and then per-destructure scan the next ~15 lines for `<binding> as\?`/`<binding> is`/`EnginePeer\(<binding>\)` / outflow-arg patterns.
+
+- **"No-edit consumer" claims need stricter verification.** Wave 36's "verify-only" list included ChatSendAudioMessageContextPreview because the initial inventory found only `[ContactListPeer]` at collection level. The deeper scan missed a `case let .peer(contact, _, _)` + `contact as? TelegramUser` pattern inside the file's `update(...)` method. For future waves, "no-edit" claims should run the wildcard-binding destructure grep described above, not just a construction-site grep.
+
+- **Outflow-to-out-of-scope-API bridges may need addition during the wave.** ContactMultiselectionController:386/403 needed `._asPeer()` bridges added where none existed pre-migration — the pre-migration code passed raw `Peer` to `peerTokenTitle(peer: Peer)` because the destructured peer was raw Peer. Post-migration, the destructured peer is EnginePeer, so a bridge is required. Future waves with same-scope outflow to not-yet-migrated Peer-typed APIs should pre-flight expect to add bridges.
+
+- **Cascading computed-property return type migration** (here: `ContactListPeer.indexName` from `PeerIndexNameRepresentation` to `EnginePeer.IndexName`) is a legitimate scope expansion when the enum's properties leak Postbox-typed values. Wave 36 caught this during plan-writing, not execution — a successful plan-review win. Future waves should grep the enum's definition file for computed properties returning Postbox-defined types.
+
+- **Build-iteration convergence is acceptable** when the wave's surface is large and pre-flight undercount is non-trivial. The cost of 6 build iterations (~5-20 minutes each in the Telegram-iOS build) is real but manageable. The alternative — exhaustive pre-flight to achieve first-pass-clean — is more expensive in plan-writing tokens and controller wall time. For waves expected to have >5 file touches, plan should explicitly budget for 3-5 build iterations.
+
+- **Ratchet effect confirmed.** Wave 36 was predominantly bridge-removal (20 outflow + 20 inflow + 2 IndexName) with only 2 bridge additions. Matches the expected ratchet behavior: earlier waves 33/34/35 added bridges at Peer/EnginePeer boundaries precisely so wave 36 could drop them atomically. The 2 new bridges added (ContactMultiselectionController:386/403 → peerTokenTitle) become next-wave drop candidates once `peerTokenTitle(peer: Peer)` migrates.
+
+**Plan / record:** `docs/superpowers/plans/2026-04-24-contactlistpeer-engine-peer-migration.md`. Spec: `docs/superpowers/specs/2026-04-24-contactlistpeer-engine-peer-migration-design.md`.
 
 ---
 

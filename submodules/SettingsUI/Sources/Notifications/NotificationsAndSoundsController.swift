@@ -779,7 +779,7 @@ public func notificationsAndSoundsController(context: AccountContext, exceptions
     })
     
     let sharedData = context.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.inAppNotificationSettings])
-    let preferences = context.account.postbox.preferencesView(keys: [PreferencesKeys.globalNotifications])
+    let preferences = context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.globalNotifications))
     
     let exceptionsSignal = Signal<NotificationExceptionsList?, NoError>.single(exceptionsList) |> then(context.engine.peers.notificationExceptionsList() |> map(Optional.init))
     
@@ -858,7 +858,7 @@ public func notificationsAndSoundsController(context: AccountContext, exceptions
         |> map { presentationData, sharedData, view, exceptions, authorizationStatus, warningSuppressed, hasMoreThanOneAccount -> (ItemListControllerState, (ItemListNodeState, Any)) in
             
             let viewSettings: GlobalNotificationSettingsSet
-            if let settings = view.values[PreferencesKeys.globalNotifications]?.get(GlobalNotificationSettings.self) {
+            if let settings = view?.get(GlobalNotificationSettings.self) {
                 viewSettings = settings.effective
             } else {
                 viewSettings = GlobalNotificationSettingsSet.defaultSettings

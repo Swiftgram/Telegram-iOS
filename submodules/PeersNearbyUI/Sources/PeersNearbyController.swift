@@ -597,11 +597,11 @@ public func peersNearbyController(context: AccountContext) -> ViewController {
         |> delay(1.0, queue: Queue.mainQueue())
     )
         
-    let signal = combineLatest(context.sharedContext.presentationData, dataPromise.get(), chatLocationPromise.get(), displayLoading, expandedPromise.get(), context.account.postbox.preferencesView(keys: [PreferencesKeys.peersNearby]))
+    let signal = combineLatest(context.sharedContext.presentationData, dataPromise.get(), chatLocationPromise.get(), displayLoading, expandedPromise.get(), context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.peersNearby)))
     |> deliverOnMainQueue
     |> map { presentationData, data, chatLocation, displayLoading, expanded, view -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let previous = previousData.swap(data)
-        let state = view.values[PreferencesKeys.peersNearby]?.get(PeersNearbyState.self) ?? .default
+        let state = view?.get(PeersNearbyState.self) ?? .default
         
         var crossfade = false
         if (data?.users.isEmpty ?? true) != (previous?.users.isEmpty ?? true) {

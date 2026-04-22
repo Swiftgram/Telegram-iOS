@@ -1015,19 +1015,22 @@ public enum ChatListSearchEntry: Comparable, Identifiable {
             case let .globalPeer(peer, unreadBadge, _, theme, strings, nameSortOrder, nameDisplayOrder, expandType, storyStats, requiresPremiumForMessaging, query):
                 var enabled = true
                 if filter.contains(.onlyWriteable) {
-                    enabled = canSendMessagesToPeer(peer.peer)
+                    enabled = canSendMessagesToPeer(peer.peer._asPeer())
                     if requiresPremiumForMessaging {
                         enabled = false
                     }
                 }
                 if filter.contains(.onlyPrivateChats) {
-                    if !(peer.peer is TelegramUser || peer.peer is TelegramSecretChat) {
+                    switch peer.peer {
+                    case .user, .secretChat:
+                        break
+                    default:
                         enabled = false
                     }
                 }
                 if filter.contains(.onlyGroups) {
-                    if let _ = peer.peer as? TelegramGroup {
-                    } else if let peer = peer.peer as? TelegramChannel, case .group = peer.info {
+                    if case .legacyGroup = peer.peer {
+                    } else if case let .channel(channel) = peer.peer, case .group = channel.info {
                     } else {
                         enabled = false
                     }
@@ -1035,9 +1038,9 @@ public enum ChatListSearchEntry: Comparable, Identifiable {
                 
                 var suffixString = ""
                 if let subscribers = peer.subscribers, subscribers != 0 {
-                    if peer.peer is TelegramUser {
+                    if case .user = peer.peer {
                         suffixString = ", \(strings.Conversation_StatusBotSubscribers(subscribers))"
-                    } else if let channel = peer.peer as? TelegramChannel, case .broadcast = channel.info {
+                    } else if case let .channel(channel) = peer.peer, case .broadcast = channel.info {
                         suffixString = ", \(strings.Conversation_StatusSubscribers(subscribers))"
                     } else {
                         suffixString = ", \(strings.Conversation_StatusMembers(subscribers))"
@@ -1072,13 +1075,13 @@ public enum ChatListSearchEntry: Comparable, Identifiable {
                     isSavedMessages = true
                 }
                 
-                return ContactsPeerItem(presentationData: ItemListPresentationData(presentationData), sortOrder: nameSortOrder, displayOrder: nameDisplayOrder, context: context, peerMode: .generalSearch(isSavedMessages: isSavedMessages), peer: .peer(peer: EnginePeer(peer.peer), chatPeer: EnginePeer(peer.peer)), status: .addressName(suffixString), badge: badge, requiresPremiumForMessaging: requiresPremiumForMessaging, enabled: enabled, selection: .none, editing: ContactsPeerItemEditing(editable: false, editing: false, revealed: false), index: nil, header: header, searchQuery: query, isAd: false, action: { _ in
-                    interaction.peerSelected(EnginePeer(peer.peer), nil, nil, nil, false)
+                return ContactsPeerItem(presentationData: ItemListPresentationData(presentationData), sortOrder: nameSortOrder, displayOrder: nameDisplayOrder, context: context, peerMode: .generalSearch(isSavedMessages: isSavedMessages), peer: .peer(peer: peer.peer, chatPeer: peer.peer), status: .addressName(suffixString), badge: badge, requiresPremiumForMessaging: requiresPremiumForMessaging, enabled: enabled, selection: .none, editing: ContactsPeerItemEditing(editable: false, editing: false, revealed: false), index: nil, header: header, searchQuery: query, isAd: false, action: { _ in
+                    interaction.peerSelected(peer.peer, nil, nil, nil, false)
                 }, disabledAction: { _ in
-                    interaction.disabledPeerSelected(EnginePeer(peer.peer), nil, requiresPremiumForMessaging ? .premiumRequired : .generic)
+                    interaction.disabledPeerSelected(peer.peer, nil, requiresPremiumForMessaging ? .premiumRequired : .generic)
                 }, contextAction: peerContextAction.flatMap { peerContextAction in
                     return { node, gesture, location in
-                        peerContextAction(EnginePeer(peer.peer), .search(nil), node, gesture, location)
+                        peerContextAction(peer.peer, .search(nil), node, gesture, location)
                     }
                 }, animationCache: interaction.animationCache, animationRenderer: interaction.animationRenderer, storyStats: storyStats.flatMap { stats in
                     return (stats.totalCount, stats.unseenCount, stats.hasUnseenCloseFriends, stats.hasLiveItems)
@@ -1497,14 +1500,14 @@ private func filteredPeerSearchQueryResults(value: ([FoundPeer], [FoundPeer]), s
     case .channels:
         return (
             value.0.filter { peer in
-                if let channel = peer.peer as? TelegramChannel, case .broadcast = channel.info {
+                if case let .channel(channel) = peer.peer, case .broadcast = channel.info {
                     return true
                 } else {
                     return false
                 }
             },
             value.1.filter { peer in
-                if let channel = peer.peer as? TelegramChannel, case .broadcast = channel.info {
+                if case let .channel(channel) = peer.peer, case .broadcast = channel.info {
                     return true
                 } else {
                     return false
@@ -2192,7 +2195,16 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                 }
             }
             
-            let accountPeer = context.account.postbox.loadedPeerWithId(context.account.peerId) |> take(1)
+            let accountPeer = context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId))
+            |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                if let peer {
+                    return .single(peer)
+                } else {
+                    return .never()
+                }
+            }
+            |> map { $0._asPeer() }
+            |> take(1)
             let foundLocalPeers: Signal<(peers: [EngineRenderedPeer], unread: [EnginePeer.Id: (Int32, Bool)], recentlySearchedPeerIds: Set<EnginePeer.Id>), NoError>
             
             if case .savedMessagesChats = location {
@@ -3076,7 +3088,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                     }
                 }
                 for peer in foundRemotePeers.0 {
-                    if !existingPeerIds.contains(peer.peer.id), filteredPeer(EnginePeer(peer.peer), EnginePeer(accountPeer)) {
+                    if !existingPeerIds.contains(peer.peer.id), filteredPeer(peer.peer, EnginePeer(accountPeer)) {
                         existingPeerIds.insert(peer.peer.id)
                         totalNumberOfLocalPeers += 1
                     }
@@ -3084,7 +3096,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                 
                 var totalNumberOfGlobalPeers = 0
                 for peer in foundRemotePeers.1 {
-                    if !existingPeerIds.contains(peer.peer.id), filteredPeer(EnginePeer(peer.peer), EnginePeer(accountPeer)) {
+                    if !existingPeerIds.contains(peer.peer.id), filteredPeer(peer.peer, EnginePeer(accountPeer)) {
                         totalNumberOfGlobalPeers += 1
                     }
                 }
@@ -3202,9 +3214,9 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                         break
                     }
                     
-                    if !existingPeerIds.contains(peer.peer.id), filteredPeer(EnginePeer(peer.peer), EnginePeer(accountPeer)) {
+                    if !existingPeerIds.contains(peer.peer.id), filteredPeer(peer.peer, EnginePeer(accountPeer)) {
                         existingPeerIds.insert(peer.peer.id)
-                        entries.append(.localPeer(EnginePeer(peer.peer), nil, nil, index, presentationData.theme, presentationData.strings, presentationData.nameSortOrder, presentationData.nameDisplayOrder, localExpandType, nil, false, false))
+                        entries.append(.localPeer(peer.peer, nil, nil, index, presentationData.theme, presentationData.strings, presentationData.nameSortOrder, presentationData.nameDisplayOrder, localExpandType, nil, false, false))
                         index += 1
                         numberOfLocalPeers += 1
                     }
@@ -3229,7 +3241,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                             break
                         }
                         
-                        if !existingPeerIds.contains(peer.peer.id), filteredPeer(EnginePeer(peer.peer), EnginePeer(accountPeer)) {
+                        if !existingPeerIds.contains(peer.peer.id), filteredPeer(peer.peer, EnginePeer(accountPeer)) {
                             existingPeerIds.insert(peer.peer.id)
                             
                             entries.append(.globalPeer(peer, nil, index, presentationData.theme, presentationData.strings, presentationData.nameSortOrder, presentationData.nameDisplayOrder, globalExpandType, nil, false, finalQuery))
@@ -3708,7 +3720,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                     }
                 case let .globalPeer(foundPeer, _, _, _, _, _, _, _, _, _, _):
                     storyStatsIds.append(foundPeer.peer.id)
-                    if let user = foundPeer.peer as? TelegramUser, user.flags.contains(.requirePremium) {
+                    if case let .user(user) = foundPeer.peer, user.flags.contains(.requirePremium) {
                         requiresPremiumForMessagingPeerIds.append(foundPeer.peer.id)
                     }
                 case let .message(_, peer, _, _, _, _, _, _, _, _, _, _, _, _, _):

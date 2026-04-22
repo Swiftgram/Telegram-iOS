@@ -93,7 +93,7 @@ final class ChatAnimationGalleryItemNode: ZoomableContentGalleryItemNode {
     private var disposable = MetaDisposable()
     private var fetchDisposable = MetaDisposable()
     private let statusDisposable = MetaDisposable()
-    private var status: MediaResourceStatus?
+    private var status: EngineMediaResource.FetchStatus?
     
     init(context: AccountContext, presentationData: PresentationData) {
         self.context = context
@@ -195,7 +195,7 @@ final class ChatAnimationGalleryItemNode: ZoomableContentGalleryItemNode {
     }
     
     private func setupStatus(resource: MediaResource) {
-        self.statusDisposable.set((self.context.account.postbox.mediaBox.resourceStatus(resource)
+        self.statusDisposable.set((self.context.engine.resources.status(resource: EngineMediaResource(resource))
         |> deliverOnMainQueue).start(next: { [weak self] status in
             if let strongSelf = self {
                 let previousStatus = strongSelf.status

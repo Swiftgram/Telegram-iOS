@@ -157,7 +157,7 @@ final class ContactSelectionControllerNode: ASDisplayNode {
             onlyWriteable: false,
             isGroupInvitation: false,
             isPeerEnabled: { peer in
-                return isPeerEnabled(.peer(peer: peer._asPeer(), isGlobal: false, participantCount: nil))
+                return isPeerEnabled(.peer(peer: peer, isGlobal: false, participantCount: nil))
             },
             displayCallIcons: displayCallIcons,
             contextAction: multipleSelection ? { peer, node, gesture, _, _ in
@@ -227,7 +227,7 @@ final class ContactSelectionControllerNode: ASDisplayNode {
                 strongSelf.contactListNode.updateSelectionState { state in
                     let peerId = ContactListPeerId.peer(peer.id)
                     let state = state ?? ContactListNodeGroupSelectionState()
-                    return state.withToggledPeerId(peerId).withSelectedPeerMap([peerId: ContactListPeer.peer(peer: peer._asPeer(), isGlobal: false, participantCount: nil)])
+                    return state.withToggledPeerId(peerId).withSelectedPeerMap([peerId: ContactListPeer.peer(peer: peer, isGlobal: false, participantCount: nil)])
                 }
             }
         }

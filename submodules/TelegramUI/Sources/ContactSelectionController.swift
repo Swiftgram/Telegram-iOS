@@ -514,7 +514,7 @@ class ContactSelectionControllerImpl: ViewController, ContactSelectionController
                 a(.default)
               
                 if let self {
-                    self.sendMessage?(EnginePeer(peer))
+                    self.sendMessage?(peer)
                 }
             })))
             
@@ -524,7 +524,7 @@ class ContactSelectionControllerImpl: ViewController, ContactSelectionController
                 a(.default)
 
                 if let self {
-                    self.openProfile?(EnginePeer(peer))
+                    self.openProfile?(peer)
                 }
             })))
             

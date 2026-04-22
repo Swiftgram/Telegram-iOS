@@ -1416,7 +1416,7 @@ private func addContactToExisting(context: AccountContext, parentController: Vie
             let dataSignal: Signal<(EnginePeer?, DeviceContactStableId?), NoError>
             switch peer {
                 case let .peer(contact, _, _):
-                    guard let contact = contact as? TelegramUser, let phoneNumber = contact.phone else {
+                    guard case let .user(contact) = contact, let phoneNumber = contact.phone else {
                         return
                     }
                     dataSignal = (context.sharedContext.contactDataManager?.basicData() ?? .single([:]))

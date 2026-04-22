@@ -957,7 +957,7 @@ func peerInfoScreenSettingsData(context: AccountContext, peerId: EnginePeer.Id, 
         combineLatest(notificationExceptions, notificationsAuthorizationStatus.get(), notificationsWarningSuppressed.get()),
         combineLatest(context.account.viewTracker.featuredStickerPacks(), archivedStickerPacks),
         hasPassport,
-        context.account.postbox.preferencesView(keys: [PreferencesKeys.appConfiguration]),
+        context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.appConfiguration)),
         context.engine.notices.getServerProvidedSuggestions(),
         context.engine.data.get(
             TelegramEngine.EngineData.Item.Configuration.UserLimits(isPremium: false),
@@ -988,7 +988,7 @@ func peerInfoScreenSettingsData(context: AccountContext, peerId: EnginePeer.Id, 
         })
         
         var enableQRLogin = false
-        let appConfiguration = accountPreferences.values[PreferencesKeys.appConfiguration]?.get(AppConfiguration.self)
+        let appConfiguration = accountPreferences?.get(AppConfiguration.self)
         if let appConfiguration, let data = appConfiguration.data, let enableQR = data["qr_login_camera"] as? Bool, enableQR {
             enableQRLogin = true
         }
@@ -2116,7 +2116,7 @@ func peerInfoScreenData(
                 requestsStatePromise.get(),
                 hasStories,
                 threadData,
-                context.account.postbox.preferencesView(keys: [PreferencesKeys.appConfiguration]),
+                context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.appConfiguration)),
                 accountIsPremium,
                 hasSavedMessages,
                 hasSavedMessagesChats,
@@ -2196,7 +2196,7 @@ func peerInfoScreenData(
                 let peerNotificationSettings = peerView.notificationSettings as? TelegramPeerNotificationSettings
                 let threadNotificationSettings = threadData?.notificationSettings
                 
-                let appConfiguration: AppConfiguration = preferencesView.values[PreferencesKeys.appConfiguration]?.get(AppConfiguration.self) ?? .defaultValue
+                let appConfiguration: AppConfiguration = preferencesView?.get(AppConfiguration.self) ?? .defaultValue
               
                 return .single(PeerInfoScreenData(
                     peer: peerView.peers[groupId],

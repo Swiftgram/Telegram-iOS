@@ -437,16 +437,23 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
             suggestedPeers = .single([])
         }
         
-        let accountPeer = self.context.account.postbox.loadedPeerWithId(self.context.account.peerId)
+        let accountPeer = self.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: self.context.account.peerId))
+        |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+            if let peer {
+                return .single(peer)
+            } else {
+                return .never()
+            }
+        }
         |> take(1)
-        
+
         self.suggestedFiltersDisposable.set((combineLatest(suggestedPeers, self.suggestedDates.get(), self.selectedFilterPromise.get(), self.searchQuery.get(), accountPeer)
         |> mapToSignal { peers, dates, selectedFilter, searchQuery, accountPeer -> Signal<([EnginePeer], [(Date?, Date, String?)], ChatListSearchFilterEntryId?, String?, EnginePeer?), NoError> in
             if searchQuery?.isEmpty ?? true {
-                return .single((peers, dates, selectedFilter?.id, searchQuery, EnginePeer(accountPeer)))
+                return .single((peers, dates, selectedFilter?.id, searchQuery, accountPeer))
             } else {
                 return (.complete() |> delay(0.25, queue: Queue.mainQueue()))
-                |> then(.single((peers, dates, selectedFilter?.id, searchQuery, EnginePeer(accountPeer))))
+                |> then(.single((peers, dates, selectedFilter?.id, searchQuery, accountPeer)))
             }
         } |> map { peers, dates, selectedFilter, searchQuery, accountPeer -> ([ChatListSearchFilter], Bool) in
             var suggestedFilters: [ChatListSearchFilter] = []
@@ -1056,7 +1063,7 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
         if paneKey == .downloads {
             let isCachedValue: Signal<Bool, NoError>
             if let downloadResource = downloadResource {
-                isCachedValue = self.context.account.postbox.mediaBox.resourceStatus(MediaResourceId(downloadResource.id), resourceSize: downloadResource.size)
+                isCachedValue = self.context.engine.resources.status(id: EngineMediaResource.Id(downloadResource.id), resourceSize: downloadResource.size)
                 |> map { status -> Bool in
                     switch status {
                     case .Local:

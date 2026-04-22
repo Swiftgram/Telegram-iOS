@@ -1922,7 +1922,7 @@ public func preloadStoryMedia(context: AccountContext, info: StoryPreloadInfo) -
                         return .complete()
                     }
                     
-                    let statusSignal = context.account.postbox.mediaBox.resourceStatus(file.resource)
+                    let statusSignal = context.engine.resources.status(resource: EngineMediaResource(file.resource))
                     |> filter { status in
                         if case .Local = status {
                             return true
@@ -1969,7 +1969,7 @@ public func preloadStoryMedia(context: AccountContext, info: StoryPreloadInfo) -
                         return .complete()
                     }
                     
-                    let statusSignal = context.account.postbox.mediaBox.resourceStatus(file.resource)
+                    let statusSignal = context.engine.resources.status(resource: EngineMediaResource(file.resource))
                     |> filter { status in
                         if case .Local = status {
                             return true
@@ -2065,9 +2065,9 @@ public func waitUntilStoryMediaPreloaded(context: AccountContext, peerId: Engine
         case let .image(image):
             if let representation = largestImageRepresentation(image.representations) {
                 statusSignals.append(
-                    context.account.postbox.mediaBox.resourceData(representation.resource)
+                    context.engine.resources.data(resource: EngineMediaResource(representation.resource))
                     |> filter { data in
-                        return data.complete
+                        return data.isComplete
                     }
                     |> take(1)
                     |> ignoreValues
@@ -2158,7 +2158,7 @@ public func waitUntilStoryMediaPreloaded(context: AccountContext, peerId: Engine
                             return .complete()
                         }
                         
-                        let statusSignal = context.account.postbox.mediaBox.resourceStatus(file.resource)
+                        let statusSignal = context.engine.resources.status(resource: EngineMediaResource(file.resource))
                         |> filter { status in
                             if case .Local = status {
                                 return true
@@ -2207,7 +2207,7 @@ public func waitUntilStoryMediaPreloaded(context: AccountContext, peerId: Engine
                             return .complete()
                         }
                         
-                        let statusSignal = context.account.postbox.mediaBox.resourceStatus(file.resource)
+                        let statusSignal = context.engine.resources.status(resource: EngineMediaResource(file.resource))
                         |> filter { status in
                             if case .Local = status {
                                 return true

@@ -3066,7 +3066,7 @@ public final class StoryItemSetContainerComponent: Component {
                         
                         sendAsConfiguration = sendAsPeer.flatMap { value in
                             return MessageInputPanelComponent.SendAsConfiguration(
-                                currentPeer: EnginePeer(value.peer),
+                                currentPeer: value.peer,
                                 subscriberCount: value.subscribers.flatMap(Int.init),
                                 isPremiumLocked: value.isPremiumRequired,
                                 isSelecting: self.sendMessageContext.isSelectingSendAsPeer,

@@ -313,9 +313,16 @@ public func channelBlacklistController(context: AccountContext, updatedPresentat
                         }
                 }
             }
-            let _ = (context.account.postbox.loadedPeerWithId(peerId)
+            let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
+            |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                if let peer {
+                    return .single(peer)
+                } else {
+                    return .never()
+                }
+            }
             |> deliverOnMainQueue).start(next: { channel in
-                guard let _ = channel as? TelegramChannel else {
+                guard case .channel = channel else {
                     return
                 }
                 

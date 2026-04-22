@@ -475,8 +475,8 @@ public final class ReactionContextNode: ASDisplayNode, ASScrollViewDelegate {
             }
             return Signal { subscriber in
                 let fetchDisposable = freeMediaFileInteractiveFetched(account: context.account, userLocation: .other, fileReference: .standalone(media: file)).start()
-                let dataDisposable = (context.account.postbox.mediaBox.resourceData(file.resource)
-                |> filter(\.complete)
+                let dataDisposable = (context.engine.resources.data(resource: EngineMediaResource(file.resource))
+                |> filter(\.isComplete)
                 |> take(1)).start(next: { data in
                     subscriber.putNext(data.path)
                     subscriber.putCompletion()

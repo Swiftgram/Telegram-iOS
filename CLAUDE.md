@@ -41,7 +41,7 @@ A gradual migration is underway to eliminate direct `import Postbox` from consum
 
 **Historical record:** Wave-by-wave outcomes, the running tally of Postbox-free modules, and full verbose forms of the guidance subsections below live in [`docs/superpowers/postbox-refactor-log.md`](docs/superpowers/postbox-refactor-log.md). Read that file when you need wave-specific context, a full worked example of a pattern, or the history of a particular module's migration.
 
-Waves landed so far (as of 2026-04-21): 26 waves plus standalone cleanups. See the log file for per-wave detail; the list of still-open migration opportunities lives in the `project_postbox_refactor_next_wave.md` memory file.
+Waves landed so far (as of 2026-04-24): 36 waves plus standalone cleanups. See the log file for per-wave detail; the list of still-open migration opportunities lives in the `project_postbox_refactor_next_wave.md` memory file.
 
 ### Rules that apply to every wave
 
@@ -120,14 +120,15 @@ Distilled lessons from waves 1–26. Each bullet below has a full-form counterpa
 
 Full per-shape recipe and wave-specific examples in the log.
 
-### TelegramEngine.Resources facade inventory (as of wave 26)
+### TelegramEngine.Resources facade inventory (as of wave 32)
 
 All mediaBox methods with clean signatures (no Postbox-protocol leaks, no complex return-type migrations) have been migrated to `TelegramEngine.Resources`. Quick reference for consumers — all of these live in `submodules/TelegramCore/Sources/TelegramEngine/Resources/TelegramEngineResources.swift`:
 
 | Facade | Wave | Wraps |
 |---|---|---|
 | `fetch(reference:userLocation:userContentType:)` | 3 | `fetchedMediaResource` |
-| `status(resource:)` | 3 | `MediaBox.resourceStatus` |
+| `status(resource:)` | 3 | `MediaBox.resourceStatus` (resource-based) |
+| `status(id:, resourceSize:)` | 32 | `MediaBox.resourceStatus(_ id:, resourceSize:)` |
 | `data(resource:, pathExtension:, waitUntilFetchStatus:)` | 3 | `MediaBox.resourceData` (resource-based) |
 | `data(id:, attemptSynchronously:)` | 3 | `MediaBox.resourceData` (id-based, defaults to `.complete(waitUntilFetchStatus: false)`) |
 | `custom(id:, fetch:, cacheTimeout:, attemptSynchronously:)` | pre-wave-21 | `MediaBox.customResourceData` |
