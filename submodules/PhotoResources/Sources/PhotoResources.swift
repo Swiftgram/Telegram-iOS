@@ -17,10 +17,10 @@ import TinyThumbnail
 import ImageTransparency
 import AppBundle
 import MusicAlbumArtResources
-import Svg
 import RangeSet
 import Accelerate
 import ImageCompression
+import LegacyImpl
 
 private enum ResourceFileData {
     case data(Data)

@@ -21,7 +21,7 @@ swift_library(
         "//submodules/PhotoResources:PhotoResources",
         "//submodules/PersistentStringHash:PersistentStringHash",
         "//submodules/AppBundle:AppBundle",
-        "//submodules/Svg:Svg",
+        "//submodules/Svg/LegacyImpl",
         "//submodules/GZip:GZip",
         "//submodules/GradientBackground:GradientBackground",
         "//submodules/TelegramPresentationData:TelegramPresentationData",

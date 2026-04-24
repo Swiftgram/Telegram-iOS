@@ -14,7 +14,7 @@ import LocalMediaResources
 import TelegramPresentationData
 import TelegramUIPreferences
 import AppBundle
-import Svg
+import LegacyImpl
 import GradientBackground
 import GZip
 
@@ -1360,7 +1360,7 @@ public func themeImage(account: Account, accountManager: AccountManager<Telegram
                     case let .pattern(data, colors, intensity):
                         let wallpaperImage = generateImage(arguments.drawingSize, rotatedContext: { size, context in
                             drawWallpaperGradientImage(colors.map(UIColor.init(rgb:)), context: context, size: size)
-                            if let unpackedData = TGGUnzipData(data, 2 * 1024 * 1024), let image = drawSvgImage(unpackedData, arguments.drawingSize, .clear, .black, 1.0, true) {
+                            if let unpackedData = TGGUnzipData(data, 2 * 1024 * 1024), let image = drawSvgImageImpl(unpackedData, arguments.drawingSize, .clear, .black, 1.0, true) {
                                 context.setBlendMode(.softLight)
                                 context.setAlpha(abs(CGFloat(intensity)) / 100.0)
                                 context.draw(image.cgImage!, in: CGRect(origin: CGPoint(), size: arguments.drawingSize))
