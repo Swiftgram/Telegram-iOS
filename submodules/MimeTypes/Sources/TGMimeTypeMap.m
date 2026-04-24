@@ -250,6 +250,7 @@ static void initializeMapping()
         mimeToExtension[@"text/plain"] = @"text"; extensionToMime[@"text"] = @"text/plain";
         mimeToExtension[@"text/plain"] = @"diff"; extensionToMime[@"diff"] = @"text/plain";
         mimeToExtension[@"text/plain"] = @"po"; extensionToMime[@"po"] = @"text/plain";     // reserve "pot" for vnd.ms-powerpoint
+        mimeToExtension[@"text/markdown"] = @"md"; extensionToMime[@"md"] = @"text/markdown";
         mimeToExtension[@"text/richtext"] = @"rtx"; extensionToMime[@"rtx"] = @"text/richtext";
         mimeToExtension[@"text/rtf"] = @"rtf"; extensionToMime[@"rtf"] = @"text/rtf";
         mimeToExtension[@"text/texmacs"] = @"ts"; extensionToMime[@"ts"] = @"text/texmacs";

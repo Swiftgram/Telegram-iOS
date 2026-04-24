@@ -521,7 +521,6 @@ public class LegacyMessageInputPanelNode: ASDisplayNode, TGCaptionPanelView {
                 mode: .standard(.default),
                 chatLocation: .peer(id: self.context.account.peerId),
                 subject: nil,
-                peerNearbyData: nil,
                 greetingData: nil,
                 pendingUnpinnedAllMessages: false,
                 activeGroupCallInfo: nil,

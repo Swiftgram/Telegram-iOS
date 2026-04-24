@@ -2684,8 +2684,9 @@ public class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
                 var pollOptionsFinalizeLayouts: [(hasResult: Bool, layout: (CGFloat) -> (CGSize, (Bool, Bool, Bool) -> ChatMessagePollOptionNode))] = []
                 var addOptionFinalizeLayout: ((CGFloat) -> (CGSize, (Bool, Bool) -> ChatMessagePollAddOptionNode))?
                 var orderedPollOptions: [(Int, TelegramMediaPollOption)] = []
+                
+                var isRestricted = false
                 if let poll = poll {
-                    var isRestricted = false
                     if !poll.countries.isEmpty, let accountCountry = item.associatedData.accountCountry, !poll.countries.contains(accountCountry) {
                         isRestricted = true
                     }
@@ -2842,430 +2843,428 @@ public class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
                     let buttonViewResultsTextFrame = CGRect(origin: CGPoint(x: floor((resultSize.width - buttonViewResultsTextLayout.size.width) / 2.0), y: optionsButtonSpacing), size: buttonViewResultsTextLayout.size)
                     
                     return (resultSize, { [weak self] animation, synchronousLoad, _ in
-                            if let strongSelf = self {
-                                strongSelf.item = item
-                                strongSelf.poll = poll
-                                
-                                let cachedLayout = strongSelf.textNode.textNode.cachedLayout
-                                if case .System = animation {
-                                    if let cachedLayout = cachedLayout {
-                                        if !cachedLayout.areLinesEqual(to: textLayout) {
-                                            if let textContents = strongSelf.textNode.textNode.contents {
-                                                let fadeNode = ASDisplayNode()
-                                                fadeNode.displaysAsynchronously = false
-                                                fadeNode.contents = textContents
-                                                fadeNode.frame = strongSelf.textNode.textNode.frame
-                                                fadeNode.isLayerBacked = true
-                                                strongSelf.addSubnode(fadeNode)
-                                                fadeNode.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false, completion: { [weak fadeNode] _ in
-                                                    fadeNode?.removeFromSupernode()
-                                                })
-                                                strongSelf.textNode.textNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.15)
-                                            }
+                        if let strongSelf = self {
+                            strongSelf.item = item
+                            strongSelf.poll = poll
+                            
+                            let cachedLayout = strongSelf.textNode.textNode.cachedLayout
+                            if case .System = animation {
+                                if let cachedLayout = cachedLayout {
+                                    if !cachedLayout.areLinesEqual(to: textLayout) {
+                                        if let textContents = strongSelf.textNode.textNode.contents {
+                                            let fadeNode = ASDisplayNode()
+                                            fadeNode.displaysAsynchronously = false
+                                            fadeNode.contents = textContents
+                                            fadeNode.frame = strongSelf.textNode.textNode.frame
+                                            fadeNode.isLayerBacked = true
+                                            strongSelf.addSubnode(fadeNode)
+                                            fadeNode.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false, completion: { [weak fadeNode] _ in
+                                                fadeNode?.removeFromSupernode()
+                                            })
+                                            strongSelf.textNode.textNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.15)
                                         }
                                     }
                                 }
-                                
-                                let _ = textApply(TextNodeWithEntities.Arguments(
-                                    context: item.context,
-                                    cache: item.context.animationCache,
-                                    renderer: item.context.animationRenderer,
-                                    placeholderColor: incoming ? item.presentationData.theme.theme.chat.message.incoming.mediaPlaceholderColor : item.presentationData.theme.theme.chat.message.outgoing.mediaPlaceholderColor,
-                                    attemptSynchronous: synchronousLoad)
-                                )
-                                let _ = typeApply()
-                                
-                                var verticalOffset = textFrame.maxY + titleTypeSpacing + typeLayout.size.height + typeOptionsSpacing
-                                var updatedOptionNodes: [ChatMessagePollOptionNode] = []
-                                for i in 0 ..< optionNodesSizesAndApply.count {
-                                    let (size, apply) = optionNodesSizesAndApply[i]
-                                    var isRequesting = false
-                                    if i < orderedPollOptions.count {
-                                        if let inProgressOpaqueIds = item.controllerInteraction.pollActionState.pollMessageIdsInProgress[item.message.id] {
-                                            isRequesting = inProgressOpaqueIds.contains(orderedPollOptions[i].1.opaqueIdentifier)
-                                        }
+                            }
+                            
+                            let _ = textApply(TextNodeWithEntities.Arguments(
+                                context: item.context,
+                                cache: item.context.animationCache,
+                                renderer: item.context.animationRenderer,
+                                placeholderColor: incoming ? item.presentationData.theme.theme.chat.message.incoming.mediaPlaceholderColor : item.presentationData.theme.theme.chat.message.outgoing.mediaPlaceholderColor,
+                                attemptSynchronous: synchronousLoad)
+                            )
+                            let _ = typeApply()
+                            
+                            var verticalOffset = textFrame.maxY + titleTypeSpacing + typeLayout.size.height + typeOptionsSpacing
+                            var updatedOptionNodes: [ChatMessagePollOptionNode] = []
+                            for i in 0 ..< optionNodesSizesAndApply.count {
+                                let (size, apply) = optionNodesSizesAndApply[i]
+                                var isRequesting = false
+                                if i < orderedPollOptions.count {
+                                    if let inProgressOpaqueIds = item.controllerInteraction.pollActionState.pollMessageIdsInProgress[item.message.id] {
+                                        isRequesting = inProgressOpaqueIds.contains(orderedPollOptions[i].1.opaqueIdentifier)
                                     }
-                                    let optionNode = apply(animation.isAnimated, isRequesting, synchronousLoad)
-                                    let optionNodeFrame = CGRect(origin: CGPoint(x: layoutConstants.bubble.borderInset, y: verticalOffset), size: size)
-                                    if optionNode.supernode !== strongSelf {
-                                        strongSelf.addSubnode(optionNode)
-                                        let option = optionNode.option
-                                        
-                                        optionNode.pressed = { [weak self] in
-                                            guard let self,
-                                                  let item = self.item,
-                                                  let option else {
-                                                return
-                                            }
-                                            item.controllerInteraction.requestSelectMessagePollOptions(item.message.id, [option.opaqueIdentifier])
+                                }
+                                let optionNode = apply(animation.isAnimated, isRequesting, synchronousLoad)
+                                let optionNodeFrame = CGRect(origin: CGPoint(x: layoutConstants.bubble.borderInset, y: verticalOffset), size: size)
+                                if optionNode.supernode !== strongSelf {
+                                    strongSelf.addSubnode(optionNode)
+                                    let option = optionNode.option
+                                    
+                                    optionNode.pressed = { [weak self] in
+                                        guard let self,
+                                              let item = self.item,
+                                              let option else {
+                                            return
                                         }
-                                        optionNode.resultPressed = { [weak self] in
-                                            guard let self,
-                                                  let item = self.item,
-                                                  let option else {
-                                                return
-                                            }
-                                            if let poll {
-                                                if case .public = poll.publicity {
-                                                    item.controllerInteraction.openMessagePollResults(item.message.id, option.opaqueIdentifier)
-                                                } else {
-                                                    if "".isEmpty {
-                                                        let locale = localeWithStrings(item.presentationData.strings)
-                                                        let countryNames = poll.countries.map { id in
-                                                            if let countryName = locale.localizedString(forRegionCode: id) {
-                                                                return countryName
-                                                            } else {
-                                                                return id
-                                                            }
-                                                        }
-                                                        var countries: String = ""
-                                                        if countryNames.count == 1, let country = countryNames.first {
-                                                            countries = "**\(country)**"
-                                                        } else {
-                                                            for i in 0 ..< countryNames.count {
-                                                                countries.append("**\(countryNames[i])**")
-                                                                if i == countryNames.count - 2 {
-                                                                    countries.append(item.presentationData.strings.Chat_Poll_Restriction_Country_CountriesLastDelimiter)
-                                                                } else if i < countryNames.count - 2 {
-                                                                    countries.append(item.presentationData.strings.Chat_Poll_Restriction_Country_CountriesDelimiter)
-                                                                }
-                                                            }
-                                                        }
-                                                        //TODO:localize
-                                                        let controller = UndoOverlayController(
-                                                            presentationData: item.context.sharedContext.currentPresentationData.with { $0 },
-                                                            content: .banned(text: "Only users from \(countries) can vote."),
-                                                            elevatedLayout: true,
-                                                            position: .bottom,
-                                                            action: { _ in return true }
-                                                        )
-                                                        item.controllerInteraction.presentController(controller, nil)
+                                        item.controllerInteraction.requestSelectMessagePollOptions(item.message.id, [option.opaqueIdentifier])
+                                    }
+                                    optionNode.resultPressed = { [weak self] in
+                                        guard let self,
+                                              let item = self.item,
+                                              let option else {
+                                            return
+                                        }
+                                        if let poll {
+                                            if case .public = poll.publicity {
+                                                item.controllerInteraction.openMessagePollResults(item.message.id, option.opaqueIdentifier)
+                                            } else if isRestricted {
+                                                let locale = localeWithStrings(item.presentationData.strings)
+                                                let countryNames = poll.countries.map { id in
+                                                    if let countryName = locale.localizedString(forRegionCode: id) {
+                                                        return countryName
+                                                    } else {
+                                                        return id
                                                     }
                                                 }
+                                                var countries: String = ""
+                                                if countryNames.count == 1, let country = countryNames.first {
+                                                    countries = "**\(country)**"
+                                                } else {
+                                                    for i in 0 ..< countryNames.count {
+                                                        countries.append("**\(countryNames[i])**")
+                                                        if i == countryNames.count - 2 {
+                                                            countries.append(item.presentationData.strings.Chat_Poll_Restriction_Country_CountriesLastDelimiter)
+                                                        } else if i < countryNames.count - 2 {
+                                                            countries.append(item.presentationData.strings.Chat_Poll_Restriction_Country_CountriesDelimiter)
+                                                        }
+                                                    }
+                                                }
+                                                //TODO:localize
+                                                let controller = UndoOverlayController(
+                                                    presentationData: item.context.sharedContext.currentPresentationData.with { $0 },
+                                                    content: .banned(text: "Only users from \(countries) can vote."),
+                                                    elevatedLayout: true,
+                                                    position: .bottom,
+                                                    action: { _ in return true }
+                                                )
+                                                item.controllerInteraction.presentController(controller, nil)
                                             }
                                         }
-                                        optionNode.selectionUpdated = { [weak self] in
-                                            guard let self else {
-                                                return
-                                            }
-                                            self.updateSelection()
-                                        }
-                                        optionNode.longTapped = { [weak self] in
-                                            guard let self,
-                                                  let item = self.item,
-                                                  let option else {
-                                                return
-                                            }
-                                            item.controllerInteraction.pollOptionLongTap(option.opaqueIdentifier, ChatControllerInteraction.LongTapParams(message: item.message, contentNode: optionNode.contextSourceNode, messageNode: strongSelf, progress: nil))
-                                        }
-                                        optionNode.frame = optionNodeFrame
-                                    } else {
-                                        animation.animator.updateFrame(layer: optionNode.layer, frame: optionNodeFrame, completion: nil)
                                     }
-                                    
-                                    if optionNode.currentResult != nil {
-                                        verticalOffset += size.height - 7.0
-                                    } else {
-                                        verticalOffset += size.height
-                                    }
-                                    updatedOptionNodes.append(optionNode)
-                                    optionNode.isUserInteractionEnabled = !strongSelf.newOptionIsFocused && item.controllerInteraction.pollActionState.pollMessageIdsInProgress[item.message.id] == nil
-                                    optionNode.alpha = strongSelf.newOptionIsFocused ? 0.5 : 1.0
-                                    
-                                    if i > 0 {
-                                        optionNode.previousOptionNode = updatedOptionNodes[i - 1]
-                                    } else {
-                                        optionNode.previousOptionNode = nil
-                                    }
-                                }
-                                for optionNode in strongSelf.optionNodes {
-                                    if !updatedOptionNodes.contains(where: { $0 === optionNode }) {
-                                        optionNode.removeFromSupernode()
-                                    }
-                                }
-                                strongSelf.optionNodes = updatedOptionNodes
-                                strongSelf.updatePollOptionsInteraction(animated: animation.isAnimated)
-                                
-                                if let (size, apply) = addOptionSizeAndApply {
-                                    let isRequesting = item.controllerInteraction.pollActionState.pollMessageIdsInProgress[item.message.id] != nil
-                                    let addOptionNode = apply(animation.isAnimated, isRequesting)
-                                    let addOptionNodeFrame = CGRect(origin: CGPoint(x: layoutConstants.bubble.borderInset, y: verticalOffset), size: size)
-                                    if addOptionNode.supernode !== strongSelf {
-                                        strongSelf.addSubnode(addOptionNode)
-                                    } else {
-                                        animation.animator.updateFrame(layer: addOptionNode.layer, frame: addOptionNodeFrame, completion: nil)
-                                    }
-                                    addOptionNode.frame = addOptionNodeFrame
-                                    addOptionNode.isUserInteractionEnabled = !isRequesting
-                                    addOptionNode.textUpdated = { [weak self] text in
-                                        self?.updateNewOptionText(text)
-                                    }
-                                    addOptionNode.heightUpdated = { [weak self] in
-                                        self?.requestNewOptionLayoutUpdate()
-                                    }
-                                    addOptionNode.attachPressed = { [weak self] in
-                                        self?.openNewOptionAttachment()
-                                    }
-                                    addOptionNode.mediaPressed = { [weak self] in
-                                        self?.openNewOptionAttachment()
-                                    }
-                                    addOptionNode.modeSelectorPressed = { [weak self] in
-                                        self?.toggleNewOptionInputMode()
-                                    }
-                                    addOptionNode.requestSave = { [weak self] in
-                                        self?.buttonPressed()
-                                    }
-                                    addOptionNode.focusUpdated = { [weak self] focused in
+                                    optionNode.selectionUpdated = { [weak self] in
                                         guard let self else {
                                             return
                                         }
-                                        self.updatePollAddOptionFocused(focused)
+                                        self.updateSelection()
                                     }
-                                    strongSelf.addOptionNode = addOptionNode
+                                    optionNode.longTapped = { [weak self] in
+                                        guard let self,
+                                              let item = self.item,
+                                              let option else {
+                                            return
+                                        }
+                                        item.controllerInteraction.pollOptionLongTap(option.opaqueIdentifier, ChatControllerInteraction.LongTapParams(message: item.message, contentNode: optionNode.contextSourceNode, messageNode: strongSelf, progress: nil))
+                                    }
+                                    optionNode.frame = optionNodeFrame
+                                } else {
+                                    animation.animator.updateFrame(layer: optionNode.layer, frame: optionNodeFrame, completion: nil)
+                                }
+                                
+                                if optionNode.currentResult != nil {
+                                    verticalOffset += size.height - 7.0
+                                } else {
                                     verticalOffset += size.height
-                                } else if let addOptionNode = strongSelf.addOptionNode {
-                                    strongSelf.updatePollAddOptionFocused(false)
-                                    strongSelf.addOptionNode = nil
-                                    addOptionNode.removeFromSupernode()
                                 }
+                                updatedOptionNodes.append(optionNode)
+                                optionNode.isUserInteractionEnabled = !strongSelf.newOptionIsFocused && item.controllerInteraction.pollActionState.pollMessageIdsInProgress[item.message.id] == nil
+                                optionNode.alpha = strongSelf.newOptionIsFocused ? 0.5 : 1.0
                                 
-                                if let poll = poll, let pendingNewOptionSubmissionText, let pendingNewOptionOptionCount = strongSelf.pendingNewOptionOptionCount, poll.options.count > pendingNewOptionOptionCount, poll.options.contains(where: { $0.text == pendingNewOptionSubmissionText }) {
-                                    strongSelf.clearNewOptionInput()
-                                }
-                                
-                                if textLayout.hasRTL {
-                                    strongSelf.textNode.textNode.frame = CGRect(origin: CGPoint(x: resultSize.width - textFrame.size.width - textInsets.left - layoutConstants.text.bubbleInsets.right - additionalTextRightInset, y: textFrame.origin.y), size: textFrame.size)
+                                if i > 0 {
+                                    optionNode.previousOptionNode = updatedOptionNodes[i - 1]
                                 } else {
-                                    strongSelf.textNode.textNode.frame = textFrame
+                                    optionNode.previousOptionNode = nil
                                 }
-                                let typeFrame = CGRect(origin: CGPoint(x: textFrame.minX, y: textFrame.maxY + titleTypeSpacing), size: typeLayout.size)
-                                animation.animator.updateFrame(layer: strongSelf.typeNode.layer, frame: typeFrame, completion: nil)
-                                
-                                let deadlineTimeout = poll?.deadlineTimeout
-                                var displayDeadlineTimer = true
-                                var hasSelected = false
-                                
-                                if let poll {
-                                    if let voters = poll.results.voters {
-                                        for voter in voters {
-                                            if voter.selected {
-                                                if case .quiz = poll.kind {
-                                                    displayDeadlineTimer = false
-                                                } else {
-                                                    displayDeadlineTimer = !poll.isClosed
-                                                }
-                                                hasSelected = true
-                                                break
-                                            }
-                                        }
-                                    }
-                                }
-                                
-                                var endDate: Int32?
-                                if let deadlineTimeout,
-                                   message.id.namespace == Namespaces.Message.Cloud {
-                                    let startDate: Int32
-                                    if let forwardInfo = message.forwardInfo {
-                                        startDate = forwardInfo.date
-                                    } else {
-                                        startDate = message.timestamp
-                                    }
-                                    endDate = startDate + deadlineTimeout
-                                }
-                                
-                                if let poll, case .quiz = poll.kind, let deadlineTimeout, !isClosed {
-                                    let timerNode: PollBubbleTimerNode
-                                    if let current = strongSelf.timerNode {
-                                        timerNode = current
-                                        let timerTransition: ContainedViewLayoutTransition
-                                        if animation.isAnimated {
-                                            timerTransition = .animated(duration: 0.25, curve: .easeInOut)
-                                        } else {
-                                            timerTransition = .immediate
-                                        }
-                                        if displayDeadlineTimer {
-                                            timerTransition.updateAlpha(node: timerNode, alpha: 1.0)
-                                        } else {
-                                            timerTransition.updateAlpha(node: timerNode, alpha: 0.0)
-                                        }
-                                    } else {
-                                        timerNode = PollBubbleTimerNode()
-                                        strongSelf.timerNode = timerNode
-                                        strongSelf.addSubnode(timerNode)
-                                        timerNode.reachedTimeout = {
-                                            guard let strongSelf = self,
-                                                  let _ = strongSelf.item else {
-                                                return
-                                            }
-                                            //item.controllerInteraction.requestMessageUpdate(item.message.id)
-                                        }
-                                        
-                                        let timerTransition: ContainedViewLayoutTransition
-                                        if animation.isAnimated {
-                                            timerTransition = .animated(duration: 0.25, curve: .easeInOut)
-                                        } else {
-                                            timerTransition = .immediate
-                                        }
-                                        if displayDeadlineTimer {
-                                            timerNode.alpha = 0.0
-                                            timerTransition.updateAlpha(node: timerNode, alpha: 1.0)
-                                        } else {
-                                            timerNode.alpha = 0.0
-                                        }
-                                    }
-                                    timerNode.update(regularColor: messageTheme.secondaryTextColor, proximityColor: messageTheme.scamColor, timeout: deadlineTimeout, deadlineTimestamp: endDate)
-                                    timerNode.frame = CGRect(origin: CGPoint(x: resultSize.width - layoutConstants.text.bubbleInsets.right, y: typeFrame.minY), size: CGSize())
-                                } else if let timerNode = strongSelf.timerNode {
-                                    strongSelf.timerNode = nil
-                                    
-                                    let timerTransition: ContainedViewLayoutTransition
-                                    if animation.isAnimated {
-                                        timerTransition = .animated(duration: 0.25, curve: .easeInOut)
-                                    } else {
-                                        timerTransition = .immediate
-                                    }
-                                    timerTransition.updateAlpha(node: timerNode, alpha: 0.0, completion: { [weak timerNode] _ in
-                                        timerNode?.removeFromSupernode()
-                                    })
-                                    timerTransition.updateTransformScale(node: timerNode, scale: 0.1)
-                                }
-                                
-                                var statusOffset: CGFloat = 0.0
-                                if let poll, case .poll = poll.kind, let endDate, !isClosed {
-                                    let timerNode: DeadlineTimerNode
-                                    if let current = strongSelf.deadlineTimerNode {
-                                        timerNode = current
-                                        let timerTransition: ContainedViewLayoutTransition
-                                        if animation.isAnimated {
-                                            timerTransition = .animated(duration: 0.25, curve: .easeInOut)
-                                        } else {
-                                            timerTransition = .immediate
-                                        }
-                                        if displayDeadlineTimer {
-                                            timerTransition.updateAlpha(node: timerNode, alpha: 1.0)
-                                        } else {
-                                            timerTransition.updateAlpha(node: timerNode, alpha: 0.0)
-                                        }
-                                    } else {
-                                        timerNode = DeadlineTimerNode()
-                                        strongSelf.deadlineTimerNode = timerNode
-                                        strongSelf.addSubnode(timerNode)
-                                        
-                                        let timerTransition: ContainedViewLayoutTransition
-                                        if animation.isAnimated {
-                                            timerTransition = .animated(duration: 0.25, curve: .easeInOut)
-                                        } else {
-                                            timerTransition = .immediate
-                                        }
-                                        if displayDeadlineTimer {
-                                            timerNode.alpha = 0.0
-                                            timerTransition.updateAlpha(node: timerNode, alpha: 1.0)
-                                        } else {
-                                            timerNode.alpha = 0.0
-                                        }
-                                    }
-                                    timerNode.update(size: resultSize, color: messageTheme.secondaryTextColor, deadlineTimeout: endDate, resultsHidden: poll.hideResultsUntilClose, strings: item.presentationData.strings)
-                                    timerNode.frame = CGRect(origin: CGPoint(x: 0.0, y: verticalOffset + 31.0), size: CGSize(width: resultSize.width, height: 20.0))
-                                    statusOffset += 6.0
-                                } else if let timerNode = strongSelf.deadlineTimerNode {
-                                    strongSelf.deadlineTimerNode = nil
-                                    
-                                    let timerTransition: ContainedViewLayoutTransition
-                                    if animation.isAnimated {
-                                        timerTransition = .animated(duration: 0.25, curve: .easeInOut)
-                                    } else {
-                                        timerTransition = .immediate
-                                    }
-                                    timerTransition.updateAlpha(node: timerNode, alpha: 0.0, completion: { [weak timerNode] _ in
-                                        timerNode?.removeFromSupernode()
-                                    })
-                                    timerTransition.updateTransformScale(node: timerNode, scale: 0.1)
-                                }
-                                
-                                let solutionButtonSize = CGSize(width: 32.0, height: 32.0)
-                                let solutionButtonFrame = CGRect(origin: CGPoint(x: resultSize.width - layoutConstants.text.bubbleInsets.right - solutionButtonSize.width + 5.0, y: typeFrame.minY - 16.0), size: solutionButtonSize)
-                                strongSelf.solutionButtonNode.frame = solutionButtonFrame
-                                
-                                if (strongSelf.timerNode == nil || !displayDeadlineTimer), let poll = poll, case .quiz = poll.kind, let _ = poll.results.solution, (isClosed || hasSelected) {
-                                    if strongSelf.solutionButtonNode.alpha.isZero {
-                                        let timerTransition: ContainedViewLayoutTransition
-                                        if animation.isAnimated {
-                                            timerTransition = .animated(duration: 0.25, curve: .easeInOut)
-                                        } else {
-                                            timerTransition = .immediate
-                                        }
-                                        timerTransition.updateAlpha(node: strongSelf.solutionButtonNode, alpha: 1.0)
-                                    }
-                                    strongSelf.solutionButtonNode.update(size: solutionButtonSize, theme: item.presentationData.theme.theme, incoming: incoming)
-                                } else if !strongSelf.solutionButtonNode.alpha.isZero {
-                                    let timerTransition: ContainedViewLayoutTransition
-                                    if animation.isAnimated {
-                                        timerTransition = .animated(duration: 0.25, curve: .easeInOut)
-                                    } else {
-                                        timerTransition = .immediate
-                                    }
-                                    timerTransition.updateAlpha(node: strongSelf.solutionButtonNode, alpha: 0.0)
-                                }
-                                
-                                let avatarsFrame = CGRect(origin: CGPoint(x: typeFrame.maxX + 6.0, y: typeFrame.minY + floor((typeFrame.height - MergedAvatarsNode.defaultMergedImageSize) / 2.0)), size: CGSize(width: MergedAvatarsNode.defaultMergedImageSize + MergedAvatarsNode.defaultMergedImageSpacing * 2.0, height: MergedAvatarsNode.defaultMergedImageSize))
-                                strongSelf.avatarsNode.frame = avatarsFrame
-                                strongSelf.avatarsNode.updateLayout(size: avatarsFrame.size)
-                                strongSelf.avatarsNode.update(context: item.context, peers: avatarPeers, synchronousLoad: synchronousLoad, imageSize: MergedAvatarsNode.defaultMergedImageSize, imageSpacing: MergedAvatarsNode.defaultMergedImageSpacing, borderWidth: MergedAvatarsNode.defaultBorderWidth)
-                                strongSelf.avatarsNode.isHidden = isBotChat
-                                let alphaTransition: ContainedViewLayoutTransition
-                                if animation.isAnimated {
-                                    alphaTransition = .animated(duration: 0.25, curve: .easeInOut)
-                                    alphaTransition.updateAlpha(node: strongSelf.avatarsNode, alpha: avatarPeers.isEmpty ? 0.0 : 1.0)
-                                } else {
-                                    alphaTransition = .immediate
-                                }
-                                
-                                let _ = votersApply()
-                                let votersFrame = CGRect(origin: CGPoint(x: floor((resultSize.width - votersLayout.size.width) / 2.0), y: verticalOffset + optionsVotersSpacing), size: votersLayout.size)
-                                animation.animator.updateFrame(layer: strongSelf.votersNode.layer, frame: votersFrame, completion: nil)
-                                
-                                if animation.isAnimated, let previousPoll = previousPoll, let poll = poll {
-                                    if previousPoll.results.totalVoters == nil && poll.results.totalVoters != nil {
-                                        strongSelf.votersNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.25)
-                                    }
-                                }
-                                
-                                if let statusSizeAndApply = statusSizeAndApply {
-                                    let statusFrame = CGRect(origin: CGPoint(x: resultSize.width - statusSizeAndApply.0.width - layoutConstants.text.bubbleInsets.right, y: votersFrame.maxY + statusOffset), size: statusSizeAndApply.0)
-                                    
-                                    if strongSelf.statusNode.supernode == nil {
-                                        statusSizeAndApply.1(.None)
-                                        strongSelf.statusNode.frame = statusFrame
-                                        strongSelf.addSubnode(strongSelf.statusNode)
-                                    } else {
-                                        statusSizeAndApply.1(animation)
-                                        animation.animator.updateFrame(layer: strongSelf.statusNode.layer, frame: statusFrame, completion: nil)
-                                    }
-                                } else if strongSelf.statusNode.supernode != nil {
-                                    strongSelf.statusNode.removeFromSupernode()
-                                }
-                                
-                                let _ = buttonSubmitInactiveTextApply()
-                                strongSelf.buttonSubmitInactiveTextNode.frame = buttonSubmitInactiveTextFrame.offsetBy(dx: 0.0, dy: verticalOffset)
-                                
-                                let _ = buttonSubmitActiveTextApply()
-                                strongSelf.buttonSubmitActiveTextNode.frame = buttonSubmitActiveTextFrame.offsetBy(dx: 0.0, dy: verticalOffset)
-                                
-                                let _ = buttonSaveTextApply()
-                                strongSelf.buttonSaveTextNode.frame = buttonSaveTextFrame.offsetBy(dx: 0.0, dy: verticalOffset)
-                                
-                                let _ = buttonViewResultsTextApply()
-                                strongSelf.buttonViewResultsTextNode.frame = buttonViewResultsTextFrame.offsetBy(dx: 0.0, dy: verticalOffset)
-                                
-                                strongSelf.updateSelection()
-                                strongSelf.updatePollTooltipMessageState(animated: false)
-                                
-                                let buttonWidth: CGFloat = floor(max(strongSelf.buttonSaveTextNode.frame.width, max(strongSelf.buttonViewResultsTextNode.frame.width, strongSelf.buttonSubmitActiveTextNode.frame.width)) * 1.1)
-                                strongSelf.buttonNode.frame = CGRect(origin: CGPoint(x: floor((resultSize.width - buttonWidth) / 2.0), y: verticalOffset), size: CGSize(width: buttonWidth, height: 44.0))
-                                
-                                strongSelf.updateIsTranslating(isTranslating)
                             }
-                        })
+                            for optionNode in strongSelf.optionNodes {
+                                if !updatedOptionNodes.contains(where: { $0 === optionNode }) {
+                                    optionNode.removeFromSupernode()
+                                }
+                            }
+                            strongSelf.optionNodes = updatedOptionNodes
+                            strongSelf.updatePollOptionsInteraction(animated: animation.isAnimated)
+                            
+                            if let (size, apply) = addOptionSizeAndApply {
+                                let isRequesting = item.controllerInteraction.pollActionState.pollMessageIdsInProgress[item.message.id] != nil
+                                let addOptionNode = apply(animation.isAnimated, isRequesting)
+                                let addOptionNodeFrame = CGRect(origin: CGPoint(x: layoutConstants.bubble.borderInset, y: verticalOffset), size: size)
+                                if addOptionNode.supernode !== strongSelf {
+                                    strongSelf.addSubnode(addOptionNode)
+                                } else {
+                                    animation.animator.updateFrame(layer: addOptionNode.layer, frame: addOptionNodeFrame, completion: nil)
+                                }
+                                addOptionNode.frame = addOptionNodeFrame
+                                addOptionNode.isUserInteractionEnabled = !isRequesting
+                                addOptionNode.textUpdated = { [weak self] text in
+                                    self?.updateNewOptionText(text)
+                                }
+                                addOptionNode.heightUpdated = { [weak self] in
+                                    self?.requestNewOptionLayoutUpdate()
+                                }
+                                addOptionNode.attachPressed = { [weak self] in
+                                    self?.openNewOptionAttachment()
+                                }
+                                addOptionNode.mediaPressed = { [weak self] in
+                                    self?.openNewOptionAttachment()
+                                }
+                                addOptionNode.modeSelectorPressed = { [weak self] in
+                                    self?.toggleNewOptionInputMode()
+                                }
+                                addOptionNode.requestSave = { [weak self] in
+                                    self?.buttonPressed()
+                                }
+                                addOptionNode.focusUpdated = { [weak self] focused in
+                                    guard let self else {
+                                        return
+                                    }
+                                    self.updatePollAddOptionFocused(focused)
+                                }
+                                strongSelf.addOptionNode = addOptionNode
+                                verticalOffset += size.height
+                            } else if let addOptionNode = strongSelf.addOptionNode {
+                                strongSelf.updatePollAddOptionFocused(false)
+                                strongSelf.addOptionNode = nil
+                                addOptionNode.removeFromSupernode()
+                            }
+                            
+                            if let poll = poll, let pendingNewOptionSubmissionText, let pendingNewOptionOptionCount = strongSelf.pendingNewOptionOptionCount, poll.options.count > pendingNewOptionOptionCount, poll.options.contains(where: { $0.text == pendingNewOptionSubmissionText }) {
+                                strongSelf.clearNewOptionInput()
+                            }
+                            
+                            if textLayout.hasRTL {
+                                strongSelf.textNode.textNode.frame = CGRect(origin: CGPoint(x: resultSize.width - textFrame.size.width - textInsets.left - layoutConstants.text.bubbleInsets.right - additionalTextRightInset, y: textFrame.origin.y), size: textFrame.size)
+                            } else {
+                                strongSelf.textNode.textNode.frame = textFrame
+                            }
+                            let typeFrame = CGRect(origin: CGPoint(x: textFrame.minX, y: textFrame.maxY + titleTypeSpacing), size: typeLayout.size)
+                            animation.animator.updateFrame(layer: strongSelf.typeNode.layer, frame: typeFrame, completion: nil)
+                            
+                            let deadlineTimeout = poll?.deadlineTimeout
+                            var displayDeadlineTimer = true
+                            var hasSelected = false
+                            
+                            if let poll {
+                                if let voters = poll.results.voters {
+                                    for voter in voters {
+                                        if voter.selected {
+                                            if case .quiz = poll.kind {
+                                                displayDeadlineTimer = false
+                                            } else {
+                                                displayDeadlineTimer = !poll.isClosed
+                                            }
+                                            hasSelected = true
+                                            break
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            var endDate: Int32?
+                            if let deadlineTimeout,
+                               message.id.namespace == Namespaces.Message.Cloud {
+                                let startDate: Int32
+                                if let forwardInfo = message.forwardInfo {
+                                    startDate = forwardInfo.date
+                                } else {
+                                    startDate = message.timestamp
+                                }
+                                endDate = startDate + deadlineTimeout
+                            }
+                            
+                            if let poll, case .quiz = poll.kind, let deadlineTimeout, !isClosed {
+                                let timerNode: PollBubbleTimerNode
+                                if let current = strongSelf.timerNode {
+                                    timerNode = current
+                                    let timerTransition: ContainedViewLayoutTransition
+                                    if animation.isAnimated {
+                                        timerTransition = .animated(duration: 0.25, curve: .easeInOut)
+                                    } else {
+                                        timerTransition = .immediate
+                                    }
+                                    if displayDeadlineTimer {
+                                        timerTransition.updateAlpha(node: timerNode, alpha: 1.0)
+                                    } else {
+                                        timerTransition.updateAlpha(node: timerNode, alpha: 0.0)
+                                    }
+                                } else {
+                                    timerNode = PollBubbleTimerNode()
+                                    strongSelf.timerNode = timerNode
+                                    strongSelf.addSubnode(timerNode)
+                                    timerNode.reachedTimeout = {
+                                        guard let strongSelf = self,
+                                              let _ = strongSelf.item else {
+                                            return
+                                        }
+                                        //item.controllerInteraction.requestMessageUpdate(item.message.id)
+                                    }
+                                    
+                                    let timerTransition: ContainedViewLayoutTransition
+                                    if animation.isAnimated {
+                                        timerTransition = .animated(duration: 0.25, curve: .easeInOut)
+                                    } else {
+                                        timerTransition = .immediate
+                                    }
+                                    if displayDeadlineTimer {
+                                        timerNode.alpha = 0.0
+                                        timerTransition.updateAlpha(node: timerNode, alpha: 1.0)
+                                    } else {
+                                        timerNode.alpha = 0.0
+                                    }
+                                }
+                                timerNode.update(regularColor: messageTheme.secondaryTextColor, proximityColor: messageTheme.scamColor, timeout: deadlineTimeout, deadlineTimestamp: endDate)
+                                timerNode.frame = CGRect(origin: CGPoint(x: resultSize.width - layoutConstants.text.bubbleInsets.right, y: typeFrame.minY), size: CGSize())
+                            } else if let timerNode = strongSelf.timerNode {
+                                strongSelf.timerNode = nil
+                                
+                                let timerTransition: ContainedViewLayoutTransition
+                                if animation.isAnimated {
+                                    timerTransition = .animated(duration: 0.25, curve: .easeInOut)
+                                } else {
+                                    timerTransition = .immediate
+                                }
+                                timerTransition.updateAlpha(node: timerNode, alpha: 0.0, completion: { [weak timerNode] _ in
+                                    timerNode?.removeFromSupernode()
+                                })
+                                timerTransition.updateTransformScale(node: timerNode, scale: 0.1)
+                            }
+                            
+                            var statusOffset: CGFloat = 0.0
+                            if let poll, case .poll = poll.kind, let endDate, !isClosed {
+                                let timerNode: DeadlineTimerNode
+                                if let current = strongSelf.deadlineTimerNode {
+                                    timerNode = current
+                                    let timerTransition: ContainedViewLayoutTransition
+                                    if animation.isAnimated {
+                                        timerTransition = .animated(duration: 0.25, curve: .easeInOut)
+                                    } else {
+                                        timerTransition = .immediate
+                                    }
+                                    if displayDeadlineTimer {
+                                        timerTransition.updateAlpha(node: timerNode, alpha: 1.0)
+                                    } else {
+                                        timerTransition.updateAlpha(node: timerNode, alpha: 0.0)
+                                    }
+                                } else {
+                                    timerNode = DeadlineTimerNode()
+                                    strongSelf.deadlineTimerNode = timerNode
+                                    strongSelf.addSubnode(timerNode)
+                                    
+                                    let timerTransition: ContainedViewLayoutTransition
+                                    if animation.isAnimated {
+                                        timerTransition = .animated(duration: 0.25, curve: .easeInOut)
+                                    } else {
+                                        timerTransition = .immediate
+                                    }
+                                    if displayDeadlineTimer {
+                                        timerNode.alpha = 0.0
+                                        timerTransition.updateAlpha(node: timerNode, alpha: 1.0)
+                                    } else {
+                                        timerNode.alpha = 0.0
+                                    }
+                                }
+                                timerNode.update(size: resultSize, color: messageTheme.secondaryTextColor, deadlineTimeout: endDate, resultsHidden: poll.hideResultsUntilClose, strings: item.presentationData.strings)
+                                timerNode.frame = CGRect(origin: CGPoint(x: 0.0, y: verticalOffset + 31.0), size: CGSize(width: resultSize.width, height: 20.0))
+                                statusOffset += 6.0
+                            } else if let timerNode = strongSelf.deadlineTimerNode {
+                                strongSelf.deadlineTimerNode = nil
+                                
+                                let timerTransition: ContainedViewLayoutTransition
+                                if animation.isAnimated {
+                                    timerTransition = .animated(duration: 0.25, curve: .easeInOut)
+                                } else {
+                                    timerTransition = .immediate
+                                }
+                                timerTransition.updateAlpha(node: timerNode, alpha: 0.0, completion: { [weak timerNode] _ in
+                                    timerNode?.removeFromSupernode()
+                                })
+                                timerTransition.updateTransformScale(node: timerNode, scale: 0.1)
+                            }
+                            
+                            let solutionButtonSize = CGSize(width: 32.0, height: 32.0)
+                            let solutionButtonFrame = CGRect(origin: CGPoint(x: resultSize.width - layoutConstants.text.bubbleInsets.right - solutionButtonSize.width + 5.0, y: typeFrame.minY - 16.0), size: solutionButtonSize)
+                            strongSelf.solutionButtonNode.frame = solutionButtonFrame
+                            
+                            if (strongSelf.timerNode == nil || !displayDeadlineTimer), let poll = poll, case .quiz = poll.kind, let _ = poll.results.solution, (isClosed || hasSelected) {
+                                if strongSelf.solutionButtonNode.alpha.isZero {
+                                    let timerTransition: ContainedViewLayoutTransition
+                                    if animation.isAnimated {
+                                        timerTransition = .animated(duration: 0.25, curve: .easeInOut)
+                                    } else {
+                                        timerTransition = .immediate
+                                    }
+                                    timerTransition.updateAlpha(node: strongSelf.solutionButtonNode, alpha: 1.0)
+                                }
+                                strongSelf.solutionButtonNode.update(size: solutionButtonSize, theme: item.presentationData.theme.theme, incoming: incoming)
+                            } else if !strongSelf.solutionButtonNode.alpha.isZero {
+                                let timerTransition: ContainedViewLayoutTransition
+                                if animation.isAnimated {
+                                    timerTransition = .animated(duration: 0.25, curve: .easeInOut)
+                                } else {
+                                    timerTransition = .immediate
+                                }
+                                timerTransition.updateAlpha(node: strongSelf.solutionButtonNode, alpha: 0.0)
+                            }
+                            
+                            let avatarsFrame = CGRect(origin: CGPoint(x: typeFrame.maxX + 6.0, y: typeFrame.minY + floor((typeFrame.height - MergedAvatarsNode.defaultMergedImageSize) / 2.0)), size: CGSize(width: MergedAvatarsNode.defaultMergedImageSize + MergedAvatarsNode.defaultMergedImageSpacing * 2.0, height: MergedAvatarsNode.defaultMergedImageSize))
+                            strongSelf.avatarsNode.frame = avatarsFrame
+                            strongSelf.avatarsNode.updateLayout(size: avatarsFrame.size)
+                            strongSelf.avatarsNode.update(context: item.context, peers: avatarPeers, synchronousLoad: synchronousLoad, imageSize: MergedAvatarsNode.defaultMergedImageSize, imageSpacing: MergedAvatarsNode.defaultMergedImageSpacing, borderWidth: MergedAvatarsNode.defaultBorderWidth)
+                            strongSelf.avatarsNode.isHidden = isBotChat
+                            let alphaTransition: ContainedViewLayoutTransition
+                            if animation.isAnimated {
+                                alphaTransition = .animated(duration: 0.25, curve: .easeInOut)
+                                alphaTransition.updateAlpha(node: strongSelf.avatarsNode, alpha: avatarPeers.isEmpty ? 0.0 : 1.0)
+                            } else {
+                                alphaTransition = .immediate
+                            }
+                            
+                            let _ = votersApply()
+                            let votersFrame = CGRect(origin: CGPoint(x: floor((resultSize.width - votersLayout.size.width) / 2.0), y: verticalOffset + optionsVotersSpacing), size: votersLayout.size)
+                            animation.animator.updateFrame(layer: strongSelf.votersNode.layer, frame: votersFrame, completion: nil)
+                            
+                            if animation.isAnimated, let previousPoll = previousPoll, let poll = poll {
+                                if previousPoll.results.totalVoters == nil && poll.results.totalVoters != nil {
+                                    strongSelf.votersNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.25)
+                                }
+                            }
+                            
+                            if let statusSizeAndApply = statusSizeAndApply {
+                                let statusFrame = CGRect(origin: CGPoint(x: resultSize.width - statusSizeAndApply.0.width - layoutConstants.text.bubbleInsets.right, y: votersFrame.maxY + statusOffset), size: statusSizeAndApply.0)
+                                
+                                if strongSelf.statusNode.supernode == nil {
+                                    statusSizeAndApply.1(.None)
+                                    strongSelf.statusNode.frame = statusFrame
+                                    strongSelf.addSubnode(strongSelf.statusNode)
+                                } else {
+                                    statusSizeAndApply.1(animation)
+                                    animation.animator.updateFrame(layer: strongSelf.statusNode.layer, frame: statusFrame, completion: nil)
+                                }
+                            } else if strongSelf.statusNode.supernode != nil {
+                                strongSelf.statusNode.removeFromSupernode()
+                            }
+                            
+                            let _ = buttonSubmitInactiveTextApply()
+                            strongSelf.buttonSubmitInactiveTextNode.frame = buttonSubmitInactiveTextFrame.offsetBy(dx: 0.0, dy: verticalOffset)
+                            
+                            let _ = buttonSubmitActiveTextApply()
+                            strongSelf.buttonSubmitActiveTextNode.frame = buttonSubmitActiveTextFrame.offsetBy(dx: 0.0, dy: verticalOffset)
+                            
+                            let _ = buttonSaveTextApply()
+                            strongSelf.buttonSaveTextNode.frame = buttonSaveTextFrame.offsetBy(dx: 0.0, dy: verticalOffset)
+                            
+                            let _ = buttonViewResultsTextApply()
+                            strongSelf.buttonViewResultsTextNode.frame = buttonViewResultsTextFrame.offsetBy(dx: 0.0, dy: verticalOffset)
+                            
+                            strongSelf.updateSelection()
+                            strongSelf.updatePollTooltipMessageState(animated: false)
+                            
+                            let buttonWidth: CGFloat = floor(max(strongSelf.buttonSaveTextNode.frame.width, max(strongSelf.buttonViewResultsTextNode.frame.width, strongSelf.buttonSubmitActiveTextNode.frame.width)) * 1.1)
+                            strongSelf.buttonNode.frame = CGRect(origin: CGPoint(x: floor((resultSize.width - buttonWidth) / 2.0), y: verticalOffset), size: CGSize(width: buttonWidth, height: 44.0))
+                            
+                            strongSelf.updateIsTranslating(isTranslating)
+                        }
+                    })
                 })
             })
         }

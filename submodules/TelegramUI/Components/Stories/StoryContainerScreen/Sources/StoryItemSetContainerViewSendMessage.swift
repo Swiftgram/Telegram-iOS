@@ -357,7 +357,6 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                 mode: .standard(.default),
                 chatLocation: .peer(id: context.account.peerId),
                 subject: nil,
-                peerNearbyData: nil,
                 greetingData: nil,
                 pendingUnpinnedAllMessages: false,
                 activeGroupCallInfo: nil,
@@ -947,7 +946,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         })
     }
 
-    func performSendContextResultAction(view: StoryItemSetContainerComponent.View, results: ChatContextResultCollection, result: ChatContextResult) {
+    func performSendContextResultAction(view: StoryItemSetContainerComponent.View, results: ChatContextResultCollection, result: ChatContextResult, silentPosting: Bool = false, scheduleTime: Int32? = nil) {
         guard let component = view.component else {
             return
         }
@@ -987,6 +986,8 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                 replyTo: nil,
                 storyId: focusedStoryId,
                 content: .contextResult(results, result),
+                silentPosting: silentPosting,
+                scheduleTime: scheduleTime,
                 sendPaidMessageStars: component.slice.additionalPeerData.sendPaidMessageStars
             ) |> deliverOnMainQueue).start(next: { [weak self, weak view] messageIds in
                 Queue.mainQueue().after(0.3) {
@@ -1140,8 +1141,8 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                                 guard let self, let view else {
                                     return
                                 }
-                                self.presentScheduleTimePicker(view: view, peer: peer, completion: { time, repeatPeriod in
-                                    done(time)
+                                self.presentScheduleTimePicker(view: view, peer: peer, completion: { time, repeatPeriod, silentPosting in
+                                    done(time, silentPosting)
                                 })
                             })))
                         }
@@ -2292,8 +2293,8 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
             guard let self, let view else {
                 return
             }
-            self.presentScheduleTimePicker(view: view, peer: peer, style: media ? .media : .default, completion: { time, repeatPeriod in
-                done(time)
+            self.presentScheduleTimePicker(view: view, peer: peer, style: media ? .media : .default, completion: { time, repeatPeriod, silentPosting in
+                done(time, silentPosting)
             })
         }
         controller.presentTimerPicker = { [weak self, weak view] done in
@@ -2372,7 +2373,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                         if let view, let component = view.component {
                             let theme = component.theme
                             let updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>) = (component.context.sharedContext.currentPresentationData.with({ $0 }).withUpdated(theme: theme), component.context.sharedContext.presentationData |> map { $0.withUpdated(theme: theme) })
-                            let controller = WebSearchController(context: component.context, updatedPresentationData: updatedPresentationData, peer: peer, chatLocation: .peer(id: peer.id), configuration: searchBotsConfiguration, mode: .media(attachment: false, completion: { [weak view] results, selectionState, editingState, silentPosting in
+                            let controller = WebSearchController(context: component.context, updatedPresentationData: updatedPresentationData, peer: peer, chatLocation: .peer(id: peer.id), configuration: searchBotsConfiguration, mode: .media(attachment: false, completion: { [weak view] results, selectionState, editingState, silentPosting, scheduleTime in
                                 if let legacyController = legacyController {
                                     legacyController.dismiss()
                                 }
@@ -2381,14 +2382,14 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                                 }
                                 legacyEnqueueWebSearchMessages(selectionState, editingState, enqueueChatContextResult: { [weak view] result in
                                     if let strongSelf = self, let view {
-                                        strongSelf.enqueueChatContextResult(view: view, peer: peer, replyMessageId: replyMessageId, storyId: replyToStoryId, results: results, result: result, hideVia: true)
+                                        strongSelf.enqueueChatContextResult(view: view, peer: peer, replyMessageId: replyMessageId, storyId: replyToStoryId, results: results, result: result, hideVia: true, silentPosting: silentPosting, scheduleTime: scheduleTime)
                                     }
                                 }, enqueueMediaMessages: { [weak view] signals in
                                     if let strongSelf = self, let view {
                                         if editingMedia {
                                             strongSelf.editMessageMediaWithLegacySignals(view: view, signals: signals)
                                         } else {
-                                            strongSelf.enqueueMediaMessages(view: view, peer: peer, replyToMessageId: replyMessageId, replyToStoryId: replyToStoryId, signals: signals, silentPosting: silentPosting)
+                                            strongSelf.enqueueMediaMessages(view: view, peer: peer, replyToMessageId: replyMessageId, replyToStoryId: replyToStoryId, signals: signals, silentPosting: silentPosting, scheduleTime: scheduleTime)
                                         }
                                     }
                                 })
@@ -2414,8 +2415,8 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                         component.controller()?.present(textAlertController(context: component.context, updatedPresentationData: (presentationData, .single(presentationData)), title: nil, text: text, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
                     }, presentSchedulePicker: { [weak view] media, done in
                         if let strongSelf = self, let view {
-                            strongSelf.presentScheduleTimePicker(view: view, peer: peer, style: media ? .media : .default, completion: { time, repeatPeriod in
-                                 done(time)
+                            strongSelf.presentScheduleTimePicker(view: view, peer: peer, style: media ? .media : .default, completion: { time, repeatPeriod, silentPosting in
+                                 done(time, silentPosting)
                             })
                         }
                     }, presentTimerPicker: { [weak view] done in
@@ -2539,7 +2540,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                                     let fileId = Int64.random(in: Int64.min ... Int64.max)
                                     let mimeType = guessMimeTypeByFileExtension((item.fileName as NSString).pathExtension)
                                     var previewRepresentations: [TelegramMediaImageRepresentation] = []
-                                    if mimeType.hasPrefix("image/") || mimeType == "application/pdf" {
+                                    if mimeType.hasPrefix("image/") || mimeType == "application/pdf" || item.audioMetadata?.hasAudioArtwork == true {
                                         previewRepresentations.append(TelegramMediaImageRepresentation(dimensions: PixelDimensions(width: 320, height: 320), resource: ICloudFileResource(urlData: item.urlData, thumbnail: true), progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false))
                                     }
                                     var attributes: [TelegramMediaFileAttribute] = []
@@ -2640,7 +2641,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
 //        component.controller()?.push(controller)
     }
 
-    private func enqueueChatContextResult(view: StoryItemSetContainerComponent.View, peer: EnginePeer, replyMessageId: EngineMessage.Id?, storyId: StoryId?, results: ChatContextResultCollection, result: ChatContextResult, hideVia: Bool = false, closeMediaInput: Bool = false, silentPosting: Bool = false, resetTextInputState: Bool = true) {
+    private func enqueueChatContextResult(view: StoryItemSetContainerComponent.View, peer: EnginePeer, replyMessageId: EngineMessage.Id?, storyId: StoryId?, results: ChatContextResultCollection, result: ChatContextResult, hideVia: Bool = false, closeMediaInput: Bool = false, silentPosting: Bool = false, scheduleTime: Int32? = nil, resetTextInputState: Bool = true) {
         if !canSendMessagesToPeer(peer._asPeer()) {
             return
         }
@@ -2669,7 +2670,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
             }
         }
 
-        sendMessage(nil)
+        sendMessage(scheduleTime)
     }
 
     private func presentWebSearch(view: StoryItemSetContainerComponent.View, activateOnDisplay: Bool = true, present: @escaping (ViewController, Any?) -> Void) {
@@ -2686,14 +2687,14 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Configuration.SearchBots())
         |> deliverOnMainQueue).start(next: { [weak self, weak view] configuration in
             if let self {
-                let controller = WebSearchController(context: context, updatedPresentationData: updatedPresentationData, peer: peer, chatLocation: .peer(id: peer.id), configuration: configuration, mode: .media(attachment: true, completion: { [weak self] results, selectionState, editingState, silentPosting in
+                let controller = WebSearchController(context: context, updatedPresentationData: updatedPresentationData, peer: peer, chatLocation: .peer(id: peer.id), configuration: configuration, mode: .media(attachment: true, completion: { [weak self] results, selectionState, editingState, silentPosting, scheduleTime in
                     legacyEnqueueWebSearchMessages(selectionState, editingState, enqueueChatContextResult: { [weak self, weak view] result in
                         if let self, let view {
-                            self.performSendContextResultAction(view: view, results: results, result: result)
+                            self.performSendContextResultAction(view: view, results: results, result: result, silentPosting: silentPosting, scheduleTime: scheduleTime)
                         }
                     }, enqueueMediaMessages: { [weak self, weak view] signals in
                         if let self, let view, !signals.isEmpty {
-                            self.enqueueMediaMessages(view: view, peer: peer, replyToMessageId: nil, replyToStoryId: StoryId(peerId: peer.id, id: storyId), signals: signals, silentPosting: false)
+                            self.enqueueMediaMessages(view: view, peer: peer, replyToMessageId: nil, replyToStoryId: StoryId(peerId: peer.id, id: storyId), signals: signals, silentPosting: silentPosting, scheduleTime: scheduleTime)
                         }
                     })
                 }), activateOnDisplay: activateOnDisplay)
@@ -2833,8 +2834,8 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                 guard let self, let view else {
                     return
                 }
-                self.presentScheduleTimePicker(view: view, peer: peer, style: .media, completion: { time, repeatPeriod in
-                    done(time)
+                self.presentScheduleTimePicker(view: view, peer: peer, style: .media, completion: { time, repeatPeriod, silentPosting in
+                    done(time, silentPosting)
                 })
             }, presentTimerPicker: { [weak self, weak view] done in
                 guard let self, let view else {
@@ -2868,7 +2869,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         style: ChatScheduleTimeControllerStyle = .default,
         selectedTime: Int32? = nil,
         dismissByTapOutside: Bool = true,
-        completion: @escaping (Int32, Int32?) -> Void
+        completion: @escaping (Int32, Int32?, Bool) -> Void
     ) {
         guard let component = view.component else {
             return
@@ -2889,16 +2890,25 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                 sendWhenOnlineAvailable = false
             }
 
-            let mode: ChatScheduleTimeControllerMode
+            let mode: ChatScheduleTimeScreen.Mode //ChatScheduleTimeControllerMode
             if peer.id == component.context.account.peerId {
                 mode = .reminders
             } else {
-                mode = .scheduledMessages(sendWhenOnlineAvailable: sendWhenOnlineAvailable)
+                mode = .scheduledMessages(peerId: peer.id, sendWhenOnlineAvailable: sendWhenOnlineAvailable)
             }
-            let theme = component.theme
-            let controller = ChatScheduleTimeController(context: component.context, updatedPresentationData: (component.context.sharedContext.currentPresentationData.with({ $0 }).withUpdated(theme: theme), component.context.sharedContext.presentationData |> map { $0.withUpdated(theme: theme) }), mode: mode, style: style, currentTime: selectedTime, minimalTime: nil, dismissByTapOutside: dismissByTapOutside, completion: { time in
-                completion(time, nil)
-            })
+            let controller = ChatScheduleTimeScreen(
+                context: component.context,
+                mode: mode,
+                currentTime: selectedTime,
+                currentRepeatPeriod: nil,
+                suggestedTime: nil,
+                minimalTime: nil,
+                silentPosting: false,
+                isDark: style == .media,
+                completion: { result in
+                    completion(result.time, nil, result.silentPosting)
+                }
+            )
             view.endEditing(true)
             view.component?.controller()?.present(controller, in: .window(.root))
         })

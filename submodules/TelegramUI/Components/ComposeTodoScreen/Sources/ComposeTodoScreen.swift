@@ -470,7 +470,6 @@ final class ComposeTodoScreenComponent: Component {
                     mode: .standard(.default),
                     chatLocation: .peer(id: component.context.account.peerId),
                     subject: nil,
-                    peerNearbyData: nil,
                     greetingData: nil,
                     pendingUnpinnedAllMessages: false,
                     activeGroupCallInfo: nil,
@@ -974,6 +973,12 @@ final class ComposeTodoScreenComponent: Component {
                                 self.state?.updated()
                             }
                         }
+                    },
+                    present: { [weak self] c in
+                        guard let controller = self?.environment?.controller() else {
+                            return
+                        }
+                        controller.present(c, in: .window(.root))
                     },
                     tag: todoItem.textFieldTag
                 ))))

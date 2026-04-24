@@ -35,18 +35,7 @@ extension PeerInfoScreenNode {
                         self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(peer), keepStack: .default))
                     }
                 } else {
-                    self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: self.nearbyPeerDistance != nil ? .always : .default, peerNearbyData: self.nearbyPeerDistance.flatMap({ ChatPeerNearbyData(distance: $0) }), completion: { [weak self] _ in
-                        if let strongSelf = self, strongSelf.nearbyPeerDistance != nil {
-                            var viewControllers = navigationController.viewControllers
-                            viewControllers = viewControllers.filter { controller in
-                                if controller is PeerInfoScreen {
-                                    return false
-                                }
-                                return true
-                            }
-                            navigationController.setViewControllers(viewControllers, animated: false)
-                        }
-                    }))
+                    self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default))
                 }
             }
         case .discussion:
@@ -812,7 +801,7 @@ extension PeerInfoScreenNode {
                                         }
                                         let _ = self.context.engine.peers.toggleMessageCopyProtection(peerId: user.id, enabled: true).start()
                                         
-                                        self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default, peerNearbyData: nil, completion: { _ in }))
+                                        self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default, completion: { _ in }))
                                     }
                                     let _ = (ApplicationSpecificNotice.getCopyProtectionTips(accountManager: self.context.sharedContext.accountManager)
                                     |> deliverOnMainQueue).start(next: { [weak self] count in

@@ -465,7 +465,7 @@ public final class ButtonComponent: Component {
         private var glassShadowCornerRadius: CGFloat?
         private var glassHighlightContainerView: UIView?
         private let button: HighlightTrackingButton
-        private let legacyGlassHighlightRecognizer: GlassHighlightGestureRecognizer
+        private let glassHighlightRecognizer: GlassHighlightGestureRecognizer
         
         private var shimmeringView: ButtonShimmeringView?
         private var chromeView: UIImageView?
@@ -480,7 +480,7 @@ public final class ButtonComponent: Component {
             self.containerView.isUserInteractionEnabled = false
             
             self.button = HighlightTrackingButton()
-            self.legacyGlassHighlightRecognizer = GlassHighlightGestureRecognizer(target: nil, action: nil)
+            self.glassHighlightRecognizer = GlassHighlightGestureRecognizer(target: nil, action: nil)
             
             super.init(frame: frame)
             
@@ -489,8 +489,8 @@ public final class ButtonComponent: Component {
             
             self.addSubview(self.containerView)
             self.addSubview(self.button)
-            self.addGestureRecognizer(self.legacyGlassHighlightRecognizer)
-            self.legacyGlassHighlightRecognizer.isEnabled = false
+            self.addGestureRecognizer(self.glassHighlightRecognizer)
+            self.glassHighlightRecognizer.isEnabled = false
             
             self.button.addTarget(self, action: #selector(self.pressed), for: .touchUpInside)
 
@@ -521,33 +521,18 @@ public final class ButtonComponent: Component {
             preconditionFailure()
         }
         
-        private func ensureGlassShadowView() -> UIImageView {
-            if let glassShadowView = self.glassShadowView {
-                return glassShadowView
-            }
-            let glassShadowView = UIImageView()
-            glassShadowView.isUserInteractionEnabled = false
-            self.glassShadowView = glassShadowView
-            return glassShadowView
-        }
-        
-        private func ensureGlassHighlightContainerView() -> UIView {
-            if let glassHighlightContainerView = self.glassHighlightContainerView {
-                return glassHighlightContainerView
-            }
-            let glassHighlightContainerView = UIView()
-            glassHighlightContainerView.isUserInteractionEnabled = false
-            glassHighlightContainerView.clipsToBounds = true
-            self.glassHighlightContainerView = glassHighlightContainerView
-            return glassHighlightContainerView
-        }
-        
-        private func removeLegacyGlassEffectViews() {
-            self.legacyGlassHighlightRecognizer.isEnabled = false
-            self.legacyGlassHighlightRecognizer.highlightContainerView = nil
+        private func removeGlassEffect(transition: ComponentTransition) {
+            self.glassHighlightRecognizer.isEnabled = false
+            self.glassHighlightRecognizer.highlightContainerView = nil
             
             if let glassShadowView = self.glassShadowView, glassShadowView.superview != nil {
-                glassShadowView.removeFromSuperview()
+                if transition.animation.isImmediate {
+                    glassShadowView.removeFromSuperview()
+                } else {
+                    transition.setAlpha(view: glassShadowView, alpha: 0.0, completion: { _ in
+                        glassShadowView.removeFromSuperview()
+                    })
+                }
             }
             if let glassHighlightContainerView = self.glassHighlightContainerView, glassHighlightContainerView.superview != nil {
                 glassHighlightContainerView.removeFromSuperview()
@@ -558,10 +543,17 @@ public final class ButtonComponent: Component {
             self.layer.sublayerTransform = CATransform3DIdentity
         }
         
-        private func updateLegacyGlassEffectViews(component: ButtonComponent, size: CGSize, cornerRadius: CGFloat, transition: ComponentTransition) {
+        private func updateGlassEffect(component: ButtonComponent, size: CGSize, cornerRadius: CGFloat, transition: ComponentTransition) {
             let shadowInset: CGFloat = 48.0
             
-            let glassShadowView = self.ensureGlassShadowView()
+            let glassShadowView: UIImageView
+            if let current = self.glassShadowView {
+                glassShadowView = current
+            } else {
+                glassShadowView = UIImageView()
+                glassShadowView.isUserInteractionEnabled = false
+                self.glassShadowView = glassShadowView
+            }
             if glassShadowView.superview == nil {
                 self.insertSubview(glassShadowView, at: 0)
             } else {
@@ -574,7 +566,15 @@ public final class ButtonComponent: Component {
             transition.setFrame(view: glassShadowView, frame: CGRect(origin: .zero, size: size).insetBy(dx: -shadowInset, dy: -shadowInset))
             transition.setAlpha(view: glassShadowView, alpha: 1.0)
             
-            let glassHighlightContainerView = self.ensureGlassHighlightContainerView()
+            let glassHighlightContainerView: UIView
+            if let current = self.glassHighlightContainerView {
+                glassHighlightContainerView = current
+            } else {
+                glassHighlightContainerView = UIView()
+                glassHighlightContainerView.isUserInteractionEnabled = false
+                glassHighlightContainerView.clipsToBounds = true
+                self.glassHighlightContainerView = glassHighlightContainerView
+            }            
             if glassHighlightContainerView.superview == nil {
                 self.insertSubview(glassHighlightContainerView, aboveSubview: self.containerView)
             } else if self.button.superview === self {
@@ -585,8 +585,8 @@ public final class ButtonComponent: Component {
             transition.setFrame(view: glassHighlightContainerView, frame: CGRect(origin: .zero, size: size))
             transition.setCornerRadius(layer: glassHighlightContainerView.layer, cornerRadius: cornerRadius)
             
-            self.legacyGlassHighlightRecognizer.highlightContainerView = glassHighlightContainerView
-            self.legacyGlassHighlightRecognizer.isEnabled = component.isEnabled && !component.displaysProgress
+            self.glassHighlightRecognizer.highlightContainerView = glassHighlightContainerView
+            self.glassHighlightRecognizer.isEnabled = component.isEnabled && !component.displaysProgress
         }
         
         @objc private func pressed() {
@@ -694,10 +694,10 @@ public final class ButtonComponent: Component {
                 transition.setCornerRadius(layer: self.containerView.layer, cornerRadius: cornerRadius)
             }
             
-            if component.background.style == .glass {
-                self.updateLegacyGlassEffectViews(component: component, size: size, cornerRadius: cornerRadius, transition: transition)
+            if component.background.style == .glass, component.background.color.alpha > 1.0 - .ulpOfOne {
+                self.updateGlassEffect(component: component, size: size, cornerRadius: cornerRadius, transition: transition)
             } else {
-                self.removeLegacyGlassEffectViews()
+                self.removeGlassEffect(transition: transition)
             }
             
             if let contentView = contentItem.view.view {

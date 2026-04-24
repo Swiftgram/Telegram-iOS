@@ -1413,7 +1413,7 @@ public final class SparseItemGridScrollingArea: ASDisplayNode {
     }
 
     override public func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        if self.dateIndicator.alpha <= 0.01 {
+        if self.dateIndicator.alpha <= 0.01 || !self.isDateIndicatorVisible {
             return nil
         }
         if self.dateIndicator.frame.offsetBy(dx: self.dateIndicatorContainer.frame.minX, dy: self.dateIndicatorContainer.frame.minY).contains(point) {

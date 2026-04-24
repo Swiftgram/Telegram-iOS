@@ -2619,14 +2619,14 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         switch authorRank {
                         case let .creator(rank):
                             if let rank, !rank.isEmpty {
-                                string = rank.trimmingEmojis
+                                string = rank
                             } else {
                                 string = item.presentationData.strings.Conversation_Owner
                             }
                             rankBadgeColor = UIColor(rgb: 0x956ac8)
                         case let .admin(rank):
                             if let rank, !rank.isEmpty {
-                                string = rank.trimmingEmojis
+                                string = rank
                             } else {
                                 string = item.presentationData.strings.Conversation_Admin
                             }
@@ -2637,7 +2637,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                                     string = item.presentationData.strings.Chat_TagPlaceholder
                                     defaultRankColor = defaultRankColor.withMultipliedAlpha(0.5)
                                 } else {
-                                    string = rank.trimmingEmojis
+                                    string = rank
                                 }
                             } else {
                                 string = ""

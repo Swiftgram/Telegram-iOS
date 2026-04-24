@@ -3470,7 +3470,6 @@ final class VideoChatScreenComponent: Component {
                         mode: .standard(.default),
                         chatLocation: .peer(id: call.accountContext.account.peerId),
                         subject: nil,
-                        peerNearbyData: nil,
                         greetingData: nil,
                         pendingUnpinnedAllMessages: false,
                         activeGroupCallInfo: nil,

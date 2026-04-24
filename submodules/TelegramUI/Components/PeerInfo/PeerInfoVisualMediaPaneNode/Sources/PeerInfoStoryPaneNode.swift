@@ -5177,7 +5177,7 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
     
     public func presentDeleteBotPreviewLanguage() {
         self.parentController?.present(textAlertController(context: self.context, title: self.presentationData.strings.BotPreviews_DeleteTranslationAlert_Title, text: self.presentationData.strings.BotPreviews_DeleteTranslationAlert_Text, actions: [
-            TextAlertAction(type: .defaultAction, title: self.presentationData.strings.Common_Cancel, action: {
+            TextAlertAction(type: .genericAction, title: self.presentationData.strings.Common_Cancel, action: {
             }),
             TextAlertAction(type: .destructiveAction, title: self.presentationData.strings.Common_OK, action: { [weak self] in
                 guard let self else {

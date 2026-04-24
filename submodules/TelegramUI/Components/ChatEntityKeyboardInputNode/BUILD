@@ -24,6 +24,7 @@ swift_library(
         "//submodules/TelegramUI/Components/MultiAnimationRenderer:MultiAnimationRenderer",
         "//submodules/TextFormat:TextFormat",
         "//submodules/AppBundle:AppBundle",
+        "//submodules/SearchBarNode:SearchBarNode",
         "//submodules/TelegramUI/Components/ChatInputNode:ChatInputNode",
         "//submodules/Components/PagerComponent:PagerComponent",
         "//submodules/PremiumUI:PremiumUI",

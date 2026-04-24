@@ -441,7 +441,7 @@ private final class VideoMessageCameraScreenComponent: CombinedComponent {
                         }
                     }, error: { [weak self] _ in
                         if let self, let controller = self.getController() {
-                            controller.completion(nil, nil, nil)
+                            controller.completion(nil, nil, nil, nil)
                         }
                     }))
                 }
@@ -1641,7 +1641,7 @@ public class VideoMessageCameraScreen: ViewController {
     fileprivate var allowLiveUpload: Bool
     fileprivate var viewOnceAvailable: Bool
     
-    fileprivate let completion: (EnqueueMessage?, Bool?, Int32?) -> Void
+    fileprivate let completion: (EnqueueMessage?, Bool?, Int32?, Int32?) -> Void
     
     private var audioSessionDisposable: Disposable?
     
@@ -1794,7 +1794,7 @@ public class VideoMessageCameraScreen: ViewController {
         viewOnceAvailable: Bool,
         inputPanelFrame: (CGRect, Bool),
         chatNode: ASDisplayNode?,
-        completion: @escaping (EnqueueMessage?, Bool?, Int32?) -> Void
+        completion: @escaping (EnqueueMessage?, Bool?, Int32?, Int32?) -> Void
     ) {
         self.context = context
         self.updatedPresentationData = updatedPresentationData
@@ -1833,7 +1833,7 @@ public class VideoMessageCameraScreen: ViewController {
     fileprivate var didSend = false
     fileprivate var lastActionTimestamp: Double?
     fileprivate var isSendingImmediately = false
-    public func sendVideoRecording(silentPosting: Bool? = nil, scheduleTime: Int32? = nil, messageEffect: ChatSendMessageEffect? = nil) {
+    public func sendVideoRecording(silentPosting: Bool? = nil, scheduleTime: Int32? = nil, repeatPeriod: Int32? = nil, messageEffect: ChatSendMessageEffect? = nil) {
         guard !self.didSend else {
             return
         }
@@ -1845,7 +1845,7 @@ public class VideoMessageCameraScreen: ViewController {
         }
         
         if case .none = self.cameraState.recording, self.node.results.isEmpty {
-            self.completion(nil, nil, nil)
+            self.completion(nil, nil, nil, nil)
             return
         }
         
@@ -1859,7 +1859,7 @@ public class VideoMessageCameraScreen: ViewController {
                 self.waitingForNextResult = true
                 self.node.stopRecording.invoke(Void())
             } else {
-                self.completion(nil, nil, nil)
+                self.completion(nil, nil, nil, nil)
                 return
             }
         }
@@ -1889,7 +1889,7 @@ public class VideoMessageCameraScreen: ViewController {
             }
             
             if duration < 1.0 {
-                self.completion(nil, nil, nil)
+                self.completion(nil, nil, nil, nil)
                 return
             }
             
@@ -1998,7 +1998,7 @@ public class VideoMessageCameraScreen: ViewController {
                     localGroupingKey: nil,
                     correlationId: nil,
                     bubbleUpEmojiOrStickersets: []
-                ), silentPosting, scheduleTime)
+                ), silentPosting, scheduleTime, repeatPeriod)
             })
         })
     }

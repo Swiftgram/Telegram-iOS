@@ -2189,6 +2189,30 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                                 c?.dismiss(completion: {
                                     controllerInteraction.openPeer(peer, .default, MessageReference(message), hasReaction ? .reaction : .default)
                                 })
+                            },
+                            deleteReaction: { [weak c] peer, _ in
+                                c?.dismiss(completion: {
+                                    guard let chatController = interfaceInteraction.chatController() as? ChatControllerImpl, chatController.chatLocation.peerId?.namespace == Namespaces.Peer.CloudChannel else {
+                                        return
+                                    }
+                                    let _ = (context.sharedContext.chatAvailableMessageActions(
+                                        engine: context.engine,
+                                        accountPeerId: context.account.peerId,
+                                        messageIds: Set([message.id]),
+                                        keepUpdated: false
+                                    )
+                                    |> deliverOnMainQueue).startStandalone(next: { actions in
+                                        guard !actions.options.isEmpty else {
+                                            return
+                                        }
+                                        chatController.presentBanMessageOptions(
+                                            accountPeerId: context.account.peerId,
+                                            author: peer._asPeer(),
+                                            messageIds: Set([message.id]),
+                                            options: actions.options
+                                        )
+                                    })
+                                })
                             }
                         )), tip: tip)))
                     } else {

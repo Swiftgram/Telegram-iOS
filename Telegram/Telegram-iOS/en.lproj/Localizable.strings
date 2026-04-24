@@ -16202,5 +16202,17 @@ Error: %8$@";
 
 "Settings.About.PrivacyHelpEmpty" = "A few words about you.";
 "Settings.About.PrivacyHelpEveryone" = "Everyone can see your bio. [Change >]()";
-"Settings.About.PrivacyHelpContacts" = "Only uour contacts can see your bio. [Change >]()";
+"Settings.About.PrivacyHelpContacts" = "Only your contacts can see your bio. [Change >]()";
 "Settings.About.PrivacyHelpNobody" = "Nobody can see your bio. [Change >]()";
+
+"Settings.Birthday.PrivacyHelpEveryone" = "Everyone can see your birthday. [Change >]()";
+"Settings.Birthday.PrivacyHelpContacts" = "Only your contacts can see your birthday. [Change >]()";
+"Settings.Birthday.PrivacyHelpNobody" = "Nobody can see your birthday. [Change >]()";
+
+"GroupPermission.NoSendReactions" = "no reactions";
+"Channel.BanUser.PermissionSendReactions" = "Send Reactions";
+
+"Chat.AdminAction.ToastReactionsDeletedTitleSingle" = "Reaction Deleted";
+"Chat.AdminAction.ToastReactionsDeletedTextSingle" = "Reaction Deleted.";
+"Chat.AdminAction.ToastReactionsDeletedTextMultiple" = "Messages Deleted.";
+"Chat.AdminAction.ToastMessagesAndReactionsDeletedText" = "Messages and reactions deleted.";

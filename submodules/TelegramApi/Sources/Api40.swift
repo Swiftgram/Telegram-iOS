@@ -5852,6 +5852,39 @@ public extension Api.functions.messages {
     }
 }
 public extension Api.functions.messages {
+    static func deleteParticipantReaction(peer: Api.InputPeer, msgId: Int32, participant: Api.InputPeer) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.Updates>) {
+        let buffer = Buffer()
+        buffer.appendInt32(-474482644)
+        peer.serialize(buffer, true)
+        serializeInt32(msgId, buffer: buffer, boxed: false)
+        participant.serialize(buffer, true)
+        return (FunctionDescription(name: "messages.deleteParticipantReaction", parameters: [("peer", ConstructorParameterDescription(peer)), ("msgId", ConstructorParameterDescription(msgId)), ("participant", ConstructorParameterDescription(participant))]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> Api.Updates? in
+            let reader = BufferReader(buffer)
+            var result: Api.Updates?
+            if let signature = reader.readInt32() {
+                result = Api.parse(reader, signature: signature) as? Api.Updates
+            }
+            return result
+        })
+    }
+}
+public extension Api.functions.messages {
+    static func deleteParticipantReactions(peer: Api.InputPeer, participant: Api.InputPeer) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.Bool>) {
+        let buffer = Buffer()
+        buffer.appendInt32(-1598550792)
+        peer.serialize(buffer, true)
+        participant.serialize(buffer, true)
+        return (FunctionDescription(name: "messages.deleteParticipantReactions", parameters: [("peer", ConstructorParameterDescription(peer)), ("participant", ConstructorParameterDescription(participant))]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> Api.Bool? in
+            let reader = BufferReader(buffer)
+            var result: Api.Bool?
+            if let signature = reader.readInt32() {
+                result = Api.parse(reader, signature: signature) as? Api.Bool
+            }
+            return result
+        })
+    }
+}
+public extension Api.functions.messages {
     static func deletePhoneCallHistory(flags: Int32) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.messages.AffectedFoundMessages>) {
         let buffer = Buffer()
         buffer.appendInt32(-104078327)

@@ -696,7 +696,7 @@ func openResolvedUrlImpl(
                     present(shareController, nil)
                     context.sharedContext.applicationBindings.dismissNativeController()
                 } else {
-                    let controller = context.sharedContext.makePeerSelectionController(PeerSelectionControllerParams(context: context, filter: [.onlyWriteable, .excludeDisabled], selectForumThreads: true))
+                    let controller = context.sharedContext.makePeerSelectionController(PeerSelectionControllerParams(context: context, filter: [.onlyWriteable, .excludeDisabled], hasFilters: true, selectForumThreads: true))
                     controller.peerSelected = { peer, threadId in
                         continueWithPeer(peer.id, threadId)
                     }

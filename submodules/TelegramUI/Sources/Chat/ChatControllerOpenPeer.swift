@@ -192,8 +192,8 @@ extension ChatControllerImpl {
                                 self.navigationActionDisposable.set((peerSignal |> take(1) |> deliverOnMainQueue).startStrict(next: { [weak self] peer in
                                     if let strongSelf = self, let peer = peer {
                                         var mode: PeerInfoControllerMode = .generic
-                                        if let _ = fromMessage, let chatPeerId = chatPeerId {
-                                            mode = .group(chatPeerId)
+                                        if let messageId = fromMessage?.id, chatPeerId != nil {
+                                            mode = .group(sourceMessageId: messageId)
                                         }
                                         if let fromReactionMessageId = fromReactionMessageId {
                                             mode = .reaction(fromReactionMessageId)

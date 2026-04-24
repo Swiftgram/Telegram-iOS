@@ -408,18 +408,6 @@ public final class ChatPeekTimeout {
     }
 }
 
-public final class ChatPeerNearbyData: Equatable {
-    public static func == (lhs: ChatPeerNearbyData, rhs: ChatPeerNearbyData) -> Bool {
-        return lhs.distance == rhs.distance
-    }
-    
-    public let distance: Int32
-    
-    public init(distance: Int32) {
-        self.distance = distance
-    }
-}
-
 public final class ChatGreetingData: Equatable {
     public static func == (lhs: ChatGreetingData, rhs: ChatGreetingData) -> Bool {
         return lhs.uuid == rhs.uuid
@@ -587,7 +575,6 @@ public final class NavigateToChatControllerParams {
     public let scrollToEndIfExists: Bool
     public let activateMessageSearch: (ChatSearchDomain, String)?
     public let peekData: ChatPeekTimeout?
-    public let peerNearbyData: ChatPeerNearbyData?
     public let reportReason: NavigateToChatControllerParams.ReportReason?
     public let animated: Bool
     public let forceAnimatedScroll: Bool
@@ -623,7 +610,6 @@ public final class NavigateToChatControllerParams {
         scrollToEndIfExists: Bool = false,
         activateMessageSearch: (ChatSearchDomain, String)? = nil,
         peekData: ChatPeekTimeout? = nil,
-        peerNearbyData: ChatPeerNearbyData? = nil,
         reportReason: NavigateToChatControllerParams.ReportReason? = nil,
         animated: Bool = true,
         forceAnimatedScroll: Bool = false,
@@ -658,7 +644,6 @@ public final class NavigateToChatControllerParams {
         self.scrollToEndIfExists = scrollToEndIfExists
         self.activateMessageSearch = activateMessageSearch
         self.peekData = peekData
-        self.peerNearbyData = peerNearbyData
         self.reportReason = reportReason
         self.animated = animated
         self.forceAnimatedScroll = forceAnimatedScroll
@@ -696,7 +681,6 @@ public final class NavigateToChatControllerParams {
             scrollToEndIfExists: self.scrollToEndIfExists,
             activateMessageSearch: self.activateMessageSearch,
             peekData: self.peekData,
-            peerNearbyData: self.peerNearbyData,
             reportReason: self.reportReason,
             animated: self.animated,
             forceAnimatedScroll: self.forceAnimatedScroll,
@@ -753,7 +737,7 @@ public enum PeerInfoControllerMode {
     case generic
     case calls(messages: [Message])
     case nearbyPeer(distance: Int32)
-    case group(PeerId)
+    case group(sourceMessageId: MessageId)
     case reaction(MessageId)
     case forumTopic(thread: ChatReplyThreadMessage)
     case recommendedChannels

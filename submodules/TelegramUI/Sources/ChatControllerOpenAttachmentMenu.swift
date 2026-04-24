@@ -528,7 +528,9 @@ extension ChatControllerImpl {
                     let contactsController = ContactSelectionControllerImpl(ContactSelectionControllerParams(context: strongSelf.context, style: .glass, updatedPresentationData: strongSelf.updatedPresentationData, title: { $0.Contacts_Title }, displayDeviceContacts: true, multipleSelection: .always, requirePhoneNumbers: true))
                     contactsController.presentScheduleTimePicker = { [weak self] completion in
                         if let strongSelf = self {
-                            strongSelf.presentScheduleTimePicker(completion: completion)
+                            strongSelf.presentScheduleTimePicker(completion: { result in
+                                completion(result.time, result.repeatPeriod, result.silentPosting)
+                            })
                         }
                     }
                     contactsController.navigationPresentation = .modal
@@ -1057,10 +1059,10 @@ extension ChatControllerImpl {
                             }
                         }, presentSchedulePicker: { [weak self] _, done in
                             if let strongSelf = self {
-                                strongSelf.presentScheduleTimePicker(style: .media, completion: { [weak self] time, repeatPeriod in
+                                strongSelf.presentScheduleTimePicker(style: .media, completion: { [weak self] result in
                                     if let strongSelf = self {
-                                        done(time)
-                                        if strongSelf.presentationInterfaceState.subject != .scheduledMessages && time != scheduleWhenOnlineTimestamp {
+                                        done(result.time, result.silentPosting)
+                                        if strongSelf.presentationInterfaceState.subject != .scheduledMessages && result.time != scheduleWhenOnlineTimestamp {
                                             strongSelf.openScheduledMessages()
                                         }
                                     }
@@ -1114,10 +1116,10 @@ extension ChatControllerImpl {
                     })], actionLayout: .vertical), in: .window(.root))
                 }, presentSchedulePicker: { [weak self] _, done in
                     if let strongSelf = self {
-                        strongSelf.presentScheduleTimePicker(style: .media, completion: { [weak self] time, repeatPeriod in
+                        strongSelf.presentScheduleTimePicker(style: .media, completion: { [weak self] result in
                             if let strongSelf = self {
-                                done(time)
-                                if strongSelf.presentationInterfaceState.subject != .scheduledMessages && time != scheduleWhenOnlineTimestamp {
+                                done(result.time, result.silentPosting)
+                                if strongSelf.presentationInterfaceState.subject != .scheduledMessages && result.time != scheduleWhenOnlineTimestamp {
                                     strongSelf.openScheduledMessages()
                                 }
                              }
@@ -1255,7 +1257,7 @@ extension ChatControllerImpl {
                                     let fileId = Int64.random(in: Int64.min ... Int64.max)
                                     let mimeType = guessMimeTypeByFileExtension((item.fileName as NSString).pathExtension)
                                     var previewRepresentations: [TelegramMediaImageRepresentation] = []
-                                    if mimeType.hasPrefix("image/") || mimeType == "application/pdf" {
+                                    if mimeType.hasPrefix("image/") || mimeType == "application/pdf" || item.audioMetadata?.hasAudioArtwork == true {
                                         previewRepresentations.append(TelegramMediaImageRepresentation(dimensions: PixelDimensions(width: 320, height: 320), resource: ICloudFileResource(urlData: item.urlData, thumbnail: true), progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false))
                                     }
                                     var attributes: [TelegramMediaFileAttribute] = []
@@ -1367,10 +1369,10 @@ extension ChatControllerImpl {
         }
         controller.presentSchedulePicker = { [weak self] media, done in
             if let strongSelf = self {
-                strongSelf.presentScheduleTimePicker(style: media ? .media : .default, completion: { [weak self] time, repeatPeriod in
+                strongSelf.presentScheduleTimePicker(style: media ? .media : .default, completion: { [weak self] result in
                     if let strongSelf = self {
-                        done(time)
-                        if strongSelf.presentationInterfaceState.subject != .scheduledMessages && time != scheduleWhenOnlineTimestamp {
+                        done(result.time, result.silentPosting)
+                        if strongSelf.presentationInterfaceState.subject != .scheduledMessages && result.time != scheduleWhenOnlineTimestamp {
                             strongSelf.openScheduledMessages()
                         }
                     }
@@ -1495,20 +1497,20 @@ extension ChatControllerImpl {
 
                     configureLegacyAssetPicker(controller, context: strongSelf.context, peer: peer, chatLocation: strongSelf.chatLocation, initialCaption: inputText, hasSchedule: strongSelf.presentationInterfaceState.subject != .scheduledMessages && peer.id.namespace != Namespaces.Peer.SecretChat, presentWebSearch: editingMedia ? nil : { [weak self, weak legacyController] in
                         if let strongSelf = self {
-                            let controller = WebSearchController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, peer: EnginePeer(peer), chatLocation: strongSelf.chatLocation, configuration: searchBotsConfiguration, mode: .media(attachment: false, completion: { results, selectionState, editingState, silentPosting in
+                            let controller = WebSearchController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, peer: EnginePeer(peer), chatLocation: strongSelf.chatLocation, configuration: searchBotsConfiguration, mode: .media(attachment: false, completion: { results, selectionState, editingState, silentPosting, scheduleTime in
                                 if let legacyController = legacyController {
                                     legacyController.dismiss()
                                 }
                                 legacyEnqueueWebSearchMessages(selectionState, editingState, enqueueChatContextResult: { result in
                                     if let strongSelf = self {
-                                        strongSelf.enqueueChatContextResult(results, result, hideVia: true)
+                                        strongSelf.enqueueChatContextResult(results, result, hideVia: true, silentPosting: silentPosting, scheduleTime: scheduleTime)
                                     }
                                 }, enqueueMediaMessages: { signals in
                                     if let strongSelf = self {
                                         if editingMedia {
                                             strongSelf.editMessageMediaWithLegacySignals(signals)
                                         } else {
-                                            strongSelf.enqueueMediaMessages(signals: signals, silentPosting: silentPosting)
+                                            strongSelf.enqueueMediaMessages(signals: signals, silentPosting: silentPosting, scheduleTime: scheduleTime)
                                         }
                                     }
                                 })
@@ -1533,10 +1535,10 @@ extension ChatControllerImpl {
                         strongSelf.present(textAlertController(context: strongSelf.context, title: nil, text: text, actions: [TextAlertAction(type: .defaultAction, title: strongSelf.presentationData.strings.Common_OK, action: {})]), in: .window(.root))
                     }, presentSchedulePicker: { [weak self] media, done in
                         if let strongSelf = self {
-                            strongSelf.presentScheduleTimePicker(style: media ? .media : .default, completion: { [weak self] time, repeatPeriod in
+                            strongSelf.presentScheduleTimePicker(style: media ? .media : .default, completion: { [weak self] result in
                                 if let strongSelf = self {
-                                     done(time)
-                                     if strongSelf.presentationInterfaceState.subject != .scheduledMessages && time != scheduleWhenOnlineTimestamp {
+                                     done(result.time, result.silentPosting)
+                                     if strongSelf.presentationInterfaceState.subject != .scheduledMessages && result.time != scheduleWhenOnlineTimestamp {
                                          strongSelf.openScheduledMessages()
                                      }
                                  }
@@ -1578,18 +1580,18 @@ extension ChatControllerImpl {
         let _ = (self.context.engine.data.get(TelegramEngine.EngineData.Item.Configuration.SearchBots())
         |> deliverOnMainQueue).startStandalone(next: { [weak self] configuration in
             if let strongSelf = self {
-                let controller = WebSearchController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, peer: EnginePeer(peer), chatLocation: strongSelf.chatLocation, configuration: configuration, mode: .media(attachment: attachment, completion: { [weak self] results, selectionState, editingState, silentPosting in
+                let controller = WebSearchController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, peer: EnginePeer(peer), chatLocation: strongSelf.chatLocation, configuration: configuration, mode: .media(attachment: attachment, completion: { [weak self] results, selectionState, editingState, silentPosting, scheduleTime in
                     self?.attachmentController?.dismiss(animated: true, completion: nil)
                     legacyEnqueueWebSearchMessages(selectionState, editingState, enqueueChatContextResult: { [weak self] result in
                         if let strongSelf = self {
-                            strongSelf.enqueueChatContextResult(results, result, hideVia: true)
+                            strongSelf.enqueueChatContextResult(results, result, hideVia: true, silentPosting: silentPosting, scheduleTime: scheduleTime)
                         }
                     }, enqueueMediaMessages: { [weak self] signals in
                         if let strongSelf = self, !signals.isEmpty {
                             if editingMessage {
                                 strongSelf.editMessageMediaWithLegacySignals(signals)
                             } else {
-                                strongSelf.enqueueMediaMessages(signals: signals, silentPosting: silentPosting)
+                                strongSelf.enqueueMediaMessages(signals: signals, silentPosting: silentPosting, scheduleTime: scheduleTime)
                             }
                         }
                     })
@@ -1967,10 +1969,10 @@ extension ChatControllerImpl {
                 }
             }, presentSchedulePicker: { [weak self] _, done in
                 if let strongSelf = self {
-                    strongSelf.presentScheduleTimePicker(style: .media, completion: { [weak self] time, repeatPeriod in
+                    strongSelf.presentScheduleTimePicker(style: .media, completion: { [weak self] result in
                         if let strongSelf = self {
-                            done(time)
-                            if strongSelf.presentationInterfaceState.subject != .scheduledMessages && time != scheduleWhenOnlineTimestamp {
+                            done(result.time, result.silentPosting)
+                            if strongSelf.presentationInterfaceState.subject != .scheduledMessages && result.time != scheduleWhenOnlineTimestamp {
                                 strongSelf.openScheduledMessages()
                             }
                         }

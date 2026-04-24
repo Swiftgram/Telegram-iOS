@@ -9,7 +9,7 @@
 
 @class TGModernGalleryController;
 
-typedef void (^ _Nonnull TGPhotoVideoEditorSchedulePickerCompletion)(int32_t time);
+typedef void (^ _Nonnull TGPhotoVideoEditorSchedulePickerCompletion)(int32_t time, bool silentPosting);
 typedef void (^ _Nonnull TGPhotoVideoEditorSchedulePicker)(bool media, TGPhotoVideoEditorSchedulePickerCompletion _Nonnull done);
 typedef void (^ _Nonnull TGPhotoVideoEditorCompletion)(id<TGMediaEditableItem> _Nonnull item, TGMediaEditingContext * _Nonnull editingContext, bool silentPosting, int32_t scheduleTime);
 

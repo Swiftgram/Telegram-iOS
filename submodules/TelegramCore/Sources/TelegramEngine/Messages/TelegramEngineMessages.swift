@@ -169,6 +169,14 @@ public extension TelegramEngine {
             }
             |> ignoreValues
         }
+        
+        public func deleteAllReactionsWithAuthor(peerId: EnginePeer.Id, authorId: EnginePeer.Id) -> Signal<Never, NoError> {
+            return _internal_deleteAllReactionsWithAuthor(account: self.account, peerId: peerId, authorId: authorId)
+        }
+        
+        public func deleteReaction(peerId: EnginePeer.Id, messageId: EngineMessage.Id, authorId: EnginePeer.Id) -> Signal<Never, NoError> {
+            return _internal_deleteReaction(account: self.account, messageId: messageId, authorId: authorId)
+        }
 
         public func clearCallHistory(forEveryone: Bool) -> Signal<Never, ClearCallHistoryError> {
             return _internal_clearCallHistory(account: self.account, forEveryone: forEveryone)

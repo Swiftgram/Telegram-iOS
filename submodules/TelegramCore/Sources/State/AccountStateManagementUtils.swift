@@ -5889,6 +5889,7 @@ func replayFinalState(
     
     var addedSecretMessageIds: [MessageId] = []
     var addedSecretMessageAuthorIds: [PeerId: PeerId] = [:]
+    let keepArchivedUnmuted = fetchGlobalPrivacySettings(transaction: transaction).keepArchivedUnmuted
     
     for peerId in peerIdsWithAddedSecretMessages {
         inner: while true {
@@ -5897,7 +5898,7 @@ func replayFinalState(
                 let processResult = processSecretChatIncomingDecryptedOperations(encryptionProvider: encryptionProvider, mediaBox: mediaBox, transaction: transaction, peerId: peerId)
                 if !processResult.addedMessages.isEmpty {
                     let currentInclusion = transaction.getPeerChatListInclusion(peerId)
-                    if let groupId = currentInclusion.groupId, groupId == Namespaces.PeerGroup.archive {
+                    if let groupId = currentInclusion.groupId, groupId == Namespaces.PeerGroup.archive, !keepArchivedUnmuted {
                         if let peer = transaction.getPeer(peerId) as? TelegramSecretChat {
                             let isRemovedFromTotalUnreadCount = resolvedIsRemovedFromTotalUnreadCount(globalSettings: transaction.getGlobalNotificationSettings(), peer: peer, peerSettings: transaction.getPeerNotificationSettings(id: peer.regularPeerId))
                             

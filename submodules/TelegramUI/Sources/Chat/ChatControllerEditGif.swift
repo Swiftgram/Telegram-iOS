@@ -35,12 +35,12 @@ extension ChatControllerImpl {
                 guard let self else {
                     return
                 }
-                self.presentScheduleTimePicker(style: .media, completion: { [weak self] time, _ in
+                self.presentScheduleTimePicker(style: .media, completion: { [weak self] result in
                     guard let self else {
                         return
                     }
-                    done(time)
-                    if self.presentationInterfaceState.subject != .scheduledMessages && time != scheduleWhenOnlineTimestamp {
+                    done(result.time, result.silentPosting)
+                    if self.presentationInterfaceState.subject != .scheduledMessages && result.time != scheduleWhenOnlineTimestamp {
                         self.openScheduledMessages()
                     }
                 })

@@ -256,11 +256,14 @@ func openChatMessageImpl(_ params: OpenChatMessageParams) -> Bool {
                                 }
                             }
                             
+                            let fileReference: FileMediaReference = .message(message: MessageReference(params.message), media: file)
                             let subject: BrowserScreen.Subject
-                            if file.mimeType == "application/pdf" {
-                                subject = .pdfDocument(file: .message(message: MessageReference(params.message), media: file), canShare: canShare)
+                            if file.mimeType.contains("markdown") {
+                                subject = .markdownDocument(file: fileReference, canShare: canShare)
+                            } else if file.mimeType.contains("pdf") {
+                                subject = .pdfDocument(file: fileReference, canShare: canShare)
                             } else {
-                                subject = .document(file: .message(message: MessageReference(params.message), media: file), canShare: canShare)
+                                subject = .document(file: fileReference, canShare: canShare)
                             }
                             let controller = BrowserScreen(context: params.context, subject: subject)
                             controller.openDocument = { [weak controller] file, canShare in

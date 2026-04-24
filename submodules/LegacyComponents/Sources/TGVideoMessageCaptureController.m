@@ -844,13 +844,13 @@ typedef enum
         }
         
         if (strongSelf.presentScheduleController) {
-            strongSelf.presentScheduleController(^(int32_t time) {
+            strongSelf.presentScheduleController(^(int32_t time, bool silentPosting) {
                 __strong TGVideoMessageCaptureController *strongSelf = weakSelf;
                 if (strongSelf == nil) {
                     return;
                 }
                 
-                [strongSelf finishWithURL:strongSelf->_url dimensions:CGSizeMake(240.0f, 240.0f) duration:strongSelf->_duration liveUploadData:strongSelf->_liveUploadData thumbnailImage:strongSelf->_thumbnailImage isSilent:false scheduleTimestamp:time];
+                [strongSelf finishWithURL:strongSelf->_url dimensions:CGSizeMake(240.0f, 240.0f) duration:strongSelf->_duration liveUploadData:strongSelf->_liveUploadData thumbnailImage:strongSelf->_thumbnailImage isSilent:silentPosting scheduleTimestamp:time];
                 
                 _automaticDismiss = true;
                 [strongSelf dismiss:false];
