@@ -622,7 +622,7 @@ public func chatListFilterPresetListController(context: AccountContext, mode: Ch
         case .default:
             leftNavigationButton = nil
         case .modal:
-            leftNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Close), style: .regular, enabled: true, action: {
+            leftNavigationButton = ItemListNavigationButton(content: .text("___close"), style: .regular, enabled: true, action: {
                 dismissImpl?()
             })
         }

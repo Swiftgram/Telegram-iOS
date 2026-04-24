@@ -28,7 +28,7 @@ func updateChatPresentationInterfaceStateImpl(
     completion externalCompletion: @escaping (ContainedViewLayoutTransition) -> Void
 ) {
     var transition = transition
-    if !selfController.didAppear {
+    if !selfController.enableAnimations {
         transition = .immediate
     }
     

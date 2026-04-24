@@ -458,6 +458,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     
     var willAppear = false
     var didAppear = false
+    var enableAnimations = false
     var scheduledActivateInput: ChatControllerActivateInput?
     
     var raiseToListen: RaiseToListenManager?
@@ -7246,6 +7247,13 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             if case .replyThread = self.chatLocation {
                 self.chatDisplayNode.historyNode.refocusOnUnreadMessagesIfNeeded()
             }
+        }
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self else {
+                return
+            }
+            self.enableAnimations = true
         }
         
         if case let .replyThread(message) = self.chatLocation, message.isForumPost {

@@ -1682,6 +1682,7 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
         } else if let headerPanelsView = self.headerPanelsView {
             self.headerPanelsView = nil
             if let headerPanelsComponentView = headerPanelsView.view {
+                transition.updateTransformScale(layer: headerPanelsComponentView.layer, scale: 0.001)
                 transition.updateAlpha(layer: headerPanelsComponentView.layer, alpha: 0.0, completion: { [weak headerPanelsComponentView] _ in
                     headerPanelsComponentView?.removeFromSuperview()
                 })
@@ -2493,6 +2494,8 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
         listInsets.left += floatingTopicsPanelInsets.left
         listInsets.bottom += floatingTopicsPanelInsets.top
         
+        childContentInsets.top = listInsets.bottom
+        
         var emptyNodeInsets = insets
         emptyNodeInsets.bottom += inputPanelsHeight
         self.validEmptyNodeLayout = (contentBounds.size, emptyNodeInsets, listInsets.left, listInsets.right)
@@ -2680,6 +2683,7 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
             var headerPanelsTransition = ComponentTransition(transition)
             if headerPanelsComponentView.superview == nil {
                 headerPanelsTransition.animateAlpha(view: headerPanelsComponentView, from: 0.0, to: 1.0)
+                headerPanelsTransition.animateScale(view: headerPanelsComponentView, from: 0.001, to: 1.0)
                 headerPanelsTransition = headerPanelsTransition.withAnimation(.none)
                 self.floatingTopicsPanelContainer.view.addSubview(headerPanelsComponentView)
             }
