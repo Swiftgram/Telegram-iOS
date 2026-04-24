@@ -1179,6 +1179,43 @@ Net ~+5 wraps overall (7 drops, 12 adds) — less important than the headline: t
 
 ---
 
+## Wave 44 outcome (2026-04-24)
+
+Migrated `RenderedChannelParticipant.peers: [PeerId: Peer]` to `[EnginePeer.Id: EnginePeer]`. Closes the wave-41 ratchet — the public RCP struct no longer leaks raw `Peer` types in any field (the surviving `presences: [PeerId: PeerPresence]` is out of scope; PeerPresence is a Postbox protocol requiring a separate migration). No new typealiases. No engine wrapper structs.
+
+**Classification:**
+- 1 declaration: `ChannelParticipants.swift:11/14` field + init default
+- 8 TelegramCore producer migrations (`ChannelMembers`, `RequestStartBot`, `ChannelOwnershipTransfer`, `JoinChannel`, `AddPeerMember`, `PeerAdmins`, `ChannelBlacklist`, `Ranks`) — each builds a local `var peers: [EnginePeer.Id: EnginePeer] = [:]` inside a `postbox.transaction` and wraps insertions with `EnginePeer(...)`. All producers pre-existed with the same structural pattern: 14 raw insertions became 14 wrapped insertions.
+- 6 consumer DROPs of `EnginePeer(peer).displayTitle(...)` → `peer.displayTitle(...)` in `ChannelAdminsController`, `ChannelMembersSearchContainerNode` (×4), `ChannelBlacklistController`
+- 5 consumer DROPs of `.mapValues({ $0._asPeer() })` transforms at RCP constructor call sites in `ChannelAdminsController`, `ChannelMembersSearchContainerNode` (×2), `ChannelMembersSearchControllerNode` (×2)
+- 2 consumer ADDs of `._asPeer()` at `ChatRecentActionsHistoryTransition.swift` iteration sites — line 673 (`participant.peers`) and line 2273 (`new.peers` inside `participantSubscriptionExtended`), where the iterated `EnginePeer` is inserted into an outer `SimpleDictionary<PeerId, Peer>`.
+
+Net consumer-surface: **−10 bridges**. TelegramCore-internal: +~12 wraps inside files that already `import Postbox`. No new `import Postbox` in any consumer module; no Postbox-hygiene regression.
+
+**Build outcome:** 2 iterations.
+1. First build surfaced one error: `cannot assign value of type 'EnginePeer' to subscript of type '(any Peer)?'` at `ChatRecentActionsHistoryTransition.swift:2273` — a second RCP.peers iteration site the plan's `participant\.peers` pre-flight grep missed because the local RCP binding was named `new` (from `case let .participantSubscriptionExtended(prev, new)`). Wider grep `\b(participant|new|prev|rcp|renderedParticipant)\.peers\b` confirmed only one additional site. Fix: identical `._asPeer()` unwrap as line 673.
+2. Second build: clean.
+
+**Commit:** `ca69fa8cbb` (14 files, 38 insertions / 38 deletions).
+
+**Lessons:**
+
+- **Property-access field migrations need a name-agnostic grep surface, not a binding-name-prefixed one.** Wave 41's lesson said "repo-wide grep surface, not a stratified one." Wave 44 extends it: the binding name of the RCP varies by enum-case-destructure site. In `ChatRecentActionsHistoryTransition` specifically, one switch arm destructures the RCP enum case as `case let .participantSubscriptionExtended(prev, new):` — the local is `new`, not `participant`. Pre-flight grep token set for RCP.peers iteration sites should be `\b(participant|new|prev|rcp|renderedParticipant|channelParticipant)\.peers\b`. For the general case: **for any `T.<field>` migration on a type passed opaquely through enum-case-destructures, enumerate the common destructure binding names (`prev`, `new`, `current`, `lhs`, `rhs`, etc.) in the plan's pre-flight grep.**
+
+- **Iteration-site-plus-insertion-into-foreign-container pattern is a canonical ADD-UNWRAP shape.** When a foundational type's dict field is migrated to engine types but a caller iterates the dict and inserts values into an outer container still typed with raw Postbox values (here `SimpleDictionary<PeerId, Peer>`), an `._asPeer()` unwrap is required at the insertion line. This pattern repeated twice in `ChatRecentActionsHistoryTransition` — both iteration sites have the same enclosing structure (build a raw-Peer `SimpleDictionary` → iterate RCP.peers → insert). **Future migrations on dict-like fields: grep for `for (_, X) in <F>.peers { <container>[X.id] = X }` patterns and anticipate the unwrap.**
+
+- **Producer-side migration is low-risk for field-type-parameter changes on local transaction-built dicts.** All 8 TelegramCore producers had the identical structural pattern (`var peers: [PeerId: Peer] = [:]` → insertions → pass to RCP constructor). Mechanical `EnginePeer(...)` wrap at each insertion with no side effects. No chain-migration concerns because every producer builds locally. **Shape heuristic: if producers build their contribution dict locally via `transaction.getPeer` calls, field-type migration is mechanical and fits a bundled-dispatch wave well.**
+
+- **Declaration-level `[PeerId: Peer] = [:]` init default shifts transparently.** The init-default literal `[:]` works as either `[PeerId: Peer]` or `[EnginePeer.Id: EnginePeer]`; 12 RCP construction sites with no `peers:` arg required zero changes. **Shape heuristic: default-valued Postbox-typed parameters are free on migration when the default literal is the empty collection form.**
+
+- **Consumer `.mapValues({ $0._asPeer() })` transforms on engine-typed source dicts become no-op drops on the target field migration.** Wave 44 dropped 5 such transforms cleanly because each source dict was already `[EnginePeer.Id: EnginePeer]` (verified at plan time by reading 20-line spans around each site). **Shape heuristic: when a consumer-side constructor call site uses `peers: X.mapValues({ $0._asPeer() })`, it signals the source is already engine-typed and the target field-type migration would drop the unwrap transform entirely.**
+
+- **Wave-41 lesson reconfirmed: foundational-type field migrations budget 2–3 iterations, not first-pass-clean.** Wave 44 hit 2 iterations because of the enum-destructure-binding-name grep miss; a more exhaustive pre-flight grep would have caught it as a first-pass-clean.
+
+**Plan:** `docs/superpowers/plans/2026-04-24-rcp-peers-engine-migration.md`.
+
+---
+
 ## Modules currently free of `import Postbox` (running tally)
 
 Consumer modules that no longer import Postbox, across all waves and standalone commits:
