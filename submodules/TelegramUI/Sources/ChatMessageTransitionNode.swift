@@ -488,7 +488,6 @@ public final class ChatMessageTransitionNodeImpl: ASDisplayNode, ChatMessageTran
 
                 let targetAbsoluteRect = self.contextSourceNode.view.convert(self.contextSourceNode.contentRect, to: self.view)
 
-                //let sourceRect = self.view.convert(initialTextInput.sourceRect, from: nil)
                 let sourceRect = convertAnimatingSourceRectFromWindow(initialTextInput.sourceRect, toView: self.view)
                 let sourceBackgroundAbsoluteRect = initialTextInput.backgroundView.frame.offsetBy(dx: sourceRect.minX, dy: sourceRect.minY)
                 let sourceAbsoluteRect = CGRect(origin: CGPoint(x: sourceBackgroundAbsoluteRect.minX, y: sourceBackgroundAbsoluteRect.maxY - self.contextSourceNode.contentRect.height), size: self.contextSourceNode.contentRect.size)
@@ -503,7 +502,7 @@ public final class ChatMessageTransitionNodeImpl: ASDisplayNode, ChatMessageTran
                     var replySourceAbsoluteFrame: CGRect
                     
                     if let storedFrameBeforeDismissed = replyPanel.storedFrameBeforeDismissed {
-                        replySourceAbsoluteFrame = self.view.convert(storedFrameBeforeDismissed, from: nil)
+                        replySourceAbsoluteFrame = convertAnimatingSourceRectFromWindow(storedFrameBeforeDismissed, toView: self.view)
                     } else {
                         replySourceAbsoluteFrame = replyPanelParentView.convert(replyPanelFrame, to: self.view)
                     }
