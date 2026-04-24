@@ -62,7 +62,7 @@ func _internal_requestStartBotInGroup(account: Account, botPeerId: PeerId, group
                                 let presences: [PeerId: PeerPresence] = [:]
                                 
                                 peers[peer.id] = peer
-                                return .channelParticipant(RenderedChannelParticipant(participant: participant, peer: peer, peers: peers, presences: presences))
+                                return .channelParticipant(RenderedChannelParticipant(participant: participant, peer: EnginePeer(peer), peers: peers, presences: presences))
                             } else {
                                 return .none
                             }

@@ -50,7 +50,7 @@ extension PeerInfoScreenNode {
             })))
         }
         
-        if actions.contains(.promote) && enclosingPeer is TelegramChannel {
+        if actions.contains(.promote), case .channel = enclosingPeer {
             var actionTitle: String = self.presentationData.strings.GroupInfo_ActionPromote
             if case .admin = member.role {
                 actionTitle = self.presentationData.strings.GroupInfo_ActionEditAdmin
@@ -66,7 +66,7 @@ extension PeerInfoScreenNode {
         }
         
         if actions.contains(.restrict) {
-            if enclosingPeer is TelegramChannel {
+            if case .channel = enclosingPeer {
                 items.append(.action(ContextMenuActionItem(text: self.presentationData.strings.GroupInfo_ActionRestrict, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Restrict"), color: theme.contextMenu.primaryColor) }, action: { [weak self] c, _ in
                     c?.dismiss {
                         guard let self else {

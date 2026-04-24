@@ -112,7 +112,7 @@ func _internal_channelMembers(postbox: Postbox, network: Network, accountPeerId:
                                     if let presence = transaction.getPeerPresence(peerId: participant.peerId) {
                                         renderedPresences[participant.peerId] = presence
                                     }
-                                    items.append(RenderedChannelParticipant(participant: participant, peer: peer, peers: peers, presences: renderedPresences))
+                                    items.append(RenderedChannelParticipant(participant: participant, peer: EnginePeer(peer), peers: peers, presences: renderedPresences))
                                 }
                             }
                         case .channelParticipantsNotModified:

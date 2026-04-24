@@ -383,7 +383,7 @@ final class PeerInfoPersonalChannelData: Equatable {
 }
 
 final class PeerInfoScreenData {
-    let peer: Peer?
+    let peer: EnginePeer?
     let chatPeer: Peer?
     let savedMessagesPeer: Peer?
     let cachedData: CachedPeerData?
@@ -439,7 +439,7 @@ final class PeerInfoScreenData {
     }
     
     init(
-        peer: Peer?,
+        peer: EnginePeer?,
         chatPeer: Peer?,
         savedMessagesPeer: Peer?,
         cachedData: CachedPeerData?,
@@ -1024,7 +1024,7 @@ func peerInfoScreenSettingsData(context: AccountContext, peerId: EnginePeer.Id, 
         )
         
         return PeerInfoScreenData(
-            peer: peer,
+            peer: peer.flatMap(EnginePeer.init),
             chatPeer: peer,
             savedMessagesPeer: nil,
             cachedData: peerView.cachedData,
@@ -1617,7 +1617,7 @@ func peerInfoScreenData(
                 }
                 
                 return PeerInfoScreenData(
-                    peer: peer,
+                    peer: peer.flatMap(EnginePeer.init),
                     chatPeer: peerView.peers[peerId],
                     savedMessagesPeer: savedMessagesPeer?._asPeer(),
                     cachedData: peerView.cachedData,
@@ -1864,7 +1864,7 @@ func peerInfoScreenData(
                 }
                                                                 
                 return PeerInfoScreenData(
-                    peer: peerView.peers[peerId],
+                    peer: peerView.peers[peerId].flatMap(EnginePeer.init),
                     chatPeer: peerView.peers[peerId],
                     savedMessagesPeer: nil,
                     cachedData: peerView.cachedData,
@@ -2202,7 +2202,7 @@ func peerInfoScreenData(
                 let appConfiguration: AppConfiguration = preferencesView?.get(AppConfiguration.self) ?? .defaultValue
               
                 return .single(PeerInfoScreenData(
-                    peer: peerView.peers[groupId],
+                    peer: peerView.peers[groupId].flatMap(EnginePeer.init),
                     chatPeer: peerView.peers[groupId],
                     savedMessagesPeer: nil,
                     cachedData: peerView.cachedData,
@@ -2256,19 +2256,19 @@ func peerInfoIsCopyProtected(data: PeerInfoScreenData) -> Bool {
     var isCopyProtected = false
     if let cachedUserData = data.cachedData as? CachedUserData, cachedUserData.flags.contains(.copyProtectionEnabled) || cachedUserData.flags.contains(.myCopyProtectionEnabled) {
         isCopyProtected = true
-    } else if let peer = data.peer, peer.isCopyProtectionEnabled {
+    } else if let peer = data.peer, peer._asPeer().isCopyProtectionEnabled {
         isCopyProtected = true
     }
     return isCopyProtected
 }
 
-func canEditPeerInfo(context: AccountContext, peer: Peer?, chatLocation: ChatLocation, threadData: MessageHistoryThreadData?) -> Bool {
+func canEditPeerInfo(context: AccountContext, peer: EnginePeer?, chatLocation: ChatLocation, threadData: MessageHistoryThreadData?) -> Bool {
     if context.account.peerId == peer?.id {
         return true
     }
-    if let user = peer as? TelegramUser, let botInfo = user.botInfo {
+    if case let .user(user) = peer, let botInfo = user.botInfo {
         return botInfo.flags.contains(.canEdit)
-    } else if let channel = peer as? TelegramChannel {
+    } else if case let .channel(channel) = peer {
         if let threadData = threadData {
             if chatLocation.threadId == 1 {
                 return false
@@ -2284,7 +2284,7 @@ func canEditPeerInfo(context: AccountContext, peer: Peer?, chatLocation: ChatLoc
                 return true
             }
         }
-    } else if let group = peer as? TelegramGroup {
+    } else if case let .legacyGroup(group) = peer {
         switch group.role {
         case .admin, .creator:
             return true
@@ -2311,23 +2311,23 @@ struct PeerInfoMemberActions: OptionSet {
     static let editRank = PeerInfoMemberActions(rawValue: 1 << 3)
 }
 
-func availableActionsForMemberOfPeer(accountPeerId: PeerId, peer: Peer?, member: PeerInfoMember) -> PeerInfoMemberActions {
+func availableActionsForMemberOfPeer(accountPeerId: PeerId, peer: EnginePeer?, member: PeerInfoMember) -> PeerInfoMemberActions {
     var result: PeerInfoMemberActions = []
-    
+
     if peer == nil {
         result.insert(.logout)
     } else if member.id == accountPeerId {
-        if let channel = peer as? TelegramChannel {
+        if case let .channel(channel) = peer {
             if channel.hasPermission(.editRank) {
                 result.insert(.editRank)
             }
-        } else if let group = peer as? TelegramGroup {
+        } else if case let .legacyGroup(group) = peer {
             if !group.hasBannedPermission(.banEditRank) {
                 result.insert(.editRank)
             }
         }
     } else {
-        if let channel = peer as? TelegramChannel {
+        if case let .channel(channel) = peer {
             if channel.flags.contains(.isCreator) {
                 if !channel.flags.contains(.isGigagroup) {
                     result.insert(.restrict)
@@ -2371,7 +2371,7 @@ func availableActionsForMemberOfPeer(accountPeerId: PeerId, peer: Peer?, member:
                     break
                 }
             }
-        } else if let group = peer as? TelegramGroup {
+        } else if case let .legacyGroup(group) = peer {
             switch group.role {
             case .creator:
                 result.insert(.restrict)
@@ -2431,9 +2431,9 @@ func peerInfoHeaderButtonIsHiddenWhileExpanded(buttonKey: PeerInfoHeaderButtonKe
     return hiddenWhileExpanded
 }
 
-func peerInfoHeaderActionButtons(peer: Peer?, isSecretChat: Bool, isContact: Bool) -> [PeerInfoHeaderButtonKey] {
+func peerInfoHeaderActionButtons(peer: EnginePeer?, isSecretChat: Bool, isContact: Bool) -> [PeerInfoHeaderButtonKey] {
     var result: [PeerInfoHeaderButtonKey] = []
-    if !isContact && !isSecretChat, let user = peer as? TelegramUser, user.botInfo == nil {
+    if !isContact && !isSecretChat, case let .user(user) = peer, user.botInfo == nil {
         result = [.message, .addContact]
     }
     
@@ -2444,9 +2444,9 @@ func peerInfoHeaderActionButtons(peer: Peer?, isSecretChat: Bool, isContact: Boo
     return result
 }
 
-func peerInfoHeaderButtons(peer: Peer?, cachedData: CachedPeerData?, isOpenedFromChat: Bool, isExpanded: Bool, videoCallsEnabled: Bool, isSecretChat: Bool, isContact: Bool, threadInfo: EngineMessageHistoryThread.Info?) -> [PeerInfoHeaderButtonKey] {
+func peerInfoHeaderButtons(peer: EnginePeer?, cachedData: CachedPeerData?, isOpenedFromChat: Bool, isExpanded: Bool, videoCallsEnabled: Bool, isSecretChat: Bool, isContact: Bool, threadInfo: EngineMessageHistoryThread.Info?) -> [PeerInfoHeaderButtonKey] {
     var result: [PeerInfoHeaderButtonKey] = []
-    if let user = peer as? TelegramUser {
+    if case let .user(user) = peer {
         if !isOpenedFromChat {
             result.append(.message)
         }
@@ -2480,7 +2480,7 @@ func peerInfoHeaderButtons(peer: Peer?, cachedData: CachedPeerData?, isOpenedFro
         } else {
             result.append(.more)
         }
-    } else if let channel = peer as? TelegramChannel {
+    } else if case let .channel(channel) = peer {
         if let _ = threadInfo {
             result.append(.mute)
             result.append(.search)
@@ -2555,7 +2555,7 @@ func peerInfoHeaderButtons(peer: Peer?, cachedData: CachedPeerData?, isOpenedFro
                 }
             }
         }
-    } else if let group = peer as? TelegramGroup {
+    } else if case let .legacyGroup(group) = peer {
         let hasVoiceChat = group.flags.contains(.hasVoiceChat)
         let canStartVoiceChat: Bool
         
@@ -2582,8 +2582,8 @@ func peerInfoHeaderButtons(peer: Peer?, cachedData: CachedPeerData?, isOpenedFro
     return result
 }
 
-func peerInfoCanEdit(peer: Peer?, chatLocation: ChatLocation, threadData: MessageHistoryThreadData?, cachedData: CachedPeerData?, isContact: Bool?) -> Bool {
-    if let user = peer as? TelegramUser {
+func peerInfoCanEdit(peer: EnginePeer?, chatLocation: ChatLocation, threadData: MessageHistoryThreadData?, cachedData: CachedPeerData?, isContact: Bool?) -> Bool {
+    if case let .user(user) = peer {
         if user.isDeleted {
             return false
         }
@@ -2594,7 +2594,7 @@ func peerInfoCanEdit(peer: Peer?, chatLocation: ChatLocation, threadData: Messag
             return false
         }
         return true
-    } else if let peer = peer as? TelegramChannel {
+    } else if case let .channel(peer) = peer {
         if peer.isForumOrMonoForum, let threadData = threadData {
             if peer.flags.contains(.isCreator) {
                 return true
@@ -2615,7 +2615,7 @@ func peerInfoCanEdit(peer: Peer?, chatLocation: ChatLocation, threadData: Messag
             }
             return false
         }
-    } else if let peer = peer as? TelegramGroup {
+    } else if case let .legacyGroup(peer) = peer {
         if case .creator = peer.role {
             return true
         } else if case let .admin(rights, _) = peer.role {
@@ -2630,19 +2630,19 @@ func peerInfoCanEdit(peer: Peer?, chatLocation: ChatLocation, threadData: Messag
     return false
 }
 
-func peerInfoIsChatMuted(peer: Peer?, peerNotificationSettings: TelegramPeerNotificationSettings?, threadNotificationSettings: TelegramPeerNotificationSettings?, globalNotificationSettings: EngineGlobalNotificationSettings?) -> Bool {
-    func isPeerMuted(peer: Peer?, peerNotificationSettings: TelegramPeerNotificationSettings?, globalNotificationSettings: EngineGlobalNotificationSettings?) -> Bool {
+func peerInfoIsChatMuted(peer: EnginePeer?, peerNotificationSettings: TelegramPeerNotificationSettings?, threadNotificationSettings: TelegramPeerNotificationSettings?, globalNotificationSettings: EngineGlobalNotificationSettings?) -> Bool {
+    func isPeerMuted(peer: EnginePeer?, peerNotificationSettings: TelegramPeerNotificationSettings?, globalNotificationSettings: EngineGlobalNotificationSettings?) -> Bool {
         var peerIsMuted = false
         if let peerNotificationSettings {
             if case .muted = peerNotificationSettings.muteState {
                 peerIsMuted = true
             } else if case .default = peerNotificationSettings.muteState, let globalNotificationSettings {
                 if let peer {
-                    if peer is TelegramUser {
+                    if case .user = peer {
                         peerIsMuted = !globalNotificationSettings.privateChats.enabled
-                    } else if peer is TelegramGroup {
+                    } else if case .legacyGroup = peer {
                         peerIsMuted = !globalNotificationSettings.groupChats.enabled
-                    } else if let channel = peer as? TelegramChannel {
+                    } else if case let .channel(channel) = peer {
                         switch channel.info {
                         case .group:
                             peerIsMuted = !globalNotificationSettings.groupChats.enabled

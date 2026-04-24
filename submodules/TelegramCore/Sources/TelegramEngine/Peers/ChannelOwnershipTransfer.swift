@@ -177,7 +177,7 @@ func _internal_updateChatOwnership(account: Account, peerId: PeerId, memberId: P
                             if let presence = transaction.getPeerPresence(peerId: user.id) {
                                 presences[user.id] = presence
                             }
-                            return [(currentCreator, RenderedChannelParticipant(participant: updatedPreviousCreator, peer: accountUser, peers: peers, presences: presences)), (currentParticipant, RenderedChannelParticipant(participant: updatedParticipant, peer: user, peers: peers, presences: presences))]
+                            return [(currentCreator, RenderedChannelParticipant(participant: updatedPreviousCreator, peer: EnginePeer(accountUser), peers: peers, presences: presences)), (currentParticipant, RenderedChannelParticipant(participant: updatedParticipant, peer: EnginePeer(user), peers: peers, presences: presences))]
                         }
                         |> mapError { _ -> ChatOwnershipTransferError in }
                     }

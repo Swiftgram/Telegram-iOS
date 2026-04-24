@@ -4359,7 +4359,7 @@ extension ChatControllerImpl {
                     if let controller = self.context.sharedContext.makePeerInfoController(
                         context: self.context,
                         updatedPresentationData: nil,
-                        peer: peer,
+                        peer: EnginePeer(peer),
                         mode: .gifts,
                         avatarInitiallyExpanded: false,
                         fromChat: false,

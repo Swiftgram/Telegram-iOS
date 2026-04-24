@@ -5626,7 +5626,7 @@ public final class StoryItemSetContainerComponent: Component {
                     }
                     navigationController.setViewControllers(currentViewControllers, animated: true)
                 } else {
-                    guard let chatController = component.context.sharedContext.makePeerInfoController(context: component.context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) else {
+                    guard let chatController = component.context.sharedContext.makePeerInfoController(context: component.context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) else {
                         return
                     }
                     
@@ -7616,7 +7616,7 @@ public final class StoryItemSetContainerComponent: Component {
                                                 if let controller = component.context.sharedContext.makePeerInfoController(
                                                     context: component.context,
                                                     updatedPresentationData: nil,
-                                                    peer: peer._asPeer(),
+                                                    peer: peer,
                                                     mode: .myProfile,
                                                     avatarInitiallyExpanded: false,
                                                     fromChat: false,

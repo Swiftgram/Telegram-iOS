@@ -164,9 +164,9 @@ private enum ChatListRecentEntry: Comparable, Identifiable {
                 var enabled = true
                 if filter.contains(.onlyWriteable) {
                     if let peer = chatPeer {
-                        enabled = canSendMessagesToPeer(peer._asPeer())
+                        enabled = canSendMessagesToPeer(peer)
                     } else {
-                        enabled = canSendMessagesToPeer(primaryPeer._asPeer())
+                        enabled = canSendMessagesToPeer(primaryPeer)
                     }
                     if requiresPremiumForMessaging {
                         enabled = false
@@ -753,7 +753,7 @@ public enum ChatListSearchEntry: Comparable, Identifiable {
                 var enabled = true
                 if filter.contains(.onlyWriteable) {
                     if let peer = chatPeer {
-                        enabled = canSendMessagesToPeer(peer._asPeer())
+                        enabled = canSendMessagesToPeer(peer)
                     } else {
                         enabled = false
                     }
@@ -892,7 +892,7 @@ public enum ChatListSearchEntry: Comparable, Identifiable {
                 var enabled = true
                 if filter.contains(.onlyWriteable) {
                     if let peer = chatPeer {
-                        enabled = canSendMessagesToPeer(peer._asPeer())
+                        enabled = canSendMessagesToPeer(peer)
                     } else {
                         enabled = false
                     }
@@ -1015,7 +1015,7 @@ public enum ChatListSearchEntry: Comparable, Identifiable {
             case let .globalPeer(peer, unreadBadge, _, theme, strings, nameSortOrder, nameDisplayOrder, expandType, storyStats, requiresPremiumForMessaging, query):
                 var enabled = true
                 if filter.contains(.onlyWriteable) {
-                    enabled = canSendMessagesToPeer(peer.peer._asPeer())
+                    enabled = canSendMessagesToPeer(peer.peer)
                     if requiresPremiumForMessaging {
                         enabled = false
                     }
@@ -1404,7 +1404,7 @@ private struct ChatListSearchListPaneNodeState: Equatable {
 
 private func doesPeerMatchFilter(peer: EnginePeer, filter: ChatListNodePeersFilter) -> Bool {
     var enabled = true
-    if filter.contains(.onlyWriteable), !canSendMessagesToPeer(peer._asPeer()) {
+    if filter.contains(.onlyWriteable), !canSendMessagesToPeer(peer) {
         enabled = false
     }
     if filter.contains(.onlyPrivateChats) {
@@ -4461,7 +4461,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                                     keepStack: .always
                                 ))
                             case .info:
-                                if let peerInfoScreen = self.context.sharedContext.makePeerInfoController(context: self.context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+                                if let peerInfoScreen = self.context.sharedContext.makePeerInfoController(context: self.context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                                     navigationController.pushViewController(peerInfoScreen)
                                 }
                             case .openApp:

@@ -63,7 +63,7 @@ final class PeerInfoEditingAvatarNode: ASDisplayNode {
             return
         }
         
-        let canEdit = canEditPeerInfo(context: self.context, peer: peer, chatLocation: chatLocation, threadData: threadData)
+        let canEdit = canEditPeerInfo(context: self.context, peer: EnginePeer(peer), chatLocation: chatLocation, threadData: threadData)
 
         let previousItem = self.item
         var item = item

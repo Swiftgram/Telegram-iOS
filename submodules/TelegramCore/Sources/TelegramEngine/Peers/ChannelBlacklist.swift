@@ -137,7 +137,7 @@ func _internal_updateChannelMemberBannedRights(account: Account, peerId: PeerId,
                             }
                         }
                         
-                        return (currentParticipant, RenderedChannelParticipant(participant: updatedParticipant, peer: memberPeer, peers: peers, presences: presences), isMember)
+                        return (currentParticipant, RenderedChannelParticipant(participant: updatedParticipant, peer: EnginePeer(memberPeer), peers: peers, presences: presences), isMember)
                     }
                 }
             } else {

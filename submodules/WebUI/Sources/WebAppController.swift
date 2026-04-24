@@ -3372,7 +3372,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
                 guard let self, let controller = self.controller, let peer else {
                     return
                 }
-                if let infoController = self.context.sharedContext.makePeerInfoController(context: self.context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+                if let infoController = self.context.sharedContext.makePeerInfoController(context: self.context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                     controller.parentController()?.push(infoController)
                 }
             })

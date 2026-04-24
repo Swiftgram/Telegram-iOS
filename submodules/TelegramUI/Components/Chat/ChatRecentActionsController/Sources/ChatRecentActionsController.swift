@@ -356,7 +356,7 @@ public final class ChatRecentActionsController: TelegramBaseController {
             var adminPeers: [EnginePeer] = []
             if let result {
                 for participant in result {
-                    adminPeers.append(EnginePeer(participant.peer))
+                    adminPeers.append(participant.peer)
                 }
             }
             let controller = RecentActionsSettingsSheet(

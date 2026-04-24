@@ -410,7 +410,7 @@ private final class GiftViewSheetContent: CombinedComponent {
                         if let profileController = context.sharedContext.makePeerInfoController(
                             context: context,
                             updatedPresentationData: nil,
-                            peer: peer._asPeer(),
+                            peer: peer,
                             mode: peer.id == context.account.peerId ? .myProfileGifts : .gifts,
                             avatarInitiallyExpanded: false,
                             fromChat: false,
@@ -558,7 +558,7 @@ private final class GiftViewSheetContent: CombinedComponent {
                                         if let controller = self.context.sharedContext.makePeerInfoController(
                                             context: self.context,
                                             updatedPresentationData: nil,
-                                            peer: peer._asPeer(),
+                                            peer: peer,
                                             mode: giftsPeerId == self.context.account.peerId ? .myProfileGifts : .gifts,
                                             avatarInitiallyExpanded: false,
                                             fromChat: false,
@@ -2249,7 +2249,7 @@ private final class GiftViewSheetContent: CombinedComponent {
                                                 if let controller = context.sharedContext.makePeerInfoController(
                                                     context: context,
                                                     updatedPresentationData: nil,
-                                                    peer: peer._asPeer(),
+                                                    peer: peer,
                                                     mode: .upgradableGifts,
                                                     avatarInitiallyExpanded: false,
                                                     fromChat: false,

@@ -79,7 +79,7 @@ func _internal_joinChannel(account: Account, peerId: PeerId, hash: String?) -> S
                             }
                         }
                         
-                        return RenderedChannelParticipant(participant: updatedParticipant, peer: peer, peers: peers, presences: presences)
+                        return RenderedChannelParticipant(participant: updatedParticipant, peer: EnginePeer(peer), peers: peers, presences: presences)
                     }
                     |> castError(JoinChannelError.self)
                 }

@@ -77,7 +77,7 @@ func infoItems(
         interaction.openBirthdayContextMenu(node, gesture)
     }
     
-    if let user = data.peer as? TelegramUser {
+    if case let .user(user) = data.peer {
         let ItemCallList = 1000
         let ItemPersonalChannelHeader = 2000
         let ItemPersonalChannel = 2001
@@ -529,7 +529,7 @@ func infoItems(
                 }
             }
         }
-    } else if let channel = data.peer as? TelegramChannel {
+    } else if case let .channel(channel) = data.peer {
         let ItemUsername = 1
         let ItemUsernameInfo = 2
         let ItemAbout = 3
@@ -795,7 +795,7 @@ func infoItems(
                 }
             }
         }
-    } else if let group = data.peer as? TelegramGroup {
+    } else if case let .legacyGroup(group) = data.peer {
         if let cachedData = data.cachedData as? CachedGroupData {
             let aboutText: String?
             if group.isFake {
@@ -820,7 +820,7 @@ func infoItems(
     
     if let peer = data.peer, let members = data.members, case let .shortList(_, memberList) = members {
         var canAddMembers = false
-        if let group = data.peer as? TelegramGroup {
+        if case let .legacyGroup(group) = data.peer {
             switch group.role {
                 case .admin, .creator:
                     canAddMembers = true
@@ -830,7 +830,7 @@ func infoItems(
             if !group.hasBannedPermission(.banAddMembers) {
                 canAddMembers = true
             }
-        } else if let channel = data.peer as? TelegramChannel {
+        } else if case let .channel(channel) = data.peer {
             switch channel.info {
             case .broadcast:
                 break
@@ -849,7 +849,7 @@ func infoItems(
         
         for member in memberList {
             let isAccountPeer = member.id == context.account.peerId
-            items[.peerMembers]!.append(PeerInfoScreenMemberItem(id: member.id, context: .account(context), enclosingPeer: peer, member: member, isAccount: false, action: isAccountPeer ? { _ in
+            items[.peerMembers]!.append(PeerInfoScreenMemberItem(id: member.id, context: .account(context), enclosingPeer: peer._asPeer(), member: member, isAccount: false, action: isAccountPeer ? { _ in
                 let actions = availableActionsForMemberOfPeer(accountPeerId: context.account.peerId, peer: peer, member: member)
                 if actions.contains(.editRank) {
                     interaction.performMemberAction(member, .editRank)
@@ -903,7 +903,7 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
     }
     
     if let data = data {
-        if let user = data.peer as? TelegramUser {
+        if case let .user(user) = data.peer {
             let ItemNote: AnyHashable = AnyHashable("note_edit")
             let ItemNoteInfo = 1
             
@@ -1047,7 +1047,7 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
                     interaction.requestDeleteContact()
                 }))
             }
-        } else if let channel = data.peer as? TelegramChannel {
+        } else if case let .channel(channel) = data.peer {
             switch channel.info {
             case .broadcast:
                 let ItemUsername = 1
@@ -1591,7 +1591,7 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
                     }
                 }
             }
-        } else if let group = data.peer as? TelegramGroup {
+        } else if case let .legacyGroup(group) = data.peer {
             let ItemUsername = 101
             let ItemInviteLinks = 102
             let ItemPreHistory = 103

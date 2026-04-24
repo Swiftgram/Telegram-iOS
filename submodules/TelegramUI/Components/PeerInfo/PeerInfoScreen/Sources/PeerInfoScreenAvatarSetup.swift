@@ -439,7 +439,7 @@ extension PeerInfoScreenImpl {
         
         let peerId = self.peerId
         var isForum = false
-        if let peer = peer as? TelegramChannel, peer.isForumOrMonoForum {
+        if case let .channel(peer) = peer, peer.isForumOrMonoForum {
             isForum = true
         }
         

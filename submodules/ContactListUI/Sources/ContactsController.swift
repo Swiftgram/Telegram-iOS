@@ -475,7 +475,7 @@ public class ContactsController: ViewController {
                             }
                             |> deliverOnMainQueue).start(next: { [weak self, weak controller] peer in
                                 if let strongSelf = self, let controller = controller {
-                                    controller.present(strongSelf.context.sharedContext.makeChatQrCodeScreen(context: strongSelf.context, peer: peer._asPeer(), threadId: nil, temporary: false), in: .window(.root))
+                                    controller.present(strongSelf.context.sharedContext.makeChatQrCodeScreen(context: strongSelf.context, peer: peer, threadId: nil, temporary: false), in: .window(.root))
                                 }
                             })
                         }
@@ -774,7 +774,7 @@ public class ContactsController: ViewController {
                                 }
                                 if let peer {
                                     Queue.mainQueue().async {
-                                        if let infoController = strongSelf.context.sharedContext.makePeerInfoController(context: strongSelf.context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+                                        if let infoController = strongSelf.context.sharedContext.makePeerInfoController(context: strongSelf.context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                                             if let navigationController = strongSelf.context.sharedContext.mainWindow?.viewController as? NavigationController {
                                                 navigationController.pushViewController(infoController)
                                             }

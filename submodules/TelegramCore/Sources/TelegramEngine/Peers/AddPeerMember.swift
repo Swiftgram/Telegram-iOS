@@ -252,7 +252,7 @@ func _internal_addChannelMember(account: Account, peerId: PeerId, memberId: Peer
                                     }
                                 }
                             }
-                            return (currentParticipant, RenderedChannelParticipant(participant: updatedParticipant, peer: memberPeer, peers: peers, presences: presences))
+                            return (currentParticipant, RenderedChannelParticipant(participant: updatedParticipant, peer: EnginePeer(memberPeer), peers: peers, presences: presences))
                         }
                         |> mapError { _ -> AddChannelMemberError in }
                     }

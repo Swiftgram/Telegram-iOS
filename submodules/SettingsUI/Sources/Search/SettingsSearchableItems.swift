@@ -968,7 +968,7 @@ private func myProfileSearchableItems(context: AccountContext) -> [SettingsSearc
             present: { context, _, present in
                 let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId))
                 |> deliverOnMainQueue).start(next: { peer in
-                    guard let peer = peer?._asPeer() else {
+                    guard let peer = peer else {
                         return
                     }
                     let controller = context.sharedContext.makeChatQrCodeScreen(context: context, peer: peer, threadId: nil, temporary: false)
@@ -977,7 +977,7 @@ private func myProfileSearchableItems(context: AccountContext) -> [SettingsSearc
             }
         )
     )
-    
+
     //TODO:fix
     items.append(
         SettingsSearchableItem(
@@ -986,7 +986,7 @@ private func myProfileSearchableItems(context: AccountContext) -> [SettingsSearc
             present: { context, _, present in
                 let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId))
                 |> deliverOnMainQueue).start(next: { peer in
-                    guard let peer = peer?._asPeer() else {
+                    guard let peer = peer else {
                         return
                     }
                     let controller = context.sharedContext.makeChatQrCodeScreen(context: context, peer: peer, threadId: nil, temporary: false)
@@ -1017,7 +1017,7 @@ private func myProfileSearchableItems(context: AccountContext) -> [SettingsSearc
             present: { context, _, present in
                 let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId))
                 |> deliverOnMainQueue).start(next: { peer in
-                    guard let peer = peer?._asPeer() else {
+                    guard let peer = peer else {
                         return
                     }
                     let controller = context.sharedContext.makePeerInfoController(
@@ -1034,7 +1034,7 @@ private func myProfileSearchableItems(context: AccountContext) -> [SettingsSearc
             }
         )
     )
-    
+
     items.append(
         SettingsSearchableItem(
             id: "my-profile/edit",
@@ -1043,7 +1043,7 @@ private func myProfileSearchableItems(context: AccountContext) -> [SettingsSearc
             present: { context, _, present in
                 let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId))
                 |> deliverOnMainQueue).start(next: { peer in
-                    guard let peer = peer?._asPeer() else {
+                    guard let peer = peer else {
                         return
                     }
                     let controller = context.sharedContext.makePeerInfoController(
@@ -1056,7 +1056,7 @@ private func myProfileSearchableItems(context: AccountContext) -> [SettingsSearc
                         requestsContext: nil
                     )
                     present(.push, controller)
-                    
+
                     Queue.mainQueue().justDispatch {
                         if let controller = controller as? PeerInfoScreen {
                             controller.activateEdit()
@@ -1077,7 +1077,7 @@ private func myProfileSearchableItems(context: AccountContext) -> [SettingsSearc
             present: { context, _, present in
                 let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId))
                 |> deliverOnMainQueue).start(next: { peer in
-                    guard let peer = peer?._asPeer() else {
+                    guard let peer = peer else {
                         return
                     }
                     let controller = context.sharedContext.makePeerInfoController(

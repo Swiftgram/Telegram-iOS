@@ -227,7 +227,7 @@ final class MiniAppListScreenComponent: Component {
                 return
             }
             
-            if let peerInfoScreen = component.context.sharedContext.makePeerInfoController(context: component.context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+            if let peerInfoScreen = component.context.sharedContext.makePeerInfoController(context: component.context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                 peerInfoScreen.navigationPresentation = .modal
                 controller.push(peerInfoScreen)
             }

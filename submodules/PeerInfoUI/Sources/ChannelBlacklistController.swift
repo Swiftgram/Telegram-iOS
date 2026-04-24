@@ -167,7 +167,7 @@ private enum ChannelBlacklistEntry: ItemListNodeEntry {
                     default:
                         break
                 }
-                return ItemListPeerItem(presentationData: presentationData, systemStyle: .glass, dateTimeFormat: dateTimeFormat, nameDisplayOrder: nameDisplayOrder, context: arguments.context, peer: EnginePeer(participant.peer), presence: nil, text: text, label: .none, editing: editing, switchValue: nil, enabled: enabled, selectable: true, sectionId: self.section, action: {
+                return ItemListPeerItem(presentationData: presentationData, systemStyle: .glass, dateTimeFormat: dateTimeFormat, nameDisplayOrder: nameDisplayOrder, context: arguments.context, peer: participant.peer, presence: nil, text: text, label: .none, editing: editing, switchValue: nil, enabled: enabled, selectable: true, sectionId: self.section, action: {
                     arguments.openPeer(participant)
                 }, setPeerIdWithRevealedOptions: { previousId, id in
                     arguments.setPeerIdWithRevealedOptions(previousId, id)
@@ -363,20 +363,20 @@ public func channelBlacklistController(context: AccountContext, updatedPresentat
             let presentationData = context.sharedContext.currentPresentationData.with { $0 }
             let actionSheet = ActionSheetController(presentationData: presentationData)
             var items: [ActionSheetItem] = []
-            if !EnginePeer(participant.peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder).isEmpty {
-                items.append(ActionSheetTextItem(title: EnginePeer(participant.peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)))
+            if !participant.peer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder).isEmpty {
+                items.append(ActionSheetTextItem(title: participant.peer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)))
             }
             let viewInfoTitle: String
-            if participant.peer is TelegramChannel {
+            if case .channel = participant.peer {
                 viewInfoTitle = presentationData.strings.GroupRemoved_ViewChannelInfo
             } else {
                 viewInfoTitle = presentationData.strings.GroupRemoved_ViewUserInfo
             }
             items.append(ActionSheetButtonItem(title: viewInfoTitle, action: { [weak actionSheet] in
                 actionSheet?.dismissAnimated()
-                if participant.peer is TelegramChannel {
+                if case .channel = participant.peer {
                     if let navigationController = getNavigationControllerImpl?() {
-                        context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: context, chatLocation: .peer(EnginePeer(participant.peer))))
+                        context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: context, chatLocation: .peer(participant.peer)))
                     }
                 } else if let infoController = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: participant.peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                     pushControllerImpl?(infoController)

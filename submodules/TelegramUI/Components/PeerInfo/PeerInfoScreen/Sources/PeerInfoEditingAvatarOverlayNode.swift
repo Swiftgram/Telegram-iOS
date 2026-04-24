@@ -82,7 +82,7 @@ final class PeerInfoEditingAvatarOverlayNode: ASDisplayNode {
             isPersonal = true
         }
         
-        if canEditPeerInfo(context: self.context, peer: peer, chatLocation: chatLocation, threadData: threadData)
+        if canEditPeerInfo(context: self.context, peer: EnginePeer(peer), chatLocation: chatLocation, threadData: threadData)
             || isPersonal
             || self.currentRepresentation != nil && updatingAvatar == nil  {
             var overlayHidden = true

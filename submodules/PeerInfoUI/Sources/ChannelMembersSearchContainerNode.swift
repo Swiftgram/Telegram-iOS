@@ -209,7 +209,7 @@ private final class ChannelMembersSearchEntry: Comparable, Identifiable {
                 displayOrder: nameDisplayOrder,
                 context: context,
                 peerMode: .peer,
-                peer: .peer(peer: EnginePeer(participant.peer), chatPeer: EnginePeer(participant.peer)),
+                peer: .peer(peer: participant.peer, chatPeer: participant.peer),
                 status: status,
                 rightLabelText: label.flatMap { .init(text: $0, color: labelColor, hasBackground: labelBackground) },
                 enabled: enabled,
@@ -220,7 +220,7 @@ private final class ChannelMembersSearchEntry: Comparable, Identifiable {
                 index: nil,
                 header: self.section.chatListHeaderType.flatMap({ ChatListSearchItemHeader(type: $0, theme: presentationData.theme, strings: presentationData.strings, actionTitle: nil, action: nil) }),
                 action: { _ in
-                    interaction.peerSelected(EnginePeer(participant.peer), participant)
+                    interaction.peerSelected(participant.peer, participant)
                 },
                 setPeerIdWithRevealedOptions: { peerId, fromPeerId in
                     interaction.setPeerIdWithRevealedOptions(RevealedPeerId(peerId: participant.peer.id, section: self.section), fromPeerId.flatMap({ RevealedPeerId(peerId: $0, section: self.section) }))
@@ -749,7 +749,7 @@ public final class ChannelMembersSearchContainerNode: SearchDisplayControllerCon
                             continue
                         }
                         
-                        if excludeBots, let user = participant.peer as? TelegramUser, user.botInfo != nil {
+                        if excludeBots, case let .user(user) = participant.peer, user.botInfo != nil {
                             continue
                         }
                         
@@ -881,7 +881,7 @@ public final class ChannelMembersSearchContainerNode: SearchDisplayControllerCon
                     }
                     
                     for participant in foundMembers {
-                        if excludeBots, let user = participant.peer as? TelegramUser, user.botInfo != nil {
+                        if excludeBots, case let .user(user) = participant.peer, user.botInfo != nil {
                             continue
                         }
                         
@@ -984,18 +984,18 @@ public final class ChannelMembersSearchContainerNode: SearchDisplayControllerCon
                                 let renderedParticipant: RenderedChannelParticipant
                                 switch participant {
                                     case .creator:
-                                        renderedParticipant = RenderedChannelParticipant(participant: .creator(id: peer.id, adminInfo: nil, rank: nil), peer: peer)
+                                        renderedParticipant = RenderedChannelParticipant(participant: .creator(id: peer.id, adminInfo: nil, rank: nil), peer: EnginePeer(peer))
                                     case .admin:
                                         var peers: [EnginePeer.Id: EnginePeer] = [:]
                                         if let creator = creatorPeer {
                                             peers[creator.id] = creator
                                         }
                                         peers[peer.id] = EnginePeer(peer)
-                                        renderedParticipant = RenderedChannelParticipant(participant: .member(id: peer.id, invitedAt: 0, adminInfo: ChannelParticipantAdminInfo(rights: TelegramChatAdminRights(rights: TelegramChatAdminRightsFlags.peerSpecific(peer: .legacyGroup(group))), promotedBy: creatorPeer?.id ?? context.account.peerId, canBeEditedByAccountPeer: creatorPeer?.id == context.account.peerId), banInfo: nil, rank: nil, subscriptionUntilDate: nil), peer: peer, peers: peers.mapValues({ $0._asPeer() }))
+                                        renderedParticipant = RenderedChannelParticipant(participant: .member(id: peer.id, invitedAt: 0, adminInfo: ChannelParticipantAdminInfo(rights: TelegramChatAdminRights(rights: TelegramChatAdminRightsFlags.peerSpecific(peer: .legacyGroup(group))), promotedBy: creatorPeer?.id ?? context.account.peerId, canBeEditedByAccountPeer: creatorPeer?.id == context.account.peerId), banInfo: nil, rank: nil, subscriptionUntilDate: nil), peer: EnginePeer(peer), peers: peers.mapValues({ $0._asPeer() }))
                                     case .member:
                                         var peers: [EnginePeer.Id: EnginePeer] = [:]
                                         peers[peer.id] = EnginePeer(peer)
-                                        renderedParticipant = RenderedChannelParticipant(participant: .member(id: peer.id, invitedAt: 0, adminInfo: nil, banInfo: nil, rank: nil, subscriptionUntilDate: nil), peer: peer, peers: peers.mapValues({ $0._asPeer() }))
+                                        renderedParticipant = RenderedChannelParticipant(participant: .member(id: peer.id, invitedAt: 0, adminInfo: nil, banInfo: nil, rank: nil, subscriptionUntilDate: nil), peer: EnginePeer(peer), peers: peers.mapValues({ $0._asPeer() }))
                                 }
                                 matchingMembers.append(renderedParticipant)
                             }
@@ -1049,7 +1049,7 @@ public final class ChannelMembersSearchContainerNode: SearchDisplayControllerCon
                     var index = 0
                     
                     for participant in foundGroupMembers {
-                        if excludeBots, let user = participant.peer as? TelegramUser, user.botInfo != nil {
+                        if excludeBots, case let .user(user) = participant.peer, user.botInfo != nil {
                             continue
                         }
                         
@@ -1133,7 +1133,7 @@ public final class ChannelMembersSearchContainerNode: SearchDisplayControllerCon
                     }
                     
                     for participant in foundMembers {
-                        if excludeBots, let user = participant.peer as? TelegramUser, user.botInfo != nil {
+                        if excludeBots, case let .user(user) = participant.peer, user.botInfo != nil {
                             continue
                         }
                         

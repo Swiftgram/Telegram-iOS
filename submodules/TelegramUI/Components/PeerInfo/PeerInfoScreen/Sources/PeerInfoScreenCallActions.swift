@@ -45,7 +45,7 @@ extension PeerInfoScreenNode {
             return
         }
         
-        guard let peer = self.data?.peer as? TelegramUser, let cachedUserData = self.data?.cachedData as? CachedUserData else {
+        guard case let .user(peer) = self.data?.peer, let cachedUserData = self.data?.cachedData as? CachedUserData else {
             return
         }
         if cachedUserData.callsPrivate {
@@ -128,7 +128,7 @@ extension PeerInfoScreenNode {
                     case .generic, .scheduledTooLate:
                         text = strongSelf.presentationData.strings.Login_UnknownError
                     case .anonymousNotAllowed:
-                        if let channel = strongSelf.data?.peer as? TelegramChannel, case .broadcast = channel.info {
+                        if case let .channel(channel) = strongSelf.data?.peer, case .broadcast = channel.info {
                             text = strongSelf.presentationData.strings.LiveStream_AnonymousDisabledAlertText
                         } else {
                             text = strongSelf.presentationData.strings.VoiceChat_AnonymousDisabledAlertText
@@ -304,7 +304,7 @@ extension PeerInfoScreenNode {
 
             let createVoiceChatTitle: String
             let scheduleVoiceChatTitle: String
-            if let channel = strongSelf.data?.peer as? TelegramChannel, case .broadcast = channel.info {
+            if case let .channel(channel) = strongSelf.data?.peer, case .broadcast = channel.info {
                 createVoiceChatTitle = strongSelf.presentationData.strings.ChannelInfo_CreateLiveStream
                 scheduleVoiceChatTitle = strongSelf.presentationData.strings.ChannelInfo_ScheduleLiveStream
             } else {
@@ -327,11 +327,11 @@ extension PeerInfoScreenNode {
             var credentialsPromise: Promise<GroupCallStreamCredentials>?
             var canCreateStream = false
             switch chatPeer {
-            case let group as TelegramGroup:
+            case let .legacyGroup(group):
                 if case .creator = group.role {
                     canCreateStream = true
                 }
-            case let channel as TelegramChannel:
+            case let .channel(channel):
                 if channel.hasPermission(.manageCalls) {
                     canCreateStream = true
                     credentialsPromise = Promise()

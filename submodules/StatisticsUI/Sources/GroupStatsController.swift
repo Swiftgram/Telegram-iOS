@@ -880,7 +880,7 @@ public func groupStatsController(context: AccountContext, updatedPresentationDat
             }
             |> take(1)
             |> deliverOnMainQueue).start(next: { peer in
-                if let controller = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+                if let controller = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                     navigationController.pushViewController(controller)
                 }
             })
@@ -912,7 +912,7 @@ public func groupStatsController(context: AccountContext, updatedPresentationDat
             }
             |> take(1)
             |> deliverOnMainQueue).start(next: { peer in
-                let controller = context.sharedContext.makeChatRecentActionsController(context: context, peer: peer._asPeer(), adminPeerId: participantPeerId, starsState: nil)
+                let controller = context.sharedContext.makeChatRecentActionsController(context: context, peer: peer, adminPeerId: participantPeerId, starsState: nil)
                 navigationController.pushViewController(controller)
             })
         }

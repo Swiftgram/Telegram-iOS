@@ -92,7 +92,7 @@ func _internal_updateChatRank(account: Account, peerId: PeerId, userId: PeerId, 
                                     return .update(StoreMessage(id: currentMessage.id, customStableId: nil, globallyUniqueId: currentMessage.globallyUniqueId, groupingKey: currentMessage.groupingKey, threadId: currentMessage.threadId, timestamp: currentMessage.timestamp, flags: StoreMessageFlags(currentMessage.flags), tags: currentMessage.tags, globalTags: currentMessage.globalTags, localTags: currentMessage.localTags, forwardInfo: storeForwardInfo, authorId: currentMessage.author?.id, text: currentMessage.text, attributes: attributes, media: currentMessage.media))
                                 })
                             }
-                            return (currentParticipant, RenderedChannelParticipant(participant: updatedParticipant, peer: user, peers: peers, presences: presences))
+                            return (currentParticipant, RenderedChannelParticipant(participant: updatedParticipant, peer: EnginePeer(user), peers: peers, presences: presences))
                         }
                     }
                     |> castError(UpdateChatRankError.self)

@@ -259,7 +259,7 @@ func _internal_updateChannelAdminRights(account: Account, peerId: PeerId, adminI
                                     peers[peer.id] = peer
                                 }
                             }
-                            return (currentParticipant, RenderedChannelParticipant(participant: updatedParticipant, peer: adminPeer, peers: peers, presences: presences))
+                            return (currentParticipant, RenderedChannelParticipant(participant: updatedParticipant, peer: EnginePeer(adminPeer), peers: peers, presences: presences))
                         } |> mapError { _ -> UpdateChannelAdminRightsError in }
                     }
                 } else {

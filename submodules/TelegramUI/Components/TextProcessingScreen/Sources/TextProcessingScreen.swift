@@ -792,7 +792,7 @@ final class TextProcessingContentComponent: Component {
                             guard let context, let navigationController else {
                                 return
                             }
-                            if let peerInfoController = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+                            if let peerInfoController = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                                 navigationController.pushViewController(peerInfoController)
                             }
                         })
