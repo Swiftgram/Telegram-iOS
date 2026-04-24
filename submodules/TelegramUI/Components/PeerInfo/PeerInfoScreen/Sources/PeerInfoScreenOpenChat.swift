@@ -22,18 +22,7 @@ extension PeerInfoScreenNode {
                 navigationController.setViewControllers(viewControllers, animated: true)
                 current.activateSearch(domain: .everything, query: "")
             } else if let peer = self.data?.chatPeer {
-                self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: self.nearbyPeerDistance != nil ? .always : .default, activateMessageSearch: (.everything, ""), peerNearbyData: self.nearbyPeerDistance.flatMap({ ChatPeerNearbyData(distance: $0) }), completion: { [weak self] _ in
-                    if let strongSelf = self, strongSelf.nearbyPeerDistance != nil {
-                        var viewControllers = navigationController.viewControllers
-                        viewControllers = viewControllers.filter { controller in
-                            if controller is PeerInfoScreen {
-                                return false
-                            }
-                            return true
-                        }
-                        navigationController.setViewControllers(viewControllers, animated: false)
-                    }
-                }))
+                self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default, activateMessageSearch: (.everything, "")))
             }
         }
     }
@@ -50,9 +39,7 @@ extension PeerInfoScreenNode {
                         context: self.context,
                         chatLocation: .peer(EnginePeer(peer)),
                         keepStack: .default,
-                        reportReason: NavigateToChatControllerParams.ReportReason(title: title, option: option, message: message),
-                        completion: { _ in
-                        }
+                        reportReason: NavigateToChatControllerParams.ReportReason(title: title, option: option, message: message)
                     )
                 )
             }
@@ -61,15 +48,13 @@ extension PeerInfoScreenNode {
     
     func openChatForThemeChange() {
         if let peer = self.data?.peer, let navigationController = (self.controller?.navigationController as? NavigationController) {
-            self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default, changeColors: true, completion: { _ in
-            }))
+            self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default, changeColors: true))
         }
     }
     
     func openChatForTranslation() {
         if let peer = self.data?.peer, let navigationController = (self.controller?.navigationController as? NavigationController) {
-            self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default, changeColors: false, completion: { _ in
-            }))
+            self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default, changeColors: false))
         }
     }
 
@@ -92,18 +77,7 @@ extension PeerInfoScreenNode {
         }
         
         if let peer = self.data?.peer, let navigationController = self.controller?.navigationController as? NavigationController {
-            self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: self.nearbyPeerDistance != nil ? .always : .default, peerNearbyData: self.nearbyPeerDistance.flatMap({ ChatPeerNearbyData(distance: $0) }), completion: { [weak self] _ in
-                if let strongSelf = self, strongSelf.nearbyPeerDistance != nil {
-                    var viewControllers = navigationController.viewControllers
-                    viewControllers = viewControllers.filter { controller in
-                        if controller is PeerInfoScreen {
-                            return false
-                        }
-                        return true
-                    }
-                    navigationController.setViewControllers(viewControllers, animated: false)
-                }
-            }))
+            self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default))
         }
     }
     
@@ -112,20 +86,8 @@ extension PeerInfoScreenNode {
             return
         }
         
-        self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: self.nearbyPeerDistance != nil ? .always : .default, peerNearbyData: self.nearbyPeerDistance.flatMap({ ChatPeerNearbyData(distance: $0) }), setupController: { controller in
+        self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default, setupController: { controller in
             controller.beginClearHistory(type: type)
-        }, completion: { [weak self] _ in
-            if let strongSelf = self, strongSelf.nearbyPeerDistance != nil {
-                var viewControllers = navigationController.viewControllers
-                viewControllers = viewControllers.filter { controller in
-                    if controller is PeerInfoScreen {
-                        return false
-                    }
-                    return true
-                }
-                
-                navigationController.setViewControllers(viewControllers, animated: false)
-            }
         }))
     }
 

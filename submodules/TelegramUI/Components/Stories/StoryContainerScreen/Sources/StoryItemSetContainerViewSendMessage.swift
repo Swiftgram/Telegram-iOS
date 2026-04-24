@@ -357,7 +357,6 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                 mode: .standard(.default),
                 chatLocation: .peer(id: context.account.peerId),
                 subject: nil,
-                peerNearbyData: nil,
                 greetingData: nil,
                 pendingUnpinnedAllMessages: false,
                 activeGroupCallInfo: nil,
@@ -2541,7 +2540,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                                     let fileId = Int64.random(in: Int64.min ... Int64.max)
                                     let mimeType = guessMimeTypeByFileExtension((item.fileName as NSString).pathExtension)
                                     var previewRepresentations: [TelegramMediaImageRepresentation] = []
-                                    if mimeType.hasPrefix("image/") || mimeType == "application/pdf" {
+                                    if mimeType.hasPrefix("image/") || mimeType == "application/pdf" || item.audioMetadata?.hasAudioArtwork == true {
                                         previewRepresentations.append(TelegramMediaImageRepresentation(dimensions: PixelDimensions(width: 320, height: 320), resource: ICloudFileResource(urlData: item.urlData, thumbnail: true), progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false))
                                     }
                                     var attributes: [TelegramMediaFileAttribute] = []

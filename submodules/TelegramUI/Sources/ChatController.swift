@@ -638,7 +638,6 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         botAppStart: ChatControllerInitialBotAppStart? = nil,
         mode: ChatControllerPresentationMode = .standard(.default),
         peekData: ChatPeekTimeout? = nil,
-        peerNearbyData: ChatPeerNearbyData? = nil,
         chatListFilter: Int32? = nil,
         chatNavigationStack: [ChatNavigationStackItem] = [],
         customChatNavigationStack: [EnginePeer.Id]? = nil,
@@ -689,7 +688,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         
         self.stickerSettings = ChatInterfaceStickerSettings()
         
-        self.presentationInterfaceState = ChatPresentationInterfaceState(chatWallpaper: self.presentationData.chatWallpaper, theme: self.presentationData.theme, preferredGlassType: .default, strings: self.presentationData.strings, dateTimeFormat: self.presentationData.dateTimeFormat, nameDisplayOrder: self.presentationData.nameDisplayOrder, limitsConfiguration: context.currentLimitsConfiguration.with { $0 }, fontSize: self.presentationData.chatFontSize, bubbleCorners: self.presentationData.chatBubbleCorners, accountPeerId: context.account.peerId, mode: mode, chatLocation: chatLocation, subject: subject, peerNearbyData: peerNearbyData, greetingData: context.prefetchManager?.preloadedGreetingSticker, pendingUnpinnedAllMessages: false, activeGroupCallInfo: nil, hasActiveGroupCall: false, threadData: nil, isGeneralThreadClosed: nil, replyMessage: nil, accountPeerColor: nil, businessIntro: nil)
+        self.presentationInterfaceState = ChatPresentationInterfaceState(chatWallpaper: self.presentationData.chatWallpaper, theme: self.presentationData.theme, preferredGlassType: .default, strings: self.presentationData.strings, dateTimeFormat: self.presentationData.dateTimeFormat, nameDisplayOrder: self.presentationData.nameDisplayOrder, limitsConfiguration: context.currentLimitsConfiguration.with { $0 }, fontSize: self.presentationData.chatFontSize, bubbleCorners: self.presentationData.chatBubbleCorners, accountPeerId: context.account.peerId, mode: mode, chatLocation: chatLocation, subject: subject, greetingData: context.prefetchManager?.preloadedGreetingSticker, pendingUnpinnedAllMessages: false, activeGroupCallInfo: nil, hasActiveGroupCall: false, threadData: nil, isGeneralThreadClosed: nil, replyMessage: nil, accountPeerColor: nil, businessIntro: nil)
         
         if case let .customChatContents(customChatContents) = subject {
             switch customChatContents.kind {

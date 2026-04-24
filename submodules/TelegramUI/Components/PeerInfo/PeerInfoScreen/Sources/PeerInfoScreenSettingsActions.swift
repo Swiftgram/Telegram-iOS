@@ -58,7 +58,6 @@ extension PeerInfoScreenNode {
                 peerId: self.context.account.peerId,
                 avatarInitiallyExpanded: false,
                 isOpenedFromChat: false,
-                nearbyPeerDistance: nil,
                 reactionSourceMessageId: nil,
                 callMessages: [],
                 isMyProfile: true,

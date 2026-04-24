@@ -470,7 +470,6 @@ final class ComposeTodoScreenComponent: Component {
                     mode: .standard(.default),
                     chatLocation: .peer(id: component.context.account.peerId),
                     subject: nil,
-                    peerNearbyData: nil,
                     greetingData: nil,
                     pendingUnpinnedAllMessages: false,
                     activeGroupCallInfo: nil,

@@ -1281,7 +1281,6 @@ private final class ChatListFilterPresetController: ItemListController {
                 mode: .standard(.default),
                 chatLocation: .peer(id: context.account.peerId),
                 subject: nil,
-                peerNearbyData: nil,
                 greetingData: nil,
                 pendingUnpinnedAllMessages: false,
                 activeGroupCallInfo: nil,

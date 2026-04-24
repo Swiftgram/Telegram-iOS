@@ -336,16 +336,16 @@ public extension TelegramEngine {
             return _internal_updateChannelSlowModeInteractively(postbox: self.account.postbox, network: self.account.network, accountStateManager: self.account.stateManager, peerId: peerId, timeout: timeout)
         }
 
-        public func reportPeer(peerId: PeerId) -> Signal<Void, NoError> {
-            return _internal_reportPeer(account: self.account, peerId: peerId)
+        public func reportPeer(peerId: PeerId, sourceMessageId: MessageId? = nil) -> Signal<Void, NoError> {
+            return _internal_reportPeer(account: self.account, peerId: peerId, sourceMessageId: sourceMessageId)
         }
 
-        public func reportPeer(peerId: PeerId, reason: ReportReason, message: String) -> Signal<Void, NoError> {
-            return _internal_reportPeer(account: self.account, peerId: peerId, reason: reason, message: message)
+        public func reportPeer(peerId: PeerId, reason: ReportReason, message: String, sourceMessageId: MessageId? = nil) -> Signal<Void, NoError> {
+            return _internal_reportPeer(account: self.account, peerId: peerId, reason: reason, message: message, sourceMessageId: sourceMessageId)
         }
 
-        public func reportPeerPhoto(peerId: PeerId, reason: ReportReason, message: String) -> Signal<Void, NoError> {
-            return _internal_reportPeerPhoto(account: self.account, peerId: peerId, reason: reason, message: message)
+        public func reportPeerPhoto(peerId: PeerId, reason: ReportReason, message: String, sourceMessageId: MessageId? = nil) -> Signal<Void, NoError> {
+            return _internal_reportPeerPhoto(account: self.account, peerId: peerId, reason: reason, message: message, sourceMessageId: sourceMessageId)
         }
 
         public func reportPeerMessages(messageIds: [MessageId], reason: ReportReason, message: String) -> Signal<Void, NoError> {
@@ -823,8 +823,8 @@ public extension TelegramEngine {
             }
         }
 
-        public func fetchAndUpdateCachedPeerData(peerId: PeerId) -> Signal<Bool, NoError> {
-            return _internal_fetchAndUpdateCachedPeerData(accountPeerId: self.account.peerId, peerId: peerId, network: self.account.network, postbox: self.account.postbox)
+        public func fetchAndUpdateCachedPeerData(peerId: PeerId, sourceMessageId: EngineMessage.Id? = nil) -> Signal<Bool, NoError> {
+            return _internal_fetchAndUpdateCachedPeerData(accountPeerId: self.account.peerId, peerId: peerId, sourceMessageId: sourceMessageId, network: self.account.network, postbox: self.account.postbox)
         }
 
         public func toggleItemPinned(location: TogglePeerChatPinnedLocation, itemId: PinnedItemId) -> Signal<TogglePeerChatPinnedResult, NoError> {
