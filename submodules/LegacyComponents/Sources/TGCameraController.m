@@ -1656,7 +1656,7 @@ static CGPoint TGCameraControllerClampPointToScreenSize(__unused id self, __unus
                 if (strongSelf == nil)
                     return;
                 
-                strongSelf.presentScheduleController(true, ^(int32_t time) {
+                strongSelf.presentScheduleController(true, ^(int32_t time, bool silentPosting) {
                     __strong TGCameraController *strongSelf = weakSelf;
                     __strong TGMediaPickerGalleryModel *strongModel = weakModel;
                     
@@ -1678,7 +1678,7 @@ static CGPoint TGCameraControllerClampPointToScreenSize(__unused id self, __unus
                         [[NSUserDefaults standardUserDefaults] setObject:@(!strongSelf->_selectionContext.grouping) forKey:@"TG_mediaGroupingDisabled_v0"];
                     
                     if (strongSelf.finishedWithResults != nil)
-                        strongSelf.finishedWithResults(strongController, strongSelf->_selectionContext, strongSelf->_editingContext, item.asset, false, time);
+                        strongSelf.finishedWithResults(strongController, strongSelf->_selectionContext, strongSelf->_editingContext, item.asset, silentPosting, time);
                     
                     [strongSelf _dismissTransitionForResultController:strongController];
                 });

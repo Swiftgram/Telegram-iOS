@@ -534,7 +534,7 @@ public final class TwoFactorDataInputScreen: ViewController {
                             strongSelf.present(textAlertController(sharedContext: strongSelf.sharedContext, title: nil, text: alertText, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
                         })
                     }),
-                    TextAlertAction(type: .defaultAction, title: strongSelf.presentationData.strings.Common_Cancel, action: {})
+                    TextAlertAction(type: .genericAction, title: strongSelf.presentationData.strings.Common_Cancel, action: {})
                 ]), in: .window(.root))
             case let .passwordHint(recovery, password, doneText):
                 if let recovery = recovery {
@@ -550,7 +550,7 @@ public final class TwoFactorDataInputScreen: ViewController {
                         }
                         strongSelf.performRecovery(recovery: recovery, password: "", hint: "")
                     }),
-                    TextAlertAction(type: .defaultAction, title: strongSelf.presentationData.strings.Common_Cancel, action: {})
+                    TextAlertAction(type: .genericAction, title: strongSelf.presentationData.strings.Common_Cancel, action: {})
                 ]), in: .window(.root))
             case let .rememberPassword(doneText):
                 guard case let .authorized(engine) = strongSelf.engine else {

@@ -17,6 +17,7 @@ swift_library(
         "//submodules/TelegramCore:TelegramCore",
         "//submodules/TelegramPresentationData:TelegramPresentationData",
         "//submodules/TelegramUIPreferences:TelegramUIPreferences",
+        "//submodules/TextFormat:TextFormat",
         "//submodules/GalleryUI:GalleryUI",
         "//submodules/MusicAlbumArtResources:MusicAlbumArtResources",
         "//submodules/LiveLocationPositionNode:LiveLocationPositionNode",

@@ -170,7 +170,7 @@ public func legacyMediaEditor(
     hasSilentPosting: Bool = false,
     hasSchedule: Bool = false,
     reminder: Bool = false,
-    presentSchedulePicker: @escaping (Bool, @escaping (Int32) -> Void) -> Void = { _, _ in },
+    presentSchedulePicker: @escaping (Bool, @escaping (Int32, Bool) -> Void) -> Void = { _, _ in },
     sendMessagesWithSignals: @escaping ([Any]?, Bool, Int32, Bool) -> Void,
     present: @escaping (ViewController, Any?) -> Void
 ) {
@@ -213,7 +213,7 @@ public func legacyMediaEditor(
             legacyController?.view.disablesInteractiveTransitionGestureRecognizer = true
         }
 
-        let schedulePicker: (Bool, @escaping (Int32) -> Void) -> Void = { media, done in
+        let schedulePicker: (Bool, @escaping (Int32, Bool) -> Void) -> Void = { media, done in
             presentSchedulePicker(media, done)
         }
         let appeared: () -> Void = {
@@ -322,7 +322,7 @@ public func legacyAttachmentMenu(
     presentSelectionLimitExceeded: @escaping () -> Void,
     presentCantSendMultipleFiles: @escaping () -> Void,
     presentJpegConversionAlert: @escaping (@escaping (Bool) -> Void) -> Void,
-    presentSchedulePicker: @escaping (Bool, @escaping (Int32) -> Void) -> Void,
+    presentSchedulePicker: @escaping (Bool, @escaping (Int32, Bool) -> Void) -> Void,
     presentTimerPicker: @escaping (@escaping (Int32) -> Void) -> Void,
     sendMessagesWithSignals: @escaping ([Any]?, Bool, Int32, ((String) -> UIView?)?, @escaping () -> Void) -> Void,
     selectRecentlyUsedInlineBot: @escaping (Peer) -> Void,
@@ -431,8 +431,8 @@ public func legacyAttachmentMenu(
         carouselItem.hasSchedule = hasSchedule
         carouselItem.reminder = peer?.id == context.account.peerId
         carouselItem.presentScheduleController = { media, done in
-            presentSchedulePicker(media, { time in
-                done?(time)
+            presentSchedulePicker(media, { time, silentPosting in
+                done?(time, silentPosting)
             })
         }
         carouselItem.presentTimerController = { done in

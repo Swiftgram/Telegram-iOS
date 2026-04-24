@@ -330,7 +330,7 @@ private func markdownBlocks(from node: MarkdownIntentNode, context: MarkdownConv
         } else if level == 2 {
             return [.header(text)]
         } else {
-            return [.subheader(text)]
+            return [.heading(text: text, level: Int32(max(3, min(level, 6))))]
         }
     case .paragraph:
         let inlineContent = markdownInlineContent(from: node.attributedText, context: context)
@@ -349,12 +349,12 @@ private func markdownBlocks(from node: MarkdownIntentNode, context: MarkdownConv
             return []
         }
         return [.paragraph(text)]
-    case .codeBlock:
+    case let .codeBlock(languageHint):
         let text = markdownRichText(from: markdownTrimTrailingCodeBlockNewline(node.attributedText), context: context)
         guard markdownHasDisplayableContent(text) else {
             return []
         }
-        return [.preformatted(text)]
+        return [.preformatted(text: text, language: markdownNormalizedCodeBlockLanguage(languageHint))]
     case .thematicBreak:
         return [.divider]
     case .blockQuote:
@@ -897,9 +897,11 @@ private func markdownPlainText(from block: InstantPageBlock) -> String {
         return text.plainText
     case let .subheader(text):
         return text.plainText
+    case let .heading(text, _):
+        return text.plainText
     case let .paragraph(text):
         return text.plainText
-    case let .preformatted(text):
+    case let .preformatted(text, _):
         return text.plainText
     case let .footer(text):
         return text.plainText
@@ -938,6 +940,14 @@ private func markdownTitle(from blocks: [InstantPageBlock], file: FileMediaRefer
         return baseName
     }
     return fileURL.lastPathComponent
+}
+
+private func markdownNormalizedCodeBlockLanguage(_ language: String?) -> String? {
+    guard let language else {
+        return nil
+    }
+    let normalized = language.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    return normalized.isEmpty ? nil : normalized
 }
 
 private func markdownFirstParagraphText(from blocks: [InstantPageBlock]) -> String? {
@@ -1006,6 +1016,8 @@ private func markdownHeadingText(from block: InstantPageBlock) -> String? {
     case let .header(text):
         return text.plainText
     case let .subheader(text):
+        return text.plainText
+    case let .heading(text, _):
         return text.plainText
     default:
         return nil

@@ -16,7 +16,7 @@ public enum WebSearchMode {
 }
 
 public enum WebSearchControllerMode {
-    case media(attachment: Bool, completion: (ChatContextResultCollection, TGMediaSelectionContext, TGMediaEditingContext, Bool) -> Void)
+    case media(attachment: Bool, completion: (ChatContextResultCollection, TGMediaSelectionContext, TGMediaEditingContext, Bool, Int32?) -> Void)
     case editor(completion: (UIImage) -> Void)
     case avatar(initialQuery: String?, completion: (UIImage) -> Void)
     
@@ -115,7 +115,7 @@ public final class WebSearchController: ViewController {
         }
     }
     
-    public var presentSchedulePicker: (Bool, @escaping (Int32) -> Void) -> Void = { _, _ in }
+    public var presentSchedulePicker: (Bool, @escaping (Int32, Bool) -> Void) -> Void = { _, _ in }
     
     public var dismissed: () -> Void = { }
     
@@ -261,13 +261,13 @@ public final class WebSearchController: ViewController {
                     selectionState.setItem(currentItem, selected: true)
                 }
                 if case let .media(_, sendSelected) = mode {
-                    sendSelected(results, selectionState, editingState, false)
+                    sendSelected(results, selectionState, editingState, silently, scheduleTime)
                 }
             }
         }, schedule: { [weak self] messageEffect in
             if let strongSelf = self {
-                strongSelf.presentSchedulePicker(false, { [weak self] time in
-                    self?.controllerInteraction?.sendSelected(nil, false, time, nil)
+                strongSelf.presentSchedulePicker(false, { [weak self] time, silentPosting in
+                    self?.controllerInteraction?.sendSelected(nil, silentPosting, time, nil)
                 })
             }
         }, avatarCompleted: { result in

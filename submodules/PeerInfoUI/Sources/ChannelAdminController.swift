@@ -385,7 +385,7 @@ private enum ChannelAdminEntry: ItemListNodeEntry {
                 return ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(string: "", textColor: .black), text: text, placeholder: placeholder, type: .regular(capitalization: false, autocorrection: true), spacing: 0.0, clearType: enabled ? .always : .none, enabled: enabled, tag: ChannelAdminEntryTag.rank, sectionId: self.section, textUpdated: { updatedText in
                     arguments.updateRank(text, updatedText)
                 }, shouldUpdateText: { text in
-                    if text.containsEmoji {
+                    if text.containsGraphicEmoji {
                         arguments.animateError()
                         return false
                     }
@@ -1329,7 +1329,7 @@ public func channelAdminController(context: AccountContext, updatedPresentationD
                         return current
                     }
                     
-                    if let updateRank = updateRank, updateRank.count > rankMaxLength || updateRank.containsEmoji {
+                    if let updateRank = updateRank, updateRank.count > rankMaxLength || updateRank.containsGraphicEmoji {
                         errorImpl?()
                         return
                     }
@@ -1361,7 +1361,7 @@ public func channelAdminController(context: AccountContext, updatedPresentationD
                     }
                     
                     let effectiveRank = updateRank ?? currentRank
-                    if effectiveRank?.containsEmoji ?? false {
+                    if effectiveRank?.containsGraphicEmoji ?? false {
                         errorImpl?()
                         return
                     }
@@ -1436,7 +1436,7 @@ public func channelAdminController(context: AccountContext, updatedPresentationD
                         return current
                     }
                     
-                    if let updateRank = updateRank, updateRank.count > rankMaxLength || updateRank.containsEmoji {
+                    if let updateRank = updateRank, updateRank.count > rankMaxLength || updateRank.containsGraphicEmoji {
                         errorImpl?()
                         return
                     }
@@ -1516,7 +1516,7 @@ public func channelAdminController(context: AccountContext, updatedPresentationD
                     return current
                 }
                 
-                if let updateRank = updateRank, updateRank.count > rankMaxLength || updateRank.containsEmoji {
+                if let updateRank = updateRank, updateRank.count > rankMaxLength || updateRank.containsGraphicEmoji {
                     errorImpl?()
                     return
                 }

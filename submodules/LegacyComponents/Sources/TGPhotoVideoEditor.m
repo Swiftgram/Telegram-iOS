@@ -282,8 +282,8 @@
             complete(false, 0x7ffffffe);
         };
         sendController.schedule = ^{
-            presentSchedulePicker(true, ^(int32_t time) {
-                complete(false, time);
+            presentSchedulePicker(true, ^(int32_t time, bool silentPosting) {
+                complete(silentPosting, time);
             });
         };
         [strongController presentViewController:sendController animated:false completion:nil];

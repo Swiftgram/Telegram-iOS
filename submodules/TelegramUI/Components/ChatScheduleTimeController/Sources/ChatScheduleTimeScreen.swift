@@ -39,6 +39,7 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
     let currentRepeatPeriod: Int32?
     let suggestedTime: Int32?
     let minimalTime: Int32?
+    let silentPosting: Bool
     let externalState: ExternalState
     let dismiss: () -> Void
     
@@ -49,6 +50,7 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
         currentRepeatPeriod: Int32?,
         suggestedTime: Int32?,
         minimalTime: Int32?,
+        silentPosting: Bool,
         externalState: ExternalState,
         dismiss: @escaping () -> Void
     ) {
@@ -58,6 +60,7 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
         self.currentRepeatPeriod = currentRepeatPeriod
         self.suggestedTime = suggestedTime
         self.minimalTime = minimalTime
+        self.silentPosting = silentPosting
         self.externalState = externalState
         self.dismiss = dismiss
     }
@@ -222,6 +225,7 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
             self.environment = environment
             
             if self.component == nil {
+                self.isSilentPosting = component.silentPosting
                 switch component.mode {
                 case .format, .search:
                     self.minDate = Date(timeIntervalSince1970: 0.0)
@@ -561,7 +565,8 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
                         controller.completion(
                             ChatScheduleTimeScreen.Result(
                                 time: Int32(self.date?.timeIntervalSince1970 ?? 0),
-                                repeatPeriod: self.repeatPeriod
+                                repeatPeriod: self.repeatPeriod,
+                                silentPosting: self.isSilentPosting
                             )
                         )
                         component.dismiss()
@@ -609,7 +614,8 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
                             controller.completion(
                                 ChatScheduleTimeScreen.Result(
                                     time: 0,
-                                    repeatPeriod: nil
+                                    repeatPeriod: nil,
+                                    silentPosting: false
                                 )
                             )
                             component.dismiss()
@@ -650,7 +656,8 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
                             controller.completion(
                                 ChatScheduleTimeScreen.Result(
                                     time: scheduleWhenOnlineTimestamp,
-                                    repeatPeriod: nil
+                                    repeatPeriod: nil,
+                                    silentPosting: self.isSilentPosting
                                 )
                             )
                             component.dismiss()
@@ -918,6 +925,7 @@ private final class ChatScheduleTimeScreenComponent: Component {
     let currentRepeatPeriod: Int32?
     let suggestedTime: Int32?
     let minimalTime: Int32?
+    let silentPosting: Bool
     
     init(
         context: AccountContext,
@@ -925,7 +933,8 @@ private final class ChatScheduleTimeScreenComponent: Component {
         currentTime: Int32?,
         currentRepeatPeriod: Int32?,
         suggestedTime: Int32?,
-        minimalTime: Int32?
+        minimalTime: Int32?,
+        silentPosting: Bool
     ) {
         self.context = context
         self.mode = mode
@@ -933,6 +942,7 @@ private final class ChatScheduleTimeScreenComponent: Component {
         self.currentRepeatPeriod = currentRepeatPeriod
         self.suggestedTime = suggestedTime
         self.minimalTime = minimalTime
+        self.silentPosting = silentPosting
     }
     
     static func ==(lhs: ChatScheduleTimeScreenComponent, rhs: ChatScheduleTimeScreenComponent) -> Bool {
@@ -949,6 +959,9 @@ private final class ChatScheduleTimeScreenComponent: Component {
             return false
         }
         if lhs.minimalTime != rhs.minimalTime {
+            return false
+        }
+        if lhs.silentPosting != rhs.silentPosting {
             return false
         }
         return true
@@ -1005,6 +1018,7 @@ private final class ChatScheduleTimeScreenComponent: Component {
                         currentRepeatPeriod: component.currentRepeatPeriod,
                         suggestedTime: component.suggestedTime,
                         minimalTime: component.minimalTime,
+                        silentPosting: component.silentPosting,
                         externalState: self.contentExternalState,
                         dismiss: { [weak self] in
                             guard let self else {
@@ -1080,6 +1094,13 @@ public class ChatScheduleTimeScreen: ViewControllerComponentContainer {
     public struct Result {
         public let time: Int32
         public let repeatPeriod: Int32?
+        public let silentPosting: Bool
+        
+        public init(time: Int32, repeatPeriod: Int32?, silentPosting: Bool = false) {
+            self.time = time
+            self.repeatPeriod = repeatPeriod
+            self.silentPosting = silentPosting
+        }
     }
     
     fileprivate let completion: (Result) -> Void
@@ -1091,6 +1112,7 @@ public class ChatScheduleTimeScreen: ViewControllerComponentContainer {
         currentRepeatPeriod: Int32? = nil,
         suggestedTime: Int32? = nil,
         minimalTime: Int32? = nil,
+        silentPosting: Bool = false,
         isDark: Bool,
         completion: @escaping (Result) -> Void
     ) {
@@ -1102,7 +1124,8 @@ public class ChatScheduleTimeScreen: ViewControllerComponentContainer {
             currentTime: currentTime,
             currentRepeatPeriod: currentRepeatPeriod,
             suggestedTime: suggestedTime,
-            minimalTime: minimalTime
+            minimalTime: minimalTime,
+            silentPosting: silentPosting
         ), navigationBarAppearance: .none, theme: isDark ? .dark : .default)
         
         self.statusBar.statusBarStyle = .Ignore

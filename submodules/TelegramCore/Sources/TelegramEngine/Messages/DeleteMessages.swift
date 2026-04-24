@@ -76,6 +76,44 @@ func _internal_deleteAllMessagesWithForwardAuthor(transaction: Transaction, medi
     }
 }
 
+func _internal_deleteAllReactionsWithAuthor(account: Account, peerId: PeerId, authorId: PeerId) -> Signal<Never, NoError> {
+    return account.postbox.transaction { transaction -> (Peer?, Peer?) in
+        return (transaction.getPeer(peerId), transaction.getPeer(authorId))
+    }
+    |> mapToSignal { peer, author in
+        guard let inputPeer = peer.flatMap(apiInputPeer), let inputAuthor = author.flatMap(apiInputPeer) else {
+            return .complete()
+        }
+        return account.network.request(Api.functions.messages.deleteParticipantReactions(peer: inputPeer, participant: inputAuthor))
+        |> ignoreValues
+        |> `catch` { _ -> Signal<Never, NoError> in
+            return .complete()
+        }
+    }
+}
+
+func _internal_deleteReaction(account: Account, messageId: MessageId, authorId: PeerId) -> Signal<Never, NoError> {
+    return account.postbox.transaction { transaction -> (Peer?, Peer?) in
+        return (transaction.getPeer(messageId.peerId), transaction.getPeer(authorId))
+    }
+    |> mapToSignal { peer, author in
+        guard let inputPeer = peer.flatMap(apiInputPeer), let inputAuthor = author.flatMap(apiInputPeer) else {
+            return .complete()
+        }
+        return account.network.request(Api.functions.messages.deleteParticipantReaction(peer: inputPeer, msgId: messageId.id, participant: inputAuthor))
+        |> map(Optional.init)
+        |> `catch` { _ -> Signal<Api.Updates?, NoError> in
+            return .single(nil)
+        }
+        |> mapToSignal { updates -> Signal<Never, NoError> in
+            if let updates {
+                account.stateManager.addUpdates(updates)
+            }
+            return .complete()
+        }
+    }
+}
+
 func _internal_clearHistory(transaction: Transaction, mediaBox: MediaBox, peerId: PeerId, threadId: Int64?, namespaces: MessageIdNamespaces) {
     if peerId.namespace == Namespaces.Peer.SecretChat {
         var resourceIds: [MediaResourceId] = []

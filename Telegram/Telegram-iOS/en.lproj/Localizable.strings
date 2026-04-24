@@ -16208,3 +16208,11 @@ Error: %8$@";
 "Settings.Birthday.PrivacyHelpEveryone" = "Everyone can see your birthday. [Change >]()";
 "Settings.Birthday.PrivacyHelpContacts" = "Only your contacts can see your birthday. [Change >]()";
 "Settings.Birthday.PrivacyHelpNobody" = "Nobody can see your birthday. [Change >]()";
+
+"GroupPermission.NoSendReactions" = "no reactions";
+"Channel.BanUser.PermissionSendReactions" = "Send Reactions";
+
+"Chat.AdminAction.ToastReactionsDeletedTitleSingle" = "Reaction Deleted";
+"Chat.AdminAction.ToastReactionsDeletedTextSingle" = "Reaction Deleted.";
+"Chat.AdminAction.ToastReactionsDeletedTextMultiple" = "Messages Deleted.";
+"Chat.AdminAction.ToastMessagesAndReactionsDeletedText" = "Messages and reactions deleted.";

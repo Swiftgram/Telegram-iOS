@@ -20,6 +20,7 @@ import SafariServices
 import LocationUI
 import OpenInExternalAppUI
 import GalleryUI
+import TextFormat
 
 final class BrowserInstantPageContent: UIView, BrowserContent, UIScrollViewDelegate {
     private let context: AccountContext
@@ -67,6 +68,8 @@ final class BrowserInstantPageContent: UIView, BrowserContent, UIScrollViewDeleg
     var currentDetailsItems: [InstantPageDetailsItem] = []
     private var resolvedExternalMediaDimensions: [MediaId: PixelDimensions] = [:]
     private var pendingResolvedExternalMediaDimensions = Set<MediaId>()
+    private var codeHighlight: CachedMessageSyntaxHighlight?
+    private var codeHighlightState: (specs: [CachedMessageSyntaxHighlight.Spec], disposable: Disposable)?
     
     var currentAccessibilityAreas: [AccessibilityAreaNode] = []
     
@@ -90,6 +93,7 @@ final class BrowserInstantPageContent: UIView, BrowserContent, UIScrollViewDeleg
     private let resolveUrlDisposable = MetaDisposable()
     private let updateLayoutDisposable = MetaDisposable()
     private let updateExternalMediaDimensionsDisposable = MetaDisposable()
+    private let updateCodeHighlightDisposable = MetaDisposable()
         
     private let loadProgress = ValuePromise<CGFloat>(1.0, ignoreRepeated: true)
     private let readingProgress = ValuePromise<CGFloat>(0.0, ignoreRepeated: true)
@@ -190,6 +194,8 @@ final class BrowserInstantPageContent: UIView, BrowserContent, UIScrollViewDeleg
                 self.updateWebPage(result, anchor: self.initialAnchor)
             })
         }
+
+        self.updateCodeHighlight()
     }
     
     deinit {
@@ -199,6 +205,7 @@ final class BrowserInstantPageContent: UIView, BrowserContent, UIScrollViewDeleg
         self.resolveUrlDisposable.dispose()
         self.updateLayoutDisposable.dispose()
         self.updateExternalMediaDimensionsDisposable.dispose()
+        self.updateCodeHighlightDisposable.dispose()
     }
     
     required init?(coder: NSCoder) {
@@ -325,6 +332,7 @@ final class BrowserInstantPageContent: UIView, BrowserContent, UIScrollViewDeleg
                 }
             }
             self.currentLayout = nil
+            self.updateCodeHighlight()
             self.updatePageLayout()
             
             self.scrollNode.frame = CGRect(x: 0.0, y: 0.0, width: 1.0, height: 1.0)
@@ -490,7 +498,7 @@ final class BrowserInstantPageContent: UIView, BrowserContent, UIScrollViewDeleg
             return
         }
         
-        let currentLayout = instantPageLayoutForWebPage(webPage, instantPage: instantPage, userLocation: self.sourceLocation.userLocation, boundingWidth: size.width, safeInset: insets.left, strings: self.presentationData.strings, theme: self.theme, dateTimeFormat: self.presentationData.dateTimeFormat, webEmbedHeights: self.currentWebEmbedHeights)
+        let currentLayout = instantPageLayoutForWebPage(webPage, instantPage: instantPage, userLocation: self.sourceLocation.userLocation, boundingWidth: size.width, safeInset: insets.left, strings: self.presentationData.strings, theme: self.theme, dateTimeFormat: self.presentationData.dateTimeFormat, webEmbedHeights: self.currentWebEmbedHeights, cachedMessageSyntaxHighlight: self.codeHighlight)
         
         let currentLayoutTiles = instantPageTilesFromLayout(currentLayout, boundingWidth: size.width)
         
@@ -550,6 +558,96 @@ final class BrowserInstantPageContent: UIView, BrowserContent, UIScrollViewDeleg
         
         self.scrollNode.view.contentSize = currentLayout.contentSize
         self.scrollNodeFooter.frame = CGRect(origin: CGPoint(x: 0.0, y: currentLayout.contentSize.height), size: CGSize(width: size.width, height: 2000.0))
+    }
+
+    private func updateCodeHighlight() {
+        guard let instantPage = self.webPage?.instantPage else {
+            self.codeHighlight = nil
+            self.codeHighlightState = nil
+            self.updateCodeHighlightDisposable.set(nil)
+            return
+        }
+
+        let specs = syntaxHighlightSpecs(for: instantPage.blocks)
+        if let currentState = self.codeHighlightState, currentState.specs == specs {
+            return
+        }
+
+        if specs.isEmpty {
+            let hadHighlight = self.codeHighlight != nil
+            self.codeHighlight = nil
+            self.codeHighlightState = nil
+            self.updateCodeHighlightDisposable.set(nil)
+            if hadHighlight {
+                self.updatePageLayout()
+                self.updateVisibleItems(visibleBounds: self.scrollNode.view.bounds)
+            }
+            return
+        }
+
+        let disposable = MetaDisposable()
+        self.codeHighlightState = (specs, disposable)
+        self.updateCodeHighlightDisposable.set(disposable)
+        disposable.set((asyncStanaloneSyntaxHighlight(current: self.codeHighlight, specs: specs)
+        |> deliverOnMainQueue).start(next: { [weak self] result in
+            guard let self else {
+                return
+            }
+            if self.codeHighlight != result {
+                self.codeHighlight = result
+                self.updatePageLayout()
+                self.updateVisibleItems(visibleBounds: self.scrollNode.view.bounds)
+            }
+        }))
+    }
+
+    private func syntaxHighlightSpecs(for blocks: [InstantPageBlock]) -> [CachedMessageSyntaxHighlight.Spec] {
+        var specs: [CachedMessageSyntaxHighlight.Spec] = []
+        var seen = Set<CachedMessageSyntaxHighlight.Spec>()
+
+        func collect(blocks: [InstantPageBlock]) {
+            for block in blocks {
+                switch block {
+                case let .preformatted(text, language):
+                    guard let language = normalizedCodeBlockLanguage(language), !text.plainText.isEmpty else {
+                        continue
+                    }
+                    let spec = CachedMessageSyntaxHighlight.Spec(language: language, text: text.plainText)
+                    if seen.insert(spec).inserted {
+                        specs.append(spec)
+                    }
+                case let .cover(block):
+                    collect(blocks: [block])
+                case let .postEmbed(_, _, _, _, _, blocks, _):
+                    collect(blocks: blocks)
+                case let .collage(items, _):
+                    collect(blocks: items)
+                case let .slideshow(items, _):
+                    collect(blocks: items)
+                case let .details(_, blocks, _):
+                    collect(blocks: blocks)
+                case let .list(items, _):
+                    for item in items {
+                        if case let .blocks(blocks, _) = item {
+                            collect(blocks: blocks)
+                        }
+                    }
+                default:
+                    break
+                }
+            }
+        }
+
+        collect(blocks: blocks)
+        return specs
+    }
+
+    private func normalizedCodeBlockLanguage(_ language: String?) -> String? {
+        guard let language else {
+            return nil
+        }
+        let normalized = language.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return normalized.isEmpty ? nil : normalized
     }
     
     func updateVisibleItems(visibleBounds: CGRect, animated: Bool = false) {

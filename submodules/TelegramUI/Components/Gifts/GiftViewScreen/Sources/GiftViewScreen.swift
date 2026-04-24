@@ -620,7 +620,7 @@ private final class GiftViewSheetContent: CombinedComponent {
                     title: presentationData.strings.Gift_Convert_Title,
                     text: text,
                     actions: [
-                        TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_Cancel, action: {}),
+                        TextAlertAction(type: .genericAction, title: presentationData.strings.Common_Cancel, action: {}),
                         TextAlertAction(type: .defaultAction, title: presentationData.strings.Gift_Convert_Convert, action: { [weak self, weak controller, weak navigationController] in
                             guard let self else {
                                 return

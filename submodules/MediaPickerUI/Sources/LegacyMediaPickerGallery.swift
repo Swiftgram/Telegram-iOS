@@ -131,7 +131,7 @@ func presentLegacyMediaPickerGallery(
     transitionHostView: @escaping () -> UIView?,
     transitionView: @escaping (String) -> UIView?,
     completed: @escaping (TGMediaSelectableItem & TGMediaEditableItem, Bool, Int32?, @escaping () -> Void) -> Void,
-    presentSchedulePicker: @escaping (Bool, @escaping (Int32) -> Void) -> Void,
+    presentSchedulePicker: @escaping (Bool, @escaping (Int32, Bool) -> Void) -> Void,
     presentTimerPicker: @escaping (@escaping (Int32) -> Void) -> Void,
     getCaptionPanelView: @escaping () -> TGCaptionPanelView?,
     present: @escaping (ViewController, Any?) -> Void,
@@ -369,8 +369,8 @@ func presentLegacyMediaPickerGallery(
                         })
                     }
                     sheetController.schedule = {
-                        presentSchedulePicker(true, { time in
-                            completed(item.asset, false, time, {
+                        presentSchedulePicker(true, { time, silentPosting in
+                            completed(item.asset, silentPosting, time, {
                                 dismissImpl()
                             })
                         })

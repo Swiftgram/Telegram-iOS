@@ -4533,7 +4533,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                 TextAlertAction(type: .destructiveAction, title: actionText, action: {
                     self?.deletePeerChat(peer: peer._asPeer(), globally: delete)
                 }),
-                TextAlertAction(type: .defaultAction, title: strongSelf.presentationData.strings.Common_Cancel, action: {
+                TextAlertAction(type: .genericAction, title: strongSelf.presentationData.strings.Common_Cancel, action: {
                 })
             ], parseMarkdown: true), in: .window(.root))
         })

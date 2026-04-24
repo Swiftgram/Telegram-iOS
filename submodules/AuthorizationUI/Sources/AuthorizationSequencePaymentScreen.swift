@@ -168,7 +168,7 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
                                 title: nil,
                                 text: errorText,
                                 actions: [
-                                    TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {}),
+                                    TextAlertAction(type: .genericAction, title: presentationData.strings.Common_OK, action: {}),
                                     TextAlertAction(type: .defaultAction, title: presentationData.strings.Login_PhoneNumberHelp, action: { [weak self] in
                                         guard let self else {
                                             return

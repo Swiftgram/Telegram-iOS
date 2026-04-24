@@ -1407,6 +1407,7 @@ public final class EmojiPagerContentComponent: Component {
         private var vibrancyClippingView: UIView
         private var vibrancyEffectView: UIView?
         public private(set) var mirrorContentClippingView: UIView?
+        private let mirrorScrollViewClippingView: UIView
         private let mirrorContentScrollView: UIView
         private var warpView: WarpView?
         private var mirrorContentWarpView: WarpView?
@@ -1459,6 +1460,9 @@ public final class EmojiPagerContentComponent: Component {
         private var longTapRecognizer: UILongPressGestureRecognizer?
         
         private func hasSameContentId(_ lhs: ContentId?, _ rhs: ContentId?) -> Bool {
+            if let rhs, rhs.version < 2 {
+                return false
+            }
             return lhs?.id == rhs?.id
         }
         
@@ -1479,6 +1483,9 @@ public final class EmojiPagerContentComponent: Component {
             
             self.scrollViewClippingView = UIView()
             self.scrollViewClippingView.clipsToBounds = true
+            
+            self.mirrorScrollViewClippingView = UIView()
+            self.mirrorScrollViewClippingView.clipsToBounds = true
             
             self.mirrorContentScrollView = UIView()
             self.mirrorContentScrollView.layer.anchorPoint = CGPoint()
@@ -1518,6 +1525,8 @@ public final class EmojiPagerContentComponent: Component {
             self.scrollView.scrollsToTop = false
             self.addSubview(self.scrollViewClippingView)
             self.scrollViewClippingView.addSubview(self.scrollView)
+            
+            self.mirrorScrollViewClippingView.addSubview(self.mirrorContentScrollView)
             
             self.scrollView.addSubview(self.placeholdersContainerView)
             
@@ -1658,6 +1667,16 @@ public final class EmojiPagerContentComponent: Component {
             fatalError("init(coder:) has not been implemented")
         }
         
+        private var mirrorOverlayContainerView: UIView? {
+            if let mirrorContentClippingView = self.mirrorContentClippingView {
+                return mirrorContentClippingView
+            } else if let vibrancyEffectView = self.vibrancyEffectView {
+                return vibrancyEffectView
+            } else {
+                return nil
+            }
+        }
+        
         func updateIsWarpEnabled(isEnabled: Bool) {
             if isEnabled {
                 if self.warpView == nil {
@@ -1671,6 +1690,7 @@ public final class EmojiPagerContentComponent: Component {
                     let mirrorContentWarpView = WarpView(frame: CGRect())
                     self.mirrorContentWarpView = mirrorContentWarpView
                     
+                    self.mirrorScrollViewClippingView.addSubview(mirrorContentWarpView)
                     mirrorContentWarpView.contentView.addSubview(self.mirrorContentScrollView)
                 }
             } else {
@@ -1683,12 +1703,7 @@ public final class EmojiPagerContentComponent: Component {
                 if let mirrorContentWarpView = self.mirrorContentWarpView {
                     self.mirrorContentWarpView = nil
                     
-                    if let mirrorContentClippingView = self.mirrorContentClippingView {
-                        mirrorContentClippingView.addSubview(self.mirrorContentScrollView)
-                    } else if let vibrancyEffectView = self.vibrancyEffectView {
-                        vibrancyEffectView.addSubview(self.mirrorContentScrollView)
-                    }
-                    
+                    self.mirrorScrollViewClippingView.addSubview(self.mirrorContentScrollView)
                     mirrorContentWarpView.removeFromSuperview()
                 }
             }
@@ -4117,12 +4132,11 @@ public final class EmojiPagerContentComponent: Component {
                     mirrorContentClippingView = UIView()
                     mirrorContentClippingView.clipsToBounds = false
                     self.mirrorContentClippingView = mirrorContentClippingView
-                    
-                    if let mirrorContentWarpView = self.mirrorContentWarpView {
-                        mirrorContentClippingView.addSubview(mirrorContentWarpView)
-                    } else {
-                        mirrorContentClippingView.addSubview(self.mirrorContentScrollView)
-                    }
+                }
+                if self.mirrorScrollViewClippingView.superview !== mirrorContentClippingView {
+                    mirrorContentClippingView.insertSubview(self.mirrorScrollViewClippingView, at: 0)
+                } else {
+                    mirrorContentClippingView.sendSubviewToBack(self.mirrorScrollViewClippingView)
                 }
                 
                 let clippingFrame = CGRect(origin: CGPoint(x: 0.0, y: pagerEnvironment.containerInsets.top), size: CGSize(width: backgroundFrame.width, height: backgroundFrame.height))
@@ -4146,8 +4160,12 @@ public final class EmojiPagerContentComponent: Component {
                     }
                     self.vibrancyEffectView = vibrancyEffectView
                     self.backgroundTintView.mask = vibrancyEffectView
-                    self.vibrancyClippingView.addSubview(self.mirrorContentScrollView)
                     vibrancyEffectView.addSubview(self.vibrancyClippingView)
+                }
+                if self.mirrorScrollViewClippingView.superview !== self.vibrancyClippingView {
+                    self.vibrancyClippingView.insertSubview(self.mirrorScrollViewClippingView, at: 0)
+                } else {
+                    self.vibrancyClippingView.sendSubviewToBack(self.mirrorScrollViewClippingView)
                 }
             }
             
@@ -4551,6 +4569,9 @@ public final class EmojiPagerContentComponent: Component {
             transition.setFrame(view: self.vibrancyClippingView, frame: CGRect(origin: CGPoint(x: 0.0, y: self.isSearchActivated ? clippingTopInset : 0.0), size: availableSize))
             transition.setBounds(view: self.vibrancyClippingView, bounds: CGRect(origin: CGPoint(x: 0.0, y: self.isSearchActivated ? clippingTopInset : 0.0), size: availableSize))
             
+            transition.setFrame(view: self.mirrorScrollViewClippingView, frame: CGRect(origin: CGPoint(x: 0.0, y: self.isSearchActivated ? clippingTopInset : 0.0), size: availableSize))
+            transition.setBounds(view: self.mirrorScrollViewClippingView, bounds: CGRect(origin: CGPoint(x: 0.0, y: self.isSearchActivated ? clippingTopInset : 0.0), size: availableSize))
+            
             let previousSize = self.scrollView.bounds.size
             self.scrollView.bounds = CGRect(origin: self.scrollView.bounds.origin, size: scrollSize)
 
@@ -4714,11 +4735,9 @@ public final class EmojiPagerContentComponent: Component {
                     if self.isSearchActivated {
                         if visibleSearchHeader.superview != self {
                             self.addSubview(visibleSearchHeader)
-                            if self.mirrorContentClippingView != nil {
-                                self.mirrorContentClippingView?.addSubview(visibleSearchHeader.tintContainerView)
-                            } else {
-                                self.mirrorContentScrollView.superview?.superview?.addSubview(visibleSearchHeader.tintContainerView)
-                            }
+                        }
+                        if let mirrorOverlayContainerView = self.mirrorOverlayContainerView, visibleSearchHeader.tintContainerView.superview !== mirrorOverlayContainerView {
+                            mirrorOverlayContainerView.addSubview(visibleSearchHeader.tintContainerView)
                         }
                     } else {
                         /*if useOpaqueTheme {
@@ -4779,7 +4798,7 @@ public final class EmojiPagerContentComponent: Component {
                     self.visibleSearchHeader = visibleSearchHeader
                     if self.isSearchActivated {
                         self.addSubview(visibleSearchHeader)
-                        self.mirrorContentClippingView?.addSubview(visibleSearchHeader.tintContainerView)
+                        self.mirrorOverlayContainerView?.addSubview(visibleSearchHeader.tintContainerView)
                     } else {
                         self.scrollView.addSubview(visibleSearchHeader)
                         self.mirrorContentScrollView.addSubview(visibleSearchHeader.tintContainerView)

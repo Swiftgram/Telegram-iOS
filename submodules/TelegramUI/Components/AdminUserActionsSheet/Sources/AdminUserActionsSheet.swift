@@ -29,6 +29,7 @@ struct MediaRight: OptionSet, Hashable {
     static let videoMessages = MediaRight(rawValue: 1 << 6)
     static let links = MediaRight(rawValue: 1 << 7)
     static let polls = MediaRight(rawValue: 1 << 8)
+    static let reactions = MediaRight(rawValue: 1 << 9)
 }
 
 extension MediaRight {
@@ -75,7 +76,8 @@ private func rightsFromBannedRights(_ rights: TelegramChatBannedRightsFlags) -> 
         .voiceMessages,
         .videoMessages,
         .links,
-        .polls
+        .polls,
+        .reactions
     ]
     
     if rights.contains(.banSendText) {
@@ -168,6 +170,9 @@ private func rightFlagsFromRights(participantRights: ParticipantRight, mediaRigh
     if !mediaRights.contains(.polls) {
         result.insert(.banSendPolls)
     }
+    if !mediaRights.contains(.reactions) {
+        result.insert(.banSendReactions)
+    }
     
     return result
 }
@@ -181,7 +186,8 @@ private let allMediaRightItems: [MediaRight] = [
     .voiceMessages,
     .videoMessages,
     .links,
-    .polls
+    .polls,
+    .reactions
 ]
 
 private enum AdminUserActionOptionSection {
@@ -821,6 +827,8 @@ private final class AdminUserActionsContentComponent: Component {
                                 mediaItemTitle = component.strings.Channel_BanUser_PermissionEmbedLinks
                             case .polls:
                                 mediaItemTitle = component.strings.Channel_BanUser_PermissionSendPolls
+                            case .reactions:
+                                mediaItemTitle = component.strings.Channel_BanUser_PermissionSendReactions
                             default:
                                 continue mediaRightsLoop
                             }
