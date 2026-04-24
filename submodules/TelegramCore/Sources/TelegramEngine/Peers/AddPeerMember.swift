@@ -239,16 +239,16 @@ func _internal_addChannelMember(account: Account, peerId: PeerId, memberId: Peer
                                     return cachedData
                                 }
                             })
-                            var peers: [PeerId: Peer] = [:]
+                            var peers: [EnginePeer.Id: EnginePeer] = [:]
                             var presences: [PeerId: PeerPresence] = [:]
-                            peers[memberPeer.id] = memberPeer
+                            peers[memberPeer.id] = EnginePeer(memberPeer)
                             if let presence = transaction.getPeerPresence(peerId: memberPeer.id) {
                                 presences[memberPeer.id] = presence
                             }
                             if case let .member(_, _, maybeAdminInfo, _, _, _) = updatedParticipant {
                                 if let adminInfo = maybeAdminInfo {
                                     if let peer = transaction.getPeer(adminInfo.promotedBy) {
-                                        peers[peer.id] = peer
+                                        peers[peer.id] = EnginePeer(peer)
                                     }
                                 }
                             }

@@ -8,10 +8,10 @@ import MtProtoKit
 public struct RenderedChannelParticipant: Equatable {
     public let participant: ChannelParticipant
     public let peer: EnginePeer
-    public let peers: [PeerId: Peer]
+    public let peers: [EnginePeer.Id: EnginePeer]
     public let presences: [PeerId: PeerPresence]
 
-    public init(participant: ChannelParticipant, peer: EnginePeer, peers: [PeerId: Peer] = [:], presences: [PeerId: PeerPresence] = [:]) {
+    public init(participant: ChannelParticipant, peer: EnginePeer, peers: [EnginePeer.Id: EnginePeer] = [:], presences: [PeerId: PeerPresence] = [:]) {
         self.participant = participant
         self.peer = peer
         self.peers = peers

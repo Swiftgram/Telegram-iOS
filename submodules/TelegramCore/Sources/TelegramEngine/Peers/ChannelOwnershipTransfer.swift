@@ -167,13 +167,13 @@ func _internal_updateChatOwnership(account: Account, peerId: PeerId, memberId: P
                                     return cachedData
                                 }
                             })
-                            var peers: [PeerId: Peer] = [:]
+                            var peers: [EnginePeer.Id: EnginePeer] = [:]
                             var presences: [PeerId: PeerPresence] = [:]
-                            peers[accountUser.id] = accountUser
+                            peers[accountUser.id] = EnginePeer(accountUser)
                             if let presence = transaction.getPeerPresence(peerId: accountUser.id) {
                                 presences[accountUser.id] = presence
                             }
-                            peers[user.id] = user
+                            peers[user.id] = EnginePeer(user)
                             if let presence = transaction.getPeerPresence(peerId: user.id) {
                                 presences[user.id] = presence
                             }

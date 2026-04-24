@@ -670,7 +670,7 @@ struct ChatRecentActionsEntry: Comparable, Identifiable {
             }
             peers[peer.id] = peer
             for (_, peer) in participant.peers {
-                peers[peer.id] = peer
+                peers[peer.id] = peer._asPeer()
             }
             peers[participant.peer.id] = participant.peer._asPeer()
             
@@ -2270,7 +2270,7 @@ struct ChatRecentActionsEntry: Comparable, Identifiable {
             }
             peers[peer.id] = peer
             for (_, peer) in new.peers {
-                peers[peer.id] = peer
+                peers[peer.id] = peer._asPeer()
             }
             peers[new.peer.id] = new.peer._asPeer()
             
