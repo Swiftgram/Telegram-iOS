@@ -1244,9 +1244,9 @@ public final class ChatMessageTransitionNodeImpl: ASDisplayNode, ChatMessageTran
     }
 
     func addExternalOffset(offset: CGFloat, transition: ContainedViewLayoutTransition, itemNode: ListViewItemNode?, isRotated: Bool) {
-        for animatingItemNode in self.animatingItemNodes {
+        /*for animatingItemNode in self.animatingItemNodes {
             animatingItemNode.addExternalOffset(offset: offset, transition: transition, itemNode: itemNode)
-        }
+        }*/
         if itemNode == nil {
             for decorationItemNode in self.decorationItemNodes {
                 decorationItemNode.addExternalOffset(offset: offset, transition: transition)
@@ -1267,9 +1267,9 @@ public final class ChatMessageTransitionNodeImpl: ASDisplayNode, ChatMessageTran
     }
 
     func addContentOffset(offset: CGFloat, itemNode: ListViewItemNode?) {
-        for animatingItemNode in self.animatingItemNodes {
+        /*for animatingItemNode in self.animatingItemNodes {
             animatingItemNode.addContentOffset(offset: offset, itemNode: itemNode)
-        }
+        }*/
         if itemNode == nil {
             for decorationItemNode in self.decorationItemNodes {
                 decorationItemNode.addContentOffset(offset: offset)
