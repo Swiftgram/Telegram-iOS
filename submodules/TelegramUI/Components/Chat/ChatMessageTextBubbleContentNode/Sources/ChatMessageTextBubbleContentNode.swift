@@ -798,7 +798,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                 textFrameWithoutInsets = textFrameWithoutInsets.offsetBy(dx: layoutConstants.text.bubbleInsets.left, dy: topInset)
                 
                 var suggestedBoundingWidth: CGFloat = textFrameWithoutInsets.width
-                if let statusSuggestedWidthAndContinue = statusSuggestedWidthAndContinue {
+                if let statusSuggestedWidthAndContinue = statusSuggestedWidthAndContinue, !hasDraft {
                     suggestedBoundingWidth = max(suggestedBoundingWidth, statusSuggestedWidthAndContinue.0)
                 }
                 let sideInsets = layoutConstants.text.bubbleInsets.left + layoutConstants.text.bubbleInsets.right
@@ -810,7 +810,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     let statusSizeAndApply = statusSuggestedWidthAndContinue?.1(boundingWidth - sideInsets)
                     
                     boundingSize = textFrameWithoutInsets.size
-                    if let statusSizeAndApply = statusSizeAndApply {
+                    if let statusSizeAndApply = statusSizeAndApply, !hasDraft {
                         boundingSize.height += statusSizeAndApply.0.height
                     }
                     

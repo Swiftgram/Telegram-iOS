@@ -1177,6 +1177,7 @@ public final class ChatHistoryListNodeImpl: ListViewImpl, ChatHistoryNode, ChatH
             }
             self.isInteractivelyScrollingValue = true
             self.isInteractivelyScrollingPromise.set(true)
+            //self.pinToTopStableId = nil
             self.beganDragging?()
         }
 
@@ -2150,7 +2151,7 @@ public final class ChatHistoryListNodeImpl: ListViewImpl, ChatHistoryNode, ChatH
                         if message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
                             for j in (0 ..< i).reversed() {
                                 let otherMessage = view.entries[j].message
-                                if !otherMessage.effectivelyIncoming(context.account.peerId) {
+                                if !otherMessage.effectivelyIncoming(context.account.peerId) && otherMessage.id.namespace == Namespaces.Message.Cloud {
                                     if strongSelf.pinToTopStableId != otherMessage.stableId {
                                         strongSelf.pinToTopStableId = otherMessage.stableId
                                         scrollToPinToTopStableId = true

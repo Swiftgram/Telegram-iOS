@@ -1106,6 +1106,9 @@ public final class NavigationBarImpl: ASDisplayNode, NavigationBar {
                 
                 titleViewTransition.updateFrame(view: titleView, frame: titleFrame)
             } else {
+                leftTitleInset = max(leftTitleInset, rightTitleInset)
+                rightTitleInset = leftTitleInset
+                
                 let titleSize = CGSize(width: max(1.0, size.width - leftTitleInset - rightTitleInset), height: nominalHeight)
                 var titleFrame = CGRect(origin: CGPoint(x: floor((size.width - titleSize.width) / 2.0), y: contentVerticalOrigin + floorToScreenPixels((nominalHeight - titleSize.height) / 2.0)), size: titleSize)
                 if titleFrame.origin.x + titleFrame.width > size.width - rightTitleInset {

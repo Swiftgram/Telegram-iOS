@@ -220,6 +220,10 @@ public final class ResizableSheetComponent<ChildEnvironmentType: Sendable & Equa
             }
             return false
         }
+        
+        public var contentViewValue: UIView? {
+            return self.contentView.view
+        }
 
         private let dimView: UIView
         public let containerView: UIView

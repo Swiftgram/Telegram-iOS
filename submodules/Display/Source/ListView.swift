@@ -3319,7 +3319,7 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
                         animation.completion = { [weak self] _ in
                             self?.updateItemNodesVisibilities(onlyPositive: false)
                         }
-                        self.layer.add(animation, forKey: nil)
+                        self.layer.add(animation, forKey: "animation-\(ObjectIdentifier(animation))")
                         if !completeOffset.isZero {
                             for itemNode in self.itemNodes {
                                 itemNode.applyAbsoluteOffset(value: CGPoint(x: 0.0, y: -completeOffset), animationCurve: animationCurve, duration: animationDuration)
@@ -3747,7 +3747,7 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
                                 headerNode.removeFromSupernode()
                             }
                         }
-                        self.layer.add(animation, forKey: nil)
+                        self.layer.add(animation, forKey: "animation-\(ObjectIdentifier(animation))")
                     }
 
                     for itemNode in self.itemNodes {
