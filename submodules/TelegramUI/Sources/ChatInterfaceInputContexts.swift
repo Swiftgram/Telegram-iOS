@@ -220,7 +220,7 @@ func inputTextPanelStateForChatPresentationInterfaceState(_ chatPresentationInte
                 var stickersEnabled = true
                 var stickersAreEmoji = !isTextEmpty
                 if let peer = chatPresentationInterfaceState.renderedPeer?.peer as? TelegramChannel {
-                    if isTextEmpty, case .broadcast = peer.info, canSendMessagesToPeer(peer) {
+                    if isTextEmpty, case .broadcast = peer.info, canSendMessagesToPeer(EnginePeer(peer)) {
                         accessoryItems.append(.silentPost(chatPresentationInterfaceState.interfaceState.silentPosting))
                     }
                     if let boostsToUnrestrict = chatPresentationInterfaceState.boostsToUnrestrict, boostsToUnrestrict > 0 {

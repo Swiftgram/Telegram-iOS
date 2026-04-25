@@ -6,7 +6,8 @@ import Postbox
 private final class LinkHelperClass: NSObject {
 }
 
-public func canSendMessagesToPeer(_ peer: Peer, ignoreDefault: Bool = false) -> Bool {
+public func canSendMessagesToPeer(_ peer: EnginePeer, ignoreDefault: Bool = false) -> Bool {
+    let peer = peer._asPeer()
     if let peer = peer as? TelegramUser, peer.addressName == "replies" {
         return false
     } else if peer is TelegramUser || peer is TelegramGroup {

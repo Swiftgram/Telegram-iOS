@@ -60,13 +60,20 @@ public func presentAddMembersImpl(context: AccountContext, updatedPresentationDa
             contactsController.navigationPresentation = .modal
         
         confirmationImpl = { [weak contactsController] peerId in
-            return context.account.postbox.loadedPeerWithId(peerId)
+            return context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
+            |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                if let peer {
+                    return .single(peer)
+                } else {
+                    return .never()
+                }
+            }
             |> deliverOnMainQueue
             |> mapToSignal { peer in
                 let result = ValuePromise<Bool>()
                 let presentationData = context.sharedContext.currentPresentationData.with { $0 }
                 if let contactsController = contactsController {
-                    let alertController = textAlertController(context: context, updatedPresentationData: updatedPresentationData, title: nil, text: presentationData.strings.GroupInfo_AddParticipantConfirmation(EnginePeer(peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)).string, actions: [
+                    let alertController = textAlertController(context: context, updatedPresentationData: updatedPresentationData, title: nil, text: presentationData.strings.GroupInfo_AddParticipantConfirmation(peer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)).string, actions: [
                         TextAlertAction(type: .genericAction, title: presentationData.strings.Common_No, action: {
                             result.set(false)
                         }),

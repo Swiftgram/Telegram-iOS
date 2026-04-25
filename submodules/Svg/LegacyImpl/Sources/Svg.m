@@ -302,7 +302,7 @@ void renderShape(NSVGshape *shape, CGContextRef context, UIColor *foregroundColo
     }
 }
 
-UIImage * _Nullable drawSvgImage(NSData * _Nonnull data, CGSize size, UIColor *backgroundColor, UIColor *foregroundColor, CGFloat canvasScale, bool opaque) {
+UIImage * _Nullable drawSvgImageImpl(NSData * _Nonnull data, CGSize size, UIColor *backgroundColor, UIColor *foregroundColor, CGFloat canvasScale, bool opaque) {
     if (!data || data.length == 0) return nil;
     
     NSXMLParser *parser = [[NSXMLParser alloc] initWithData:data];

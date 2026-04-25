@@ -285,21 +285,39 @@ final class TextProcessingContentComponent: Component {
                 return
             }
             
-            environment.controller()?.push(textAlertController(
-                context: component.context,
-                title: "Delete Style",
-                text: "Are you sure you want to delete this style? It will be removed for everyone who installed it.",
-                actions: [
-                    TextAlertAction(type: .genericAction, title: environment.strings.Common_Cancel, action: {}),
-                    TextAlertAction(type: .destructiveAction, title: environment.strings.Common_Delete, action: { [weak self] in
-                        guard let self, let component = self.component else {
-                            return
-                        }
-                        let _ = component.context.engine.messages.deleteAITextStyle(id: style.id, accessHash: style.accessHash).startStandalone()
-                        component.styleDeleted(id.id)
-                    }),
-                ]
-            ))
+            if style.isCreator {
+                environment.controller()?.push(textAlertController(
+                    context: component.context,
+                    title: "Delete Style",
+                    text: "Are you sure you want to delete this style? It will be removed for everyone who installed it.",
+                    actions: [
+                        TextAlertAction(type: .genericAction, title: environment.strings.Common_Cancel, action: {}),
+                        TextAlertAction(type: .destructiveAction, title: environment.strings.Common_Delete, action: { [weak self] in
+                            guard let self, let component = self.component else {
+                                return
+                            }
+                            let _ = component.context.engine.messages.deleteAITextStyle(id: style.id, accessHash: style.accessHash).startStandalone()
+                            component.styleDeleted(id.id)
+                        }),
+                    ]
+                ))
+            } else {
+                environment.controller()?.push(textAlertController(
+                    context: component.context,
+                    title: "Delete Style",
+                    text: "Are you sure you want to delete this style?",
+                    actions: [
+                        TextAlertAction(type: .genericAction, title: environment.strings.Common_Cancel, action: {}),
+                        TextAlertAction(type: .destructiveAction, title: environment.strings.Common_Delete, action: { [weak self] in
+                            guard let self, let component = self.component else {
+                                return
+                            }
+                            let _ = component.context.engine.messages.unsaveAITextStyle(id: style.id, accessHash: style.accessHash).startStandalone()
+                            component.styleDeleted(id.id)
+                        }),
+                    ]
+                ))
+            }
         }
         
         private func openStyleContextMenu(id: TelegramComposeAIMessageMode.StyleReference, gesture:  ContextGesture, sourceView: ContextExtractedContentContainingView) {
@@ -749,6 +767,53 @@ final class TextProcessingContentComponent: Component {
                             guard let component = self.component, let environment = self.environment else {
                                 return
                             }
+                            
+                            let hasPremium = await (component.context.engine.data.get(
+                                TelegramEngine.EngineData.Item.Peer.Peer(id: component.context.account.peerId)
+                            )
+                            |> map { peer -> Bool in
+                                guard case let .user(user) = peer else {
+                                    return false
+                                }
+                                return user.isPremium
+                            }).get()
+                            let userLimits = await component.context.engine.data.get(
+                                TelegramEngine.EngineData.Item.Configuration.UserLimits(isPremium: hasPremium)
+                            ).get()
+                            
+                            let maxStyles = Int(userLimits.maxOwnedAITextStyles)
+                                                        
+                            if component.styles.filter({ $0.isAuthor }).count >= maxStyles {
+                                if !hasPremium {
+                                    //TODO:localize
+                                    let context = component.context
+                                    var replaceImpl: ((ViewController) -> Void)?
+                                    let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .aiTools, forceDark: false, action: {
+                                        let controller = context.sharedContext.makePremiumIntroController(context: context, source: .storiesStealthMode, forceDark: false, dismissed: nil)
+                                        replaceImpl?(controller)
+                                    }, dismissed: nil)
+                                    replaceImpl = { [weak self, weak controller] c in
+                                        controller?.dismiss(animated: true, completion: {
+                                            guard let self else {
+                                                return
+                                            }
+                                            self.environment?.controller()?.push(c)
+                                        })
+                                    }
+                                    environment.controller()?.push(controller)
+                                } else {
+                                    environment.controller()?.push(textAlertController(
+                                        context: component.context,
+                                        title: "Too Many Styles",
+                                        text: "Please delete some of your saved styles to create a new one.",
+                                        actions: [
+                                            TextAlertAction(type: .defaultAction, title: environment.strings.Common_OK, action: {}),
+                                        ]
+                                    ))
+                                }
+                                return
+                            }
+                            
                             environment.controller()?.push(await TextStyleEditScreen(
                                 context: component.context,
                                 mode: .create,
@@ -792,7 +857,7 @@ final class TextProcessingContentComponent: Component {
                             guard let context, let navigationController else {
                                 return
                             }
-                            if let peerInfoController = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+                            if let peerInfoController = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                                 navigationController.pushViewController(peerInfoController)
                             }
                         })
@@ -1101,7 +1166,6 @@ private final class TextProcessingSheetComponent: Component {
     final class View: UIView {
         private let sheet = ComponentView<(ViewControllerComponentContainer.Environment, ResizableSheetComponentEnvironment)>()
         private var toast: ComponentView<Empty>?
-        private var languageSelectionMenu: ComponentView<Empty>?
         private let animateOut = ActionSlot<Action<Void>>()
         private let contentExternalState = TextProcessingContentComponent.ExternalState()
         
@@ -1123,6 +1187,10 @@ private final class TextProcessingSheetComponent: Component {
             }
         }
         private var languageSelectionMenuData: LanguageSelectionMenuData?
+        private var languageSelectionMenu: ComponentView<Empty>?
+        
+        private var styleCreatedToastData: (timer: Foundation.Timer, emojiFile: TelegramMediaFile, style: TelegramComposeAIMessageMode.CloudStyle.Custom)?
+        private var styleCreatedToast: ComponentView<Empty>?
 
         private var component: TextProcessingSheetComponent?
         private var environment: ViewControllerComponentContainer.Environment?
@@ -1142,6 +1210,7 @@ private final class TextProcessingSheetComponent: Component {
         
         deinit {
             self.actionDisposable?.dispose()
+            self.styleCreatedToastData?.timer.invalidate()
         }
         
         private func displayLongPressSendMenu(sourceSendButton: UIView) {
@@ -1433,6 +1502,21 @@ private final class TextProcessingSheetComponent: Component {
                                         TelegramEngine.EngineData.Item.Peer.Peer(id: authorId)
                                     ).get()
                                 }
+                                
+                                if case let .custom(style) = style.content, let emojiFileId = style.emojiFileId {
+                                    let emojiFile = await component.context.engine.stickers.resolveInlineStickersLocal(fileIds: [emojiFileId]).get().first?.value
+                                    
+                                    if let emojiFile {
+                                        self.styleCreatedToastData = (Foundation.Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false, block: { [weak self] _ in
+                                            guard let self else {
+                                                return
+                                            }
+                                            self.styleCreatedToastData = nil
+                                            self.state?.updated(transition: .spring(duration: 0.4))
+                                        }), emojiFile, style)
+                                    }
+                                }
+                                
                                 self.styles.insert(TextProcessingScreen.Style(cloudStyle: style, authorPeer: authorPeer), at: 0)
                                 self.state?.updated(transition: .spring(duration: 0.4))
                             }
@@ -1632,6 +1716,73 @@ private final class TextProcessingSheetComponent: Component {
                     if let toastView = toast.view {
                         toastView.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.25, removeOnCompletion: false, completion: { [weak toastView] _ in
                             toastView?.removeFromSuperview()
+                        })
+                    }
+                }
+            }
+            
+            if let styleCreatedToastData = self.styleCreatedToastData, !self.contentExternalState.nonPremiumFloodTriggered {
+                let sideInset: CGFloat = 8.0
+                
+                let styleCreatedToast: ComponentView<Empty>
+                var styleCreatedToastTransition = transition
+                if let current = self.styleCreatedToast {
+                    styleCreatedToast = current
+                } else {
+                    styleCreatedToastTransition = styleCreatedToastTransition.withAnimation(.none)
+                    styleCreatedToast = ComponentView()
+                    self.styleCreatedToast = styleCreatedToast
+                }
+                let body = MarkdownAttributeSet(font: Font.regular(14.0), textColor: .white)
+                let bold = MarkdownAttributeSet(font: Font.semibold(14.0), textColor: .white)
+                let styleCreatedToastSize = styleCreatedToast.update(
+                    transition: styleCreatedToastTransition,
+                    component: AnyComponent(ToastContentComponent(
+                        icon: AnyComponent(EmojiStatusComponent(
+                            context: component.context,
+                            animationCache: component.context.animationCache,
+                            animationRenderer: component.context.animationRenderer,
+                            content: .animation(
+                                content: .file(file: styleCreatedToastData.emojiFile),
+                                size: CGSize(width: 32.0, height: 32.0),
+                                placeholderColor: environmentValue.theme.list.mediaPlaceholderColor,
+                                themeColor: environmentValue.theme.list.itemPrimaryTextColor,
+                                loopMode: .count(1)
+                            ),
+                            size: CGSize(width: 32.0, height: 32.0),
+                            isVisibleForAnimations: true,
+                            action: nil
+                        )),
+                        content: AnyComponent(VStack([
+                            AnyComponentWithIdentity(id: 0, component: AnyComponent(MultilineTextComponent(
+                                text: .plain(NSAttributedString(string: "\(styleCreatedToastData.style.title) style created!", font: Font.semibold(14.0), textColor: .white)),
+                            ))),
+                            AnyComponentWithIdentity(id: 1, component: AnyComponent(MultilineTextComponent(
+                                text: .markdown(text: "Press and hold a style to edit or share the link.", attributes: MarkdownAttributes(body: body, bold: bold, link: body, linkAttribute: { _ in nil })),
+                                maximumNumberOfLines: 0
+                            )))
+                        ], alignment: .left, spacing: 6.0)),
+                        insets: UIEdgeInsets(top: 10.0, left: 12.0, bottom: 10.0, right: 10.0),
+                        iconSpacing: 12.0
+                    )),
+                    environment: {},
+                    containerSize: CGSize(width: availableSize.width - sideInset * 2.0, height: availableSize.height)
+                )
+                if let styleCreatedToastView = styleCreatedToast.view {
+                    if styleCreatedToastView.superview == nil, let sheetView = self.sheet.view as? ResizableSheetComponent<ViewControllerComponentContainer.Environment>.View {
+                        sheetView.containerView.addSubview(styleCreatedToastView)
+                        if !transition.animation.isImmediate {
+                            styleCreatedToastView.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.25)
+                        }
+                    }
+                    styleCreatedToastTransition.setFrame(view: styleCreatedToastView, frame: CGRect(origin: CGPoint(x: sideInset, y: availableSize.height - 94.0 - styleCreatedToastSize.height), size: styleCreatedToastSize))
+                }
+            } else {
+                if let styleCreatedToast = self.styleCreatedToast {
+                    self.styleCreatedToast = nil
+                    if let styleCreatedToastView = styleCreatedToast.view {
+                        styleCreatedToastView.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.25, removeOnCompletion: false, completion: { [weak styleCreatedToastView] _ in
+                            styleCreatedToastView?.removeFromSuperview()
                         })
                     }
                 }

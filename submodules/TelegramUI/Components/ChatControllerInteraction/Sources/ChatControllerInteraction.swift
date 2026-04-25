@@ -1,9 +1,7 @@
 import Foundation
 import UIKit
-import Postbox
 import SwiftSignalKit
 import AsyncDisplayKit
-import Postbox
 import TelegramCore
 import Display
 import TelegramUIPreferences
@@ -18,6 +16,7 @@ import TextFormat
 import WallpaperBackgroundNode
 import AnimationCache
 import MultiAnimationRenderer
+import Postbox
 
 public struct ChatInterfaceHighlightedState: Equatable {
     public struct Quote: Equatable {

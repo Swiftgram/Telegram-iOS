@@ -133,10 +133,10 @@ final class InstantPageImageNode: ASDisplayNode, InstantPageNode, InstantPageExt
                 })
                 
                 if interactive {
-                    self.statusDisposable.set((context.account.postbox.mediaBox.resourceStatus(largest.resource) |> deliverOnMainQueue).start(next: { [weak self] status in
+                    self.statusDisposable.set((context.engine.resources.status(resource: EngineMediaResource(largest.resource)) |> deliverOnMainQueue).start(next: { [weak self] status in
                         displayLinkDispatcher.dispatch {
                             if let strongSelf = self {
-                                strongSelf.fetchStatus = EngineMediaResource.FetchStatus(status)
+                                strongSelf.fetchStatus = status
                                 strongSelf.updateFetchStatus()
                             }
                         }

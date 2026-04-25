@@ -152,6 +152,53 @@ final class TextStyleEditContentComponent: Component {
                 }
             }
         }
+        
+        func activateEmojiSelection() {
+            guard let component = self.component else {
+                return
+            }
+            guard let iconBackgroundView = self.iconBackground.view else {
+                return
+            }
+            self.environment?.controller()?.present(component.context.sharedContext.makeEmojiStatusSelectionController(
+                context: component.context,
+                mode: .backgroundSelection(completion: { [weak self] file in
+                    guard let self, let component = self.component else {
+                        return
+                    }
+                    component.externalState.emojiFile = file
+                    self.state?.updated(transition: .immediate)
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self else {
+                            return
+                        }
+                        self.state?.updated(transition: .immediate)
+                    }
+                }),
+                sourceView: iconBackgroundView,
+                emojiContent: EmojiPagerContentComponent.emojiInputData(
+                    context: component.context,
+                    animationCache: component.context.animationCache,
+                    animationRenderer: component.context.animationRenderer,
+                    isStandalone: false,
+                    subject: .emoji,
+                    hasTrending: false,
+                    topReactionItems: [],
+                    areUnicodeEmojiEnabled: false,
+                    areCustomEmojiEnabled: true,
+                    chatPeerId: component.context.account.peerId,
+                    selectedItems: Set()
+                ) |> map { $0 },
+                currentSelection: nil,
+                color: nil,
+                destinationItemView: { [weak self] in
+                    guard let self else {
+                        return nil
+                    }
+                    return self.emojiIcon?.view
+                }
+            ), in: .window(.root))
+        }
 
         func update(component: TextStyleEditContentComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<ViewControllerComponentContainer.Environment>, transition: ComponentTransition) -> CGSize {
             self.isUpdating = true
@@ -195,50 +242,10 @@ final class TextStyleEditContentComponent: Component {
                         smoothCorners: false
                     )),
                     action: { [weak self] in
-                        guard let self, let component = self.component else {
+                        guard let self else {
                             return
                         }
-                        guard let iconBackgroundView = self.iconBackground.view else {
-                            return
-                        }
-                        self.environment?.controller()?.present(component.context.sharedContext.makeEmojiStatusSelectionController(
-                            context: component.context,
-                            mode: .backgroundSelection(completion: { [weak self] file in
-                                guard let self, let component = self.component else {
-                                    return
-                                }
-                                component.externalState.emojiFile = file
-                                self.state?.updated(transition: .immediate)
-                                DispatchQueue.main.async { [weak self] in
-                                    guard let self else {
-                                        return
-                                    }
-                                    self.state?.updated(transition: .immediate)
-                                }
-                            }),
-                            sourceView: iconBackgroundView,
-                            emojiContent: EmojiPagerContentComponent.emojiInputData(
-                                context: component.context,
-                                animationCache: component.context.animationCache,
-                                animationRenderer: component.context.animationRenderer,
-                                isStandalone: false,
-                                subject: .emoji,
-                                hasTrending: false,
-                                topReactionItems: [],
-                                areUnicodeEmojiEnabled: false,
-                                areCustomEmojiEnabled: true,
-                                chatPeerId: component.context.account.peerId,
-                                selectedItems: Set()
-                            ) |> map { $0 },
-                            currentSelection: nil,
-                            color: nil,
-                            destinationItemView: { [weak self] in
-                                guard let self else {
-                                    return nil
-                                }
-                                return self.emojiIcon?.view
-                            }
-                        ), in: .window(.root))
+                        self.activateEmojiSelection()
                     },
                     animateAlpha: false,
                     animateScale: false,
@@ -338,9 +345,9 @@ final class TextStyleEditContentComponent: Component {
                     return ListMultilineTextFieldItemComponent.ResetText(value: resetTitle)
                 },
                 placeholder: "Style Name (for example, \"Pirate\")",
-                autocapitalizationType: .none,
-                autocorrectionType: .no,
-                characterLimit: 256,
+                autocapitalizationType: .sentences,
+                autocorrectionType: .default,
+                characterLimit: 12,
                 emptyLineHandling: .notAllowed,
                 updated: nil,
                 textUpdateTransition: .spring(duration: 0.4),
@@ -383,9 +390,9 @@ final class TextStyleEditContentComponent: Component {
                 },
                 placeholder: "Instructions (for example, \"Write like a swashbuckling pirate. Use arr, ye, matey, and talk about treasure, the sea, and rum\")",
                 placeholderDefinesMinHeight: true,
-                autocapitalizationType: .none,
-                autocorrectionType: .no,
-                characterLimit: 4096,
+                autocapitalizationType: .sentences,
+                autocorrectionType: .default,
+                characterLimit: 1024,
                 emptyLineHandling: .allowed,
                 updated: nil,
                 textUpdateTransition: .spring(duration: 0.4),
@@ -615,6 +622,11 @@ private final class TextStyleEditSheetComponent: Component {
                 return
             }
             guard let emojiFile = self.contentState.emojiFile else {
+                if let sheetView = self.sheet.view as? ResizableSheetComponent<ViewControllerComponentContainer.Environment>.View {
+                    if let contentView = sheetView.contentViewValue as? TextStyleEditContentComponent.View {
+                        contentView.activateEmojiSelection()
+                    }
+                }
                 return
             }
             
@@ -731,7 +743,7 @@ private final class TextStyleEditSheetComponent: Component {
                 }
                 self.performCreateStyle()
             }
-            let isMainActionEnabled = !self.contentState.titleInputState.text.string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !self.contentState.textInputState.text.string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && self.contentState.emojiFile != nil && !self.isActionInProgress
+            let isMainActionEnabled = !self.contentState.titleInputState.text.string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !self.contentState.textInputState.text.string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !self.isActionInProgress
             let actionButtonTitle: String
             let titleString: String
             switch component.mode {

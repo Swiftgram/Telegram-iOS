@@ -843,7 +843,7 @@ public final class ChatTextInputPanelComponent: Component {
             
             if let sendAsConfiguration = component.sendAsConfiguration {
                 presentationInterfaceState = presentationInterfaceState.updatedSendAsPeers([SendAsPeer(
-                    peer: sendAsConfiguration.currentPeer._asPeer(),
+                    peer: sendAsConfiguration.currentPeer,
                     subscribers: sendAsConfiguration.subscriberCount.flatMap(Int32.init(clamping:)),
                     isPremiumRequired: sendAsConfiguration.isPremiumLocked
                 )]).updatedShowSendAsPeers(sendAsConfiguration.isSelecting).updatedCurrentSendAsPeerId(sendAsConfiguration.currentPeer.id)

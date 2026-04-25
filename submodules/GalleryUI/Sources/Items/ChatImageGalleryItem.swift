@@ -249,7 +249,7 @@ final class ChatImageGalleryItemNode: ZoomableContentGalleryItemNode {
     private let statusDisposable = MetaDisposable()
     private let dataDisposable = MetaDisposable()
     private let recognitionDisposable = MetaDisposable()
-    private var status: MediaResourceStatus?
+    private var status: EngineMediaResource.FetchStatus?
     private var fetchedDimensions: PixelDimensions?
     
     private let pagingEnabledPromise = ValuePromise<Bool>(true)
@@ -769,7 +769,7 @@ final class ChatImageGalleryItemNode: ZoomableContentGalleryItemNode {
                 }
             }
             
-            if let peer, let message = self.message, canSendMessagesToPeer(peer._asPeer()) {
+            if let peer, let message = self.message, canSendMessagesToPeer(peer) {
                 items.append(.action(ContextMenuActionItem(text: self.presentationData.strings.Conversation_ContextMenuReply, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Reply"), color: theme.contextMenu.primaryColor)}, action: { [weak self] _, f in
                     if let self, let navigationController = self.baseNavigationController() {
                         self.beginCustomDismiss(.simpleAnimation)
@@ -957,7 +957,7 @@ final class ChatImageGalleryItemNode: ZoomableContentGalleryItemNode {
     }
     
     private func setupStatus(resource: MediaResource) {
-        self.statusDisposable.set((self.context.account.postbox.mediaBox.resourceStatus(resource)
+        self.statusDisposable.set((self.context.engine.resources.status(resource: EngineMediaResource(resource))
         |> deliverOnMainQueue).start(next: { [weak self] status in
             if let strongSelf = self {
                 let previousStatus = strongSelf.status

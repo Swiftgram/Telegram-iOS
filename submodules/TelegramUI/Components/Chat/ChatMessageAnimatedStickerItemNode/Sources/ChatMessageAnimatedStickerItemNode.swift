@@ -2404,10 +2404,10 @@ public class ChatMessageAnimatedStickerItemNode: ChatMessageItemView {
                     let peach = 0x1F351
                     let coffin = 0x26B0
                     
-                    let appConfiguration = item.context.account.postbox.preferencesView(keys: [PreferencesKeys.appConfiguration])
+                    let appConfiguration = item.context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.appConfiguration))
                     |> take(1)
                     |> map { view in
-                        return view.values[PreferencesKeys.appConfiguration]?.get(AppConfiguration.self) ?? .defaultValue
+                        return view?.get(AppConfiguration.self) ?? .defaultValue
                     }
                     
                     let text = item.message.text

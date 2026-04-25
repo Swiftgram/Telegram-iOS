@@ -179,7 +179,15 @@ extension ChatControllerImpl {
                                 if let messageId = fromMessage?.id {
                                     peerSignal = loadedPeerFromMessage(account: self.context.account, peerId: peer.id, messageId: messageId)
                                 } else {
-                                    peerSignal = self.context.account.postbox.loadedPeerWithId(peer.id) |> map(Optional.init)
+                                    peerSignal = self.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peer.id))
+                                    |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                                        if let peer {
+                                            return .single(peer)
+                                        } else {
+                                            return .never()
+                                        }
+                                    }
+                                    |> map { Optional($0._asPeer()) }
                                 }
                                 self.navigationActionDisposable.set((peerSignal |> take(1) |> deliverOnMainQueue).startStrict(next: { [weak self] peer in
                                     if let strongSelf = self, let peer = peer {
@@ -207,7 +215,7 @@ extension ChatControllerImpl {
                                         if let validLayout = strongSelf.validLayout, validLayout.deviceMetrics.type == .tablet {
                                             expandAvatar = false
                                         }
-                                        if let infoController = strongSelf.context.sharedContext.makePeerInfoController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, peer: peer, mode: mode, avatarInitiallyExpanded: expandAvatar, fromChat: false, requestsContext: nil) {
+                                        if let infoController = strongSelf.context.sharedContext.makePeerInfoController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, peer: EnginePeer(peer), mode: mode, avatarInitiallyExpanded: expandAvatar, fromChat: false, requestsContext: nil) {
                                             strongSelf.effectiveNavigationController?.pushViewController(infoController)
                                         }
                                     }
@@ -347,8 +355,8 @@ extension ChatControllerImpl {
                 guard let self, let peer = self.presentationInterfaceState.renderedPeer?.chatMainPeer else {
                     return
                 }
-                
-                guard let controller = self.context.sharedContext.makePeerInfoController(context: self.context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) else {
+
+                guard let controller = self.context.sharedContext.makePeerInfoController(context: self.context, updatedPresentationData: nil, peer: EnginePeer(peer), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) else {
                     return
                 }
                 (self.navigationController as? NavigationController)?.pushViewController(controller)

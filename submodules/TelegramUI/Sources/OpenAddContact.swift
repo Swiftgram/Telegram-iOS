@@ -25,7 +25,7 @@ func openAddContactImpl(context: AccountContext, peer: EnginePeer?, firstName: S
                 shareViaException: false,
                 completion: { peer, stableId, contactData in
                     if let peer = peer {
-                        if let infoController = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+                        if let infoController = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                             pushController(infoController)
                         }
                     } else if let stableId, let contactData {

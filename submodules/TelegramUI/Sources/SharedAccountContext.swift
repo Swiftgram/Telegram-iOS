@@ -1934,7 +1934,8 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         handleTextLinkActionImpl(context: context, peerId: peerId, navigateDisposable: navigateDisposable, controller: controller, action: action, itemLink: itemLink)
     }
     
-    public func makePeerInfoController(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, peer: Peer, mode: PeerInfoControllerMode, avatarInitiallyExpanded: Bool, fromChat: Bool, requestsContext: PeerInvitationImportersContext?) -> ViewController? {
+    public func makePeerInfoController(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, peer: EnginePeer, mode: PeerInfoControllerMode, avatarInitiallyExpanded: Bool, fromChat: Bool, requestsContext: PeerInvitationImportersContext?) -> ViewController? {
+        let peer = peer._asPeer()
         let controller = peerInfoControllerImpl(context: context, updatedPresentationData: updatedPresentationData, peer: peer, mode: mode, avatarInitiallyExpanded: avatarInitiallyExpanded, isOpenedFromChat: fromChat)
         controller?.navigationPresentation = .modalInLargeLayout
         return controller
@@ -2298,7 +2299,8 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return nil
     }
     
-    public func makeChatRecentActionsController(context: AccountContext, peer: Peer, adminPeerId: PeerId?, starsState: StarsRevenueStats?) -> ViewController {
+    public func makeChatRecentActionsController(context: AccountContext, peer: EnginePeer, adminPeerId: PeerId?, starsState: StarsRevenueStats?) -> ViewController {
+        let peer = peer._asPeer()
         return ChatRecentActionsController(context: context, peer: peer, adminPeerId: adminPeerId, starsState: starsState)
     }
     
@@ -2726,7 +2728,8 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return recentSessionsController(context: context, activeSessionsContext: activeSessionsContext, webSessionsContext: context.engine.privacy.webSessions(), websitesOnly: false)
     }
     
-    public func makeChatQrCodeScreen(context: AccountContext, peer: Peer, threadId: Int64?, temporary: Bool) -> ViewController {
+    public func makeChatQrCodeScreen(context: AccountContext, peer: EnginePeer, threadId: Int64?, temporary: Bool) -> ViewController {
+        let peer = peer._asPeer()
         return ChatQrCodeScreenImpl(context: context, subject: .peer(peer: peer, threadId: threadId, temporary: temporary))
     }
     
@@ -3294,12 +3297,12 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         )).startStandalone(next: { [weak controller] result, options in
             if let (peers, _, _, _, _, _) = result, let contactPeer = peers.first, case let .peer(peer, _, _) = contactPeer, let starsContext = context.starsContext {
                 if case .starGiftTransfer = source {
-                    presentTransferAlertImpl?(EnginePeer(peer))
+                    presentTransferAlertImpl?(peer)
                 } else {
                     let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.DisallowedGifts(id: peer.id))
                     |> deliverOnMainQueue).start(next: { disallowedGifts in
                         if let disallowedGifts, disallowedGifts == TelegramDisallowedGifts.All && peer.id != context.account.peerId {
-                            let alertController = textAlertController(context: context, title: nil, text: presentationData.strings.Gift_Send_GiftsDisallowed(EnginePeer(peer).compactDisplayTitle).string, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})])
+                            let alertController = textAlertController(context: context, title: nil, text: presentationData.strings.Gift_Send_GiftsDisallowed(peer.compactDisplayTitle).string, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})])
                             controller?.present(alertController, in: .window(.root))
                             return
                         }
@@ -3332,7 +3335,7 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             if let infoController = self.makePeerInfoController(
                 context: context,
                 updatedPresentationData: nil,
-                peer: peer._asPeer(),
+                peer: peer,
                 mode: .generic,
                 avatarInitiallyExpanded: peer.smallProfileImage != nil,
                 fromChat: false,
@@ -3480,7 +3483,7 @@ public final class SharedAccountContextImpl: SharedAccountContext {
                                         if let controller = context.sharedContext.makePeerInfoController(
                                             context: context,
                                             updatedPresentationData: nil,
-                                            peer: peer._asPeer(),
+                                            peer: peer,
                                             mode: .gifts,
                                             avatarInitiallyExpanded: false,
                                             fromChat: false,
@@ -4013,7 +4016,7 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             if let infoController = self.makePeerInfoController(
                 context: context,
                 updatedPresentationData: nil,
-                peer: peer._asPeer(),
+                peer: peer,
                 mode: .generic,
                 avatarInitiallyExpanded: peer.smallProfileImage != nil,
                 fromChat: false,

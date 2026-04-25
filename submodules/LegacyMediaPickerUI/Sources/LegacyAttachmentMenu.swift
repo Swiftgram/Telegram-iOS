@@ -621,7 +621,7 @@ public func legacyAttachmentMenu(
                 peerSupportsPolls = true
             }
         }
-        if let peer, peerSupportsPolls, canSendMessagesToPeer(peer) && canSendPolls {
+        if let peer, peerSupportsPolls, canSendMessagesToPeer(EnginePeer(peer)) && canSendPolls {
             let pollItem = TGMenuSheetButtonItemView(title: presentationData.strings.AttachmentMenu_Poll, type: TGMenuSheetButtonTypeDefault, fontSize: fontSize, action: { [weak controller] in
                 controller?.dismiss(animated: true)
                 openPoll()

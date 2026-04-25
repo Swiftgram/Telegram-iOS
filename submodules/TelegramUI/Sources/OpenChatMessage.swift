@@ -137,13 +137,13 @@ func openChatMessageImpl(_ params: OpenChatMessageParams) -> Bool {
                 params.openUrl(url)
                 return true
             case let .pass(file):
-                let _ = (params.context.account.postbox.mediaBox.resourceData(file.resource, option: .complete(waitUntilFetchStatus: true))
+                let _ = (params.context.engine.resources.data(resource: EngineMediaResource(file.resource), waitUntilFetchStatus: true)
                 |> take(1)
                 |> deliverOnMainQueue).startStandalone(next: { data in
                     guard let navigationController = params.navigationController else {
                         return
                     }
-                    if data.complete, let content = try? Data(contentsOf: URL(fileURLWithPath: data.path)) {
+                    if data.isComplete, let content = try? Data(contentsOf: URL(fileURLWithPath: data.path)) {
                         if let pass = try? PKPass(data: content), let controller = PKAddPassesViewController(pass: pass) {
                             if let window = navigationController.view.window {
                                 controller.popoverPresentationController?.sourceView = window

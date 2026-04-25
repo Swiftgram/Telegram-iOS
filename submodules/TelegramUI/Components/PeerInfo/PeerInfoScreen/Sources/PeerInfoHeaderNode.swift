@@ -545,8 +545,8 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             }
         }
         
-        let actionButtonKeys: [PeerInfoHeaderButtonKey] = (self.isSettings || self.isMyProfile) ? [] : peerInfoHeaderActionButtons(peer: peer, isSecretChat: isSecretChat, isContact: isContact)
-        let buttonKeys: [PeerInfoHeaderButtonKey] = (self.isSettings || self.isMyProfile) ? [] : peerInfoHeaderButtons(peer: peer, cachedData: cachedData, isOpenedFromChat: self.isOpenedFromChat, isExpanded: true, videoCallsEnabled: width > 320.0 && self.videoCallsEnabled, isSecretChat: isSecretChat, isContact: isContact, threadInfo: threadData?.info)
+        let actionButtonKeys: [PeerInfoHeaderButtonKey] = (self.isSettings || self.isMyProfile) ? [] : peerInfoHeaderActionButtons(peer: peer.flatMap(EnginePeer.init), isSecretChat: isSecretChat, isContact: isContact)
+        let buttonKeys: [PeerInfoHeaderButtonKey] = (self.isSettings || self.isMyProfile) ? [] : peerInfoHeaderButtons(peer: peer.flatMap(EnginePeer.init), cachedData: cachedData, isOpenedFromChat: self.isOpenedFromChat, isExpanded: true, videoCallsEnabled: width > 320.0 && self.videoCallsEnabled, isSecretChat: isSecretChat, isContact: isContact, threadInfo: threadData?.info)
         
         let backgroundCoverSubject: PeerInfoCoverComponent.Subject?
         var backgroundCoverAnimateIn = false
@@ -2358,7 +2358,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                 }
                 buttonIcon = .voiceChat
             case .mute:
-                let chatIsMuted = peerInfoIsChatMuted(peer: peer, peerNotificationSettings: peerNotificationSettings, threadNotificationSettings: threadNotificationSettings, globalNotificationSettings: globalNotificationSettings)
+                let chatIsMuted = peerInfoIsChatMuted(peer: peer.flatMap(EnginePeer.init), peerNotificationSettings: peerNotificationSettings, threadNotificationSettings: threadNotificationSettings, globalNotificationSettings: globalNotificationSettings)
                 if chatIsMuted {
                     buttonText = presentationData.strings.PeerInfo_ButtonUnmute
                     buttonIcon = .unmute

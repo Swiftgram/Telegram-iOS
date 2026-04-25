@@ -760,7 +760,14 @@ extension ChatControllerImpl {
             })
         }
         
-        let currentAccountPeer = self.context.account.postbox.loadedPeerWithId(self.context.account.peerId)
+        let currentAccountPeer = self.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: self.context.account.peerId))
+        |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+            if let peer {
+                return .single(peer)
+            } else {
+                return .never()
+            }
+        }
         |> map { peer in
             return SendAsPeer(peer: peer, subscribers: nil, isPremiumRequired: false)
         }
@@ -795,7 +802,7 @@ extension ChatControllerImpl {
                             }
                         }
                         if !hasAnonymousPeer {
-                            allPeers?.insert(SendAsPeer(peer: channel, subscribers: 0, isPremiumRequired: false), at: 0)
+                            allPeers?.insert(SendAsPeer(peer: EnginePeer(channel), subscribers: 0, isPremiumRequired: false), at: 0)
                         }
                     } else if let channel = peerViewMainPeer(peerView) as? TelegramChannel, case let .broadcast(info) = channel.info, (info.flags.contains(.messagesShouldHaveSignatures) || info.flags.contains(.messagesShouldHaveProfiles)) {
                         allPeers = peers
@@ -813,7 +820,7 @@ extension ChatControllerImpl {
                             allPeers?.insert(currentAccountPeer, at: 0)
                         }
                         if !hasAnonymousPeer {
-                            allPeers?.insert(SendAsPeer(peer: channel, subscribers: 0, isPremiumRequired: false), at: 0)
+                            allPeers?.insert(SendAsPeer(peer: EnginePeer(channel), subscribers: 0, isPremiumRequired: false), at: 0)
                         }
                     } else {
                         allPeers = peers.filter { $0.peer.id != peerViewMainPeer(peerView)?.id }
@@ -4352,7 +4359,7 @@ extension ChatControllerImpl {
                     if let controller = self.context.sharedContext.makePeerInfoController(
                         context: self.context,
                         updatedPresentationData: nil,
-                        peer: peer,
+                        peer: EnginePeer(peer),
                         mode: .gifts,
                         avatarInitiallyExpanded: false,
                         fromChat: false,

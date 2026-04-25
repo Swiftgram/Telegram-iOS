@@ -2494,7 +2494,7 @@ public final class ShareController: ViewController {
             for entry in view.0.entries.reversed() {
                 switch entry {
                 case let .MessageEntry(entryData):
-                    if let peer = entryData.renderedPeer.peers[entryData.renderedPeer.peerId], peer.id != accountPeer.id, canSendMessagesToPeer(peer) {
+                    if let peer = entryData.renderedPeer.peers[entryData.renderedPeer.peerId], peer.id != accountPeer.id, canSendMessagesToPeer(EnginePeer(peer)) {
                         peers.append(EngineRenderedPeer(entryData.renderedPeer))
                         if let user = peer as? TelegramUser, user.flags.contains(.requirePremium) || user.flags.contains(.requireStars) {
                             possiblePremiumRequiredPeers.insert(user.id)

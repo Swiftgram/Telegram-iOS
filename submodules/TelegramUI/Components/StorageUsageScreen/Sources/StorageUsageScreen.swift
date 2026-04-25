@@ -2075,7 +2075,7 @@ final class StorageUsageScreenComponent: Component {
                                         let peerInfoController = component.context.sharedContext.makePeerInfoController(
                                             context: component.context,
                                             updatedPresentationData: nil,
-                                            peer: peer._asPeer(),
+                                            peer: peer,
                                             mode: .generic,
                                             avatarInitiallyExpanded: false,
                                             fromChat: false,

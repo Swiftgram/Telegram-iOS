@@ -29,7 +29,7 @@ extension PeerInfoScreenNode {
     
     func openChatForReporting(title: String, option: Data, message: String?) {
         if let peer = self.data?.peer, let navigationController = (self.controller?.navigationController as? NavigationController) {
-            if let channel = peer as? TelegramChannel, channel.isForumOrMonoForum {
+            if case let .channel(channel) = peer, channel.isForumOrMonoForum {
                 //let _ = self.context.engine.peers.reportPeer(peerId: peer.id, reason: reason, message: "").startStandalone()
                 //self.controller?.present(UndoOverlayController(presentationData: self.presentationData, content: .emoji(name: "PoliceCar", text: self.presentationData.strings.Report_Succeed), elevatedLayout: false, action: { _ in return false }), in: .current)
             } else {
@@ -37,7 +37,7 @@ extension PeerInfoScreenNode {
                     NavigateToChatControllerParams(
                         navigationController: navigationController,
                         context: self.context,
-                        chatLocation: .peer(EnginePeer(peer)),
+                        chatLocation: .peer(peer),
                         keepStack: .default,
                         reportReason: NavigateToChatControllerParams.ReportReason(title: title, option: option, message: message)
                     )
@@ -48,13 +48,13 @@ extension PeerInfoScreenNode {
     
     func openChatForThemeChange() {
         if let peer = self.data?.peer, let navigationController = (self.controller?.navigationController as? NavigationController) {
-            self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default, changeColors: true))
+            self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(peer), keepStack: .default, changeColors: true))
         }
     }
-    
+
     func openChatForTranslation() {
         if let peer = self.data?.peer, let navigationController = (self.controller?.navigationController as? NavigationController) {
-            self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default, changeColors: false))
+            self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(peer), keepStack: .default, changeColors: false))
         }
     }
 
@@ -77,7 +77,7 @@ extension PeerInfoScreenNode {
         }
         
         if let peer = self.data?.peer, let navigationController = self.controller?.navigationController as? NavigationController {
-            self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default))
+            self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(peer), keepStack: .default))
         }
     }
     
@@ -92,7 +92,7 @@ extension PeerInfoScreenNode {
     }
 
     func openChannelMessages() {
-        guard let channel = self.data?.peer as? TelegramChannel, let linkedMonoforumId = channel.linkedMonoforumId else {
+        guard case let .channel(channel) = self.data?.peer, let linkedMonoforumId = channel.linkedMonoforumId else {
             return
         }
         let _ = (self.context.engine.data.get(

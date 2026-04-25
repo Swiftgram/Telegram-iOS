@@ -1766,7 +1766,7 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
                             if NativeVideoContent.isHLSVideo(file: file), let minimizedQuality = HLSVideoContent.minimizedHLSQuality(file: .standalone(media: file), codecConfiguration: HLSCodecConfiguration(context: context)) {
                                 let postbox = context.account.postbox
                                 
-                                let playlistStatusSignal = postbox.mediaBox.resourceStatus(minimizedQuality.playlist.media.resource)
+                                let playlistStatusSignal = context.engine.resources.status(resource: EngineMediaResource(minimizedQuality.playlist.media.resource))
                                 |> map { status -> MediaResourceStatus in
                                     switch status {
                                     case .Fetching, .Paused:
@@ -1796,7 +1796,7 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
                                             return .single((.Local, nil))
                                         }
                                         
-                                        return postbox.mediaBox.resourceStatus(preloadData.0.media.resource)
+                                        return context.engine.resources.status(resource: EngineMediaResource(preloadData.0.media.resource))
                                         |> map { status -> Bool in
                                             if case .Fetching = status {
                                                 return true
@@ -1806,7 +1806,7 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
                                         }
                                         |> distinctUntilChanged
                                         |> mapToSignal { isFetching -> Signal<(MediaResourceStatus, MediaResourceStatus?), NoError> in
-                                            return postbox.mediaBox.resourceRangesStatus(preloadData.0.media.resource)
+                                            return context.engine.resources.resourceRangesStatus(resource: EngineMediaResource(preloadData.0.media.resource))
                                             |> map { status -> (MediaResourceStatus, MediaResourceStatus?) in
                                                 let preloadRanges = RangeSet(preloadData.1)
                                                 let intersection = status.intersection(preloadRanges)

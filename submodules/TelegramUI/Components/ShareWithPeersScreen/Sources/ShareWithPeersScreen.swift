@@ -774,10 +774,10 @@ final class ShareWithPeersScreenComponent: Component {
                             if item.peer.id == context.account.peerId {
                                 continue
                             }
-                            if let user = item.peer as? TelegramUser, user.botInfo != nil {
+                            if case let .user(user) = item.peer, user.botInfo != nil {
                                 continue
                             }
-                            peers.append(EnginePeer(item.peer))
+                            peers.append(item.peer)
                         }
                         if !list.list.isEmpty {
                             subscriber.putNext(peers)

@@ -353,74 +353,81 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
                 contentHeight += pickerHeight
             }
             
-            transition.setFrame(layer: self.topSeparator, frame: CGRect(origin: CGPoint(x: sideInset, y: contentHeight), size: CGSize(width: availableSize.width - sideInset * 2.0, height: UIScreenPixel)))
-            self.topSeparator.backgroundColor = environment.theme.list.itemBlocksSeparatorColor.cgColor
-            if self.topSeparator.superlayer == nil {
-                self.layer.addSublayer(self.topSeparator)
-            }
-            
-            let timeTitleSize = self.timeTitle.update(
-                transition: transition,
-                component: AnyComponent(
-                    Text(text: strings.ScheduleMessage_Time, font: Font.regular(17.0), color: environment.theme.actionSheet.primaryTextColor)
-                ),
-                environment: {},
-                containerSize: availableSize
-            )
-            let timeTitleFrame = CGRect(origin: CGPoint(x: sideInset, y: contentHeight + 16.0), size: timeTitleSize)
-            if let timeTitleView = self.timeTitle.view {
-                if timeTitleView.superview == nil {
-                    self.addSubview(timeTitleView)
-                }
-                transition.setFrame(view: timeTitleView, frame: timeTitleFrame)
-            }
-            
             let date = self.date ?? Date()
+            var timeValueFrame: CGRect?
             
-            var t: time_t = Int(date.timeIntervalSince1970)
-            var timeinfo = tm()
-            localtime_r(&t, &timeinfo);
-            
-            let timeString = stringForShortTimestamp(hours: Int32(timeinfo.tm_hour), minutes: Int32(timeinfo.tm_min), dateTimeFormat: environment.dateTimeFormat)
-            let timeValueSize = self.timeValue.update(
-                transition: transition,
-                component: AnyComponent(
-                    PlainButtonComponent(
-                        content: AnyComponent(
-                            ButtonContentComponent(
-                                theme: environment.theme,
-                                text: timeString,
-                                isActive: self.isPickingTime,
-                                isLocked: false
-                            )
-                        ),
-                        action: { [weak self] in
-                            guard let self else {
-                                return
-                            }
-                            if self.isPickingRepeatPeriod {
-                                self.isPickingRepeatPeriod = false
-                            } else {
-                                self.isPickingTime = !self.isPickingTime
-                            }
-                            self.state?.updated()
-                        },
-                        animateScale: false
-                    )
-                ),
-                environment: {
-                },
-                containerSize: availableSize
-            )
-            let timeValueFrame = CGRect(origin: CGPoint(x: availableSize.width - sideInset - timeValueSize.width, y: contentHeight + 10.0), size: timeValueSize)
-            if let timeValueView = self.timeValue.view {
-                if timeValueView.superview == nil {
-                    self.addSubview(timeValueView)
+            switch component.mode {
+            case .search:
+                break
+            default:
+                transition.setFrame(layer: self.topSeparator, frame: CGRect(origin: CGPoint(x: sideInset, y: contentHeight), size: CGSize(width: availableSize.width - sideInset * 2.0, height: UIScreenPixel)))
+                self.topSeparator.backgroundColor = environment.theme.list.itemBlocksSeparatorColor.cgColor
+                if self.topSeparator.superlayer == nil {
+                    self.layer.addSublayer(self.topSeparator)
                 }
-                transition.setFrame(view: timeValueView, frame: timeValueFrame)
+                
+                let timeTitleSize = self.timeTitle.update(
+                    transition: transition,
+                    component: AnyComponent(
+                        Text(text: strings.ScheduleMessage_Time, font: Font.regular(17.0), color: environment.theme.actionSheet.primaryTextColor)
+                    ),
+                    environment: {},
+                    containerSize: availableSize
+                )
+                let timeTitleFrame = CGRect(origin: CGPoint(x: sideInset, y: contentHeight + 16.0), size: timeTitleSize)
+                if let timeTitleView = self.timeTitle.view {
+                    if timeTitleView.superview == nil {
+                        self.addSubview(timeTitleView)
+                    }
+                    transition.setFrame(view: timeTitleView, frame: timeTitleFrame)
+                }
+                
+                var t: time_t = Int(date.timeIntervalSince1970)
+                var timeinfo = tm()
+                localtime_r(&t, &timeinfo);
+                
+                let timeString = stringForShortTimestamp(hours: Int32(timeinfo.tm_hour), minutes: Int32(timeinfo.tm_min), dateTimeFormat: environment.dateTimeFormat)
+                let timeValueSize = self.timeValue.update(
+                    transition: transition,
+                    component: AnyComponent(
+                        PlainButtonComponent(
+                            content: AnyComponent(
+                                ButtonContentComponent(
+                                    theme: environment.theme,
+                                    text: timeString,
+                                    isActive: self.isPickingTime,
+                                    isLocked: false
+                                )
+                            ),
+                            action: { [weak self] in
+                                guard let self else {
+                                    return
+                                }
+                                if self.isPickingRepeatPeriod {
+                                    self.isPickingRepeatPeriod = false
+                                } else {
+                                    self.isPickingTime = !self.isPickingTime
+                                }
+                                self.state?.updated()
+                            },
+                            animateScale: false
+                        )
+                    ),
+                    environment: {
+                    },
+                    containerSize: availableSize
+                )
+                let timeValueFrameValue = CGRect(origin: CGPoint(x: availableSize.width - sideInset - timeValueSize.width, y: contentHeight + 10.0), size: timeValueSize)
+                timeValueFrame = timeValueFrameValue
+                if let timeValueView = self.timeValue.view {
+                    if timeValueView.superview == nil {
+                        self.addSubview(timeValueView)
+                    }
+                    transition.setFrame(view: timeValueView, frame: timeValueFrameValue)
+                }
+                
+                contentHeight += 56.0
             }
-            
-            contentHeight += 56.0
             
             var repeatValueFrame = CGRect()
             if case .format = component.mode {
@@ -682,7 +689,7 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
             
             let contentSize = CGSize(width: availableSize.width, height: contentHeight)
             
-            if self.isPickingTime {
+            if self.isPickingTime, let timeValueFrame {
                 let _ = self.timePicker.update(
                     transition: transition,
                     component: AnyComponent(

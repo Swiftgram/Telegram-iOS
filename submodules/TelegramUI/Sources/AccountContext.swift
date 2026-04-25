@@ -329,9 +329,9 @@ public final class AccountContextImpl: AccountContext {
         self.animationRenderer = DCTMultiAnimationRendererImpl()
         (self.animationRenderer as? DCTMultiAnimationRendererImpl)?.useYuvA = sharedContext.immediateExperimentalUISettings.compressedEmojiCache
         
-        let updatedLimitsConfiguration = account.postbox.preferencesView(keys: [PreferencesKeys.limitsConfiguration])
+        let updatedLimitsConfiguration = self.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.limitsConfiguration))
         |> map { preferences -> LimitsConfiguration in
-            return preferences.values[PreferencesKeys.limitsConfiguration]?.get(LimitsConfiguration.self) ?? LimitsConfiguration.defaultValue
+            return preferences?.get(LimitsConfiguration.self) ?? LimitsConfiguration.defaultValue
         }
         
         self.currentLimitsConfiguration = Atomic(value: limitsConfiguration)
@@ -353,7 +353,7 @@ public final class AccountContextImpl: AccountContext {
             let _ = currentContentSettings.swap(value)
         })
         
-        let updatedAppConfiguration = getAppConfiguration(postbox: account.postbox)
+        let updatedAppConfiguration = getAppConfiguration(engine: self.engine)
         self.currentAppConfiguration = Atomic(value: appConfiguration)
         self._appConfiguration.set(.single(appConfiguration) |> then(updatedAppConfiguration))
                 
@@ -923,10 +923,10 @@ private final class ChatLocationReplyContextHolderImpl: ChatLocationContextHolde
     }
 }
 
-func getAppConfiguration(postbox: Postbox) -> Signal<AppConfiguration, NoError> {
-    return postbox.preferencesView(keys: [PreferencesKeys.appConfiguration])
+func getAppConfiguration(engine: TelegramEngine) -> Signal<AppConfiguration, NoError> {
+    return engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.appConfiguration))
     |> map { view -> AppConfiguration in
-        let appConfiguration: AppConfiguration = view.values[PreferencesKeys.appConfiguration]?.get(AppConfiguration.self) ?? AppConfiguration.defaultValue
+        let appConfiguration: AppConfiguration = view?.get(AppConfiguration.self) ?? AppConfiguration.defaultValue
         return appConfiguration
     }
     |> distinctUntilChanged

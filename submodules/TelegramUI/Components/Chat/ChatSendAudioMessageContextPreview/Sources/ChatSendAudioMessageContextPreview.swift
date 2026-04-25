@@ -86,7 +86,7 @@ public final class ChatSendContactMessageContextPreview: UIView, ChatSendMessage
         for peer in self.contactPeers {
             switch peer {
             case let .peer(contact, _, _):
-                guard let contact = contact as? TelegramUser, let phoneNumber = contact.phone else {
+                guard case let .user(contact) = contact, let phoneNumber = contact.phone else {
                     continue
                 }
                 let contactData = DeviceContactExtendedData(basicData: DeviceContactBasicData(firstName: contact.firstName ?? "", lastName: contact.lastName ?? "", phoneNumbers: [DeviceContactPhoneNumberData(label: "_$!<Mobile>!$_", value: phoneNumber)]), middleName: "", prefix: "", suffix: "", organization: "", jobTitle: "", department: "", emailAddresses: [], urls: [], addresses: [], birthdayDate: nil, socialProfiles: [], instantMessagingProfiles: [], note: "")

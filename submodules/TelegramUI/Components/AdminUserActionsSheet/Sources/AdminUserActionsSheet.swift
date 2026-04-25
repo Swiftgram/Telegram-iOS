@@ -286,7 +286,7 @@ private func adminUserActionsTitle(
     switch mode {
     case .monoforum:
         if let peer = peers.first {
-            return strings.Monoforum_DeleteTopic_Title(EnginePeer(peer.peer).compactDisplayTitle).string
+            return strings.Monoforum_DeleteTopic_Title(peer.peer.compactDisplayTitle).string
         } else {
             return strings.Common_Delete
         }
@@ -409,7 +409,7 @@ private final class AdminUserActionsContentComponent: Component {
                     additionalSelectedPeers = component.sheetState.optionDeleteAllReactionsSelectedPeers
                     isExpanded = component.sheetState.isOptionDeleteAllExpanded
                     if component.peers.count == 1 {
-                        title = component.strings.Chat_AdminActionSheet_DeleteAllSingle(EnginePeer(component.peers[0].peer).compactDisplayTitle).string
+                        title = component.strings.Chat_AdminActionSheet_DeleteAllSingle(component.peers[0].peer.compactDisplayTitle).string
                     } else {
                         title = component.strings.Chat_AdminActionSheet_DeleteAllMultiple
                     }
@@ -421,8 +421,8 @@ private final class AdminUserActionsContentComponent: Component {
                     let banTitle: String
                     let restrictTitle: String
                     if component.peers.count == 1 {
-                        banTitle = component.strings.Chat_AdminActionSheet_BanSingle(EnginePeer(component.peers[0].peer).compactDisplayTitle).string
-                        restrictTitle = component.strings.Chat_AdminActionSheet_RestrictSingle(EnginePeer(component.peers[0].peer).compactDisplayTitle).string
+                        banTitle = component.strings.Chat_AdminActionSheet_BanSingle(component.peers[0].peer.compactDisplayTitle).string
+                        restrictTitle = component.strings.Chat_AdminActionSheet_RestrictSingle(component.peers[0].peer.compactDisplayTitle).string
                     } else {
                         banTitle = component.strings.Chat_AdminActionSheet_BanMultiple
                         restrictTitle = component.strings.Chat_AdminActionSheet_RestrictMultiple
@@ -528,8 +528,8 @@ private final class AdminUserActionsContentComponent: Component {
                             strings: component.strings,
                             baseFontSize: component.presentationData.listsFontSize.baseDisplaySize,
                             sideInset: 0.0,
-                            title: EnginePeer(peer.peer).displayTitle(strings: component.strings, displayOrder: .firstLast),
-                            peer: EnginePeer(peer.peer),
+                            title: peer.peer.displayTitle(strings: component.strings, displayOrder: .firstLast),
+                            peer: peer.peer,
                             selectionState: .editing(isSelected: selectedPeers.contains(peer.peer.id) || additionalSelectedPeers.contains(peer.peer.id)),
                             action: { peer in
                                 component.togglePeerSelection(section, peer)

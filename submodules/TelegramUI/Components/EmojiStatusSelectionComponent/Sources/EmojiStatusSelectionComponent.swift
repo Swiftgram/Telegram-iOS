@@ -38,8 +38,8 @@ private func randomGenericReactionEffect(context: AccountContext) -> Signal<Stri
         }
         return Signal { subscriber in
             let fetchDisposable = freeMediaFileInteractiveFetched(account: context.account, userLocation: .other, fileReference: .standalone(media: file)).start()
-            let dataDisposable = (context.account.postbox.mediaBox.resourceData(file.resource)
-            |> filter(\.complete)
+            let dataDisposable = (context.engine.resources.data(resource: EngineMediaResource(file.resource))
+            |> filter(\.isComplete)
             |> take(1)).start(next: { data in
                 subscriber.putNext(data.path)
                 subscriber.putCompletion()
@@ -1207,10 +1207,10 @@ public final class EmojiStatusSelectionController: ViewController {
                                         for reaction in availableReactions.reactions {
                                             if case let .builtin(value) = reaction.value, value == emojiString {
                                                 if let aroundAnimation = reaction.aroundAnimation?._parse() {
-                                                    return context.account.postbox.mediaBox.resourceData(aroundAnimation.resource)
+                                                    return context.engine.resources.data(resource: EngineMediaResource(aroundAnimation.resource))
                                                     |> take(1)
                                                     |> map { data -> String? in
-                                                        if data.complete {
+                                                        if data.isComplete {
                                                             return data.path
                                                         } else {
                                                             return nil
@@ -1396,10 +1396,10 @@ public final class EmojiStatusSelectionController: ViewController {
                         for reaction in availableReactions.reactions {
                             if case let .builtin(value) = reaction.value, value == emojiString {
                                 if let aroundAnimation = reaction.aroundAnimation?._parse() {
-                                    return context.account.postbox.mediaBox.resourceData(aroundAnimation.resource)
+                                    return context.engine.resources.data(resource: EngineMediaResource(aroundAnimation.resource))
                                     |> take(1)
                                     |> map { data -> String? in
-                                        if data.complete {
+                                        if data.isComplete {
                                             return data.path
                                         } else {
                                             return nil

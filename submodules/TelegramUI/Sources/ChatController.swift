@@ -458,6 +458,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     
     var willAppear = false
     var didAppear = false
+    var enableAnimations = false
     var scheduledActivateInput: ChatControllerActivateInput?
     
     var raiseToListen: RaiseToListenManager?
@@ -3048,7 +3049,15 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                         return $0
                     }
                 })
-                strongSelf.messageActionUrlAuthDisposable.set(((combineLatest(strongSelf.context.account.postbox.loadedPeerWithId(strongSelf.context.account.peerId), strongSelf.context.engine.messages.requestMessageActionUrlAuth(subject: subject) |> afterDisposed {
+                let urlAuthAccountPeer = strongSelf.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: strongSelf.context.account.peerId))
+                |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                    if let peer {
+                        return .single(peer)
+                    } else {
+                        return .never()
+                    }
+                }
+                strongSelf.messageActionUrlAuthDisposable.set(((combineLatest(urlAuthAccountPeer, strongSelf.context.engine.messages.requestMessageActionUrlAuth(subject: subject) |> afterDisposed {
                     Queue.mainQueue().async {
                         if let strongSelf = self {
                             strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: true, {
@@ -3076,7 +3085,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             case .default:
                                 strongSelf.openUrl(defaultUrl, concealed: false, skipUrlAuth: true)
                             case let .request(domain, bot, _, flags, _, _):
-                                let controller = chatMessageActionUrlAuthController(context: strongSelf.context, defaultUrl: defaultUrl, domain: domain, bot: bot, requestWriteAccess: flags.contains(.requestWriteAccess), displayName: EnginePeer(peer).displayTitle(strings: strongSelf.presentationData.strings, displayOrder: strongSelf.presentationData.nameDisplayOrder), open: { [weak self] authorize, allowWriteAccess in
+                                let controller = chatMessageActionUrlAuthController(context: strongSelf.context, defaultUrl: defaultUrl, domain: domain, bot: bot, requestWriteAccess: flags.contains(.requestWriteAccess), displayName: peer.displayTitle(strings: strongSelf.presentationData.strings, displayOrder: strongSelf.presentationData.nameDisplayOrder), open: { [weak self] authorize, allowWriteAccess in
                                     if let strongSelf = self {
                                         if authorize {
                                             strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: true, {
@@ -3235,10 +3244,17 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 }
                 strongSelf.present(textAlertController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, title: strongSelf.presentationData.strings.Conversation_ShareBotContactConfirmationTitle, text: strongSelf.presentationData.strings.Conversation_ShareBotContactConfirmation, actions: [TextAlertAction(type: .genericAction, title: strongSelf.presentationData.strings.Common_Cancel, action: {}), TextAlertAction(type: .defaultAction, title: strongSelf.presentationData.strings.Common_OK, action: {
                     if let strongSelf = self {
-                        let _ = (strongSelf.context.account.postbox.loadedPeerWithId(strongSelf.context.account.peerId)
+                        let _ = (strongSelf.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: strongSelf.context.account.peerId))
+                        |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                            if let peer {
+                                return .single(peer)
+                            } else {
+                                return .never()
+                            }
+                        }
                         |> deliverOnMainQueue).startStandalone(next: { peer in
-                            if let peer = peer as? TelegramUser, let phone = peer.phone, !phone.isEmpty {
-                                strongSelf.sendMessages([.message(text: "", attributes: [], inlineStickers: [:], mediaReference: .standalone(media: TelegramMediaContact(firstName: peer.firstName ?? "", lastName: peer.lastName ?? "", phoneNumber: phone, peerId: peer.id, vCardData: nil)), threadId: strongSelf.chatLocation.threadId, replyToMessageId: nil, replyToStoryId: nil, localGroupingKey: nil, correlationId: nil, bubbleUpEmojiOrStickersets: [])])
+                            if case let .user(user) = peer, let phone = user.phone, !phone.isEmpty {
+                                strongSelf.sendMessages([.message(text: "", attributes: [], inlineStickers: [:], mediaReference: .standalone(media: TelegramMediaContact(firstName: user.firstName ?? "", lastName: user.lastName ?? "", phoneNumber: phone, peerId: user.id, vCardData: nil)), threadId: strongSelf.chatLocation.threadId, replyToMessageId: nil, replyToStoryId: nil, localGroupingKey: nil, correlationId: nil, bubbleUpEmojiOrStickersets: [])])
                             }
                         })
                     }
@@ -7231,6 +7247,13 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             }
         }
         
+        DispatchQueue.main.async { [weak self] in
+            guard let self else {
+                return
+            }
+            self.enableAnimations = true
+        }
+        
         if case let .replyThread(message) = self.chatLocation, message.isForumPost {
             if self.keepMessageCountersSyncrhonizedDisposable == nil {
                 self.keepMessageCountersSyncrhonizedDisposable = self.context.engine.messages.keepMessageCountersSyncrhonized(peerId: message.peerId, threadId: message.threadId).startStrict()
@@ -9187,8 +9210,15 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                     }
                 }
             } else if let peerId = self.chatLocation.peerId {
-                resolveSignal = self.context.account.postbox.loadedPeerWithId(peerId)
-                |> map(Optional.init)
+                resolveSignal = self.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
+                |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                    if let peer {
+                        return .single(peer)
+                    } else {
+                        return .never()
+                    }
+                }
+                |> map { Optional($0._asPeer()) }
             } else {
                 resolveSignal = .single(nil)
             }
@@ -9239,12 +9269,19 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     }
     
     func shareAccountContact() {
-        let _ = (self.context.account.postbox.loadedPeerWithId(self.context.account.peerId)
+        let _ = (self.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: self.context.account.peerId))
+        |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+            if let peer {
+                return .single(peer)
+            } else {
+                return .never()
+            }
+        }
         |> deliverOnMainQueue).startStandalone(next: { [weak self] accountPeer in
             guard let strongSelf = self else {
                 return
             }
-            guard let user = accountPeer as? TelegramUser, let phoneNumber = user.phone else {
+            guard case let .user(user) = accountPeer, let phoneNumber = user.phone else {
                 return
             }
             guard let peer = strongSelf.presentationInterfaceState.renderedPeer?.chatMainPeer as? TelegramUser else {
@@ -9386,7 +9423,14 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                     commit()
                 case .info:
                     dismissWebAppControllers()
-                    strongSelf.navigationActionDisposable.set((strongSelf.context.account.postbox.loadedPeerWithId(peerId.id)
+                    strongSelf.navigationActionDisposable.set((strongSelf.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId.id))
+                    |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                        if let peer {
+                            return .single(peer)
+                        } else {
+                            return .never()
+                        }
+                    }
                     |> take(1)
                     |> deliverOnMainQueue).startStrict(next: { [weak self] peer in
                         if let strongSelf = self, peer.restrictionText(platform: "ios", contentSettings: strongSelf.context.currentContentSettings.with { $0 }) == nil {

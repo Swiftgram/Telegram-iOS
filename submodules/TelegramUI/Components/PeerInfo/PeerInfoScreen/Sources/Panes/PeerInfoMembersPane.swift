@@ -136,7 +136,7 @@ private enum PeerMembersListEntry: Comparable, Identifiable {
                     break
                 }
                 
-                let actions = availableActionsForMemberOfPeer(accountPeerId: context.account.peerId, peer: enclosingPeer, member: member)
+                let actions = availableActionsForMemberOfPeer(accountPeerId: context.account.peerId, peer: EnginePeer(enclosingPeer), member: member)
                 
                 var options: [ItemListPeerItemRevealOption] = []
                 if actions.contains(.promote) && enclosingPeer is TelegramChannel {

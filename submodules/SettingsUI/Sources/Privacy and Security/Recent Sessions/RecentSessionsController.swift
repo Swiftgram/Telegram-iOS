@@ -811,9 +811,9 @@ public func recentSessionsController(context: AccountContext, activeSessionsCont
     
     let previousMode = Atomic<RecentSessionsMode>(value: .sessions)
     
-    let enableQRLogin = context.account.postbox.preferencesView(keys: [PreferencesKeys.appConfiguration])
+    let enableQRLogin = context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.appConfiguration))
     |> map { view -> Bool in
-        guard let appConfiguration = view.values[PreferencesKeys.appConfiguration]?.get(AppConfiguration.self) else {
+        guard let appConfiguration = view?.get(AppConfiguration.self) else {
             return false
         }
         guard let data = appConfiguration.data, let enableQR = data["qr_login_camera"] as? Bool, enableQR else {

@@ -899,8 +899,8 @@ final class PeerSelectionControllerNode: ASDisplayNode {
             var selectedPeerMap: [EnginePeer.Id: EnginePeer] = [:]
             for contactPeer in selectedContactPeers {
                 if case let .peer(peer, _, _) = contactPeer {
-                    selectedPeers.append(EnginePeer(peer))
-                    selectedPeerMap[peer.id] = EnginePeer(peer)
+                    selectedPeers.append(peer)
+                    selectedPeerMap[peer.id] = peer
                 }
             }
             return (selectedPeers, selectedPeerMap)
@@ -1589,7 +1589,7 @@ final class PeerSelectionControllerNode: ASDisplayNode {
                     contactListNode.openPeer = { [weak self] peer, _, _, _ in
                         if case let .peer(peer, _, _) = peer {
                             self?.contactListNode?.listNode.clearHighlightAnimated(true)
-                            self?.requestOpenPeer?(EnginePeer(peer), nil)
+                            self?.requestOpenPeer?(peer, nil)
                         }
                     }
                     contactListNode.openDisabledPeer = { [weak self] peer, reason in

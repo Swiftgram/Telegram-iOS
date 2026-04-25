@@ -431,10 +431,10 @@ public final class ChatMessageInteractiveFileNode: ASDisplayNode {
                         guard let file = message.media.first(where: { $0 is TelegramMediaFile }) as? TelegramMediaFile else {
                             return .single(nil)
                         }
-                        return context.account.postbox.mediaBox.resourceData(id: file.resource.id)
+                        return context.engine.resources.data(id: EngineMediaResource.Id(file.resource.id))
                         |> take(1)
                         |> mapToSignal { data -> Signal<String?, NoError> in
-                            if !data.complete {
+                            if !data.isComplete {
                                 return .single(nil)
                             }
                             return .single(data.path)

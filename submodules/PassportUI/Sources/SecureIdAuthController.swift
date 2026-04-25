@@ -328,7 +328,14 @@ public final class SecureIdAuthController: ViewController, StandalonePresentable
             guard let strongSelf = self else {
                 return
             }
-            let _ = (strongSelf.context.account.postbox.loadedPeerWithId(mention.peerId)
+            let _ = (strongSelf.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: mention.peerId))
+            |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                if let peer {
+                    return .single(peer)
+                } else {
+                    return .never()
+                }
+            }
             |> deliverOnMainQueue).start(next: { peer in
                 guard let strongSelf = self else {
                     return

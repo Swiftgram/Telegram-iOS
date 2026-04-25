@@ -175,7 +175,7 @@ private final class PeerInfoScreenMemberItemNode: PeerInfoScreenItemNode {
             break
         }
         
-        let actions = availableActionsForMemberOfPeer(accountPeerId: item.context.accountPeerId, peer: item.enclosingPeer, member: item.member)
+        let actions = availableActionsForMemberOfPeer(accountPeerId: item.context.accountPeerId, peer: item.enclosingPeer.flatMap(EnginePeer.init), member: item.member)
         
         var options: [ItemListPeerItemRevealOption] = []
         if actions.contains(.promote) && item.enclosingPeer is TelegramChannel {

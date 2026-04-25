@@ -927,7 +927,8 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
                         
                         signal = chatMessagePhoto(postbox: context.account.postbox, userLocation: .other, photoReference: .standalone(media: tmpImage))
                         fetchSignal = fetchedMediaResource(mediaBox: context.account.postbox.mediaBox, userLocation: .other, userContentType: .other, reference: .media(media: .standalone(media: tmpImage), resource: imageResource))
-                        statusSignal = context.account.postbox.mediaBox.resourceStatus(imageResource)
+                        statusSignal = context.engine.resources.status(resource: EngineMediaResource(imageResource))
+                        |> map { $0._asStatus() }
                     } else {
                         displaySize = CGSize(width: 1.0, height: 1.0)
                         contentSize = displaySize

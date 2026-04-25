@@ -1230,7 +1230,7 @@ public func channelAdminController(context: AccountContext, updatedPresentationD
             guard let peer else {
                 return
             }
-            if let controller = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: updatedPresentationData, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+            if let controller = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: updatedPresentationData, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                 pushControllerImpl?(controller)
             }
         })

@@ -1,11 +1,9 @@
 import Foundation
 import UIKit
-import Postbox
 import SwiftSignalKit
 import Display
 import AsyncDisplayKit
 import TelegramCore
-import Postbox
 import TelegramPresentationData
 import TelegramUIPreferences
 import MediaResources
@@ -39,6 +37,7 @@ import UrlHandling
 import TextFormat
 import ChatNewThreadInfoItem
 import PhoneNumberFormat
+import Postbox
 
 struct ChatTopVisibleMessageRange: Equatable {
     var lowerBound: MessageIndex
@@ -1178,6 +1177,7 @@ public final class ChatHistoryListNodeImpl: ListViewImpl, ChatHistoryNode, ChatH
             }
             self.isInteractivelyScrollingValue = true
             self.isInteractivelyScrollingPromise.set(true)
+            //self.pinToTopStableId = nil
             self.beganDragging?()
         }
 
@@ -1688,16 +1688,16 @@ public final class ChatHistoryListNodeImpl: ListViewImpl, ChatHistoryNode, ChatH
                 TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId)
             ),
             peerReactionSettings,
-            self.context.account.postbox.preferencesView(keys: [PreferencesKeys.reactionSettings])
+            self.context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.reactionSettings))
         )
         |> map { peer, peerReactionSettings, preferencesView -> (MessageReaction.Reaction?, Bool) in
             var areStarsEnabled: Bool = false
             if let peerReactionSettings, let value = peerReactionSettings.knownValue?.starsAllowed {
                 areStarsEnabled = value
             }
-            
+
             let reactionSettings: ReactionSettings
-            if let entry = preferencesView.values[PreferencesKeys.reactionSettings], let value = entry.get(ReactionSettings.self) {
+            if let entry = preferencesView, let value = entry.get(ReactionSettings.self) {
                 reactionSettings = value
             } else {
                 reactionSettings = .default
@@ -2151,7 +2151,7 @@ public final class ChatHistoryListNodeImpl: ListViewImpl, ChatHistoryNode, ChatH
                         if message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
                             for j in (0 ..< i).reversed() {
                                 let otherMessage = view.entries[j].message
-                                if !otherMessage.effectivelyIncoming(context.account.peerId) {
+                                if !otherMessage.effectivelyIncoming(context.account.peerId) && otherMessage.id.namespace == Namespaces.Message.Cloud {
                                     if strongSelf.pinToTopStableId != otherMessage.stableId {
                                         strongSelf.pinToTopStableId = otherMessage.stableId
                                         scrollToPinToTopStableId = true
@@ -2529,10 +2529,10 @@ public final class ChatHistoryListNodeImpl: ListViewImpl, ChatHistoryNode, ChatH
     }
     
     private func beginPresentationDataManagement(updated: Signal<PresentationData, NoError>) {
-        let appConfiguration = self.context.account.postbox.preferencesView(keys: [PreferencesKeys.appConfiguration])
+        let appConfiguration = self.context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.appConfiguration))
         |> take(1)
         |> map { view in
-            return view.values[PreferencesKeys.appConfiguration]?.get(AppConfiguration.self) ?? .defaultValue
+            return view?.get(AppConfiguration.self) ?? .defaultValue
         }
         
         var didSetPresentationData = false

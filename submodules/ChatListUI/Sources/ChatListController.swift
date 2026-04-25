@@ -749,9 +749,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             self.reloadFilters()
         }
         
-        self.storiesPostingAvailabilityDisposable = (self.context.account.postbox.preferencesView(keys: [PreferencesKeys.appConfiguration])
+        self.storiesPostingAvailabilityDisposable = (self.context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.appConfiguration))
         |> map { view -> AppConfiguration in
-            let appConfiguration: AppConfiguration = view.values[PreferencesKeys.appConfiguration]?.get(AppConfiguration.self) ?? AppConfiguration.defaultValue
+            let appConfiguration: AppConfiguration = view?.get(AppConfiguration.self) ?? AppConfiguration.defaultValue
             return appConfiguration
         }
         |> distinctUntilChanged
@@ -1910,7 +1910,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                             strongSelf.presentInGlobalOverlay(contextController)
                         }
                     } else if let peer = peer.peer, peer.id == strongSelf.context.account.peerId, peerData.displayAsTopicList {
-                        if let peerInfoController = strongSelf.context.sharedContext.makePeerInfoController(context: strongSelf.context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+                        if let peerInfoController = strongSelf.context.sharedContext.makePeerInfoController(context: strongSelf.context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                             let source: ContextContentSource
                             if let location = location {
                                 source = .location(ChatListContextLocationContentSource(controller: strongSelf, location: location))
@@ -2711,11 +2711,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         }
                 
         if !self.processedFeaturedFilters {
-            let initializedFeatured = self.context.account.postbox.preferencesView(keys: [
-                PreferencesKeys.chatListFiltersFeaturedState
-            ])
+            let initializedFeatured = self.context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.chatListFiltersFeaturedState))
             |> mapToSignal { view -> Signal<Bool, NoError> in
-                if let entry = view.values[PreferencesKeys.chatListFiltersFeaturedState]?.get(ChatListFiltersFeaturedState.self) {
+                if let entry = view?.get(ChatListFiltersFeaturedState.self) {
                     return .single(!entry.filters.isEmpty && !entry.isSeen)
                 } else {
                     return .complete()
@@ -3308,7 +3306,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                                     guard let self else {
                                         return
                                     }
-                                    guard let peer = peer, let controller = self.context.sharedContext.makePeerInfoController(context: self.context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) else {
+                                    guard let peer = peer, let controller = self.context.sharedContext.makePeerInfoController(context: self.context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) else {
                                         return
                                     }
                                     (self.navigationController as? NavigationController)?.pushViewController(controller)
@@ -3794,7 +3792,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                     TelegramEngine.EngineData.Item.Peer.Peer(id: peerId)
                 )
                 |> deliverOnMainQueue).startStandalone(next: { peer in
-                    guard let sourceController = sourceController, let peer = peer, let controller = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) else {
+                    guard let sourceController = sourceController, let peer = peer, let controller = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) else {
                         return
                     }
                     (sourceController.navigationController as? NavigationController)?.pushViewController(controller)
@@ -3966,13 +3964,6 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                 resolvedItems = []
             }
             
-            var wasEmpty = false
-            if let tabContainerData = strongSelf.tabContainerData {
-                wasEmpty = tabContainerData.0.count <= 1 || tabContainerData.1
-            } else {
-                wasEmpty = true
-            }
-            
             let firstItem = countAndFilterItems.1.first?.0 ?? .allChats
             let firstItemEntryId: ChatListFilterTabEntryId
             switch firstItem {
@@ -4041,17 +4032,13 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                 strongSelf.initializedFilters = true
             }
             
-            let isEmpty = resolvedItems.count <= 1
-            
             let animated = strongSelf.didSetupTabs
             strongSelf.didSetupTabs = true
             
             if let layout = strongSelf.validLayout {
-                if wasEmpty != isEmpty {
-                    let transition: ContainedViewLayoutTransition = animated ? .animated(duration: 0.2, curve: .easeInOut) : .immediate
-                    strongSelf.containerLayoutUpdated(layout, transition: transition)
-                    (strongSelf.parent as? TabBarController)?.updateLayout(transition: transition)
-                }
+                let transition: ContainedViewLayoutTransition = animated ? .animated(duration: 0.2, curve: .easeInOut) : .immediate
+                strongSelf.containerLayoutUpdated(layout, transition: transition)
+                (strongSelf.parent as? TabBarController)?.updateLayout(transition: transition)
             }
             
             if !notifiedFirstUpdate {
@@ -7311,7 +7298,7 @@ private final class ChatListLocationContext {
                         TelegramEngine.EngineData.Item.Peer.Peer(id: peerId)
                     )
                     |> deliverOnMainQueue).startStandalone(next: { [weak self] peer in
-                        guard let self, let peer = peer, let controller = self.context.sharedContext.makePeerInfoController(context: self.context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) else {
+                        guard let self, let peer = peer, let controller = self.context.sharedContext.makePeerInfoController(context: self.context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) else {
                             return
                         }
                         (self.parentController?.navigationController as? NavigationController)?.pushViewController(controller)

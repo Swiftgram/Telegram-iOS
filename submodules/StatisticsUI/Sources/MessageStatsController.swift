@@ -601,7 +601,7 @@ public func messageStatsController(context: AccountContext, updatedPresentationD
                         return
                     }
                     if case .user = peer {
-                        if let controller = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: peer.largeProfileImage != nil, fromChat: false, requestsContext: nil) {
+                        if let controller = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: peer.largeProfileImage != nil, fromChat: false, requestsContext: nil) {
                             navigationController.pushViewController(controller)
                         }
                     } else {

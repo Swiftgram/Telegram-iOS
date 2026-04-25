@@ -6078,12 +6078,16 @@ func replayFinalState(
                 if let current, current.id > update.id {
                     return current
                 }
+                var timestamp = update.timestamp
+                if let current, current.id == update.id {
+                    timestamp = current.timestamp
+                }
                 return (
                     update.id,
                     Namespaces.Message.Cloud,
                     update.threadId,
                     update.authorId,
-                    update.timestamp,
+                    timestamp,
                     update.text,
                     [
                         TypingDraftMessageAttribute(),

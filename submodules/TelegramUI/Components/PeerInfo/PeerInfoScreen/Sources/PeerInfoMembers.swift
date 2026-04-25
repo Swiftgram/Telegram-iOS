@@ -30,7 +30,7 @@ enum PeerInfoMember: Equatable {
     var peer: Peer {
         switch self {
         case let .channelMember(participant, _):
-            return participant.peer
+            return participant.peer._asPeer()
         case let .legacyGroupMember(peer, _, _, _, _, _):
             return peer.peers[peer.peerId]!
         case let .account(peer):

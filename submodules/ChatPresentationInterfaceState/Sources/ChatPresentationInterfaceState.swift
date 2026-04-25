@@ -1572,7 +1572,7 @@ public func canBypassRestrictions(chatPresentationInterfaceState: ChatPresentati
 public func canSendMessagesToChat(_ state: ChatPresentationInterfaceState) -> Bool {
     if let peer = state.renderedPeer?.peer {
         let canBypassRestrictions = canBypassRestrictions(chatPresentationInterfaceState: state)
-        if canSendMessagesToPeer(peer, ignoreDefault: canBypassRestrictions) {
+        if canSendMessagesToPeer(EnginePeer(peer), ignoreDefault: canBypassRestrictions) {
             return true
         } else {
             return false

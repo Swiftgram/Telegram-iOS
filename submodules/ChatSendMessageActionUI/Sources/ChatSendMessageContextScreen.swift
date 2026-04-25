@@ -987,7 +987,7 @@ final class ChatSendMessageContextScreenComponent: Component {
                             loadEffectAnimationSignal = Signal { subscriber in
                                 let fetchDisposable = freeMediaFileResourceInteractiveFetched(account: context.account, userLocation: .other, fileReference: customEffectResourceFileReference, resource: customEffectResource).start()
                                 
-                                let dataDisposabke = (context.account.postbox.mediaBox.resourceStatus(customEffectResource)
+                                let dataDisposabke = (context.engine.resources.status(resource: EngineMediaResource(customEffectResource))
                                 |> filter { status in
                                     if status == .Local {
                                         return true

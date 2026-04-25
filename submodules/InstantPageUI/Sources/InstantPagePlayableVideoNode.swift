@@ -70,10 +70,10 @@ final class InstantPagePlayableVideoNode: ASDisplayNode, InstantPageNode, Galler
         if case let .file(file) = media.media {
             self.fetchedDisposable.set(fetchedMediaResource(mediaBox: context.account.postbox.mediaBox, userLocation: userLocation, userContentType: .video, reference: AnyMediaReference.webPage(webPage: WebpageReference(webPage), media: file).resourceReference(file.resource)).start())
             
-            self.statusDisposable.set((context.account.postbox.mediaBox.resourceStatus(file.resource) |> deliverOnMainQueue).start(next: { [weak self] status in
+            self.statusDisposable.set((context.engine.resources.status(resource: EngineMediaResource(file.resource)) |> deliverOnMainQueue).start(next: { [weak self] status in
                 displayLinkDispatcher.dispatch {
                     if let strongSelf = self {
-                        strongSelf.fetchStatus = EngineMediaResource.FetchStatus(status)
+                        strongSelf.fetchStatus = status
                         strongSelf.updateFetchStatus()
                     }
                 }

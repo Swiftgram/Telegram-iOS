@@ -84,7 +84,7 @@ class ChatExternalFileGalleryItemNode: GalleryItemNode {
     
     private var fetchDisposable = MetaDisposable()
     private let statusDisposable = MetaDisposable()
-    private var status: MediaResourceStatus?
+    private var status: EngineMediaResource.FetchStatus?
     
     init(context: AccountContext, presentationData: PresentationData) {
         self.containerNode = ASDisplayNode()
@@ -183,7 +183,7 @@ class ChatExternalFileGalleryItemNode: GalleryItemNode {
     }
     
     private func setupStatus(context: AccountContext, resource: MediaResource) {
-        self.statusDisposable.set((context.account.postbox.mediaBox.resourceStatus(resource)
+        self.statusDisposable.set((context.engine.resources.status(resource: EngineMediaResource(resource))
         |> deliverOnMainQueue).start(next: { [weak self] status in
             if let strongSelf = self {
                 let previousStatus = strongSelf.status
