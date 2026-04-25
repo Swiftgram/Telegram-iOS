@@ -96,6 +96,8 @@
 "Settings.HidePhoneInSettingsUI" = "Hide Phone in Settings";
 "Settings.HidePhoneInSettingsUI.Notice" = "This will only hide your phone number from the settings interface. To hide it from others, go to Privacy and Security.";
 
+"Settings.HidePMFirstTimeSticker" = "Hide Sticker in Empty Private Chats";
+
 "PasscodeSettings.AutoLock.InFiveSeconds" = "If away for 5 seconds";
 
 "ProxySettings.UseSystemDNS" = "Use system DNS";

@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -196,81 +197,92 @@ public final class ChatEmptyNodeGreetingChatContent: ASDisplayNode, ChatEmptyNod
             stickerSize = dimensions.aspectFitted(stickerSize)
         }
         
-        if let item = self.stickerItem, previousCustomStickerFile == customStickerFile {
-            self.stickerNode.updateLayout(item: item, size: stickerSize, isVisible: true, synchronousLoads: true)
-        } else if !self.didSetupSticker || previousCustomStickerFile != customStickerFile {
-            let sticker: Signal<TelegramMediaFile?, NoError>
-            if let customStickerFile {
-                sticker = .single(customStickerFile)
-            } else if let preloadedSticker = interfaceState.greetingData?.sticker {
-                sticker = preloadedSticker
-            } else {
-                sticker = self.context.engine.stickers.randomGreetingSticker()
-                |> map { item -> TelegramMediaFile? in
-                    return item?.file
-                }
-            }
+        // MARK: Swiftgram
+        let hidePMSticker = SGSimpleSettings.shared.hidePMFirstTimeSticker
+        if hidePMSticker {
+            stickerSize = .zero
+            self.stickerNode.isHidden = true
+            self.stickerNode.alpha = 0.0
+        } else {
+            self.stickerNode.isHidden = false
+            self.stickerNode.alpha = 1.0
             
-            if !isFirstTime, case let .emptyChat(emptyChat) = subject, case .customGreeting = emptyChat {
-                let previousStickerNode = self.stickerNode
-                previousStickerNode.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false, completion: { [weak previousStickerNode] _ in
-                    previousStickerNode?.removeFromSupernode()
-                })
-                previousStickerNode.layer.animateScale(from: 1.0, to: 0.001, duration: 0.2, removeOnCompletion: false)
-                
-                self.stickerNode = ChatMediaInputStickerGridItemNode()
-                self.addSubnode(self.stickerNode)
-                self.stickerNode.layer.animateSpring(from: 0.001 as NSNumber, to: 1.0 as NSNumber, keyPath: "transform.scale", duration: 0.5)
-                self.stickerNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
-            }
-            
-            self.didSetupSticker = true
-            self.disposable.set((sticker
-            |> deliverOnMainQueue).startStrict(next: { [weak self] sticker in
-                if let strongSelf = self, let sticker = sticker {
-                    let inputNodeInteraction = ChatMediaInputNodeInteraction(
-                        navigateToCollectionId: { _ in
-                        },
-                        navigateBackToStickers: {
-                        },
-                        setGifMode: { _ in
-                        },
-                        openSettings: {
-                        },
-                        openTrending: { _ in
-                        },
-                        dismissTrendingPacks: { _ in
-                        },
-                        toggleSearch: { _, _, _ in
-                        },
-                        openPeerSpecificSettings: {
-                        },
-                        dismissPeerSpecificSettings: {
-                        },
-                        clearRecentlyUsedStickers: {
-                        }
-                    )
-                    inputNodeInteraction.displayStickerPlaceholder = false
-                    
-                    let index = ItemCollectionItemIndex(index: 0, id: 0)
-                    let collectionId = ItemCollectionId(namespace: 0, id: 0)
-                    let stickerPackItem = StickerPackItem(index: index, file: sticker, indexKeys: [])
-                    let item = ChatMediaInputStickerGridItem(context: strongSelf.context, collectionId: collectionId, stickerPackInfo: nil, index: ItemCollectionViewEntryIndex(collectionIndex: 0, collectionId: collectionId, itemIndex: index), stickerItem: stickerPackItem, canManagePeerSpecificPack: nil, interfaceInteraction: nil, inputNodeInteraction: inputNodeInteraction, hasAccessory: false, theme: interfaceState.theme, large: true, selected: {})
-                    strongSelf.stickerItem = item
-                    
-                    if isFirstTime {
-                        
+            if let item = self.stickerItem, previousCustomStickerFile == customStickerFile {
+                self.stickerNode.updateLayout(item: item, size: stickerSize, isVisible: true, synchronousLoads: true)
+            } else if !self.didSetupSticker || previousCustomStickerFile != customStickerFile {
+                let sticker: Signal<TelegramMediaFile?, NoError>
+                if let customStickerFile {
+                    sticker = .single(customStickerFile)
+                } else if let preloadedSticker = interfaceState.greetingData?.sticker {
+                    sticker = preloadedSticker
+                } else {
+                    sticker = self.context.engine.stickers.randomGreetingSticker()
+                    |> map { item -> TelegramMediaFile? in
+                        return item?.file
                     }
-                    strongSelf.stickerNode.updateLayout(item: item, size: stickerSize, isVisible: true, synchronousLoads: true)
-                    strongSelf.stickerNode.isVisibleInGrid = true
-                    strongSelf.stickerNode.updateIsPanelVisible(true)
                 }
-            }))
+                
+                if !isFirstTime, case let .emptyChat(emptyChat) = subject, case .customGreeting = emptyChat {
+                    let previousStickerNode = self.stickerNode
+                    previousStickerNode.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false, completion: { [weak previousStickerNode] _ in
+                        previousStickerNode?.removeFromSupernode()
+                    })
+                    previousStickerNode.layer.animateScale(from: 1.0, to: 0.001, duration: 0.2, removeOnCompletion: false)
+                    
+                    self.stickerNode = ChatMediaInputStickerGridItemNode()
+                    self.addSubnode(self.stickerNode)
+                    self.stickerNode.layer.animateSpring(from: 0.001 as NSNumber, to: 1.0 as NSNumber, keyPath: "transform.scale", duration: 0.5)
+                    self.stickerNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
+                }
+                
+                self.didSetupSticker = true
+                self.disposable.set((sticker
+                |> deliverOnMainQueue).startStrict(next: { [weak self] sticker in
+                    if let strongSelf = self, let sticker = sticker {
+                        let inputNodeInteraction = ChatMediaInputNodeInteraction(
+                            navigateToCollectionId: { _ in
+                            },
+                            navigateBackToStickers: {
+                            },
+                            setGifMode: { _ in
+                            },
+                            openSettings: {
+                            },
+                            openTrending: { _ in
+                            },
+                            dismissTrendingPacks: { _ in
+                            },
+                            toggleSearch: { _, _, _ in
+                            },
+                            openPeerSpecificSettings: {
+                            },
+                            dismissPeerSpecificSettings: {
+                            },
+                            clearRecentlyUsedStickers: {
+                            }
+                        )
+                        inputNodeInteraction.displayStickerPlaceholder = false
+                        
+                        let index = ItemCollectionItemIndex(index: 0, id: 0)
+                        let collectionId = ItemCollectionId(namespace: 0, id: 0)
+                        let stickerPackItem = StickerPackItem(index: index, file: sticker, indexKeys: [])
+                        let item = ChatMediaInputStickerGridItem(context: strongSelf.context, collectionId: collectionId, stickerPackInfo: nil, index: ItemCollectionViewEntryIndex(collectionIndex: 0, collectionId: collectionId, itemIndex: index), stickerItem: stickerPackItem, canManagePeerSpecificPack: nil, interfaceInteraction: nil, inputNodeInteraction: inputNodeInteraction, hasAccessory: false, theme: interfaceState.theme, large: true, selected: {})
+                        strongSelf.stickerItem = item
+                        
+                        if isFirstTime {
+                            
+                        }
+                        strongSelf.stickerNode.updateLayout(item: item, size: stickerSize, isVisible: true, synchronousLoads: true)
+                        strongSelf.stickerNode.isVisibleInGrid = true
+                        strongSelf.stickerNode.updateIsPanelVisible(true)
+                    }
+                }))
+            }
         }
         
         let insets = UIEdgeInsets(top: inset, left: inset, bottom: inset, right: inset)
         let titleSpacing: CGFloat = 5.0
-        let stickerSpacing: CGFloat = 5.0
+        let stickerSpacing: CGFloat = hidePMSticker ? 0.0 : 5.0 // MARK: Swiftgram
         
         var contentWidth: CGFloat = 220.0
         var contentHeight: CGFloat = 0.0

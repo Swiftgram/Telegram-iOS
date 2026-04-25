@@ -176,6 +176,7 @@ public class SGSimpleSettings {
         case warnOnStoriesOpen
         case showProfileId
         case sendWithReturnKey
+        case hidePMFirstTimeSticker
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -328,7 +329,8 @@ public class SGSimpleSettings {
         Keys.hideStories.rawValue: false,
         Keys.warnOnStoriesOpen.rawValue: false,
         Keys.showProfileId.rawValue: true,
-        Keys.sendWithReturnKey.rawValue: false
+        Keys.sendWithReturnKey.rawValue: false,
+        Keys.hidePMFirstTimeSticker.rawValue: false
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -592,6 +594,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.tabBarSearchEnabled.rawValue)
     public var tabBarSearchEnabled: Bool
+
+    @UserDefault(key: Keys.hidePMFirstTimeSticker.rawValue)
+    public var hidePMFirstTimeSticker: Bool
 }
 
 extension SGSimpleSettings {
