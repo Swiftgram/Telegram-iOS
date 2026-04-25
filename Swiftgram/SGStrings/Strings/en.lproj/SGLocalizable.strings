@@ -127,6 +127,7 @@
 
 "Settings.ChatSwipeOptions" = "Chat List Swipe Options";
 "Settings.DeleteChatSwipeOption" = "Swipe to Delete Chat";
+"Settings.ChatContextAdvancedMute" = "Context Menu Mute Options";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
 "Settings.PullToNextChannel" = "Pull to Next Unread Channel";
 /* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
