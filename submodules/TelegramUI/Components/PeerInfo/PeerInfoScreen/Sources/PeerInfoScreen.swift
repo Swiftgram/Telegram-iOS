@@ -6766,6 +6766,19 @@ public final class PeerInfoScreenImpl: ViewController, PeerInfoScreen, KeyShortc
         })
 
         self.updateTabBarSearchState(ViewController.TabBarSearchState(isActive: false), transition: .immediate)
+        
+        if let sourceMessageId {
+            let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
+            |> deliverOnMainQueue).start(next: { peer in
+                guard case let .user(user) = peer else {
+                    return
+                }
+                if case .personal = user.accessHash {
+                } else {
+                    let _ = context.engine.peers.fetchAndUpdateCachedPeerData(peerId: peerId, sourceMessageId: sourceMessageId).startStandalone()
+                }
+            })
+        }
     }
     
     required init(coder aDecoder: NSCoder) {

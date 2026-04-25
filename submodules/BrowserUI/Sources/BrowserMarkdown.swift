@@ -20,6 +20,8 @@ private let markdownInlineHTMLInlineIntent = InlinePresentationIntent(rawValue: 
 
 private let markdownDefaultBlockImageDimensions = PixelDimensions(width: 1200, height: 900)
 private let markdownDefaultInlineImageDimensions = PixelDimensions(width: 18, height: 18)
+private let markdownTaskListUncheckedNumber = "\u{001f}tg-md-task:unchecked"
+private let markdownTaskListCheckedNumber = "\u{001f}tg-md-task:checked"
 
 private struct MarkdownPageResult {
     let blocks: [InstantPageBlock]
@@ -86,6 +88,11 @@ private enum MarkdownResolvedImageSource {
     case remote(String)
     case data(Data, PixelDimensions)
     case unsupported
+}
+
+private enum MarkdownTaskListState {
+    case unchecked
+    case checked
 }
 
 private final class MarkdownConversionContext {
@@ -326,8 +333,6 @@ private func markdownBlocks(from node: MarkdownIntentNode, context: MarkdownConv
             return []
         }
         if level <= 1 {
-            return [.title(text)]
-        } else if level == 2 {
             return [.header(text)]
         } else {
             return [.heading(text: text, level: Int32(max(3, min(level, 6))))]
@@ -396,23 +401,79 @@ private func markdownListItems(from nodes: [MarkdownIntentNode], ordered: Bool, 
         guard case let .listItem(ordinal) = node.kind else {
             continue
         }
-        let blocks = markdownBlocks(from: node.children, context: context)
-        guard !blocks.isEmpty else {
-            continue
-        }
+        var blocks = markdownBlocks(from: node.children, context: context)
+        let taskListState = markdownApplyTaskListMarker(to: &blocks)
         let number: String?
-        if ordered {
+        if let taskListState {
+            number = markdownTaskListNumber(for: taskListState)
+        } else if ordered {
             number = "\(ordinal)"
         } else {
             number = nil
         }
+        if blocks.isEmpty {
+            if let number {
+                result.append(.text(.plain(" "), number))
+            }
+            continue
+        }
         if blocks.count == 1, case let .paragraph(text) = blocks[0] {
-            result.append(.text(text, number))
+            if number != nil && markdownIsWhitespaceOnly(text) {
+                result.append(.text(.plain(" "), number))
+            } else {
+                result.append(.text(text, number))
+            }
         } else {
             result.append(.blocks(blocks, number))
         }
     }
     return result
+}
+
+private func markdownTaskListNumber(for state: MarkdownTaskListState) -> String {
+    switch state {
+    case .unchecked:
+        return markdownTaskListUncheckedNumber
+    case .checked:
+        return markdownTaskListCheckedNumber
+    }
+}
+
+private func markdownApplyTaskListMarker(to blocks: inout [InstantPageBlock]) -> MarkdownTaskListState? {
+    guard !blocks.isEmpty, case let .paragraph(text) = blocks[0] else {
+        return nil
+    }
+    guard let (state, strippedText) = markdownStrippingTaskListMarker(from: text) else {
+        return nil
+    }
+    if blocks.count > 1 && markdownIsWhitespaceOnly(strippedText) {
+        blocks.removeFirst()
+    } else {
+        blocks[0] = .paragraph(strippedText)
+    }
+    return state
+}
+
+private func markdownStrippingTaskListMarker(from text: RichText) -> (MarkdownTaskListState, RichText)? {
+    guard let (state, markerLength) = markdownTaskListMarker(in: text.plainText) else {
+        return nil
+    }
+    return (state, markdownDroppingPrefixLength(markerLength, from: text))
+}
+
+private func markdownTaskListMarker(in plainText: String) -> (MarkdownTaskListState, Int)? {
+    switch plainText {
+    case _ where plainText.hasPrefix("[ ] "):
+        return (.unchecked, 4)
+    case "[ ]":
+        return (.unchecked, 3)
+    case _ where plainText.hasPrefix("[x] "), _ where plainText.hasPrefix("[X] "):
+        return (.checked, 4)
+    case "[x]", "[X]":
+        return (.checked, 3)
+    default:
+        return nil
+    }
 }
 
 private func markdownTableRows(from nodes: [MarkdownIntentNode], alignments: [TableHorizontalAlignment], context: MarkdownConversionContext) -> [InstantPageTableRow] {
@@ -828,6 +889,79 @@ private func markdownCompact(_ fragments: [RichText]) -> RichText {
         return compacted[0]
     } else {
         return .concat(compacted)
+    }
+}
+
+private func markdownDroppingPrefixLength(_ length: Int, from text: RichText) -> RichText {
+    guard length > 0 else {
+        return text
+    }
+    switch text {
+    case .empty:
+        return .empty
+    case let .plain(string):
+        let nsString = string as NSString
+        if nsString.length <= length {
+            return .empty
+        } else {
+            return .plain(nsString.substring(from: length))
+        }
+    case let .bold(inner):
+        let dropped = markdownDroppingPrefixLength(length, from: inner)
+        return dropped == .empty ? .empty : .bold(dropped)
+    case let .italic(inner):
+        let dropped = markdownDroppingPrefixLength(length, from: inner)
+        return dropped == .empty ? .empty : .italic(dropped)
+    case let .underline(inner):
+        let dropped = markdownDroppingPrefixLength(length, from: inner)
+        return dropped == .empty ? .empty : .underline(dropped)
+    case let .strikethrough(inner):
+        let dropped = markdownDroppingPrefixLength(length, from: inner)
+        return dropped == .empty ? .empty : .strikethrough(dropped)
+    case let .fixed(inner):
+        let dropped = markdownDroppingPrefixLength(length, from: inner)
+        return dropped == .empty ? .empty : .fixed(dropped)
+    case let .url(inner, url, webpageId):
+        let dropped = markdownDroppingPrefixLength(length, from: inner)
+        return dropped == .empty ? .empty : .url(text: dropped, url: url, webpageId: webpageId)
+    case let .email(inner, email):
+        let dropped = markdownDroppingPrefixLength(length, from: inner)
+        return dropped == .empty ? .empty : .email(text: dropped, email: email)
+    case let .concat(items):
+        var remainingLength = length
+        var result: [RichText] = []
+        result.reserveCapacity(items.count)
+        for item in items {
+            if remainingLength > 0 {
+                let itemLength = (item.plainText as NSString).length
+                if itemLength <= remainingLength {
+                    remainingLength -= itemLength
+                    continue
+                }
+                result.append(markdownDroppingPrefixLength(remainingLength, from: item))
+                remainingLength = 0
+            } else {
+                result.append(item)
+            }
+        }
+        return markdownCompact(result)
+    case let .subscript(inner):
+        let dropped = markdownDroppingPrefixLength(length, from: inner)
+        return dropped == .empty ? .empty : .subscript(dropped)
+    case let .superscript(inner):
+        let dropped = markdownDroppingPrefixLength(length, from: inner)
+        return dropped == .empty ? .empty : .superscript(dropped)
+    case let .marked(inner):
+        let dropped = markdownDroppingPrefixLength(length, from: inner)
+        return dropped == .empty ? .empty : .marked(dropped)
+    case let .phone(inner, phone):
+        let dropped = markdownDroppingPrefixLength(length, from: inner)
+        return dropped == .empty ? .empty : .phone(text: dropped, phone: phone)
+    case .image:
+        return text
+    case let .anchor(inner, name):
+        let dropped = markdownDroppingPrefixLength(length, from: inner)
+        return dropped == .empty ? .empty : .anchor(text: dropped, name: name)
     }
 }
 

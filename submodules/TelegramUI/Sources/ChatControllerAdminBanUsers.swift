@@ -72,7 +72,13 @@ extension ChatControllerImpl {
         }
         
         do {
-            let _ = self.context.engine.messages.deleteMessagesInteractively(messageIds: Array(messageIds), type: .forEveryone).startStandalone()
+            if let reactionPeerId {
+                if let messageId = messageIds.first {
+                    let _ = self.context.engine.messages.deleteReaction(messageId: messageId, authorId: reactionPeerId).startStandalone()
+                }
+            } else {
+                let _ = self.context.engine.messages.deleteMessagesInteractively(messageIds: Array(messageIds), type: .forEveryone).startStandalone()
+            }
             
             for authorId in result.deleteAllFromPeers {
                 let _ = self.context.engine.messages.deleteAllMessagesWithAuthor(peerId: messagesPeerId, authorId: authorId, namespace: Namespaces.Message.Cloud).startStandalone()

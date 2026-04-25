@@ -1093,6 +1093,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[1236871718] = { return Api.TodoList.parse_todoList($0) }
     dict[-305282981] = { return Api.TopPeer.parse_topPeer($0) }
     dict[-39945236] = { return Api.TopPeerCategory.parse_topPeerCategoryBotsApp($0) }
+    dict[1814361053] = { return Api.TopPeerCategory.parse_topPeerCategoryBotsGuestChat($0) }
     dict[344356834] = { return Api.TopPeerCategory.parse_topPeerCategoryBotsInline($0) }
     dict[-1419371685] = { return Api.TopPeerCategory.parse_topPeerCategoryBotsPM($0) }
     dict[371037736] = { return Api.TopPeerCategory.parse_topPeerCategoryChannels($0) }

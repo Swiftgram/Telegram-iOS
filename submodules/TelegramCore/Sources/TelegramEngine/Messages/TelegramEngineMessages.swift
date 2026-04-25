@@ -174,7 +174,7 @@ public extension TelegramEngine {
             return _internal_deleteAllReactionsWithAuthor(account: self.account, peerId: peerId, authorId: authorId)
         }
         
-        public func deleteReaction(peerId: EnginePeer.Id, messageId: EngineMessage.Id, authorId: EnginePeer.Id) -> Signal<Never, NoError> {
+        public func deleteReaction(messageId: EngineMessage.Id, authorId: EnginePeer.Id) -> Signal<Never, NoError> {
             return _internal_deleteReaction(account: self.account, messageId: messageId, authorId: authorId)
         }
 
