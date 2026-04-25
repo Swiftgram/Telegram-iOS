@@ -122,7 +122,7 @@ final class WebSearchVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                 switch gesture {
                     case .tap:
                         if let item = self.item, let selectionState = item.controllerInteraction?.selectionState {
-                            let legacyItem = legacyWebSearchItem(account: item.context.account, result: item.result)
+                            let legacyItem = legacyWebSearchItem(engine: item.context.engine, result: item.result)
                             selectionState.toggleItemSelection(legacyItem, success: nil)
                         }
                     case .doubleTap:

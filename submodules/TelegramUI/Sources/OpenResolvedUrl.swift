@@ -747,16 +747,16 @@ func openResolvedUrlImpl(
                     } else if let resource = themeInfo.file?.resource {
                         disposables.add(context.engine.resources.fetch(reference: .standalone(resource: resource), userLocation: .other, userContentType: .other).start())
                         
-                        let maybeFetched = context.sharedContext.accountManager.mediaBox.resourceData(resource, option: .complete(waitUntilFetchStatus: false), attemptSynchronously: false)
+                        let maybeFetched = context.sharedContext.accountManager.resources.data(resource: EngineMediaResource(resource))
                         |> mapToSignal { maybeData -> Signal<Data?, NoError> in
-                            if maybeData.complete {
+                            if maybeData.isComplete {
                                 let loadedData = try? Data(contentsOf: URL(fileURLWithPath: maybeData.path), options: [])
                                 return .single(loadedData)
                             } else {
                                 return context.engine.resources.data(resource: EngineMediaResource(resource))
                                 |> map { next -> Data? in
                                     if next.availableSize > 0, let data = try? Data(contentsOf: URL(fileURLWithPath: next.path), options: []) {
-                                        context.sharedContext.accountManager.mediaBox.storeResourceData(resource.id, data: data)
+                                        context.sharedContext.accountManager.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data)
                                         return data
                                     } else {
                                         return nil

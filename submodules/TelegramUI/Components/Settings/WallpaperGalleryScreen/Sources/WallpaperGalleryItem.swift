@@ -131,7 +131,7 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
     private let colorDisposable = MetaDisposable()
     
     let subtitle = Promise<String?>(nil)
-    let status = Promise<MediaResourceStatus>(.Local)
+    let status = Promise<EngineMediaResource.FetchStatus>(.Local)
     let actionButton = Promise<UIBarButtonItem?>(nil)
     var action: (() -> Void)?
     var requestPatternPanel: ((Bool, TelegramWallpaper) -> Void)?
@@ -615,7 +615,7 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
             
             let signal: Signal<(TransformImageArguments) -> DrawingContext?, NoError>
             let fetchSignal: Signal<FetchResourceSourceType, FetchResourceError>
-            let statusSignal: Signal<MediaResourceStatus, NoError>
+            let statusSignal: Signal<EngineMediaResource.FetchStatus, NoError>
             let subtitleSignal: Signal<String?, NoError>
             var actionSignal: Signal<UIBarButtonItem?, NoError> = .single(nil)
             var colorSignal: Signal<UIColor, NoError> = serviceColor(from: imagePromise.get())
@@ -795,14 +795,14 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
                                 signal = wallpaperImage(account: context.account, accountManager: context.sharedContext.accountManager, fileReference: fileReference, representations: convertedRepresentations, alwaysShowThumbnailFirst: true, autoFetchFullSize: false)
                             }
                             fetchSignal = context.engine.resources.fetch(reference: convertedRepresentations[convertedRepresentations.count - 1].reference, userLocation: .other, userContentType: .other)
-                            let account = self.context.account
-                            statusSignal = self.context.sharedContext.accountManager.mediaBox.resourceStatus(file.file.resource)
+                            let engine = self.context.engine
+                            statusSignal = self.context.sharedContext.accountManager.resources.status(resource: EngineMediaResource(file.file.resource))
                             |> take(1)
-                            |> mapToSignal { status -> Signal<MediaResourceStatus, NoError> in
+                            |> mapToSignal { status -> Signal<EngineMediaResource.FetchStatus, NoError> in
                                 if case .Local = status {
                                     return .single(status)
                                 } else {
-                                    return account.postbox.mediaBox.resourceStatus(file.file.resource)
+                                    return engine.resources.status(resource: EngineMediaResource(file.file.resource))
                                 }
                             }
                             if let fileSize = file.file.size {
@@ -830,14 +830,14 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
                                 } else {
                                     fetchSignal = .complete()
                                 }
-                                let account = context.account
-                                statusSignal = context.sharedContext.accountManager.mediaBox.resourceStatus(largestSize.resource)
+                                let engine = context.engine
+                                statusSignal = context.sharedContext.accountManager.resources.status(resource: EngineMediaResource(largestSize.resource))
                                 |> take(1)
-                                |> mapToSignal { status -> Signal<MediaResourceStatus, NoError> in
+                                |> mapToSignal { status -> Signal<EngineMediaResource.FetchStatus, NoError> in
                                     if case .Local = status {
                                         return .single(status)
                                     } else {
-                                        return account.postbox.mediaBox.resourceStatus(largestSize.resource)
+                                        return engine.resources.status(resource: EngineMediaResource(largestSize.resource))
                                     }
                                 }
                                 if let fileSize = largestSize.resource.size {
@@ -928,7 +928,6 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
                         signal = chatMessagePhoto(postbox: context.account.postbox, userLocation: .other, photoReference: .standalone(media: tmpImage))
                         fetchSignal = context.engine.resources.fetch(reference: .media(media: .standalone(media: tmpImage), resource: imageResource), userLocation: .other, userContentType: .other)
                         statusSignal = context.engine.resources.status(resource: EngineMediaResource(imageResource))
-                        |> map { $0._asStatus() }
                     } else {
                         displaySize = CGSize(width: 1.0, height: 1.0)
                         contentSize = displaySize
@@ -987,7 +986,7 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
                     
                     if case .asset = entry, let image, let data = image.jpegData(compressionQuality: 0.5) {
                         let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
-                        strongSelf.context.sharedContext.accountManager.mediaBox.storeResourceData(resource.id, data: data, synchronous: true)
+                        strongSelf.context.sharedContext.accountManager.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data, synchronous: true)
                         
                         let wallpaper: TelegramWallpaper = .image([TelegramMediaImageRepresentation(dimensions: PixelDimensions(image.size), resource: resource, progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false)], WallpaperSettings())
                         strongSelf.nativeNode.update(wallpaper: wallpaper, animated: false)

@@ -543,7 +543,7 @@ func openChatTheme(context: AccountContext, message: Message, pushController: @e
                 }
                 if case let .theme(slug) = resolvedUrl {
                     if let file = file {
-                        if let path = context.sharedContext.accountManager.mediaBox.completedResourcePath(file.resource), let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
+                        if let path = context.sharedContext.accountManager.resources.completedResourcePath(resource: EngineMediaResource(file.resource)), let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                             if let theme = makePresentationTheme(data: data) {
                                 let controller = ThemePreviewController(context: context, previewTheme: theme, source: .slug(slug, file))
                                 pushController(controller)

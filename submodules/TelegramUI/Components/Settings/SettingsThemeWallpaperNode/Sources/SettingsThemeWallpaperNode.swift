@@ -281,8 +281,8 @@ public final class SettingsThemeWallpaperNode: ASDisplayNode {
                         }
 
                         let anyStatus = combineLatest(queue: .mainQueue(),
-                            context.account.postbox.mediaBox.resourceStatus(convertedFullRepresentations[0].reference.resource, approximateSynchronousValue: true),
-                            context.sharedContext.accountManager.mediaBox.resourceStatus(convertedFullRepresentations[0].reference.resource, approximateSynchronousValue: true)
+                            context.engine.resources.status(resource: EngineMediaResource(convertedFullRepresentations[0].reference.resource), approximateSynchronousValue: true),
+                            context.sharedContext.accountManager.resources.status(resource: EngineMediaResource(convertedFullRepresentations[0].reference.resource), approximateSynchronousValue: true)
                         )
                         |> map { a, b -> Bool in
                             switch a {

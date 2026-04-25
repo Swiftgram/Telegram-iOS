@@ -435,9 +435,10 @@ public extension TelegramEngine {
         }
 
         public func status(
-            resource: EngineMediaResource
+            resource: EngineMediaResource,
+            approximateSynchronousValue: Bool = false
         ) -> Signal<EngineMediaResource.FetchStatus, NoError> {
-            return self.account.postbox.mediaBox.resourceStatus(resource._asResource())
+            return self.account.postbox.mediaBox.resourceStatus(resource._asResource(), approximateSynchronousValue: approximateSynchronousValue)
             |> map { EngineMediaResource.FetchStatus($0) }
         }
 
