@@ -355,7 +355,7 @@ private enum InviteLinksEditEntry: ItemListNodeEntry {
             case let .timeHeader(_, text):
                 return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
             case let .timePicker(_, value, enabled):
-                return ItemListInviteLinkTimeLimitItem(theme: presentationData.theme, strings: presentationData.strings, value: value, enabled: enabled, sectionId: self.section, updated: { value in
+                return ItemListInviteLinkTimeLimitItem(theme: presentationData.theme, systemStyle: .glass, strings: presentationData.strings, value: value, enabled: enabled, sectionId: self.section, updated: { value in
                     arguments.updateState({ state in
                         var updatedState = state
                         if value != updatedState.time {
@@ -418,7 +418,7 @@ private enum InviteLinksEditEntry: ItemListNodeEntry {
             case let .usageHeader(_, text):
                 return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
             case let .usagePicker(_, dateTimeFormat, value, enabled):
-                return ItemListInviteLinkUsageLimitItem(theme: presentationData.theme, strings: presentationData.strings, dateTimeFormat: dateTimeFormat, value: value, enabled: enabled, sectionId: self.section, updated: { value in
+                return ItemListInviteLinkUsageLimitItem(theme: presentationData.theme, systemStyle: .glass, strings: presentationData.strings, dateTimeFormat: dateTimeFormat, value: value, enabled: enabled, sectionId: self.section, updated: { value in
                     arguments.dismissInput()
                     arguments.updateState({ state in
                         var updatedState = state
