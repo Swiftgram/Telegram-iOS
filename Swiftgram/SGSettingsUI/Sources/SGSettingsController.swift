@@ -106,6 +106,7 @@ private enum SGBoolSetting: String {
     case nyStyleSnow
     case nyStyleLightning
     case tabBarSearchEnabled
+    case chatContextAdvancedMute
 }
 
 private enum SGOneFromManySetting: String {
@@ -193,6 +194,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .chatList, settingName: .compactMessagePreview, value: SGSimpleSettings.shared.chatListLines != SGSimpleSettings.ChatListLines.three.rawValue, text: i18n("Settings.CompactMessagePreview", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .chatList, settingName: .disableChatSwipeOptions, value: !SGSimpleSettings.shared.disableChatSwipeOptions, text: i18n("Settings.ChatSwipeOptions", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .chatList, settingName: .disableDeleteChatSwipeOption, value: !SGSimpleSettings.shared.disableDeleteChatSwipeOption, text: i18n("Settings.DeleteChatSwipeOption", lang), enabled: !SGSimpleSettings.shared.disableChatSwipeOptions))
+    entries.append(.toggle(id: id.count, section: .chatList, settingName: .chatContextAdvancedMute, value: SGSimpleSettings.shared.chatContextAdvancedMute, text: i18n("Settings.ChatContextAdvancedMute", lang), enabled: true))
     
     entries.append(.header(id: id.count, section: .profiles, text: i18n("Settings.Profiles.Header", lang), badge: nil))
     entries.append(.toggle(id: id.count, section: .profiles, settingName: .showProfileId, value: SGSimpleSettings.shared.showProfileId, text: i18n("Settings.ShowProfileID", lang), enabled: true))
@@ -441,6 +443,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
         case .disableDeleteChatSwipeOption:
             SGSimpleSettings.shared.disableDeleteChatSwipeOption = !value
             askForRestart?()
+        case .chatContextAdvancedMute:
+            SGSimpleSettings.shared.chatContextAdvancedMute = value
         case .disableGalleryCamera:
             SGSimpleSettings.shared.disableGalleryCamera = !value
             simplePromise.set(true)
