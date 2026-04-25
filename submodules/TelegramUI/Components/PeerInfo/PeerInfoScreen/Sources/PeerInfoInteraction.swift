@@ -42,7 +42,7 @@ final class PeerInfoInteraction {
     let openPermissions: () -> Void
     let openLocation: () -> Void
     let editingOpenSetupLocation: () -> Void
-    let openPeerInfo: (Peer, Bool) -> Void
+    let openPeerInfo: (EnginePeer, Bool) -> Void
     let performMemberAction: (PeerInfoMember, PeerInfoMemberAction) -> Void
     let openPeerInfoContextMenu: (PeerInfoContextSubject, ASDisplayNode, CGRect?) -> Void
     let performBioLinkAction: (TextLinkItemActionType, TextLinkItem) -> Void
@@ -120,7 +120,7 @@ final class PeerInfoInteraction {
         openPermissions: @escaping () -> Void,
         openLocation: @escaping () -> Void,
         editingOpenSetupLocation: @escaping () -> Void,
-        openPeerInfo: @escaping (Peer, Bool) -> Void,
+        openPeerInfo: @escaping (EnginePeer, Bool) -> Void,
         performMemberAction: @escaping (PeerInfoMember, PeerInfoMemberAction) -> Void,
         openPeerInfoContextMenu: @escaping (PeerInfoContextSubject, ASDisplayNode, CGRect?) -> Void,
         performBioLinkAction: @escaping (TextLinkItemActionType, TextLinkItem) -> Void,

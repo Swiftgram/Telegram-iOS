@@ -794,7 +794,7 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
                                 }
                                 signal = wallpaperImage(account: context.account, accountManager: context.sharedContext.accountManager, fileReference: fileReference, representations: convertedRepresentations, alwaysShowThumbnailFirst: true, autoFetchFullSize: false)
                             }
-                            fetchSignal = fetchedMediaResource(mediaBox: context.account.postbox.mediaBox, userLocation: .other, userContentType: .other, reference: convertedRepresentations[convertedRepresentations.count - 1].reference)
+                            fetchSignal = context.engine.resources.fetch(reference: convertedRepresentations[convertedRepresentations.count - 1].reference, userLocation: .other, userContentType: .other)
                             let account = self.context.account
                             statusSignal = self.context.sharedContext.accountManager.mediaBox.resourceStatus(file.file.resource)
                             |> take(1)
@@ -826,7 +826,7 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
                                 signal = wallpaperImage(account: context.account, accountManager: context.sharedContext.accountManager, representations: convertedRepresentations, alwaysShowThumbnailFirst: true, autoFetchFullSize: false)
                                 
                                 if let largestIndex = convertedRepresentations.firstIndex(where: { $0.representation == largestSize }) {
-                                    fetchSignal = fetchedMediaResource(mediaBox: context.account.postbox.mediaBox, userLocation: .other, userContentType: .other, reference: convertedRepresentations[largestIndex].reference)
+                                    fetchSignal = context.engine.resources.fetch(reference: convertedRepresentations[largestIndex].reference, userLocation: .other, userContentType: .other)
                                 } else {
                                     fetchSignal = .complete()
                                 }
@@ -926,7 +926,7 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
                         let tmpImage = TelegramMediaImage(imageId: MediaId(namespace: 0, id: 0), representations: representations, immediateThumbnailData: nil, reference: nil, partialReference: nil, flags: [])
                         
                         signal = chatMessagePhoto(postbox: context.account.postbox, userLocation: .other, photoReference: .standalone(media: tmpImage))
-                        fetchSignal = fetchedMediaResource(mediaBox: context.account.postbox.mediaBox, userLocation: .other, userContentType: .other, reference: .media(media: .standalone(media: tmpImage), resource: imageResource))
+                        fetchSignal = context.engine.resources.fetch(reference: .media(media: .standalone(media: tmpImage), resource: imageResource), userLocation: .other, userContentType: .other)
                         statusSignal = context.engine.resources.status(resource: EngineMediaResource(imageResource))
                         |> map { $0._asStatus() }
                     } else {

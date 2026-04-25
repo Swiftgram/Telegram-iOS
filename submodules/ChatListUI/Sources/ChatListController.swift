@@ -472,7 +472,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                         var entry: FetchManagerEntrySummary
                         var isRemoved: Bool = false
                         var statusDisposable: Disposable?
-                        var status: MediaResourceStatus?
+                        var status: EngineMediaResource.FetchStatus?
                         
                         init(entry: FetchManagerEntrySummary) {
                             self.entry = entry
@@ -522,7 +522,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                                 }
                                 
                                 if context.statusDisposable == nil {
-                                    context.statusDisposable = (engine.account.postbox.mediaBox.resourceStatus(context.entry.resourceReference.resource)
+                                    context.statusDisposable = (engine.resources.status(resource: EngineMediaResource(context.entry.resourceReference.resource))
                                     |> deliverOn(self.queue)).startStrict(next: { [weak self, weak context] status in
                                         guard let strongSelf = self, let context = context else {
                                             return
@@ -3314,7 +3314,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                             })
                         })))
                         
-                        let isMuted = resolvedAreStoriesMuted(globalSettings: globalSettings._asGlobalNotificationSettings(), peer: peer._asPeer(), peerSettings: notificationSettings._asNotificationSettings(), topSearchPeers: topSearchPeers)
+                        let isMuted = resolvedAreStoriesMuted(globalSettings: globalSettings._asGlobalNotificationSettings(), peer: peer, peerSettings: notificationSettings._asNotificationSettings(), topSearchPeers: topSearchPeers)
                         items.append(.action(ContextMenuActionItem(text: isMuted ? self.presentationData.strings.StoryFeed_ContextNotifyOn : self.presentationData.strings.StoryFeed_ContextNotifyOff, icon: { theme in
                             return generateTintedImage(image: UIImage(bundleImageName: isMuted ? "Chat/Context Menu/Unmute" : "Chat/Context Menu/Muted"), color: theme.contextMenu.primaryColor)
                         }, action: { [weak self] _, f in
@@ -3812,7 +3812,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                         }
                         let selectAddMemberDisposable = MetaDisposable()
                         let addMemberDisposable = MetaDisposable()
-                        context.sharedContext.openAddPeerMembers(context: context, updatedPresentationData: nil, parentController: sourceController, groupPeer: peer._asPeer(), selectAddMemberDisposable: selectAddMemberDisposable, addMemberDisposable: addMemberDisposable)
+                        context.sharedContext.openAddPeerMembers(context: context, updatedPresentationData: nil, parentController: sourceController, groupPeer: peer, selectAddMemberDisposable: selectAddMemberDisposable, addMemberDisposable: addMemberDisposable)
                     })
                 })))
             }

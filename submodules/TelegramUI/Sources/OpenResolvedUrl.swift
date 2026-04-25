@@ -745,7 +745,7 @@ func openResolvedUrlImpl(
                         subscriber.putNext((nil, settings, themeInfo))
                         subscriber.putCompletion()
                     } else if let resource = themeInfo.file?.resource {
-                        disposables.add(fetchedMediaResource(mediaBox: context.account.postbox.mediaBox, userLocation: .other, userContentType: .other, reference: .standalone(resource: resource)).start())
+                        disposables.add(context.engine.resources.fetch(reference: .standalone(resource: resource), userLocation: .other, userContentType: .other).start())
                         
                         let maybeFetched = context.sharedContext.accountManager.mediaBox.resourceData(resource, option: .complete(waitUntilFetchStatus: false), attemptSynchronously: false)
                         |> mapToSignal { maybeData -> Signal<Data?, NoError> in

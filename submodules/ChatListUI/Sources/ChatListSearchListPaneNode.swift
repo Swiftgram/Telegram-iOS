@@ -150,7 +150,7 @@ private enum ChatListRecentEntry: Comparable, Identifiable {
                 let primaryPeer: EnginePeer
                 var chatPeer: EnginePeer?
                 let maybeChatPeer = EnginePeer(peer.peer.peers[peer.peer.peerId]!)
-                if case .secretChat = maybeChatPeer, let associatedPeerId = maybeChatPeer._asPeer().associatedPeerId, let associatedPeer = peer.peer.peers[associatedPeerId] {
+                if case .secretChat = maybeChatPeer, let associatedPeerId = maybeChatPeer.associatedPeerId, let associatedPeer = peer.peer.peers[associatedPeerId] {
                     primaryPeer = EnginePeer(associatedPeer)
                     chatPeer = maybeChatPeer
                 } else if case .channel = maybeChatPeer, let mainChannel = peer.peer.chatOrMonoforumMainPeer {
@@ -4170,7 +4170,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                         result.append(.peer(
                             index: result.count,
                             peer: RecentlySearchedPeer(
-                                peer: RenderedPeer(peer: peer._asPeer()),
+                                peer: RenderedPeer(peer: peer),
                                 presence: nil,
                                 notificationSettings: peerNotificationSettings.flatMap({ $0._asNotificationSettings() }),
                                 unreadCount: unreadCount,
@@ -4210,7 +4210,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                             result.append(.peer(
                                 index: result.count,
                                 peer: RecentlySearchedPeer(
-                                    peer: RenderedPeer(peer: peer._asPeer()),
+                                    peer: RenderedPeer(peer: peer),
                                     presence: nil,
                                     notificationSettings: peerNotificationSettings.flatMap({ $0._asNotificationSettings() }),
                                     unreadCount: 0,
@@ -4333,7 +4333,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                         result.append(.peer(
                             index: result.count,
                             peer: RecentlySearchedPeer(
-                                peer: RenderedPeer(peer: peer._asPeer()),
+                                peer: RenderedPeer(peer: peer),
                                 presence: nil,
                                 notificationSettings: peerNotificationSettings.flatMap({ $0._asNotificationSettings() }),
                                 unreadCount: unreadCount,
@@ -4368,7 +4368,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                             result.append(.peer(
                                 index: result.count,
                                 peer: RecentlySearchedPeer(
-                                    peer: RenderedPeer(peer: peer._asPeer()),
+                                    peer: RenderedPeer(peer: peer),
                                     presence: nil,
                                     notificationSettings: peerNotificationSettings.flatMap({ $0._asNotificationSettings() }),
                                     unreadCount: 0,

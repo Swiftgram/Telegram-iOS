@@ -344,7 +344,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
                     return .single(nil)
                 }
                 |> mapToSignal { bot -> Signal<(FileMediaReference, Bool)?, NoError> in
-                    if let bot = bot, let peerReference = PeerReference(bot.peer._asPeer()) {
+                    if let bot = bot, let peerReference = PeerReference(bot.peer) {
                         var imageFile: TelegramMediaFile?
                         var isPlaceholder = false
                         if let file = bot.icons[.placeholder] {

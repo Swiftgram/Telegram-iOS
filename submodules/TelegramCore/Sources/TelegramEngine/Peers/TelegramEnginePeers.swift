@@ -1233,14 +1233,11 @@ public extension TelegramEngine {
         }
         
         public func ensurePeerIsLocallyAvailable(peer: EnginePeer) -> Signal<EnginePeer, NoError> {
-            return _internal_storedMessageFromSearchPeer(postbox: self.account.postbox, peer: peer._asPeer())
-            |> map { result -> EnginePeer in
-                return EnginePeer(result)
-            }
+            return _internal_storedMessageFromSearchPeer(postbox: self.account.postbox, peer: peer)
         }
         
         public func ensurePeersAreLocallyAvailable(peers: [EnginePeer]) -> Signal<Never, NoError> {
-            return _internal_storedMessageFromSearchPeers(account: self.account, peers: peers.map { $0._asPeer() })
+            return _internal_storedMessageFromSearchPeers(account: self.account, peers: peers)
         }
         
         public func mostRecentSecretChat(id: EnginePeer.Id) -> Signal<EnginePeer.Id?, NoError> {

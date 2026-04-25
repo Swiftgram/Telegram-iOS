@@ -299,18 +299,18 @@ public final class ShareControllerAppEnvironment: ShareControllerEnvironment {
 
 public final class ShareControllerSwitchableAccount: Equatable {
     public let account: ShareControllerAccountContext
-    public let peer: Peer
-    
-    public init(account: ShareControllerAccountContext, peer: Peer) {
+    public let peer: EnginePeer
+
+    public init(account: ShareControllerAccountContext, peer: EnginePeer) {
         self.account = account
         self.peer = peer
     }
-    
+
     public static func ==(lhs: ShareControllerSwitchableAccount, rhs: ShareControllerSwitchableAccount) -> Bool {
         if lhs.account !== rhs.account {
             return false
         }
-        if !arePeersEqual(lhs.peer, rhs.peer) {
+        if lhs.peer != rhs.peer {
             return false
         }
         return true
@@ -1147,8 +1147,8 @@ public final class ShareController: ViewController {
                     accountPeerId: info.account.accountPeerId,
                     stateManager: info.account.stateManager,
                     contentSettings: info.account.contentSettings,
-                    peer: EnginePeer(info.peer),
-                    title: EnginePeer(info.peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder),
+                    peer: info.peer,
+                    title: info.peer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder),
                     isSelected: info.account.accountId == strongSelf.currentContext.accountId,
                     strings: presentationData.strings,
                     theme: presentationData.theme,

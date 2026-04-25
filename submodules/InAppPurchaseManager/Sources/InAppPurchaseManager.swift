@@ -3,7 +3,6 @@ import CoreLocation
 import SwiftSignalKit
 import StoreKit
 import TelegramCore
-import Postbox
 import TelegramStringFormatting
 import TelegramUIPreferences
 import PersistentStringHash
@@ -623,9 +622,9 @@ extension InAppPurchaseManager: SKPaymentTransactionObserver {
         }
         let id = Int64.random(in: Int64.min ... Int64.max)
         let fileResource = LocalFileMediaResource(fileId: id, size: Int64(receiptData.count), isSecretRelated: false)
-        engine.account.postbox.mediaBox.storeResourceData(fileResource.id, data: receiptData)
+        engine.resources.storeResourceData(id: EngineMediaResource.Id(fileResource.id), data: receiptData)
 
-        let file = TelegramMediaFile(fileId: MediaId(namespace: Namespaces.Media.LocalFile, id: id), partialReference: nil, resource: fileResource, previewRepresentations: [], videoThumbnails: [], immediateThumbnailData: nil, mimeType: "application/text", size: Int64(receiptData.count), attributes: [.FileName(fileName: "Receipt.dat")], alternativeRepresentations: [])
+        let file = TelegramMediaFile(fileId: EngineMedia.Id(namespace: Namespaces.Media.LocalFile, id: id), partialReference: nil, resource: fileResource, previewRepresentations: [], videoThumbnails: [], immediateThumbnailData: nil, mimeType: "application/text", size: Int64(receiptData.count), attributes: [.FileName(fileName: "Receipt.dat")], alternativeRepresentations: [])
         let message: EnqueueMessage = .message(text: "", attributes: [], inlineStickers: [:], mediaReference: .standalone(media: file), threadId: nil, replyToMessageId: nil, replyToStoryId: nil, localGroupingKey: nil, correlationId: nil, bubbleUpEmojiOrStickersets: [])
 
         let _ = enqueueMessages(account: engine.account, peerId: engine.account.peerId, messages: [message]).start()

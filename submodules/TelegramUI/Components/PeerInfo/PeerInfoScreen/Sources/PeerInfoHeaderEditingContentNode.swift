@@ -112,7 +112,11 @@ final class PeerInfoHeaderEditingContentNode: ASDisplayNode {
                         }
                     }
                 case .lastName:
-                    updateText = (peer?._asPeer() as? TelegramUser)?.lastName ?? ""
+                    if case let .user(user) = peer {
+                        updateText = user.lastName ?? ""
+                    } else {
+                        updateText = ""
+                    }
                 case .title:
                     updateText = peer?.debugDisplayTitle ?? ""
                 case .description:

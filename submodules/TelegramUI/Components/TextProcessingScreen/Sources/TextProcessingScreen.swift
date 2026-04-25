@@ -1278,7 +1278,7 @@ private final class TextProcessingSheetComponent: Component {
                         currentPrice: nil,
                         hasTimers: false,
                         sendPaidMessageStars: nil,
-                        isMonoforum: peer._asPeer().isMonoForum
+                        isMonoforum: peer.isMonoForum
                     )),
                     hasEntityKeyboard: false,
                     gesture: nil,

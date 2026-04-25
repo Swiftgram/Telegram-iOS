@@ -384,8 +384,8 @@ final class PeerInfoPersonalChannelData: Equatable {
 
 final class PeerInfoScreenData {
     let peer: EnginePeer?
-    let chatPeer: Peer?
-    let savedMessagesPeer: Peer?
+    let chatPeer: EnginePeer?
+    let savedMessagesPeer: EnginePeer?
     let cachedData: CachedPeerData?
     let status: PeerInfoStatusData?
     let peerNotificationSettings: TelegramPeerNotificationSettings?
@@ -393,8 +393,8 @@ final class PeerInfoScreenData {
     let globalNotificationSettings: EngineGlobalNotificationSettings?
     let availablePanes: [PeerInfoPaneKey]
     let groupsInCommon: GroupsInCommonContext?
-    let linkedDiscussionPeer: Peer?
-    let linkedMonoforumPeer: Peer?
+    let linkedDiscussionPeer: EnginePeer?
+    let linkedMonoforumPeer: EnginePeer?
     let members: PeerInfoMembersData?
     let storyListContext: StoryListContext?
     let storyArchiveListContext: StoryListContext?
@@ -440,8 +440,8 @@ final class PeerInfoScreenData {
     
     init(
         peer: EnginePeer?,
-        chatPeer: Peer?,
-        savedMessagesPeer: Peer?,
+        chatPeer: EnginePeer?,
+        savedMessagesPeer: EnginePeer?,
         cachedData: CachedPeerData?,
         status: PeerInfoStatusData?,
         peerNotificationSettings: TelegramPeerNotificationSettings?,
@@ -450,8 +450,8 @@ final class PeerInfoScreenData {
         isContact: Bool,
         availablePanes: [PeerInfoPaneKey],
         groupsInCommon: GroupsInCommonContext?,
-        linkedDiscussionPeer: Peer?,
-        linkedMonoforumPeer: Peer?,
+        linkedDiscussionPeer: EnginePeer?,
+        linkedMonoforumPeer: EnginePeer?,
         members: PeerInfoMembersData?,
         storyListContext: StoryListContext?,
         storyArchiveListContext: StoryListContext?,
@@ -1025,7 +1025,7 @@ func peerInfoScreenSettingsData(context: AccountContext, peerId: EnginePeer.Id, 
         
         return PeerInfoScreenData(
             peer: peer.flatMap(EnginePeer.init),
-            chatPeer: peer,
+            chatPeer: peer.flatMap(EnginePeer.init),
             savedMessagesPeer: nil,
             cachedData: peerView.cachedData,
             status: nil,
@@ -1618,8 +1618,8 @@ func peerInfoScreenData(
                 
                 return PeerInfoScreenData(
                     peer: peer.flatMap(EnginePeer.init),
-                    chatPeer: peerView.peers[peerId],
-                    savedMessagesPeer: savedMessagesPeer?._asPeer(),
+                    chatPeer: peerView.peers[peerId].flatMap(EnginePeer.init),
+                    savedMessagesPeer: savedMessagesPeer,
                     cachedData: peerView.cachedData,
                     status: status,
                     peerNotificationSettings: peerView.notificationSettings as? TelegramPeerNotificationSettings,
@@ -1833,14 +1833,14 @@ func peerInfoScreenData(
                     }
                 }
                 
-                var discussionPeer: Peer?
+                var discussionPeer: EnginePeer?
                 if case let .known(maybeLinkedDiscussionPeerId) = (peerView.cachedData as? CachedChannelData)?.linkedDiscussionPeerId, let linkedDiscussionPeerId = maybeLinkedDiscussionPeerId, let peer = peerView.peers[linkedDiscussionPeerId] {
-                    discussionPeer = peer
+                    discussionPeer = EnginePeer(peer)
                 }
-                
-                var monoforumPeer: Peer?
+
+                var monoforumPeer: EnginePeer?
                 if let channel = peerViewMainPeer(peerView) as? TelegramChannel, case let .broadcast(info) = channel.info, info.flags.contains(.hasMonoforum), let linkedMonoforumId = channel.linkedMonoforumId {
-                    monoforumPeer = peerView.peers[linkedMonoforumId]
+                    monoforumPeer = peerView.peers[linkedMonoforumId].flatMap(EnginePeer.init)
                 }
                 
                 var canManageInvitations = false
@@ -1865,7 +1865,7 @@ func peerInfoScreenData(
                                                                 
                 return PeerInfoScreenData(
                     peer: peerView.peers[peerId].flatMap(EnginePeer.init),
-                    chatPeer: peerView.peers[peerId],
+                    chatPeer: peerView.peers[peerId].flatMap(EnginePeer.init),
                     savedMessagesPeer: nil,
                     cachedData: peerView.cachedData,
                     status: status,
@@ -2128,14 +2128,14 @@ func peerInfoScreenData(
                 starsRevenueContextAndState
             )
             |> mapToSignal { peerView, availablePanes, globalNotificationSettings, status, membersData, currentInvitationsContext, invitations, currentRequestsContext, requests, hasStories, threadData, preferencesView, accountIsPremium, hasSavedMessages, hasSavedMessagesChats, hasSavedMessageTags, isPremiumRequiredForStoryPosting, starsRevenueContextAndState -> Signal<PeerInfoScreenData, NoError> in
-                var discussionPeer: Peer?
+                var discussionPeer: EnginePeer?
                 if case let .known(maybeLinkedDiscussionPeerId) = (peerView.cachedData as? CachedChannelData)?.linkedDiscussionPeerId, let linkedDiscussionPeerId = maybeLinkedDiscussionPeerId, let peer = peerView.peers[linkedDiscussionPeerId] {
-                    discussionPeer = peer
+                    discussionPeer = EnginePeer(peer)
                 }
-                
-                var monoforumPeer: Peer?
+
+                var monoforumPeer: EnginePeer?
                 if let channel = peerViewMainPeer(peerView) as? TelegramChannel, case let .broadcast(info) = channel.info, info.flags.contains(.hasMonoforum), let linkedMonoforumId = channel.linkedMonoforumId {
-                    monoforumPeer = peerView.peers[linkedMonoforumId]
+                    monoforumPeer = peerView.peers[linkedMonoforumId].flatMap(EnginePeer.init)
                 }
                                 
                 var availablePanes = availablePanes
@@ -2203,7 +2203,7 @@ func peerInfoScreenData(
               
                 return .single(PeerInfoScreenData(
                     peer: peerView.peers[groupId].flatMap(EnginePeer.init),
-                    chatPeer: peerView.peers[groupId],
+                    chatPeer: peerView.peers[groupId].flatMap(EnginePeer.init),
                     savedMessagesPeer: nil,
                     cachedData: peerView.cachedData,
                     status: status,
@@ -2256,7 +2256,7 @@ func peerInfoIsCopyProtected(data: PeerInfoScreenData) -> Bool {
     var isCopyProtected = false
     if let cachedUserData = data.cachedData as? CachedUserData, cachedUserData.flags.contains(.copyProtectionEnabled) || cachedUserData.flags.contains(.myCopyProtectionEnabled) {
         isCopyProtected = true
-    } else if let peer = data.peer, peer._asPeer().isCopyProtectionEnabled {
+    } else if let peer = data.peer, peer.isCopyProtectionEnabled {
         isCopyProtected = true
     }
     return isCopyProtected

@@ -854,9 +854,9 @@ private final class ChatMessagePollOptionNode: ASDisplayNode {
 //            }
             let rightInset: CGFloat = 10.0 + mediaInset
 
-            let recentVoterPeers: [Peer]
+            let recentVoterPeers: [EnginePeer]
             if let optionResult {
-                recentVoterPeers = optionResult.recentVoterPeerIds.compactMap { message.peers[$0] }
+                recentVoterPeers = optionResult.recentVoterPeerIds.compactMap { message.peers[$0] }.map(EnginePeer.init)
             } else {
                 recentVoterPeers = []
             }
@@ -2567,11 +2567,11 @@ public class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
                 let (textLayout, textApply) = makeTextLayout(TextNodeLayoutArguments(attributedString: attributedText, backgroundColor: nil, maximumNumberOfLines: 0, truncationType: .end, constrainedSize: textConstrainedSize, alignment: .natural, cutout: nil, insets: textInsets))
                 let typeText: String
                 
-                var avatarPeers: [Peer] = []
+                var avatarPeers: [EnginePeer] = []
                 if let poll = poll {
                     for peerId in poll.results.recentVoters {
                         if let peer = item.message.peers[peerId] {
-                            avatarPeers.append(peer)
+                            avatarPeers.append(EnginePeer(peer))
                         }
                     }
                 }

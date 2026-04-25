@@ -475,7 +475,7 @@ public func selectivePrivacyPeersController(context: AccountContext, title: Stri
                                 }
                             }
                             
-                            updatedPeers.append(SelectivePrivacyPeer(peer: peer._asPeer(), participantCount: participantCount))
+                            updatedPeers.append(SelectivePrivacyPeer(peer: peer, participantCount: participantCount))
                         }
                     }
                     return updatedPeers

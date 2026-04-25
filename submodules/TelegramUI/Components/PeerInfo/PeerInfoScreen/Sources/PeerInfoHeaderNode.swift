@@ -89,7 +89,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
     private weak var controller: PeerInfoScreenImpl?
     private var presentationData: PresentationData?
     private var state: PeerInfoState?
-    private var peer: Peer?
+    private var peer: EnginePeer?
     private var threadData: MessageHistoryThreadData?
     private var isSearching: Bool = false
     private var avatarSize: CGFloat?
@@ -360,7 +360,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             guard let strongSelf = self, let state = strongSelf.state, let peer = strongSelf.peer, let presentationData = strongSelf.presentationData, let avatarSize = strongSelf.avatarSize else {
                 return
             }
-            strongSelf.editingContentNode.avatarNode.update(peer: EnginePeer(peer), threadData: strongSelf.threadData, chatLocation: chatLocation, item: strongSelf.avatarListNode.item, updatingAvatar: state.updatingAvatar, uploadProgress: state.avatarUploadProgress, theme: presentationData.theme, avatarSize: avatarSize, isEditing: state.isEditing)
+            strongSelf.editingContentNode.avatarNode.update(peer: peer, threadData: strongSelf.threadData, chatLocation: chatLocation, item: strongSelf.avatarListNode.item, updatingAvatar: state.updatingAvatar, uploadProgress: state.avatarUploadProgress, theme: presentationData.theme, avatarSize: avatarSize, isEditing: state.isEditing)
         }
 
         self.avatarListNode.animateOverlaysFadeIn = { [weak self] in
@@ -518,7 +518,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
         }
         
         self.state = state
-        self.peer = peer?._asPeer()
+        self.peer = peer
         self.threadData = threadData
         self.isSearching = isSearching
         self.avatarListNode.listContainerNode.peer = peer
@@ -1812,7 +1812,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             })
         }
         
-        self.avatarListNode.update(size: CGSize(), avatarSize: avatarSize, isExpanded: self.isAvatarExpanded, peer: peer?._asPeer(), isForum: isForum, threadId: self.forumTopicThreadId, threadInfo: threadData?.info, theme: presentationData.theme, transition: transition)
+        self.avatarListNode.update(size: CGSize(), avatarSize: avatarSize, isExpanded: self.isAvatarExpanded, peer: peer, isForum: isForum, threadId: self.forumTopicThreadId, threadInfo: threadData?.info, theme: presentationData.theme, transition: transition)
         self.editingContentNode.avatarNode.update(peer: peer, threadData: threadData, chatLocation: self.chatLocation, item: self.avatarListNode.item, updatingAvatar: state.updatingAvatar, uploadProgress: state.avatarUploadProgress, theme: presentationData.theme, avatarSize: avatarSize, isEditing: state.isEditing)
         self.avatarOverlayNode.update(peer: peer, threadData: threadData, chatLocation: self.chatLocation, item: self.avatarListNode.item, updatingAvatar: state.updatingAvatar, uploadProgress: state.avatarUploadProgress, theme: presentationData.theme, avatarSize: avatarSize, isEditing: state.isEditing)
         if additive {
@@ -2051,7 +2051,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                         }
                         self.controller?.push(ProfileLevelInfoScreen(
                             context: self.context,
-                            peer: EnginePeer(peer),
+                            peer: peer,
                             starRating: currentStarRating,
                             pendingStarRating: self.currentPendingStarRating,
                             customTheme: self.presentationData?.theme

@@ -1115,7 +1115,7 @@ public final class ChatMessageAttachedContentNode: ASDisplayNode {
                                         inlineMedia.setSignal(updateInlineImageSignal)
                                     }
                                 case let .peerAvatar(peer):
-                                    if let peerReference = PeerReference(peer._asPeer()) {
+                                    if let peerReference = PeerReference(peer) {
                                         if let signal = peerAvatarImage(account: context.account, peerReference: peerReference, authorOfMessage: nil, representation: peer.largeProfileImage, displayDimensions: inlineMediaSize, clipStyle: .none, blurred: false, inset: 0.0, emptyColor: mainColor.withMultipliedAlpha(0.1), synchronousLoad: synchronousLoads, provideUnrounded: false) {
                                             let updateInlineImageSignal = signal |> map { images -> (TransformImageArguments) -> DrawingContext? in
                                                 let image = images?.0

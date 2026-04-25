@@ -302,7 +302,7 @@ private final class AttachButtonComponent: CombinedComponent {
                 )
             } else {
                 var fileReference: FileMediaReference?
-                if let peer = botPeer.flatMap({ PeerReference($0._asPeer())}), let imageFile = imageFile {
+                if let peer = botPeer.flatMap({ PeerReference($0)}), let imageFile = imageFile {
                     fileReference = .attachBot(peer: peer, media: imageFile)
                 }
 
@@ -2065,7 +2065,7 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
             if case let .app(bot) = type {
                 for (name, file) in bot.icons {
                     if [.default, .iOSAnimated, .iOSSettingsStatic, .placeholder].contains(name) {
-                        if self.iconDisposables[file.fileId] == nil, let peer = PeerReference(bot.peer._asPeer()) {
+                        if self.iconDisposables[file.fileId] == nil, let peer = PeerReference(bot.peer) {
                             if case .placeholder = name {
                                 let account = self.context.account
                                 let path = account.postbox.mediaBox.cachedRepresentationCompletePath(file.resource.id, representation: CachedPreparedSvgRepresentation())

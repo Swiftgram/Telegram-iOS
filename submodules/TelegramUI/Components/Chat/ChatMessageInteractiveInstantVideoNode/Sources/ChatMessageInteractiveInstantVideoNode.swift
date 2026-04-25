@@ -703,7 +703,7 @@ public class ChatMessageInteractiveInstantVideoNode: ASDisplayNode {
                     
                     if let updatedFile = updatedFile, updatedMedia {
                         if let resource = updatedFile.previewRepresentations.first?.resource {
-                            strongSelf.fetchedThumbnailDisposable.set(fetchedMediaResource(mediaBox: item.context.account.postbox.mediaBox, userLocation: .peer(item.message.id.peerId), userContentType: .video, reference: FileMediaReference.message(message: MessageReference(item.message), media: updatedFile).resourceReference(resource)).startStrict())
+                            strongSelf.fetchedThumbnailDisposable.set(item.context.engine.resources.fetch(reference: FileMediaReference.message(message: MessageReference(item.message), media: updatedFile).resourceReference(resource), userLocation: .peer(item.message.id.peerId), userContentType: .video).startStrict())
                         } else {
                             strongSelf.fetchedThumbnailDisposable.set(nil)
                         }

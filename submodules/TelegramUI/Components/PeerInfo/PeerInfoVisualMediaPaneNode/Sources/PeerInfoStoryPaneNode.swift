@@ -489,7 +489,7 @@ private final class DurationLayer: SimpleLayer {
             })
             self.contents = image?.cgImage
             
-            if let smallProfileImage = author.smallProfileImage, let peerReference = PeerReference(author._asPeer()) {
+            if let smallProfileImage = author.smallProfileImage, let peerReference = PeerReference(author) {
                 if let result = directMediaImageCache.getAvatarImage(peer: peerReference, resource: MediaResourceReference.avatar(peer: peerReference, resource: smallProfileImage.resource), immediateThumbnail: smallProfileImage.immediateThumbnailData, size: 24, includeBlurred: true, synchronous: synchronous == .full) {
                     if let image = result.image {
                         avatarLayer.contents = image.cgImage
@@ -2766,7 +2766,7 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
                         guard let self else {
                             return
                         }
-                        guard let peer, let peerReference = PeerReference(peer._asPeer()) else {
+                        guard let peer, let peerReference = PeerReference(peer) else {
                             return
                         }
                         
@@ -3060,7 +3060,7 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
             if let value = state.peerReference {
                 peerReference = value
             } else if let peer = item.peer {
-                peerReference = PeerReference(peer._asPeer())
+                peerReference = PeerReference(peer)
             }
             guard let peerReference else {
                 continue

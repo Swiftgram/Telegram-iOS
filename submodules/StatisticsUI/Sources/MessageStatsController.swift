@@ -198,10 +198,10 @@ private enum StatsEntry: ItemListNodeEntry {
                 var reactions: Int32 = 0
             
                 var isStory = false
-                let peer: Peer
+                let peer: EnginePeer
                 switch item {
                 case let .message(message):
-                    peer = message.peers[message.id.peerId]!
+                    peer = EnginePeer(message.peers[message.id.peerId]!)
                     for attribute in message.attributes {
                         if let viewsAttribute = attribute as? ViewCountMessageAttribute {
                             views = Int32(viewsAttribute.count)
@@ -214,7 +214,7 @@ private enum StatsEntry: ItemListNodeEntry {
                         }
                     }
                 case let .story(peerValue, story):
-                    peer = peerValue._asPeer()
+                    peer = peerValue
                     views = Int32(story.views?.seenCount ?? 0)
                     forwards = Int32(story.views?.forwardCount ?? 0)
                     reactions = Int32(story.views?.reactedCount ?? 0)

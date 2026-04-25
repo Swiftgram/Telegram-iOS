@@ -158,7 +158,7 @@ extension PeerInfoScreenNode {
         if self.resolvePeerByNameDisposable == nil {
             self.resolvePeerByNameDisposable = MetaDisposable()
         }
-        var resolveSignal: Signal<Peer?, NoError>
+        var resolveSignal: Signal<EnginePeer?, NoError>
         if let peerName = peerName {
             resolveSignal = self.context.engine.peers.resolvePeerByName(name: peerName, referrer: nil)
             |> mapToSignal { result -> Signal<EnginePeer?, NoError> in
@@ -166,9 +166,6 @@ extension PeerInfoScreenNode {
                     return .complete()
                 }
                 return .single(result)
-            }
-            |> mapToSignal { peer -> Signal<Peer?, NoError> in
-                return .single(peer?._asPeer())
             }
         } else {
             resolveSignal = self.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: self.peerId))
@@ -179,7 +176,7 @@ extension PeerInfoScreenNode {
                     return .never()
                 }
             }
-            |> map { Optional($0._asPeer()) }
+            |> map { Optional($0) }
         }
         var cancelImpl: (() -> Void)?
         let presentationData = self.presentationData
@@ -210,7 +207,7 @@ extension PeerInfoScreenNode {
         self.resolvePeerByNameDisposable?.set((resolveSignal
         |> deliverOnMainQueue).start(next: { [weak self] peer in
             if let strongSelf = self, !hashtag.isEmpty {
-                let searchController = HashtagSearchController(context: strongSelf.context, peer: peer.flatMap(EnginePeer.init), query: hashtag)
+                let searchController = HashtagSearchController(context: strongSelf.context, peer: peer, query: hashtag)
                 strongSelf.controller?.push(searchController)
             }
         }))

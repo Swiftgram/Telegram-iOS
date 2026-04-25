@@ -227,7 +227,7 @@ public final class SecureIdAuthController: ViewController, StandalonePresentable
                         }
                         
                         let primaryLanguageByCountry = configuration.nativeLanguageByCountry
-                        return .single(SecureIdEncryptedFormData(form: form, primaryLanguageByCountry: primaryLanguageByCountry, accountPeer: accountPeer._asPeer(), servicePeer: servicePeer._asPeer()))
+                        return .single(SecureIdEncryptedFormData(form: form, primaryLanguageByCountry: primaryLanguageByCountry, accountPeer: accountPeer, servicePeer: servicePeer))
                     }
                 }
                 |> deliverOnMainQueue).start(next: { [weak self] formData in
@@ -268,7 +268,7 @@ public final class SecureIdAuthController: ViewController, StandalonePresentable
                             case .form:
                                 break
                             case var .list(list):
-                                list.accountPeer = accountPeer._asPeer()
+                                list.accountPeer = accountPeer
                                 list.primaryLanguageByCountry = primaryLanguageByCountry
                                 list.encryptedValues = values
                                 return .list(list)

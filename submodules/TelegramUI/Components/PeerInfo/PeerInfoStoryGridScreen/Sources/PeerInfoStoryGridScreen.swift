@@ -242,7 +242,7 @@ final class PeerInfoStoryGridScreenComponent: Component {
                 guard let self, let component = self.component, let peer else {
                     return
                 }
-                guard let peerReference = PeerReference(peer._asPeer()) else {
+                guard let peerReference = PeerReference(peer) else {
                     return
                 }
                 

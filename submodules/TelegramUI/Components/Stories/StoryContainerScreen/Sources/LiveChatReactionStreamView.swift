@@ -107,8 +107,8 @@ private func makePeerBadgeImage(engine: TelegramEngine, peer: EnginePeer, count:
     textSize.height = ceil(textSize.height)
     
     var avatarSourceImage: UIImage?
-    if let resource = smallestImageRepresentation(peer.profileImageRepresentations)?.resource, let peerReference = PeerReference(peer._asPeer()) {
-        let disposable = fetchedMediaResource(mediaBox: engine.account.postbox.mediaBox, userLocation: .peer(peer.id), userContentType: .avatar, reference: .avatar(peer: peerReference, resource: resource)).startStrict()
+    if let resource = smallestImageRepresentation(peer.profileImageRepresentations)?.resource, let peerReference = PeerReference(peer) {
+        let disposable = engine.resources.fetch(reference: .avatar(peer: peerReference, resource: resource), userLocation: .peer(peer.id), userContentType: .avatar).startStrict()
         let signal = engine.account.postbox.mediaBox.resourceData(resource)
         |> filter { $0.complete }
         |> map { value -> Data? in

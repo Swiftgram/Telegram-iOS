@@ -111,18 +111,18 @@ public enum TextLinkItem: Equatable {
 
 public final class AccountWithInfo: Equatable {
     public let account: Account
-    public let peer: Peer
-    
-    public init(account: Account, peer: Peer) {
+    public let peer: EnginePeer
+
+    public init(account: Account, peer: EnginePeer) {
         self.account = account
         self.peer = peer
     }
-    
+
     public static func ==(lhs: AccountWithInfo, rhs: AccountWithInfo) -> Bool {
         if lhs.account !== rhs.account {
             return false
         }
-        if !arePeersEqual(lhs.peer, rhs.peer) {
+        if lhs.peer != rhs.peer {
             return false
         }
         return true
@@ -1453,7 +1453,7 @@ public protocol SharedAccountContext: AnyObject {
         completion: @escaping (UIImage?) -> Void,
         completedWithUploadingImage: @escaping (UIImage, Signal<PeerInfoAvatarUploadStatus, NoError>) -> UIView?
     )
-    func openAddPeerMembers(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, parentController: ViewController, groupPeer: Peer, selectAddMemberDisposable: MetaDisposable, addMemberDisposable: MetaDisposable)
+    func openAddPeerMembers(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, parentController: ViewController, groupPeer: EnginePeer, selectAddMemberDisposable: MetaDisposable, addMemberDisposable: MetaDisposable)
     func makeInstantPageController(context: AccountContext, message: Message, sourcePeerType: MediaAutoDownloadPeerType?) -> ViewController?
     func makeInstantPageController(context: AccountContext, webPage: TelegramMediaWebpage, anchor: String?, sourceLocation: InstantPageSourceLocation) -> ViewController
     func openChatWallpaper(context: AccountContext, message: Message, present: @escaping (ViewController, Any?) -> Void)

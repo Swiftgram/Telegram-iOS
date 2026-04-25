@@ -14,6 +14,10 @@ public extension PeerReference {
             return PeerId(namespace: Namespaces.Peer.CloudChannel, id: PeerId.Id._internalFromInt64Value(id))
         }
     }
+
+    init?(_ peer: EnginePeer) {
+        self.init(peer._asPeer())
+    }
 }
 
 extension PeerReference {    
