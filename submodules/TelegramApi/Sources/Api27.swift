@@ -1694,6 +1694,7 @@ public extension Api {
 public extension Api {
     enum TopPeerCategory: TypeConstructorDescription {
         case topPeerCategoryBotsApp
+        case topPeerCategoryBotsGuestChat
         case topPeerCategoryBotsInline
         case topPeerCategoryBotsPM
         case topPeerCategoryChannels
@@ -1708,6 +1709,11 @@ public extension Api {
             case .topPeerCategoryBotsApp:
                 if boxed {
                     buffer.appendInt32(-39945236)
+                }
+                break
+            case .topPeerCategoryBotsGuestChat:
+                if boxed {
+                    buffer.appendInt32(1814361053)
                 }
                 break
             case .topPeerCategoryBotsInline:
@@ -1757,6 +1763,8 @@ public extension Api {
             switch self {
             case .topPeerCategoryBotsApp:
                 return ("topPeerCategoryBotsApp", [])
+            case .topPeerCategoryBotsGuestChat:
+                return ("topPeerCategoryBotsGuestChat", [])
             case .topPeerCategoryBotsInline:
                 return ("topPeerCategoryBotsInline", [])
             case .topPeerCategoryBotsPM:
@@ -1778,6 +1786,9 @@ public extension Api {
 
         public static func parse_topPeerCategoryBotsApp(_ reader: BufferReader) -> TopPeerCategory? {
             return Api.TopPeerCategory.topPeerCategoryBotsApp
+        }
+        public static func parse_topPeerCategoryBotsGuestChat(_ reader: BufferReader) -> TopPeerCategory? {
+            return Api.TopPeerCategory.topPeerCategoryBotsGuestChat
         }
         public static func parse_topPeerCategoryBotsInline(_ reader: BufferReader) -> TopPeerCategory? {
             return Api.TopPeerCategory.topPeerCategoryBotsInline

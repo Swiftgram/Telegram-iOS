@@ -7487,6 +7487,25 @@ public extension Api.functions.messages {
     }
 }
 public extension Api.functions.messages {
+    static func getPersonalChannelHistory(userId: Api.InputUser, limit: Int32, maxId: Int32, minId: Int32, hash: Int64) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.messages.Messages>) {
+        let buffer = Buffer()
+        buffer.appendInt32(1442515350)
+        userId.serialize(buffer, true)
+        serializeInt32(limit, buffer: buffer, boxed: false)
+        serializeInt32(maxId, buffer: buffer, boxed: false)
+        serializeInt32(minId, buffer: buffer, boxed: false)
+        serializeInt64(hash, buffer: buffer, boxed: false)
+        return (FunctionDescription(name: "messages.getPersonalChannelHistory", parameters: [("userId", ConstructorParameterDescription(userId)), ("limit", ConstructorParameterDescription(limit)), ("maxId", ConstructorParameterDescription(maxId)), ("minId", ConstructorParameterDescription(minId)), ("hash", ConstructorParameterDescription(hash))]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> Api.messages.Messages? in
+            let reader = BufferReader(buffer)
+            var result: Api.messages.Messages?
+            if let signature = reader.readInt32() {
+                result = Api.parse(reader, signature: signature) as? Api.messages.Messages
+            }
+            return result
+        })
+    }
+}
+public extension Api.functions.messages {
     static func getPinnedDialogs(folderId: Int32) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.messages.PeerDialogs>) {
         let buffer = Buffer()
         buffer.appendInt32(-692498958)

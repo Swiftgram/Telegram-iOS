@@ -196,6 +196,11 @@ private enum AdminUserActionOptionSection {
     case ban
 }
 
+private enum AdminUserDeleteAllOption {
+    case messages
+    case reactions
+}
+
 private enum AdminUserActionConfigItem: Hashable, CaseIterable {
     case sendMessages
     case sendMedia
@@ -318,6 +323,7 @@ private final class AdminUserActionsContentComponent: Component {
     let toggleOptionSelection: (AdminUserActionOptionSection) -> Void
     let toggleOptionExpansion: (AdminUserActionOptionSection) -> Void
     let togglePeerSelection: (AdminUserActionOptionSection, EnginePeer) -> Void
+    let toggleDeleteAllOptionPeerSelection: (AdminUserDeleteAllOption, EnginePeer) -> Void
     let toggleConfiguration: () -> Void
     let toggleConfigItem: (AdminUserActionConfigItem) -> Void
     let toggleMediaSectionExpansion: () -> Void
@@ -336,6 +342,7 @@ private final class AdminUserActionsContentComponent: Component {
         toggleOptionSelection: @escaping (AdminUserActionOptionSection) -> Void,
         toggleOptionExpansion: @escaping (AdminUserActionOptionSection) -> Void,
         togglePeerSelection: @escaping (AdminUserActionOptionSection, EnginePeer) -> Void,
+        toggleDeleteAllOptionPeerSelection: @escaping (AdminUserDeleteAllOption, EnginePeer) -> Void,
         toggleConfiguration: @escaping () -> Void,
         toggleConfigItem: @escaping (AdminUserActionConfigItem) -> Void,
         toggleMediaSectionExpansion: @escaping () -> Void,
@@ -353,6 +360,7 @@ private final class AdminUserActionsContentComponent: Component {
         self.toggleOptionSelection = toggleOptionSelection
         self.toggleOptionExpansion = toggleOptionExpansion
         self.togglePeerSelection = togglePeerSelection
+        self.toggleDeleteAllOptionPeerSelection = toggleDeleteAllOptionPeerSelection
         self.toggleConfiguration = toggleConfiguration
         self.toggleConfigItem = toggleConfigItem
         self.toggleMediaSectionExpansion = toggleMediaSectionExpansion
@@ -436,11 +444,12 @@ private final class AdminUserActionsContentComponent: Component {
                 var accessory: ListActionItemComponent.Accessory?
                 var isExpandable = false
                 if component.peers.count > 1 {
+                    let selectedCount = selectedPeers.union(additionalSelectedPeers).count
                     accessory = .custom(ListActionItemComponent.CustomAccessory(
                         component: AnyComponentWithIdentity(id: 0, component: AnyComponent(PlainButtonComponent(
                             content: AnyComponent(OptionSectionExpandIndicatorComponent(
                                 theme: component.theme,
-                                count: selectedPeers.isEmpty ? component.peers.count : selectedPeers.count,
+                                count: selectedCount == 0 ? component.peers.count : selectedCount,
                                 isExpanded: isExpanded
                             )),
                             effectAlignment: .center,
@@ -464,7 +473,7 @@ private final class AdminUserActionsContentComponent: Component {
                         AnyComponentWithIdentity(id: 1, component: AnyComponent(MediaSectionExpandIndicatorComponent(
                             theme: component.theme,
                             title: "\(count)/2",
-                            isExpanded: component.sheetState.isMediaSectionExpanded
+                            isExpanded: isExpanded
                         )))
                     )
                     isExpandable = true
@@ -521,7 +530,7 @@ private final class AdminUserActionsContentComponent: Component {
                             sideInset: 0.0,
                             title: peer.peer.displayTitle(strings: component.strings, displayOrder: .firstLast),
                             peer: peer.peer,
-                            selectionState: .editing(isSelected: selectedPeers.contains(peer.peer.id)),
+                            selectionState: .editing(isSelected: selectedPeers.contains(peer.peer.id) || additionalSelectedPeers.contains(peer.peer.id)),
                             action: { peer in
                                 component.togglePeerSelection(section, peer)
                             }
@@ -544,13 +553,13 @@ private final class AdminUserActionsContentComponent: Component {
                             leftIcon: .check(ListActionItemComponent.LeftIcon.Check(
                                 isSelected: !selectedPeers.isEmpty,
                                 toggle: {
-                                    component.toggleOptionSelection(section)
+                                    component.toggleDeleteAllOptionPeerSelection(.messages, component.peers[0].peer)
                                 }
                             )),
                             icon: .none,
                             accessory: nil,
                             action: { _ in
-                                component.toggleOptionSelection(section)
+                                component.toggleDeleteAllOptionPeerSelection(.messages, component.peers[0].peer)
                             },
                             highlighting: .disabled
                         )))
@@ -570,13 +579,13 @@ private final class AdminUserActionsContentComponent: Component {
                             leftIcon: .check(ListActionItemComponent.LeftIcon.Check(
                                 isSelected: !additionalSelectedPeers.isEmpty,
                                 toggle: {
-                                    component.toggleOptionSelection(section)
+                                    component.toggleDeleteAllOptionPeerSelection(.reactions, component.peers[0].peer)
                                 }
                             )),
                             icon: .none,
                             accessory: nil,
                             action: { _ in
-                                component.toggleOptionSelection(section)
+                                component.toggleDeleteAllOptionPeerSelection(.reactions, component.peers[0].peer)
                             },
                             highlighting: .disabled
                         )))
@@ -992,6 +1001,7 @@ private final class AdminUserActionsSheetComponent: Component {
         private var optionReportSelectedPeers = Set<EnginePeer.Id>()
         private var isOptionDeleteAllExpanded: Bool = false
         private var optionDeleteAllSelectedPeers = Set<EnginePeer.Id>()
+        private var optionDeleteAllReactionsSelectedPeers = Set<EnginePeer.Id>()
         private var isOptionBanExpanded: Bool = false
         private var optionBanSelectedPeers = Set<EnginePeer.Id>()
         
@@ -1034,7 +1044,7 @@ private final class AdminUserActionsSheetComponent: Component {
                 deleteAllFromPeers.append(id)
             }
             
-            for id in self.optionDeleteAllSelectedPeers.sorted() {
+            for id in self.optionDeleteAllReactionsSelectedPeers.sorted() {
                 deleteAllReactionsFromPeers.append(id)
             }
             
@@ -1182,7 +1192,7 @@ private final class AdminUserActionsSheetComponent: Component {
                 optionReportSelectedPeers: self.optionReportSelectedPeers,
                 isOptionDeleteAllExpanded: self.isOptionDeleteAllExpanded,
                 optionDeleteAllSelectedPeers: self.optionDeleteAllSelectedPeers,
-                optionDeleteAllReactionsSelectedPeers: self.optionDeleteAllSelectedPeers,
+                optionDeleteAllReactionsSelectedPeers: self.optionDeleteAllReactionsSelectedPeers,
                 isOptionBanExpanded: self.isOptionBanExpanded,
                 optionBanSelectedPeers: self.optionBanSelectedPeers,
                 isConfigurationExpanded: self.isConfigurationExpanded,
@@ -1238,7 +1248,17 @@ private final class AdminUserActionsSheetComponent: Component {
                             case .report:
                                 selectedPeers = self.optionReportSelectedPeers
                             case .deleteAll:
-                                selectedPeers = self.optionDeleteAllSelectedPeers
+                                let allPeerIds = Set(component.peers.map { $0.peer.id })
+                                if self.optionDeleteAllSelectedPeers.isEmpty && self.optionDeleteAllReactionsSelectedPeers.isEmpty {
+                                    self.optionDeleteAllSelectedPeers = allPeerIds
+                                    self.optionDeleteAllReactionsSelectedPeers = allPeerIds
+                                } else {
+                                    self.optionDeleteAllSelectedPeers.removeAll()
+                                    self.optionDeleteAllReactionsSelectedPeers.removeAll()
+                                }
+
+                                self.state?.updated(transition: .spring(duration: 0.35))
+                                return
                             case .ban:
                                 selectedPeers = self.optionBanSelectedPeers
                             }
@@ -1291,7 +1311,16 @@ private final class AdminUserActionsSheetComponent: Component {
                             case .report:
                                 selectedPeers = self.optionReportSelectedPeers
                             case .deleteAll:
-                                selectedPeers = self.optionDeleteAllSelectedPeers
+                                if self.optionDeleteAllSelectedPeers.contains(peer.id) || self.optionDeleteAllReactionsSelectedPeers.contains(peer.id) {
+                                    self.optionDeleteAllSelectedPeers.remove(peer.id)
+                                    self.optionDeleteAllReactionsSelectedPeers.remove(peer.id)
+                                } else {
+                                    self.optionDeleteAllSelectedPeers.insert(peer.id)
+                                    self.optionDeleteAllReactionsSelectedPeers.insert(peer.id)
+                                }
+
+                                self.state?.updated(transition: ComponentTransition(animation: .curve(duration: 0.3, curve: .easeInOut)))
+                                return
                             case .ban:
                                 selectedPeers = self.optionBanSelectedPeers
                             }
@@ -1311,6 +1340,28 @@ private final class AdminUserActionsSheetComponent: Component {
                                 self.optionBanSelectedPeers = selectedPeers
                             }
                             
+                            self.state?.updated(transition: ComponentTransition(animation: .curve(duration: 0.3, curve: .easeInOut)))
+                        },
+                        toggleDeleteAllOptionPeerSelection: { [weak self] option, peer in
+                            guard let self else {
+                                return
+                            }
+
+                            switch option {
+                            case .messages:
+                                if self.optionDeleteAllSelectedPeers.contains(peer.id) {
+                                    self.optionDeleteAllSelectedPeers.remove(peer.id)
+                                } else {
+                                    self.optionDeleteAllSelectedPeers.insert(peer.id)
+                                }
+                            case .reactions:
+                                if self.optionDeleteAllReactionsSelectedPeers.contains(peer.id) {
+                                    self.optionDeleteAllReactionsSelectedPeers.remove(peer.id)
+                                } else {
+                                    self.optionDeleteAllReactionsSelectedPeers.insert(peer.id)
+                                }
+                            }
+
                             self.state?.updated(transition: ComponentTransition(animation: .curve(duration: 0.3, curve: .easeInOut)))
                         },
                         toggleConfiguration: { [weak self] in

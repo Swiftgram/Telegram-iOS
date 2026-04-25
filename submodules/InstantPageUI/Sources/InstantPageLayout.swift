@@ -131,6 +131,40 @@ private func attributedStringForPreformattedText(_ text: RichText, language: Str
     return attributedString
 }
 
+private let instantPageTaskListUncheckedNumber = "\u{001f}tg-md-task:unchecked"
+private let instantPageTaskListCheckedNumber = "\u{001f}tg-md-task:checked"
+private let instantPageChecklistMarkerSize = CGSize(width: 18.0, height: 18.0)
+
+private func instantPageTaskListMarkerState(_ number: String?) -> Bool? {
+    switch number {
+    case instantPageTaskListUncheckedNumber:
+        return false
+    case instantPageTaskListCheckedNumber:
+        return true
+    default:
+        return nil
+    }
+}
+
+private func instantPageFirstTextLineMidY(in items: [InstantPageItem]) -> CGFloat? {
+    for item in items {
+        if let textItem = item as? InstantPageTextItem {
+            if let line = textItem.lines.first {
+                return textItem.frame.minY + line.frame.midY
+            } else {
+                return textItem.frame.midY
+            }
+        } else if let scrollableTextItem = item as? InstantPageScrollableTextItem {
+            if let line = scrollableTextItem.item.lines.first {
+                return scrollableTextItem.frame.minY + scrollableTextItem.item.frame.minY + line.frame.midY
+            } else {
+                return scrollableTextItem.frame.midY
+            }
+        }
+    }
+    return nil
+}
+
 public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: MediaResourceUserLocation, rtl: Bool, block: InstantPageBlock, boundingWidth: CGFloat, horizontalInset: CGFloat, safeInset: CGFloat, isCover: Bool, previousItems: [InstantPageItem], fillToSize: CGSize?, media: [EngineMedia.Id: EngineMedia], mediaIndexCounter: inout Int, embedIndexCounter: inout Int, detailsIndexCounter: inout Int, theme: InstantPageTheme, strings: PresentationStrings, dateTimeFormat: PresentationDateTimeFormat, webEmbedHeights: [Int : CGFloat] = [:], cachedMessageSyntaxHighlight: CachedMessageSyntaxHighlight? = nil, excludeCaptions: Bool) -> InstantPageLayout {
    
     let layoutCaption: (InstantPageCaption, CGSize) -> ([InstantPageItem], CGSize) = { caption, contentSize in
@@ -298,12 +332,21 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
             var maxIndexWidth: CGFloat = 0.0
             var listItems: [InstantPageItem] = []
             var indexItems: [InstantPageItem] = []
+            var hasTaskMarkers = false
             
             var hasNums = false
             if ordered {
                 for item in contentItems {
-                    if let num = item.num, !num.isEmpty {
+                    if instantPageTaskListMarkerState(item.num) != nil {
+                        hasTaskMarkers = true
+                    } else if let num = item.num, !num.isEmpty {
                         hasNums = true
+                    }
+                }
+            } else {
+                for item in contentItems {
+                    if instantPageTaskListMarkerState(item.num) != nil {
+                        hasTaskMarkers = true
                         break
                     }
                 }
@@ -311,7 +354,13 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
             
             for i in 0 ..< contentItems.count {
                 let item = contentItems[i]
-                if ordered {
+                if let checked = instantPageTaskListMarkerState(item.num) {
+                    let checklistItem = InstantPageChecklistMarkerItem(frame: CGRect(origin: .zero, size: instantPageChecklistMarkerSize), checked: checked)
+                    if ordered {
+                        maxIndexWidth = max(maxIndexWidth, instantPageChecklistMarkerSize.width)
+                    }
+                    indexItems.append(checklistItem)
+                } else if ordered {
                     let styleStack = InstantPageTextStyleStack()
                     setupStyleStack(styleStack, theme: theme, category: .paragraph, link: false)
                     let value: String
@@ -335,7 +384,7 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
                     indexItems.append(shapeItem)
                 }
             }
-            let indexSpacing: CGFloat = ordered ? 12.0 : 20.0
+            let indexSpacing: CGFloat = ordered ? (hasTaskMarkers ? 16.0 : 12.0) : (hasTaskMarkers ? 24.0 : 20.0)
             for (i, item) in contentItems.enumerated() {
                 if (i != 0) {
                     contentSize.height += 18.0
@@ -366,6 +415,12 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
                         
                         if let textIndexItem = indexItem as? InstantPageTextItem, let line = textIndexItem.lines.first {
                             itemFrame = itemFrame.offsetBy(dx: horizontalInset + maxIndexWidth - line.frame.width, dy: floorToScreenPixels(lineMidY - (itemFrame.height / 2.0)))
+                        } else if indexItem is InstantPageChecklistMarkerItem {
+                            if ordered {
+                                itemFrame = itemFrame.offsetBy(dx: horizontalInset + maxIndexWidth - itemFrame.width, dy: floorToScreenPixels(lineMidY - (itemFrame.height / 2.0)))
+                            } else {
+                                itemFrame = itemFrame.offsetBy(dx: horizontalInset, dy: floorToScreenPixels(lineMidY - (itemFrame.height / 2.0)))
+                            }
                         } else {
                             itemFrame = itemFrame.offsetBy(dx: horizontalInset, dy: floorToScreenPixels(lineMidY - itemFrame.height / 2.0))
                         }
@@ -375,6 +430,7 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
                     case let .blocks(blocks, _):
                         var previousBlock: InstantPageBlock?
                         var originY: CGFloat = contentSize.height
+                        var firstBlockLineMidY: CGFloat?
                         for subBlock in blocks {
                             let subLayout = layoutInstantPageBlock(webpage: webpage, userLocation: userLocation, rtl: rtl, block: subBlock, boundingWidth: boundingWidth - horizontalInset * 2.0 - indexSpacing - maxIndexWidth, horizontalInset: 0.0, safeInset: 0.0, isCover: false, previousItems: listItems, fillToSize: nil, media: media, mediaIndexCounter: &mediaIndexCounter, embedIndexCounter: &embedIndexCounter, detailsIndexCounter: &detailsIndexCounter, theme: theme, strings: strings, dateTimeFormat: dateTimeFormat, webEmbedHeights: webEmbedHeights, cachedMessageSyntaxHighlight: cachedMessageSyntaxHighlight, excludeCaptions: false)
                             
@@ -382,6 +438,9 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
                             let blockItems = subLayout.flattenedItemsWithOrigin(CGPoint(x: horizontalInset + indexSpacing + maxIndexWidth, y: contentSize.height + spacing))
                             if previousBlock == nil {
                                 originY += spacing
+                            }
+                            if firstBlockLineMidY == nil {
+                                firstBlockLineMidY = instantPageFirstTextLineMidY(in: blockItems)
                             }
                             listItems.append(contentsOf: blockItems)
                             contentSize.height += subLayout.contentSize.height + spacing
@@ -391,6 +450,18 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
                         var indexItemFrame = indexItem.frame
                         if let textIndexItem = indexItem as? InstantPageTextItem, let line = textIndexItem.lines.first {
                             indexItemFrame = indexItemFrame.offsetBy(dx: horizontalInset + maxIndexWidth - line.frame.width, dy: originY)
+                        } else if indexItem is InstantPageChecklistMarkerItem {
+                            let markerOriginY: CGFloat
+                            if let firstBlockLineMidY {
+                                markerOriginY = floorToScreenPixels(firstBlockLineMidY - indexItemFrame.height / 2.0)
+                            } else {
+                                markerOriginY = originY
+                            }
+                            if ordered {
+                                indexItemFrame = indexItemFrame.offsetBy(dx: horizontalInset + maxIndexWidth - indexItemFrame.width, dy: markerOriginY)
+                            } else {
+                                indexItemFrame = indexItemFrame.offsetBy(dx: horizontalInset, dy: markerOriginY)
+                            }
                         } else {
                             indexItemFrame = indexItemFrame.offsetBy(dx: horizontalInset, dy: originY)
                         }
