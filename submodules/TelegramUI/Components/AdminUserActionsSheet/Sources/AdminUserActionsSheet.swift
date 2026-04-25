@@ -379,9 +379,7 @@ private final class AdminUserActionsContentComponent: Component {
         func update(component: AdminUserActionsContentComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<ViewControllerComponentContainer.Environment>, transition: ComponentTransition) -> CGSize {
             let environment = environment[ViewControllerComponentContainer.Environment.self].value
             let sideInset: CGFloat = 16.0
-            var contentHeight: CGFloat = 76.0
-            
-            contentHeight += 15.0
+            var contentHeight: CGFloat = 76.0 + 15.0
             
             let availableOptions = availableAdminUserActionOptionSections(
                 accountPeerId: component.context.account.peerId,
