@@ -507,7 +507,7 @@ final class ChatImageGalleryItemNode: ZoomableContentGalleryItemNode {
                 
                 self.zoomableContent = (largestSize.dimensions.cgSize, self.imageNode)
                 
-                self.fetchDisposable.set(fetchedMediaResource(mediaBox: self.context.account.postbox.mediaBox, userLocation: userLocation, userContentType: .image, reference: imageReference.resourceReference(largestSize.resource)).start())
+                self.fetchDisposable.set(self.context.engine.resources.fetch(reference: imageReference.resourceReference(largestSize.resource), userLocation: userLocation, userContentType: .image).start())
                 self.setupStatus(resource: largestSize.resource)
             } else {
                 self._ready.set(.single(Void()))
@@ -932,7 +932,7 @@ final class ChatImageGalleryItemNode: ZoomableContentGalleryItemNode {
                 }
                 self._rightBarButtonItems.set(.single(barButtonItems))
                 
-                self.fetchDisposable.set(fetchedMediaResource(mediaBox: self.context.account.postbox.mediaBox, userLocation: userLocation, userContentType: .image, reference: fileReference.resourceReference(fileReference.media.resource)).start())
+                self.fetchDisposable.set(self.context.engine.resources.fetch(reference: fileReference.resourceReference(fileReference.media.resource), userLocation: userLocation, userContentType: .image).start())
             } else {
                 let _ = (chatMessageFileDatas(account: context.account, userLocation: userLocation, fileReference: fileReference, progressive: false, fetched: true)
                 |> mapToSignal { value -> Signal<UIImage?, NoError> in

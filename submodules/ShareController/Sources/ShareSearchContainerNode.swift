@@ -475,7 +475,7 @@ final class ShareSearchContainerNode: ASDisplayNode, ShareContentContainerNode {
             var index = 0
             for (peer, requiresPremiumForMessaging) in recentPeerList {
                 if let mainPeer = peer.peers[peer.peerId], canSendMessagesToPeer(mainPeer) {
-                    recentItemList.append(.peer(index: index, theme: theme, peer: mainPeer, associatedPeer: mainPeer._asPeer().associatedPeerId.flatMap { peer.peers[$0] }, presence: nil, requiresPremiumForMessaging: requiresPremiumForMessaging, requiresStars: nil, strings: strings))
+                    recentItemList.append(.peer(index: index, theme: theme, peer: mainPeer, associatedPeer: mainPeer.associatedPeerId.flatMap { peer.peers[$0] }, presence: nil, requiresPremiumForMessaging: requiresPremiumForMessaging, requiresStars: nil, strings: strings))
                     index += 1
                 }
             }

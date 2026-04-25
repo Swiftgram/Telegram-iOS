@@ -233,11 +233,11 @@ public func normalizeEntries(_ entries: [AvatarGalleryEntry]) -> [AvatarGalleryE
 
 public func initialAvatarGalleryEntries(account: Account, engine: TelegramEngine, peer: EnginePeer) -> Signal<[AvatarGalleryEntry]?, NoError> {
     var initialEntries: [AvatarGalleryEntry] = []
-    if !peer.profileImageRepresentations.isEmpty, let peerReference = PeerReference(peer._asPeer()) {
+    if !peer.profileImageRepresentations.isEmpty, let peerReference = PeerReference(peer) {
         initialEntries.append(.topImage(peer.profileImageRepresentations.map({ ImageRepresentationWithReference(representation: $0, reference: MediaResourceReference.avatar(peer: peerReference, resource: $0.resource)) }), [], peer, nil, nil, nil))
     }
     
-    guard let peerReference = PeerReference(peer._asPeer()) else {
+    guard let peerReference = PeerReference(peer) else {
         return .single(initialEntries)
     }
     switch peer {
@@ -283,7 +283,7 @@ public func fetchedAvatarGalleryEntries(engine: TelegramEngine, account: Account
                 var result: [AvatarGalleryEntry] = []
                 if photos.isEmpty {
                     result = initialEntries
-                } else if let peerReference = PeerReference(peer._asPeer()) {
+                } else if let peerReference = PeerReference(peer) {
                     var index: Int32 = 0
                     if [Namespaces.Peer.CloudGroup, Namespaces.Peer.CloudChannel].contains(peer.id.namespace) {
                         var initialMediaIds = Set<EngineMedia.Id>()
@@ -339,13 +339,13 @@ public func fetchedAvatarGalleryEntries(engine: TelegramEngine, account: Account
             let initialEntries = [firstEntry]
             if photos.isEmpty {
                 result = initialEntries
-                if let lastEntry, let firstEntry = result.first, firstEntry.videoRepresentations.isEmpty, !lastEntry.videoRepresentations.isEmpty, avatarGalleryEntryMatchesImage(firstEntry, lastEntry), let peerReference = PeerReference(peer._asPeer()) {
+                if let lastEntry, let firstEntry = result.first, firstEntry.videoRepresentations.isEmpty, !lastEntry.videoRepresentations.isEmpty, avatarGalleryEntryMatchesImage(firstEntry, lastEntry), let peerReference = PeerReference(peer) {
                     let videoRepresentations = lastEntry.videoRepresentations.map {
                         VideoRepresentationWithReference(representation: $0, reference: MediaResourceReference.avatar(peer: peerReference, resource: $0.resource))
                     }
                     result[0] = avatarGalleryEntryWithVideoRepresentations(firstEntry, videoRepresentations: videoRepresentations, immediateThumbnailData: firstEntry.immediateThumbnailData ?? lastEntry.immediateThumbnailData)
                 }
-            } else if let peerReference = PeerReference(peer._asPeer()) {
+            } else if let peerReference = PeerReference(peer) {
                 var index: Int32 = 0
                 
                 if [Namespaces.Peer.CloudGroup, Namespaces.Peer.CloudChannel].contains(peer.id.namespace) {
@@ -846,7 +846,7 @@ public class AvatarGalleryController: ViewController, StandalonePresentableContr
                 } else {
                 }
             case let .image(_, reference, _, _, _, _, _, _, _, _, _, _):
-            if self.peer.id == self.context.account.peerId, let peerReference = PeerReference(self.peer._asPeer()) {
+            if self.peer.id == self.context.account.peerId, let peerReference = PeerReference(self.peer) {
                     if let reference = reference {
                         let _ = (self.context.engine.accountData.updatePeerPhotoExisting(reference: reference)
                         |> deliverOnMainQueue).start(next: { [weak self] photo in

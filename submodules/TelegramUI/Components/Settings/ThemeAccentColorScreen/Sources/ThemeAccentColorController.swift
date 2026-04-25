@@ -188,12 +188,12 @@ public final class ThemeAccentColorController: ViewController {
                     var data: Data?
                     if let path = strongSelf.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(resource.id)), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                         data = maybeData
-                    } else if let path = strongSelf.context.sharedContext.accountManager.mediaBox.completedResourcePath(resource), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
+                    } else if let path = strongSelf.context.sharedContext.accountManager.resources.completedResourcePath(resource: EngineMediaResource(resource)), let maybeData = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedRead) {
                         data = maybeData
                     }
-                    
+
                     if let data = data {
-                        strongSelf.context.sharedContext.accountManager.mediaBox.storeResourceData(resource.id, data: data, synchronous: true)
+                        strongSelf.context.sharedContext.accountManager.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data, synchronous: true)
                         prepareWallpaper = .complete()
                     } else {
                         prepareWallpaper = .complete()

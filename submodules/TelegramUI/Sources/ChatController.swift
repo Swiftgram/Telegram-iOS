@@ -386,7 +386,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     var chatUnreadMentionCountDisposable: Disposable?
     var peerInputActivitiesDisposable: Disposable?
     
-    var peerInputActivitiesPromise = Promise<[(Peer, PeerInputActivity)]>()
+    var peerInputActivitiesPromise = Promise<[(EnginePeer, PeerInputActivity)]>()
     var interactiveEmojiSyncDisposable = MetaDisposable()
     
     var recentlyUsedInlineBotsValue: [Peer] = []

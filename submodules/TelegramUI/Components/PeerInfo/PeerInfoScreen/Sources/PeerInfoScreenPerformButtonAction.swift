@@ -425,18 +425,18 @@ extension PeerInfoScreenNode {
                 
                 var canSetupAutoremoveTimeout = false
                 
-                if let secretChat = chatPeer as? TelegramSecretChat {
+                if case let .secretChat(secretChat) = chatPeer {
                     currentAutoremoveTimeout = secretChat.messageAutoremoveTimeout
                     canSetupAutoremoveTimeout = false
-                } else if let group = chatPeer as? TelegramGroup {
+                } else if case let .legacyGroup(group) = chatPeer {
                     if !group.hasBannedPermission(.banChangeInfo) {
                         canSetupAutoremoveTimeout = true
                     }
-                } else if let user = chatPeer as? TelegramUser {
+                } else if case let .user(user) = chatPeer {
                     if user.id != strongSelf.context.account.peerId {
                         canSetupAutoremoveTimeout = true
                     }
-                } else if let channel = chatPeer as? TelegramChannel {
+                } else if case let .channel(channel) = chatPeer {
                     if channel.hasPermission(.changeInfo) {
                         canSetupAutoremoveTimeout = true
                     }
@@ -460,7 +460,7 @@ extension PeerInfoScreenNode {
                 }
                 
                 var hasDiscussion = false
-                if let channel = chatPeer as? TelegramChannel {
+                if case let .channel(channel) = chatPeer {
                     switch channel.info {
                     case let .broadcast(info):
                         hasDiscussion = info.flags.contains(.hasDiscussionGroup)
@@ -854,7 +854,7 @@ extension PeerInfoScreenNode {
                             generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/ClearMessages"), color: theme.contextMenu.primaryColor)
                         }, action: { c, _ in
                             if let c {
-                                self?.openClearHistory(contextController: c, clearPeerHistory: clearPeerHistory, peer: user, chatPeer: user)
+                                self?.openClearHistory(contextController: c, clearPeerHistory: clearPeerHistory, peer: user, chatPeer: EnginePeer(user))
                             }
                         })))
                     }
@@ -1064,13 +1064,13 @@ extension PeerInfoScreenNode {
                         })))
                     }
                     
-                    let clearPeerHistory = ClearPeerHistory(context: strongSelf.context, peer: channel, chatPeer: channel, cachedData: strongSelf.data?.cachedData)
+                    let clearPeerHistory = ClearPeerHistory(context: strongSelf.context, peer: channel, chatPeer: EnginePeer(channel), cachedData: strongSelf.data?.cachedData)
                     if clearPeerHistory.canClearForMyself != nil || clearPeerHistory.canClearForEveryone != nil {
                         items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.PeerInfo_ClearMessages, icon: { theme in
                             generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/ClearMessages"), color: theme.contextMenu.primaryColor)
                         }, action: { c, _ in
                             if let c {
-                                self?.openClearHistory(contextController: c, clearPeerHistory: clearPeerHistory, peer: channel, chatPeer: channel)
+                                self?.openClearHistory(contextController: c, clearPeerHistory: clearPeerHistory, peer: channel, chatPeer: EnginePeer(channel))
                             }
                         })))
                     }
@@ -1231,13 +1231,13 @@ extension PeerInfoScreenNode {
                         })))
                     }
                     
-                    let clearPeerHistory = ClearPeerHistory(context: strongSelf.context, peer: group, chatPeer: group, cachedData: strongSelf.data?.cachedData)
+                    let clearPeerHistory = ClearPeerHistory(context: strongSelf.context, peer: group, chatPeer: EnginePeer(group), cachedData: strongSelf.data?.cachedData)
                     if clearPeerHistory.canClearForMyself != nil || clearPeerHistory.canClearForEveryone != nil {
                         items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.PeerInfo_ClearMessages, icon: { theme in
                             generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/ClearMessages"), color: theme.contextMenu.primaryColor)
                         }, action: { c, _ in
                             if let c {
-                                self?.openClearHistory(contextController: c, clearPeerHistory: clearPeerHistory, peer: group, chatPeer: group)
+                                self?.openClearHistory(contextController: c, clearPeerHistory: clearPeerHistory, peer: group, chatPeer: EnginePeer(group))
                             }
                         })))
                     }

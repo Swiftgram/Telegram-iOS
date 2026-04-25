@@ -408,7 +408,7 @@ private final class PeerInfoPendingPane {
         updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?,
         chatControllerInteraction: ChatControllerInteraction,
         data: PeerInfoScreenData,
-        openPeerContextAction: @escaping (Bool, Peer, ASDisplayNode, ContextGesture?) -> Void,
+        openPeerContextAction: @escaping (Bool, EnginePeer, ASDisplayNode, ContextGesture?) -> Void,
         openAddMemberAction: @escaping () -> Void,
         requestPerformPeerMemberAction: @escaping (PeerInfoMember, PeerMembersListAction) -> Void,
         peerId: PeerId,
@@ -637,7 +637,7 @@ final class PeerInfoPaneContainerNode: ASDisplayNode, ASGestureRecognizerDelegat
     var selectionPanelNode: PeerInfoSelectionPanelNode?
     
     var chatControllerInteraction: ChatControllerInteraction?
-    var openPeerContextAction: ((Bool, Peer, ASDisplayNode, ContextGesture?) -> Void)?
+    var openPeerContextAction: ((Bool, EnginePeer, ASDisplayNode, ContextGesture?) -> Void)?
     var openAddMemberAction: (() -> Void)?
     var requestPerformPeerMemberAction: ((PeerInfoMember, PeerMembersListAction) -> Void)?
     

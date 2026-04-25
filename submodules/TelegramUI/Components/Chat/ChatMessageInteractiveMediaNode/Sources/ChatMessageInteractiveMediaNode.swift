@@ -1471,7 +1471,7 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
                                         }
                                     }, cancel: {
                                         if file.isAnimated {
-                                            context.account.postbox.mediaBox.cancelInteractiveResourceFetch(file.resource)
+                                            context.engine.resources.cancelInteractiveResourceFetch(id: EngineMediaResource.Id(file.resource.id))
                                         } else {
                                             messageMediaFileCancelInteractiveFetch(context: context, messageId: message.id, file: file)
                                         }
@@ -1706,7 +1706,7 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
                                 }
                             }, cancel: {
                                 if file.isAnimated {
-                                    context.account.postbox.mediaBox.cancelInteractiveResourceFetch(file.resource)
+                                    context.engine.resources.cancelInteractiveResourceFetch(id: EngineMediaResource.Id(file.resource.id))
                                 } else {
                                     messageMediaFileCancelInteractiveFetch(context: context, messageId: message.id, file: file)
                                 }

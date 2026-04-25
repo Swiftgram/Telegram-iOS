@@ -24,7 +24,7 @@ extension PeerInfoScreenNode {
                     guard let self, let navigationController = self.controller?.navigationController as? NavigationController else {
                         return
                     }
-                    self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(member.peer))))
+                    self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(member.peer)))
                 }
             })))
         }

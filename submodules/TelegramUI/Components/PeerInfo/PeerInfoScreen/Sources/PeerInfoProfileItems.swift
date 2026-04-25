@@ -521,7 +521,7 @@ func infoItems(
                     
                     if let managedByBot = data.managedByBot {
                         items[currentPeerInfoSection]!.append(PeerInfoScreenCommentItem(id: ItemBotAddToChatInfo, icon: .managedBot, text: presentationData.strings.PeerInfo_ManagedBotFooter(managedByBot.compactDisplayTitle).string, linkAction: { _ in
-                            interaction.openPeerInfo(managedByBot._asPeer(), false)
+                            interaction.openPeerInfo(managedByBot, false)
                         }))
                     } else {
                         items[currentPeerInfoSection]!.append(PeerInfoScreenCommentItem(id: ItemBotAddToChatInfo, text: presentationData.strings.Bot_AddToChatInfo))
@@ -849,7 +849,7 @@ func infoItems(
         
         for member in memberList {
             let isAccountPeer = member.id == context.account.peerId
-            items[.peerMembers]!.append(PeerInfoScreenMemberItem(id: member.id, context: .account(context), enclosingPeer: peer._asPeer(), member: member, isAccount: false, action: isAccountPeer ? { _ in
+            items[.peerMembers]!.append(PeerInfoScreenMemberItem(id: member.id, context: .account(context), enclosingPeer: peer, member: member, isAccount: false, action: isAccountPeer ? { _ in
                 let actions = availableActionsForMemberOfPeer(accountPeerId: context.account.peerId, peer: peer, member: member)
                 if actions.contains(.editRank) {
                     interaction.performMemberAction(member, .editRank)
@@ -1099,7 +1099,7 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
                             if let addressName = peer.addressName, !addressName.isEmpty {
                                 discussionGroupTitle = "@\(addressName)"
                             } else {
-                                discussionGroupTitle = EnginePeer(peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
+                                discussionGroupTitle = peer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
                             }
                         } else {
                             discussionGroupTitle = presentationData.strings.Channel_DiscussionGroupAdd
@@ -1194,7 +1194,7 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
                 if isCreator || (channel.adminRights?.rights.contains(.canChangeInfo) == true) {
                     let labelString: NSAttributedString
                     if channel.linkedMonoforumId != nil {
-                        if let monoforumPeer = data.linkedMonoforumPeer as? TelegramChannel {
+                        if case let .channel(monoforumPeer) = data.linkedMonoforumPeer {
                             if let sendPaidMessageStars = monoforumPeer.sendPaidMessageStars {
                                 let formattedLabel = formatStarsAmountText(sendPaidMessageStars, dateTimeFormat: presentationData.dateTimeFormat)
                                 let smallLabelFont = Font.regular(floor(presentationData.listsFontSize.itemListBaseFontSize / 17.0 * 13.0))
@@ -1406,7 +1406,7 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
                             if let addressName = linkedDiscussionPeer.addressName, !addressName.isEmpty {
                                 peerTitle = "@\(addressName)"
                             } else {
-                                peerTitle = EnginePeer(linkedDiscussionPeer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
+                                peerTitle = linkedDiscussionPeer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
                             }
                                                         
                             items[.peerDataSettings]!.append(PeerInfoScreenDisclosureItem(id: ItemLinkedChannel, label: .text(peerTitle), text: presentationData.strings.Group_LinkedChannel, icon: PresentationResourcesSettings.channels, action: {

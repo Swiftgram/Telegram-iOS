@@ -22,7 +22,7 @@ extension PeerInfoScreenNode {
                 navigationController.setViewControllers(viewControllers, animated: true)
                 current.activateSearch(domain: .everything, query: "")
             } else if let peer = self.data?.chatPeer {
-                self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default, activateMessageSearch: (.everything, "")))
+                self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(peer), keepStack: .default, activateMessageSearch: (.everything, "")))
             }
         }
     }
@@ -86,7 +86,7 @@ extension PeerInfoScreenNode {
             return
         }
         
-        self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .default, setupController: { controller in
+        self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(peer), keepStack: .default, setupController: { controller in
             controller.beginClearHistory(type: type)
         }))
     }

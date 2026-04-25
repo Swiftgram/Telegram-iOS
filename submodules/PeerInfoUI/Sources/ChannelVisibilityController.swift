@@ -1475,7 +1475,7 @@ public func channelVisibilityController(context: AccountContext, updatedPresenta
                 let (limits, premiumLimits) = data
                 let isPremium = accountPeer?.isPremium ?? false
                 
-                let hasAdditionalUsernames = (peer?._asPeer().usernames.firstIndex(where: { !$0.flags.contains(.isEditable) }) ?? nil) != nil
+                let hasAdditionalUsernames = (peer?.usernames.firstIndex(where: { !$0.flags.contains(.isEditable) }) ?? nil) != nil
                 
                 if let peers = peers {
                     let count = Int32(peers.count)

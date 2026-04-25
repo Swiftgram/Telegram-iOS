@@ -808,7 +808,7 @@ public final class SharedAccountContextImpl: SharedAccountContext {
                     guard let peer = peer else {
                         return nil
                     }
-                    return AccountWithInfo(account: context.account, peer: peer._asPeer())
+                    return AccountWithInfo(account: context.account, peer: peer)
                 }
                 |> distinctUntilChanged
             })
@@ -1935,7 +1935,6 @@ public final class SharedAccountContextImpl: SharedAccountContext {
     }
     
     public func makePeerInfoController(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, peer: EnginePeer, mode: PeerInfoControllerMode, avatarInitiallyExpanded: Bool, fromChat: Bool, requestsContext: PeerInvitationImportersContext?) -> ViewController? {
-        let peer = peer._asPeer()
         let controller = peerInfoControllerImpl(context: context, updatedPresentationData: updatedPresentationData, peer: peer, mode: mode, avatarInitiallyExpanded: avatarInitiallyExpanded, isOpenedFromChat: fromChat)
         controller?.navigationPresentation = .modalInLargeLayout
         return controller
@@ -2300,7 +2299,6 @@ public final class SharedAccountContextImpl: SharedAccountContext {
     }
     
     public func makeChatRecentActionsController(context: AccountContext, peer: EnginePeer, adminPeerId: PeerId?, starsState: StarsRevenueStats?) -> ViewController {
-        let peer = peer._asPeer()
         return ChatRecentActionsController(context: context, peer: peer, adminPeerId: adminPeerId, starsState: starsState)
     }
     
@@ -2348,7 +2346,7 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return PeerSelectionControllerImpl(params)
     }
     
-    public func openAddPeerMembers(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, parentController: ViewController, groupPeer: Peer, selectAddMemberDisposable: MetaDisposable, addMemberDisposable: MetaDisposable) {
+    public func openAddPeerMembers(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, parentController: ViewController, groupPeer: EnginePeer, selectAddMemberDisposable: MetaDisposable, addMemberDisposable: MetaDisposable) {
         return presentAddMembersImpl(context: context, updatedPresentationData: updatedPresentationData, parentController: parentController, groupPeer: groupPeer, selectAddMemberDisposable: selectAddMemberDisposable, addMemberDisposable: addMemberDisposable)
     }
     
@@ -2729,7 +2727,6 @@ public final class SharedAccountContextImpl: SharedAccountContext {
     }
     
     public func makeChatQrCodeScreen(context: AccountContext, peer: EnginePeer, threadId: Int64?, temporary: Bool) -> ViewController {
-        let peer = peer._asPeer()
         return ChatQrCodeScreenImpl(context: context, subject: .peer(peer: peer, threadId: threadId, temporary: temporary))
     }
     
@@ -4434,7 +4431,7 @@ public final class SharedAccountContextImpl: SharedAccountContext {
     }
 }
 
-private func peerInfoControllerImpl(context: AccountContext, updatedPresentationData: (PresentationData, Signal<PresentationData, NoError>)?, peer: Peer, mode: PeerInfoControllerMode, avatarInitiallyExpanded: Bool, isOpenedFromChat: Bool, requestsContext: PeerInvitationImportersContext? = nil) -> ViewController? {
+private func peerInfoControllerImpl(context: AccountContext, updatedPresentationData: (PresentationData, Signal<PresentationData, NoError>)?, peer: EnginePeer, mode: PeerInfoControllerMode, avatarInitiallyExpanded: Bool, isOpenedFromChat: Bool, requestsContext: PeerInvitationImportersContext? = nil) -> ViewController? {
     var switchToMediaTarget: PeerInfoSwitchToMediaTarget?
     switch mode {
     case let .media(kind, index):
@@ -4450,9 +4447,9 @@ private func peerInfoControllerImpl(context: AccountContext, updatedPresentation
         break
     }
     
-    if let _ = peer as? TelegramGroup {
+    if case .legacyGroup = peer {
         return PeerInfoScreenImpl(context: context, updatedPresentationData: updatedPresentationData, peerId: peer.id, avatarInitiallyExpanded: avatarInitiallyExpanded, isOpenedFromChat: isOpenedFromChat, reactionSourceMessageId: nil, callMessages: [], switchToMediaTarget: switchToMediaTarget)
-    } else if let _ = peer as? TelegramChannel {
+    } else if case .channel = peer {
         var sourceMessageId: MessageId?
         var forumTopicThread: ChatReplyThreadMessage?
         var switchToRecommendedChannels = false
@@ -4478,7 +4475,7 @@ private func peerInfoControllerImpl(context: AccountContext, updatedPresentation
             break
         }
         return PeerInfoScreenImpl(context: context, updatedPresentationData: updatedPresentationData, peerId: peer.id, avatarInitiallyExpanded: avatarInitiallyExpanded, isOpenedFromChat: isOpenedFromChat, reactionSourceMessageId: nil, sourceMessageId: sourceMessageId, callMessages: [], forumTopicThread: forumTopicThread, switchToRecommendedChannels: switchToRecommendedChannels, switchToGiftsTarget: switchToGiftsTarget, switchToGroupsInCommon: switchToGroupsInCommon, switchToStoryFolder: switchToStoryFolder, switchToMediaTarget: switchToMediaTarget)
-    } else if peer is TelegramUser {
+    } else if case .user = peer {
         var reactionSourceMessageId: MessageId?
         var sourceMessageId: MessageId?
         var callMessages: [Message] = []
@@ -4531,7 +4528,7 @@ private func peerInfoControllerImpl(context: AccountContext, updatedPresentation
             break
         }
         return PeerInfoScreenImpl(context: context, updatedPresentationData: updatedPresentationData, peerId: peer.id, avatarInitiallyExpanded: avatarInitiallyExpanded, isOpenedFromChat: isOpenedFromChat, reactionSourceMessageId: reactionSourceMessageId, sourceMessageId: sourceMessageId, callMessages: callMessages, isMyProfile: isMyProfile, hintGroupInCommon: hintGroupInCommon, forumTopicThread: forumTopicThread, sharedMediaFromForumTopic: sharedMediaFromForumTopic, switchToGiftsTarget: switchToGiftsTarget, switchToGroupsInCommon: switchToGroupsInCommon, switchToStoryFolder: switchToStoryFolder, switchToMediaTarget: switchToMediaTarget)
-    } else if peer is TelegramSecretChat {
+    } else if case .secretChat = peer {
         return PeerInfoScreenImpl(context: context, updatedPresentationData: updatedPresentationData, peerId: peer.id, avatarInitiallyExpanded: avatarInitiallyExpanded, isOpenedFromChat: isOpenedFromChat, reactionSourceMessageId: nil, callMessages: [], switchToMediaTarget: switchToMediaTarget)
     }
     return nil

@@ -102,7 +102,7 @@ final class StoryItemImageView: UIView {
                             }
                         }
                         
-                        if let peerReference = PeerReference(peer._asPeer()) {
+                        if let peerReference = PeerReference(peer) {
                             self.fetchDisposable = fetchedMediaResource(mediaBox: context.account.postbox.mediaBox, userLocation: .peer(peer.id), userContentType: .story, reference: .media(media: .story(peer: peerReference, id: storyId, media: media._asMedia()), resource: representation.resource), ranges: nil).start()
                         }
                         self.disposable = (context.engine.resources.data(resource: EngineMediaResource(representation.resource))

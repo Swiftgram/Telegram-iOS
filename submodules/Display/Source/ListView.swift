@@ -2664,6 +2664,13 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
         }
     }
     
+    private var nextAnimationId: Int = 0
+    private func takeNextAnimationId() -> Int {
+        let value = self.nextAnimationId
+        self.nextAnimationId += 1
+        return value
+    }
+    
     private func replayOperations(animated: Bool, animateAlpha: Bool, animateCrossfade: Bool, animateFullTransition: Bool, customAnimationTransition: ControlledTransition?, synchronous: Bool, synchronousLoads: Bool, animateTopItemVerticalOrigin: Bool, operations: [ListViewStateOperation], requestItemInsertionAnimationsIndices: Set<Int>, scrollToItem originalScrollToItem: ListViewScrollToItem?, additionalScrollDistance: CGFloat, updateSizeAndInsets: ListViewUpdateSizeAndInsets?, stationaryItemIndex: Int?, updateOpaqueState: Any?, forceInvertOffsetDirection: Bool = false, completion: () -> Void) {
         var scrollToItem: ListViewScrollToItem?
         var isExperimentalSnapToScrollToItem = false
@@ -3319,7 +3326,7 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
                         animation.completion = { [weak self] _ in
                             self?.updateItemNodesVisibilities(onlyPositive: false)
                         }
-                        self.layer.add(animation, forKey: "animation-\(ObjectIdentifier(animation))")
+                        self.layer.add(animation, forKey: "animation-\(self.takeNextAnimationId())")
                         if !completeOffset.isZero {
                             for itemNode in self.itemNodes {
                                 itemNode.applyAbsoluteOffset(value: CGPoint(x: 0.0, y: -completeOffset), animationCurve: animationCurve, duration: animationDuration)
@@ -3747,7 +3754,7 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
                                 headerNode.removeFromSupernode()
                             }
                         }
-                        self.layer.add(animation, forKey: "animation-\(ObjectIdentifier(animation))")
+                        self.layer.add(animation, forKey: "animation-\(self.takeNextAnimationId()))")
                     }
 
                     for itemNode in self.itemNodes {

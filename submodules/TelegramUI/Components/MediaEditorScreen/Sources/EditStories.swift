@@ -24,7 +24,7 @@ public extension MediaEditorScreenImpl {
         willDismiss: @escaping () -> Void = {},
         update: @escaping (Disposable?) -> Void
     ) -> MediaEditorScreenImpl? {
-        guard let peerReference = PeerReference(peer._asPeer()) else {
+        guard let peerReference = PeerReference(peer) else {
             return nil
         }
         let subject: Signal<MediaEditorScreenImpl.Subject?, NoError>

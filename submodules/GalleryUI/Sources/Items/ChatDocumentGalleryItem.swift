@@ -183,7 +183,7 @@ class ChatDocumentGalleryItemNode: ZoomableContentGalleryItemNode, WKNavigationD
             self.maybeLoadContent()
             self.setupStatus(context: context, resource: fileReference.media.resource)
             
-            self.fetchDisposable.set(fetchedMediaResource(mediaBox: context.account.postbox.mediaBox, userLocation: (self.message?.id.peerId).flatMap(MediaResourceUserLocation.peer) ?? .other, userContentType: .file, reference: fileReference.resourceReference(fileReference.media.resource)).start())
+            self.fetchDisposable.set(context.engine.resources.fetch(reference: fileReference.resourceReference(fileReference.media.resource), userLocation: (self.message?.id.peerId).flatMap(MediaResourceUserLocation.peer) ?? .other, userContentType: .file).start())
         }
     }
     
@@ -388,7 +388,7 @@ class ChatDocumentGalleryItemNode: ZoomableContentGalleryItemNode, WKNavigationD
                 case .Fetching:
                     context.engine.resources.cancelInteractiveResourceFetch(id: EngineMediaResource.Id(fileReference.media.resource.id))
                 case .Remote:
-                    self.fetchDisposable.set(fetchedMediaResource(mediaBox: context.account.postbox.mediaBox, userLocation: (self.message?.id.peerId).flatMap(MediaResourceUserLocation.peer) ?? .other, userContentType: .file, reference: fileReference.resourceReference(fileReference.media.resource)).start())
+                    self.fetchDisposable.set(context.engine.resources.fetch(reference: fileReference.resourceReference(fileReference.media.resource), userLocation: (self.message?.id.peerId).flatMap(MediaResourceUserLocation.peer) ?? .other, userContentType: .file).start())
                 default:
                     break
             }

@@ -1216,6 +1216,661 @@ Net consumer-surface: **−10 bridges**. TelegramCore-internal: +~12 wraps insid
 
 ---
 
+## Wave 45 outcome (2026-04-24)
+
+Migrated the four `update(..., peer: Peer?, ...)` methods across the PeerInfoHeader node hierarchy — `PeerInfoHeaderNode.update`, `PeerInfoHeaderEditingContentNode.update`, `PeerInfoEditingAvatarNode.update`, `PeerInfoEditingAvatarOverlayNode.update` — from raw `Peer?` to `EnginePeer?`. Consumer-surface ratchet that drops ~15 wave-43-era ADD-WRAP bridges. Single-module wave (all four files live in `submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/`). No new typealiases. No engine wrapper structs. The stored `PeerInfoHeaderNode.peer: Peer?` field stays raw (intentional scope cap) and is bridged with `peer?._asPeer()` at assignment.
+
+**Classification:**
+- 4 signature changes: `peer: Peer?` → `peer: EnginePeer?` at PHN:496, PHECN:52, PEAN:61, PEAON:63.
+- 15 DROP wraps across the four files:
+  - PHN body: 7 drops at :524 (listContainerNode.peer), :548 (peerInfoHeaderActionButtons), :549 (peerInfoHeaderButtons), :571 (backgroundCoverSubject = .peer), :1218 (displayTitle), :1964 (listContainerNode.update), :2361 (peerInfoIsChatMuted).
+  - PHECN body: 5 drops at :59, :88, :93, :159, :162 (all `canEditPeerInfo` wraps).
+  - PEAN body: 2 drops at :66 (canEditPeerInfo) and :88 (avatarNode.setPeer).
+  - PEAON body: 1 drop at :85 (canEditPeerInfo).
+- 5 enum-case rewrites in PHN: `peer as? TelegramChannel` / `peer as? TelegramUser` → `case let .channel(x) = peer` / `case let .user(x) = peer` at :622, :1225, :1238, :1273, :2354.
+- 7 enum-case rewrites in PHECN: `peer as? TelegramUser/Group/Channel` at :73, :77, :86 (no-bind), :91 (no-bind), :107 (inner rebind), :154.
+- 1 enum-case rewrite in PEAN: `peer as? TelegramChannel` at :93.
+- 1 enum-case rewrite in PEAON: `peer as? TelegramChannel` at :74.
+- 4 `_asPeer()` bridges ADDED at Peer-only-property sites (wave-42 lesson pattern):
+  - PEAN:159 `PeerReference(peer._asPeer())` — PeerReference.init takes raw Peer.
+  - PEAN:166 `peer._asPeer().isCopyProtectionEnabled` — property not forwarded on EnginePeer.
+  - PHECN:115 `(peer?._asPeer() as? TelegramUser)?.lastName` — inline expression form kept; chose bridge over multi-line `case let` expansion.
+  - PHN:521 `self.peer = peer?._asPeer()` — stored raw Peer? field stays raw.
+- 1 ADD wrap at PHN:363 (`itemsUpdated` closure) — closure reads stored raw `self.peer` and forwards to the migrated `PEAN.update`.
+- 1 ADD bridge at PHN:1815 for `self.avatarListNode.update(..., peer: peer?._asPeer(), ...)` — `PeerInfoAvatarListNode.update(size:avatarSize:isExpanded:peer:...)` still takes raw `Peer?` (plan pre-flight missed this site). Candidate for wave 46.
+- 2 external call sites in `PeerInfoScreen.swift` at :5399 and :5805 reshuffled: `peer: self.data?.savedMessagesPeer ?? self.data?.peer?._asPeer()` → `peer: self.data?.savedMessagesPeer.flatMap(EnginePeer.init) ?? self.data?.peer`. Net-zero at these sites (swap `?._asPeer()` bridge for `.flatMap(EnginePeer.init)` wrap).
+
+Net consumer-surface: **−10 bridges** (15 drops − 4 internal `_asPeer()` bridges − 1 internal closure ADD-WRAP at :363 − 1 :1815 bridge the plan missed; the two external call sites are net-zero). No new `import Postbox` in any consumer module; no Postbox-hygiene regression.
+
+**Build outcome:** 1 iteration (first-pass-clean).
+
+**Commit:** `6b7a23867c` (5 files, 41 insertions / 41 deletions).
+
+**Lessons:**
+
+- **Plan pre-flight grep for call sites must include internal sibling-method callers, not just the target method's direct callers.** The plan enumerated the three internal call sites of PEAN.update / PHECN.update / PEAON.update inside PeerInfoHeaderNode.update's body (:633, :1816, :1817) and the `itemsUpdated` closure (:363), plus the two external call sites (:5399, :5805). It MISSED the `self.avatarListNode.update(..., peer:...)` call at PHN:1815 — a different target node's update method (`PeerInfoAvatarListNode.update(size:avatarSize:isExpanded:peer:...)`) that happens to live on the line immediately before `self.editingContentNode.avatarNode.update(peer: peer, ...)` at :1816. Pre-flight grep token `\.update\(.+peer:` over the four files would have caught it. Fix for future pre-flight grep: for each signature migration, grep ALL `update` methods called with the migrated param and verify each target's signature — not just the siblings being migrated.
+
+- **Wave-43 binding-rule continues to hold at scale.** All 13 `as? TelegramUser/Group/Channel` rewrites in this wave obeyed the bind-when-used / no-bind-when-unused rule (PHECN:86 and :91 used `case .legacyGroup = peer` / `case .channel = peer` no-bind form because the branch body only appends field keys; all 11 others bind because the branch uses the concrete value). Zero `-warnings-as-errors` unused-binding risks surfaced during review. **Rule confirmed as durable.**
+
+- **EnginePeer forwarding audit is worth a pre-flight pass for multi-property-accessing methods.** PHN's `update` method body accesses ~15 EnginePeer-forwarded properties (id, isFake, isScam, isPremium, isVerified, debugDisplayTitle, displayTitle, addressName, effectiveProfileColor, emojiStatus, verificationIconFileId, profileImageRepresentations, etc.) plus 2 concrete-class properties requiring enum bindings (`.phone` on TelegramUser; `.info` on TelegramChannel). Without a pre-flight forwarding audit against `submodules/TelegramCore/Sources/TelegramEngine/Peers/Peer.swift:485-560` (the EnginePeer property-forwarding extension), iteration surprises are likely. This wave's audit at plan time caught `isCopyProtectionEnabled` as the only non-forwarded property in PHN's body — matching the single bridge in PHN. **Rule: for multi-access methods, read the EnginePeer property-forwarding extension in full at plan time; enumerate every `peer.X` site and mark forwarded vs not.**
+
+- **Case-pattern-against-optional is idiomatic and compiles cleanly.** All rewrites use `if case let .user(user) = peer` (or sibling case forms) against `EnginePeer?` — Swift extracts through Optional implicitly. Precedent: `PeerInfoScreenSettingsActions.swift:200` `if case let .user(user) = self.data?.peer, let phoneNumber = user.phone`. Build did not complain at any rewrite site. **Conservative fallback `if let peer, case let .x(y) = peer` is NOT needed; drop from future plans' "fallback" sections.**
+
+- **Bundling net-zero external-call-site migrations with net-negative internal drops is fine for ratchet-focused waves.** The two PHN.update call sites in PeerInfoScreen.swift swap one bridge form for another (`?._asPeer()` → `.flatMap(EnginePeer.init)`) — literally net-zero on wrap count. The wave accepted this because (a) the internal drops (~15) dominate, (b) migrating `savedMessagesPeer` field to remove the external wrap would expand scope to a different file's public struct field, and (c) the wave-goal was "ratchet wave-43 ADDs", which is accomplished purely via internal drops. **Heuristic: if external call sites are net-zero and the internal scope is net-negative, bundle them; don't let the external net-zero block the ratchet.**
+
+**Plan:** `docs/superpowers/plans/2026-04-24-peerinfoheader-update-bundle-engine-peer.md`.
+
+---
+
+## Wave 46 outcome (2026-04-25)
+
+Migrated the PeerInfoScreen-local avatar chain: `PeerInfoAvatarListNode.update(peer:)` together with `PeerInfoAvatarTransformContainerNode.update(peer:)` / `.updateStoryView(peer:)` and the private `Params.peer` stored field — raw `Peer?` → `EnginePeer?` across 4 files. Ratchet wave: drops the wave-45 ADD at `PeerInfoHeaderNode.swift:1815` plus a pre-existing external bridge at `PeerInfoScreen.swift:2574`, collapses one internal wave-45 wrap inside PIATCN's `setPeer` body, and adds 2 `_asPeer()` bridges for Peer-only surfaces (`PeerReference.init` and `.isCopyProtectionEnabled`). Net: −1 bridge. The PeerInfoScreen-local `PeerInfoAvatarListNode` class shadows a same-named submodule class — the wave targets the local (PeerInfoScreen/Sources) file only; the submodule is untouched. No new typealiases. No engine wrapper structs. No `import Postbox` change.
+
+**Classification:**
+- 4 signature changes: `peer: Peer?` → `peer: EnginePeer?` on `PeerInfoAvatarListNode.update(peer:)` and its `arguments` tuple, plus `PeerInfoAvatarTransformContainerNode.update(peer:)`, `.updateStoryView(peer:)`, and the private `Params.peer` stored field.
+- 2 DROPs at call sites (ratchet-value):
+  - `PeerInfoHeaderNode.swift:1815` — `peer: peer?._asPeer()` → `peer: peer` (the wave-45 ADD flagged for ratchet).
+  - `PeerInfoScreen.swift:2574` — `peer: peer?._asPeer()` → `peer: peer` (pre-existing external bridge; direct caller of `updateStoryView`).
+- 1 internal WRAP collapsed inside PIATCN's `setPeer(...)` body: `peer: EnginePeer(peer)` → `peer: peer` (type flowed once upstream migrated).
+- 2 ADDs inside PIATCN body for Peer-only surface:
+  - PIATCN ~:404 `PeerReference(peer._asPeer())` — `PeerReference.init` takes raw `Peer`, not `EnginePeer`.
+  - PIATCN ~:406 `peer._asPeer().isCopyProtectionEnabled` — property defined on the `Peer` protocol (`PeerUtils.swift:236`), not forwarded on EnginePeer (same finding as wave 45 for PEAN:166).
+- 2 `as? TelegramChannel` → `case let .channel(...) = peer` rewrites inside PIATCN (both `update` and `updateStoryView` bodies test `channel.isForumOrMonoForum`; the `let channel` binding is retained because the body uses the concrete value).
+
+Net consumer-surface: **−1 bridge** (2 drops + 1 wrap collapse − 2 adds). External API: no change.
+
+**Build outcome:** 1 iteration (first-pass-clean). Full-project Bazel build 29.587s; only PeerInfoScreen + TelegramUI recompiled.
+
+**Commit:** `5ca99da5a7` (4 files, 13 insertions / 13 deletions).
+
+**Lessons:**
+
+- **Shadowing-class-name pre-flight disambiguation.** `PeerInfoAvatarListNode` is defined in two places: `submodules/PeerInfoAvatarListNode/Sources/PeerInfoAvatarListNode.swift` (the submodule) AND `submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoAvatarListNode.swift` (the PeerInfoScreen-local class that shadows it). Wave 46's pre-flight nearly targeted the wrong file when the plan inspected the signature by class name alone. Mitigation for future waves: when the target method's signature has distinctive parameter names (here `avatarSize:isForum:threadId:threadInfo:`), grep against those distinctive tokens alongside the class name to disambiguate — and when the class name appears in multiple files, resolve the module path before writing the plan.
+
+- **Chain-audit extends via sibling internal methods (`updateStoryView` pattern).** The initial audit targeted only the `update(peer:)` chain. But `PeerInfoAvatarTransformContainerNode.update`'s tail calls `self.updateStoryView(peer:)` — which also takes raw `Peer?`. Expanding the wave to include `updateStoryView` was a single-file additional edit and additionally dropped the `PeerInfoScreen.swift:2574` external bridge (a direct caller of `updateStoryView`, not `update`). Pattern for future chain waves: grep the target implementation body for `self\.\w+\(.+peer:` to find internal sibling methods whose signature migration naturally bundles with the primary chain.
+
+- **First-pass-clean extends to chain migrations when both forwarding audit and scope audit are done at plan time.** Wave 46 is the 4th consecutive wave (42/43/44/45/46 — wave 44 needed 2 iterations) hitting 0-to-1-iteration convergence. The 1-iteration-clean pattern is reproducible when (a) the `_asPeer()` bridge sites are identified at plan time by cross-referencing the body against the EnginePeer property-forwarding extension AND `PeerReference`'s init overloads, and (b) enum-case conversions are pre-written in the plan with bindless-vs-binding form pre-classified. Both inputs were present in the wave 46 plan.
+
+- **Chain-bundling heuristic validated at 3 methods / 4 files.** Migrating a narrow call chain (`PeerInfoAvatarListNode.update` → `PIATCN.update` → `PIATCN.updateStoryView`) + all external call sites in a single commit is the right granularity: the internal `peer` variables flow transparently once each downstream signature migrates, and the external call-site greps (2 sites total) complete the ratchet. Net: clean atomic commit, no bridging churn remains at the boundary. For future chain waves, bundle the chain methods plus external callers in one commit; don't split by method.
+
+**Plan:** `docs/superpowers/plans/2026-04-25-peerinfo-avatar-chain-engine-peer.md`.
+
+---
+
+## Wave 47 outcome (2026-04-25)
+
+Migrated the stored `PeerInfoHeaderNode.peer` field from `Peer?` to `EnginePeer?`. Single-file wave; field is `private`, so no external API change. 4 edits / 1 file, all inside `submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoHeaderNode.swift`.
+
+**Edits:**
+- Line 92: `private var peer: Peer?` → `private var peer: EnginePeer?`
+- Line 363 (`itemsUpdated` closure): `peer: EnginePeer(peer)` → `peer: peer` (drops bridge; `peer` is captured from `strongSelf.peer`).
+- Line 521 (assignment in `update`): `self.peer = peer?._asPeer()` → `self.peer = peer`.
+- Line 2054 (ProfileLevelInfoScreen push closure): `peer: EnginePeer(peer),` → `peer: peer,`.
+
+PHN:426 (`peer.profileImageRepresentations.isEmpty`) compiles unchanged because `profileImageRepresentations` is forwarded by `EnginePeer` (`Peer.swift:485`).
+
+Net consumer-surface: **−3 internal bridges**.
+
+**Build outcome:** 2 iterations.
+- Iteration 1 failed at PHN:363 — pre-flight grep used `self\.peer\b` and missed the `strongSelf.peer` capture inside the `itemsUpdated` closure body. The memory file's wave-47 candidate notes had explicitly flagged PHN:363; the omission was in the executor's grep, not the plan's identification.
+- Iteration 2 clean. Full-project Bazel build 28.727s; only PeerInfoScreen + TelegramUI recompiled.
+
+**Commit:** `d7b7536440` (4 insertions / 4 deletions in PHN.swift; plan file added).
+
+**Lessons:**
+
+- **Pre-flight grep for stored-field migrations must include closure-capture aliases (`strongSelf`, `self_`, etc.), not just `self.<field>`.** Wave 47's first-iteration failure was 100% avoidable: the same field is referenced via `strongSelf.peer` inside an `itemsUpdated` closure, and the bare `self\.peer\b` grep missed it. For future stored-field migrations, the canonical grep pattern is `(self|strongSelf|[a-zA-Z_]*[Ss]elf)\.<field>\b`. The convention `strongSelf` appears throughout the PeerInfo codebase whenever closures use `[weak self]`.
+- **Memory-stored candidate notes can pre-list the bridge sites.** The memory file `project_postbox_refactor_next_wave.md` had explicitly named PHN:363 (`itemsUpdated` closure read), PHN:521 (stored assignment), and PHN:2054 (ProfileLevelInfoScreen push wrap) before the wave started. Reading those during plan-write would have caught the iteration-1 miss. Treat the wave-N+1 candidate notes in memory as a load-bearing input to the plan, not just narrative.
+- **Single-file `private` stored-field migrations are the cleanest possible wave shape.** No external API surface, no cross-module recompilation, blast radius bounded to the same file's other methods. When a wave reaches this shape, it is a near-zero-risk drop. Future stored-field-migration waves should be explicitly classified during planning as "single-file private" / "cross-file private" / "public-surface" to set the iteration budget.
+
+**Plan:** `docs/superpowers/plans/2026-04-25-phn-peer-stored-field-engine-peer.md`.
+
+---
+
+## Wave 48 outcome (2026-04-25)
+
+Migrated `PeerInfoScreenData.savedMessagesPeer: Peer? → EnginePeer?`. Cross-file struct-field migration contained within the PeerInfoScreen module; the field has no external consumer (`grep -rEn "(\w+\??)\.savedMessagesPeer\b"` matches only inside the PeerInfoScreen sources). 5 edits across 2 files.
+
+**Edits:**
+- `PeerInfoData.swift:388` — field decl `Peer?` → `EnginePeer?`.
+- `PeerInfoData.swift:444` — init param `Peer?` → `EnginePeer?`.
+- `PeerInfoData.swift:1622` — drop `?._asPeer()` bridge. The source local `let savedMessagesPeer: Signal<EnginePeer?, NoError>` (PID:1313) already produces `EnginePeer?`; the bridge was an artificial demotion.
+- `PeerInfoScreen.swift:5399` and `:5805` — drop `.flatMap(EnginePeer.init)` bridge in `headerNode.update(... peer: ...)` call. The `peer` parameter of `headerNode.update` has been `EnginePeer?` since wave 45, and the `??` coalescing operand `self.data?.peer` has been `EnginePeer?` since wave 42; once the field migrates, both ends of the expression are `EnginePeer?` and the `flatMap` bridge falls out.
+
+The other 4 init kwarg sites (PID:1029, :1102, :1869, :2207) all pass `nil` and require no change.
+
+**Build outcome:** 1 iteration (first-pass-clean). Full-project Bazel build 29.858s; only PeerInfoScreen + TelegramUI recompiled.
+
+**Commit:** `1e4c2eea33` (5 insertions / 5 deletions; plan file added).
+
+**Lessons:**
+
+- **Internal-storage demotion → external re-promotion** is a high-yield ratchet pattern. The field had a `?._asPeer()` demotion at the storage site, then `.flatMap(EnginePeer.init)` re-promotions at every read. Migrating the field type drops both ends in one wave — the underlying signal pipeline never needed the `Peer?` form at all. Pattern to look for in future PSD-class migrations: any field whose initialization expression names `_asPeer()` strongly indicates that the field's source data is already `EnginePeer?`. Grep candidate fields' init expressions for `_asPeer()` to surface these high-leverage migrations.
+
+- **Containment audit must distinguish field declarations on different types.** The grep `grep -rln "savedMessagesPeer"` returned 6 modules outside PeerInfoScreen. All matched references were independent declarations on unrelated types (TelegramEngineMessages, ChatListUI nodes, ChatControllerContentData). The narrower regex `(\w+\??)\.savedMessagesPeer\b` filtered to actual field-access patterns and confirmed no external consumer. For future struct-field migrations, prefer the access-pattern regex over plain text grep; common field names will hit unrelated declarations and inflate apparent blast radius.
+
+- **`replace_all=true` is correct for verbatim-duplicated call sites.** PIS:5399 and :5805 are byte-identical `headerNode.update(...)` calls with the same `peer:` argument. Single-Edit-with-replace_all replaced both atomically. No collisions because the `headerNode.update` argument list with `flatMap(EnginePeer.init)` is sufficiently long to be unique.
+
+- **Wave-shape G' (sibling-of-wave-42 ratchet) revalidated.** Wave 42 migrated `PeerInfoScreenData.peer: Peer? → EnginePeer?`. Wave 48 follows the same pattern on a sibling field. Future waves on `chatPeer`, `linkedDiscussionPeer`, `linkedMonoforumPeer` will not all be this clean: `chatPeer` has 5 `as? TelegramX` checks downstream + cross-method propagation into ClearPeerHistory; `linkedMonoforumPeer` has an `as? TelegramChannel` check at PIPI:1197. Field-by-field selection should consider downstream consumer shape, not just declaration site.
+
+**Plan:** `docs/superpowers/plans/2026-04-25-peerinfoscreendata-savedmessagespeer-engine-peer.md`.
+
+---
+
+## Wave 49 outcome (2026-04-25)
+
+Bundled migration: `PeerInfoScreenData.linkedDiscussionPeer` + `.linkedMonoforumPeer`, both `Peer? → EnginePeer?`. Cross-file struct-field migration over 2 files. Bundled because both fields share parallel local-source patterns (raw `peerView.peers[id]` dict lookup) and the same single consumer file (`PeerInfoProfileItems.swift`). The bundle is justified: the source-of-truth init blocks compute `discussionPeer` and `monoforumPeer` as a sibling pair at PID:1836–1843 and again at PID:2131–2138; migrating one without the other would leave a half-Peer-half-EnginePeer init block.
+
+**Edits:**
+
+`PeerInfoData.swift` (12 edits via `replace_all=true` on the parallel pair):
+- Lines 396–397 — field decls Peer? → EnginePeer?.
+- Lines 453–454 — init params Peer? → EnginePeer?.
+- Lines 1836+2131 — `var discussionPeer: EnginePeer?` (parallel pair).
+- Lines 1838+2133 — `discussionPeer = EnginePeer(peer)` (lift raw Peer at boundary).
+- Lines 1841+2136 — `var monoforumPeer: EnginePeer?` (parallel pair).
+- Lines 1843+2138 — `monoforumPeer = peerView.peers[linkedMonoforumId].flatMap(EnginePeer.init)` (lift Peer? at boundary).
+
+`PeerInfoProfileItems.swift` (3 edits):
+- :1102 — `EnginePeer(peer).displayTitle(...)` → `peer.displayTitle(...)`.
+- :1197 — `if let monoforumPeer = data.linkedMonoforumPeer as? TelegramChannel` → `if case let .channel(monoforumPeer) = data.linkedMonoforumPeer`. The `case .channel` payload is `TelegramChannel`, so the downstream `monoforumPeer.sendPaidMessageStars` access at :1198 continues to compile.
+- :1409 — `EnginePeer(linkedDiscussionPeer).displayTitle(...)` → `linkedDiscussionPeer.displayTitle(...)`.
+
+**Net bridge accounting:**
+- ADDs (4): boundary lifts at PID:1838, :1843, :2133, :2138. These lift the Postbox-typed `peerView.peers[...]` dict-lookup result to the engine type at the data-flow boundary — the canonical Postbox→Engine position. Mirrors wave 42's `peer.flatMap(EnginePeer.init)` lift at PID:1620.
+- DROPs (2): displayTitle `EnginePeer(...)` wraps at PIPI:1102 and :1409.
+- Plus 1 idiom cleanup (PIPI:1197 — `as?` cast → enum-case pattern); no text saving but better Swift idiom.
+
+The +4/−2 net text-bridge count is acceptable here because the ADDs are not "internal bridges" — they're the canonical Postbox→Engine boundary that any well-typed engine field requires. Wave-tracking should distinguish "boundary lifts" (correct, permanent) from "internal bridges" (incorrect, ratchet target).
+
+**Build outcome:** 1 iteration (first-pass-clean). Full-project Bazel build 29.479s; only PeerInfoScreen + TelegramUI recompiled. Pre-flight EnginePeer-property forwarding audit (`addressName` at Peer.swift:461; `displayTitle` is an EnginePeer instance method; `case .channel` binds `TelegramChannel`; `TelegramChannel.sendPaidMessageStars` exists at SyncCore_TelegramChannel.swift:215) all verified at plan time and proved correct.
+
+**Commit:** `79698e4513` (15 edits across 2 files; plan added).
+
+**Lessons:**
+
+- **Bundle waves around source-of-truth coherence, not just consumer overlap.** Wave 49's bundling was justified primarily by the *source* side: both fields are computed in the same init block as a sibling pair (PID:1836–1843, :2131–2138). Migrating only one would leave the init block in a half-typed state and force an artificial bridge. Future bundling decisions should weight this "shared source-of-truth init" factor at least as heavily as "shared consumer file."
+
+- **Boundary-lift bridges are not "internal bridges" — wave-tracking should distinguish.** Wave-49's +4 ADDs are at the Postbox↔Engine boundary (raw `peerView.peers[...]` Postbox-typed dict → engine-typed field). They are the *correct* place for the lift; they will not ratchet away in a future wave. Internal bridges (e.g. PID:1622's `_asPeer()` in wave 48, or `EnginePeer(...)` wraps at consumer-side display calls) are the actual ratchet targets. Future wave outcome reports should categorize ADDs as "boundary lift" vs "internal bridge" to avoid confusion in net-bridge accounting.
+
+- **Parallel-pair `replace_all=true` works for multi-line blocks when the parallel pair is byte-identical.** PID:1836–1843 and PID:2131–2138 are byte-identical 9-line blocks. One Edit-with-replace_all applied the type+wrap rewrite to both. Pre-flight verification: `diff <(sed -n '1836,1843p' file) <(sed -n '2131,2138p' file)` returned empty before the edit. Pattern generalizes to any "compute the same locals in two adjacent init paths" code structure (a common shape in PeerInfoData.swift's signal pipelines).
+
+- **Whitespace nuance with `replace_all` multi-line edits.** The blank separator between the two `var X: Peer?` blocks had trailing spaces (Swift code with whitespace-trimming editor settings). The new_string used a clean blank line; the resulting file has a plain `\n` separator instead of `                \n`. Cosmetic only — no compile impact — but worth noting for future plans: when the indentation-sensitive pre-text uses trailing whitespace, mirror it exactly in the new_string to avoid inadvertent normalization.
+
+- **`case .channel` pattern at field-binding compiles cleanly against `EnginePeer?` (re-confirmed wave 45 lesson).** No `if let ... case let .channel = ...` two-step needed; single-step `if case let .channel(monoforumPeer) = data.linkedMonoforumPeer` works directly.
+
+**Plan:** `docs/superpowers/plans/2026-04-25-peerinfoscreendata-linked-peers-engine-peer.md`.
+
+---
+
+## Wave 50 outcome (2026-04-25)
+
+`enclosingPeer: Peer? → EnginePeer?` migration across the PeerInfo members chain. 19 edits across 3 files (`PeerInfoScreenMemberItem.swift`, `PeerInfoMembersPane.swift`, `PeerInfoProfileItems.swift`). Cross-file private struct-field migration with stored-form ratchet (wave-47 taxonomy: "cross-file private"). Closes the wave-48-pattern internal-demotion-and-external-re-promotion ratchet at PIMP:354–363, where `engine.data.subscribe(...)` produced an `EnginePeer?` that was demoted to `Peer?` for storage and then re-promoted at every consumer.
+
+**Edits:**
+
+`PeerInfoScreenMemberItem.swift` (7 edits):
+- :23 — stored field `let enclosingPeer: Peer? → EnginePeer?`.
+- :34 — init param `Peer? → EnginePeer?`.
+- :152, :154 — `as? TelegramChannel` / `as? TelegramGroup` → `case let .channel(channel)` / `case let .legacyGroup(group)`.
+- :178 — `peer: item.enclosingPeer.flatMap(EnginePeer.init)` → `peer: item.enclosingPeer` (auto-promotes to `EnginePeer?`).
+- :181, :187 — `is TelegramChannel` → `case .channel = ...` (wave-41 always-false-warning fix).
+
+`PeerInfoMembersPane.swift` (11 edits):
+- :92, :271, :442 — three func sigs `enclosingPeer: Peer → EnginePeer`.
+- :113, :115 — `as? TelegramChannel` / `as? TelegramGroup` → `case let .channel(channel)` / `case let .legacyGroup(group)`.
+- :139 — `peer: EnginePeer(enclosingPeer)` → `peer: enclosingPeer` (drop wrap, auto-promotes).
+- :142, :148 — `is TelegramChannel` → `case .channel = ...`.
+- :293 — stored field `private var enclosingPeer: Peer? → EnginePeer?`.
+- :361 — `strongSelf.enclosingPeer = enclosingPeer._asPeer()` → `strongSelf.enclosingPeer = enclosingPeer`.
+- :363 — `strongSelf.updateState(enclosingPeer: enclosingPeer._asPeer(), ...)` → `..., enclosingPeer: enclosingPeer, ...`.
+
+`PeerInfoProfileItems.swift` (1 edit):
+- :852 — `enclosingPeer: peer._asPeer()` → `enclosingPeer: peer` (boundary lift; `peer` is already `EnginePeer` from the closure scope's `data.peer` post-wave-42).
+
+**Net bridge accounting:**
+- DROPs (5): 2× `_asPeer()` demotion (PIMP:361, :363), 1× `EnginePeer(...)` wrap (PIMP:139), 1× `flatMap(EnginePeer.init)` (PSMI:178), 1× boundary `_asPeer()` lift (PSPB:852).
+- ADDs (0): no new bridges. Pattern conversions (`as?` → `case let`, `is` → `case`) are not bridges; they're idiom shifts mandated by the EnginePeer enum representation.
+- Pass-through call sites at PIMP:275, :276, :437, :438, :451, :485 needed no edits — types flow transparently through stored field, local var, and func params after the signature changes.
+
+**Build outcome:** 1 iteration (first-pass-clean). Full-project Bazel build 29.290s; only PeerInfoScreen + TelegramUI recompiled. Continues the wave 42/45/46/48/49 first-pass-clean streak (6 of last 8 waves first-pass-clean; wave 44 was 2 iterations, wave 47 was 2 iterations).
+
+**Commit:** `a1b77bcf74` (19 edits across 3 files).
+
+**Lessons:**
+
+- **The wave-48 internal-demotion ratchet pattern is reliably first-pass-clean.** When the source signal already produces the engine type and is being demoted at storage, migrating the storage to the engine type is a 1-iteration target if the consumer's only Peer-only access is through `as? TelegramX` / `is TelegramX` (mechanical conversions to `case let`/`case`). Wave 50 reproduces the wave-48 pattern verbatim and lands the same first-pass-clean outcome.
+
+- **Pre-flight EnginePeer-property forwarding audit confirmed unnecessary for `case let`-bound concrete types.** The `case let .channel(channel)` / `case let .legacyGroup(group)` patterns bind a `TelegramChannel` / `TelegramGroup` directly — methods like `.hasPermission(.editRank)` and `.hasBannedPermission(.banEditRank)` are class methods on the concrete type and call cleanly without `_asPeer()`. The forwarding audit in earlier waves was load-bearing for properties accessed *off the bare EnginePeer* (e.g., `peer.displayTitle` requiring an EnginePeer method); when accessed off a case-bound concrete type, no audit is needed.
+
+- **Bundling rationale: PSMI + PIMP + PSPB:852 share the same data-flow contour.** `PeerInfoProfileItems.swift:852` is the only producer of `PeerInfoScreenMemberItem` in the migration's scope (PSI:132 also produces but with `enclosingPeer: nil`, no edit needed). PIMP and PSMI form a tight pane–node pair. The 1-edit PSPB inclusion was non-controversial because the PSPB:852 site is the canonical Postbox→Engine boundary above the migrated chain. Boundary-lift inclusion for a 1-edit site is correct.
+
+- **Bundled implementer dispatch with a single subagent is the right shape for a 19-edit / 3-file mechanical wave.** Per-task subagent dispatch (1 task per file) would have triggered three implementer roundtrips and three review rounds for what is essentially one cohesive editing unit that doesn't pass build at any per-file checkpoint. The subagent-driven-development skill's "fresh subagent per task" convention adapts to "fresh subagent per cohesive editing unit" when individual tasks are not independently verifiable.
+
+**Plan:** `docs/superpowers/plans/2026-04-25-peerinfo-enclosingpeer-engine-peer.md`.
+
+---
+
+## Wave 51 outcome (2026-04-25)
+
+`GroupsInCommonListEntry.peer: Peer → EnginePeer` migration in `PeerInfoGroupsInCommonPaneNode.swift` (single-file private struct-field). 7 edits, 1 file, **first-pass-clean**. Wave-shape: narrow internal struct-field migration with deliberate boundary scoping — public init's `openPeerContextAction: (Bool, Peer, …)` field left unmigrated to avoid cascading into `PeerInfoPaneContainerNode` (parent), `PeerInfoRecommendedPeersPaneNode` (sibling pane sharing the closure type), and upstream callers in `PeerInfoScreen.swift`. Saved for a coordinated wave once a wider closure-type sweep is justified.
+
+**Edits:**
+
+`PeerInfoGroupsInCommonPaneNode.swift` (7 edits):
+- :28 — stored field `var peer: Peer → var peer: EnginePeer`.
+- :35 — `lhs.peer.isEqual(rhs.peer)` → `lhs.peer == rhs.peer` (EnginePeer is `Equatable`; was Peer-protocol method).
+- :42 — `item()` closure params `(Peer) -> Void` → `(EnginePeer) -> Void` and `(Peer, ASDisplayNode, ContextGesture?) -> Void` → `(EnginePeer, ASDisplayNode, ContextGesture?) -> Void`.
+- :44 — `peer: EnginePeer(self.peer)` → `peer: self.peer` (drop wrap; `ItemListPeerItem.peer:` already takes `EnginePeer`).
+- :54 — `preparedTransition()` closure params, same migration as :42.
+- :232 — `GroupsInCommonListEntry(... peer: peer)` → `peer: EnginePeer(peer)` (boundary lift; `peer.peer` source is `RenderedPeer.peer: Peer?`).
+- :236 — `self?.chatControllerInteraction.openPeer(EnginePeer(peer), …)` → `self?.chatControllerInteraction.openPeer(peer, …)` (drop wrap; `peer` is now `EnginePeer` from migrated closure param).
+- :238 — `self?.openPeerContextAction(false, peer, node, gesture)` → `self?.openPeerContextAction(false, peer._asPeer(), node, gesture)` (internal bridge to still-Peer-typed stored field at PIGCP:68/109).
+
+**Net bridge accounting:**
+- DROPs (2): 1× `EnginePeer(...)` wrap (PIGCP:44 → ItemListPeerItem), 1× `EnginePeer(...)` wrap (PIGCP:236 → chatControllerInteraction.openPeer).
+- ADDs (2): 1× boundary lift `EnginePeer(peer)` (PIGCP:232; `RenderedPeer.peer: Peer?` → struct field; correct/permanent), 1× internal `_asPeer()` bridge (PIGCP:238) to the still-`Peer`-typed stored `openPeerContextAction` field.
+- Net internal bridges: **−1**. Boundary lifts: **+1**.
+
+**Build outcome:** 1 iteration (first-pass-clean). Full-project Bazel build 29.454s; PeerInfoScreen + TelegramUI recompiled. Continues the first-pass-clean streak (waves 42, 45, 46, 48, 49, 50, 51 — 7 of last 9 waves first-pass-clean; waves 44 and 47 each took 2 iterations).
+
+**Commit:** `f2b67a1b54` (7 edits in 1 file).
+
+**Lessons:**
+
+- **Narrow-wave shape works for struct-field migrations even when the field flows into closure params.** The internal closures (`item()`, `preparedTransition()`) can be migrated independently from the public init's stored closure field, by sandwiching the still-Postbox-typed boundary at the closure that captures the stored field. This adds one `_asPeer()` bridge at the boundary but keeps the wave atomic and first-pass-clean.
+- **Boundary-lift accounting clarifies wave value.** Net internal-bridge count (−1) is the correct progress metric; boundary lifts (+1) at `RenderedPeer.peer` are permanent until `RenderedPeer → EngineRenderedPeer` lands. The wave is a real ratchet step even with net-zero raw bridge count.
+- **Memory-stored field name was wrong (memory said `PeerEntry`, actual was `GroupsInCommonListEntry`).** Verify struct identifiers at plan time. Doesn't affect the wave but should keep memory accurate for future planning.
+
+---
+
+## Wave 52 outcome (2026-04-25)
+
+`PeerInfoPaneContainerNode.openPeerContextAction` closure parameter `Peer → EnginePeer` cascade across `PeerInfoPaneContainerNode` (PIPC), `PeerInfoGroupsInCommonPaneNode` (PIGCP), `PeerInfoRecommendedPeersPaneNode` (PIRP), and `PeerInfoScreen.swift` (PIS) — closes the wave-51 PIGCP:238 `_asPeer()` bridge and unifies the closure type across both sibling panes. 4 files, 8 type-site edits + 5 drops, **first-pass-clean**.
+
+**Edits:**
+
+- `PeerInfoPaneContainerNode.swift` (2): :411 init param closure type, :640 stored field closure type — both `(Bool, Peer, …) → (Bool, EnginePeer, …)`.
+- `PeerInfoGroupsInCommonPaneNode.swift` (3): :68 stored field, :109 init param, :238 dropped `peer._asPeer()` (the wave-51 bridge — closed in this wave).
+- `PeerInfoRecommendedPeersPaneNode.swift` (5): :68 inner item closure, :88 dropped `peer._asPeer()`, :94 `preparedTransition` closure, :119 stored field, :155 init param.
+- `PeerInfoScreen.swift` (3): :1331 dropped `EnginePeer(peer)` wrap (`chatInterfaceInteraction.openPeer`), :1340 dropped `EnginePeer(peer)` wrap (`joinChannel(peer:)`), :1348 dropped `EnginePeer(peer)` wrap (second `chatInterfaceInteraction.openPeer`).
+
+**Net bridge accounting:**
+- DROPs (5): 2× internal `_asPeer()` (PIGCP:238 + PIRP:88), 3× `EnginePeer(peer)` wrap (PIS:1331 / :1340 / :1348).
+- ADDs (0). The four forwarding closures (PIPC:1044–1045, PIRP:273–274 / :303–304, PIS:1319) all use parameter type inference, so the closure-type cascade ripples through automatically without explicit edits at those sites.
+- Net internal bridges: **−5**. No boundary lifts (the migration unifies closure types end-to-end inside the module; receiving APIs already accepted `EnginePeer`).
+
+**Build outcome:** 1 iteration (first-pass-clean). Full-project Bazel build 29.52s. Streak continues — 8 of last 10 waves first-pass-clean (42, 45, 46, 48, 49, 50, 51, 52; waves 44 and 47 each took 2 iterations).
+
+**Commit:** `c86aa1aba3` (4 files, 13 insertions, 13 deletions).
+
+**Lessons:**
+
+- **Closure-type cascade as a wave-shape variant of struct-field migration.** When the migrating type is a closure parameter (not a struct field), Swift's parameter-type inference at every forwarding-closure site does the cascade automatically — no explicit edits needed at type-inferred sites. Wave 52 had 5 inferred-cascade sites (PIPC:1044, PIRP:273/303, PIS:1319) and only 8 explicit type-site edits (init params + stored fields). Compare to wave 50 (struct-field cascade with 19 explicit edits).
+- **Pre-flight receiving-API verification is load-bearing for closure-type migrations.** Wave 52's plan verified `chatControllerInteraction.openPeer: (EnginePeer, …)` and `joinChannel(peer: EnginePeer)` BEFORE writing the wave, ensuring the 3 PIS body wraps would drop without compensating ADDs. If either API still took raw `Peer`, the migration would have re-introduced wraps inside the closure body, defeating the wave's purpose.
+- **The wave-51 deferral was the correct call.** Wave 51 explicitly noted `openPeerContextAction: (Bool, Peer, …)` would NOT migrate within that wave's scope. Wave 52 closed it cleanly with a 4-file unit. This validates the wave-47 lesson: "memory-stored wave-N+1 candidate notes are load-bearing plan input." The deferral pre-classified the candidate, and wave 52 picked it up directly.
+- **Bundled implementer dispatch with Haiku confirmed for closure-type cascades.** Wave 50 established Haiku-sufficiency for mechanical wave-shape edits (19 edits). Wave 52 reproduces with 13 edits — implementer applied all edits byte-perfectly first attempt, all greps passed, build first-pass-clean. Total cost ~56k implementer tokens.
+
+---
+
+## Wave 53 outcome (2026-04-25)
+
+`PeerInfoScreenData.chatPeer: Peer? → EnginePeer?` field migration with deliberately narrow scope (defers `ClearPeerHistory.init.chatPeer: Peer` and `openClearHistory.chatPeer: Peer` to a future wave). 3 files / 14 insertions / 14 deletions / **first-pass-clean** Bazel ~29.5s.
+
+**Edits:**
+
+`PeerInfoData.swift` (PSD, 6 edits):
+- :387 — field decl `let chatPeer: Peer? → let chatPeer: EnginePeer?`.
+- :443 — init param `chatPeer: Peer? → chatPeer: EnginePeer?`.
+- :1028, :1621, :1868, :2206 — boundary lifts at PSD-internal init call sites: `chatPeer: peer → chatPeer: peer.flatMap(EnginePeer.init)` (1028), `chatPeer: peerView.peers[peerId/groupId] → chatPeer: peerView.peers[...].flatMap(EnginePeer.init)` (1621/1868/2206). Each matches the sibling `peer:` line on the same construction.
+
+`PeerInfoScreenOpenChat.swift` (PISOC, 2 edits):
+- :25 — `chatLocation: .peer(EnginePeer(peer)) → chatLocation: .peer(peer)` (drop wrap).
+- :89 — same pattern (drop wrap).
+
+`PeerInfoScreenPerformButtonAction.swift` (PISPBA, 6 edits):
+- :428 — `if let secretChat = chatPeer as? TelegramSecretChat → if case let .secretChat(secretChat) = chatPeer`.
+- :431 — `} else if let group = chatPeer as? TelegramGroup → } else if case let .legacyGroup(group) = chatPeer`.
+- :435 — `} else if let user = chatPeer as? TelegramUser → } else if case let .user(user) = chatPeer`.
+- :439 — `} else if let channel = chatPeer as? TelegramChannel → } else if case let .channel(channel) = chatPeer`.
+- :463 — `if let channel = chatPeer as? TelegramChannel → if case let .channel(channel) = chatPeer` (separate `if`, not in the else-if chain).
+- :851 — `chatPeer: chatPeer → chatPeer: chatPeer._asPeer()` (1× ADD `_asPeer()` boundary bridge for unmigrated `ClearPeerHistory.init.chatPeer: Peer`).
+
+**Net bridge accounting:**
+- DROPs (2): `EnginePeer(peer)` wrap at PISOC:25 + PISOC:89.
+- ADDs (1): `_asPeer()` at PISPBA:851 (boundary with unmigrated `ClearPeerHistory.init`).
+- Boundary lifts (4): PSD:1028, :1621, :1868, :2206 — `Peer? → EnginePeer?` at the data-flow boundary into the migrated struct field. Permanent until upstream `RenderedPeer.peer / peerView.peers` migrate.
+- Net internal bridges: **−1**.
+
+**Build outcome:** 1 iteration (first-pass-clean). Full-project Bazel ~29.5s. Streak: 9 of last 11 waves first-pass-clean (42, 45, 46, 48, 49, 50, 51, 52, 53; waves 44 and 47 each took 2 iterations).
+
+**Commit:** `438b4d7f46` (3 files, 14/14 line changes).
+
+**Lessons:**
+
+- **Narrow-scope is the right wave shape when bundling produces net-negative accounting.** Bundling wave 53 with `ClearPeerHistory.init` + `openClearHistory` migrations would have dropped 4 `EnginePeer(chatPeer)` wraps in `openClearHistory` body BUT added 4–6 `EnginePeer(...)` boundary lifts at PISPBA call sites (where `channel`/`group`/`user` Peer locals get passed). Pre-flight call-site classification turned this from "tempting bundle" into "net-negative bundle" — the deferral is correct.
+- **`as? Telegram*` cluster conversion is mechanically safe even with `else if` chains.** 5 conversions in the same `.more` case body, all sharing the `chatPeer` scrutinee. Each `case let .x(y) = chatPeer` has the same scope semantics as the original `let y = chatPeer as? X` — `y` shadows nothing in the surrounding scope, control flow is preserved, and `else if` chains over EnginePeer's 4-case enum are equivalent to the original sequential `as?` casts.
+- **Boundary-lift uniformity check.** Each `chatPeer:` PSD construction site already had a sibling `peer:` line one above with `peer.flatMap(EnginePeer.init)` or `peerView.peers[...].flatMap(EnginePeer.init)`. The wave-53 edits are byte-identical to the sibling pattern. Pre-flight verification ("does the sibling line use the same construction?") is the simplest signal that boundary lifts are idiomatic for the surrounding code.
+- **Memory's "30+ sites / multi-iter" overcount.** Memory's wave-53 estimate captured the BUNDLED scope; narrow scope reduces to 14 sites / 1-iteration. Future memory updates should distinguish "bundled candidate site count" from "narrow candidate site count" so wave-N+1 budgets aren't anchored too high.
+
+---
+
+## Wave 54 outcome (2026-04-25)
+
+`ClearPeerHistory.init.chatPeer` + `openClearHistory.chatPeer` `Peer → EnginePeer` bundled method-signature migration. Closes wave-53's deferred sibling. 2 files / 16 insertions / 16 deletions / **first-pass-clean** Bazel 31.484s. Commit `e3da090a7f`.
+
+**Edits:**
+
+`PeerInfoScreen.swift` (PIS, 10 edits):
+- :3213 — `openClearHistory(... chatPeer: Peer) → ... chatPeer: EnginePeer)`.
+- :3230, :3232, :3251, :3269 — drop 4 internal display-call wraps `EnginePeer(chatPeer).compactDisplayTitle → chatPeer.compactDisplayTitle` (the hot-path ratchet target).
+- :7416 — `ClearPeerHistory.init(... chatPeer: Peer, cachedData:) → ... chatPeer: EnginePeer, cachedData:`.
+- :7421 — `} else if chatPeer is TelegramSecretChat { → } else if case .secretChat = chatPeer {` (no-bind pattern; case body uses no fields from the secretChat).
+- :7425 — `} else if let group = chatPeer as? TelegramGroup { → } else if case let .legacyGroup(group) = chatPeer {`.
+- :7436 — `} else if let channel = chatPeer as? TelegramChannel { → } else if case let .channel(channel) = chatPeer {`.
+- :7464 — `if let user = chatPeer as? TelegramUser, user.botInfo != nil { → if case let .user(user) = chatPeer, user.botInfo != nil {`.
+
+`PeerInfoScreenPerformButtonAction.swift` (PISPBA, 6 edits):
+- :851 — DROP wave-53 ADD: `chatPeer: chatPeer._asPeer() → chatPeer: chatPeer`.
+- :857 — boundary lift: `chatPeer: user → chatPeer: EnginePeer(user)` (TelegramUser local from `case let .user(user)` upstream).
+- :1067, :1073 — `chatPeer: channel → chatPeer: EnginePeer(channel)` (TelegramChannel locals).
+- :1234, :1240 — `chatPeer: group → chatPeer: EnginePeer(group)` (TelegramGroup locals).
+
+**Net bridge accounting:**
+- DROPs (5): 4 internal `EnginePeer(chatPeer).compactDisplayTitle` wraps in PIS:openClearHistory body + 1 `_asPeer()` bridge at PISPBA:851 (the wave-53 ADD).
+- ADDs (5): 5 boundary `EnginePeer(...)` lifts at PISPBA call sites.
+- Conversions (4): `is`/`as?` → `case let` on PIS:7421/7425/7436/7464.
+- Type-site (2): signature changes on PIS:3213 and PIS:7416.
+- Net internal bridges: **0 raw count** — but the **ratchet kills 4 internal display-call wraps in the hot path** (PIS:3230/3232/3251/3269); only call-site boundary lifts remain, and those are permanent until upstream PISPBA sites get further migrated (e.g., to flow EnginePeer locals end-to-end).
+
+**Build outcome:** 1 iteration (first-pass-clean). Full-project Bazel 31.484s. Streak: 10 of last 12 waves first-pass-clean (42, 45, 46, 48, 49, 50, 51, 52, 53, 54; waves 44 and 47 each took 2 iterations).
+
+**Lessons:**
+
+- **Bundled deferral closure cleanly inverts the wave-53 narrow-scope decision.** Wave 53 deferred this bundle because the call-site classification at that time was "5 boundary lifts vs. 4 wrap drops = net-negative" — but the analysis missed that closing wave-53's 1 ADD is also a drop. The actual full accounting at wave-54 time: 5 drops (4 wraps + wave-53 ADD) vs. 5 lifts (1 user + 2 channel + 2 group) = 0 raw count, with ratchet benefit of 4 hot-path wraps killed. Wave-by-wave deferral followed by closure is the right shape when the bundle's first half is independently valuable (wave 53 dropped 2 PISOC wraps and migrated the field type on its own merit).
+- **`case .secretChat = chatPeer` (no-bind pattern) compiles cleanly under `-warnings-as-errors`.** No "unused binding" warning because there is no binding. The original `chatPeer is TelegramSecretChat` form is structurally similar — both are predicate checks with no name to discard.
+- **`peer:` parameter unused in body is fine for `-warnings-as-errors`.** `openClearHistory(... peer: Peer, ...)` body never references `peer`; this passed wave 53 and continues to pass wave 54. Function-parameter unused warnings are not enabled in this codebase's compile flags. Confirms a wave-53 implicit assumption.
+- **Bundled signature migration with mechanical `as?` cluster + small call-site count = 1-iteration target.** 2 files, 16 edits, 4 case-let conversions, 5 boundary lifts, 1 wave-53-ADD drop, 4 hot-path wrap drops. Full-project Bazel completed in one shot.
+
+---
+
+## Wave 55 outcome (2026-04-25)
+
+`PeerInfoScreenViewControllerNode.deletePeerChat(peer:)` private-method first-arg `Peer → EnginePeer`. 1 file / 4 edits / **first-pass-clean** Bazel 29.284s. Commit `4818a0f090`.
+
+**Edits:** all in `PeerInfoScreen.swift`:
+- :4502 — drop `_asPeer()` at `openDeletePeer` ActionSheet button: `self?.deletePeerChat(peer: peer._asPeer(), globally: true) → self?.deletePeerChat(peer: peer, globally: true)`.
+- :4556 — same drop at `openLeavePeer` TextAlertAction.
+- :4564 — definition signature `peer: Peer → peer: EnginePeer`.
+- :4573 — drop internal wrap inside body: `EngineRenderedPeer(peer: EnginePeer(peer)) → EngineRenderedPeer(peer: peer)` passed to `chatListController.maybeAskForPeerChatRemoval`.
+
+**Net:** 3 drops, 0 adds. Both call sites' `peer` is `EnginePeer` (sourced from `engine.data.get(...Item.Peer.Peer(id:))` returning `Signal<EnginePeer?, NoError>`). Hot-path bridges eliminated end-to-end from delete/leave entry points down to `maybeAskForPeerChatRemoval`. Streak: 11 of last 13 first-pass-clean.
+
+**Lessons:**
+
+- **Single-file private-method migration with both call sites already EnginePeer = pure-drop wave shape.** The `_asPeer()` bridge at the call site exists *because* the receiving method was Peer-typed; once both endpoints are migrated, the bridge becomes deletable in the same wave. Pre-flight grep for `<method>(.*\._asPeer\(\))` patterns surfaces this shape immediately.
+
+---
+
+## Wave 56 outcome (2026-04-25)
+
+`PeerInfoInteraction.openPeerInfo` closure-type and `PeerInfoScreenViewControllerNode.openPeerInfo` private-method first-arg `Peer → EnginePeer` cascade. 3 files / 7 edits / **first-pass-clean** Bazel 29.074s. Commit `31433fc1d4`.
+
+**Edits:**
+
+`PeerInfoInteraction.swift` (PII, 2 edits):
+- :45 — `let openPeerInfo: (Peer, Bool) -> Void → (EnginePeer, Bool) -> Void`.
+- :123 — same closure type in init param.
+
+`PeerInfoScreen.swift` (PIS, 2 edits):
+- :4304 — `private func openPeerInfo(peer: Peer, ...) → ... peer: EnginePeer`.
+- :4306 — drop internal `EnginePeer(peer)` wrap (passed to `makePeerInfoController` which already takes EnginePeer post-wave-39).
+- :1482 — boundary lift: `strongSelf.openPeerInfo(peer: member.peer, ...) → ... peer: EnginePeer(member.peer)` (`PeerInfoMember.peer` is still `Peer`, depends on RenderedPeer foundational migration).
+
+`PeerInfoProfileItems.swift` (PIPI, 2 edits):
+- :524 — drop `_asPeer()` bridge: `interaction.openPeerInfo(managedByBot._asPeer(), false) → interaction.openPeerInfo(managedByBot, false)` (`managedByBot` is EnginePeer? from PSD field).
+- :860 — boundary lift: `interaction.openPeerInfo(member.peer, true) → interaction.openPeerInfo(EnginePeer(member.peer), true)`.
+
+**Net:** 2 drops (PIS:4306 wrap + PIPI:524 _asPeer bridge), 2 boundary lifts (PIS:1482 + PIPI:860 at PeerInfoMember.peer source sites). Net raw count = 0 but 1 hot-path bridge eliminated. The 2 boundary lifts will close when `PeerInfoMember.peer` migrates (depends on RenderedPeer foundational session). Streak: 12 of last 14.
+
+**Lessons:**
+
+- **PIS:520-521 lambda forwarding `peer, isMember in self?.openPeerInfo(...)` needs no edit when the closure-field type migrates.** Swift parameter-type inference cascades from the migrated closure-field type to the lambda's parameter, and the lambda body forwards an EnginePeer to the migrated method. This is the same lesson as wave 52's PIPC.openPeerContextAction cascade — when the lambda's only role is to forward the parameter, the type re-bind is invisible at the lambda site.
+- **Net-zero migrations are still worth doing when they consolidate a hot path.** Even though wave 56 has 2 drops and 2 adds, the 2 adds are at sources that will likely migrate later (PeerInfoMember.peer foundational), and the 2 drops include a hot-path `_asPeer()` ratchet at PIPI:524. The migration also makes the chain (`interaction.openPeerInfo → self.openPeerInfo → makePeerInfoController`) cleanly EnginePeer end-to-end, so future migrations can reason about it without bridge-hopping.
+
+---
+
+## Wave 57 outcome (2026-04-25)
+
+Add `EnginePeer.isCopyProtectionEnabled` forwarding property in TelegramCore + drop 4 consumer-side `_asPeer().isCopyProtectionEnabled` bridges. 5 files / 5 edits / **first-pass-clean** Bazel 237.868s (cascade compile from TelegramCore touch). Commit `a5fc9fcf0e`.
+
+**Edits:**
+
+`TelegramCore/Sources/TelegramEngine/Peers/Peer.swift` (1 edit, 1 addition):
+- Appended `var isCopyProtectionEnabled: Bool { return self._asPeer().isCopyProtectionEnabled }` to the existing `public extension EnginePeer { ... }` block (sibling to isDeleted, isScam, isVerified, isPremium).
+
+Consumer drops (4 edits across 4 files):
+- `PeerInfoEditingAvatarNode.swift:166` — `peer._asPeer().isCopyProtectionEnabled → peer.isCopyProtectionEnabled` (NativeVideoContent.captureProtected).
+- `PeerInfoAvatarTransformContainerNode.swift:406` — same.
+- `PeerInfoData.swift:2259` — `peerInfoIsCopyProtected(data:)` body.
+- `PeerAvatarGalleryUI/Sources/AvatarGalleryItemFooterContentNode.swift:128` — `canShare = !peer.isCopyProtectionEnabled` (peer from `case let .image(_, _, _, _, peer, _, _, _, _, _, _, _) = entry`, which is `EnginePeer?`).
+
+**Net:** 4 internal `_asPeer()` bridge drops; 0 adds. Other `_asPeer()` calls at adjacent lines (e.g., `PeerReference(peer._asPeer())` at PIED:159 / PIATCN:404) remain — `PeerReference.init` still takes raw Postbox Peer.
+
+**Cascade compile:** full-project Bazel 237.868s (vs. ~30s typical) due to TelegramCore touch triggering downstream module rebuilds. Behavior parity verified by build success.
+
+**Lessons:**
+
+- **EnginePeer forwarding-extension addition is a high-leverage wave shape when ≥3 consumer sites use the same `_asPeer().<prop>` pattern.** Cost: 1 line in TelegramCore. Benefit: drops N consumer-side bridges (4 in this wave) and unlocks future call-site simplifications that pattern-match on the property. The wave-26 lesson "EnginePeer forwarding audit is load-bearing for multi-property methods" extends to "single-property forwarding is a wave shape on its own when the access-count threshold is met."
+- **TelegramCore touches incur cascade-recompile cost (~210s extra wall-clock).** Worth budgeting; not a blocker. Future TelegramCore-touching waves should weight cascade time as part of wave-shape planning.
+- **`EnginePeer` cases (.user/.legacyGroup/.channel/.secretChat) all preserve the underlying Postbox Peer's flag access via `_asPeer()`** — the forwarding implementation is a one-line wrapper. No case-by-case logic needed for properties that already exist on `Peer` protocol's extension. Rule of thumb: any `var <prop>` on `extension Peer` in PeerUtils.swift can be forwarded mechanically.
+
+---
+
+## Wave 58 outcome (2026-04-25)
+
+`AccountContext.openAddPeerMembers` + `presentAddMembersImpl` cross-module `groupPeer: Peer → EnginePeer` migration. 6 files / 9 edits / **2 build iterations**. Commit `261c086c15`. Bazel 180.751s (iter 1, failure with 1 error) + 29.946s (iter 2, clean) = ~210s wall-clock.
+
+**Edits:**
+
+Protocol + impl (2 edits, 2 files):
+- `AccountContext.swift:1456` — protocol method `groupPeer: Peer → groupPeer: EnginePeer`.
+- `SharedAccountContext.swift:2351` — implementation signature.
+
+`PresentAddMembers.swift` (4 edits, 1 file):
+- :14 — public function signature.
+- :38 — `if let group = groupPeer as? TelegramGroup → if case let .legacyGroup(group) = groupPeer`.
+- :47 — `} else if let channel = groupPeer as? TelegramChannel, ... → } else if case let .channel(channel) = groupPeer, ...`.
+- :210 — **iter-2 fix:** drop now-redundant `EnginePeer(groupPeer)` wrap inside body — `peer: EnginePeer(groupPeer) → peer: groupPeer` (after parameter is EnginePeer, wrapping it again doesn't compile).
+
+Call sites (3 edits, 3 files):
+- `PeerInfoScreen.swift:4606` — drop `_asPeer()`: `groupPeer: groupPeer._asPeer() → groupPeer: groupPeer` (`groupPeer = data.peer` is EnginePeer? post-wave-42).
+- `ChatListUI/Sources/ChatListController.swift:3815` — drop `_asPeer()`: `groupPeer: peer._asPeer() → groupPeer: peer` (`peer` from `engine.data.get(...Item.Peer.Peer(id:))` is EnginePeer).
+- `TelegramUI/Sources/Chat/ChatControllerLoadDisplayNode.swift:4006` — boundary lift: `groupPeer: peer → groupPeer: EnginePeer(peer)` (`peer` from `renderedPeer?.peer` is Postbox Peer; needed because `is TelegramGroup || is TelegramChannel` pre-check still runs against the Peer-typed local).
+
+**Net:** 3 drops (2 `_asPeer()` at PIS:4606 + CLC:3815, 1 redundant `EnginePeer()` wrap at PAM:210), 1 boundary lift (CCLDN:4006), 2 case-let conversions in PAM body. Net internal-bridge progress: **−2**.
+
+**Iter-2 lesson — pre-flight scope must include "internal wraps inside the migrated function's body."** Pre-flight grep covered:
+- `<func>(...<arg>:` call sites ✓
+- `<arg> as? Telegram*` casts ✓
+But missed:
+- `EnginePeer(<arg>)` wraps INSIDE the migrated body — once the parameter type changes, those become invalid.
+
+Adding `<arg>\b` (the parameter name) to the pre-flight grep would have caught the PAM:210 site. Cheap rule going forward: grep the body for `EnginePeer\(<paramname>\)` before declaring inventory complete.
+
+**Lessons:**
+
+- **Cross-module migration with protocol method = uniform 2-iter target unless body is small.** `AccountContext` protocol method touches 3 callers + 1 impl + 1 forwarding free function with internal body. Each axis can hide one missed reference. Wave 58 hit one such miss (PAM:210); this is typical. Budget 2 iters for protocol-method migrations even when all axes look complete in inventory.
+- **Boundary-lift planning is correct when the call-site's source is foundational.** CCLDN:4006 boundary lift is permanent until `RenderedPeer.peer` migrates. Adding it now is the right shape — defers the foundational migration without inflating the wave to that scope.
+- **Pure cross-module migrations don't always cascade-recompile through TelegramCore.** Wave 58 touched TelegramUI consumers + AccountContext protocol but NOT TelegramCore; iter-2 rebuild was 29.9s (typical). Compare to wave 57's 237.9s when TelegramCore was touched.
+
+---
+
+## Wave 59 outcome (2026-04-25)
+
+`_asPeer() as? TelegramX` micro-cluster migration. 4 files / 7 edits / **first-pass-clean** Bazel 25.833s. Commit `6ca4058ae8`.
+
+**Edits:**
+
+- `PeerInfoHeaderEditingContentNode.swift:115` — `(peer?._asPeer() as? TelegramUser)?.lastName ?? ""` → `if case let .user(user) = peer { updateText = user.lastName ?? "" } else { updateText = "" }` (preserves `?? ""` fallback semantics on cast-failure path).
+- `StarsTransactionsScreen.swift:1288` — `if let channel = subscription.peer._asPeer() as? TelegramChannel { ... }` → `if case let .channel(channel) = subscription.peer { ... }`.
+- `StarsTransactionScreen.swift:280` — `if let creationDate = (subscription.peer._asPeer() as? TelegramChannel)?.creationDate, creationDate > 0 {` → `if case let .channel(channel) = subscription.peer, channel.creationDate > 0 { additionalDate = channel.creationDate ... }`. (TelegramChannel.creationDate is non-optional Int32.)
+- `ChatListSearchContainerNode.swift:927` — `if let user = message.author?._asPeer() as? TelegramUser { ... }` → `if case let .user(user) = message.author { ... }` (message.author is EnginePeer?).
+
+**Net:** 4 internal `_asPeer() as? TelegramX` cast bridges eliminated; 0 adds. PIHEC site adds explicit `else { updateText = "" }` to preserve original cast-failure fallback.
+
+**Lessons:**
+
+- **`_asPeer()` is a tag for "this value is EnginePeer" by construction.** `_asPeer()` only exists on `EnginePeer`; calling it on any other type (including `Peer` protocol) doesn't compile. So every consumer-side `X._asPeer()` is provably an EnginePeer source — no need to verify per-site. This invariant makes bulk `_asPeer()` cluster migrations safe.
+- **Preserve cast-failure-path semantics when converting `as?` clusters.** Original `(X as? TelegramUser)?.lastName ?? ""` returns `""` if X is nil OR not TelegramUser OR lastName is nil. Naive `if case let .user(user) = X { updateText = user.lastName ?? "" }` only sets updateText for the .user case, leaving it nil for other cases. Add explicit `else` branch when the original `??` fallback is load-bearing.
+
+---
+
+## Wave 60 outcome (2026-04-25)
+
+Add `PeerReference.init?(_ peer: EnginePeer)` convenience init in TelegramCore + drop **49** consumer-side `PeerReference(X._asPeer())` bridges across 29 files / 53 insertions / 49 deletions. **First-pass-clean** Bazel 238.803s (cascade compile). Commit `b6cc2bfbd1`.
+
+**TelegramCore extension addition:**
+
+`submodules/TelegramCore/Sources/ApiUtils/ApiUtils.swift` — appended `init?(_ peer: EnginePeer) { self.init(peer._asPeer()) }` to the existing `public extension PeerReference` block.
+
+**Consumer drops:** 49 sites where `PeerReference(X._asPeer())` becomes `PeerReference(X)`. 12 distinct expression patterns: `$0`, `author`, `bot.peer`, `component.peer`, `component.slice.effectivePeer`, `component.slice.peer`, `item.peer`, `participantPeer`, `peer`, `peerValue`, `primary.1`, `self.peer`. All EnginePeer-typed by the `_asPeer()` invariant.
+
+**Execution method:** Python regex replacement (`re.sub` with pattern `PeerReference\(([^)(]+)\._asPeer\(\)\)` → `PeerReference(\1)`). Non-`)`-non-`(` capture group ensures the match is the smallest expression before the trailing `._asPeer())`. Tested against all 12 distinct expression patterns including chained property accesses and closure-arg captures.
+
+**Net:** 49 internal `_asPeer()` bridge drops; 0 adds. Largest single-wave consumer-drop count to date.
+
+**Lessons:**
+
+- **The wave-57 forwarding-extension pattern scales to bulk init/method addition.** Convenience init/method overload in TelegramCore (1 line) drops N consumer bridges (49 in this case). Cost: 1 line + bulk consumer migration. Benefit: O(N) bridges dropped. Threshold for triggering this shape is ≥5 consumer sites (anything fewer is per-site case-by-case).
+- **Python regex with `[^)(]+` capture is the safe automation primitive for migrating `Wrapper(X._asPeer())` patterns.** Greedy `.*` captures cause over-match. Non-greedy `.*?` is fragile in BSD sed. The `[^)(]+` capture explicitly avoids both `(` and `)` inside the captured expression, which works for chained property accesses (`a.b.c`), closure args (`$0`), and tuple-indexed accesses (`primary.1`). 49 sites all replaced safely.
+- **The `_asPeer()` invariant guarantees migration safety.** Because `_asPeer()` only compiles on EnginePeer, no per-site type verification is needed for `Wrapper(X._asPeer()) → Wrapper(X)` migrations once the EnginePeer-accepting overload is added.
+
+---
+
+## Wave 61 outcome (2026-04-25)
+
+Drop 6 `_asPeer().X` consumer-side bridges where X is already on the EnginePeer forwarding extension. 3 files / 6 edits / **first-pass-clean** Bazel 19.351s. Commit `5d497cc5e9`.
+
+**Edits:**
+
+- `ChannelVisibilityController.swift:1478` — `peer?._asPeer().usernames` → `peer?.usernames`.
+- `PeerInfoCoverComponent.swift:74` — `peer._asPeer().profileColor` → `peer.profileColor`.
+- `PeerInfoCoverComponent.swift:82` — `peer._asPeer().nameColor` → `peer.nameColor`.
+- `StoryItemSetContainerComponent.swift:6700/6956/7274` — `component.slice.effectivePeer._asPeer().usernames` → `component.slice.effectivePeer.usernames` (replace_all=true; 3 sites).
+
+**Net:** 6 internal `_asPeer()` bridge drops; 0 adds. All 6 sites used properties (`usernames`, `profileColor`, `nameColor`) already present on `public extension EnginePeer` block in TelegramCore — no new TelegramCore touch needed (no cascade compile).
+
+**Skipped:** `peer._asPeer().indexName.indexTokens` at `ChannelDiscussionGroupSearchContainerNode.swift:157` — `EnginePeer.indexName` returns wrapper enum `EnginePeer.IndexName` without `.indexTokens`. Needs a separate IndexName extension or consumer refactor. Defer.
+
+---
+
+## Wave 62 outcome (2026-04-25)
+
+Add 4 EnginePeer forwarding entries (isMonoForum, associatedPeerId, hasCustomNameColor, hasSensitiveContent) + drop 5 consumer-side `_asPeer().X` bridges. 6 files / 9 edits / **first-pass-clean** Bazel 237.769s (cascade compile). Commit `cdce0dba01`.
+
+**TelegramCore extension additions** (Peer.swift, 4 entries — 16 lines):
+
+```swift
+var isMonoForum: Bool {
+    return self._asPeer().isMonoForum
+}
+var associatedPeerId: Id? {
+    return self._asPeer().associatedPeerId
+}
+var hasCustomNameColor: Bool {
+    return self._asPeer().hasCustomNameColor
+}
+func hasSensitiveContent(platform: String) -> Bool {
+    return self._asPeer().hasSensitiveContent(platform: platform)
+}
+```
+
+All four forwarding implementations live in `submodules/TelegramCore/Sources/Utils/PeerUtils.swift` on the `extension Peer { ... }` block. The `Id` typealias on EnginePeer is `PeerId`, so `associatedPeerId: Id?` is type-equivalent to the underlying `Peer.associatedPeerId: PeerId?`.
+
+**Consumer drops** (5 sites):
+
+- `ThemeSettingsController.swift:428` — `accountPeer._asPeer().hasCustomNameColor` → `accountPeer.hasCustomNameColor`.
+- `AgeVerificationScreen.swift:31` — `peer._asPeer().hasSensitiveContent(platform: "ios")` → `peer.hasSensitiveContent(platform: "ios")`.
+- `TextProcessingScreen.swift:1281` — `peer._asPeer().isMonoForum` → `peer.isMonoForum`.
+- `ShareSearchContainerNode.swift:478` — `mainPeer._asPeer().associatedPeerId` → `mainPeer.associatedPeerId`.
+- `ChatListSearchListPaneNode.swift:153` — `maybeChatPeer._asPeer().associatedPeerId` → `maybeChatPeer.associatedPeerId`.
+
+**Net:** 5 internal bridge drops; 0 adds.
+
+**Lessons:**
+
+- **Bundle multi-property forwarding additions in a single TelegramCore touch.** When 4 properties each unblock 1-2 consumer drops, bundling the additions into one wave amortizes the cascade-recompile cost (~210s) across 5 drops instead of paying 4× across 4 separate waves.
+
+---
+
+## Wave 63 outcome (2026-04-25)
+
+`resolvedAreStoriesMuted(peer:)` Peer → EnginePeer cross-module function-signature migration. 5 files / 11 edits / **first-pass-clean** Bazel 239.818s (cascade compile). Commit `499edc0ddb`.
+
+**TelegramCore signature change** (`ChangePeerNotificationSettings.swift`):
+- :65 — `peer: Peer → peer: EnginePeer`. Body uses only `peer.id` (works on EnginePeer).
+- :117 — internal call site boundary lift: `peer: peer → peer: EnginePeer(peer)` (peer source is `transaction.getPeer(peerId)` returning Postbox Peer).
+
+**Consumer drops** (9 sites, 4 files):
+- `ContactContextMenus.swift:50` — drop `_asPeer()`.
+- `ChatListController.swift:3317` — drop `_asPeer()`.
+- `StoryItemSetContainerComponent.swift:7224` — drop `_asPeer()` on `component.slice.effectivePeer`.
+- `StoryChatContent.swift` — 6 sites (lines 210, 212, 1287, 1599, 2490, 2492); pattern `peer: peer._asPeer(),` → `peer: peer,` via `replace_all=true`.
+
+**Net:** 9 drops, 1 boundary lift = **−8 internal bridges**.
+
+**Lessons:**
+
+- **Cross-module function-signature migration is a uniform 1-iter target when (a) the function body uses only EnginePeer-compatible properties and (b) all call sites have EnginePeer-typed sources via `_asPeer()`.** Pre-flight grep `<func>.*_asPeer` enumerates all consumer-side bridges; each drop is mechanical. Internal call sites in TelegramCore that pass Postbox Peer-typed locals get a boundary lift.
+- **`replace_all=true` shines when the same parameter pattern repeats in a single file.** StoryChatContent had 6 identical `peer: peer._asPeer(),` patterns — one Edit call with `replace_all=true` replaced all of them. Saves 5 round-trips.
+
+---
+
+## Wave 64 outcome (2026-04-25)
+
+`RenderedPeer.convenience init(peer: EnginePeer)` in TelegramCore + 5 consumer drops. 3 files / 6 edits / **first-pass-clean** Bazel 237.725s (cascade compile). Commit `109c2fe172`. Wave-shape: foundational TelegramCore extension addition (wave-57 pattern). Original `init(peer: Peer)` retained as designated init; Swift overload resolution selects the EnginePeer init only when the argument is EnginePeer-typed. Sites: PeerInfoSettingsItems:131 + ChatListSearchListPaneNode:4173/4213/4336/4371.
+
+## Wave 65 outcome (2026-04-25)
+
+`MergedAvatarsNode.update(peers: [Peer]) → [EnginePeer]` + private `PeerAvatarReference.init(peer:)` cascade. 6 files / 9 edits / **3 iter**. Commit `37c680c86c`. Iter-2 missed `groupsInCommon: [Peer]` field at ChatUserInfoItem; iter-3 missed `recentVoterPeers: [Peer]` and `avatarPeers: [Peer]` at ChatMessagePollBubbleContentNode. Lesson: **migrating a public function's array-of-Peer parameter forces a transitive inventory of *all* `[Peer]` field declarations across consumer modules**. Pre-flight grep should include `\[Peer\]\s*=\s*\[\]` and similar local/field decls.
+
+## Wave 66 outcome (2026-04-25)
+
+`VoiceChatJoinScreen.setPeer` + `VoiceChatPreviewContentNode.init` chain Peer→EnginePeer. Single file / 5 edits / first-pass-clean. Commit `148aa53f3f`. Net **−3** internal bridges. Wave-55 single-file pure-drop pattern.
+
+## Wave 67 outcome (2026-04-25)
+
+`_internal_storedMessageFromSearchPeer` signature Peer→EnginePeer + return type Signal<Peer>→Signal<EnginePeer>. 3 files / 5 edits / first-pass-clean Bazel 226.884s. Commit `3732fb66b6`. Drops `peer._asPeer()` and `|> map { EnginePeer(result) }` in `ensurePeerIsLocallyAvailable`. Net **−1** with 2 internal boundary lifts inside TelegramCore body.
+
+## Wave 68 outcome (2026-04-25)
+
+`SelectivePrivacyPeer.convenience init(peer: EnginePeer, participantCount:)` + 3 consumer drops. 4 files / 4 edits / first-pass-clean (initial 221s after TelegramCore touch + 17s consumer-only rebuild). Commit `73811a4e5d`. Original `init(peer: Peer)` and stored `peer: Peer` field unchanged — full migration of the field deferred (69 references repo-wide).
+
+## Wave 69 outcome (2026-04-25)
+
+`_internal_storedMessageFromSearchPeers` (plural) Peer→EnginePeer. Closes wave-67 sibling. 2 files / 3 edits / first-pass-clean Bazel 225.143s. Commit `42252eb9fd`. Drops `peers.map { $0._asPeer() }` in `ensurePeersAreLocallyAvailable`.
+
+## Wave 70 outcome (2026-04-25)
+
+`StatsMessageItem.peer` + `ChannelStatsController .post` enum-case payload + `MessageStatsController` local var Peer→EnginePeer cascade. 3 files / 9 edits / **3 iter**. Commit `f14dfe2273`. Iter-2 missed `entries.append(.post)` building sites at ChannelStatsController:1429/1433. Iter-3 missed `arePeersEqual(lhsPeer, rhsPeer)` Equatable comparison at L639 — replaced with `lhsPeer == rhsPeer` since EnginePeer is Equatable. **Pre-flight rule: when migrating an enum-case payload from Peer to EnginePeer, grep the same enum's `==` Equatable conformance for `arePeersEqual` calls.** Net **−5** internal bridges.
+
+## Wave 71 outcome (2026-04-25)
+
+`peerInfoControllerImpl` signature Peer→EnginePeer + drop `_asPeer()` shadow at SAC:1938. 1 file / 6 edits / first-pass-clean Bazel 24.582s. Commit `1650bc1521`. Wave-shape: single-file private-function with shadow-assignment pattern (`let peer = peer._asPeer()` shadowing the EnginePeer parameter to a Peer local). Mechanical conversion of body's 4 `as?`/`is` checks. Cheap rebuild because no public API change.
+
+## Wave 72 outcome (2026-04-25)
+
+`canSendMessagesToPeer` body cleanup: drop `_asPeer()` shadow + restructure `as?` casts as exhaustive switch on EnginePeer cases. 1 file / 1 edit / first-pass-clean Bazel 25.792s. Commit `98e7158b7a`. Wave-shape: TelegramCore-internal body cleanup. Public API was already EnginePeer (wave 38) — this wave only refactors the implementation. Cheap rebuild despite TelegramCore touch.
+
+## Wave 73 outcome (2026-04-25)
+
+`ChatQrCodeScreenImpl.Subject.peer` enum-payload Peer→EnginePeer + `QrContentNode.peer` field migration + drop `_asPeer()` shadow at SAC:2731. 2 files / 8 edits / **2 iter**. Commit `0faf4a0336`. Iter-2 missed two additional `peer as? TelegramX` casts at QrContentNode body L1742/L1744; also fixed an over-aggressive `replace_all=true` that caught a different `peer: EnginePeer(peer)` site at MessageContentNode L2184 where the local `peer` is Postbox-typed (boundary lift restored).
+
+**Lesson reinforced: `replace_all=true` on a parametric wrapping pattern (`peer: EnginePeer(peer)`) must verify ALL matches share the same scope/source.** When the same call appears in multiple scopes with different local-variable types, `replace_all` propagates the wrong intent. Mitigation: grep first to verify unique-scope assumption, or fall back to per-site Edit when unsure.
+
+---
+
 ## Modules currently free of `import Postbox` (running tally)
 
 Consumer modules that no longer import Postbox, across all waves and standalone commits:

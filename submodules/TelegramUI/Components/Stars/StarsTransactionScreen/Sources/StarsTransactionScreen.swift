@@ -277,8 +277,8 @@ private final class StarsTransactionSheetContent: CombinedComponent {
                 descriptionText = ""
                 count = CurrencyAmount(amount: subscription.pricing.amount, currency: .stars)
                 date = subscription.untilDate
-                if let creationDate = (subscription.peer._asPeer() as? TelegramChannel)?.creationDate, creationDate > 0 {
-                    additionalDate = creationDate
+                if case let .channel(channel) = subscription.peer, channel.creationDate > 0 {
+                    additionalDate = channel.creationDate
                 } else {
                     additionalDate = nil
                 }

@@ -89,7 +89,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
     private weak var controller: PeerInfoScreenImpl?
     private var presentationData: PresentationData?
     private var state: PeerInfoState?
-    private var peer: Peer?
+    private var peer: EnginePeer?
     private var threadData: MessageHistoryThreadData?
     private var isSearching: Bool = false
     private var avatarSize: CGFloat?
@@ -493,7 +493,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
     private var currentStatusIcon: CredibilityIcon?
     
     private var currentPanelStatusData: PeerInfoStatusData?
-    func update(width: CGFloat, containerHeight: CGFloat, containerInset: CGFloat, statusBarHeight: CGFloat, navigationHeight: CGFloat, isModalOverlay: Bool, isMediaOnly: Bool, contentOffset: CGFloat, paneContainerY: CGFloat, presentationData: PresentationData, peer: Peer?, cachedData: CachedPeerData?, threadData: MessageHistoryThreadData?, peerNotificationSettings: TelegramPeerNotificationSettings?, threadNotificationSettings: TelegramPeerNotificationSettings?, globalNotificationSettings: EngineGlobalNotificationSettings?, statusData: PeerInfoStatusData?, panelStatusData: (PeerInfoStatusData?, PeerInfoStatusData?, CGFloat?), isSecretChat: Bool, isContact: Bool, isSettings: Bool, state: PeerInfoState, profileGiftsContext: ProfileGiftsContext?, screenData: PeerInfoScreenData?, isSearching: Bool, metrics: LayoutMetrics, deviceMetrics: DeviceMetrics, transition: ContainedViewLayoutTransition, additive: Bool, animateHeader: Bool) -> CGFloat {
+    func update(width: CGFloat, containerHeight: CGFloat, containerInset: CGFloat, statusBarHeight: CGFloat, navigationHeight: CGFloat, isModalOverlay: Bool, isMediaOnly: Bool, contentOffset: CGFloat, paneContainerY: CGFloat, presentationData: PresentationData, peer: EnginePeer?, cachedData: CachedPeerData?, threadData: MessageHistoryThreadData?, peerNotificationSettings: TelegramPeerNotificationSettings?, threadNotificationSettings: TelegramPeerNotificationSettings?, globalNotificationSettings: EngineGlobalNotificationSettings?, statusData: PeerInfoStatusData?, panelStatusData: (PeerInfoStatusData?, PeerInfoStatusData?, CGFloat?), isSecretChat: Bool, isContact: Bool, isSettings: Bool, state: PeerInfoState, profileGiftsContext: ProfileGiftsContext?, screenData: PeerInfoScreenData?, isSearching: Bool, metrics: LayoutMetrics, deviceMetrics: DeviceMetrics, transition: ContainedViewLayoutTransition, additive: Bool, animateHeader: Bool) -> CGFloat {
         if self.appliedCustomNavigationContentNode !== self.customNavigationContentNode {
             if let previous = self.appliedCustomNavigationContentNode {
                 ComponentTransition(transition).setAlpha(view: previous.view, alpha: 0.0, completion: { [weak previous] _ in
@@ -521,7 +521,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
         self.peer = peer
         self.threadData = threadData
         self.isSearching = isSearching
-        self.avatarListNode.listContainerNode.peer = peer.flatMap(EnginePeer.init)
+        self.avatarListNode.listContainerNode.peer = peer
         
         let isFirstTime = self.validLayout == nil
         self.validLayout = (width, statusBarHeight, deviceMetrics)
@@ -545,8 +545,8 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             }
         }
         
-        let actionButtonKeys: [PeerInfoHeaderButtonKey] = (self.isSettings || self.isMyProfile) ? [] : peerInfoHeaderActionButtons(peer: peer.flatMap(EnginePeer.init), isSecretChat: isSecretChat, isContact: isContact)
-        let buttonKeys: [PeerInfoHeaderButtonKey] = (self.isSettings || self.isMyProfile) ? [] : peerInfoHeaderButtons(peer: peer.flatMap(EnginePeer.init), cachedData: cachedData, isOpenedFromChat: self.isOpenedFromChat, isExpanded: true, videoCallsEnabled: width > 320.0 && self.videoCallsEnabled, isSecretChat: isSecretChat, isContact: isContact, threadInfo: threadData?.info)
+        let actionButtonKeys: [PeerInfoHeaderButtonKey] = (self.isSettings || self.isMyProfile) ? [] : peerInfoHeaderActionButtons(peer: peer, isSecretChat: isSecretChat, isContact: isContact)
+        let buttonKeys: [PeerInfoHeaderButtonKey] = (self.isSettings || self.isMyProfile) ? [] : peerInfoHeaderButtons(peer: peer, cachedData: cachedData, isOpenedFromChat: self.isOpenedFromChat, isExpanded: true, videoCallsEnabled: width > 320.0 && self.videoCallsEnabled, isSecretChat: isSecretChat, isContact: isContact, threadInfo: threadData?.info)
         
         let backgroundCoverSubject: PeerInfoCoverComponent.Subject?
         var backgroundCoverAnimateIn = false
@@ -568,7 +568,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             }
             hasBackground = true
         } else if let peer {
-            backgroundCoverSubject = .peer(EnginePeer(peer))
+            backgroundCoverSubject = .peer(peer)
             if peer.effectiveProfileColor != nil {
                 hasBackground = true
             }
@@ -619,7 +619,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
         }
         
         var isForum = false
-        if let channel = peer as? TelegramChannel, channel.isForumOrMonoForum {
+        if case let .channel(channel) = peer, channel.isForumOrMonoForum {
             isForum = true
         }
         
@@ -1215,14 +1215,14 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             } else if let threadData = threadData {
                 title = threadData.info.title
             } else {
-                title = EnginePeer(peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
+                title = peer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
             }
             title = title.replacingOccurrences(of: "\u{1160}", with: "").replacingOccurrences(of: "\u{3164}", with: "")
             if title.replacingOccurrences(of: "\u{fe0e}", with: "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 title = "" //"\u{00A0}"
             }
             if title.isEmpty {
-                if let peer = peer as? TelegramUser, let phone = peer.phone {
+                if case let .user(user) = peer, let phone = user.phone {
                     title = formatPhoneNumber(context: self.context, number: phone)
                 } else if let addressName = peer.addressName {
                     title = "@\(addressName)"
@@ -1235,7 +1235,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             titleAttributes = MultiScaleTextState.Attributes(font: Font.medium(28.0), color: .white)
             smallTitleAttributes = MultiScaleTextState.Attributes(font: Font.medium(28.0), color: .white, shadowColor: titleShadowColor)
             
-            if self.isSettings, let user = peer as? TelegramUser {
+            if self.isSettings, case let .user(user) = peer {
                 var subtitle = formatPhoneNumber(context: self.context, number: user.phone ?? "")
                 
                 if let mainUsername = user.addressName, !mainUsername.isEmpty {
@@ -1270,7 +1270,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                 let subtitleColor: UIColor = .white
                 
                 let statusText: String
-                if let user = peer as? TelegramUser, user.isForum {
+                if case let .user(user) = peer, user.isForum {
                     statusText = " "
                 } else {
                     statusText = peer.debugDisplayTitle
@@ -1961,7 +1961,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             self.avatarListNode.containerNode.view.mask = nil
         }
         
-        self.avatarListNode.listContainerNode.update(size: expandedAvatarListSize, peer: peer.flatMap(EnginePeer.init), isExpanded: self.isAvatarExpanded, transition: transition)
+        self.avatarListNode.listContainerNode.update(size: expandedAvatarListSize, peer: peer, isExpanded: self.isAvatarExpanded, transition: transition)
         if self.avatarListNode.listContainerNode.isCollapsing && !self.ignoreCollapse {
             self.avatarListNode.avatarContainerNode.canAttachVideo = false
         }
@@ -2051,7 +2051,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                         }
                         self.controller?.push(ProfileLevelInfoScreen(
                             context: self.context,
-                            peer: EnginePeer(peer),
+                            peer: peer,
                             starRating: currentStarRating,
                             pendingStarRating: self.currentPendingStarRating,
                             customTheme: self.presentationData?.theme
@@ -2351,14 +2351,14 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                 buttonText = presentationData.strings.PeerInfo_ButtonVideoCall
                 buttonIcon = .videoCall
             case .voiceChat:
-                if let channel = peer as? TelegramChannel, case .broadcast = channel.info {
+                if case let .channel(channel) = peer, case .broadcast = channel.info {
                     buttonText = presentationData.strings.PeerInfo_ButtonLiveStream
                 } else {
                     buttonText = presentationData.strings.PeerInfo_ButtonVoiceChat
                 }
                 buttonIcon = .voiceChat
             case .mute:
-                let chatIsMuted = peerInfoIsChatMuted(peer: peer.flatMap(EnginePeer.init), peerNotificationSettings: peerNotificationSettings, threadNotificationSettings: threadNotificationSettings, globalNotificationSettings: globalNotificationSettings)
+                let chatIsMuted = peerInfoIsChatMuted(peer: peer, peerNotificationSettings: peerNotificationSettings, threadNotificationSettings: threadNotificationSettings, globalNotificationSettings: globalNotificationSettings)
                 if chatIsMuted {
                     buttonText = presentationData.strings.PeerInfo_ButtonUnmute
                     buttonIcon = .unmute

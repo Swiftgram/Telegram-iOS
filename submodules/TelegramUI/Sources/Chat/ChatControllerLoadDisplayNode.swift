@@ -4003,7 +4003,7 @@ extension ChatControllerImpl {
             if !(peer is TelegramGroup || peer is TelegramChannel) {
                 return
             }
-            presentAddMembersImpl(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, parentController: strongSelf, groupPeer: peer, selectAddMemberDisposable: strongSelf.selectAddMemberDisposable, addMemberDisposable: strongSelf.addMemberDisposable)
+            presentAddMembersImpl(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, parentController: strongSelf, groupPeer: EnginePeer(peer), selectAddMemberDisposable: strongSelf.selectAddMemberDisposable, addMemberDisposable: strongSelf.addMemberDisposable)
         }, presentGigagroupHelp: { [weak self] in
             if let strongSelf = self {
                 strongSelf.present(UndoOverlayController(presentationData: strongSelf.presentationData, content: .info(title: nil, text: strongSelf.presentationData.strings.Conversation_GigagroupDescription, timeout: nil, customUndoText: nil), elevatedLayout: false, action: { _ in return true }), in: .current)
@@ -4967,7 +4967,7 @@ extension ChatControllerImpl {
                 }
                 
                 let engine = self.context.engine
-                let previousPeerCache = Atomic<[PeerId: Peer]>(value: [:])
+                let previousPeerCache = Atomic<[PeerId: EnginePeer]>(value: [:])
 
                 let activitySpace: PeerActivitySpace?
                 switch self.chatLocation {
@@ -4982,9 +4982,9 @@ extension ChatControllerImpl {
                 if let activitySpace = activitySpace, let peerId = peerId {
                     self.peerInputActivitiesDisposable?.dispose()
                     self.peerInputActivitiesDisposable = (self.context.account.peerInputActivities(peerId: activitySpace)
-                    |> mapToSignal { activities -> Signal<[(Peer, PeerInputActivity)], NoError> in
+                    |> mapToSignal { activities -> Signal<[(EnginePeer, PeerInputActivity)], NoError> in
                         var foundAllPeers = true
-                        var cachedResult: [(Peer, PeerInputActivity)] = []
+                        var cachedResult: [(EnginePeer, PeerInputActivity)] = []
                         previousPeerCache.with { dict -> Void in
                             for (peerId, activity) in activities {
                                 if let peer = dict[peerId] {
@@ -5001,13 +5001,13 @@ extension ChatControllerImpl {
                             return engine.data.get(EngineDataMap(
                                 activities.map { TelegramEngine.EngineData.Item.Peer.Peer(id: $0.0) }
                             ))
-                            |> map { peerMap -> [(Peer, PeerInputActivity)] in
-                                var result: [(Peer, PeerInputActivity)] = []
-                                var peerCache: [PeerId: Peer] = [:]
+                            |> map { peerMap -> [(EnginePeer, PeerInputActivity)] in
+                                var result: [(EnginePeer, PeerInputActivity)] = []
+                                var peerCache: [PeerId: EnginePeer] = [:]
                                 for (peerId, activity) in activities {
                                     if let maybePeer = peerMap[peerId], let peer = maybePeer {
-                                        result.append((peer._asPeer(), activity))
-                                        peerCache[peerId] = peer._asPeer()
+                                        result.append((peer, activity))
+                                        peerCache[peerId] = peer
                                     }
                                 }
                                 let _ = previousPeerCache.swap(peerCache)
@@ -5030,7 +5030,7 @@ extension ChatControllerImpl {
                                     peerId: peerId,
                                     items: displayActivities.map { item -> ChatTitleComponent.Activities.Item in
                                         return ChatTitleComponent.Activities.Item(
-                                            peer: EnginePeer(item.0),
+                                            peer: item.0,
                                             activity: item.1
                                         )
                                     }

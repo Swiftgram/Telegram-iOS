@@ -60,7 +60,7 @@ final class PeerInfoEditingAvatarOverlayNode: ASDisplayNode {
         transition.updateAlpha(node: self, alpha: 1.0 - fraction)
     }
     
-    func update(peer: Peer?, threadData: MessageHistoryThreadData?, chatLocation: ChatLocation, item: PeerInfoAvatarListItem?, updatingAvatar: PeerInfoUpdatingAvatar?, uploadProgress: AvatarUploadProgress?, theme: PresentationTheme, avatarSize: CGFloat, isEditing: Bool) {
+    func update(peer: EnginePeer?, threadData: MessageHistoryThreadData?, chatLocation: ChatLocation, item: PeerInfoAvatarListItem?, updatingAvatar: PeerInfoUpdatingAvatar?, uploadProgress: AvatarUploadProgress?, theme: PresentationTheme, avatarSize: CGFloat, isEditing: Bool) {
         guard let peer = peer else {
             return
         }
@@ -71,7 +71,7 @@ final class PeerInfoEditingAvatarOverlayNode: ASDisplayNode {
         let transition = ContainedViewLayoutTransition.animated(duration: 0.2, curve: .linear)
         
         let clipStyle: AvatarNodeClipStyle
-        if let channel = peer as? TelegramChannel, channel.isForumOrMonoForum {
+        if case let .channel(channel) = peer, channel.isForumOrMonoForum {
             clipStyle = .roundedRect
         } else {
             clipStyle = .round
@@ -82,7 +82,7 @@ final class PeerInfoEditingAvatarOverlayNode: ASDisplayNode {
             isPersonal = true
         }
         
-        if canEditPeerInfo(context: self.context, peer: EnginePeer(peer), chatLocation: chatLocation, threadData: threadData)
+        if canEditPeerInfo(context: self.context, peer: peer, chatLocation: chatLocation, threadData: threadData)
             || isPersonal
             || self.currentRepresentation != nil && updatingAvatar == nil  {
             var overlayHidden = true

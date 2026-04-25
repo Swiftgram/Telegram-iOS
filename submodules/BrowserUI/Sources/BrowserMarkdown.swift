@@ -147,7 +147,7 @@ private final class MarkdownConversionContext {
             )
         case let .data(data, dimensions):
             let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max), size: Int64(data.count), isSecretRelated: false)
-            self.context.account.postbox.mediaBox.storeResourceData(resource.id, data: data)
+            self.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data)
             
             let mediaId = self.nextMediaId(namespace: Namespaces.Media.LocalImage)
             self.media[mediaId] = TelegramMediaImage(
@@ -192,7 +192,7 @@ func markdownWebpage(context: AccountContext, file: FileMediaReference) -> (webP
     guard #available(iOS 15.0, *) else {
         return nil
     }
-    guard let path = context.account.postbox.mediaBox.completedResourcePath(file.media.resource) else {
+    guard let path = context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(file.media.resource.id)) else {
         return nil
     }
     let fileURL = URL(fileURLWithPath: path)

@@ -600,7 +600,7 @@ final class OverlayAudioPlayerControllerNode: ViewControllerTracingNode, ASGestu
         }
         let _ = (self.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: savedMusicContext.peerId))
         |> deliverOnMainQueue).start(next: { [weak self] peer in
-            guard let self, let peer = peer.flatMap({ PeerReference($0._asPeer()) }) else {
+            guard let self, let peer = peer.flatMap({ PeerReference($0) }) else {
                 return
             }
 

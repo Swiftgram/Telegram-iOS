@@ -281,8 +281,8 @@ public final class SettingsThemeWallpaperNode: ASDisplayNode {
                         }
 
                         let anyStatus = combineLatest(queue: .mainQueue(),
-                            context.account.postbox.mediaBox.resourceStatus(convertedFullRepresentations[0].reference.resource, approximateSynchronousValue: true),
-                            context.sharedContext.accountManager.mediaBox.resourceStatus(convertedFullRepresentations[0].reference.resource, approximateSynchronousValue: true)
+                            context.engine.resources.status(resource: EngineMediaResource(convertedFullRepresentations[0].reference.resource), approximateSynchronousValue: true),
+                            context.sharedContext.accountManager.resources.status(resource: EngineMediaResource(convertedFullRepresentations[0].reference.resource), approximateSynchronousValue: true)
                         )
                         |> map { a, b -> Bool in
                             switch a {
@@ -375,7 +375,7 @@ public final class SettingsThemeWallpaperNode: ASDisplayNode {
             animatedStickerNode.autoplay = true
             animatedStickerNode.visibility = true
             
-            self.stickerFetchedDisposable.set(fetchedMediaResource(mediaBox: context.account.postbox.mediaBox, userLocation: .other, userContentType: .other, reference: MediaResourceReference.media(media: .standalone(media: file), resource: file.resource)).start())
+            self.stickerFetchedDisposable.set(context.engine.resources.fetch(reference: MediaResourceReference.media(media: .standalone(media: file), resource: file.resource), userLocation: .other, userContentType: .other).start())
             
 //            let thumbnailDimensions = PixelDimensions(width: 512, height: 512)
 //            self.placeholderNode.update(backgroundColor: nil, foregroundColor: UIColor(rgb: 0xffffff, alpha: 0.2), shimmeringColor: UIColor(rgb: 0xffffff, alpha: 0.3), data: file.immediateThumbnailData, size: emojiFrame.size, enableEffect: item.context.sharedContext.energyUsageSettings.fullTranslucency, imageSize: thumbnailDimensions.cgSize)

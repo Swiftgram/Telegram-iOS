@@ -47,7 +47,7 @@ func contactContextMenuItems(context: AccountContext, peerId: EnginePeer.Id, con
                 })
             })))
             
-            let isMuted = resolvedAreStoriesMuted(globalSettings: globalSettings._asGlobalNotificationSettings(), peer: peer._asPeer(), peerSettings: notificationSettings._asNotificationSettings(), topSearchPeers: topSearchPeers)
+            let isMuted = resolvedAreStoriesMuted(globalSettings: globalSettings._asGlobalNotificationSettings(), peer: peer, peerSettings: notificationSettings._asNotificationSettings(), topSearchPeers: topSearchPeers)
             
             items.append(.action(ContextMenuActionItem(text: isMuted ? strings.StoryFeed_ContextNotifyOn : strings.StoryFeed_ContextNotifyOff, icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: isMuted ? "Chat/Context Menu/Unmute" : "Chat/Context Menu/Muted"), color: theme.contextMenu.primaryColor)

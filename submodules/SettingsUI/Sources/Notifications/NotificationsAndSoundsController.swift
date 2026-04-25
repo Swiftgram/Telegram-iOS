@@ -794,7 +794,7 @@ public func notificationsAndSoundsController(context: AccountContext, exceptions
             for (key, value) in list.settings {
                 if let peer = list.peers[key], !peer.debugDisplayTitle.isEmpty, peer.id != context.account.peerId {
                     if value.storySettings != defaultStorySettings {
-                        stories[key] = NotificationExceptionWrapper(settings: value, peer: EnginePeer(peer))
+                        stories[key] = NotificationExceptionWrapper(settings: value, peer: peer)
                     }
                     
                     switch value.muteState {
@@ -805,24 +805,24 @@ public func notificationsAndSoundsController(context: AccountContext, exceptions
                         default:
                             switch key.namespace {
                             case Namespaces.Peer.CloudUser:
-                                users[key] = NotificationExceptionWrapper(settings: value, peer: EnginePeer(peer))
+                                users[key] = NotificationExceptionWrapper(settings: value, peer: peer)
                             default:
-                                if let peer = peer as? TelegramChannel, case .broadcast = peer.info {
+                                if case let .channel(peer) = peer, case .broadcast = peer.info {
                                     channels[key] = NotificationExceptionWrapper(settings: value, peer: .channel(peer))
                                 } else {
-                                    groups[key] = NotificationExceptionWrapper(settings: value, peer: EnginePeer(peer))
+                                    groups[key] = NotificationExceptionWrapper(settings: value, peer: peer)
                                 }
                             }
                         }
                     default:
                         switch key.namespace {
                         case Namespaces.Peer.CloudUser:
-                            users[key] = NotificationExceptionWrapper(settings: value, peer: EnginePeer(peer))
+                            users[key] = NotificationExceptionWrapper(settings: value, peer: peer)
                         default:
-                            if let peer = peer as? TelegramChannel, case .broadcast = peer.info {
+                            if case let .channel(peer) = peer, case .broadcast = peer.info {
                                 channels[key] = NotificationExceptionWrapper(settings: value, peer: .channel(peer))
                             } else {
-                                groups[key] = NotificationExceptionWrapper(settings: value, peer: EnginePeer(peer))
+                                groups[key] = NotificationExceptionWrapper(settings: value, peer: peer)
                             }
                         }
                     }

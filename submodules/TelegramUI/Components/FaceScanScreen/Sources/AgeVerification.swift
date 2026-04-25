@@ -73,7 +73,7 @@ public func ageVerificationAvailability(context: AccountContext) -> Signal<AgeVe
         |> take(1)
         |> mapToSignal { maybeFileAndMessage -> Signal<AgeVerificationAvailability, NoError> in
             if let (file, message) = maybeFileAndMessage {
-                let fetchedData = fetchedMediaResource(mediaBox: context.account.postbox.mediaBox, userLocation: .other, userContentType: .file, reference: FileMediaReference.message(message: MessageReference(message._asMessage()), media: file).resourceReference(file.resource))
+                let fetchedData = context.engine.resources.fetch(reference: FileMediaReference.message(message: MessageReference(message._asMessage()), media: file).resourceReference(file.resource), userLocation: .other, userContentType: .file)
                 
                 enum FetchStatus {
                     case completed(String)

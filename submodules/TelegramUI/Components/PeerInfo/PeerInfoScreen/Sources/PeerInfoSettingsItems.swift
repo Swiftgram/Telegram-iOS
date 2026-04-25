@@ -128,7 +128,7 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
                         return context.engine.stickers.resolveInlineStickers(fileIds: fileIds)
                     }
                 ))
-                let member: PeerInfoMember = .account(peer: RenderedPeer(peer: peer._asPeer()))
+                let member: PeerInfoMember = .account(peer: RenderedPeer(peer: peer))
                 items[.accounts]!.append(PeerInfoScreenMemberItem(id: member.id, context: mappedContext, enclosingPeer: nil, member: member, badge: badgeCount > 0 ? "\(compactNumericCountString(Int(badgeCount), decimalSeparator: presentationData.dateTimeFormat.decimalSeparator))" : nil, isAccount: true, action: { action in
                     switch action {
                     case .open:
@@ -174,7 +174,7 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
     if let settings = data.globalSettings {
         for bot in settings.bots {
             let iconSignal: Signal<UIImage?, NoError>
-            if let peer = PeerReference(bot.peer._asPeer()), let icon = bot.icons[.iOSSettingsStatic] {
+            if let peer = PeerReference(bot.peer), let icon = bot.icons[.iOSSettingsStatic] {
                 let fileReference: FileMediaReference = .attachBot(peer: peer, media: icon)
                 iconSignal = instantPageImageFile(account: context.account, userLocation: .other, fileReference: fileReference, fetched: true)
                 |> map { generator -> UIImage? in

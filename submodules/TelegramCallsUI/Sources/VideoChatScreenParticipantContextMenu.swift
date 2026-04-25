@@ -551,7 +551,7 @@ extension VideoChatScreenComponent.View {
         let peerId = callState.myPeerId
         
         let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
-        currentCall.accountContext.account.postbox.mediaBox.storeResourceData(resource.id, data: data)
+        currentCall.accountContext.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data)
         let representation = TelegramMediaImageRepresentation(dimensions: PixelDimensions(width: 640, height: 640), resource: resource, progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false)
         
         self.currentUpdatingAvatar = (representation, 0.0)
@@ -592,7 +592,7 @@ extension VideoChatScreenComponent.View {
         let peerId = callState.myPeerId
         
         let photoResource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
-        currentCall.accountContext.account.postbox.mediaBox.storeResourceData(photoResource.id, data: data)
+        currentCall.accountContext.engine.resources.storeResourceData(id: EngineMediaResource.Id(photoResource.id), data: data)
         let representation = TelegramMediaImageRepresentation(dimensions: PixelDimensions(width: 640, height: 640), resource: photoResource, progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false)
         
         self.currentUpdatingAvatar = (representation, 0.0)

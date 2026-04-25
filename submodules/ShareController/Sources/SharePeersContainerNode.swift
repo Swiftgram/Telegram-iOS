@@ -232,7 +232,7 @@ final class SharePeersContainerNode: ASDisplayNode, ShareContentContainerNode {
                 network: context.stateManager.network,
                 contentSettings: context.contentSettings,
                 theme: theme,
-                peer: EnginePeer(info.peer),
+                peer: info.peer,
                 emptyColor: nil,
                 synchronousLoad: false
             )
