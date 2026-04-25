@@ -185,11 +185,19 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
                 
                 //TODO:localize
                 let text: String
-                if case .user = peer {
-                    if isSilentPosting {
-                        text = "\(peer.compactDisplayTitle) will receive a silent notification"
+                if case let .user(user) = peer {
+                    if user.id == component.context.account.peerId {
+                        if isSilentPosting {
+                            text = "You will receive a silent notification"
+                        } else {
+                            text = "You will be notified"
+                        }
                     } else {
-                        text = "\(peer.compactDisplayTitle) will be notified"
+                        if isSilentPosting {
+                            text = "\(peer.compactDisplayTitle) will receive a silent notification"
+                        } else {
+                            text = "\(peer.compactDisplayTitle) will be notified"
+                        }
                     }
                 } else if isChannel {
                     if isSilentPosting {

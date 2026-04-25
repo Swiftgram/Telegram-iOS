@@ -52,6 +52,13 @@ func canEditMessage(context: AccountContext, limitsConfiguration: EngineConfigur
     return canEditMessage(accountPeerId: context.account.peerId, limitsConfiguration: limitsConfiguration, message: message)
 }
 
+func canDeleteOtherUserMessages(message: Message) -> Bool {
+    guard let channel = message.peers[message.id.peerId] as? TelegramChannel else {
+        return false
+    }
+    return channel.hasPermission(.deleteAllMessages)
+}
+
 private func canEditMessage(accountPeerId: PeerId, limitsConfiguration: EngineConfiguration.Limits, message: Message, reschedule: Bool = false) -> Bool {
     var hasEditRights = false
     var unlimitedInterval = reschedule
@@ -2173,24 +2180,9 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                             displayReadTimestamps = true
                         }
                         
-                        c.pushItems(items: .single(ContextController.Items(content: .custom(ReactionListContextMenuContent(
-                            context: context,
-                            displayReadTimestamps: displayReadTimestamps,
-                            availableReactions: availableReactions,
-                            animationCache: controllerInteraction.presentationContext.animationCache,
-                            animationRenderer: controllerInteraction.presentationContext.animationRenderer,
-                            message: EngineMessage(message),
-                            reaction: nil,
-                            readStats: stats,
-                            back: { [weak c] in
-                                c?.popItems()
-                            },
-                            openPeer: { [weak c] peer, hasReaction in
-                                c?.dismiss(completion: {
-                                    controllerInteraction.openPeer(peer, .default, MessageReference(message), hasReaction ? .reaction : .default)
-                                })
-                            },
-                            deleteReaction: { [weak c] peer, _ in
+                        let deleteReaction: ((EnginePeer, MessageReaction.Reaction) -> Void)?
+                        if canDeleteOtherUserMessages(message: message) {
+                            deleteReaction = { [weak c] peer, _ in
                                 c?.dismiss(completion: {
                                     guard let chatController = interfaceInteraction.chatController() as? ChatControllerImpl, chatController.chatLocation.peerId?.namespace == Namespaces.Peer.CloudChannel else {
                                         return
@@ -2209,11 +2201,34 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                                             accountPeerId: context.account.peerId,
                                             author: peer._asPeer(),
                                             messageIds: Set([message.id]),
-                                            options: actions.options
+                                            options: actions.options,
+                                            reaction: true
                                         )
                                     })
                                 })
                             }
+                        } else {
+                            deleteReaction = nil
+                        }
+
+                        c.pushItems(items: .single(ContextController.Items(content: .custom(ReactionListContextMenuContent(
+                            context: context,
+                            displayReadTimestamps: displayReadTimestamps,
+                            availableReactions: availableReactions,
+                            animationCache: controllerInteraction.presentationContext.animationCache,
+                            animationRenderer: controllerInteraction.presentationContext.animationRenderer,
+                            message: EngineMessage(message),
+                            reaction: nil,
+                            readStats: stats,
+                            back: { [weak c] in
+                                c?.popItems()
+                            },
+                            openPeer: { [weak c] peer, hasReaction in
+                                c?.dismiss(completion: {
+                                    controllerInteraction.openPeer(peer, .default, MessageReference(message), hasReaction ? .reaction : .default)
+                                })
+                            },
+                            deleteReaction: deleteReaction
                         )), tip: tip)))
                     } else {
                         f(.default)

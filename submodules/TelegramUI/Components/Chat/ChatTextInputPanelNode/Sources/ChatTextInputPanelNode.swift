@@ -3103,16 +3103,17 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             self.textPlaceholderNode.view.setMonochromaticEffect(tintColor: placeholderColor)
             
             self.textInputNode?.textView.accessibilityHint = currentPlaceholder
+                        
+            if transition.isAnimated, let snapshotView = self.textPlaceholderNode.view.snapshotView(afterScreenUpdates: false) {
+                snapshotView.frame = self.textPlaceholderNode.frame
+                self.textPlaceholderNode.view.superview?.insertSubview(snapshotView, aboveSubview: self.textPlaceholderNode.view)
+                snapshotView.layer.animateAlpha(from: snapshotView.alpha, to: 0.0, duration: 0.22, removeOnCompletion: false, completion: { [weak snapshotView] _ in
+                    snapshotView?.removeFromSuperview()
+                })
+                self.textPlaceholderNode.layer.animateAlpha(from: 0.0, to: self.textPlaceholderNode.alpha, duration: 0.18)
+            }
             
             let placeholderSize = self.textPlaceholderNode.updateLayout(CGSize(width: textPlaceholderMaxWidth, height: CGFloat.greatestFiniteMagnitude))
-            
-            if transition.isAnimated, let snapshotLayer = self.textPlaceholderNode.layer.snapshotContentTree() {
-                self.textPlaceholderNode.supernode?.layer.insertSublayer(snapshotLayer, above: self.textPlaceholderNode.layer)
-                snapshotLayer.animateAlpha(from: 1.0, to: 0.0, duration: 0.22, removeOnCompletion: false, completion: { [weak snapshotLayer] _ in
-                    snapshotLayer?.removeFromSuperlayer()
-                })
-                self.textPlaceholderNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.18)
-            }
             
             textPlaceholderSize = placeholderSize
         } else {

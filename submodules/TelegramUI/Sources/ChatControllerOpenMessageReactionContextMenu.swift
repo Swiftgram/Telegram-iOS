@@ -188,9 +188,41 @@ extension ChatControllerImpl {
                 }
                 
                 var dismissController: ((@escaping () -> Void) -> Void)?
+                let canDeleteReactions = canDeleteOtherUserMessages(message: message)
+                let canViewReactions = canViewMessageReactionList(message: message)
+                let deleteReaction: ((EnginePeer, MessageReaction.Reaction) -> Void)?
+                if canDeleteReactions && canViewReactions {
+                    deleteReaction = { [weak self] peer, _ in
+                        dismissController?({ [weak self] in
+                            guard let self, self.chatLocation.peerId?.namespace == Namespaces.Peer.CloudChannel else {
+                                return
+                            }
+                            let _ = (self.context.sharedContext.chatAvailableMessageActions(
+                                engine: self.context.engine,
+                                accountPeerId: self.context.account.peerId,
+                                messageIds: Set([message.id]),
+                                keepUpdated: false
+                            )
+                            |> deliverOnMainQueue).startStandalone(next: { [weak self] actions in
+                                guard let self, !actions.options.isEmpty else {
+                                    return
+                                }
+                                self.presentBanMessageOptions(
+                                    accountPeerId: self.context.account.peerId,
+                                    author: peer._asPeer(),
+                                    messageIds: Set([message.id]),
+                                    options: actions.options,
+                                    reaction: true
+                                )
+                            })
+                        })
+                    }
+                } else {
+                    deleteReaction = nil
+                }
                 
                 var items: ContextController.Items
-                if canViewMessageReactionList(message: message) {
+                if canViewReactions {
                     items = ContextController.Items(content: .custom(ReactionListContextMenuContent(
                         context: self.context,
                         displayReadTimestamps: true,
@@ -210,31 +242,7 @@ extension ChatControllerImpl {
                                 self.openPeer(peer: peer, navigation: .default, fromMessage: MessageReference(message), fromReactionMessageId: hasReaction ? message.id : nil)
                             })
                         },
-                        deleteReaction: { [weak self] peer, _ in
-                            dismissController?({ [weak self] in
-                                guard let self, self.chatLocation.peerId?.namespace == Namespaces.Peer.CloudChannel else {
-                                    return
-                                }
-                                let _ = (self.context.sharedContext.chatAvailableMessageActions(
-                                    engine: self.context.engine,
-                                    accountPeerId: self.context.account.peerId,
-                                    messageIds: Set([message.id]),
-                                    keepUpdated: false
-                                )
-                                |> deliverOnMainQueue).startStandalone(next: { [weak self] actions in
-                                    guard let self, !actions.options.isEmpty else {
-                                        return
-                                    }
-                                    self.presentBanMessageOptions(
-                                        accountPeerId: self.context.account.peerId,
-                                        author: peer._asPeer(),
-                                        messageIds: Set([message.id]),
-                                        options: actions.options,
-                                        reaction: true
-                                    )
-                                })
-                            })
-                        }
+                        deleteReaction: deleteReaction
                     )))
                 } else {
                     items = ContextController.Items(content: .list([]))
@@ -325,7 +333,7 @@ extension ChatControllerImpl {
                 let presentationContext = self.controllerInteraction?.presentationContext
                 let premiumConfiguration = PremiumConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 })
                 
-                if "".isEmpty {
+                if canDeleteReactions && canViewReactions {
                     items.tip = .deleteReaction
                 } else if !packReferences.isEmpty && !premiumConfiguration.isPremiumDisabled {
                     items.tip = .animatedEmoji(text: nil, arguments: nil, file: nil, action: nil)
