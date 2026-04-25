@@ -106,6 +106,7 @@ private enum SGBoolSetting: String {
     case nyStyleSnow
     case nyStyleLightning
     case tabBarSearchEnabled
+    case hidePMFirstTimeSticker
 }
 
 private enum SGOneFromManySetting: String {
@@ -328,7 +329,8 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.DefaultEmojisFirst.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hidePhoneInSettings, value: SGSimpleSettings.shared.hidePhoneInSettings, text: i18n("Settings.HidePhoneInSettingsUI", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.HidePhoneInSettingsUI.Notice", lang)))
-    
+    entries.append(.toggle(id: id.count, section: .other, settingName: .hidePMFirstTimeSticker, value: SGSimpleSettings.shared.hidePMFirstTimeSticker, text: i18n("Settings.HidePMFirstTimeSticker", lang), enabled: true))
+
     return filterSGItemListUIEntrires(entries: entries, by: state.searchQuery)
 }
 
@@ -504,6 +506,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.secondsInMessages = value
         case .confirmCalls:
             SGSimpleSettings.shared.confirmCalls = value
+        case .hidePMFirstTimeSticker:
+            SGSimpleSettings.shared.hidePMFirstTimeSticker = value
         case .swipeForVideoPIP:
             SGSimpleSettings.shared.videoPIPSwipeDirection = value ? SGSimpleSettings.VideoPIPSwipeDirection.up.rawValue : SGSimpleSettings.VideoPIPSwipeDirection.none.rawValue
         case .enableVoipTcp:
