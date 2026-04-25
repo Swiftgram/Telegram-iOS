@@ -553,13 +553,13 @@ private final class AdminUserActionsContentComponent: Component {
                             leftIcon: .check(ListActionItemComponent.LeftIcon.Check(
                                 isSelected: !selectedPeers.isEmpty,
                                 toggle: {
-                                    component.toggleDeleteAllOptionPeerSelection(.messages, EnginePeer(component.peers[0].peer))
+                                    component.toggleDeleteAllOptionPeerSelection(.messages, component.peers[0].peer)
                                 }
                             )),
                             icon: .none,
                             accessory: nil,
                             action: { _ in
-                                component.toggleDeleteAllOptionPeerSelection(.messages, EnginePeer(component.peers[0].peer))
+                                component.toggleDeleteAllOptionPeerSelection(.messages, component.peers[0].peer)
                             },
                             highlighting: .disabled
                         )))
@@ -579,13 +579,13 @@ private final class AdminUserActionsContentComponent: Component {
                             leftIcon: .check(ListActionItemComponent.LeftIcon.Check(
                                 isSelected: !additionalSelectedPeers.isEmpty,
                                 toggle: {
-                                    component.toggleDeleteAllOptionPeerSelection(.reactions, EnginePeer(component.peers[0].peer))
+                                    component.toggleDeleteAllOptionPeerSelection(.reactions, component.peers[0].peer)
                                 }
                             )),
                             icon: .none,
                             accessory: nil,
                             action: { _ in
-                                component.toggleDeleteAllOptionPeerSelection(.reactions, EnginePeer(component.peers[0].peer))
+                                component.toggleDeleteAllOptionPeerSelection(.reactions, component.peers[0].peer)
                             },
                             highlighting: .disabled
                         )))
