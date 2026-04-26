@@ -454,12 +454,16 @@ public extension TelegramEngine {
             resource: EngineMediaResource,
             pathExtension: String? = nil,
             waitUntilFetchStatus: Bool = false,
+            incremental: Bool = false,
             attemptSynchronously: Bool = false
         ) -> Signal<EngineMediaResource.ResourceData, NoError> {
+            let option: ResourceDataRequestOption = incremental
+                ? .incremental(waitUntilFetchStatus: waitUntilFetchStatus)
+                : .complete(waitUntilFetchStatus: waitUntilFetchStatus)
             return self.account.postbox.mediaBox.resourceData(
                 resource._asResource(),
                 pathExtension: pathExtension,
-                option: .complete(waitUntilFetchStatus: waitUntilFetchStatus),
+                option: option,
                 attemptSynchronously: attemptSynchronously
             )
             |> map { EngineMediaResource.ResourceData($0) }

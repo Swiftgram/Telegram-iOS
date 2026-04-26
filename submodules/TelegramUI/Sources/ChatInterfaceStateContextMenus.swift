@@ -1324,10 +1324,10 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                                 if resourceAvailable {
                                     for media in message.media {
                                         if let image = media as? TelegramMediaImage, let largest = largestImageRepresentation(image.representations) {
-                                            let _ = (context.account.postbox.mediaBox.resourceData(largest.resource, option: .incremental(waitUntilFetchStatus: false))
+                                            let _ = (context.engine.resources.data(resource: EngineMediaResource(largest.resource), incremental: true)
                                             |> take(1)
                                             |> deliverOnMainQueue).startStandalone(next: { data in
-                                                if data.complete, let imageData = try? Data(contentsOf: URL(fileURLWithPath: data.path)) {
+                                                if data.isComplete, let imageData = try? Data(contentsOf: URL(fileURLWithPath: data.path)) {
                                                     if let image = UIImage(data: imageData) {
                                                         if !messageText.isEmpty {
                                                             copyTextWithEntities()
