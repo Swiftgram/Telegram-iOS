@@ -680,7 +680,7 @@ extension ChatControllerImpl {
                                                 strongSelf.sendMessages(strongSelf.transformEnqueueMessages(enqueueMessages, silentPosting: silent, scheduleTime: scheduleTime, postpone: postpone), postpone: postpone)
                                             })
                                         } else {
-                                            let contactController = strongSelf.context.sharedContext.makeDeviceContactInfoController(context: ShareControllerAppAccountContext(context: strongSelf.context), environment: ShareControllerAppEnvironment(sharedContext: strongSelf.context.sharedContext), subject: .filter(peer: peerAndContactData.0, contactId: nil, contactData: contactData, completion: { peer, contactData in
+                                            let contactController = strongSelf.context.sharedContext.makeDeviceContactInfoController(context: ShareControllerAppAccountContext(context: strongSelf.context), environment: ShareControllerAppEnvironment(sharedContext: strongSelf.context.sharedContext), subject: .filter(peer: peerAndContactData.0.flatMap(EnginePeer.init), contactId: nil, contactData: contactData, completion: { peer, contactData in
                                                 guard let strongSelf = self, !contactData.basicData.phoneNumbers.isEmpty else {
                                                     return
                                                 }
@@ -1847,7 +1847,7 @@ extension ChatControllerImpl {
                                     strongSelf.sendMessages([message], postpone: postpone)
                                 })
                             } else {
-                                let contactController = strongSelf.context.sharedContext.makeDeviceContactInfoController(context: ShareControllerAppAccountContext(context: strongSelf.context), environment: ShareControllerAppEnvironment(sharedContext: strongSelf.context.sharedContext), subject: .filter(peer: peerAndContactData.0, contactId: nil, contactData: contactData, completion: { peer, contactData in
+                                let contactController = strongSelf.context.sharedContext.makeDeviceContactInfoController(context: ShareControllerAppAccountContext(context: strongSelf.context), environment: ShareControllerAppEnvironment(sharedContext: strongSelf.context.sharedContext), subject: .filter(peer: peerAndContactData.0.flatMap(EnginePeer.init), contactId: nil, contactData: contactData, completion: { peer, contactData in
                                     guard let strongSelf = self, !contactData.basicData.phoneNumbers.isEmpty else {
                                         return
                                     }

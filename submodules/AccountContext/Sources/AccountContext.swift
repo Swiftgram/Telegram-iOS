@@ -701,11 +701,11 @@ public final class NavigateToChatControllerParams {
 }
 
 public enum DeviceContactInfoSubject {
-    case vcard(Peer?, DeviceContactStableId?, DeviceContactExtendedData)
-    case filter(peer: Peer?, contactId: DeviceContactStableId?, contactData: DeviceContactExtendedData, completion: (Peer?, DeviceContactExtendedData) -> Void)
-    case create(peer: Peer?, contactData: DeviceContactExtendedData, isSharing: Bool, shareViaException: Bool, completion: (Peer?, DeviceContactStableId, DeviceContactExtendedData) -> Void)
-    
-    public var peer: Peer? {
+    case vcard(EnginePeer?, DeviceContactStableId?, DeviceContactExtendedData)
+    case filter(peer: EnginePeer?, contactId: DeviceContactStableId?, contactData: DeviceContactExtendedData, completion: (EnginePeer?, DeviceContactExtendedData) -> Void)
+    case create(peer: EnginePeer?, contactData: DeviceContactExtendedData, isSharing: Bool, shareViaException: Bool, completion: (EnginePeer?, DeviceContactStableId, DeviceContactExtendedData) -> Void)
+
+    public var peer: EnginePeer? {
         switch self {
         case let .vcard(peer, _, _):
             return peer

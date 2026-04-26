@@ -1871,6 +1871,81 @@ All four forwarding implementations live in `submodules/TelegramCore/Sources/Uti
 
 ---
 
+## Wave 103 outcome (2026-04-26): ABANDONED
+
+`ChatRecentActionsControllerNode.peer: Peer → EnginePeer` (wave-71-shadow close). Implementation built and committed (`e60a8692a7`, build clean at iter-3 / 41s), then **reverted** (`git reset --hard HEAD~1`) after pre-flight failure surfaced.
+
+**Spec promised:** −1 boundary `_asPeer()` (CRAC:277) + −1 `import Postbox` (CRACN:5) + 0 ADD wraps. 7 edits / 2 files / 1 iter.
+
+**Actual outcome before revert:** −1 boundary `_asPeer()` (CRAC:277) + −1 `EnginePeer(strongSelf.peer)` wrap (CRACN:535, bonus) + 0 `import Postbox` drops (raw `Message`/`MessageId` references for `AdminLogEventAction` payloads block the drop) + **+2 ADD `_asPeer()` wraps** (CRACN:228 for `canSetupAutoremoveTimeout` Peer-protocol extension, CRACN:737 for `chatRecentActionsHistoryPreparedTransition(peer: Peer)` helper). Net wrap delta: **0**, not the promised −1. Net `import Postbox` drop: **0**, not the promised −1.
+
+**Why "extend in follow-up" was rejected:** Migrating `chatRecentActionsHistoryPreparedTransition(peer:)` to `EnginePeer` to drop the CRACN:737 ADD bridge would cascade into `ChatRecentActionsEntry.item(peer:)`. Inventory found 75 ADD-bridge sites in the helper body: 72 `peers[peer.id] = peer` stores into a `SimpleDictionary<PeerId, Peer>` (the type required by `Message(...)` constructor's `peers:` parameter) plus 3 `filterMessageChannelPeer(peer)` calls. Net cost of dropping 1 bridge: **+74 new bridges**. Catastrophic regression.
+
+**Pre-flight failure modes (lessons):**
+
+- **Pre-flight grep for `self.<field>.X` access must enumerate Peer-protocol extension methods, not just downcast patterns.** Wave-103 spec grepped `self.peer as\?` and `self.peer\.id\b` but missed `self.peer.canSetupAutoremoveTimeout(...)` at CRACN:228. `canSetupAutoremoveTimeout` is a `public extension Peer` method in `AccountContext/Sources/ChatController.swift:1013` — not on `EnginePeer`. **Mitigation:** future wave specs that retype a stored field from `Peer` to `EnginePeer` MUST grep for ALL `self.<field>.<method>(` patterns and verify each method is reachable on `EnginePeer` (not just on the `Peer` protocol). Build a method-allowlist for `EnginePeer` from `extension EnginePeer` declarations in TelegramCore and intersect.
+
+- **Pre-flight grep for `<field>` flowing into Peer-typed function parameters.** Wave-103 spec missed that `peer` was passed to `chatRecentActionsHistoryPreparedTransition(peer: Peer)` at CRACN:737. The helper sits in a different file (`ChatRecentActionsHistoryTransition.swift`) but the same submodule. **Mitigation:** grep `: peer\b|, peer:|peer: peer\b|peer:\s*self\.peer` across the entire submodule, classify each call site as (a) target accepts EnginePeer (clean), (b) target accepts Peer (would need `_asPeer()` ADD or co-migration of target), (c) target accepts `EnginePeer(peer)` wrap (clean drop).
+
+- **Wave-71-shadow close is NOT always cheap.** The implicit assumption ("caller already has EnginePeer; just drop the boundary `_asPeer()` and retype the storage") only holds when ALL of: (a) every `self.<field>.X` access has an EnginePeer-compatible counterpart, (b) every function call passing `self.<field>` accepts EnginePeer, (c) no protocol-conformance constraint on the stored field exists. Wave 71 itself worked because `peerInfoControllerImpl` was a single private function with mechanical body. Wave 103 failed because the file participates in a deep helper-cascade that builds Postbox `Message` values — and `Message`'s `peers: SimpleDictionary<PeerId, Peer>` constructor parameter is a hard barrier.
+
+- **The `Message(... peers: SimpleDictionary<PeerId, Peer>, ...)` constructor is a hard wave barrier.** Any helper that builds Message values from a peer-typed parameter has Cat-3 ADD-bridge sites everywhere it stores the migrated peer into the peers dict. ChatRecentActionsHistoryTransition.swift has 70+ such constructions. Future waves should treat Message-building helpers as red-flagged candidates and pre-flight inventory their `peers[X.id] = X` store sites before promising any `peer: Peer → EnginePeer` migration upstream.
+
+- **Spec self-review must include an "ADD wraps inventory" pass.** The wave-103 spec claimed "ADD wraps: 0" but the pre-flight grep didn't actually verify this — only the cast/`is` patterns were enumerated. Future spec template: a dedicated "ADD-wrap risk grep" section listing the regex patterns checked (Peer-protocol method calls, function calls accepting `: Peer`, dictionary stores into `[PeerId: Peer]`).
+
+**Outcome:** wave-103 candidate marked **abandoned** in `project_postbox_refactor_next_wave.md`. Spec and plan docs retained at `docs/superpowers/specs/2026-04-26-postbox-wave-103-chat-recent-actions-controller-node-design.md` and `docs/superpowers/plans/2026-04-26-postbox-wave-103-chat-recent-actions-controller-node.md` as record of the failed attempt.
+
+---
+
+## Wave 103 (retry) outcome (2026-04-26)
+
+`accountManager.mediaBox.storeResourceData(...)` Shape-A drain against the wave-94 `AccountManagerResources.storeResourceData(id:data:synchronous:)` facade. 5 sites / 2 files / 3 Edit calls (1 single + 2 `replace_all=true` batches) / **first-pass-clean** Bazel 29.5s (warm cache). Commit `92230b0691`. Sites: ThemeUpdateManager:112 (with `synchronous: true`), WallpaperResources:973+1214 (`reference.resource.id` pattern, replace_all), WallpaperResources:1260+1523 (`file.file.resource.id` pattern, replace_all).
+
+**Net delta:** −5 raw `mediaBox.X` accesses, +5 facade calls, +5 `EngineMediaResource.Id(...)` wraps (canonical engine-side, not Postbox bridges).
+
+**Lesson reinforced:** wave-shape-G drain against an existing facade is the cheapest reliable wave shape. 1-iter, ~30s build, single atomic commit. Pre-flight risk inventory takes ~5 minutes; implementation takes ~30s. Use this shape after a difficult abandonment to rebuild momentum.
+
+**Wave-shape-G drain after a failed wave-71-shadow:** the contrast between the abandoned wave-103 (`peer: Peer → EnginePeer` field migration with hidden 75-site cascade) and the retry (5-site call-rewrite drain) illustrates why facade-drain waves and field-migration waves are categorically different. Drains have bounded scope (only sites matching a literal text pattern); field migrations have unbounded scope (any consumer of any field-typed value). Future wave selection should prefer drains when the goal is consistent forward progress and reserve field migrations for sessions with explicit budget for cascade investigation.
+
+---
+
+## Wave 104 outcome (2026-04-26)
+
+`accountManager.mediaBox.resourceData(...)` Shape-A drain (3 of 8 candidate sites) against the wave-32 / wave-94 `AccountManagerResources.data(resource:)` facade. 1 file / 6 Edit calls (3 call rewrites + 3 consumer-side `.complete` → `.isComplete` renames) / **first-pass-clean** Bazel 11.7s. Commit `08fc3f721e`. Sites: WallpaperResources:957 (`reference.resource`), :1164 (`fileReference.media.resource`), :1264 (`file.file.resource`).
+
+**Net delta:** −3 raw `mediaBox.X` accesses, +3 facade calls, +3 `EngineMediaResource(...)` wraps, +3 consumer field renames (`.complete` → `.isComplete` to match `EngineMediaResource.ResourceData`'s renamed field).
+
+**Deferred (from the original 8-site candidate set):**
+- 2 sites in `FetchCachedRepresentations.swift:482, 490` — flow `data: MediaResourceData` into `fetchCachedScaledImageRepresentation` / `fetchCachedBlurredWallpaperRepresentation` (raw-`MediaResourceData`-typed `resourceData:` parameter). Migration would cascade those functions OR require boundary `MediaResourceData` reconstruction. Defer.
+- 3 sites in `WallpaperResources.swift:33, 59, 401` — coupled to postbox-side via `combineLatest(accountManager.mediaBox.resourceData(X), account.postbox.mediaBox.resourceData(X))` returning typed `Signal<(MediaResourceData, MediaResourceData), NoError>`. Migrating one side without the other breaks the tuple type. Defer until postbox-side is also drainable or a paired-resource facade is designed.
+
+**Lesson — "Postbox-typed-function-parameter barrier" pattern (generalized):** wave 103's abandonment introduced this concept for `Message(... peers: SimpleDictionary<PeerId, Peer>, ...)` — any helper that builds a `Message` value forces ADD bridges at every `peers[X.id] = X` store. Wave 104 finds the same pattern at the result-type-flow level: `fetchCachedScaled*Representation(resourceData: MediaResourceData)` is a barrier that forces ADD bridges at every site whose closure flows the migrated result into it. Both are instances of "a Postbox-typed function parameter blocks upstream migration of values that flow into it." Pre-flight inventory must enumerate not just type-level uses of the migrated symbol but also the function-parameter-typed barriers it transitively flows into.
+
+**Lesson — "field rename at wrapper-type boundaries":** `EngineMediaResource.ResourceData.isComplete` is renamed from `MediaResourceData.complete`. Each migrated call site has a paired consumer rename. This is a small but mandatory step the spec must call out per-site; an undocumented rename would surface as a build error referencing a property that doesn't exist on the new wrapper. The rename is verifiable per-site by reading the closure body that consumes the result.
+
+---
+
+## Wave 105 outcome (2026-04-26)
+
+`DeviceContactInfoSubject` enum-payload Peer? → EnginePeer? migration. 5 files / 17 edits / **first-pass-clean** Bazel 203s (foundational AccountContext touch). Commit `0c76724409`. Wave-91-pattern multi-module enum-payload + completion-callback signature migration.
+
+**Type changes:** 3 enum case payloads (`Peer?` → `EnginePeer?`), 2 completion-callback signatures (`(Peer?, ...) -> Void` → `(EnginePeer?, ...) -> Void`), 1 computed property (`peer: Peer?` → `peer: EnginePeer?`). All in `AccountContext.swift`.
+
+**Net delta:** −10 wraps dropped, +2 wraps added (Pattern E ADD bridges at Chat-side construction sites where `peerAndContactData.0` is raw `Peer?`), +1 downcast → case-let conversion. **Net wrap delta: −8.**
+
+Per-pattern breakdown:
+- Pattern A (5 sites): `_asPeer()` drops at construction sites where source is already `EnginePeer?`. DeviceContactInfoController.swift:1289, 1443, 1489 + StoryItemSetContainerViewSendMessage.swift:2132 + OpenChatMessage.swift:443.
+- Pattern B (2 sites): `_asPeer()` drops at completion-call sites. DeviceContactInfoController.swift:1105, 1224.
+- Pattern C (3 sites): `.flatMap(EnginePeer.init)` simplifications when destructured `peer` is already `EnginePeer?` post-migration. DeviceContactInfoController.swift:942, 944, 946.
+- Pattern D (1 site): downcast `as? TelegramUser` → `case let .user(peer)`. DeviceContactInfoController.swift:849.
+- Pattern E (2 sites): ADD `.flatMap(EnginePeer.init)` wraps at construction sites where source is raw `Peer?`. ChatControllerOpenAttachmentMenu.swift:683, 1850.
+
+**Lesson — "thorough pre-flight inventory pays for itself":** wave 105 was the first wave-71-shadow-style (field/payload migration with cascade risk) attempted after the wave-103 abandonment forced a discipline reset. Pre-flight inventory took ~15 minutes (full 4-layer wave-71-shadow-checklist sweep, including verifying 8 destructure sites + 5 callback consumers + 3 `subject.peer` accesses + 12 construction sites across 8 files). The inventory caught the 2 ADD bridges at Chat sites that an Explore-agent pass had initially miscategorized — verified by direct grep of `peerAndContactData` source signal types. Cost-of-care: 15 minutes of pre-flight + 5 minutes of one-line spec fix vs. the wave-103 cost of a build-and-revert cycle. Recommendation: apply the same discipline to every future wave-71-shadow candidate. The inventory cost is a tiny fraction of the abandoned-wave cost.
+
+**Lesson — "documented ADD bridges are net-positive":** ADD bridges are not always disqualifying. The wave-71-shadow risk feedback emphasizes inventorying them, not avoiding them entirely. When the migration delivers net-negative wrap delta even after accounting for the ADD bridges (here: −10 drops vs. +2 adds = −8 net), the wave is still worth doing. The ADD bridges are also documented in the spec and commit message, so future waves migrating the upstream `peerAndContactData` source can drop them as part of that migration's natural cascade.
+
+---
+
 ## Modules currently free of `import Postbox` (running tally)
 
 Consumer modules that no longer import Postbox, across all waves and standalone commits:
