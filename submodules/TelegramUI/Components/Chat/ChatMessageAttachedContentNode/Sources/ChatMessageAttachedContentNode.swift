@@ -356,7 +356,7 @@ public final class ChatMessageAttachedContentNode: ASDisplayNode {
                             contentMediaValue = file
                         } else if file.isVideo {
                             contentMediaValue = file
-                        } else if file.isSticker || file.isAnimatedSticker {
+                        } else if file.isSticker || file.isAnimatedSticker || file.isCustomEmoji {
                             contentMediaValue = file
                         } else {
                             contentFileValue = file

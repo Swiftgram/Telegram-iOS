@@ -2057,8 +2057,9 @@ func openResolvedUrlImpl(
                         TelegramEngine.EngineData.Item.Peer.Peer(id: authorId)
                     ).get()
                 }
+                let isAlreadyAdded = await context.engine.messages.composeAIMessageStyles().get().contains(where: { $0.id == .style(.custom(style.id)) })
                 
-                let controller = await context.sharedContext.makeTextProcessingScreen(context: context, theme: nil, mode: .preview(style: style, authorPeer: authorPeer, initialPreview: initialPreview, added: {
+                let controller = await context.sharedContext.makeTextProcessingScreen(context: context, theme: nil, mode: .preview(style: style, authorPeer: authorPeer, initialPreview: initialPreview, isAlreadyAdded: isAlreadyAdded, added: {
                     Task { @MainActor in
                         guard let emojiFileId = style.emojiFileId, let file = await context.engine.stickers.resolveInlineStickers(fileIds: [emojiFileId]).get().first?.value else {
                             return
