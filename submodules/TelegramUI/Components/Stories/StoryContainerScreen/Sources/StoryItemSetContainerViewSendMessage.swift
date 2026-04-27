@@ -2914,12 +2914,12 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         })
     }
 
-    private func presentTimerPicker(view: StoryItemSetContainerComponent.View, peer: EnginePeer, style: ChatTimerScreenStyle = .default, selectedTime: Int32? = nil, dismissByTapOutside: Bool = true, completion: @escaping (Int32) -> Void) {
+    private func presentTimerPicker(view: StoryItemSetContainerComponent.View, peer: EnginePeer, style: ChatTimerScreenStyle = .default, selectedTime: Int32? = nil, completion: @escaping (Int32) -> Void) {
         guard let component = view.component else {
             return
         }
         let theme = component.theme
-        let controller = ChatTimerScreen(context: component.context, updatedPresentationData: (component.context.sharedContext.currentPresentationData.with({ $0 }).withUpdated(theme: theme), component.context.sharedContext.presentationData |> map { $0.withUpdated(theme: theme) }), style: style, currentTime: selectedTime, dismissByTapOutside: dismissByTapOutside, completion: { time in
+        let controller = ChatTimerScreen(context: component.context, updatedPresentationData: (component.context.sharedContext.currentPresentationData.with({ $0 }).withUpdated(theme: theme), component.context.sharedContext.presentationData |> map { $0.withUpdated(theme: theme) }), style: style, currentTime: selectedTime, completion: { time in
             completion(time)
         })
         view.endEditing(true)

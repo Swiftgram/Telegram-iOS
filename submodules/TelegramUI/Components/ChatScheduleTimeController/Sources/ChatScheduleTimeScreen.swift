@@ -613,12 +613,12 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
                     component: AnyComponent(ButtonComponent(
                         background: ButtonComponent.Background(
                             style: .glass,
-                            color: environment.theme.list.itemDestructiveColor.withMultipliedAlpha(0.1),
-                            foreground: environment.theme.list.itemDestructiveColor,
-                            pressedColor: environment.theme.list.itemDestructiveColor.withMultipliedAlpha(0.8),
+                            color: environment.theme.list.itemAccentColor.withMultipliedAlpha(0.1),
+                            foreground: environment.theme.list.itemAccentColor,
+                            pressedColor: environment.theme.list.itemAccentColor.withMultipliedAlpha(0.8),
                         ),
                         content: AnyComponentWithIdentity(id: AnyHashable(0 as Int), component: AnyComponent(
-                            Text(text: strings.Conversation_FormatDate_RemoveDate, font: Font.semibold(17.0), color: environment.theme.list.itemDestructiveColor)
+                            Text(text: strings.Conversation_FormatDate_RemoveDate, font: Font.semibold(17.0), color: environment.theme.list.itemAccentColor)
                         )),
                         isEnabled: true,
                         displaysProgress: false,

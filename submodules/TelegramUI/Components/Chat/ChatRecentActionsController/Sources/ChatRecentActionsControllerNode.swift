@@ -1487,7 +1487,7 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
     }
     
     private func presentAutoremoveSetup() {
-        /*let controller = ChatTimerScreen(context: self.context, updatedPresentationData: self.controller?.updatedPresentationData, peerId: self.peer.id, style: .default, mode: .autoremove, currentTime: currentValue, dismissByTapOutside: true, completion: { [weak self] value in
+        /*let controller = ChatTimerScreen(context: self.context, updatedPresentationData: self.controller?.updatedPresentationData, peerId: self.peer.id, style: .default, mode: .autoremove, currentTime: currentValue, completion: { [weak self] value in
             guard let strongSelf = self else {
                 return
             }

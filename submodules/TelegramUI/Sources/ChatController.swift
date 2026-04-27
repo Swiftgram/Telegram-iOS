@@ -10344,11 +10344,11 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         })
     }
     
-    func presentTimerPicker(style: ChatTimerScreenStyle = .default, selectedTime: Int32? = nil, dismissByTapOutside: Bool = true, completion: @escaping (Int32) -> Void) {
+    func presentTimerPicker(style: ChatTimerScreenStyle = .default, selectedTime: Int32? = nil, completion: @escaping (Int32) -> Void) {
         guard case .peer = self.chatLocation else {
             return
         }
-        let controller = ChatTimerScreen(context: self.context, updatedPresentationData: self.updatedPresentationData, style: style, currentTime: selectedTime, dismissByTapOutside: dismissByTapOutside, completion: { time in
+        let controller = ChatTimerScreen(context: self.context, updatedPresentationData: self.updatedPresentationData, style: style, currentTime: selectedTime, completion: { time in
             completion(time)
         })
         self.chatDisplayNode.dismissInput()
@@ -10414,7 +10414,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             return
         }
         
-        let controller = ChatTimerScreen(context: self.context, updatedPresentationData: self.updatedPresentationData, style: .default, mode: .autoremove, currentTime: self.presentationInterfaceState.autoremoveTimeout, dismissByTapOutside: true, completion: { [weak self] value in
+        let controller = ChatTimerScreen(context: self.context, updatedPresentationData: self.updatedPresentationData, style: .default, mode: .autoremove, currentTime: self.presentationInterfaceState.autoremoveTimeout, completion: { [weak self] value in
             guard let strongSelf = self else {
                 return
             }

@@ -1023,7 +1023,7 @@ public func savedMessagesPeerMenuItems(context: AccountContext, threadId: Int64,
 }
 
 private func openCustomMute(context: AccountContext, peerId: EnginePeer.Id, threadId: Int64, baseController: ViewController) {
-    let controller = ChatTimerScreen(context: context, updatedPresentationData: nil, style: .default, mode: .mute, currentTime: nil, dismissByTapOutside: true, completion: { [weak baseController] value in
+    let controller = ChatTimerScreen(context: context, updatedPresentationData: nil, style: .default, mode: .mute, currentTime: nil, completion: { [weak baseController] value in
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
         
         if value <= 0 {
