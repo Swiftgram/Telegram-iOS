@@ -1053,7 +1053,7 @@ public final class PendingMessageManager {
                 for attribute in messages[0].0.attributes {
                     if let replyAttribute = attribute as? ReplyMessageAttribute {
                         replyMessageId = replyAttribute.messageId.id
-                        if peerId != replyAttribute.messageId.peerId || (replyAttribute.threadMessageId != nil && replyAttribute.threadMessageId?.id != topMsgId) {
+                        if peerId != replyAttribute.messageId.peerId || (topMsgId != nil && replyAttribute.threadMessageId != nil && replyAttribute.threadMessageId?.id != topMsgId) {
                             replyPeerId = replyAttribute.messageId.peerId
                         }
                         if replyAttribute.isQuote {
@@ -1561,7 +1561,7 @@ public final class PendingMessageManager {
                 for attribute in message.attributes {
                     if let replyAttribute = attribute as? ReplyMessageAttribute {
                         replyMessageId = replyAttribute.messageId.id
-                        if peer.id != replyAttribute.messageId.peerId || (replyAttribute.threadMessageId != nil && replyAttribute.threadMessageId?.id != topMsgId) {
+                        if peer.id != replyAttribute.messageId.peerId || (topMsgId != nil && replyAttribute.threadMessageId != nil && replyAttribute.threadMessageId?.id != topMsgId) {
                             replyPeerId = replyAttribute.messageId.peerId
                         }
                         if replyAttribute.isQuote {
