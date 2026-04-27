@@ -516,6 +516,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
                 return
             }
             #endif*/
+            self.webView?.bindTrustedOrigin(from: url)
             self.webView?.load(URLRequest(url: url))
         }
         
@@ -1092,7 +1093,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
             guard let controller = self.controller else {
                 return
             }
-            guard message.frameInfo.isMainFrame else {
+            guard self.webView?.isTrustedMainFrameMessage(message) == true else {
                 return
             }
             guard let body = message.body as? [String: Any] else {

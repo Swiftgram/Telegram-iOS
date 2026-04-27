@@ -1498,7 +1498,6 @@ final class ComposePollScreenComponent: Component {
             pollTextSectionItems.append(AnyComponentWithIdentity(id: 0, component: AnyComponent(ListComposePollOptionComponent(
                 externalState: self.pollTextInputState,
                 context: component.context,
-                style: .glass,
                 theme: theme,
                 strings: environment.strings,
                 resetText: self.resetPollText.flatMap { resetText in
@@ -1534,7 +1533,6 @@ final class ComposePollScreenComponent: Component {
             pollTextSectionItems.append(AnyComponentWithIdentity(id: 1, component: AnyComponent(ListComposePollOptionComponent(
                 externalState: self.pollDescriptionInputState,
                 context: component.context,
-                style: .glass,
                 theme: theme,
                 strings: environment.strings,
                 resetText: nil,
@@ -1650,7 +1648,6 @@ final class ComposePollScreenComponent: Component {
                 pollOptionsSectionItems.append(AnyComponentWithIdentity(id: pollOption.id, component: AnyComponent(ListComposePollOptionComponent(
                     externalState: pollOption.textInputState,
                     context: component.context,
-                    style: .glass,
                     theme: theme,
                     strings: environment.strings,
                     resetText: pollOption.resetText.flatMap { resetText in
@@ -2499,7 +2496,6 @@ final class ComposePollScreenComponent: Component {
                         AnyComponentWithIdentity(id: 0, component: AnyComponent(ListComposePollOptionComponent(
                             externalState: self.quizAnswerTextInputState,
                             context: component.context,
-                            style: .glass,
                             theme: theme,
                             strings: environment.strings,
                             resetText: self.resetQuizAnswerText.flatMap { resetText in

@@ -343,6 +343,8 @@ private func trimStart(_ input: RichText) -> RichText {
         }
     case .image:
         break
+    case .formula:
+        break
     }
     return text
 }
@@ -384,6 +386,8 @@ private func trimEnd(_ input: RichText) -> RichText {
             text = .concat(array)
         }
     case .image:
+        break
+    case .formula:
         break
     }
     return text
@@ -428,6 +432,8 @@ private func trim(_ input: RichText) -> RichText {
         }
     case .image:
         break
+    case .formula:
+        break
     }
     return text
 }
@@ -470,6 +476,8 @@ private func addNewLine(_ input: RichText) -> RichText {
         }
     case .image:
         break
+    case let .formula(latex):
+        text = .concat([.formula(latex: latex), .plain("\n")])
     }
     return text
 }

@@ -27,9 +27,23 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?) ->
                 return 31.0
             case (.preformatted, .paragraph):
                 return 19.0
+            case (.formula, .paragraph):
+                return 19.0
             case (.paragraph, .paragraph):
                 return 25.0
             case (_, .paragraph):
+                return 20.0
+            case (.title, .formula), (.authorDate, .formula):
+                return 34.0
+            case (.header, .formula), (.subheader, .formula), (.heading, .formula):
+                return 25.0
+            case (.list, .formula):
+                return 31.0
+            case (.preformatted, .formula):
+                return 19.0
+            case (.paragraph, .formula):
+                return 19.0
+            case (_, .formula):
                 return 20.0
             case (.title, .list), (.authorDate, .list):
                 return 34.0
@@ -37,9 +51,13 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?) ->
                 return 31.0
             case (.preformatted, .list):
                 return 19.0
+            case (.formula, .list):
+                return 25.0
             case (_, .list):
                 return 25.0
             case (.paragraph, .preformatted):
+                return 19.0
+            case (.formula, .preformatted):
                 return 19.0
             case (_, .preformatted):
                 return 20.0

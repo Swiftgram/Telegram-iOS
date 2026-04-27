@@ -466,13 +466,10 @@ final class PeerSelectionControllerNode: ASDisplayNode {
                     }
 
                     var isDice = false
-                    var isMusic = false
                     for media in message.media {
-                        if let media = media as? TelegramMediaFile, media.isMusic {
-                            isMusic = true
-                        } else if media is TelegramMediaDice {
+                        if media is TelegramMediaDice {
                             isDice = true
-                        } else {
+                        } else if (media as? TelegramMediaFile)?.isMusic != true {
                             if !message.text.isEmpty {
                                 if media is TelegramMediaImage || media is TelegramMediaFile {
                                     hasCaptions = true
@@ -480,7 +477,7 @@ final class PeerSelectionControllerNode: ASDisplayNode {
                             }
                         }
                     }
-                    if !isDice && !isMusic {
+                    if !isDice {
                         hasOther = true
                     }
                 }

@@ -158,10 +158,8 @@ private func chatForwardOptions(selfController: ChatControllerImpl, sourceView: 
             }
             
             var isDice = false
-            var isMusic = false
             for media in message.media {
                 if let media = media as? TelegramMediaFile, media.isMusic {
-                    isMusic = true
                     if !message.text.isEmpty {
                         hasCaptions = true
                     }
@@ -175,7 +173,7 @@ private func chatForwardOptions(selfController: ChatControllerImpl, sourceView: 
                     hasPaid = true
                 }
             }
-            if !isDice && !isMusic {
+            if !isDice {
                 hasOther = true
             }
         }

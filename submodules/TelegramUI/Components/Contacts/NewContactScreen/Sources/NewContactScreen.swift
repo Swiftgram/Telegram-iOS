@@ -716,7 +716,6 @@ final class NewContactScreenComponent: Component {
                             ListComposePollOptionComponent(
                                 externalState: nil,
                                 context: component.context,
-                                style: .glass,
                                 theme: theme,
                                 strings: strings,
                                 placeholder: NSAttributedString(string: strings.AddContact_NotePlaceholder, font: Font.regular(17.0), textColor: theme.list.itemPlaceholderTextColor),

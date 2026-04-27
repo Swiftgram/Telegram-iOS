@@ -330,11 +330,7 @@ typedef enum
     _circleWrapperView.alpha = 0.0f;
     _circleWrapperView.clipsToBounds = false;
     [_wrapperView addSubview:_circleWrapperView];
-    
-    _shadowView = [[UIImageView alloc] initWithImage:TGComponentsImageNamed(@"VideoMessageShadow")];
-    _shadowView.frame = _circleWrapperView.bounds;
-    [_circleWrapperView addSubview:_shadowView];
-    
+        
     _circleView = [[UIView alloc] initWithFrame:CGRectInset(_circleWrapperView.bounds, shadowSize, shadowSize)];
     _circleView.clipsToBounds = true;
     _circleView.layer.cornerRadius = _circleView.frame.size.width / 2.0f;

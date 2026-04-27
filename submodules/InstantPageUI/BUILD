@@ -29,6 +29,7 @@ swift_library(
         "//submodules/UndoUI:UndoUI",
         "//submodules/TranslateUI:TranslateUI",
         "//submodules/Tuples:Tuples",
+        "//third-party/SwiftMath:SwiftMath",
     ],
     visibility = [
         "//visibility:public",

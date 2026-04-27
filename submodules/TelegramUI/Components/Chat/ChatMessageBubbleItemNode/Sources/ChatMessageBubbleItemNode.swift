@@ -1766,9 +1766,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         if let forwardInfo = item.content.firstMessage.forwardInfo, forwardInfo.source == nil, forwardInfo.author?.id.namespace == Namespaces.Peer.CloudUser {
             for media in item.content.firstMessage.media {
                 if let file = media as? TelegramMediaFile {
-                    if file.isMusic {
-                        ignoreForward = true
-                    } else if file.isInstantVideo {
+                    if file.isInstantVideo {
                         isInstantVideo = true
                     }
                     break

@@ -1158,7 +1158,7 @@ public func createGroupControllerImpl(context: AccountContext, peerIds: [PeerId]
             }, action: { _, f in
                 f(.default)
                 
-                let controller = ChatTimerScreen(context: context, updatedPresentationData: nil, style: .default, mode: .autoremove, currentTime: currentValue == 0 ? nil : currentValue, dismissByTapOutside: true, completion: { value in
+                let controller = ChatTimerScreen(context: context, updatedPresentationData: nil, style: .default, mode: .autoremove, currentTime: currentValue == 0 ? nil : currentValue, completion: { value in
                     applyValue(value)
                 })
                 endEditingImpl?()
