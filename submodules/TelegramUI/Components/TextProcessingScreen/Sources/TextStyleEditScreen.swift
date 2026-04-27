@@ -67,6 +67,7 @@ final class TextStyleEditContentComponent: Component {
         private var environment: ViewControllerComponentContainer.Environment?
         private weak var state: EmptyComponentState?
         private var isUpdating: Bool = false
+        private var previousEnvironment: ViewControllerComponentContainer.Environment?
         
         private let iconBackground = ComponentView<Empty>()
         private let emptyIcon = ComponentView<Empty>()
@@ -209,6 +210,8 @@ final class TextStyleEditContentComponent: Component {
             let alphaTransition: ComponentTransition = transition.animation.isImmediate ? .immediate : .easeInOut(duration: 0.2)
             
             let environment = environment[ViewControllerComponentContainer.Environment.self].value
+            let previousEnvironment = self.previousEnvironment
+            self.previousEnvironment = environment
             
             var resetTitle: String?
             var resetText: String?
@@ -534,8 +537,36 @@ final class TextStyleEditContentComponent: Component {
 
             let _ = alphaTransition
 
-            if let hint = transition.userData(TextFieldComponent.AnimationHint.self), case .textChanged = hint.kind, let hintView = hint.view {
-                self.recenterCaret(hintView: hintView, transition: transition)
+            if let hint = transition.userData(TextFieldComponent.AnimationHint.self), let hintView = hint.view {
+                switch hint.kind {
+                case .textChanged:
+                    self.recenterCaret(hintView: hintView, transition: transition)
+                default:
+                    break
+                }
+            }
+            if let previousEnvironment {
+                var targetView: UIView?
+                if component.externalState.titleInputState.isEditing {
+                    if let view = self.titleSection.findTaggedView(tag: self.titleFieldTag) as? ListMultilineTextFieldItemComponent.View {
+                        targetView = view
+                    }
+                } else if component.externalState.textInputState.isEditing {
+                    if let view = self.textSection.findTaggedView(tag: self.textFieldTag) as? ListMultilineTextFieldItemComponent.View {
+                        targetView = view
+                    }
+                }
+                
+                if let targetView {
+                    if (environment.inputHeight == 0.0) != (previousEnvironment.inputHeight == 0.0) {
+                        DispatchQueue.main.async { [weak self] in
+                            guard let self else {
+                                return
+                            }
+                            self.recenterCaret(hintView: targetView, transition: transition)
+                        }
+                    }
+                }
             }
 
             return CGSize(width: availableSize.width, height: contentHeight)

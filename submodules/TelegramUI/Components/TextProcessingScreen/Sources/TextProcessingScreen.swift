@@ -54,6 +54,7 @@ final class TextProcessingContentComponent: Component {
     let newStyleAdded: (TelegramComposeAIMessageMode.CloudStyle) -> Void
     let styleUpdated: (TelegramComposeAIMessageMode.CloudStyle) -> Void
     let styleDeleted: (TelegramComposeAIMessageMode.StyleId) -> Void
+    let displayToast: (String) -> Void
     let dismiss: (@escaping () -> Void) -> Void
 
     init(
@@ -72,6 +73,7 @@ final class TextProcessingContentComponent: Component {
         newStyleAdded: @escaping (TelegramComposeAIMessageMode.CloudStyle) -> Void,
         styleUpdated: @escaping (TelegramComposeAIMessageMode.CloudStyle) -> Void,
         styleDeleted: @escaping (TelegramComposeAIMessageMode.StyleId) -> Void,
+        displayToast: @escaping (String) -> Void,
         dismiss: @escaping (@escaping () -> Void) -> Void
     ) {
         self.externalState = externalState
@@ -89,6 +91,7 @@ final class TextProcessingContentComponent: Component {
         self.newStyleAdded = newStyleAdded
         self.styleUpdated = styleUpdated
         self.styleDeleted = styleDeleted
+        self.displayToast = displayToast
         self.dismiss = dismiss
     }
 
@@ -240,7 +243,26 @@ final class TextProcessingContentComponent: Component {
             guard let slug = style.slug else {
                 return
             }
-            let shareController = component.context.sharedContext.makeShareController(context: component.context, params: ShareControllerParams(subject: .url("https://t.me/addstyle/\(slug)")))
+            let shareController = component.context.sharedContext.makeShareController(context: component.context, params: ShareControllerParams(
+                subject: .url("https://t.me/addstyle/\(slug)"),
+                completed: { [weak self] peerIds in
+                    Task { @MainActor in
+                        guard let self, let component = self.component, let environment = self.environment, let peerId = peerIds.first else {
+                            return
+                        }
+                        let text: String
+                        if peerId == component.context.account.peerId {
+                            text = environment.strings.WebBrowser_LinkForwardTooltip_SavedMessages_One
+                        } else {
+                            guard let peer = await component.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId)).get() else {
+                                return
+                            }
+                            text = environment.strings.Conversation_ShareLinkTooltip_Chat_One(peer.displayTitle(strings: environment.strings, displayOrder: .firstLast).replacingOccurrences(of: "*", with: "")).string
+                        }
+                        component.displayToast(text)
+                    }
+                }
+            ))
             self.environment?.controller()?.present(shareController, in: .window(.root))
         }
         
@@ -411,7 +433,7 @@ final class TextProcessingContentComponent: Component {
             guard let component = self.component else {
                 return
             }
-            guard case let .preview(style, _, _, _) = component.mode else {
+            guard case let .preview(style, _, _, _, _) = component.mode else {
                 return
             }
             
@@ -463,7 +485,7 @@ final class TextProcessingContentComponent: Component {
                 switch component.mode {
                 case .edit:
                     self.currentMode = .stylize
-                case let .preview(_, _, initialPreview, _):
+                case let .preview(_, _, initialPreview, _, _):
                     self.currentMode = .stylize
                     self.currentStylePreview = initialPreview
                     self.requestStylePreview()
@@ -476,7 +498,7 @@ final class TextProcessingContentComponent: Component {
 
             var contentHeight: CGFloat = 0.0
             
-            if case let .preview(style, _, _, _) = component.mode {
+            if case let .preview(style, _, _, _, _) = component.mode {
                 contentHeight += 40.0
                 if let previewIconFile = component.previewIconFile {
                     let previewIcon: ComponentView<Empty>
@@ -736,7 +758,7 @@ final class TextProcessingContentComponent: Component {
                 var isRequestingPreview: Bool = false
                 var authorPeer: EnginePeer?
                 var userCount: Int = 0
-                if case let .preview(style, authorPeerValue, _, _) = component.mode {
+                if case let .preview(style, authorPeerValue, _, _, _) = component.mode {
                     isPreview = true
                     inputText = TextWithEntities(text: "", entities: [])
                     authorPeer = authorPeerValue
@@ -1191,6 +1213,9 @@ private final class TextProcessingSheetComponent: Component {
         
         private var styleCreatedToastData: (timer: Foundation.Timer, emojiFile: TelegramMediaFile, style: TelegramComposeAIMessageMode.CloudStyle.Custom)?
         private var styleCreatedToast: ComponentView<Empty>?
+        
+        private var customToastData: (timer: Foundation.Timer, text: String)?
+        private var customToast: ComponentView<Empty>?
 
         private var component: TextProcessingSheetComponent?
         private var environment: ViewControllerComponentContainer.Environment?
@@ -1211,6 +1236,7 @@ private final class TextProcessingSheetComponent: Component {
         deinit {
             self.actionDisposable?.dispose()
             self.styleCreatedToastData?.timer.invalidate()
+            self.customToastData?.timer.invalidate()
         }
         
         private func displayLongPressSendMenu(sourceSendButton: UIView) {
@@ -1410,8 +1436,9 @@ private final class TextProcessingSheetComponent: Component {
                     performMainAction = {
                         dismiss(true)
                     }
-                case let .preview(style, _, _, added):
-                    actionButtonTitle = "Add Style"
+                case let .preview(style, _, _, isAlreadyAdded, added):
+                    //TODO:localize
+                    actionButtonTitle = isAlreadyAdded ? "Done" : "Add Style"
                     isMainActionEnabled = !self.isPerformingMainAction
                     performMainAction = { [weak self] in
                         guard let self, let component = self.component else {
@@ -1422,19 +1449,23 @@ private final class TextProcessingSheetComponent: Component {
                             self.state?.updated(transition: .spring(duration: 0.4))
                         }
                         
-                        self.actionDisposable?.dispose()
-                        self.actionDisposable = (component.context.engine.messages.installAIMessageStyle(style: style) |> deliverOnMainQueue).startStrict(error: { [weak self] _ in
-                            guard let self else {
-                                return
-                            }
-                            self.isPerformingMainAction = false
-                            if !self.isUpdating {
-                                self.state?.updated(transition: .spring(duration: 0.4))
-                            }
-                        }, completed: {
+                        if isAlreadyAdded {
                             dismiss(true)
-                            added()
-                        })
+                        } else {
+                            self.actionDisposable?.dispose()
+                            self.actionDisposable = (component.context.engine.messages.installAIMessageStyle(style: style) |> deliverOnMainQueue).startStrict(error: { [weak self] _ in
+                                guard let self else {
+                                    return
+                                }
+                                self.isPerformingMainAction = false
+                                if !self.isUpdating {
+                                    self.state?.updated(transition: .spring(duration: 0.4))
+                                }
+                            }, completed: {
+                                dismiss(true)
+                                added()
+                            })
+                        }
                     }
                 }
             }
@@ -1547,6 +1578,19 @@ private final class TextProcessingSheetComponent: Component {
                                 return
                             }
                             self.styles.remove(at: index)
+                            self.state?.updated(transition: .spring(duration: 0.4))
+                        },
+                        displayToast: { [weak self] text in
+                            guard let self else {
+                                return
+                            }
+                            self.customToastData = (Foundation.Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false, block: { [weak self] _ in
+                                guard let self else {
+                                    return
+                                }
+                                self.customToastData = nil
+                                self.state?.updated(transition: .spring(duration: 0.4))
+                            }), text)
                             self.state?.updated(transition: .spring(duration: 0.4))
                         },
                         dismiss: { [weak self] completion in
@@ -1787,6 +1831,63 @@ private final class TextProcessingSheetComponent: Component {
                     }
                 }
             }
+            
+            if let customToastData = self.customToastData, !self.contentExternalState.nonPremiumFloodTriggered, self.styleCreatedToastData == nil {
+                let sideInset: CGFloat = 8.0
+                
+                let customToast: ComponentView<Empty>
+                var customToastTransition = transition
+                if let current = self.customToast {
+                    customToast = current
+                } else {
+                    customToastTransition = customToastTransition.withAnimation(.none)
+                    customToast = ComponentView()
+                    self.customToast = customToast
+                }
+                let body = MarkdownAttributeSet(font: Font.regular(14.0), textColor: .white)
+                let bold = MarkdownAttributeSet(font: Font.semibold(14.0), textColor: .white)
+                let playOnce = ActionSlot<Void>()
+                let customToastSize = customToast.update(
+                    transition: customToastTransition,
+                    component: AnyComponent(ToastContentComponent(
+                        icon: AnyComponent(LottieComponent(
+                            content: LottieComponent.AppBundleContent(name: "anim_infotip"),
+                            startingPosition: .begin,
+                            size: CGSize(width: 32.0, height: 32.0),
+                            playOnce: playOnce
+                        )),
+                        content: AnyComponent(VStack([
+                            AnyComponentWithIdentity(id: 1, component: AnyComponent(MultilineTextComponent(
+                                text: .markdown(text: customToastData.text, attributes: MarkdownAttributes(body: body, bold: bold, link: body, linkAttribute: { _ in nil })),
+                                maximumNumberOfLines: 0
+                            )))
+                        ], alignment: .left, spacing: 6.0)),
+                        insets: UIEdgeInsets(top: 10.0, left: 12.0, bottom: 10.0, right: 10.0),
+                        iconSpacing: 12.0
+                    )),
+                    environment: {},
+                    containerSize: CGSize(width: availableSize.width - sideInset * 2.0, height: availableSize.height)
+                )
+                if let customToastView = customToast.view {
+                    if customToastView.superview == nil, let sheetView = self.sheet.view as? ResizableSheetComponent<ViewControllerComponentContainer.Environment>.View {
+                        sheetView.containerView.addSubview(customToastView)
+                        if !transition.animation.isImmediate {
+                            customToastView.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.25)
+                        }
+                        playOnce.invoke(())
+                    }
+                    customToastTransition.setFrame(view: customToastView, frame: CGRect(origin: CGPoint(x: sideInset, y: availableSize.height - 94.0 - customToastSize.height), size: customToastSize))
+                }
+            } else {
+                if let customToast = self.customToast {
+                    self.customToast = nil
+                    if let customToastView = customToast.view {
+                        customToastView.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.25, removeOnCompletion: false, completion: { [weak customToastView] _ in
+                            customToastView?.removeFromSuperview()
+                        })
+                    }
+                }
+            }
 
             if let languageSelectionMenuDataValue = self.languageSelectionMenuData {
                 let languageSelectionMenu: ComponentView<Empty>
@@ -1988,7 +2089,7 @@ public class TextProcessingScreen: ViewControllerComponentContainer {
         
         var shouldDisplayStyleNotice = false
         var previewIconFile: TelegramMediaFile?
-        if case let .preview(style, _, _, _) = mode {
+        if case let .preview(style, _, _, _, _) = mode {
             if let emojiFileId = style.emojiFileId {
                 previewIconFile = await context.engine.stickers.resolveInlineStickersLocal(fileIds: [emojiFileId]).get().first?.value
             }

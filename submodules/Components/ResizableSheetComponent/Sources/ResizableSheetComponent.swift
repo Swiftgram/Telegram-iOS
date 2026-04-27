@@ -661,6 +661,7 @@ public final class ResizableSheetComponent<ChildEnvironmentType: Sendable & Equa
                 guard let self else {
                     return
                 }
+                self.endEditing(true)
                 self.animateOut {
                     completion(Void())
                 }

@@ -173,6 +173,9 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
             initialFilter = .topics
         }
         
+        var folder = folder
+        folder = nil
+        
         self.context = context
         self.peersFilter = filter
         self.requestPeerType = requestPeerType

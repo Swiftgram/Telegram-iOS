@@ -902,7 +902,9 @@ func _internal_editAITextStyle(account: Account, id: Int64, accessHash: Int64, d
             
             let styles = _internal_cachedCloudAITextStyles(transaction: transaction)
             var items = styles?.items ?? []
-            items.append(style)
+            if let index = items.firstIndex(where: { $0.id == .style(.custom(id)) }) {
+                items[index] = style
+            }
             _internal_setCachedCloudAITextStyles(transaction: transaction, styles: CachedCloudAITextStyles(items: items, hash: 0))
             return style
         }
