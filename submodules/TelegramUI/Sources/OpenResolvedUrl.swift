@@ -307,11 +307,8 @@ func openResolvedUrlImpl(
             dismissInput()
             navigationController?.pushViewController(controller)
         case let .gameStart(botPeerId, game):
-            let controller = context.sharedContext.makePeerSelectionController(PeerSelectionControllerParams(context: context, filter: [.onlyManageable, .excludeDisabled, .excludeRecent, .doNotSearchMessages], hasContactSelector: false, title: presentationData.strings.Bot_AddToChat_Title, selectForumThreads: true))
-            controller.peerSelected = { [weak controller] peer, _ in
-                let _ = peer.id
-                let _ = botPeerId
-                let _ = game
+            let controller = context.sharedContext.makePeerSelectionController(PeerSelectionControllerParams(context: context, filter: [.onlyWriteable, .excludeDisabled, .doNotSearchMessages], hasContactSelector: false, title: presentationData.strings.ShareMenu_SelectChats, selectForumThreads: true))
+            controller.peerSelected = { [weak controller] peer, threadId in
                 let presentationData = context.sharedContext.currentPresentationData.with { $0 }
                 let text: String
                 if case .user = peer {
@@ -321,6 +318,20 @@ func openResolvedUrlImpl(
                 }
                 
                 let alertController = textAlertController(context: context, title: nil, text: text, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.RequestPeer_SelectionConfirmationSend, action: {
+                    controller?.inProgress = true
+                    let _ = (context.engine.messages.sendBotGame(botPeerId: botPeerId, game: game, to: peer.id, threadId: threadId)
+                    |> deliverOnMainQueue).startStandalone(error: { _ in
+                        controller?.inProgress = false
+                        let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                        present(textAlertController(context: context, updatedPresentationData: updatedPresentationData, title: nil, text: presentationData.strings.Login_UnknownError, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), nil)
+                    })
+                    if let navigationController {
+                        if let threadId {
+                            let _ = context.sharedContext.navigateToForumThread(context: context, peerId: peer.id, threadId: threadId, messageId: nil, navigationController: navigationController, activateInput: nil, scrollToEndIfExists: true, keepStack: .always, animated: true).startStandalone()
+                        } else {
+                            context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: context, chatLocation: .peer(peer), keepStack: .always, useExisting: true, scrollToEndIfExists: true))
+                        }
+                    }
                     controller?.dismiss()
                 }), TextAlertAction(type: .genericAction, title: presentationData.strings.Common_Cancel, action: {
                 })])

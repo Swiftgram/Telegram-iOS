@@ -219,6 +219,10 @@ public extension TelegramEngine {
             return _internal_forwardGameWithScore(account: self.account, messageId: messageId, to: peerId, threadId: threadId, as: senderPeerId)
         }
 
+        public func sendBotGame(botPeerId: PeerId, game: String, to peerId: PeerId, threadId: Int64?) -> Signal<Void, SendBotGameError> {
+            return _internal_sendBotGame(account: self.account, botPeerId: botPeerId, game: game, to: peerId, threadId: threadId)
+        }
+
         public func requestUpdatePinnedMessage(peerId: PeerId, update: PinnedMessageUpdate) -> Signal<Void, UpdatePinnedMessageError> {
             return _internal_requestUpdatePinnedMessage(account: self.account, peerId: peerId, update: update)
         }
