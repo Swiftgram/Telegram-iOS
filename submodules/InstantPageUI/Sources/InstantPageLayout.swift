@@ -291,6 +291,37 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
             setupStyleStack(styleStack, theme: theme, attributes: theme.headingTextAttributes(level: level, link: false))
             let (_, items, contentSize) = layoutTextItemWithString(attributedStringForRichText(text, styleStack: styleStack), boundingWidth: boundingWidth - horizontalInset * 2.0, offset: CGPoint(x: horizontalInset, y: 0.0), media: media, webpage: webpage)
             return InstantPageLayout(origin: CGPoint(), contentSize: contentSize, items: items)
+        case let .formula(latex):
+            let styleStack = InstantPageTextStyleStack()
+            setupStyleStack(styleStack, theme: theme, category: .paragraph, link: false)
+            let attributes = styleStack.textAttributes()
+            let textColor = (attributes[NSAttributedString.Key.foregroundColor] as? UIColor) ?? theme.textCategories.paragraph.color
+            let fontSize = (attributes[NSAttributedString.Key.font] as? UIFont)?.pointSize ?? theme.textCategories.paragraph.font.size
+
+            guard let attachment = instantPageMathAttachment(latex: latex, fontSize: fontSize, textColor: textColor, mode: .block) else {
+                let (_, items, contentSize) = layoutTextItemWithString(attributedStringForRichText(.plain(latex), styleStack: styleStack), boundingWidth: boundingWidth - horizontalInset * 2.0, offset: CGPoint(x: horizontalInset, y: 0.0), media: media, webpage: webpage)
+                return InstantPageLayout(origin: CGPoint(), contentSize: contentSize, items: items)
+            }
+
+            let availableWidth = boundingWidth - horizontalInset * 2.0
+            if attachment.rendered.size.width > availableWidth {
+                let scrollableItem = InstantPageScrollableFormulaItem(
+                    frame: CGRect(origin: .zero, size: CGSize(width: boundingWidth, height: attachment.rendered.size.height)),
+                    attachment: attachment,
+                    totalWidth: attachment.rendered.size.width,
+                    horizontalInset: horizontalInset
+                )
+                return InstantPageLayout(origin: CGPoint(), contentSize: scrollableItem.frame.size, items: [scrollableItem])
+            } else {
+                let item = InstantPageFormulaItem(
+                    frame: CGRect(
+                        origin: CGPoint(x: horizontalInset + floor((availableWidth - attachment.rendered.size.width) / 2.0), y: 0.0),
+                        size: attachment.rendered.size
+                    ),
+                    attachment: attachment
+                )
+                return InstantPageLayout(origin: CGPoint(), contentSize: CGSize(width: boundingWidth, height: attachment.rendered.size.height), items: [item])
+            }
         case let .paragraph(text):
             let styleStack = InstantPageTextStyleStack()
             setupStyleStack(styleStack, theme: theme, category: .paragraph, link: false)

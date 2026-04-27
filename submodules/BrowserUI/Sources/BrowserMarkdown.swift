@@ -22,14 +22,221 @@ private let markdownDefaultBlockImageDimensions = PixelDimensions(width: 1200, h
 private let markdownDefaultInlineImageDimensions = PixelDimensions(width: 18, height: 18)
 private let markdownTaskListUncheckedNumber = "\u{001f}tg-md-task:unchecked"
 private let markdownTaskListCheckedNumber = "\u{001f}tg-md-task:checked"
+private let markdownRawHTMLTagRegex = try! NSRegularExpression(pattern: #"</?([A-Za-z][A-Za-z0-9:-]*)\b[^>]*?>"#)
+private let markdownFormulaPlaceholderRegex = try! NSRegularExpression(pattern: #"TGMDMATH\d+TGMD"#)
+private let markdownVoidHTMLTags: Set<String> = [
+    "area",
+    "base",
+    "br",
+    "col",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "link",
+    "meta",
+    "param",
+    "source",
+    "track",
+    "wbr"
+]
+
+private struct MarkdownSafetyLimits {
+    let maxFileSize = 2_097_152
+    let maxLineLength = 32_768
+    let maxBlockquoteDepth = 64
+    let maxListIndent = 96
+    let maxRawHTMLTagCount = 8_000
+    let maxRawHTMLNestingDepth = 64
+    let maxAttributedStringLength = 400_000
+    let maxAttributeRuns = 20_000
+    let maxPresentationIntentDepth = 128
+    let maxIntentNodes = 10_000
+    let maxEmittedBlocks = 5_000
+    let maxTableColumns = 32
+    let maxTableCells = 2_000
+    let maxMediaItems = 100
+    let maxInlineHTMLStyleDepth = 32
+    let maxDataImageBytes = 2_097_152
+    let maxDataImagePixelCount = 12_000_000
+    let maxFormulas = 200
+    let maxFormulaSourceCharacters = 20_000
+    let maxInlineFormulaLength = 256
+    let maxBlockFormulaLength = 4_096
+}
+
+private let markdownSafetyLimits = MarkdownSafetyLimits()
+
+private final class MarkdownConversionBudget {
+    let limits: MarkdownSafetyLimits
+
+    private(set) var isExceeded = false
+
+    private var attributeRunCount = 0
+    private var intentNodeCount = 0
+    private var tableCellCount = 0
+    private var mediaItemCount = 0
+
+    init(limits: MarkdownSafetyLimits) {
+        self.limits = limits
+    }
+
+    @discardableResult
+    func fail() -> Bool {
+        self.isExceeded = true
+        return false
+    }
+
+    @discardableResult
+    func registerAttributedStringLength(_ length: Int) -> Bool {
+        guard length <= self.limits.maxAttributedStringLength else {
+            return self.fail()
+        }
+        return true
+    }
+
+    @discardableResult
+    func registerAttributeRun() -> Bool {
+        self.attributeRunCount += 1
+        guard self.attributeRunCount <= self.limits.maxAttributeRuns else {
+            return self.fail()
+        }
+        return true
+    }
+
+    @discardableResult
+    func registerPresentationIntentDepth(_ depth: Int) -> Bool {
+        guard depth <= self.limits.maxPresentationIntentDepth else {
+            return self.fail()
+        }
+        return true
+    }
+
+    @discardableResult
+    func registerIntentNode() -> Bool {
+        self.intentNodeCount += 1
+        guard self.intentNodeCount <= self.limits.maxIntentNodes else {
+            return self.fail()
+        }
+        return true
+    }
+
+    @discardableResult
+    func registerBlockDepth(_ depth: Int) -> Bool {
+        guard depth <= self.limits.maxPresentationIntentDepth else {
+            return self.fail()
+        }
+        return true
+    }
+
+    @discardableResult
+    func registerTableColumns(_ count: Int) -> Bool {
+        guard count <= self.limits.maxTableColumns else {
+            return self.fail()
+        }
+        return true
+    }
+
+    @discardableResult
+    func registerTableCells(_ count: Int) -> Bool {
+        self.tableCellCount += count
+        guard self.tableCellCount <= self.limits.maxTableCells else {
+            return self.fail()
+        }
+        return true
+    }
+
+    @discardableResult
+    func registerMediaItem() -> Bool {
+        self.mediaItemCount += 1
+        guard self.mediaItemCount <= self.limits.maxMediaItems else {
+            return self.fail()
+        }
+        return true
+    }
+
+    @discardableResult
+    func registerInlineHTMLStyleDepth(_ depth: Int) -> Bool {
+        guard depth <= self.limits.maxInlineHTMLStyleDepth else {
+            return self.fail()
+        }
+        return true
+    }
+
+    @discardableResult
+    func validateFinalBlocks(_ blocks: [InstantPageBlock]) -> Bool {
+        var count = 0
+        return self.validate(blocks: blocks, depth: 0, count: &count)
+    }
+
+    private func validate(blocks: [InstantPageBlock], depth: Int, count: inout Int) -> Bool {
+        guard self.registerBlockDepth(depth) else {
+            return false
+        }
+        for block in blocks {
+            count += 1
+            guard count <= self.limits.maxEmittedBlocks else {
+                return self.fail()
+            }
+            switch block {
+            case let .list(items, _):
+                for item in items {
+                    if !self.validate(listItem: item, depth: depth + 1, count: &count) {
+                        return false
+                    }
+                }
+            case let .details(_, nestedBlocks, _):
+                if !self.validate(blocks: nestedBlocks, depth: depth + 1, count: &count) {
+                    return false
+                }
+            default:
+                break
+            }
+        }
+        return true
+    }
+
+    private func validate(listItem: InstantPageListItem, depth: Int, count: inout Int) -> Bool {
+        guard self.registerBlockDepth(depth) else {
+            return false
+        }
+        if case let .blocks(blocks, _) = listItem {
+            return self.validate(blocks: blocks, depth: depth + 1, count: &count)
+        } else {
+            return true
+        }
+    }
+}
 
 private struct MarkdownPageResult {
     let blocks: [InstantPageBlock]
     let media: [MediaId: Media]
 }
 
+private enum MarkdownFormulaMode {
+    case inline
+    case block
+}
+
+private struct MarkdownFormulaDescriptor {
+    let placeholder: String
+    let latex: String
+    let mode: MarkdownFormulaMode
+}
+
+private struct MarkdownPreparedSource {
+    let text: String
+    let formulasByPlaceholder: [String: MarkdownFormulaDescriptor]
+}
+
+private enum MarkdownInlineTextSegment {
+    case plain(String)
+    case formula(MarkdownFormulaDescriptor)
+}
+
 private enum MarkdownInlineFragment {
     case richText(RichText)
+    case formula(MarkdownFormulaDescriptor, RichText)
     case image(MarkdownResolvedImage)
 }
 
@@ -44,6 +251,8 @@ private struct MarkdownInlineContent {
             switch fragment {
             case let .richText(text):
                 result.append(text)
+            case let .formula(_, text):
+                result.append(text)
             case let .image(image):
                 var text: RichText = .image(id: image.mediaId, dimensions: image.inlineDimensions)
                 if let linkUrl = image.linkUrl {
@@ -55,6 +264,31 @@ private struct MarkdownInlineContent {
         
         return markdownCompact(result)
     }
+
+    var standaloneBlockFormula: MarkdownFormulaDescriptor? {
+        var result: MarkdownFormulaDescriptor?
+
+        for fragment in self.fragments {
+            switch fragment {
+            case let .richText(text):
+                if !markdownIsWhitespaceOnly(text) {
+                    return nil
+                }
+            case let .formula(descriptor, _):
+                guard descriptor.mode == .block else {
+                    return nil
+                }
+                if result != nil {
+                    return nil
+                }
+                result = descriptor
+            case .image:
+                return nil
+            }
+        }
+
+        return result
+    }
     
     var standaloneImage: MarkdownResolvedImage? {
         var result: MarkdownResolvedImage?
@@ -65,6 +299,8 @@ private struct MarkdownInlineContent {
                 if !markdownIsWhitespaceOnly(text) {
                     return nil
                 }
+            case .formula:
+                return nil
             case let .image(image):
                 if result != nil {
                     return nil
@@ -98,20 +334,24 @@ private enum MarkdownTaskListState {
 private final class MarkdownConversionContext {
     private let context: AccountContext
     fileprivate let documentURL: URL
+    fileprivate let formulasByPlaceholder: [String: MarkdownFormulaDescriptor]
+    fileprivate let budget: MarkdownConversionBudget
     private var nextRemoteMediaId: Int64 = 0
     private var nextLocalMediaId: Int64 = 0
-    
+
     private(set) var media: [MediaId: Media] = [:]
-    
-    init(context: AccountContext, documentURL: URL) {
+
+    init(context: AccountContext, documentURL: URL, formulasByPlaceholder: [String: MarkdownFormulaDescriptor], budget: MarkdownConversionBudget) {
         self.context = context
         self.documentURL = documentURL
+        self.formulasByPlaceholder = formulasByPlaceholder
+        self.budget = budget
     }
-    
+
     func makePageResult(blocks: [InstantPageBlock]) -> MarkdownPageResult {
         return MarkdownPageResult(blocks: blocks, media: self.media)
     }
-    
+
     func resolveImage(attributes: [NSAttributedString.Key: Any]) -> MarkdownResolvedImage? {
         guard let imageUrl = markdownImageURL(attributes: attributes) else {
             return nil
@@ -121,8 +361,11 @@ private final class MarkdownConversionContext {
         let caption = markdownImageCaption(markdownAlternateDescription(attributes: attributes))
         let linkUrl = markdownLink(attributes: attributes, documentURL: self.documentURL)
         
-        switch markdownResolveImageSource(imageUrl) {
+        switch markdownResolveImageSource(imageUrl, limits: self.budget.limits) {
         case let .remote(url):
+            guard self.budget.registerMediaItem() else {
+                return nil
+            }
             let mediaId = self.nextMediaId(namespace: Namespaces.Media.CloudImage)
             self.media[mediaId] = TelegramMediaImage(
                 imageId: mediaId,
@@ -146,6 +389,9 @@ private final class MarkdownConversionContext {
                 linkUrl: linkUrl
             )
         case let .data(data, dimensions):
+            guard self.budget.registerMediaItem() else {
+                return nil
+            }
             let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max), size: Int64(data.count), isSecretRelated: false)
             self.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data)
             
@@ -188,6 +434,535 @@ private final class MarkdownConversionContext {
     }
 }
 
+private func markdownPassesPreflight(data: Data, limits: MarkdownSafetyLimits) -> Bool {
+    guard data.count <= limits.maxFileSize else {
+        return false
+    }
+    guard let text = markdownDecodedSourceText(data) else {
+        return false
+    }
+    return markdownPassesPreflight(text: text, limits: limits)
+}
+
+private func markdownDecodedSourceText(_ data: Data) -> String? {
+    if let text = String(data: data, encoding: .utf8) {
+        return text
+    }
+    if data.starts(with: [0xff, 0xfe]) {
+        return String(data: data, encoding: .utf16LittleEndian)
+    }
+    if data.starts(with: [0xfe, 0xff]) {
+        return String(data: data, encoding: .utf16BigEndian)
+    }
+    return nil
+}
+
+private func markdownPassesPreflight(text: String, limits: MarkdownSafetyLimits) -> Bool {
+    var activeFence: Character?
+    var htmlTagCount = 0
+    var htmlDepth = 0
+
+    for rawLine in text.split(separator: "\n", omittingEmptySubsequences: false) {
+        var line = String(rawLine)
+        if line.hasSuffix("\r") {
+            line.removeLast()
+        }
+
+        if (line as NSString).length > limits.maxLineLength {
+            return false
+        }
+
+        if let fenceMarker = markdownFenceMarker(in: line) {
+            if activeFence == fenceMarker {
+                activeFence = nil
+            } else {
+                activeFence = fenceMarker
+            }
+            continue
+        }
+
+        if activeFence != nil {
+            continue
+        }
+
+        if markdownBlockquoteDepth(in: line) > limits.maxBlockquoteDepth {
+            return false
+        }
+        if markdownIndentWidth(in: line) > limits.maxListIndent {
+            return false
+        }
+        if !markdownScanRawHTMLTags(in: line, limits: limits, tagCount: &htmlTagCount, depth: &htmlDepth) {
+            return false
+        }
+    }
+
+    return true
+}
+
+private func markdownFenceMarker(in line: String) -> Character? {
+    let trimmed = line.drop(while: { $0 == " " || $0 == "\t" })
+    guard let marker = trimmed.first, marker == "`" || marker == "~" else {
+        return nil
+    }
+    var count = 0
+    var index = trimmed.startIndex
+    while index < trimmed.endIndex, trimmed[index] == marker {
+        count += 1
+        index = trimmed.index(after: index)
+    }
+    return count >= 3 ? marker : nil
+}
+
+private func markdownBlockquoteDepth(in line: String) -> Int {
+    var depth = 0
+    var index = line.startIndex
+
+    while index < line.endIndex {
+        switch line[index] {
+        case " ", "\t":
+            index = line.index(after: index)
+        case ">":
+            depth += 1
+            index = line.index(after: index)
+            if index < line.endIndex, (line[index] == " " || line[index] == "\t") {
+                index = line.index(after: index)
+            }
+        default:
+            return depth
+        }
+    }
+
+    return depth
+}
+
+private func markdownIndentWidth(in line: String) -> Int {
+    var width = 0
+    for character in line {
+        switch character {
+        case " ":
+            width += 1
+        case "\t":
+            width += 4
+        default:
+            return width
+        }
+    }
+    return width
+}
+
+private func markdownScanRawHTMLTags(in line: String, limits: MarkdownSafetyLimits, tagCount: inout Int, depth: inout Int) -> Bool {
+    let nsLine = line as NSString
+    let matches = markdownRawHTMLTagRegex.matches(in: line, range: NSRange(location: 0, length: nsLine.length))
+
+    for match in matches {
+        tagCount += 1
+        guard tagCount <= limits.maxRawHTMLTagCount else {
+            return false
+        }
+
+        let tagText = nsLine.substring(with: match.range)
+        let tagName = nsLine.substring(with: match.range(at: 1)).lowercased()
+        let lowercasedTag = tagText.lowercased()
+
+        if lowercasedTag.hasPrefix("</") {
+            depth = max(0, depth - 1)
+        } else if !lowercasedTag.hasSuffix("/>") && !markdownVoidHTMLTags.contains(tagName) {
+            depth += 1
+            guard depth <= limits.maxRawHTMLNestingDepth else {
+                return false
+            }
+        }
+    }
+
+    return true
+}
+
+private func markdownPreparedSource(text: String, limits: MarkdownSafetyLimits) -> MarkdownPreparedSource {
+    let lines = markdownLinesPreservingEndings(text)
+
+    var activeFence: Character?
+    var formulasByPlaceholder: [String: MarkdownFormulaDescriptor] = [:]
+    var acceptedFormulaCount = 0
+    var totalFormulaCharacters = 0
+    var nextPlaceholderIndex = 0
+    var result = ""
+
+    var lineIndex = 0
+    while lineIndex < lines.count {
+        let line = lines[lineIndex]
+        let (content, _) = markdownLineContentAndEnding(line)
+
+        if let fenceMarker = markdownFenceMarker(in: content) {
+            if activeFence == fenceMarker {
+                activeFence = nil
+            } else {
+                activeFence = fenceMarker
+            }
+            result.append(contentsOf: line)
+            lineIndex += 1
+            continue
+        }
+
+        if activeFence != nil {
+            result.append(contentsOf: line)
+            lineIndex += 1
+            continue
+        }
+
+        if let replacement = markdownBlockFormulaReplacement(
+            in: lines,
+            startLineIndex: lineIndex,
+            limits: limits,
+            acceptedFormulaCount: &acceptedFormulaCount,
+            totalFormulaCharacters: &totalFormulaCharacters,
+            nextPlaceholderIndex: &nextPlaceholderIndex
+        ) {
+            result.append(contentsOf: replacement.replacement)
+            formulasByPlaceholder[replacement.descriptor.placeholder] = replacement.descriptor
+            lineIndex = replacement.nextLineIndex
+            continue
+        }
+
+        let processedLine = markdownReplacingInlineFormulas(
+            in: line,
+            limits: limits,
+            acceptedFormulaCount: &acceptedFormulaCount,
+            totalFormulaCharacters: &totalFormulaCharacters,
+            nextPlaceholderIndex: &nextPlaceholderIndex,
+            formulasByPlaceholder: &formulasByPlaceholder
+        )
+        result.append(contentsOf: processedLine)
+        lineIndex += 1
+    }
+
+    return MarkdownPreparedSource(text: result, formulasByPlaceholder: formulasByPlaceholder)
+}
+
+private func markdownLinesPreservingEndings(_ text: String) -> [String] {
+    guard !text.isEmpty else {
+        return []
+    }
+
+    var result: [String] = []
+    var lineStart = text.startIndex
+    var index = text.startIndex
+
+    while index < text.endIndex {
+        if text[index] == "\n" {
+            let nextIndex = text.index(after: index)
+            result.append(String(text[lineStart ..< nextIndex]))
+            lineStart = nextIndex
+        }
+        index = text.index(after: index)
+    }
+
+    if lineStart < text.endIndex {
+        result.append(String(text[lineStart...]))
+    }
+
+    return result
+}
+
+private func markdownLineContentAndEnding(_ line: String) -> (content: String, ending: String) {
+    if line.hasSuffix("\r\n") {
+        return (String(line.dropLast(2)), "\r\n")
+    } else if line.hasSuffix("\n") {
+        return (String(line.dropLast()), "\n")
+    } else {
+        return (line, "")
+    }
+}
+
+private func markdownFormulaPlaceholder(_ index: Int) -> String {
+    return "TGMDMATH\(index)TGMD"
+}
+
+private func markdownAcceptedFormulaDescriptor(
+    latex: String,
+    mode: MarkdownFormulaMode,
+    limits: MarkdownSafetyLimits,
+    acceptedFormulaCount: inout Int,
+    totalFormulaCharacters: inout Int,
+    nextPlaceholderIndex: inout Int
+) -> MarkdownFormulaDescriptor? {
+    let normalizedLatex: String
+    switch mode {
+    case .inline:
+        normalizedLatex = latex
+    case .block:
+        normalizedLatex = latex.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    guard !normalizedLatex.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        return nil
+    }
+
+    let latexLength = (normalizedLatex as NSString).length
+    let maxLength = mode == .inline ? limits.maxInlineFormulaLength : limits.maxBlockFormulaLength
+    guard latexLength <= maxLength else {
+        return nil
+    }
+    guard acceptedFormulaCount < limits.maxFormulas else {
+        return nil
+    }
+    guard totalFormulaCharacters + latexLength <= limits.maxFormulaSourceCharacters else {
+        return nil
+    }
+
+    let placeholder = markdownFormulaPlaceholder(nextPlaceholderIndex)
+    nextPlaceholderIndex += 1
+    acceptedFormulaCount += 1
+    totalFormulaCharacters += latexLength
+    return MarkdownFormulaDescriptor(placeholder: placeholder, latex: normalizedLatex, mode: mode)
+}
+
+private func markdownBlockFormulaReplacement(
+    in lines: [String],
+    startLineIndex: Int,
+    limits: MarkdownSafetyLimits,
+    acceptedFormulaCount: inout Int,
+    totalFormulaCharacters: inout Int,
+    nextPlaceholderIndex: inout Int
+) -> (replacement: String, nextLineIndex: Int, descriptor: MarkdownFormulaDescriptor)? {
+    guard startLineIndex >= 0, startLineIndex < lines.count else {
+        return nil
+    }
+
+    let (content, _) = markdownLineContentAndEnding(lines[startLineIndex])
+    let indentation = String(content.prefix { $0 == " " || $0 == "\t" })
+    let trimmedStart = content.drop(while: { $0 == " " || $0 == "\t" })
+
+    let opener: String
+    let closer: String
+    if trimmedStart.hasPrefix("$$") {
+        opener = "$$"
+        closer = "$$"
+    } else if trimmedStart.hasPrefix("\\[") {
+        opener = "\\["
+        closer = "\\]"
+    } else {
+        return nil
+    }
+
+    let openerContent = String(trimmedStart.dropFirst(opener.count))
+    var latex = ""
+
+    if let closeRange = markdownFirstUnescapedRange(of: closer, in: openerContent, from: openerContent.startIndex) {
+        let trailing = String(openerContent[closeRange.upperBound...])
+        guard trailing.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+        latex = String(openerContent[..<closeRange.lowerBound])
+        guard let descriptor = markdownAcceptedFormulaDescriptor(
+            latex: latex,
+            mode: .block,
+            limits: limits,
+            acceptedFormulaCount: &acceptedFormulaCount,
+            totalFormulaCharacters: &totalFormulaCharacters,
+            nextPlaceholderIndex: &nextPlaceholderIndex
+        ) else {
+            return nil
+        }
+        let (_, ending) = markdownLineContentAndEnding(lines[startLineIndex])
+        return (indentation + descriptor.placeholder + ending, startLineIndex + 1, descriptor)
+    }
+
+    let (_, openerEnding) = markdownLineContentAndEnding(lines[startLineIndex])
+    latex.append(contentsOf: openerContent)
+    latex.append(contentsOf: openerEnding)
+
+    var currentIndex = startLineIndex + 1
+    while currentIndex < lines.count {
+        let (nextContent, nextEnding) = markdownLineContentAndEnding(lines[currentIndex])
+        if let closeRange = markdownFirstUnescapedRange(of: closer, in: nextContent, from: nextContent.startIndex) {
+            let trailing = String(nextContent[closeRange.upperBound...])
+            guard trailing.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return nil
+            }
+            latex.append(contentsOf: String(nextContent[..<closeRange.lowerBound]))
+            guard let descriptor = markdownAcceptedFormulaDescriptor(
+                latex: latex,
+                mode: .block,
+                limits: limits,
+                acceptedFormulaCount: &acceptedFormulaCount,
+                totalFormulaCharacters: &totalFormulaCharacters,
+                nextPlaceholderIndex: &nextPlaceholderIndex
+            ) else {
+                return nil
+            }
+            return (indentation + descriptor.placeholder + nextEnding, currentIndex + 1, descriptor)
+        } else {
+            latex.append(contentsOf: nextContent)
+            latex.append(contentsOf: nextEnding)
+        }
+        currentIndex += 1
+    }
+
+    return nil
+}
+
+private func markdownReplacingInlineFormulas(
+    in line: String,
+    limits: MarkdownSafetyLimits,
+    acceptedFormulaCount: inout Int,
+    totalFormulaCharacters: inout Int,
+    nextPlaceholderIndex: inout Int,
+    formulasByPlaceholder: inout [String: MarkdownFormulaDescriptor]
+) -> String {
+    let (content, ending) = markdownLineContentAndEnding(line)
+    guard !content.isEmpty else {
+        return line
+    }
+
+    var result = ""
+    var index = content.startIndex
+    var activeCodeDelimiterLength: Int?
+
+    while index < content.endIndex {
+        if content[index] == "`" {
+            let delimiterEnd = markdownIndex(afterRepeating: "`", in: content, from: index)
+            let delimiterLength = content.distance(from: index, to: delimiterEnd)
+            result.append(contentsOf: content[index ..< delimiterEnd])
+            if activeCodeDelimiterLength == delimiterLength {
+                activeCodeDelimiterLength = nil
+            } else {
+                activeCodeDelimiterLength = delimiterLength
+            }
+            index = delimiterEnd
+            continue
+        }
+
+        if activeCodeDelimiterLength != nil {
+            result.append(content[index])
+            index = content.index(after: index)
+            continue
+        }
+
+        if content[index] == "\\", !markdownIsEscaped(content, at: index), let nextIndex = markdownIndex(content, offsetBy: 1, from: index), nextIndex < content.endIndex, content[nextIndex] == "(" {
+            let bodyStart = content.index(after: nextIndex)
+            if let closeRange = markdownFirstUnescapedRange(of: "\\)", in: content, from: bodyStart) {
+                let latex = String(content[bodyStart ..< closeRange.lowerBound])
+                if let descriptor = markdownAcceptedFormulaDescriptor(
+                    latex: latex,
+                    mode: .inline,
+                    limits: limits,
+                    acceptedFormulaCount: &acceptedFormulaCount,
+                    totalFormulaCharacters: &totalFormulaCharacters,
+                    nextPlaceholderIndex: &nextPlaceholderIndex
+                ) {
+                    result.append(contentsOf: descriptor.placeholder)
+                    formulasByPlaceholder[descriptor.placeholder] = descriptor
+                    index = closeRange.upperBound
+                    continue
+                }
+            }
+        }
+
+        if content[index] == "$", !markdownIsEscaped(content, at: index) {
+            guard let bodyStart = markdownIndex(content, offsetBy: 1, from: index), bodyStart < content.endIndex else {
+                result.append(content[index])
+                index = content.index(after: index)
+                continue
+            }
+            if content[bodyStart] == "$" || content[bodyStart].isWhitespace {
+                result.append(content[index])
+                index = content.index(after: index)
+                continue
+            }
+
+            var searchIndex = bodyStart
+            var matchedRange: Range<String.Index>?
+            while let closeRange = markdownFirstUnescapedRange(of: "$", in: content, from: searchIndex) {
+                let closerIndex = closeRange.lowerBound
+                let previousIndex = content.index(before: closerIndex)
+                if !content[previousIndex].isWhitespace {
+                    matchedRange = closeRange
+                    break
+                }
+                searchIndex = closeRange.upperBound
+            }
+
+            if let matchedRange {
+                let latex = String(content[bodyStart ..< matchedRange.lowerBound])
+                if let descriptor = markdownAcceptedFormulaDescriptor(
+                    latex: latex,
+                    mode: .inline,
+                    limits: limits,
+                    acceptedFormulaCount: &acceptedFormulaCount,
+                    totalFormulaCharacters: &totalFormulaCharacters,
+                    nextPlaceholderIndex: &nextPlaceholderIndex
+                ) {
+                    result.append(contentsOf: descriptor.placeholder)
+                    formulasByPlaceholder[descriptor.placeholder] = descriptor
+                    index = matchedRange.upperBound
+                    continue
+                }
+            }
+        }
+
+        result.append(content[index])
+        index = content.index(after: index)
+    }
+
+    result.append(contentsOf: ending)
+    return result
+}
+
+private func markdownFirstUnescapedRange(of pattern: String, in text: String, from startIndex: String.Index) -> Range<String.Index>? {
+    guard !pattern.isEmpty, startIndex <= text.endIndex else {
+        return nil
+    }
+
+    var searchIndex = startIndex
+    while searchIndex < text.endIndex {
+        guard let range = text.range(of: pattern, range: searchIndex ..< text.endIndex) else {
+            return nil
+        }
+        if !markdownIsEscaped(text, at: range.lowerBound) {
+            return range
+        }
+        searchIndex = range.upperBound
+    }
+    return nil
+}
+
+private func markdownIsEscaped(_ text: String, at index: String.Index) -> Bool {
+    guard index > text.startIndex else {
+        return false
+    }
+
+    var slashCount = 0
+    var currentIndex = text.index(before: index)
+    while true {
+        if text[currentIndex] == "\\" {
+            slashCount += 1
+        } else {
+            break
+        }
+        guard currentIndex > text.startIndex else {
+            break
+        }
+        currentIndex = text.index(before: currentIndex)
+    }
+
+    return slashCount % 2 == 1
+}
+
+private func markdownIndex(_ text: String, offsetBy distance: Int, from index: String.Index) -> String.Index? {
+    guard distance >= 0 else {
+        return nil
+    }
+    return text.index(index, offsetBy: distance, limitedBy: text.endIndex)
+}
+
+private func markdownIndex(afterRepeating character: Character, in text: String, from startIndex: String.Index) -> String.Index {
+    var index = startIndex
+    while index < text.endIndex, text[index] == character {
+        index = text.index(after: index)
+    }
+    return index
+}
+
 func markdownWebpage(context: AccountContext, file: FileMediaReference) -> (webPage: TelegramMediaWebpage, fileURL: URL)? {
     guard #available(iOS 15.0, *) else {
         return nil
@@ -207,10 +982,19 @@ func markdownWebpage(context: AccountContext, file: FileMediaReference) -> (webP
 
 @available(iOS 15.0, *)
 private func markdownWebpage(context: AccountContext, file: FileMediaReference, fileURL: URL, data: Data) -> TelegramMediaWebpage? {
+    let limits = markdownSafetyLimits
+    guard markdownPassesPreflight(data: data, limits: limits) else {
+        return nil
+    }
+    guard let sourceText = markdownDecodedSourceText(data) else {
+        return nil
+    }
+    let preparedSource = markdownPreparedSource(text: sourceText, limits: limits)
+
     let attributedString: NSAttributedString
     do {
         attributedString = try NSAttributedString(
-            markdown: data,
+            markdown: Data(preparedSource.text.utf8),
             options: .init(),
             baseURL: fileURL.deletingLastPathComponent()
         )
@@ -218,10 +1002,13 @@ private func markdownWebpage(context: AccountContext, file: FileMediaReference, 
         return nil
     }
     
-    let conversionContext = MarkdownConversionContext(context: context, documentURL: fileURL)
-    let pageResult = markdownPageResult(from: attributedString, context: conversionContext)
+    let budget = MarkdownConversionBudget(limits: limits)
+    let conversionContext = MarkdownConversionContext(context: context, documentURL: fileURL, formulasByPlaceholder: preparedSource.formulasByPlaceholder, budget: budget)
+    guard let pageResult = markdownPageResult(from: attributedString, context: conversionContext) else {
+        return nil
+    }
     let blocks = markdownBlocksWithGeneratedAnchors(pageResult.blocks)
-    guard !blocks.isEmpty else {
+    guard !blocks.isEmpty, budget.validateFinalBlocks(blocks) else {
         return nil
     }
     
@@ -265,13 +1052,23 @@ private func markdownWebpage(context: AccountContext, file: FileMediaReference, 
 }
 
 @available(iOS 15.0, *)
-private func markdownPageResult(from attributedString: NSAttributedString, context: MarkdownConversionContext) -> MarkdownPageResult {
+private func markdownPageResult(from attributedString: NSAttributedString, context: MarkdownConversionContext) -> MarkdownPageResult? {
+    guard context.budget.registerAttributedStringLength(attributedString.length) else {
+        return nil
+    }
+
     var nodesByIdentity: [Int: MarkdownIntentNode] = [:]
     var rootNodes: [MarkdownIntentNode] = []
     var rootIdentities: Set<Int> = []
-    
-    attributedString.enumerateAttributes(in: NSRange(location: 0, length: attributedString.length), options: []) { attributes, range, _ in
+    var didAbort = false
+
+    attributedString.enumerateAttributes(in: NSRange(location: 0, length: attributedString.length), options: []) { attributes, range, stop in
         guard range.length > 0 else {
+            return
+        }
+        guard context.budget.registerAttributeRun() else {
+            didAbort = true
+            stop.pointee = true
             return
         }
         guard let presentationIntent = attributes[markdownPresentationIntentAttribute] as? PresentationIntent else {
@@ -281,13 +1078,23 @@ private func markdownPageResult(from attributedString: NSAttributedString, conte
         guard !components.isEmpty else {
             return
         }
-        
+        guard context.budget.registerPresentationIntentDepth(components.count) else {
+            didAbort = true
+            stop.pointee = true
+            return
+        }
+
         var orderedNodes: [MarkdownIntentNode] = []
         for component in components.reversed() {
             let node: MarkdownIntentNode
             if let current = nodesByIdentity[component.identity] {
                 node = current
             } else {
+                guard context.budget.registerIntentNode() else {
+                    didAbort = true
+                    stop.pointee = true
+                    return
+                }
                 let created = MarkdownIntentNode(component: component)
                 nodesByIdentity[component.identity] = created
                 node = created
@@ -308,37 +1115,69 @@ private func markdownPageResult(from attributedString: NSAttributedString, conte
         }
     }
     
-    return context.makePageResult(blocks: markdownBlocks(from: rootNodes, context: context))
+    guard !didAbort, !context.budget.isExceeded else {
+        return nil
+    }
+    guard let blocks = markdownBlocks(from: rootNodes, context: context, depth: 0), !context.budget.isExceeded else {
+        return nil
+    }
+    return context.makePageResult(blocks: blocks)
 }
 
-private func markdownBlocks(from nodes: [MarkdownIntentNode], context: MarkdownConversionContext) -> [InstantPageBlock] {
+private func markdownBlocks(from nodes: [MarkdownIntentNode], context: MarkdownConversionContext, depth: Int) -> [InstantPageBlock]? {
+    guard context.budget.registerBlockDepth(depth), !context.budget.isExceeded else {
+        return nil
+    }
+
     var result: [InstantPageBlock] = []
     for node in nodes {
-        result.append(contentsOf: markdownBlocks(from: node, context: context))
+        guard let blocks = markdownBlocks(from: node, context: context, depth: depth + 1) else {
+            return nil
+        }
+        result.append(contentsOf: blocks)
+        if context.budget.isExceeded {
+            return nil
+        }
     }
     return result
 }
 
-private func markdownBlocks(from node: MarkdownIntentNode, context: MarkdownConversionContext) -> [InstantPageBlock] {
+private func markdownBlocks(from node: MarkdownIntentNode, context: MarkdownConversionContext, depth: Int) -> [InstantPageBlock]? {
+    guard context.budget.registerBlockDepth(depth), !context.budget.isExceeded else {
+        return nil
+    }
+
     switch node.kind {
     case let .table(alignments):
-        let rows = markdownTableRows(from: node.children, alignments: alignments, context: context)
+        guard let rows = markdownTableRows(from: node.children, alignments: alignments, context: context, depth: depth + 1) else {
+            return nil
+        }
         guard !rows.isEmpty else {
             return []
         }
         return [.table(title: .empty, rows: rows, bordered: true, striped: false)]
     case let .header(level):
-        let text = markdownRichText(from: node.attributedText, context: context)
+        guard let text = markdownRichText(from: node.attributedText, context: context) else {
+            return nil
+        }
         guard markdownHasDisplayableContent(text) else {
             return []
         }
-        if level <= 1 {
+        switch level {
+        case Int.min ... 1:
+            return [.title(text)]
+        case 2:
             return [.header(text)]
-        } else {
+        default:
             return [.heading(text: text, level: Int32(max(3, min(level, 6))))]
         }
     case .paragraph:
-        let inlineContent = markdownInlineContent(from: node.attributedText, context: context)
+        guard let inlineContent = markdownInlineContent(from: node.attributedText, context: context) else {
+            return nil
+        }
+        if let formula = inlineContent.standaloneBlockFormula {
+            return [.formula(latex: formula.latex)]
+        }
         if let image = inlineContent.standaloneImage {
             return [
                 .image(
@@ -355,7 +1194,9 @@ private func markdownBlocks(from node: MarkdownIntentNode, context: MarkdownConv
         }
         return [.paragraph(text)]
     case let .codeBlock(languageHint):
-        let text = markdownRichText(from: markdownTrimTrailingCodeBlockNewline(node.attributedText), context: context)
+        guard let text = markdownRichText(from: markdownTrimTrailingCodeBlockNewline(node.attributedText), context: context) else {
+            return nil
+        }
         guard markdownHasDisplayableContent(text) else {
             return []
         }
@@ -365,12 +1206,15 @@ private func markdownBlocks(from node: MarkdownIntentNode, context: MarkdownConv
     case .blockQuote:
         var result: [InstantPageBlock] = []
         for child in node.children {
-            for childBlock in markdownBlocks(from: child, context: context) {
+            guard let childBlocks = markdownBlocks(from: child, context: context, depth: depth + 1) else {
+                return nil
+            }
+            for childBlock in childBlocks {
                 switch childBlock {
                 case let .paragraph(text):
                     result.append(.blockQuote(text: text, caption: .empty))
                 default:
-                    let plainText = markdownPlainText(from: childBlock)
+                    let plainText = markdownPlainText(from: childBlock, depth: depth + 1)
                     if !plainText.isEmpty {
                         result.append(.blockQuote(text: .plain(plainText), caption: .empty))
                     }
@@ -379,29 +1223,39 @@ private func markdownBlocks(from node: MarkdownIntentNode, context: MarkdownConv
         }
         return result
     case .orderedList:
-        let items = markdownListItems(from: node.children, ordered: true, context: context)
+        guard let items = markdownListItems(from: node.children, ordered: true, context: context, depth: depth + 1) else {
+            return nil
+        }
         guard !items.isEmpty else {
             return []
         }
         return [.list(items: items, ordered: true)]
     case .unorderedList:
-        let items = markdownListItems(from: node.children, ordered: false, context: context)
+        guard let items = markdownListItems(from: node.children, ordered: false, context: context, depth: depth + 1) else {
+            return nil
+        }
         guard !items.isEmpty else {
             return []
         }
         return [.list(items: items, ordered: false)]
     case .listItem(_), .tableHeaderRow, .tableRow, .tableCell(_), .unknown:
-        return markdownBlocks(from: node.children, context: context)
+        return markdownBlocks(from: node.children, context: context, depth: depth + 1)
     }
 }
 
-private func markdownListItems(from nodes: [MarkdownIntentNode], ordered: Bool, context: MarkdownConversionContext) -> [InstantPageListItem] {
+private func markdownListItems(from nodes: [MarkdownIntentNode], ordered: Bool, context: MarkdownConversionContext, depth: Int) -> [InstantPageListItem]? {
+    guard context.budget.registerBlockDepth(depth), !context.budget.isExceeded else {
+        return nil
+    }
+
     var result: [InstantPageListItem] = []
     for node in nodes {
         guard case let .listItem(ordinal) = node.kind else {
             continue
         }
-        var blocks = markdownBlocks(from: node.children, context: context)
+        guard var blocks = markdownBlocks(from: node.children, context: context, depth: depth + 1) else {
+            return nil
+        }
         let taskListState = markdownApplyTaskListMarker(to: &blocks)
         let number: String?
         if let taskListState {
@@ -476,17 +1330,25 @@ private func markdownTaskListMarker(in plainText: String) -> (MarkdownTaskListSt
     }
 }
 
-private func markdownTableRows(from nodes: [MarkdownIntentNode], alignments: [TableHorizontalAlignment], context: MarkdownConversionContext) -> [InstantPageTableRow] {
+private func markdownTableRows(from nodes: [MarkdownIntentNode], alignments: [TableHorizontalAlignment], context: MarkdownConversionContext, depth: Int) -> [InstantPageTableRow]? {
+    guard context.budget.registerBlockDepth(depth), !context.budget.isExceeded else {
+        return nil
+    }
+
     var result: [InstantPageTableRow] = []
     for node in nodes {
         switch node.kind {
         case .tableHeaderRow:
-            let cells = markdownTableCells(from: node.children, alignments: alignments, header: true, context: context)
+            guard let cells = markdownTableCells(from: node.children, alignments: alignments, header: true, context: context, depth: depth + 1) else {
+                return nil
+            }
             if !cells.isEmpty {
                 result.append(InstantPageTableRow(cells: cells))
             }
         case .tableRow:
-            let cells = markdownTableCells(from: node.children, alignments: alignments, header: false, context: context)
+            guard let cells = markdownTableCells(from: node.children, alignments: alignments, header: false, context: context, depth: depth + 1) else {
+                return nil
+            }
             if !cells.isEmpty {
                 result.append(InstantPageTableRow(cells: cells))
             }
@@ -494,10 +1356,14 @@ private func markdownTableRows(from nodes: [MarkdownIntentNode], alignments: [Ta
             continue
         }
     }
-    return result
+    return context.budget.isExceeded ? nil : result
 }
 
-private func markdownTableCells(from nodes: [MarkdownIntentNode], alignments: [TableHorizontalAlignment], header: Bool, context: MarkdownConversionContext) -> [InstantPageTableCell] {
+private func markdownTableCells(from nodes: [MarkdownIntentNode], alignments: [TableHorizontalAlignment], header: Bool, context: MarkdownConversionContext, depth: Int) -> [InstantPageTableCell]? {
+    guard context.budget.registerBlockDepth(depth), !context.budget.isExceeded else {
+        return nil
+    }
+
     let maxColumnIndex = nodes.reduce(-1) { partialResult, node in
         if case let .tableCell(column) = node.kind {
             return max(partialResult, column)
@@ -509,7 +1375,10 @@ private func markdownTableCells(from nodes: [MarkdownIntentNode], alignments: [T
     guard columnCount > 0 else {
         return []
     }
-    
+    guard context.budget.registerTableColumns(columnCount) else {
+        return nil
+    }
+
     var result: [InstantPageTableCell] = []
     var nextColumn = 0
     
@@ -517,13 +1386,15 @@ private func markdownTableCells(from nodes: [MarkdownIntentNode], alignments: [T
         guard case let .tableCell(column) = node.kind else {
             continue
         }
-        
+
         while nextColumn < column {
             result.append(markdownEmptyTableCell(header: header, alignment: markdownTableAlignment(at: nextColumn, from: alignments)))
             nextColumn += 1
         }
-        
-        let text = markdownRichText(from: node.attributedText, context: context)
+
+        guard let text = markdownRichText(from: node.attributedText, context: context) else {
+            return nil
+        }
         result.append(
             InstantPageTableCell(
                 text: text,
@@ -542,6 +1413,9 @@ private func markdownTableCells(from nodes: [MarkdownIntentNode], alignments: [T
         nextColumn += 1
     }
     
+    guard context.budget.registerTableCells(result.count) else {
+        return nil
+    }
     return result
 }
 
@@ -563,21 +1437,27 @@ private func markdownTableAlignment(at index: Int, from alignments: [TableHorizo
     return alignments[index]
 }
 
-private func markdownRichText(from attributedString: NSAttributedString, context: MarkdownConversionContext) -> RichText {
-    return markdownInlineContent(from: attributedString, context: context).richText
+private func markdownRichText(from attributedString: NSAttributedString, context: MarkdownConversionContext) -> RichText? {
+    return markdownInlineContent(from: attributedString, context: context)?.richText
 }
 
-private func markdownInlineContent(from attributedString: NSAttributedString, context: MarkdownConversionContext) -> MarkdownInlineContent {
+private func markdownInlineContent(from attributedString: NSAttributedString, context: MarkdownConversionContext) -> MarkdownInlineContent? {
     guard attributedString.length > 0, #available(iOS 15.0, *) else {
         return MarkdownInlineContent(fragments: [])
     }
-    
+
     var fragments: [MarkdownInlineFragment] = []
     var htmlStyles: [MarkdownHTMLInlineStyle] = []
     var consumeNextSoftBreak = false
-    
-    attributedString.enumerateAttributes(in: NSRange(location: 0, length: attributedString.length), options: []) { attributes, range, _ in
+    var didAbort = false
+
+    attributedString.enumerateAttributes(in: NSRange(location: 0, length: attributedString.length), options: []) { attributes, range, stop in
         guard range.length > 0 else {
+            return
+        }
+        if context.budget.isExceeded {
+            didAbort = true
+            stop.pointee = true
             return
         }
         
@@ -585,7 +1465,7 @@ private func markdownInlineContent(from attributedString: NSAttributedString, co
         guard !text.isEmpty else {
             return
         }
-        
+
         let inlineIntent: InlinePresentationIntent?
         if let inlineIntentValue = attributes[markdownInlinePresentationIntentAttribute] as? InlinePresentationIntent {
             inlineIntent = inlineIntentValue
@@ -594,11 +1474,16 @@ private func markdownInlineContent(from attributedString: NSAttributedString, co
         } else {
             inlineIntent = nil
         }
-        
+
         if let inlineIntent, inlineIntent.contains(markdownInlineHTMLInlineIntent), let directive = markdownHTMLDirective(for: text) {
             switch directive {
             case let .open(style):
                 htmlStyles.append(style)
+                guard context.budget.registerInlineHTMLStyleDepth(htmlStyles.count) else {
+                    didAbort = true
+                    stop.pointee = true
+                    return
+                }
             case let .close(style):
                 if let index = htmlStyles.lastIndex(of: style) {
                     htmlStyles.remove(at: index)
@@ -609,7 +1494,7 @@ private func markdownInlineContent(from attributedString: NSAttributedString, co
             }
             return
         }
-        
+
         if consumeNextSoftBreak {
             if let inlineIntent, inlineIntent.contains(markdownSoftBreakInlineIntent), text == " " {
                 consumeNextSoftBreak = false
@@ -617,42 +1502,107 @@ private func markdownInlineContent(from attributedString: NSAttributedString, co
             }
             consumeNextSoftBreak = false
         }
-        
+
         if let image = context.resolveImage(attributes: attributes) {
             fragments.append(.image(image))
             return
         }
-        
-        var fragment: RichText = .plain(text)
-        if let inlineIntent {
-            if inlineIntent.contains(.stronglyEmphasized) {
-                fragment = .bold(fragment)
+
+        let segments = markdownInlineTextSegments(from: text, formulasByPlaceholder: context.formulasByPlaceholder)
+        for segment in segments {
+            let baseText: RichText
+            let descriptor: MarkdownFormulaDescriptor?
+            switch segment {
+            case let .plain(plainText):
+                baseText = .plain(plainText)
+                descriptor = nil
+            case let .formula(formulaDescriptor):
+                baseText = .formula(latex: formulaDescriptor.latex)
+                descriptor = formulaDescriptor
             }
-            if inlineIntent.contains(.emphasized) {
-                fragment = .italic(fragment)
+
+            var fragment = markdownApplyingInlineIntent(inlineIntent, to: baseText)
+            if let url = markdownLink(attributes: attributes, documentURL: context.documentURL) {
+                fragment = .url(text: fragment, url: url, webpageId: nil)
             }
-            if inlineIntent.contains(.strikethrough) {
-                fragment = .strikethrough(fragment)
-            }
-            if inlineIntent.contains(.code) {
-                fragment = .fixed(fragment)
-            }
-            if inlineIntent.contains(markdownHardBreakInlineIntent) {
-                fragment = .plain("\n")
+            fragment = markdownApplyHTMLStyles(htmlStyles, to: fragment)
+
+            if let descriptor {
+                fragments.append(.formula(descriptor, fragment))
+            } else {
+                fragments.append(.richText(fragment))
             }
         }
-        
-        if let url = markdownLink(attributes: attributes, documentURL: context.documentURL) {
-            fragment = .url(text: fragment, url: url, webpageId: nil)
-        }
-        
-        fragments.append(.richText(markdownApplyHTMLStyles(htmlStyles, to: fragment)))
     }
-    
+
+    guard !didAbort, !context.budget.isExceeded else {
+        return nil
+    }
     return MarkdownInlineContent(fragments: fragments)
 }
 
+private func markdownInlineTextSegments(from text: String, formulasByPlaceholder: [String: MarkdownFormulaDescriptor]) -> [MarkdownInlineTextSegment] {
+    guard !text.isEmpty else {
+        return []
+    }
+
+    let nsText = text as NSString
+    let matches = markdownFormulaPlaceholderRegex.matches(in: text, range: NSRange(location: 0, length: nsText.length))
+    guard !matches.isEmpty else {
+        return [.plain(text)]
+    }
+
+    var result: [MarkdownInlineTextSegment] = []
+    var currentLocation = 0
+
+    for match in matches {
+        if match.range.location > currentLocation {
+            result.append(.plain(nsText.substring(with: NSRange(location: currentLocation, length: match.range.location - currentLocation))))
+        }
+
+        let placeholder = nsText.substring(with: match.range)
+        if let descriptor = formulasByPlaceholder[placeholder] {
+            result.append(.formula(descriptor))
+        } else {
+            result.append(.plain(placeholder))
+        }
+        currentLocation = match.range.location + match.range.length
+    }
+
+    if currentLocation < nsText.length {
+        result.append(.plain(nsText.substring(from: currentLocation)))
+    }
+
+    return result
+}
+
+@available(iOS 15.0, *)
+private func markdownApplyingInlineIntent(_ inlineIntent: InlinePresentationIntent?, to text: RichText) -> RichText {
+    guard let inlineIntent else {
+        return text
+    }
+
+    var result = text
+    if inlineIntent.contains(.stronglyEmphasized) {
+        result = .bold(result)
+    }
+    if inlineIntent.contains(.emphasized) {
+        result = .italic(result)
+    }
+    if inlineIntent.contains(.strikethrough) {
+        result = .strikethrough(result)
+    }
+    if inlineIntent.contains(.code) {
+        result = .fixed(result)
+    }
+    if inlineIntent.contains(markdownHardBreakInlineIntent) {
+        result = .plain("\n")
+    }
+    return result
+}
+
 private enum MarkdownHTMLInlineStyle: Equatable {
+    case underline
     case `subscript`
     case superscript
     case marked
@@ -666,6 +1616,10 @@ private enum MarkdownHTMLDirective {
 
 private func markdownHTMLDirective(for text: String) -> MarkdownHTMLDirective? {
     switch text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+    case "<u>":
+        return .open(.underline)
+    case "</u>":
+        return .close(.underline)
     case "<sub>":
         return .open(.subscript)
     case "</sub>":
@@ -689,6 +1643,8 @@ private func markdownApplyHTMLStyles(_ styles: [MarkdownHTMLInlineStyle], to tex
     var result = text
     for style in styles {
         switch style {
+        case .underline:
+            result = .underline(result)
         case .subscript:
             result = .subscript(result)
         case .superscript:
@@ -720,13 +1676,13 @@ private func markdownImageURL(attributes: [NSAttributedString.Key: Any]) -> Stri
     return nil
 }
 
-private func markdownResolveImageSource(_ value: String) -> MarkdownResolvedImageSource {
+private func markdownResolveImageSource(_ value: String, limits: MarkdownSafetyLimits) -> MarkdownResolvedImageSource {
     if value.hasPrefix("//") {
         return .remote("https:\(value)")
     }
     
     if value.lowercased().hasPrefix("data:") {
-        return markdownResolveDataImageSource(value)
+        return markdownResolveDataImageSource(value, limits: limits)
     }
     
     guard let url = URL(string: value), let scheme = url.scheme?.lowercased() else {
@@ -737,23 +1693,23 @@ private func markdownResolveImageSource(_ value: String) -> MarkdownResolvedImag
     case "http", "https":
         return .remote(url.absoluteString)
     case "data":
-        return markdownResolveDataImageSource(url.absoluteString)
+        return markdownResolveDataImageSource(url.absoluteString, limits: limits)
     default:
         return .unsupported
     }
 }
 
-private func markdownResolveDataImageSource(_ value: String) -> MarkdownResolvedImageSource {
+private func markdownResolveDataImageSource(_ value: String, limits: MarkdownSafetyLimits) -> MarkdownResolvedImageSource {
     guard value.lowercased().hasPrefix("data:"),
           let commaIndex = value.firstIndex(of: ",") else {
         return .unsupported
     }
-    
+
     let header = String(value[value.index(value.startIndex, offsetBy: 5) ..< commaIndex])
     let payloadStart = value.index(after: commaIndex)
     let payload = String(value[payloadStart...])
     let isBase64 = header.lowercased().contains(";base64")
-    
+
     let data: Data?
     if isBase64 {
         data = Data(base64Encoded: payload, options: [.ignoreUnknownCharacters])
@@ -762,13 +1718,21 @@ private func markdownResolveDataImageSource(_ value: String) -> MarkdownResolved
     } else {
         data = nil
     }
-    
-    guard let data,
-          let image = UIImage(data: data),
+
+    guard let data = data, data.count <= limits.maxDataImageBytes else {
+        return .unsupported
+    }
+
+    guard let image = UIImage(data: data),
           let dimensions = markdownImagePixelDimensions(image) else {
         return .unsupported
     }
-    
+
+    let pixelCount = Int64(dimensions.width) * Int64(dimensions.height)
+    guard pixelCount <= Int64(limits.maxDataImagePixelCount) else {
+        return .unsupported
+    }
+
     return .data(data, dimensions)
 }
 
@@ -794,7 +1758,7 @@ private func markdownInlineImageDimensions(attributes: [NSAttributedString.Key: 
     guard let font = attributes[.font] as? UIFont else {
         return markdownDefaultInlineImageDimensions
     }
-    
+
     let side = max(markdownDefaultInlineImageDimensions.width, Int32(ceil(font.lineHeight)))
     return PixelDimensions(width: side, height: side)
 }
@@ -959,6 +1923,13 @@ private func markdownDroppingPrefixLength(_ length: Int, from text: RichText) ->
         return dropped == .empty ? .empty : .phone(text: dropped, phone: phone)
     case .image:
         return text
+    case let .formula(latex):
+        let nsLatex = latex as NSString
+        if nsLatex.length <= length {
+            return .empty
+        } else {
+            return .plain(nsLatex.substring(from: length))
+        }
     case let .anchor(inner, name):
         let dropped = markdownDroppingPrefixLength(length, from: inner)
         return dropped == .empty ? .empty : .anchor(text: dropped, name: name)
@@ -989,6 +1960,8 @@ private func markdownHasDisplayableContent(_ richText: RichText) -> Bool {
         return items.contains(where: markdownHasDisplayableContent)
     case .image:
         return true
+    case let .formula(latex):
+        return !latex.isEmpty
     }
 }
 
@@ -1016,10 +1989,16 @@ private func markdownIsWhitespaceOnly(_ richText: RichText) -> Bool {
         return items.allSatisfy(markdownIsWhitespaceOnly)
     case .image:
         return false
+    case let .formula(latex):
+        return latex.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }
 
-private func markdownPlainText(from block: InstantPageBlock) -> String {
+private func markdownPlainText(from block: InstantPageBlock, depth: Int = 0) -> String {
+    guard depth <= markdownSafetyLimits.maxPresentationIntentDepth else {
+        return ""
+    }
+
     switch block {
     case let .title(text):
         return text.plainText
@@ -1033,6 +2012,8 @@ private func markdownPlainText(from block: InstantPageBlock) -> String {
         return text.plainText
     case let .heading(text, _):
         return text.plainText
+    case let .formula(latex):
+        return latex
     case let .paragraph(text):
         return text.plainText
     case let .preformatted(text, _):
@@ -1084,9 +2065,17 @@ private func markdownNormalizedCodeBlockLanguage(_ language: String?) -> String?
     return normalized.isEmpty ? nil : normalized
 }
 
-private func markdownFirstParagraphText(from blocks: [InstantPageBlock]) -> String? {
+private func markdownFirstParagraphText(from blocks: [InstantPageBlock], depth: Int = 0) -> String? {
+    guard depth <= markdownSafetyLimits.maxPresentationIntentDepth else {
+        return nil
+    }
+
     for block in blocks {
         switch block {
+        case let .formula(latex):
+            if !latex.isEmpty {
+                return latex
+            }
         case let .paragraph(text):
             if !text.plainText.isEmpty {
                 return text.plainText
@@ -1099,7 +2088,7 @@ private func markdownFirstParagraphText(from blocks: [InstantPageBlock]) -> Stri
                         return text.plainText
                     }
                 case let .blocks(blocks, _):
-                    if let text = markdownFirstParagraphText(from: blocks) {
+                    if let text = markdownFirstParagraphText(from: blocks, depth: depth + 1) {
                         return text
                     }
                 default:
@@ -1107,7 +2096,7 @@ private func markdownFirstParagraphText(from blocks: [InstantPageBlock]) -> Stri
                 }
             }
         case let .details(_, blocks, _):
-            if let text = markdownFirstParagraphText(from: blocks) {
+            if let text = markdownFirstParagraphText(from: blocks, depth: depth + 1) {
                 return text
             }
         default:

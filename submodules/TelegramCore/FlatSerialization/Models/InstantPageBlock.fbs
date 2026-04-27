@@ -35,7 +35,8 @@ union InstantPageBlock_Value {
     InstantPageBlock_Details,
     InstantPageBlock_RelatedArticles,
     InstantPageBlock_Map,
-    InstantPageBlock_Heading
+    InstantPageBlock_Heading,
+    InstantPageBlock_Formula
 }
 
 table InstantPageBlock {
@@ -189,6 +190,10 @@ table InstantPageBlock_Map {
 table InstantPageBlock_Heading {
     text:RichText (id: 0, required);
     level:int32 (id: 1);
+}
+
+table InstantPageBlock_Formula {
+    latex:string (id: 0, required);
 }
 
 table InstantPageCaption {
