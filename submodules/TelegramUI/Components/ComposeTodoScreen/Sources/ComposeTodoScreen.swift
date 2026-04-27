@@ -784,7 +784,6 @@ final class ComposeTodoScreenComponent: Component {
             todoTextSectionItems.append(AnyComponentWithIdentity(id: 0, component: AnyComponent(ListComposePollOptionComponent(
                 externalState: self.todoTextInputState,
                 context: component.context,
-                style: .glass,
                 theme: theme,
                 strings: environment.strings,
                 isEnabled: canEdit,
@@ -874,7 +873,6 @@ final class ComposeTodoScreenComponent: Component {
                 todoItemsSectionItems.append(AnyComponentWithIdentity(id: todoItem.id, component: AnyComponent(ListComposePollOptionComponent(
                     externalState: todoItem.textInputState,
                     context: component.context,
-                    style: .glass,
                     theme: theme,
                     strings: environment.strings,
                     isEnabled: isEnabled,
