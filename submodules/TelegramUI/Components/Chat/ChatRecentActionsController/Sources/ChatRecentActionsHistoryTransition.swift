@@ -2367,6 +2367,8 @@ private let deletedMessagesDisplayedLimit = 4
 func chatRecentActionsEntries(entries: [ChannelAdminEventLogEntry], presentationData: ChatPresentationData, expandedDeletedMessages: Set<EngineMessage.Id>, currentDeletedHeaderMessages: inout Set<EngineMessage.Id>) -> [ChatRecentActionsEntry] {
     var result: [ChatRecentActionsEntry] = []
     var deleteMessageEntries: [ChannelAdminEventLogEntry] = []
+    let previousDeletedHeaderMessages = currentDeletedHeaderMessages
+    currentDeletedHeaderMessages = Set()
     
     func appendCurrentDeleteEntries() {
         if !deleteMessageEntries.isEmpty, let lastEntry = deleteMessageEntries.last, let lastMessageId = lastEntry.event.action.messageId {
@@ -2394,9 +2396,16 @@ func chatRecentActionsEntries(entries: [ChannelAdminEventLogEntry], presentation
         var skipAppendingGeneralEntry = false
         if case let .deleteMessage(message) = entry.event.action {
             var skipAppendingDeletionEntry = false
-            if currentDeleteMessageEvent == nil || (currentDeleteMessageEvent!.peerId == entry.event.peerId && abs(currentDeleteMessageEvent!.date - entry.event.date) < 5 && !currentDeletedHeaderMessages.contains(message.id)) {
+            let belongsToCurrentDeleteGroup: Bool
+            if let currentDeleteMessageEvent {
+                belongsToCurrentDeleteGroup = currentDeleteMessageEvent.peerId == entry.event.peerId && abs(currentDeleteMessageEvent.date - entry.event.date) < 5
             } else {
-                if currentDeletedHeaderMessages.contains(message.id) {
+                belongsToCurrentDeleteGroup = true
+            }
+            let wasPreviousHeaderMessage = previousDeletedHeaderMessages.contains(message.id)
+            if currentDeleteMessageEvent == nil || (belongsToCurrentDeleteGroup && !wasPreviousHeaderMessage) {
+            } else {
+                if belongsToCurrentDeleteGroup && wasPreviousHeaderMessage {
                     deleteMessageEntries.append(entry)
                     skipAppendingDeletionEntry = true
                 }
