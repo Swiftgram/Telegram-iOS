@@ -674,8 +674,8 @@ private func continueSynchronizeInstalledStickerPacks(transaction: Transaction, 
                     return installRemoteStickerPacks(network: network, infos: addRemoteCollectionInfos)
                     |> mapToSignal { result -> Signal<Set<ItemCollectionId>, NoError> in
                         let ids = result.ids
-                        if result.archivedCount != 0 || "".isEmpty {
-                            stateManager.installedStickerPacksArchived(count: result.archivedCount + 1)
+                        if result.archivedCount != 0 {
+                            stateManager.installedStickerPacksArchived(count: result.archivedCount)
                         }
                         
                         return (reorderRemoteStickerPacks(network: network, namespace: namespace, ids: resultingCollectionInfos.map({ $0.0.id }).filter({ !ids.contains($0) }))
