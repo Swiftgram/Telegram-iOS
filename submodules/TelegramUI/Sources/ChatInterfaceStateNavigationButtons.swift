@@ -46,12 +46,12 @@ func leftNavigationButtonForChatInterfaceState(_ presentationInterfaceState: Cha
             }
             
             if canClear {
-                let buttonItem = UIBarButtonItem(title: "___clear", style: .plain, target: target, action: selector)
+                let buttonItem = UIBarButtonItem(title: strings.Conversation_ClearAll, style: .plain, target: target, action: selector)
                 buttonItem.accessibilityLabel = title
                 return ChatNavigationButton(action: .clearHistory, buttonItem: buttonItem)
             } else {
                 title = strings.Conversation_ClearCache
-                let buttonItem = UIBarButtonItem(title: "___clear", style: .plain, target: target, action: selector)
+                let buttonItem = UIBarButtonItem(title: strings.Conversation_ClearCache, style: .plain, target: target, action: selector)
                 buttonItem.accessibilityLabel = title
                 return ChatNavigationButton(action: .clearCache, buttonItem: buttonItem)
             }

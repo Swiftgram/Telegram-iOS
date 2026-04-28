@@ -42,7 +42,7 @@ private let markdownVoidHTMLTags: Set<String> = [
 ]
 
 private struct MarkdownSafetyLimits {
-    let maxFileSize = 2_097_152
+    let maxFileSize = 524_288
     let maxLineLength = 32_768
     let maxBlockquoteDepth = 64
     let maxListIndent = 96
