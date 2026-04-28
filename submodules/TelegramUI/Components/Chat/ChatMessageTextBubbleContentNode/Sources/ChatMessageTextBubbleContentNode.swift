@@ -698,6 +698,15 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     }
                 }
                 
+                var hasDraft = false
+                if item.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+                    hasDraft = true
+                }
+                var hadDraft = false
+                if let previousItem, previousItem.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+                    hadDraft = true
+                }
+                
                 let textInsets = UIEdgeInsets(top: 2.0, left: 2.0, bottom: 5.0, right: 2.0)
                 let (textLayout, textApply) = textLayout(InteractiveTextNodeLayoutArguments(
                     attributedString: attributedText,
@@ -712,17 +721,9 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     displayContentsUnderSpoilers: displayContentsUnderSpoilers.value,
                     customTruncationToken: customTruncationToken,
                     expandedBlocks: expandedBlockIds,
-                    computeCharacterRects: true
+                    computeCharacterRects: true,
+                    minWidth: (attributedText.string.isEmpty && hasDraft) ? 40.0 : nil
                 ))
-                
-                var hasDraft = false
-                if item.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
-                    hasDraft = true
-                }
-                var hadDraft = false
-                if let previousItem, previousItem.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
-                    hadDraft = true
-                }
                 
                 var maxGlyphCount = currentMaxGlyphCount
                 if maxGlyphCount == nil && (hasDraft || hadDraft) {

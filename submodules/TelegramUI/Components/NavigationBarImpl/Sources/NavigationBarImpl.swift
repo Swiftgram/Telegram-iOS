@@ -1073,17 +1073,18 @@ public final class NavigationBarImpl: ASDisplayNode, NavigationBar {
         }
         
         if self.titleNode.view.superview != nil {
-            let titleSize = self.titleNode.updateLayout(CGSize(width: max(1.0, size.width - max(leftTitleInset, rightTitleInset) * 2.0), height: nominalHeight))
+            var transition = transition
+            if self.titleNode.frame.width.isZero {
+                transition = .immediate
+            }
+            self.titleNode.alpha = 1.0
             
-            do {
-                var transition = transition
-                if self.titleNode.frame.width.isZero {
-                    transition = .immediate
-                }
-                self.titleNode.alpha = 1.0
-                
-                let titleOffset: CGFloat = 0.0
-                transition.updateFrame(node: self.titleNode, frame: CGRect(origin: CGPoint(x: floor((size.width - titleSize.width) / 2.0), y: contentVerticalOrigin + titleOffset + floorToScreenPixels((nominalHeight - titleSize.height) / 2.0)), size: titleSize))
+            let titleSize = self.titleNode.updateLayout(CGSize(width: max(1.0, size.width - leftTitleInset - rightTitleInset), height: nominalHeight))
+            
+            if titleSize.width <= size.width - max(leftTitleInset, rightTitleInset) * 2.0 {
+                transition.updateFrame(node: self.titleNode, frame: CGRect(origin: CGPoint(x: floor((size.width - titleSize.width) / 2.0), y: contentVerticalOrigin + floorToScreenPixels((nominalHeight - titleSize.height) / 2.0)), size: titleSize))
+            } else {
+                transition.updateFrame(node: self.titleNode, frame: CGRect(origin: CGPoint(x: leftTitleInset + floor((size.width - leftTitleInset - rightTitleInset - titleSize.width) / 2.0), y: contentVerticalOrigin + floorToScreenPixels((nominalHeight - titleSize.height) / 2.0)), size: titleSize))
             }
         }
         

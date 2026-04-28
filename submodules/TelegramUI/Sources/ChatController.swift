@@ -8740,6 +8740,13 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         getAnimatedTransitionSource: ((String) -> UIView?)? = nil,
         completion: @escaping () -> Void = {}
     ) {
+        var animateTransition = true
+        if let validLayout = self.chatDisplayNode.validLayout?.0 {
+            if validLayout.metrics.widthClass != .compact {
+                animateTransition = false
+            }
+        }
+        
         self.enqueueMediaMessageDisposable.set((legacyAssetPickerEnqueueMessages(context: self.context, account: self.context.account, signals: signals!, originalMediaReference: originalMediaReference)
         |> deliverOnMainQueue).startStrict(next: { [weak self] items in
             guard let strongSelf = self else {
@@ -8764,6 +8771,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 var skipAddingTransitions = false
                 
                 if shouldDivert {
+                    skipAddingTransitions = true
+                }
+                if !animateTransition {
                     skipAddingTransitions = true
                 }
                 

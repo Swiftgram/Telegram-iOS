@@ -4058,8 +4058,8 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
     
     func frameForInputActionButton() -> CGRect? {
         if let textInputPanelNode = self.textInputPanelNode, self.inputPanelNode === textInputPanelNode {
-            return textInputPanelNode.frameForInputActionButton().flatMap {
-                return $0.offsetBy(dx: textInputPanelNode.frame.minX, dy: textInputPanelNode.frame.minY)
+            return textInputPanelNode.frameForInputActionButton().flatMap { rect in
+                return self.view.convert(rect, from: textInputPanelNode.view)
             }
         }
         return nil

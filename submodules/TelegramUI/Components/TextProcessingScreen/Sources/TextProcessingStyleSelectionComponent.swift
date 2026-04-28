@@ -470,7 +470,8 @@ private final class ItemComponent: Component {
             guard let component = self.component else {
                 return
             }
-            let containerFrame = CGRect(origin: CGPoint(x: floor((size.width - measuredSize.width) * 0.5), y: floor((measuredSize.height - size.height) * 0.5)), size: measuredSize)
+            
+            let containerFrame = CGRect(origin: CGPoint(x: floorToScreenPixels((size.width - measuredSize.width) * 0.5), y: floor((measuredSize.height - size.height) * 0.5)), size: measuredSize)
             let contentRect = CGRect(origin: CGPoint(x: 0.0, y: -5.0 - 4.0), size: CGSize(width: size.width + 0.0, height: size.height + 5.0 + 3.0 + 6.0))
             transition.setFrame(view: self.backgroundContainer, frame: contentRect)
             self.backgroundContainer.update(size: contentRect.size, isDark: component.theme.overallDarkAppearance, transition: transition)

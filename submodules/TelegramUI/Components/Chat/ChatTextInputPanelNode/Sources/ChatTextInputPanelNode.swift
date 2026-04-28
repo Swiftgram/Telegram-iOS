@@ -2308,6 +2308,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
                     }
                 }
             }
+            
             sendActionButtonsSize = self.sendActionButtons.updateLayout(size: CGSize(width: 40.0, height: minimalHeight), isMediaInputExpanded: isMediaInputExpanded, showTitle: showTitle, currentMessageEffectId: presentationInterfaceState.interfaceState.sendMessageEffect, transition: transition, interfaceState: presentationInterfaceState)
             mediaActionButtonsSize = self.mediaActionButtons.updateLayout(size: CGSize(width: 40.0, height: minimalHeight), isMediaInputExpanded: isMediaInputExpanded, showTitle: false, currentMessageEffectId: presentationInterfaceState.interfaceState.sendMessageEffect, transition: transition, interfaceState: presentationInterfaceState)
         }
@@ -5600,6 +5601,9 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
     }
     
     public func frameForInputActionButton() -> CGRect? {
+        if !self.sendActionButtons.alpha.isZero && self.sendActionButtons.frame.minX < self.bounds.width {
+            return self.sendActionButtons.frame.insetBy(dx: 0.0, dy: -4.0).offsetBy(dx: -3.0, dy: 0.0)
+        }
         if !self.mediaActionButtons.alpha.isZero && self.mediaActionButtons.frame.minX < self.bounds.width {
             return self.mediaActionButtons.frame.insetBy(dx: 0.0, dy: -4.0).offsetBy(dx: -3.0, dy: 0.0)
         }

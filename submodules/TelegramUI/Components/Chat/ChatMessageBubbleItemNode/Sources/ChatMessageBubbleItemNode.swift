@@ -329,7 +329,7 @@ private func contentNodeMessagesAndClassesForItem(_ item: ChatMessageItem) -> ([
             messageText = updatingMedia.text
         }
                 
-        if !messageText.isEmpty || isUnsupportedMedia || isStoryWithText {
+        if !messageText.isEmpty || message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) || isUnsupportedMedia || isStoryWithText {
             if !skipText {
                 if case .group = item.content, !isFile {
                     messageWithCaptionToAdd = (message, itemAttributes)
@@ -2262,7 +2262,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             bubbleReactions = ReactionsMessageAttribute(canViewList: false, isTags: false, reactions: [], recentPeers: [], topPeers: [])
         }
         if !bubbleReactions.reactions.isEmpty && !item.presentationData.isPreview {
-            bottomNodeMergeStatus = .Both
+            bottomNodeMergeStatus = .Right
         }
         
         var currentCredibilityIcon: (EmojiStatusComponent.Content, UIColor?)?
@@ -6259,7 +6259,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         if strongSelf.backgroundNode.supernode != nil, let backgroundView = strongSelf.backgroundNode.view.snapshotContentTree(unhide: true) {
                             let backgroundContainer = UIView()
                             
-                            let backdropView = strongSelf.backgroundWallpaperNode.view.snapshotContentTree(unhide: true)
+                            let backdropView = strongSelf.backgroundWallpaperNode.view.snapshotContentTree(unhide: true, keepPortals: true)
                             if let backdropView = backdropView {
                                 let backdropFrame = strongSelf.backgroundWallpaperNode.layer.convert(strongSelf.backgroundWallpaperNode.bounds, to: strongSelf.backgroundNode.layer)
                                 backdropView.frame = backdropFrame

@@ -339,24 +339,24 @@ public final class EmojiStatusSelectionController: ViewController {
             
             self.componentHost = ComponentView<Empty>()
             self.componentShadowLayer = SimpleLayer()
-            self.componentShadowLayer.shadowOpacity = 0.12
+            self.componentShadowLayer.shadowOpacity = 0.35
             self.componentShadowLayer.shadowColor = UIColor(white: 0.0, alpha: 1.0).cgColor
-            self.componentShadowLayer.shadowOffset = CGSize(width: 0.0, height: 2.0)
-            self.componentShadowLayer.shadowRadius = 16.0
+            self.componentShadowLayer.shadowOffset = CGSize(width: 0.0, height: 10.0)
+            self.componentShadowLayer.shadowRadius = 30.0
             
             self.cloudLayer0 = SimpleLayer()
             self.cloudShadowLayer0 = SimpleLayer()
-            self.cloudShadowLayer0.shadowOpacity = 0.12
-            self.cloudShadowLayer0.shadowColor = UIColor(white: 0.0, alpha: 1.0).cgColor
-            self.cloudShadowLayer0.shadowOffset = CGSize(width: 0.0, height: 2.0)
-            self.cloudShadowLayer0.shadowRadius = 16.0
+            self.cloudShadowLayer0.shadowOpacity = self.componentShadowLayer.shadowOpacity
+            self.cloudShadowLayer0.shadowColor = self.componentShadowLayer.shadowColor
+            self.cloudShadowLayer0.shadowOffset = self.componentShadowLayer.shadowOffset
+            self.cloudShadowLayer0.shadowRadius = self.componentShadowLayer.shadowRadius
             
             self.cloudLayer1 = SimpleLayer()
             self.cloudShadowLayer1 = SimpleLayer()
-            self.cloudShadowLayer1.shadowOpacity = 0.12
-            self.cloudShadowLayer1.shadowColor = UIColor(white: 0.0, alpha: 1.0).cgColor
-            self.cloudShadowLayer1.shadowOffset = CGSize(width: 0.0, height: 2.0)
-            self.cloudShadowLayer1.shadowRadius = 16.0
+            self.cloudShadowLayer1.shadowOpacity = self.componentShadowLayer.shadowOpacity
+            self.cloudShadowLayer1.shadowColor = self.componentShadowLayer.shadowColor
+            self.cloudShadowLayer1.shadowOffset = self.componentShadowLayer.shadowOffset
+            self.cloudShadowLayer1.shadowRadius = self.componentShadowLayer.shadowRadius
             
             super.init()
             
@@ -973,16 +973,12 @@ public final class EmojiStatusSelectionController: ViewController {
             if self.presentationData.theme.overallDarkAppearance {
                 listBackgroundColor = self.presentationData.theme.list.itemBlocksBackgroundColor
                 separatorColor = self.presentationData.theme.list.itemBlocksSeparatorColor
-                self.componentShadowLayer.shadowOpacity = 0.32
-                self.cloudShadowLayer0.shadowOpacity = 0.32
-                self.cloudShadowLayer1.shadowOpacity = 0.32
             } else {
                 listBackgroundColor = self.presentationData.theme.list.plainBackgroundColor
                 separatorColor = self.presentationData.theme.list.itemPlainSeparatorColor.withMultipliedAlpha(0.5)
-                self.componentShadowLayer.shadowOpacity = 0.12
-                self.cloudShadowLayer0.shadowOpacity = 0.12
-                self.cloudShadowLayer1.shadowOpacity = 0.12
             }
+            self.cloudShadowLayer0.shadowOpacity = self.componentShadowLayer.shadowOpacity
+            self.cloudShadowLayer1.shadowOpacity = self.componentShadowLayer.shadowOpacity
             
             self.cloudLayer0.backgroundColor = listBackgroundColor.cgColor
             self.cloudLayer1.backgroundColor = listBackgroundColor.cgColor
