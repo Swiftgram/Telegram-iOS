@@ -2870,13 +2870,28 @@ final class TextContentItemLayer: SimpleLayer {
 
             let revealCount = min(characterRects.count, remainingCharacters)
             var revealedWidth: CGFloat = 0.0
-            for j in 0 ..< revealCount {
-                let rect = characterRects[j]
-                if !rect.isEmpty {
-                    revealedWidth = max(revealedWidth, rect.maxX)
+            if line.isRTL {
+                // Logical index 0 is the visually rightmost glyph in an RTL line,
+                // so the revealed extent grows leftward from the right edge.
+                var minX: CGFloat = .greatestFiniteMagnitude
+                for j in 0 ..< revealCount {
+                    let rect = characterRects[j]
+                    if !rect.isEmpty {
+                        minX = min(minX, rect.minX)
+                    }
                 }
+                if minX != .greatestFiniteMagnitude {
+                    revealedWidth = ceil(lineFrame.width - minX)
+                }
+            } else {
+                for j in 0 ..< revealCount {
+                    let rect = characterRects[j]
+                    if !rect.isEmpty {
+                        revealedWidth = max(revealedWidth, rect.maxX)
+                    }
+                }
+                revealedWidth = ceil(revealedWidth)
             }
-            revealedWidth = ceil(revealedWidth)
 
             remainingCharacters -= characterRects.count
             let isFull = remainingCharacters >= 0
