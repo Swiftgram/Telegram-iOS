@@ -104,6 +104,21 @@ public extension Api.functions.account {
     }
 }
 public extension Api.functions.account {
+    static func confirmBotConnection(botId: Api.InputUser) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.Bool>) {
+        let buffer = Buffer()
+        buffer.appendInt32(1743593320)
+        botId.serialize(buffer, true)
+        return (FunctionDescription(name: "account.confirmBotConnection", parameters: [("botId", ConstructorParameterDescription(botId))]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> Api.Bool? in
+            let reader = BufferReader(buffer)
+            var result: Api.Bool?
+            if let signature = reader.readInt32() {
+                result = Api.parse(reader, signature: signature) as? Api.Bool
+            }
+            return result
+        })
+    }
+}
+public extension Api.functions.account {
     static func confirmPasswordEmail(code: String) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.Bool>) {
         let buffer = Buffer()
         buffer.appendInt32(-1881204448)

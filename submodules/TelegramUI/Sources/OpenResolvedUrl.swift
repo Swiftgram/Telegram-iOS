@@ -20,7 +20,6 @@ import JoinLinkPreviewUI
 import LanguageLinkPreviewUI
 import SettingsUI
 import UrlHandling
-import ChatInterfaceState
 import TelegramCallsUI
 import UndoUI
 import ImportStickerPackUI
@@ -631,16 +630,16 @@ func openResolvedUrlImpl(
                     }
                     let chatController: Signal<ChatController, NoError>
                     if let threadId {
-                        chatController = chatControllerForForumThreadImpl(context: context, peerId: peerId, threadId: threadId)
+                        chatController = chatControllerForForumThreadImpl(context: context, peerId: peerId, threadId: threadId, initialTextInputState: textInputState)
                     } else {
-                        chatController = .single(ChatControllerImpl(context: context, chatLocation: .peer(id: peerId)))
+                        chatController = .single(ChatControllerImpl(context: context, chatLocation: .peer(id: peerId), initialTextInputState: textInputState))
                     }
-                    
+
                     let _ = (chatController
                     |> deliverOnMainQueue).start(next: { [weak navigationController] chatController in
                         guard let navigationController else {
                             return
-                        }  
+                        }
                         var controllers = navigationController.viewControllers.filter { controller in
                             if controller is PeerSelectionController {
                                 return false
@@ -651,17 +650,8 @@ func openResolvedUrlImpl(
                         navigationController.setViewControllers(controllers, animated: true)
                     })
                 }
-                
-                if let textInputState = textInputState {
-                    let _ = (ChatInterfaceState.update(engine: context.engine, peerId: peerId, threadId: threadId, { currentState in
-                        return currentState.withUpdatedComposeInputState(textInputState)
-                    })
-                    |> deliverOnMainQueue).startStandalone(completed: {
-                        updateControllers()
-                    })
-                } else {
-                    updateControllers()
-                }
+
+                updateControllers()
             }
             
             if let to = to {

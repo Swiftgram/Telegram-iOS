@@ -1227,18 +1227,20 @@ public extension Api.auth {
             public var phoneCodeHash: String
             public var supportEmailAddress: String
             public var supportEmailSubject: String
+            public var premiumDays: Int32
             public var currency: String
             public var amount: Int64
-            public init(storeProduct: String, phoneCodeHash: String, supportEmailAddress: String, supportEmailSubject: String, currency: String, amount: Int64) {
+            public init(storeProduct: String, phoneCodeHash: String, supportEmailAddress: String, supportEmailSubject: String, premiumDays: Int32, currency: String, amount: Int64) {
                 self.storeProduct = storeProduct
                 self.phoneCodeHash = phoneCodeHash
                 self.supportEmailAddress = supportEmailAddress
                 self.supportEmailSubject = supportEmailSubject
+                self.premiumDays = premiumDays
                 self.currency = currency
                 self.amount = amount
             }
             public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("sentCodePaymentRequired", [("storeProduct", ConstructorParameterDescription(self.storeProduct)), ("phoneCodeHash", ConstructorParameterDescription(self.phoneCodeHash)), ("supportEmailAddress", ConstructorParameterDescription(self.supportEmailAddress)), ("supportEmailSubject", ConstructorParameterDescription(self.supportEmailSubject)), ("currency", ConstructorParameterDescription(self.currency)), ("amount", ConstructorParameterDescription(self.amount))])
+                return ("sentCodePaymentRequired", [("storeProduct", ConstructorParameterDescription(self.storeProduct)), ("phoneCodeHash", ConstructorParameterDescription(self.phoneCodeHash)), ("supportEmailAddress", ConstructorParameterDescription(self.supportEmailAddress)), ("supportEmailSubject", ConstructorParameterDescription(self.supportEmailSubject)), ("premiumDays", ConstructorParameterDescription(self.premiumDays)), ("currency", ConstructorParameterDescription(self.currency)), ("amount", ConstructorParameterDescription(self.amount))])
             }
         }
         public class Cons_sentCodeSuccess: TypeConstructorDescription {
@@ -1272,12 +1274,13 @@ public extension Api.auth {
                 break
             case .sentCodePaymentRequired(let _data):
                 if boxed {
-                    buffer.appendInt32(-527082948)
+                    buffer.appendInt32(-125665601)
                 }
                 serializeString(_data.storeProduct, buffer: buffer, boxed: false)
                 serializeString(_data.phoneCodeHash, buffer: buffer, boxed: false)
                 serializeString(_data.supportEmailAddress, buffer: buffer, boxed: false)
                 serializeString(_data.supportEmailSubject, buffer: buffer, boxed: false)
+                serializeInt32(_data.premiumDays, buffer: buffer, boxed: false)
                 serializeString(_data.currency, buffer: buffer, boxed: false)
                 serializeInt64(_data.amount, buffer: buffer, boxed: false)
                 break
@@ -1295,7 +1298,7 @@ public extension Api.auth {
             case .sentCode(let _data):
                 return ("sentCode", [("flags", ConstructorParameterDescription(_data.flags)), ("type", ConstructorParameterDescription(_data.type)), ("phoneCodeHash", ConstructorParameterDescription(_data.phoneCodeHash)), ("nextType", ConstructorParameterDescription(_data.nextType)), ("timeout", ConstructorParameterDescription(_data.timeout))])
             case .sentCodePaymentRequired(let _data):
-                return ("sentCodePaymentRequired", [("storeProduct", ConstructorParameterDescription(_data.storeProduct)), ("phoneCodeHash", ConstructorParameterDescription(_data.phoneCodeHash)), ("supportEmailAddress", ConstructorParameterDescription(_data.supportEmailAddress)), ("supportEmailSubject", ConstructorParameterDescription(_data.supportEmailSubject)), ("currency", ConstructorParameterDescription(_data.currency)), ("amount", ConstructorParameterDescription(_data.amount))])
+                return ("sentCodePaymentRequired", [("storeProduct", ConstructorParameterDescription(_data.storeProduct)), ("phoneCodeHash", ConstructorParameterDescription(_data.phoneCodeHash)), ("supportEmailAddress", ConstructorParameterDescription(_data.supportEmailAddress)), ("supportEmailSubject", ConstructorParameterDescription(_data.supportEmailSubject)), ("premiumDays", ConstructorParameterDescription(_data.premiumDays)), ("currency", ConstructorParameterDescription(_data.currency)), ("amount", ConstructorParameterDescription(_data.amount))])
             case .sentCodeSuccess(let _data):
                 return ("sentCodeSuccess", [("authorization", ConstructorParameterDescription(_data.authorization))])
             }
@@ -1341,18 +1344,21 @@ public extension Api.auth {
             _3 = parseString(reader)
             var _4: String?
             _4 = parseString(reader)
-            var _5: String?
-            _5 = parseString(reader)
-            var _6: Int64?
-            _6 = reader.readInt64()
+            var _5: Int32?
+            _5 = reader.readInt32()
+            var _6: String?
+            _6 = parseString(reader)
+            var _7: Int64?
+            _7 = reader.readInt64()
             let _c1 = _1 != nil
             let _c2 = _2 != nil
             let _c3 = _3 != nil
             let _c4 = _4 != nil
             let _c5 = _5 != nil
             let _c6 = _6 != nil
-            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 {
-                return Api.auth.SentCode.sentCodePaymentRequired(Cons_sentCodePaymentRequired(storeProduct: _1!, phoneCodeHash: _2!, supportEmailAddress: _3!, supportEmailSubject: _4!, currency: _5!, amount: _6!))
+            let _c7 = _7 != nil
+            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 && _c7 {
+                return Api.auth.SentCode.sentCodePaymentRequired(Cons_sentCodePaymentRequired(storeProduct: _1!, phoneCodeHash: _2!, supportEmailAddress: _3!, supportEmailSubject: _4!, premiumDays: _5!, currency: _6!, amount: _7!))
             }
             else {
                 return nil

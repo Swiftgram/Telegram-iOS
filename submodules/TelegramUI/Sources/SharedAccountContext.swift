@@ -2975,8 +2975,8 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             mappedSource = .copyProtection
         case .aiTools:
             mappedSource = .aiTools
-        case let .auth(price):
-            mappedSource = .auth(price)
+        case let .auth(price, days):
+            mappedSource = .auth(price, days)
         case let .premiumGift(file):
             mappedSource = .premiumGift(file)
         }
