@@ -188,33 +188,21 @@ extension ChatControllerImpl {
                 }
                 
                 var dismissController: ((@escaping () -> Void) -> Void)?
-                let canDeleteReactions = canDeleteOtherUserMessages(message: message)
+                let canDeleteReactions: Bool
+                if let channel = message.peers[message.id.peerId] as? TelegramChannel {
+                    canDeleteReactions = channel.hasPermission(.deleteAllMessages)
+                } else {
+                    canDeleteReactions = false
+                }
                 let canViewReactions = canViewMessageReactionList(message: message)
                 let deleteReaction: ((EnginePeer, MessageReaction.Reaction) -> Void)?
                 if canDeleteReactions && canViewReactions {
                     deleteReaction = { [weak self] peer, _ in
                         dismissController?({ [weak self] in
-                            guard let self, self.chatLocation.peerId?.namespace == Namespaces.Peer.CloudChannel else {
+                            guard let self else {
                                 return
                             }
-                            let _ = (self.context.sharedContext.chatAvailableMessageActions(
-                                engine: self.context.engine,
-                                accountPeerId: self.context.account.peerId,
-                                messageIds: Set([message.id]),
-                                keepUpdated: false
-                            )
-                            |> deliverOnMainQueue).startStandalone(next: { [weak self] actions in
-                                guard let self, !actions.options.isEmpty else {
-                                    return
-                                }
-                                self.presentBanMessageOptions(
-                                    accountPeerId: self.context.account.peerId,
-                                    author: peer._asPeer(),
-                                    messageIds: Set([message.id]),
-                                    options: actions.options,
-                                    reaction: true
-                                )
-                            })
+                            self.presentReactionDeletionOptions(author: peer._asPeer(), messageId: message.id)
                         })
                     }
                 } else {
@@ -408,6 +396,10 @@ extension ChatControllerImpl {
     }
     
     func openMessageSendStarsScreen(message: Message) {
+        guard canSendReactionsToChat(self.presentationInterfaceState) else {
+            return
+        }
+
         if let current = self.currentSendStarsUndoController {
             self.currentSendStarsUndoController = nil
             current.dismiss()

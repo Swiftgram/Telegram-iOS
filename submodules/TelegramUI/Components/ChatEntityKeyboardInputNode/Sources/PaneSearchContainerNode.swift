@@ -220,7 +220,7 @@ public final class PaneSearchContainerNode: ASDisplayNode, EntitySearchContainer
         return self.contentNode.itemAt(point: CGPoint(x: point.x, y: point.y - searchBarHeight))
     }
 
-    private func openSelectedPackMoreMenu() {
+    private func openMore() {
         guard let selectedStickerPack = self.selectedStickerPack, let controlsView = self.navigationButtons.view as? GlassControlPanelComponent.View, let rightItemView = controlsView.rightItemView, let sourceView = rightItemView.itemView(id: AnyHashable("more")) else {
             return
         }
@@ -271,6 +271,59 @@ public final class PaneSearchContainerNode: ASDisplayNode, EntitySearchContainer
                 return false
             }), nil)
         })))
+
+        if selectedStickerPack.installed {
+            items.append(.separator)
+            items.append(.action(ContextMenuActionItem(text: strings.StickerPack_RemoveStickerSet, textColor: .destructive, icon: { theme in
+                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Delete"), color: theme.contextMenu.destructiveColor)
+            }, action: { [weak self] _, f in
+                f(.default)
+
+                guard let self else {
+                    return
+                }
+
+                let info = selectedStickerPack.info
+                let context = self.context
+                let _ = (context.engine.stickers.removeStickerPackInteractively(id: info.id, option: .delete)
+                |> deliverOnMainQueue).start(next: { [weak self] indexAndItems in
+                    guard let self, let (positionInList, items) = indexAndItems else {
+                        return
+                    }
+
+                    let stickerItems = items.compactMap { $0 as? StickerPackItem }
+                    if let contentNode = self.contentNode as? StickerPaneSearchContentNode {
+                        contentNode.setPackInstalledState(id: info.id, installed: false)
+                    }
+
+                    var animateInAsReplacement = false
+                    if let navigationController = self.interaction.getNavigationController() {
+                        for controller in navigationController.overlayControllers {
+                            if let controller = controller as? UndoOverlayController {
+                                controller.dismissWithCommitActionAndReplacementAnimation()
+                                animateInAsReplacement = true
+                            }
+                        }
+                    }
+
+                    let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }.withUpdated(theme: self.theme)
+                    let undoController = UndoOverlayController(presentationData: presentationData, content: .stickersModified(title: presentationData.strings.StickerPackActionInfo_RemovedTitle, text: presentationData.strings.StickerPackActionInfo_RemovedText(info.title).string, undo: true, info: info, topItem: stickerItems.first, context: context), elevatedLayout: false, animateInAsReplacement: animateInAsReplacement, action: { [weak self] action in
+                        if case .undo = action {
+                            let _ = context.engine.stickers.addStickerPackInteractively(info: info, items: stickerItems, positionInList: positionInList).start()
+                            if let contentNode = self?.contentNode as? StickerPaneSearchContentNode {
+                                contentNode.setPackInstalledState(id: info.id, installed: true)
+                            }
+                        }
+                        return true
+                    })
+                    if let navigationController = self.interaction.getNavigationController() {
+                        navigationController.presentOverlay(controller: undoController)
+                    } else {
+                        self.interaction.presentController(undoController, nil)
+                    }
+                })
+            })))
+        }
 
         let contextController = makeContextController(
             presentationData: presentationData,
@@ -327,7 +380,7 @@ public final class PaneSearchContainerNode: ASDisplayNode, EntitySearchContainer
                             id: AnyHashable("more"),
                             content: .animation("anim_morewide"),
                             action: { [weak self] in
-                                self?.openSelectedPackMoreMenu()
+                                self?.openMore()
                             }
                         )
                     ],

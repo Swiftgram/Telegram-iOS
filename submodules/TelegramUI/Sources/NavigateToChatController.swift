@@ -182,6 +182,7 @@ public func navigateToChatControllerImpl(_ params: NavigateToChatControllerParam
                             controller.navigateToMessage(messageLocation: .id(messageId, NavigateToMessageParams(timestamp: timecode, quote: (highlight?.quote).flatMap { quote in NavigateToMessageParams.Quote(string: quote.string, offset: quote.offset) }, subject: highlight?.subject, setupReply: setupReply)), animated: isFirst || params.forceAnimatedScroll, completion: { [weak navigationController, weak controller] in
                                 if let navigationController = navigationController, let controller = controller {
                                     let _ = navigationController.popToViewController(controller, animated: animated)
+                                    params.completion(controller)
                                 }
                             }, customPresentProgress: { [weak navigationController] c, a in
                                 (navigationController?.viewControllers.last as? ViewController)?.present(c, in: .window(.root), with: a)

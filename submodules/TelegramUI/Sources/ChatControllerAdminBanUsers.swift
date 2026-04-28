@@ -261,6 +261,30 @@ extension ChatControllerImpl {
         }))
     }
     
+    public func presentReactionDeletionOptions(author: Peer, messageId: MessageId) {
+        guard self.chatLocation.peerId?.namespace == Namespaces.Peer.CloudChannel else {
+            return
+        }
+        let _ = (self.context.sharedContext.chatAvailableMessageActions(
+            engine: self.context.engine,
+            accountPeerId: self.context.account.peerId,
+            messageIds: Set([messageId]),
+            keepUpdated: false
+        )
+        |> deliverOnMainQueue).startStandalone(next: { [weak self] actions in
+            guard let self, !actions.options.isEmpty else {
+                return
+            }
+            self.presentBanMessageOptions(
+                accountPeerId: self.context.account.peerId,
+                author: author,
+                messageIds: Set([messageId]),
+                options: actions.options,
+                reaction: true
+            )
+        })
+    }
+
     func presentBanMessageOptions(accountPeerId: PeerId, author: Peer, messageIds: Set<MessageId>, options: ChatAvailableMessageActionOptions, reaction: Bool = false) {
         guard let peerId = self.chatLocation.peerId else {
             return
