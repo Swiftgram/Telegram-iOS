@@ -302,9 +302,8 @@ private func adminUserActionsTitle(
         } else {
             return strings.Chat_AdminActionSheet_DeleteTitle(Int32(messageCount))
         }
-    case .chatReaction(_):
-        //TODO:localize
-        return "Delete 1 Reaction"
+    case .chatReaction:
+        return strings.Chat_AdminActionSheet_DeleteReactionTitle
     }
 }
 
@@ -535,14 +534,13 @@ private final class AdminUserActionsContentComponent: Component {
                         ))))
                     }
                 } else {
-                    //TODO:localize
                     subItems.append(
                         AnyComponentWithIdentity(id: 0, component: AnyComponent(ListActionItemComponent(
                             theme: component.theme,
                             style: .glass,
                             title: AnyComponent(MultilineTextComponent(
                                 text: .plain(NSAttributedString(
-                                    string: "Delete all Messages",
+                                    string: component.strings.Chat_AdminActionSheet_DeleteAllMessages,
                                     font: Font.regular(component.presentationData.listsFontSize.baseDisplaySize),
                                     textColor: component.theme.list.itemPrimaryTextColor
                                 )),
@@ -568,7 +566,7 @@ private final class AdminUserActionsContentComponent: Component {
                             style: .glass,
                             title: AnyComponent(MultilineTextComponent(
                                 text: .plain(NSAttributedString(
-                                    string: "Delete all Reactions",
+                                    string: component.strings.Chat_AdminActionSheet_DeleteAllReactions,
                                     font: Font.regular(component.presentationData.listsFontSize.baseDisplaySize),
                                     textColor: component.theme.list.itemPrimaryTextColor
                                 )),

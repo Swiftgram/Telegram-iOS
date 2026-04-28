@@ -16176,6 +16176,7 @@ Error: %8$@";
 "CreatePoll.OptionsNeededOne" = "Add at least one option";
 "CreatePoll.QuizCorrectOptionNeeded" = "Select a correct option";
 "CreatePoll.QuizCorrectOptionNeededMultiple" = "Select at least one correct option";
+"CreatePoll.QuizCountryNeeded" = "Select at least one country";
 
 "Stars.Intro.Transaction.Commission.Title" = "%@ commission";
 
@@ -16192,7 +16193,7 @@ Error: %8$@";
 "CreatePoll.AllowedCountries.Countries_1" = "%@ country";
 "CreatePoll.AllowedCountries.Countries_any" = "%@ countries";
 
-"Chat.Poll.Restriction.Subscribers" = "Only subscribers of **%@** can vote";
+"Chat.Poll.Restriction.Subscribers" = "Only subscribers of **%@** can vote.";
 "Chat.Poll.Restriction.Subscribers.TimeLimit" = "Only subscribers who joined more than **24 hours** ago can vote.";
 "Chat.Poll.Restriction.Country" = "Only users from %@ can vote.";
 "Chat.Poll.Restriction.SubscribersCountry" = "Only subscribers of **%@** from %@ can vote.";
@@ -16232,3 +16233,26 @@ Error: %8$@";
 "Login.Fee.GetPremiumForDays" = "Get Telegram Premium for %@";
 "Login.Fee.GetPremiumForDays.Days_1" = "%@ day";
 "Login.Fee.GetPremiumForDays.Days_any" = "%@ days";
+
+"PeerInfo.DeleteReaction" = "Delete Reaction";
+"Chat.DeleteReactionInfo" = "Tap and hold to delete reaction.";
+
+"Chat.AdminActionSheet.DeleteReactionTitle" = "Delete 1 Reaction";
+"Chat.AdminActionSheet.DeleteAllMessages" = "Delete All Messages";
+"Chat.AdminActionSheet.DeleteAllReactions" = "Delete All Reactions";
+
+"Conversation.CalendarSearch.Title" = "Search";
+"Conversation.CalendarSearch.Done" = "Done";
+
+"ScheduleMessage.SilentPosting.YouEnabled" = "You will receive a silent notification";
+"ScheduleMessage.SilentPosting.YouDisabled" = "You will be notified";
+"ScheduleMessage.SilentPosting.UserEnabled" = "%@ will receive a silent notification";
+"ScheduleMessage.SilentPosting.UserDisabled" = "%@ will be notified";
+"ScheduleMessage.SilentPosting.GroupEnabled" = "Members will receive a silent notification";
+"ScheduleMessage.SilentPosting.GroupDisabled" = "Members will be notified";
+"ScheduleMessage.SilentPosting.ChannelEnabled" = "Subscribers will receive a silent notification";
+"ScheduleMessage.SilentPosting.ChannelDisabled" = "Subscribers will be notified";
+
+"Settings.ChatAutomation" = "Chat Automation";
+"Settings.ChatAutomationInfo" = "Add a bot to reply to messages on your behalf.";
+"Settings.ChatAutomationOff" = "Off";

@@ -378,8 +378,7 @@ func infoItems(
 
             if let reactionSourceMessageId = reactionSourceMessageId {
                 if canDeleteReaction {
-                    //TODO:localize
-                    items[currentPeerInfoSection]!.append(PeerInfoScreenActionItem(id: ItemDeleteReaction, text: "Delete Reaction", color: .destructive, action: {
+                    items[currentPeerInfoSection]!.append(PeerInfoScreenActionItem(id: ItemDeleteReaction, text: presentationData.strings.PeerInfo_DeleteReaction, color: .destructive, action: {
                         interaction.openDeleteReaction(reactionSourceMessageId)
                     }))
                 }

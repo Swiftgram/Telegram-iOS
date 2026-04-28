@@ -3099,9 +3099,8 @@ public class ComposePollScreen: ViewControllerComponentContainer, AttachmentCont
                 text = presentationData.strings.CreatePoll_QuizCorrectOptionNeeded
             }
         case .countriesNeeded:
-            //TODO:localize
             title = nil
-            text = "Select at least one country"
+            text = presentationData.strings.CreatePoll_QuizCountryNeeded
         }
         
         let controller = UndoOverlayController(

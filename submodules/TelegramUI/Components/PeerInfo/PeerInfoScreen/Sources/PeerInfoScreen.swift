@@ -4592,20 +4592,20 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         guard let controller = self.controller, let navigationController = controller.navigationController as? NavigationController else {
             return
         }
-        guard let tabController = navigationController.viewControllers.first as? TabBarController else {
+        guard let navigationTarget = resolveChatListNavigationTarget(navigationController: navigationController, excluding: controller) else {
             return
         }
-        for childController in tabController.controllers {
-            if let chatListController = childController as? ChatListController {
-                chatListController.maybeAskForPeerChatRemoval(peer: EngineRenderedPeer(peer: peer), joined: false, deleteGloballyIfPossible: globally, completion: { [weak navigationController] deleted in
-                    if deleted {
-                        navigationController?.popToRoot(animated: true)
-                    }
-                }, removed: {
-                })
-                break
+        navigationTarget.chatListController.maybeAskForPeerChatRemoval(peer: EngineRenderedPeer(peer: peer), joined: false, deleteGloballyIfPossible: globally, completion: { [weak navigationController] deleted in
+            guard deleted, let navigationController = navigationController else {
+                return
             }
-        }
+            if let popToController = navigationTarget.popToController {
+                let _ = navigationController.popToViewController(popToController, animated: true)
+            } else {
+                navigationController.popToRoot(animated: true)
+            }
+        }, removed: {
+        })
     }
     
     func deleteProfilePhoto(_ item: PeerInfoAvatarListItem) {
