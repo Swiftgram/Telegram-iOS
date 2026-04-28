@@ -863,6 +863,8 @@ public final class FeaturedStickersScreen: ViewController {
     
     fileprivate var searchNavigationNode: SearchNavigationContentNode?
     
+    private var eventsDisposable: Disposable?
+    
     public init(context: AccountContext, highlightedPackId: ItemCollectionId?, forceTheme: PresentationTheme? = nil, stickerActionTitle: String? = nil, sendSticker: ((FileMediaReference, UIView?, CGRect?) -> Bool)? = nil) {
         self.context = context
         self.highlightedPackId = highlightedPackId
@@ -906,6 +908,18 @@ public final class FeaturedStickersScreen: ViewController {
                 }
             }
         })
+        
+        self.eventsDisposable = (context.account.stateManager.installedStickerPacksArchivedEvents
+        |> deliverOnMainQueue).startStrict(next: { [weak self] count in
+            guard let self else {
+                return
+            }
+            if count == 0 {
+                return
+            }
+            let presentationData = self.presentationData
+            self.push(textAlertController(context: self.context, updatedPresentationData: nil, title: nil, text: presentationData.strings.ArchivedPacksAlert_Title, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]))
+        })
     }
     
     required init(coder aDecoder: NSCoder) {
@@ -914,6 +928,7 @@ public final class FeaturedStickersScreen: ViewController {
     
     deinit {
         self.presentationDataDisposable?.dispose()
+        self.eventsDisposable?.dispose()
     }
     
     private func updatePresentationData() {
