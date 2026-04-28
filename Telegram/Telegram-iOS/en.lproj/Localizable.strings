@@ -2067,6 +2067,7 @@
 "StickerPack.Share" = "Share";
 "StickerPack.Send" = "Send Sticker";
 "StickerPack.AddSticker" = "Add Sticker";
+"StickerPack.RemoveStickerSet" = "Remove Sticker Set";
 
 "StickerPack.RemoveStickerCount_1" = "Remove 1 Sticker";
 "StickerPack.RemoveStickerCount_2" = "Remove 2 Stickers";
@@ -16214,5 +16215,5 @@ Error: %8$@";
 
 "Chat.AdminAction.ToastReactionsDeletedTitleSingle" = "Reaction Deleted";
 "Chat.AdminAction.ToastReactionsDeletedTextSingle" = "Reaction Deleted.";
-"Chat.AdminAction.ToastReactionsDeletedTextMultiple" = "Messages Deleted.";
+"Chat.AdminAction.ToastReactionsDeletedTextMultiple" = "Reactions Deleted.";
 "Chat.AdminAction.ToastMessagesAndReactionsDeletedText" = "Messages and reactions deleted.";

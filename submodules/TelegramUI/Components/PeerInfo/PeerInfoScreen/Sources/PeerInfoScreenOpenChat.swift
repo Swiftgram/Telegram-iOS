@@ -81,6 +81,50 @@ extension PeerInfoScreenNode {
         }
     }
     
+    func openDeleteReaction(messageId: MessageId) {
+        guard let authorPeer = self.data?.peer?._asPeer(), let navigationController = self.controller?.navigationController as? NavigationController else {
+            return
+        }
+
+        let _ = (self.context.engine.data.get(
+            TelegramEngine.EngineData.Item.Peer.Peer(id: messageId.peerId),
+            TelegramEngine.EngineData.Item.Messages.Message(id: messageId)
+        )
+        |> deliverOnMainQueue).startStandalone(next: { [weak self] sourcePeer, sourceMessage in
+            guard let self, let sourcePeer, let sourceMessage = sourceMessage?._asMessage() else {
+                return
+            }
+            guard let channel = sourceMessage.peers[sourceMessage.id.peerId] as? TelegramChannel, channel.hasPermission(.deleteAllMessages) else {
+                return
+            }
+
+            var hasReaction = false
+            for attribute in sourceMessage.attributes {
+                guard let attribute = attribute as? ReactionsMessageAttribute else {
+                    continue
+                }
+                if attribute.recentPeers.contains(where: { $0.peerId == authorPeer.id }) || attribute.topPeers.contains(where: { $0.peerId == authorPeer.id }) {
+                    hasReaction = true
+                    break
+                }
+            }
+            guard hasReaction else {
+                return
+            }
+
+            let chatLocation: NavigateToChatControllerParams.Location
+            if case let .channel(channel) = sourcePeer, channel.isForumOrMonoForum, let threadId = sourceMessage.threadId {
+                chatLocation = .replyThread(ChatReplyThreadMessage(peerId: sourcePeer.id, threadId: threadId, channelMessageId: nil, isChannelPost: false, isForumPost: true, isMonoforumPost: channel.isMonoForum, maxMessage: nil, maxReadIncomingMessageId: nil, maxReadOutgoingMessageId: nil, unreadCount: 0, initialFilledHoles: IndexSet(), initialAnchor: .automatic, isNotAvailable: false))
+            } else {
+                chatLocation = .peer(sourcePeer)
+            }
+
+            self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: chatLocation, subject: .message(id: .id(messageId), highlight: ChatControllerSubject.MessageHighlight(quote: nil), timecode: nil, setupReply: false), keepStack: .always, useExisting: true, completion: { chatController in
+                chatController.presentReactionDeletionOptions(author: authorPeer, messageId: messageId)
+            }))
+        })
+    }
+
     func openChatWithClearedHistory(type: InteractiveHistoryClearingType) {
         guard let peer = self.data?.chatPeer, let navigationController = self.controller?.navigationController as? NavigationController else {
             return

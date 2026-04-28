@@ -2578,6 +2578,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                 case poll
                 case todo
                 case game
+                case voiceMessage
             }
             var messageTypeIcon: MessageTypeIcon?
             var ignoreForwardedIcon = false
@@ -2895,7 +2896,11 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                                 messageTypeIcon = .story
                             } else {
                                 for media in message.media {
-                                    if let _ = media as? TelegramMediaPoll {
+                                    if let file = media as? TelegramMediaFile {
+                                        if file.isVoice {
+                                            messageTypeIcon = .voiceMessage
+                                        }
+                                    } else if let _ = media as? TelegramMediaPoll {
                                         messageTypeIcon = .poll
                                     } else if let _ = media as? TelegramMediaTodo {
                                         messageTypeIcon = .todo
@@ -3106,6 +3111,9 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
             case .game:
                 currentMessageTypeIcon = PresentationResourcesChatList.gameIcon(item.presentationData.theme)
                 currentMessageTypeIconOffset.y = -1.0
+            case .voiceMessage:
+                currentMessageTypeIcon = PresentationResourcesChatList.voiceMessageIcon(item.presentationData.theme)
+                currentMessageTypeIconOffset.y = -1.0
             default:
                 break
             }
@@ -3115,7 +3123,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                 if !contentImageSpecs.isEmpty {
                     textLeftCutout += forwardedIconSpacing
                 } else {
-                    textLeftCutout += contentImageTrailingSpace
+                    textLeftCutout += contentImageTrailingSpace - 1.0
                 }
             }
             

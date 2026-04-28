@@ -42,6 +42,7 @@ func infoItems(
     presentationData: PresentationData,
     interaction: PeerInfoInteraction,
     reactionSourceMessageId: MessageId?,
+    canDeleteReaction: Bool,
     callMessages: [Message],
     chatLocation: ChatLocation,
     isOpenedFromChat: Bool,
@@ -91,9 +92,9 @@ func infoItems(
         let ItemAffiliateInfo = 4001
         let ItemBusinessHours = 5000
         let ItemLocation = 5001
-        let ItemSendMessage = 6000
-        let ItemReport = 6001
-        let ItemAddToContacts = 6002
+        let ItemAddToContacts = 6000
+        let ItemDeleteReaction = 6001
+        let ItemReport = 6002
         let ItemBlock = 6003
         let ItemEncryptionKey = 6004
         let ItemBalanceHeader = 7000
@@ -369,23 +370,23 @@ func infoItems(
         }
         
         if !isMyProfile {
-            if let reactionSourceMessageId = reactionSourceMessageId, !data.isContact {
-                items[currentPeerInfoSection]!.append(PeerInfoScreenActionItem(id: ItemSendMessage, text: presentationData.strings.UserInfo_SendMessage, action: {
-                    interaction.openChat(nil)
+            if !data.isContact, user.botInfo == nil {
+                items[currentPeerInfoSection]!.append(PeerInfoScreenActionItem(id: ItemAddToContacts, text: presentationData.strings.PeerInfo_AddToContacts, action: {
+                    interaction.openAddContact()
                 }))
-                
+            }
+
+            if let reactionSourceMessageId = reactionSourceMessageId {
+                if canDeleteReaction {
+                    //TODO:localize
+                    items[currentPeerInfoSection]!.append(PeerInfoScreenActionItem(id: ItemDeleteReaction, text: "Delete Reaction", color: .destructive, action: {
+                        interaction.openDeleteReaction(reactionSourceMessageId)
+                    }))
+                }
                 items[currentPeerInfoSection]!.append(PeerInfoScreenActionItem(id: ItemReport, text: presentationData.strings.ReportPeer_BanAndReport, color: .destructive, action: {
                     interaction.openReport(.reaction(reactionSourceMessageId))
                 }))
             } else {
-                if !data.isContact {
-                    if user.botInfo == nil {
-                        items[currentPeerInfoSection]!.append(PeerInfoScreenActionItem(id: ItemAddToContacts, text: presentationData.strings.PeerInfo_AddToContacts, action: {
-                            interaction.openAddContact()
-                        }))
-                    }
-                }
-                
                 var isBlocked = false
                 if let cachedData = data.cachedData as? CachedUserData, cachedData.isBlocked {
                     isBlocked = true

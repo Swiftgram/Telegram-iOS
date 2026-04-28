@@ -677,7 +677,11 @@ final class ChatbotSetupScreenComponent: Component {
                 }
                 transition.setPosition(view: self.titleTransformContainer, position: navigationTitleFrame.center)
                 transition.setBounds(view: self.titleTransformContainer, bounds: CGRect(origin: CGPoint(), size: navigationTitleFrame.size))
-                transition.setFrame(view: navigationTitleView, frame: CGRect(origin: CGPoint(), size: navigationTitleFrame.size))
+                transition.setBounds(view: navigationTitleView, bounds: CGRect(origin: CGPoint(), size: navigationTitleFrame.size))
+                transition.setPosition(view: navigationTitleView, position: CGPoint(
+                    x: navigationTitleFrame.size.width * 0.5,
+                    y: navigationTitleFrame.size.height * 0.5
+                ))
             }
             
             let bottomContentInset: CGFloat = 24.0

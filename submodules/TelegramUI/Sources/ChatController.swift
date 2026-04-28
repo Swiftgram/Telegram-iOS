@@ -1679,6 +1679,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             if case .default = reaction, strongSelf.chatLocation.peerId == strongSelf.context.account.peerId {
                 return
             }
+            if case .default = reaction, !canSendReactionsToChat(strongSelf.presentationInterfaceState) {
+                return
+            }
             if case let .customChatContents(customChatContents) = strongSelf.presentationInterfaceState.subject {
                 if case let .hashTagSearch(publicPosts) = customChatContents.kind, publicPosts {
                     return
@@ -1747,7 +1750,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 return
             }
             
-            let _ = (peerMessageAllowedReactions(context: strongSelf.context, message: message)
+            let _ = (peerMessageAllowedReactions(context: strongSelf.context, message: message, ignoreDefault: canBypassRestrictions(chatPresentationInterfaceState: strongSelf.presentationInterfaceState))
             |> deliverOnMainQueue).startStandalone(next: { allowedReactions, _ in
                 guard let strongSelf = self else {
                     return
@@ -1791,6 +1794,10 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                     }
                     
                     if case .stars = chosenReaction {
+                        if !canSendReactionsToChat(strongSelf.presentationInterfaceState) {
+                            return
+                        }
+
                         if strongSelf.selectPollOptionFeedback == nil {
                             strongSelf.selectPollOptionFeedback = HapticFeedback()
                         }
@@ -1957,6 +1964,10 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                         }
                         
                         if removedReaction == nil {
+                            if !canSendReactionsToChat(strongSelf.presentationInterfaceState) {
+                                return
+                            }
+
                             if !canAddMessageReactions(message: message) {
                                 itemNode.openMessageContextMenu()
                                 return
