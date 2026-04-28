@@ -1046,7 +1046,7 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
     }
 }
 
-public func instantPageLayoutForWebPage(_ webPage: TelegramMediaWebpage, instantPage: InstantPage?, userLocation: MediaResourceUserLocation, boundingWidth: CGFloat, safeInset: CGFloat, strings: PresentationStrings, theme: InstantPageTheme, dateTimeFormat: PresentationDateTimeFormat, webEmbedHeights: [Int : CGFloat] = [:], cachedMessageSyntaxHighlight: CachedMessageSyntaxHighlight? = nil) -> InstantPageLayout {
+public func instantPageLayoutForWebPage(_ webPage: TelegramMediaWebpage, instantPage: InstantPage?, userLocation: MediaResourceUserLocation, boundingWidth: CGFloat, safeInset: CGFloat, strings: PresentationStrings, theme: InstantPageTheme, dateTimeFormat: PresentationDateTimeFormat, webEmbedHeights: [Int : CGFloat] = [:], cachedMessageSyntaxHighlight: CachedMessageSyntaxHighlight? = nil, addFeedback: Bool = true) -> InstantPageLayout {
     var maybeLoadedContent: TelegramMediaWebpageLoadedContent?
     if case let .Loaded(content) = webPage.content {
         maybeLoadedContent = content
@@ -1088,7 +1088,7 @@ public func instantPageLayoutForWebPage(_ webPage: TelegramMediaWebpage, instant
     let closingSpacing = spacingBetweenBlocks(upper: previousBlock, lower: nil)
     contentSize.height += closingSpacing
     
-    if webPage.webpageId.id != 0 {
+    if webPage.webpageId.id != 0 && addFeedback {
         let feedbackItem = InstantPageFeedbackItem(frame: CGRect(x: 0.0, y: contentSize.height, width: boundingWidth, height: 40.0), webPage: webPage)
         contentSize.height += feedbackItem.frame.height
         items.append(feedbackItem)

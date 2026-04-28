@@ -822,6 +822,7 @@ private final class TextStyleEditSheetComponent: Component {
                             theme: theme,
                             strings: environmentValue.strings,
                             actionTitle: actionButtonTitle,
+                            displayProgress: self.isActionInProgress,
                             action: isMainActionEnabled ? performMainAction : nil
                         )
                     ),
@@ -998,17 +999,20 @@ private final class ActionButtonsComponent: Component {
     let theme: PresentationTheme
     let strings: PresentationStrings
     let actionTitle: String
+    let displayProgress: Bool
     let action: (() -> Void)?
     
     init(
         theme: PresentationTheme,
         strings: PresentationStrings,
         actionTitle: String,
+        displayProgress: Bool,
         action: (() -> Void)?
     ) {
         self.theme = theme
         self.strings = strings
         self.actionTitle = actionTitle
+        self.displayProgress = displayProgress
         self.action = action
     }
     
@@ -1020,6 +1024,9 @@ private final class ActionButtonsComponent: Component {
             return false
         }
         if lhs.actionTitle != rhs.actionTitle {
+            return false
+        }
+        if lhs.displayProgress != rhs.displayProgress {
             return false
         }
         if (lhs.action == nil) != (rhs.action == nil) {
@@ -1070,7 +1077,7 @@ private final class ActionButtonsComponent: Component {
                         ))
                     ),
                     isEnabled: component.action != nil,
-                    displaysProgress: false,
+                    displaysProgress: component.displayProgress,
                     action: { [weak self] in
                         guard let self, let component = self.component else {
                             return

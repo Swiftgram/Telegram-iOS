@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 import AsyncDisplayKit
+import Display
 
 private final class InstantPageTileNodeParameters: NSObject {
     let tile: InstantPageTile
@@ -45,9 +46,11 @@ public final class InstantPageTileNode: ASDisplayNode {
         
         if let parameters = parameters as? InstantPageTileNodeParameters {
             if !isRasterizing {
-                context.setBlendMode(.copy)
-                context.setFillColor(parameters.backgroundColor.cgColor)
-                context.fill(bounds)
+                if !parameters.backgroundColor.alpha.isZero {
+                    context.setBlendMode(.copy)
+                    context.setFillColor(parameters.backgroundColor.cgColor)
+                    context.fill(bounds)
+                }
             }
             
             parameters.tile.draw(context: context)

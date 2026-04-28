@@ -35,6 +35,7 @@ import ChatMessageDateAndStatusNode
 import ChatMessageBubbleContentNode
 import ChatHistoryEntry
 import ChatMessageTextBubbleContentNode
+import ChatMessageRichDataBubbleContentNode
 import ChatMessageItemCommon
 import ChatMessageReplyInfoNode
 import ChatMessageCallBubbleContentNode
@@ -382,7 +383,11 @@ private func contentNodeMessagesAndClassesForItem(_ item: ChatMessageItem) -> ([
                     if let attribute = message.attributes.first(where: { $0 is WebpagePreviewMessageAttribute }) as? WebpagePreviewMessageAttribute, attribute.leadingPreview {
                         result.insert((message, ChatMessageWebpageBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)), at: addedPriceInfo ? 1 : 0)
                     } else {
-                        result.append((message, ChatMessageWebpageBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)))
+                        if content.instantPage != nil && item.context.sharedContext.immediateExperimentalUISettings.debugRichText {
+                            result.append((message, ChatMessageRichDataBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)))
+                        } else {
+                            result.append((message, ChatMessageWebpageBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)))
+                        }
                     }
                     needReactions = false
                 }
@@ -1620,6 +1625,12 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         
         var allowFullWidth = false
         let chatLocationPeerId: PeerId = item.chatLocation.peerId ?? item.content.firstMessage.id.peerId
+        
+        var isInlinePage = false
+        if item.context.sharedContext.immediateExperimentalUISettings.debugRichText, let webpage = item.message.media.first(where: { $0 is TelegramMediaWebpage }) as? TelegramMediaWebpage, case let .Loaded(content) = webpage.content, content.instantPage != nil {
+            allowFullWidth = true
+            isInlinePage = true
+        }
                 
         do {
             let peerId = chatLocationPeerId
@@ -1888,6 +1899,10 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         if let subject = item.associatedData.subject, case .messageOptions = subject {
             needsShareButton = false
         }
+        
+        if isInlinePage {
+            needsShareButton = false
+        }
                         
         var tmpWidth: CGFloat
         if allowFullWidth {
@@ -1895,7 +1910,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             if (needsShareButton && !isSidePanelOpen) || isAd {
                 tmpWidth -= 45.0
             } else {
-                tmpWidth -= 4.0
+                tmpWidth -= 3.0
             }
         } else {
             tmpWidth = layoutConstants.bubble.maximumWidthFill.widthFor(baseWidth)
@@ -2262,7 +2277,11 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             bubbleReactions = ReactionsMessageAttribute(canViewList: false, isTags: false, reactions: [], recentPeers: [], topPeers: [])
         }
         if !bubbleReactions.reactions.isEmpty && !item.presentationData.isPreview {
-            bottomNodeMergeStatus = .Right
+            if incoming {
+                bottomNodeMergeStatus = .Both
+            } else {
+                bottomNodeMergeStatus = .Right
+            }
         }
         
         var currentCredibilityIcon: (EmojiStatusComponent.Content, UIColor?)?
@@ -7348,7 +7367,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         }
         
         for contentNode in self.contentNodes {
-            if contentNode is ChatMessageMediaBubbleContentNode || contentNode is ChatMessageGiftBubbleContentNode || contentNode is ChatMessageWebpageBubbleContentNode || contentNode is ChatMessageInvoiceBubbleContentNode || contentNode is ChatMessageGameBubbleContentNode || contentNode is ChatMessageInstantVideoBubbleContentNode {
+            if contentNode is ChatMessageMediaBubbleContentNode || contentNode is ChatMessageGiftBubbleContentNode || contentNode is ChatMessageWebpageBubbleContentNode || contentNode is ChatMessageInvoiceBubbleContentNode || contentNode is ChatMessageGameBubbleContentNode || contentNode is ChatMessageInstantVideoBubbleContentNode || contentNode is ChatMessageRichDataBubbleContentNode {
                 contentNode.visibility = mapVisibility(effectiveMediaVisibility, boundsSize: self.bounds.size, insets: self.insets, to: contentNode)
             } else {
                 contentNode.visibility = mapVisibility(effectiveVisibility, boundsSize: self.bounds.size, insets: self.insets, to: contentNode)
