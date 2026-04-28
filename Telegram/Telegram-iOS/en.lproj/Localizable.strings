@@ -16217,3 +16217,18 @@ Error: %8$@";
 "Chat.AdminAction.ToastReactionsDeletedTextSingle" = "Reaction Deleted.";
 "Chat.AdminAction.ToastReactionsDeletedTextMultiple" = "Reactions Deleted.";
 "Chat.AdminAction.ToastMessagesAndReactionsDeletedText" = "Messages and reactions deleted.";
+
+"Premium.SignUp.SignUpNewInfo" = "Get Telegram Premium for %@";
+"Premium.SignUp.SignUpNewInfo.Days_1" = "%@ day";
+"Premium.SignUp.SignUpNewInfo.Days_any" = "%@ days";
+"Premium.SignUp.SignUpNewInfoNone" = "Get Telegram Premium";
+
+"Login.Fee.Support.NewText.Days_1" = "%@ day";
+"Login.Fee.Support.NewText.Days_any" = "%@ days";
+"Login.Fee.Support.NewText" = "Sign up for a %@ Telegram Premium subscription to help cover the SMS costs.";
+"Login.Fee.Support.NewTextNone" = "Sign up for Telegram Premium subscription to help cover the SMS costs.";
+
+"Login.Fee.GetPremiumNone" = "Get Telegram Premium";
+"Login.Fee.GetPremiumForDays" = "Get Telegram Premium for %@";
+"Login.Fee.GetPremiumForDays.Days_1" = "%@ day";
+"Login.Fee.GetPremiumForDays.Days_any" = "%@ days";
