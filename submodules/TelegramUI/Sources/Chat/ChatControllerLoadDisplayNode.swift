@@ -530,6 +530,8 @@ extension ChatControllerImpl {
             
             let initialInterfaceState = contentData.initialInterfaceState
             contentData.initialInterfaceState = nil
+            let initialTextInputState = self.initialTextInputState
+            self.initialTextInputState = nil
             
             if !self.didInitializePersistentPeerInterfaceData, let initialPersistentPeerData = contentData.initialPersistentPeerData {
                 self.didInitializePersistentPeerInterfaceData = true
@@ -540,6 +542,9 @@ extension ChatControllerImpl {
                 var interfaceState = interfaceState
                 if let initialInterfaceState {
                     interfaceState = initialInterfaceState.interfaceState
+                }
+                if let initialTextInputState {
+                    interfaceState = interfaceState.withUpdatedComposeInputState(initialTextInputState)
                 }
                 
                 if let channel = contentData.state.renderedPeer?.peer as? TelegramChannel {
