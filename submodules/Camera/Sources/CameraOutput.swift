@@ -192,9 +192,9 @@ final class CameraOutput: NSObject {
         }
         
         if #available(iOS 13.0, *), session.hasMultiCam {
-            if let device = device.videoDevice, let ports = input.videoInput?.ports(for: AVMediaType.video, sourceDeviceType: device.deviceType, sourceDevicePosition: device.position) {
+            if let device = device.videoDevice, let ports = input.videoInput?.ports(for: AVMediaType.video, sourceDeviceType: device.deviceType, sourceDevicePosition: device.position), let firstPort = ports.first {
                 if let previewView {
-                    let previewConnection = AVCaptureConnection(inputPort: ports.first!, videoPreviewLayer: previewView.videoPreviewLayer)
+                    let previewConnection = AVCaptureConnection(inputPort: firstPort, videoPreviewLayer: previewView.videoPreviewLayer)
                     if session.session.canAddConnection(previewConnection) {
                         session.session.addConnection(previewConnection)
                         self.previewConnection = previewConnection
@@ -447,7 +447,7 @@ final class CameraOutput: NSObject {
         }
         
         return Signal { subscriber in
-            let timer = SwiftSignalKit.Timer(timeout: 0.1, repeat: true, completion: { [weak videoRecorder] in
+            let timer = SwiftSignalKit.Timer(timeout: 0.09, repeat: true, completion: { [weak videoRecorder] in
                 let recordingData = CameraRecordingData(duration: videoRecorder?.duration ?? 0.0, filePath: outputFilePath)
                 subscriber.putNext(recordingData)
             }, queue: Queue.mainQueue())
@@ -473,11 +473,7 @@ final class CameraOutput: NSObject {
     }
     
     var transitionImage: UIImage? {
-        var result: UIImage?
-        self.videoQueue.sync {
-            result = self.videoRecorder?.transitionImage
-        }
-        return result
+        return self.videoRecorder?.transitionImage
     }
     
     private weak var masterOutput: CameraOutput?
@@ -705,7 +701,7 @@ extension CameraOutput: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
     
     func captureOutput(_ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         if #available(iOS 13.0, *) {
-            Logger.shared.log("VideoRecorder", "Dropped sample buffer \(sampleBuffer.attachments)")
+            Logger.shared.log("Camera", "Dropped sample buffer \(sampleBuffer.attachments)")
         }
     }
 }

@@ -278,7 +278,6 @@ private final class CameraContext {
                 self._positionPromise.set(targetPosition)
                 self.modeChange = .position
                 
-                
                 let preferWide = self.initialConfiguration.preferWide || isRoundVideo
                 let preferLowerFramerate = self.initialConfiguration.preferLowerFramerate || isRoundVideo
                 
@@ -567,6 +566,11 @@ private final class CameraContext {
                         return .finished(mainImage, additionalImage, CACurrentMediaTime())
                     }
                 } else {
+                    if case .failed = main {
+                        return .failed
+                    } else if case .failed = additional {
+                        return .failed
+                    }
                     return .began
                 }
             } |> distinctUntilChanged
@@ -584,6 +588,10 @@ private final class CameraContext {
         } else {
             mainDeviceContext.device.setTorchMode(self._flashMode)
         }
+        
+        let timestamp = CACurrentMediaTime() + 2.0
+        self.lastSnapshotTimestamp = timestamp
+        self.lastAdditionalSnapshotTimestamp = timestamp
         
         let orientation = self.simplePreviewView?.videoPreviewLayer.connection?.videoOrientation ?? .portrait
         if self.initialConfiguration.isRoundVideo {
@@ -790,6 +798,11 @@ public final class Camera {
             secondaryPreviewView.setSession(session.session, autoConnect: false)
         }
         
+        if #available(iOS 14.5, *), configuration.isRoundVideo {
+            AVCaptureDevice.centerStageControlMode = .app
+            AVCaptureDevice.isCenterStageEnabled = false
+        }
+        
         self.queue.async {
             let context = CameraContext(queue: self.queue, session: session, configuration: configuration, metrics: self.metrics, previewView: previewView, secondaryPreviewView: secondaryPreviewView)
             self.contextRef = Unmanaged.passRetained(context)
@@ -802,6 +815,10 @@ public final class Camera {
         let contextRef = self.contextRef
         self.queue.async {
             contextRef?.release()
+        }
+        
+        if #available(iOS 14.5, *) {
+            AVCaptureDevice.centerStageControlMode = .user
         }
     }
     

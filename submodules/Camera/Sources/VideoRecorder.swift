@@ -232,7 +232,9 @@ private final class VideoRecorderImpl {
                                 } else if self.orientation == .portraitUpsideDown {
                                     orientation = .left
                                 }
-                                self.transitionImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: orientation)
+                                Queue.mainQueue().async {
+                                    self.transitionImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: orientation)
+                                }
                             } else {
                                 self.savedTransitionImage = false
                             }
@@ -375,21 +377,21 @@ private final class VideoRecorderImpl {
         dispatchPrecondition(condition: .onQueue(self.queue))
         let completion = self.completion
         if self.recordingStopSampleTime == .invalid {
-            DispatchQueue.main.async {
+            Queue.mainQueue().async {
                 completion(false, nil, nil)
             }
             return
         }
         
         if let _ = self.error.with({ $0 }) {
-            DispatchQueue.main.async {
+            Queue.mainQueue().async {
                 completion(false, nil, nil)
             }
             return
         }
         
         if !self.tryAppendingPendingAudioBuffers() {
-            DispatchQueue.main.async {
+            Queue.mainQueue().async {
                 completion(false, nil, nil)
             }
             return
@@ -398,21 +400,21 @@ private final class VideoRecorderImpl {
         if self.assetWriter.status == .writing {
             self.assetWriter.finishWriting {
                 if let _ = self.assetWriter.error {
-                    DispatchQueue.main.async {
+                    Queue.mainQueue().async {
                         completion(false, nil, nil)
                     }
                 } else {
-                    DispatchQueue.main.async {
+                    Queue.mainQueue().async {
                         completion(true, self.transitionImage, self.positionChangeTimestamps)
                     }
                 }
             }
         } else if let _ = self.assetWriter.error {
-            DispatchQueue.main.async {
+            Queue.mainQueue().async {
                 completion(false, nil, nil)
             }
         } else {
-            DispatchQueue.main.async {
+            Queue.mainQueue().async {
                 completion(false, nil, nil)
             }
         }
