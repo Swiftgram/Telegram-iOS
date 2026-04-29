@@ -7389,3 +7389,25 @@ private final class AdsInfoContextReferenceContentSource: ContextReferenceConten
         return ContextControllerReferenceViewInfo(referenceView: self.sourceView, contentAreaInScreenSpace: UIScreen.main.bounds.inset(by: self.insets), insets: self.contentInsets)
     }
 }
+
+public struct ChatListNavigationTarget {
+    public let chatListController: ChatListControllerImpl
+    public let popToController: ViewController?
+}
+
+public func resolveChatListNavigationTarget(navigationController: NavigationController, excluding excludedController: ViewController? = nil) -> ChatListNavigationTarget? {
+    for case let controller as ViewController in navigationController.viewControllers.reversed() {
+        if let excludedController, controller === excludedController {
+            continue
+        }
+        if let chatListController = controller as? ChatListControllerImpl, !chatListController.previewing {
+            return ChatListNavigationTarget(chatListController: chatListController, popToController: controller)
+        }
+    }
+    
+    if let controller = navigationController.viewControllers.first as? TabBarController, let chatListController = controller.currentController as? ChatListControllerImpl {
+        return ChatListNavigationTarget(chatListController: chatListController, popToController: nil)
+    }
+    
+    return nil
+}

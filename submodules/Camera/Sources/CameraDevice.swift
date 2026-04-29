@@ -141,10 +141,12 @@ final class CameraDevice {
                 Logger.shared.log("Camera", "No format selected")
             }
             
+            #if DEBUG
             Logger.shared.log("Camera", "Available formats:")
             for format in device.formats {
                 Logger.shared.log("Camera", format.description)
             }
+            #endif
             
             if let targetFPS = device.actualFPS(maxFramerate) {
                 device.activeVideoMinFrameDuration = targetFPS.duration
@@ -180,18 +182,16 @@ final class CameraDevice {
         self.setFocusPoint(CGPoint(x: 0.5, y: 0.5), focusMode: .continuousAutoFocus, exposureMode: .continuousAutoExposure, monitorSubjectAreaChange: false)
     }
     
-    var fps: Double = defaultFPS {
-        didSet {
-            guard let device = self.videoDevice, let targetFPS = device.actualFPS(Double(self.fps)) else {
-                return
-            }
-            
-            self.fps = targetFPS.fps
-            
-            self.transaction(device) { device in
-                device.activeVideoMinFrameDuration = targetFPS.duration
-                device.activeVideoMaxFrameDuration = targetFPS.duration
-            }
+    private(set) var fps: Double = defaultFPS
+    
+    func setFps(_ fps: Double) {
+        guard let device = self.videoDevice, let targetFPS = device.actualFPS(Double(self.fps)) else {
+            return
+        }
+        self.fps = targetFPS.fps
+        self.transaction(device) { device in
+            device.activeVideoMinFrameDuration = targetFPS.duration
+            device.activeVideoMaxFrameDuration = targetFPS.duration
         }
     }
     

@@ -9385,10 +9385,19 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         guard case let .peer(peerId) = self.chatLocation else {
             return
         }
+        let navigationTarget = self.effectiveNavigationController.flatMap { navigationController in
+            resolveChatListNavigationTarget(navigationController: navigationController, excluding: self)
+        }
         self.commitPurposefulAction()
         self.chatDisplayNode.historyNode.disconnect()
         let _ = self.context.engine.peers.removePeerChat(peerId: peerId, reportChatSpam: reportChatSpam).startStandalone()
-        self.effectiveNavigationController?.popToRoot(animated: true)
+        if let navigationController = self.effectiveNavigationController {
+            if let navigationTarget, let popToController = navigationTarget.popToController {
+                let _ = navigationController.popToViewController(popToController, animated: true)
+            } else {
+                navigationController.popToRoot(animated: true)
+            }
+        }
         
         let _ = self.context.engine.privacy.requestUpdatePeerIsBlocked(peerId: peerId, isBlocked: true).startStandalone()
     }

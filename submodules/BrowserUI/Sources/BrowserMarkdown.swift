@@ -20,6 +20,7 @@ private let markdownInlineHTMLInlineIntent = InlinePresentationIntent(rawValue: 
 
 private let markdownDefaultBlockImageDimensions = PixelDimensions(width: 1200, height: 900)
 private let markdownDefaultInlineImageDimensions = PixelDimensions(width: 18, height: 18)
+private let markdownImageParsingEnabled = false
 private let markdownTaskListUncheckedNumber = "\u{001f}tg-md-task:unchecked"
 private let markdownTaskListCheckedNumber = "\u{001f}tg-md-task:checked"
 private let markdownRawHTMLTagRegex = try! NSRegularExpression(pattern: #"</?([A-Za-z][A-Za-z0-9:-]*)\b[^>]*?>"#)
@@ -353,6 +354,9 @@ private final class MarkdownConversionContext {
     }
 
     func resolveImage(attributes: [NSAttributedString.Key: Any]) -> MarkdownResolvedImage? {
+        guard markdownImageParsingEnabled else {
+            return nil
+        }
         guard let imageUrl = markdownImageURL(attributes: attributes) else {
             return nil
         }
@@ -1166,10 +1170,8 @@ private func markdownBlocks(from node: MarkdownIntentNode, context: MarkdownConv
         switch level {
         case Int.min ... 1:
             return [.title(text)]
-        case 2:
-            return [.header(text)]
         default:
-            return [.heading(text: text, level: Int32(max(3, min(level, 6))))]
+            return [.heading(text: text, level: Int32(max(2, min(level, 6))))]
         }
     case .paragraph:
         guard let inlineContent = markdownInlineContent(from: node.attributedText, context: context) else {

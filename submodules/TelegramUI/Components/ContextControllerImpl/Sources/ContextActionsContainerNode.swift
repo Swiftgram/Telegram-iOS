@@ -426,8 +426,7 @@ final class InnerTextSelectionTipContainerNode: ASDisplayNode {
             icon = UIImage(bundleImageName: "Chat/Context Menu/Tip")
         case .deleteReaction:
             self.action = nil
-            //TODO:localize
-            self.text = "Tap and hold to delete reaction."
+            self.text = self.presentationData.strings.Chat_DeleteReactionInfo
             self.targetSelectionIndex = nil
             icon = nil
             isUserInteractionEnabled = false

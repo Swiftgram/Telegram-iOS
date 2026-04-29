@@ -1724,27 +1724,32 @@ public final class ChatHistoryListNodeImpl: ListViewImpl, ChatHistoryNode, ChatH
         }
         |> distinctUntilChanged
         
-        let accountCountry: Signal<String?, NoError> = .single(nil)
-        |> then(
-            combineLatest(
-                accountPeer
-                |> map { peer -> String? in
-                    if case let .user(user) = peer {
-                        return user.phone
-                    } else {
+        let accountCountry: Signal<String?, NoError>
+        if let data = context.currentAppConfiguration.with({ $0 }).data, let country = data["phone_country_iso2"] as? String {
+            accountCountry = .single(country)
+        } else {
+            accountCountry = .single(nil)
+            |> then(
+                combineLatest(
+                    accountPeer
+                    |> map { peer -> String? in
+                        if case let .user(user) = peer {
+                            return user.phone
+                        } else {
+                            return nil
+                        }
+                    }
+                    |> distinctUntilChanged,
+                    (context as! AccountContextImpl).countriesConfiguration
+                )
+                |> map { phone, countriesConfiguration in
+                    guard let phone, let (country, _) = lookupCountryIdByNumber(phone, configuration: countriesConfiguration) else {
                         return nil
                     }
+                    return country.id
                 }
-                |> distinctUntilChanged,
-                (context as! AccountContextImpl).countriesConfiguration
             )
-            |> map { phone, countriesConfiguration in
-                guard let phone, let (country, _) = lookupCountryIdByNumber(phone, configuration: countriesConfiguration) else {
-                    return nil
-                }
-                return country.id
-            }
-        )
+        }
 
         let topicAuthorId: Signal<EnginePeer.Id?, NoError>
         if let peerId = chatLocation.peerId, let threadId = chatLocation.threadId {

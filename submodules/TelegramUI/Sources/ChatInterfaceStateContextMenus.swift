@@ -2310,7 +2310,9 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                 if !poll.countries.isEmpty {
                     let locale = localeWithStrings(chatPresentationInterfaceState.strings)
                     let countryNames = poll.countries.map { id in
-                        if let countryName = locale.localizedString(forRegionCode: id) {
+                        if id == "FT" {
+                            return "Fragment"
+                        } else if let countryName = locale.localizedString(forRegionCode: id) {
                             return countryName
                         } else {
                             return id

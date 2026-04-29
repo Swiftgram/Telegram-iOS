@@ -146,7 +146,7 @@ private final class CameraContext {
                 transform = CGAffineTransformTranslate(transform, 0.0, -size.height)
                 ciImage = ciImage.transformed(by: transform)
             }
-            ciImage = ciImage.clampedToExtent().applyingGaussianBlur(sigma: Camera.isDualCameraSupported(forRoundVideo: true) ? 100.0 : 40.0).cropped(to: CGRect(origin: .zero, size: size))
+            ciImage = ciImage.clampedToExtent().applyingGaussianBlur(sigma: Camera.isDualCameraSupported(forRoundVideo: true) ? 60.0 : 40.0).cropped(to: CGRect(origin: .zero, size: size))
             if let cgImage = self.ciContext.createCGImage(ciImage, from: ciImage.extent) {
                 let uiImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .right)
                 if front {
@@ -189,6 +189,7 @@ private final class CameraContext {
     
     deinit {
         Logger.shared.log("CameraContext", "deinit")
+        NotificationCenter.default.removeObserver(self)
     }
         
     private var isSessionRunning = false
@@ -202,7 +203,7 @@ private final class CameraContext {
     }
     
     func stopCapture(invalidate: Bool = false) {
-        Logger.shared.log("CameraContext", "startCapture(invalidate: \(invalidate))")
+        Logger.shared.log("CameraContext", "stopCapture(invalidate: \(invalidate))")
         if invalidate {
             self.mainDeviceContext?.device.resetZoom()
             
@@ -212,6 +213,7 @@ private final class CameraContext {
         }
         
         self.session.session.stopRunning()
+        self.isSessionRunning = false
     }
     
     func focus(at point: CGPoint, autoFocus: Bool) {
@@ -228,7 +230,7 @@ private final class CameraContext {
     }
     
     func setFps(_ fps: Float64) {
-        self.mainDeviceContext?.device.fps = fps
+        self.mainDeviceContext?.device.setFps(fps)
     }
     
     private var modeChange: Camera.ModeChange = .none {
@@ -1170,6 +1172,7 @@ public struct CameraRecordingData {
 }
 
 public enum CameraRecordingError {
+    case videoRecorderInitializationError
     case audioInitializationError
 }
 
