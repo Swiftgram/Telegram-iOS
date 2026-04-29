@@ -321,9 +321,7 @@ extension ChatControllerImpl {
                 let presentationContext = self.controllerInteraction?.presentationContext
                 let premiumConfiguration = PremiumConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 })
                 
-                if canDeleteReactions && canViewReactions {
-                    items.tip = .deleteReaction
-                } else if !packReferences.isEmpty && !premiumConfiguration.isPremiumDisabled {
+                if !packReferences.isEmpty && !premiumConfiguration.isPremiumDisabled {
                     items.tip = .animatedEmoji(text: nil, arguments: nil, file: nil, action: nil)
                     
                     if packReferences.count > 1 {

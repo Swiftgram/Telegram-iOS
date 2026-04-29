@@ -263,7 +263,7 @@ extension ChatControllerImpl {
     }
     
     public func presentReactionDeletionOptions(author: Peer, messageId: MessageId) {
-        guard self.chatLocation.peerId?.namespace == Namespaces.Peer.CloudChannel else {
+        guard self.chatLocation.peerId?.namespace == Namespaces.Peer.CloudChannel, author.id != self.context.account.peerId  else {
             return
         }
         let _ = (self.context.sharedContext.chatAvailableMessageActions(

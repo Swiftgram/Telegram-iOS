@@ -20,6 +20,7 @@ swift_library(
         "//submodules/AnimatedAvatarSetNode:AnimatedAvatarSetNode",
         "//submodules/ContextUI:ContextUI",
         "//submodules/AvatarNode:AvatarNode",
+        "//submodules/Components/MultilineTextComponent:MultilineTextComponent",
         "//submodules/Components/ReactionImageComponent:ReactionImageComponent",
         "//submodules/TelegramUI/Components/AnimationCache:AnimationCache",
         "//submodules/TelegramUI/Components/MultiAnimationRenderer:MultiAnimationRenderer",

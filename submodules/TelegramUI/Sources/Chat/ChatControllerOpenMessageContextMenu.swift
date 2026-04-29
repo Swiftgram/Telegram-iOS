@@ -374,7 +374,13 @@ extension ChatControllerImpl {
                     
                     if case .stars = chosenUpdatedReaction.reaction {
                         if !canSendReactionsToChat(self.presentationInterfaceState) {
-                            controller?.dismiss(completion: {})
+                            if let controller {
+                                controller.dismiss(completion: { [weak self] in
+                                    self?.displaySendReactionRestrictedToast()
+                                })
+                            } else {
+                                self.displaySendReactionRestrictedToast()
+                            }
                             return
                         }
 
@@ -514,7 +520,13 @@ extension ChatControllerImpl {
                         }
                         
                         if removedReaction == nil && !canSendReactionsToChat(self.presentationInterfaceState) {
-                            controller?.dismiss(completion: {})
+                            if let controller {
+                                controller.dismiss(completion: { [weak self] in
+                                    self?.displaySendReactionRestrictedToast()
+                                })
+                            } else {
+                                self.displaySendReactionRestrictedToast()
+                            }
                             return
                         }
 

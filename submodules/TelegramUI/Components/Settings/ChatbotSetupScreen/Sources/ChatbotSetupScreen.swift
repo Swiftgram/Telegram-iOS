@@ -25,6 +25,7 @@ import Markdown
 import PeerListItemComponent
 import AvatarNode
 import AlertComponent
+import UndoUI
 
 private let checkIcon: UIImage = {
     return generateImage(CGSize(width: 12.0, height: 10.0), rotatedContext: { size, context in
@@ -216,8 +217,19 @@ final class ChatbotSetupScreenComponent: Component {
         }
         
         func attemptNavigation(complete: @escaping () -> Void) -> Bool {
-            guard let component = self.component else {
+            guard let component = self.component, let environemnt = self.environment else {
                 return true
+            }
+            
+            if let botResolutionState = self.botResolutionState, case let .found(_, isInstalled) = botResolutionState.state, !isInstalled {
+                let alertController = textAlertController(context: component.context, title: environemnt.strings.ChatbotSetup_SetupNotCompleted_Title, text: environemnt.strings.ChatbotSetup_SetupNotCompleted_Text, actions: [
+                    TextAlertAction(type: .defaultAction, title: environemnt.strings.Common_Cancel, action: {}),
+                    TextAlertAction(type: .genericAction, title: environemnt.strings.ChatbotSetup_SetupNotCompleted_Leave, action: {
+                        complete()
+                    })
+                ])
+                environemnt.controller()?.present(alertController, in: .window(.root))
+                return false
             }
             
             var mappedCategories: TelegramBusinessRecipients.Categories = []
@@ -803,7 +815,7 @@ final class ChatbotSetupScreenComponent: Component {
                     strings: environment.strings,
                     content: mappedContent,
                     installAction: { [weak self] in
-                        guard let self else {
+                        guard let self, let component = self.component, let environment = self.environment, let controller = self.environment?.controller() else {
                             return
                         }
                         self.endEditing(true)
@@ -820,6 +832,14 @@ final class ChatbotSetupScreenComponent: Component {
                                     })
                                 ]), in: .window(.root))
                             }
+                            controller.present(UndoOverlayController(
+                                presentationData: presentationData,
+                                content: .invitedToVoiceChat(context: component.context, peer: peer, title: nil, text: environment.strings.ChatbotSetup_BotInstalled(peer.compactDisplayTitle).string, action: nil, duration: 2.0),
+                                elevatedLayout: false,
+                                position: .bottom,
+                                animateInAsReplacement: false,
+                                action: { _ in return true }
+                            ), in: .current)
                         }
                     },
                     removeAction: { [weak self] in

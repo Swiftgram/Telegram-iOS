@@ -10,6 +10,17 @@ import AccountContext
 import ChatControllerInteraction
 
 extension ChatControllerImpl {
+    func displaySendReactionRestrictedToast() {
+        self.controllerInteraction?.presentControllerInCurrent(UndoOverlayController(
+            presentationData: self.presentationData,
+            content: .banned(text: self.presentationData.strings.Chat_SendReactionRestricted),
+            elevatedLayout: false,
+            position: .bottom,
+            animateInAsReplacement: false,
+            action: { _ in return true }
+        ), nil)
+    }
+
     func displayPostedScheduledMessagesToast(ids: [EngineMessage.Id]) {
         let timestamp = CFAbsoluteTimeGetCurrent()
         if self.lastPostedScheduledMessagesToastTimestamp + 0.4 >= timestamp {

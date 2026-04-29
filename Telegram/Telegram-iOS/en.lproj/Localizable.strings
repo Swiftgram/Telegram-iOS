@@ -16256,3 +16256,11 @@ Error: %8$@";
 "Settings.ChatAutomation" = "Chat Automation";
 "Settings.ChatAutomationInfo" = "Add a bot to reply to messages on your behalf.";
 "Settings.ChatAutomationOff" = "Off";
+
+"Chat.SendReactionRestricted" = "You cannot send reactions in this chat.";
+
+"ChatbotSetup.BotInstalled" = "%@ now manages your account.";
+
+"ChatbotSetup.SetupNotCompleted.Title" = "No Bot Added";
+"ChatbotSetup.SetupNotCompleted.Text" = "You haven’t added a bot to manage your account. Leave anyway?";
+"ChatbotSetup.SetupNotCompleted.Leave" = "Leave";

@@ -1682,9 +1682,6 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             if case .default = reaction, strongSelf.chatLocation.peerId == strongSelf.context.account.peerId {
                 return
             }
-            if case .default = reaction, !canSendReactionsToChat(strongSelf.presentationInterfaceState) {
-                return
-            }
             if case let .customChatContents(customChatContents) = strongSelf.presentationInterfaceState.subject {
                 if case let .hashTagSearch(publicPosts) = customChatContents.kind, publicPosts {
                     return
@@ -1798,6 +1795,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                     
                     if case .stars = chosenReaction {
                         if !canSendReactionsToChat(strongSelf.presentationInterfaceState) {
+                            strongSelf.displaySendReactionRestrictedToast()
                             return
                         }
 
@@ -1968,6 +1966,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                         
                         if removedReaction == nil {
                             if !canSendReactionsToChat(strongSelf.presentationInterfaceState) {
+                                strongSelf.displaySendReactionRestrictedToast()
                                 return
                             }
 
