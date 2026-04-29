@@ -575,14 +575,18 @@ private final class VideoMessageCameraScreenComponent: CombinedComponent {
             
             if !component.isPreviewing {
                 if case .on = component.cameraState.flashMode, case .front = component.cameraState.position {
+                    let frontFlashPosition = CGPoint(x: component.previewFrame.midX, y: component.previewFrame.midY)
+                    let frontFlashSize = CGSize(
+                        width: max(abs(frontFlashPosition.x), abs(context.availableSize.width - frontFlashPosition.x)) * 2.0,
+                        height: max(abs(frontFlashPosition.y), abs(context.availableSize.height - frontFlashPosition.y)) * 2.0
+                    )
                     let frontFlash = frontFlash.update(
-                        component: Image(image: state.image(.flashImage, theme: environment.theme), tintColor: component.cameraState.flashTint.color),
-                        availableSize: context.availableSize,
+                        component: Image(image: state.image(.flashImage, theme: environment.theme), tintColor: component.cameraState.flashTint.color, contentMode: .scaleAspectFill),
+                        availableSize: frontFlashSize,
                         transition: .easeInOut(duration: 0.2)
                     )
-                    let frontFlashFrame = CGRect(origin: CGPoint(), size: context.availableSize)
                     context.add(frontFlash
-                        .position(frontFlashFrame.center)
+                        .position(frontFlashPosition)
                         .scale(1.5 - component.cameraState.flashTintSize * 0.5)
                         .appear(.default(alpha: true))
                         .disappear(ComponentTransition.Disappear({ view, transition, completion in
