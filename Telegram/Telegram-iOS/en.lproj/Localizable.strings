@@ -2707,6 +2707,7 @@ Unused sets are archived when you add more.";
 "Channel.AdminLog.AddMembers" = "Add Members";
 "Channel.AdminLog.SendPolls" = "Send Polls";
 "Channel.AdminLog.ManageTopics" = "Manage Topics";
+"Channel.AdminLog.SendReactions" = "Send Reactions";
 
 "Channel.AdminLog.CanChangeInfo" = "Change Info";
 "Channel.AdminLog.CanSendMessages" = "Post Messages";
