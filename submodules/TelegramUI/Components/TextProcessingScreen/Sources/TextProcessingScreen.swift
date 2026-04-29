@@ -369,7 +369,7 @@ final class TextProcessingContentComponent: Component {
                 ))
             }
             items.append(.action(ContextMenuActionItem(
-                text: "Share Style",
+                text: "Share Style", //TODO:localize
                 icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Forward"), color: theme.contextMenu.primaryColor)
                 },
@@ -382,23 +382,21 @@ final class TextProcessingContentComponent: Component {
                     })
                 })
             ))
-            if style.isAuthor {
-                items.append(.action(ContextMenuActionItem(
-                    text: "Delete Style",
-                    textColor: .destructive,
-                    icon: { theme in
-                        return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Delete"), color: theme.contextMenu.destructiveColor)
-                    },
-                    action: { [weak self] c, _ in
-                        c?.dismiss(completion: { [weak self] in
-                            guard let self else {
-                                return
-                            }
-                            self.requestDeleteStyle(id: id)
-                        })
+            items.append(.action(ContextMenuActionItem(
+                text: "Delete Style",
+                textColor: .destructive,
+                icon: { theme in
+                    return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Delete"), color: theme.contextMenu.destructiveColor)
+                },
+                action: { [weak self] c, _ in
+                    c?.dismiss(completion: { [weak self] in
+                        guard let self else {
+                            return
+                        }
+                        self.requestDeleteStyle(id: id)
                     })
-                ))
-            }
+                })
+            ))
             
             final class ContextExtractedContentSourceImpl: ContextExtractedContentSource {
                 let keepInPlace: Bool = false

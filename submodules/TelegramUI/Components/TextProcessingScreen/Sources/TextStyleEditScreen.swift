@@ -889,7 +889,7 @@ public class TextStyleEditScreen: ViewControllerComponentContainer {
         
         var initialEmojiFile: TelegramMediaFile?
         if case let .edit(style) = mode, case let .custom(style) = style.content, let emojiFileId = style.emojiFileId {
-            initialEmojiFile = await context.engine.stickers.resolveInlineStickers(fileIds: [emojiFileId]).get()[emojiFileId]
+            initialEmojiFile = await context.engine.stickers.resolveInlineStickersLocal(fileIds: [emojiFileId]).get()[emojiFileId]
         }
         
         super.init(
