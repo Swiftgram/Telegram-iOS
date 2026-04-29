@@ -752,7 +752,7 @@ final class CountriesMultiselectionScreenComponent: Component {
                 if let searchStateContext = self.searchStateContext, searchStateContext.subject == .countriesSearch(query: self.navigationTextFieldState.text) {
                 } else {
                     self.searchStateDisposable?.dispose()
-                    let searchStateContext = CountriesMultiselectionScreen.StateContext(context: component.context, subject: .countriesSearch(query: self.navigationTextFieldState.text))
+                    let searchStateContext = CountriesMultiselectionScreen.StateContext(context: component.context, subject: .countriesSearch(query: self.navigationTextFieldState.text), showFragment: component.stateContext.showFragment)
                     var applyState = false
                     self.searchStateDisposable = (searchStateContext.ready |> filter { $0 } |> take(1) |> deliverOnMainQueue).start(next: { [weak self] _ in
                         guard let self else {
@@ -789,7 +789,6 @@ final class CountriesMultiselectionScreenComponent: Component {
                         
             var sections: [ItemLayout.Section] = []
             if let stateValue = self.effectiveStateValue {
-                 
                 var id: Int = 0
                 for (_, countries) in stateValue.sections {
                     sections.append(ItemLayout.Section(
@@ -1148,12 +1147,12 @@ public extension CountriesMultiselectionScreen {
             self.showFragment = showFragment
             
             let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-            var countryList = localizedCountryNamesAndCodes(strings: presentationData.strings)
-            if showFragment {
-                countryList.append((("Fragment", "Fragment"), "FT", [888]))
-            }
-            let countries = countryList.sorted { lhs, rhs in
+            let countryList = localizedCountryNamesAndCodes(strings: presentationData.strings)
+            var countries = countryList.sorted { lhs, rhs in
                 return lhs.0.1.lowercased() < rhs.0.1.lowercased()
+            }
+            if showFragment, let index = countries.firstIndex(where: { $0.1 == "FR" }) {
+                countries.insert((("Fragment", "Fragment"), "FT", [888]), at: index)
             }
             
             switch subject {
@@ -1164,7 +1163,7 @@ public extension CountriesMultiselectionScreen {
                 var currentCountries: [CountryItem] = []
                 for country in countries {
                     let section = String(country.0.1.prefix(1)).uppercased()
-                    if currentSection != section {
+                    if currentSection != section && country.1 != "FT" {
                         if let currentSection {
                             sections.append((currentSection, currentCountries))
                         }

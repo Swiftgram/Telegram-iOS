@@ -1245,9 +1245,17 @@ final class ComposePollScreenComponent: Component {
                 return
             }
             
+            let maxCount: Int32
+            if let data = component.context.currentAppConfiguration.with({ $0 }).data, let value = data["poll_countries_max"] as? Double {
+                maxCount = Int32(value)
+            } else {
+                maxCount = 12
+            }
+            
             let stateContext = CountriesMultiselectionScreen.StateContext(
                 context: component.context,
                 subject: .countries,
+                maxCount: maxCount,
                 initialSelectedCountries: self.limitToCountries,
                 showFragment: true
             )

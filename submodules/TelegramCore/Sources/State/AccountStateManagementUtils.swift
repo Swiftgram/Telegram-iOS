@@ -3309,7 +3309,7 @@ func resetChannels(accountPeerId: PeerId, postbox: Postbox, network: Network, pe
                         
                         resetForumTopics.insert(peerId)
                     }
-                    
+
                     for message in messages {
                         var peerIsForum = false
                         if let peerId = message.peerId {
@@ -3943,6 +3943,7 @@ func replayFinalState(
     var updatedStarGiftAuctionState: [Int64: GiftAuctionContext.State.AuctionState] = [:]
     var updatedStarGiftAuctionMyState: [Int64: GiftAuctionContext.State.MyState] = [:]
     var updatedEmojiGameInfo: EmojiGameInfo?
+    var recentlyUsedGuestChatBots = Set<PeerId>()
     
     var holesFromPreviousStateMessageIds: [MessageId] = []
     var clearHolesFromPreviousStateForChannelMessagesWithPts: [PeerIdAndMessageNamespace: Int32] = [:]
@@ -4341,6 +4342,15 @@ func replayFinalState(
                                     }
                                 }
                             }
+                            
+                            if message.flags.contains(.Incoming), let authorId = message.authorId {
+                                for attribute in message.attributes {
+                                    if let attribute = attribute as? GuestChatMessageAttribute, attribute.peerId == accountPeerId {
+                                        recentlyUsedGuestChatBots.insert(authorId)
+                                        break
+                                    }
+                                }
+                            }
                         }
                         if !message.flags.contains(.Incoming) && !message.flags.contains(.Unsent) {
                             if message.id.peerId.namespace == Namespaces.Peer.CloudChannel {
@@ -4350,7 +4360,7 @@ func replayFinalState(
                         
                         if !message.flags.contains(.Incoming), message.forwardInfo == nil {
                             if [Namespaces.Peer.CloudGroup, Namespaces.Peer.CloudChannel].contains(message.id.peerId.namespace), let peer = transaction.getPeer(message.id.peerId), peer.isCopyProtectionEnabled {
-                                
+ 
                             } else if message.id.peerId.namespace == Namespaces.Peer.CloudUser, let cachedUserData = transaction.getPeerCachedData(peerId: message.id.peerId) as? CachedUserData, cachedUserData.flags.contains(.copyProtectionEnabled) || cachedUserData.flags.contains(.myCopyProtectionEnabled) {
                                 
                             } else {
@@ -5865,6 +5875,10 @@ func replayFinalState(
                 }
             }
         }
+    }
+    
+    for peerId in recentlyUsedGuestChatBots {
+        _internal_addRecentlyUsedInlineBot(transaction: transaction, peerId: peerId)
     }
     
     if syncAttachMenuBots {
