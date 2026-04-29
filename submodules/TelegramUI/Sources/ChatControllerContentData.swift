@@ -609,8 +609,7 @@ extension ChatControllerImpl {
                         } else {
                             var customSubtitle: String?
                             if savedMessagesChatsTip {
-                                //TODO:localize
-                                customSubtitle = "Tap to view as chats"
+                                customSubtitle = strings.Chat_SavedMessagesStatusViewAsChats
                             }
                             
                             strongSelf.state.chatTitleContent = .peer(peerView: ChatTitleContent.PeerData(peerView: peerView), customTitle: nil, customSubtitle: customSubtitle, onlineMemberCount: onlineMemberCount, isScheduledMessages: isScheduledMessages, isMuted: nil, customMessageCount: nil, hidePeerStatus: false, isEnabled: hasPeerInfo)

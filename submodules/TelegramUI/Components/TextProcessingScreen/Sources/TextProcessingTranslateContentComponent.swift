@@ -382,9 +382,8 @@ final class TextProcessingTranslateContentComponent: Component {
                 }
                 toTitle = ""
             case .preview:
-                //TODO:localize
-                fromFormat = "Before"
-                toFormat = "After"
+                fromFormat = component.strings.TextProcessing_StylePreview_Before
+                toFormat = component.strings.TextProcessing_StylePreview_After
                 toTitle = ""
             }
             
@@ -407,14 +406,12 @@ final class TextProcessingTranslateContentComponent: Component {
             }
             
             if case .stylize = component.mode {
-                //TODO:localize
                 if case .style = component.externalState.style, let style = component.styles.first(where: { $0.id == component.externalState.style }), let authorPeer = style.authorPeer {
                     let footerText: String
-                    //TODO:localize
                     if let addressName = authorPeer.addressName {
-                        footerText = "Style by [@\(addressName)](\(authorPeer.id.toInt64()))"
+                        footerText = component.strings.TextProcessing_StyleFooterAuthor("@" + addressName).string
                     } else {
-                        footerText = "Style by [\(authorPeer.displayTitle(strings: component.strings, displayOrder: .firstLast))](\(authorPeer.id.toInt64()))"
+                        footerText = component.strings.TextProcessing_StyleFooterAuthor(authorPeer.displayTitle(strings: component.strings, displayOrder: .firstLast)).string
                     }
                     component.externalState.sectionFooter = AnyComponentWithIdentity(id: "style_by_\(authorPeer.id.toInt64())", component: AnyComponent(MultilineTextComponent(
                         text: .markdown(text: footerText, attributes: MarkdownAttributes(
@@ -448,7 +445,7 @@ final class TextProcessingTranslateContentComponent: Component {
             } else if case let .preview(_, _, authorPeer, userCount, _) = component.mode {
                 component.externalState.sectionHeader = AnyComponentWithIdentity(id: "preview", component: AnyComponent(HStack([
                     AnyComponentWithIdentity(id: 0, component: AnyComponent(MultilineTextComponent(
-                        text: .markdown(text: "EXAMPLE", attributes: MarkdownAttributes(
+                        text: .markdown(text: component.strings.TextProcessing_StylePreview_ExampleHeader, attributes: MarkdownAttributes(
                             body: MarkdownAttributeSet(font: Font.regular(13.0), textColor: component.theme.list.freeTextColor),
                             bold: MarkdownAttributeSet(font: Font.semibold(13.0), textColor: component.theme.list.freeTextColor),
                             link: MarkdownAttributeSet(font: Font.regular(13.0), textColor: component.theme.list.itemAccentColor),
@@ -464,7 +461,7 @@ final class TextProcessingTranslateContentComponent: Component {
                                 tintColor: component.theme.list.itemAccentColor
                             ))),
                             AnyComponentWithIdentity(id: 1, component: AnyComponent(MultilineTextComponent(
-                                text: .plain(NSAttributedString(string: "ANOTHER EXAMPLE", font: Font.regular(13.0), textColor: component.theme.list.itemAccentColor))
+                                text: .plain(NSAttributedString(string: component.strings.TextProcessing_StylePreview_ExampleHeaderRefresh, font: Font.regular(13.0), textColor: component.theme.list.itemAccentColor))
                             )))
                         ], spacing: 2.0)),
                         action: { [weak self] in
@@ -478,18 +475,17 @@ final class TextProcessingTranslateContentComponent: Component {
                     ))),
                 ], spacing: 8.0, alignment: .alternatingLeftRight)))
                 
-                let userCountString = userCount == 1 ? "Used by 1 person" : "Used by \(userCount) people"
+                let userCountString = component.strings.TextProcessing_StyleFooterUserCount(Int32(userCount))
                 
                 let footerText: String
-                //TODO:localize
                 if let authorPeer {
                     if let addressName = authorPeer.addressName {
-                        footerText = "\(userCountString). Created by [@\(addressName)](\(authorPeer.id.toInt64()))"
+                        footerText = component.strings.TextProcessing_StyleFooterCreatedByFormat(userCountString, component.strings.TextProcessing_StyleFooterCreatedBy("@" + addressName).string).string
                     } else {
-                        footerText = "\(userCountString). Created by [\(authorPeer.displayTitle(strings: component.strings, displayOrder: .firstLast))](\(authorPeer.id.toInt64()))"
+                        footerText = component.strings.TextProcessing_StyleFooterCreatedByFormat(userCountString, component.strings.TextProcessing_StyleFooterCreatedBy(authorPeer.displayTitle(strings: component.strings, displayOrder: .firstLast)).string).string
                     }
                 } else {
-                    footerText = "\(userCountString)."
+                    footerText = component.strings.TextProcessing_StyleFooterCreatedBySimpleFormat(userCountString).string
                 }
                 component.externalState.sectionFooter = AnyComponentWithIdentity(id: "style_by_\(authorPeer?.id.toInt64() ?? 0)", component: AnyComponent(MultilineTextComponent(
                     text: .markdown(text: footerText, attributes: MarkdownAttributes(

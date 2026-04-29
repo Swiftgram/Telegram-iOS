@@ -335,7 +335,6 @@ final class TextStyleEditContentComponent: Component {
             
             contentHeight += iconBackgroundSize.height + iconSpacing
             
-            //TODO:localize
             var titleSectionItems: [AnyComponentWithIdentity<Empty>] = []
             titleSectionItems.append(AnyComponentWithIdentity(id: 0, component: AnyComponent(ListMultilineTextFieldItemComponent(
                 externalState: component.externalState.titleInputState,
@@ -347,7 +346,7 @@ final class TextStyleEditContentComponent: Component {
                 resetText: resetTitle.flatMap { resetTitle in
                     return ListMultilineTextFieldItemComponent.ResetText(value: resetTitle)
                 },
-                placeholder: "Style Name (for example, \"Pirate\")",
+                placeholder: environment.strings.TextProcessing_EditStyle_NamePlaceholder,
                 autocapitalizationType: .sentences,
                 autocorrectionType: .default,
                 characterLimit: 12,
@@ -379,7 +378,6 @@ final class TextStyleEditContentComponent: Component {
             contentHeight += titleSectionSize.height
             contentHeight += sectionSpacing
             
-            //TODO:localize
             var textSectionItems: [AnyComponentWithIdentity<Empty>] = []
             textSectionItems.append(AnyComponentWithIdentity(id: 0, component: AnyComponent(ListMultilineTextFieldItemComponent(
                 externalState: component.externalState.textInputState,
@@ -391,7 +389,7 @@ final class TextStyleEditContentComponent: Component {
                 resetText: resetText.flatMap { resetText in
                     return ListMultilineTextFieldItemComponent.ResetText(value: resetText)
                 },
-                placeholder: "Instructions (for example, \"Write like a swashbuckling pirate. Use arr, ye, matey, and talk about treasure, the sea, and rum\")",
+                placeholder: environment.strings.TextProcessing_EditStyle_TextPlaceholder,
                 placeholderDefinesMinHeight: true,
                 autocapitalizationType: .sentences,
                 autocorrectionType: .default,
@@ -439,7 +437,7 @@ final class TextStyleEditContentComponent: Component {
                             title: AnyComponent(VStack([
                                 AnyComponentWithIdentity(id: AnyHashable(0), component: AnyComponent(MultilineTextComponent(
                                     text: .plain(NSAttributedString(
-                                        string: "Delete Style",
+                                        string: environment.strings.TextProcessing_EditStyle_Delete,
                                         font: Font.regular(17.0),
                                         textColor: environment.theme.list.itemDestructiveColor
                                     )),
@@ -453,8 +451,8 @@ final class TextStyleEditContentComponent: Component {
                                 }
                                 environment.controller()?.push(textAlertController(
                                     context: component.context,
-                                    title: "Delete Style",
-                                    text: "Are you sure you want to delete this style? It will be removed for everyone who installed it.",
+                                    title: environment.strings.TextProcessing_AlertCreatorDeleteStyle_Title,
+                                    text: environment.strings.TextProcessing_AlertCreatorDeleteStyle_Text,
                                     actions: [
                                         TextAlertAction(type: .genericAction, title: environment.strings.Common_Cancel, action: {}),
                                         TextAlertAction(type: .destructiveAction, title: environment.strings.Common_Delete, action: { [weak self] in
@@ -503,7 +501,7 @@ final class TextStyleEditContentComponent: Component {
                             selected: component.externalState.isLinkToProfileEnabled
                         ))),
                         AnyComponentWithIdentity(id: AnyHashable(1), component: AnyComponent(MultilineTextComponent(
-                            text: .plain(NSAttributedString(string: "Add a link to my account", font: Font.regular(13.0), textColor: environment.theme.list.freeTextColor))
+                            text: .plain(NSAttributedString(string: environment.strings.TextProcessing_EditStyle_AddLink, font: Font.regular(13.0), textColor: environment.theme.list.freeTextColor))
                         )))
                     ], spacing: 10.0)),
                     effectAlignment: .center,
@@ -779,11 +777,11 @@ private final class TextStyleEditSheetComponent: Component {
             let titleString: String
             switch component.mode {
             case .create:
-                titleString = "New Style"
-                actionButtonTitle = "Create"
+                titleString = environmentValue.strings.TextProcessing_EditStyle_TitleCreate
+                actionButtonTitle = environmentValue.strings.TextProcessing_EditStyle_ActionCreate
             case .edit:
-                titleString = "Edit Style"
-                actionButtonTitle = "Save"
+                titleString = environmentValue.strings.TextProcessing_EditStyle_TitleEdit
+                actionButtonTitle = environmentValue.strings.TextProcessing_EditStyle_ActionEdit
             }
 
             let sheetSize = self.sheet.update(

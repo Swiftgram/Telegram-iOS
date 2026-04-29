@@ -330,8 +330,7 @@ func openChatMessageImpl(_ params: OpenChatMessageParams) -> Bool {
                     } |> take(1) |> timeout(1.0, queue: .mainQueue(), alternate: .single(false)) |> deliverOnMainQueue).startStandalone(next: { value in
                         if value {
                             let presentationData = params.context.sharedContext.currentPresentationData.with { $0 }
-                            //TODO:localize
-                            let toastController = UndoOverlayController(presentationData: presentationData, content: .info(title: nil, text: "Device is muted.", timeout: 4.0, customUndoText: nil), elevatedLayout: false, animateInAsReplacement: false, action: { _ in
+                            let toastController = UndoOverlayController(presentationData: presentationData, content: .info(title: nil, text: presentationData.strings.Chat_ToastVoiceMessageDeviceMuted, timeout: 4.0, customUndoText: nil), elevatedLayout: false, animateInAsReplacement: false, action: { _ in
                                 return true
                             })
                             params.present(toastController, nil, .current)

@@ -2054,8 +2054,7 @@ func openResolvedUrlImpl(
                         guard let emojiFileId = style.emojiFileId, let file = await context.engine.stickers.resolveInlineStickers(fileIds: [emojiFileId]).get().first?.value else {
                             return
                         }
-                        //TODO:localize
-                        present(UndoOverlayController(presentationData: presentationData, content: .customEmoji(context: context, file: file, loop: false, title: "Style Added", text: "Tap 'AI' → '\(style.title)' when typing your next long message.", undoText: nil, customAction: nil), elevatedLayout: false, animateInAsReplacement: false, action: { _ in
+                        present(UndoOverlayController(presentationData: presentationData, content: .customEmoji(context: context, file: file, loop: false, title: presentationData.strings.TextProcessing_ToastStyleAdded_Title, text: presentationData.strings.TextProcessing_ToastStyleAdded_Text(style.title).string, undoText: nil, customAction: nil), elevatedLayout: false, animateInAsReplacement: false, action: { _ in
                             return true
                         }), nil)
                     }

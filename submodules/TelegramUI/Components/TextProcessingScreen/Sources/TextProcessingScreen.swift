@@ -310,8 +310,8 @@ final class TextProcessingContentComponent: Component {
             if style.isCreator {
                 environment.controller()?.push(textAlertController(
                     context: component.context,
-                    title: "Delete Style",
-                    text: "Are you sure you want to delete this style? It will be removed for everyone who installed it.",
+                    title: environment.strings.TextProcessing_AlertCreatorDeleteStyle_Title,
+                    text: environment.strings.TextProcessing_AlertCreatorDeleteStyle_Text,
                     actions: [
                         TextAlertAction(type: .genericAction, title: environment.strings.Common_Cancel, action: {}),
                         TextAlertAction(type: .destructiveAction, title: environment.strings.Common_Delete, action: { [weak self] in
@@ -326,8 +326,8 @@ final class TextProcessingContentComponent: Component {
             } else {
                 environment.controller()?.push(textAlertController(
                     context: component.context,
-                    title: "Delete Style",
-                    text: "Are you sure you want to delete this style?",
+                    title: environment.strings.TextProcessing_AlertDeleteStyle_Title,
+                    text: environment.strings.TextProcessing_AlertDeleteStyle_Text,
                     actions: [
                         TextAlertAction(type: .genericAction, title: environment.strings.Common_Cancel, action: {}),
                         TextAlertAction(type: .destructiveAction, title: environment.strings.Common_Delete, action: { [weak self] in
@@ -354,7 +354,7 @@ final class TextProcessingContentComponent: Component {
             var items: [ContextMenuItem] = []
             if style.isAuthor {
                 items.append(.action(ContextMenuActionItem(
-                    text: "Edit Style",
+                    text: environment.strings.TextProcessing_StyleMenu_Edit,
                     icon: { theme in
                         return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Edit"), color: theme.contextMenu.primaryColor)
                     },
@@ -369,7 +369,7 @@ final class TextProcessingContentComponent: Component {
                 ))
             }
             items.append(.action(ContextMenuActionItem(
-                text: "Share Style", //TODO:localize
+                text: environment.strings.TextProcessing_StyleMenu_Share,
                 icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Forward"), color: theme.contextMenu.primaryColor)
                 },
@@ -383,7 +383,7 @@ final class TextProcessingContentComponent: Component {
                 })
             ))
             items.append(.action(ContextMenuActionItem(
-                text: "Delete Style",
+                text: environment.strings.TextProcessing_StyleMenu_Delete,
                 textColor: .destructive,
                 icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Delete"), color: theme.contextMenu.destructiveColor)
@@ -576,7 +576,7 @@ final class TextProcessingContentComponent: Component {
                 let descriptionSize = previewDescription.update(
                     transition: .immediate,
                     component: AnyComponent(MultilineTextComponent(
-                        text: .plain(NSAttributedString(string: "Add this style to instantly\nrewrite your messages.", font: Font.regular(15.0), textColor: environment.theme.list.itemPrimaryTextColor)),
+                        text: .plain(NSAttributedString(string: environment.strings.TextProcessing_StylePreview_Subtitle, font: Font.regular(15.0), textColor: environment.theme.list.itemPrimaryTextColor)),
                         horizontalAlignment: .center,
                         maximumNumberOfLines: 0,
                         lineSpacing: 0.12
@@ -805,7 +805,6 @@ final class TextProcessingContentComponent: Component {
                                                         
                             if component.styles.filter({ $0.isAuthor }).count >= maxStyles {
                                 if !hasPremium {
-                                    //TODO:localize
                                     let context = component.context
                                     var replaceImpl: ((ViewController) -> Void)?
                                     let controller = context.sharedContext.makePremiumDemoController(context: context, subject: .aiTools, forceDark: false, action: {
@@ -824,8 +823,8 @@ final class TextProcessingContentComponent: Component {
                                 } else {
                                     environment.controller()?.push(textAlertController(
                                         context: component.context,
-                                        title: "Too Many Styles",
-                                        text: "Please delete some of your saved styles to create a new one.",
+                                        title: environment.strings.TextProcessing_AlertTooManyStyles_Title,
+                                        text: environment.strings.TextProcessing_AlertTooManyStyles_Text,
                                         actions: [
                                             TextAlertAction(type: .defaultAction, title: environment.strings.Common_OK, action: {}),
                                         ]
@@ -1435,8 +1434,7 @@ private final class TextProcessingSheetComponent: Component {
                         dismiss(true)
                     }
                 case let .preview(style, _, _, isAlreadyAdded, added):
-                    //TODO:localize
-                    actionButtonTitle = isAlreadyAdded ? "Done" : "Add Style"
+                    actionButtonTitle = isAlreadyAdded ? environmentValue.strings.TextProcessing_StyleMenu_ButtonClose : environmentValue.strings.TextProcessing_StyleMenu_ButtonAdd
                     isMainActionEnabled = !self.isPerformingMainAction
                     performMainAction = { [weak self] in
                         guard let self, let component = self.component else {
@@ -1797,10 +1795,10 @@ private final class TextProcessingSheetComponent: Component {
                         )),
                         content: AnyComponent(VStack([
                             AnyComponentWithIdentity(id: 0, component: AnyComponent(MultilineTextComponent(
-                                text: .plain(NSAttributedString(string: "\(styleCreatedToastData.style.title) style created!", font: Font.semibold(14.0), textColor: .white)),
+                                text: .plain(NSAttributedString(string: environmentValue.strings.TextProcessing_ToastStyleCreated_Title(styleCreatedToastData.style.title).string, font: Font.semibold(14.0), textColor: .white)),
                             ))),
                             AnyComponentWithIdentity(id: 1, component: AnyComponent(MultilineTextComponent(
-                                text: .markdown(text: "Press and hold a style to edit or share the link.", attributes: MarkdownAttributes(body: body, bold: bold, link: body, linkAttribute: { _ in nil })),
+                                text: .markdown(text: environmentValue.strings.TextProcessing_ToastStyleCreated_Text, attributes: MarkdownAttributes(body: body, bold: bold, link: body, linkAttribute: { _ in nil })),
                                 maximumNumberOfLines: 0
                             )))
                         ], alignment: .left, spacing: 6.0)),
