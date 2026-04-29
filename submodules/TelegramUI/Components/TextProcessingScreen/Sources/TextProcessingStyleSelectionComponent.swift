@@ -638,11 +638,10 @@ private final class CreateItemComponent: Component {
                 containerSize: CGSize(width: 100.0, height: 100.0)
             )
             
-            //TODO:localize
             let titleSize = self.title.update(
                 transition: .immediate,
                 component: AnyComponent(MultilineTextComponent(
-                    text: .plain(NSAttributedString(string: "Add Style", font: Font.medium(10.0), textColor: iconTintColor))
+                    text: .plain(NSAttributedString(string: component.strings.TextProcessing_StyleList_Add, font: Font.medium(10.0), textColor: iconTintColor))
                 )),
                 environment: {},
                 containerSize: CGSize(width: availableSize.width, height: 100.0)

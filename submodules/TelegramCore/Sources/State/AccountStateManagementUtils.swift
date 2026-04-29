@@ -2806,6 +2806,15 @@ func extractEmojiFileIds(message: StoreMessage, fileIds: inout Set<Int64>) {
             }
         }
     }
+    for media in message.media {
+        if let media = media as? TelegramMediaWebpage, case let .Loaded(content) = media.content {
+            for attribute in content.attributes {
+                if case let .aiTextStyle(aiTextStyle) = attribute {
+                    fileIds.insert(aiTextStyle.emojiFileId)
+                }
+            }
+        }
+    }
 }
 
 private func messagesFromOperations(state: AccountMutableState) -> [StoreMessage] {
