@@ -1248,7 +1248,8 @@ final class ComposePollScreenComponent: Component {
             let stateContext = CountriesMultiselectionScreen.StateContext(
                 context: component.context,
                 subject: .countries,
-                initialSelectedCountries: self.limitToCountries
+                initialSelectedCountries: self.limitToCountries,
+                showFragment: true
             )
             let _ = (stateContext.ready |> filter { $0 } |> take(1) |> deliverOnMainQueue).startStandalone(next: { [weak self] _ in
                 let controller = CountriesMultiselectionScreen(

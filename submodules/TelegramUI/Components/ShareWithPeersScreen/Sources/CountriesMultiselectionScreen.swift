@@ -1122,6 +1122,7 @@ public extension CountriesMultiselectionScreen {
         public let subject: Subject
         public let maxCount: Int32?
         public let initialSelectedCountries: [String]
+        public let showFragment: Bool
         
         private var stateDisposable: Disposable?
         private let stateSubject = Promise<State>()
@@ -1138,14 +1139,20 @@ public extension CountriesMultiselectionScreen {
             context: AccountContext,
             subject: Subject = .countries,
             maxCount: Int32? = nil,
-            initialSelectedCountries: [String] = []
+            initialSelectedCountries: [String] = [],
+            showFragment: Bool = false
         ) {
             self.subject = subject
             self.maxCount = maxCount
             self.initialSelectedCountries = initialSelectedCountries
+            self.showFragment = showFragment
             
             let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-            let countries = localizedCountryNamesAndCodes(strings: presentationData.strings).sorted { lhs, rhs in
+            var countryList = localizedCountryNamesAndCodes(strings: presentationData.strings)
+            if showFragment {
+                countryList.append((("Fragment", "Fragment"), "FT", [888]))
+            }
+            let countries = countryList.sorted { lhs, rhs in
                 return lhs.0.1.lowercased() < rhs.0.1.lowercased()
             }
             
