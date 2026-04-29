@@ -2671,6 +2671,22 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
         return value
     }
     
+    public func isStrictlyScrolledToPinToEdgeItem() -> Bool {
+        if self.calculatePinToEdgeTopInset() <= 0.0 {
+            return false
+        }
+        guard let targetIndex = self.items.firstIndex(where: { $0.pinToEdgeWithInset }) else {
+            return false
+        }
+        for itemNode in self.itemNodes {
+            if itemNode.index == targetIndex {
+                let expectedMaxY = (self.visibleSize.height - self.insets.bottom) + itemNode.scrollPositioningInsets.bottom
+                return abs(itemNode.apparentFrame.maxY - expectedMaxY) < 0.5
+            }
+        }
+        return false
+    }
+    
     private func replayOperations(animated: Bool, animateAlpha: Bool, animateCrossfade: Bool, animateFullTransition: Bool, customAnimationTransition: ControlledTransition?, synchronous: Bool, synchronousLoads: Bool, animateTopItemVerticalOrigin: Bool, operations: [ListViewStateOperation], requestItemInsertionAnimationsIndices: Set<Int>, scrollToItem originalScrollToItem: ListViewScrollToItem?, additionalScrollDistance: CGFloat, updateSizeAndInsets: ListViewUpdateSizeAndInsets?, stationaryItemIndex: Int?, updateOpaqueState: Any?, forceInvertOffsetDirection: Bool = false, completion: () -> Void) {
         var scrollToItem: ListViewScrollToItem?
         var isExperimentalSnapToScrollToItem = false

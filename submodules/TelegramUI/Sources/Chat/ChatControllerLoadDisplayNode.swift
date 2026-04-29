@@ -878,6 +878,12 @@ extension ChatControllerImpl {
             self?.requestLayout(transition: transition)
         }
         
+        var enableSendAnimationV2 = false
+        if let data = self.context.currentAppConfiguration.with({ $0 }).data, let _ = data["ios_killswitch_disable_send_animation_v2"] {
+        } else {
+            enableSendAnimationV2 = true
+        }
+        
         self.chatDisplayNode.setupSendActionOnViewUpdate = { [weak self] f, messageCorrelationId in
             //print("setup layoutActionOnViewTransition")
 
@@ -886,7 +892,11 @@ extension ChatControllerImpl {
             }
             self.layoutActionOnViewTransitionAction = f
             
-            self.chatDisplayNode.historyNode.pinToTopStableId = nil
+            if !enableSendAnimationV2 {
+                self.chatDisplayNode.historyNode.pinToTopStableId = nil
+            } else if !self.chatDisplayNode.historyNode.isStrictlyScrolledToPinToEdgeItem() {
+                self.chatDisplayNode.historyNode.pinToTopStableId = nil
+            }
             self.chatDisplayNode.historyNode.layoutActionOnViewTransition = ({ [weak self] transition in
                 f()
                 if let strongSelf = self, let validLayout = strongSelf.validLayout {
@@ -906,7 +916,7 @@ extension ChatControllerImpl {
 
                     let shouldUseFastMessageSendAnimation = strongSelf.chatDisplayNode.shouldUseFastMessageSendAnimation
                     
-                    strongSelf.chatDisplayNode.containerLayoutUpdated(validLayout, navigationBarHeight: strongSelf.navigationLayout(layout: validLayout).navigationFrame.maxY, transition: .animated(duration: duration, curve: curve), listViewTransaction: {
+                    strongSelf.chatDisplayNode.containerLayoutUpdated(validLayout, navigationBarHeight: strongSelf.navigationLayout(layout: validLayout).navigationFrame.maxY, transition: .animated(duration: duration, curve: curve), listViewTransaction: { [weak strongSelf]
                         updateSizeAndInsets, _, _, _ in
                         var options = transition.options
                         let _ = options.insert(.Synchronous)
@@ -941,6 +951,11 @@ extension ChatControllerImpl {
                                 scrollToItem = ListViewScrollToItem(index: insertedIndex, position: .visible, animated: true, curve: .Custom(duration: duration, controlPoints.0, controlPoints.1, controlPoints.2, controlPoints.3), directionHint: .Down)
                             } else if transition.historyView.originalView.laterId == nil {
                                 scrollToItem = ListViewScrollToItem(index: 0, position: .top(0.0), animated: true, curve: .Custom(duration: duration, controlPoints.0, controlPoints.1, controlPoints.2, controlPoints.3), directionHint: .Up)
+                                if enableSendAnimationV2, Thread.isMainThread, let strongSelf {
+                                    if strongSelf.chatDisplayNode.historyNode.isStrictlyScrolledToPinToEdgeItem() {
+                                        scrollToItem = nil
+                                    }
+                                }
                             }
 
                             if let maxInsertedItem = maxInsertedItem {
