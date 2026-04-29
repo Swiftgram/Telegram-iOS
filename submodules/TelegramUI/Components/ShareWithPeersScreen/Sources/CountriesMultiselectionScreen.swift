@@ -1163,7 +1163,7 @@ public extension CountriesMultiselectionScreen {
                 var currentSection: String?
                 var currentCountries: [CountryItem] = []
                 for country in countries {
-                    let section = String(country.0.1.prefix(1))
+                    let section = String(country.0.1.prefix(1)).uppercased()
                     if currentSection != section {
                         if let currentSection {
                             sections.append((currentSection, currentCountries))

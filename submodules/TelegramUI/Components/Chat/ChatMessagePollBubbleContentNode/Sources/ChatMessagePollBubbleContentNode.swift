@@ -2924,7 +2924,9 @@ public class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
                                                 if !poll.countries.isEmpty {
                                                     let locale = localeWithStrings(item.presentationData.strings)
                                                     let countryNames = poll.countries.map { id in
-                                                        if let countryName = locale.localizedString(forRegionCode: id) {
+                                                        if id == "FT" {
+                                                            return "Fragment"
+                                                        } else if let countryName = locale.localizedString(forRegionCode: id) {
                                                             return countryName
                                                         } else {
                                                             return id

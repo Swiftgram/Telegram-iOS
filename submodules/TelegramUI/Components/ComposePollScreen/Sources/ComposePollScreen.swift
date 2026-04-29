@@ -2396,7 +2396,11 @@ final class ComposePollScreenComponent: Component {
                     if self.limitToCountries.count > 1 {
                         value = environment.strings.CreatePoll_AllowedCountries_Countries(Int32(self.limitToCountries.count))
                     } else if self.limitToCountries.count == 1, let countryCode = self.limitToCountries.first {
-                        value = self.currentLocale?.localizedString(forRegionCode: countryCode) ?? countryCode
+                        if countryCode == "FT" {
+                            value = "Fragment"
+                        } else {
+                            value = self.currentLocale?.localizedString(forRegionCode: countryCode) ?? countryCode
+                        }
                     } else {
                         value = ""
                     }
