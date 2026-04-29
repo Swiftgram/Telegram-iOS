@@ -204,9 +204,7 @@ private final class VideoRecorderImpl {
                         let maxDate = Date(timeIntervalSinceNow: 0.05)
                         RunLoop.current.run(until: maxDate)
                     }
-                }
 
-                if let videoInput = self.videoInput {
                     let time = CACurrentMediaTime()
 //                    if let previousPresentationTime = self.previousPresentationTime, let previousAppendTime = self.previousAppendTime {
 //                        print("appending \(presentationTime.seconds) (\(presentationTime.seconds - previousPresentationTime) ) on \(time) (\(time - previousAppendTime)")
@@ -366,7 +364,7 @@ private final class VideoRecorderImpl {
     
     private func maybeFinish() {
         dispatchPrecondition(condition: .onQueue(self.queue))
-        guard self.hasAllVideoBuffers && self.hasAllVideoBuffers && !self.stopped else {
+        guard self.hasAllVideoBuffers && (!self.configuration.hasAudio || self.hasAllAudioBuffers) && !self.stopped else {
             return
         }
         let _ = self._stopped.modify { _ in return true }
