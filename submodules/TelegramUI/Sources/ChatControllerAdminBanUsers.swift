@@ -85,8 +85,9 @@ extension ChatControllerImpl {
                 let _ = self.context.engine.messages.clearAuthorHistory(peerId: messagesPeerId, memberId: authorId).startStandalone()
             }
             
+            let aroundMessageId = messageIds.count == 1 ? messageIds.first : nil
             for authorId in result.deleteAllReactionsFromPeers {
-                let _ = self.context.engine.messages.deleteAllReactionsWithAuthor(peerId: messagesPeerId, authorId: authorId).startStandalone()
+                let _ = self.context.engine.messages.deleteAllReactionsWithAuthor(peerId: messagesPeerId, authorId: authorId, aroundMessageId: aroundMessageId).startStandalone()
             }
             
             for authorId in result.reportSpamPeers {
