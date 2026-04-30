@@ -211,6 +211,7 @@ private final class ItemComponent: Component {
 
 private final class NavigationButtonItemNode: ImmediateTextNode {
     private let isGlass: Bool
+    var requestUpdate: (() -> Void)?
     
     private func fontForCurrentState() -> UIFont {
         return self.bold ? Font.semibold(17.0) : Font.medium(17.0)
@@ -235,7 +236,13 @@ private final class NavigationButtonItemNode: ImmediateTextNode {
                 
                 if let item = self.item {
                     self.setEnabledListener = item.addSetEnabledListener { [weak self] value in
-                        self?.isEnabled = value
+                        guard let self else {
+                            return
+                        }
+                        if self.isEnabled != value {
+                            self.isEnabled = value
+                            self.requestUpdate?()
+                        }
                     }
                     self.accessibilityHint = item.accessibilityHint
                     self.accessibilityLabel = item.accessibilityLabel
@@ -261,7 +268,7 @@ private final class NavigationButtonItemNode: ImmediateTextNode {
         }
     }
     
-    private(set) var imageNode: ASImageNode?
+    private(set) var imageView: UIImageView?
     
     private var _image: UIImage?
     public var image: UIImage? {
@@ -271,23 +278,21 @@ private final class NavigationButtonItemNode: ImmediateTextNode {
             _image = value
             
             if let _ = value {
-                if self.imageNode == nil {
-                    let imageNode = ASImageNode()
-                    imageNode.displayWithoutProcessing = true
-                    imageNode.displaysAsynchronously = false
-                    self.imageNode = imageNode
+                if self.imageView == nil {
+                    let imageView = UIImageView()
+                    self.imageView = imageView
                     
-                    self.addSubnode(imageNode)
+                    self.view.addSubview(imageView)
                 }
-                self.imageNode?.image = image
-                if self.imageNode?.image?.renderingMode == .alwaysTemplate {
-                    self.imageNode?.tintColor = self.color
+                self.imageView?.image = image
+                if self.imageView?.image?.renderingMode == .alwaysTemplate {
+                    self.imageView?.tintColor = self.color
                 } else {
-                    self.imageNode?.tintColor = nil
+                    self.imageView?.tintColor = nil
                 }
-            } else if let imageNode = self.imageNode {
-                imageNode.removeFromSupernode()
-                self.imageNode = nil
+            } else if let imageView = self.imageView {
+                imageView.removeFromSuperview()
+                self.imageView = nil
             }
             
             self.invalidateCalculatedLayout()
@@ -311,11 +316,15 @@ private final class NavigationButtonItemNode: ImmediateTextNode {
     
     public var color: UIColor = UIColor(rgb: 0x0088ff) {
         didSet {
-            if self.imageNode?.image?.renderingMode == .alwaysTemplate {
-                self.imageNode?.tintColor = self.color
-            }
-            if let text = self._text {
-                self.attributedText = NSAttributedString(string: text, attributes: self.attributesForCurrentState())
+            if self.color != oldValue {
+                if self.imageView?.image?.renderingMode == .alwaysTemplate {
+                    self.imageView?.tintColor = self.color
+                } else {
+                    self.image = self.image
+                }
+                if let text = self._text {
+                    self.attributedText = NSAttributedString(string: text, attributes: self.attributesForCurrentState())
+                }
             }
         }
     }
@@ -422,11 +431,11 @@ private final class NavigationButtonItemNode: ImmediateTextNode {
             let size = CGSize(width: max(nodeSize.width, superSize.width), height: max(nodeSize.height, superSize.height))
             node.frame = CGRect(origin: CGPoint(), size: nodeSize)
             return size
-        } else if let imageNode = self.imageNode {
-            let nodeSize = imageNode.image?.size ?? CGSize()
+        } else if let imageView = self.imageView {
+            let nodeSize = imageView.image?.size ?? CGSize()
             let size = CGSize(width: max(nodeSize.width, superSize.width), height: max(44.0, max(nodeSize.height, superSize.height)))
             let imageFrame = CGRect(origin: CGPoint(x: floorToScreenPixels((size.width - nodeSize.width) / 2.0), y: floorToScreenPixels((size.height - nodeSize.height) / 2.0)), size: nodeSize)
-            imageNode.frame = imageFrame
+            imageView.frame = imageFrame
             return size
         } else {
             superSize.height = max(44.0, superSize.height)
@@ -524,10 +533,19 @@ private final class NavigationButtonItemNode: ImmediateTextNode {
 
 
 public final class NavigationButtonNodeImpl: ContextControllerSourceNode, NavigationButtonNode {
+    enum ContentType {
+        case accent
+        case accentDisabled
+        case generic
+    }
+    
     private let isGlass: Bool
     private var isBack: Bool = false
     
+    private var items: [UIBarButtonItem] = []
     private var nodes: [NavigationButtonItemNode] = []
+    
+    var requestUpdate: (() -> Void)?
     
     private var disappearingNodes: [(frame: CGRect, size: CGSize, node: NavigationButtonItemNode)] = []
     
@@ -625,6 +643,9 @@ public final class NavigationButtonNodeImpl: ContextControllerSourceNode, Naviga
                     }
                 }
             }
+            node.requestUpdate = { [weak self] in
+                self?.requestUpdate?()
+            }
             self.nodes.append(node)
             self.addSubnode(node)
         }
@@ -648,6 +669,8 @@ public final class NavigationButtonNodeImpl: ContextControllerSourceNode, Naviga
     }
     
     public func updateItems(_ items: [UIBarButtonItem], animated: Bool) {
+        self.items = items
+        
         for i in 0 ..< items.count {
             let node: NavigationButtonItemNode
             if self.nodes.count > i {
@@ -670,14 +693,20 @@ public final class NavigationButtonNodeImpl: ContextControllerSourceNode, Naviga
                         }
                     }
                 }
+                node.requestUpdate = { [weak self] in
+                    self?.requestUpdate?()
+                }
                 self.nodes.append(node)
                 self.addSubnode(node)
             }
             node.alpha = self.manualAlpha
             node.item = items[i]
             if items[i].title == "___close" {
-                //node.image = glassCloseImage
-                node.image = generateTintedImage(image: UIImage(bundleImageName: "Navigation/Close"), color: self.color)
+                node.image = generateTintedImage(image: UIImage(bundleImageName: "Navigation/Close"), color: .white)?.withRenderingMode(.alwaysTemplate)
+            } else if items[i].title == "___clear" {
+                node.image = generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Delete"), color: .white)?.withRenderingMode(.alwaysTemplate)
+            } else if items[i].title == "___done" {
+                node.image = generateTintedImage(image: UIImage(bundleImageName: "Navigation/Done"), color: .white)?.withRenderingMode(.alwaysTemplate)
             } else {
                 node.image = items[i].image
                 node.text = items[i].title ?? ""
@@ -749,7 +778,7 @@ public final class NavigationButtonNodeImpl: ContextControllerSourceNode, Naviga
                 nodeOrigin.x += 16.0
             }
 
-            if !self.isGlass && node.node == nil && node.imageNode != nil && i == self.nodes.count - 1 {
+            if !self.isGlass && node.node == nil && node.imageView != nil && i == self.nodes.count - 1 {
                 nodeOrigin.x -= 5.0
             }
         }
@@ -790,5 +819,31 @@ public final class NavigationButtonNodeImpl: ContextControllerSourceNode, Naviga
             }
         }
         return true
+    }
+    
+    var commonContentType: ContentType {
+        var commonType: ContentType?
+        for item in self.items {
+            var nodeContentType: ContentType = .generic
+            if item.title == "___close" {
+            } else if item.title == "___clear" {
+            } else if item.title == "___done" {
+                if item.isEnabled {
+                    nodeContentType = .accent
+                } else {
+                    nodeContentType = .accentDisabled
+                }
+            }
+            
+            if commonType == nil {
+                commonType = nodeContentType
+            } else {
+                if commonType != nodeContentType {
+                    return .generic
+                }
+            }
+        }
+        
+        return commonType ?? .generic
     }
 }

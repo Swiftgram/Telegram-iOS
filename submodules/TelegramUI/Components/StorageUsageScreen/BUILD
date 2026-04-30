@@ -12,7 +12,6 @@ swift_library(
     deps = [
         "//submodules/AsyncDisplayKit:AsyncDisplayKit",
         "//submodules/Display:Display",
-        "//submodules/Postbox:Postbox",
         "//submodules/TelegramCore:TelegramCore",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/ComponentFlow:ComponentFlow",
@@ -46,6 +45,8 @@ swift_library(
         "//submodules/SegmentedControlNode",
         "//submodules/TelegramUIPreferences",
         "//submodules/TelegramUI/Components/GlassBackgroundComponent",
+        "//submodules/TelegramUI/Components/HorizontalTabsComponent",
+        "//submodules/TelegramUI/Components/LiquidLens",
         "//submodules/TelegramUI/Components/EdgeEffect",
     ],
     visibility = [

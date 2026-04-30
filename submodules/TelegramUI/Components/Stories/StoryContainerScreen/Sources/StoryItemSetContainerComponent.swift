@@ -3066,7 +3066,7 @@ public final class StoryItemSetContainerComponent: Component {
                         
                         sendAsConfiguration = sendAsPeer.flatMap { value in
                             return MessageInputPanelComponent.SendAsConfiguration(
-                                currentPeer: EnginePeer(value.peer),
+                                currentPeer: value.peer,
                                 subscriberCount: value.subscribers.flatMap(Int.init),
                                 isPremiumLocked: value.isPremiumRequired,
                                 isSelecting: self.sendMessageContext.isSelectingSendAsPeer,
@@ -5626,7 +5626,7 @@ public final class StoryItemSetContainerComponent: Component {
                     }
                     navigationController.setViewControllers(currentViewControllers, animated: true)
                 } else {
-                    guard let chatController = component.context.sharedContext.makePeerInfoController(context: component.context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) else {
+                    guard let chatController = component.context.sharedContext.makePeerInfoController(context: component.context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) else {
                         return
                     }
                     
@@ -5967,7 +5967,7 @@ public final class StoryItemSetContainerComponent: Component {
         }
         
         private func requestSave() {
-            guard let component = self.component, let peerReference = PeerReference(component.slice.effectivePeer._asPeer()) else {
+            guard let component = self.component, let peerReference = PeerReference(component.slice.effectivePeer) else {
                 return
             }
             
@@ -5977,7 +5977,7 @@ public final class StoryItemSetContainerComponent: Component {
             let stringSaving = component.strings.Story_TooltipSaving
             let stringSaved = component.strings.Story_TooltipSaved
             
-            let disposable = (saveToCameraRoll(context: component.context, postbox: component.context.account.postbox, userLocation: .peer(peerReference.id), customUserContentType: .story, mediaReference: .story(peer: peerReference, id: component.slice.item.storyItem.id, media: component.slice.item.storyItem.media._asMedia()))
+            let disposable = (saveToCameraRoll(context: component.context, userLocation: .peer(peerReference.id), customUserContentType: .story, mediaReference: .story(peer: peerReference, id: component.slice.item.storyItem.id, media: component.slice.item.storyItem.media._asMedia()))
             |> deliverOnMainQueue).start(next: { [weak saveScreen] progress in
                 guard let saveScreen else {
                     return
@@ -6243,7 +6243,7 @@ public final class StoryItemSetContainerComponent: Component {
                 }
             }
             
-            if !emojiFileIds.isEmpty || hasLinkedStickers, let peerReference = PeerReference(component.slice.effectivePeer._asPeer()) {
+            if !emojiFileIds.isEmpty || hasLinkedStickers, let peerReference = PeerReference(component.slice.effectivePeer) {
                 let context = component.context
                 
                 tip = .animatedEmoji(text: nil, arguments: nil, file: nil, action: nil)
@@ -6697,7 +6697,7 @@ public final class StoryItemSetContainerComponent: Component {
                     }
                 }
                 
-                if component.slice.item.storyItem.isPublic && (component.slice.effectivePeer.addressName != nil || !component.slice.effectivePeer._asPeer().usernames.isEmpty) && (component.slice.item.storyItem.expirationTimestamp > Int32(Date().timeIntervalSince1970) || component.slice.item.storyItem.isPinned) {
+                if component.slice.item.storyItem.isPublic && (component.slice.effectivePeer.addressName != nil || !component.slice.effectivePeer.usernames.isEmpty) && (component.slice.item.storyItem.expirationTimestamp > Int32(Date().timeIntervalSince1970) || component.slice.item.storyItem.isPinned) {
                     items.append(.action(ContextMenuActionItem(text: component.strings.Story_Context_CopyLink, icon: { theme in
                         return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Link"), color: theme.contextMenu.primaryColor)
                     }, action: { [weak self] _, a in
@@ -6953,7 +6953,7 @@ public final class StoryItemSetContainerComponent: Component {
                     })))
                 }
                 
-                if component.slice.item.storyItem.isPublic && (component.slice.effectivePeer.addressName != nil || !component.slice.effectivePeer._asPeer().usernames.isEmpty) && (component.slice.item.storyItem.expirationTimestamp > Int32(Date().timeIntervalSince1970) || component.slice.item.storyItem.isPinned) {
+                if component.slice.item.storyItem.isPublic && (component.slice.effectivePeer.addressName != nil || !component.slice.effectivePeer.usernames.isEmpty) && (component.slice.item.storyItem.expirationTimestamp > Int32(Date().timeIntervalSince1970) || component.slice.item.storyItem.isPinned) {
                     items.append(.action(ContextMenuActionItem(text: component.strings.Story_Context_CopyLink, icon: { theme in
                         return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Link"), color: theme.contextMenu.primaryColor)
                     }, action: { [weak self] _, a in
@@ -7221,7 +7221,7 @@ public final class StoryItemSetContainerComponent: Component {
                         items.append(.separator)
                     }
                     
-                    let isMuted = resolvedAreStoriesMuted(globalSettings: globalSettings._asGlobalNotificationSettings(), peer: component.slice.effectivePeer._asPeer(), peerSettings: settings._asNotificationSettings(), topSearchPeers: topSearchPeers)
+                    let isMuted = resolvedAreStoriesMuted(globalSettings: globalSettings._asGlobalNotificationSettings(), peer: component.slice.effectivePeer, peerSettings: settings._asNotificationSettings(), topSearchPeers: topSearchPeers)
                     
                     if !component.slice.effectivePeer.isService && isContact {
                         items.append(.action(ContextMenuActionItem(text: isMuted ? component.strings.StoryFeed_ContextNotifyOn : component.strings.StoryFeed_ContextNotifyOff, icon: { theme in
@@ -7271,7 +7271,7 @@ public final class StoryItemSetContainerComponent: Component {
                         })))
                     }
                     
-                    if !component.slice.effectivePeer.isService && component.slice.item.storyItem.isPublic && (component.slice.effectivePeer.addressName != nil || !component.slice.effectivePeer._asPeer().usernames.isEmpty) {
+                    if !component.slice.effectivePeer.isService && component.slice.item.storyItem.isPublic && (component.slice.effectivePeer.addressName != nil || !component.slice.effectivePeer.usernames.isEmpty) {
                         items.append(.action(ContextMenuActionItem(text: component.strings.Story_Context_CopyLink, icon: { theme in
                             return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Link"), color: theme.contextMenu.primaryColor)
                         }, action: { [weak self] _, a in
@@ -7547,8 +7547,8 @@ public final class StoryItemSetContainerComponent: Component {
             })
         }
         
-        private func performMusicAction(file: FileMediaReference, sourceView: UIView, gesture: ContextGesture?) {
-            guard let component = self.component, let controller = component.controller() else {
+        private func performMusicAction(file: TelegramMediaFile, sourceView: UIView, gesture: ContextGesture?) {
+            guard let component = self.component, let controller = component.controller(), let peer = PeerReference(component.slice.peer) else {
                 return
             }
             
@@ -7556,6 +7556,8 @@ public final class StoryItemSetContainerComponent: Component {
             
             let presentationData = component.context.sharedContext.currentPresentationData.with({ $0 }).withUpdated(theme: component.theme)
             
+            let fileReference: FileMediaReference = .story(peer: peer, id: component.slice.item.storyItem.id, media: file)
+
             let items = component.context.engine.peers.savedMusicIds()
             |> take(1)
             |> map { [weak self] savedIds -> ContextController.Items in
@@ -7580,7 +7582,7 @@ public final class StoryItemSetContainerComponent: Component {
                                         return
                                     }
                                                         
-                                    let _ = component.context.engine.peers.addSavedMusic(file: file).start()
+                                    let _ = component.context.engine.peers.addSavedMusic(file: fileReference).start()
                                     
                                     guard let controller = component.controller() as? StoryContainerScreen else {
                                         return
@@ -7614,7 +7616,7 @@ public final class StoryItemSetContainerComponent: Component {
                                                 if let controller = component.context.sharedContext.makePeerInfoController(
                                                     context: component.context,
                                                     updatedPresentationData: nil,
-                                                    peer: peer._asPeer(),
+                                                    peer: peer,
                                                     mode: .myProfile,
                                                     avatarInitiallyExpanded: false,
                                                     fromChat: false,
@@ -7638,7 +7640,7 @@ public final class StoryItemSetContainerComponent: Component {
                                         return
                                     }
                                     
-                                    let _ = component.context.engine.messages.enqueueOutgoingMessage(to: component.context.account.peerId, replyTo: nil, content: .file(file)).start()
+                                    let _ = component.context.engine.messages.enqueueOutgoingMessage(to: component.context.account.peerId, replyTo: nil, content: .file(fileReference)).start()
                                     
                                     guard let controller = component.controller() as? StoryContainerScreen else {
                                         return

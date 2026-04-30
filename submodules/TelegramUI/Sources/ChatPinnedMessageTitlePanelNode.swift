@@ -408,7 +408,7 @@ final class ChatPinnedMessageTitlePanelNode: ChatTitleAccessoryPanelNode {
         var tapButtonRightInset: CGFloat = rightInset
         
         let buttonsContainerSize = CGSize(width: 16.0, height: panelHeight)
-        self.buttonsContainer.frame = CGRect(origin: CGPoint(x: width - buttonsContainerSize.width - rightInset, y: 0.0), size: buttonsContainerSize)
+        self.buttonsContainer.frame = CGRect(origin: CGPoint(x: width - buttonsContainerSize.width - rightInset - 4.0, y: 0.0), size: buttonsContainerSize)
         
         let closeButtonSize = self.closeButton.measure(CGSize(width: 100.0, height: 100.0))
         
@@ -608,7 +608,7 @@ final class ChatPinnedMessageTitlePanelNode: ChatTitleAccessoryPanelNode {
         let previousMediaReference = self.previousMediaReference
         let context = self.context
         
-        let contentLeftInset: CGFloat = leftInset + 10.0
+        let contentLeftInset: CGFloat = leftInset + 18.0
         var textLineInset: CGFloat = 10.0
         var rightInset: CGFloat = 14.0 + rightInset
         
@@ -707,7 +707,7 @@ final class ChatPinnedMessageTitlePanelNode: ChatTitleAccessoryPanelNode {
         var applyImage: (() -> Void)?
         if let imageDimensions = imageDimensions {
             let boundingSize = CGSize(width: 35.0, height: 35.0)
-            applyImage = imageNodeLayout(TransformImageArguments(corners: ImageCorners(radius: 2.0), imageSize: imageDimensions.aspectFilled(boundingSize), boundingSize: boundingSize, intrinsicInsets: UIEdgeInsets()))
+            applyImage = imageNodeLayout(TransformImageArguments(corners: ImageCorners(radius: 8.0), imageSize: imageDimensions.aspectFilled(boundingSize), boundingSize: boundingSize, intrinsicInsets: UIEdgeInsets()))
             
             textLineInset += 9.0 + 35.0
         }
@@ -735,7 +735,7 @@ final class ChatPinnedMessageTitlePanelNode: ChatTitleAccessoryPanelNode {
                     if fileReference.media.isAnimatedSticker {
                         let dimensions = fileReference.media.dimensions ?? PixelDimensions(width: 512, height: 512)
                         updateImageSignal = chatMessageAnimatedSticker(postbox: context.account.postbox, userLocation: .peer(message.id.peerId), file: fileReference.media, small: false, size: dimensions.cgSize.aspectFitted(CGSize(width: 160.0, height: 160.0)))
-                        updatedFetchMediaSignal = fetchedMediaResource(mediaBox: context.account.postbox.mediaBox, userLocation: .peer(message.id.peerId), userContentType: MediaResourceUserContentType(file: fileReference.media), reference: fileReference.resourceReference(fileReference.media.resource))
+                        updatedFetchMediaSignal = context.engine.resources.fetch(reference: fileReference.resourceReference(fileReference.media.resource), userLocation: .peer(message.id.peerId), userContentType: MediaResourceUserContentType(file: fileReference.media))
                     } else if fileReference.media.isVideo || fileReference.media.isAnimated {
                         updateImageSignal = chatMessageVideoThumbnail(account: context.account, userLocation: .peer(message.id.peerId), fileReference: fileReference, blurred: hasSpoiler)
                     } else if let iconImageRepresentation = smallestImageRepresentation(fileReference.media.previewRepresentations) {
@@ -797,7 +797,7 @@ final class ChatPinnedMessageTitlePanelNode: ChatTitleAccessoryPanelNode {
             messageText = NSAttributedString(string: foldLineBreaks(textString.string), font: textFont, textColor: message.media.isEmpty || message.media.first is TelegramMediaWebpage ? theme.chat.inputPanel.primaryTextColor : theme.chat.inputPanel.secondaryTextColor)
         }
         
-        let textConstrainedSize = CGSize(width: width - textLineInset - contentLeftInset - rightInset - textRightInset, height: CGFloat.greatestFiniteMagnitude)
+        let textConstrainedSize = CGSize(width: width - textLineInset - contentLeftInset - rightInset - textRightInset - 10.0, height: CGFloat.greatestFiniteMagnitude)
         let (textLayout, textApply) = makeTextLayout(TextNodeLayoutArguments(attributedString: messageText, backgroundColor: nil, maximumNumberOfLines: 1, truncationType: .end, constrainedSize: textConstrainedSize, alignment: .natural, cutout: nil, insets: UIEdgeInsets(top: 2.0, left: 0.0, bottom: 2.0, right: 0.0)))
         
         let spoilerTextLayoutAndApply: (TextNodeLayout, (TextNodeWithEntities.Arguments?) -> TextNodeWithEntities)?
@@ -885,8 +885,8 @@ final class ChatPinnedMessageTitlePanelNode: ChatTitleAccessoryPanelNode {
             transition: animationTransition
         )
         
-        strongSelf.imageNodeContainer.frame = CGRect(origin: CGPoint(x: contentLeftInset + 9.0, y: 8.0), size: CGSize(width: 35.0, height: 35.0))
-        strongSelf.imageNode.frame = CGRect(origin: CGPoint(), size: CGSize(width: 35.0, height: 35.0))
+        strongSelf.imageNodeContainer.frame = CGRect(origin: CGPoint(x: contentLeftInset + 9.0, y: 7.0), size: CGSize(width: 36.0, height: 36.0))
+        strongSelf.imageNode.frame = CGRect(origin: CGPoint(), size: CGSize(width: 36.0, height: 36.0))
         
         if let applyImage = applyImage {
             applyImage()

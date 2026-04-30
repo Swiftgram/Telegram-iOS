@@ -36,7 +36,18 @@ enum InfoSection: Int, CaseIterable {
     case botAffiliateProgram
 }
 
-func infoItems(data: PeerInfoScreenData?, context: AccountContext, presentationData: PresentationData, interaction: PeerInfoInteraction, nearbyPeerDistance: Int32?, reactionSourceMessageId: MessageId?, callMessages: [Message], chatLocation: ChatLocation, isOpenedFromChat: Bool, isMyProfile: Bool) -> [(AnyHashable, [PeerInfoScreenItem])] {
+func infoItems(
+    data: PeerInfoScreenData?,
+    context: AccountContext,
+    presentationData: PresentationData,
+    interaction: PeerInfoInteraction,
+    reactionSourceMessageId: MessageId?,
+    canDeleteReaction: Bool,
+    callMessages: [Message],
+    chatLocation: ChatLocation,
+    isOpenedFromChat: Bool,
+    isMyProfile: Bool
+) -> [(AnyHashable, [PeerInfoScreenItem])] {
     guard let data = data else {
         return []
     }
@@ -67,7 +78,7 @@ func infoItems(data: PeerInfoScreenData?, context: AccountContext, presentationD
         interaction.openBirthdayContextMenu(node, gesture)
     }
     
-    if let user = data.peer as? TelegramUser {
+    if case let .user(user) = data.peer {
         let ItemCallList = 1000
         let ItemPersonalChannelHeader = 2000
         let ItemPersonalChannel = 2001
@@ -81,9 +92,9 @@ func infoItems(data: PeerInfoScreenData?, context: AccountContext, presentationD
         let ItemAffiliateInfo = 4001
         let ItemBusinessHours = 5000
         let ItemLocation = 5001
-        let ItemSendMessage = 6000
-        let ItemReport = 6001
-        let ItemAddToContacts = 6002
+        let ItemAddToContacts = 6000
+        let ItemDeleteReaction = 6001
+        let ItemReport = 6002
         let ItemBlock = 6003
         let ItemEncryptionKey = 6004
         let ItemBalanceHeader = 7000
@@ -359,31 +370,22 @@ func infoItems(data: PeerInfoScreenData?, context: AccountContext, presentationD
         }
         
         if !isMyProfile {
-            if let reactionSourceMessageId = reactionSourceMessageId, !data.isContact {
-                items[currentPeerInfoSection]!.append(PeerInfoScreenActionItem(id: ItemSendMessage, text: presentationData.strings.UserInfo_SendMessage, action: {
-                    interaction.openChat(nil)
+            if !data.isContact, user.botInfo == nil {
+                items[currentPeerInfoSection]!.append(PeerInfoScreenActionItem(id: ItemAddToContacts, text: presentationData.strings.PeerInfo_AddToContacts, action: {
+                    interaction.openAddContact()
                 }))
-                
+            }
+
+            if let reactionSourceMessageId = reactionSourceMessageId {
+                if canDeleteReaction {
+                    items[currentPeerInfoSection]!.append(PeerInfoScreenActionItem(id: ItemDeleteReaction, text: presentationData.strings.PeerInfo_DeleteReaction, color: .destructive, action: {
+                        interaction.openDeleteReaction(reactionSourceMessageId)
+                    }))
+                }
                 items[currentPeerInfoSection]!.append(PeerInfoScreenActionItem(id: ItemReport, text: presentationData.strings.ReportPeer_BanAndReport, color: .destructive, action: {
                     interaction.openReport(.reaction(reactionSourceMessageId))
                 }))
-            } else if let _ = nearbyPeerDistance {
-                items[currentPeerInfoSection]!.append(PeerInfoScreenActionItem(id: ItemSendMessage, text: presentationData.strings.UserInfo_SendMessage, action: {
-                    interaction.openChat(nil)
-                }))
-                
-                items[currentPeerInfoSection]!.append(PeerInfoScreenActionItem(id: ItemReport, text: presentationData.strings.ReportPeer_Report, color: .destructive, action: {
-                    interaction.openReport(.user)
-                }))
             } else {
-                if !data.isContact {
-                    if user.botInfo == nil {
-                        items[currentPeerInfoSection]!.append(PeerInfoScreenActionItem(id: ItemAddToContacts, text: presentationData.strings.PeerInfo_AddToContacts, action: {
-                            interaction.openAddContact()
-                        }))
-                    }
-                }
-                
                 var isBlocked = false
                 if let cachedData = data.cachedData as? CachedUserData, cachedData.isBlocked {
                     isBlocked = true
@@ -519,7 +521,7 @@ func infoItems(data: PeerInfoScreenData?, context: AccountContext, presentationD
                     
                     if let managedByBot = data.managedByBot {
                         items[currentPeerInfoSection]!.append(PeerInfoScreenCommentItem(id: ItemBotAddToChatInfo, icon: .managedBot, text: presentationData.strings.PeerInfo_ManagedBotFooter(managedByBot.compactDisplayTitle).string, linkAction: { _ in
-                            interaction.openPeerInfo(managedByBot._asPeer(), false)
+                            interaction.openPeerInfo(managedByBot, false)
                         }))
                     } else {
                         items[currentPeerInfoSection]!.append(PeerInfoScreenCommentItem(id: ItemBotAddToChatInfo, text: presentationData.strings.Bot_AddToChatInfo))
@@ -527,7 +529,7 @@ func infoItems(data: PeerInfoScreenData?, context: AccountContext, presentationD
                 }
             }
         }
-    } else if let channel = data.peer as? TelegramChannel {
+    } else if case let .channel(channel) = data.peer {
         let ItemUsername = 1
         let ItemUsernameInfo = 2
         let ItemAbout = 3
@@ -793,7 +795,7 @@ func infoItems(data: PeerInfoScreenData?, context: AccountContext, presentationD
                 }
             }
         }
-    } else if let group = data.peer as? TelegramGroup {
+    } else if case let .legacyGroup(group) = data.peer {
         if let cachedData = data.cachedData as? CachedGroupData {
             let aboutText: String?
             if group.isFake {
@@ -818,7 +820,7 @@ func infoItems(data: PeerInfoScreenData?, context: AccountContext, presentationD
     
     if let peer = data.peer, let members = data.members, case let .shortList(_, memberList) = members {
         var canAddMembers = false
-        if let group = data.peer as? TelegramGroup {
+        if case let .legacyGroup(group) = data.peer {
             switch group.role {
                 case .admin, .creator:
                     canAddMembers = true
@@ -828,7 +830,7 @@ func infoItems(data: PeerInfoScreenData?, context: AccountContext, presentationD
             if !group.hasBannedPermission(.banAddMembers) {
                 canAddMembers = true
             }
-        } else if let channel = data.peer as? TelegramChannel {
+        } else if case let .channel(channel) = data.peer {
             switch channel.info {
             case .broadcast:
                 break
@@ -901,7 +903,7 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
     }
     
     if let data = data {
-        if let user = data.peer as? TelegramUser {
+        if case let .user(user) = data.peer {
             let ItemNote: AnyHashable = AnyHashable("note_edit")
             let ItemNoteInfo = 1
             
@@ -1045,7 +1047,7 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
                     interaction.requestDeleteContact()
                 }))
             }
-        } else if let channel = data.peer as? TelegramChannel {
+        } else if case let .channel(channel) = data.peer {
             switch channel.info {
             case .broadcast:
                 let ItemUsername = 1
@@ -1097,7 +1099,7 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
                             if let addressName = peer.addressName, !addressName.isEmpty {
                                 discussionGroupTitle = "@\(addressName)"
                             } else {
-                                discussionGroupTitle = EnginePeer(peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
+                                discussionGroupTitle = peer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
                             }
                         } else {
                             discussionGroupTitle = presentationData.strings.Channel_DiscussionGroupAdd
@@ -1192,7 +1194,7 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
                 if isCreator || (channel.adminRights?.rights.contains(.canChangeInfo) == true) {
                     let labelString: NSAttributedString
                     if channel.linkedMonoforumId != nil {
-                        if let monoforumPeer = data.linkedMonoforumPeer as? TelegramChannel {
+                        if case let .channel(monoforumPeer) = data.linkedMonoforumPeer {
                             if let sendPaidMessageStars = monoforumPeer.sendPaidMessageStars {
                                 let formattedLabel = formatStarsAmountText(sendPaidMessageStars, dateTimeFormat: presentationData.dateTimeFormat)
                                 let smallLabelFont = Font.regular(floor(presentationData.listsFontSize.itemListBaseFontSize / 17.0 * 13.0))
@@ -1404,7 +1406,7 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
                             if let addressName = linkedDiscussionPeer.addressName, !addressName.isEmpty {
                                 peerTitle = "@\(addressName)"
                             } else {
-                                peerTitle = EnginePeer(linkedDiscussionPeer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
+                                peerTitle = linkedDiscussionPeer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
                             }
                                                         
                             items[.peerDataSettings]!.append(PeerInfoScreenDisclosureItem(id: ItemLinkedChannel, label: .text(peerTitle), text: presentationData.strings.Group_LinkedChannel, icon: PresentationResourcesSettings.channels, action: {
@@ -1589,7 +1591,7 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
                     }
                 }
             }
-        } else if let group = data.peer as? TelegramGroup {
+        } else if case let .legacyGroup(group) = data.peer {
             let ItemUsername = 101
             let ItemInviteLinks = 102
             let ItemPreHistory = 103

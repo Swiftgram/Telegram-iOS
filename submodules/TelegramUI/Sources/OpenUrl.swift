@@ -172,7 +172,7 @@ private func makeResolvedUrlHandler(
                 openPeer: { peer, navigation in
                     switch navigation {
                     case .info:
-                        if let infoController = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+                        if let infoController = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                             context.sharedContext.applicationBindings.dismissNativeController()
                             navigationController?.pushViewController(infoController)
                         }
@@ -532,7 +532,7 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                             if let peer = peer, let controller = context.sharedContext.makePeerInfoController(
                                 context: context,
                                 updatedPresentationData: nil,
-                                peer: peer._asPeer(),
+                                peer: peer,
                                 mode: .generic,
                                 avatarInitiallyExpanded: false,
                                 fromChat: false,
@@ -692,6 +692,10 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                             }
                             handleResolvedUrl(.createBot(parentBot: peer.id, username: params["username"], title: params["name"]))
                         })
+                    }
+                case "textStyle":
+                    if let slug = params["slug"] {
+                        convertedUrl = makeTelegramUrl("/addstyle/\(slug)")
                     }
                 default:
                     break

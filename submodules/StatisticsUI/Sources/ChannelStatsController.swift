@@ -18,7 +18,7 @@ import ContextUI
 import ItemListPeerItem
 import InviteLinksUI
 import UndoUI
-import ShareController
+
 import ItemListPeerActionItem
 import PremiumUI
 import StoryContainerScreen
@@ -205,7 +205,7 @@ private enum StatsEntry: ItemListNodeEntry {
     case instantPageInteractionsGraph(PresentationTheme, PresentationStrings, PresentationDateTimeFormat, StatsGraph, ChartType)
     
     case postsTitle(PresentationTheme, String)
-    case post(Int32, PresentationTheme, PresentationStrings, PresentationDateTimeFormat, Peer, StatsPostItem, ChannelStatsPostInteractions)
+    case post(Int32, PresentationTheme, PresentationStrings, PresentationDateTimeFormat, EnginePeer, StatsPostItem, ChannelStatsPostInteractions)
 
     case boostLevel(PresentationTheme, Int32, Int32, CGFloat)
     
@@ -636,7 +636,7 @@ private enum StatsEntry: ItemListNodeEntry {
                     return false
                 }
             case let .post(lhsIndex, lhsTheme, lhsStrings, lhsDateTimeFormat, lhsPeer, lhsPost, lhsInteractions):
-                if case let .post(rhsIndex, rhsTheme, rhsStrings, rhsDateTimeFormat, rhsPeer, rhsPost, rhsInteractions) = rhs, lhsIndex == rhsIndex, lhsTheme === rhsTheme, lhsStrings === rhsStrings, lhsDateTimeFormat == rhsDateTimeFormat, arePeersEqual(lhsPeer, rhsPeer), lhsPost == rhsPost, lhsInteractions == rhsInteractions {
+                if case let .post(rhsIndex, rhsTheme, rhsStrings, rhsDateTimeFormat, rhsPeer, rhsPost, rhsInteractions) = rhs, lhsIndex == rhsIndex, lhsTheme === rhsTheme, lhsStrings === rhsStrings, lhsDateTimeFormat == rhsDateTimeFormat, lhsPeer == rhsPeer, lhsPost == rhsPost, lhsInteractions == rhsInteractions {
                     return true
                 } else {
                     return false
@@ -960,7 +960,7 @@ private enum StatsEntry: ItemListNodeEntry {
                 }, sectionId: self.section, style: .blocks)
             case let .post(_, _, _, _, peer, post, interactions):
                 return StatsMessageItem(context: arguments.context, presentationData: presentationData, peer: peer, item: post, views: interactions.views, reactions: interactions.reactions, forwards: interactions.forwards, sectionId: self.section, style: .blocks, action: {
-                    arguments.openPostStats(EnginePeer(peer), post)
+                    arguments.openPostStats(peer, post)
                 }, openStory: { sourceView in
                     if case let .story(_, story) = post {
                         arguments.openStory(story, sourceView)
@@ -1426,11 +1426,11 @@ private func statsEntries(
                 switch post {
                 case let .message(message):
                     if let interactions = interactions[.message(id: message.id)] {
-                        entries.append(.post(index, presentationData.theme, presentationData.strings, presentationData.dateTimeFormat, peer._asPeer(), post, interactions))
+                        entries.append(.post(index, presentationData.theme, presentationData.strings, presentationData.dateTimeFormat, peer, post, interactions))
                     }
                 case let .story(_, story):
                     if let interactions = interactions[.story(peerId: peer.id, id: story.id)] {
-                        entries.append(.post(index, presentationData.theme, presentationData.strings, presentationData.dateTimeFormat, peer._asPeer(), post, interactions))
+                        entries.append(.post(index, presentationData.theme, presentationData.strings, presentationData.dateTimeFormat, peer, post, interactions))
                     }
                 }
                 index += 1
@@ -1940,8 +1940,10 @@ public func channelStatsController(
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
         presentImpl?(UndoOverlayController(presentationData: presentationData, content: .linkCopied(title: nil, text: presentationData.strings.ChannelBoost_BoostLinkCopied), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }))
     }, shareBoostLink: { link in        
-        let shareController = ShareController(context: context, subject: .url(link), updatedPresentationData: updatedPresentationData)
-        shareController.completed = {  peerIds in
+        let shareController = context.sharedContext.makeShareController(context: context, params: ShareControllerParams(subject: .url(link), updatedPresentationData: updatedPresentationData, actionCompleted: {
+            let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+            presentImpl?(UndoOverlayController(presentationData: presentationData, content: .linkCopied(title: nil, text: presentationData.strings.ChannelBoost_BoostLinkCopied), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }))
+        }, completed: { peerIds in
             let _ = (context.engine.data.get(
                 EngineDataList(
                     peerIds.map(TelegramEngine.EngineData.Item.Peer.Peer.init)
@@ -1950,7 +1952,7 @@ public func channelStatsController(
             |> deliverOnMainQueue).start(next: { peerList in
                 let peers = peerList.compactMap { $0 }
                 let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-                
+
                 let text: String
                 var savedMessages = false
                 if peerIds.count == 1, let peerId = peerIds.first, peerId == context.account.peerId {
@@ -1971,7 +1973,7 @@ public func channelStatsController(
                         text = ""
                     }
                 }
-                
+
                 presentImpl?(UndoOverlayController(presentationData: presentationData, content: .forward(savedMessages: savedMessages, text: text), elevatedLayout: false, animateInAsReplacement: true, action: { action in
                     if savedMessages, action == .info {
                         let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId))
@@ -1985,11 +1987,7 @@ public func channelStatsController(
                     return false
                 }))
             })
-        }
-        shareController.actionCompleted = {
-            let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-            presentImpl?(UndoOverlayController(presentationData: presentationData, content: .linkCopied(title: nil, text: presentationData.strings.ChannelBoost_BoostLinkCopied), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }))
-        }
+        }))
         presentImpl?(shareController)
     },
     openBoost: { boost in

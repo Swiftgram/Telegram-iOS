@@ -20,6 +20,8 @@ import FetchManagerImpl
 import InAppPurchaseManager
 import AnimationCache
 import MultiAnimationRenderer
+import DCTAnimationCacheImpl
+import DCTMultiAnimationRendererImpl
 import AppBundle
 import DirectMediaImageCache
 
@@ -317,19 +319,19 @@ public final class AccountContextImpl: AccountContext {
         self.cachedGroupCallContexts = AccountGroupCallContextCacheImpl()
         
         let cacheStorageBox = self.account.postbox.mediaBox.cacheStorageBox
-        self.animationCache = AnimationCacheImpl(basePath: self.account.postbox.mediaBox.basePath + "/animation-cache", allocateTempFile: {
+        self.animationCache = DCTAnimationCacheImpl(basePath: self.account.postbox.mediaBox.basePath + "/animation-cache", allocateTempFile: {
             return TempBox.shared.tempFile(fileName: "file").path
         }, updateStorageStats: { path, size in
             if let pathData = path.data(using: .utf8) {
                 cacheStorageBox.update(id: pathData, size: size)
             }
         })
-        self.animationRenderer = MultiAnimationRendererImpl()
-        (self.animationRenderer as? MultiAnimationRendererImpl)?.useYuvA = sharedContext.immediateExperimentalUISettings.compressedEmojiCache
+        self.animationRenderer = DCTMultiAnimationRendererImpl()
+        (self.animationRenderer as? DCTMultiAnimationRendererImpl)?.useYuvA = sharedContext.immediateExperimentalUISettings.compressedEmojiCache
         
-        let updatedLimitsConfiguration = account.postbox.preferencesView(keys: [PreferencesKeys.limitsConfiguration])
+        let updatedLimitsConfiguration = self.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.limitsConfiguration))
         |> map { preferences -> LimitsConfiguration in
-            return preferences.values[PreferencesKeys.limitsConfiguration]?.get(LimitsConfiguration.self) ?? LimitsConfiguration.defaultValue
+            return preferences?.get(LimitsConfiguration.self) ?? LimitsConfiguration.defaultValue
         }
         
         self.currentLimitsConfiguration = Atomic(value: limitsConfiguration)
@@ -351,7 +353,7 @@ public final class AccountContextImpl: AccountContext {
             let _ = currentContentSettings.swap(value)
         })
         
-        let updatedAppConfiguration = getAppConfiguration(postbox: account.postbox)
+        let updatedAppConfiguration = getAppConfiguration(engine: self.engine)
         self.currentAppConfiguration = Atomic(value: appConfiguration)
         self._appConfiguration.set(.single(appConfiguration) |> then(updatedAppConfiguration))
                 
@@ -376,21 +378,23 @@ public final class AccountContextImpl: AccountContext {
                 }).start()
             }
         })
+                
+        let queue = Queue()
+        self.deviceSpecificContactImportContexts = QueueLocalObject(queue: queue, generate: {
+            return DeviceSpecificContactImportContexts(queue: queue)
+        })
         
         let langCode = sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode
         self.currentCountriesConfiguration = Atomic(value: CountriesConfiguration(countries: loadCountryCodes()))
         if !temp {
             let currentCountriesConfiguration = self.currentCountriesConfiguration
             self.countriesConfigurationDisposable = (self.engine.localization.getCountriesList(accountManager: sharedContext.accountManager, langCode: langCode)
-            |> deliverOnMainQueue).start(next: { value in
-                let _ = currentCountriesConfiguration.swap(CountriesConfiguration(countries: value))
+            |> deliverOnMainQueue).start(next: { [weak self] value in
+                let configuration = CountriesConfiguration(countries: value)
+                let _ = currentCountriesConfiguration.swap(configuration)
+                self?._countriesConfiguration.set(.single(configuration))
             })
         }
-        
-        let queue = Queue()
-        self.deviceSpecificContactImportContexts = QueueLocalObject(queue: queue, generate: {
-            return DeviceSpecificContactImportContexts(queue: queue)
-        })
         
         if let contactDataManager = sharedContext.contactDataManager {
             let deviceSpecificContactImportContexts = self.deviceSpecificContactImportContexts
@@ -496,7 +500,7 @@ public final class AccountContextImpl: AccountContext {
             guard let settings = sharedData.entries[ApplicationSpecificSharedDataKeys.experimentalUISettings]?.get(ExperimentalUISettings.self) else {
                 return
             }
-            (self.animationRenderer as? MultiAnimationRendererImpl)?.useYuvA = settings.compressedEmojiCache
+            (self.animationRenderer as? DCTMultiAnimationRendererImpl)?.useYuvA = settings.compressedEmojiCache
         })
     }
     
@@ -919,10 +923,10 @@ private final class ChatLocationReplyContextHolderImpl: ChatLocationContextHolde
     }
 }
 
-func getAppConfiguration(postbox: Postbox) -> Signal<AppConfiguration, NoError> {
-    return postbox.preferencesView(keys: [PreferencesKeys.appConfiguration])
+func getAppConfiguration(engine: TelegramEngine) -> Signal<AppConfiguration, NoError> {
+    return engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.appConfiguration))
     |> map { view -> AppConfiguration in
-        let appConfiguration: AppConfiguration = view.values[PreferencesKeys.appConfiguration]?.get(AppConfiguration.self) ?? AppConfiguration.defaultValue
+        let appConfiguration: AppConfiguration = view?.get(AppConfiguration.self) ?? AppConfiguration.defaultValue
         return appConfiguration
     }
     |> distinctUntilChanged

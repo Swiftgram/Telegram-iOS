@@ -12,11 +12,13 @@ swift_library(
     deps = [
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/AsyncDisplayKit:AsyncDisplayKit",
+        "//submodules/CheckNode:CheckNode",
         "//submodules/Display:Display",
         "//submodules/Postbox:Postbox",
         "//submodules/TelegramCore:TelegramCore",
         "//submodules/TelegramPresentationData:TelegramPresentationData",
         "//submodules/TelegramUIPreferences:TelegramUIPreferences",
+        "//submodules/TextFormat:TextFormat",
         "//submodules/GalleryUI:GalleryUI",
         "//submodules/MusicAlbumArtResources:MusicAlbumArtResources",
         "//submodules/LiveLocationPositionNode:LiveLocationPositionNode",
@@ -27,6 +29,7 @@ swift_library(
         "//submodules/UndoUI:UndoUI",
         "//submodules/TranslateUI:TranslateUI",
         "//submodules/Tuples:Tuples",
+        "//third-party/SwiftMath:SwiftMath",
     ],
     visibility = [
         "//visibility:public",

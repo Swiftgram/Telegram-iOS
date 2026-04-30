@@ -503,6 +503,20 @@ public final class PagerComponent<ChildEnvironmentType: Equatable, TopPanelEnvir
             self.component?.contentIdUpdated(id)
         }
         
+        override public func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+            if self.alpha.isZero {
+                return nil
+            }
+            for view in self.subviews.reversed() {
+                if let result = view.hitTest(self.convert(point, to: view), with: event), result.isUserInteractionEnabled {
+                    return result
+                }
+            }
+            
+            let result = super.hitTest(point, with: event)
+            return result
+        }
+        
         func update(component: PagerComponent<ChildEnvironmentType, TopPanelEnvironment>, availableSize: CGSize, state: EmptyComponentState, environment: Environment<EnvironmentType>, transition: ComponentTransition) -> CGSize {
             let previousPanelHideBehavior = self.component?.panelHideBehavior
             
@@ -1088,6 +1102,27 @@ public final class PagerComponent<ChildEnvironmentType: Equatable, TopPanelEnvir
             }
             
             self.isTopPanelExpandedUpdated(isExpanded: false, transition: ComponentTransition(animation: .curve(duration: 0.4, curve: .spring)))
+        }
+        
+        public func revealHiddenPanels() {
+            guard let component = self.component else {
+                return
+            }
+            guard case .hideOnScroll = component.panelHideBehavior else {
+                return
+            }
+            guard let centralId = self.centralId, let contentView = self.contentViews[centralId] else {
+                return
+            }
+            guard !contentView.wantsExclusiveMode else {
+                return
+            }
+            guard contentView.scrollingPanelOffsetFraction != 0.0 else {
+                return
+            }
+            
+            contentView.scrollingPanelOffsetFraction = 0.0
+            self.state?.updated(transition: ComponentTransition(animation: .curve(duration: 0.25, curve: .easeInOut)))
         }
     }
     

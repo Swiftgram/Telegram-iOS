@@ -1,6 +1,5 @@
 import Foundation
 import UIKit
-import Postbox
 import SwiftSignalKit
 import Display
 import AsyncDisplayKit
@@ -18,7 +17,6 @@ import AccountContext
 import TelegramStringFormatting
 import OverlayStatusController
 import DeviceLocationManager
-import ShareController
 import UrlEscaping
 import ContextUI
 import AlertUI

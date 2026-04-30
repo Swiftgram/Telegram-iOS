@@ -3,7 +3,6 @@ import UIKit
 import Display
 import AsyncDisplayKit
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramPresentationData
 import TelegramUIPreferences
@@ -40,6 +39,7 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
     let phoneNumber: String
     let phoneCodeHash: String
     let storeProduct: String
+    let premiumDays: Int32
     let supportEmailAddress: String
     let supportEmailSubject: String
     
@@ -51,6 +51,7 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
         phoneNumber: String,
         phoneCodeHash: String,
         storeProduct: String,
+        premiumDays: Int32,
         supportEmailAddress: String,
         supportEmailSubject: String
     ) {
@@ -61,6 +62,7 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
         self.phoneNumber = phoneNumber
         self.phoneCodeHash = phoneCodeHash
         self.storeProduct = storeProduct
+        self.premiumDays = premiumDays
         self.supportEmailAddress = supportEmailAddress
         self.supportEmailSubject = supportEmailSubject
     }
@@ -116,7 +118,7 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
             self.state?.updated()
             
             let (currency, amount) = storeProduct.priceCurrencyAndAmount
-            let purpose: AppStoreTransactionPurpose = .authCode(restore: false, phoneNumber: component.phoneNumber, phoneCodeHash: component.phoneCodeHash, currency: currency, amount: amount)
+            let purpose: AppStoreTransactionPurpose = .authCode(restore: false, phoneNumber: component.phoneNumber, phoneCodeHash: component.phoneCodeHash, premiumDays: component.premiumDays, currency: currency, amount: amount)
             let _ = (component.engine.payments.canPurchasePremium(purpose: purpose)
             |> deliverOnMainQueue).start(next: { [weak self] available in
                 guard let self else {
@@ -169,7 +171,7 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
                                 title: nil,
                                 text: errorText,
                                 actions: [
-                                    TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {}),
+                                    TextAlertAction(type: .genericAction, title: presentationData.strings.Common_OK, action: {}),
                                     TextAlertAction(type: .defaultAction, title: presentationData.strings.Login_PhoneNumberHelp, action: { [weak self] in
                                         guard let self else {
                                             return
@@ -334,13 +336,24 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
                     ))
                 )
             )
+            
+            let supportText: String
+            if component.premiumDays == 7 {
+                supportText = environment.strings.Login_Fee_Support_Text
+            } else if component.premiumDays > 0 {
+                let daysString = environment.strings.Login_Fee_Support_NewText_Days(component.premiumDays)
+                supportText = environment.strings.Login_Fee_Support_NewText(daysString).string
+            } else {
+                supportText = environment.strings.Login_Fee_Support_NewTextNone
+            }
+            
             items.append(
                 AnyComponentWithIdentity(
                     id: "support",
                     component: AnyComponent(ParagraphComponent(
                         title: environment.strings.Login_Fee_Support_Title,
                         titleColor: textColor,
-                        text: environment.strings.Login_Fee_Support_Text,
+                        text: supportText,
                         textColor: secondaryTextColor,
                         iconName: "Premium/Authorization/Support",
                         iconColor: linkColor,
@@ -352,7 +365,7 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
                                 sharedContext: component.sharedContext,
                                 engine: component.engine,
                                 inAppPurchaseManager: component.inAppPurchaseManager,
-                                source: .auth(product.price),
+                                source: .auth(product.price, component.premiumDays),
                                 proceed: { [weak self] in
                                     self?.proceed()
                                 }
@@ -411,6 +424,16 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
             }
             
             let buttonString = environment.strings.Login_Fee_SignUp(priceString).string
+            let buttonSubtitle: String
+            if component.premiumDays == 7 {
+                buttonSubtitle = environment.strings.Login_Fee_GetPremiumForAWeek
+            } else if component.premiumDays > 0 {
+                let daysString = environment.strings.Login_Fee_GetPremiumForDays_Days(component.premiumDays)
+                buttonSubtitle = environment.strings.Login_Fee_GetPremiumForDays(daysString).string
+            } else {
+                buttonSubtitle = environment.strings.Login_Fee_GetPremiumNone
+            }
+            
             let buttonAttributedString = NSMutableAttributedString(string: buttonString, font: Font.semibold(17.0), textColor: environment.theme.list.itemCheckColors.foregroundColor, paragraphAlignment: .center)
             let buttonSize = self.button.update(
                 transition: transition,
@@ -426,7 +449,7 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
                         component: AnyComponent(
                             VStack([
                                 AnyComponentWithIdentity(id: AnyHashable(0), component: AnyComponent(MultilineTextComponent(text: .plain(buttonAttributedString)))),
-                                AnyComponentWithIdentity(id: AnyHashable(1), component: AnyComponent(MultilineTextComponent(text: .plain(NSAttributedString(string: environment.strings.Login_Fee_GetPremiumForAWeek, font: Font.medium(11.0), textColor: environment.theme.list.itemCheckColors.foregroundColor.withAlphaComponent(0.7), paragraphAlignment: .center)))))
+                                AnyComponentWithIdentity(id: AnyHashable(1), component: AnyComponent(MultilineTextComponent(text: .plain(NSAttributedString(string: buttonSubtitle, font: Font.medium(11.0), textColor: environment.theme.list.itemCheckColors.foregroundColor.withAlphaComponent(0.7), paragraphAlignment: .center)))))
                             ], spacing: 1.0)
                         )
                     ),
@@ -468,6 +491,7 @@ public final class AuthorizationSequencePaymentScreen: ViewControllerComponentCo
         phoneNumber: String,
         phoneCodeHash: String,
         storeProduct: String,
+        premiumDays: Int32,
         supportEmailAddress: String,
         supportEmailSubject: String,
         back: @escaping () -> Void
@@ -480,6 +504,7 @@ public final class AuthorizationSequencePaymentScreen: ViewControllerComponentCo
             phoneNumber: phoneNumber,
             phoneCodeHash: phoneCodeHash,
             storeProduct: storeProduct,
+            premiumDays: premiumDays,
             supportEmailAddress: supportEmailAddress,
             supportEmailSubject: supportEmailSubject
         ), navigationBarAppearance: .transparent, theme: .default, updatedPresentationData: (initial: presentationData, signal: .single(presentationData)))

@@ -1504,6 +1504,24 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         if self.controller?.tabContainerData != nil || !panels.isEmpty {
             var tabs: AnyComponent<Empty>?
             if let tabContainerData = self.controller?.tabContainerData, tabContainerData.0.count > 1 {
+                let folderFilterIndex: (ChatListFilterTabEntryId, [ChatListFilterTabEntry]) -> Int? = { id, entries in
+                    var index = 0
+                    for entry in entries {
+                        switch entry {
+                        case .all:
+                            if entry.id == id {
+                                return nil
+                            }
+                        case .filter:
+                            if entry.id == id {
+                                return index
+                            }
+                            index += 1
+                        }
+                    }
+                    return nil
+                }
+
                 let selectedTab: HorizontalTabsComponent.Tab.Id
                 switch self.effectiveContainerNode.currentItemFilter {
                 case .all:
@@ -1553,10 +1571,9 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
                                 
                                 var isDisabled = false
                                 if let filtersLimit = tabContainerData.2 {
-                                    guard let folderIndex = tabContainerData.0.firstIndex(where: { $0.id == mappedId }) else {
-                                        return
+                                    if let folderIndex = folderFilterIndex(mappedId, tabContainerData.0) {
+                                        isDisabled = !isPremium && folderIndex >= filtersLimit
                                     }
-                                    isDisabled = !isPremium && folderIndex >= filtersLimit
                                 }
                                 
                                 if isDisabled {
@@ -1599,10 +1616,9 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
                                 
                                 var isDisabled = false
                                 if let filtersLimit = tabContainerData.2 {
-                                    guard let folderIndex = tabContainerData.0.firstIndex(where: { $0.id == entry.id }) else {
-                                        return
+                                    if let folderIndex = folderFilterIndex(entry.id, tabContainerData.0) {
+                                        isDisabled = !isPremium && folderIndex >= filtersLimit
                                     }
-                                    isDisabled = !isPremium && folderIndex >= filtersLimit
                                 }
                                 
                                 self.controller?.tabContextGesture(id: mappedId, sourceNode: nil, sourceView: sourceView, gesture: gesture, keepInPlace: false, isDisabled: isDisabled)
@@ -1949,7 +1965,21 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
             //filter.insert(.excludeRecent)
         }
         
-        let contentNode = ChatListSearchContainerNode(context: self.context, animationCache: self.animationCache, animationRenderer: self.animationRenderer, filter: filter, requestPeerType: nil, location: effectiveLocation, displaySearchFilters: displaySearchFilters, hasDownloads: hasDownloads, initialFilter: initialFilter, openPeer: { [weak self] peer, _, threadId, dismissSearch in
+        var folder: (Int32, String)?
+        if let folders = self.controller?.tabContainerData?.0 {
+            switch self.effectiveContainerNode.currentItemFilter {
+            case .all:
+                break
+            case let .filter(id):
+                if let value = folders.first(where: { $0.id == .filter(id) }) {
+                    if case let .filter(_, text, _) = value {
+                        folder = (id, text.text)
+                    }
+                }
+            }
+        }
+        
+        let contentNode = ChatListSearchContainerNode(context: self.context, animationCache: self.animationCache, animationRenderer: self.animationRenderer, filter: filter, requestPeerType: nil, location: effectiveLocation, folder: folder, displaySearchFilters: displaySearchFilters, hasDownloads: hasDownloads, initialFilter: initialFilter, openPeer: { [weak self] peer, _, threadId, dismissSearch in
             self?.requestOpenPeerFromSearch?(peer, threadId, dismissSearch)
         }, openDisabledPeer: { _, _, _ in
         }, openRecentPeerOptions: { [weak self] peer in
@@ -1971,6 +2001,9 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         })
         contentNode.dismissSearch = { [weak self] in
             self?.dismissSearch?()
+        }
+        contentNode.dismissSearchImmediately = { [weak self] in
+            self?.controller?.deactivateSearch(animated: false)
         }
         contentNode.openAdInfo = { [weak self] node, adPeer in
             self?.controller?.openAdInfo(node: node, adPeer: adPeer)

@@ -27,6 +27,17 @@ private enum OptionsId: Hashable {
     case link
 }
 
+private func chatLocationMatchesDestination(_ chatLocation: ChatLocation, peerId: EnginePeer.Id, threadId: Int64?) -> Bool {
+    switch chatLocation {
+    case let .peer(id):
+        return id == peerId && threadId == nil
+    case let .replyThread(replyThreadMessage):
+        return replyThreadMessage.peerId == peerId && replyThreadMessage.threadId == threadId
+    case .customChatContents:
+        return false
+    }
+}
+
 private func presentChatInputOptions(selfController: ChatControllerImpl, sourceView: UIView, initialId: OptionsId) {
     var getContextController: (() -> ContextController?)?
     
@@ -147,10 +158,8 @@ private func chatForwardOptions(selfController: ChatControllerImpl, sourceView: 
             }
             
             var isDice = false
-            var isMusic = false
             for media in message.media {
                 if let media = media as? TelegramMediaFile, media.isMusic {
-                    isMusic = true
                     if !message.text.isEmpty {
                         hasCaptions = true
                     }
@@ -164,7 +173,7 @@ private func chatForwardOptions(selfController: ChatControllerImpl, sourceView: 
                     hasPaid = true
                 }
             }
-            if !isDice && !isMusic {
+            if !isDice {
                 hasOther = true
             }
         }
@@ -554,85 +563,95 @@ func presentChatReplyOptions(selfController: ChatControllerImpl, sourceView: UIV
 
 func moveReplyMessageToAnotherChat(selfController: ChatControllerImpl, replySubject: ChatInterfaceState.ReplyMessageSubject) {
     let _ = selfController.presentVoiceMessageDiscardAlert(action: { [weak selfController] in
-        guard let selfController else {
-            return
-        }
-        let filter: ChatListNodePeersFilter = [.onlyWriteable, .excludeDisabled, .doNotSearchMessages]
-        var attemptSelectionImpl: ((EnginePeer, ChatListDisabledPeerReason) -> Void)?
-        let controller = selfController.context.sharedContext.makePeerSelectionController(PeerSelectionControllerParams(
-            context: selfController.context,
-            updatedPresentationData: selfController.updatedPresentationData,
-            filter: filter,
-            hasFilters: true,
-            title: selfController.presentationData.strings.Conversation_MoveReplyToAnotherChatTitle,
-            attemptSelection: { peer, _, reason in
-                attemptSelectionImpl?(peer, reason)
-            },
-            multipleSelection: false,
-            forwardedMessageIds: [],
-            selectForumThreads: true
-        ))
-        let context = selfController.context
-        attemptSelectionImpl = { [weak selfController, weak controller] peer, reason in
-            guard let selfController, let controller = controller else {
+        Task { @MainActor in
+            guard let selfController else {
                 return
             }
-            let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-            switch reason {
-            case .generic:
-                controller.present(textAlertController(context: context, updatedPresentationData: selfController.updatedPresentationData, title: nil, text: presentationData.strings.Forward_ErrorDisabledForChat, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
-            case .premiumRequired:
-                controller.forEachController { c in
-                    if let c = c as? UndoOverlayController {
-                        c.dismiss()
+            let filter: ChatListNodePeersFilter = [.onlyWriteable, .excludeDisabled, .doNotSearchMessages]
+            var attemptSelectionImpl: ((EnginePeer, ChatListDisabledPeerReason) -> Void)?
+            
+            var suggestedPeers: [EnginePeer] = []
+            if let message = await selfController.context.engine.data.get(
+                TelegramEngine.EngineData.Item.Messages.Message(id: replySubject.messageId)
+            ).get(), case let .user(author) = message.author {
+                suggestedPeers.append(.user(author))
+            }
+            
+            let controller = selfController.context.sharedContext.makePeerSelectionController(PeerSelectionControllerParams(
+                context: selfController.context,
+                updatedPresentationData: selfController.updatedPresentationData,
+                filter: filter,
+                hasFilters: true,
+                title: selfController.presentationData.strings.Conversation_MoveReplyToAnotherChatTitle,
+                attemptSelection: { peer, _, reason in
+                    attemptSelectionImpl?(peer, reason)
+                },
+                multipleSelection: false,
+                forwardedMessageIds: [],
+                selectForumThreads: true,
+                suggestedPeers: suggestedPeers
+            ))
+            let context = selfController.context
+            attemptSelectionImpl = { [weak selfController, weak controller] peer, reason in
+                guard let selfController, let controller = controller else {
+                    return
+                }
+                let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                switch reason {
+                case .generic:
+                    controller.present(textAlertController(context: context, updatedPresentationData: selfController.updatedPresentationData, title: nil, text: presentationData.strings.Forward_ErrorDisabledForChat, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
+                case .premiumRequired:
+                    controller.forEachController { c in
+                        if let c = c as? UndoOverlayController {
+                            c.dismiss()
+                        }
+                        return true
                     }
-                    return true
-                }
-                
-                var hasAction = false
-                let premiumConfiguration = PremiumConfiguration.with(appConfiguration: selfController.context.currentAppConfiguration.with { $0 })
-                if !premiumConfiguration.isPremiumDisabled {
-                    hasAction = true
-                }
-                
-                controller.present(UndoOverlayController(presentationData: presentationData, content: .premiumPaywall(title: nil, text: presentationData.strings.Chat_ToastMessagingRestrictedToPremium_Text(peer.compactDisplayTitle).string, customUndoText: hasAction ? presentationData.strings.Chat_ToastMessagingRestrictedToPremium_Action : nil, timeout: nil, linkAction: { _ in
-                }), elevatedLayout: false, animateInAsReplacement: true, action: { [weak selfController, weak controller] action in
-                    guard let selfController, let controller else {
+                    
+                    var hasAction = false
+                    let premiumConfiguration = PremiumConfiguration.with(appConfiguration: selfController.context.currentAppConfiguration.with { $0 })
+                    if !premiumConfiguration.isPremiumDisabled {
+                        hasAction = true
+                    }
+                    
+                    controller.present(UndoOverlayController(presentationData: presentationData, content: .premiumPaywall(title: nil, text: presentationData.strings.Chat_ToastMessagingRestrictedToPremium_Text(peer.compactDisplayTitle).string, customUndoText: hasAction ? presentationData.strings.Chat_ToastMessagingRestrictedToPremium_Action : nil, timeout: nil, linkAction: { _ in
+                    }), elevatedLayout: false, animateInAsReplacement: true, action: { [weak selfController, weak controller] action in
+                        guard let selfController, let controller else {
+                            return false
+                        }
+                        if case .undo = action {
+                            let premiumController = PremiumIntroScreen(context: selfController.context, source: .settings)
+                            controller.push(premiumController)
+                        }
                         return false
-                    }
-                    if case .undo = action {
-                        let premiumController = PremiumIntroScreen(context: selfController.context, source: .settings)
-                        controller.push(premiumController)
-                    }
-                    return false
-                }), in: .current)
+                    }), in: .current)
+                }
             }
+            controller.peerSelected = { [weak selfController, weak controller] peer, threadId in
+                guard let selfController, let strongController = controller else {
+                    return
+                }
+                let peerId = peer.id
+                
+                var isPinnedMessages = false
+                if case .pinnedMessages = selfController.presentationInterfaceState.subject {
+                    isPinnedMessages = true
+                }
+                
+                if chatLocationMatchesDestination(selfController.chatLocation, peerId: peerId, threadId: threadId), selfController.parentController == nil, !isPinnedMessages {
+                    selfController.updateChatPresentationInterfaceState(animated: false, interactive: true, { $0.updatedInterfaceState({ $0.withUpdatedReplyMessageSubject(replySubject).withoutSelectionState() }).updatedSearch(nil) })
+                    selfController.updateItemNodesSearchTextHighlightStates()
+                    selfController.searchResultsController = nil
+                    strongController.dismiss()
+                } else {
+                    moveReplyToChat(selfController: selfController, peerId: peerId, threadId: threadId, replySubject: replySubject, completion: { [weak strongController] in
+                        strongController?.dismiss()
+                    })
+                }
+            }
+            selfController.chatDisplayNode.dismissInput()
+            selfController.effectiveNavigationController?.pushViewController(controller)
         }
-        controller.peerSelected = { [weak selfController, weak controller] peer, threadId in
-            guard let selfController, let strongController = controller else {
-                return
-            }
-            let peerId = peer.id
-            //let accountPeerId = selfController.context.account.peerId
-            
-            var isPinnedMessages = false
-            if case .pinnedMessages = selfController.presentationInterfaceState.subject {
-                isPinnedMessages = true
-            }
-            
-            if case .peer(peerId) = selfController.chatLocation, selfController.parentController == nil, !isPinnedMessages {
-                selfController.updateChatPresentationInterfaceState(animated: false, interactive: true, { $0.updatedInterfaceState({ $0.withUpdatedReplyMessageSubject(replySubject).withoutSelectionState() }).updatedSearch(nil) })
-                selfController.updateItemNodesSearchTextHighlightStates()
-                selfController.searchResultsController = nil
-                strongController.dismiss()
-            } else {
-                moveReplyToChat(selfController: selfController, peerId: peerId, threadId: threadId, replySubject: replySubject, completion: { [weak strongController] in
-                    strongController?.dismiss()
-                })
-            }
-        }
-        selfController.chatDisplayNode.dismissInput()
-        selfController.effectiveNavigationController?.pushViewController(controller)
     })
 }
 
@@ -640,7 +659,7 @@ func moveReplyToChat(selfController: ChatControllerImpl, peerId: EnginePeer.Id, 
     if let navigationController = selfController.effectiveNavigationController {
         for controller in navigationController.viewControllers {
             if let maybeChat = controller as? ChatControllerImpl {
-                if case .peer(peerId) = maybeChat.chatLocation {
+                if chatLocationMatchesDestination(maybeChat.chatLocation, peerId: peerId, threadId: threadId) {
                     var isChatPinnedMessages = false
                     if case .pinnedMessages = maybeChat.presentationInterfaceState.subject {
                         isChatPinnedMessages = true

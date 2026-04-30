@@ -176,7 +176,7 @@ public final class BrowserBookmarksScreen: ViewController {
             }, sendGift: { _ in
             }, openUniqueGift: { _ in
             }, openMessageFeeException: {  
-            }, requestMessageUpdate: { _, _ in
+            }, requestMessageUpdate: { _, _, _ in
             }, cancelInteractiveKeyboardGestures: {
             }, dismissTextInput: {
             }, scrollToMessageId: { _ in
@@ -189,7 +189,10 @@ public final class BrowserBookmarksScreen: ViewController {
             }, requestToggleTodoMessageItem: { _, _, _ in
             }, displayTodoToggleUnavailable: { _ in
             }, openStarsPurchase: { _ in
-            }, openRankInfo: { _, _, _ in }, openSetPeerAvatar: {}, automaticMediaDownloadSettings: MediaAutoDownloadSettings.defaultSettings, pollActionState: ChatInterfacePollActionState(), stickerSettings: ChatInterfaceStickerSettings(), presentationContext: ChatPresentationContext(context: context, backgroundNode: nil))
+            }, openRankInfo: { _, _, _ in
+            }, openSetPeerAvatar: {
+            }, displayPollRestrictedToast: { _ in
+            }, automaticMediaDownloadSettings: MediaAutoDownloadSettings.defaultSettings, pollActionState: ChatInterfacePollActionState(), stickerSettings: ChatInterfaceStickerSettings(), presentationContext: ChatPresentationContext(context: context, backgroundNode: nil))
             
             
             let tagMask: MessageTags = .webPage

@@ -1,7 +1,6 @@
 import Foundation
 import UIKit
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import AsyncDisplayKit
 import Display
@@ -141,15 +140,10 @@ extension ChatControllerImpl {
             openText = self.presentationData.strings.Conversation_FileOpenIn
         }
             
-        let recognizer: TapLongTapOrDoubleTapGestureRecognizer? = nil// anyRecognizer as? TapLongTapOrDoubleTapGestureRecognizer
-        let gesture: ContextGesture? = nil // anyRecognizer as? ContextGesture
+        let recognizer: TapLongTapOrDoubleTapGestureRecognizer? = params.gesture
+        let gesture: ContextGesture? = nil
         
-        let source: ContextContentSource
-//                if let location = location {
-//                    source = .location(ChatMessageContextLocationContentSource(controller: self, location: messageNode.view.convert(messageNode.bounds, to: nil).origin.offsetBy(dx: location.x, dy: location.y)))
-//                } else {
-            source = .extracted(ChatMessageLinkContextExtractedContentSource(chatNode: self.chatDisplayNode, contentNode: contentNode))
-//                }
+        let source: ContextContentSource = .extracted(ChatMessageLinkContextExtractedContentSource(chatNode: self.chatDisplayNode, contentNode: contentNode))
         
         var items: [ContextMenuItem] = []
         

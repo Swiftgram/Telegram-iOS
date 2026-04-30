@@ -7,13 +7,13 @@ import SwiftSignalKit
 import TelegramCore
 import TelegramPresentationData
 import AccountContext
+import ShareController
 import AlertUI
 import PresentationDataUtils
 import SearchUI
 import TelegramPermissionsUI
 import AppBundle
 import DeviceAccess
-import ShareController
 
 public class ComposeControllerImpl: ViewController, ComposeController {
     private let context: AccountContext
@@ -202,6 +202,8 @@ public class ComposeControllerImpl: ViewController, ComposeController {
                     let controller = strongSelf.context.sharedContext.makeNewContactScreen(
                         context: strongSelf.context,
                         peer: nil,
+                        firstName: nil,
+                        lastName: nil,
                         phoneNumber: nil,
                         shareViaException: false,
                         completion: { [weak self] peer, stableId, contactData in
@@ -224,7 +226,7 @@ public class ComposeControllerImpl: ViewController, ComposeController {
                     DeviceAccess.authorizeAccess(to: .contacts)
                 default:
                     let presentationData = strongSelf.presentationData
-                    strongSelf.present(textAlertController(context: strongSelf.context, title: presentationData.strings.AccessDenied_Title, text: presentationData.strings.Contacts_AccessDeniedError, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_NotNow, action: {}), TextAlertAction(type: .genericAction, title: presentationData.strings.AccessDenied_Settings, action: {
+                    strongSelf.present(textAlertController(context: strongSelf.context, title: presentationData.strings.AccessDenied_Title, text: presentationData.strings.Contacts_AccessDeniedError, actions: [TextAlertAction(type: .genericAction, title: presentationData.strings.Common_NotNow, action: {}), TextAlertAction(type: .defaultAction, title: presentationData.strings.AccessDenied_Settings, action: {
                         self?.context.sharedContext.applicationBindings.openSettings()
                     })]), in: .window(.root))
                 }

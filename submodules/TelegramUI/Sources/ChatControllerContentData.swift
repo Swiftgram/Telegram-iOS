@@ -14,6 +14,7 @@ import ChatListUI
 import EmojiStatusComponent
 import TelegramUIPreferences
 import TranslateUI
+import TelegramNotices
 
 extension ChatControllerImpl {
     final class ContentData {
@@ -507,6 +508,25 @@ extension ChatControllerImpl {
                     messageOptionsTitleInfo = .single(nil)
                 }
                 
+                var savedMessagesChatsTip: Signal<Bool, NoError> = .single(false)
+                if case .peer(context.account.peerId) = chatLocation {
+                    let hasSavedChats = context.engine.messages.savedMessagesHasPeersOtherThanSaved()
+                    if chatLocation.threadId == nil {
+                        savedMessagesChatsTip = hasSavedChats
+                        |> distinctUntilChanged
+                        |> mapToSignal { value -> Signal<Bool, NoError> in
+                            if !value {
+                                return .single(false)
+                            }
+                            return ApplicationSpecificNotice.getSavedMessagesChatListView(accountManager: context.sharedContext.accountManager)
+                            |> map { value -> Bool in
+                                return value < 5
+                            }
+                        }
+                        |> distinctUntilChanged
+                    }
+                }
+                
                 self.titleDisposable = (combineLatest(
                     queue: Queue.mainQueue(),
                     peerView.get(),
@@ -515,9 +535,10 @@ extension ChatControllerImpl {
                     subtitleTextSignal,
                     configuration,
                     hasPeerInfo,
-                    messageOptionsTitleInfo
+                    messageOptionsTitleInfo,
+                    savedMessagesChatsTip
                 )
-                |> deliverOnMainQueue).startStrict(next: { [weak self] peerView, onlineMemberCount, displayedCount, subtitleText, configuration, hasPeerInfo, messageOptionsTitleInfo in
+                |> deliverOnMainQueue).startStrict(next: { [weak self] peerView, onlineMemberCount, displayedCount, subtitleText, configuration, hasPeerInfo, messageOptionsTitleInfo, savedMessagesChatsTip in
                     guard let strongSelf = self else {
                         return
                     }
@@ -581,12 +602,17 @@ extension ChatControllerImpl {
                                     notificationSettings: nil,
                                     peerPresences: [:],
                                     cachedData: nil
-                                ), customTitle: nil, customSubtitle: strings.Chat_Monoforum_Subtitle, onlineMemberCount: (nil, nil), isScheduledMessages: false, isMuted: nil, customMessageCount: nil, isEnabled: true)
+                                ), customTitle: nil, customSubtitle: strings.Chat_Monoforum_Subtitle, onlineMemberCount: (nil, nil), isScheduledMessages: false, isMuted: nil, customMessageCount: nil, hidePeerStatus: false, isEnabled: true)
                             } else {
                                 strongSelf.state.chatTitleContent = .custom(title: [ChatTitleContent.TitleTextItem(id: AnyHashable(0), content: .text(channel.debugDisplayTitle))], subtitle: nil, isEnabled: true)
                             }
                         } else {
-                            strongSelf.state.chatTitleContent = .peer(peerView: ChatTitleContent.PeerData(peerView: peerView), customTitle: nil, customSubtitle: nil, onlineMemberCount: onlineMemberCount, isScheduledMessages: isScheduledMessages, isMuted: nil, customMessageCount: nil, isEnabled: hasPeerInfo)
+                            var customSubtitle: String?
+                            if savedMessagesChatsTip {
+                                customSubtitle = strings.Chat_SavedMessagesStatusViewAsChats
+                            }
+                            
+                            strongSelf.state.chatTitleContent = .peer(peerView: ChatTitleContent.PeerData(peerView: peerView), customTitle: nil, customSubtitle: customSubtitle, onlineMemberCount: onlineMemberCount, isScheduledMessages: isScheduledMessages, isMuted: nil, customMessageCount: nil, hidePeerStatus: false, isEnabled: hasPeerInfo)
                             
                             let imageOverride: AvatarNodeImageOverride?
                             if context.account.peerId == peer.id {
@@ -1492,7 +1518,7 @@ extension ChatControllerImpl {
                             customMessageCount = savedMessagesPeer?.messageCount ?? 0
                         }
                         
-                        strongSelf.state.chatTitleContent = .peer(peerView: mappedPeerData, customTitle: nil, customSubtitle: customSubtitle, onlineMemberCount: (nil, nil), isScheduledMessages: false, isMuted: false, customMessageCount: customMessageCount, isEnabled: true)
+                        strongSelf.state.chatTitleContent = .peer(peerView: mappedPeerData, customTitle: nil, customSubtitle: customSubtitle, onlineMemberCount: (nil, nil), isScheduledMessages: false, isMuted: false, customMessageCount: customMessageCount, hidePeerStatus: false, isEnabled: true)
                         
                         strongSelf.state.peerView = peerView
                         
@@ -1586,7 +1612,7 @@ extension ChatControllerImpl {
                                 }
                             }
                             
-                            strongSelf.state.chatTitleContent = .peer(peerView: ChatTitleContent.PeerData(peerView: peerView), customTitle: threadInfo.title, customSubtitle: customSubtitle, onlineMemberCount: onlineMemberCount, isScheduledMessages: false, isMuted: peerIsMuted, customMessageCount: messageAndTopic.messageCount == 0 ? nil : messageAndTopic.messageCount, isEnabled: true)
+                            strongSelf.state.chatTitleContent = .peer(peerView: ChatTitleContent.PeerData(peerView: peerView), customTitle: threadInfo.title, customSubtitle: customSubtitle, onlineMemberCount: onlineMemberCount, isScheduledMessages: false, isMuted: peerIsMuted, customMessageCount: messageAndTopic.messageCount == 0 ? nil : messageAndTopic.messageCount, hidePeerStatus: true, isEnabled: true)
                             
                             let avatarContent: EmojiStatusComponent.Content
                             if chatLocation.threadId == 1 {
@@ -2235,7 +2261,7 @@ extension ChatControllerImpl {
                 } else {
                     cachedData = .single((nil, [:]))
                 }
-                
+                                
                 self.cachedDataDisposable?.dispose()
                 self.cachedDataDisposable = combineLatest(queue: .mainQueue(),
                     cachedData,

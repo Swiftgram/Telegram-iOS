@@ -26,7 +26,6 @@ import AppBundle
 import GalleryData
 import InstantPageUI
 import ChatInterfaceState
-import ShareController
 import UndoUI
 import TextFormat
 import Postbox
@@ -43,6 +42,7 @@ import ComponentDisplayAdapters
 
 private enum ChatListTokenId: Int32 {
     case archive
+    case folder
     case forum
     case filter
     case peer
@@ -102,6 +102,7 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
     private let peersFilter: ChatListNodePeersFilter
     private let requestPeerType: [ReplyMarkupButtonRequestPeerType]?
     private var location: ChatListControllerLocation
+    private var folder: (Int32, String)?
     private let displaySearchFilters: Bool
     private let hasDownloads: Bool
     private var interaction: ChatListSearchInteraction?
@@ -109,6 +110,7 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
     private let navigationController: NavigationController?
     
     var dismissSearch: (() -> Void)?
+    var dismissSearchImmediately: (() -> Void)?
     var openAdInfo: ((ASDisplayNode, AdPeer) -> Void)?
     
     private let edgeEffectView: EdgeEffectView
@@ -165,16 +167,22 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
     private var recentAppsDisposable: Disposable?
     private var refreshedGlobalPostSearchStateDisposable: Disposable?
     
-    public init(context: AccountContext, animationCache: AnimationCache, animationRenderer: MultiAnimationRenderer, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil, filter: ChatListNodePeersFilter, requestPeerType: [ReplyMarkupButtonRequestPeerType]?, location: ChatListControllerLocation, displaySearchFilters: Bool, hasDownloads: Bool, initialFilter: ChatListSearchFilter = .chats, openPeer originalOpenPeer: @escaping (EnginePeer, EnginePeer?, Int64?, Bool) -> Void, openDisabledPeer: @escaping (EnginePeer, Int64?, ChatListDisabledPeerReason) -> Void, openRecentPeerOptions: @escaping (EnginePeer) -> Void, openMessage originalOpenMessage: @escaping (EnginePeer, Int64?, EngineMessage.Id, Bool) -> Void, addContact: ((String) -> Void)?, peerContextAction: ((EnginePeer, ChatListSearchContextActionSource, ASDisplayNode, ContextGesture?, CGPoint?) -> Void)?, present: @escaping (ViewController, Any?) -> Void, presentInGlobalOverlay: @escaping (ViewController, Any?) -> Void, navigationController: NavigationController?, parentController: @escaping () -> ViewController?) {
+    public init(context: AccountContext, animationCache: AnimationCache, animationRenderer: MultiAnimationRenderer, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil, filter: ChatListNodePeersFilter, requestPeerType: [ReplyMarkupButtonRequestPeerType]?, location: ChatListControllerLocation, folder: (Int32, String)?, displaySearchFilters: Bool, hasDownloads: Bool, initialFilter: ChatListSearchFilter = .chats, openPeer originalOpenPeer: @escaping (EnginePeer, EnginePeer?, Int64?, Bool) -> Void, openDisabledPeer: @escaping (EnginePeer, Int64?, ChatListDisabledPeerReason) -> Void, openRecentPeerOptions: @escaping (EnginePeer) -> Void, openMessage originalOpenMessage: @escaping (EnginePeer, Int64?, EngineMessage.Id, Bool) -> Void, addContact: ((String) -> Void)?, peerContextAction: ((EnginePeer, ChatListSearchContextActionSource, ASDisplayNode, ContextGesture?, CGPoint?) -> Void)?, present: @escaping (ViewController, Any?) -> Void, presentInGlobalOverlay: @escaping (ViewController, Any?) -> Void, navigationController: NavigationController?, parentController: @escaping () -> ViewController?) {
         var initialFilter = initialFilter
         if case .chats = initialFilter, case .forum = location {
             initialFilter = .topics
         }
         
+        var folder = folder
+        folder = nil
+        
         self.context = context
         self.peersFilter = filter
         self.requestPeerType = requestPeerType
         self.location = location
+        
+        self.folder = folder
+        
         self.displaySearchFilters = displaySearchFilters
         self.hasDownloads = hasDownloads
         self.navigationController = navigationController
@@ -194,6 +202,11 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
         self.paneContainerNode.clipsToBounds = true
         
         super.init()
+        
+        if let folder {
+            self.searchOptionsValue = self.currentSearchOptions.withUpdatedFolder(folder)
+            self.searchOptions.set(.single(self.currentSearchOptions))
+        }
                 
         self.backgroundColor = filter.contains(.excludeRecent) ? nil : self.presentationData.theme.chatList.backgroundColor
         
@@ -427,16 +440,23 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
             suggestedPeers = .single([])
         }
         
-        let accountPeer = self.context.account.postbox.loadedPeerWithId(self.context.account.peerId)
+        let accountPeer = self.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: self.context.account.peerId))
+        |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+            if let peer {
+                return .single(peer)
+            } else {
+                return .never()
+            }
+        }
         |> take(1)
-        
+
         self.suggestedFiltersDisposable.set((combineLatest(suggestedPeers, self.suggestedDates.get(), self.selectedFilterPromise.get(), self.searchQuery.get(), accountPeer)
         |> mapToSignal { peers, dates, selectedFilter, searchQuery, accountPeer -> Signal<([EnginePeer], [(Date?, Date, String?)], ChatListSearchFilterEntryId?, String?, EnginePeer?), NoError> in
             if searchQuery?.isEmpty ?? true {
-                return .single((peers, dates, selectedFilter?.id, searchQuery, EnginePeer(accountPeer)))
+                return .single((peers, dates, selectedFilter?.id, searchQuery, accountPeer))
             } else {
                 return (.complete() |> delay(0.25, queue: Queue.mainQueue()))
-                |> then(.single((peers, dates, selectedFilter?.id, searchQuery, EnginePeer(accountPeer))))
+                |> then(.single((peers, dates, selectedFilter?.id, searchQuery, accountPeer)))
             }
         } |> map { peers, dates, selectedFilter, searchQuery, accountPeer -> ([ChatListSearchFilter], Bool) in
             var suggestedFilters: [ChatListSearchFilter] = []
@@ -588,7 +608,7 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
     }
     
     private var currentSearchOptions: ChatListSearchOptions {
-        return self.searchOptionsValue ?? ChatListSearchOptions(peer: nil, date: nil)
+        return self.searchOptionsValue ?? ChatListSearchOptions(peer: nil, date: nil, folder: nil)
     }
     
     public override func searchTokensUpdated(tokens: [SearchBarToken]) {
@@ -609,12 +629,19 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
         if !tokensIdSet.contains(ChatListTokenId.peer.rawValue) && updatedOptions?.peer != nil {
              updatedOptions = updatedOptions?.withUpdatedPeer(nil)
         }
+        if !tokensIdSet.contains(ChatListTokenId.folder.rawValue) && updatedOptions?.folder != nil {
+             updatedOptions = updatedOptions?.withUpdatedFolder(nil)
+            self.folder = nil
+        }
         self.updateSearchOptions(updatedOptions)
     }
     
     private func updateSearchOptions(_ options: ChatListSearchOptions?, clearQuery: Bool = false) {
         var options = options
         var tokens: [SearchBarToken] = []
+        if let folder = self.folder {
+            tokens.append(SearchBarToken(id: ChatListTokenId.folder.rawValue, icon: nil, iconOffset: 0.0, peer: nil, title: folder.1, permanent: false))
+        }
         if case .chatList(.archive) = self.location {
             tokens.append(SearchBarToken(id: ChatListTokenId.archive.rawValue, icon: UIImage(bundleImageName: "Chat List/Search/Archive"), iconOffset: -1.0, title: self.presentationData.strings.ChatList_Archive, permanent: false))
         } else if case .forum = self.location, let forumPeer = self.forumPeer {
@@ -737,10 +764,13 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
             key = .chats
         }
         self.paneContainerNode.requestSelectPane(key)
-        self.updateSearchOptions(nil)
+        self.updateSearchOptions(self.currentSearchOptions)
         self.searchTextUpdated(text: query ?? "")
         
         var tokens: [SearchBarToken] = []
+        if let folder = self.folder {
+            tokens.append(SearchBarToken(id: ChatListTokenId.folder.rawValue, icon: nil, iconOffset: 0.0, peer: nil, title: folder.1, permanent: false))
+        }
         if case .chatList(.archive) = self.location {
             tokens.append(SearchBarToken(id: ChatListTokenId.archive.rawValue, icon: UIImage(bundleImageName: "Chat List/Search/Archive"), iconOffset: -1.0, title: self.presentationData.strings.ChatList_Archive, permanent: false))
         } else if case .forum = self.location, let forumPeer = self.forumPeer {
@@ -809,6 +839,8 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
         transition.updateFrame(node: self.filterContainerNode, frame: CGRect(origin: CGPoint(x: layout.safeInsets.left + filtersInsets.left, y: layout.size.height - filtersInsets.bottom - 40.0), size: CGSize(width: layout.size.width - (layout.safeInsets.left + filtersInsets.left) * 2.0, height: 40.0)))
         self.updateFilterContainerNode(layout: layout, transition: transition)
         
+        self.filterContainerNode.isHidden = !self.displaySearchFilters
+        
         if isFirstTime {
             self.filterContainerNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
             self.appearanceTimestamp = CACurrentMediaTime()
@@ -855,9 +887,9 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
                     }
                     |> deliverOnMainQueue).startStandalone(next: { messages in
                         if let strongSelf = self, !messages.isEmpty {
-                            let shareController = ShareController(context: strongSelf.context, subject: .messages(messages.sorted(by: { lhs, rhs in
+                            let shareController = strongSelf.context.sharedContext.makeShareController(context: strongSelf.context, params: ShareControllerParams(subject: .messages(messages.sorted(by: { lhs, rhs in
                                 return lhs.index < rhs.index
-                            }).map({ $0._asMessage() })), externalShare: true, immediateExternalShare: true)
+                            }).map({ $0._asMessage() })), externalShare: true, immediateExternalShare: true))
                             strongSelf.dismissInput()
                             strongSelf.present?(shareController, nil)
                         }
@@ -895,7 +927,7 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
                             }
                             var type: PeerType = .group
                             for message in messages {
-                                if let user = message.author?._asPeer() as? TelegramUser {
+                                if case let .user(user) = message.author {
                                     if user.botInfo != nil && !user.id.isVerificationCodes {
                                         type = .bot
                                     } else {
@@ -1034,7 +1066,7 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
         if paneKey == .downloads {
             let isCachedValue: Signal<Bool, NoError>
             if let downloadResource = downloadResource {
-                isCachedValue = self.context.account.postbox.mediaBox.resourceStatus(MediaResourceId(downloadResource.id), resourceSize: downloadResource.size)
+                isCachedValue = self.context.engine.resources.status(id: EngineMediaResource.Id(downloadResource.id), resourceSize: downloadResource.size)
                 |> map { status -> Bool in
                     switch status {
                     case .Local:
@@ -1082,7 +1114,7 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
                             f(.default)
                             return
                         }
-                        let _ = (strongSelf.context.account.postbox.mediaBox.removeCachedResources([MediaResourceId(downloadResource.id)], notify: true)
+                        let _ = (strongSelf.context.engine.resources.removeCachedResources(ids: [EngineMediaResource.Id(downloadResource.id)], notify: true)
                         |> deliverOnMainQueue).startStandalone(completed: {
                             f(.dismissWithoutContent)
                         })
@@ -1322,8 +1354,8 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
     }
     
     public override func searchTextClearTokens() {
+        self.folder = nil
         self.updateSearchOptions(nil)
-//        self.setQuery?(nil, [], self.searchQueryValue ?? "")
     }
     
     func deleteMessages(messageIds: Set<EngineMessage.Id>?) {
@@ -1373,7 +1405,7 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
                                 }
                             }
                             
-                            let _ = (strongSelf.context.account.postbox.mediaBox.removeCachedResources(Array(resourceIds), force: true, notify: true)
+                            let _ = (strongSelf.context.engine.resources.removeCachedResources(ids: resourceIds.map { EngineMediaResource.Id($0) }, force: true, notify: true)
                             |> deliverOnMainQueue).startStandalone(completed: {
                                 guard let strongSelf = self else {
                                     return
@@ -1636,7 +1668,7 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
                             if let strongSelf = self {
                                 let proceed: (ChatController) -> Void = { chatController in
                                     chatController.purposefulAction = { [weak self] in
-                                        self?.cancel?()
+                                        self?.dismissSearchImmediately?()
                                     }
                                     if let navigationController = strongSelf.navigationController {
                                         var viewControllers = navigationController.viewControllers

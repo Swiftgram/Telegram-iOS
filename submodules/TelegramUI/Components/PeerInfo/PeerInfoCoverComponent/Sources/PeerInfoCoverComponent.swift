@@ -71,7 +71,7 @@ public final class PeerInfoCoverComponent: Component {
         func colors(context: AccountContext, isDark: Bool) -> (UIColor, UIColor)? {
             switch self {
             case let .peer(peer):
-                if let colors = peer._asPeer().profileColor.flatMap({ context.peerNameColors.getProfile($0, dark: isDark) }) {
+                if let colors = peer.profileColor.flatMap({ context.peerNameColors.getProfile($0, dark: isDark) }) {
                     let backgroundColor = colors.main
                     let secondaryBackgroundColor = colors.secondary ?? colors.main
                     return (backgroundColor, secondaryBackgroundColor)
@@ -79,7 +79,7 @@ public final class PeerInfoCoverComponent: Component {
                     return nil
                 }
             case let .managedBot(peer):
-                if let color = peer._asPeer().nameColor {
+                if let color = peer.nameColor {
                     let colors = calculateAvatarColors(context: context, explicitColorIndex: nil, peerId: peer.id, nameColor: color, icon: .none, theme: nil)
                     if colors.count == 2 {
                         return (colors[0], colors[1])
@@ -526,7 +526,10 @@ public final class PeerInfoCoverComponent: Component {
             let backgroundFrame = CGRect(origin: CGPoint(x: 0.0, y: -1000.0 + availableSize.height), size: CGSize(width: availableSize.width, height: 1000.0))
             transition.containedViewLayoutTransition.updateFrameAdditive(view: self.backgroundView, frame: backgroundFrame)
                         
-            let patternWidth: CGFloat = min(380.0, availableSize.width - 32.0)
+            var patternWidth: CGFloat = 380.0
+            if case .managedBot = component.subject {
+                patternWidth = min(380.0, availableSize.width - 32.0)
+            }
             let avatarPatternFrame = CGSize(width: patternWidth, height: floor(component.defaultHeight * 1.0)).centered(around: component.avatarCenter)
             transition.setFrame(layer: self.avatarBackgroundPatternContentsLayer, frame: avatarPatternFrame)
             

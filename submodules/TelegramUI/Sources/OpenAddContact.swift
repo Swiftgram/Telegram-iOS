@@ -4,12 +4,13 @@ import TelegramCore
 import Display
 import DeviceAccess
 import AccountContext
+import ShareController
 import AlertUI
 import PresentationDataUtils
 import PeerInfoUI
-import ShareController
+import PhoneNumberFormat
 
-func openAddContactImpl(context: AccountContext, firstName: String = "", lastName: String = "", phoneNumber: String, label: String = "_$!<Mobile>!$_", present: @escaping (ViewController, Any?) -> Void, pushController: @escaping (ViewController) -> Void, completed: @escaping () -> Void = {}) {
+func openAddContactImpl(context: AccountContext, peer: EnginePeer?, firstName: String = "", lastName: String = "", phoneNumber: String, label: String = "_$!<Mobile>!$_", present: @escaping (ViewController, Any?) -> Void, pushController: @escaping (ViewController) -> Void, completed: @escaping () -> Void = {}) {
     let _ = (DeviceAccess.authorizationStatus(subject: .contacts)
     |> take(1)
     |> deliverOnMainQueue).startStandalone(next: { value in
@@ -17,12 +18,14 @@ func openAddContactImpl(context: AccountContext, firstName: String = "", lastNam
         case .allowed:
             let controller = context.sharedContext.makeNewContactScreen(
                 context: context,
-                peer: nil,
-                phoneNumber: phoneNumber,
+                peer: peer,
+                firstName: firstName.isEmpty ? nil : firstName,
+                lastName: lastName.isEmpty ? nil : lastName,
+                phoneNumber: cleanPhoneNumber(phoneNumber, removePlus: true),
                 shareViaException: false,
                 completion: { peer, stableId, contactData in
                     if let peer = peer {
-                        if let infoController = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+                        if let infoController = context.sharedContext.makePeerInfoController(context: context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                             pushController(infoController)
                         }
                     } else if let stableId, let contactData {
@@ -36,7 +39,7 @@ func openAddContactImpl(context: AccountContext, firstName: String = "", lastNam
             DeviceAccess.authorizeAccess(to: .contacts)
         default:
             let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-            present(textAlertController(context: context, title: presentationData.strings.AccessDenied_Title, text: presentationData.strings.Contacts_AccessDeniedError, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_NotNow, action: {}), TextAlertAction(type: .genericAction, title: presentationData.strings.AccessDenied_Settings, action: {
+            present(textAlertController(context: context, title: presentationData.strings.AccessDenied_Title, text: presentationData.strings.Contacts_AccessDeniedError, actions: [TextAlertAction(type: .genericAction, title: presentationData.strings.Common_NotNow, action: {}), TextAlertAction(type: .defaultAction, title: presentationData.strings.AccessDenied_Settings, action: {
                 context.sharedContext.applicationBindings.openSettings()
             })]), nil)
         }

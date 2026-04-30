@@ -54,6 +54,9 @@ extension ResolvedBotAdminRights {
         if components.contains("manage_chat") {
             rawValue |= ResolvedBotAdminRights.manageChat.rawValue
         }
+        if components.contains("manage_topics") {
+            rawValue |= ResolvedBotAdminRights.manageTopics.rawValue
+        }
         if components.contains("anonymous") {
             rawValue |= ResolvedBotAdminRights.canBeAnonymous.rawValue
         }
@@ -128,6 +131,7 @@ public enum ParsedInternalUrl {
     case auction(slug: String)
     case oauth(url: String)
     case createBot(parentBot: String, username: String?, title: String?)
+    case textStyle(slug: String)
     case externalUrl(url: String)
 }
 
@@ -600,9 +604,12 @@ public func parseInternalUrl(sharedContext: SharedAccountContext, context: Accou
                     return .peer(.name(pathComponents[1]), .boost)
                 } else if pathComponents[0] == "giftcode", pathComponents.count == 2 {
                     return .premiumGiftCode(slug: pathComponents[1])
-                } else if pathComponents.count >= 3 && pathComponents[0] == "newbot" {
+                } else if pathComponents.count >= 2 && pathComponents[0] == "newbot" {
                     let parentBot = pathComponents[1]
-                    let username = pathComponents[2]
+                    var username: String?
+                    if pathComponents.count >= 3 {
+                        username = pathComponents[2]
+                    }
                     var title: String?
                     for queryItem in components.queryItems ?? [] {
                         if let value = queryItem.value {
@@ -612,6 +619,8 @@ public func parseInternalUrl(sharedContext: SharedAccountContext, context: Accou
                         }
                     }
                     return .createBot(parentBot: parentBot, username: username, title: title)
+                } else if pathComponents.count >= 2 && pathComponents[0] == "addstyle" {
+                    return .textStyle(slug: pathComponents[1])
                 } else if pathComponents[0] == "m" {
                     return .messageLink(slug: pathComponents[1])
                 } else if pathComponents.count == 3 && pathComponents[0] == "c" {
@@ -1335,6 +1344,19 @@ private func resolveInternalUrl(context: AccountContext, url: ParsedInternalUrl)
                     }
                 }
             }
+        case let .textStyle(slug):
+            let signal: Signal<ResolveInternalUrlResult, NoError> = context.engine.messages.requestAIMessageStyle(slug: slug)
+            |> map { result -> ResolveInternalUrlResult in
+                guard let result else {
+                    return .result(nil)
+                }
+                guard case let .custom(style) = result.style.content else {
+                    return .result(nil)
+                }
+                return .result(.textStyle(style: style, initialPreview: result.initialPreview))
+            }
+            return .single(.progress)
+            |> then(signal)
     }
 }
 

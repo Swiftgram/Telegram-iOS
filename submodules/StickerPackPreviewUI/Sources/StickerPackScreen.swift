@@ -1110,16 +1110,16 @@ private final class StickerPackContainer: ASDisplayNode {
                 let parentNavigationController = strongSelf.controller?.parentNavigationController
                 let shareController = strongSelf.context.sharedContext.makeShareController(
                     context: strongSelf.context,
-                    subject: shareSubject,
-                    forceExternal: false,
-                    shareStory: nil,
-                    enqueued: nil,
-                    actionCompleted: { [weak parentNavigationController] in
-                        if let parentNavigationController = parentNavigationController, let controller = parentNavigationController.topViewController as? ViewController {
-                            let presentationData = strongSelf.context.sharedContext.currentPresentationData.with { $0 }
-                            controller.present(UndoOverlayController(presentationData: presentationData, content: .linkCopied(title: nil, text: presentationData.strings.Conversation_LinkCopied), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .window(.root))
+                    params: ShareControllerParams(
+                        subject: shareSubject,
+                        externalShare: false,
+                        actionCompleted: { [weak parentNavigationController] in
+                            if let parentNavigationController = parentNavigationController, let controller = parentNavigationController.topViewController as? ViewController {
+                                let presentationData = strongSelf.context.sharedContext.currentPresentationData.with { $0 }
+                                controller.present(UndoOverlayController(presentationData: presentationData, content: .linkCopied(title: nil, text: presentationData.strings.Conversation_LinkCopied), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .window(.root))
+                            }
                         }
-                    }
+                    )
                 )
                 strongSelf.controller?.present(shareController, in: .window(.root))
             }
@@ -1517,12 +1517,19 @@ private final class StickerPackContainer: ASDisplayNode {
         if let (info, items, installed) = self.currentStickerPack {
             var dismissed = false
             switch self.decideNextAction(self, installed ? .remove : .add) {
-                case .dismiss:
-                    self.requestDismiss()
-                    dismissed = true
-                case .navigatedNext, .ignored:
-                    self.updateStickerPackContents([.result(info: StickerPackCollectionInfo.Accessor(info), items: items, installed: !installed)], hasPremium: false)
+            case .dismiss:
+                self.requestDismiss()
+                dismissed = true
+            case .navigatedNext, .ignored:
+                self.updateStickerPackContents([.result(info: StickerPackCollectionInfo.Accessor(info), items: items, installed: !installed)], hasPremium: false)
             }
+            
+            guard let controller = self.controller else {
+                return
+            }
+            let navigationController = controller.parentNavigationController ?? (controller.navigationController as? NavigationController)
+            let context = self.context
+            let strings = self.presentationData.strings
             
             let actionPerformed = self.controller?.actionPerformed
             if installed {
@@ -1536,7 +1543,19 @@ private final class StickerPackContainer: ASDisplayNode {
                     }
                 })
             } else {
-                let _ = self.context.engine.stickers.addStickerPackInteractively(info: info, items: items).start()
+                let _ = self.context.engine.stickers.addStickerPackInteractively(info: info, items: items, noDelay: true).startStandalone()
+                let _ = (self.context.account.stateManager.installedStickerPacksArchivedEvents
+                |> deliverOnMainQueue
+                |> take(1)
+                |> timeout(3.0, queue: .mainQueue(), alternate: .single(0))).startStandalone(next: { [weak navigationController] count in
+                    if count == 0 {
+                        return
+                    }
+                    guard let navigationController else {
+                        return
+                    }
+                    navigationController.pushViewController(textAlertController(context: context, updatedPresentationData: controller.updatedPresentationData, title: nil, text: strings.ArchivedPacksAlert_Title, actions: [TextAlertAction(type: .defaultAction, title: strings.Common_OK, action: {})]))
+                })
                 if dismissed {
                     actionPerformed?([(info, items, .add)])
                 }

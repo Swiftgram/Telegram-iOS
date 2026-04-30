@@ -192,9 +192,9 @@ public class ContactsController: ViewController {
         }).strict()
         
         if #available(iOSApplicationExtension 10.0, iOS 10.0, *) {
-            self.authorizationDisposable = (combineLatest(DeviceAccess.authorizationStatus(subject: .contacts), combineLatest(context.sharedContext.accountManager.noticeEntry(key: ApplicationSpecificNotice.permissionWarningKey(permission: .contacts)!), context.account.postbox.preferencesView(keys: [PreferencesKeys.contactsSettings]), context.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.contactSynchronizationSettings]))
+            self.authorizationDisposable = (combineLatest(DeviceAccess.authorizationStatus(subject: .contacts), combineLatest(context.sharedContext.accountManager.noticeEntry(key: ApplicationSpecificNotice.permissionWarningKey(permission: .contacts)!), context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.contactsSettings)), context.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.contactSynchronizationSettings]))
             |> map { noticeView, preferences, sharedData -> (Bool, ContactsSortOrder) in
-                let settings: ContactsSettings = preferences.values[PreferencesKeys.contactsSettings]?.get(ContactsSettings.self) ?? ContactsSettings.defaultSettings
+                let settings: ContactsSettings = preferences?.get(ContactsSettings.self) ?? ContactsSettings.defaultSettings
                 let synchronizeDeviceContacts: Bool = settings.synchronizeContacts
                 
                 let contactsSettings = sharedData.entries[ApplicationSpecificSharedDataKeys.contactSynchronizationSettings]?.get(ContactSynchronizationSettings.self)
@@ -291,7 +291,7 @@ public class ContactsController: ViewController {
                                 scrollToEndIfExists = true
                             }
                             
-                            strongSelf.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: strongSelf.context, chatLocation: .peer(EnginePeer(peer)), purposefulAction: { [weak self] in
+                            strongSelf.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: strongSelf.context, chatLocation: .peer(peer), purposefulAction: { [weak self] in
                                 if fromSearch {
                                     self?.deactivateSearch(animated: false)
                                     self?.switchToChatsController?()
@@ -365,7 +365,7 @@ public class ContactsController: ViewController {
         self.contactsNode.requestAddContact = { [weak self] phoneNumber in
             if let strongSelf = self {
                 strongSelf.view.endEditing(true)
-                strongSelf.context.sharedContext.openAddContact(context: strongSelf.context, firstName: "", lastName: "", phoneNumber: phoneNumber, label: defaultContactLabel, present: { [weak self] controller, arguments in
+                strongSelf.context.sharedContext.openAddContact(context: strongSelf.context, peer: nil, firstName: "", lastName: "", phoneNumber: phoneNumber, label: defaultContactLabel, present: { [weak self] controller, arguments in
                     self?.present(controller, in: .window(.root), with: arguments)
                 }, pushController: { [weak self] controller in
                     (self?.navigationController as? NavigationController)?.pushViewController(controller)
@@ -437,7 +437,7 @@ public class ContactsController: ViewController {
                         strongSelf.contactsNode.contactListNode.listNode.clearHighlightAnimated(true)
                     default:
                         let presentationData = strongSelf.presentationData
-                        strongSelf.present(textAlertController(context: strongSelf.context, title: presentationData.strings.AccessDenied_Title, text: presentationData.strings.Contacts_AccessDeniedError, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_NotNow, action: {}), TextAlertAction(type: .genericAction, title: presentationData.strings.AccessDenied_Settings, action: {
+                        strongSelf.present(textAlertController(context: strongSelf.context, title: presentationData.strings.AccessDenied_Title, text: presentationData.strings.Contacts_AccessDeniedError, actions: [TextAlertAction(type: .genericAction, title: presentationData.strings.Common_NotNow, action: {}), TextAlertAction(type: .defaultAction, title: presentationData.strings.AccessDenied_Settings, action: {
                             self?.context.sharedContext.applicationBindings.openSettings()
                         })]), in: .window(.root))
                         strongSelf.contactsNode.contactListNode.listNode.clearHighlightAnimated(true)
@@ -465,7 +465,14 @@ public class ContactsController: ViewController {
                     let controller = QrCodeScanScreen(context: strongSelf.context, subject: .peer)
                     controller.showMyCode = { [weak self, weak controller] in
                         if let strongSelf = self {
-                            let _ = (strongSelf.context.account.postbox.loadedPeerWithId(strongSelf.context.account.peerId)
+                            let _ = (strongSelf.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: strongSelf.context.account.peerId))
+                            |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+                                if let peer {
+                                    return .single(peer)
+                                } else {
+                                    return .never()
+                                }
+                            }
                             |> deliverOnMainQueue).start(next: { [weak self, weak controller] peer in
                                 if let strongSelf = self, let controller = controller {
                                     controller.present(strongSelf.context.sharedContext.makeChatQrCodeScreen(context: strongSelf.context, peer: peer, threadId: nil, temporary: false), in: .window(.root))
@@ -757,6 +764,8 @@ public class ContactsController: ViewController {
                         let controller = strongSelf.context.sharedContext.makeNewContactScreen(
                             context: strongSelf.context,
                             peer: nil,
+                            firstName: nil,
+                            lastName: nil,
                             phoneNumber: nil,
                             shareViaException: false,
                             completion: { [weak self] peer, stableId, contactData in
@@ -765,7 +774,7 @@ public class ContactsController: ViewController {
                                 }
                                 if let peer {
                                     Queue.mainQueue().async {
-                                        if let infoController = strongSelf.context.sharedContext.makePeerInfoController(context: strongSelf.context, updatedPresentationData: nil, peer: peer._asPeer(), mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
+                                        if let infoController = strongSelf.context.sharedContext.makePeerInfoController(context: strongSelf.context, updatedPresentationData: nil, peer: peer, mode: .generic, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
                                             if let navigationController = strongSelf.context.sharedContext.mainWindow?.viewController as? NavigationController {
                                                 navigationController.pushViewController(infoController)
                                             }
@@ -785,7 +794,7 @@ public class ContactsController: ViewController {
                 default:
                     let presentationData = strongSelf.presentationData
                     if let navigationController = strongSelf.context.sharedContext.mainWindow?.viewController as? NavigationController, let topController = navigationController.topViewController as? ViewController {
-                        topController.present(textAlertController(context: strongSelf.context, title: presentationData.strings.AccessDenied_Title, text: presentationData.strings.Contacts_AccessDeniedError, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_NotNow, action: {}), TextAlertAction(type: .genericAction, title: presentationData.strings.AccessDenied_Settings, action: {
+                        topController.present(textAlertController(context: strongSelf.context, title: presentationData.strings.AccessDenied_Title, text: presentationData.strings.Contacts_AccessDeniedError, actions: [TextAlertAction(type: .genericAction, title: presentationData.strings.Common_NotNow, action: {}), TextAlertAction(type: .defaultAction, title: presentationData.strings.AccessDenied_Settings, action: {
                             self?.context.sharedContext.applicationBindings.openSettings()
                         })]), in: .window(.root))
                     }

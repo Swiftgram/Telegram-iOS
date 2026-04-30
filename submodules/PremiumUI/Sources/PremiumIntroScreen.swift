@@ -329,8 +329,8 @@ public enum PremiumSource: Equatable {
             } else {
                 return false
             }
-        case let .auth(lhsPrice):
-            if case let .auth(rhsPrice) = rhs, lhsPrice == rhsPrice {
+        case let .auth(lhsPrice, lhsDays):
+            if case let .auth(rhsPrice, rhsDays) = rhs, lhsPrice == rhsPrice, lhsDays == rhsDays {
                 return true
             } else {
                 return false
@@ -391,7 +391,7 @@ public enum PremiumSource: Equatable {
     case todo
     case copyProtection
     case aiTools
-    case auth(String)
+    case auth(String, Int32)
     case premiumGift(TelegramMediaFile)
     
     var identifier: String? {
@@ -3786,13 +3786,26 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
             if !buttonIsHidden {
                 let buttonTitle: String
                 var buttonSubtitle: String?
-                if case let .auth(price) = context.component.source {
+                if case let .auth(price, days) = context.component.source {
                     buttonTitle = environment.strings.Premium_Week_SignUp(price).string
-                    buttonSubtitle = environment.strings.Premium_Week_SignUpInfo
+                    if days == 7 {
+                        buttonSubtitle = environment.strings.Premium_Week_SignUpInfo
+                    } else if days > 0 {
+                        let daysString = environment.strings.Premium_SignUp_SignUpNewInfo_Days(days)
+                        buttonSubtitle = environment.strings.Premium_SignUp_SignUpNewInfo(daysString).string
+                    } else {
+                        buttonSubtitle = environment.strings.Premium_SignUp_SignUpNewInfoNone
+                    }
                 } else if isUnusedGift {
                     buttonTitle = environment.strings.Premium_Gift_ApplyLink
                 } else if state.isPremium == true && state.canUpgrade {
-                    buttonTitle = state.isAnnual ? environment.strings.Premium_UpgradeForAnnual(state.price ?? "—").string : environment.strings.Premium_UpgradeFor(state.price ?? "—").string
+                    if state.isAnnual {
+                        buttonTitle = environment.strings.Premium_UpgradeForAnnual(state.price ?? "—").string
+                    } else if state.isBiannual {
+                        buttonTitle = environment.strings.Premium_UpgradeForBiannual(state.price ?? "—").string
+                    } else {
+                        buttonTitle = environment.strings.Premium_UpgradeFor(state.price ?? "—").string
+                    }
                 } else {
                     if state.isAnnual {
                         buttonTitle = environment.strings.Premium_SubscribeForAnnual(state.price ?? "—").string
@@ -3802,9 +3815,6 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
                         buttonTitle = environment.strings.Premium_SubscribeFor(state.price ?? "–").string
                     }
                 }
-                
-                
-
                 
                 let controller = environment.controller
                 let button = button.update(

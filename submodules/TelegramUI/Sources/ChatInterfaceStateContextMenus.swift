@@ -44,7 +44,7 @@ private struct MessageContextMenuData {
     let canPin: Bool
     let canEdit: Bool
     let canSelect: Bool
-    let resourceStatus: MediaResourceStatus?
+    let resourceStatus: EngineMediaResource.FetchStatus?
     let messageActions: ChatAvailableMessageActions
 }
 
@@ -484,8 +484,13 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
     guard let interfaceInteraction = interfaceInteraction, let controllerInteraction = controllerInteraction else {
         return .single(ContextController.Items(content: .list([])))
     }
-    if let message = messages.first, message.id.namespace < 0 {
-        return .single(ContextController.Items(content: .list([])))
+    if let message = messages.first {
+        if message.id.namespace < 0 {
+            return .single(ContextController.Items(content: .list([])))
+        }
+        if message.id.namespace == Namespaces.Message.Local && message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+            return .single(ContextController.Items(content: .list([])))
+        }
     }
     
     var isEmbeddedMode = false
@@ -808,9 +813,9 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         |> map(Optional.init)
     }
     
-    var loadResourceStatusSignal: Signal<MediaResourceStatus?, NoError> = .single(nil)
+    var loadResourceStatusSignal: Signal<EngineMediaResource.FetchStatus?, NoError> = .single(nil)
     if let loadCopyMediaResource = loadCopyMediaResource {
-        loadResourceStatusSignal = context.account.postbox.mediaBox.resourceStatus(loadCopyMediaResource)
+        loadResourceStatusSignal = context.engine.resources.status(resource: EngineMediaResource(loadCopyMediaResource))
         |> take(1)
         |> map(Optional.init)
     }
@@ -1312,10 +1317,10 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                                 if resourceAvailable {
                                     for media in message.media {
                                         if let image = media as? TelegramMediaImage, let largest = largestImageRepresentation(image.representations) {
-                                            let _ = (context.account.postbox.mediaBox.resourceData(largest.resource, option: .incremental(waitUntilFetchStatus: false))
+                                            let _ = (context.engine.resources.data(resource: EngineMediaResource(largest.resource), incremental: true)
                                             |> take(1)
                                             |> deliverOnMainQueue).startStandalone(next: { data in
-                                                if data.complete, let imageData = try? Data(contentsOf: URL(fileURLWithPath: data.path)) {
+                                                if data.isComplete, let imageData = try? Data(contentsOf: URL(fileURLWithPath: data.path)) {
                                                     if let image = UIImage(data: imageData) {
                                                         if !messageText.isEmpty {
                                                             copyTextWithEntities()
@@ -1354,7 +1359,10 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     showTranslateIfTopical = true
                 }
                 
-                let (canTranslate, _) = canTranslateText(context: context, text: messageText, showTranslate: translationSettings.showTranslate, showTranslateIfTopical: showTranslateIfTopical, ignoredLanguages: translationSettings.ignoredLanguages)
+                var (canTranslate, _) = canTranslateText(context: context, text: messageText, showTranslate: translationSettings.showTranslate, showTranslateIfTopical: showTranslateIfTopical, ignoredLanguages: translationSettings.ignoredLanguages)
+                if let peerId = chatPresentationInterfaceState.chatLocation.peerId, peerId.namespace == Namespaces.Peer.SecretChat {
+                    canTranslate = false
+                }
                 if canTranslate {
                     actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Conversation_ContextMenuTranslate, icon: { theme in
                         return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Translate"), color: theme.actionSheet.primaryTextColor)
@@ -1411,7 +1419,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                 actions.append(.action(ContextMenuActionItem(text: isVideo ? chatPresentationInterfaceState.strings.Gallery_SaveVideo : chatPresentationInterfaceState.strings.Gallery_SaveImage, icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Save"), color: theme.actionSheet.primaryTextColor)
                 }, action: { _, f in
-                    let _ = (saveToCameraRoll(context: context, postbox: context.account.postbox, userLocation: .peer(message.id.peerId), mediaReference: mediaReference)
+                    let _ = (saveToCameraRoll(context: context, userLocation: .peer(message.id.peerId), mediaReference: mediaReference)
                              |> deliverOnMainQueue).startStandalone(completed: {
                         Queue.mainQueue().after(0.2) {
                             let presentationData = context.sharedContext.currentPresentationData.with { $0 }
@@ -1655,7 +1663,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             }
         }
         
-        if let activePoll = activePoll, messages[0].forwardInfo == nil {
+        if let activePoll, messages[0].forwardInfo == nil {
             var canStopPoll = false
             if !messages[0].flags.contains(.Incoming) {
                 canStopPoll = true
@@ -1862,6 +1870,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         }
         
         var clearCacheAsDelete = false
+        var hasViewStats = false
         if let channel = message.peers[message.id.peerId] as? TelegramChannel, case .broadcast = channel.info, !isMigrated {
             var views: Int = 0
             var forwards: Int = 0
@@ -1882,9 +1891,26 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                         controllerInteraction.openMessageStats(messages[0].id)
                     })
                 })))
+                hasViewStats = true
             }
             
             clearCacheAsDelete = true
+        }
+        
+        if !hasViewStats, messages[0].forwardInfo == nil {
+            for media in message.media {
+                if let poll = media as? TelegramMediaPoll, message.id.namespace == Namespaces.Message.Cloud, poll.pollId.namespace == Namespaces.Media.CloudPoll, poll.results.canViewStats {
+                    actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Conversation_ViewPollStats, icon: { theme in
+                        return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Statistics"), color: theme.actionSheet.primaryTextColor)
+                    }, action: { c, _ in
+                        c?.dismiss(completion: {
+                            let controller = context.sharedContext.makePollStatsScreen(context: context, messageId: messages[0].id)
+                            controllerInteraction.navigationController()?.pushViewController(controller)
+                        })
+                    })))
+                    break
+                }
+            }
         }
         
         if message.id.namespace == Namespaces.Message.Cloud, let channel = message.peers[message.id.peerId] as? TelegramChannel, case .broadcast = channel.info, canEditFactCheck(appConfig: appConfig) {
@@ -2147,6 +2173,20 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                             displayReadTimestamps = true
                         }
                         
+                        let deleteReaction: ((EnginePeer, MessageReaction.Reaction) -> Void)?
+                        if let channel = message.peers[message.id.peerId] as? TelegramChannel, channel.hasPermission(.deleteAllMessages) {
+                            deleteReaction = { [weak c] peer, _ in
+                                c?.dismiss(completion: {
+                                    guard let chatController = interfaceInteraction.chatController() as? ChatController else {
+                                        return
+                                    }
+                                    chatController.presentReactionDeletionOptions(author: peer._asPeer(), messageId: message.id)
+                                })
+                            }
+                        } else {
+                            deleteReaction = nil
+                        }
+
                         c.pushItems(items: .single(ContextController.Items(content: .custom(ReactionListContextMenuContent(
                             context: context,
                             displayReadTimestamps: displayReadTimestamps,
@@ -2163,7 +2203,8 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                                 c?.dismiss(completion: {
                                     controllerInteraction.openPeer(peer, .default, MessageReference(message), hasReaction ? .reaction : .default)
                                 })
-                            }
+                            },
+                            deleteReaction: deleteReaction
                         )), tip: tip)))
                     } else {
                         f(.default)
@@ -2258,6 +2299,55 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                 }
             case .businessLinkSetup:
                 actions.removeAll()
+            }
+        }
+        
+        for media in message.media {
+            if let poll = media as? TelegramMediaPoll, message.id.namespace == Namespaces.Message.Cloud, poll.pollId.namespace == Namespaces.Media.CloudPoll {
+                var restrictionText: String = ""
+                let peerName: String = chatPresentationInterfaceState.renderedPeer?.peer.flatMap(EnginePeer.init)?.compactDisplayTitle ?? ""
+                
+                if !poll.countries.isEmpty {
+                    let locale = localeWithStrings(chatPresentationInterfaceState.strings)
+                    let countryNames = poll.countries.map { id in
+                        if id == "FT" {
+                            return "Fragment"
+                        } else if let countryName = locale.localizedString(forRegionCode: id) {
+                            return countryName
+                        } else {
+                            return id
+                        }
+                    }
+                    var countries: String = ""
+                    if countryNames.count == 1, let country = countryNames.first {
+                        countries = "**\(country)**"
+                    } else {
+                        for i in 0 ..< countryNames.count {
+                            countries.append("**\(countryNames[i])**")
+                            if i == countryNames.count - 2 {
+                                countries.append(chatPresentationInterfaceState.strings.Chat_Poll_Restriction_Country_CountriesLastDelimiter)
+                            } else if i < countryNames.count - 2 {
+                                countries.append(chatPresentationInterfaceState.strings.Chat_Poll_Restriction_Country_CountriesDelimiter)
+                            }
+                        }
+                    }
+                    if poll.restrictToSubscribers {
+                        restrictionText = chatPresentationInterfaceState.strings.Chat_Poll_Restriction_SubscribersCountry(peerName, countries).string
+                    } else {
+                        restrictionText = chatPresentationInterfaceState.strings.Chat_Poll_Restriction_Country(countries).string
+                    }
+                } else if poll.restrictToSubscribers {
+                    restrictionText = chatPresentationInterfaceState.strings.Chat_Poll_Restriction_Subscribers(peerName).string
+                }
+                
+                if !restrictionText.isEmpty {
+                    actions.append(.separator)
+                    let noAction: ((ContextMenuActionItem.Action) -> Void)? = nil
+                    actions.append(
+                        .action(ContextMenuActionItem(text: restrictionText, textLayout: .multiline, textFont: .small, parseMarkdown: true, icon: { _ in return nil }, action: noAction))
+                    )
+                }
+                break
             }
         }
         

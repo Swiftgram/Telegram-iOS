@@ -1,9 +1,7 @@
 import Foundation
 import UIKit
-import Postbox
 import SwiftSignalKit
 import AsyncDisplayKit
-import Postbox
 import TelegramCore
 import Display
 import TelegramUIPreferences
@@ -18,6 +16,7 @@ import TextFormat
 import WallpaperBackgroundNode
 import AnimationCache
 import MultiAnimationRenderer
+import Postbox
 
 public struct ChatInterfaceHighlightedState: Equatable {
     public struct Quote: Equatable {
@@ -164,12 +163,14 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         public var contentNode: ContextExtractedContentContainingNode?
         public var messageNode: ASDisplayNode?
         public var progress: Promise<Bool>?
+        public var gesture: TapLongTapOrDoubleTapGestureRecognizer?
         
-        public init(message: Message? = nil, contentNode: ContextExtractedContentContainingNode? = nil, messageNode: ASDisplayNode? = nil, progress: Promise<Bool>? = nil) {
+        public init(message: Message? = nil, contentNode: ContextExtractedContentContainingNode? = nil, messageNode: ASDisplayNode? = nil, progress: Promise<Bool>? = nil, gesture: TapLongTapOrDoubleTapGestureRecognizer? = nil) {
             self.message = message
             self.contentNode = contentNode
             self.messageNode = messageNode
             self.progress = progress
+            self.gesture = gesture
         }
     }
     
@@ -287,7 +288,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
     public let sendGift: (EnginePeer.Id) -> Void
     public let openUniqueGift: (String) -> Void
     public let openMessageFeeException: () -> Void
-    public let requestMessageUpdate: (MessageId, Bool) -> Void
+    public let requestMessageUpdate: (MessageId, Bool, ControlledTransition?) -> Void
     public let cancelInteractiveKeyboardGestures: () -> Void
     public let dismissTextInput: () -> Void
     public let scrollToMessageId: (MessageIndex) -> Void
@@ -302,6 +303,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
     public let openStarsPurchase: (Int64?) -> Void
     public let openRankInfo: (EnginePeer, ChatRankInfoScreenRole, String) -> Void
     public let openSetPeerAvatar: () -> Void
+    public let displayPollRestrictedToast: (EngineMessage.Id) -> Void
     
     public var canPlayMedia: Bool = false
     public var hiddenMedia: [MessageId: [Media]] = [:]
@@ -464,7 +466,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         sendGift: @escaping (EnginePeer.Id) -> Void,
         openUniqueGift: @escaping (String) -> Void,
         openMessageFeeException: @escaping () -> Void,
-        requestMessageUpdate: @escaping (MessageId, Bool) -> Void,
+        requestMessageUpdate: @escaping (MessageId, Bool, ControlledTransition?) -> Void,
         cancelInteractiveKeyboardGestures: @escaping () -> Void,
         dismissTextInput: @escaping () -> Void,
         scrollToMessageId: @escaping (MessageIndex) -> Void,
@@ -479,6 +481,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         openStarsPurchase: @escaping (Int64?) -> Void,
         openRankInfo: @escaping (EnginePeer, ChatRankInfoScreenRole, String) -> Void,
         openSetPeerAvatar: @escaping () -> Void,
+        displayPollRestrictedToast: @escaping (EngineMessage.Id) -> Void,
         automaticMediaDownloadSettings: MediaAutoDownloadSettings,
         pollActionState: ChatInterfacePollActionState,
         stickerSettings: ChatInterfaceStickerSettings,
@@ -609,6 +612,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         self.openStarsPurchase = openStarsPurchase
         self.openRankInfo = openRankInfo
         self.openSetPeerAvatar = openSetPeerAvatar
+        self.displayPollRestrictedToast = displayPollRestrictedToast
         
         self.automaticMediaDownloadSettings = automaticMediaDownloadSettings
         

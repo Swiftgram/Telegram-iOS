@@ -189,7 +189,7 @@ final class ContactMultiselectionControllerNode: ASDisplayNode {
             }
             
             placeholder = placeholderValue
-            let chatListNode = ChatListNode(context: context, location: .chatList(groupId: .root), chatListFilter: chatListFilter, previewing: false, fillPreloadItems: false, mode: .peers(filter: [.excludeSecretChats], isSelecting: true, additionalCategories: additionalCategories?.categories ?? [], chatListFilters: chatListFilters, displayAutoremoveTimeout: chatSelection.displayAutoremoveTimeout, displayPresence: chatSelection.displayPresence), isPeerEnabled: isPeerEnabled, theme: self.presentationData.theme, fontSize: self.presentationData.listsFontSize, strings: self.presentationData.strings, dateTimeFormat: self.presentationData.dateTimeFormat, nameSortOrder: self.presentationData.nameSortOrder, nameDisplayOrder: self.presentationData.nameDisplayOrder, animationCache: self.animationCache, animationRenderer: self.animationRenderer, disableAnimations: true, isInlineMode: false, autoSetReady: true, isMainTab: false)
+            let chatListNode = ChatListNode(context: context, location: .chatList(groupId: .root), chatListFilter: chatListFilter, previewing: false, fillPreloadItems: false, mode: .peers(filter: [.excludeSecretChats], isSelecting: true, additionalCategories: additionalCategories?.categories ?? [], topPeers: [], chatListFilters: chatListFilters, displayAutoremoveTimeout: chatSelection.displayAutoremoveTimeout, displayPresence: chatSelection.displayPresence), isPeerEnabled: isPeerEnabled, theme: self.presentationData.theme, fontSize: self.presentationData.listsFontSize, strings: self.presentationData.strings, dateTimeFormat: self.presentationData.dateTimeFormat, nameSortOrder: self.presentationData.nameSortOrder, nameDisplayOrder: self.presentationData.nameDisplayOrder, animationCache: self.animationCache, animationRenderer: self.animationRenderer, disableAnimations: true, isInlineMode: false, autoSetReady: true, isMainTab: false)
             chatListNode.passthroughPeerSelection = true
             chatListNode.disabledPeerSelected = { peer, _, reason in
                 attemptDisabledItemSelection?(peer, reason)
@@ -314,7 +314,7 @@ final class ContactMultiselectionControllerNode: ASDisplayNode {
             }
         case let .chats(chatsNode):
             chatsNode.peerSelected = { [weak self] peer, _, _, _, _ in
-                self?.openPeer?(.peer(peer: peer._asPeer(), isGlobal: false, participantCount: nil))
+                self?.openPeer?(.peer(peer: peer, isGlobal: false, participantCount: nil))
             }
             chatsNode.additionalCategorySelected = { [weak self] id in
                 guard let strongSelf = self else {
@@ -489,7 +489,7 @@ final class ContactMultiselectionControllerNode: ASDisplayNode {
                 } else if count <= 1 {
                     let callTitle: String
                     if case let .contacts(contactListNode) = self.contentNode, let peer = contactListNode.selectedPeers.first, case let .peer(peer, _, _) = peer {
-                        callTitle = self.presentationData.strings.NewCall_ActionCallSingle(EnginePeer(peer).compactDisplayTitle).string
+                        callTitle = self.presentationData.strings.NewCall_ActionCallSingle(peer.compactDisplayTitle).string
                     } else {
                         callTitle = self.presentationData.strings.NewCall_ActionCallMultiple
                     }

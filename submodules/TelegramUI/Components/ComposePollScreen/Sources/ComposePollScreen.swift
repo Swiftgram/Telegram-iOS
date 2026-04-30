@@ -35,6 +35,8 @@ import ContextUI
 import StickerPeekUI
 import EdgeEffect
 import LocationUI
+import CountrySelectionUI
+import ShareWithPeersScreen
 
 public final class ComposedPoll {
     public struct Text {
@@ -54,6 +56,8 @@ public final class ComposedPoll {
     public let revotingDisabled: Bool
     public let shuffleAnswers: Bool
     public let hideResultsUntilClose: Bool
+    public let restrictToSubscribers: Bool
+    public let limitToCountries: [String]
 
     public let text: Text
     public let description: Text
@@ -72,6 +76,8 @@ public final class ComposedPoll {
         revotingDisabled: Bool,
         shuffleAnswers: Bool,
         hideResultsUntilClose: Bool,
+        restrictToSubscribers: Bool,
+        limitToCountries: [String],
         text: Text,
         description: Text,
         media: AnyMediaReference?,
@@ -88,6 +94,8 @@ public final class ComposedPoll {
         self.revotingDisabled = revotingDisabled
         self.shuffleAnswers = shuffleAnswers
         self.hideResultsUntilClose = hideResultsUntilClose
+        self.restrictToSubscribers = restrictToSubscribers
+        self.limitToCountries = limitToCountries
         self.text = text
         self.description = description
         self.media = media
@@ -229,11 +237,17 @@ final class ComposePollScreenComponent: Component {
         private var canAddOptions: Bool = false
         private var canRevote: Bool = false
         private var shuffleOptions: Bool = false
-        private var isQuiz: Bool = false
+        private(set) var isQuiz: Bool = false
         private var selectedQuizOptionIds = Set<Int>()
         private var limitDuration: Bool = false
         private var timeLimit: TimeLimit = .duration(24 * 60 * 60)
         private var hideResults: Bool = false
+        private var restrictToSubscribers: Bool = false
+        private var limitByCountry: Bool = false
+        private var limitToCountries: [String] = []
+        
+        private var currentLocale: Locale?
+        private var didSetupCountries = false
         
         private var currentInputMode: ListComposePollOptionComponent.InputMode = .keyboard
         
@@ -258,6 +272,8 @@ final class ComposePollScreenComponent: Component {
         private var cachedShuffleIcon: UIImage?
         private var cachedQuizIcon: UIImage?
         private var cachedDurationIcon: UIImage?
+        private var cachedSubscribersIcon: UIImage?
+        private var cachedCountryIcon: UIImage?
         private var cachedEmptyIcon: UIImage?
         
         private var reorderRecognizer: ReorderGestureRecognizer?
@@ -346,7 +362,7 @@ final class ComposePollScreenComponent: Component {
             for (id, itemView) in self.pollOptionsSectionContainer.itemViews {
                 if let view = itemView.contents.view as? ListComposePollOptionComponent.View, !view.isRevealed && !view.currentText.isEmpty {
                     let viewFrame = view.convert(view.bounds, to: self.pollOptionsSectionContainer)
-                    let iconFrame = CGRect(origin: CGPoint(x: viewFrame.minX, y: viewFrame.minY), size: CGSize(width: viewFrame.height, height: viewFrame.height))
+                    let iconFrame = CGRect(origin: CGPoint(x: viewFrame.minX, y: viewFrame.minY), size: CGSize(width: 50.0, height: viewFrame.height))
                     if iconFrame.contains(localPoint) {
                         return (id, itemView.contents)
                     }
@@ -450,13 +466,17 @@ final class ComposePollScreenComponent: Component {
             }
         }
         
-        private var effectiveIsMultiAnswer: Bool {
+        fileprivate var effectiveIsMultiAnswer: Bool {
             return self.isMultiAnswer ?? false
         }
         
         enum ValidatedInput {
             case ready(ComposedPoll)
             case isUploading
+            case questionNeeded
+            case optionsNeeded
+            case quizCorrectOptionNeeded
+            case countriesNeeded
         }
         
         var hasAnyData: Bool {
@@ -483,18 +503,11 @@ final class ComposePollScreenComponent: Component {
             return false
         }
         
-        func validatedInput() -> ValidatedInput? {
+        func validatedInput() -> ValidatedInput {
             if self.pollTextInputState.text.length == 0 {
-                return nil
+                return .questionNeeded
             }
-            
-            let mappedKind: TelegramMediaPollKind
-            if self.isQuiz {
-                mappedKind = .quiz(multipleAnswers: self.effectiveIsMultiAnswer)
-            } else {
-                mappedKind = .poll(multipleAnswers: self.effectiveIsMultiAnswer)
-            }
-            
+                        
             var mappedOptions: [TelegramMediaPollOption] = []
             var selectedQuizOptions: [Data] = []
             for pollOption in self.pollOptions {
@@ -529,8 +542,21 @@ final class ComposePollScreenComponent: Component {
                 ))
             }
             
-            if mappedOptions.count < 2 {
-                return nil
+            let mappedKind: TelegramMediaPollKind
+            if self.isQuiz {
+                mappedKind = .quiz(multipleAnswers: self.effectiveIsMultiAnswer)
+            } else {
+                mappedKind = .poll(multipleAnswers: self.effectiveIsMultiAnswer && mappedOptions.count > 1)
+            }
+            
+            if self.isQuiz && mappedOptions.count < 2 {
+                return .optionsNeeded
+            } else if !self.isQuiz && mappedOptions.count < 1 {
+                return .optionsNeeded
+            }
+            
+            if self.limitByCountry && self.limitToCountries.isEmpty {
+                return .countriesNeeded
             }
             
             var mappedCorrectAnswers: [Data]?
@@ -538,12 +564,12 @@ final class ComposePollScreenComponent: Component {
                 if !selectedQuizOptions.isEmpty {
                     mappedCorrectAnswers = selectedQuizOptions
                 } else {
-                    return nil
+                    return .quizCorrectOptionNeeded
                 }
             }
             
             var mappedSolution: (String, [MessageTextEntity], AnyMediaReference?)?
-            if self.isQuiz && self.quizAnswerTextInputState.text.length != 0 {
+            if self.isQuiz && (self.quizAnswerTextInputState.text.length != 0 || self.quizAnswerMedia != nil) {
                 var solutionTextEntities: [MessageTextEntity] = []
                 for entity in generateChatInputTextEntities(self.quizAnswerTextInputState.text) {
                     switch entity.type {
@@ -605,6 +631,8 @@ final class ComposePollScreenComponent: Component {
                 revotingDisabled: !self.canRevote,
                 shuffleAnswers: self.shuffleOptions,
                 hideResultsUntilClose: self.hideResults,
+                restrictToSubscribers: self.restrictToSubscribers,
+                limitToCountries: self.limitByCountry ? self.limitToCountries : [],
                 text: ComposedPoll.Text(string: self.pollTextInputState.text.string, entities: textEntities),
                 description: ComposedPoll.Text(string: self.pollDescriptionInputState.text.string, entities: descriptionEntities),
                 media: self.pollDescriptionMedia?.media,
@@ -621,7 +649,8 @@ final class ComposePollScreenComponent: Component {
                             media: mappedSolution.2?.media
                         )
                     },
-                    hasUnseenVotes: false
+                    hasUnseenVotes: false,
+                    canViewStats: false
                 ),
                 deadlineTimeout: deadlineTimeout,
                 deadlineDate: deadlineDate,
@@ -730,7 +759,6 @@ final class ComposePollScreenComponent: Component {
                     mode: .standard(.default),
                     chatLocation: .peer(id: component.context.account.peerId),
                     subject: nil,
-                    peerNearbyData: nil,
                     greetingData: nil,
                     pendingUnpinnedAllMessages: false,
                     activeGroupCallInfo: nil,
@@ -741,8 +769,6 @@ final class ComposePollScreenComponent: Component {
                     accountPeerColor: nil,
                     businessIntro: nil
                 )
-                
-                //self.inputMediaNodeBackground.backgroundColor = presentationData.theme.rootController.navigationBar.opaqueBackgroundColor.cgColor
                 
                 let heightAndOverflow = inputMediaNode.updateLayout(width: availableSize.width, leftInset: 0.0, rightInset: 0.0, bottomInset: bottomInset, standardInputHeight: deviceMetrics.standardInputHeight(inLandscape: false), inputHeight: inputHeight < 100.0 ? inputHeight - bottomContainerInset : inputHeight, maximumHeight: availableSize.height, inputPanelHeight: 0.0, transition: .immediate, interfaceState: presentationInterfaceState, layoutMetrics: metrics, deviceMetrics: deviceMetrics, isVisible: true, isExpanded: false)
                 let inputNodeHeight = heightAndOverflow.0
@@ -961,7 +987,7 @@ final class ComposePollScreenComponent: Component {
                         switch result {
                         case let .media(resultMedia):
                             if let resultImage = resultMedia.media as? TelegramMediaImage, let resultLargest = largestImageRepresentation(resultImage.representations) {
-                                component.context.account.postbox.mediaBox.moveResourceData(from: largest.resource.id, to: resultLargest.resource.id, synchronous: true)
+                                component.context.engine.resources.moveResourceData(from: EngineMediaResource.Id(largest.resource.id), to: EngineMediaResource.Id(resultLargest.resource.id), synchronous: true)
                             }
                             
                             media.media = resultMedia
@@ -1000,7 +1026,7 @@ final class ComposePollScreenComponent: Component {
                         switch result {
                         case let .media(resultMedia):
                             if let resultFile = resultMedia.media as? TelegramMediaFile {
-                                component.context.account.postbox.mediaBox.moveResourceData(from: file.resource.id, to: resultFile.resource.id, synchronous: true)
+                                component.context.engine.resources.moveResourceData(from: EngineMediaResource.Id(file.resource.id), to: EngineMediaResource.Id(resultFile.resource.id), synchronous: true)
                             }
                             media.media = resultMedia
                             media.progress = nil
@@ -1214,6 +1240,41 @@ final class ComposePollScreenComponent: Component {
             (self.environment?.controller() as? ComposePollScreen)?.parentController()?.push(controller)
         }
         
+        private func openCountriesSelection() {
+            guard let component = self.component else {
+                return
+            }
+            
+            let maxCount: Int32
+            if let data = component.context.currentAppConfiguration.with({ $0 }).data, let value = data["poll_countries_max"] as? Double {
+                maxCount = Int32(value)
+            } else {
+                maxCount = 12
+            }
+            
+            let stateContext = CountriesMultiselectionScreen.StateContext(
+                context: component.context,
+                subject: .countries,
+                maxCount: maxCount,
+                initialSelectedCountries: self.limitToCountries,
+                showFragment: true
+            )
+            let _ = (stateContext.ready |> filter { $0 } |> take(1) |> deliverOnMainQueue).startStandalone(next: { [weak self] _ in
+                let controller = CountriesMultiselectionScreen(
+                    context: component.context,
+                    stateContext: stateContext,
+                    completion: { [weak self] countries in
+                        guard let self else {
+                            return
+                        }
+                        self.limitToCountries = countries
+                        self.state?.updated()
+                    }
+                )
+                (self?.environment?.controller() as? ComposePollScreen)?.parentController()?.push(controller)
+            })
+        }
+        
         func deactivateInput() {
             self.currentInputMode = .keyboard
             if hasFirstResponder(self) {
@@ -1239,13 +1300,15 @@ final class ComposePollScreenComponent: Component {
             self.environment = environment
             
             let theme = environment.theme.withModalBlocksBackground()
-            
+                        
             var isChannel = false
             if case let .channel(channel) = component.peer, case .broadcast = channel.info {
                 isChannel = true
             }
             
             if self.component == nil {
+                self.currentLocale = localeWithStrings(environment.strings)
+                
                 self.isQuiz = component.isQuiz ?? false
                 if !self.isQuiz {
                     self.isMultiAnswer = true
@@ -1412,8 +1475,14 @@ final class ComposePollScreenComponent: Component {
                 self.cachedShuffleIcon = renderSettingsIcon(name: "Item List/Icons/Shuffle", backgroundColors: [UIColor(rgb: 0xAF52DE)])
                 self.cachedQuizIcon = renderSettingsIcon(name: "Item List/Icons/Checkbox", backgroundColors: [UIColor(rgb: 0x34C759)])
                 self.cachedDurationIcon = renderSettingsIcon(name: "Item List/Icons/Timer", backgroundColors: [UIColor(rgb: 0xFF453A)])
+                self.cachedSubscribersIcon = renderSettingsIcon(name: "Item List/Icons/Profile", backgroundColors: [UIColor(rgb: 0x0A84FF)])
+                self.cachedCountryIcon = renderSettingsIcon(name: "Item List/Icons/Flag", backgroundColors: [UIColor(rgb: 0xFF9F0A)])
                 
                 self.cachedEmptyIcon = generateSingleColorImage(size: CGSize(width: 30.0, height: 30.0), color: .clear)
+                
+                if let isQuiz = component.isQuiz, isQuiz {
+                    self.bottomEdgeEffectView.isHidden = true
+                }
             }
             
             self.component = component
@@ -1438,7 +1507,6 @@ final class ComposePollScreenComponent: Component {
             pollTextSectionItems.append(AnyComponentWithIdentity(id: 0, component: AnyComponent(ListComposePollOptionComponent(
                 externalState: self.pollTextInputState,
                 context: component.context,
-                style: .glass,
                 theme: theme,
                 strings: environment.strings,
                 resetText: self.resetPollText.flatMap { resetText in
@@ -1474,7 +1542,6 @@ final class ComposePollScreenComponent: Component {
             pollTextSectionItems.append(AnyComponentWithIdentity(id: 1, component: AnyComponent(ListComposePollOptionComponent(
                 externalState: self.pollDescriptionInputState,
                 context: component.context,
-                style: .glass,
                 theme: theme,
                 strings: environment.strings,
                 resetText: nil,
@@ -1590,7 +1657,6 @@ final class ComposePollScreenComponent: Component {
                 pollOptionsSectionItems.append(AnyComponentWithIdentity(id: pollOption.id, component: AnyComponent(ListComposePollOptionComponent(
                     externalState: pollOption.textInputState,
                     context: component.context,
-                    style: .glass,
                     theme: theme,
                     strings: environment.strings,
                     resetText: pollOption.resetText.flatMap { resetText in
@@ -2249,6 +2315,140 @@ final class ComposePollScreenComponent: Component {
                     maximumNumberOfLines: 0
                 ))
             }
+            
+            if isChannel {
+                pollSettingsSectionItems.append(AnyComponentWithIdentity(id: "subscribers", component: AnyComponent(ListActionItemComponent(
+                    theme: theme,
+                    style: .glass,
+                    title: AnyComponent(VStack([
+                        AnyComponentWithIdentity(id: AnyHashable(0), component: AnyComponent(MultilineTextComponent(
+                            text: .plain(NSAttributedString(
+                                string: environment.strings.CreatePoll_RestrictToSubscribers,
+                                font: Font.regular(presentationData.listsFontSize.baseDisplaySize),
+                                textColor: theme.list.itemPrimaryTextColor
+                            )),
+                            maximumNumberOfLines: 2
+                        ))),
+                        AnyComponentWithIdentity(id: AnyHashable(1), component: AnyComponent(MultilineTextComponent(
+                            text: .plain(NSAttributedString(
+                                string: environment.strings.CreatePoll_RestrictToSubscribersInfo,
+                                font: Font.regular(presentationData.listsFontSize.baseDisplaySize * 13.0 / 17.0),
+                                textColor: theme.list.itemSecondaryTextColor
+                            )),
+                            maximumNumberOfLines: 3,
+                            lineSpacing: 0.1
+                        )))
+                    ], alignment: .left, spacing: 4.0)),
+                    verticalAlignment: .middle,
+                    contentInsets: UIEdgeInsets(top: 10.0, left: 0.0, bottom: 10.0, right: 0.0),
+                    leftIcon: .custom(AnyComponentWithIdentity(id: 0, component: AnyComponent(
+                        Image(image: self.cachedSubscribersIcon, size: CGSize(width: 30.0, height: 30.0))
+                    )), false),
+                    accessory: .toggle(ListActionItemComponent.Toggle(style: .regular, isOn: self.restrictToSubscribers, action: { [weak self] _ in
+                        guard let self else {
+                            return
+                        }
+                        self.restrictToSubscribers = !self.restrictToSubscribers
+                        self.state?.updated(transition: .spring(duration: 0.4))
+                    })),
+                    action: nil
+                ))))
+                
+                pollSettingsSectionItems.append(AnyComponentWithIdentity(id: "limitCountry", component: AnyComponent(ListActionItemComponent(
+                    theme: theme,
+                    style: .glass,
+                    title: AnyComponent(VStack([
+                        AnyComponentWithIdentity(id: AnyHashable(0), component: AnyComponent(MultilineTextComponent(
+                            text: .plain(NSAttributedString(
+                                string: environment.strings.CreatePoll_LimitCountry,
+                                font: Font.regular(presentationData.listsFontSize.baseDisplaySize),
+                                textColor: theme.list.itemPrimaryTextColor
+                            )),
+                            maximumNumberOfLines: 2
+                        ))),
+                        AnyComponentWithIdentity(id: AnyHashable(1), component: AnyComponent(MultilineTextComponent(
+                            text: .plain(NSAttributedString(
+                                string: environment.strings.CreatePoll_LimitCountryInfo,
+                                font: Font.regular(presentationData.listsFontSize.baseDisplaySize * 13.0 / 17.0),
+                                textColor: theme.list.itemSecondaryTextColor
+                            )),
+                            maximumNumberOfLines: 3,
+                            lineSpacing: 0.1
+                        )))
+                    ], alignment: .left, spacing: 4.0)),
+                    verticalAlignment: .middle,
+                    contentInsets: UIEdgeInsets(top: 10.0, left: 0.0, bottom: 10.0, right: 0.0),
+                    leftIcon: .custom(AnyComponentWithIdentity(id: 0, component: AnyComponent(
+                        Image(image: self.cachedCountryIcon, size: CGSize(width: 30.0, height: 30.0))
+                    )), false),
+                    accessory: .toggle(ListActionItemComponent.Toggle(style: .regular, isOn: self.limitByCountry, action: { [weak self] _ in
+                        guard let self else {
+                            return
+                        }
+                        self.limitByCountry = !self.limitByCountry
+                        self.state?.updated(transition: .spring(duration: 0.4))
+                        
+                        if self.limitByCountry {
+                            if !self.didSetupCountries {
+                                let countriesConfiguration = component.context.currentCountriesConfiguration.with { $0 }
+                                AuthorizationSequenceCountrySelectionController.setupCountryCodes(countries: countriesConfiguration.countries, codesByPrefix: countriesConfiguration.countriesByPrefix)
+                            }
+                            self.scrollView.setContentOffset(CGPoint(x: 0.0, y: self.scrollView.contentSize.height - self.scrollView.bounds.size.height), animated: true)
+                        }
+                    })),
+                    action: nil
+                ))))
+                
+                if self.limitByCountry {
+                    var value: String
+                    if self.limitToCountries.count > 1 {
+                        value = environment.strings.CreatePoll_AllowedCountries_Countries(Int32(self.limitToCountries.count))
+                    } else if self.limitToCountries.count == 1, let countryCode = self.limitToCountries.first {
+                        if countryCode == "FT" {
+                            value = "Fragment"
+                        } else {
+                            value = self.currentLocale?.localizedString(forRegionCode: countryCode) ?? countryCode
+                        }
+                    } else {
+                        value = ""
+                    }
+                    
+                    pollSettingsSectionItems.append(AnyComponentWithIdentity(id: "countries", component: AnyComponent(ListActionItemComponent(
+                        theme: theme,
+                        style: .glass,
+                        title: AnyComponent(VStack([
+                            AnyComponentWithIdentity(id: AnyHashable(0), component: AnyComponent(MultilineTextComponent(
+                                text: .plain(NSAttributedString(
+                                    string: environment.strings.CreatePoll_AllowedCountries,
+                                    font: Font.regular(presentationData.listsFontSize.baseDisplaySize),
+                                    textColor: theme.list.itemPrimaryTextColor
+                                )),
+                                maximumNumberOfLines: 2
+                            )))
+                        ], alignment: .left, spacing: 4.0)),
+                        verticalAlignment: .middle,
+                        leftIcon: .custom(AnyComponentWithIdentity(id: 0, component: AnyComponent(
+                            Image(image: self.cachedEmptyIcon, size: CGSize(width: 30.0, height: 30.0))
+                        )), false),
+                        icon: ListActionItemComponent.Icon(component: AnyComponentWithIdentity(id: 0, component: AnyComponent(MultilineTextComponent(
+                            text: .plain(NSAttributedString(
+                                string: value,
+                                font: Font.regular(presentationData.listsFontSize.baseDisplaySize),
+                                textColor: environment.theme.list.itemSecondaryTextColor
+                            )),
+                            maximumNumberOfLines: 1
+                        )))),
+                        accessory: .arrow,
+                        action: { [weak self] view in
+                            guard let self else {
+                                return
+                            }
+                            self.deactivateInput()
+                            self.openCountriesSelection()
+                        }
+                    ))))
+                }
+            }
                     
             let pollSettingsSectionSize = self.pollSettingsSection.update(
                 transition: transition,
@@ -2309,7 +2509,6 @@ final class ComposePollScreenComponent: Component {
                         AnyComponentWithIdentity(id: 0, component: AnyComponent(ListComposePollOptionComponent(
                             externalState: self.quizAnswerTextInputState,
                             context: component.context,
-                            style: .glass,
                             theme: theme,
                             strings: environment.strings,
                             resetText: self.resetQuizAnswerText.flatMap { resetText in
@@ -2581,31 +2780,6 @@ final class ComposePollScreenComponent: Component {
                 self.scrollView.verticalScrollIndicatorInsets = scrollInsets
             }
             
-            let title = self.isQuiz ? environment.strings.CreatePoll_QuizTitle : environment.strings.CreatePoll_Title
-            let titleSize = self.title.update(
-                transition: .immediate,
-                component: AnyComponent(
-                    MultilineTextComponent(
-                        text: .plain(
-                            NSAttributedString(
-                                string: title,
-                                font: Font.semibold(17.0),
-                                textColor: environment.theme.rootController.navigationBar.primaryTextColor
-                            )
-                        )
-                    )
-                ),
-                environment: {},
-                containerSize: CGSize(width: 200.0, height: 40.0)
-            )
-            let titleFrame = CGRect(origin: CGPoint(x: floorToScreenPixels((availableSize.width - titleSize.width) / 2.0), y: floorToScreenPixels((environment.navigationHeight - titleSize.height) / 2.0) + 3.0), size: titleSize)
-            if let titleView = self.title.view {
-                if titleView.superview == nil {
-                    component.overNavigationContainer.addSubview(titleView)
-                }
-                transition.setFrame(view: titleView, frame: titleFrame)
-            }
-            
             let barButtonSize = CGSize(width: 44.0, height: 44.0)
             let cancelButtonSize = self.cancelButton.update(
                 transition: transition,
@@ -2640,11 +2814,8 @@ final class ComposePollScreenComponent: Component {
             
             let validatedInput = self.validatedInput()
             var isValid = false
-            var isUploading = false
             if case .ready = validatedInput {
                 isValid = true
-            } else if case .isUploading = validatedInput {
-                isUploading = true
             }
             
             let doneButtonSize = self.doneButton.update(
@@ -2654,7 +2825,7 @@ final class ComposePollScreenComponent: Component {
                     backgroundColor: isValid ? environment.theme.list.itemCheckColors.fillColor : environment.theme.list.itemCheckColors.fillColor.desaturated().withMultipliedAlpha(0.5),
                     isDark: environment.theme.overallDarkAppearance,
                     state: .tintedGlass,
-                    isEnabled: isValid || isUploading,
+                    isEnabled: true,
                     component: AnyComponentWithIdentity(id: "done", component: AnyComponent(
                         Text(text: environment.strings.MediaPicker_Send, font: Font.semibold(17.0), color: environment.theme.list.itemCheckColors.foregroundColor)
                     )),
@@ -2674,6 +2845,35 @@ final class ComposePollScreenComponent: Component {
                     component.overNavigationContainer.addSubview(doneButtonView)
                 }
                 transition.setFrame(view: doneButtonView, frame: doneButtonFrame)
+            }
+            
+            let title = self.isQuiz ? environment.strings.CreatePoll_QuizTitle : environment.strings.CreatePoll_Title
+            let titleSize = self.title.update(
+                transition: .immediate,
+                component: AnyComponent(
+                    MultilineTextComponent(
+                        text: .plain(
+                            NSAttributedString(
+                                string: title,
+                                font: Font.semibold(17.0),
+                                textColor: environment.theme.rootController.navigationBar.primaryTextColor
+                            )
+                        )
+                    )
+                ),
+                environment: {},
+                containerSize: CGSize(width: 200.0, height: 40.0)
+            )
+            var titleFrame = CGRect(origin: CGPoint(x: floorToScreenPixels((availableSize.width - titleSize.width) / 2.0), y: floorToScreenPixels((environment.navigationHeight - titleSize.height) / 2.0) + 3.0), size: titleSize)
+            if titleFrame.maxX > doneButtonFrame.minX - 16.0 {
+                titleFrame.origin.x = cancelButtonFrame.maxX + floorToScreenPixels((doneButtonFrame.minX - cancelButtonFrame.maxX) - titleSize.width) / 2.0
+            }
+                
+            if let titleView = self.title.view {
+                if titleView.superview == nil {
+                    component.overNavigationContainer.addSubview(titleView)
+                }
+                transition.setFrame(view: titleView, frame: titleFrame)
             }
             
             if let recenterOnTag {
@@ -2884,22 +3084,49 @@ public class ComposePollScreen: ViewControllerComponentContainer, AttachmentCont
         guard let componentView = self.node.hostView.componentView as? ComposePollScreenComponent.View else {
             return
         }
+        let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
         let validatedInput = componentView.validatedInput()
-        if case let .ready(poll) = validatedInput {
+       
+        let title: String?
+        let text: String
+        
+        switch validatedInput {
+        case let .ready(poll):
             self.completion(poll)
             self.dismiss()
-        } else if case .isUploading = validatedInput {
-            let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
-            let controller = UndoOverlayController(
-                presentationData: presentationData,
-                content: .info(title: presentationData.strings.CreatePoll_MediaUploading_Title, text: presentationData.strings.CreatePoll_MediaUploading_Text, timeout: nil, customUndoText: nil),
-                position: .top,
-                action: { _ in
-                    return false
-                }
-            )
-            self.present(controller, in: .current)
+            return
+        case .isUploading:
+            title = presentationData.strings.CreatePoll_MediaUploading_Title
+            text = presentationData.strings.CreatePoll_MediaUploading_Text
+        case .questionNeeded:
+            title = nil
+            text = presentationData.strings.CreatePoll_QuestionNeeded
+        case .optionsNeeded:
+            title = nil
+            text = componentView.isQuiz ? presentationData.strings.CreatePoll_OptionsNeeded : presentationData.strings.CreatePoll_OptionsNeededOne
+        case .quizCorrectOptionNeeded:
+            title = nil
+            if componentView.effectiveIsMultiAnswer {
+                text = presentationData.strings.CreatePoll_QuizCorrectOptionNeededMultiple
+            } else {
+                text = presentationData.strings.CreatePoll_QuizCorrectOptionNeeded
+            }
+        case .countriesNeeded:
+            title = nil
+            text = presentationData.strings.CreatePoll_QuizCountryNeeded
         }
+        
+        let controller = UndoOverlayController(
+            presentationData: presentationData,
+            content: .info(title: title, text: text, timeout: nil, customUndoText: nil),
+            position: .bottom,
+            action: { _ in
+                return false
+            }
+        )
+        self.present(controller, in: .current)
+        
+        HapticFeedback().error()
     }
     
     override public func containerLayoutUpdated(_ layout: ContainerViewLayout, transition: ContainedViewLayoutTransition) {

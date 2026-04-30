@@ -35,6 +35,7 @@ import ChatMessageDateAndStatusNode
 import ChatMessageBubbleContentNode
 import ChatHistoryEntry
 import ChatMessageTextBubbleContentNode
+import ChatMessageRichDataBubbleContentNode
 import ChatMessageItemCommon
 import ChatMessageReplyInfoNode
 import ChatMessageCallBubbleContentNode
@@ -329,7 +330,7 @@ private func contentNodeMessagesAndClassesForItem(_ item: ChatMessageItem) -> ([
             messageText = updatingMedia.text
         }
                 
-        if !messageText.isEmpty || isUnsupportedMedia || isStoryWithText {
+        if !messageText.isEmpty || message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) || isUnsupportedMedia || isStoryWithText {
             if !skipText {
                 if case .group = item.content, !isFile {
                     messageWithCaptionToAdd = (message, itemAttributes)
@@ -382,7 +383,11 @@ private func contentNodeMessagesAndClassesForItem(_ item: ChatMessageItem) -> ([
                     if let attribute = message.attributes.first(where: { $0 is WebpagePreviewMessageAttribute }) as? WebpagePreviewMessageAttribute, attribute.leadingPreview {
                         result.insert((message, ChatMessageWebpageBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)), at: addedPriceInfo ? 1 : 0)
                     } else {
-                        result.append((message, ChatMessageWebpageBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)))
+                        if content.instantPage != nil && item.context.sharedContext.immediateExperimentalUISettings.debugRichText {
+                            result.append((message, ChatMessageRichDataBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)))
+                        } else {
+                            result.append((message, ChatMessageWebpageBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)))
+                        }
                     }
                     needReactions = false
                 }
@@ -1366,8 +1371,11 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             if let action = strongSelf.gestureRecognized(gesture: .longTap, location: point, recognizer: recognizer) {
                 switch action {
                 case let .action(f):
-                    f.action()
-                    recognizer.cancel()
+                    if let actionWithLongTapRecognizer = f.actionWithLongTapRecognizer {
+                        actionWithLongTapRecognizer(recognizer)
+                    } else {
+                        f.action()
+                    }
                 case let .optionalAction(f):
                     f()
                     recognizer.cancel()
@@ -1577,6 +1585,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         
         let fontSize = floor(item.presentationData.fontSize.baseDisplaySize * 14.0 / 17.0)
         let nameFont = Font.semibold(fontSize)
+        let regularFont = Font.regular(fontSize)
 
         let inlineBotPrefixFont = Font.regular(fontSize - 1.0)
         let boostBadgeFont = Font.regular(fontSize - 1.0)
@@ -1616,6 +1625,12 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         
         var allowFullWidth = false
         let chatLocationPeerId: PeerId = item.chatLocation.peerId ?? item.content.firstMessage.id.peerId
+        
+        var isInlinePage = false
+        if item.context.sharedContext.immediateExperimentalUISettings.debugRichText, let webpage = item.message.media.first(where: { $0 is TelegramMediaWebpage }) as? TelegramMediaWebpage, case let .Loaded(content) = webpage.content, content.instantPage != nil {
+            allowFullWidth = true
+            isInlinePage = true
+        }
                 
         do {
             let peerId = chatLocationPeerId
@@ -1656,6 +1671,10 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                 ignoreForward = true
                 effectiveAuthor = author
                 displayAuthorInfo = !mergedTop.merged && incoming
+            } else if let _ = item.content.firstMessage.guestChatAttribute {
+                effectiveAuthor = firstMessage.author
+                displayAuthorInfo = !mergedTop.merged && incoming
+                hasAvatar = true
             } else {
                 effectiveAuthor = firstMessage.author
                 
@@ -1758,9 +1777,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         if let forwardInfo = item.content.firstMessage.forwardInfo, forwardInfo.source == nil, forwardInfo.author?.id.namespace == Namespaces.Peer.CloudUser {
             for media in item.content.firstMessage.media {
                 if let file = media as? TelegramMediaFile {
-                    if file.isMusic {
-                        ignoreForward = true
-                    } else if file.isInstantVideo {
+                    if file.isInstantVideo {
                         isInstantVideo = true
                     }
                     break
@@ -1882,6 +1899,10 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         if let subject = item.associatedData.subject, case .messageOptions = subject {
             needsShareButton = false
         }
+        
+        if isInlinePage {
+            needsShareButton = false
+        }
                         
         var tmpWidth: CGFloat
         if allowFullWidth {
@@ -1889,7 +1910,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             if (needsShareButton && !isSidePanelOpen) || isAd {
                 tmpWidth -= 45.0
             } else {
-                tmpWidth -= 4.0
+                tmpWidth -= 3.0
             }
         } else {
             tmpWidth = layoutConstants.bubble.maximumWidthFill.widthFor(baseWidth)
@@ -2006,6 +2027,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                 break
         }
         
+        var guestChatViaFromNameString: String?
         var inlineBotNameString: String?
         var replyMessage: Message?
         var replyForward: QuotedReplyMessageAttribute?
@@ -2016,7 +2038,11 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         var authorNameColor: UIColor?
         
         for attribute in firstMessage.attributes {
-            if let attribute = attribute as? InlineBotMessageAttribute {
+            if let attribute = attribute as? GuestChatMessageAttribute {
+                if let peer = firstMessage.peers[attribute.peerId] {
+                    guestChatViaFromNameString = EnginePeer(peer).compactDisplayTitle
+                }
+            } else if let attribute = attribute as? InlineBotMessageAttribute {
                 if let peerId = attribute.peerId, let bot = firstMessage.peers[peerId] as? TelegramUser {
                     inlineBotNameString = bot.addressName
                 } else {
@@ -2251,7 +2277,11 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             bubbleReactions = ReactionsMessageAttribute(canViewList: false, isTags: false, reactions: [], recentPeers: [], topPeers: [])
         }
         if !bubbleReactions.reactions.isEmpty && !item.presentationData.isPreview {
-            bottomNodeMergeStatus = .Both
+            if incoming {
+                bottomNodeMergeStatus = .Both
+            } else {
+                bottomNodeMergeStatus = .Right
+            }
         }
         
         var currentCredibilityIcon: (EmojiStatusComponent.Content, UIColor?)?
@@ -2393,6 +2423,9 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         var displayHeader = false
         if initialDisplayHeader {
             if authorNameString != nil {
+                displayHeader = true
+            }
+            if guestChatViaFromNameString != nil {
                 displayHeader = true
             }
             if inlineBotNameString != nil {
@@ -2603,14 +2636,14 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         switch authorRank {
                         case let .creator(rank):
                             if let rank, !rank.isEmpty {
-                                string = rank.trimmingEmojis
+                                string = rank
                             } else {
                                 string = item.presentationData.strings.Conversation_Owner
                             }
                             rankBadgeColor = UIColor(rgb: 0x956ac8)
                         case let .admin(rank):
                             if let rank, !rank.isEmpty {
-                                string = rank.trimmingEmojis
+                                string = rank
                             } else {
                                 string = item.presentationData.strings.Conversation_Admin
                             }
@@ -2621,7 +2654,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                                     string = item.presentationData.strings.Chat_TagPlaceholder
                                     defaultRankColor = defaultRankColor.withMultipliedAlpha(0.5)
                                 } else {
-                                    string = rank.trimmingEmojis
+                                    string = rank
                                 }
                             } else {
                                 string = ""
@@ -2641,6 +2674,13 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                     let bodyAttributes = MarkdownAttributeSet(font: nameFont, textColor: inlineBotNameColor)
                     let boldAttributes = MarkdownAttributeSet(font: inlineBotPrefixFont, textColor: inlineBotNameColor)
                     let botString = addAttributesToStringWithRanges(item.presentationData.strings.Conversation_MessageViaUser("@\(inlineBotNameString)")._tuple, body: bodyAttributes, argumentAttributes: [0: boldAttributes])
+                    mutableString.append(botString)
+                    attributedString = mutableString
+                    viaSuffix = botString
+                } else if let authorNameString = authorNameString, let authorNameColor = authorNameColor, let guestChatViaFromNameString = guestChatViaFromNameString {
+                    let mutableString = NSMutableAttributedString(string: "\(authorNameString) ", attributes: [NSAttributedString.Key.font: nameFont, NSAttributedString.Key.foregroundColor: authorNameColor])
+                    let bodyAttributes = MarkdownAttributeSet(font: regularFont, textColor: authorNameColor)
+                    let botString = addAttributesToStringWithRanges(item.presentationData.strings.Conversation_MessageGuestChatForUser(guestChatViaFromNameString)._tuple, body: bodyAttributes, argumentAttributes: [:])
                     mutableString.append(botString)
                     attributedString = mutableString
                     viaSuffix = botString
@@ -4776,12 +4816,12 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         
                         strongSelf.internalUpdateLayout()
                     }
-                    contentNode.requestFullUpdate = { [weak strongSelf] in
+                    contentNode.requestFullUpdate = { [weak strongSelf] customTransition in
                         guard let strongSelf, let item = strongSelf.item else {
                             return
                         }
                         
-                        item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+                        item.controllerInteraction.requestMessageUpdate(item.message.id, false, customTransition)
                     }
                 }
             }
@@ -5596,7 +5636,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                                         }
                                         if attribute.isQuote, !replyInfoNode.isQuoteExpanded {
                                             replyInfoNode.isQuoteExpanded = true
-                                            item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+                                            item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
                                             return
                                         }
                                         var progress: Promise<Bool>?
@@ -5628,7 +5668,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                                     }
                                     if attribute.isQuote, !replyInfoNode.isQuoteExpanded {
                                         replyInfoNode.isQuoteExpanded = true
-                                        item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+                                        item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
                                         return
                                     }
                                     
@@ -5949,55 +5989,75 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                             break
                         case let .url(url):
                             if tapAction.hasLongTapAction {
-                                return .action(InternalBubbleTapAction.Action({ [weak self] in
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
                                     let cleanUrl = url.url.replacingOccurrences(of: "mailto:", with: "")
                                     guard let self, let contentNode = self.contextContentNodeForLink(cleanUrl, rects: rects) else {
                                         return
                                     }
-                                    item.controllerInteraction.longTap(.url(url.url), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
+                                    item.controllerInteraction.longTap(.url(url.url), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
                                 }, contextMenuOnLongPress: false))
                             } else {
                                 disableDefaultPressAnimation = true
                             }
                         case let .phone(number):
-                            return .action(InternalBubbleTapAction.Action({ [weak self] in
-                                guard let self, let contentNode = self.contextContentNodeForLink(number, rects: rects) else {
-                                    return
-                                }
-                                item.controllerInteraction.longTap(.phone(number), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                            }, contextMenuOnLongPress: !tapAction.hasLongTapAction))
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    guard let self, let contentNode = self.contextContentNodeForLink(number, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.phone(number), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
                         case let .peerMention(peerId, mention, _):
-                            return .action(InternalBubbleTapAction.Action { [weak self] in
-                                guard let self, let contentNode = self.contextContentNodeForLink(mention, rects: rects) else {
-                                    return
-                                }
-                                item.controllerInteraction.longTap(.peerMention(peerId, mention), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                            })
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    guard let self, let contentNode = self.contextContentNodeForLink(mention, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.peerMention(peerId, mention), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
                         case let .textMention(name):
-                            return .action(InternalBubbleTapAction.Action { [weak self] in
-                                guard let self, let contentNode = self.contextContentNodeForLink(name, rects: rects) else {
-                                    return
-                                }
-                                item.controllerInteraction.longTap(.mention(name), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                            })
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    guard let self, let contentNode = self.contextContentNodeForLink(name, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.mention(name), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
                         case let .botCommand(command):
-                            return .action(InternalBubbleTapAction.Action { [weak self] in
-                                guard let self, let contentNode = self.contextContentNodeForLink(command, rects: rects) else {
-                                    return
-                                }
-                                item.controllerInteraction.longTap(.command(command), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                            })
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    guard let self, let contentNode = self.contextContentNodeForLink(command, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.command(command), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
                         case let .hashtag(peerName, hashtag):
                             var fullHashtag = hashtag
                             if let peerName {
                                 fullHashtag += "@\(peerName)"
                             }
-                            return .action(InternalBubbleTapAction.Action { [weak self] in
-                                guard let self, let contentNode = self.contextContentNodeForLink(fullHashtag, rects: rects) else {
-                                    return
-                                }
-                                item.controllerInteraction.longTap(.hashtag(fullHashtag), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                            })
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    guard let self, let contentNode = self.contextContentNodeForLink(fullHashtag, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.hashtag(fullHashtag), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
                         case .instantPage:
                             break
                         case .wallpaper:
@@ -6011,21 +6071,29 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         case .openMessage:
                             break
                         case let .timecode(timecode, text):
-                            if let mediaMessage = mediaMessage {
-                                return .action(InternalBubbleTapAction.Action { [weak self] in
-                                    guard let self, let contentNode = self.contextContentNodeForLink(text, rects: rects) else {
-                                        return
-                                    }
-                                    item.controllerInteraction.longTap(.timecode(timecode, text), ChatControllerInteraction.LongTapParams(message: mediaMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                                })
+                            if let mediaMessage {
+                                if tapAction.hasLongTapAction {
+                                    return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                        guard let self, let contentNode = self.contextContentNodeForLink(text, rects: rects) else {
+                                            return
+                                        }
+                                        item.controllerInteraction.longTap(.timecode(timecode, text), ChatControllerInteraction.LongTapParams(message: mediaMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                    }, contextMenuOnLongPress: false))
+                                } else {
+                                    disableDefaultPressAnimation = true
+                                }
                             }
                         case let .bankCard(number):
-                            return .action(InternalBubbleTapAction.Action { [weak self] in
-                                guard let self, let contentNode = self.contextContentNodeForLink(number, rects: rects) else {
-                                    return
-                                }
-                                item.controllerInteraction.longTap(.bankCard(number), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                            })
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    guard let self, let contentNode = self.contextContentNodeForLink(number, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.bankCard(number), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
                         case .tooltip:
                             break
                         case .openPollResults:
@@ -6037,13 +6105,17 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         case .customEmoji:
                             break
                         case let .date(date, _):
-                            return .action(InternalBubbleTapAction.Action { [weak self] in
-                                let fullDate = stringForEntityFormattedDate(timestamp: date, format: .full(timeFormat: .short, dateFormat: .long, dayOfWeek: false), strings: item.presentationData.strings, dateTimeFormat: item.presentationData.dateTimeFormat)
-                                guard let self, let contentNode = self.contextContentNodeForLink(fullDate, rects: rects) else {
-                                    return
-                                }
-                                item.controllerInteraction.longTap(.date(date), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?()))
-                            })
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    let fullDate = stringForEntityFormattedDate(timestamp: date, format: .full(timeFormat: .short, dateFormat: .long, dayOfWeek: false), strings: item.presentationData.strings, dateTimeFormat: item.presentationData.dateTimeFormat)
+                                    guard let self, let contentNode = self.contextContentNodeForLink(fullDate, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.date(date), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
                         case .custom:
                             break
                         }
@@ -6206,7 +6278,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         if strongSelf.backgroundNode.supernode != nil, let backgroundView = strongSelf.backgroundNode.view.snapshotContentTree(unhide: true) {
                             let backgroundContainer = UIView()
                             
-                            let backdropView = strongSelf.backgroundWallpaperNode.view.snapshotContentTree(unhide: true)
+                            let backdropView = strongSelf.backgroundWallpaperNode.view.snapshotContentTree(unhide: true, keepPortals: true)
                             if let backdropView = backdropView {
                                 let backdropFrame = strongSelf.backgroundWallpaperNode.layer.convert(strongSelf.backgroundWallpaperNode.bounds, to: strongSelf.backgroundNode.layer)
                                 backdropView.frame = backdropFrame
@@ -7237,10 +7309,10 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         
         if item.controllerInteraction.summarizedMessageIds.contains(item.message.id) {
             item.controllerInteraction.summarizedMessageIds.remove(item.message.id)
-            let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+            let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
         } else {
             item.controllerInteraction.summarizedMessageIds.insert(item.message.id)
-            let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+            let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
             
             let translateToLanguage = item.associatedData.translateToLanguage
             var requestSummary = true
@@ -7255,7 +7327,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                 |> deliverOnMainQueue).start(error: { error in
                     if case .limitExceededPremium = error, let parentController = item.controllerInteraction.navigationController()?.topViewController as? ViewController {
                         item.controllerInteraction.summarizedMessageIds.remove(item.message.id)
-                        let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+                        let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
                         let controller = premiumAlertController(
                             context: item.context,
                             parentController: parentController,
@@ -7295,7 +7367,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         }
         
         for contentNode in self.contentNodes {
-            if contentNode is ChatMessageMediaBubbleContentNode || contentNode is ChatMessageGiftBubbleContentNode || contentNode is ChatMessageWebpageBubbleContentNode || contentNode is ChatMessageInvoiceBubbleContentNode || contentNode is ChatMessageGameBubbleContentNode || contentNode is ChatMessageInstantVideoBubbleContentNode {
+            if contentNode is ChatMessageMediaBubbleContentNode || contentNode is ChatMessageGiftBubbleContentNode || contentNode is ChatMessageWebpageBubbleContentNode || contentNode is ChatMessageInvoiceBubbleContentNode || contentNode is ChatMessageGameBubbleContentNode || contentNode is ChatMessageInstantVideoBubbleContentNode || contentNode is ChatMessageRichDataBubbleContentNode {
                 contentNode.visibility = mapVisibility(effectiveMediaVisibility, boundsSize: self.bounds.size, insets: self.insets, to: contentNode)
             } else {
                 contentNode.visibility = mapVisibility(effectiveVisibility, boundsSize: self.bounds.size, insets: self.insets, to: contentNode)

@@ -7,7 +7,6 @@ import TelegramPresentationData
 import ItemListUI
 import PresentationDataUtils
 import AccountContext
-import ShareController
 import UndoUI
 import InviteLinksUI
 import TextFormat
@@ -469,10 +468,17 @@ public func usernameSetupController(context: AccountContext, mode: UsernameSetup
             }))
         }
     }, shareLink: {
-        let _ = (context.account.postbox.loadedPeerWithId(peerId)
+        let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
+        |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+            if let peer {
+                return .single(peer)
+            } else {
+                return .never()
+            }
+        }
         |> take(1)
         |> deliverOnMainQueue).start(next: { peer in
-            if let user = peer as? TelegramUser, user.botInfo != nil {
+            if case let .user(user) = peer, user.botInfo != nil {
                 context.sharedContext.openExternalUrl(context: context, urlContext: .generic, url: "https://fragment.com/", forceExternal: true, presentationData: context.sharedContext.currentPresentationData.with { $0 }, navigationController: nil, dismissInput: {})
             } else {
                 var currentAddressName: String = peer.addressName ?? ""
@@ -484,11 +490,10 @@ public func usernameSetupController(context: AccountContext, mode: UsernameSetup
                 }
                 if !currentAddressName.isEmpty {
                     dismissInputImpl?()
-                    let shareController = ShareController(context: context, subject: .url("https://t.me/\(currentAddressName)"))
-                    shareController.actionCompleted = {
+                    let shareController = context.sharedContext.makeShareController(context: context, params: ShareControllerParams(subject: .url("https://t.me/\(currentAddressName)"), actionCompleted: {
                         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
                         presentControllerImpl?(UndoOverlayController(presentationData: presentationData, content: .linkCopied(title: nil, text: presentationData.strings.Conversation_LinkCopied), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), nil)
-                    }
+                    }))
                     presentControllerImpl?(shareController, nil)
                 }
             }

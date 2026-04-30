@@ -152,11 +152,16 @@ public final class ChatMessageWebpageBubbleContentNode: ChatMessageBubbleContent
         }
         self.contentNode.requestUpdateLayout = { [weak self] in
             if let strongSelf = self, let item = strongSelf.item {
-                let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+                let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
             }
         }
         self.contentNode.defaultContentAction = { [weak self] in
             guard let self, let item = self.item, let webPage = self.webPage, case let .Loaded(content) = webPage.content else {
+                return ChatMessageBubbleContentTapAction(content: .none)
+            }
+            
+            let incoming = item.message.effectivelyIncoming(item.context.account.peerId)
+            if incoming && item.associatedData.isSuspiciousPeer {
                 return ChatMessageBubbleContentTapAction(content: .none)
             }
             
@@ -265,19 +270,19 @@ public final class ChatMessageWebpageBubbleContentNode: ChatMessageBubbleContent
                     if case .full = automaticDownload {
                         automaticPlayback = true
                     } else {
-                        automaticPlayback = item.context.account.postbox.mediaBox.completedResourcePath(file.resource) != nil
+                        automaticPlayback = item.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(file.resource.id)) != nil
                     }
                 }
                 
                 switch type {
-                    case .instagram, .twitter:
-                        if automaticPlayback {
-                            mainMedia = webpage.story ?? webpage.file ?? webpage.image
-                        } else {
-                            mainMedia = webpage.story ?? webpage.image ?? webpage.file
-                        }
-                    default:
+                case .instagram, .twitter:
+                    if automaticPlayback {
                         mainMedia = webpage.story ?? webpage.file ?? webpage.image
+                    } else {
+                        mainMedia = webpage.story ?? webpage.image ?? webpage.file
+                    }
+                default:
+                    mainMedia = webpage.story ?? webpage.file ?? webpage.image
                 }
                 
                 let themeMimeType = "application/x-tgtheme-ios"
@@ -517,6 +522,16 @@ public final class ChatMessageWebpageBubbleContentNode: ChatMessageBubbleContent
                             actionTitle = item.presentationData.strings.Chat_ContactChannel
                         case "telegram_newbot":
                             actionTitle = item.presentationData.strings.Chat_CreateBotLink
+                        case "telegram_aicomposetone":
+                            actionTitle = "VIEW STYLE"
+                        
+                            for attribute in webpage.attributes {
+                                if case let .aiTextStyle(aiTextStyle) = attribute {
+                                    if let file = item.message.associatedMedia[MediaId(namespace: Namespaces.Media.CloudFile, id: aiTextStyle.emojiFileId)] {
+                                        mediaAndFlags = ([file], [.preferMediaInline])
+                                    }
+                                }
+                            }
                         default:
                             break
                     }

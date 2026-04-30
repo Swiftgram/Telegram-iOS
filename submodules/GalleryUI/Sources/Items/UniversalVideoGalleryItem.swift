@@ -3288,7 +3288,6 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
         guard let (message, _, _) = self.contentInfo() else {
             return false
         }
-
         var canDelete = false
         if let peer = message.peers[message.id.peerId] {
             if peer is TelegramUser || peer is TelegramSecretChat {
@@ -3305,6 +3304,9 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                 canDelete = false
             }
         } else {
+            canDelete = false
+        }
+        if let _ = message.media.first(where: { $0 is TelegramMediaPoll }) {
             canDelete = false
         }
         return canDelete
@@ -3702,7 +3704,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                             allFiles.append(contentsOf: qualitySet.qualityFiles.values)
                             
                             let qualitySignals = allFiles.map { file -> Signal<(fileId: MediaId, isCached: Bool), NoError> in
-                                return self.context.account.postbox.mediaBox.resourceStatus(file.media.resource)
+                                return self.context.engine.resources.status(resource: EngineMediaResource(file.media.resource))
                                 |> take(1)
                                 |> map { status -> (fileId: MediaId, isCached: Bool) in
                                     return (file.media.fileId, status == .Local)
@@ -3759,7 +3761,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                                         let stringSaved = self.presentationData.strings.Story_TooltipSaved
                                         
                                         let saveFileReference: AnyMediaReference = qualityFile.abstract
-                                        let saveSignal = SaveToCameraRoll.saveToCameraRoll(context: self.context, postbox: self.context.account.postbox, userLocation: .peer(message.id.peerId), mediaReference: saveFileReference)
+                                        let saveSignal = SaveToCameraRoll.saveToCameraRoll(context: self.context, userLocation: .peer(message.id.peerId), mediaReference: saveFileReference)
                                         
                                         let disposable = (saveSignal
                                         |> deliverOnMainQueue).start(next: { [weak saveScreen] progress in
@@ -3805,7 +3807,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                             
                             switch self.fetchStatus {
                             case .Local:
-                                let _ = (SaveToCameraRoll.saveToCameraRoll(context: self.context, postbox: self.context.account.postbox, userLocation: .peer(message.id.peerId), mediaReference: .message(message: MessageReference(message), media: file))
+                                let _ = (SaveToCameraRoll.saveToCameraRoll(context: self.context, userLocation: .peer(message.id.peerId), mediaReference: .message(message: MessageReference(message), media: file))
                                 |> deliverOnMainQueue).start(completed: { [weak self] in
                                     guard let self else {
                                         return
@@ -3855,10 +3857,14 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                 
                 if let (message, _, _) = strongSelf.contentInfo(), let image = message.media.first(where: { $0 is TelegramMediaImage }) as? TelegramMediaImage, !message.isCopyProtected() && !item.peerIsCopyProtected && message.paidContent == nil {
                     let context = strongSelf.context
+                    var videoReference: AnyMediaReference?
+                    if let video = image.video {
+                        videoReference = .message(message: MessageReference(message), media: video)
+                    }
                     items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.Gallery_SaveImage, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Download"), color: theme.actionSheet.primaryTextColor) }, action: { [weak self] _, f in
                         f(.default)
                         
-                        let _ = (SaveToCameraRoll.saveToCameraRoll(context: context, postbox: context.account.postbox, userLocation: .peer(message.id.peerId), mediaReference: .message(message: MessageReference(message), media: image))
+                        let _ = (SaveToCameraRoll.saveToCameraRoll(context: context, userLocation: .peer(message.id.peerId), mediaReference: .message(message: MessageReference(message), media: image), video: videoReference)
                         |> deliverOnMainQueue).start(completed: { [weak self] in
                             guard let strongSelf = self else {
                                 return
@@ -3866,7 +3872,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                             guard let controller = strongSelf.galleryController() else {
                                 return
                             }
-                            controller.present(UndoOverlayController(presentationData: strongSelf.presentationData, content: .mediaSaved(text: strongSelf.presentationData.strings.Gallery_ImageSaved), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .window(.root))
+                            controller.present(UndoOverlayController(presentationData: strongSelf.presentationData, content: .mediaSaved(text: strongSelf.presentationData.strings.Gallery_ImageSaved), elevatedLayout: true, animateInAsReplacement: false, action: { _ in return false }), in: .window(.root))
                         })
                     })))
                 }
@@ -3899,7 +3905,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                     }
                 }
                 
-                if let peer, let (message, _, _) = strongSelf.contentInfo(), canSendMessagesToPeer(peer._asPeer()) {
+                if let peer, let (message, _, _) = strongSelf.contentInfo(), canSendMessagesToPeer(peer) {
                     items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.Conversation_ContextMenuReply, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Reply"), color: theme.contextMenu.primaryColor)}, action: { [weak self] _, f in
                         if let self, let navigationController = self.baseNavigationController() {
                             self.beginCustomDismiss(.simpleAnimation)

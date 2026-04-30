@@ -12,7 +12,6 @@ import AccountContext
 import AppBundle
 import PromptUI
 import SafariServices
-import ShareController
 import UndoUI
 import UrlEscaping
 import PDFKit
@@ -83,7 +82,7 @@ final class BrowserPdfContent: UIView, BrowserContent, UIScrollViewDelegate, PDF
         
         var title = "file"
         var url = ""
-        if let path = self.context.account.postbox.mediaBox.completedResourcePath(file.media.resource) {
+        if let path = self.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(file.media.resource.id)) {
             var updatedPath = path
             if let fileName = file.media.fileName {
                 let tempFile = TempBox.shared.file(path: path, fileName: fileName)
@@ -365,7 +364,7 @@ final class BrowserPdfContent: UIView, BrowserContent, UIScrollViewDelegate, PDF
         let pageIndicatorSize = self.pageIndicator.update(
             transition: .immediate,
             component: AnyComponent(
-                Text(text: "\(self.pageNumber?.0 ?? 1) of \(self.pageNumber?.1 ?? 1)", font: Font.with(size: 15.0, weight: .regular, traits: .monospacedNumbers), color: self.presentationData.theme.list.itemPrimaryTextColor)
+                Text(text: self.presentationData.strings.Items_NOfM("\(self.pageNumber?.0 ?? 1)", "\(self.pageNumber?.1 ?? 1)").string, font: Font.with(size: 15.0, weight: .regular, traits: .monospacedNumbers), color: self.presentationData.theme.list.itemPrimaryTextColor)
             ),
             environment: {},
             containerSize: size
@@ -549,10 +548,9 @@ final class BrowserPdfContent: UIView, BrowserContent, UIScrollViewDelegate, PDF
     
     private func share(url: String) {
         let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
-        let shareController = ShareController(context: self.context, subject: .url(url))
-        shareController.actionCompleted = { [weak self] in
+        let shareController = self.context.sharedContext.makeShareController(context: self.context, params: ShareControllerParams(subject: .url(url), actionCompleted: { [weak self] in
             self?.present(UndoOverlayController(presentationData: presentationData, content: .linkCopied(title: nil, text: presentationData.strings.Conversation_LinkCopied), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), nil)
-        }
+        }))
         self.present(shareController, nil)
     }
     

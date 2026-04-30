@@ -60,6 +60,8 @@ swift_library(
         "//submodules/CounterControllerTitleView",
         "//submodules/TelegramUI/Components/EdgeEffect",
         "//submodules/ICloudResources",
+        "//submodules/CountrySelectionUI",
+        "//submodules/TelegramUI/Components/ShareWithPeersScreen",
     ],
     visibility = [
         "//visibility:public",
