@@ -2589,6 +2589,10 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                     if case .user = itemPeer.chatMainPeer {
                         isUser = true
                     }
+                    var isGuestChatAuthor = false
+                    if case let .user(user) = messages.last?.author, let botInfo = user.botInfo, botInfo.flags.contains(.isGuestChat) {
+                        isGuestChatAuthor = true
+                    }
 
                     var peerText: String?
                     if case .savedMessagesChats = item.chatListLocation {
@@ -2606,14 +2610,14 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                             if let message = messages.last, let forwardInfo = message.forwardInfo, let author = forwardInfo.author {
                                 peerText = EnginePeer(author).compactDisplayTitle
                             }
-                        } else if !isUser {
+                        } else if !isUser || isGuestChatAuthor {
                             if case let .channel(peer) = peer, case .broadcast = peer.info {
                             } else if !displayAsMessage {
                                 if let forwardInfo = message.forwardInfo, forwardInfo.flags.contains(.isImported), let authorSignature = forwardInfo.authorSignature {
                                     peerText = authorSignature
                                 } else {
                                     peerText = author.id == account.peerId ? item.presentationData.strings.DialogList_You : EnginePeer(author).displayTitle(strings: item.presentationData.strings, displayOrder: item.presentationData.nameDisplayOrder)
-                                    authorIsCurrentChat = author.id == peer.id
+                                    authorIsCurrentChat = !isGuestChatAuthor && author.id == peer.id
                                 }
                             }
                         }
