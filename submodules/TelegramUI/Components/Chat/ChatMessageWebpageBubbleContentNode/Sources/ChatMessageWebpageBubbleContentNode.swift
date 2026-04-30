@@ -152,7 +152,7 @@ public final class ChatMessageWebpageBubbleContentNode: ChatMessageBubbleContent
         }
         self.contentNode.requestUpdateLayout = { [weak self] in
             if let strongSelf = self, let item = strongSelf.item {
-                let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+                let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
             }
         }
         self.contentNode.defaultContentAction = { [weak self] in

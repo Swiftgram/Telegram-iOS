@@ -197,7 +197,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
             } else {
                 self.expandedBlockIds.insert(blockId)
             }
-            item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+            item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
         }
         self.textNode.textNode.requestDisplayContentsUnderSpoilers = { [weak self] location in
             guard let self else {
@@ -841,7 +841,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                                     strongSelf.relativeDateTimer = nil
                                 }
                                 strongSelf.relativeDateTimer = (SwiftSignalKit.Timer(timeout: Double(formattedDateUpdatePeriod), repeat: true, completion: { [weak self] in
-                                    self?.requestFullUpdate?()
+                                    self?.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
                                 }, queue: Queue.mainQueue()), formattedDateUpdatePeriod)
                                 strongSelf.relativeDateTimer?.timer.start()
                             } else if let (timer, _) = strongSelf.relativeDateTimer {
@@ -1117,7 +1117,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                         ContainedViewLayoutTransition.animated(duration: 0.2, curve: .easeInOut).updateAlpha(node: statusNode, alpha: 1.0)
                     }
                     
-                    self.requestFullUpdate?()
+                    self.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
                 } else {
                     var requestUpdate = false
                     let glyphCount = textRevealAnimationState.glyphCount(timestamp: timestamp)
@@ -1137,7 +1137,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     }
                     
                     if requestUpdate {
-                        self.requestFullUpdate?()
+                        self.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
                     }
                 }
             }
@@ -1737,7 +1737,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         }
         self.displayContentsUnderSpoilers = (value, location)
         if let item = self.item {
-            item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+            item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
         }
     }
     

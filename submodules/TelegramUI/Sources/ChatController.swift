@@ -4377,7 +4377,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 self.displayPollSolution(solution: solution, sourceNode: sourceNode, isAutomatic: false)
             } else if let messageId = self.controllerInteraction?.currentPollMessageWithTooltip {
                 self.controllerInteraction?.currentPollMessageWithTooltip = nil
-                self.controllerInteraction?.requestMessageUpdate(messageId, false)
+                self.controllerInteraction?.requestMessageUpdate(messageId, false, nil)
             }
         }, displayPsa: { [weak self] type, sourceNode in
             self?.displayPsa(type: type, sourceNode: sourceNode, isAutomatic: false)
@@ -5317,9 +5317,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                     self.present(controller, in: .window(.root))
                 })
             }
-        }, requestMessageUpdate: { [weak self] id, scroll in
+        }, requestMessageUpdate: { [weak self] id, scroll, customTransition in
             if let self {
-                self.chatDisplayNode.historyNode.requestMessageUpdate(id, andScrollToItem: scroll)
+                self.chatDisplayNode.historyNode.requestMessageUpdate(id, andScrollToItem: scroll, customTransition: customTransition)
             }
         }, cancelInteractiveKeyboardGestures: { [weak self] in
             if let self {
@@ -8212,7 +8212,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         
         let messageId = item.message.id
         self.controllerInteraction?.currentPollMessageWithTooltip = messageId
-        self.controllerInteraction?.requestMessageUpdate(messageId, false)
+        self.controllerInteraction?.requestMessageUpdate(messageId, false, nil)
     }
     
     public func displayPromoAnnouncement(text: String) {

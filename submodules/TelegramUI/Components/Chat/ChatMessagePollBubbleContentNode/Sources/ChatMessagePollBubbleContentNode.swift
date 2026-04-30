@@ -2165,7 +2165,7 @@ public class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
         guard let item = self.item else {
             return
         }
-        item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+        item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
     }
 
     private func updatePollAddOptionFocused(_ focus: Bool) {
@@ -2372,7 +2372,7 @@ public class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
                     item.controllerInteraction.requestOpenMessagePollResults(item.message.id, pollId)
                 case .anonymous:
                     self.isPreviewingResults = !self.isPreviewingResults
-                    item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+                    item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
                 }
             }
         } else if !selectedOpaqueIdentifiers.isEmpty {

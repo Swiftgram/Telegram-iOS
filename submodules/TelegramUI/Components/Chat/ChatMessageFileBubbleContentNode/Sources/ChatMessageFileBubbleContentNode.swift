@@ -54,7 +54,7 @@ public class ChatMessageFileBubbleContentNode: ChatMessageBubbleContentNode {
         
         self.interactiveFileNode.requestUpdateLayout = { [weak self] _ in
             if let strongSelf = self, let item = strongSelf.item {
-                let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+                let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
             }
         }
         

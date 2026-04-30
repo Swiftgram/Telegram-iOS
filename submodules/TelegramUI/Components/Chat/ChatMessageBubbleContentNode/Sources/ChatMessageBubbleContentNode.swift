@@ -225,7 +225,7 @@ open class ChatMessageBubbleContentNode: ASDisplayNode {
     
     public var updateIsTextSelectionActive: ((Bool) -> Void)?
     public var requestInlineUpdate: (() -> Void)?
-    public var requestFullUpdate: (() -> Void)?
+    public var requestFullUpdate: ((ControlledTransition?) -> Void)?
     
     open var disablesClipping: Bool {
         return false
