@@ -3227,10 +3227,12 @@ cc_library(
             "-framework CoreVideo",
             "-framework CoreGraphics",
             "-framework QuartzCore",
-            "-framework AppKit",
             "-weak_framework Network",
             "-weak_framework Metal",
         ],
+    }) + select({
+        "@platforms//os:macos": ["-framework AppKit"],
+        "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],
 )

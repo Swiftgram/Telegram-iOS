@@ -1856,11 +1856,16 @@ public final class PresentationGroupCallImpl: PresentationGroupCall {
                     }
                     
                     var prioritizeVP8 = false
-                    #if DEBUG && false
-                    prioritizeVP8 = "".isEmpty
-                    #endif
                     if let data = self.accountContext.currentAppConfiguration.with({ $0 }).data, let value = data["ios_calls_prioritize_vp8"] as? Double {
                         prioritizeVP8 = value != 0.0
+                    }
+                    
+                    var useReferenceImpl = false
+                    #if DEBUG && true
+                    useReferenceImpl = "".isEmpty
+                    #endif
+                    if let data = self.accountContext.currentAppConfiguration.with({ $0 }).data, let value = data["ios_calls_group_reference_impl"] as? Double {
+                        useReferenceImpl = value != 0.0
                     }
 
                     genericCallContext = .call(OngoingGroupCallContext(audioSessionActive: contextAudioSessionActive, video: self.videoCapturer, requestMediaChannelDescriptions: { [weak self] ssrcs, completion in
@@ -1881,7 +1886,7 @@ public final class PresentationGroupCallImpl: PresentationGroupCall {
                                 self.requestCall(movingFromBroadcastToRtc: false)
                             }
                         }
-                    }, outgoingAudioBitrateKbit: outgoingAudioBitrateKbit, videoContentType: self.isVideoEnabled ? .generic : .none, enableNoiseSuppression: false, disableAudioInput: self.isStream, enableSystemMute: self.accountContext.sharedContext.immediateExperimentalUISettings.experimentalCallMute, prioritizeVP8: prioritizeVP8, logPath: allocateCallLogPath(account: self.account), onMutedSpeechActivityDetected: { [weak self] value in
+                    }, outgoingAudioBitrateKbit: outgoingAudioBitrateKbit,videoContentType: self.isVideoEnabled ? .generic : .none, enableNoiseSuppression: false, disableAudioInput: self.isStream, enableSystemMute: self.accountContext.sharedContext.immediateExperimentalUISettings.experimentalCallMute, useReferenceImpl: useReferenceImpl, prioritizeVP8: prioritizeVP8, logPath: allocateCallLogPath(account: self.account), onMutedSpeechActivityDetected: { [weak self] value in
                         Queue.mainQueue().async {
                             guard let self else {
                                 return

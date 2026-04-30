@@ -163,6 +163,7 @@ private final class EmbeddedBroadcastUploadImpl: BroadcastUploadImpl {
                             enableNoiseSuppression: false,
                             disableAudioInput: true,
                             enableSystemMute: false,
+                            useReferenceImpl: false,
                             prioritizeVP8: false,
                             logPath: "",
                             onMutedSpeechActivityDetected: { _ in },
