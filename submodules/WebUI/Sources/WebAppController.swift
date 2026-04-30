@@ -516,7 +516,12 @@ public final class WebAppController: ViewController, AttachmentContainable {
                 return
             }
             #endif*/
-            self.webView?.bindTrustedOrigin(from: url)
+
+            if !"".isEmpty {
+                self.webView?.bindTrustedOrigin(from: url)
+            } else {
+                self.webView?.setupEventProxySource()
+            }
             self.webView?.load(URLRequest(url: url))
         }
         
