@@ -291,8 +291,10 @@ final class WebAppWebView: WKWebView {
     }
     
     func sendEvent(name: String, data: String?) {
-        guard let trustedOrigin = self.trustedOrigin, self.origin == trustedOrigin else {
-            return
+        if self.useSecuredEventProxy {
+            guard let trustedOrigin = self.trustedOrigin, self.origin == trustedOrigin else {
+                return
+            }
         }
         let script = "window.TelegramGameProxy && window.TelegramGameProxy.receiveEvent && window.TelegramGameProxy.receiveEvent(\"\(name)\", \(data ?? "null"))"
         self.evaluateJavaScript(script, completionHandler: { _, _ in
