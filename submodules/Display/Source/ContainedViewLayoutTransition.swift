@@ -408,7 +408,7 @@ public extension ContainedViewLayoutTransition {
         }
     }
     
-    func updateBounds(layer: CALayer, bounds: CGRect, force: Bool = false, completion: ((Bool) -> Void)? = nil) {
+    func updateBounds(layer: CALayer, bounds: CGRect, beginWithCurrentState: Bool = false, force: Bool = false, completion: ((Bool) -> Void)? = nil) {
         if layer.bounds.equalTo(bounds) && !force {
             completion?(true)
         } else {
@@ -420,7 +420,12 @@ public extension ContainedViewLayoutTransition {
                     completion(true)
                 }
             case let .animated(duration, curve):
-                let previousBounds = layer.bounds
+                let previousBounds: CGRect
+                if beginWithCurrentState, layer.animation(forKey: "position") != nil, let presentation = layer.presentation() {
+                    previousBounds = presentation.bounds
+                } else {
+                    previousBounds = layer.bounds
+                }
                 layer.bounds = bounds
                 layer.animateBounds(from: previousBounds, to: bounds, duration: duration, timingFunction: curve.timingFunction, mediaTimingFunction: curve.mediaTimingFunction, force: force, completion: { result in
                     if let completion = completion {
