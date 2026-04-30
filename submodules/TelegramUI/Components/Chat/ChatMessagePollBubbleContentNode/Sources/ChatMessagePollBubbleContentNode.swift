@@ -2918,49 +2918,7 @@ public class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
                                             if case .public = poll.publicity {
                                                 item.controllerInteraction.openMessagePollResults(item.message.id, option.opaqueIdentifier)
                                             } else if isRestricted {
-                                                let text: String
-                                                
-                                                let peerName = item.message.peers[item.message.id.peerId].flatMap(EnginePeer.init)?.compactDisplayTitle ?? ""
-                                                if !poll.countries.isEmpty {
-                                                    let locale = localeWithStrings(item.presentationData.strings)
-                                                    let countryNames = poll.countries.map { id in
-                                                        if id == "FT" {
-                                                            return "Fragment"
-                                                        } else if let countryName = locale.localizedString(forRegionCode: id) {
-                                                            return countryName
-                                                        } else {
-                                                            return id
-                                                        }
-                                                    }
-                                                    var countries: String = ""
-                                                    if countryNames.count == 1, let country = countryNames.first {
-                                                        countries = "**\(country)**"
-                                                    } else {
-                                                        for i in 0 ..< countryNames.count {
-                                                            countries.append("**\(countryNames[i])**")
-                                                            if i == countryNames.count - 2 {
-                                                                countries.append(item.presentationData.strings.Chat_Poll_Restriction_Country_CountriesLastDelimiter)
-                                                            } else if i < countryNames.count - 2 {
-                                                                countries.append(item.presentationData.strings.Chat_Poll_Restriction_Country_CountriesDelimiter)
-                                                            }
-                                                        }
-                                                    }
-                                                    if poll.restrictToSubscribers {
-                                                        text = item.presentationData.strings.Chat_Poll_Restriction_SubscribersCountry(peerName, countries).string
-                                                    } else {
-                                                        text = item.presentationData.strings.Chat_Poll_Restriction_Country(countries).string
-                                                    }
-                                                } else {
-                                                    text = item.presentationData.strings.Chat_Poll_Restriction_Subscribers(peerName).string
-                                                }
-                                                let controller = UndoOverlayController(
-                                                    presentationData: item.context.sharedContext.currentPresentationData.with { $0 },
-                                                    content: .banned(text: text),
-                                                    elevatedLayout: true,
-                                                    position: .bottom,
-                                                    action: { _ in return true }
-                                                )
-                                                item.controllerInteraction.presentController(controller, nil)
+                                                item.controllerInteraction.displayPollRestrictedToast(item.message.id)
                                             }
                                         }
                                     }

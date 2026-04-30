@@ -2581,7 +2581,10 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             openStarsPurchase: { _ in
             },
             openRankInfo: { _, _, _ in
-            }, openSetPeerAvatar: {
+            },
+            openSetPeerAvatar: {
+            },
+            displayPollRestrictedToast: { _ in
             },
             automaticMediaDownloadSettings: MediaAutoDownloadSettings.defaultSettings,
             pollActionState: ChatInterfacePollActionState(),
