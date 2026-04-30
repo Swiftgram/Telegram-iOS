@@ -24,13 +24,14 @@ extension ChatControllerImpl {
     
     func displayPollRestrictedToast(messageId: EngineMessage.Id) {
         let _ = (self.context.engine.data.get(
-            TelegramEngine.EngineData.Item.Messages.Message(id: messageId)
+            TelegramEngine.EngineData.Item.Messages.Message(id: messageId),
+            TelegramEngine.EngineData.Item.Peer.Peer(id: messageId.peerId)
         )
-        |> deliverOnMainQueue).startStandalone(next: { [weak self] message in
-            guard let self, let message else {
+        |> deliverOnMainQueue).startStandalone(next: { [weak self] message, peer in
+            guard let self, let message, let peer else {
                 return
             }
-            let peerName = message.peers[message.id.peerId].flatMap(EnginePeer.init)?.compactDisplayTitle ?? ""
+            let peerName = peer.compactDisplayTitle
             guard let poll = message.media.first(where: { $0 is TelegramMediaPoll }) as? TelegramMediaPoll else {
                 return
             }
@@ -70,7 +71,11 @@ extension ChatControllerImpl {
                     text = self.presentationData.strings.Chat_Poll_Restriction_Country(countries).string
                 }
             } else {
-                text = self.presentationData.strings.Chat_Poll_Restriction_Subscribers_TimeLimit
+                if case let .channel(channel) = peer, case .member = channel.participationStatus {
+                    text = self.presentationData.strings.Chat_Poll_Restriction_Subscribers_TimeLimit
+                } else {
+                    text = self.presentationData.strings.Chat_Poll_Restriction_Subscribers(peerName).string
+                }
             }
             let controller = UndoOverlayController(
                 presentationData: self.presentationData,
