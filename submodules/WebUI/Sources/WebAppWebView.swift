@@ -43,7 +43,19 @@ private func jsStringLiteral(_ value: String) -> String {
     return "\"\""
 }
 
-private func eventProxySource(trustedOrigin: String) -> String {
+private func eventProxySource() -> String {
+    return """
+    (function() {
+        var TelegramWebviewProxyProto = function() {};
+        TelegramWebviewProxyProto.prototype.postEvent = function(eventName, eventData) {
+            window.webkit.messageHandlers.performAction.postMessage({'eventName': eventName, 'eventData': eventData});
+        };
+        window.TelegramWebviewProxy = new TelegramWebviewProxyProto();
+    })();
+    """
+}
+
+private func securedEventProxySource(trustedOrigin: String) -> String {
     return """
     (function() {
         if (window.location.origin !== \(jsStringLiteral(trustedOrigin))) {
@@ -202,6 +214,7 @@ final class WebAppWebView: WKWebView {
         print()
     }
     
+    var useSecuredEventProxy = true
     func bindTrustedOrigin(from url: URL) {
         guard self.trustedOrigin == nil else {
             return
@@ -212,13 +225,23 @@ final class WebAppWebView: WKWebView {
 
         self.trustedOrigin = origin
 
-        let eventProxyScript = WKUserScript(source: eventProxySource(trustedOrigin: origin), injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        let eventProxyScript = WKUserScript(source: securedEventProxySource(trustedOrigin: origin), injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        self.configuration.userContentController.addUserScript(eventProxyScript)
+    }
+    
+    func setupEventProxySource() {
+        self.useSecuredEventProxy = false
+        
+        let eventProxyScript = WKUserScript(source: eventProxySource(), injectionTime: .atDocumentStart, forMainFrameOnly: true)
         self.configuration.userContentController.addUserScript(eventProxyScript)
     }
 
     func isTrustedMainFrameMessage(_ message: WKScriptMessage) -> Bool {
         guard message.frameInfo.isMainFrame else {
             return false
+        }
+        if !self.useSecuredEventProxy {
+            return true
         }
         guard let trustedOrigin = self.trustedOrigin else {
             return false
