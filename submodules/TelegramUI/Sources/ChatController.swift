@@ -3896,12 +3896,19 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                         )
                         strongSelf.present(controller, in: .current)
                     }
-                }, error: { _ in
+                }, error: { error in
                     guard let strongSelf = self, let controllerInteraction = strongSelf.controllerInteraction else {
                         return
                     }
                     if controllerInteraction.pollActionState.pollMessageIdsInProgress.removeValue(forKey: id) != nil {
                         strongSelf.chatDisplayNode.historyNode.requestMessageUpdate(id)
+                    }
+                    
+                    switch error {
+                    case .restrictedToSubscribers:
+                        strongSelf.displayPollRestrictedToast(messageId: id)
+                    default:
+                        break
                     }
                 }, completed: {
                     guard let strongSelf = self, let controllerInteraction = strongSelf.controllerInteraction else {
@@ -3909,7 +3916,6 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                     }
                     if controllerInteraction.pollActionState.pollMessageIdsInProgress.removeValue(forKey: id) != nil {
                         Queue.mainQueue().after(1.0, {
-                            
                             strongSelf.chatDisplayNode.historyNode.requestMessageUpdate(id)
                         })
                     }
@@ -5664,6 +5670,11 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 return
             }
             self.interfaceInteraction?.openSetPeerAvatar()
+        }, displayPollRestrictedToast: { [weak self] messageId in
+            guard let self else {
+                return
+            }
+            self.displayPollRestrictedToast(messageId: messageId)
         }, automaticMediaDownloadSettings: self.automaticMediaDownloadSettings, pollActionState: ChatInterfacePollActionState(), stickerSettings: self.stickerSettings, presentationContext: ChatPresentationContext(context: context, backgroundNode: self.chatBackgroundNode))
         controllerInteraction.enableFullTranslucency = context.sharedContext.energyUsageSettings.fullTranslucency
         
