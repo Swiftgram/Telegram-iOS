@@ -11,7 +11,7 @@ go_sdk.download(version = "1.24.2")
 bazel_dep(name = "gazelle", version = "0.43.0", repo_name = "bazel_gazelle")
 
 go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps")
-go_deps.from_file(go_mod = "//tools/go_sfu:go.mod")
+go_deps.from_file(go_mod = "//submodules/TgVoipWebrtc/tgcalls/tools/go_sfu:go.mod")
 use_repo(
     go_deps,
     "com_github_pion_datachannel",
