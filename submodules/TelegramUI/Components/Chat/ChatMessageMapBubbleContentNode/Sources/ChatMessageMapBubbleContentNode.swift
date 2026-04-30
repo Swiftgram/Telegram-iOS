@@ -439,7 +439,7 @@ public class ChatMessageMapBubbleContentNode: ChatMessageBubbleContentNode {
                                             if let strongSelf = self {
                                                 strongSelf.timeoutTimer?.0.invalidate()
                                                 strongSelf.timeoutTimer = nil
-                                                item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+                                                item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
                                             }
                                         }, queue: Queue.mainQueue())
                                         strongSelf.timeoutTimer = (timer, timeoutDeadline)

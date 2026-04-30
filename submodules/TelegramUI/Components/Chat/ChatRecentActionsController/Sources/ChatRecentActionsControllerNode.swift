@@ -653,7 +653,7 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
         }, sendGift: { _ in
         }, openUniqueGift: { _ in
         }, openMessageFeeException: {
-        }, requestMessageUpdate: { _, _ in   
+        }, requestMessageUpdate: { _, _, _ in   
         }, cancelInteractiveKeyboardGestures: {
         }, dismissTextInput: {
         }, scrollToMessageId: { _ in

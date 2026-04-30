@@ -1271,7 +1271,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             self.openPremiumGift()
         }, openUniqueGift: { _ in
         }, openMessageFeeException: {
-        }, requestMessageUpdate: { _, _ in
+        }, requestMessageUpdate: { _, _, _ in
         }, cancelInteractiveKeyboardGestures: {
         }, dismissTextInput: {
         }, scrollToMessageId: { _ in

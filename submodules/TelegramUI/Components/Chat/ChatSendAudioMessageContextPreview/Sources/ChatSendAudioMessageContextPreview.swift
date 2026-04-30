@@ -500,7 +500,7 @@ public final class ChatSendGroupMediaMessageContextPreview: UIView, ChatSendMess
         }, sendGift: { _ in
         }, openUniqueGift: { _ in
         }, openMessageFeeException: {
-        }, requestMessageUpdate: { _, _ in
+        }, requestMessageUpdate: { _, _, _ in
         }, cancelInteractiveKeyboardGestures: {
         }, dismissTextInput: {
         }, scrollToMessageId: { _ in

@@ -4018,7 +4018,7 @@ func replayFinalState(
         }
         
         case update(Update)
-        case cancel
+        case cancel(updatedTimestamp: Int32)
     }
     
     var liveTypingDraftUpdates: [PeerAndThreadId: [LiveTypingDraftUpdate]] = [:]
@@ -4236,11 +4236,11 @@ func replayFinalState(
                         let allKey = PeerAndThreadId(peerId: chatPeerId, threadId: nil)
                         
                         if liveTypingDraftUpdates[key] != nil {
-                            liveTypingDraftUpdates[key] = [.cancel]
-                            liveTypingDraftUpdates[allKey] = [.cancel]
+                            liveTypingDraftUpdates[key] = [.cancel(updatedTimestamp: message.timestamp)]
+                            liveTypingDraftUpdates[allKey] = [.cancel(updatedTimestamp: message.timestamp)]
                         } else if let currentDraft = transaction.getCurrentTypingDraft(location: key) {
-                            liveTypingDraftUpdates[key] = [.cancel]
-                            liveTypingDraftUpdates[allKey] = [.cancel]
+                            liveTypingDraftUpdates[key] = [.cancel(updatedTimestamp: message.timestamp)]
+                            liveTypingDraftUpdates[allKey] = [.cancel(updatedTimestamp: message.timestamp)]
                             messages[i] = messages[i].withUpdatedCustomStableId(currentDraft.stableId)
                         }
                     }
@@ -6080,6 +6080,23 @@ func replayFinalState(
     }
     
     if !liveTypingDraftUpdates.isEmpty {
+        for (key, updates) in liveTypingDraftUpdates {
+            if key.threadId == nil {
+                var maxCancelledTimestamp: Int32?
+                for update in updates {
+                    if case let .cancel(updatedTimestamp) = update {
+                        if let current = maxCancelledTimestamp {
+                            maxCancelledTimestamp = max(current, updatedTimestamp)
+                        } else {
+                            maxCancelledTimestamp = updatedTimestamp
+                        }
+                    }
+                }
+                if let maxCancelledTimestamp {
+                    transaction.offsetPendingMessagesTimestamps(lowerBound: MessageId(peerId: key.peerId, namespace: Namespaces.Message.Local, id: 1), excludeIds: Set(), timestamp: maxCancelledTimestamp)
+                }
+            }
+        }
         transaction.combineTypingDrafts(locations: Set(liveTypingDraftUpdates.keys), update: { key, current in
             guard let update = liveTypingDraftUpdates[key]?.max(by: { lhs, rhs in
                 switch lhs {
@@ -6104,6 +6121,11 @@ func replayFinalState(
                 var timestamp = update.timestamp
                 if let current, current.id == update.id {
                     timestamp = current.timestamp
+                }
+                if current == nil {
+                    if let index = transaction.getTopPeerMessageIndex(peerId: key.peerId) {
+                        timestamp = max(timestamp, index.timestamp)
+                    }
                 }
                 return (
                     update.id,

@@ -2554,7 +2554,7 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             },
             openMessageFeeException: {
             },
-            requestMessageUpdate: { _, _ in
+            requestMessageUpdate: { _, _, _ in
             },
             cancelInteractiveKeyboardGestures: {
             },

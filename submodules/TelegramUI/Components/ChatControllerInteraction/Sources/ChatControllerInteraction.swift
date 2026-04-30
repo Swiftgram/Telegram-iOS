@@ -288,7 +288,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
     public let sendGift: (EnginePeer.Id) -> Void
     public let openUniqueGift: (String) -> Void
     public let openMessageFeeException: () -> Void
-    public let requestMessageUpdate: (MessageId, Bool) -> Void
+    public let requestMessageUpdate: (MessageId, Bool, ControlledTransition?) -> Void
     public let cancelInteractiveKeyboardGestures: () -> Void
     public let dismissTextInput: () -> Void
     public let scrollToMessageId: (MessageIndex) -> Void
@@ -465,7 +465,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         sendGift: @escaping (EnginePeer.Id) -> Void,
         openUniqueGift: @escaping (String) -> Void,
         openMessageFeeException: @escaping () -> Void,
-        requestMessageUpdate: @escaping (MessageId, Bool) -> Void,
+        requestMessageUpdate: @escaping (MessageId, Bool, ControlledTransition?) -> Void,
         cancelInteractiveKeyboardGestures: @escaping () -> Void,
         dismissTextInput: @escaping () -> Void,
         scrollToMessageId: @escaping (MessageIndex) -> Void,
