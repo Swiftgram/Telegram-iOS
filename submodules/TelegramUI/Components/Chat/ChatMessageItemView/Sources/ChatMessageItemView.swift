@@ -26,8 +26,8 @@ public func chatMessageItemLayoutConstants(_ constants: (ChatMessageItemLayoutCo
     } else {
         result = constants.0
     }
-    result.image.defaultCornerRadius = presentationData.chatBubbleCorners.mainRadius
-    result.image.mergedCornerRadius = (presentationData.chatBubbleCorners.mergeBubbleCorners && result.image.defaultCornerRadius >= 10.0) ?  presentationData.chatBubbleCorners.auxiliaryRadius : presentationData.chatBubbleCorners.mainRadius
+    result.image.defaultCornerRadius = max(0.0, presentationData.chatBubbleCorners.mainRadius - 1.0)
+    result.image.mergedCornerRadius = max(0.0, ((presentationData.chatBubbleCorners.mergeBubbleCorners && result.image.defaultCornerRadius >= 10.0) ? presentationData.chatBubbleCorners.auxiliaryRadius : presentationData.chatBubbleCorners.mainRadius) - 1.0)
     let minRadius: CGFloat = 4.0
     let maxRadius: CGFloat = 16.0
     let radiusTransition = (presentationData.chatBubbleCorners.mainRadius - minRadius) / (maxRadius - minRadius)

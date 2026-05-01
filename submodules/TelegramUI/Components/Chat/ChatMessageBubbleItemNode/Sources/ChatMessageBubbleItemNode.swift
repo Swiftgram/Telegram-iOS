@@ -2278,7 +2278,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         }
         if !bubbleReactions.reactions.isEmpty && !item.presentationData.isPreview {
             if incoming {
-                bottomNodeMergeStatus = .Both
+                bottomNodeMergeStatus = .Left
             } else {
                 bottomNodeMergeStatus = .Right
             }
@@ -3814,7 +3814,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         }
         
         var forceBackgroundSide = false
-        if actionButtonsSizeAndApply != nil || reactionButtonsSizeAndApply != nil {
+        if actionButtonsSizeAndApply != nil {
             forceBackgroundSide = true
         } else if case .semanticallyMerged = updatedMergedTop {
             forceBackgroundSide = true
