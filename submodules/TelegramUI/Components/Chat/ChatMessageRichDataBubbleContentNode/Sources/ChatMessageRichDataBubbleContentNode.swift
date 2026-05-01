@@ -12,6 +12,7 @@ import ChatControllerInteraction
 import InstantPageUI
 import TelegramUIPreferences
 import TextLoadingEffect
+import TextSelectionNode
 
 public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode {
     public final class ContainerNode: ASDisplayNode {
@@ -30,7 +31,9 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     private var linkProgressRects: [CGRect]?
     private var linkHighlightingNode: LinkHighlightingNode?
     private var linkProgressView: TextLoadingEffectView?
-    
+    private var textSelectionAdapter: InstantPageMultiTextAdapter?
+    private var textSelectionNode: TextSelectionNode?
+
     override public var visibility: ListViewItemNodeVisibility {
         didSet {
             if oldValue != self.visibility {
@@ -697,9 +700,82 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
     
     override public func willUpdateIsExtractedToContextPreview(_ value: Bool) {
+        if !value, let textSelectionNode = self.textSelectionNode {
+            self.textSelectionNode = nil
+            self.textSelectionAdapter = nil
+            textSelectionNode.highlightAreaNode.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false)
+            textSelectionNode.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false, completion: { [weak textSelectionNode] _ in
+                textSelectionNode?.highlightAreaNode.removeFromSupernode()
+                textSelectionNode?.removeFromSupernode()
+            })
+        }
     }
-    
+
     override public func updateIsExtractedToContextPreview(_ value: Bool) {
+        guard value, self.textSelectionNode == nil, let messageItem = self.item, let layout = self.currentPageLayout?.layout, let rootNode = messageItem.controllerInteraction.chatControllerNode() else {
+            return
+        }
+
+        let items = layout.items.compactMap { $0 as? InstantPageTextItem }.filter { $0.selectable && !$0.attributedString.string.isEmpty }
+        guard !items.isEmpty else {
+            return
+        }
+
+        let adapter = InstantPageMultiTextAdapter(items: items)
+        adapter.frame = self.containerNode.bounds
+        self.textSelectionAdapter = adapter
+        self.containerNode.addSubnode(adapter)
+
+        let incoming = messageItem.message.effectivelyIncoming(messageItem.context.account.peerId)
+        let theme = messageItem.presentationData.theme.theme
+        let selectionColor = incoming ? theme.chat.message.incoming.textSelectionColor : theme.chat.message.outgoing.textSelectionColor
+        let knobColor = incoming ? theme.chat.message.incoming.textSelectionKnobColor : theme.chat.message.outgoing.textSelectionKnobColor
+
+        let textSelectionNode = TextSelectionNode(
+            theme: TextSelectionTheme(selection: selectionColor, knob: knobColor, isDark: theme.overallDarkAppearance),
+            strings: messageItem.presentationData.strings,
+            textNodeOrView: .node(adapter),
+            updateIsActive: { _ in },
+            present: { [weak self] c, a in
+                guard let self, let item = self.item else {
+                    return
+                }
+                if let subject = item.associatedData.subject, case let .messageOptions(_, _, info) = subject, case .reply = info {
+                    item.controllerInteraction.presentControllerInCurrent(c, a)
+                } else {
+                    item.controllerInteraction.presentGlobalOverlayController(c, a)
+                }
+            },
+            rootView: { [weak rootNode] in
+                return rootNode?.view
+            },
+            performAction: { [weak self] text, action in
+                guard let self, let item = self.item else {
+                    return
+                }
+                item.controllerInteraction.performTextSelectionAction(item.message, true, text, nil, action)
+            }
+        )
+
+        let enableCopy = (!messageItem.associatedData.isCopyProtectionEnabled && !messageItem.message.isCopyProtected()) || messageItem.message.id.peerId.isVerificationCodes
+        textSelectionNode.enableCopy = enableCopy
+
+        var enableOtherActions = true
+        if let subject = messageItem.associatedData.subject, case let .messageOptions(_, _, info) = subject, case .reply = info {
+            enableOtherActions = false
+        }
+
+        textSelectionNode.enableQuote = false
+        textSelectionNode.enableTranslate = enableOtherActions
+        textSelectionNode.enableShare = enableOtherActions && enableCopy
+        textSelectionNode.enableLookup = true
+        textSelectionNode.menuSkipCoordnateConversion = !enableOtherActions
+
+        textSelectionNode.frame = self.containerNode.bounds
+        textSelectionNode.highlightAreaNode.frame = self.containerNode.bounds
+        self.containerNode.insertSubnode(textSelectionNode.highlightAreaNode, at: 0)
+        self.containerNode.addSubnode(textSelectionNode)
+        self.textSelectionNode = textSelectionNode
     }
 
     override public func transitionNode(messageId: MessageId, media: Media, adjustRect: Bool) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {

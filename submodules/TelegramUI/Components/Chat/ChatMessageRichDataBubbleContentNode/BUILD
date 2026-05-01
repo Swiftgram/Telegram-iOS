@@ -22,6 +22,7 @@ swift_library(
         "//submodules/TelegramUI/Components/ChatControllerInteraction",
         "//submodules/TelegramUI/Components/TextLoadingEffect",
         "//submodules/TelegramUIPreferences",
+        "//submodules/TextSelectionNode",
     ],
     visibility = [
         "//visibility:public",

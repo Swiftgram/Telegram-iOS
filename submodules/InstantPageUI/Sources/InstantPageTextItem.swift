@@ -175,7 +175,7 @@ private func attachmentBoundsForRange(_ range: NSRange, line: InstantPageTextLin
 }
 
 public final class InstantPageTextItem: InstantPageItem {
-    let attributedString: NSAttributedString
+    public let attributedString: NSAttributedString
     public let lines: [InstantPageTextLine]
     let rtlLineIndices: Set<Int>
     public var frame: CGRect
@@ -300,7 +300,7 @@ public final class InstantPageTextItem: InstantPageItem {
         let boundsWidth = self.frame.width
         for i in 0 ..< self.lines.count {
             let line = self.lines[i]
-            
+
             let lineFrame = expandedFrameForLine(line, boundingWidth: boundsWidth, alignment: self.alignment)
             if lineFrame.insetBy(dx: -5.0, dy: -5.0).contains(transformedPoint) {
                 var index = CTLineGetStringIndexForPosition(line.line, CGPoint(x: transformedPoint.x - lineFrame.minX, y: transformedPoint.y - lineFrame.minY))
@@ -321,7 +321,53 @@ public final class InstantPageTextItem: InstantPageItem {
         }
         return nil
     }
-    
+
+    public func attributesAtPoint(_ point: CGPoint, orNearest: Bool) -> (Int, [NSAttributedString.Key: Any])? {
+        if let direct = self.attributesAtPoint(point) {
+            return direct
+        }
+        guard orNearest, !self.lines.isEmpty else {
+            return nil
+        }
+
+        let boundsWidth = self.frame.width
+        var nearestLineIndex = 0
+        var nearestDistance = CGFloat.greatestFiniteMagnitude
+        for i in 0 ..< self.lines.count {
+            let lineFrame = expandedFrameForLine(self.lines[i], boundingWidth: boundsWidth, alignment: self.alignment)
+            let distance: CGFloat
+            if point.y < lineFrame.minY {
+                distance = lineFrame.minY - point.y
+            } else if point.y > lineFrame.maxY {
+                distance = point.y - lineFrame.maxY
+            } else {
+                distance = 0.0
+            }
+            if distance < nearestDistance {
+                nearestDistance = distance
+                nearestLineIndex = i
+            }
+        }
+
+        let line = self.lines[nearestLineIndex]
+        let lineFrame = expandedFrameForLine(line, boundingWidth: boundsWidth, alignment: self.alignment)
+        let clampedX = max(lineFrame.minX, min(lineFrame.maxX, point.x))
+        var index = CTLineGetStringIndexForPosition(line.line, CGPoint(x: clampedX - lineFrame.minX, y: 0.0))
+        if index == self.attributedString.length {
+            index -= 1
+        } else if index != 0 {
+            var glyphStart: CGFloat = 0.0
+            CTLineGetOffsetForStringIndex(line.line, index, &glyphStart)
+            if clampedX - lineFrame.minX < glyphStart {
+                index -= 1
+            }
+        }
+        guard index >= 0, index < self.attributedString.length else {
+            return nil
+        }
+        return (index, self.attributedString.attributes(at: index, effectiveRange: nil))
+    }
+
     private func attributeRects(name: NSAttributedString.Key, at index: Int) -> [CGRect]? {
         var range = NSRange()
         let _ = self.attributedString.attribute(name, at: index, effectiveRange: &range)
@@ -396,9 +442,9 @@ public final class InstantPageTextItem: InstantPageItem {
         guard range.length != 0 else {
             return nil
         }
-        
+
         let boundsWidth = self.frame.width
-        
+
         var rects: [(CGRect, CGRect)] = []
         var startEdge: InstantPageTextRangeRectEdge?
         var endEdge: InstantPageTextRangeRectEdge?
@@ -419,11 +465,11 @@ public final class InstantPageTextItem: InstantPageItem {
                         rightOffset = ceil(secondaryOffset)
                     }
                 }
-                
+
                 let lineFrame = expandedFrameForLine(line, boundingWidth: boundsWidth, alignment: self.alignment)
-                
+
                 let width = max(0.0, abs(rightOffset - leftOffset))
-                
+
                 if line.range.contains(range.lowerBound) {
                     let offsetX = floor(CTLineGetOffsetForStringIndex(line.line, range.lowerBound, nil))
                     startEdge = InstantPageTextRangeRectEdge(x: lineFrame.minX + offsetX, y: lineFrame.minY, height: lineFrame.height)
@@ -437,7 +483,7 @@ public final class InstantPageTextItem: InstantPageItem {
                         let primaryOffset = floor(CTLineGetOffsetForStringIndex(line.line, range.upperBound - 1, &secondaryOffset))
                         secondaryOffset = floor(secondaryOffset)
                         let nextOffet = floor(CTLineGetOffsetForStringIndex(line.line, range.upperBound, &secondaryOffset))
-                        
+
                         if primaryOffset != secondaryOffset {
                             offsetX = secondaryOffset
                         } else {
@@ -446,7 +492,7 @@ public final class InstantPageTextItem: InstantPageItem {
                     }
                     endEdge = InstantPageTextRangeRectEdge(x: lineFrame.minX + offsetX, y: lineFrame.minY, height: lineFrame.height)
                 }
-                
+
                 rects.append((lineFrame, CGRect(origin: CGPoint(x: lineFrame.minX + min(leftOffset, rightOffset), y: lineFrame.minY), size: CGSize(width: width, height: lineFrame.size.height))))
             }
         }
@@ -455,7 +501,16 @@ public final class InstantPageTextItem: InstantPageItem {
         }
         return nil
     }
-    
+
+    public func textRangeRects(in range: NSRange) -> (rects: [CGRect], start: TextRangeRectEdge, end: TextRangeRectEdge)? {
+        guard let result = self.rangeRects(in: range), let start = result.start, let end = result.end, !result.rects.isEmpty else {
+            return nil
+        }
+        let startEdge = TextRangeRectEdge(x: start.x, y: start.y, height: start.height)
+        let endEdge = TextRangeRectEdge(x: end.x, y: end.y, height: end.height)
+        return (result.rects, startEdge, endEdge)
+    }
+
     public func lineRects() -> [CGRect] {
         let boundsWidth = self.frame.width
         var rects: [CGRect] = []
