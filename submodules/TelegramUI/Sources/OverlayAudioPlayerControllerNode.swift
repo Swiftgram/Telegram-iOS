@@ -155,6 +155,7 @@ final class OverlayAudioPlayerControllerNode: ViewControllerTracingNode, ASGestu
         }, requestMessageActionUrlAuth: { _, _ in
         }, activateSwitchInline: { _, _, _ in
         }, openUrl: { _ in
+        }, openExternalInstantPage: { _ in
         }, shareCurrentLocation: {
         }, shareAccountContact: {
         }, sendBotCommand: { _, _ in
@@ -248,7 +249,8 @@ final class OverlayAudioPlayerControllerNode: ViewControllerTracingNode, ASGestu
         }, requestMessageUpdate: { _, _, _ in
         }, cancelInteractiveKeyboardGestures: {
         }, dismissTextInput: {
-        }, scrollToMessageId: { _ in
+        }, scrollToMessageId: { _, _ in
+        }, scrollToMessageIdWithAnchor: { _, _ in
         }, navigateToStory: { _, _ in
         }, attemptedNavigationToPrivateQuote: { _ in
         }, forceUpdateWarpContents: {

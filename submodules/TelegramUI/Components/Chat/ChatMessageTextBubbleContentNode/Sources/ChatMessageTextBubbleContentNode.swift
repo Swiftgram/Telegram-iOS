@@ -832,8 +832,8 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                             }
                             
                             strongSelf.textNode.textNode.displaysAsynchronously = !item.presentationData.isPreview
-                            animation.animator.updateFrame(layer: strongSelf.containerNode.layer, frame: CGRect(origin: CGPoint(), size: boundingSize), completion: nil)
-                            
+                            animation.animator.updatePosition(layer: strongSelf.containerNode.layer, position: CGRect(origin: CGPoint(), size: boundingSize).center, completion: nil)
+                            animation.animator.updateBounds(layer: strongSelf.containerNode.layer, bounds: CGRect(origin: CGPoint(), size: boundingSize), completion: nil)
                             
                             if let formattedDateUpdatePeriod {
                                 if strongSelf.relativeDateTimer?.period != formattedDateUpdatePeriod {
@@ -917,7 +917,8 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                                     }
                                 )
                             ))
-                            animation.animator.updateFrame(layer: strongSelf.textNode.textNode.layer, frame: realTextFrame, completion: nil)
+                            animation.animator.updatePosition(layer: strongSelf.textNode.textNode.layer, position: realTextFrame.center, completion: nil)
+                            animation.animator.updateBounds(layer: strongSelf.textNode.textNode.layer, bounds: CGRect(origin: CGPoint(), size: realTextFrame.size), completion: nil)
                             
                             switch strongSelf.visibility {
                             case .none:
@@ -971,7 +972,8 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                                     }
                                     statusNode.frame = statusFrame
                                 } else {
-                                    animation.animator.updateFrame(layer: statusNode.layer, frame: statusFrame, completion: nil)
+                                    animation.animator.updatePosition(layer: statusNode.layer, position: statusFrame.center, completion: nil)
+                                    animation.animator.updateBounds(layer: statusNode.layer, bounds: CGRect(origin: CGPoint(), size: statusFrame.size), completion: nil)
                                 }
                             } else if let statusNode = strongSelf.statusNode {
                                 strongSelf.statusNode = nil

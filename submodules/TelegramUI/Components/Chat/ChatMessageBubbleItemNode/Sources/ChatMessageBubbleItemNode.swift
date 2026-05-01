@@ -1347,7 +1347,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         break
                     case .ignore:
                         return .fail
-                    case .url, .phone, .peerMention, .textMention, .botCommand, .hashtag, .instantPage, .wallpaper, .theme, .call, .conferenceCall, .openMessage, .timecode, .bankCard, .tooltip, .openPollResults, .copy, .largeEmoji, .customEmoji, .date, .custom:
+                    case .url, .phone, .peerMention, .textMention, .botCommand, .hashtag, .instantPage, .wallpaper, .theme, .call, .conferenceCall, .openMessage, .timecode, .bankCard, .tooltip, .openPollResults, .copy, .largeEmoji, .customEmoji, .date, .custom, .externalInstantPage:
                         return .waitForSingleTap
                     }
                 }
@@ -5791,6 +5791,27 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                                 item.controllerInteraction.openUrl(ChatControllerInteraction.OpenUrl(url: url.url, concealed: url.concealed, message: item.content.firstMessage, allowInlineWebpageResolution: url.allowInlineWebpageResolution, progress: tapAction.activate?()))
                             }, contextMenuOnLongPress: !tapAction.hasLongTapAction))
                         }
+                    case let .externalInstantPage(url, webpageId, anchor):
+                        if case .longTap = gesture, !tapAction.hasLongTapAction, let item = self.item {
+                            let tapMessage = item.content.firstMessage
+                            var subFrame = self.backgroundNode.frame
+                            if case .group = item.content {
+                                for contentNode in self.contentNodes {
+                                    if contentNode.item?.message.stableId == tapMessage.stableId {
+                                        subFrame = contentNode.frame.insetBy(dx: 0.0, dy: -4.0)
+                                        break
+                                    }
+                                }
+                            }
+                            return .openContextMenu(InternalBubbleTapAction.OpenContextMenu(tapMessage: tapMessage, selectAll: false, subFrame: subFrame, disableDefaultPressAnimation: true))
+                        } else {
+                            return .action(InternalBubbleTapAction.Action({ [weak self] in
+                                guard let self, let item = self.item else {
+                                    return
+                                }
+                                item.controllerInteraction.openExternalInstantPage(ChatControllerInteraction.OpenInstantPage(webpageId: webpageId, url: url.url, anchor: anchor, concealed: true, progress: tapAction.activate?()))
+                            }, contextMenuOnLongPress: !tapAction.hasLongTapAction))
+                        }
                     case let .phone(number):
                         return .action(InternalBubbleTapAction.Action({ [weak self] in
                             guard let self, let item = self.item, let contentNode = self.contextContentNodeForLink(number, rects: rects) else {
@@ -5998,6 +6019,42 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                                 }, contextMenuOnLongPress: false))
                             } else {
                                 disableDefaultPressAnimation = true
+                            }
+                        case let .externalInstantPage(url, webpageId, anchor):
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    guard let self, let item = self.item else {
+                                        return
+                                    }
+                                    let cleanUrl = url.url.replacingOccurrences(of: "mailto:", with: "")
+                                    guard let contentNode = self.contextContentNodeForLink(cleanUrl, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.url(url.url), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
+                            
+                            if case .longTap = gesture, !tapAction.hasLongTapAction, let item = self.item {
+                                let tapMessage = item.content.firstMessage
+                                var subFrame = self.backgroundNode.frame
+                                if case .group = item.content {
+                                    for contentNode in self.contentNodes {
+                                        if contentNode.item?.message.stableId == tapMessage.stableId {
+                                            subFrame = contentNode.frame.insetBy(dx: 0.0, dy: -4.0)
+                                            break
+                                        }
+                                    }
+                                }
+                                return .openContextMenu(InternalBubbleTapAction.OpenContextMenu(tapMessage: tapMessage, selectAll: false, subFrame: subFrame, disableDefaultPressAnimation: true))
+                            } else {
+                                return .action(InternalBubbleTapAction.Action({ [weak self] in
+                                    guard let self, let item = self.item else {
+                                        return
+                                    }
+                                    item.controllerInteraction.openExternalInstantPage(ChatControllerInteraction.OpenInstantPage(webpageId: webpageId, url: url.url, anchor: anchor, concealed: true, progress: tapAction.activate?()))
+                                }, contextMenuOnLongPress: !tapAction.hasLongTapAction))
                             }
                         case let .phone(number):
                             if tapAction.hasLongTapAction {
@@ -7187,7 +7244,16 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         }
         return nil
     }
-    
+
+    public func getAnchorRect(anchor: String) -> CGRect? {
+        for contentNode in self.contentNodes {
+            if let result = contentNode.getAnchorRect(anchor: anchor) {
+                return contentNode.view.convert(result, to: self.view)
+            }
+        }
+        return nil
+    }
+
     public func getInnerReplySubjectRect(innerSubject: EngineMessageReplyInnerSubject) -> CGRect? {
         switch innerSubject {
         case let .todoItem(todoItemId):

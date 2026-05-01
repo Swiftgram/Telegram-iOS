@@ -287,7 +287,7 @@ public final class InstantPageTextItem: InstantPageItem {
                         context.setFillColor(color.cgColor)
                     }
                     let itemFrame = item.frame.offsetBy(dx: lineFrame.minX, dy: 0.0)
-                    context.fill(CGRect(x: itemFrame.minX, y: itemFrame.minY + lineFrame.size.height + 1.0, width: itemFrame.size.width, height: 1.0))
+                    context.fill(CGRect(x: itemFrame.minX, y: itemFrame.minY + lineFrame.size.height + 2.0, width: itemFrame.size.width, height: 1.0))
                 }
             }
         }

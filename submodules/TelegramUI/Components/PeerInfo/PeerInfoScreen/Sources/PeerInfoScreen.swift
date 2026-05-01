@@ -1109,6 +1109,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                 return
             }
             strongSelf.openUrl(url: url.url, concealed: url.concealed, external: url.external ?? false)
+        }, openExternalInstantPage: { _ in
         }, shareCurrentLocation: {
         }, shareAccountContact: {
         }, sendBotCommand: { _, _ in
@@ -1274,7 +1275,8 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         }, requestMessageUpdate: { _, _, _ in
         }, cancelInteractiveKeyboardGestures: {
         }, dismissTextInput: {
-        }, scrollToMessageId: { _ in
+        }, scrollToMessageId: { _, _ in
+        }, scrollToMessageIdWithAnchor: { _, _ in
         }, navigateToStory: { _, _ in
         }, attemptedNavigationToPrivateQuote: { _ in
         }, forceUpdateWarpContents: {

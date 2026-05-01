@@ -3221,6 +3221,66 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             } else {
                 strongSelf.openUrl(url, concealed: concealed, forceExternal: forceExternal, skipConcealedAlert: skipConcealedAlert, message: message, allowInlineWebpageResolution: urlData.allowInlineWebpageResolution, progress: progress)
             }
+        }, openExternalInstantPage: { [weak self] instantPage in
+            guard let self else {
+                return
+            }
+            let _ = (webpagePreviewWithProgress(account: self.context.account, urls: [instantPage.url], webpageId: instantPage.webpageId)
+            |> deliverOnMainQueue).startStandalone(next: { [weak self] result in
+                Task { @MainActor in
+                    guard let self else {
+                        return
+                    }
+                    switch result {
+                    case let .result(webpageResult):
+                        instantPage.progress?.set(.single(false))
+                        
+                        guard let webpageResult else {
+                            self.openUrl(instantPage.url, concealed: true)
+                            return
+                        }
+                        
+                        if case .Loaded = webpageResult.webpage.content {
+                            let sourceLocation: InstantPageSourceLocation
+                             
+                            if let peerId = self.chatLocation.peerId {
+                                let (peer, isContact) = await self.context.engine.data.get(
+                                    TelegramEngine.EngineData.Item.Peer.Peer(id: peerId),
+                                    TelegramEngine.EngineData.Item.Peer.IsContact(id: peerId)
+                                ).get()
+                                
+                                if let peer {
+                                    let peerType: MediaAutoDownloadPeerType
+                                    switch peer {
+                                    case .user:
+                                        peerType = isContact ? .contact : .otherPrivate
+                                    case let .channel(channel):
+                                        if case .group = channel.info {
+                                            peerType = .group
+                                        } else {
+                                            peerType = .channel
+                                        }
+                                    case .legacyGroup:
+                                        peerType = .group
+                                    case .secretChat:
+                                        return
+                                    }
+                                    let peerLocation = MediaResourceUserLocation.peer(peer.id)
+                                    sourceLocation = InstantPageSourceLocation(userLocation: peerLocation, peerType: peerType)
+                                } else {
+                                    sourceLocation = InstantPageSourceLocation(userLocation: .other, peerType: .channel)
+                                }
+                            } else {
+                                sourceLocation = InstantPageSourceLocation(userLocation: .other, peerType: .channel)
+                            }
+                            
+                            self.push(makeInstantPageControllerImpl(context: self.context, webPage: webpageResult.webpage, anchor: instantPage.anchor, sourceLocation: sourceLocation))
+                        }
+                    case .progress:
+                        instantPage.progress?.set(.single(true))
+                    }
+                }
+            })
         }, shareCurrentLocation: { [weak self] in
             if let strongSelf = self {
                 if case .pinnedMessages = strongSelf.presentationInterfaceState.subject {
@@ -5334,8 +5394,38 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             }
         }, dismissTextInput: { [weak self] in
             self?.chatDisplayNode.dismissTextInput()
-        }, scrollToMessageId: { [weak self] index in
-            self?.chatDisplayNode.historyNode.scrollToMessage(index: index)
+        }, scrollToMessageId: { [weak self] index, offset in
+            self?.chatDisplayNode.historyNode.scrollToMessage(index: index, offset: offset)
+        }, scrollToMessageIdWithAnchor: { [weak self] index, anchor in
+            guard let self else {
+                return
+            }
+            // Find the bubble for this message (it must be at least partially
+            // visible — we got here from a tap inside it) and compute the
+            // anchor's y in item-local coords. .bottom(anchorY) places the item
+            // so the anchor lands at the visual top of the rotated chat list's
+            // content area; .center(.custom) is bypassed for short items, so it
+            // can't position the anchor uniformly.
+            var anchorY: CGFloat?
+            self.chatDisplayNode.historyNode.forEachVisibleItemNode { itemNode in
+                guard anchorY == nil else {
+                    return
+                }
+                if let itemNode = itemNode as? ChatMessageBubbleItemNode,
+                   itemNode.item?.message.id == index.id,
+                   let rect = itemNode.getAnchorRect(anchor: anchor) {
+                    anchorY = rect.minY
+                }
+            }
+            if let anchorY {
+                self.chatDisplayNode.historyNode.scrollToMessage(
+                    from: index, to: index,
+                    animated: true, highlight: false,
+                    scrollPosition: .bottom(anchorY)
+                )
+            } else {
+                self.chatDisplayNode.historyNode.scrollToMessage(index: index)
+            }
         }, navigateToStory: { [weak self] message, storyId in
             guard let self else {
                 return

@@ -327,6 +327,7 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
             }
         }, requestMessageActionUrlAuth: { _, _ in }, activateSwitchInline: { _, _, _ in }, openUrl: { [weak self] url in
             self?.openUrl(url.url, progress: url.progress)
+        }, openExternalInstantPage: { _ in
         }, shareCurrentLocation: {}, shareAccountContact: {}, sendBotCommand: { _, _ in }, openInstantPage: { [weak self] message, associatedData in
             if let strongSelf = self, let navigationController = strongSelf.getNavigationController() {
                 if let controller = strongSelf.context.sharedContext.makeInstantPageController(context: strongSelf.context, message: message, sourcePeerType: associatedData?.automaticDownloadPeerType) {
@@ -656,7 +657,8 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
         }, requestMessageUpdate: { _, _, _ in   
         }, cancelInteractiveKeyboardGestures: {
         }, dismissTextInput: {
-        }, scrollToMessageId: { _ in
+        }, scrollToMessageId: { _, _ in
+        }, scrollToMessageIdWithAnchor: { _, _ in
         }, navigateToStory: { _, _ in
         }, attemptedNavigationToPrivateQuote: { _ in
         }, forceUpdateWarpContents: {

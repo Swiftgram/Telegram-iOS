@@ -401,6 +401,7 @@ final class BrowserInstantPageContent: UIView, BrowserContent, UIScrollViewDeleg
         self.settings = InstantPagePresentationSettings(
             themeType: self.presentationData.theme.overallDarkAppearance ? .dark : .light,
             fontSize: fontSize,
+            lineSpacingFactor: 1.0,
             forceSerif: state.isSerif,
             autoNightMode: false,
             ignoreAutoNightModeUntil: 0
@@ -498,7 +499,7 @@ final class BrowserInstantPageContent: UIView, BrowserContent, UIScrollViewDeleg
             return
         }
         
-        let currentLayout = instantPageLayoutForWebPage(webPage, instantPage: instantPage, userLocation: self.sourceLocation.userLocation, boundingWidth: size.width, safeInset: insets.left, strings: self.presentationData.strings, theme: self.theme, dateTimeFormat: self.presentationData.dateTimeFormat, webEmbedHeights: self.currentWebEmbedHeights, cachedMessageSyntaxHighlight: self.codeHighlight)
+        let currentLayout = instantPageLayoutForWebPage(webPage, instantPage: instantPage, userLocation: self.sourceLocation.userLocation, boundingWidth: size.width, sideInset: 17.0, safeInset: insets.left, strings: self.presentationData.strings, theme: self.theme, dateTimeFormat: self.presentationData.dateTimeFormat, webEmbedHeights: self.currentWebEmbedHeights, cachedMessageSyntaxHighlight: self.codeHighlight)
         
         let currentLayoutTiles = instantPageTilesFromLayout(currentLayout, boundingWidth: size.width)
         

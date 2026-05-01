@@ -22,6 +22,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     private var visibleTiles: [Int: InstantPageTileNode] = [:]
     private var visibleItemsWithNodes: [Int: InstantPageNode] = [:]
     private var currentPageLayout: (boundingWidth: CGFloat, layout: InstantPageLayout)?
+    private var pageTheme: InstantPageTheme?
     private var distanceThresholdGroupCount: [Int: Int] = [:]
     private var currentLayoutItemsWithNodes: [InstantPageItem] = []
     private var currentExpandedDetails: [Int : Bool]?
@@ -56,6 +57,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
     
     override public func asyncLayoutContent() -> (_ item: ChatMessageBubbleContentItem, _ layoutConstants: ChatMessageItemLayoutConstants, _ preparePosition: ChatMessageBubblePreparePosition, _ messageSelection: Bool?, _ constrainedSize: CGSize, _ avatarInset: CGFloat) -> (ChatMessageBubbleContentProperties, CGSize?, CGFloat, (CGSize, ChatMessageBubbleContentPosition) -> (CGFloat, (CGFloat) -> (CGSize, (ListViewItemUpdateAnimation, Bool, ListViewItemApply?) -> Void))) {
+        let previousItem = self.item
         let currentPageLayout = self.currentPageLayout
         let previousCurrentLayoutTiles = self.currentLayoutTiles
         
@@ -71,20 +73,117 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     var pageLayout: InstantPageLayout?
                     var currentLayoutTiles: [InstantPageTile] = []
                     
+                    let isDark = item.presentationData.theme.theme.overallDarkAppearance
+                    let isIncoming = item.message.effectivelyIncoming(item.context.account.peerId)
+                    let messageTheme = isIncoming ? item.presentationData.theme.theme.chat.message.incoming : item.presentationData.theme.theme.chat.message.outgoing
+                    
+                    var underlineLinks = true
+                    if !messageTheme.primaryTextColor.isEqual(messageTheme.linkTextColor) {
+                        underlineLinks = false
+                    }
+                    let _ = underlineLinks
+                    
+                    let author = item.message.author
+                    let mainColor: UIColor
+                    var secondaryColor: UIColor? = nil
+                    var tertiaryColor: UIColor? = nil
+                    
+                    let nameColors: PeerNameColors.Colors?
+                    switch author?.nameColor {
+                    case let .preset(nameColor):
+                        nameColors = item.context.peerNameColors.get(nameColor, dark: item.presentationData.theme.theme.overallDarkAppearance)
+                    case let .collectible(collectibleColor):
+                        nameColors = collectibleColor.peerNameColors(dark: item.presentationData.theme.theme.overallDarkAppearance)
+                    default:
+                        nameColors = nil
+                    }
+                    
+                    let codeBlockTitleColor: UIColor
+                    let codeBlockAccentColor: UIColor
+                    let codeBlockBackgroundColor: UIColor
+                    if !isIncoming {
+                        mainColor = messageTheme.accentTextColor
+                        if let _ = nameColors?.secondary {
+                            secondaryColor = .clear
+                        }
+                        if let _ = nameColors?.tertiary {
+                            tertiaryColor = .clear
+                        }
+                        
+                        if item.presentationData.theme.theme.overallDarkAppearance {
+                            codeBlockTitleColor = .white
+                            codeBlockAccentColor = UIColor(white: 1.0, alpha: 0.5)
+                            codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.25)
+                        } else {
+                            codeBlockTitleColor = mainColor
+                            codeBlockAccentColor = mainColor
+                            codeBlockBackgroundColor = mainColor.withMultipliedAlpha(0.1)
+                        }
+                    } else {
+                        let authorNameColor = nameColors?.main
+                        secondaryColor = nameColors?.secondary
+                        tertiaryColor = nameColors?.tertiary
+                        
+                        if let authorNameColor {
+                            mainColor = authorNameColor
+                        } else {
+                            mainColor = messageTheme.accentTextColor
+                        }
+                        
+                        codeBlockTitleColor = mainColor
+                        codeBlockAccentColor = mainColor
+                        
+                        if item.presentationData.theme.theme.overallDarkAppearance {
+                            codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.65)
+                        } else {
+                            codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.05)
+                        }
+                    }
+                    
+                    let _ = secondaryColor
+                    let _ = tertiaryColor
+                    
+                    let _ = codeBlockTitleColor
+                    let _ = codeBlockAccentColor
+                    
+                    let textCategories = InstantPageTextCategories(
+                        kicker: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
+                        header: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 24.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
+                        subheader: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 19.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
+                        paragraph: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 17.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
+                        caption: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
+                        credit: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 13.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
+                        table: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
+                        article: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 18.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor)
+                    )
+                    let pageTheme = InstantPageTheme(
+                        type: isDark ? .dark : .light,
+                        pageBackgroundColor: .clear,
+                        textCategories: textCategories,
+                        serif: false,
+                        codeBlockBackgroundColor: codeBlockBackgroundColor,
+                        linkColor: messageTheme.linkTextColor,
+                        textHighlightColor: messageTheme.accentTextColor.withMultipliedAlpha(0.1),
+                        linkHighlightColor: messageTheme.linkTextColor.withMultipliedAlpha(0.1),
+                        markerColor: UIColor(rgb: 0xfef3bc),
+                        panelBackgroundColor: messageTheme.accentControlColor.withMultipliedAlpha(0.1),
+                        panelHighlightedBackgroundColor: messageTheme.accentControlColor.withMultipliedAlpha(0.25),
+                        panelPrimaryColor: messageTheme.primaryTextColor,
+                        panelSecondaryColor: messageTheme.secondaryTextColor,
+                        panelAccentColor: messageTheme.accentTextColor,
+                        tableBorderColor: isDark || !isIncoming ? messageTheme.accentControlColor.withMultipliedAlpha(0.25) : UIColor(white: 0.0, alpha: 0.1),
+                        tableHeaderColor: isDark || !isIncoming ? messageTheme.accentControlColor.withMultipliedAlpha(0.1) : UIColor(white: 0.0, alpha: 0.05),
+                        controlColor: messageTheme.accentControlColor,
+                        imageTintColor: nil,
+                        overlayPanelColor: isDark ? UIColor(white: 0.0, alpha: 0.13) : UIColor(white: 1.0, alpha: 0.13)
+                    )
+                    
                     if let webpage = item.message.media.first(where: { $0 is TelegramMediaWebpage }) as? TelegramMediaWebpage, case let .Loaded(content) = webpage.content, let instantPage = content.instantPage {
-                        if let current = currentPageLayout, current.boundingWidth == boundingSize.width {
+                        if let current = currentPageLayout, current.boundingWidth == boundingSize.width, previousItem?.presentationData.theme.theme === item.presentationData.theme.theme {
                             pageLayout = current.layout
                             currentLayoutTiles = previousCurrentLayoutTiles
                         } else {
-                            let pageTheme = instantPageThemeForType(item.presentationData.theme.theme.overallDarkAppearance ? .dark : .light, settings: InstantPagePresentationSettings(
-                                themeType: item.presentationData.theme.theme.overallDarkAppearance ? .dark : .light,
-                                fontSize: .standard,
-                                lineSpacingFactor: 0.9,
-                                forceSerif: false,
-                                autoNightMode: false,
-                                ignoreAutoNightModeUntil: 0
-                            ))
-                            pageLayout = instantPageLayoutForWebPage(webpage, instantPage: instantPage._parse(), userLocation: .other, boundingWidth: boundingWidth - 2.0, safeInset: 0.0, strings: item.presentationData.strings, theme: pageTheme, dateTimeFormat: item.presentationData.dateTimeFormat, webEmbedHeights: [:], addFeedback: false)
+                            pageLayout = instantPageLayoutForWebPage(webpage, instantPage: instantPage._parse(), userLocation: .other, boundingWidth: boundingWidth - 2.0, sideInset: 10.0, safeInset: 0.0, strings: item.presentationData.strings, theme: pageTheme, dateTimeFormat: item.presentationData.dateTimeFormat, webEmbedHeights: [:], addFeedback: false)
                             if let pageLayout {
                                 currentLayoutTiles = instantPageTilesFromLayout(pageLayout, boundingWidth: boundingWidth)
                             }
@@ -100,6 +199,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                             return
                         }
                         self.item = item
+                        self.pageTheme = pageTheme
                         
                         self.containerNode.frame = CGRect(origin: CGPoint(x: 1.0, y: 1.0), size: CGSize(width: boundingSize.width - 2.0, height: boundingSize.height - 2.0))
                         
@@ -158,17 +258,9 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
     
     private func updateVisibleItems(visibleBounds: CGRect, animated: Bool = false) {
-        guard let messageItem = self.item else {
+        guard let messageItem = self.item, let pageTheme = self.pageTheme else {
             return
         }
-        let pageTheme = instantPageThemeForType(messageItem.presentationData.theme.theme.overallDarkAppearance ? .dark : .light, settings: InstantPagePresentationSettings(
-            themeType: messageItem.presentationData.theme.theme.overallDarkAppearance ? .dark : .light,
-            fontSize: .standard,
-            lineSpacingFactor: 0.9,
-            forceSerif: false,
-            autoNightMode: false,
-            ignoreAutoNightModeUntil: 0
-        ))
         let sourceLocation = InstantPageSourceLocation(userLocation: .other, peerType: .otherPrivate)
         
         var visibleTileIndices = Set<Int>()
@@ -427,13 +519,23 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         // The chat URL handler will show a confirmation when concealed is true
         // and the visible text differs from the destination — safer default.
         let concealed = true
-        let url = ChatMessageBubbleContentTapAction.Url(url: urlHit.urlItem.url, concealed: concealed)
+        let url = ChatMessageBubbleContentTapAction.Url(url: urlHit.urlItem.url, concealed: concealed, allowInlineWebpageResolution: urlHit.urlItem.webpageId != nil)
         let rects = self.computeHighlightRects(item: urlHit.item, parentOffset: urlHit.parentOffset, localPoint: urlHit.localPoint)
-        return ChatMessageBubbleContentTapAction(
-            content: .url(url),
-            rects: rects,
-            activate: self.makeActivate(item: urlHit.item, parentOffset: urlHit.parentOffset, localPoint: urlHit.localPoint)
-        )
+        
+        if let webpageId = urlHit.urlItem.webpageId {
+            let split = self.splitAnchor(url.url)
+            return ChatMessageBubbleContentTapAction(
+                content: .externalInstantPage(url: url, webpageId: webpageId, anchor: split.anchor),
+                rects: rects,
+                activate: self.makeActivate(item: urlHit.item, parentOffset: urlHit.parentOffset, localPoint: urlHit.localPoint)
+            )
+        } else {
+            return ChatMessageBubbleContentTapAction(
+                content: .url(url),
+                rects: rects,
+                activate: self.makeActivate(item: urlHit.item, parentOffset: urlHit.parentOffset, localPoint: urlHit.localPoint)
+            )
+        }
     }
 
     private func textItemAtLocation(_ location: CGPoint) -> (item: InstantPageTextItem, parentOffset: CGPoint)? {
@@ -650,6 +752,42 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         return nil
     }
 
+    override public func getAnchorRect(anchor: String) -> CGRect? {
+        guard let layout = self.currentPageLayout?.layout else {
+            return nil
+        }
+        if let rect = self.anchorRect(in: layout.items, anchor: anchor, baseY: 0.0) {
+            // Translate from layout/containerNode coords to bubble-content-node coords.
+            // containerNode is offset by (1, 1) from the bubble content node.
+            return rect.offsetBy(dx: 1.0, dy: 1.0)
+        }
+        return nil
+    }
+
+    private func anchorRect(in items: [InstantPageItem], anchor: String, baseY: CGFloat) -> CGRect? {
+        for item in items {
+            if let item = item as? InstantPageAnchorItem, item.anchor == anchor {
+                return CGRect(x: item.frame.minX, y: baseY + item.frame.minY, width: 1.0, height: 1.0)
+            } else if let item = item as? InstantPageTextItem {
+                if let (lineIndex, _) = item.anchors[anchor] {
+                    let lineFrame = item.lines[lineIndex].frame
+                    return CGRect(x: item.frame.minX + lineFrame.minX, y: baseY + item.frame.minY + lineFrame.minY, width: lineFrame.width, height: lineFrame.height)
+                }
+            } else if let item = item as? InstantPageTableItem {
+                if let (offset, _) = item.anchors[anchor] {
+                    return CGRect(x: item.frame.minX, y: baseY + item.frame.minY + offset, width: item.frame.width, height: 1.0)
+                }
+            } else if let item = item as? InstantPageDetailsItem {
+                // Inner items are laid out below the title bar, so the recursive base
+                // must include titleHeight (mirrors InstantPageDetailsNode.linkSelectionRects).
+                if let rect = self.anchorRect(in: item.items, anchor: anchor, baseY: baseY + item.frame.minY + item.titleHeight) {
+                    return rect
+                }
+            }
+        }
+        return nil
+    }
+
     override public func reactionTargetView(value: MessageReaction.Reaction) -> UIView? {
         /*if let statusNode = self.statusNode, !statusNode.isHidden {
             return statusNode.reactionView(value: value)
@@ -692,7 +830,13 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
 
     private func scrollToAnchor(_ anchor: String) {
-        // TODO: implement intra-page anchor scrolling
-        let _ = anchor
+        guard let item = self.item else {
+            return
+        }
+        if anchor.isEmpty {
+            item.controllerInteraction.scrollToMessageId(item.message.index, 0.0)
+        } else {
+            item.controllerInteraction.scrollToMessageIdWithAnchor(item.message.index, anchor)
+        }
     }
 }

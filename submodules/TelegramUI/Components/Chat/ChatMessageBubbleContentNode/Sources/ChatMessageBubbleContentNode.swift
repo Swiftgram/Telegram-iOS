@@ -162,6 +162,7 @@ public struct ChatMessageBubbleContentTapAction {
         case date(Int32, String)
         case largeEmoji(String, String?, TelegramMediaFile)
         case customEmoji(TelegramMediaFile)
+        case externalInstantPage(url: Url, webpageId: MediaId, anchor: String?)
         case custom(() -> Void)
     }
     
@@ -260,7 +261,11 @@ open class ChatMessageBubbleContentNode: ASDisplayNode {
     open func transitionNode(messageId: MessageId, media: Media, adjustRect: Bool) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
         return nil
     }
-    
+
+    open func getAnchorRect(anchor: String) -> CGRect? {
+        return nil
+    }
+
     open func updateHiddenMedia(_ media: [Media]?) -> Bool {
         return false
     }

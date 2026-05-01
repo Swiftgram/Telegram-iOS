@@ -2687,6 +2687,9 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
             return false
         }
         let pinToEdgeTopInset = self.calculatePinToEdgeTopInset()
+        if pinToEdgeTopInset <= 0.0 {
+            return false
+        }
         for itemNode in self.itemNodes {
             if itemNode.index == targetIndex {
                 let extensionOffset = self.pinToEdgeBottomExtension(forPinnedHeight: itemNode.apparentBounds.height)

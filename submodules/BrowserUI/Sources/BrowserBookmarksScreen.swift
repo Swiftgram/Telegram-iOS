@@ -83,6 +83,7 @@ public final class BrowserBookmarksScreen: ViewController {
                     controller.openUrl(url.url)
                     controller.dismiss()
                 }
+            }, openExternalInstantPage: { _ in
             }, shareCurrentLocation: {
             }, shareAccountContact: {
             }, sendBotCommand: { _, _ in
@@ -179,7 +180,8 @@ public final class BrowserBookmarksScreen: ViewController {
             }, requestMessageUpdate: { _, _, _ in
             }, cancelInteractiveKeyboardGestures: {
             }, dismissTextInput: {
-            }, scrollToMessageId: { _ in
+            }, scrollToMessageId: { _, _ in
+            }, scrollToMessageIdWithAnchor: { _, _ in
             }, navigateToStory: { _, _ in
             }, attemptedNavigationToPrivateQuote: { _ in
             }, forceUpdateWarpContents: {
