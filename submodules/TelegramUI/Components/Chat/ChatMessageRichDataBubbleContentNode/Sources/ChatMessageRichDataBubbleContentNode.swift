@@ -8,8 +8,10 @@ import SwiftSignalKit
 import AccountContext
 import ChatMessageBubbleContentNode
 import ChatMessageItemCommon
+import ChatControllerInteraction
 import InstantPageUI
 import TelegramUIPreferences
+import TextLoadingEffect
 
 public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode {
     public final class ContainerNode: ASDisplayNode {
@@ -23,6 +25,10 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     private var distanceThresholdGroupCount: [Int: Int] = [:]
     private var currentLayoutItemsWithNodes: [InstantPageItem] = []
     private var currentExpandedDetails: [Int : Bool]?
+    private var linkProgressDisposable: Disposable?
+    private var linkProgressRects: [CGRect]?
+    private var linkHighlightingNode: LinkHighlightingNode?
+    private var linkProgressView: TextLoadingEffectView?
     
     override public var visibility: ListViewItemNodeVisibility {
         didSet {
@@ -46,6 +52,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
     
     deinit {
+        self.linkProgressDisposable?.dispose()
     }
     
     override public func asyncLayoutContent() -> (_ item: ChatMessageBubbleContentItem, _ layoutConstants: ChatMessageItemLayoutConstants, _ preparePosition: ChatMessageBubblePreparePosition, _ messageSelection: Bool?, _ constrainedSize: CGSize, _ avatarInset: CGFloat) -> (ChatMessageBubbleContentProperties, CGSize?, CGFloat, (CGSize, ChatMessageBubbleContentPosition) -> (CGFloat, (CGFloat) -> (CGSize, (ListViewItemUpdateAnimation, Bool, ListViewItemApply?) -> Void))) {
@@ -72,6 +79,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                             let pageTheme = instantPageThemeForType(item.presentationData.theme.theme.overallDarkAppearance ? .dark : .light, settings: InstantPagePresentationSettings(
                                 themeType: item.presentationData.theme.theme.overallDarkAppearance ? .dark : .light,
                                 fontSize: .standard,
+                                lineSpacingFactor: 0.9,
                                 forceSerif: false,
                                 autoNightMode: false,
                                 ignoreAutoNightModeUntil: 0
@@ -98,13 +106,14 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                         if let pageLayout {
                             self.currentPageLayout = (boundingSize.width, pageLayout)
                             self.currentLayoutTiles = currentLayoutTiles
-                            
+
+                            var currentLayoutItemsWithNodes: [InstantPageItem] = []
                             var distanceThresholdGroupCount: [Int : Int] = [:]
-                            
+
                             for item in pageLayout.items {
                                 if item.wantsNode {
-                                    self.currentLayoutItemsWithNodes.append(item)
-                                    
+                                    currentLayoutItemsWithNodes.append(item)
+
                                     if let group = item.distanceThresholdGroup() {
                                         let count: Int
                                         if let currentCount = distanceThresholdGroupCount[Int(group)] {
@@ -116,11 +125,13 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                                     }
                                 }
                             }
-                            
+
+                            self.currentLayoutItemsWithNodes = currentLayoutItemsWithNodes
                             self.distanceThresholdGroupCount = distanceThresholdGroupCount
                         } else {
                             self.currentPageLayout = nil
                             self.currentLayoutTiles = []
+                            self.currentLayoutItemsWithNodes = []
                             self.distanceThresholdGroupCount = [:]
                         }
                         
@@ -153,6 +164,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         let pageTheme = instantPageThemeForType(messageItem.presentationData.theme.theme.overallDarkAppearance ? .dark : .light, settings: InstantPagePresentationSettings(
             themeType: messageItem.presentationData.theme.theme.overallDarkAppearance ? .dark : .light,
             fontSize: .standard,
+            lineSpacingFactor: 0.9,
             forceSerif: false,
             autoNightMode: false,
             ignoreAutoNightModeUntil: 0
@@ -231,50 +243,40 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     //let embedIndex = embedIndex
                     //let detailsIndex = detailsIndex
                     if let newNode = item.node(context: messageItem.context, strings: messageItem.presentationData.strings, nameDisplayOrder: messageItem.presentationData.nameDisplayOrder, theme: pageTheme, sourceLocation: sourceLocation, openMedia: { [weak self] media in
-                        let _ = self
-                        //self?.openMedia(media)
-                    }, longPressMedia: { [weak self] media in
-                        //self?.longPressMedia(media)
-                        let _ = self
-                    }, activatePinchPreview: { [weak self] sourceNode in
-                        /*guard let strongSelf = self, let controller = strongSelf.controller else {
+                        guard let self, let item = self.item, let mediaId = media.media.id else {
                             return
                         }
-                        let pinchController = makePinchController(sourceNode: sourceNode, getContentAreaInScreenSpace: {
-                            guard let strongSelf = self else {
-                                return CGRect()
-                            }
-
-                            let localRect = CGRect(origin: CGPoint(x: 0.0, y: strongSelf.navigationBar.frame.maxY), size: CGSize(width: strongSelf.bounds.width, height: strongSelf.bounds.height - strongSelf.navigationBar.frame.maxY))
-                            return strongSelf.view.convert(localRect, to: nil)
-                        })
-                        controller.window?.presentInGlobalOverlay(pinchController)*/
-                        let _ = self
-                    }, pinchPreviewFinished: { [weak self] itemNode in
-                        /*guard let strongSelf = self else {
+                        let _ = item.controllerInteraction.openMessage(item.message, OpenMessageParams(mode: .default, mediaSubject: .instantPageMedia(mediaId)))
+                    }, longPressMedia: { _ in
+                        // TODO
+                    }, activatePinchPreview: { _ in
+                        // TODO
+                    }, pinchPreviewFinished: { _ in
+                        // TODO
+                    }, openPeer: { [weak self] peer in
+                        guard let self, let item = self.item else {
                             return
                         }
-                        for (_, listItemNode) in strongSelf.visibleItemsWithNodes {
-                            if let listItemNode = listItemNode as? InstantPagePeerReferenceNode {
-                                if listItemNode.frame.intersects(itemNode.frame) && listItemNode.frame.maxY <= itemNode.frame.maxY + 2.0 {
-                                    listItemNode.layer.animateAlpha(from: 0.0, to: listItemNode.alpha, duration: 0.25)
-                                    break
-                                }
-                            }
-                        }*/
-                        let _ = self
-                    }, openPeer: { [weak self] peerId in
-                        let _ = self
-                        //self?.openPeer(peerId)
-                    }, openUrl: { [weak self] url in
-                        let _ = self
-                        //self?.openUrl(url)
-                    }, updateWebEmbedHeight: { [weak self] height in
-                        let _ = self
-                        //self?.updateWebEmbedHeight(embedIndex, height)
-                    }, updateDetailsExpanded: { [weak self] expanded in
-                        let _ = self
-                        //self?.updateDetailsExpanded(detailsIndex, expanded)
+                        item.controllerInteraction.openPeer(peer, .chat(textInputState: nil, subject: nil, peekData: nil), nil, .default)
+                    }, openUrl: { [weak self] urlItem in
+                        guard let self, let item = self.item else {
+                            return
+                        }
+                        let split = self.splitAnchor(urlItem.url)
+                        if let webpage = self.currentLoadedWebpage(), webpage.url == split.base, let anchor = split.anchor {
+                            self.scrollToAnchor(anchor)
+                            return
+                        }
+                        item.controllerInteraction.openUrl(ChatControllerInteraction.OpenUrl(
+                            url: urlItem.url,
+                            concealed: false,
+                            message: item.message,
+                            allowInlineWebpageResolution: urlItem.webpageId != nil
+                        ))
+                    }, updateWebEmbedHeight: { _ in
+                        // TODO
+                    }, updateDetailsExpanded: { _ in
+                        // TODO
                     }, currentExpandedDetails: self.currentExpandedDetails, getPreloadedResource: { _ in return nil }) {
                         newNode.frame = itemFrame
                         newNode.updateLayout(size: itemFrame.size, transition: transition)
@@ -407,45 +409,186 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                 return ChatMessageBubbleContentTapAction(content: .none)
             }
         }
-        
-        /*func makeActivate(_ urlRange: NSRange?) -> (() -> Promise<Bool>?)? {
-            return { [weak self] in
-                guard let self else {
-                    return nil
+
+        guard let urlHit = self.urlForTapLocation(point) else {
+            return ChatMessageBubbleContentTapAction(content: .none)
+        }
+
+        let split = self.splitAnchor(urlHit.urlItem.url)
+        if let webpage = self.currentLoadedWebpage(), webpage.url == split.base, let anchor = split.anchor {
+            return ChatMessageBubbleContentTapAction(content: .custom({ [weak self] in
+                self?.scrollToAnchor(anchor)
+            }))
+        }
+
+        // Default to concealed=true: InstantPageTextItem does not expose a clean
+        // "attribute substring with displayed range" API, so we cannot compare
+        // displayed text to the resolved URL the way the chat text bubble does.
+        // The chat URL handler will show a confirmation when concealed is true
+        // and the visible text differs from the destination — safer default.
+        let concealed = true
+        let url = ChatMessageBubbleContentTapAction.Url(url: urlHit.urlItem.url, concealed: concealed)
+        let rects = self.computeHighlightRects(item: urlHit.item, parentOffset: urlHit.parentOffset, localPoint: urlHit.localPoint)
+        return ChatMessageBubbleContentTapAction(
+            content: .url(url),
+            rects: rects,
+            activate: self.makeActivate(item: urlHit.item, parentOffset: urlHit.parentOffset, localPoint: urlHit.localPoint)
+        )
+    }
+
+    private func textItemAtLocation(_ location: CGPoint) -> (item: InstantPageTextItem, parentOffset: CGPoint)? {
+        guard let layout = self.currentPageLayout?.layout else {
+            return nil
+        }
+        // Translate from bubble-content-node coords to container-/layout-local coords.
+        let layoutLocation = location.offsetBy(dx: -1.0, dy: -1.0)
+        for item in layout.items {
+            let itemFrame = item.frame
+            if itemFrame.contains(layoutLocation) {
+                if let item = item as? InstantPageTextItem, item.selectable {
+                    return (item, CGPoint(x: itemFrame.minX - item.frame.minX, y: itemFrame.minY - item.frame.minY))
+                } else if let item = item as? InstantPageScrollableItem {
+                    let contentOffset = CGPoint.zero
+                    if let (textItem, parentOffset) = item.textItemAtLocation(layoutLocation.offsetBy(dx: -itemFrame.minX + contentOffset.x, dy: -itemFrame.minY)) {
+                        return (textItem, itemFrame.origin.offsetBy(dx: parentOffset.x - contentOffset.x, dy: parentOffset.y))
+                    }
+                } else if let item = item as? InstantPageDetailsItem {
+                    for (_, itemNode) in self.visibleItemsWithNodes {
+                        if let itemNode = itemNode as? InstantPageDetailsNode, itemNode.item === item {
+                            if let (textItem, parentOffset) = itemNode.textItemAtLocation(layoutLocation.offsetBy(dx: -itemFrame.minX, dy: -itemFrame.minY)) {
+                                return (textItem, itemFrame.origin.offsetBy(dx: parentOffset.x, dy: parentOffset.y))
+                            }
+                        }
+                    }
                 }
-                
-                let promise = Promise<Bool>()
-                
-                self.linkProgressDisposable?.dispose()
-                
-                if self.linkProgressRange != nil {
-                    self.linkProgressRange = nil
+            }
+        }
+        return nil
+    }
+
+    private func urlForTapLocation(_ point: CGPoint) -> (item: InstantPageTextItem, urlItem: InstantPageUrlItem, parentOffset: CGPoint, localPoint: CGPoint)? {
+        guard let (item, parentOffset) = self.textItemAtLocation(point) else {
+            return nil
+        }
+        // Translate bubble-content-node point → text-item-local point.
+        // (bubble-coords → layout-coords) is `- (1, 1)`; (layout → item-local) is `- item.frame.origin - parentOffset`.
+        let layoutPoint = point.offsetBy(dx: -1.0, dy: -1.0)
+        let localPoint = layoutPoint.offsetBy(dx: -item.frame.minX - parentOffset.x, dy: -item.frame.minY - parentOffset.y)
+        guard let urlItem = item.urlAttribute(at: localPoint) else {
+            return nil
+        }
+        return (item, urlItem, parentOffset, localPoint)
+    }
+
+    private func computeHighlightRects(item: InstantPageTextItem, parentOffset: CGPoint, localPoint: CGPoint) -> [CGRect] {
+        // Text item returns rects in its local coords; translate back into containerNode-local coords.
+        // containerNode is offset by (1, 1) from the bubble-content-node, but the highlight overlay lives
+        // *inside* containerNode, so we use layout-coords (= containerNode-local) for the rects.
+        let originX = item.frame.minX + parentOffset.x
+        let originY = item.frame.minY + parentOffset.y
+        return item.linkSelectionRects(at: localPoint).map { rect in
+            rect.offsetBy(dx: originX, dy: originY)
+        }
+    }
+
+    private func makeActivate(item: InstantPageTextItem, parentOffset: CGPoint, localPoint: CGPoint) -> (() -> Promise<Bool>?)? {
+        return { [weak self, weak item] in
+            guard let self else {
+                return nil
+            }
+            let promise = Promise<Bool>()
+            self.linkProgressDisposable?.dispose()
+            if self.linkProgressRects != nil {
+                self.linkProgressRects = nil
+                self.updateLinkProgressState()
+            }
+            self.linkProgressDisposable = (promise.get() |> deliverOnMainQueue).startStrict(next: { [weak self] value in
+                guard let self else {
+                    return
+                }
+                let updated: [CGRect]?
+                if value, let item {
+                    updated = self.computeHighlightRects(item: item, parentOffset: parentOffset, localPoint: localPoint)
+                } else {
+                    updated = nil
+                }
+                let changed: Bool
+                if let lhs = self.linkProgressRects, let rhs = updated {
+                    changed = lhs != rhs
+                } else {
+                    changed = (self.linkProgressRects == nil) != (updated == nil)
+                }
+                if changed {
+                    self.linkProgressRects = updated
                     self.updateLinkProgressState()
                 }
-                
-                self.linkProgressDisposable = (promise.get() |> deliverOnMainQueue).startStrict(next: { [weak self] value in
-                    guard let self else {
-                        return
-                    }
-                    let updatedRange: NSRange? = value ? urlRange : nil
-                    if self.linkProgressRange != updatedRange {
-                        self.linkProgressRange = updatedRange
-                        self.updateLinkProgressState()
-                    }
-                })
-                
-                return promise
-            }
-        }*/
-        
-        return ChatMessageBubbleContentTapAction(content: .none)
+            })
+            return promise
+        }
     }
-    
+
+    private func updateLinkProgressState() {
+        guard let messageItem = self.item else {
+            return
+        }
+        if let rects = self.linkProgressRects, !rects.isEmpty {
+            let linkProgressView: TextLoadingEffectView
+            if let current = self.linkProgressView {
+                linkProgressView = current
+            } else {
+                linkProgressView = TextLoadingEffectView(frame: CGRect())
+                self.linkProgressView = linkProgressView
+                self.containerNode.view.addSubview(linkProgressView)
+            }
+            linkProgressView.frame = self.containerNode.bounds
+
+            let progressColor: UIColor = messageItem.message.effectivelyIncoming(messageItem.context.account.peerId)
+                ? messageItem.presentationData.theme.theme.chat.message.incoming.linkHighlightColor
+                : messageItem.presentationData.theme.theme.chat.message.outgoing.linkHighlightColor
+
+            linkProgressView.update(color: progressColor, size: self.containerNode.bounds.size, rects: rects)
+        } else if let linkProgressView = self.linkProgressView {
+            self.linkProgressView = nil
+            linkProgressView.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false, completion: { [weak linkProgressView] _ in
+                linkProgressView?.removeFromSuperview()
+            })
+        }
+    }
+
     override public func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         return super.hitTest(point, with: event)
     }
     
     override public func updateTouchesAtPoint(_ point: CGPoint?) {
+        guard let messageItem = self.item else {
+            return
+        }
+
+        var rects: [CGRect]?
+        if let point, let urlHit = self.urlForTapLocation(point) {
+            rects = self.computeHighlightRects(item: urlHit.item, parentOffset: urlHit.parentOffset, localPoint: urlHit.localPoint)
+        }
+
+        if let rects, !rects.isEmpty {
+            let highlightingNode: LinkHighlightingNode
+            if let current = self.linkHighlightingNode {
+                highlightingNode = current
+            } else {
+                let color: UIColor = messageItem.message.effectivelyIncoming(messageItem.context.account.peerId)
+                    ? messageItem.presentationData.theme.theme.chat.message.incoming.linkHighlightColor
+                    : messageItem.presentationData.theme.theme.chat.message.outgoing.linkHighlightColor
+                highlightingNode = LinkHighlightingNode(color: color)
+                self.linkHighlightingNode = highlightingNode
+                self.containerNode.insertSubnode(highlightingNode, at: 0)
+            }
+            highlightingNode.frame = self.containerNode.bounds
+            highlightingNode.updateRects(rects)
+        } else if let highlightingNode = self.linkHighlightingNode {
+            self.linkHighlightingNode = nil
+            highlightingNode.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.18, removeOnCompletion: false, completion: { [weak highlightingNode] _ in
+                highlightingNode?.removeFromSupernode()
+            })
+        }
     }
     
     override public func updateSearchTextHighlightState(text: String?, messages: [MessageIndex]?) {
@@ -456,7 +599,57 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     
     override public func updateIsExtractedToContextPreview(_ value: Bool) {
     }
-    
+
+    override public func transitionNode(messageId: MessageId, media: Media, adjustRect: Bool) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
+        guard let item = self.item, item.message.id == messageId else {
+            return nil
+        }
+        guard let mediaId = media.id, let layout = self.currentPageLayout?.layout else {
+            return nil
+        }
+        guard let match = self.findInstantPageMedia(in: layout.items, mediaId: mediaId) else {
+            return nil
+        }
+        for (_, itemNode) in self.visibleItemsWithNodes {
+            if let transition = itemNode.transitionNode(media: match) {
+                return transition
+            }
+        }
+        return nil
+    }
+
+    override public func updateHiddenMedia(_ media: [Media]?) -> Bool {
+        var hiddenMedia: InstantPageMedia?
+        if let media, !media.isEmpty, let layout = self.currentPageLayout?.layout {
+            for raw in media {
+                if let id = raw.id, let match = self.findInstantPageMedia(in: layout.items, mediaId: id) {
+                    hiddenMedia = match
+                    break
+                }
+            }
+        }
+        for (_, itemNode) in self.visibleItemsWithNodes {
+            itemNode.updateHiddenMedia(media: hiddenMedia)
+        }
+        return hiddenMedia != nil
+    }
+
+    private func findInstantPageMedia(in items: [InstantPageItem], mediaId: MediaId) -> InstantPageMedia? {
+        for item in items {
+            if let detailsItem = item as? InstantPageDetailsItem {
+                if let found = self.findInstantPageMedia(in: detailsItem.items, mediaId: mediaId) {
+                    return found
+                }
+            }
+            for itemMedia in item.medias {
+                if itemMedia.media.id == mediaId {
+                    return itemMedia
+                }
+            }
+        }
+        return nil
+    }
+
     override public func reactionTargetView(value: MessageReaction.Reaction) -> UIView? {
         /*if let statusNode = self.statusNode, !statusNode.isHidden {
             return statusNode.reactionView(value: value)
@@ -474,5 +667,32 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     override public func getStatusNode() -> ASDisplayNode? {
         return nil
         //return self.statusNode
+    }
+
+    private func splitAnchor(_ url: String) -> (base: String, anchor: String?) {
+        if let anchorRange = url.range(of: "#") {
+            let anchor = String(url[anchorRange.upperBound...]).removingPercentEncoding
+            let base = String(url[..<anchorRange.lowerBound])
+            return (base, anchor)
+        }
+        return (url, nil)
+    }
+
+    private func currentLoadedWebpage() -> TelegramMediaWebpageLoadedContent? {
+        guard let item = self.item else {
+            return nil
+        }
+        guard let webpage = item.message.media.first(where: { $0 is TelegramMediaWebpage }) as? TelegramMediaWebpage else {
+            return nil
+        }
+        if case let .Loaded(content) = webpage.content {
+            return content
+        }
+        return nil
+    }
+
+    private func scrollToAnchor(_ anchor: String) {
+        // TODO: implement intra-page anchor scrolling
+        let _ = anchor
     }
 }

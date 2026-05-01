@@ -19,6 +19,8 @@ swift_library(
         "//submodules/InstantPageUI",
         "//submodules/TelegramUI/Components/Chat/ChatMessageBubbleContentNode",
         "//submodules/TelegramUI/Components/Chat/ChatMessageItemCommon",
+        "//submodules/TelegramUI/Components/ChatControllerInteraction",
+        "//submodules/TelegramUI/Components/TextLoadingEffect",
         "//submodules/TelegramUIPreferences",
     ],
     visibility = [
