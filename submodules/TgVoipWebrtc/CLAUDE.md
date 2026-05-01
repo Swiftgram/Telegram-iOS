@@ -158,7 +158,7 @@ GroupInstanceReferenceImpl
         ├── sendonly video transceiver (outgoing H264 simulcast, SDP-munged SSRCs)
         ├── recvonly audio transceivers (one per remote SSRC, added dynamically)
         ├── recvonly video transceivers (one per remote endpoint, added dynamically)
-        └── data channel ("data", for ActiveAudioSsrcs / ActiveVideoSsrcs)
+        └── data channel ("data", for ActiveVideoSsrcs and Colibri video constraints)
 ```
 
 ### How It Differs from CustomImpl
@@ -167,9 +167,9 @@ GroupInstanceReferenceImpl
 |--------|-----------|---------------|
 | Transport | Manual ICE/DTLS/SRTP via GroupNetworkManager | WebRTC PeerConnection |
 | SDP | None (custom JSON protocol) | Local SDP construction, translates to/from JSON |
-| SSRC discovery | `unknownSsrcPacketReceived` on raw RTP | `ActiveAudioSsrcs`/`ActiveVideoSsrcs` data channel messages from SFU |
+| SSRC discovery | `unknownSsrcPacketReceived` on raw RTP | Audio: `GRAudioFrameTransformer` on mid=0's unsignaled receiver. Video: `ActiveVideoSsrcs` data channel message from SFU |
 | Audio channels | Manual `IncomingAudioChannel` per SSRC | PeerConnection recvonly transceivers |
-| Audio levels | RTP header extension parsing | Synthetic levels based on known SSRCs |
+| Audio levels | RTP header extension parsing | Per-receiver `GRAudioLevelSink` reading real PCM levels |
 | Video outgoing | Manual `cricket::VideoChannel` with direct SSRC control | PeerConnection sendonly transceiver + SDP munging for simulcast SSRCs |
 | Video incoming | Manual `IncomingVideoChannel` per endpoint | PeerConnection recvonly transceivers with SSRCs in answer |
 | Video decode | Manual decoder lifecycle | PeerConnection handles internally |
@@ -187,11 +187,17 @@ GroupInstanceReferenceImpl
 
 ### Dynamic Participant Handling
 
-**Audio:**
-1. SFU sends `{"colibriClass":"ActiveAudioSsrcs","ssrcs":[54321,98765]}` over data channel
-2. Client diffs against known SSRCs
-3. New SSRCs: add recvonly audio transceiver → renegotiate (new offer + constructed answer mirroring offer mids)
-4. Removed SSRCs: clean up from tracking map
+**Audio (per-receiver frame transformer):**
+1. The first packet for an unknown SSRC X reaches mid=0's receiver — PeerConnection's catch-all for unsignaled audio. The voice channel creates a `WebRtcAudioReceiveStream` for X and attaches `GRAudioFrameTransformer` (registered as `unsignaled_frame_transformer_` on mid=0).
+2. The transformer's `Transform(frame)` reads `frame->GetSsrc() = X`, sees X for the first time, **buffers the frame** in a per-SSRC FIFO, and posts the SSRC to the media thread.
+3. `handleDiscoveredAudioSsrc(X)` inserts X into `_remoteSsrcs` with a fresh mid, fires `_requestMediaChannelDescriptions({X}, ...)` (matches CustomImpl's contract), and calls `scheduleDiscoveryRenegotiation()` (250 ms debounce).
+4. After the debounce, `renegotiate()` adds a recvonly audio transceiver bound to mid=`_nextMid++` for every entry in `_remoteSsrcs` that doesn't have one. `buildRemoteAnswer` includes X on the new m-line; `WebRtcVoiceReceiveChannel::AddRecvStream(X)` PROMOTES the existing unsignaled stream in place (`webrtc_voice_engine.cc:2258-2266`) — the transformer stays attached.
+5. `onRenegotiationComplete` runs `wireRemoteAudioLevelSinks()` (attaches `GRAudioLevelSink` per receiver), then calls `_audioFrameTransformer->releaseSsrc(ssrc)` for every SSRC whose transceiver now has a mid. The transformer drains the per-SSRC FIFO via `OnTransformedFrame` so the buffered audio plays without a startup gap.
+6. Subsequent live frames for X take the transformer's `kDrained` branch (immediate passthrough). The per-receiver `GRAudioLevelSink` reads real PCM levels.
+
+The `colibriClass=ActiveAudioSsrcs` data-channel mechanism (test-SFU only) was removed; the tap is the single audio-discovery path. Removed-SSRC handling is the same as CustomImpl: stale recvonly transceivers stay in the SDP indefinitely; participant departures are tracked at the application layer (MTProto).
+
+The transformer is installed once on mid=0's receiver only — re-installing on the recvonly receivers triggers `Register{Sink,}TransformedFrameCallback` re-runs that overwrite valid registrations and misroute frames. Stream promotion keeps the single instance valid for every signaled SSRC.
 
 **Video:**
 1. SFU sends `ActiveVideoSsrcs` over data channel → forwarded to app via `dataChannelMessageReceived`
