@@ -33,6 +33,12 @@ struct InstantPageTextStrikethroughItem {
     let frame: CGRect
 }
 
+struct InstantPageTextUnderlineItem {
+    let frame: CGRect
+    let range: NSRange
+    let color: UIColor?
+}
+
 struct InstantPageTextImageItem {
     let frame: CGRect
     let range: NSRange
@@ -68,17 +74,19 @@ public final class InstantPageTextLine {
     let range: NSRange
     public let frame: CGRect
     let strikethroughItems: [InstantPageTextStrikethroughItem]
+    let underlineItems: [InstantPageTextUnderlineItem]
     let markedItems: [InstantPageTextMarkedItem]
     let imageItems: [InstantPageTextImageItem]
     let formulaItems: [InstantPageTextFormulaRun]
     public let anchorItems: [InstantPageTextAnchorItem]
     let isRTL: Bool
-    
-    init(line: CTLine, range: NSRange, frame: CGRect, strikethroughItems: [InstantPageTextStrikethroughItem], markedItems: [InstantPageTextMarkedItem], imageItems: [InstantPageTextImageItem], formulaItems: [InstantPageTextFormulaRun], anchorItems: [InstantPageTextAnchorItem], isRTL: Bool) {
+
+    init(line: CTLine, range: NSRange, frame: CGRect, strikethroughItems: [InstantPageTextStrikethroughItem], underlineItems: [InstantPageTextUnderlineItem], markedItems: [InstantPageTextMarkedItem], imageItems: [InstantPageTextImageItem], formulaItems: [InstantPageTextFormulaRun], anchorItems: [InstantPageTextAnchorItem], isRTL: Bool) {
         self.line = line
         self.range = range
         self.frame = frame
         self.strikethroughItems = strikethroughItems
+        self.underlineItems = underlineItems
         self.markedItems = markedItems
         self.imageItems = imageItems
         self.formulaItems = formulaItems
@@ -262,6 +270,24 @@ public final class InstantPageTextItem: InstantPageItem {
                 for item in line.strikethroughItems {
                     let itemFrame = item.frame.offsetBy(dx: lineFrame.minX, dy: 0.0)
                     context.fill(CGRect(x: itemFrame.minX, y: itemFrame.minY + floor((lineFrame.size.height / 2.0) + 1.0), width: itemFrame.size.width, height: 1.0))
+                }
+            }
+
+            if !line.underlineItems.isEmpty {
+                for item in line.underlineItems {
+                    var color: UIColor? = item.color
+                    if color == nil {
+                        self.attributedString.enumerateAttributes(in: item.range, options: []) { attributes, _, _ in
+                            if let foreground = attributes[NSAttributedString.Key.foregroundColor] as? UIColor {
+                                color = foreground
+                            }
+                        }
+                    }
+                    if let color {
+                        context.setFillColor(color.cgColor)
+                    }
+                    let itemFrame = item.frame.offsetBy(dx: lineFrame.minX, dy: 0.0)
+                    context.fill(CGRect(x: itemFrame.minX, y: itemFrame.minY + lineFrame.size.height + 1.0, width: itemFrame.size.width, height: 1.0))
                 }
             }
         }
@@ -909,15 +935,26 @@ func layoutTextItemWithString(_ string: NSAttributedString, boundingWidth: CGFlo
             }
             
             var strikethroughItems: [InstantPageTextStrikethroughItem] = []
+            var underlineItems: [InstantPageTextUnderlineItem] = []
             var markedItems: [InstantPageTextMarkedItem] = []
             var anchorItems: [InstantPageTextAnchorItem] = []
-            
+
             string.enumerateAttributes(in: lineRange, options: []) { attributes, range, _ in
                 if let _ = attributes[NSAttributedString.Key.strikethroughStyle] {
                     let lowerX = floor(CTLineGetOffsetForStringIndex(line, range.location, nil))
                     let upperX = ceil(CTLineGetOffsetForStringIndex(line, range.location + range.length, nil))
                     let x = lowerX < upperX ? lowerX : upperX
                     strikethroughItems.append(InstantPageTextStrikethroughItem(frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y, width: abs(upperX - lowerX), height: fontLineHeight)))
+                }
+                if let _ = attributes[NSAttributedString.Key.underlineStyle] {
+                    let lowerX = floor(CTLineGetOffsetForStringIndex(line, range.location, nil))
+                    let upperX = ceil(CTLineGetOffsetForStringIndex(line, range.location + range.length, nil))
+                    let x = lowerX < upperX ? lowerX : upperX
+                    underlineItems.append(InstantPageTextUnderlineItem(
+                        frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y, width: abs(upperX - lowerX), height: fontLineHeight),
+                        range: range,
+                        color: attributes[NSAttributedString.Key.underlineColor] as? UIColor
+                    ))
                 }
                 if let color = attributes[NSAttributedString.Key.init(rawValue: InstantPageMarkerColorAttribute)] as? UIColor {
                     var lineHeight = fontLineHeight
@@ -967,7 +1004,7 @@ func layoutTextItemWithString(_ string: NSAttributedString, boundingWidth: CGFlo
                     }
                 }
             }
-            let textLine = InstantPageTextLine(line: line, range: lineRange, frame: CGRect(x: workingLineOrigin.x, y: workingLineOrigin.y, width: lineWidth, height: height), strikethroughItems: strikethroughItems, markedItems: markedItems, imageItems: lineImageItems, formulaItems: lineFormulaItems, anchorItems: anchorItems, isRTL: isRTL)
+            let textLine = InstantPageTextLine(line: line, range: lineRange, frame: CGRect(x: workingLineOrigin.x, y: workingLineOrigin.y, width: lineWidth, height: height), strikethroughItems: strikethroughItems, underlineItems: underlineItems, markedItems: markedItems, imageItems: lineImageItems, formulaItems: lineFormulaItems, anchorItems: anchorItems, isRTL: isRTL)
             
             lines.append(textLine)
             imageItems.append(contentsOf: lineImageItems)
