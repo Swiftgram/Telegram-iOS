@@ -28,6 +28,7 @@ import PhoneNumberFormat
 import PlainButtonComponent
 import StoreKit
 import DeviceModel
+import GlassBarButtonComponent
 
 final class AuthorizationSequencePaymentScreenComponent: Component {
     typealias EnvironmentType = ViewControllerComponentContainer.Environment
@@ -254,25 +255,27 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
             
             let helpButtonSize = self.helpButton.update(
                 transition: transition,
-                component: AnyComponent(PlainButtonComponent(
-                    content: AnyComponent(MultilineTextComponent(
-                        text: .plain(NSAttributedString(string: environment.strings.Login_PhoneNumberHelp, font: Font.regular(17.0), textColor: environment.theme.list.itemAccentColor))
-                    )),
-                    minSize: CGSize(width: 0.0, height: 44.0),
-                    contentInsets: UIEdgeInsets(top: 0.0, left: 8.0, bottom: 0.0, right: 8.0),
-                    action: { [weak self] in
-                        guard let self else {
-                            return
+                component: AnyComponent(
+                    GlassBarButtonComponent(
+                        size: nil,
+                        backgroundColor: nil,
+                        isDark: environment.theme.overallDarkAppearance,
+                        state: .glass,
+                        component: AnyComponentWithIdentity(id: "label", component: AnyComponent(MultilineTextComponent(
+                            text: .plain(NSAttributedString(string: environment.strings.Login_PhoneNumberHelp, font: Font.regular(17.0), textColor: environment.theme.chat.inputPanel.panelControlColor))
+                        ))),
+                        action: { [weak self] _ in
+                            guard let self else {
+                                return
+                            }
+                            self.displaySendEmail(error: nil, errorCode: nil)
                         }
-                        self.displaySendEmail(error: nil, errorCode: nil)
-                    },
-                    animateScale: false,
-                    animateContents: false
-                )),
+                    )
+                ),
                 environment: {},
-                containerSize: CGSize(width: 200.0, height: 100.0)
+                containerSize: CGSize(width: 200.0, height: 44.0)
             )
-            let helpButtonFrame = CGRect(origin: CGPoint(x: availableSize.width - 8.0 - helpButtonSize.width, y: environment.statusBarHeight), size: helpButtonSize)
+            let helpButtonFrame = CGRect(origin: CGPoint(x: availableSize.width - 16.0 - helpButtonSize.width, y: environment.navigationHeight - helpButtonSize.height - 6.0), size: helpButtonSize)
             if let helpButtonView = self.helpButton.view {
                 if helpButtonView.superview == nil {
                     self.addSubview(helpButtonView)
