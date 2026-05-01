@@ -464,8 +464,7 @@ final class CountriesMultiselectionScreenComponent: Component {
                                     update()
                                 }
                                 
-                                let limit = component.context.userLimits.maxGiveawayCountriesCount
-                                if self.selectedCountries.count >= limit, index == nil {
+                                if let limit = component.stateContext.maxCount, self.selectedCountries.count >= limit, index == nil {
                                     self.hapticFeedback.error()
                                     
                                     let presentationData = component.context.sharedContext.currentPresentationData.with { $0 }

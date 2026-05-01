@@ -28,6 +28,7 @@ private let productIdentifiers = [
     "org.telegram.telegramPremium.twelveMonths.code_x10",
     
     "org.telegram.telegramPremium.oneWeek.auth",
+    "org.telegram.telegramPremium.threeDays.auth",
     
     "org.telegram.telegramStars.topup.x15",
     "org.telegram.telegramStars.topup.x25",
