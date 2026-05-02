@@ -124,7 +124,7 @@ private func drawRectsImageContent(size: CGSize, context: CGContext, color: UICo
                 if rect.maxX == next.maxX {
                     context.addLine(to: CGPoint(x: next.maxX, y: next.midY))
                 } else {
-                    let nextRadius = min(outerRadius, floor(abs(rect.maxX - next.maxX) * 0.5))
+                    let nextRadius = min(outerRadius, ceil(abs(rect.maxX - next.maxX) * 0.5))
                     context.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - nextRadius))
                     if next.maxX > rect.maxX {
                         context.addArc(tangent1End: CGPoint(x: rect.maxX, y: rect.maxY), tangent2End: CGPoint(x: rect.maxX + nextRadius, y: rect.maxY), radius: nextRadius)
@@ -151,7 +151,7 @@ private func drawRectsImageContent(size: CGSize, context: CGContext, color: UICo
                 if rect.minX == prev.minX {
                     context.addLine(to: CGPoint(x: prev.minX, y: prev.midY))
                 } else {
-                    let prevRadius = min(outerRadius, floor(abs(rect.minX - prev.minX) * 0.5))
+                    let prevRadius = min(outerRadius, ceil(abs(rect.minX - prev.minX) * 0.5))
                     context.addLine(to: CGPoint(x: rect.minX, y: rect.minY + prevRadius))
                     if rect.minX < prev.minX {
                         context.addArc(tangent1End: CGPoint(x: rect.minX, y: rect.minY), tangent2End: CGPoint(x: rect.minX + prevRadius, y: rect.minY), radius: prevRadius)
