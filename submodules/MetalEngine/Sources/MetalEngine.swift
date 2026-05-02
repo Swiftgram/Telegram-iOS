@@ -1073,12 +1073,20 @@ public final class MetalEngine {
             #if targetEnvironment(simulator)
             if #available(iOS 13.0, *) {
                 if let drawable = self.layer.nextDrawable() {
-                    commandBuffer.present(drawable)
+                    commandBuffer.addScheduledHandler { _ in
+                        CATransaction.begin()
+                        drawable.present()
+                        CATransaction.commit()
+                    }
                 }
             }
             #else
             if let drawable = self.layer.nextDrawable() {
-                commandBuffer.present(drawable)
+                commandBuffer.addScheduledHandler { _ in
+                    CATransaction.begin()
+                    drawable.present()
+                    CATransaction.commit()
+                }
             }
             #endif
             #endif
