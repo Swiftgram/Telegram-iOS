@@ -775,8 +775,7 @@ public final class OngoingGroupCallContext {
                             return encryptionContext.decrypt(message: data, userId: userId)
                         }
                     }
-                },
-                useReferenceImpl: useReferenceImpl
+                }
             )
 #endif
             
