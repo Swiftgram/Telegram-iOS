@@ -82,7 +82,7 @@ private func drawRectsImageContent(size: CGSize, context: CGContext, color: UICo
                         rects[i + 1].size.height = rects[i + 1].maxY - midY
                         hadChanges = true
                     }
-                    if rects[i].maxY >= rects[i + 1].minY && rects[i].insetBy(dx: 0.0, dy: 1.0).intersects(rects[i + 1]) {
+                    if rects[i].maxY >= rects[i + 1].minY && rects[i].insetBy(dx: 0.0, dy: -1.0).intersects(rects[i + 1]) {
                         if abs(rects[i].minX - rects[i + 1].minX) < minRadius {
                             let commonMinX = min(rects[i].origin.x, rects[i + 1].origin.x)
                             if rects[i].origin.x != commonMinX {
