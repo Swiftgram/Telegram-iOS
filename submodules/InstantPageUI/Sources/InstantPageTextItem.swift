@@ -33,6 +33,12 @@ struct InstantPageTextStrikethroughItem {
     let frame: CGRect
 }
 
+struct InstantPageTextUnderlineItem {
+    let frame: CGRect
+    let range: NSRange
+    let color: UIColor?
+}
+
 struct InstantPageTextImageItem {
     let frame: CGRect
     let range: NSRange
@@ -68,17 +74,19 @@ public final class InstantPageTextLine {
     let range: NSRange
     public let frame: CGRect
     let strikethroughItems: [InstantPageTextStrikethroughItem]
+    let underlineItems: [InstantPageTextUnderlineItem]
     let markedItems: [InstantPageTextMarkedItem]
     let imageItems: [InstantPageTextImageItem]
     let formulaItems: [InstantPageTextFormulaRun]
     public let anchorItems: [InstantPageTextAnchorItem]
     let isRTL: Bool
-    
-    init(line: CTLine, range: NSRange, frame: CGRect, strikethroughItems: [InstantPageTextStrikethroughItem], markedItems: [InstantPageTextMarkedItem], imageItems: [InstantPageTextImageItem], formulaItems: [InstantPageTextFormulaRun], anchorItems: [InstantPageTextAnchorItem], isRTL: Bool) {
+
+    init(line: CTLine, range: NSRange, frame: CGRect, strikethroughItems: [InstantPageTextStrikethroughItem], underlineItems: [InstantPageTextUnderlineItem], markedItems: [InstantPageTextMarkedItem], imageItems: [InstantPageTextImageItem], formulaItems: [InstantPageTextFormulaRun], anchorItems: [InstantPageTextAnchorItem], isRTL: Bool) {
         self.line = line
         self.range = range
         self.frame = frame
         self.strikethroughItems = strikethroughItems
+        self.underlineItems = underlineItems
         self.markedItems = markedItems
         self.imageItems = imageItems
         self.formulaItems = formulaItems
@@ -167,7 +175,7 @@ private func attachmentBoundsForRange(_ range: NSRange, line: InstantPageTextLin
 }
 
 public final class InstantPageTextItem: InstantPageItem {
-    let attributedString: NSAttributedString
+    public let attributedString: NSAttributedString
     public let lines: [InstantPageTextLine]
     let rtlLineIndices: Set<Int>
     public var frame: CGRect
@@ -264,6 +272,24 @@ public final class InstantPageTextItem: InstantPageItem {
                     context.fill(CGRect(x: itemFrame.minX, y: itemFrame.minY + floor((lineFrame.size.height / 2.0) + 1.0), width: itemFrame.size.width, height: 1.0))
                 }
             }
+
+            if !line.underlineItems.isEmpty {
+                for item in line.underlineItems {
+                    var color: UIColor? = item.color
+                    if color == nil {
+                        self.attributedString.enumerateAttributes(in: item.range, options: []) { attributes, _, _ in
+                            if let foreground = attributes[NSAttributedString.Key.foregroundColor] as? UIColor {
+                                color = foreground
+                            }
+                        }
+                    }
+                    if let color {
+                        context.setFillColor(color.cgColor)
+                    }
+                    let itemFrame = item.frame.offsetBy(dx: lineFrame.minX, dy: 0.0)
+                    context.fill(CGRect(x: itemFrame.minX, y: itemFrame.minY + lineFrame.size.height + 2.0, width: itemFrame.size.width, height: 1.0))
+                }
+            }
         }
         
         context.restoreGState()
@@ -274,7 +300,7 @@ public final class InstantPageTextItem: InstantPageItem {
         let boundsWidth = self.frame.width
         for i in 0 ..< self.lines.count {
             let line = self.lines[i]
-            
+
             let lineFrame = expandedFrameForLine(line, boundingWidth: boundsWidth, alignment: self.alignment)
             if lineFrame.insetBy(dx: -5.0, dy: -5.0).contains(transformedPoint) {
                 var index = CTLineGetStringIndexForPosition(line.line, CGPoint(x: transformedPoint.x - lineFrame.minX, y: transformedPoint.y - lineFrame.minY))
@@ -295,7 +321,53 @@ public final class InstantPageTextItem: InstantPageItem {
         }
         return nil
     }
-    
+
+    public func attributesAtPoint(_ point: CGPoint, orNearest: Bool) -> (Int, [NSAttributedString.Key: Any])? {
+        if let direct = self.attributesAtPoint(point) {
+            return direct
+        }
+        guard orNearest, !self.lines.isEmpty else {
+            return nil
+        }
+
+        let boundsWidth = self.frame.width
+        var nearestLineIndex = 0
+        var nearestDistance = CGFloat.greatestFiniteMagnitude
+        for i in 0 ..< self.lines.count {
+            let lineFrame = expandedFrameForLine(self.lines[i], boundingWidth: boundsWidth, alignment: self.alignment)
+            let distance: CGFloat
+            if point.y < lineFrame.minY {
+                distance = lineFrame.minY - point.y
+            } else if point.y > lineFrame.maxY {
+                distance = point.y - lineFrame.maxY
+            } else {
+                distance = 0.0
+            }
+            if distance < nearestDistance {
+                nearestDistance = distance
+                nearestLineIndex = i
+            }
+        }
+
+        let line = self.lines[nearestLineIndex]
+        let lineFrame = expandedFrameForLine(line, boundingWidth: boundsWidth, alignment: self.alignment)
+        let clampedX = max(lineFrame.minX, min(lineFrame.maxX, point.x))
+        var index = CTLineGetStringIndexForPosition(line.line, CGPoint(x: clampedX - lineFrame.minX, y: 0.0))
+        if index == self.attributedString.length {
+            index -= 1
+        } else if index != 0 {
+            var glyphStart: CGFloat = 0.0
+            CTLineGetOffsetForStringIndex(line.line, index, &glyphStart)
+            if clampedX - lineFrame.minX < glyphStart {
+                index -= 1
+            }
+        }
+        guard index >= 0, index < self.attributedString.length else {
+            return nil
+        }
+        return (index, self.attributedString.attributes(at: index, effectiveRange: nil))
+    }
+
     private func attributeRects(name: NSAttributedString.Key, at index: Int) -> [CGRect]? {
         var range = NSRange()
         let _ = self.attributedString.attribute(name, at: index, effectiveRange: &range)
@@ -370,9 +442,9 @@ public final class InstantPageTextItem: InstantPageItem {
         guard range.length != 0 else {
             return nil
         }
-        
+
         let boundsWidth = self.frame.width
-        
+
         var rects: [(CGRect, CGRect)] = []
         var startEdge: InstantPageTextRangeRectEdge?
         var endEdge: InstantPageTextRangeRectEdge?
@@ -393,11 +465,11 @@ public final class InstantPageTextItem: InstantPageItem {
                         rightOffset = ceil(secondaryOffset)
                     }
                 }
-                
+
                 let lineFrame = expandedFrameForLine(line, boundingWidth: boundsWidth, alignment: self.alignment)
-                
+
                 let width = max(0.0, abs(rightOffset - leftOffset))
-                
+
                 if line.range.contains(range.lowerBound) {
                     let offsetX = floor(CTLineGetOffsetForStringIndex(line.line, range.lowerBound, nil))
                     startEdge = InstantPageTextRangeRectEdge(x: lineFrame.minX + offsetX, y: lineFrame.minY, height: lineFrame.height)
@@ -411,7 +483,7 @@ public final class InstantPageTextItem: InstantPageItem {
                         let primaryOffset = floor(CTLineGetOffsetForStringIndex(line.line, range.upperBound - 1, &secondaryOffset))
                         secondaryOffset = floor(secondaryOffset)
                         let nextOffet = floor(CTLineGetOffsetForStringIndex(line.line, range.upperBound, &secondaryOffset))
-                        
+
                         if primaryOffset != secondaryOffset {
                             offsetX = secondaryOffset
                         } else {
@@ -420,7 +492,7 @@ public final class InstantPageTextItem: InstantPageItem {
                     }
                     endEdge = InstantPageTextRangeRectEdge(x: lineFrame.minX + offsetX, y: lineFrame.minY, height: lineFrame.height)
                 }
-                
+
                 rects.append((lineFrame, CGRect(origin: CGPoint(x: lineFrame.minX + min(leftOffset, rightOffset), y: lineFrame.minY), size: CGSize(width: width, height: lineFrame.size.height))))
             }
         }
@@ -429,7 +501,16 @@ public final class InstantPageTextItem: InstantPageItem {
         }
         return nil
     }
-    
+
+    public func textRangeRects(in range: NSRange) -> (rects: [CGRect], start: TextRangeRectEdge, end: TextRangeRectEdge)? {
+        guard let result = self.rangeRects(in: range), let start = result.start, let end = result.end, !result.rects.isEmpty else {
+            return nil
+        }
+        let startEdge = TextRangeRectEdge(x: start.x, y: start.y, height: start.height)
+        let endEdge = TextRangeRectEdge(x: end.x, y: end.y, height: end.height)
+        return (result.rects, startEdge, endEdge)
+    }
+
     public func lineRects() -> [CGRect] {
         let boundsWidth = self.frame.width
         var rects: [CGRect] = []
@@ -909,15 +990,26 @@ func layoutTextItemWithString(_ string: NSAttributedString, boundingWidth: CGFlo
             }
             
             var strikethroughItems: [InstantPageTextStrikethroughItem] = []
+            var underlineItems: [InstantPageTextUnderlineItem] = []
             var markedItems: [InstantPageTextMarkedItem] = []
             var anchorItems: [InstantPageTextAnchorItem] = []
-            
+
             string.enumerateAttributes(in: lineRange, options: []) { attributes, range, _ in
                 if let _ = attributes[NSAttributedString.Key.strikethroughStyle] {
                     let lowerX = floor(CTLineGetOffsetForStringIndex(line, range.location, nil))
                     let upperX = ceil(CTLineGetOffsetForStringIndex(line, range.location + range.length, nil))
                     let x = lowerX < upperX ? lowerX : upperX
                     strikethroughItems.append(InstantPageTextStrikethroughItem(frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y, width: abs(upperX - lowerX), height: fontLineHeight)))
+                }
+                if let _ = attributes[NSAttributedString.Key.underlineStyle] {
+                    let lowerX = floor(CTLineGetOffsetForStringIndex(line, range.location, nil))
+                    let upperX = ceil(CTLineGetOffsetForStringIndex(line, range.location + range.length, nil))
+                    let x = lowerX < upperX ? lowerX : upperX
+                    underlineItems.append(InstantPageTextUnderlineItem(
+                        frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y, width: abs(upperX - lowerX), height: fontLineHeight),
+                        range: range,
+                        color: attributes[NSAttributedString.Key.underlineColor] as? UIColor
+                    ))
                 }
                 if let color = attributes[NSAttributedString.Key.init(rawValue: InstantPageMarkerColorAttribute)] as? UIColor {
                     var lineHeight = fontLineHeight
@@ -967,7 +1059,7 @@ func layoutTextItemWithString(_ string: NSAttributedString, boundingWidth: CGFlo
                     }
                 }
             }
-            let textLine = InstantPageTextLine(line: line, range: lineRange, frame: CGRect(x: workingLineOrigin.x, y: workingLineOrigin.y, width: lineWidth, height: height), strikethroughItems: strikethroughItems, markedItems: markedItems, imageItems: lineImageItems, formulaItems: lineFormulaItems, anchorItems: anchorItems, isRTL: isRTL)
+            let textLine = InstantPageTextLine(line: line, range: lineRange, frame: CGRect(x: workingLineOrigin.x, y: workingLineOrigin.y, width: lineWidth, height: height), strikethroughItems: strikethroughItems, underlineItems: underlineItems, markedItems: markedItems, imageItems: lineImageItems, formulaItems: lineFormulaItems, anchorItems: anchorItems, isRTL: isRTL)
             
             lines.append(textLine)
             imageItems.append(contentsOf: lineImageItems)

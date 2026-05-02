@@ -1117,6 +1117,7 @@ public protocol ChatController: ViewController {
     func activateSearch(domain: ChatSearchDomain, query: String)
     func activateInput(type: ChatControllerActivateInput)
     func beginClearHistory(type: InteractiveHistoryClearingType)
+    func presentReactionDeletionOptions(author: Peer, messageId: MessageId)
     
     func performScrollToTop() -> Bool
     func transferScrollingVelocity(_ velocity: CGFloat)

@@ -4,23 +4,29 @@ import Display
 import TelegramPresentationData
 import TelegramUIPreferences
 
-enum InstantPageFontStyle {
+public enum InstantPageFontStyle {
     case sans
     case serif
 }
 
-struct InstantPageFont {
+public struct InstantPageFont {
     let style: InstantPageFontStyle
     let size: CGFloat
     let lineSpacingFactor: CGFloat
+
+    public init(style: InstantPageFontStyle, size: CGFloat, lineSpacingFactor: CGFloat) {
+        self.style = style
+        self.size = size
+        self.lineSpacingFactor = lineSpacingFactor
+    }
 }
 
-struct InstantPageTextAttributes {
+public struct InstantPageTextAttributes {
     let font: InstantPageFont
     let color: UIColor
     let underline: Bool
     
-    init(font: InstantPageFont, color: UIColor, underline: Bool = false) {
+    public init(font: InstantPageFont, color: UIColor, underline: Bool = false) {
         self.font = font
         self.color = color
         self.underline = underline
@@ -30,8 +36,8 @@ struct InstantPageTextAttributes {
         return InstantPageTextAttributes(font: self.font, color: self.color, underline: underline)
     }
     
-    func withUpdatedFontStyles(sizeMultiplier: CGFloat, forceSerif: Bool) -> InstantPageTextAttributes {
-        return InstantPageTextAttributes(font: InstantPageFont(style: forceSerif ? .serif : self.font.style, size: floor(self.font.size * sizeMultiplier), lineSpacingFactor: self.font.lineSpacingFactor), color: self.color, underline: self.underline)
+    func withUpdatedFontStyles(sizeMultiplier: CGFloat, lineSpacingFactor: CGFloat, forceSerif: Bool) -> InstantPageTextAttributes {
+        return InstantPageTextAttributes(font: InstantPageFont(style: forceSerif ? .serif : self.font.style, size: floor(self.font.size * sizeMultiplier), lineSpacingFactor: self.font.lineSpacingFactor * lineSpacingFactor), color: self.color, underline: self.underline)
     }
 }
 
@@ -56,6 +62,17 @@ public struct InstantPageTextCategories {
     let table: InstantPageTextAttributes
     let article: InstantPageTextAttributes
     
+    public init(kicker: InstantPageTextAttributes, header: InstantPageTextAttributes, subheader: InstantPageTextAttributes, paragraph: InstantPageTextAttributes, caption: InstantPageTextAttributes, credit: InstantPageTextAttributes, table: InstantPageTextAttributes, article: InstantPageTextAttributes) {
+        self.kicker = kicker
+        self.header = header
+        self.subheader = subheader
+        self.paragraph = paragraph
+        self.caption = caption
+        self.credit = credit
+        self.table = table
+        self.article = article
+    }
+    
     func attributes(type: InstantPageTextCategoryType, link: Bool) -> InstantPageTextAttributes {
         switch type {
             case .kicker:
@@ -77,8 +94,17 @@ public struct InstantPageTextCategories {
         }
     }
     
-    func withUpdatedFontStyles(sizeMultiplier: CGFloat, forceSerif: Bool) -> InstantPageTextCategories {
-        return InstantPageTextCategories(kicker: self.kicker.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, forceSerif: forceSerif), header: self.header.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, forceSerif: forceSerif), subheader: self.subheader.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, forceSerif: forceSerif), paragraph: self.paragraph.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, forceSerif: forceSerif), caption: self.caption.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, forceSerif: forceSerif), credit: self.credit.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, forceSerif: forceSerif), table: self.table.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, forceSerif: forceSerif), article: self.article.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, forceSerif: forceSerif))
+    func withUpdatedFontStyles(sizeMultiplier: CGFloat, lineSpacingFactor: CGFloat, forceSerif: Bool) -> InstantPageTextCategories {
+        return InstantPageTextCategories(
+            kicker: self.kicker.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, lineSpacingFactor: lineSpacingFactor, forceSerif: forceSerif),
+            header: self.header.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, lineSpacingFactor: lineSpacingFactor, forceSerif: forceSerif),
+            subheader: self.subheader.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, lineSpacingFactor: lineSpacingFactor, forceSerif: forceSerif),
+            paragraph: self.paragraph.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, lineSpacingFactor: lineSpacingFactor, forceSerif: forceSerif),
+            caption: self.caption.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, lineSpacingFactor: lineSpacingFactor, forceSerif: forceSerif),
+            credit: self.credit.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, lineSpacingFactor: lineSpacingFactor, forceSerif: forceSerif),
+            table: self.table.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, lineSpacingFactor: lineSpacingFactor, forceSerif: forceSerif),
+            article: self.article.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, lineSpacingFactor: lineSpacingFactor, forceSerif: forceSerif)
+        )
     }
 }
 
@@ -132,8 +158,8 @@ public final class InstantPageTheme {
         self.overlayPanelColor = overlayPanelColor
     }
     
-    public func withUpdatedFontStyles(sizeMultiplier: CGFloat, forceSerif: Bool) -> InstantPageTheme {
-        return InstantPageTheme(type: type, pageBackgroundColor: pageBackgroundColor, textCategories: self.textCategories.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, forceSerif: forceSerif), serif: forceSerif, codeBlockBackgroundColor: codeBlockBackgroundColor, linkColor: linkColor, textHighlightColor: textHighlightColor, linkHighlightColor: linkHighlightColor, markerColor: markerColor, panelBackgroundColor: panelBackgroundColor, panelHighlightedBackgroundColor: panelHighlightedBackgroundColor, panelPrimaryColor: panelPrimaryColor, panelSecondaryColor: panelSecondaryColor, panelAccentColor: panelAccentColor, tableBorderColor: tableBorderColor, tableHeaderColor: tableHeaderColor, controlColor: controlColor, imageTintColor: imageTintColor, overlayPanelColor: overlayPanelColor)
+    public func withUpdatedFontStyles(sizeMultiplier: CGFloat, lineSpacingFactor: CGFloat, forceSerif: Bool) -> InstantPageTheme {
+        return InstantPageTheme(type: type, pageBackgroundColor: pageBackgroundColor, textCategories: self.textCategories.withUpdatedFontStyles(sizeMultiplier: sizeMultiplier, lineSpacingFactor: lineSpacingFactor, forceSerif: forceSerif), serif: forceSerif, codeBlockBackgroundColor: codeBlockBackgroundColor, linkColor: linkColor, textHighlightColor: textHighlightColor, linkHighlightColor: linkHighlightColor, markerColor: markerColor, panelBackgroundColor: panelBackgroundColor, panelHighlightedBackgroundColor: panelHighlightedBackgroundColor, panelPrimaryColor: panelPrimaryColor, panelSecondaryColor: panelSecondaryColor, panelAccentColor: panelAccentColor, tableBorderColor: tableBorderColor, tableHeaderColor: tableHeaderColor, controlColor: controlColor, imageTintColor: imageTintColor, overlayPanelColor: overlayPanelColor)
     }
 
     func headingTextAttributes(level: Int32, link: Bool) -> InstantPageTextAttributes {
@@ -339,14 +365,14 @@ func instantPageThemeTypeForSettingsAndTime(themeSettings: PresentationThemeSett
 
 public func instantPageThemeForType(_ type: InstantPageThemeType, settings: InstantPagePresentationSettings) -> InstantPageTheme {
     switch type {
-        case .light:
-            return lightTheme.withUpdatedFontStyles(sizeMultiplier: fontSizeMultiplierForVariant(settings.fontSize), forceSerif: settings.forceSerif)
-        case .sepia:
-            return sepiaTheme.withUpdatedFontStyles(sizeMultiplier: fontSizeMultiplierForVariant(settings.fontSize), forceSerif: settings.forceSerif)
-        case .gray:
-            return grayTheme.withUpdatedFontStyles(sizeMultiplier: fontSizeMultiplierForVariant(settings.fontSize), forceSerif: settings.forceSerif)
-        case .dark:
-            return darkTheme.withUpdatedFontStyles(sizeMultiplier: fontSizeMultiplierForVariant(settings.fontSize), forceSerif: settings.forceSerif)
+    case .light:
+        return lightTheme.withUpdatedFontStyles(sizeMultiplier: fontSizeMultiplierForVariant(settings.fontSize), lineSpacingFactor: settings.lineSpacingFactor, forceSerif: settings.forceSerif)
+    case .sepia:
+        return sepiaTheme.withUpdatedFontStyles(sizeMultiplier: fontSizeMultiplierForVariant(settings.fontSize), lineSpacingFactor: settings.lineSpacingFactor, forceSerif: settings.forceSerif)
+    case .gray:
+        return grayTheme.withUpdatedFontStyles(sizeMultiplier: fontSizeMultiplierForVariant(settings.fontSize), lineSpacingFactor: settings.lineSpacingFactor, forceSerif: settings.forceSerif)
+    case .dark:
+        return darkTheme.withUpdatedFontStyles(sizeMultiplier: fontSizeMultiplierForVariant(settings.fontSize), lineSpacingFactor: settings.lineSpacingFactor, forceSerif: settings.forceSerif)
     }
 }
 

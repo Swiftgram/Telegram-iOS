@@ -2806,6 +2806,15 @@ func extractEmojiFileIds(message: StoreMessage, fileIds: inout Set<Int64>) {
             }
         }
     }
+    for media in message.media {
+        if let media = media as? TelegramMediaWebpage, case let .Loaded(content) = media.content {
+            for attribute in content.attributes {
+                if case let .aiTextStyle(aiTextStyle) = attribute {
+                    fileIds.insert(aiTextStyle.emojiFileId)
+                }
+            }
+        }
+    }
 }
 
 private func messagesFromOperations(state: AccountMutableState) -> [StoreMessage] {
@@ -3309,7 +3318,7 @@ func resetChannels(accountPeerId: PeerId, postbox: Postbox, network: Network, pe
                         
                         resetForumTopics.insert(peerId)
                     }
-                    
+
                     for message in messages {
                         var peerIsForum = false
                         if let peerId = message.peerId {
@@ -3943,6 +3952,7 @@ func replayFinalState(
     var updatedStarGiftAuctionState: [Int64: GiftAuctionContext.State.AuctionState] = [:]
     var updatedStarGiftAuctionMyState: [Int64: GiftAuctionContext.State.MyState] = [:]
     var updatedEmojiGameInfo: EmojiGameInfo?
+    var recentlyUsedGuestChatBots = Set<PeerId>()
     
     var holesFromPreviousStateMessageIds: [MessageId] = []
     var clearHolesFromPreviousStateForChannelMessagesWithPts: [PeerIdAndMessageNamespace: Int32] = [:]
@@ -4008,7 +4018,7 @@ func replayFinalState(
         }
         
         case update(Update)
-        case cancel
+        case cancel(updatedTimestamp: Int32)
     }
     
     var liveTypingDraftUpdates: [PeerAndThreadId: [LiveTypingDraftUpdate]] = [:]
@@ -4226,11 +4236,11 @@ func replayFinalState(
                         let allKey = PeerAndThreadId(peerId: chatPeerId, threadId: nil)
                         
                         if liveTypingDraftUpdates[key] != nil {
-                            liveTypingDraftUpdates[key] = [.cancel]
-                            liveTypingDraftUpdates[allKey] = [.cancel]
+                            liveTypingDraftUpdates[key] = [.cancel(updatedTimestamp: message.timestamp)]
+                            liveTypingDraftUpdates[allKey] = [.cancel(updatedTimestamp: message.timestamp)]
                         } else if let currentDraft = transaction.getCurrentTypingDraft(location: key) {
-                            liveTypingDraftUpdates[key] = [.cancel]
-                            liveTypingDraftUpdates[allKey] = [.cancel]
+                            liveTypingDraftUpdates[key] = [.cancel(updatedTimestamp: message.timestamp)]
+                            liveTypingDraftUpdates[allKey] = [.cancel(updatedTimestamp: message.timestamp)]
                             messages[i] = messages[i].withUpdatedCustomStableId(currentDraft.stableId)
                         }
                     }
@@ -4341,6 +4351,15 @@ func replayFinalState(
                                     }
                                 }
                             }
+                            
+                            if message.flags.contains(.Incoming), let authorId = message.authorId {
+                                for attribute in message.attributes {
+                                    if let attribute = attribute as? GuestChatMessageAttribute, attribute.peerId == accountPeerId {
+                                        recentlyUsedGuestChatBots.insert(authorId)
+                                        break
+                                    }
+                                }
+                            }
                         }
                         if !message.flags.contains(.Incoming) && !message.flags.contains(.Unsent) {
                             if message.id.peerId.namespace == Namespaces.Peer.CloudChannel {
@@ -4350,7 +4369,7 @@ func replayFinalState(
                         
                         if !message.flags.contains(.Incoming), message.forwardInfo == nil {
                             if [Namespaces.Peer.CloudGroup, Namespaces.Peer.CloudChannel].contains(message.id.peerId.namespace), let peer = transaction.getPeer(message.id.peerId), peer.isCopyProtectionEnabled {
-                                
+ 
                             } else if message.id.peerId.namespace == Namespaces.Peer.CloudUser, let cachedUserData = transaction.getPeerCachedData(peerId: message.id.peerId) as? CachedUserData, cachedUserData.flags.contains(.copyProtectionEnabled) || cachedUserData.flags.contains(.myCopyProtectionEnabled) {
                                 
                             } else {
@@ -5867,6 +5886,10 @@ func replayFinalState(
         }
     }
     
+    for peerId in recentlyUsedGuestChatBots {
+        _internal_addRecentlyUsedInlineBot(transaction: transaction, peerId: peerId)
+    }
+    
     if syncAttachMenuBots {
 //        addSynchronizeAttachMenuBotsOperation(transaction: transaction)
     }
@@ -6057,6 +6080,23 @@ func replayFinalState(
     }
     
     if !liveTypingDraftUpdates.isEmpty {
+        for (key, updates) in liveTypingDraftUpdates {
+            if key.threadId == nil {
+                var maxCancelledTimestamp: Int32?
+                for update in updates {
+                    if case let .cancel(updatedTimestamp) = update {
+                        if let current = maxCancelledTimestamp {
+                            maxCancelledTimestamp = max(current, updatedTimestamp)
+                        } else {
+                            maxCancelledTimestamp = updatedTimestamp
+                        }
+                    }
+                }
+                if let maxCancelledTimestamp {
+                    transaction.offsetPendingMessagesTimestamps(lowerBound: MessageId(peerId: key.peerId, namespace: Namespaces.Message.Local, id: 1), excludeIds: Set(), timestamp: maxCancelledTimestamp)
+                }
+            }
+        }
         transaction.combineTypingDrafts(locations: Set(liveTypingDraftUpdates.keys), update: { key, current in
             guard let update = liveTypingDraftUpdates[key]?.max(by: { lhs, rhs in
                 switch lhs {
@@ -6081,6 +6121,11 @@ func replayFinalState(
                 var timestamp = update.timestamp
                 if let current, current.id == update.id {
                     timestamp = current.timestamp
+                }
+                if current == nil {
+                    if let index = transaction.getTopPeerMessageIndex(peerId: key.peerId) {
+                        timestamp = max(timestamp, index.timestamp)
+                    }
                 }
                 return (
                     update.id,

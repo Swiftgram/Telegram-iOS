@@ -2165,7 +2165,7 @@ public class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
         guard let item = self.item else {
             return
         }
-        item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+        item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
     }
 
     private func updatePollAddOptionFocused(_ focus: Bool) {
@@ -2372,7 +2372,7 @@ public class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
                     item.controllerInteraction.requestOpenMessagePollResults(item.message.id, pollId)
                 case .anonymous:
                     self.isPreviewingResults = !self.isPreviewingResults
-                    item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+                    item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
                 }
             }
         } else if !selectedOpaqueIdentifiers.isEmpty {
@@ -2918,36 +2918,7 @@ public class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
                                             if case .public = poll.publicity {
                                                 item.controllerInteraction.openMessagePollResults(item.message.id, option.opaqueIdentifier)
                                             } else if isRestricted {
-                                                let locale = localeWithStrings(item.presentationData.strings)
-                                                let countryNames = poll.countries.map { id in
-                                                    if let countryName = locale.localizedString(forRegionCode: id) {
-                                                        return countryName
-                                                    } else {
-                                                        return id
-                                                    }
-                                                }
-                                                var countries: String = ""
-                                                if countryNames.count == 1, let country = countryNames.first {
-                                                    countries = "**\(country)**"
-                                                } else {
-                                                    for i in 0 ..< countryNames.count {
-                                                        countries.append("**\(countryNames[i])**")
-                                                        if i == countryNames.count - 2 {
-                                                            countries.append(item.presentationData.strings.Chat_Poll_Restriction_Country_CountriesLastDelimiter)
-                                                        } else if i < countryNames.count - 2 {
-                                                            countries.append(item.presentationData.strings.Chat_Poll_Restriction_Country_CountriesDelimiter)
-                                                        }
-                                                    }
-                                                }
-                                                //TODO:localize
-                                                let controller = UndoOverlayController(
-                                                    presentationData: item.context.sharedContext.currentPresentationData.with { $0 },
-                                                    content: .banned(text: "Only users from \(countries) can vote."),
-                                                    elevatedLayout: true,
-                                                    position: .bottom,
-                                                    action: { _ in return true }
-                                                )
-                                                item.controllerInteraction.presentController(controller, nil)
+                                                item.controllerInteraction.displayPollRestrictedToast(item.message.id)
                                             }
                                         }
                                     }

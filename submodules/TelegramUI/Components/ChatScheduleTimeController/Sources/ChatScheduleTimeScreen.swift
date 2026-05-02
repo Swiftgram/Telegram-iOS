@@ -174,42 +174,39 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
             let isSilentPosting = self.isSilentPosting
             let _ = (component.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
             |> deliverOnMainQueue).start(next: { [weak self] peer in
-                guard let self, let peer, let controller = self.environment?.controller() else {
+                guard let self, let peer, let environment = self.environment, let controller = self.environment?.controller() else {
                     return
                 }
-                
                 var isChannel = false
                 if case let .channel(channel) = peer, case .broadcast = channel.info {
                     isChannel = true
                 }
-                
-                //TODO:localize
                 let text: String
                 if case let .user(user) = peer {
                     if user.id == component.context.account.peerId {
                         if isSilentPosting {
-                            text = "You will receive a silent notification"
+                            text = environment.strings.ScheduleMessage_SilentPosting_YouEnabled
                         } else {
-                            text = "You will be notified"
+                            text = environment.strings.ScheduleMessage_SilentPosting_YouDisabled
                         }
                     } else {
                         if isSilentPosting {
-                            text = "\(peer.compactDisplayTitle) will receive a silent notification"
+                            text = environment.strings.ScheduleMessage_SilentPosting_UserEnabled(peer.compactDisplayTitle).string
                         } else {
-                            text = "\(peer.compactDisplayTitle) will be notified"
+                            text = environment.strings.ScheduleMessage_SilentPosting_UserDisabled(peer.compactDisplayTitle).string
                         }
                     }
                 } else if isChannel {
                     if isSilentPosting {
-                        text = "Subscribers will receive a silent notification"
+                        text = environment.strings.ScheduleMessage_SilentPosting_ChannelEnabled
                     } else {
-                        text = "Subscribers will be notified"
+                        text = environment.strings.ScheduleMessage_SilentPosting_ChannelDisabled
                     }
                 } else {
                     if isSilentPosting {
-                        text = "Members will receive a silent notification"
+                        text = environment.strings.ScheduleMessage_SilentPosting_GroupEnabled
                     } else {
-                        text = "Members will be notified"
+                        text = environment.strings.ScheduleMessage_SilentPosting_GroupDisabled
                     }
                 }
 
@@ -272,8 +269,7 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
             case .poll:
                 title = strings.CreatePoll_Deadline_Title
             case .search:
-                //TODO:localize
-                title = "Search"
+                title = strings.Conversation_CalendarSearch_Title
             }
             let titleSize = self.title.update(
                 transition: transition,
@@ -554,8 +550,7 @@ private final class ChatScheduleTimeSheetContentComponent: Component {
             case .poll:
                 buttonTitle = strings.CreatePoll_Deadline_SetDeadline
             case .search:
-                //TODO:localize
-                buttonTitle = "Done"
+                buttonTitle = strings.Conversation_CalendarSearch_Done
             }
                 
             let buttonSideInset: CGFloat = 30.0

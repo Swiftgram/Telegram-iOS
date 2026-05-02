@@ -23,6 +23,7 @@ final class PeerInfoInteraction {
     let openAddContact: () -> Void
     let updateBlocked: (Bool) -> Void
     let openReport: (PeerInfoReportType) -> Void
+    let openDeleteReaction: (MessageId) -> Void
     let openShareBot: () -> Void
     let openAddBotToGroup: () -> Void
     let performBotCommand: (PeerInfoBotCommand) -> Void
@@ -101,6 +102,7 @@ final class PeerInfoInteraction {
         openAddContact: @escaping () -> Void,
         updateBlocked: @escaping (Bool) -> Void,
         openReport: @escaping (PeerInfoReportType) -> Void,
+        openDeleteReaction: @escaping (MessageId) -> Void,
         openShareBot: @escaping () -> Void,
         openAddBotToGroup: @escaping () -> Void,
         performBotCommand: @escaping (PeerInfoBotCommand) -> Void,
@@ -178,6 +180,7 @@ final class PeerInfoInteraction {
         self.openAddContact = openAddContact
         self.updateBlocked = updateBlocked
         self.openReport = openReport
+        self.openDeleteReaction = openDeleteReaction
         self.openShareBot = openShareBot
         self.openAddBotToGroup = openAddBotToGroup
         self.performBotCommand = performBotCommand

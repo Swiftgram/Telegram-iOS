@@ -530,6 +530,8 @@ extension ChatControllerImpl {
             
             let initialInterfaceState = contentData.initialInterfaceState
             contentData.initialInterfaceState = nil
+            let initialTextInputState = self.initialTextInputState
+            self.initialTextInputState = nil
             
             if !self.didInitializePersistentPeerInterfaceData, let initialPersistentPeerData = contentData.initialPersistentPeerData {
                 self.didInitializePersistentPeerInterfaceData = true
@@ -540,6 +542,9 @@ extension ChatControllerImpl {
                 var interfaceState = interfaceState
                 if let initialInterfaceState {
                     interfaceState = initialInterfaceState.interfaceState
+                }
+                if let initialTextInputState {
+                    interfaceState = interfaceState.withUpdatedComposeInputState(initialTextInputState)
                 }
                 
                 if let channel = contentData.state.renderedPeer?.peer as? TelegramChannel {
@@ -873,6 +878,12 @@ extension ChatControllerImpl {
             self?.requestLayout(transition: transition)
         }
         
+        var enableSendAnimationV2 = false
+        if let data = self.context.currentAppConfiguration.with({ $0 }).data, let _ = data["ios_killswitch_disable_send_animation_v2"] {
+        } else {
+            enableSendAnimationV2 = true
+        }
+        
         self.chatDisplayNode.setupSendActionOnViewUpdate = { [weak self] f, messageCorrelationId in
             //print("setup layoutActionOnViewTransition")
 
@@ -881,7 +892,11 @@ extension ChatControllerImpl {
             }
             self.layoutActionOnViewTransitionAction = f
             
-            self.chatDisplayNode.historyNode.pinToTopStableId = nil
+            if !enableSendAnimationV2 {
+                self.chatDisplayNode.historyNode.pinToTopStableId = nil
+            } else if !self.chatDisplayNode.historyNode.isStrictlyScrolledToPinToEdgeItem() {
+                self.chatDisplayNode.historyNode.pinToTopStableId = nil
+            }
             self.chatDisplayNode.historyNode.layoutActionOnViewTransition = ({ [weak self] transition in
                 f()
                 if let strongSelf = self, let validLayout = strongSelf.validLayout {
@@ -901,7 +916,7 @@ extension ChatControllerImpl {
 
                     let shouldUseFastMessageSendAnimation = strongSelf.chatDisplayNode.shouldUseFastMessageSendAnimation
                     
-                    strongSelf.chatDisplayNode.containerLayoutUpdated(validLayout, navigationBarHeight: strongSelf.navigationLayout(layout: validLayout).navigationFrame.maxY, transition: .animated(duration: duration, curve: curve), listViewTransaction: {
+                    strongSelf.chatDisplayNode.containerLayoutUpdated(validLayout, navigationBarHeight: strongSelf.navigationLayout(layout: validLayout).navigationFrame.maxY, transition: .animated(duration: duration, curve: curve), listViewTransaction: { [weak strongSelf]
                         updateSizeAndInsets, _, _, _ in
                         var options = transition.options
                         let _ = options.insert(.Synchronous)
@@ -936,6 +951,11 @@ extension ChatControllerImpl {
                                 scrollToItem = ListViewScrollToItem(index: insertedIndex, position: .visible, animated: true, curve: .Custom(duration: duration, controlPoints.0, controlPoints.1, controlPoints.2, controlPoints.3), directionHint: .Down)
                             } else if transition.historyView.originalView.laterId == nil {
                                 scrollToItem = ListViewScrollToItem(index: 0, position: .top(0.0), animated: true, curve: .Custom(duration: duration, controlPoints.0, controlPoints.1, controlPoints.2, controlPoints.3), directionHint: .Up)
+                                if enableSendAnimationV2, Thread.isMainThread, let strongSelf {
+                                    if strongSelf.chatDisplayNode.historyNode.isStrictlyScrolledToPinToEdgeItem() {
+                                        scrollToItem = nil
+                                    }
+                                }
                             }
 
                             if let maxInsertedItem = maxInsertedItem {
@@ -5123,56 +5143,68 @@ extension ChatControllerImpl {
                         }
                     }
                 }))
+                
+                let isScheduledMessages: Bool
+                if case .scheduledMessages = self.presentationInterfaceState.subject {
+                    isScheduledMessages = true
+                } else {
+                    isScheduledMessages = false
+                }
             
-                self.failedMessageEventsDisposable.set((self.context.account.pendingMessageManager.failedMessageEvents(peerId: peerId)
+                self.failedMessageEventsDisposable.set((self.context.account.pendingMessageManager.failedMessageEvents(peerId: peerId, isScheduled: isScheduledMessages)
                 |> deliverOnMainQueue).startStrict(next: { [weak self] reason in
-                    if let strongSelf = self, strongSelf.currentFailedMessagesAlertController == nil {
-                        let text: String
-                        var title: String?
-                        let moreInfo: Bool
-                        switch reason {
-                        case .flood:
-                            text = strongSelf.presentationData.strings.Conversation_SendMessageErrorFlood
-                            moreInfo = true
-                        case .sendingTooFast:
-                            text = strongSelf.presentationData.strings.Conversation_SendMessageErrorTooFast
-                            title = strongSelf.presentationData.strings.Conversation_SendMessageErrorTooFastTitle
-                            moreInfo = false
-                        case .publicBan:
-                            text = strongSelf.presentationData.strings.Conversation_SendMessageErrorGroupRestricted
-                            moreInfo = true
-                        case .mediaRestricted:
-                            text = strongSelf.restrictedSendingContentsText()
-                            moreInfo = false
-                        case .slowmodeActive:
-                            text = strongSelf.presentationData.strings.Chat_SlowmodeSendError
-                            moreInfo = false
-                        case .tooMuchScheduled:
-                            text = strongSelf.presentationData.strings.Conversation_SendMessageErrorTooMuchScheduled
-                            moreInfo = false
-                        case .voiceMessagesForbidden:
-                            strongSelf.interfaceInteraction?.displayRestrictedInfo(.premiumVoiceMessages, .alert)
-                            return
-                        case .nonPremiumMessagesForbidden:
-                            if let peer = strongSelf.presentationInterfaceState.renderedPeer?.chatMainPeer {
-                                text = strongSelf.presentationData.strings.Conversation_SendMessageErrorNonPremiumForbidden(EnginePeer(peer).compactDisplayTitle).string
-                                moreInfo = false
-                            } else {
-                                return
-                            }
-                        }
-                        let actions: [TextAlertAction]
-                        if moreInfo {
-                            actions = [TextAlertAction(type: .defaultAction, title: strongSelf.presentationData.strings.Generic_ErrorMoreInfo, action: {
-                                self?.openPeerMention("spambot", navigation: .chat(textInputState: nil, subject: nil, peekData: nil))
-                            }), TextAlertAction(type: .genericAction, title: strongSelf.presentationData.strings.Common_OK, action: {})]
-                        } else {
-                            actions = [TextAlertAction(type: .defaultAction, title: strongSelf.presentationData.strings.Common_OK, action: {})]
-                        }
-                        let controller = textAlertController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, title: title, text: text, actions: actions)
-                        strongSelf.currentFailedMessagesAlertController = controller
-                        strongSelf.present(controller, in: .window(.root))
+                    guard let strongSelf = self else {
+                        return
                     }
+                    guard strongSelf.currentFailedMessagesAlertController == nil else {
+                        return
+                    }
+                    
+                    let text: String
+                    var title: String?
+                    let moreInfo: Bool
+                    switch reason {
+                    case .flood:
+                        text = strongSelf.presentationData.strings.Conversation_SendMessageErrorFlood
+                        moreInfo = true
+                    case .sendingTooFast:
+                        text = strongSelf.presentationData.strings.Conversation_SendMessageErrorTooFast
+                        title = strongSelf.presentationData.strings.Conversation_SendMessageErrorTooFastTitle
+                        moreInfo = false
+                    case .publicBan:
+                        text = strongSelf.presentationData.strings.Conversation_SendMessageErrorGroupRestricted
+                        moreInfo = true
+                    case .mediaRestricted:
+                        text = strongSelf.restrictedSendingContentsText()
+                        moreInfo = false
+                    case .slowmodeActive:
+                        text = strongSelf.presentationData.strings.Chat_SlowmodeSendError
+                        moreInfo = false
+                    case .tooMuchScheduled:
+                        text = strongSelf.presentationData.strings.Conversation_SendMessageErrorTooMuchScheduled
+                        moreInfo = false
+                    case .voiceMessagesForbidden:
+                        strongSelf.interfaceInteraction?.displayRestrictedInfo(.premiumVoiceMessages, .alert)
+                        return
+                    case .nonPremiumMessagesForbidden:
+                        if let peer = strongSelf.presentationInterfaceState.renderedPeer?.chatMainPeer {
+                            text = strongSelf.presentationData.strings.Conversation_SendMessageErrorNonPremiumForbidden(EnginePeer(peer).compactDisplayTitle).string
+                            moreInfo = false
+                        } else {
+                            return
+                        }
+                    }
+                    let actions: [TextAlertAction]
+                    if moreInfo {
+                        actions = [TextAlertAction(type: .defaultAction, title: strongSelf.presentationData.strings.Generic_ErrorMoreInfo, action: {
+                            self?.openPeerMention("spambot", navigation: .chat(textInputState: nil, subject: nil, peekData: nil))
+                        }), TextAlertAction(type: .genericAction, title: strongSelf.presentationData.strings.Common_OK, action: {})]
+                    } else {
+                        actions = [TextAlertAction(type: .defaultAction, title: strongSelf.presentationData.strings.Common_OK, action: {})]
+                    }
+                    let controller = textAlertController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, title: title, text: text, actions: actions)
+                    strongSelf.currentFailedMessagesAlertController = controller
+                    strongSelf.present(controller, in: .window(.root))
                 }))
                 
                 self.sentPeerMediaMessageEventsDisposable.dispose()

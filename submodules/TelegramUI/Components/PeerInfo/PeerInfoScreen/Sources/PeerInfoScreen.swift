@@ -283,6 +283,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
     var forceIsContactPromise = ValuePromise<Bool>(false)
     let reactionSourceMessageId: MessageId?
     let sourceMessageId: MessageId?
+    var canDeleteReaction = false
     var dataDisposable: Disposable?
     
     let activeActionDisposable = MetaDisposable()
@@ -459,6 +460,9 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             },
             openReport: { [weak self] type in
                 self?.openReport(type: type, contextController: nil, backAction: nil)
+            },
+            openDeleteReaction: { [weak self] messageId in
+                self?.openDeleteReaction(messageId: messageId)
             },
             openShareBot: { [weak self] in
                 self?.openShareBot()
@@ -1105,6 +1109,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                 return
             }
             strongSelf.openUrl(url: url.url, concealed: url.concealed, external: url.external ?? false)
+        }, openExternalInstantPage: { _ in
         }, shareCurrentLocation: {
         }, shareAccountContact: {
         }, sendBotCommand: { _, _ in
@@ -1267,10 +1272,11 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             self.openPremiumGift()
         }, openUniqueGift: { _ in
         }, openMessageFeeException: {
-        }, requestMessageUpdate: { _, _ in
+        }, requestMessageUpdate: { _, _, _ in
         }, cancelInteractiveKeyboardGestures: {
         }, dismissTextInput: {
-        }, scrollToMessageId: { _ in
+        }, scrollToMessageId: { _, _ in
+        }, scrollToMessageIdWithAnchor: { _, _ in
         }, navigateToStory: { _, _ in
         }, attemptedNavigationToPrivateQuote: { _ in
         }, forceUpdateWarpContents: {
@@ -1280,7 +1286,10 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         }, requestToggleTodoMessageItem: { _, _, _ in
         }, displayTodoToggleUnavailable: { _ in
         }, openStarsPurchase: { _ in
-        }, openRankInfo: { _, _, _ in }, openSetPeerAvatar: {}, automaticMediaDownloadSettings: MediaAutoDownloadSettings.defaultSettings,
+        }, openRankInfo: { _, _, _ in
+        }, openSetPeerAvatar: {
+        }, displayPollRestrictedToast: { _ in
+        }, automaticMediaDownloadSettings: MediaAutoDownloadSettings.defaultSettings,
         pollActionState: ChatInterfacePollActionState(), stickerSettings: ChatInterfaceStickerSettings(), presentationContext: ChatPresentationContext(context: context, backgroundNode: nil))
         self.hiddenMediaDisposable = context.sharedContext.mediaManager.galleryHiddenMediaManager.hiddenIds().startStrict(next: { [weak self] ids in
             guard let strongSelf = self else {
@@ -2485,14 +2494,37 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             self?.updateNavigation(transition: .immediate, additive: true, animateHeader: true)
         }
         
+        let reactionSourceMessage: Signal<EngineMessage?, NoError>
+        if let reactionSourceMessageId = self.reactionSourceMessageId {
+            reactionSourceMessage = context.engine.data.subscribe(TelegramEngine.EngineData.Item.Messages.Message(id: reactionSourceMessageId))
+        } else {
+            reactionSourceMessage = .single(nil)
+        }
+
         self.dataDisposable = combineLatest(
             queue: Queue.mainQueue(),
             screenData,
-            self.forceIsContactPromise.get()
-        ).startStrict(next: { [weak self] data, forceIsContact in
+            self.forceIsContactPromise.get(),
+            reactionSourceMessage
+        ).startStrict(next: { [weak self] data, forceIsContact, reactionSourceMessage in
             guard let strongSelf = self else {
                 return
             }
+
+            var canDeleteReaction = false
+            if let sourceMessage = reactionSourceMessage?._asMessage(), let reactionPeerId = data.peer?.id, let channel = sourceMessage.peers[sourceMessage.id.peerId] as? TelegramChannel, channel.hasPermission(.deleteAllMessages) {
+                for attribute in sourceMessage.attributes {
+                    guard let attribute = attribute as? ReactionsMessageAttribute else {
+                        continue
+                    }
+                    if attribute.recentPeers.contains(where: { $0.peerId == reactionPeerId }) || attribute.topPeers.contains(where: { $0.peerId == reactionPeerId }) {
+                        canDeleteReaction = true
+                        break
+                    }
+                }
+            }
+            strongSelf.canDeleteReaction = canDeleteReaction
+
             if data.isContact && forceIsContact {
                 strongSelf.forceIsContactPromise.set(false)
             } else {
@@ -4565,20 +4597,20 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         guard let controller = self.controller, let navigationController = controller.navigationController as? NavigationController else {
             return
         }
-        guard let tabController = navigationController.viewControllers.first as? TabBarController else {
+        guard let navigationTarget = resolveChatListNavigationTarget(navigationController: navigationController, excluding: controller) else {
             return
         }
-        for childController in tabController.controllers {
-            if let chatListController = childController as? ChatListController {
-                chatListController.maybeAskForPeerChatRemoval(peer: EngineRenderedPeer(peer: peer), joined: false, deleteGloballyIfPossible: globally, completion: { [weak navigationController] deleted in
-                    if deleted {
-                        navigationController?.popToRoot(animated: true)
-                    }
-                }, removed: {
-                })
-                break
+        navigationTarget.chatListController.maybeAskForPeerChatRemoval(peer: EngineRenderedPeer(peer: peer), joined: false, deleteGloballyIfPossible: globally, completion: { [weak navigationController] deleted in
+            guard deleted, let navigationController = navigationController else {
+                return
             }
-        }
+            if let popToController = navigationTarget.popToController {
+                let _ = navigationController.popToViewController(popToController, animated: true)
+            } else {
+                navigationController.popToRoot(animated: true)
+            }
+        }, removed: {
+        })
     }
     
     func deleteProfilePhoto(_ item: PeerInfoAvatarListItem) {
@@ -5414,7 +5446,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             insets.left += sectionInset
             insets.right += sectionInset
             
-            let items = self.isSettings ? settingsItems(data: self.data, context: self.context, presentationData: self.presentationData, interaction: self.interaction, isExpanded: self.headerNode.isAvatarExpanded) : infoItems(data: self.data, context: self.context, presentationData: self.presentationData, interaction: self.interaction, reactionSourceMessageId: self.reactionSourceMessageId, callMessages: self.callMessages, chatLocation: self.chatLocation, isOpenedFromChat: self.isOpenedFromChat, isMyProfile: self.isMyProfile)
+            let items = self.isSettings ? settingsItems(data: self.data, context: self.context, presentationData: self.presentationData, interaction: self.interaction, isExpanded: self.headerNode.isAvatarExpanded) : infoItems(data: self.data, context: self.context, presentationData: self.presentationData, interaction: self.interaction, reactionSourceMessageId: self.reactionSourceMessageId, canDeleteReaction: self.canDeleteReaction, callMessages: self.callMessages, chatLocation: self.chatLocation, isOpenedFromChat: self.isOpenedFromChat, isMyProfile: self.isMyProfile)
             
             contentHeight += headerHeight
             if !((self.isSettings || self.isMyProfile) && self.state.isEditing) {

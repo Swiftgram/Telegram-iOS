@@ -138,6 +138,10 @@
 
 - (void)createDismissViewIfNeeded
 {
+    if (_dismissView != nil) {
+        return;
+    }
+    
     UIView *parentView = [self _parentView];
     
     _dismissView = [[UIView alloc] initWithFrame:parentView.bounds];
@@ -231,6 +235,12 @@
 - (void)finishEditing {
     if ([self.inputPanel dismissInput]) {
         _editing = false;
+        
+        [UIView animateWithDuration:0.3 delay:0.0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+            _dismissView.alpha = 0.0f;
+        } completion:^(BOOL finished) {
+            
+        }];
                 
         if (self.finishedWithCaption != nil)
             self.finishedWithCaption([_inputPanel caption]);

@@ -82,6 +82,7 @@ private enum StickerSearchEntry: Identifiable, Comparable {
 
 struct StickerPaneSearchSelectedPack {
     let info: StickerPackCollectionInfo
+    let installed: Bool
 }
 
 private struct StickerPaneSearchPack: Equatable {
@@ -497,19 +498,8 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
                     guard let strongSelf = self else {
                         return
                     }
-
-                    var animateInAsReplacement = false
-                    if let navigationController = strongSelf.interaction.getNavigationController() {
-                        for controller in navigationController.overlayControllers {
-                            if let controller = controller as? UndoOverlayController {
-                                controller.dismissWithCommitActionAndReplacementAnimation()
-                                animateInAsReplacement = true
-                            }
-                        }
-                    }
-
                     let presentationData = strongSelf.context.sharedContext.currentPresentationData.with { $0 }.withUpdated(theme: theme)
-                    strongSelf.interaction.getNavigationController()?.presentOverlay(controller: UndoOverlayController(presentationData: presentationData, content: .stickersModified(title: presentationData.strings.StickerPackActionInfo_AddedTitle, text: presentationData.strings.StickerPackActionInfo_AddedText(info.title).string, undo: false, info: info, topItem: items.first, context: strongSelf.context), elevatedLayout: false, animateInAsReplacement: animateInAsReplacement, action: { _ in
+                    strongSelf.interaction.getNavigationController()?.presentOverlay(controller: UndoOverlayController(presentationData: presentationData, content: .stickersModified(title: presentationData.strings.StickerPackActionInfo_AddedTitle, text: presentationData.strings.StickerPackActionInfo_AddedText(info.title).string, undo: false, info: info, topItem: items.first, context: strongSelf.context), elevatedLayout: false, action: { _ in
                         return true
                     }))
                 }))
@@ -688,7 +678,7 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
                     strongSelf.currentSearchEntries = entries
                     strongSelf.currentPacks = packItems
                     if let selectedPack = strongSelf.selectedPack, let updatedPack = packItems.first(where: { $0.info.id == selectedPack.info.id }), selectedPack.installed != updatedPack.installed {
-                        strongSelf.selectedPack = StickerPaneSearchPack(info: selectedPack.info, topItems: selectedPack.topItems, installed: updatedPack.installed)
+                        strongSelf.setPackInstalledState(id: selectedPack.info.id, installed: updatedPack.installed, transition: .immediate)
                     }
                     strongSelf.currentSearchIsFinal = final
                     strongSelf.searchIsActive = true
@@ -796,19 +786,40 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
         return !selectedPack.installed && !self.installedPackIds.contains(selectedPack.info.id)
     }
     
-    private func markPackInstalled(_ id: ItemCollectionId) {
-        self.installedPackIds.insert(id)
-
-        if let selectedPack = self.selectedPack, selectedPack.info.id == id, !selectedPack.installed {
-            self.selectedPack = StickerPaneSearchPack(info: selectedPack.info, topItems: selectedPack.topItems, installed: true)
+    func setPackInstalledState(id: ItemCollectionId, installed: Bool, transition: ContainedViewLayoutTransition = .animated(duration: 0.2, curve: .easeInOut)) {
+        if installed {
+            self.installedPackIds.insert(id)
+        } else {
+            self.installedPackIds.remove(id)
         }
 
+        var updatedSelectedPack: StickerPaneSearchPack?
+        if let selectedPack = self.selectedPack, selectedPack.info.id == id {
+            if selectedPack.installed != installed {
+                let pack = StickerPaneSearchPack(info: selectedPack.info, topItems: selectedPack.topItems, installed: installed)
+                self.selectedPack = pack
+                updatedSelectedPack = pack
+            } else {
+                updatedSelectedPack = selectedPack
+            }
+        }
+
+        var updatedPacks = false
         self.currentPacks = self.currentPacks.map { pack in
-            if pack.info.id == id && !pack.installed {
-                return StickerPaneSearchPack(info: pack.info, topItems: pack.topItems, installed: true)
+            if pack.info.id == id && pack.installed != installed {
+                updatedPacks = true
+                return StickerPaneSearchPack(info: pack.info, topItems: pack.topItems, installed: installed)
             } else {
                 return pack
             }
+        }
+
+        if let updatedSelectedPack {
+            self.selectedPackUpdated?(StickerPaneSearchSelectedPack(info: updatedSelectedPack.info, installed: updatedSelectedPack.installed))
+        }
+
+        if updatedSelectedPack != nil || updatedPacks {
+            self.requestLayout(transition: transition)
         }
     }
 
@@ -865,7 +876,7 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
         self.notFoundNode.isHidden = true
         self.gridNode.isHidden = false
         self.trendingPane.isHidden = true
-        self.selectedPackUpdated?(StickerPaneSearchSelectedPack(info: pack.info))
+        self.selectedPackUpdated?(StickerPaneSearchSelectedPack(info: pack.info, installed: pack.installed))
 
         self.enqueueEntries(self.entries(packItems: pack.topItems), interaction: interaction, crossfade: true)
         self.isPackPanelExpanded = true
@@ -896,8 +907,7 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
         let packId = selectedPack.info.id
         let accessHash = selectedPack.info.accessHash
 
-        self.markPackInstalled(packId)
-        self.requestLayout(transition: .animated(duration: 0.2, curve: .easeInOut))
+        self.setPackInstalledState(id: packId, installed: true)
 
         let installSignal = (context.engine.stickers.loadedStickerPack(reference: .id(id: packId.id, accessHash: accessHash), forceActualized: false)
         |> mapToSignal { result -> Signal<(StickerPackCollectionInfo, [StickerPackItem]), NoError> in
@@ -931,19 +941,8 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
             guard let self else {
                 return
             }
-
-            var animateInAsReplacement = false
-            if let navigationController = self.interaction.getNavigationController() {
-                for controller in navigationController.overlayControllers {
-                    if let controller = controller as? UndoOverlayController {
-                        controller.dismissWithCommitActionAndReplacementAnimation()
-                        animateInAsReplacement = true
-                    }
-                }
-            }
-
             let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }.withUpdated(theme: self.theme)
-            self.interaction.getNavigationController()?.presentOverlay(controller: UndoOverlayController(presentationData: presentationData, content: .stickersModified(title: presentationData.strings.StickerPackActionInfo_AddedTitle, text: presentationData.strings.StickerPackActionInfo_AddedText(info.title).string, undo: false, info: info, topItem: items.first, context: self.context), elevatedLayout: false, animateInAsReplacement: animateInAsReplacement, action: { _ in
+            self.interaction.getNavigationController()?.presentOverlay(controller: UndoOverlayController(presentationData: presentationData, content: .stickersModified(title: presentationData.strings.StickerPackActionInfo_AddedTitle, text: presentationData.strings.StickerPackActionInfo_AddedText(info.title).string, undo: false, info: info, topItem: items.first, context: self.context), elevatedLayout: false, action: { _ in
                 return true
             }))
         }))

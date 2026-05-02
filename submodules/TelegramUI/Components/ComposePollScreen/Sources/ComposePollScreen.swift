@@ -1245,10 +1245,19 @@ final class ComposePollScreenComponent: Component {
                 return
             }
             
+            let maxCount: Int32
+            if let data = component.context.currentAppConfiguration.with({ $0 }).data, let value = data["poll_countries_max"] as? Double {
+                maxCount = Int32(value)
+            } else {
+                maxCount = 12
+            }
+            
             let stateContext = CountriesMultiselectionScreen.StateContext(
                 context: component.context,
                 subject: .countries,
-                initialSelectedCountries: self.limitToCountries
+                maxCount: maxCount,
+                initialSelectedCountries: self.limitToCountries,
+                showFragment: true
             )
             let _ = (stateContext.ready |> filter { $0 } |> take(1) |> deliverOnMainQueue).startStandalone(next: { [weak self] _ in
                 let controller = CountriesMultiselectionScreen(
@@ -2395,7 +2404,11 @@ final class ComposePollScreenComponent: Component {
                     if self.limitToCountries.count > 1 {
                         value = environment.strings.CreatePoll_AllowedCountries_Countries(Int32(self.limitToCountries.count))
                     } else if self.limitToCountries.count == 1, let countryCode = self.limitToCountries.first {
-                        value = self.currentLocale?.localizedString(forRegionCode: countryCode) ?? countryCode
+                        if countryCode == "FT" {
+                            value = "Fragment"
+                        } else {
+                            value = self.currentLocale?.localizedString(forRegionCode: countryCode) ?? countryCode
+                        }
                     } else {
                         value = ""
                     }
@@ -3099,9 +3112,8 @@ public class ComposePollScreen: ViewControllerComponentContainer, AttachmentCont
                 text = presentationData.strings.CreatePoll_QuizCorrectOptionNeeded
             }
         case .countriesNeeded:
-            //TODO:localize
             title = nil
-            text = "Select at least one country"
+            text = presentationData.strings.CreatePoll_QuizCountryNeeded
         }
         
         let controller = UndoOverlayController(

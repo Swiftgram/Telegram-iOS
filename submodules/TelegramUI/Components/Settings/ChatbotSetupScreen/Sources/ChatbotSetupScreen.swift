@@ -25,6 +25,7 @@ import Markdown
 import PeerListItemComponent
 import AvatarNode
 import AlertComponent
+import UndoUI
 
 private let checkIcon: UIImage = {
     return generateImage(CGSize(width: 12.0, height: 10.0), rotatedContext: { size, context in
@@ -216,8 +217,19 @@ final class ChatbotSetupScreenComponent: Component {
         }
         
         func attemptNavigation(complete: @escaping () -> Void) -> Bool {
-            guard let component = self.component else {
+            guard let component = self.component, let environemnt = self.environment else {
                 return true
+            }
+            
+            if let botResolutionState = self.botResolutionState, case let .found(_, isInstalled) = botResolutionState.state, !isInstalled {
+                let alertController = textAlertController(context: component.context, title: environemnt.strings.ChatbotSetup_SetupNotCompleted_Title, text: environemnt.strings.ChatbotSetup_SetupNotCompleted_Text, actions: [
+                    TextAlertAction(type: .defaultAction, title: environemnt.strings.Common_Cancel, action: {}),
+                    TextAlertAction(type: .genericAction, title: environemnt.strings.ChatbotSetup_SetupNotCompleted_Leave, action: {
+                        complete()
+                    })
+                ])
+                environemnt.controller()?.present(alertController, in: .window(.root))
+                return false
             }
             
             var mappedCategories: TelegramBusinessRecipients.Categories = []
@@ -677,7 +689,11 @@ final class ChatbotSetupScreenComponent: Component {
                 }
                 transition.setPosition(view: self.titleTransformContainer, position: navigationTitleFrame.center)
                 transition.setBounds(view: self.titleTransformContainer, bounds: CGRect(origin: CGPoint(), size: navigationTitleFrame.size))
-                transition.setFrame(view: navigationTitleView, frame: CGRect(origin: CGPoint(), size: navigationTitleFrame.size))
+                transition.setBounds(view: navigationTitleView, bounds: CGRect(origin: CGPoint(), size: navigationTitleFrame.size))
+                transition.setPosition(view: navigationTitleView, position: CGPoint(
+                    x: navigationTitleFrame.size.width * 0.5,
+                    y: navigationTitleFrame.size.height * 0.5
+                ))
             }
             
             let bottomContentInset: CGFloat = 24.0
@@ -694,13 +710,13 @@ final class ChatbotSetupScreenComponent: Component {
             let iconSize = self.icon.update(
                 transition: .immediate,
                 component: AnyComponent(LottieComponent(
-                    content: LottieComponent.AppBundleContent(name: "BotEmoji"),
+                    content: LottieComponent.AppBundleContent(name: "ChatAutomation"),
                     loop: false
                 )),
                 environment: {},
-                containerSize: CGSize(width: 100.0, height: 100.0)
+                containerSize: CGSize(width: 140.0, height: 140.0)
             )
-            let iconFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - iconSize.width) * 0.5), y: contentHeight - 30.0), size: iconSize)
+            let iconFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - iconSize.width) * 0.5), y: contentHeight - 50.0), size: iconSize)
             if let iconView = self.icon.view as? LottieComponent.View {
                 if iconView.superview == nil {
                     self.scrollView.addSubview(iconView)
@@ -799,7 +815,7 @@ final class ChatbotSetupScreenComponent: Component {
                     strings: environment.strings,
                     content: mappedContent,
                     installAction: { [weak self] in
-                        guard let self else {
+                        guard let self, let component = self.component, let environment = self.environment, let controller = self.environment?.controller() else {
                             return
                         }
                         self.endEditing(true)
@@ -816,6 +832,14 @@ final class ChatbotSetupScreenComponent: Component {
                                     })
                                 ]), in: .window(.root))
                             }
+                            controller.present(UndoOverlayController(
+                                presentationData: presentationData,
+                                content: .invitedToVoiceChat(context: component.context, peer: peer, title: nil, text: environment.strings.ChatbotSetup_BotInstalled(peer.compactDisplayTitle).string, action: nil, duration: 2.0),
+                                elevatedLayout: false,
+                                position: .bottom,
+                                animateInAsReplacement: false,
+                                action: { _ in return true }
+                            ), in: .current)
                         }
                     },
                     removeAction: { [weak self] in

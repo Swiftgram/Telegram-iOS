@@ -35,6 +35,7 @@ import ChatMessageDateAndStatusNode
 import ChatMessageBubbleContentNode
 import ChatHistoryEntry
 import ChatMessageTextBubbleContentNode
+import ChatMessageRichDataBubbleContentNode
 import ChatMessageItemCommon
 import ChatMessageReplyInfoNode
 import ChatMessageCallBubbleContentNode
@@ -329,7 +330,7 @@ private func contentNodeMessagesAndClassesForItem(_ item: ChatMessageItem) -> ([
             messageText = updatingMedia.text
         }
                 
-        if !messageText.isEmpty || isUnsupportedMedia || isStoryWithText {
+        if !messageText.isEmpty || message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) || isUnsupportedMedia || isStoryWithText {
             if !skipText {
                 if case .group = item.content, !isFile {
                     messageWithCaptionToAdd = (message, itemAttributes)
@@ -382,7 +383,11 @@ private func contentNodeMessagesAndClassesForItem(_ item: ChatMessageItem) -> ([
                     if let attribute = message.attributes.first(where: { $0 is WebpagePreviewMessageAttribute }) as? WebpagePreviewMessageAttribute, attribute.leadingPreview {
                         result.insert((message, ChatMessageWebpageBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)), at: addedPriceInfo ? 1 : 0)
                     } else {
-                        result.append((message, ChatMessageWebpageBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)))
+                        if content.instantPage != nil && item.context.sharedContext.immediateExperimentalUISettings.debugRichText {
+                            result.append((message, ChatMessageRichDataBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)))
+                        } else {
+                            result.append((message, ChatMessageWebpageBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)))
+                        }
                     }
                     needReactions = false
                 }
@@ -1342,7 +1347,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         break
                     case .ignore:
                         return .fail
-                    case .url, .phone, .peerMention, .textMention, .botCommand, .hashtag, .instantPage, .wallpaper, .theme, .call, .conferenceCall, .openMessage, .timecode, .bankCard, .tooltip, .openPollResults, .copy, .largeEmoji, .customEmoji, .date, .custom:
+                    case .url, .phone, .peerMention, .textMention, .botCommand, .hashtag, .instantPage, .wallpaper, .theme, .call, .conferenceCall, .openMessage, .timecode, .bankCard, .tooltip, .openPollResults, .copy, .largeEmoji, .customEmoji, .date, .custom, .externalInstantPage:
                         return .waitForSingleTap
                     }
                 }
@@ -1620,6 +1625,12 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         
         var allowFullWidth = false
         let chatLocationPeerId: PeerId = item.chatLocation.peerId ?? item.content.firstMessage.id.peerId
+        
+        var isInlinePage = false
+        if item.context.sharedContext.immediateExperimentalUISettings.debugRichText, let webpage = item.message.media.first(where: { $0 is TelegramMediaWebpage }) as? TelegramMediaWebpage, case let .Loaded(content) = webpage.content, content.instantPage != nil {
+            allowFullWidth = true
+            isInlinePage = true
+        }
                 
         do {
             let peerId = chatLocationPeerId
@@ -1888,6 +1899,10 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         if let subject = item.associatedData.subject, case .messageOptions = subject {
             needsShareButton = false
         }
+        
+        if isInlinePage {
+            needsShareButton = false
+        }
                         
         var tmpWidth: CGFloat
         if allowFullWidth {
@@ -1895,7 +1910,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             if (needsShareButton && !isSidePanelOpen) || isAd {
                 tmpWidth -= 45.0
             } else {
-                tmpWidth -= 4.0
+                tmpWidth -= 3.0
             }
         } else {
             tmpWidth = layoutConstants.bubble.maximumWidthFill.widthFor(baseWidth)
@@ -2262,7 +2277,11 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             bubbleReactions = ReactionsMessageAttribute(canViewList: false, isTags: false, reactions: [], recentPeers: [], topPeers: [])
         }
         if !bubbleReactions.reactions.isEmpty && !item.presentationData.isPreview {
-            bottomNodeMergeStatus = .Both
+            if incoming {
+                bottomNodeMergeStatus = .Left
+            } else {
+                bottomNodeMergeStatus = .Right
+            }
         }
         
         var currentCredibilityIcon: (EmojiStatusComponent.Content, UIColor?)?
@@ -3795,7 +3814,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         }
         
         var forceBackgroundSide = false
-        if actionButtonsSizeAndApply != nil || reactionButtonsSizeAndApply != nil {
+        if actionButtonsSizeAndApply != nil {
             forceBackgroundSide = true
         } else if case .semanticallyMerged = updatedMergedTop {
             forceBackgroundSide = true
@@ -4797,12 +4816,12 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         
                         strongSelf.internalUpdateLayout()
                     }
-                    contentNode.requestFullUpdate = { [weak strongSelf] in
+                    contentNode.requestFullUpdate = { [weak strongSelf] customTransition in
                         guard let strongSelf, let item = strongSelf.item else {
                             return
                         }
                         
-                        item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+                        item.controllerInteraction.requestMessageUpdate(item.message.id, false, customTransition)
                     }
                 }
             }
@@ -5617,7 +5636,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                                         }
                                         if attribute.isQuote, !replyInfoNode.isQuoteExpanded {
                                             replyInfoNode.isQuoteExpanded = true
-                                            item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+                                            item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
                                             return
                                         }
                                         var progress: Promise<Bool>?
@@ -5649,7 +5668,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                                     }
                                     if attribute.isQuote, !replyInfoNode.isQuoteExpanded {
                                         replyInfoNode.isQuoteExpanded = true
-                                        item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+                                        item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
                                         return
                                     }
                                     
@@ -5770,6 +5789,27 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                                     return
                                 }
                                 item.controllerInteraction.openUrl(ChatControllerInteraction.OpenUrl(url: url.url, concealed: url.concealed, message: item.content.firstMessage, allowInlineWebpageResolution: url.allowInlineWebpageResolution, progress: tapAction.activate?()))
+                            }, contextMenuOnLongPress: !tapAction.hasLongTapAction))
+                        }
+                    case let .externalInstantPage(url, webpageId, anchor):
+                        if case .longTap = gesture, !tapAction.hasLongTapAction, let item = self.item {
+                            let tapMessage = item.content.firstMessage
+                            var subFrame = self.backgroundNode.frame
+                            if case .group = item.content {
+                                for contentNode in self.contentNodes {
+                                    if contentNode.item?.message.stableId == tapMessage.stableId {
+                                        subFrame = contentNode.frame.insetBy(dx: 0.0, dy: -4.0)
+                                        break
+                                    }
+                                }
+                            }
+                            return .openContextMenu(InternalBubbleTapAction.OpenContextMenu(tapMessage: tapMessage, selectAll: false, subFrame: subFrame, disableDefaultPressAnimation: true))
+                        } else {
+                            return .action(InternalBubbleTapAction.Action({ [weak self] in
+                                guard let self, let item = self.item else {
+                                    return
+                                }
+                                item.controllerInteraction.openExternalInstantPage(ChatControllerInteraction.OpenInstantPage(webpageId: webpageId, url: url.url, anchor: anchor, concealed: true, progress: tapAction.activate?()))
                             }, contextMenuOnLongPress: !tapAction.hasLongTapAction))
                         }
                     case let .phone(number):
@@ -5979,6 +6019,42 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                                 }, contextMenuOnLongPress: false))
                             } else {
                                 disableDefaultPressAnimation = true
+                            }
+                        case let .externalInstantPage(url, webpageId, anchor):
+                            if tapAction.hasLongTapAction {
+                                return .action(InternalBubbleTapAction.Action({}, actionWithLongTapRecognizer: { [weak self] gesture in
+                                    guard let self, let item = self.item else {
+                                        return
+                                    }
+                                    let cleanUrl = url.url.replacingOccurrences(of: "mailto:", with: "")
+                                    guard let contentNode = self.contextContentNodeForLink(cleanUrl, rects: rects) else {
+                                        return
+                                    }
+                                    item.controllerInteraction.longTap(.url(url.url), ChatControllerInteraction.LongTapParams(message: item.content.firstMessage, contentNode: contentNode, messageNode: self, progress: tapAction.activate?(), gesture: gesture))
+                                }, contextMenuOnLongPress: false))
+                            } else {
+                                disableDefaultPressAnimation = true
+                            }
+                            
+                            if case .longTap = gesture, !tapAction.hasLongTapAction, let item = self.item {
+                                let tapMessage = item.content.firstMessage
+                                var subFrame = self.backgroundNode.frame
+                                if case .group = item.content {
+                                    for contentNode in self.contentNodes {
+                                        if contentNode.item?.message.stableId == tapMessage.stableId {
+                                            subFrame = contentNode.frame.insetBy(dx: 0.0, dy: -4.0)
+                                            break
+                                        }
+                                    }
+                                }
+                                return .openContextMenu(InternalBubbleTapAction.OpenContextMenu(tapMessage: tapMessage, selectAll: false, subFrame: subFrame, disableDefaultPressAnimation: true))
+                            } else {
+                                return .action(InternalBubbleTapAction.Action({ [weak self] in
+                                    guard let self, let item = self.item else {
+                                        return
+                                    }
+                                    item.controllerInteraction.openExternalInstantPage(ChatControllerInteraction.OpenInstantPage(webpageId: webpageId, url: url.url, anchor: anchor, concealed: true, progress: tapAction.activate?()))
+                                }, contextMenuOnLongPress: !tapAction.hasLongTapAction))
                             }
                         case let .phone(number):
                             if tapAction.hasLongTapAction {
@@ -6259,7 +6335,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         if strongSelf.backgroundNode.supernode != nil, let backgroundView = strongSelf.backgroundNode.view.snapshotContentTree(unhide: true) {
                             let backgroundContainer = UIView()
                             
-                            let backdropView = strongSelf.backgroundWallpaperNode.view.snapshotContentTree(unhide: true)
+                            let backdropView = strongSelf.backgroundWallpaperNode.view.snapshotContentTree(unhide: true, keepPortals: true)
                             if let backdropView = backdropView {
                                 let backdropFrame = strongSelf.backgroundWallpaperNode.layer.convert(strongSelf.backgroundWallpaperNode.bounds, to: strongSelf.backgroundNode.layer)
                                 backdropView.frame = backdropFrame
@@ -7168,7 +7244,16 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         }
         return nil
     }
-    
+
+    public func getAnchorRect(anchor: String) -> CGRect? {
+        for contentNode in self.contentNodes {
+            if let result = contentNode.getAnchorRect(anchor: anchor) {
+                return contentNode.view.convert(result, to: self.view)
+            }
+        }
+        return nil
+    }
+
     public func getInnerReplySubjectRect(innerSubject: EngineMessageReplyInnerSubject) -> CGRect? {
         switch innerSubject {
         case let .todoItem(todoItemId):
@@ -7290,10 +7375,10 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         
         if item.controllerInteraction.summarizedMessageIds.contains(item.message.id) {
             item.controllerInteraction.summarizedMessageIds.remove(item.message.id)
-            let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+            let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
         } else {
             item.controllerInteraction.summarizedMessageIds.insert(item.message.id)
-            let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+            let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
             
             let translateToLanguage = item.associatedData.translateToLanguage
             var requestSummary = true
@@ -7308,7 +7393,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                 |> deliverOnMainQueue).start(error: { error in
                     if case .limitExceededPremium = error, let parentController = item.controllerInteraction.navigationController()?.topViewController as? ViewController {
                         item.controllerInteraction.summarizedMessageIds.remove(item.message.id)
-                        let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+                        let _ = item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
                         let controller = premiumAlertController(
                             context: item.context,
                             parentController: parentController,
@@ -7348,7 +7433,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         }
         
         for contentNode in self.contentNodes {
-            if contentNode is ChatMessageMediaBubbleContentNode || contentNode is ChatMessageGiftBubbleContentNode || contentNode is ChatMessageWebpageBubbleContentNode || contentNode is ChatMessageInvoiceBubbleContentNode || contentNode is ChatMessageGameBubbleContentNode || contentNode is ChatMessageInstantVideoBubbleContentNode {
+            if contentNode is ChatMessageMediaBubbleContentNode || contentNode is ChatMessageGiftBubbleContentNode || contentNode is ChatMessageWebpageBubbleContentNode || contentNode is ChatMessageInvoiceBubbleContentNode || contentNode is ChatMessageGameBubbleContentNode || contentNode is ChatMessageInstantVideoBubbleContentNode || contentNode is ChatMessageRichDataBubbleContentNode {
                 contentNode.visibility = mapVisibility(effectiveMediaVisibility, boundsSize: self.bounds.size, insets: self.insets, to: contentNode)
             } else {
                 contentNode.visibility = mapVisibility(effectiveVisibility, boundsSize: self.bounds.size, insets: self.insets, to: contentNode)

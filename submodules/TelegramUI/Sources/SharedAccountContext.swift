@@ -2392,6 +2392,8 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             requestMessageActionUrlAuth: { _, _ in },
             activateSwitchInline: { _, _, _ in },
             openUrl: { _ in },
+            openExternalInstantPage: { _ in
+            },
             shareCurrentLocation: {},
             shareAccountContact: {},
             sendBotCommand: { _, _ in },
@@ -2554,13 +2556,15 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             },
             openMessageFeeException: {
             },
-            requestMessageUpdate: { _, _ in
+            requestMessageUpdate: { _, _, _ in
             },
             cancelInteractiveKeyboardGestures: {
             },
             dismissTextInput: {
             },
-            scrollToMessageId: { _ in
+            scrollToMessageId: { _, _ in
+            },
+            scrollToMessageIdWithAnchor: { _, _ in
             },
             navigateToStory: { _, _ in
             },
@@ -2581,7 +2585,10 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             openStarsPurchase: { _ in
             },
             openRankInfo: { _, _, _ in
-            }, openSetPeerAvatar: {
+            },
+            openSetPeerAvatar: {
+            },
+            displayPollRestrictedToast: { _ in
             },
             automaticMediaDownloadSettings: MediaAutoDownloadSettings.defaultSettings,
             pollActionState: ChatInterfacePollActionState(),
@@ -2975,8 +2982,8 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             mappedSource = .copyProtection
         case .aiTools:
             mappedSource = .aiTools
-        case let .auth(price):
-            mappedSource = .auth(price)
+        case let .auth(price, days):
+            mappedSource = .auth(price, days)
         case let .premiumGift(file):
             mappedSource = .premiumGift(file)
         }

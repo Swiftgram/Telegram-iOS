@@ -170,8 +170,8 @@ public extension TelegramEngine {
             |> ignoreValues
         }
         
-        public func deleteAllReactionsWithAuthor(peerId: EnginePeer.Id, authorId: EnginePeer.Id) -> Signal<Never, NoError> {
-            return _internal_deleteAllReactionsWithAuthor(account: self.account, peerId: peerId, authorId: authorId)
+        public func deleteAllReactionsWithAuthor(peerId: EnginePeer.Id, authorId: EnginePeer.Id, aroundMessageId: EngineMessage.Id? = nil) -> Signal<Never, NoError> {
+            return _internal_deleteAllReactionsWithAuthor(account: self.account, peerId: peerId, authorId: authorId, aroundMessageId: aroundMessageId)
         }
         
         public func deleteReaction(messageId: EngineMessage.Id, authorId: EnginePeer.Id) -> Signal<Never, NoError> {

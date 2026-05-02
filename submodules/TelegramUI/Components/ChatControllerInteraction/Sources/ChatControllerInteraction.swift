@@ -158,6 +158,22 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         }
     }
     
+    public struct OpenInstantPage {
+        public var webpageId: MediaId
+        public var url: String
+        public var anchor: String?
+        public var concealed: Bool
+        public var progress: Promise<Bool>?
+        
+        public init(webpageId: MediaId, url: String, anchor: String?, concealed: Bool, progress: Promise<Bool>? = nil) {
+            self.webpageId = webpageId
+            self.url = url
+            self.anchor = anchor
+            self.concealed = concealed
+            self.progress = progress
+        }
+    }
+    
     public struct LongTapParams {
         public var message: Message?
         public var contentNode: ContextExtractedContentContainingNode?
@@ -204,6 +220,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
     public let requestMessageActionUrlAuth: (String, MessageActionUrlSubject) -> Void
     public let activateSwitchInline: (PeerId?, String, ReplyMarkupButtonAction.PeerTypes?) -> Void
     public let openUrl: (OpenUrl) -> Void
+    public let openExternalInstantPage: (OpenInstantPage) -> Void
     public let shareCurrentLocation: () -> Void
     public let shareAccountContact: () -> Void
     public let sendBotCommand: (MessageId?, String) -> Void
@@ -288,10 +305,11 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
     public let sendGift: (EnginePeer.Id) -> Void
     public let openUniqueGift: (String) -> Void
     public let openMessageFeeException: () -> Void
-    public let requestMessageUpdate: (MessageId, Bool) -> Void
+    public let requestMessageUpdate: (MessageId, Bool, ControlledTransition?) -> Void
     public let cancelInteractiveKeyboardGestures: () -> Void
     public let dismissTextInput: () -> Void
-    public let scrollToMessageId: (MessageIndex) -> Void
+    public let scrollToMessageId: (MessageIndex, CGFloat) -> Void
+    public let scrollToMessageIdWithAnchor: (MessageIndex, String) -> Void
     public let navigateToStory: (Message, StoryId) -> Void
     public let attemptedNavigationToPrivateQuote: (Peer?) -> Void
     public let forceUpdateWarpContents: () -> Void
@@ -303,6 +321,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
     public let openStarsPurchase: (Int64?) -> Void
     public let openRankInfo: (EnginePeer, ChatRankInfoScreenRole, String) -> Void
     public let openSetPeerAvatar: () -> Void
+    public let displayPollRestrictedToast: (EngineMessage.Id) -> Void
     
     public var canPlayMedia: Bool = false
     public var hiddenMedia: [MessageId: [Media]] = [:]
@@ -381,6 +400,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         requestMessageActionUrlAuth: @escaping (String, MessageActionUrlSubject) -> Void,
         activateSwitchInline: @escaping (PeerId?, String, ReplyMarkupButtonAction.PeerTypes?) -> Void,
         openUrl: @escaping (OpenUrl) -> Void,
+        openExternalInstantPage: @escaping (OpenInstantPage) -> Void,
         shareCurrentLocation: @escaping () -> Void,
         shareAccountContact: @escaping () -> Void,
         sendBotCommand: @escaping (MessageId?, String) -> Void,
@@ -465,10 +485,11 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         sendGift: @escaping (EnginePeer.Id) -> Void,
         openUniqueGift: @escaping (String) -> Void,
         openMessageFeeException: @escaping () -> Void,
-        requestMessageUpdate: @escaping (MessageId, Bool) -> Void,
+        requestMessageUpdate: @escaping (MessageId, Bool, ControlledTransition?) -> Void,
         cancelInteractiveKeyboardGestures: @escaping () -> Void,
         dismissTextInput: @escaping () -> Void,
-        scrollToMessageId: @escaping (MessageIndex) -> Void,
+        scrollToMessageId: @escaping (MessageIndex, CGFloat) -> Void,
+        scrollToMessageIdWithAnchor: @escaping (MessageIndex, String) -> Void,
         navigateToStory: @escaping (Message, StoryId) -> Void,
         attemptedNavigationToPrivateQuote: @escaping (Peer?) -> Void,
         forceUpdateWarpContents: @escaping () -> Void,
@@ -480,6 +501,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         openStarsPurchase: @escaping (Int64?) -> Void,
         openRankInfo: @escaping (EnginePeer, ChatRankInfoScreenRole, String) -> Void,
         openSetPeerAvatar: @escaping () -> Void,
+        displayPollRestrictedToast: @escaping (EngineMessage.Id) -> Void,
         automaticMediaDownloadSettings: MediaAutoDownloadSettings,
         pollActionState: ChatInterfacePollActionState,
         stickerSettings: ChatInterfaceStickerSettings,
@@ -510,6 +532,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         self.requestMessageActionUrlAuth = requestMessageActionUrlAuth
         self.activateSwitchInline = activateSwitchInline
         self.openUrl = openUrl
+        self.openExternalInstantPage = openExternalInstantPage
         self.shareCurrentLocation = shareCurrentLocation
         self.shareAccountContact = shareAccountContact
         self.sendBotCommand = sendBotCommand
@@ -599,6 +622,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         self.cancelInteractiveKeyboardGestures = cancelInteractiveKeyboardGestures
         self.dismissTextInput = dismissTextInput
         self.scrollToMessageId = scrollToMessageId
+        self.scrollToMessageIdWithAnchor = scrollToMessageIdWithAnchor
         self.navigateToStory = navigateToStory
         self.attemptedNavigationToPrivateQuote = attemptedNavigationToPrivateQuote
         self.forceUpdateWarpContents = forceUpdateWarpContents
@@ -610,6 +634,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         self.openStarsPurchase = openStarsPurchase
         self.openRankInfo = openRankInfo
         self.openSetPeerAvatar = openSetPeerAvatar
+        self.displayPollRestrictedToast = displayPollRestrictedToast
         
         self.automaticMediaDownloadSettings = automaticMediaDownloadSettings
         

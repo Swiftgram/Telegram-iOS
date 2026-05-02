@@ -256,7 +256,7 @@ final class InstantPageControllerNode: ASDisplayNode, ASScrollViewDelegate {
                     updateLayout = true
                     animated = true
                 }
-                if previousSettings.fontSize != settings.fontSize || previousSettings.forceSerif != settings.forceSerif {
+                if previousSettings.fontSize != settings.fontSize || previousSettings.lineSpacingFactor != settings.lineSpacingFactor || previousSettings.forceSerif != settings.forceSerif {
                     animated = false
                     updateLayout = true
                 }
@@ -475,7 +475,7 @@ final class InstantPageControllerNode: ASDisplayNode, ASScrollViewDelegate {
             return
         }
         
-        let currentLayout = instantPageLayoutForWebPage(webPage, instantPage: instantPage, userLocation: self.sourceLocation.userLocation, boundingWidth: containerLayout.size.width, safeInset: containerLayout.safeInsets.left, strings: self.strings, theme: theme, dateTimeFormat: self.dateTimeFormat, webEmbedHeights: self.currentWebEmbedHeights)
+        let currentLayout = instantPageLayoutForWebPage(webPage, instantPage: instantPage, userLocation: self.sourceLocation.userLocation, boundingWidth: containerLayout.size.width, sideInset: 17.0, safeInset: containerLayout.safeInsets.left, strings: self.strings, theme: theme, dateTimeFormat: self.dateTimeFormat, webEmbedHeights: self.currentWebEmbedHeights)
         
         let currentLayoutTiles = instantPageTilesFromLayout(currentLayout, boundingWidth: containerLayout.size.width)
         

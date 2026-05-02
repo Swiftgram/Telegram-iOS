@@ -2578,6 +2578,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                 case poll
                 case todo
                 case game
+                case voiceMessage
             }
             var messageTypeIcon: MessageTypeIcon?
             var ignoreForwardedIcon = false
@@ -2587,6 +2588,10 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                     var isUser = false
                     if case .user = itemPeer.chatMainPeer {
                         isUser = true
+                    }
+                    var isGuestChatAuthor = false
+                    if case let .user(user) = messages.last?.author, let botInfo = user.botInfo, botInfo.flags.contains(.isGuestChat) {
+                        isGuestChatAuthor = true
                     }
 
                     var peerText: String?
@@ -2605,14 +2610,14 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                             if let message = messages.last, let forwardInfo = message.forwardInfo, let author = forwardInfo.author {
                                 peerText = EnginePeer(author).compactDisplayTitle
                             }
-                        } else if !isUser {
+                        } else if !isUser || isGuestChatAuthor {
                             if case let .channel(peer) = peer, case .broadcast = peer.info {
                             } else if !displayAsMessage {
                                 if let forwardInfo = message.forwardInfo, forwardInfo.flags.contains(.isImported), let authorSignature = forwardInfo.authorSignature {
                                     peerText = authorSignature
                                 } else {
                                     peerText = author.id == account.peerId ? item.presentationData.strings.DialogList_You : EnginePeer(author).displayTitle(strings: item.presentationData.strings, displayOrder: item.presentationData.nameDisplayOrder)
-                                    authorIsCurrentChat = author.id == peer.id
+                                    authorIsCurrentChat = !isGuestChatAuthor && author.id == peer.id
                                 }
                             }
                         }
@@ -2895,7 +2900,11 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                                 messageTypeIcon = .story
                             } else {
                                 for media in message.media {
-                                    if let _ = media as? TelegramMediaPoll {
+                                    if let file = media as? TelegramMediaFile {
+                                        if file.isVoice {
+                                            messageTypeIcon = .voiceMessage
+                                        }
+                                    } else if let _ = media as? TelegramMediaPoll {
                                         messageTypeIcon = .poll
                                     } else if let _ = media as? TelegramMediaTodo {
                                         messageTypeIcon = .todo
@@ -3106,6 +3115,9 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
             case .game:
                 currentMessageTypeIcon = PresentationResourcesChatList.gameIcon(item.presentationData.theme)
                 currentMessageTypeIconOffset.y = -1.0
+            case .voiceMessage:
+                currentMessageTypeIcon = PresentationResourcesChatList.voiceMessageIcon(item.presentationData.theme)
+                currentMessageTypeIconOffset.y = -1.0
             default:
                 break
             }
@@ -3115,7 +3127,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                 if !contentImageSpecs.isEmpty {
                     textLeftCutout += forwardedIconSpacing
                 } else {
-                    textLeftCutout += contentImageTrailingSpace
+                    textLeftCutout += contentImageTrailingSpace - 1.0
                 }
             }
             

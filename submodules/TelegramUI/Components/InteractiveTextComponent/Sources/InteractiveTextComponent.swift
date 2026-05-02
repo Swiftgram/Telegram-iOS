@@ -298,6 +298,7 @@ public final class InteractiveTextNodeLayoutArguments {
     public let customTruncationToken: ((UIFont, Bool) -> NSAttributedString?)?
     public let expandedBlocks: Set<Int>
     public let computeCharacterRects: Bool
+    public let minWidth: CGFloat?
 
     public init(
         attributedString: NSAttributedString?,
@@ -318,7 +319,8 @@ public final class InteractiveTextNodeLayoutArguments {
         displayContentsUnderSpoilers: Bool = false,
         customTruncationToken: ((UIFont, Bool) -> NSAttributedString?)? = nil,
         expandedBlocks: Set<Int> = Set(),
-        computeCharacterRects: Bool = false
+        computeCharacterRects: Bool = false,
+        minWidth: CGFloat? = nil
     ) {
         self.attributedString = attributedString
         self.backgroundColor = backgroundColor
@@ -339,6 +341,7 @@ public final class InteractiveTextNodeLayoutArguments {
         self.customTruncationToken = customTruncationToken
         self.expandedBlocks = expandedBlocks
         self.computeCharacterRects = computeCharacterRects
+        self.minWidth = minWidth
     }
 
     public func withAttributedString(_ attributedString: NSAttributedString?) -> InteractiveTextNodeLayoutArguments {
@@ -361,7 +364,8 @@ public final class InteractiveTextNodeLayoutArguments {
             displayContentsUnderSpoilers: self.displayContentsUnderSpoilers,
             customTruncationToken: self.customTruncationToken,
             expandedBlocks: self.expandedBlocks,
-            computeCharacterRects: self.computeCharacterRects
+            computeCharacterRects: self.computeCharacterRects,
+            minWidth: self.minWidth
         )
     }
 }
@@ -424,6 +428,7 @@ public final class InteractiveTextNodeLayout: NSObject {
     fileprivate let textStroke: (UIColor, CGFloat)?
     public let displayContentsUnderSpoilers: Bool
     fileprivate let expandedBlocks: Set<Int>
+    public let minWidth: CGFloat?
     
     fileprivate init(
         attributedString: NSAttributedString?,
@@ -447,7 +452,8 @@ public final class InteractiveTextNodeLayout: NSObject {
         textShadowBlur: CGFloat?,
         textStroke: (UIColor, CGFloat)?,
         displayContentsUnderSpoilers: Bool,
-        expandedBlocks: Set<Int>
+        expandedBlocks: Set<Int>,
+        minWidth: CGFloat?
     ) {
         self.attributedString = attributedString
         self.maximumNumberOfLines = maximumNumberOfLines
@@ -471,6 +477,7 @@ public final class InteractiveTextNodeLayout: NSObject {
         self.textStroke = textStroke
         self.displayContentsUnderSpoilers = displayContentsUnderSpoilers
         self.expandedBlocks = expandedBlocks
+        self.minWidth = minWidth
     }
     
     func withUpdatedDisplayContentsUnderSpoilers(_ displayContentsUnderSpoilers: Bool) -> InteractiveTextNodeLayout {
@@ -496,7 +503,8 @@ public final class InteractiveTextNodeLayout: NSObject {
             textShadowBlur: self.textShadowBlur,
             textStroke: self.textStroke,
             displayContentsUnderSpoilers: displayContentsUnderSpoilers,
-            expandedBlocks: self.expandedBlocks
+            expandedBlocks: self.expandedBlocks,
+            minWidth: self.minWidth
         )
     }
     
@@ -1102,6 +1110,12 @@ public final class InteractiveTextNodeLayout: NSObject {
         }
 
         height += self.insets.top + self.insets.bottom + 2.0
+        
+        if let minWidth = self.minWidth {
+            width = max(width, minWidth)
+            trailingLineWidth = max(trailingLineWidth, minWidth)
+        }
+        
         return TextNodeLayout.LayoutInfo(
             size: CGSize(width: width, height: ceil(height)),
             trailingLineWidth: trailingLineWidth
@@ -1474,7 +1488,8 @@ open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecogn
         displayContentsUnderSpoilers: Bool,
         customTruncationToken: ((UIFont, Bool) -> NSAttributedString?)?,
         expandedBlocks: Set<Int>,
-        computeCharacterRects: Bool = false
+        computeCharacterRects: Bool = false,
+        minWidth: CGFloat?
     ) -> InteractiveTextNodeLayout {
         let blockQuoteLeftInset: CGFloat = 9.0
         let blockQuoteRightInset: CGFloat = 0.0
@@ -2046,6 +2061,10 @@ open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecogn
         size.width += insets.left + insets.right
         size.height += insets.top + insets.bottom
         
+        if let minWidth {
+            size.width = max(size.width, minWidth)
+        }
+        
         return InteractiveTextNodeLayout(
             attributedString: attributedString,
             maximumNumberOfLines: maximumNumberOfLines,
@@ -2068,16 +2087,17 @@ open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecogn
             textShadowBlur: textShadowBlur,
             textStroke: textStroke,
             displayContentsUnderSpoilers: displayContentsUnderSpoilers,
-            expandedBlocks: expandedBlocks
+            expandedBlocks: expandedBlocks,
+            minWidth: minWidth
         )
     }
     
-    static func calculateLayout(attributedString: NSAttributedString?, minimumNumberOfLines: Int, maximumNumberOfLines: Int, truncationType: CTLineTruncationType, backgroundColor: UIColor?, constrainedSize: CGSize, alignment: NSTextAlignment, verticalAlignment: TextVerticalAlignment, lineSpacingFactor: CGFloat, cutout: TextNodeCutout?, insets: UIEdgeInsets, lineColor: UIColor?, textShadowColor: UIColor?, textShadowBlur: CGFloat?, textStroke: (UIColor, CGFloat)?, displayContentsUnderSpoilers: Bool, customTruncationToken: ((UIFont, Bool) -> NSAttributedString?)?, expandedBlocks: Set<Int>, computeCharacterRects: Bool = false) -> InteractiveTextNodeLayout {
+    static func calculateLayout(attributedString: NSAttributedString?, minimumNumberOfLines: Int, maximumNumberOfLines: Int, truncationType: CTLineTruncationType, backgroundColor: UIColor?, constrainedSize: CGSize, alignment: NSTextAlignment, verticalAlignment: TextVerticalAlignment, lineSpacingFactor: CGFloat, cutout: TextNodeCutout?, insets: UIEdgeInsets, lineColor: UIColor?, textShadowColor: UIColor?, textShadowBlur: CGFloat?, textStroke: (UIColor, CGFloat)?, displayContentsUnderSpoilers: Bool, customTruncationToken: ((UIFont, Bool) -> NSAttributedString?)?, expandedBlocks: Set<Int>, computeCharacterRects: Bool = false, minWidth: CGFloat? = nil) -> InteractiveTextNodeLayout {
         guard let attributedString else {
-            return InteractiveTextNodeLayout(attributedString: attributedString, maximumNumberOfLines: maximumNumberOfLines, truncationType: truncationType, constrainedSize: constrainedSize, explicitAlignment: alignment, resolvedAlignment: alignment, verticalAlignment: verticalAlignment, lineSpacing: lineSpacingFactor, cutout: cutout, insets: insets, size: CGSize(), rawTextSize: CGSize(), truncated: false, firstLineOffset: 0.0, segments: [], backgroundColor: backgroundColor, lineColor: lineColor, textShadowColor: textShadowColor, textShadowBlur: textShadowBlur, textStroke: textStroke, displayContentsUnderSpoilers: displayContentsUnderSpoilers, expandedBlocks: expandedBlocks)
+            return InteractiveTextNodeLayout(attributedString: attributedString, maximumNumberOfLines: maximumNumberOfLines, truncationType: truncationType, constrainedSize: constrainedSize, explicitAlignment: alignment, resolvedAlignment: alignment, verticalAlignment: verticalAlignment, lineSpacing: lineSpacingFactor, cutout: cutout, insets: insets, size: CGSize(), rawTextSize: CGSize(), truncated: false, firstLineOffset: 0.0, segments: [], backgroundColor: backgroundColor, lineColor: lineColor, textShadowColor: textShadowColor, textShadowBlur: textShadowBlur, textStroke: textStroke, displayContentsUnderSpoilers: displayContentsUnderSpoilers, expandedBlocks: expandedBlocks, minWidth: minWidth)
         }
         
-        return calculateLayoutV2(attributedString: attributedString, minimumNumberOfLines: minimumNumberOfLines, maximumNumberOfLines: maximumNumberOfLines, truncationType: truncationType, backgroundColor: backgroundColor, constrainedSize: constrainedSize, alignment: alignment, verticalAlignment: verticalAlignment, lineSpacingFactor: lineSpacingFactor, cutout: cutout, insets: insets, lineColor: lineColor, textShadowColor: textShadowColor, textShadowBlur: textShadowBlur, textStroke: textStroke, displayContentsUnderSpoilers: displayContentsUnderSpoilers, customTruncationToken: customTruncationToken, expandedBlocks: expandedBlocks, computeCharacterRects: computeCharacterRects)
+        return calculateLayoutV2(attributedString: attributedString, minimumNumberOfLines: minimumNumberOfLines, maximumNumberOfLines: maximumNumberOfLines, truncationType: truncationType, backgroundColor: backgroundColor, constrainedSize: constrainedSize, alignment: alignment, verticalAlignment: verticalAlignment, lineSpacingFactor: lineSpacingFactor, cutout: cutout, insets: insets, lineColor: lineColor, textShadowColor: textShadowColor, textShadowBlur: textShadowBlur, textStroke: textStroke, displayContentsUnderSpoilers: displayContentsUnderSpoilers, customTruncationToken: customTruncationToken, expandedBlocks: expandedBlocks, computeCharacterRects: computeCharacterRects, minWidth: minWidth)
     }
     
     private func updateContentItems(arguments: ApplyArguments) {
@@ -2222,7 +2242,7 @@ open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecogn
         return { arguments in
             var layout: InteractiveTextNodeLayout
             
-            if let existingLayout = existingLayout, existingLayout.constrainedSize == arguments.constrainedSize && existingLayout.maximumNumberOfLines == arguments.maximumNumberOfLines && existingLayout.truncationType == arguments.truncationType && existingLayout.cutout == arguments.cutout && existingLayout.explicitAlignment == arguments.alignment && existingLayout.lineSpacing.isEqual(to: arguments.lineSpacing) && existingLayout.expandedBlocks == arguments.expandedBlocks {
+            if let existingLayout = existingLayout, existingLayout.constrainedSize == arguments.constrainedSize && existingLayout.maximumNumberOfLines == arguments.maximumNumberOfLines && existingLayout.truncationType == arguments.truncationType && existingLayout.cutout == arguments.cutout && existingLayout.explicitAlignment == arguments.alignment && existingLayout.lineSpacing.isEqual(to: arguments.lineSpacing) && existingLayout.expandedBlocks == arguments.expandedBlocks && existingLayout.minWidth == arguments.minWidth {
                 let stringMatch: Bool
                 
                 var colorMatch: Bool = true
@@ -2250,10 +2270,10 @@ open class InteractiveTextNode: ASDisplayNode, TextNodeProtocol, UIGestureRecogn
                         layout = layout.withUpdatedDisplayContentsUnderSpoilers(arguments.displayContentsUnderSpoilers)
                     }
                 } else {
-                    layout = InteractiveTextNode.calculateLayout(attributedString: arguments.attributedString, minimumNumberOfLines: arguments.minimumNumberOfLines, maximumNumberOfLines: arguments.maximumNumberOfLines, truncationType: arguments.truncationType, backgroundColor: arguments.backgroundColor, constrainedSize: arguments.constrainedSize, alignment: arguments.alignment, verticalAlignment: arguments.verticalAlignment, lineSpacingFactor: arguments.lineSpacing, cutout: arguments.cutout, insets: arguments.insets, lineColor: arguments.lineColor, textShadowColor: arguments.textShadowColor, textShadowBlur: arguments.textShadowBlur, textStroke: arguments.textStroke, displayContentsUnderSpoilers: arguments.displayContentsUnderSpoilers, customTruncationToken: arguments.customTruncationToken, expandedBlocks: arguments.expandedBlocks, computeCharacterRects: arguments.computeCharacterRects)
+                    layout = InteractiveTextNode.calculateLayout(attributedString: arguments.attributedString, minimumNumberOfLines: arguments.minimumNumberOfLines, maximumNumberOfLines: arguments.maximumNumberOfLines, truncationType: arguments.truncationType, backgroundColor: arguments.backgroundColor, constrainedSize: arguments.constrainedSize, alignment: arguments.alignment, verticalAlignment: arguments.verticalAlignment, lineSpacingFactor: arguments.lineSpacing, cutout: arguments.cutout, insets: arguments.insets, lineColor: arguments.lineColor, textShadowColor: arguments.textShadowColor, textShadowBlur: arguments.textShadowBlur, textStroke: arguments.textStroke, displayContentsUnderSpoilers: arguments.displayContentsUnderSpoilers, customTruncationToken: arguments.customTruncationToken, expandedBlocks: arguments.expandedBlocks, computeCharacterRects: arguments.computeCharacterRects, minWidth: arguments.minWidth)
                 }
             } else {
-                layout = InteractiveTextNode.calculateLayout(attributedString: arguments.attributedString, minimumNumberOfLines: arguments.minimumNumberOfLines, maximumNumberOfLines: arguments.maximumNumberOfLines, truncationType: arguments.truncationType, backgroundColor: arguments.backgroundColor, constrainedSize: arguments.constrainedSize, alignment: arguments.alignment, verticalAlignment: arguments.verticalAlignment, lineSpacingFactor: arguments.lineSpacing, cutout: arguments.cutout, insets: arguments.insets, lineColor: arguments.lineColor, textShadowColor: arguments.textShadowColor, textShadowBlur: arguments.textShadowBlur, textStroke: arguments.textStroke, displayContentsUnderSpoilers: arguments.displayContentsUnderSpoilers, customTruncationToken: arguments.customTruncationToken, expandedBlocks: arguments.expandedBlocks, computeCharacterRects: arguments.computeCharacterRects)
+                layout = InteractiveTextNode.calculateLayout(attributedString: arguments.attributedString, minimumNumberOfLines: arguments.minimumNumberOfLines, maximumNumberOfLines: arguments.maximumNumberOfLines, truncationType: arguments.truncationType, backgroundColor: arguments.backgroundColor, constrainedSize: arguments.constrainedSize, alignment: arguments.alignment, verticalAlignment: arguments.verticalAlignment, lineSpacingFactor: arguments.lineSpacing, cutout: arguments.cutout, insets: arguments.insets, lineColor: arguments.lineColor, textShadowColor: arguments.textShadowColor, textShadowBlur: arguments.textShadowBlur, textStroke: arguments.textStroke, displayContentsUnderSpoilers: arguments.displayContentsUnderSpoilers, customTruncationToken: arguments.customTruncationToken, expandedBlocks: arguments.expandedBlocks, computeCharacterRects: arguments.computeCharacterRects, minWidth: arguments.minWidth)
             }
             
             let node = maybeNode ?? InteractiveTextNode()
@@ -2850,13 +2870,28 @@ final class TextContentItemLayer: SimpleLayer {
 
             let revealCount = min(characterRects.count, remainingCharacters)
             var revealedWidth: CGFloat = 0.0
-            for j in 0 ..< revealCount {
-                let rect = characterRects[j]
-                if !rect.isEmpty {
-                    revealedWidth = max(revealedWidth, rect.maxX)
+            if line.isRTL {
+                // Logical index 0 is the visually rightmost glyph in an RTL line,
+                // so the revealed extent grows leftward from the right edge.
+                var minX: CGFloat = .greatestFiniteMagnitude
+                for j in 0 ..< revealCount {
+                    let rect = characterRects[j]
+                    if !rect.isEmpty {
+                        minX = min(minX, rect.minX)
+                    }
                 }
+                if minX != .greatestFiniteMagnitude {
+                    revealedWidth = ceil(lineFrame.width - minX)
+                }
+            } else {
+                for j in 0 ..< revealCount {
+                    let rect = characterRects[j]
+                    if !rect.isEmpty {
+                        revealedWidth = max(revealedWidth, rect.maxX)
+                    }
+                }
+                revealedWidth = ceil(revealedWidth)
             }
-            revealedWidth = ceil(revealedWidth)
 
             remainingCharacters -= characterRects.count
             let isFull = remainingCharacters >= 0
@@ -3211,8 +3246,11 @@ final class TextContentItemLayer: SimpleLayer {
             }
         }
         
-        animation.animator.updateFrame(layer: self.renderNodeContainer, frame: effectiveContentFrame, completion: nil)
-        animation.animator.updateFrame(layer: self.renderNode.layer, frame: CGRect(origin: CGPoint(), size: effectiveContentFrame.size), completion: nil)
+        animation.animator.updatePosition(layer: self.renderNodeContainer, position: effectiveContentFrame.center, completion: nil)
+        animation.animator.updateBounds(layer: self.renderNodeContainer, bounds: CGRect(origin: CGPoint(), size: effectiveContentFrame.size), completion: nil)
+        
+        animation.animator.updatePosition(layer: self.renderNode.layer, position: effectiveContentFrame.center, completion: nil)
+        animation.animator.updateBounds(layer: self.renderNode.layer, bounds: CGRect(origin: CGRect(origin: CGPoint(), size: effectiveContentFrame.size).center, size: effectiveContentFrame.size), completion: nil)
         
         var staticContentMask = contentMask
         if let contentMask, self.isAnimating {

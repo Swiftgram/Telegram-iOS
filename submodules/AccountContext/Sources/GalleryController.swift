@@ -10,6 +10,7 @@ public enum GalleryMediaSubject: Hashable {
     case pollDescription
     case pollOption(Data)
     case pollSolution
+    case instantPageMedia(MediaId)
 }
 
 public enum GalleryControllerItemSource {

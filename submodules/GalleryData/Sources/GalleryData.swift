@@ -174,15 +174,26 @@ public func chatMessageGalleryControllerData(
                 }
             }
             
-            if let instantPage = content.instantPage, let galleryMedia = galleryMedia {
-                switch instantPageType(of: content) {
-                    case .album:
-                        let medias = instantPageGalleryMedia(webpageId: webpage.webpageId, page: instantPage, galleryMedia: galleryMedia)
-                        if medias.count > 1 {
+            if let instantPage = content.instantPage {
+                if case let .instantPageMedia(tappedMediaId) = mediaSubject {
+                    let parsedPage = instantPage._parse()
+                    if let tappedMedia = parsedPage.media[tappedMediaId] {
+                        let medias = instantPageGalleryMedia(webpageId: webpage.webpageId, page: instantPage, galleryMedia: tappedMedia)
+                        if !medias.isEmpty {
                             instantPageMedia = (webpage, medias)
+                            galleryMedia = tappedMedia
                         }
-                    default:
-                        break
+                    }
+                } else if let galleryMedia = galleryMedia {
+                    switch instantPageType(of: content) {
+                        case .album:
+                            let medias = instantPageGalleryMedia(webpageId: webpage.webpageId, page: instantPage, galleryMedia: galleryMedia)
+                            if medias.count > 1 {
+                                instantPageMedia = (webpage, medias)
+                            }
+                        default:
+                            break
+                    }
                 }
             }
         } else if let mapMedia = media as? TelegramMediaMap {

@@ -52,13 +52,6 @@ func canEditMessage(context: AccountContext, limitsConfiguration: EngineConfigur
     return canEditMessage(accountPeerId: context.account.peerId, limitsConfiguration: limitsConfiguration, message: message)
 }
 
-func canDeleteOtherUserMessages(message: Message) -> Bool {
-    guard let channel = message.peers[message.id.peerId] as? TelegramChannel else {
-        return false
-    }
-    return channel.hasPermission(.deleteAllMessages)
-}
-
 private func canEditMessage(accountPeerId: PeerId, limitsConfiguration: EngineConfiguration.Limits, message: Message, reschedule: Bool = false) -> Bool {
     var hasEditRights = false
     var unlimitedInterval = reschedule
@@ -2181,30 +2174,13 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                         }
                         
                         let deleteReaction: ((EnginePeer, MessageReaction.Reaction) -> Void)?
-                        if canDeleteOtherUserMessages(message: message) {
+                        if let channel = message.peers[message.id.peerId] as? TelegramChannel, channel.hasPermission(.deleteAllMessages) {
                             deleteReaction = { [weak c] peer, _ in
                                 c?.dismiss(completion: {
-                                    guard let chatController = interfaceInteraction.chatController() as? ChatControllerImpl, chatController.chatLocation.peerId?.namespace == Namespaces.Peer.CloudChannel else {
+                                    guard let chatController = interfaceInteraction.chatController() as? ChatController else {
                                         return
                                     }
-                                    let _ = (context.sharedContext.chatAvailableMessageActions(
-                                        engine: context.engine,
-                                        accountPeerId: context.account.peerId,
-                                        messageIds: Set([message.id]),
-                                        keepUpdated: false
-                                    )
-                                    |> deliverOnMainQueue).startStandalone(next: { actions in
-                                        guard !actions.options.isEmpty else {
-                                            return
-                                        }
-                                        chatController.presentBanMessageOptions(
-                                            accountPeerId: context.account.peerId,
-                                            author: peer._asPeer(),
-                                            messageIds: Set([message.id]),
-                                            options: actions.options,
-                                            reaction: true
-                                        )
-                                    })
+                                    chatController.presentReactionDeletionOptions(author: peer._asPeer(), messageId: message.id)
                                 })
                             }
                         } else {
@@ -2334,7 +2310,9 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                 if !poll.countries.isEmpty {
                     let locale = localeWithStrings(chatPresentationInterfaceState.strings)
                     let countryNames = poll.countries.map { id in
-                        if let countryName = locale.localizedString(forRegionCode: id) {
+                        if id == "FT" {
+                            return "Fragment"
+                        } else if let countryName = locale.localizedString(forRegionCode: id) {
                             return countryName
                         } else {
                             return id

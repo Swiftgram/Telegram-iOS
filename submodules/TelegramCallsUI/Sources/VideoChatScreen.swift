@@ -1911,11 +1911,10 @@ final class VideoChatScreenComponent: Component {
                                 }
                             }
                         } else {
-                            //TODO:localized
                             if event.joined {
-                                self.lastTitleEvent = "\(event.peer.compactDisplayTitle) joined"
+                                self.lastTitleEvent = environment.strings.VideoChat_StatusPeerJoined(event.peer.compactDisplayTitle).string
                             } else {
-                                self.lastTitleEvent = "\(event.peer.compactDisplayTitle) left"
+                                self.lastTitleEvent = environment.strings.VideoChat_StatusPeerLeft(event.peer.compactDisplayTitle).string
                             }
                             if !self.isUpdating {
                                 self.state?.updated(transition: .spring(duration: 0.4))

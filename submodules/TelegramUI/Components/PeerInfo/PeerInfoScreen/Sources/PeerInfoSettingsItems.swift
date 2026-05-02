@@ -496,19 +496,17 @@ func settingsEditingItems(data: PeerInfoScreenData?, state: PeerInfoState, conte
         }
     }
     
-    if "".isEmpty {
-        //TODO:localize
-        let automationBotTitle: String
-        if let botPeer = data.businessConnectedBot {
-            automationBotTitle = "@\(botPeer.compactDisplayTitle)"
-        } else {
-            automationBotTitle = "Off"
-        }
-        items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPeerChatAutomation, label: .text(automationBotTitle), text: "Chat Automation", icon: PresentationResourcesSettings.aiTools, action: {
-            interaction.editingOpenBusinessChatBots()
-        }))
-        items[.info]!.append(PeerInfoScreenCommentItem(id: ItemPeerChatAutomationHelp, text: "Add a bot to reply to messages on your behalf."))
+    let automationBotTitle: String
+    if let botPeer = data.businessConnectedBot {
+        let _ = botPeer
+        automationBotTitle = "@\(botPeer.compactDisplayTitle)"
+    } else {
+        automationBotTitle = presentationData.strings.Settings_ChatAutomationOff
     }
+    items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPeerChatAutomation, label: .text(automationBotTitle), additionalBadgeLabel: nil, text: presentationData.strings.Settings_ChatAutomation, icon: PresentationResourcesSettings.aiTools, action: {
+        interaction.editingOpenBusinessChatBots()
+    }))
+    items[.info]!.append(PeerInfoScreenCommentItem(id: ItemPeerChatAutomationHelp, text: presentationData.strings.Settings_ChatAutomationInfo))
     
     items[.account]!.append(PeerInfoScreenActionItem(id: ItemAddAccount, text: presentationData.strings.Settings_AddAnotherAccount, alignment: .center, action: {
         interaction.openSettings(.addAccount)

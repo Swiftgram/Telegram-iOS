@@ -197,7 +197,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
             } else {
                 self.expandedBlockIds.insert(blockId)
             }
-            item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+            item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
         }
         self.textNode.textNode.requestDisplayContentsUnderSpoilers = { [weak self] location in
             guard let self else {
@@ -698,6 +698,15 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     }
                 }
                 
+                var hasDraft = false
+                if item.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+                    hasDraft = true
+                }
+                var hadDraft = false
+                if let previousItem, previousItem.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+                    hadDraft = true
+                }
+                
                 let textInsets = UIEdgeInsets(top: 2.0, left: 2.0, bottom: 5.0, right: 2.0)
                 let (textLayout, textApply) = textLayout(InteractiveTextNodeLayoutArguments(
                     attributedString: attributedText,
@@ -712,17 +721,9 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     displayContentsUnderSpoilers: displayContentsUnderSpoilers.value,
                     customTruncationToken: customTruncationToken,
                     expandedBlocks: expandedBlockIds,
-                    computeCharacterRects: true
+                    computeCharacterRects: true,
+                    minWidth: (attributedText.string.isEmpty && hasDraft) ? 40.0 : nil
                 ))
-                
-                var hasDraft = false
-                if item.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
-                    hasDraft = true
-                }
-                var hadDraft = false
-                if let previousItem, previousItem.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
-                    hadDraft = true
-                }
                 
                 var maxGlyphCount = currentMaxGlyphCount
                 if maxGlyphCount == nil && (hasDraft || hadDraft) {
@@ -831,8 +832,8 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                             }
                             
                             strongSelf.textNode.textNode.displaysAsynchronously = !item.presentationData.isPreview
-                            animation.animator.updateFrame(layer: strongSelf.containerNode.layer, frame: CGRect(origin: CGPoint(), size: boundingSize), completion: nil)
-                            
+                            animation.animator.updatePosition(layer: strongSelf.containerNode.layer, position: CGRect(origin: CGPoint(), size: boundingSize).center, completion: nil)
+                            animation.animator.updateBounds(layer: strongSelf.containerNode.layer, bounds: CGRect(origin: CGPoint(), size: boundingSize), completion: nil)
                             
                             if let formattedDateUpdatePeriod {
                                 if strongSelf.relativeDateTimer?.period != formattedDateUpdatePeriod {
@@ -840,7 +841,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                                     strongSelf.relativeDateTimer = nil
                                 }
                                 strongSelf.relativeDateTimer = (SwiftSignalKit.Timer(timeout: Double(formattedDateUpdatePeriod), repeat: true, completion: { [weak self] in
-                                    self?.requestFullUpdate?()
+                                    self?.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
                                 }, queue: Queue.mainQueue()), formattedDateUpdatePeriod)
                                 strongSelf.relativeDateTimer?.timer.start()
                             } else if let (timer, _) = strongSelf.relativeDateTimer {
@@ -916,7 +917,8 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                                     }
                                 )
                             ))
-                            animation.animator.updateFrame(layer: strongSelf.textNode.textNode.layer, frame: realTextFrame, completion: nil)
+                            animation.animator.updatePosition(layer: strongSelf.textNode.textNode.layer, position: realTextFrame.center, completion: nil)
+                            animation.animator.updateBounds(layer: strongSelf.textNode.textNode.layer, bounds: CGRect(origin: CGPoint(), size: realTextFrame.size), completion: nil)
                             
                             switch strongSelf.visibility {
                             case .none:
@@ -970,7 +972,8 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                                     }
                                     statusNode.frame = statusFrame
                                 } else {
-                                    animation.animator.updateFrame(layer: statusNode.layer, frame: statusFrame, completion: nil)
+                                    animation.animator.updatePosition(layer: statusNode.layer, position: statusFrame.center, completion: nil)
+                                    animation.animator.updateBounds(layer: statusNode.layer, bounds: CGRect(origin: CGPoint(), size: statusFrame.size), completion: nil)
                                 }
                             } else if let statusNode = strongSelf.statusNode {
                                 strongSelf.statusNode = nil
@@ -1116,7 +1119,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                         ContainedViewLayoutTransition.animated(duration: 0.2, curve: .easeInOut).updateAlpha(node: statusNode, alpha: 1.0)
                     }
                     
-                    self.requestFullUpdate?()
+                    self.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
                 } else {
                     var requestUpdate = false
                     let glyphCount = textRevealAnimationState.glyphCount(timestamp: timestamp)
@@ -1136,7 +1139,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     }
                     
                     if requestUpdate {
-                        self.requestFullUpdate?()
+                        self.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
                     }
                 }
             }
@@ -1736,7 +1739,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         }
         self.displayContentsUnderSpoilers = (value, location)
         if let item = self.item {
-            item.controllerInteraction.requestMessageUpdate(item.message.id, false)
+            item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
         }
     }
     

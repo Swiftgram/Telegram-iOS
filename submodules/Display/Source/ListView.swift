@@ -1101,6 +1101,8 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
         }
         guard lowestPinnedIndex != Int.max else { return 0.0 }
 
+        let visibleArea = self.visibleSize.height - self.insets.top - self.insets.bottom
+
         var totalAboveAndPinned: CGFloat = 0.0
         var sawIndexZero = false
         for itemNode in self.itemNodes {
@@ -1108,14 +1110,23 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
             if index == 0 {
                 sawIndexZero = true
             }
-            if index <= lowestPinnedIndex {
+            if index < lowestPinnedIndex {
                 totalAboveAndPinned += itemNode.apparentBounds.height
+            } else if index == lowestPinnedIndex {
+                let pinnedHeight = itemNode.apparentBounds.height
+                totalAboveAndPinned += pinnedHeight - self.pinToEdgeBottomExtension(forPinnedHeight: pinnedHeight)
             }
         }
         guard sawIndexZero else { return 0.0 }
 
-        let visibleArea = self.visibleSize.height - self.insets.top - self.insets.bottom
         return max(0.0, visibleArea - totalAboveAndPinned)
+    }
+
+    private func pinToEdgeBottomExtension(forPinnedHeight pinnedHeight: CGFloat) -> CGFloat {
+        let visibleArea = self.visibleSize.height - self.insets.top - self.insets.bottom
+        let halfArea = visibleArea * 0.5
+        guard halfArea > 0.0 else { return 0.0 }
+        return max(0.0, pinnedHeight - halfArea)
     }
 
     private func areAllItemsOnScreen() -> Bool {
@@ -1856,7 +1867,7 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
         })
     }
     
-    public func transaction(deleteIndices: [ListViewDeleteItem], insertIndicesAndItems: [ListViewInsertItem], updateIndicesAndItems: [ListViewUpdateItem], options: ListViewDeleteAndInsertOptions, scrollToItem: ListViewScrollToItem? = nil, additionalScrollDistance: CGFloat = 0.0, updateSizeAndInsets: ListViewUpdateSizeAndInsets? = nil, stationaryItemRange: (Int, Int)? = nil, updateOpaqueState: Any?, completion: @escaping (ListViewDisplayedItemRange) -> Void = { _ in }) {
+    public func transaction(deleteIndices: [ListViewDeleteItem], insertIndicesAndItems: [ListViewInsertItem], updateIndicesAndItems: [ListViewUpdateItem], options: ListViewDeleteAndInsertOptions, scrollToItem: ListViewScrollToItem? = nil, additionalScrollDistance: CGFloat = 0.0, updateSizeAndInsets: ListViewUpdateSizeAndInsets? = nil, stationaryItemRange: (Int, Int)? = nil, customAnimationTransition: ControlledTransition? = nil, updateOpaqueState: Any?, completion: @escaping (ListViewDisplayedItemRange) -> Void = { _ in }) {
         if deleteIndices.isEmpty && insertIndicesAndItems.isEmpty && updateIndicesAndItems.isEmpty && scrollToItem == nil && updateSizeAndInsets == nil && additionalScrollDistance.isZero {
             if let updateOpaqueState = updateOpaqueState {
                 self.opaqueTransactionState = updateOpaqueState
@@ -1868,7 +1879,7 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
         self.transactionQueue.addTransaction({ [weak self] transactionCompletion in
             if let strongSelf = self {
                 strongSelf.transactionOffset = 0.0
-                strongSelf.deleteAndInsertItemsTransaction(deleteIndices: deleteIndices, insertIndicesAndItems: insertIndicesAndItems, updateIndicesAndItems: updateIndicesAndItems, options: options, scrollToItem: scrollToItem, additionalScrollDistance: additionalScrollDistance, updateSizeAndInsets: updateSizeAndInsets, stationaryItemRange: stationaryItemRange, updateOpaqueState: updateOpaqueState, customAnimationTransition: updateSizeAndInsets?.customAnimationTransition, completion: { [weak strongSelf] in
+                strongSelf.deleteAndInsertItemsTransaction(deleteIndices: deleteIndices, insertIndicesAndItems: insertIndicesAndItems, updateIndicesAndItems: updateIndicesAndItems, options: options, scrollToItem: scrollToItem, additionalScrollDistance: additionalScrollDistance, updateSizeAndInsets: updateSizeAndInsets, stationaryItemRange: stationaryItemRange, updateOpaqueState: updateOpaqueState, customAnimationTransition: customAnimationTransition ?? updateSizeAndInsets?.customAnimationTransition, completion: { [weak strongSelf] in
                     completion(strongSelf?.immediateDisplayedItemRange() ?? ListViewDisplayedItemRange(loadedRange: nil, visibleRange: nil))
                     
                     transactionCompletion()
@@ -2671,6 +2682,27 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
         return value
     }
     
+    public func isStrictlyScrolledToPinToEdgeItem() -> Bool {
+        guard let targetIndex = self.items.firstIndex(where: { $0.pinToEdgeWithInset }) else {
+            return false
+        }
+        let pinToEdgeTopInset = self.calculatePinToEdgeTopInset()
+        if pinToEdgeTopInset <= 0.0 {
+            return false
+        }
+        for itemNode in self.itemNodes {
+            if itemNode.index == targetIndex {
+                let extensionOffset = self.pinToEdgeBottomExtension(forPinnedHeight: itemNode.apparentBounds.height)
+                guard pinToEdgeTopInset > 0.0 || extensionOffset > 0.0 else {
+                    return false
+                }
+                let expectedMaxY = (self.visibleSize.height - self.insets.bottom + extensionOffset) + itemNode.scrollPositioningInsets.bottom
+                return abs(itemNode.apparentFrame.maxY - expectedMaxY) < 0.5
+            }
+        }
+        return false
+    }
+    
     private func replayOperations(animated: Bool, animateAlpha: Bool, animateCrossfade: Bool, animateFullTransition: Bool, customAnimationTransition: ControlledTransition?, synchronous: Bool, synchronousLoads: Bool, animateTopItemVerticalOrigin: Bool, operations: [ListViewStateOperation], requestItemInsertionAnimationsIndices: Set<Int>, scrollToItem originalScrollToItem: ListViewScrollToItem?, additionalScrollDistance: CGFloat, updateSizeAndInsets: ListViewUpdateSizeAndInsets?, stationaryItemIndex: Int?, updateOpaqueState: Any?, forceInvertOffsetDirection: Bool = false, completion: () -> Void) {
         var scrollToItem: ListViewScrollToItem?
         var isExperimentalSnapToScrollToItem = false
@@ -3092,23 +3124,25 @@ open class ListViewImpl: ASDisplayNode, ListView, ASScrollViewDelegate, ASGestur
                     let insets = self.insets// updateSizeAndInsets?.insets ?? self.insets
 
                     var isPinToEdgeTarget = false
-                    if self.calculatePinToEdgeTopInset() > 0.0,
-                       index >= 0, index < self.items.count,
-                       self.items[index].pinToEdgeWithInset {
-                        isPinToEdgeTarget = true
-                        for otherNode in self.itemNodes {
-                            guard let otherIndex = otherNode.index else { continue }
-                            guard otherIndex >= 0, otherIndex < self.items.count else { continue }
-                            if otherIndex < index, self.items[otherIndex].pinToEdgeWithInset {
-                                isPinToEdgeTarget = false
-                                break
+                    if index >= 0, index < self.items.count, self.items[index].pinToEdgeWithInset {
+                        let pinExtension = self.pinToEdgeBottomExtension(forPinnedHeight: itemNode.apparentBounds.height)
+                        if self.calculatePinToEdgeTopInset() > 0.0 || pinExtension > 0.0 {
+                            isPinToEdgeTarget = true
+                            for otherNode in self.itemNodes {
+                                guard let otherIndex = otherNode.index else { continue }
+                                guard otherIndex >= 0, otherIndex < self.items.count else { continue }
+                                if otherIndex < index, self.items[otherIndex].pinToEdgeWithInset {
+                                    isPinToEdgeTarget = false
+                                    break
+                                }
                             }
                         }
                     }
 
                     var offset: CGFloat
                     if isPinToEdgeTarget {
-                        offset = (self.visibleSize.height - insets.bottom) - itemNode.apparentFrame.maxY + itemNode.scrollPositioningInsets.bottom
+                        let extensionOffset = self.pinToEdgeBottomExtension(forPinnedHeight: itemNode.apparentBounds.height)
+                        offset = (self.visibleSize.height - insets.bottom + extensionOffset) - itemNode.apparentFrame.maxY + itemNode.scrollPositioningInsets.bottom
                     } else {
                         switch scrollToItem.position {
                         case let .bottom(additionalOffset):
