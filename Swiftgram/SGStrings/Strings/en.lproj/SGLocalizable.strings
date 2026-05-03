@@ -120,6 +120,7 @@
 
 "ContextMenu.SaveToCloud" = "Save to Cloud";
 "ContextMenu.SelectFromUser" = "Select from Author";
+"ContextMenu.RepeatMessage" = "Repeat Message";
 
 "Settings.ContextMenu" = "CONTEXT MENU";
 "Settings.ContextMenu.Notice" = "Disabled entries will be available in \"Swiftgram\" sub-menu.";

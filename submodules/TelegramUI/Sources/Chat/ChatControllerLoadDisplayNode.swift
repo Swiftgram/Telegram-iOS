@@ -2031,6 +2031,16 @@ extension ChatControllerImpl {
                             strongSelf.forwardMessagesToCloud(messageIds: forwardMessageIds, removeNames: false, openCloud: false, resetCurrent: true)
                         case "hideNames":
                             strongSelf.forwardMessages(forceHideNames: true, messageIds: forwardMessageIds, options: ChatInterfaceForwardOptionsState(hideNames: true, hideCaptions: false, unhideNamesOnCaptionChange: false))
+                        case "repeatMessage":
+                            if let peerId = strongSelf.chatLocation.peerId {
+                                let attributes: [MessageAttribute] = [ForwardOptionsMessageAttribute(hideNames: true, hideCaptions: false)]
+                                let messagesToEnqueue = forwardMessageIds.map { id -> EnqueueMessage in
+                                    return .forward(source: id, threadId: strongSelf.chatLocation.threadId, grouping: .auto, attributes: attributes, correlationId: nil)
+                                }
+                                let _ = enqueueMessages(account: strongSelf.context.account, peerId: peerId, messages: messagesToEnqueue).start()
+                                strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: true, { $0.updatedInterfaceState { $0.withoutSelectionState() } })
+                                strongSelf.chatDisplayNode.historyNode.scrollToEndOfHistory()
+                            }
                         default:
                             strongSelf.forwardMessages(messageIds: forwardMessageIds)
                         }
@@ -2063,6 +2073,16 @@ extension ChatControllerImpl {
                             strongSelf.forwardMessagesToCloud(messageIds: forwardMessageIds, removeNames: false, openCloud: false)
                         case "forwardMessagesWithNoNames":
                             strongSelf.forwardMessages(forceHideNames: true, messageIds: forwardMessageIds, options: ChatInterfaceForwardOptionsState(hideNames: true, hideCaptions: false, unhideNamesOnCaptionChange: false))
+                        case "repeatMessage":
+                            if let peerId = strongSelf.chatLocation.peerId {
+                                let attributes: [MessageAttribute] = [ForwardOptionsMessageAttribute(hideNames: true, hideCaptions: false)]
+                                let messagesToEnqueue = forwardMessageIds.map { id -> EnqueueMessage in
+                                    return .forward(source: id, threadId: strongSelf.chatLocation.threadId, grouping: .auto, attributes: attributes, correlationId: nil)
+                                }
+                                let _ = enqueueMessages(account: strongSelf.context.account, peerId: peerId, messages: messagesToEnqueue).start()
+                                strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: true, { $0.updatedInterfaceState { $0.withoutSelectionState() } })
+                                strongSelf.chatDisplayNode.historyNode.scrollToEndOfHistory()
+                            }
                         default:
                             strongSelf.forwardMessages(messageIds: forwardMessageIds)
                     }
