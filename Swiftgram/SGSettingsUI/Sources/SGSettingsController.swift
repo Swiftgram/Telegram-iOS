@@ -76,6 +76,7 @@ private enum SGBoolSetting: String {
     case contextShowSaveMedia
     case contextShowMessageReplies
     case contextShowJson
+    case contextShowRepeat
     case disableScrollToNextChannel
     case disableScrollToNextTopic
     case disableChatSwipeOptions
@@ -271,6 +272,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .contextMenu, settingName: .contextShowSaveMedia, value: SGSimpleSettings.shared.contextShowSaveMedia, text: strings.Conversation_SaveToFiles, enabled: true))
     entries.append(.toggle(id: id.count, section: .contextMenu, settingName: .contextShowMessageReplies, value: SGSimpleSettings.shared.contextShowMessageReplies, text: strings.Conversation_ContextViewThread, enabled: true))
     entries.append(.toggle(id: id.count, section: .contextMenu, settingName: .contextShowJson, value: SGSimpleSettings.shared.contextShowJson, text: "JSON", enabled: true))
+    entries.append(.toggle(id: id.count, section: .contextMenu, settingName: .contextShowRepeat, value: SGSimpleSettings.shared.contextShowRepeat, text: i18n("ContextMenu.RepeatMessage", lang), enabled: true))
     /* entries.append(.toggle(id: id.count, section: .contextMenu, settingName: .contextShowRestrict, value: SGSimpleSettings.shared.contextShowRestrict, text: strings.Conversation_ContextMenuBan)) */
     
     entries.append(.header(id: id.count, section: .accountColors, text: i18n("Settings.CustomColors.Header", lang), badge: nil))
@@ -464,6 +466,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.stickerTimestamp = value
         case .contextShowJson:
             SGSimpleSettings.shared.contextShowJson = value
+        case .contextShowRepeat:
+            SGSimpleSettings.shared.contextShowRepeat = value
         case .hideRecordingButton:
             SGSimpleSettings.shared.hideRecordingButton = !value
         case .hideTabBar:

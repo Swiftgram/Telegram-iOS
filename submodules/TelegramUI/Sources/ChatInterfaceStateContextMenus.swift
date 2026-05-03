@@ -1874,6 +1874,17 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     interfaceInteraction.forwardMessages(selectAll || isImage ? messages : [message], nil)
                     f(.dismissWithoutContent)
                 })))
+                let repeatAction: ContextMenuItem = .action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.ScheduleMessage_Repeat, icon: { theme in
+                    return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Reload"), color: theme.actionSheet.primaryTextColor)
+                }, action: { _, f in
+                    interfaceInteraction.forwardMessages(selectAll || isImage ? messages : [message], "repeatMessage")
+                    f(.dismissWithoutContent)
+                }))
+               if SGSimpleSettings.shared.contextShowRepeat {
+                    actions.append(repeatAction)
+               } else {
+                   sgActions.append(repeatAction)
+               }
                 if message.id.peerId != context.account.peerId {
                     let action: ContextMenuItem = .action(ContextMenuActionItem(text: i18n("ContextMenu.SaveToCloud", chatPresentationInterfaceState.strings.baseLanguageCode), icon: { theme in
                         return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Fave"), color: theme.actionSheet.primaryTextColor)
@@ -4035,3 +4046,4 @@ private final class ChatRateTranscriptionContextItemNode: ASDisplayNode, Context
         return self
     }
 }
+
