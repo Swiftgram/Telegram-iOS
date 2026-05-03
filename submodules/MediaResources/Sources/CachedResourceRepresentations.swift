@@ -1,6 +1,5 @@
 import Foundation
 import UIKit
-import Postbox
 import SwiftSignalKit
 
 public final class CachedStickerAJpegRepresentation: CachedMediaResourceRepresentation {

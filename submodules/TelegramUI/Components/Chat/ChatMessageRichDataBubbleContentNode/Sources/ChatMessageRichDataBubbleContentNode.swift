@@ -683,6 +683,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     ? messageItem.presentationData.theme.theme.chat.message.incoming.linkHighlightColor
                     : messageItem.presentationData.theme.theme.chat.message.outgoing.linkHighlightColor
                 highlightingNode = LinkHighlightingNode(color: color)
+                highlightingNode.useModernPathCalculation = true
                 self.linkHighlightingNode = highlightingNode
                 self.containerNode.insertSubnode(highlightingNode, at: 0)
             }
