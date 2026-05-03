@@ -8,7 +8,6 @@ import TelegramPresentationData
 import LegacyComponents
 import AccountContext
 import MergeLists
-import Postbox
 import SettingsThemeWallpaperNode
 
 private let itemSize = CGSize(width: 88.0, height: 88.0)
@@ -258,7 +257,7 @@ public final class WallpaperPatternPanelNode: ASDisplayNode {
         self.addSubnode(self.labelNode)
         self.disposable = ((telegramWallpapers(postbox: context.account.postbox, network: context.account.network)
         |> map { wallpapers -> [TelegramWallpaper] in
-            var existingIds = Set<MediaId>()
+            var existingIds = Set<EngineMedia.Id>()
 
             return wallpapers.filter { wallpaper in
                 if case let .file(file) = wallpaper, wallpaper.isPattern, file.file.mimeType != "image/webp" {

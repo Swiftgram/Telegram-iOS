@@ -3,7 +3,6 @@ import UIKit
 import AsyncDisplayKit
 import Display
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramPresentationData
 import AccountContext
@@ -141,7 +140,7 @@ private func chatForwardOptions(selfController: ChatControllerImpl, sourceView: 
         var items: [ContextMenuItem] = []
         
         var hasCaptions = false
-        var uniquePeerIds = Set<PeerId>()
+        var uniquePeerIds = Set<EnginePeer.Id>()
         
         var hasOther = false
         var hasNotOwnMessages = false

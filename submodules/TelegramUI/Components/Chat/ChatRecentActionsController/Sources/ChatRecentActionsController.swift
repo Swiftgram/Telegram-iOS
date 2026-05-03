@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import Display
 import TelegramCore
-import Postbox
 import SwiftSignalKit
 import TelegramPresentationData
 import TelegramBaseController
@@ -21,7 +20,7 @@ public final class ChatRecentActionsController: TelegramBaseController {
     
     private let context: AccountContext
     private let peer: EnginePeer
-    private let initialAdminPeerId: PeerId?
+    private let initialAdminPeerId: EnginePeer.Id?
     let starsState: StarsRevenueStats?
     
     private var presentationData: PresentationData
@@ -39,7 +38,7 @@ public final class ChatRecentActionsController: TelegramBaseController {
     
     private var adminsDisposable: Disposable?
     
-    public init(context: AccountContext, peer: EnginePeer, adminPeerId: PeerId?, starsState: StarsRevenueStats?) {
+    public init(context: AccountContext, peer: EnginePeer, adminPeerId: EnginePeer.Id?, starsState: StarsRevenueStats?) {
         self.context = context
         self.peer = peer
         self.initialAdminPeerId = adminPeerId

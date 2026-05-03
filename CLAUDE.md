@@ -41,7 +41,7 @@ A gradual migration is underway to eliminate direct `import Postbox` from consum
 
 **Historical record:** Wave-by-wave outcomes, the running tally of Postbox-free modules, and full verbose forms of the guidance subsections below live in [`docs/superpowers/postbox-refactor-log.md`](docs/superpowers/postbox-refactor-log.md). Read that file when you need wave-specific context, a full worked example of a pattern, or the history of a particular module's migration.
 
-Waves landed so far (as of 2026-04-24): 45 waves plus standalone cleanups. See the log file for per-wave detail; the list of still-open migration opportunities lives in the `project_postbox_refactor_next_wave.md` memory file.
+Waves landed so far (as of 2026-05-02): 137 waves plus standalone cleanups. See the log file for per-wave detail; the list of still-open migration opportunities lives in the `project_postbox_refactor_next_wave.md` memory file.
 
 ### Rules that apply to every wave
 
@@ -74,6 +74,7 @@ AdaptedPostboxDecoder → EngineAdaptedPostboxDecoder (added 2026-04)
 ItemCollectionId    → EngineItemCollectionId       (added 2026-04-20)
 FetchResourceSourceType → EngineFetchResourceSourceType (added 2026-04-20)
 FetchResourceError  → EngineFetchResourceError     (added 2026-04-20)
+StoryId             → EngineStoryId                (added 2026-05-02)
 ```
 
 For the `MediaResource` Postbox protocol, prefer the TelegramCore subtype `TelegramMediaResource` when the consumer's usage allows (note: `EngineMediaResource` is a wrapper **class**, not a typealias, so it is not interchangeable with the protocol).

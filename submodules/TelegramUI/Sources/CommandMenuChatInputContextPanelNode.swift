@@ -1,7 +1,6 @@
 import Foundation
 import UIKit
 import AsyncDisplayKit
-import Postbox
 import SwiftSignalKit
 import TelegramCore
 import Display
@@ -75,7 +74,7 @@ final class CommandMenuChatInputContextPanelNode: ChatInputContextPanelNode {
     
     private let disposable = MetaDisposable()
     
-    init(context: AccountContext, theme: PresentationTheme, strings: PresentationStrings, fontSize: PresentationFontSize, peerId: PeerId, chatPresentationContext: ChatPresentationContext) {
+    init(context: AccountContext, theme: PresentationTheme, strings: PresentationStrings, fontSize: PresentationFontSize, peerId: EnginePeer.Id, chatPresentationContext: ChatPresentationContext) {
         self.backgroundView = GlassBackgroundView()
         self.backgroundView.layer.anchorPoint = CGPoint()
         

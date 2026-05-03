@@ -6,7 +6,6 @@ import Vision
 import Photos
 import SwiftSignalKit
 import Display
-import Postbox
 import TelegramCore
 import TelegramPresentationData
 import FastBlur
@@ -167,7 +166,7 @@ public final class MediaEditor {
         case videoCollage([VideoCollageItem])
         case asset(PHAsset)
         case draft(MediaEditorDraft)
-        case message(MessageId)
+        case message(EngineMessage.Id)
         case gift(StarGift.UniqueGift)
         case sticker(TelegramMediaFile)
         

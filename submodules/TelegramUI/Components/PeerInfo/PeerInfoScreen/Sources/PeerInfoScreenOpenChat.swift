@@ -3,7 +3,6 @@ import UIKit
 import Display
 import AccountContext
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 
 extension PeerInfoScreenNode {
@@ -81,7 +80,7 @@ extension PeerInfoScreenNode {
         }
     }
     
-    func openDeleteReaction(messageId: MessageId) {
+    func openDeleteReaction(messageId: EngineMessage.Id) {
         guard let authorPeer = self.data?.peer?._asPeer(), let navigationController = self.controller?.navigationController as? NavigationController else {
             return
         }

@@ -3,7 +3,6 @@ import UIKit
 import Display
 import AsyncDisplayKit
 import TelegramCore
-import Postbox
 import SwiftSignalKit
 import AccountContext
 import StatisticsUI
@@ -23,7 +22,7 @@ final class PeerInfoInteraction {
     let openAddContact: () -> Void
     let updateBlocked: (Bool) -> Void
     let openReport: (PeerInfoReportType) -> Void
-    let openDeleteReaction: (MessageId) -> Void
+    let openDeleteReaction: (EngineMessage.Id) -> Void
     let openShareBot: () -> Void
     let openAddBotToGroup: () -> Void
     let performBotCommand: (PeerInfoBotCommand) -> Void
@@ -102,7 +101,7 @@ final class PeerInfoInteraction {
         openAddContact: @escaping () -> Void,
         updateBlocked: @escaping (Bool) -> Void,
         openReport: @escaping (PeerInfoReportType) -> Void,
-        openDeleteReaction: @escaping (MessageId) -> Void,
+        openDeleteReaction: @escaping (EngineMessage.Id) -> Void,
         openShareBot: @escaping () -> Void,
         openAddBotToGroup: @escaping () -> Void,
         performBotCommand: @escaping (PeerInfoBotCommand) -> Void,

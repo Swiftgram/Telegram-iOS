@@ -4,7 +4,6 @@ import AsyncDisplayKit
 import Display
 import TelegramCore
 import SwiftSignalKit
-import Postbox
 import TelegramPresentationData
 import TelegramUIPreferences
 import AvatarNode
@@ -23,7 +22,7 @@ final class MentionChatInputPanelItem: ListViewItem {
 
     let selectable: Bool = true
 
-    public init(context: AccountContext, presentationData: ItemListPresentationData, inverted: Bool, peer: EnginePeer, revealed: Bool, setPeerIdRevealed: @escaping (PeerId?) -> Void, peerSelected: @escaping (EnginePeer) -> Void, removeRequested: @escaping (PeerId) -> Void) {
+    public init(context: AccountContext, presentationData: ItemListPresentationData, inverted: Bool, peer: EnginePeer, revealed: Bool, setPeerIdRevealed: @escaping (EnginePeer.Id?) -> Void, peerSelected: @escaping (EnginePeer) -> Void, removeRequested: @escaping (EnginePeer.Id) -> Void) {
         self.context = context
         self.presentationData = presentationData
         self.inverted = inverted

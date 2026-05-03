@@ -3,7 +3,6 @@ import BackgroundTasks
 import AVFAudio
 import UIKit
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramCallsUI
 import AccountContext
@@ -54,7 +53,7 @@ private let backgroundTaskSubmissionDelay: Double = 10.0
 
 private struct PendingMediaUploadKey: Hashable {
     let accountId: AccountRecordId
-    let messageId: MessageId
+    let messageId: EngineMessage.Id
 }
 
 private struct PendingStoryUploadKey: Hashable {
@@ -461,7 +460,7 @@ public final class SharedWakeupManager {
             return
         }
         
-        var messageIdsByAccount: [AccountRecordId: [MessageId]] = [:]
+        var messageIdsByAccount: [AccountRecordId: [EngineMessage.Id]] = [:]
         for key in keys {
             if messageIdsByAccount[key.accountId] == nil {
                 messageIdsByAccount[key.accountId] = []

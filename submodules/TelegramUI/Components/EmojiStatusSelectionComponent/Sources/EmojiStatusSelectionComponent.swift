@@ -18,7 +18,6 @@ import TextFormat
 import AppBundle
 import GZip
 import EmojiStatusComponent
-import Postbox
 import TelegramNotices
 
 private func randomGenericReactionEffect(context: AccountContext) -> Signal<String?, NoError> {
@@ -439,7 +438,7 @@ public final class EmojiStatusSelectionController: ViewController {
                     openSearch: {
                     },
                     addGroupAction: { groupId, isPremiumLocked, _ in
-                        guard let strongSelf = self, let collectionId = groupId.base as? ItemCollectionId else {
+                        guard let strongSelf = self, let collectionId = groupId.base as? EngineItemCollectionId else {
                             return
                         }
                         
@@ -550,7 +549,7 @@ public final class EmojiStatusSelectionController: ViewController {
                                     |> map { foundEmoji, foundPacks -> (groups: [EmojiPagerContentComponent.ItemGroup], canLoadMore: Bool, isSearching: Bool, searchContext: EmojiSearchContext?) in
                                         var items: [EmojiPagerContentComponent.Item] = []
 
-                                        var existingIds = Set<MediaId>()
+                                        var existingIds = Set<EngineMedia.Id>()
                                         for itemFile in foundEmoji.items {
                                             if existingIds.contains(itemFile.fileId) {
                                                 continue

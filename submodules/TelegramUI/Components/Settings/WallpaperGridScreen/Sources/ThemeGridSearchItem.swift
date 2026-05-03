@@ -4,7 +4,6 @@ import Display
 import TelegramCore
 import SwiftSignalKit
 import AsyncDisplayKit
-import Postbox
 import TelegramPresentationData
 import PhotoResources
 
@@ -114,7 +113,7 @@ final class ThemeGridSearchItemNode: GridItemNode {
                 representations.append(TelegramMediaImageRepresentation(dimensions: PixelDimensions(imageDimensions), resource: imageResource, progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false))
             }
             if !representations.isEmpty {
-                let tmpImage = TelegramMediaImage(imageId: MediaId(namespace: 0, id: 0), representations: representations, immediateThumbnailData: immediateThumbnailData, reference: nil, partialReference: nil, flags: [])
+                let tmpImage = TelegramMediaImage(imageId: EngineMedia.Id(namespace: 0, id: 0), representations: representations, immediateThumbnailData: immediateThumbnailData, reference: nil, partialReference: nil, flags: [])
                 updateImageSignal =  mediaGridMessagePhoto(account: item.account, userLocation: .other, photoReference: .standalone(media: tmpImage), fullRepresentationSize: CGSize(width: 512, height: 512))
             } else {
                 updateImageSignal = .complete()

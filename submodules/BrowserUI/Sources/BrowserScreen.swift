@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import SwiftSignalKit
 import Display
-import Postbox
 import TelegramCore
 import TelegramPresentationData
 import ComponentFlow
@@ -1583,7 +1582,7 @@ public class BrowserScreen: ViewController, MinimizableController {
         case pdfDocument(file: FileMediaReference, canShare: Bool)
         case markdownDocument(file: FileMediaReference, canShare: Bool)
         
-        public var fileId: MediaId? {
+        public var fileId: EngineMedia.Id? {
             switch self {
             case let .document(file, _), let .pdfDocument(file, _), let .markdownDocument(file, _):
                 return file.media.fileId

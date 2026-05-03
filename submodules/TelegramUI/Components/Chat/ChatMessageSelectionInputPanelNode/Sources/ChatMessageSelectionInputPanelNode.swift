@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import AsyncDisplayKit
 import Display
-import Postbox
 import TelegramCore
 import SwiftSignalKit
 import TelegramPresentationData
@@ -211,7 +210,7 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
     
     private let canDeleteMessagesDisposable = MetaDisposable()
     
-    public var selectedMessages = Set<MessageId>() {
+    public var selectedMessages = Set<EngineMessage.Id>() {
         didSet {
             if oldValue != self.selectedMessages {
                 self.updateActions()

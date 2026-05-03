@@ -4,7 +4,6 @@ import Photos
 import Display
 import AsyncDisplayKit
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramPresentationData
 import TelegramUIPreferences
@@ -860,9 +859,9 @@ final class UserAppearanceScreenComponent: Component {
             self.previousEmojiSetupTimestamp = currentTimestamp
             
             self.emojiStatusSelectionController?.dismiss()
-            var selectedItems = Set<MediaId>()
+            var selectedItems = Set<EngineMedia.Id>()
             if let currentFileId {
-                selectedItems.insert(MediaId(namespace: Namespaces.Media.CloudFile, id: currentFileId))
+                selectedItems.insert(EngineMedia.Id(namespace: Namespaces.Media.CloudFile, id: currentFileId))
             }
             
             let mappedSubject: EmojiPagerContentComponent.Subject
@@ -1596,7 +1595,7 @@ final class UserAppearanceScreenComponent: Component {
                 
                 let messageItem = PeerNameColorChatPreviewItem.MessageItem(
                     outgoing: false,
-                    peerId: EnginePeer.Id(namespace: peer.id.namespace, id: PeerId.Id._internalFromInt64Value(0)),
+                    peerId: EnginePeer.Id(namespace: peer.id.namespace, id: EnginePeer.Id.Id._internalFromInt64Value(0)),
                     author: peer.compactDisplayTitle,
                     photo: peer.profileImageRepresentations,
                     nameColor: resolvedState.nameColor,

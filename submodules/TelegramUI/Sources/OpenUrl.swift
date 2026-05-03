@@ -2,7 +2,6 @@ import Foundation
 import Display
 import SafariServices
 import TelegramCore
-import Postbox
 import SwiftSignalKit
 import MtProtoKit
 import TelegramPresentationData
@@ -17,7 +16,7 @@ import OverlayStatusController
 import PresentationDataUtils
 
 public struct ParsedSecureIdUrl {
-    public let peerId: PeerId
+    public let peerId: EnginePeer.Id
     public let scope: String
     public let publicKey: String
     public let callbackUrl: String
@@ -100,7 +99,7 @@ public func parseSecureIdUrl(_ url: URL) -> ParsedSecureIdUrl? {
                 return nil
             }
             
-            return ParsedSecureIdUrl(peerId: PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(botId)), scope: scope, publicKey: publicKey, callbackUrl: callbackUrl, opaquePayload: opaquePayload, opaqueNonce: opaqueNonce)
+            return ParsedSecureIdUrl(peerId: EnginePeer.Id(namespace: Namespaces.Peer.CloudUser, id: EnginePeer.Id.Id._internalFromInt64Value(botId)), scope: scope, publicKey: publicKey, callbackUrl: callbackUrl, opaquePayload: opaquePayload, opaqueNonce: opaqueNonce)
         }
     }
     
@@ -436,7 +435,7 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                 switch host {
                 case "localpeer":
                     if let peerIdValue = params["id"].flatMap(Int64.init), let accountId = params["accountId"].flatMap(Int64.init) {
-                        let peerId = PeerId(peerIdValue)
+                        let peerId = EnginePeer.Id(peerIdValue)
                         context.sharedContext.applicationBindings.dismissNativeController()
                         context.sharedContext.navigateToChat(accountId: AccountRecordId(rawValue: accountId), peerId: peerId, messageId: nil)
                     }
@@ -527,7 +526,7 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                     }
                 case "user":
                     if let idValue = params["id"].flatMap(Int64.init), idValue > 0 {
-                        let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(idValue))))
+                        let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: EnginePeer.Id(namespace: Namespaces.Peer.CloudUser, id: EnginePeer.Id.Id._internalFromInt64Value(idValue))))
                         |> deliverOnMainQueue).startStandalone(next: { peer in
                             if let peer = peer, let controller = context.sharedContext.makePeerInfoController(
                                 context: context,
@@ -670,7 +669,7 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                 case "send_gift":
                     if let recipient = params["to"] {
                         if let id = Int64(recipient) {
-                            handleResolvedUrl(.sendGift(peerId: PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(id))))
+                            handleResolvedUrl(.sendGift(peerId: EnginePeer.Id(namespace: Namespaces.Peer.CloudUser, id: EnginePeer.Id.Id._internalFromInt64Value(id))))
                         } else {
                             let _ = (context.engine.peers.resolvePeerByName(name: recipient, referrer: nil)
                             |> deliverOnMainQueue).start(next: { result in

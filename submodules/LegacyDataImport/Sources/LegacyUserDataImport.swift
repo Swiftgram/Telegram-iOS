@@ -3,7 +3,6 @@ import UIKit
 import TelegramCore
 import SyncCore
 import SwiftSignalKit
-import Postbox
 
 func loadLegacyUser(database: SqliteInterface, id: Int32) -> (TelegramUser, TelegramUserPresence)? {
     var result: (TelegramUser, TelegramUserPresence)?
@@ -24,7 +23,7 @@ func loadLegacyUser(database: SqliteInterface, id: Int32) -> (TelegramUser, Tele
             photo.append(TelegramMediaImageRepresentation(dimensions: PixelDimensions(width: 600, height: 600), resource: resource, progressiveSizes: []))
         }
         
-        let user = TelegramUser(id: PeerId(namespace: Namespaces.Peer.CloudUser, id: cursor.getInt32(at: 0)), accessHash: accessHash == 0 ? nil : .personal(accessHash), firstName: firstName.isEmpty ? nil : firstName, lastName: lastName.isEmpty ? nil : lastName, username: username.isEmpty ? nil : username, phone: phone.isEmpty ? nil : phone, photo: photo, botInfo: nil, restrictionInfo: nil, flags: [])
+        let user = TelegramUser(id: EnginePeer.Id(namespace: Namespaces.Peer.CloudUser, id: cursor.getInt32(at: 0)), accessHash: accessHash == 0 ? nil : .personal(accessHash), firstName: firstName.isEmpty ? nil : firstName, lastName: lastName.isEmpty ? nil : lastName, username: username.isEmpty ? nil : username, phone: phone.isEmpty ? nil : phone, photo: photo, botInfo: nil, restrictionInfo: nil, flags: [])
         
         let status: UserPresenceStatus
         let lastSeen = cursor.getInt32(at: 7)

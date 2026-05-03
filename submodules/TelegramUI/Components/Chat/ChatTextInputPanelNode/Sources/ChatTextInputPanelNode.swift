@@ -4,7 +4,6 @@ import UIKit
 import Display
 import AsyncDisplayKit
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import MobileCoreServices
 import TelegramPresentationData
@@ -4253,19 +4252,19 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         let _ = file
         let _ = itemLayer
         
-        var collectionId: ItemCollectionId?
+        var collectionId: EngineItemCollectionId?
         for attribute in file.attributes {
             if case let .CustomEmoji(_, _, _, packReference) = attribute {
                 switch packReference {
                 case let .id(id, _):
-                    collectionId = ItemCollectionId(namespace: Namespaces.ItemCollection.CloudEmojiPacks, id: id)
+                    collectionId = EngineItemCollectionId(namespace: Namespaces.ItemCollection.CloudEmojiPacks, id: id)
                 default:
                     break
                 }
             }
         }
         
-        var bubbleUpEmojiOrStickersets: [ItemCollectionId] = []
+        var bubbleUpEmojiOrStickersets: [EngineItemCollectionId] = []
         if let collectionId {
             bubbleUpEmojiOrStickersets.append(collectionId)
         }
@@ -4322,9 +4321,9 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
                         case let .CustomEmoji(_, _, displayText, stickerPackReference):
                             text = displayText
                             
-                            var packId: ItemCollectionId?
+                            var packId: EngineItemCollectionId?
                             if case let .id(id, _) = stickerPackReference {
-                                packId = ItemCollectionId(namespace: Namespaces.ItemCollection.CloudEmojiPacks, id: id)
+                                packId = EngineItemCollectionId(namespace: Namespaces.ItemCollection.CloudEmojiPacks, id: id)
                             }
                             emojiAttribute = ChatTextInputTextCustomEmojiAttribute(interactivelySelectedFromPackId: packId, fileId: file.fileId.id, file: file)
                             break loop

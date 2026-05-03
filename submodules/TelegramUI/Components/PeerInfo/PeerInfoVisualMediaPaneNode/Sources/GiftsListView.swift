@@ -4,7 +4,6 @@ import Display
 import ComponentFlow
 import TelegramCore
 import SwiftSignalKit
-import Postbox
 import TelegramPresentationData
 import AccountContext
 import ContextUI
@@ -30,7 +29,7 @@ import ContextUI
 
 final class GiftsListView: UIView {
     private let context: AccountContext
-    private let peerId: PeerId
+    private let peerId: EnginePeer.Id
     let profileGifts: ProfileGiftsContext
     private let giftsCollections: ProfileGiftsCollectionsContext?
     
@@ -127,7 +126,7 @@ final class GiftsListView: UIView {
     var contextAction: ((ProfileGiftsContext.State.StarGift, UIView, ContextGesture) -> Void)?
     var addToCollection: (() -> Void)?
     
-    init(context: AccountContext, peerId: PeerId, profileGifts: ProfileGiftsContext, giftsCollections: ProfileGiftsCollectionsContext?, canSelect: Bool, ignoreCollection: Int32? = nil, remainingSelectionCount: Int32 = 0) {
+    init(context: AccountContext, peerId: EnginePeer.Id, profileGifts: ProfileGiftsContext, giftsCollections: ProfileGiftsCollectionsContext?, canSelect: Bool, ignoreCollection: Int32? = nil, remainingSelectionCount: Int32 = 0) {
         self.context = context
         self.peerId = peerId
         self.profileGifts = profileGifts

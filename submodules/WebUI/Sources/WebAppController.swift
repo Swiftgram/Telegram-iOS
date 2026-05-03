@@ -3,7 +3,6 @@ import UIKit
 @preconcurrency import WebKit
 import Display
 import AsyncDisplayKit
-import Postbox
 import TelegramCore
 import SwiftSignalKit
 import ComponentFlow
@@ -66,8 +65,8 @@ public struct WebAppParameters {
     }
     
     let source: Source
-    let peerId: PeerId
-    let botId: PeerId
+    let peerId: EnginePeer.Id
+    let botId: EnginePeer.Id
     let botName: String
     let botVerified: Bool
     let botAddress: String
@@ -84,8 +83,8 @@ public struct WebAppParameters {
     
     public init(
         source: Source,
-        peerId: PeerId,
-        botId: PeerId,
+        peerId: EnginePeer.Id,
+        botId: EnginePeer.Id,
         botName: String,
         botVerified: Bool,
         botAddress: String,
@@ -684,7 +683,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
         @available(iOS 14.5, *)
         func downloadDidFinish(_ download: WKDownload) {
             if let (path, fileName) = self.downloadArguments {
-                let tempFile = TempBox.shared.file(path: path, fileName: fileName)
+                let tempFile = EngineTempBox.shared.file(path: path, fileName: fileName)
                 let url = URL(fileURLWithPath: tempFile.path)
                 
                 if fileName.hasSuffix(".pkpass") {
@@ -1656,7 +1655,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
                             if let image = UIImage(data: data) {
                                 source = image
                             } else {
-                                let tempFile = TempBox.shared.tempFile(fileName: "image.mp4")
+                                let tempFile = EngineTempBox.shared.tempFile(fileName: "image.mp4")
                                 if let _ = try? data.write(to: URL(fileURLWithPath: tempFile.path), options: .atomic) {
                                     source = tempFile.path
                                 }
@@ -3053,7 +3052,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
                                 tooltip.dismissWithCommitAction()
                             }
                             
-                            let tempFile = TempBox.shared.file(path: resultUrl.absoluteString, fileName: fileName)
+                            let tempFile = EngineTempBox.shared.file(path: resultUrl.absoluteString, fileName: fileName)
                             let url = URL(fileURLWithPath: tempFile.path)
                             try? FileManager.default.copyItem(at: resultUrl, to: url)
                             
@@ -3537,8 +3536,8 @@ public final class WebAppController: ViewController, AttachmentContainable {
     
     private let context: AccountContext
     public let source: WebAppParameters.Source
-    private let peerId: PeerId
-    public let botId: PeerId
+    private let peerId: EnginePeer.Id
+    public let botId: EnginePeer.Id
     fileprivate let botName: String
     fileprivate let botVerified: Bool
     fileprivate let botAppSettings: BotAppSettings?
@@ -3550,7 +3549,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
     private let buttonText: String?
     private let forceHasSettings: Bool
     private let keepAliveSignal: Signal<Never, KeepWebViewError>?
-    private let replyToMessageId: MessageId?
+    private let replyToMessageId: EngineMessage.Id?
     private let threadId: Int64?
     public var isFullscreen: Bool
     
@@ -3567,7 +3566,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
     
     public var verifyAgeCompletion: ((Int) -> Void)?
     
-    public init(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil, params: WebAppParameters, replyToMessageId: MessageId?, threadId: Int64?) {
+    public init(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil, params: WebAppParameters, replyToMessageId: EngineMessage.Id?, threadId: Int64?) {
         self.context = context
         self.source = params.source
         self.peerId = params.peerId

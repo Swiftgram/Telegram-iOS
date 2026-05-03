@@ -1,24 +1,23 @@
 import Foundation
 import UIKit
-import Postbox
 import TelegramCore
 import SwiftSignalKit
 import TelegramUIPreferences
 
 private struct WebSearchRecentQueryItemId {
-    public let rawValue: MemoryBuffer
+    public let rawValue: EngineMemoryBuffer
     
     var value: String {
         return String(data: self.rawValue.makeData(), encoding: .utf8) ?? ""
     }
     
-    init(_ rawValue: MemoryBuffer) {
+    init(_ rawValue: EngineMemoryBuffer) {
         self.rawValue = rawValue
     }
     
     init?(_ value: String) {
         if let data = value.data(using: .utf8) {
-            self.rawValue = MemoryBuffer(data: data)
+            self.rawValue = EngineMemoryBuffer(data: data)
         } else {
             return nil
         }

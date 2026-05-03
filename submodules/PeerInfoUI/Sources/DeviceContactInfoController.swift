@@ -24,7 +24,6 @@ import PhoneNumberFormat
 import UndoUI
 import GalleryUI
 import PeerAvatarGalleryUI
-import Postbox
 import ContextUI
 
 private enum DeviceContactInfoAction {

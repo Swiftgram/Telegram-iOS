@@ -1,5 +1,4 @@
 import Foundation
-import Postbox
 import TelegramCore
 import SwiftSignalKit
 
@@ -113,7 +112,7 @@ public func updateInstantPagePresentationSettingsInteractively(accountManager: A
             } else {
                 currentSettings = InstantPagePresentationSettings.defaultSettings
             }
-            return PreferencesEntry(f(currentSettings))
+            return EnginePreferencesEntry(f(currentSettings))
         })
     }
 }

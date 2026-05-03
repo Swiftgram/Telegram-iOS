@@ -1,7 +1,6 @@
 import Foundation
 import UIKit
 import Display
-import Postbox
 import SwiftSignalKit
 import AsyncDisplayKit
 import TelegramCore
@@ -411,7 +410,7 @@ public final class ThemePreviewController: ViewController {
                     
                     var themeSpecificChatWallpapers = updatedSettings.themeSpecificChatWallpapers
                     themeSpecificChatWallpapers[updatedTheme.index] = nil
-                    return PreferencesEntry(updatedSettings.withUpdatedThemeSpecificChatWallpapers(themeSpecificChatWallpapers).withUpdatedThemeSpecificAccentColors(themeSpecificAccentColors))
+                    return EnginePreferencesEntry(updatedSettings.withUpdatedThemeSpecificChatWallpapers(themeSpecificChatWallpapers).withUpdatedThemeSpecificAccentColors(themeSpecificAccentColors))
                 })
                 return previousDefaultTheme
             }

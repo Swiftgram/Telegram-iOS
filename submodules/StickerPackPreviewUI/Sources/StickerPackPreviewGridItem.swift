@@ -4,7 +4,6 @@ import Display
 import TelegramCore
 import SwiftSignalKit
 import AsyncDisplayKit
-import Postbox
 import StickerResources
 import AccountContext
 import AnimatedStickerNode
@@ -16,7 +15,7 @@ import TextFormat
 
 final class StickerPackPreviewInteraction {
     var previewedItem: StickerPreviewPeekItem?
-    var reorderingFileId: MediaId?
+    var reorderingFileId: EngineMedia.Id?
     var playAnimatedStickers: Bool
     
     let addStickerPack: (StickerPackCollectionInfo, [StickerPackItem]) -> Void

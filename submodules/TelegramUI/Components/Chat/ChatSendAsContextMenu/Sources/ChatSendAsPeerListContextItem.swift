@@ -3,7 +3,6 @@ import UIKit
 import Display
 import AsyncDisplayKit
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramPresentationData
 import AppBundle
@@ -16,14 +15,14 @@ import ContextControllerImpl
 
 public final class ChatSendAsPeerListContextItem: ContextMenuCustomItem {
     let context: AccountContext
-    let chatPeerId: PeerId
+    let chatPeerId: EnginePeer.Id
     let peers: [SendAsPeer]
-    let selectedPeerId: PeerId?
+    let selectedPeerId: EnginePeer.Id?
     let isPremium: Bool
     let action: (EnginePeer) -> Void
     let presentToast: (EnginePeer) -> Void
     
-    public init(context: AccountContext, chatPeerId: PeerId, peers: [SendAsPeer], selectedPeerId: PeerId?, isPremium: Bool, action: @escaping (EnginePeer) -> Void, presentToast: @escaping (EnginePeer) -> Void) {
+    public init(context: AccountContext, chatPeerId: EnginePeer.Id, peers: [SendAsPeer], selectedPeerId: EnginePeer.Id?, isPremium: Bool, action: @escaping (EnginePeer) -> Void, presentToast: @escaping (EnginePeer) -> Void) {
         self.context = context
         self.chatPeerId = chatPeerId
         self.peers = peers

@@ -1,7 +1,6 @@
 import Foundation
 import UIKit
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import AsyncDisplayKit
 import Display
@@ -126,7 +125,7 @@ extension ChatControllerImpl {
                     guard let self else {
                         return
                     }
-                    var threadMessageId: MessageId?
+                    var threadMessageId: EngineMessage.Id?
                     if case let .replyThread(replyThreadMessage) = self.presentationInterfaceState.chatLocation {
                         threadMessageId = replyThreadMessage.effectiveMessageId
                     }

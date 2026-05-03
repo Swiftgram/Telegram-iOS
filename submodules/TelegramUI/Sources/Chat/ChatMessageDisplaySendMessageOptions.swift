@@ -4,7 +4,6 @@ import AsyncDisplayKit
 import ContextUI
 import Display
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramNotices
 import ChatSendMessageActionUI

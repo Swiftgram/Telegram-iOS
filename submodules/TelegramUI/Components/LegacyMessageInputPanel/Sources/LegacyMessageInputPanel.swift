@@ -4,7 +4,6 @@ import AsyncDisplayKit
 import LegacyComponents
 import Display
 import TelegramCore
-import Postbox
 import SwiftSignalKit
 import AccountContext
 import ComponentFlow
