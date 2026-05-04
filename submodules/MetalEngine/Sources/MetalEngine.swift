@@ -1068,7 +1068,7 @@ public final class MetalEngine {
             for id in removeSurfaceIds {
                 self.surfaces.removeValue(forKey: id)
             }
-            
+
             commandBuffer.commit()
             commandBuffer.waitUntilScheduled()
         }
