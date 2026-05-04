@@ -1247,7 +1247,7 @@ public func themeImage(account: Account, accountManager: AccountManager<Telegram
     |> mapToSignal { (theme, thumbnailData) -> Signal<(PresentationTheme?, WallpaperImage?, Data?), NoError> in
         if let theme = theme {
             if case let .file(file) = theme.chat.defaultWallpaper {
-                return cachedWallpaper(account: account, slug: file.slug, settings: file.settings)
+                return cachedWallpaper(engine: TelegramEngine(account: account), network: account.network, slug: file.slug, settings: file.settings)
                 |> mapToSignal { wallpaper -> Signal<(PresentationTheme?, WallpaperImage?, Data?), NoError> in
                     if let wallpaper = wallpaper, case let .file(file) = wallpaper.wallpaper {
                         var convertedRepresentations: [ImageRepresentationWithReference] = []
@@ -1496,7 +1496,7 @@ public func themeIconImage(account: Account, accountManager: AccountManager<Tele
                         backgroundColor = (theme.chatList.backgroundColor, nil, [])
                     }
                 
-                    wallpaperSignal = cachedWallpaper(account: account, slug: file.slug, settings: file.settings)
+                    wallpaperSignal = cachedWallpaper(engine: TelegramEngine(account: account), network: account.network, slug: file.slug, settings: file.settings)
                     |> mapToSignal { wallpaper in
                         if let wallpaper = wallpaper, case let .file(file) = wallpaper.wallpaper {
                             var effectiveBackgroundColor = backgroundColor

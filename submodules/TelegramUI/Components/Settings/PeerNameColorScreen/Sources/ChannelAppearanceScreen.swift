@@ -929,7 +929,7 @@ final class ChannelAppearanceScreenComponent: Component {
                     if let temporaryPeerWallpaper = self.temporaryPeerWallpaper {
                         resolvedWallpaper = .single(temporaryPeerWallpaper)
                     } else if case let .file(file) = presentationTheme.chat.defaultWallpaper, file.id == 0 {
-                        resolvedWallpaper = cachedWallpaper(account: component.context.account, slug: file.slug, settings: file.settings)
+                        resolvedWallpaper = cachedWallpaper(engine: component.context.engine, network: component.context.account.network, slug: file.slug, settings: file.settings)
                         |> map { wallpaper -> TelegramWallpaper? in
                             return wallpaper?.wallpaper
                         }

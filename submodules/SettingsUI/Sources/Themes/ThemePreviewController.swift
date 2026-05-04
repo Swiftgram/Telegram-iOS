@@ -221,7 +221,7 @@ public final class ThemePreviewController: ViewController {
         if let initialWallpaper = initialWallpaper {
             self.controllerNode.wallpaperPromise.set(.single(initialWallpaper))
         } else if case let .file(file) = previewTheme.chat.defaultWallpaper, file.id == 0 {
-            self.controllerNode.wallpaperPromise.set(cachedWallpaper(account: self.context.account, slug: file.slug, settings: file.settings)
+            self.controllerNode.wallpaperPromise.set(cachedWallpaper(engine: self.context.engine, network: self.context.account.network, slug: file.slug, settings: file.settings)
             |> mapToSignal { wallpaper in                
                 return .single(wallpaper?.wallpaper ?? .color(previewTheme.chatList.backgroundColor.argb))
             })

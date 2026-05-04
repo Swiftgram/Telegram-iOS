@@ -335,7 +335,7 @@ public func editThemeController(context: AccountContext, mode: EditThemeControll
             settingsPromise.set(.single(info.theme.settings?.first))
             if let file = info.theme.file, let path = context.sharedContext.accountManager.resources.completedResourcePath(resource: EngineMediaResource(file.resource)), let data = try? Data(contentsOf: URL(fileURLWithPath: path)), let theme = makePresentationTheme(data: data, resolvedWallpaper: info.resolvedWallpaper) {
                 if case let .file(file) = theme.chat.defaultWallpaper, file.id == 0 {
-                    previewThemePromise.set(cachedWallpaper(account: context.account, slug: file.slug, settings: file.settings)
+                    previewThemePromise.set(cachedWallpaper(engine: context.engine, network: context.account.network, slug: file.slug, settings: file.settings)
                     |> map ({ wallpaper -> PresentationTheme in
                         if let wallpaper = wallpaper {
                             return theme.withUpdated(name: nil, defaultWallpaper: wallpaper.wallpaper)
@@ -404,7 +404,7 @@ public func editThemeController(context: AccountContext, mode: EditThemeControll
             if let url = urls.first{
                 if let data = try? Data(contentsOf: url), let theme = makePresentationTheme(data: data) {
                     if case let .file(file) = theme.chat.defaultWallpaper, file.id == 0 {
-                        let _ = (cachedWallpaper(account: context.account, slug: file.slug, settings: file.settings)
+                        let _ = (cachedWallpaper(engine: context.engine, network: context.account.network, slug: file.slug, settings: file.settings)
                         |> mapToSignal { wallpaper -> Signal<TelegramWallpaper?, NoError> in
                             if let wallpaper = wallpaper, case let .file(file) = wallpaper.wallpaper {
                                 var convertedRepresentations: [ImageRepresentationWithReference] = []

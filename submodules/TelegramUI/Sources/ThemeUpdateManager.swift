@@ -91,7 +91,7 @@ final class ThemeUpdateManagerImpl: ThemeUpdateManager {
                             
                             let resolvedWallpaper: Signal<TelegramWallpaper?, NoError>
                             if case let .file(file) = presentationTheme.chat.defaultWallpaper, file.id == 0 {
-                                resolvedWallpaper = cachedWallpaper(account: account, slug: file.slug, settings: file.settings)
+                                resolvedWallpaper = cachedWallpaper(engine: TelegramEngine(account: account), network: account.network, slug: file.slug, settings: file.settings)
                                 |> map { wallpaper in
                                     return wallpaper?.wallpaper
                                 }

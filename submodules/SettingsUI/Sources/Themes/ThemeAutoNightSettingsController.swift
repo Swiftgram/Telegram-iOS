@@ -539,7 +539,7 @@ public func themeAutoNightSettingsController(context: AccountContext) -> ViewCon
         
         let resolvedWallpaper: Signal<TelegramWallpaper?, NoError>
         if case let .file(file) = presentationTheme.chat.defaultWallpaper, file.id == 0 {
-            resolvedWallpaper = cachedWallpaper(account: context.account, slug: file.slug, settings: file.settings)
+            resolvedWallpaper = cachedWallpaper(engine: context.engine, network: context.account.network, slug: file.slug, settings: file.settings)
             |> map { wallpaper -> TelegramWallpaper? in
                 return wallpaper?.wallpaper
             }

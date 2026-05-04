@@ -517,7 +517,7 @@ public func themePickerController(context: AccountContext, focusOnItemTag: Theme
         }
         |> mapToSignal { accentColor, wallpaper -> Signal<(PresentationThemeAccentColor?, TelegramWallpaper), NoError> in
             if case let .file(file) = wallpaper, file.id == 0 {
-                return cachedWallpaper(account: context.account, slug: file.slug, settings: file.settings)
+                return cachedWallpaper(engine: context.engine, network: context.account.network, slug: file.slug, settings: file.settings)
                 |> map { cachedWallpaper in
                     if let wallpaper = cachedWallpaper?.wallpaper, case .file = wallpaper {
                         return (accentColor, wallpaper)
@@ -578,7 +578,7 @@ public func themePickerController(context: AccountContext, focusOnItemTag: Theme
                         
                         let resolvedWallpaper: Signal<TelegramWallpaper, NoError>
                         if case let .file(file) = theme.chat.defaultWallpaper, file.id == 0 {
-                            resolvedWallpaper = cachedWallpaper(account: context.account, slug: file.slug, settings: file.settings)
+                            resolvedWallpaper = cachedWallpaper(engine: context.engine, network: context.account.network, slug: file.slug, settings: file.settings)
                             |> map { cachedWallpaper -> TelegramWallpaper in
                                 return cachedWallpaper?.wallpaper ?? theme.chat.defaultWallpaper
                             }
@@ -745,7 +745,7 @@ public func themePickerController(context: AccountContext, focusOnItemTag: Theme
             
             let wallpaperSignal: Signal<TelegramWallpaper, NoError>
             if case let .file(file) = effectiveWallpaper, file.id == 0 {
-                wallpaperSignal = cachedWallpaper(account: context.account, slug: file.slug, settings: file.settings)
+                wallpaperSignal = cachedWallpaper(engine: context.engine, network: context.account.network, slug: file.slug, settings: file.settings)
                 |> map { cachedWallpaper in
                     return cachedWallpaper?.wallpaper ?? effectiveWallpaper
                 }
@@ -825,7 +825,7 @@ public func themePickerController(context: AccountContext, focusOnItemTag: Theme
                             
                             let resolvedWallpaper: Signal<TelegramWallpaper, NoError>
                             if case let .file(file) = theme.chat.defaultWallpaper, file.id == 0 {
-                                resolvedWallpaper = cachedWallpaper(account: context.account, slug: file.slug, settings: file.settings)
+                                resolvedWallpaper = cachedWallpaper(engine: context.engine, network: context.account.network, slug: file.slug, settings: file.settings)
                                 |> map { cachedWallpaper -> TelegramWallpaper in
                                     return cachedWallpaper?.wallpaper ?? theme.chat.defaultWallpaper
                                 }
@@ -1129,7 +1129,7 @@ public func themePickerController(context: AccountContext, focusOnItemTag: Theme
         
         let resolvedWallpaper: Signal<TelegramWallpaper?, NoError>
         if case let .file(file) = presentationTheme.chat.defaultWallpaper, file.id == 0 {
-            resolvedWallpaper = cachedWallpaper(account: context.account, slug: file.slug, settings: file.settings)
+            resolvedWallpaper = cachedWallpaper(engine: context.engine, network: context.account.network, slug: file.slug, settings: file.settings)
             |> map { wallpaper -> TelegramWallpaper? in
                 return wallpaper?.wallpaper
             }
@@ -1226,7 +1226,7 @@ public func themePickerController(context: AccountContext, focusOnItemTag: Theme
     selectAccentColorImpl = { currentBaseTheme, accentColor in
         var wallpaperSignal: Signal<TelegramWallpaper?, NoError> = .single(nil)
         if let colorWallpaper = accentColor?.wallpaper, case let .file(file) = colorWallpaper {
-            wallpaperSignal = cachedWallpaper(account: context.account, slug: file.slug, settings: colorWallpaper.settings)
+            wallpaperSignal = cachedWallpaper(engine: context.engine, network: context.account.network, slug: file.slug, settings: colorWallpaper.settings)
             |> mapToSignal { cachedWallpaper in
                 if let wallpaper = cachedWallpaper?.wallpaper, case let .file(file) = wallpaper {
                     let _ = context.engine.resources.fetch(reference: .wallpaper(wallpaper: .slug(file.slug), resource: file.file.resource), userLocation: .other, userContentType: .other).start()
