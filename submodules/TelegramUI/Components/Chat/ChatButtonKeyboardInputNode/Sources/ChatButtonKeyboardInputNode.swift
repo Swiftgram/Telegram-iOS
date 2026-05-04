@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import Display
 import AsyncDisplayKit
-import Postbox
 import TelegramCore
 import SwiftSignalKit
 import TelegramPresentationData
@@ -149,7 +148,7 @@ private final class ChatButtonKeyboardInputButtonNode: HighlightTrackingButtonNo
             maxTextWidth -= iconSize.width + iconSpacing
             
             var animationContent: EmojiStatusComponent.AnimationContent = .customEmoji(fileId: iconFileId)
-            if let file = message.associatedMedia[MediaId(namespace: Namespaces.Media.CloudFile, id: iconFileId)] as? TelegramMediaFile {
+            if let file = message.associatedMedia[EngineMedia.Id(namespace: Namespaces.Media.CloudFile, id: iconFileId)] as? TelegramMediaFile {
                 animationContent = .file(file: file)
             }
             
@@ -208,7 +207,7 @@ public final class ChatButtonKeyboardInputNode: ChatInputNode, UIScrollViewDeleg
     private let scrollNode: ASScrollNode
     
     private var buttonNodes: [ChatButtonKeyboardInputButtonNode] = []
-    private var message: Message?
+    private var message: EngineMessage?
     
     private var theme: PresentationTheme?
     
@@ -286,7 +285,7 @@ public final class ChatButtonKeyboardInputNode: ChatInputNode, UIScrollViewDeleg
             }
         }
         
-        self.message = interfaceState.keyboardButtonsMessage
+        self.message = interfaceState.keyboardButtonsMessage.flatMap(EngineMessage.init)
         
         if let markup = validatedMarkup, let message = self.message {
             let verticalInset: CGFloat = 18.0
@@ -325,7 +324,7 @@ public final class ChatButtonKeyboardInputNode: ChatInputNode, UIScrollViewDeleg
                     let buttonFrame = CGRect(origin: CGPoint(x: sideInset + CGFloat(columnIndex) * (buttonWidth + columnSpacing), y: verticalOffset), size: CGSize(width: buttonWidth, height: buttonHeight))
                     buttonNode.frame = buttonFrame
                     buttonNode.tintMaskView.frame = buttonFrame
-                    buttonNode.update(context: self.context, size: buttonFrame.size, theme: interfaceState.theme, wallpaperBackgroundNode: self.controllerInteraction.presentationContext.backgroundNode, button: button, message: EngineMessage(message))
+                    buttonNode.update(context: self.context, size: buttonFrame.size, theme: interfaceState.theme, wallpaperBackgroundNode: self.controllerInteraction.presentationContext.backgroundNode, button: button, message: message)
                     columnIndex += 1
                 }
                 verticalOffset += buttonHeight + rowSpacing
@@ -391,35 +390,35 @@ public final class ChatButtonKeyboardInputNode: ChatInputNode, UIScrollViewDeleg
                     self.controllerInteraction.shareAccountContact()
                 case .openWebApp:
                     if let message = self.message {
-                        self.controllerInteraction.requestMessageActionCallback(message, nil, true, false, nil)
+                        self.controllerInteraction.requestMessageActionCallback(message._asMessage(), nil, true, false, nil)
                     }
                 case let .callback(requiresPassword, data):
                     if let message = self.message {
-                        self.controllerInteraction.requestMessageActionCallback(message, data, false, requiresPassword, nil)
+                        self.controllerInteraction.requestMessageActionCallback(message._asMessage(), data, false, requiresPassword, nil)
                     }
                 case let .switchInline(samePeer, query, _):
                     if let message = message {
-                        var botPeer: Peer?
-                        
+                        var botPeer: EnginePeer?
+
                         var found = false
                         for attribute in message.attributes {
                             if let attribute = attribute as? InlineBotMessageAttribute, let peerId = attribute.peerId {
-                                botPeer = message.peers[peerId]
+                                botPeer = message.enginePeers[peerId]
                                 found = true
                             }
                         }
                         if !found {
                             botPeer = message.author
                         }
-                        
-                        var peer: Peer?
+
+                        var peer: EnginePeer?
                         if samePeer {
-                            peer = message.peers[message.id.peerId]
+                            peer = message.enginePeers[message.id.peerId]
                         } else {
                             peer = botPeer
                         }
                         if let peer = peer, let botPeer = botPeer, let addressName = botPeer.addressName {
-                            self.controllerInteraction.openPeer(EnginePeer(peer), .chat(textInputState: ChatTextInputState(inputText: NSAttributedString(string: "@\(addressName) \(query)")), subject: nil, peekData: nil), nil, .default)
+                            self.controllerInteraction.openPeer(peer, .chat(textInputState: ChatTextInputState(inputText: NSAttributedString(string: "@\(addressName) \(query)")), subject: nil, peekData: nil), nil, .default)
                         }
                     }
                 case .payment:
@@ -452,7 +451,7 @@ public final class ChatButtonKeyboardInputNode: ChatInputNode, UIScrollViewDeleg
                     for attribute in message.attributes {
                         if let attribute = attribute as? ReplyMarkupMessageAttribute {
                             if attribute.flags.contains(.once) {
-                                self.controllerInteraction.dismissReplyMarkupMessage(message)
+                                self.controllerInteraction.dismissReplyMarkupMessage(message._asMessage())
                             }
                             break
                         }

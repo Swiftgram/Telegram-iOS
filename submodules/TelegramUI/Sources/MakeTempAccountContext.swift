@@ -13,7 +13,7 @@ public func makeTempContext(
     appGroupPath: String,
     accountManager: AccountManager<TelegramAccountManagerTypes>,
     appLockContext: AppLockContext,
-    encryptionParameters: ValueBoxEncryptionParameters,
+    encryptionParameters: EngineValueBoxEncryptionParameters,
     applicationBindings: TelegramApplicationBindings,
     initialPresentationDataAndSettings: InitialPresentationDataAndSettings,
     networkArguments: NetworkInitializationArguments,

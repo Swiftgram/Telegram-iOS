@@ -6,7 +6,6 @@ import TelegramPresentationData
 import ChatControllerInteraction
 import AccountContext
 import TelegramCore
-import Postbox
 import WallpaperBackgroundNode
 import ChatMessageItemCommon
 import ContextUI
@@ -107,7 +106,7 @@ public class ChatMessageShareButton: ASDisplayNode {
         self.morePressed?()
     }
     
-    public func update(presentationData: ChatPresentationData, controllerInteraction: ChatControllerInteraction, chatLocation: ChatLocation, subject: ChatControllerSubject?, message: Message, account: Account, disableComments: Bool = false, isSummarize: Bool = false) -> CGSize {
+    public func update(presentationData: ChatPresentationData, controllerInteraction: ChatControllerInteraction, chatLocation: ChatLocation, subject: ChatControllerSubject?, message: EngineMessage, accountPeerId: EnginePeer.Id, disableComments: Bool = false, isSummarize: Bool = false) -> CGSize {
         var isReplies = false
         var isNavigate = false
         var replyCount = 0
@@ -176,7 +175,7 @@ public class ChatMessageShareButton: ASDisplayNode {
                 updatedIconOffset = CGPoint(x: UIScreenPixel, y: 1.0)
             } else if isReplies {
                 updatedIconImage = PresentationResourcesChat.chatFreeCommentButtonIcon(presentationData.theme.theme, wallpaper: presentationData.theme.wallpaper)
-            } else if message.id.peerId.isRepliesOrSavedMessages(accountPeerId: account.peerId) {
+            } else if message.id.peerId.isRepliesOrSavedMessages(accountPeerId: accountPeerId) {
                 updatedIconImage = PresentationResourcesChat.chatFreeNavigateButtonIcon(presentationData.theme.theme, wallpaper: presentationData.theme.wallpaper)
                 updatedIconOffset = CGPoint(x: UIScreenPixel, y: 1.0)
             } else {

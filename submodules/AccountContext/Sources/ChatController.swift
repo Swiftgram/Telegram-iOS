@@ -1117,7 +1117,7 @@ public protocol ChatController: ViewController {
     func activateSearch(domain: ChatSearchDomain, query: String)
     func activateInput(type: ChatControllerActivateInput)
     func beginClearHistory(type: InteractiveHistoryClearingType)
-    func presentReactionDeletionOptions(author: Peer, messageId: MessageId)
+    func presentReactionDeletionOptions(author: EnginePeer, messageId: EngineMessage.Id)
     
     func performScrollToTop() -> Bool
     func transferScrollingVelocity(_ velocity: CGFloat)
@@ -1270,7 +1270,7 @@ public protocol ChatHistoryListNode: ListView {
     
     func scrollToEndOfHistory()
     func updateLayout(transition: ContainedViewLayoutTransition, updateSizeAndInsets: ListViewUpdateSizeAndInsets)
-    func messageInCurrentHistoryView(_ id: MessageId) -> Message?
+    func messageInCurrentHistoryView(_ id: EngineMessage.Id) -> EngineMessage?
     
     var contentPositionChanged: (ListViewVisibleContentOffset) -> Void { get set }
 }

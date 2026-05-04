@@ -3,7 +3,6 @@ import UIKit
 import Display
 import AccountContext
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import OpenInExternalAppUI
 import PresentationDataUtils
@@ -134,19 +133,16 @@ extension PeerInfoScreenNode {
         }
         disposable.set((resolveSignal
         |> take(1)
-        |> mapToSignal { peer -> Signal<Peer?, NoError> in
-            return .single(peer?._asPeer())
-        }
         |> deliverOnMainQueue).start(next: { [weak self] peer in
             if let strongSelf = self {
                 if let peer = peer {
                     var navigation = navigation
                     if case .default = navigation {
-                        if let peer = peer as? TelegramUser, peer.botInfo != nil {
+                        if case let .user(user) = peer, user.botInfo != nil {
                             navigation = .chat(textInputState: nil, subject: nil, peekData: nil)
                         }
                     }
-                    strongSelf.openResolved(.peer(peer, navigation))
+                    strongSelf.openResolved(.peer(peer._asPeer(), navigation))
                 } else {
                     strongSelf.controller?.present(textAlertController(context: strongSelf.context, updatedPresentationData: strongSelf.controller?.updatedPresentationData, title: nil, text: strongSelf.presentationData.strings.Resolve_ErrorNotFound, actions: [TextAlertAction(type: .defaultAction, title: strongSelf.presentationData.strings.Common_OK, action: {})]), in: .window(.root))
                 }

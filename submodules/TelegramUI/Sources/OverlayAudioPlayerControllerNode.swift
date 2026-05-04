@@ -471,7 +471,7 @@ final class OverlayAudioPlayerControllerNode: ViewControllerTracingNode, ASGestu
         }
         
         openMessageImpl = { [weak self] id in
-            if let strongSelf = self, strongSelf.isNodeLoaded, let message = strongSelf.historyNode.messageInCurrentHistoryView(id) {
+            if let strongSelf = self, strongSelf.isNodeLoaded, let message = strongSelf.historyNode.messageInCurrentHistoryView(id)?._asMessage() {
                 var playlistLocation: PeerMessagesPlaylistLocation?
                 if let location = strongSelf.playlistLocation as? PeerMessagesPlaylistLocation {
                     if case let .custom(messages, canReorder, _, loadMore, hidePanel) = location {

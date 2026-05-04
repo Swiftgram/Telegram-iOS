@@ -4,7 +4,6 @@ import Display
 import AsyncDisplayKit
 import SwiftSignalKit
 import TelegramCore
-import Postbox
 import TelegramPresentationData
 import TelegramUIPreferences
 import ItemListUI
@@ -467,7 +466,7 @@ public final class ItemListPeerItem: ListViewItem, ItemListItem {
     let displayDecorations: Bool
     let displayBackground: Bool
     let disableInteractiveTransitionIfNecessary: Bool
-    let storyStats: PeerStoryStats?
+    let storyStats: EnginePeerStoryStats?
     let openStories: ((UIView) -> Void)?
     
     public init(
@@ -511,7 +510,7 @@ public final class ItemListPeerItem: ListViewItem, ItemListItem {
         displayDecorations: Bool = true,
         displayBackground: Bool = true,
         disableInteractiveTransitionIfNecessary: Bool = false,
-        storyStats: PeerStoryStats? = nil,
+        storyStats: EnginePeerStoryStats? = nil,
         openStories: ((UIView) -> Void)? = nil
     ) {
         self.presentationData = presentationData
@@ -599,7 +598,7 @@ public final class ItemListPeerItem: ListViewItem, ItemListItem {
         displayDecorations: Bool = true,
         displayBackground: Bool = true,
         disableInteractiveTransitionIfNecessary: Bool = false,
-        storyStats: PeerStoryStats? = nil,
+        storyStats: EnginePeerStoryStats? = nil,
         openStories: ((UIView) -> Void)? = nil
     ) {
         self.presentationData = presentationData

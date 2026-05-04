@@ -28,7 +28,6 @@ import TelegramPresentationData
 import LegacyInstantVideoController
 import TelegramPresentationData
 import ChatPresentationInterfaceState
-import Postbox
 import OverlayStatusController
 import PresentationDataUtils
 import TextFieldComponent
@@ -786,7 +785,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
 
                             call.sendMessage(fromId: sendAsPeer?.peer.id, isAdmin: isAdmin, text: text.string, entities: entities, paidStars: sendPaidMessageStars?.value)
 
-                            component.storyItemSharedState.replyDrafts.removeValue(forKey: StoryId(peerId: peerId, id: focusedItem.storyItem.id))
+                            component.storyItemSharedState.replyDrafts.removeValue(forKey: EngineStoryId(peerId: peerId, id: focusedItem.storyItem.id))
                             inputPanelView.clearSendMessageInput(updateState: true)
 
                             self.currentLiveStreamMessageStars = nil
@@ -813,7 +812,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
             guard let peerId = focusedItem.peerId else {
                 return
             }
-            let focusedStoryId = StoryId(peerId: peerId, id: focusedItem.storyItem.id)
+            let focusedStoryId = EngineStoryId(peerId: peerId, id: focusedItem.storyItem.id)
             guard let inputPanelView = view.inputPanel.view as? MessageInputPanelComponent.View else {
                 return
             }
@@ -830,7 +829,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
 
                     let waveformBuffer = audio.waveform.makeBitstream()
 
-                    var messageAttributes: [MessageAttribute] = []
+                    var messageAttributes: [EngineMessage.Attribute] = []
                     if let sendPaidMessageStars = component.slice.additionalPeerData.sendPaidMessageStars {
                         messageAttributes.append(PaidStarsMessageAttribute(stars: sendPaidMessageStars, postponeSending: false))
                     }
@@ -865,7 +864,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                                     }
                                 }
                             })
-                            component.storyItemSharedState.replyDrafts.removeValue(forKey: StoryId(peerId: peerId, id: focusedItem.storyItem.id))
+                            component.storyItemSharedState.replyDrafts.removeValue(forKey: EngineStoryId(peerId: peerId, id: focusedItem.storyItem.id))
                             inputPanelView.clearSendMessageInput(updateState: true)
 
                             self.currentInputMode = .text
@@ -894,7 +893,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
             guard let peerId = focusedItem.peerId else {
                 return
             }
-            let focusedStoryId = StoryId(peerId: peerId, id: focusedItem.storyItem.id)
+            let focusedStoryId = EngineStoryId(peerId: peerId, id: focusedItem.storyItem.id)
             let peer = component.slice.effectivePeer
 
             let controller = component.controller() as? StoryContainerScreen
@@ -954,7 +953,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         guard let peerId = focusedItem.peerId else {
             return
         }
-        let focusedStoryId = StoryId(peerId: peerId, id: focusedItem.storyItem.id)
+        let focusedStoryId = EngineStoryId(peerId: peerId, id: focusedItem.storyItem.id)
         let peer = component.slice.effectivePeer
 
         let controller = component.controller() as? StoryContainerScreen
@@ -1067,7 +1066,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                 fileAttributes.append(.Sticker(displayText: "", packReference: nil, maskData: nil))
                 fileAttributes.append(.ImageSize(size: PixelDimensions(size)))
 
-                let media = TelegramMediaFile(fileId: MediaId(namespace: Namespaces.Media.LocalFile, id: Int64.random(in: Int64.min ... Int64.max)), partialReference: nil, resource: resource, previewRepresentations: [], videoThumbnails: [], immediateThumbnailData: nil, mimeType: "image/webp", size: Int64(data.count), attributes: fileAttributes, alternativeRepresentations: [])
+                let media = TelegramMediaFile(fileId: EngineMedia.Id(namespace: Namespaces.Media.LocalFile, id: Int64.random(in: Int64.min ... Int64.max)), partialReference: nil, resource: resource, previewRepresentations: [], videoThumbnails: [], immediateThumbnailData: nil, mimeType: "image/webp", size: Int64(data.count), attributes: fileAttributes, alternativeRepresentations: [])
                 let message = EnqueueMessage.message(text: "", attributes: [], inlineStickers: [:], mediaReference: .standalone(media: media), threadId: nil, replyToMessageId: nil, replyToStoryId: nil, localGroupingKey: nil, correlationId: nil, bubbleUpEmojiOrStickersets: [])
 
                 self.presentPaidMessageAlertIfNeeded(view: view, completion: { [weak self] in
@@ -1095,7 +1094,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         guard let peerId = focusedItem.peerId else {
             return
         }
-        let focusedStoryId = StoryId(peerId: peerId, id: focusedItem.storyItem.id)
+        let focusedStoryId = EngineStoryId(peerId: peerId, id: focusedItem.storyItem.id)
         let _ = (component.context.engine.data.get(
             TelegramEngine.EngineData.Item.Peer.Peer(id: peerId)
         )
@@ -1325,7 +1324,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
             }
 
             let shareController = component.context.sharedContext.makeShareController(context: component.context, params: ShareControllerParams(
-                subject: .media(AnyMediaReference.standalone(media: TelegramMediaStory(storyId: StoryId(peerId: peerId, id: focusedItem.storyItem.id), isMention: false)), nil),
+                subject: .media(AnyMediaReference.standalone(media: TelegramMediaStory(storyId: EngineStoryId(peerId: peerId, id: focusedItem.storyItem.id), isMention: false)), nil),
                 preferredAction: preferredAction ?? .default,
                 externalShare: false,
                 immediateExternalShare: false,
@@ -1648,7 +1647,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         guard let peerId = focusedItem.peerId else {
             return
         }
-        component.storyItemSharedState.replyDrafts.removeValue(forKey: StoryId(peerId: peerId, id: focusedItem.storyItem.id))
+        component.storyItemSharedState.replyDrafts.removeValue(forKey: EngineStoryId(peerId: peerId, id: focusedItem.storyItem.id))
     }
 
     enum AttachMenuSubject {
@@ -1666,7 +1665,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         guard let peerId = focusedItem.peerId else {
             return
         }
-        let focusedStoryId = StoryId(peerId: peerId, id: focusedItem.storyItem.id)
+        let focusedStoryId = EngineStoryId(peerId: peerId, id: focusedItem.storyItem.id)
         guard let inputPanelView = view.inputPanel.view as? MessageInputPanelComponent.View else {
             return
         }
@@ -1939,7 +1938,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                             guard let view, let component = view.component else {
                                 return
                             }
-                            var messageAttributes: [MessageAttribute] = []
+                            var messageAttributes: [EngineMessage.Attribute] = []
                             if let sendPaidMessageStars = component.slice.additionalPeerData.sendPaidMessageStars {
                                 messageAttributes.append(PaidStarsMessageAttribute(stars: sendPaidMessageStars, postponeSending: false))
                             }
@@ -2243,7 +2242,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         view: StoryItemSetContainerComponent.View,
         peer: EnginePeer,
         replyToMessageId: EngineMessage.Id?,
-        replyToStoryId: StoryId?,
+        replyToStoryId: EngineStoryId?,
         subject: MediaPickerScreenImpl.Subject = .assets(nil, .default),
         saveEditedPhotos: Bool,
         bannedSendPhotos: (Int32, Bool)?,
@@ -2317,7 +2316,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         present(controller, mediaPickerContext)
     }
 
-    private func presentOldMediaPicker(view: StoryItemSetContainerComponent.View, peer: EnginePeer, replyMessageId: EngineMessage.Id?, replyToStoryId: StoryId?, fileMode: Bool, editingMedia: Bool, push: @escaping (ViewController) -> Void, completion: @escaping ([Any], Bool, Int32) -> Void) {
+    private func presentOldMediaPicker(view: StoryItemSetContainerComponent.View, peer: EnginePeer, replyMessageId: EngineMessage.Id?, replyToStoryId: EngineStoryId?, fileMode: Bool, editingMedia: Bool, push: @escaping (ViewController) -> Void, completion: @escaping ([Any], Bool, Int32) -> Void) {
         guard let component = view.component else {
             return
         }
@@ -2450,7 +2449,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         })
     }
 
-    private func presentFileGallery(view: StoryItemSetContainerComponent.View, peer: EnginePeer, replyMessageId: EngineMessage.Id?, replyToStoryId: StoryId?, editingMessage: Bool = false) {
+    private func presentFileGallery(view: StoryItemSetContainerComponent.View, peer: EnginePeer, replyMessageId: EngineMessage.Id?, replyToStoryId: EngineStoryId?, editingMessage: Bool = false) {
         self.presentOldMediaPicker(view: view, peer: peer, replyMessageId: replyMessageId, replyToStoryId: replyToStoryId, fileMode: true, editingMedia: editingMessage, push: { [weak view] c in
             view?.component?.controller()?.push(c)
         }, completion: { [weak self, weak view] signals, silentPosting, scheduleTime in
@@ -2465,7 +2464,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         })
     }
 
-    private func presentICloudFileGallery(view: StoryItemSetContainerComponent.View, peer: EnginePeer, replyMessageId: EngineMessage.Id?, replyToStoryId: StoryId?) {
+    private func presentICloudFileGallery(view: StoryItemSetContainerComponent.View, peer: EnginePeer, replyMessageId: EngineMessage.Id?, replyToStoryId: EngineStoryId?) {
         guard let component = view.component else {
             return
         }
@@ -2581,7 +2580,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
 //        guard let peerId = focusedItem.peerId else {
 //            return
 //        }
-//        let focusedStoryId = StoryId(peerId: peerId, id: focusedItem.storyItem.id)
+//        let focusedStoryId = EngineStoryId(peerId: peerId, id: focusedItem.storyItem.id)
 //        guard let inputPanelView = view.inputPanel.view as? MessageInputPanelComponent.View else {
 //            return
 //        }
@@ -2641,7 +2640,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
 //        component.controller()?.push(controller)
     }
 
-    private func enqueueChatContextResult(view: StoryItemSetContainerComponent.View, peer: EnginePeer, replyMessageId: EngineMessage.Id?, storyId: StoryId?, results: ChatContextResultCollection, result: ChatContextResult, hideVia: Bool = false, closeMediaInput: Bool = false, silentPosting: Bool = false, scheduleTime: Int32? = nil, resetTextInputState: Bool = true) {
+    private func enqueueChatContextResult(view: StoryItemSetContainerComponent.View, peer: EnginePeer, replyMessageId: EngineMessage.Id?, storyId: EngineStoryId?, results: ChatContextResultCollection, result: ChatContextResult, hideVia: Bool = false, closeMediaInput: Bool = false, silentPosting: Bool = false, scheduleTime: Int32? = nil, resetTextInputState: Bool = true) {
         if !canSendMessagesToPeer(peer) {
             return
         }
@@ -2694,7 +2693,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                         }
                     }, enqueueMediaMessages: { [weak self, weak view] signals in
                         if let self, let view, !signals.isEmpty {
-                            self.enqueueMediaMessages(view: view, peer: peer, replyToMessageId: nil, replyToStoryId: StoryId(peerId: peer.id, id: storyId), signals: signals, silentPosting: silentPosting, scheduleTime: scheduleTime)
+                            self.enqueueMediaMessages(view: view, peer: peer, replyToMessageId: nil, replyToStoryId: EngineStoryId(peerId: peer.id, id: storyId), signals: signals, silentPosting: silentPosting, scheduleTime: scheduleTime)
                         }
                     })
                 }), activateOnDisplay: activateOnDisplay)
@@ -2758,7 +2757,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         }) as? TGCaptionPanelView
     }
 
-    private func openCamera(view: StoryItemSetContainerComponent.View, peer: EnginePeer, replyToMessageId: EngineMessage.Id?, replyToStoryId: StoryId?, cameraView: TGAttachmentCameraView? = nil) {
+    private func openCamera(view: StoryItemSetContainerComponent.View, peer: EnginePeer, replyToMessageId: EngineMessage.Id?, replyToStoryId: EngineStoryId?, cameraView: TGAttachmentCameraView? = nil) {
         guard let component = view.component else {
             return
         }
@@ -2816,7 +2815,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
 
             let storeCapturedMedia = peer.id.namespace != Namespaces.Peer.SecretChat
 
-            presentedLegacyCamera(context: component.context, peer: peer._asPeer(), chatLocation: .peer(id: peer.id), cameraView: cameraView, menuController: nil, parentController: parentController, attachmentController: self.attachmentController, editingMedia: false, saveCapturedPhotos: storeCapturedMedia, mediaGrouping: true, initialCaption: inputText, hasSchedule: peer.id.namespace != Namespaces.Peer.SecretChat, enablePhoto: enablePhoto, enableVideo: enableVideo, sendMessagesWithSignals: { [weak self, weak view] signals, silentPosting, scheduleTime, parameters in
+            presentedLegacyCamera(context: component.context, peer: peer, chatLocation: .peer(id: peer.id), cameraView: cameraView, menuController: nil, parentController: parentController, attachmentController: self.attachmentController, editingMedia: false, saveCapturedPhotos: storeCapturedMedia, mediaGrouping: true, initialCaption: inputText, hasSchedule: peer.id.namespace != Namespaces.Peer.SecretChat, enablePhoto: enablePhoto, enableVideo: enableVideo, sendMessagesWithSignals: { [weak self, weak view] signals, silentPosting, scheduleTime, parameters in
                 guard let self, let view else {
                     return
                 }
@@ -2927,9 +2926,9 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
     }
 
     private func transformEnqueueMessages(view: StoryItemSetContainerComponent.View, messages: [EnqueueMessage], silentPosting: Bool, scheduleTime: Int32? = nil) -> [EnqueueMessage] {
-        var focusedStoryId: StoryId?
+        var focusedStoryId: EngineStoryId?
         if let component = view.component, let peerId = component.slice.item.peerId {
-            focusedStoryId = StoryId(peerId: peerId, id: component.slice.item.storyItem.id)
+            focusedStoryId = EngineStoryId(peerId: peerId, id: component.slice.item.storyItem.id)
         }
 
         return messages.map { message in
@@ -2963,7 +2962,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                          attributes.append(OutgoingScheduleInfoMessageAttribute(scheduleTime: scheduleTime, repeatPeriod: nil))
                     }
                 }
-                var messageAttributes: [MessageAttribute] = []
+                var messageAttributes: [EngineMessage.Attribute] = []
                 if let component = view.component, let sendPaidMessageStars = component.slice.additionalPeerData.sendPaidMessageStars {
                     messageAttributes.append(PaidStarsMessageAttribute(stars: sendPaidMessageStars, postponeSending: false))
                 }
@@ -2992,7 +2991,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         }
     }
 
-    private func enqueueMediaMessages(view: StoryItemSetContainerComponent.View, peer: EnginePeer, replyToMessageId: EngineMessage.Id?, replyToStoryId: StoryId?, signals: [Any]?, silentPosting: Bool, scheduleTime: Int32? = nil, parameters: ChatSendMessageActionSheetController.SendParameters? = nil, getAnimatedTransitionSource: ((String) -> UIView?)? = nil, completion: @escaping () -> Void = {}) {
+    private func enqueueMediaMessages(view: StoryItemSetContainerComponent.View, peer: EnginePeer, replyToMessageId: EngineMessage.Id?, replyToStoryId: EngineStoryId?, signals: [Any]?, silentPosting: Bool, scheduleTime: Int32? = nil, parameters: ChatSendMessageActionSheetController.SendParameters? = nil, getAnimatedTransitionSource: ((String) -> UIView?)? = nil, completion: @escaping () -> Void = {}) {
         guard let component = view.component else {
             return
         }
@@ -3183,7 +3182,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         })
     }
 
-    func openPeerMention(view: StoryItemSetContainerComponent.View, name: String, sourceMessageId: MessageId? = nil) {
+    func openPeerMention(view: StoryItemSetContainerComponent.View, name: String, sourceMessageId: EngineMessage.Id? = nil) {
         guard let component = view.component, let parentController = component.controller() else {
             return
         }
@@ -3233,16 +3232,14 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
             }
             return .single(result)
         }
-        |> mapToSignal { peer -> Signal<Peer?, NoError> in
-            return .single(peer?._asPeer())
-        }
-        |> deliverOnMainQueue).start(next: { [weak view] peer in
+        |> deliverOnMainQueue).start(next: { [weak view] enginePeer in
             guard let view, let component = view.component else {
                 return
             }
-            if let peer = peer {
+            if let enginePeer = enginePeer {
+                let peer = enginePeer._asPeer()
                 var navigation: ChatControllerInteractionNavigateToPeer
-                if let peer = peer as? TelegramUser, peer.botInfo == nil {
+                if case let .user(user) = enginePeer, user.botInfo == nil {
                     navigation = .info(nil)
                 } else {
                     navigation = .chat(textInputState: nil, subject: nil, peekData: nil)
@@ -3262,7 +3259,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
 
         let peerId = component.slice.effectivePeer.id
 
-        var resolveSignal: Signal<Peer?, NoError>
+        var resolveSignal: Signal<EnginePeer?, NoError>
         if let peerName = peerName {
             resolveSignal = component.context.engine.peers.resolvePeerByName(name: peerName, referrer: nil)
             |> mapToSignal { result -> Signal<EnginePeer?, NoError> in
@@ -3271,23 +3268,15 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                 }
                 return .single(result)
             }
-            |> mapToSignal { peer -> Signal<Peer?, NoError> in
-                if let peer = peer {
-                    return .single(peer._asPeer())
-                } else {
-                    return .single(nil)
-                }
-            }
         } else {
             resolveSignal = component.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
-            |> mapToSignal { peer -> Signal<EnginePeer, NoError> in
+            |> mapToSignal { peer -> Signal<EnginePeer?, NoError> in
                 if let peer {
                     return .single(peer)
                 } else {
                     return .never()
                 }
             }
-            |> map { Optional($0._asPeer()) }
         }
         var cancelImpl: (() -> Void)?
         let presentationData = component.context.sharedContext.currentPresentationData.with { $0 }
@@ -3338,7 +3327,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                     let searchController = component.context.sharedContext.makeStorySearchController(context: component.context, scope: .query(nil, hashtag), listContext: nil)
                     navigationController.pushViewController(searchController)
                 } else {
-                    let searchController = component.context.sharedContext.makeHashtagSearchController(context: component.context, peer: peer.flatMap(EnginePeer.init), query: hashtag, stories: true, forceDark: true)
+                    let searchController = component.context.sharedContext.makeHashtagSearchController(context: component.context, peer: peer, query: hashtag, stories: true, forceDark: true)
                     navigationController.pushViewController(searchController)
                 }
             }
@@ -3786,9 +3775,9 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
             useGesturePosition = true
             let action = { [weak self, weak view, weak controller] in
                 let _ = ((context.engine.messages.getMessagesLoadIfNecessary([messageId], strategy: .cloud(skipLocal: true))
-                |> mapToSignal { result -> Signal<Message?, GetMessagesError> in
+                |> mapToSignal { result -> Signal<EngineMessage?, GetMessagesError> in
                     if case let .result(messages) = result {
-                        return .single(messages.first)
+                        return .single(messages.first.flatMap(EngineMessage.init))
                     } else {
                         return .complete()
                     }

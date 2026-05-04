@@ -9,7 +9,6 @@ import TelegramStringFormatting
 import ContextUI
 import TelegramCore
 import ChatListUI
-import Postbox
 import StoryContainerScreen
 import AvatarNode
 
@@ -560,10 +559,10 @@ private final class PeerInfoScreenPersonalChannelItemNode: PeerInfoScreenItemNod
         let isLoading = item.data.isLoading
         
         if !isLoading, !item.data.topMessages.isEmpty {
-            index = EngineChatList.Item.Index.chatList(ChatListIndex(pinningIndex: nil, messageIndex: item.data.topMessages[0].index))
+            index = EngineChatList.Item.Index.chatList(EngineChatListIndex(pinningIndex: nil, messageIndex: item.data.topMessages[0].index))
             messages = item.data.topMessages
         } else {
-            index = EngineChatList.Item.Index.chatList(ChatListIndex(pinningIndex: nil, messageIndex: MessageIndex(id: MessageId(peerId: item.data.peer.peerId, namespace: Namespaces.Message.Cloud, id: 1), timestamp: 0)))
+            index = EngineChatList.Item.Index.chatList(EngineChatListIndex(pinningIndex: nil, messageIndex: EngineMessage.Index(id: EngineMessage.Id(peerId: item.data.peer.peerId, namespace: Namespaces.Message.Cloud, id: 1), timestamp: 0)))
             messages = []
         }
         

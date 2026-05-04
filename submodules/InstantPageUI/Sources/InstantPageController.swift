@@ -7,7 +7,7 @@ import TelegramPresentationData
 import TelegramUIPreferences
 import AccountContext
 
-public func instantPageAndAnchor(message: Message) -> (TelegramMediaWebpage, String?)? {
+public func instantPageAndAnchor(message: EngineMessage) -> (TelegramMediaWebpage, String?)? {
     for media in message.media {
         if let webpage = media as? TelegramMediaWebpage, case let .Loaded(content) = webpage.content {
             if let _ = content.instantPage {

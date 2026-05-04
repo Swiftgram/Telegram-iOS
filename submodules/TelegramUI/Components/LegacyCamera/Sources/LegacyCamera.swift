@@ -3,7 +3,6 @@ import UIKit
 import LegacyComponents
 import Display
 import TelegramCore
-import Postbox
 import SSignalKit
 import SwiftSignalKit
 import AccountContext
@@ -11,7 +10,7 @@ import ShareController
 import LegacyUI
 import LegacyMediaPickerUI
 
-public func presentedLegacyCamera(context: AccountContext, peer: Peer?, chatLocation: ChatLocation, cameraView: TGAttachmentCameraView?, menuController: TGMenuSheetController?, parentController: ViewController, attachmentController: ViewController? = nil, editingMedia: Bool, saveCapturedPhotos: Bool, mediaGrouping: Bool, initialCaption: NSAttributedString, hasSchedule: Bool, enablePhoto: Bool, enableVideo: Bool, sendPaidMessageStars: Int64 = 0, sendMessagesWithSignals: @escaping ([Any]?, Bool, Int32, ChatSendMessageActionSheetController.SendParameters?) -> Void, recognizedQRCode: @escaping (String) -> Void = { _ in }, presentSchedulePicker: @escaping (Bool, @escaping (Int32, Bool) -> Void) -> Void, presentTimerPicker: @escaping (@escaping (Int32) -> Void) -> Void, getCaptionPanelView: @escaping () -> TGCaptionPanelView?, dismissedWithResult: @escaping () -> Void = {}, finishedTransitionIn: @escaping () -> Void = {}) {
+public func presentedLegacyCamera(context: AccountContext, peer: EnginePeer?, chatLocation: ChatLocation, cameraView: TGAttachmentCameraView?, menuController: TGMenuSheetController?, parentController: ViewController, attachmentController: ViewController? = nil, editingMedia: Bool, saveCapturedPhotos: Bool, mediaGrouping: Bool, initialCaption: NSAttributedString, hasSchedule: Bool, enablePhoto: Bool, enableVideo: Bool, sendPaidMessageStars: Int64 = 0, sendMessagesWithSignals: @escaping ([Any]?, Bool, Int32, ChatSendMessageActionSheetController.SendParameters?) -> Void, recognizedQRCode: @escaping (String) -> Void = { _ in }, presentSchedulePicker: @escaping (Bool, @escaping (Int32, Bool) -> Void) -> Void, presentTimerPicker: @escaping (@escaping (Int32) -> Void) -> Void, getCaptionPanelView: @escaping () -> TGCaptionPanelView?, dismissedWithResult: @escaping () -> Void = {}, finishedTransitionIn: @escaping () -> Void = {}) {
     let presentationData = context.sharedContext.currentPresentationData.with { $0 }
     let legacyController = LegacyController(presentation: .custom, theme: presentationData.theme)
     legacyController.supportedOrientations = ViewControllerSupportedOrientations(regularSize: .portrait, compactSize: .portrait)
@@ -92,9 +91,9 @@ public func presentedLegacyCamera(context: AccountContext, peer: Peer?, chatLoca
     controller.inhibitDocumentCaptions = false
     
     if let peer {
-        controller.recipientName = EnginePeer(peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
+        controller.recipientName = peer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
         if peer.id != context.account.peerId {
-            if peer is TelegramUser {
+            if case .user = peer {
                 controller.hasTimer = hasSchedule
             }
             controller.hasSilentPosting = true

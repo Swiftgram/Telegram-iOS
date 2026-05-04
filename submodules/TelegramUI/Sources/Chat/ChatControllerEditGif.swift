@@ -17,7 +17,7 @@ extension ChatControllerImpl {
         let hasSchedule = self.presentationInterfaceState.subject != .scheduledMessages && peer.id.namespace != Namespaces.Peer.SecretChat && self.presentationInterfaceState.sendPaidMessageStars == nil
         legacyMediaEditor(
             context: self.context,
-            peer: peer,
+            peer: EnginePeer(peer),
             threadTitle: nil,
             media: file.abstract,
             mode: addCaption ? .caption : .default,

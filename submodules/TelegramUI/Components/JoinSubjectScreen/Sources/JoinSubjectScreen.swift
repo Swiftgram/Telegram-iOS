@@ -12,7 +12,6 @@ import BalancedTextComponent
 import ButtonComponent
 import BundleIconComponent
 import Markdown
-import Postbox
 import TelegramCore
 import AvatarNode
 import TelegramStringFormatting
@@ -894,7 +893,7 @@ private final class JoinSubjectScreenComponent: Component {
                                 |> deliverOnMainQueue).startStandalone(next: { value in
                                     var value: PresentationGroupCallPersistentSettings = value?.get(PresentationGroupCallPersistentSettings.self) ?? PresentationGroupCallPersistentSettings.default
                                     value.isMicrophoneEnabledByDefault = callMicrophoneIsEnabled
-                                    if let entry = CodableEntry(value) {
+                                    if let entry = EngineCodableEntry(value) {
                                         context.engine.calls.setGroupCallPersistentSettings(callId: groupCall.id, value: entry)
                                     }
                                 })

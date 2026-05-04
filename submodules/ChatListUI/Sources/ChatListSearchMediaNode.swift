@@ -130,7 +130,7 @@ private final class VisualMediaItemNode: ASDisplayNode {
                         
                         if let media = media {
                             if let file = media as? TelegramMediaFile {
-                                if isMediaStreamable(message: message, media: file) {
+                                if isMediaStreamable(message: EngineMessage(message), media: file) {
                                     self.interaction.openMessage(message)
                                 } else {
                                     self.progressPressed()
@@ -226,7 +226,7 @@ private final class VisualMediaItemNode: ASDisplayNode {
                     if let strongSelf = self, let _ = strongSelf.item {
                         strongSelf.resourceStatus = status
                         
-                        let isStreamable = isMediaStreamable(message: message, media: file)
+                        let isStreamable = isMediaStreamable(message: EngineMessage(message), media: file)
                         
                         var statusState: RadialStatusNodeState = .none
                         if isStreamable || file.isAnimated {

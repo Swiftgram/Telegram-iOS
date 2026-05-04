@@ -1,6 +1,5 @@
 import Foundation
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import AccountContext
 import MultiplexedVideoNode
@@ -96,7 +95,7 @@ public func paneGifSearchForQuery(context: AccountContext, query: String, offset
                     if let content = externalReference.content {
                         imageResource = content.resource
                         if let resource = content.resource as? WebFileReferenceMediaResource {
-                            uniqueId = Int64(HashFunctions.murMurHash32(resource.url))
+                            uniqueId = Int64(EngineHashFunctions.murMurHash32(resource.url))
                         }
                     }
                     if let thumbnail = externalReference.thumbnail {

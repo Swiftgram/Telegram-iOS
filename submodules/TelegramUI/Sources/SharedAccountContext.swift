@@ -4485,7 +4485,7 @@ private func peerInfoControllerImpl(context: AccountContext, updatedPresentation
     } else if case .user = peer {
         var reactionSourceMessageId: MessageId?
         var sourceMessageId: MessageId?
-        var callMessages: [Message] = []
+        var callMessages: [EngineMessage] = []
         var hintGroupInCommon: PeerId?
         var forumTopicThread: ChatReplyThreadMessage?
         var sharedMediaFromForumTopic: (EnginePeer.Id, Int64)?

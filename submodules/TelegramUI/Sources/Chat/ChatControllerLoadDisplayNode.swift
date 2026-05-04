@@ -1691,7 +1691,7 @@ extension ChatControllerImpl {
                 
                 if canSendMessagesHere {
                     let _ = strongSelf.presentVoiceMessageDiscardAlert(action: {
-                        if let message = strongSelf.chatDisplayNode.historyNode.messageInCurrentHistoryView(messageId) {
+                        if let message = strongSelf.chatDisplayNode.historyNode.messageInCurrentHistoryView(messageId)?._asMessage() {
                             strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: true, { $0.updatedInterfaceState({
                                 $0.withUpdatedReplyMessageSubject(ChatInterfaceState.ReplyMessageSubject(
                                     messageId: message.id,
@@ -1756,7 +1756,7 @@ extension ChatControllerImpl {
                     return
                 }
                 let _ = strongSelf.presentVoiceMessageDiscardAlert(action: {
-                    if let message = strongSelf.chatDisplayNode.historyNode.messageInCurrentHistoryView(messageId) {
+                    if let message = strongSelf.chatDisplayNode.historyNode.messageInCurrentHistoryView(messageId)?._asMessage() {
                         strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: true, { state in
                             var entities: [MessageTextEntity] = []
                             for attribute in message.attributes {
@@ -3485,7 +3485,7 @@ extension ChatControllerImpl {
                 strongSelf.controllerInteraction?.callPeer(peerId, isVideo)
             }
         }, toggleMessageStickerStarred: { [weak self] messageId in
-            if let strongSelf = self, let message = strongSelf.chatDisplayNode.historyNode.messageInCurrentHistoryView(messageId) {
+            if let strongSelf = self, let message = strongSelf.chatDisplayNode.historyNode.messageInCurrentHistoryView(messageId)?._asMessage() {
                 var stickerFile: TelegramMediaFile?
                 for media in message.media {
                     if let file = media as? TelegramMediaFile, file.isSticker {
@@ -3647,7 +3647,7 @@ extension ChatControllerImpl {
                 self.selectPollOptionFeedback?.success()
             }), forKey: id)
         }, requestStopPollInMessage: { [weak self] id in
-            guard let strongSelf = self, let message = strongSelf.chatDisplayNode.historyNode.messageInCurrentHistoryView(id) else {
+            guard let strongSelf = self, let message = strongSelf.chatDisplayNode.historyNode.messageInCurrentHistoryView(id)?._asMessage() else {
                 return
             }
             
@@ -5285,7 +5285,7 @@ extension ChatControllerImpl {
                         }
                     }
                     
-                    if let message = strongSelf.chatDisplayNode.historyNode.messageInCurrentHistoryView(mappedId) {
+                    if let message = strongSelf.chatDisplayNode.historyNode.messageInCurrentHistoryView(mappedId)?._asMessage() {
                         if toSubject.setupReply {
                             Queue.mainQueue().after(0.1) {
                                 strongSelf.interfaceInteraction?.setupReplyMessage(mappedId, toSubject.subject, { _, f in f() })

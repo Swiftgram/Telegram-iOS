@@ -162,14 +162,14 @@ public struct ChatAvailableMessageActionOptions: OptionSet {
 
 public struct ChatAvailableMessageActions {
     public var options: ChatAvailableMessageActionOptions
-    public var banAuthor: Peer?
-    public var banAuthors: [Peer]
+    public var banAuthor: EnginePeer?
+    public var banAuthors: [EnginePeer]
     public var disableDelete: Bool
     public var isCopyProtected: Bool
     public var setTag: Bool
     public var editTags: Set<MessageReaction.Reaction>
-    
-    public init(options: ChatAvailableMessageActionOptions, banAuthor: Peer?, banAuthors: [Peer], disableDelete: Bool, isCopyProtected: Bool, setTag: Bool, editTags: Set<MessageReaction.Reaction>) {
+
+    public init(options: ChatAvailableMessageActionOptions, banAuthor: EnginePeer?, banAuthors: [EnginePeer], disableDelete: Bool, isCopyProtected: Bool, setTag: Bool, editTags: Set<MessageReaction.Reaction>) {
         self.options = options
         self.banAuthor = banAuthor
         self.banAuthors = banAuthors
@@ -735,7 +735,7 @@ public enum PeerInfoControllerMode {
     }
     
     case generic
-    case calls(messages: [Message])
+    case calls(messages: [EngineMessage])
     case nearbyPeer(distance: Int32)
     case group(sourceMessageId: MessageId)
     case reaction(MessageId)

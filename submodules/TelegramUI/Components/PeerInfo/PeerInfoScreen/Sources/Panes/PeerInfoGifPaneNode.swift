@@ -131,7 +131,7 @@ private final class VisualMediaItemNode: ASDisplayNode {
                         
                         if let media = media {
                             if let file = media as? TelegramMediaFile {
-                                if isMediaStreamable(message: item.message, media: file) {
+                                if isMediaStreamable(message: EngineMessage(item.message), media: file) {
                                     self.interaction.openMessage(item.message)
                                 } else {
                                     self.progressPressed()
@@ -235,7 +235,7 @@ private final class VisualMediaItemNode: ASDisplayNode {
                     if let strongSelf = self, let (item, _, _, _) = strongSelf.item {
                         strongSelf.resourceStatus = status
                         
-                        let isStreamable = isMediaStreamable(message: item.message, media: file)
+                        let isStreamable = isMediaStreamable(message: EngineMessage(item.message), media: file)
                         
                         var statusState: RadialStatusNodeState = .none
                         if isStreamable || file.isAnimated {
@@ -751,7 +751,7 @@ final class PeerInfoGifPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScrollViewDe
         self.hiddenMediaDisposable?.dispose()
     }
     
-    func ensureMessageIsVisible(id: MessageId) {
+    func ensureMessageIsVisible(id: EngineMessage.Id) {
         let activeRect = self.scrollNode.bounds
         for item in self.mediaItems {
             if item.message.id == id {
@@ -816,10 +816,10 @@ final class PeerInfoGifPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScrollViewDe
         }
     }
     
-    func findLoadedMessage(id: MessageId) -> Message? {
+    func findLoadedMessage(id: EngineMessage.Id) -> EngineMessage? {
         for item in self.mediaItems {
             if item.message.id == id {
-                return item.message
+                return EngineMessage(item.message)
             }
         }
         return nil
@@ -881,7 +881,7 @@ final class PeerInfoGifPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScrollViewDe
         }
     }
     
-    func transitionNodeForGallery(messageId: MessageId, media: Media) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
+    func transitionNodeForGallery(messageId: EngineMessage.Id, media: EngineMedia) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
         for item in self.mediaItems {
             if item.message.id == messageId {
                 if let itemNode = self.visibleMediaItems[item.message.stableId] {

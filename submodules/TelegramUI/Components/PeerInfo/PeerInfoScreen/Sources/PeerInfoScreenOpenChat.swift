@@ -81,7 +81,7 @@ extension PeerInfoScreenNode {
     }
     
     func openDeleteReaction(messageId: EngineMessage.Id) {
-        guard let authorPeer = self.data?.peer?._asPeer(), let navigationController = self.controller?.navigationController as? NavigationController else {
+        guard let authorPeer = self.data?.peer, let navigationController = self.controller?.navigationController as? NavigationController else {
             return
         }
 

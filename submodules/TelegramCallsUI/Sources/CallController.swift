@@ -33,7 +33,7 @@ protocol CallControllerNodeProtocol: AnyObject {
     
     func updateAudioOutputs(availableOutputs: [AudioSessionOutput], currentOutput: AudioSessionOutput?)
     func updateCallState(_ callState: PresentationCallState)
-    func updatePeer(accountPeer: Peer, peer: Peer, hasOther: Bool)
+    func updatePeer(accountPeer: EnginePeer, peer: EnginePeer, hasOther: Bool)
     
     func animateIn()
     func animateOut(completion: @escaping () -> Void)
@@ -62,8 +62,6 @@ public final class CallController: ViewController {
     
     private var presentationData: PresentationData
     private var didPlayPresentationAnimation = false
-    
-    private var peer: Peer?
     
     private var peerDisposable: Disposable?
     private var disposable: Disposable?
@@ -164,7 +162,6 @@ public final class CallController: ViewController {
     override public func loadDisplayNode() {
         let displayNode = CallControllerNodeV2(
             sharedContext: self.sharedContext,
-            account: self.account,
             presentationData: self.presentationData,
             statusBar: self.statusBar,
             debugInfo: self.call.debugInfo(),
@@ -372,8 +369,7 @@ public final class CallController: ViewController {
             if let strongSelf = self {
                 if let view {
                     if let accountPeer = accountView.peers[accountView.peerId], let peer = view.peers[view.peerId] {
-                        strongSelf.peer = peer
-                        strongSelf.controllerNode.updatePeer(accountPeer: accountPeer, peer: peer, hasOther: activeAccountsWithInfo.accounts.count > 1)
+                        strongSelf.controllerNode.updatePeer(accountPeer: EnginePeer(accountPeer), peer: EnginePeer(peer), hasOther: activeAccountsWithInfo.accounts.count > 1)
                         strongSelf.isDataReady.set(.single(true))
                     }
                 } else {

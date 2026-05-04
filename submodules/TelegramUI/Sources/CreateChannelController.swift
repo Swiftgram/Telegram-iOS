@@ -3,7 +3,6 @@ import UIKit
 import Display
 import SSignalKit
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramPresentationData
 import LegacyComponents
@@ -72,7 +71,7 @@ private enum CreateChannelEntryTag: ItemListItemTag {
 }
 
 private enum CreateChannelEntry: ItemListNodeEntry {
-    case channelInfo(PresentationTheme, PresentationStrings, PresentationDateTimeFormat, Peer?, ItemListAvatarAndNameInfoItemState, ItemListAvatarAndNameInfoItemUpdatingAvatar?)
+    case channelInfo(PresentationTheme, PresentationStrings, PresentationDateTimeFormat, EnginePeer?, ItemListAvatarAndNameInfoItemState, ItemListAvatarAndNameInfoItemUpdatingAvatar?)
     case setProfilePhoto(PresentationTheme, String)
         
     case descriptionSetup(PresentationTheme, String, String)
@@ -128,11 +127,7 @@ private enum CreateChannelEntry: ItemListNodeEntry {
                     if lhsDateTimeFormat != rhsDateTimeFormat {
                         return false
                     }
-                    if let lhsPeer = lhsPeer, let rhsPeer = rhsPeer {
-                        if !lhsPeer.isEqual(rhsPeer) {
-                            return false
-                        }
-                    } else if (lhsPeer != nil) != (rhsPeer != nil) {
+                    if lhsPeer != rhsPeer {
                         return false
                     }
                     if lhsEditingState != rhsEditingState {
@@ -198,7 +193,7 @@ private enum CreateChannelEntry: ItemListNodeEntry {
         let arguments = arguments as! CreateChannelArguments
         switch self {
             case let .channelInfo(_, _, dateTimeFormat, peer, state, avatar):
-                return ItemListAvatarAndNameInfoItem(itemContext: .accountContext(arguments.context), presentationData: presentationData, systemStyle: .glass, dateTimeFormat: dateTimeFormat, mode: .editSettings, peer: peer.flatMap(EnginePeer.init), presence: nil, memberCount: nil, state: state, sectionId: ItemListSectionId(self.section), style: .blocks(withTopInset: false, withExtendedBottomInset: false), editingNameUpdated: { editingName in
+                return ItemListAvatarAndNameInfoItem(itemContext: .accountContext(arguments.context), presentationData: presentationData, systemStyle: .glass, dateTimeFormat: dateTimeFormat, mode: .editSettings, peer: peer, presence: nil, memberCount: nil, state: state, sectionId: ItemListSectionId(self.section), style: .blocks(withTopInset: false, withExtendedBottomInset: false), editingNameUpdated: { editingName in
                     arguments.updateEditingName(editingName)
                 }, editingNameCompleted: {
                     arguments.focusOnDescription()
@@ -286,9 +281,9 @@ private func CreateChannelEntries(presentationData: PresentationData, state: Cre
     
     let groupInfoState = ItemListAvatarAndNameInfoItemState(editingName: state.editingName, updatingName: nil)
     
-    let peer = TelegramGroup(id: PeerId(namespace: .max, id: PeerId.Id._internalFromInt64Value(0)), title: state.editingName.composedTitle, photo: [], participantCount: 0, role: .creator(rank: nil), membership: .Member, flags: [], defaultBannedRights: nil, migrationReference: nil, creationDate: 0, version: 0)
-    
-    entries.append(.channelInfo(presentationData.theme, presentationData.strings, presentationData.dateTimeFormat, peer, groupInfoState, state.avatar))
+    let peer = TelegramGroup(id: EnginePeer.Id(namespace: .max, id: EnginePeer.Id.Id._internalFromInt64Value(0)), title: state.editingName.composedTitle, photo: [], participantCount: 0, role: .creator(rank: nil), membership: .Member, flags: [], defaultBannedRights: nil, migrationReference: nil, creationDate: 0, version: 0)
+
+    entries.append(.channelInfo(presentationData.theme, presentationData.strings, presentationData.dateTimeFormat, EnginePeer(peer), groupInfoState, state.avatar))
     
     entries.append(.descriptionSetup(presentationData.theme, presentationData.strings.Channel_Edit_AboutItem, state.editingDescriptionText))
     entries.append(.descriptionInfo(presentationData.theme, presentationData.strings.Channel_About_Help))
@@ -350,7 +345,7 @@ public enum CreateChannelMode {
     case requestPeer(ReplyMarkupButtonRequestPeerType.Channel)
 }
 
-public func createChannelController(context: AccountContext, mode: CreateChannelMode = .generic, willComplete: @escaping (String, @escaping () -> Void) -> Void = { _, complete in complete() }, completion: ((PeerId, @escaping () -> Void) -> Void)? = nil) -> ViewController {
+public func createChannelController(context: AccountContext, mode: CreateChannelMode = .generic, willComplete: @escaping (String, @escaping () -> Void) -> Void = { _, complete in complete() }, completion: ((EnginePeer.Id, @escaping () -> Void) -> Void)? = nil) -> ViewController {
     let initialState = CreateChannelState(creating: false, editingName: ItemListAvatarAndNameInfoItemName.title(title: "", type: .channel), editingDescriptionText: "", avatar: nil)
     let statePromise = ValuePromise(initialState, ignoreRepeated: true)
     let stateValue = Atomic(value: initialState)
@@ -431,7 +426,7 @@ public func createChannelController(context: AccountContext, mode: CreateChannel
                 
                 endEditingImpl?()
                 
-                var createSignal: Signal<PeerId, CreateChannelError> = context.engine.peers.createChannel(title: title, description: description.isEmpty ? nil : description)
+                var createSignal: Signal<EnginePeer.Id, CreateChannelError> = context.engine.peers.createChannel(title: title, description: description.isEmpty ? nil : description)
                 if case .requestPeer = mode {
                     if let publicLink, !publicLink.isEmpty {
                         createSignal = createSignal
@@ -633,7 +628,7 @@ public func createChannelController(context: AccountContext, mode: CreateChannel
                 return updated
             }
             
-            checkAddressNameDisposable.set((context.engine.peers.validateAddressNameInteractive(domain: .peer(PeerId(namespace: Namespaces.Peer.CloudGroup, id: PeerId.Id._internalFromInt64Value(0))), name: text)
+            checkAddressNameDisposable.set((context.engine.peers.validateAddressNameInteractive(domain: .peer(EnginePeer.Id(namespace: Namespaces.Peer.CloudGroup, id: EnginePeer.Id.Id._internalFromInt64Value(0))), name: text)
             |> deliverOnMainQueue).start(next: { result in
                 updateState { state in
                     var updated = state

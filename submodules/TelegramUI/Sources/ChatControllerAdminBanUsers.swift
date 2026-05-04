@@ -1,7 +1,6 @@
 import Foundation
 import TelegramPresentationData
 import AccountContext
-import Postbox
 import TelegramCore
 import SwiftSignalKit
 import Display
@@ -21,7 +20,7 @@ fileprivate struct InitialBannedRights {
 }
 
 extension ChatControllerImpl {
-    fileprivate func applyAdminUserActionsResult(messageIds: Set<MessageId>, reactionPeerId: EnginePeer.Id? = nil, result: AdminUserActionsSheet.ChatResult, initialUserBannedRights: [EnginePeer.Id: InitialBannedRights]) {
+    fileprivate func applyAdminUserActionsResult(messageIds: Set<EngineMessage.Id>, reactionPeerId: EnginePeer.Id? = nil, result: AdminUserActionsSheet.ChatResult, initialUserBannedRights: [EnginePeer.Id: InitialBannedRights]) {
         guard let messagesPeerId = self.chatLocation.peerId else {
             return
         }
@@ -148,7 +147,7 @@ extension ChatControllerImpl {
         self.updateChatPresentationInterfaceState(animated: true, interactive: true, { $0.updatedInterfaceState { $0.withoutSelectionState() } })
     }
     
-    func presentMultiBanMessageOptions(accountPeerId: PeerId, authors: [Peer], messageIds: Set<MessageId>, options: ChatAvailableMessageActionOptions) {
+    func presentMultiBanMessageOptions(accountPeerId: EnginePeer.Id, authors: [EnginePeer], messageIds: Set<EngineMessage.Id>, options: ChatAvailableMessageActionOptions) {
         guard let peerId = self.chatLocation.peerId else {
             return
         }
@@ -163,7 +162,7 @@ extension ChatControllerImpl {
         
         var signal = combineLatest(authors.map { author in
             self.context.engine.peers.fetchChannelParticipant(peerId: peerId, participantId: author.id)
-            |> map { result -> (Peer, ChannelParticipant?) in
+            |> map { result -> (EnginePeer, ChannelParticipant?) in
                 return (author, result)
             }
         })
@@ -227,10 +226,9 @@ extension ChatControllerImpl {
                         ), rank: nil, subscriptionUntilDate: nil)
                     }
                     
-                    let peer = author
                     renderedParticipants.append(RenderedChannelParticipant(
                         participant: participant,
-                        peer: EnginePeer(peer)
+                        peer: author
                     ))
                     switch participant {
                     case .creator:
@@ -262,7 +260,7 @@ extension ChatControllerImpl {
         }))
     }
     
-    public func presentReactionDeletionOptions(author: Peer, messageId: MessageId) {
+    public func presentReactionDeletionOptions(author: EnginePeer, messageId: EngineMessage.Id) {
         guard self.chatLocation.peerId?.namespace == Namespaces.Peer.CloudChannel, author.id != self.context.account.peerId  else {
             return
         }
@@ -286,7 +284,7 @@ extension ChatControllerImpl {
         })
     }
 
-    func presentBanMessageOptions(accountPeerId: PeerId, author: Peer, messageIds: Set<MessageId>, options: ChatAvailableMessageActionOptions, reaction: Bool = false) {
+    func presentBanMessageOptions(accountPeerId: EnginePeer.Id, author: EnginePeer, messageIds: Set<EngineMessage.Id>, options: ChatAvailableMessageActionOptions, reaction: Bool = false) {
         guard let peerId = self.chatLocation.peerId else {
             return
         }
@@ -408,7 +406,7 @@ extension ChatControllerImpl {
         }))
     }
         
-    func beginDeleteMessagesWithUndo(messageIds: Set<MessageId>, type: InteractiveMessagesDeletionType) {
+    func beginDeleteMessagesWithUndo(messageIds: Set<EngineMessage.Id>, type: InteractiveMessagesDeletionType) {
         var deleteImmediately = false
         if case .forEveryone = type {
             deleteImmediately = true
@@ -441,7 +439,7 @@ extension ChatControllerImpl {
         }), in: .current)
     }
     
-    func presentDeleteMessageOptions(messageIds: Set<MessageId>, options: ChatAvailableMessageActionOptions, contextController: ContextControllerProtocol?, completion: @escaping (ContextMenuActionResult) -> Void) {
+    func presentDeleteMessageOptions(messageIds: Set<EngineMessage.Id>, options: ChatAvailableMessageActionOptions, contextController: ContextControllerProtocol?, completion: @escaping (ContextMenuActionResult) -> Void) {
         let _ = (self.context.engine.data.get(
             EngineDataMap(messageIds.map(TelegramEngine.EngineData.Item.Messages.Message.init(id:)))
         )
@@ -597,7 +595,7 @@ extension ChatControllerImpl {
                     if let strongSelf = self {
                         var giveaway: TelegramMediaGiveaway?
                         for messageId in messageIds {
-                            if let message = strongSelf.chatDisplayNode.historyNode.messageInCurrentHistoryView(messageId) {
+                            if let message = strongSelf.chatDisplayNode.historyNode.messageInCurrentHistoryView(messageId)?._asMessage() {
                                 if let media = message.media.first(where: { $0 is TelegramMediaGiveaway }) as? TelegramMediaGiveaway {
                                     giveaway = media
                                     break

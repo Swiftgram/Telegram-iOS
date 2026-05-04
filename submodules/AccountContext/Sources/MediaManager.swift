@@ -254,7 +254,7 @@ public enum GalleryHiddenMediaId: Hashable {
 }
 
 public protocol GalleryHiddenMediaTarget: AnyObject {
-    func getTransitionInfo(messageId: MessageId, media: Media) -> ((UIView) -> Void, ASDisplayNode, () -> (UIView?, UIView?))?
+    func getTransitionInfo(messageId: EngineMessage.Id, media: EngineMedia) -> ((UIView) -> Void, ASDisplayNode, () -> (UIView?, UIView?))?
 }
 
 public protocol GalleryHiddenMediaManager: AnyObject {
@@ -263,7 +263,7 @@ public protocol GalleryHiddenMediaManager: AnyObject {
     func removeSource(_ index: Int)
     func addTarget(_ target: GalleryHiddenMediaTarget)
     func removeTarget(_ target: GalleryHiddenMediaTarget)
-    func findTarget(messageId: MessageId, media: Media) -> ((UIView) -> Void, ASDisplayNode, () -> (UIView?, UIView?))?
+    func findTarget(messageId: EngineMessage.Id, media: EngineMedia) -> ((UIView) -> Void, ASDisplayNode, () -> (UIView?, UIView?))?
 }
 
 public protocol UniversalVideoManager: AnyObject {

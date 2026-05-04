@@ -1513,6 +1513,10 @@ public extension TelegramEngine {
         public func tokenizeSearchString(string: String, transliteration: EngineStringIndexTokenTransliteration) -> [EngineDataBuffer] {
             return stringIndexTokens(string, transliteration: transliteration)
         }
+
+        public func matchSearchTokens(_ tokens: [EngineDataBuffer], with other: [EngineDataBuffer]) -> Bool {
+            return matchStringIndexTokens(tokens, with: other)
+        }
         
         public func updatePeerStoriesHidden(id: PeerId, isHidden: Bool) {
             let _ = _internal_updatePeerStoriesHidden(account: self.account, id: id, isHidden: isHidden).start()

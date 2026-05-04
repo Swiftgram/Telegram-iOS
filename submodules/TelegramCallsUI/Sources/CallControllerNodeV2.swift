@@ -3,7 +3,6 @@ import UIKit
 import AsyncDisplayKit
 import Display
 import TelegramCore
-import Postbox
 import TelegramAudio
 import AccountContext
 import TelegramPresentationData
@@ -30,7 +29,6 @@ final class CallControllerNodeV2: ViewControllerTracingNode, CallControllerNodeP
     }
     
     private let sharedContext: SharedAccountContext
-    private let account: Account
     private let presentationData: PresentationData
     private let statusBar: StatusBar
     private let call: PresentationCall
@@ -88,7 +86,6 @@ final class CallControllerNodeV2: ViewControllerTracingNode, CallControllerNodeP
     
     init(
         sharedContext: SharedAccountContext,
-        account: Account,
         presentationData: PresentationData,
         statusBar: StatusBar,
         debugInfo: Signal<(String, String), NoError>,
@@ -96,7 +93,6 @@ final class CallControllerNodeV2: ViewControllerTracingNode, CallControllerNodeP
         call: PresentationCall
     ) {
         self.sharedContext = sharedContext
-        self.account = account
         self.presentationData = presentationData
         self.statusBar = statusBar
         self.call = call
@@ -611,8 +607,8 @@ final class CallControllerNodeV2: ViewControllerTracingNode, CallControllerNodeP
         }
     }
     
-    func updatePeer(accountPeer: Peer, peer: Peer, hasOther: Bool) {
-        self.updatePeer(peer: EnginePeer(peer))
+    func updatePeer(accountPeer: EnginePeer, peer: EnginePeer, hasOther: Bool) {
+        self.updatePeer(peer: peer)
     }
     
     private func updatePeer(peer: EnginePeer) {

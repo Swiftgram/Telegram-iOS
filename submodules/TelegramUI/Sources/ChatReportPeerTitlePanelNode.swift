@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import Display
 import AsyncDisplayKit
-import Postbox
 import SwiftSignalKit
 import TelegramCore
 import TelegramPresentationData
@@ -184,24 +183,24 @@ private final class ChatInfoTitlePanelInviteInfoNode: ASDisplayNode {
         return result
     }
     
-    func update(width: CGFloat, theme: PresentationTheme, strings: PresentationStrings, wallpaper: TelegramWallpaper, chatPeer: Peer, invitedBy: Peer, transition: ContainedViewLayoutTransition) -> CGFloat {
+    func update(width: CGFloat, theme: PresentationTheme, strings: PresentationStrings, wallpaper: TelegramWallpaper, chatPeer: EnginePeer, invitedBy: EnginePeer, transition: ContainedViewLayoutTransition) -> CGFloat {
         let primaryTextColor = serviceMessageColorComponents(theme: theme, wallpaper: wallpaper).primaryText
-        
+
         if self.theme !== theme {
             self.theme = theme
-            
+
             self.labelNode.linkHighlightColor = primaryTextColor.withAlphaComponent(0.3)
         }
-        
+
         let topInset: CGFloat = 6.0
         let bottomInset: CGFloat = 6.0
         let sideInset: CGFloat = 16.0
-        
+
         let stringAndRanges: PresentationStrings.FormattedString
-        if let channel = chatPeer as? TelegramChannel, case .broadcast = channel.info {
-            stringAndRanges = strings.Conversation_NoticeInvitedByInChannel(EnginePeer(invitedBy).compactDisplayTitle)
+        if case let .channel(channel) = chatPeer, case .broadcast = channel.info {
+            stringAndRanges = strings.Conversation_NoticeInvitedByInChannel(invitedBy.compactDisplayTitle)
         } else {
-            stringAndRanges = strings.Conversation_NoticeInvitedByInGroup(EnginePeer(invitedBy).compactDisplayTitle)
+            stringAndRanges = strings.Conversation_NoticeInvitedByInGroup(invitedBy.compactDisplayTitle)
         }
         
         let attributedString = NSMutableAttributedString(string: stringAndRanges.string, font: Font.regular(13.0), textColor: primaryTextColor)
@@ -283,7 +282,7 @@ private final class ChatInfoTitlePanelPeerNearbyInfoNode: ASDisplayNode {
         self.openPeersNearby()
     }
     
-    func update(width: CGFloat, theme: PresentationTheme, strings: PresentationStrings, wallpaper: TelegramWallpaper, chatPeer: Peer, distance: Int32, transition: ContainedViewLayoutTransition) -> CGFloat {
+    func update(width: CGFloat, theme: PresentationTheme, strings: PresentationStrings, wallpaper: TelegramWallpaper, chatPeer: EnginePeer, distance: Int32, transition: ContainedViewLayoutTransition) -> CGFloat {
         let primaryTextColor = serviceMessageColorComponents(theme: theme, wallpaper: wallpaper).primaryText
         
         if self.theme !== theme {
@@ -296,7 +295,7 @@ private final class ChatInfoTitlePanelPeerNearbyInfoNode: ASDisplayNode {
         let bottomInset: CGFloat = 6.0
         let sideInset: CGFloat = 16.0
         
-        let stringAndRanges = strings.Conversation_PeerNearbyDistance(EnginePeer(chatPeer).compactDisplayTitle, shortStringForDistance(strings: strings, distance: distance))
+        let stringAndRanges = strings.Conversation_PeerNearbyDistance(chatPeer.compactDisplayTitle, shortStringForDistance(strings: strings, distance: distance))
         
         let attributedString = NSMutableAttributedString(string: stringAndRanges.string, font: Font.regular(13.0), textColor: primaryTextColor)
         
@@ -738,12 +737,13 @@ final class ChatReportPeerTitlePanelNode: ChatTitleAccessoryPanelNode {
             panelInset += 40.0
         }
         
-        var chatPeer: Peer?
+        var chatPeer: EnginePeer?
         if let renderedPeer = interfaceState.renderedPeer {
-            chatPeer = renderedPeer.peers[renderedPeer.peerId]
+            chatPeer = renderedPeer.peers[renderedPeer.peerId].flatMap(EnginePeer.init)
         }
         var hitTestSlop: CGFloat = 0.0
-        if let chatPeer = chatPeer, (updatedButtons.contains(.block) || updatedButtons.contains(.reportSpam) || updatedButtons.contains(.reportUserSpam)), let invitedBy = interfaceState.contactStatus?.invitedBy {
+        if let chatPeer = chatPeer, (updatedButtons.contains(.block) || updatedButtons.contains(.reportSpam) || updatedButtons.contains(.reportUserSpam)), let invitedByPeer = interfaceState.contactStatus?.invitedBy {
+            let invitedBy = EnginePeer(invitedByPeer)
             var inviteInfoTransition = transition
             let inviteInfoNode: ChatInfoTitlePanelInviteInfoNode
             if let current = self.inviteInfoNode {

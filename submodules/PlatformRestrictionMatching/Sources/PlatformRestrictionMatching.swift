@@ -1,5 +1,6 @@
 import Foundation
 import TelegramCore
+import Postbox
 
 public extension Message {
     func isRestricted(platform: String, contentSettings: ContentSettings) -> Bool {

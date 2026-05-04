@@ -1524,7 +1524,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         var activeTodo: TelegramMediaTodo?
         for media in message.media {
             if let poll = media as? TelegramMediaPoll, !poll.isClosed, message.id.namespace == Namespaces.Message.Cloud, poll.pollId.namespace == Namespaces.Media.CloudPoll {
-                if !isPollEffectivelyClosed(message: message, poll: poll) {
+                if !isPollEffectivelyClosed(message: EngineMessage(message), poll: poll) {
                     activePoll = poll
                 }
             } else if let todo = media as? TelegramMediaTodo {
@@ -2180,7 +2180,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                                     guard let chatController = interfaceInteraction.chatController() as? ChatController else {
                                         return
                                     }
-                                    chatController.presentReactionDeletionOptions(author: peer._asPeer(), messageId: message.id)
+                                    chatController.presentReactionDeletionOptions(author: peer, messageId: message.id)
                                 })
                             }
                         } else {
@@ -2710,7 +2710,7 @@ func chatAvailableMessageActionsImpl(engine: TelegramEngine, accountPeerId: Peer
                 commonTags = nil
             }
             
-            return ChatAvailableMessageActions(options: reducedOptions, banAuthor: banPeer, banAuthors: banPeers, disableDelete: disableDelete, isCopyProtected: isCopyProtected, setTag: setTag, editTags: commonTags ?? Set())
+            return ChatAvailableMessageActions(options: reducedOptions, banAuthor: banPeer.flatMap(EnginePeer.init), banAuthors: banPeers.map(EnginePeer.init), disableDelete: disableDelete, isCopyProtected: isCopyProtected, setTag: setTag, editTags: commonTags ?? Set())
         } else {
             return ChatAvailableMessageActions(options: [], banAuthor: nil, banAuthors: [], disableDelete: false, isCopyProtected: isCopyProtected, setTag: false, editTags: Set())
         }

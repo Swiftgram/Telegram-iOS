@@ -3,7 +3,6 @@ import UIKit
 import LegacyComponents
 import Display
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramPresentationData
 import DeviceAccess
@@ -159,7 +158,7 @@ public func legacyStoryMediaEditor(context: AccountContext, item: TGMediaEditabl
 
 public func legacyMediaEditor(
     context: AccountContext,
-    peer: Peer,
+    peer: EnginePeer,
     threadTitle: String?,
     media: AnyMediaReference,
     mode: LegacyMediaEditorMode,
@@ -201,7 +200,7 @@ public func legacyMediaEditor(
             if peer.id == context.account.peerId {
                 recipientName = presentationData.strings.DialogList_SavedMessages
             } else {
-                recipientName = EnginePeer(peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
+                recipientName = peer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
             }
         }
         
@@ -299,7 +298,7 @@ public func legacyMediaEditor(
     
 public func legacyAttachmentMenu(
     context: AccountContext,
-    peer: Peer?,
+    peer: EnginePeer?,
     threadTitle: String?,
     chatLocation: ChatLocation,
     editMediaOptions: LegacyAttachmentMenuMediaEditing?,
@@ -310,7 +309,7 @@ public func legacyAttachmentMenu(
     canSendPolls: Bool,
     updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>),
     parentController: LegacyController,
-    recentlyUsedInlineBots: [Peer],
+    recentlyUsedInlineBots: [EnginePeer],
     initialCaption: NSAttributedString,
     openGallery: @escaping () -> Void,
     openCamera: @escaping (TGAttachmentCameraView?, TGMenuSheetController?) -> Void,
@@ -325,7 +324,7 @@ public func legacyAttachmentMenu(
     presentSchedulePicker: @escaping (Bool, @escaping (Int32, Bool) -> Void) -> Void,
     presentTimerPicker: @escaping (@escaping (Int32) -> Void) -> Void,
     sendMessagesWithSignals: @escaping ([Any]?, Bool, Int32, ((String) -> UIView?)?, @escaping () -> Void) -> Void,
-    selectRecentlyUsedInlineBot: @escaping (Peer) -> Void,
+    selectRecentlyUsedInlineBot: @escaping (EnginePeer) -> Void,
     getCaptionPanelView: @escaping () -> TGCaptionPanelView?,
     present: @escaping (ViewController, Any?) -> Void
 ) -> TGMenuSheetController {
@@ -340,7 +339,7 @@ public func legacyAttachmentMenu(
         if peer.id == context.account.peerId {
             recipientName = presentationData.strings.DialogList_SavedMessages
         } else {
-            recipientName = EnginePeer(peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
+            recipientName = peer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
         }
     } else {
         recipientName = ""
@@ -384,7 +383,7 @@ public func legacyAttachmentMenu(
     
     var selectionLimit: Int32 = 100
     var slowModeEnabled = false
-    if let channel = peer as? TelegramChannel, channel.isRestrictedBySlowmode {
+    if case let .channel(channel) = peer, channel.isRestrictedBySlowmode {
         slowModeEnabled = true
         selectionLimit = 10
     }
@@ -423,7 +422,7 @@ public func legacyAttachmentMenu(
             presentSelectionLimitExceeded()
         }
         if let peer, peer.id != context.account.peerId {
-            if peer is TelegramUser {
+            if case .user = peer {
                 carouselItem.hasTimer = hasSchedule
             }
             carouselItem.hasSilentPosting = true
@@ -573,7 +572,7 @@ public func legacyAttachmentMenu(
                 
                 let recipientName: String
                 if let peer {
-                    recipientName = EnginePeer(peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
+                    recipientName = peer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
                 } else {
                     recipientName = ""
                 }
@@ -615,13 +614,16 @@ public func legacyAttachmentMenu(
         
         var peerSupportsPolls = false
         if let peer {
-            if peer is TelegramGroup || peer is TelegramChannel {
+            switch peer {
+            case .legacyGroup, .channel:
                 peerSupportsPolls = true
-            } else if let user = peer as? TelegramUser, let _ = user.botInfo {
+            case let .user(user) where user.botInfo != nil:
                 peerSupportsPolls = true
+            default:
+                break
             }
         }
-        if let peer, peerSupportsPolls, canSendMessagesToPeer(EnginePeer(peer)) && canSendPolls {
+        if let peer, peerSupportsPolls, canSendMessagesToPeer(peer) && canSendPolls {
             let pollItem = TGMenuSheetButtonItemView(title: presentationData.strings.AttachmentMenu_Poll, type: TGMenuSheetButtonTypeDefault, fontSize: fontSize, action: { [weak controller] in
                 controller?.dismiss(animated: true)
                 openPoll()

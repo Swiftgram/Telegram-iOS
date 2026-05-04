@@ -61,9 +61,7 @@ func saveMediaToFiles(context: AccountContext, fileReference: FileMediaReference
         case let .data(data):
             if data.isComplete {
                 var symlinkPath = data.path + ".mp3"
-                if fileSize(symlinkPath) != nil {
-                    try? FileManager.default.removeItem(atPath: symlinkPath)
-                }
+                try? FileManager.default.removeItem(atPath: symlinkPath)
                 let _ = try? FileManager.default.linkItem(atPath: data.path, toPath: symlinkPath)
                 
                 let audioUrl = URL(fileURLWithPath: symlinkPath)

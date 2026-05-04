@@ -479,7 +479,7 @@ func openChatMessageImpl(_ params: OpenChatMessageParams) -> Bool {
 }
 
 public func makeInstantPageControllerImpl(context: AccountContext, message: Message, sourcePeerType: MediaAutoDownloadPeerType?) -> ViewController? {
-    guard let (webpage, anchor) = instantPageAndAnchor(message: message) else {
+    guard let (webpage, anchor) = instantPageAndAnchor(message: EngineMessage(message)) else {
         return nil
     }
     let sourceLocation = InstantPageSourceLocation(userLocation: .peer(message.id.peerId), peerType: sourcePeerType ?? .channel)

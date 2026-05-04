@@ -151,7 +151,7 @@ final class CommandMenuChatInputContextPanelNode: ChatInputContextPanelNode {
         let transition = preparedTransition(from: from ?? [], to: to, context: self.context, fontSize: self.fontSize, commandSelected: { [weak self] command, sendImmediately in
             if let strongSelf = self, let interfaceInteraction = strongSelf.interfaceInteraction {
                 if sendImmediately {
-                    interfaceInteraction.sendBotCommand(command.peer, "/" + command.command.text)
+                    interfaceInteraction.sendBotCommand(command.peer._asPeer(), "/" + command.command.text)
                 } else {
                     interfaceInteraction.updateShowCommands { _ in return false }
                     interfaceInteraction.updateTextInputStateAndMode { textInputState, inputMode in

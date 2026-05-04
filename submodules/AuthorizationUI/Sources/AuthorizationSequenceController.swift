@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import AsyncDisplayKit
 import Display
-import Postbox
 import TelegramCore
 import SwiftSignalKit
 import MtProtoKit
@@ -209,7 +208,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                 |> deliverOnMainQueue).startStandalone(next: { [weak self] authorizationPushConfiguration in
                     if let strongSelf = self {
                         strongSelf.actionDisposable.set((sendAuthorizationCode(accountManager: strongSelf.sharedContext.accountManager, account: strongSelf.account, phoneNumber: number, apiId: strongSelf.apiId, apiHash: strongSelf.apiHash, pushNotificationConfiguration: authorizationPushConfiguration, firebaseSecretStream: strongSelf.sharedContext.firebaseSecretStream, syncContacts: syncContacts, disableAuthTokens: disableAuthTokens, forcedPasswordSetupNotice: { value in
-                            guard let entry = CodableEntry(ApplicationSpecificCounterNotice(value: value)) else {
+                            guard let entry = EngineCodableEntry(ApplicationSpecificCounterNotice(value: value)) else {
                                 return nil
                             }
                             return (ApplicationSpecificNotice.forcedPasswordSetupKey(), entry)
@@ -327,7 +326,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                     passkey: passkey,
                     foreignDatacenter: nil,
                     forcedPasswordSetupNotice: { value in
-                        guard let entry = CodableEntry(ApplicationSpecificCounterNotice(value: value)) else {
+                        guard let entry = EngineCodableEntry(ApplicationSpecificCounterNotice(value: value)) else {
                             return nil
                         }
                         return (ApplicationSpecificNotice.forcedPasswordSetupKey(), entry)
@@ -518,7 +517,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                         }))
                     } else {
                         strongSelf.actionDisposable.set((authorizeWithCode(accountManager: strongSelf.sharedContext.accountManager, account: strongSelf.account, code: authorizationCode, termsOfService: termsOfService?.0, forcedPasswordSetupNotice: { value in
-                            guard let entry = CodableEntry(ApplicationSpecificCounterNotice(value: value)) else {
+                            guard let entry = EngineCodableEntry(ApplicationSpecificCounterNotice(value: value)) else {
                                 return nil
                             }
                             return (ApplicationSpecificNotice.forcedPasswordSetupKey(), entry)
@@ -857,7 +856,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
             } else {
                 self.actionDisposable.set(
                     authorizeWithCode(accountManager: self.sharedContext.accountManager, account: self.account, code: .emailVerification(.appleToken(token)), termsOfService: nil, forcedPasswordSetupNotice: { value in
-                        guard let entry = CodableEntry(ApplicationSpecificCounterNotice(value: value)) else {
+                        guard let entry = EngineCodableEntry(ApplicationSpecificCounterNotice(value: value)) else {
                             return nil
                         }
                         return (ApplicationSpecificNotice.forcedPasswordSetupKey(), entry)
@@ -1177,7 +1176,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                                     if stat(result.fileURL.path, &value) == 0 {
                                         if let data = try? Data(contentsOf: result.fileURL) {
                                             let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
-                                            engine.account.postbox.mediaBox.storeResourceData(resource.id, data: data, synchronous: true)
+                                            engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data, synchronous: true)
                                             subscriber.putNext(EngineMediaResource(resource))
                                             
                                             EngineTempBox.shared.dispose(tempFile)
@@ -1208,7 +1207,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                     }
                     
                     strongSelf.actionDisposable.set((signUpWithName(accountManager: strongSelf.sharedContext.accountManager, account: strongSelf.account, firstName: firstName, lastName: lastName, avatarData: avatarData, avatarVideo: avatarVideo, videoStartTimestamp: videoStartTimestamp, disableJoinNotifications: !announceSignUp, forcedPasswordSetupNotice: { value in
-                        guard let entry = CodableEntry(ApplicationSpecificCounterNotice(value: value)) else {
+                        guard let entry = EngineCodableEntry(ApplicationSpecificCounterNotice(value: value)) else {
                             return nil
                         }
                         return (ApplicationSpecificNotice.forcedPasswordSetupKey(), entry)

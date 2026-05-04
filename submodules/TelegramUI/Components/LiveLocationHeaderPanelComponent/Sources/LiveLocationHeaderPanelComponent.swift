@@ -141,7 +141,7 @@ public final class LiveLocationHeaderPanelComponent: Component {
                                             }
                                             
                                             if let beginTimeAndTimeout {
-                                                items.append(LocationBroadcastActionSheetItem(context: component.context, peer: peer, title: EnginePeer(peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder), beginTimestamp: beginTimeAndTimeout.0, timeout: beginTimeAndTimeout.1, strings: presentationData.strings, action: { [weak self] in
+                                                items.append(LocationBroadcastActionSheetItem(context: component.context, peer: EnginePeer(peer), title: EnginePeer(peer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder), beginTimestamp: beginTimeAndTimeout.0, timeout: beginTimeAndTimeout.1, strings: presentationData.strings, action: { [weak self] in
                                                     dismissAction()
                                                     
                                                     guard let self, let component = self.component, let controller = component.controller() else {

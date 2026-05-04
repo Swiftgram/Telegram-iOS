@@ -3,7 +3,6 @@ import UIKit
 import Display
 import AccountContext
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import LegacyMediaPickerUI
 import ChatHistorySearchContainerNode
@@ -11,27 +10,27 @@ import MediaResources
 import TelegramUIPreferences
 
 extension PeerInfoScreenNode {
-    func openMessage(id: MessageId) -> Bool {
+    func openMessage(id: EngineMessage.Id) -> Bool {
         guard let controller = self.controller, let navigationController = controller.navigationController as? NavigationController else {
             return false
         }
-        var foundGalleryMessage: Message?
+        var foundGalleryMessage: EngineMessage?
         if let searchContentNode = self.searchDisplayController?.contentNode as? ChatHistorySearchContainerNode {
             if let galleryMessage = searchContentNode.messageForGallery(id) {
-                self.context.engine.messages.ensureMessagesAreLocallyAvailable(messages: [EngineMessage(galleryMessage)])
+                self.context.engine.messages.ensureMessagesAreLocallyAvailable(messages: [galleryMessage])
                 foundGalleryMessage = galleryMessage
             }
         }
         if foundGalleryMessage == nil, let galleryMessage = self.paneContainerNode.findLoadedMessage(id: id) {
             foundGalleryMessage = galleryMessage
         }
-        
+
         guard let galleryMessage = foundGalleryMessage else {
             return false
         }
         self.view.endEditing(true)
-        
-        return self.context.sharedContext.openChatMessage(OpenChatMessageParams(context: self.context, chatLocation: self.chatLocation, chatFilterTag: nil, chatLocationContextHolder: self.chatLocationContextHolder, message: galleryMessage, standalone: false, reverseMessageGalleryOrder: true, navigationController: navigationController, dismissInput: { [weak self] in
+
+        return self.context.sharedContext.openChatMessage(OpenChatMessageParams(context: self.context, chatLocation: self.chatLocation, chatFilterTag: nil, chatLocationContextHolder: self.chatLocationContextHolder, message: galleryMessage._asMessage(), standalone: false, reverseMessageGalleryOrder: true, navigationController: navigationController, dismissInput: { [weak self] in
             self?.view.endEditing(true)
         }, present: { [weak self] c, a, _ in
             self?.controller?.present(c, in: .window(.root), with: a, blockInteraction: true)
@@ -39,7 +38,7 @@ extension PeerInfoScreenNode {
             guard let strongSelf = self else {
                 return nil
             }
-            return strongSelf.paneContainerNode.transitionNodeForGallery(messageId: messageId, media: media)
+            return strongSelf.paneContainerNode.transitionNodeForGallery(messageId: messageId, media: EngineMedia(media))
         }, addToTransitionSurface: { [weak self] view in
             guard let strongSelf = self else {
                 return
@@ -105,16 +104,17 @@ extension PeerInfoScreenNode {
                 }
                 
                 var mediaReference: AnyMediaReference?
-                for media in message.media {
-                    if let image = media as? TelegramMediaImage {
+                for media in message.engineMedia {
+                    if case let .image(image) = media {
                         mediaReference = AnyMediaReference.standalone(media: image)
-                    } else if let file = media as? TelegramMediaFile {
+                    } else if case let .file(file) = media {
                         mediaReference = AnyMediaReference.standalone(media: file)
                     }
                 }
-                
+
                 if let mediaReference = mediaReference, let peer = message.peers[message.id.peerId] {
-                    legacyMediaEditor(context: strongSelf.context, peer: peer, threadTitle: message.associatedThreadInfo?.title, media: mediaReference, mode: .draw, initialCaption: NSAttributedString(), snapshots: snapshots, transitionCompletion: {
+                    legacyMediaEditor(context: strongSelf.context, peer: EnginePeer(peer), threadTitle: message.associatedThreadInfo?.title, media: mediaReference, mode: .draw, initialCaption: NSAttributedString(), snapshots: snapshots, transitionCompletion: {
+
                         transitionCompletion()
                     }, getCaptionPanelView: {
                         return nil

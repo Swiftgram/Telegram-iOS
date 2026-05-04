@@ -4,7 +4,6 @@ import TelegramCore
 import AccountContext
 import TelegramUIPreferences
 import TemporaryCachedPeerDataManager
-import Postbox
 
 public extension ShareWithPeersScreen {
     final class State {
@@ -650,9 +649,9 @@ public extension ShareWithPeersScreen {
                         }
                     }
                  
-                    let queryTokens = stringIndexTokens(searchQuery ?? "", transliteration: .combined)
-                    func peerMatchesTokens(peer: EnginePeer, tokens: [ValueBoxKey]) -> Bool {
-                        if matchStringIndexTokens(peer.indexName._asIndexName().indexTokens, with: queryTokens) {
+                    let queryTokens = context.engine.peers.tokenizeSearchString(string: searchQuery ?? "", transliteration: .combined)
+                    func peerMatchesTokens(peer: EnginePeer, tokens: [EngineDataBuffer]) -> Bool {
+                        if context.engine.peers.matchSearchTokens(peer.indexName._asIndexName().indexTokens, with: queryTokens) {
                             return true
                         }
                         return false

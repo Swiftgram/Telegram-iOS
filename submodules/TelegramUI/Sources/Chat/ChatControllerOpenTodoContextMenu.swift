@@ -250,7 +250,7 @@ extension ChatControllerImpl {
                 )
             )
             
-            let messageContentSource = ChatMessageContextExtractedContentSource(chatController: self, chatNode: self.chatDisplayNode, engine: self.context.engine, message: message, selectAll: false, snapshot: true)
+            let messageContentSource = ChatMessageContextExtractedContentSource(chatController: self, chatNode: self.chatDisplayNode, engine: self.context.engine, message: EngineMessage(message), selectAll: false, snapshot: true)
             
             sources.append(
                 ContextController.Source(

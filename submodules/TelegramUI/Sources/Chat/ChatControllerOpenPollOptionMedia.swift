@@ -1,7 +1,6 @@
 import Foundation
 import UIKit
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import AsyncDisplayKit
 import Display
@@ -17,23 +16,23 @@ import StickerPeekUI
 import StickerPackPreviewUI
 
 extension ChatControllerImpl {
-    func openPollMedia(message: Message, subject: ChatControllerInteraction.PollMediaSubject) -> Void {
+    func openPollMedia(message: EngineMessage, subject: ChatControllerInteraction.PollMediaSubject) -> Void {
         let mediaSubject: GalleryMediaSubject
-        var media: Media?
+        let media: EngineMedia?
         switch subject {
         case let .option(option):
-            media = option.media
+            media = option.media.flatMap(EngineMedia.init)
             mediaSubject = .pollOption(option.opaqueIdentifier)
         case let .solution(solution):
-            media = solution.media
+            media = solution.media.flatMap(EngineMedia.init)
             mediaSubject = .pollSolution
         }
-        
+
         guard let media else {
             return
         }
-        
-        if let file = media as? TelegramMediaFile, file.isSticker || file.isCustomEmoji {
+
+        if case let .file(file) = media, file.isSticker || file.isCustomEmoji {
             let _ = (self.context.engine.stickers.isStickerSaved(id: file.fileId)
             |> deliverOnMainQueue).start(next: { [weak self] isStarred in
                 guard let self else {
@@ -112,7 +111,7 @@ extension ChatControllerImpl {
                 chatLocation: self.chatLocation,
                 chatFilterTag: nil,
                 chatLocationContextHolder: nil,
-                message: message,
+                message: message._asMessage(),
                 mediaSubject: mediaSubject,
                 standalone: true,
                 reverseMessageGalleryOrder: false,
@@ -195,7 +194,7 @@ extension ChatControllerImpl {
                 },
                 chatAvatarHiddenMedia: { _, _ in
                 },
-                gallerySource: .standaloneMessage(message, mediaSubject)
+                gallerySource: .standaloneMessage(message._asMessage(), mediaSubject)
             ))
         }
     }

@@ -4,7 +4,6 @@ import Display
 import AsyncDisplayKit
 import ComponentFlow
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import Markdown
 import TextFormat
@@ -1378,7 +1377,7 @@ public class AdsInfoScreen: ViewController {
     
     private let context: AccountContext
     private let mode: Mode
-    private let message: Message?
+    private let message: EngineMessage?
     private let forceDark: Bool
     
     private var currentLayout: ContainerViewLayout?
@@ -1388,7 +1387,7 @@ public class AdsInfoScreen: ViewController {
     public init(
         context: AccountContext,
         mode: Mode,
-        message: Message? = nil,
+        message: EngineMessage? = nil,
         forceDark: Bool = false
     ) {
         self.context = context

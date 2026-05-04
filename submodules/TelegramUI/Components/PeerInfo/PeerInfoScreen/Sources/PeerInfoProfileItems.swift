@@ -4,7 +4,6 @@ import Display
 import AccountContext
 import TelegramPresentationData
 import TelegramCore
-import Postbox
 import PeerInfoUI
 import TextFormat
 import PhoneNumberFormat
@@ -41,9 +40,9 @@ func infoItems(
     context: AccountContext,
     presentationData: PresentationData,
     interaction: PeerInfoInteraction,
-    reactionSourceMessageId: MessageId?,
+    reactionSourceMessageId: EngineMessage.Id?,
     canDeleteReaction: Bool,
-    callMessages: [Message],
+    callMessages: [EngineMessage],
     chatLocation: ChatLocation,
     isOpenedFromChat: Bool,
     isMyProfile: Bool

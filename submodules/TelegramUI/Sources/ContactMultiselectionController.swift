@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import Display
 import AsyncDisplayKit
-import Postbox
 import SwiftSignalKit
 import TelegramCore
 import TelegramPresentationData
@@ -18,7 +17,7 @@ import PremiumUI
 import UndoUI
 import ContextUI
 
-private func peerTokenTitle(accountPeerId: PeerId, peer: EnginePeer, strings: PresentationStrings, nameDisplayOrder: PresentationPersonNameOrder) -> String {
+private func peerTokenTitle(accountPeerId: EnginePeer.Id, peer: EnginePeer, strings: PresentationStrings, nameDisplayOrder: PresentationPersonNameOrder) -> String {
     if peer.id == accountPeerId {
         return strings.DialogList_SavedMessages
     } else if peer.id.isReplies {
@@ -43,8 +42,6 @@ class ContactMultiselectionControllerImpl: ViewController, ContactMultiselection
     
     var dismissed: (() -> Void)?
 
-    private let index: PeerNameIndex = .lastNameFirst
-    
     private var _ready = Promise<Bool>()
     private var _limitsReady = Promise<Bool>()
     private var _peersReady = Promise<Bool>()

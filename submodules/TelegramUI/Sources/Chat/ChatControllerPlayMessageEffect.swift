@@ -8,7 +8,7 @@ import AccountContext
 import ChatMessageItemView
 
 extension ChatControllerImpl {
-    func playMessageEffect(message: Message) {
+    func playMessageEffect(message: EngineMessage) {
         var messageItemNode: ChatMessageItemView?
         self.chatDisplayNode.historyNode.forEachVisibleMessageItemNode { itemNode in
             if let item = itemNode.item, item.message.id == message.id {

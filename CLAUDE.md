@@ -41,7 +41,7 @@ A gradual migration is underway to eliminate direct `import Postbox` from consum
 
 **Historical record:** Wave-by-wave outcomes, the running tally of Postbox-free modules, and full verbose forms of the guidance subsections below live in [`docs/superpowers/postbox-refactor-log.md`](docs/superpowers/postbox-refactor-log.md). Read that file when you need wave-specific context, a full worked example of a pattern, or the history of a particular module's migration.
 
-Waves landed so far (as of 2026-05-02): 137 waves plus standalone cleanups. See the log file for per-wave detail; the list of still-open migration opportunities lives in the `project_postbox_refactor_next_wave.md` memory file.
+Waves landed so far (as of 2026-05-04): 238 waves plus standalone cleanups. See the log file for per-wave detail; the list of still-open migration opportunities lives in the `project_postbox_refactor_next_wave.md` memory file.
 
 ### Rules that apply to every wave
 
@@ -52,6 +52,7 @@ Waves landed so far (as of 2026-05-02): 137 waves plus standalone cleanups. See 
 5. **Abandonment protocol:** if a module can only be refactored by violating rule 2 or by editing a module outside the current wave's list, mark the task Abandoned with a recorded reason. Do NOT substitute a new module mid-wave.
 6. Full project build per module. No unit tests exist in this project.
 7. **TelegramCore never imports UIKit/Display.** `TelegramCore` is shared with the Telegram-Mac codebase; its Bazel `deps` and source files must not reference UIKit, Display, or any Apple-UI framework. UIKit-needing helpers (image scaling, rendering, etc.) stay in consumer-side submodules.
+8. **Never substitute Postbox protocols (`Media`, `Peer`, `Message`) with `Any` / `AnyObject`** in code that previously used them. Type erasure throws away the domain semantics that the next reader expects. Use the matching engine wrapper (`EngineMedia`, `EnginePeer`, `EngineMessage`) — extending it as needed (e.g. add a missing case-init or convenience). If neither typealias nor wrapper covers the use site, restore the original Postbox import + type for now and flag the case for a future facade. Existing `Any`/`AnyObject` parameters predating the refactor are not in scope for this rule.
 
 ### Engine typealias cheat sheet (existing aliases)
 
@@ -75,7 +76,30 @@ ItemCollectionId    → EngineItemCollectionId       (added 2026-04-20)
 FetchResourceSourceType → EngineFetchResourceSourceType (added 2026-04-20)
 FetchResourceError  → EngineFetchResourceError     (added 2026-04-20)
 StoryId             → EngineStoryId                (added 2026-05-02)
+ChatListIndex       → EngineChatListIndex          (added 2026-05-03)
+TempBoxFile         → EngineTempBoxFile            (added 2026-05-03)
+ItemCollectionItemIndex → EngineItemCollectionItemIndex (added 2026-05-03)
+ItemCollectionViewEntryIndex → EngineItemCollectionViewEntryIndex (added 2026-05-03)
+ValueBoxEncryptionParameters → EngineValueBoxEncryptionParameters (added 2026-05-03)
+MessageAndThreadId  → EngineMessageAndThreadId      (added 2026-05-03)
+PeerStoryStats      → EnginePeerStoryStats          (added 2026-05-03)
+MessageHistoryAnchorIndex → EngineMessageHistoryAnchorIndex (added 2026-05-03)
+ChatListTotalUnreadStateCategory → EngineChatListTotalUnreadStateCategory (added 2026-05-03)
+ChatListTotalUnreadStateStats → EngineChatListTotalUnreadStateStats (added 2026-05-03)
+PeerSummaryCounterTags → EnginePeerSummaryCounterTags (added 2026-05-03)
+ChatListTotalUnreadState → EngineChatListTotalUnreadState (added 2026-05-04)
+ItemCacheEntryId    → EngineItemCacheEntryId        (added 2026-05-04)
+HashFunctions       → EngineHashFunctions           (added 2026-05-04 wave 251)
+CachedMediaResourceRepresentationResult → EngineCachedMediaResourceRepresentationResult (added 2026-05-04 wave 265)
+MediaResourceDataFetchResult → EngineMediaResourceDataFetchResult (added 2026-05-04 wave 266)
+MediaResourceDataFetchError → EngineMediaResourceDataFetchError (added 2026-05-04 wave 266)
+MediaResourceStatus → EngineMediaResourceStatus     (added 2026-05-04 wave 272)
 ```
+
+**Free-function thin forwarders in TelegramCore** (rule 3 allows):
+- `engineFileSize(_ path:, useTotalFileAllocatedSize: Bool = false)` — forwards to Postbox's `fileSize(...)` (added 2026-05-04 wave 268)
+
+**TelegramEngineUnauthorized.resources facade**: `UnauthorizedResources.storeResourceData(id: EngineMediaResource.Id, data:, synchronous:)` — bridges to `account.postbox.mediaBox.storeResourceData` (added 2026-05-04 wave 271)
 
 For the `MediaResource` Postbox protocol, prefer the TelegramCore subtype `TelegramMediaResource` when the consumer's usage allows (note: `EngineMediaResource` is a wrapper **class**, not a typealias, so it is not interchangeable with the protocol).
 
@@ -144,6 +168,7 @@ All mediaBox methods with clean signatures (no Postbox-protocol leaks, no comple
 | `copyResourceData(from:, to:, synchronous:)` | 25 | `MediaBox.copyResourceData(from:, to:, synchronous:)` |
 | `resourceRangesStatus(resource:)` | 26 | `MediaBox.resourceRangesStatus(_ resource:)` |
 | `removeCachedResources(ids:, force:, notify:)` | 26 | `MediaBox.removeCachedResources(_ ids:, force:, notify:)` |
+| `clearCachedMediaResources(mediaResourceIds:)` | 223 | `_internal_clearCachedMediaResources` |
 
 **Facade-shape convention:** all of these take `EngineMediaResource.Id` or `EngineMediaResource` (never raw `MediaResourceId`/`MediaResource`). Return types either don't leak Postbox (`Void`, `String`, `String?`, `Signal<RangeSet<Int64>, NoError>`, `Signal<Float, NoError>`) or wrap via TelegramCore type (`Signal<EngineMediaResource.ResourceData, NoError>`).
 

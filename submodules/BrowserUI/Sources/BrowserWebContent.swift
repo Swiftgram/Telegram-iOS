@@ -3,7 +3,6 @@ import UIKit
 import Display
 import ComponentFlow
 import TelegramCore
-import Postbox
 import SwiftSignalKit
 import TelegramPresentationData
 import TelegramUIPreferences
@@ -236,7 +235,7 @@ final class BrowserWebContent: UIView, BrowserContent, WKNavigationDelegate, WKU
     var getNavigationController: () -> NavigationController? = { return nil }
     var cancelInteractiveTransitionGestures: () -> Void = {}
     
-    private var tempFile: TempBoxFile?
+    private var tempFile: EngineTempBoxFile?
     private var disposeTrustedDomain: (() -> Void)?
     
     init(context: AccountContext, presentationData: PresentationData, url: String, preferredConfiguration: WKWebViewConfiguration? = nil) {
@@ -321,7 +320,7 @@ final class BrowserWebContent: UIView, BrowserContent, WKNavigationDelegate, WKU
         var request: URLRequest?
         if url.hasPrefix("file://") {
             var updatedPath = url
-            let tempFile = TempBox.shared.file(path: url.replacingOccurrences(of: "file://", with: ""), fileName: "file.xlsx")
+            let tempFile = EngineTempBox.shared.file(path: url.replacingOccurrences(of: "file://", with: ""), fileName: "file.xlsx")
             updatedPath = tempFile.path
             self.tempFile = tempFile
             
@@ -536,7 +535,7 @@ final class BrowserWebContent: UIView, BrowserContent, WKNavigationDelegate, WKU
             fileName = "default"
         }
         
-        let tempFile = TempBox.shared.file(path: path, fileName: fileName)
+        let tempFile = EngineTempBox.shared.file(path: path, fileName: fileName)
         let fileUrl = URL(fileURLWithPath: tempFile.path)
         
         let controller = legacyICloudFilePicker(theme: self.presentationData.theme, mode: .export, url: fileUrl, documentTypes: [], forceDarkTheme: false, dismissed: {}, completion: { _ in
@@ -1042,7 +1041,7 @@ final class BrowserWebContent: UIView, BrowserContent, WKNavigationDelegate, WKU
         }
         
         if let (path, fileName) = self.downloadArguments {
-            let tempFile = TempBox.shared.file(path: path, fileName: fileName)
+            let tempFile = EngineTempBox.shared.file(path: path, fileName: fileName)
             let url = URL(fileURLWithPath: tempFile.path)
             
             if fileName.hasSuffix(".pkpass") {
@@ -1180,7 +1179,7 @@ final class BrowserWebContent: UIView, BrowserContent, WKNavigationDelegate, WKU
                                 }
                                 self.instantPage = webPage
                                 self.instantPageResources = resources
-                                let _ = (updatedRemoteWebpage(postbox: self.context.account.postbox, network: self.context.account.network, accountPeerId: self.context.account.peerId, webPage: WebpageReference(TelegramMediaWebpage(webpageId: MediaId(namespace: 0, id: 0), content: .Loaded(TelegramMediaWebpageLoadedContent(url: self._state.url, displayUrl: "", hash: 0, type: nil, websiteName: nil, title: nil, text: nil, embedUrl: nil, embedType: nil, embedSize: nil, duration: nil, author: nil, isMediaLargeByDefault: nil, imageIsVideoCover: false, image: nil, file: nil, story: nil, attributes: [], instantPage: nil)))))
+                                let _ = (updatedRemoteWebpage(postbox: self.context.account.postbox, network: self.context.account.network, accountPeerId: self.context.account.peerId, webPage: WebpageReference(TelegramMediaWebpage(webpageId: EngineMedia.Id(namespace: 0, id: 0), content: .Loaded(TelegramMediaWebpageLoadedContent(url: self._state.url, displayUrl: "", hash: 0, type: nil, websiteName: nil, title: nil, text: nil, embedUrl: nil, embedType: nil, embedSize: nil, duration: nil, author: nil, isMediaLargeByDefault: nil, imageIsVideoCover: false, image: nil, file: nil, story: nil, attributes: [], instantPage: nil)))))
                                 |> deliverOnMainQueue).start(next: { [weak self] webPage in
                                     guard let self, let webPage, case let .Loaded(result) = webPage.content, let _ = result.instantPage else {
                                         return
@@ -1215,7 +1214,7 @@ final class BrowserWebContent: UIView, BrowserContent, WKNavigationDelegate, WKU
                     let path = NSTemporaryDirectory() + NSUUID().uuidString
                     let _ = try? data.write(to: URL(fileURLWithPath: path), options: .atomic)
                     
-                    let tempFile = TempBox.shared.file(path: path, fileName: "\(self._state.title).webarchive")
+                    let tempFile = EngineTempBox.shared.file(path: path, fileName: "\(self._state.title).webarchive")
                     let url = URL(fileURLWithPath: tempFile.path)
                     
                     let controller = legacyICloudFilePicker(theme: self.presentationData.theme, mode: .export, url: url, documentTypes: [], forceDarkTheme: false, dismissed: {}, completion: { _ in
@@ -1354,7 +1353,7 @@ final class BrowserWebContent: UIView, BrowserContent, WKNavigationDelegate, WKU
             fileName = "default"
         }
         
-        let tempFile = TempBox.shared.file(path: path, fileName: fileName)
+        let tempFile = EngineTempBox.shared.file(path: path, fileName: fileName)
         let fileUrl = URL(fileURLWithPath: tempFile.path)
         
         let controller = legacyICloudFilePicker(theme: self.presentationData.theme, mode: .export, url: fileUrl, documentTypes: [], forceDarkTheme: false, dismissed: {}, completion: { _ in
@@ -1675,7 +1674,7 @@ final class BrowserWebContent: UIView, BrowserContent, WKNavigationDelegate, WKU
                             let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
                             self.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: imageData)
                             image = TelegramMediaImage(
-                                imageId: MediaId(namespace: Namespaces.Media.LocalImage, id: Int64.random(in: Int64.min ... Int64.max)),
+                                imageId: EngineMedia.Id(namespace: Namespaces.Media.LocalImage, id: Int64.random(in: Int64.min ... Int64.max)),
                                 representations: [
                                     TelegramMediaImageRepresentation(
                                         dimensions: PixelDimensions(width: Int32(favicon.size.width), height: Int32(favicon.size.height)),
@@ -1693,7 +1692,7 @@ final class BrowserWebContent: UIView, BrowserContent, WKNavigationDelegate, WKU
                             )
                         }
                         
-                        let webPage = TelegramMediaWebpage(webpageId: MediaId(namespace: 0, id: 0), content: .Loaded(TelegramMediaWebpageLoadedContent(
+                        let webPage = TelegramMediaWebpage(webpageId: EngineMedia.Id(namespace: 0, id: 0), content: .Loaded(TelegramMediaWebpageLoadedContent(
                             url: self._state.url,
                             displayUrl: self._state.url,
                             hash: 0,

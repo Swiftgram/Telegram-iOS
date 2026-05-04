@@ -209,7 +209,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
     let peerId: PeerId
     let isOpenedFromChat: Bool
     let videoCallsEnabled: Bool
-    let callMessages: [Message]
+    let callMessages: [EngineMessage]
     let chatLocation: ChatLocation
     let chatLocationContextHolder: Atomic<ChatLocationContextHolder?>
     let switchToStoryFolder: Int64?
@@ -356,7 +356,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         isOpenedFromChat: Bool,
         reactionSourceMessageId: MessageId?,
         sourceMessageId: MessageId?,
-        callMessages: [Message],
+        callMessages: [EngineMessage],
         isSettings: Bool,
         isMyProfile: Bool,
         hintGroupInCommon: PeerId?,
@@ -1120,11 +1120,11 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             var foundGalleryMessage: Message?
             if let searchContentNode = strongSelf.searchDisplayController?.contentNode as? ChatHistorySearchContainerNode {
                 if let galleryMessage = searchContentNode.messageForGallery(message.id) {
-                    strongSelf.context.engine.messages.ensureMessagesAreLocallyAvailable(messages: [EngineMessage(galleryMessage)])
-                    foundGalleryMessage = galleryMessage
+                    strongSelf.context.engine.messages.ensureMessagesAreLocallyAvailable(messages: [galleryMessage])
+                    foundGalleryMessage = galleryMessage._asMessage()
                 }
             }
-            if foundGalleryMessage == nil, let galleryMessage = strongSelf.paneContainerNode.findLoadedMessage(id: message.id) {
+            if foundGalleryMessage == nil, let galleryMessage = strongSelf.paneContainerNode.findLoadedMessage(id: message.id)?._asMessage() {
                 foundGalleryMessage = galleryMessage
             }
             
@@ -6360,7 +6360,7 @@ public final class PeerInfoScreenImpl: ViewController, PeerInfoScreen, KeyShortc
     private let isOpenedFromChat: Bool
     private let reactionSourceMessageId: MessageId?
     private let sourceMessageId: MessageId?
-    private let callMessages: [Message]
+    private let callMessages: [EngineMessage]
     let isSettings: Bool
     let isMyProfile: Bool
     private let hintGroupInCommon: PeerId?
@@ -6448,7 +6448,7 @@ public final class PeerInfoScreenImpl: ViewController, PeerInfoScreen, KeyShortc
         isOpenedFromChat: Bool,
         reactionSourceMessageId: MessageId?,
         sourceMessageId: MessageId? = nil,
-        callMessages: [Message],
+        callMessages: [EngineMessage],
         isSettings: Bool = false,
         isMyProfile: Bool = false,
         hintGroupInCommon: PeerId? = nil,

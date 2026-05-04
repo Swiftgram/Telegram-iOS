@@ -353,13 +353,13 @@ public final class ChatHistorySearchContainerNode: SearchDisplayControllerConten
         }
     }
     
-    public func messageForGallery(_ id: MessageId) -> Message? {
+    public func messageForGallery(_ id: EngineMessage.Id) -> EngineMessage? {
         if let currentEntries = self.currentEntries {
             for entry in currentEntries {
                 switch entry {
                 case let .message(message, _, _, _, _):
                     if message.id == id {
-                        return message
+                        return EngineMessage(message)
                     }
                 }
             }

@@ -497,7 +497,7 @@ private final class CreateLinkSheetComponent: CombinedComponent {
             
             
             let completion = controller.completion
-            let renderer = DrawingMessageRenderer(context: self.context, messages: [message], parentView: controller.view, isLink: true)
+            let renderer = DrawingMessageRenderer(context: self.context, messages: [EngineMessage(message)], parentView: controller.view, isLink: true)
             renderer.render(completion: { result in
                 completion(
                     CreateLinkScreen.Result(

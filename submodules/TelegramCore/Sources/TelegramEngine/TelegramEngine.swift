@@ -1,3 +1,4 @@
+import Foundation
 import SwiftSignalKit
 import Postbox
 
@@ -107,14 +108,32 @@ public final class TelegramEngineUnauthorized {
     public lazy var localization: Localization = {
         return Localization(account: self.account)
     }()
-    
+
     public lazy var payments: Payments = {
         return Payments(account: self.account)
+    }()
+
+    public lazy var resources: UnauthorizedResources = {
+        return UnauthorizedResources(account: self.account)
     }()
     
     public lazy var itemCache: ItemCache = {
         return ItemCache(account: self.account)
     }()
+}
+
+public extension TelegramEngineUnauthorized {
+    final class UnauthorizedResources {
+        private let account: UnauthorizedAccount
+
+        init(account: UnauthorizedAccount) {
+            self.account = account
+        }
+
+        public func storeResourceData(id: EngineMediaResource.Id, data: Data, synchronous: Bool = false) {
+            self.account.postbox.mediaBox.storeResourceData(MediaResourceId(id.stringRepresentation), data: data, synchronous: synchronous)
+        }
+    }
 }
 
 public enum SomeTelegramEngine {

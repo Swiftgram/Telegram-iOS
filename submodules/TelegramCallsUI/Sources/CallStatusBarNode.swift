@@ -221,7 +221,7 @@ public class CallStatusBarNodeImpl: CallStatusBarNode {
     private var presentationData: PresentationData?
     private let presentationDataDisposable = MetaDisposable()
     
-    private var currentPeer: Peer?
+    private var currentPeer: EnginePeer?
     private var currentCallTimer: SwiftSignalKit.Timer?
     private var currentCallState: PresentationCallState?
     private var currentGroupCallState: PresentationGroupCallSummaryState?
@@ -335,7 +335,7 @@ public class CallStatusBarNodeImpl: CallStatusBarNode {
                         )
                     |> deliverOnMainQueue).start(next: { [weak self] peer, state, isMuted in
                         if let strongSelf = self {
-                            strongSelf.currentPeer = peer._asPeer()
+                            strongSelf.currentPeer = peer
                             strongSelf.currentCallState = state
                             strongSelf.currentIsMuted = isMuted
                             
@@ -384,7 +384,7 @@ public class CallStatusBarNodeImpl: CallStatusBarNode {
                     |> deliverOnMainQueue).start(next: { [weak self] view, state, isMuted, members in
                         if let strongSelf = self {
                             if let view {
-                                strongSelf.currentPeer = view.peers[view.peerId]
+                                strongSelf.currentPeer = view.peers[view.peerId].flatMap(EnginePeer.init)
                             } else {
                                 strongSelf.currentPeer = nil
                             }
@@ -470,7 +470,7 @@ public class CallStatusBarNodeImpl: CallStatusBarNode {
             if let voiceChatTitle = self.currentGroupCallState?.info?.title, !voiceChatTitle.isEmpty {
                 title = voiceChatTitle
             } else if let currentPeer = self.currentPeer {
-                title = EnginePeer(currentPeer).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
+                title = currentPeer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
             }
             var membersCount: Int32?
             if let groupCallState = self.currentGroupCallState {
