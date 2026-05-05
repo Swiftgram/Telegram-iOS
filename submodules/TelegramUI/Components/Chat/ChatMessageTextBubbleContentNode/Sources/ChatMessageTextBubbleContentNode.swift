@@ -25,6 +25,7 @@ import ChatMessageItemCommon
 import TextLoadingEffect
 import ChatControllerInteraction
 import InteractiveTextComponent
+import ShimmeringMask
 
 private final class CachedChatMessageText {
     let text: String
@@ -86,6 +87,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
     
     private let containerNode: ContainerNode
     private let textNode: InteractiveTextNodeWithEntities
+    private var streamingStatusTextNode: InteractiveTextNodeWithEntities?
     
     private let textAccessibilityOverlayNode: TextAccessibilityOverlayNode
     public var statusNode: ChatMessageDateAndStatusNode?
@@ -240,6 +242,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         let previousItem = self.item
         
         let textLayout = InteractiveTextNodeWithEntities.asyncLayout(self.textNode)
+        let streamingStatusTextLayout = InteractiveTextNodeWithEntities.asyncLayout(self.streamingStatusTextNode)
         let statusLayout = ChatMessageDateAndStatusNode.asyncLayout(self.statusNode)
         
         let currentCachedChatMessageText = self.cachedChatMessageText
@@ -720,9 +723,26 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     displayContentsUnderSpoilers: displayContentsUnderSpoilers.value,
                     customTruncationToken: customTruncationToken,
                     expandedBlocks: expandedBlockIds,
-                    computeCharacterRects: true,
-                    minWidth: (attributedText.string.isEmpty && hasDraft) ? 40.0 : nil
+                    computeCharacterRects: true
                 ))
+                
+                var streamingTextLayoutAndApply: (layout: InteractiveTextNodeLayout, apply: (InteractiveTextNodeWithEntities.Arguments) -> InteractiveTextNodeWithEntities)?
+                if hasDraft || hadDraft {
+                    //TODO:localize
+                    streamingTextLayoutAndApply = streamingStatusTextLayout(InteractiveTextNodeLayoutArguments(
+                        attributedString: NSAttributedString(string: "Thinking...", font: textFont, textColor: messageTheme.fileDescriptionColor),
+                        backgroundColor: nil,
+                        maximumNumberOfLines: 1,
+                        truncationType: .end,
+                        constrainedSize: textConstrainedSize,
+                        alignment: .natural,
+                        cutout: nil,
+                        insets: textInsets,
+                        lineColor: messageTheme.accentControlColor,
+                        customTruncationToken: customTruncationToken,
+                        computeCharacterRects: true
+                    ))
+                }
                 
                 var maxGlyphCount = currentMaxGlyphCount
                 if maxGlyphCount == nil && (hasDraft || hadDraft) {
@@ -785,6 +805,15 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                 
                 var textFrame = CGRect(origin: CGPoint(x: -textInsets.left, y: -textInsets.top), size: textLayout.size)
                 
+                let streamingTextSpacing: CGFloat = 1.0
+                
+                var streamingTextFrame: CGRect?
+                if let streamingTextLayoutAndApply {
+                    let streamingTextFrameValue = CGRect(origin: CGPoint(x: layoutConstants.text.bubbleInsets.left - textInsets.left, y: topInset - textInsets.top), size: streamingTextLayoutAndApply.layout.size)
+                    streamingTextFrame = streamingTextFrameValue
+                    textFrame.origin.y += streamingTextFrameValue.height + streamingTextSpacing - textInsets.top - textInsets.bottom
+                }
+                
                 var textFrameWithoutInsets = CGRect(origin: CGPoint(x: textFrame.origin.x + textInsets.left, y: textFrame.origin.y + textInsets.top), size: CGSize(width: textFrame.width - textInsets.left - textInsets.right, height: textFrame.height - textInsets.top - textInsets.bottom))
                 
                 textFrame = textFrame.offsetBy(dx: layoutConstants.text.bubbleInsets.left, dy: topInset)
@@ -798,6 +827,9 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                 textFrameWithoutInsets = textFrameWithoutInsets.offsetBy(dx: layoutConstants.text.bubbleInsets.left, dy: topInset)
                 
                 var suggestedBoundingWidth: CGFloat = textFrameWithoutInsets.width
+                if let streamingTextFrame {
+                    suggestedBoundingWidth = max(suggestedBoundingWidth, streamingTextFrame.width - textInsets.left - textInsets.right)
+                }
                 if let statusSuggestedWidthAndContinue = statusSuggestedWidthAndContinue, !hasDraft {
                     suggestedBoundingWidth = max(suggestedBoundingWidth, statusSuggestedWidthAndContinue.0)
                 }
@@ -812,6 +844,11 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     boundingSize = textFrameWithoutInsets.size
                     if let statusSizeAndApply = statusSizeAndApply, !hasDraft {
                         boundingSize.height += statusSizeAndApply.0.height
+                    }
+                    
+                    if let streamingTextFrame {
+                        boundingSize.width = max(boundingSize.width, streamingTextFrame.width - textInsets.left - textInsets.right)
+                        boundingSize.height += streamingTextFrame.height - textInsets.top - textInsets.bottom + streamingTextSpacing
                     }
                     
                     boundingSize.width += layoutConstants.text.bubbleInsets.left + layoutConstants.text.bubbleInsets.right
@@ -918,6 +955,56 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                             ))
                             animation.animator.updatePosition(layer: strongSelf.textNode.textNode.layer, position: realTextFrame.center, completion: nil)
                             animation.animator.updateBounds(layer: strongSelf.textNode.textNode.layer, bounds: CGRect(origin: CGPoint(), size: realTextFrame.size), completion: nil)
+                            
+                            if let streamingTextFrame, let streamingTextLayoutAndApply {
+                                var animation = animation
+                                if strongSelf.streamingStatusTextNode == nil {
+                                    animation = .None
+                                }
+                                let streamingStatusTextNode = streamingTextLayoutAndApply.apply(InteractiveTextNodeWithEntities.Arguments(
+                                    context: item.context,
+                                    cache: item.controllerInteraction.presentationContext.animationCache,
+                                    renderer: item.controllerInteraction.presentationContext.animationRenderer,
+                                    placeholderColor: messageTheme.mediaPlaceholderColor,
+                                    attemptSynchronous: synchronousLoads,
+                                    textColor: messageTheme.primaryTextColor,
+                                    spoilerEffectColor: messageTheme.secondaryTextColor,
+                                    applyArguments: InteractiveTextNode.ApplyArguments(
+                                        animation: animation,
+                                        spoilerTextColor: messageTheme.primaryTextColor,
+                                        spoilerEffectColor: messageTheme.secondaryTextColor,
+                                        areContentAnimationsEnabled: item.context.sharedContext.energyUsageSettings.loopEmoji,
+                                        spoilerExpandRect: nil,
+                                        crossfadeContents: { [weak strongSelf] sourceView in
+                                            guard let strongSelf, let streamingStatusTextNode = strongSelf.streamingStatusTextNode else {
+                                                return
+                                            }
+                                            if let textNodeContainer = streamingStatusTextNode.textNode.view.superview {
+                                                sourceView.frame = CGRect(origin: streamingStatusTextNode.textNode.frame.origin, size: sourceView.bounds.size)
+                                                textNodeContainer.addSubview(sourceView)
+                                                
+                                                sourceView.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.12, removeOnCompletion: false, completion: { [weak sourceView] _ in
+                                                    sourceView?.removeFromSuperview()
+                                                })
+                                                streamingStatusTextNode.textNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.1)
+                                            }
+                                        }
+                                    )
+                                ))
+                                if streamingStatusTextNode !== strongSelf.streamingStatusTextNode {
+                                    strongSelf.streamingStatusTextNode?.textNode.removeFromSupernode()
+                                    strongSelf.streamingStatusTextNode = streamingStatusTextNode
+                                    strongSelf.containerNode.addSubnode(streamingStatusTextNode.textNode)
+                                }
+                                animation.animator.updatePosition(layer: streamingStatusTextNode.textNode.layer, position: streamingTextFrame.center, completion: nil)
+                                animation.animator.updateBounds(layer: streamingStatusTextNode.textNode.layer, bounds: CGRect(origin: CGPoint(), size: streamingTextFrame.size), completion: nil)
+                            } else if let streamingStatusTextNode = strongSelf.streamingStatusTextNode {
+                                strongSelf.streamingStatusTextNode = nil
+                                let streamingStatusTextNodeNode = streamingStatusTextNode.textNode
+                                animation.animator.updateAlpha(layer: streamingStatusTextNodeNode.layer, alpha: 0.0, completion: { [weak streamingStatusTextNodeNode] _ in
+                                    streamingStatusTextNodeNode?.removeFromSupernode()
+                                })
+                            }
                             
                             switch strongSelf.visibility {
                             case .none:

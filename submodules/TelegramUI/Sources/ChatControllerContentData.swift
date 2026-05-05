@@ -147,6 +147,7 @@ extension ChatControllerImpl {
             var removePaidMessageFeeData: ChatPresentationInterfaceState.RemovePaidMessageFeeData?
             var viewForumAsMessages: Bool = false
             var hasTopics: Bool = false
+            var canStopIncomingStreamingMessage: Bool = false
             
             var preloadNextChatPeerId: EnginePeer.Id?
         }
@@ -711,6 +712,21 @@ extension ChatControllerImpl {
                 }
                 
                 let globalPrivacySettings = context.engine.data.get(TelegramEngine.EngineData.Item.Configuration.GlobalPrivacy())
+                
+                let canStopIncomingStreamingMessage: Signal<Bool, NoError>
+                if let peerId = chatLocation.peerId {
+                    let key = PeerAndThreadId(peerId: peerId, threadId: chatLocation.threadId)
+                    canStopIncomingStreamingMessage = context.account.postbox.combinedView(keys: [PostboxViewKey.typingDrafts(key)])
+                    |> map { views -> Bool in
+                        guard let view = views.views[PostboxViewKey.typingDrafts(key)] as? TypingDraftsView else {
+                            return false
+                        }
+                        return view.typingDraft != nil
+                    }
+                    |> distinctUntilChanged
+                } else {
+                    canStopIncomingStreamingMessage = .single(false)
+                }
 
                 self.peerDisposable = combineLatest(
                     queue: Queue.mainQueue(),
@@ -727,8 +743,9 @@ extension ChatControllerImpl {
                     managingBot,
                     adMessage,
                     displayedPeerVerification,
-                    globalPrivacySettings
-                ).startStrict(next: { [weak self] peerView, globalNotificationSettings, onlineMemberCount, hasScheduledMessages, hasTopics, pinnedCount, threadInfo, hasSearchTags, hasSavedChats, isPremiumRequiredForMessaging, managingBot, adMessage, displayedPeerVerification, globalPrivacySettings in
+                    globalPrivacySettings,
+                    canStopIncomingStreamingMessage
+                ).startStrict(next: { [weak self] peerView, globalNotificationSettings, onlineMemberCount, hasScheduledMessages, hasTopics, pinnedCount, threadInfo, hasSearchTags, hasSavedChats, isPremiumRequiredForMessaging, managingBot, adMessage, displayedPeerVerification, globalPrivacySettings, canStopIncomingStreamingMessage in
                     guard let strongSelf = self else {
                         return
                     }
@@ -738,6 +755,7 @@ extension ChatControllerImpl {
                     if strongSelf.state.peerView === peerView
                         && strongSelf.state.hasScheduledMessages == hasScheduledMessages
                         && strongSelf.state.hasTopics == hasTopics
+                        && strongSelf.state.canStopIncomingStreamingMessage == canStopIncomingStreamingMessage
                         && strongSelf.state.threadInfo == threadInfo
                         && strongSelf.state.hasSearchTags == hasSearchTags
                         && strongSelf.state.hasSavedChats == hasSavedChats
@@ -749,6 +767,7 @@ extension ChatControllerImpl {
                     
                     strongSelf.state.hasScheduledMessages = hasScheduledMessages
                     strongSelf.state.hasTopics = hasTopics
+                    strongSelf.state.canStopIncomingStreamingMessage = canStopIncomingStreamingMessage
                     
                     var upgradedToPeerId: PeerId?
                     var movedToForumTopics = false
@@ -1057,6 +1076,7 @@ extension ChatControllerImpl {
                     strongSelf.state.explicitelyCanPinMessages = explicitelyCanPinMessages
                     strongSelf.state.hasScheduledMessages = hasScheduledMessages
                     strongSelf.state.hasTopics = hasTopics
+                    strongSelf.state.canStopIncomingStreamingMessage = canStopIncomingStreamingMessage
                     strongSelf.state.autoremoveTimeout = autoremoveTimeout
                     strongSelf.state.currentSendAsPeerId = currentSendAsPeerId
                     strongSelf.state.copyProtectionEnabled = copyProtectionEnabled
@@ -1402,6 +1422,21 @@ extension ChatControllerImpl {
                 
                 let globalPrivacySettings = context.engine.data.get(TelegramEngine.EngineData.Item.Configuration.GlobalPrivacy())
                 
+                let canStopIncomingStreamingMessage: Signal<Bool, NoError>
+                if let peerId = chatLocation.peerId {
+                    let key = PeerAndThreadId(peerId: peerId, threadId: chatLocation.threadId)
+                    canStopIncomingStreamingMessage = context.account.postbox.combinedView(keys: [PostboxViewKey.typingDrafts(key)])
+                    |> map { views -> Bool in
+                        guard let view = views.views[PostboxViewKey.typingDrafts(key)] as? TypingDraftsView else {
+                            return false
+                        }
+                        return view.typingDraft != nil
+                    }
+                    |> distinctUntilChanged
+                } else {
+                    canStopIncomingStreamingMessage = .single(false)
+                }
+                
                 self.peerDisposable = (combineLatest(queue: Queue.mainQueue(),
                     peerView,
                     messageAndTopic,
@@ -1412,9 +1447,10 @@ extension ChatControllerImpl {
                     hasSavedChats,
                     isPremiumRequiredForMessaging,
                     managingBot,
-                    globalPrivacySettings
+                    globalPrivacySettings,
+                    canStopIncomingStreamingMessage
                 )
-                |> deliverOnMainQueue).startStrict(next: { [weak self] peerView, messageAndTopic, savedMessagesPeer, onlineMemberCount, hasScheduledMessages, hasSearchTags, hasSavedChats, isPremiumRequiredForMessaging, managingBot, globalPrivacySettings in
+                |> deliverOnMainQueue).startStrict(next: { [weak self] peerView, messageAndTopic, savedMessagesPeer, onlineMemberCount, hasScheduledMessages, hasSearchTags, hasSavedChats, isPremiumRequiredForMessaging, managingBot, globalPrivacySettings, canStopIncomingStreamingMessage in
                     guard let strongSelf = self else {
                         return
                     }
@@ -1490,6 +1526,7 @@ extension ChatControllerImpl {
                     }
                     
                     strongSelf.state.hasTopics = true
+                    strongSelf.state.canStopIncomingStreamingMessage = canStopIncomingStreamingMessage
                     
                     if let savedMessagesPeerId {
                         var peerPresences: [PeerId: PeerPresence] = [:]

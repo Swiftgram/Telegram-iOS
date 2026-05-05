@@ -381,6 +381,9 @@ extension ChatControllerImpl {
         if previousState.slowmodeState != contentData.state.slowmodeState || previousState.boostsToUnrestrict != contentData.state.boostsToUnrestrict {
             animated = true
         }
+        if previousState.canStopIncomingStreamingMessage != contentData.state.canStopIncomingStreamingMessage {
+            animated = true
+        }
         
         var transition: ContainedViewLayoutTransition = animated ? .animated(duration: 0.4, curve: .spring) : .immediate
         if let forceAnimationTransition {
@@ -445,6 +448,7 @@ extension ChatControllerImpl {
             presentationInterfaceState = presentationInterfaceState.updatedRemovePaidMessageFeeData(contentData.state.removePaidMessageFeeData)
             presentationInterfaceState = presentationInterfaceState.updatedViewForumAsMessages(contentData.state.viewForumAsMessages)
             presentationInterfaceState = presentationInterfaceState.updatedHasTopics(contentData.state.hasTopics)
+            presentationInterfaceState = presentationInterfaceState.updatedCanStopIncomingStreamingMessage(contentData.state.canStopIncomingStreamingMessage)
             
             presentationInterfaceState = presentationInterfaceState.updatedTitlePanelContext({ context in
                 if contentData.state.pinnedMessageId != nil {
