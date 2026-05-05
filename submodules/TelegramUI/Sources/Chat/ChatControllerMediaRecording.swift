@@ -119,7 +119,6 @@ import AudioWaveform
 import PeerNameColorScreen
 import ChatEmptyNode
 import ChatMediaInputStickerGridItem
-import AdsInfoScreen
 
 extension ChatControllerImpl {
     func requestAudioRecorder(beginWithTone: Bool, existingDraft: ChatInterfaceMediaDraftState.Audio? = nil) {

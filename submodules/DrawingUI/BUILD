@@ -107,6 +107,7 @@ swift_library(
         "//submodules/TelegramUI/Components/DynamicCornerRadiusView",
         "//submodules/TelegramUI/Components/StickerPickerScreen",
         "//submodules/TelegramUI/Components/MediaEditor/ImageObjectSeparation",
+        "//submodules/TelegramUI/Components/SegmentControlComponent",
     ],
     visibility = [
         "//visibility:public",

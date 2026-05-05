@@ -21,7 +21,6 @@ swift_library(
         "//submodules/Markdown:Markdown",
         "//submodules/TelegramPermissions:TelegramPermissions",
         "//submodules/DeviceAccess:DeviceAccess",
-        "//submodules/PeersNearbyIconNode:PeersNearbyIconNode",
         "//submodules/SolidRoundedButtonNode:SolidRoundedButtonNode",
         "//submodules/AppBundle:AppBundle",
         "//submodules/PresentationDataUtils:PresentationDataUtils",

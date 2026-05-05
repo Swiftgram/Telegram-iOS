@@ -31,6 +31,7 @@ swift_library(
         "//submodules/ChatListUI",
         "//submodules/TelegramUI/Components/Chat/ChatMessageItemView",
         "//submodules/ChatPresentationInterfaceState",
+        "//submodules/TelegramUI/Components/ChatScheduleTimeController",
         "//submodules/TelegramUI/Components/ChatTimerScreen",
         "//submodules/TelegramUI/Components/ChatTitleView",
         "//submodules/Components/ComponentDisplayAdapters",

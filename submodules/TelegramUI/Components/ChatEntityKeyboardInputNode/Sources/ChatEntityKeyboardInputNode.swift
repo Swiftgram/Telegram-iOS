@@ -2792,6 +2792,70 @@ public final class EmojiContentPeekBehaviorImpl: EmojiContentPeekBehavior {
         self.present = present
     }
 
+    private func presentStickerPackActionOverlay(_ actions: [StickerPackScreenActionResult], interaction: Interaction) {
+        guard let action = actions.first else {
+            return
+        }
+
+        var animateInAsReplacement = false
+        if let navigationController = interaction.navigationController() {
+            for controller in navigationController.overlayControllers {
+                if let controller = controller as? UndoOverlayController {
+                    controller.dismissWithCommitActionAndReplacementAnimation()
+                    animateInAsReplacement = true
+                }
+            }
+        }
+
+        var presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
+        if let forceTheme = self.forceTheme {
+            presentationData = presentationData.withUpdated(theme: forceTheme)
+        }
+
+        let controller: UndoOverlayController
+        switch action.action {
+        case .add:
+            controller = UndoOverlayController(
+                presentationData: presentationData,
+                content: .stickersModified(
+                    title: presentationData.strings.StickerPackActionInfo_AddedTitle,
+                    text: presentationData.strings.StickerPackActionInfo_AddedText(action.info.title).string,
+                    undo: false,
+                    info: action.info,
+                    topItem: action.items.first,
+                    context: self.context
+                ),
+                elevatedLayout: false,
+                animateInAsReplacement: animateInAsReplacement,
+                action: { _ in
+                    return true
+                }
+            )
+        case let .remove(positionInList):
+            controller = UndoOverlayController(
+                presentationData: presentationData,
+                content: .stickersModified(
+                    title: presentationData.strings.StickerPackActionInfo_RemovedTitle,
+                    text: presentationData.strings.StickerPackActionInfo_RemovedText(action.info.title).string,
+                    undo: true,
+                    info: action.info,
+                    topItem: action.items.first,
+                    context: self.context
+                ),
+                elevatedLayout: false,
+                animateInAsReplacement: animateInAsReplacement,
+                action: { [weak self] overlayAction in
+                    if case .undo = overlayAction {
+                        let _ = self?.context.engine.stickers.addStickerPackInteractively(info: action.info, items: action.items, positionInList: positionInList).start()
+                    }
+                    return true
+                }
+            )
+        }
+
+        interaction.presentGlobalOverlayController(controller, nil)
+    }
+
     public func setGestureRecognizerEnabled(view: UIView, isEnabled: Bool, itemAtPoint: @escaping (CGPoint) -> (AnyHashable, CALayer, TelegramMediaFile)?) {
         self.viewRecords = self.viewRecords.filter({ $0.view != nil })
 
@@ -3062,7 +3126,12 @@ public final class EmojiContentPeekBehaviorImpl: EmojiContentPeekBehavior {
                                                 let controller = strongSelf.context.sharedContext.makeStickerPackScreen(context: context, updatedPresentationData: nil, mainStickerPack: packReference, stickerPacks: [packReference], loadedStickerPacks: [], actionTitle: nil, isEditing: false, expandIfNeeded: false, parentNavigationController: interaction.navigationController(), sendSticker: { file, sourceView, sourceRect in
                                                     sendSticker(file, false, false, nil, false, sourceView, sourceRect, nil)
                                                     return true
-                                                }, actionPerformed: nil)
+                                                }, actionPerformed: { [weak self] actions in
+                                                    guard let self else {
+                                                        return
+                                                    }
+                                                    self.presentStickerPackActionOverlay(actions, interaction: interaction)
+                                                })
 
                                                 interaction.navigationController()?.view.window?.endEditing(true)
                                                 interaction.presentController(controller, nil)

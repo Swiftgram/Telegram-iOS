@@ -5376,21 +5376,18 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                         if case .broadcast = channel.info {
                             canClear = false
                             deleteTitle = strongSelf.presentationData.strings.Channel_LeaveChannel
-                            if channel.addressName == nil && channel.flags.contains(.isCreator) {
-                                canRemoveGlobally = true
-                            }
                         } else {
                             deleteTitle = strongSelf.presentationData.strings.Group_DeleteGroup
-                            if channel.addressName == nil && channel.flags.contains(.isCreator) {
-                                canRemoveGlobally = true
-                            }
+                        }
+                        if strongSelf.canDeletePeerGloballyAsCreator(mainPeer) {
+                            canRemoveGlobally = true
                         }
                         if let addressName = channel.addressName, !addressName.isEmpty {
                             canClear = false
                         }
                     }
-                } else if case let .legacyGroup(group) = chatPeer {
-                    if case .creator = group.role {
+                } else if case .legacyGroup = chatPeer {
+                    if strongSelf.canDeletePeerGloballyAsCreator(mainPeer) {
                         canRemoveGlobally = true
                     }
                 } else if case let .user(user) = chatPeer, user.botInfo != nil {
@@ -5843,6 +5840,14 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             canRemoveGlobally = true
         }
         
+        if deleteGloballyIfPossible && self.canDeletePeerGloballyAsCreator(mainPeer) {
+            self.schedulePeerChatRemoval(peer: peer, type: .forEveryone, deleteGloballyIfPossible: true, completion: {
+                removed()
+            })
+            completion(true)
+            return
+        }
+        
         if canRemoveGlobally {
             let actionSheet = ActionSheetController(presentationData: self.presentationData)
             var items: [ActionSheetItem] = []
@@ -5943,6 +5948,16 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             } else {
                 proceed()
             }
+        }
+    }
+    
+    private func canDeletePeerGloballyAsCreator(_ peer: EnginePeer) -> Bool {
+        if case let .channel(channel) = peer {
+            return !channel.isMonoForum && channel.flags.contains(.isCreator) && channel.addressName == nil
+        } else if case let .legacyGroup(group) = peer, case .creator = group.role {
+            return true
+        } else {
+            return false
         }
     }
     

@@ -3645,8 +3645,16 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
                                     
                                     let controller = context.sharedContext.makeStickerPackScreen(context: context, updatedPresentationData: nil, mainStickerPack: packReference, stickerPacks: [packReference], loadedStickerPacks: loadedPack.flatMap { [$0] } ?? [], actionTitle: nil, isEditing: false, expandIfNeeded: false, parentNavigationController: navigationController, sendSticker: { _, _, _ in
                                         return false
-                                    }, actionPerformed: { added in
-                                        updatedInstalled = added
+                                    }, actionPerformed: { actions in
+                                        guard let action = actions.first?.action else {
+                                            return
+                                        }
+                                        switch action {
+                                        case .add:
+                                            updatedInstalled = true
+                                        case .remove:
+                                            updatedInstalled = false
+                                        }
                                     })
                                     presentController(controller)
                                     break

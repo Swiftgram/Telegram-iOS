@@ -14,6 +14,7 @@ import AlertUI
 import PresentationDataUtils
 import ItemListAvatarAndNameInfoItem
 import OldChannelsController
+import ChatTimerScreen
 
 private let rankMaxLength: Int32 = 16
 
@@ -741,9 +742,28 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
         }))
         items.append(ActionSheetButtonItem(title: presentationData.strings.MessageTimer_Custom, color: .accent, action: { [weak actionSheet] in
             actionSheet?.dismissAnimated()
-            presentControllerImpl?(PeerBanTimeoutController(context: context, updatedPresentationData: updatedPresentationData, currentValue: Int32(Date().timeIntervalSince1970), applyValue: { value in
-                applyValue(value)
-            }), nil)
+            let controller = ChatTimerScreen(
+                context: context,
+                updatedPresentationData: updatedPresentationData,
+                configuration: ChatTimerScreen.Configuration(
+                    style: .default,
+                    picker: .date,
+                    currentValue: Int32(Date().timeIntervalSince1970),
+                    minimumDate: Date(),
+                    maximumDate: Date(timeIntervalSince1970: Double(Int32.max - 1)),
+                    pickerValueMapping: .roundDateToDaysUTC,
+                    primaryActionTitle: { strings, _, _ in
+                        strings.Wallpaper_Set
+                    }
+                ),
+                completion: { value in
+                    guard let value else {
+                        return
+                    }
+                    applyValue(value)
+                }
+            )
+            presentControllerImpl?(controller, nil)
         }))
         actionSheet.setItemGroups([ActionSheetItemGroup(items: items), ActionSheetItemGroup(items: [
             ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, color: .accent, font: .bold, action: { [weak actionSheet] in

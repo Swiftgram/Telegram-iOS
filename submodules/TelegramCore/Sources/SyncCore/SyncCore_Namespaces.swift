@@ -433,12 +433,6 @@ public struct PreferencesKeys {
         return key
     }()
     
-    public static let peersNearby: ValueBoxKey = {
-        let key = ValueBoxKey(length: 4)
-        key.setInt32(0, value: PreferencesKeyValues.peersNearby.rawValue)
-        return key
-    }()
-    
     public static let chatListFiltersFeaturedState: ValueBoxKey = {
         let key = ValueBoxKey(length: 4)
         key.setInt32(0, value: PreferencesKeyValues.chatListFiltersFeaturedState.rawValue)

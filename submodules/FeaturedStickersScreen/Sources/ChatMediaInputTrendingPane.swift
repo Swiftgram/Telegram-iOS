@@ -255,6 +255,70 @@ public final class ChatMediaInputTrendingPane: ChatMediaInputPane {
         self.disposable?.dispose()
         self.installDisposable.dispose()
     }
+
+    private func presentStickerPackActionOverlay(_ actions: [StickerPackScreenActionResult]) {
+        guard let action = actions.first else {
+            return
+        }
+
+        var animateInAsReplacement = false
+        if let navigationController = self.interaction.getNavigationController() {
+            for controller in navigationController.overlayControllers {
+                if let controller = controller as? UndoOverlayController {
+                    controller.dismissWithCommitActionAndReplacementAnimation()
+                    animateInAsReplacement = true
+                }
+            }
+        }
+
+        var presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
+        if let forceTheme = self.forceTheme {
+            presentationData = presentationData.withUpdated(theme: forceTheme)
+        }
+
+        let controller: UndoOverlayController
+        switch action.action {
+        case .add:
+            controller = UndoOverlayController(
+                presentationData: presentationData,
+                content: .stickersModified(
+                    title: presentationData.strings.StickerPackActionInfo_AddedTitle,
+                    text: presentationData.strings.StickerPackActionInfo_AddedText(action.info.title).string,
+                    undo: false,
+                    info: action.info,
+                    topItem: action.items.first,
+                    context: self.context
+                ),
+                elevatedLayout: false,
+                animateInAsReplacement: animateInAsReplacement,
+                action: { _ in
+                    return true
+                }
+            )
+        case let .remove(positionInList):
+            controller = UndoOverlayController(
+                presentationData: presentationData,
+                content: .stickersModified(
+                    title: presentationData.strings.StickerPackActionInfo_RemovedTitle,
+                    text: presentationData.strings.StickerPackActionInfo_RemovedText(action.info.title).string,
+                    undo: true,
+                    info: action.info,
+                    topItem: action.items.first,
+                    context: self.context
+                ),
+                elevatedLayout: false,
+                animateInAsReplacement: animateInAsReplacement,
+                action: { [weak self] overlayAction in
+                    if case .undo = overlayAction {
+                        let _ = self?.context.engine.stickers.addStickerPackInteractively(info: action.info, items: action.items, positionInList: positionInList).start()
+                    }
+                    return true
+                }
+            )
+        }
+
+        self.interaction.getNavigationController()?.presentOverlay(controller: controller)
+    }
     
     public func activate() {
         if self.isActivated {
@@ -374,7 +438,9 @@ public final class ChatMediaInputTrendingPane: ChatMediaInputPane {
                             return false
                         }
                     },
-                    actionPerformed: nil
+                    actionPerformed: { [weak self] actions in
+                        self?.presentStickerPackActionOverlay(actions)
+                    }
                 )
                 strongSelf.interaction.presentController(controller, nil)
             }

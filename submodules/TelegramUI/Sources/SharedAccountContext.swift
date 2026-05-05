@@ -13,7 +13,6 @@ import DeviceLocationManager
 import ItemListUI
 import LegacyUI
 import ChatListUI
-import PeersNearbyUI
 import PeerInfoUI
 import SettingsUI
 import UrlHandling
@@ -2244,15 +2243,11 @@ public final class SharedAccountContextImpl: SharedAccountContext {
     public func openResolvedUrl(_ resolvedUrl: ResolvedUrl, context: AccountContext, urlContext: OpenURLContext, navigationController: NavigationController?, forceExternal: Bool, forceUpdate: Bool, openPeer: @escaping (EnginePeer, ChatControllerInteractionNavigateToPeer) -> Void, sendFile: ((FileMediaReference) -> Void)?, sendSticker: ((FileMediaReference, UIView?, CGRect?) -> Bool)?, sendEmoji: ((String, ChatTextInputTextCustomEmojiAttribute) -> Void)?, requestMessageActionUrlAuth: ((MessageActionUrlSubject) -> Void)?, joinVoiceChat: ((PeerId, String?, CachedChannelData.ActiveCall) -> Void)?, present: @escaping (ViewController, Any?) -> Void, dismissInput: @escaping () -> Void, contentContext: Any?, progress: Promise<Bool>?, completion: (() -> Void)?) {
         openResolvedUrlImpl(resolvedUrl, context: context, urlContext: urlContext, navigationController: navigationController, forceExternal: forceExternal, forceUpdate: forceUpdate, openPeer: openPeer, sendFile: sendFile, sendSticker: sendSticker, sendEmoji: sendEmoji, requestMessageActionUrlAuth: requestMessageActionUrlAuth, joinVoiceChat: joinVoiceChat, present: present, dismissInput: dismissInput, contentContext: contentContext, progress: progress, completion: completion)
     }
-    
+
     public func makeDeviceContactInfoController(context: ShareControllerAccountContext, environment: ShareControllerEnvironment, subject: DeviceContactInfoSubject, completed: (() -> Void)?, cancelled: (() -> Void)?) -> ViewController {
         return deviceContactInfoController(context: context, environment: environment, subject: subject, completed: completed, cancelled: cancelled)
     }
-    
-    public func makePeersNearbyController(context: AccountContext) -> ViewController {
-        return peersNearbyController(context: context)
-    }
-    
+
     public func makeChatController(context: AccountContext, chatLocation: ChatLocation, subject: ChatControllerSubject?, botStart: ChatControllerInitialBotStart?, mode: ChatControllerPresentationMode, params: ChatControllerParams?) -> ChatController {
         return ChatControllerImpl(context: context, chatLocation: chatLocation, subject: subject, botStart: botStart, mode: mode, params: params)
     }
@@ -3719,16 +3714,21 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return controller
     }
     
-    public func makeStickerPackScreen(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, mainStickerPack: StickerPackReference, stickerPacks: [StickerPackReference], loadedStickerPacks: [LoadedStickerPack], actionTitle: String?, isEditing: Bool, expandIfNeeded: Bool, parentNavigationController: NavigationController?, sendSticker: ((FileMediaReference, UIView?, CGRect?) -> Bool)?, actionPerformed: ((Bool) -> Void)?) -> ViewController {
+    public func makeStickerPackScreen(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, mainStickerPack: StickerPackReference, stickerPacks: [StickerPackReference], loadedStickerPacks: [LoadedStickerPack], actionTitle: String?, isEditing: Bool, expandIfNeeded: Bool, parentNavigationController: NavigationController?, sendSticker: ((FileMediaReference, UIView?, CGRect?) -> Bool)?, actionPerformed: (([StickerPackScreenActionResult]) -> Void)?) -> ViewController {
         return StickerPackScreen(context: context, updatedPresentationData: updatedPresentationData, mainStickerPack: mainStickerPack, stickerPacks: stickerPacks, loadedStickerPacks: loadedStickerPacks, actionTitle: actionTitle, isEditing: isEditing, expandIfNeeded: expandIfNeeded, parentNavigationController: parentNavigationController, sendSticker: sendSticker, actionPerformed: { actions in
-            if let (_, _, action) = actions.first {
+            guard let actionPerformed = actionPerformed else {
+                return
+            }
+            actionPerformed(actions.map { info, items, action in
+                let mappedAction: StickerPackScreenActionKind
                 switch action {
                 case .add:
-                    actionPerformed?(true)
-                case .remove:
-                    actionPerformed?(false)
+                    mappedAction = .add
+                case let .remove(positionInList):
+                    mappedAction = .remove(positionInList: positionInList)
                 }
-            }
+                return StickerPackScreenActionResult(info: info, items: items, action: mappedAction)
+            })
         })
     }
     

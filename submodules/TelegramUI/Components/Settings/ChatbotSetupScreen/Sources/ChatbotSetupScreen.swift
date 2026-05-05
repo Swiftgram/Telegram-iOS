@@ -833,7 +833,7 @@ final class ChatbotSetupScreenComponent: Component {
                             }
                             controller.present(UndoOverlayController(
                                 presentationData: presentationData,
-                                content: .invitedToVoiceChat(context: component.context, peer: peer, title: nil, text: environment.strings.ChatbotSetup_BotInstalled(peer.compactDisplayTitle).string, action: nil, duration: 2.0),
+                                content: .actionSucceeded(title: nil, text: environment.strings.ChatbotSetup_BotInstalled(peer.compactDisplayTitle).string, cancel: nil, destructive: false),
                                 elevatedLayout: false,
                                 position: .bottom,
                                 animateInAsReplacement: false,

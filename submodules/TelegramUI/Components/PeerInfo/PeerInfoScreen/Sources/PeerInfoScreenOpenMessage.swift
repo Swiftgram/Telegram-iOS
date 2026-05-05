@@ -6,10 +6,119 @@ import SwiftSignalKit
 import TelegramCore
 import LegacyMediaPickerUI
 import ChatHistorySearchContainerNode
+import ChatScheduleTimeController
 import MediaResources
 import TelegramUIPreferences
 
 extension PeerInfoScreenNode {
+    private func presentMediaScheduleTimePicker(completion: @escaping (Int32, Bool) -> Void) {
+        guard let peerId = self.chatLocation.peerId else {
+            return
+        }
+        let _ = (self.context.account.viewTracker.peerView(peerId)
+        |> take(1)
+        |> deliverOnMainQueue).startStandalone(next: { [weak self] peerView in
+            guard let self, let controller = self.controller, let peer = peerViewMainPeer(peerView) else {
+                return
+            }
+
+            var sendWhenOnlineAvailable = false
+            if let presence = peerView.peerPresences[peer.id] as? TelegramUserPresence, case .present = presence.status {
+                sendWhenOnlineAvailable = true
+            }
+            if peer.id.namespace == Namespaces.Peer.CloudUser && peer.id.id._internalGetInt64Value() == 777000 {
+                sendWhenOnlineAvailable = false
+            }
+
+            let mode: ChatScheduleTimeScreen.Mode
+            if peerId == self.context.account.peerId {
+                mode = .reminders
+            } else {
+                mode = .scheduledMessages(peerId: peer.id, sendWhenOnlineAvailable: sendWhenOnlineAvailable)
+            }
+
+            let scheduleController = ChatScheduleTimeScreen(
+                context: self.context,
+                mode: mode,
+                currentTime: nil,
+                currentRepeatPeriod: nil,
+                minimalTime: nil,
+                silentPosting: false,
+                isDark: true,
+                completion: { result in
+                    completion(result.time, result.silentPosting)
+                }
+            )
+            self.view.endEditing(true)
+            controller.present(scheduleController, in: .window(.root))
+        })
+    }
+
+    private func openScheduledMessages() {
+        guard let controller = self.controller, let navigationController = controller.navigationController as? NavigationController else {
+            return
+        }
+
+        var mappedChatLocation = self.chatLocation
+        if case let .replyThread(message) = self.chatLocation, message.peerId == self.context.account.peerId {
+            mappedChatLocation = .peer(id: self.context.account.peerId)
+        }
+
+        let scheduledController = self.context.sharedContext.makeChatController(
+            context: self.context,
+            chatLocation: mappedChatLocation,
+            subject: .scheduledMessages,
+            botStart: nil,
+            mode: .standard(.default),
+            params: nil
+        )
+        scheduledController.navigationPresentation = .modal
+        navigationController.pushViewController(scheduledController)
+    }
+
+    private func transformEditedMediaMessages(_ messages: [EnqueueMessage], replyToMessageId: EngineMessage.Id, silentPosting: Bool, scheduleTime: Int32?) -> [EnqueueMessage] {
+        let replySubject = EngineMessageReplySubject(messageId: replyToMessageId, quote: nil, innerSubject: nil)
+        let defaultThreadId: Int64?
+        if case let .replyThread(replyThreadMessage) = self.chatLocation, replyThreadMessage.peerId == self.context.account.peerId {
+            defaultThreadId = replyThreadMessage.threadId
+        } else {
+            defaultThreadId = nil
+        }
+
+        return messages.map { message in
+            var message = message.withUpdatedReplyToMessageId(replySubject)
+
+            if let defaultThreadId {
+                var updateThreadId = false
+                switch message {
+                case let .message(_, _, _, _, threadId, _, _, _, _, _):
+                    updateThreadId = threadId == nil
+                case let .forward(_, threadId, _, _, _):
+                    updateThreadId = threadId == nil
+                }
+                if updateThreadId {
+                    message = message.withUpdatedThreadId(defaultThreadId)
+                }
+            }
+
+            return message.withUpdatedAttributes { attributes in
+                var attributes = attributes
+                for i in (0 ..< attributes.count).reversed() {
+                    if attributes[i] is NotificationInfoMessageAttribute || attributes[i] is OutgoingScheduleInfoMessageAttribute {
+                        attributes.remove(at: i)
+                    }
+                }
+                if silentPosting {
+                    attributes.append(NotificationInfoMessageAttribute(flags: .muted))
+                }
+                if let scheduleTime {
+                    attributes.append(OutgoingScheduleInfoMessageAttribute(scheduleTime: scheduleTime, repeatPeriod: nil))
+                }
+                return attributes
+            }
+        }
+    }
+
     func openMessage(id: EngineMessage.Id) -> Bool {
         guard let controller = self.controller, let navigationController = controller.navigationController as? NavigationController else {
             return false
@@ -113,17 +222,31 @@ extension PeerInfoScreenNode {
                 }
 
                 if let mediaReference = mediaReference, let peer = message.peers[message.id.peerId] {
+                    let hasSilentPosting = peer.id != strongSelf.context.account.peerId
+                    let hasSchedule = peer.id.namespace != Namespaces.Peer.SecretChat
                     legacyMediaEditor(context: strongSelf.context, peer: EnginePeer(peer), threadTitle: message.associatedThreadInfo?.title, media: mediaReference, mode: .draw, initialCaption: NSAttributedString(), snapshots: snapshots, transitionCompletion: {
 
                         transitionCompletion()
                     }, getCaptionPanelView: {
                         return nil
-                    }, sendMessagesWithSignals: { [weak self] signals, _, _, _ in
+                    }, hasSilentPosting: hasSilentPosting, hasSchedule: hasSchedule, reminder: peer.id == strongSelf.context.account.peerId, presentSchedulePicker: { [weak self] _, done in
+                        self?.presentMediaScheduleTimePicker(completion: { time, silentPosting in
+                            done(time, silentPosting)
+                        })
+                    }, sendMessagesWithSignals: { [weak self] signals, silentPosting, scheduleTime, _ in
                         if let strongSelf = self {
                             strongSelf.enqueueMediaMessageDisposable.set((legacyAssetPickerEnqueueMessages(context: strongSelf.context, account: strongSelf.context.account, signals: signals!)
                             |> deliverOnMainQueue).startStrict(next: { [weak self] messages in
                                 if let strongSelf = self {
-                                    let _ = enqueueMessages(account: strongSelf.context.account, peerId: strongSelf.peerId, messages: messages.map { $0.message.withUpdatedReplyToMessageId(.init(messageId: message.id, quote: nil, innerSubject: nil)) }).startStandalone()
+                                    let effectiveScheduleTime = scheduleTime == 0 ? nil : scheduleTime
+                                    let mappedMessages = strongSelf.transformEditedMediaMessages(messages.map(\.message), replyToMessageId: message.id, silentPosting: silentPosting, scheduleTime: effectiveScheduleTime)
+                                    let _ = (enqueueMessages(account: strongSelf.context.account, peerId: strongSelf.peerId, messages: mappedMessages)
+                                    |> deliverOnMainQueue).startStandalone(next: { [weak self] _ in
+                                        guard let self, let effectiveScheduleTime, effectiveScheduleTime != scheduleWhenOnlineTimestamp else {
+                                            return
+                                        }
+                                        self.openScheduledMessages()
+                                    })
                                 }
                             }))
                         }

@@ -15,6 +15,7 @@ import Geocoding
 import WallpaperResources
 import Sunrise
 import ThemeSettingsThemeItem
+import ChatTimerScreen
 
 private enum TriggerMode {
     case system
@@ -487,32 +488,44 @@ public func themeAutoNightSettingsController(context: AccountContext) -> ViewCon
                     break
             }
             
-            presentControllerImpl?(ThemeAutoNightTimeSelectionActionSheet(context: context, currentValue: currentValue, applyValue: { value in
-                guard let value = value else {
-                    return
-                }
-                updateSettings { settings in
-                    var settings = settings
-                    switch settings.trigger {
-                        case let .timeBased(setting):
-                            switch setting {
-                            case var .manual(fromSeconds, toSeconds):
-                                switch field {
-                                case .from:
-                                    fromSeconds = value
-                                case .to:
-                                    toSeconds = value
+            let controller = ChatTimerScreen(
+                context: context,
+                configuration: ChatTimerScreen.Configuration(
+                    style: .default,
+                    picker: .timeOfDay,
+                    currentValue: currentValue,
+                    pickerValueMapping: .secondsFromMidnightGMT,
+                    primaryActionTitle: { strings, _, _ in
+                        strings.Wallpaper_Set
+                    }
+                ),
+                completion: { value in
+                    guard let value = value else {
+                        return
+                    }
+                    updateSettings { settings in
+                        var settings = settings
+                        switch settings.trigger {
+                            case let .timeBased(setting):
+                                switch setting {
+                                case var .manual(fromSeconds, toSeconds):
+                                    switch field {
+                                    case .from:
+                                        fromSeconds = value
+                                    case .to:
+                                        toSeconds = value
+                                    }
+                                    settings.trigger = .timeBased(setting: .manual(fromSeconds: fromSeconds, toSeconds: toSeconds))
+                                default:
+                                    break
                                 }
-                                settings.trigger = .timeBased(setting: .manual(fromSeconds: fromSeconds, toSeconds: toSeconds))
                             default:
                                 break
-                            }
-                        default:
-                            break
+                        }
+                        return settings
                     }
-                    return settings
-                }
-            }))
+                })
+            presentControllerImpl?(controller)
             
             return settings
         }

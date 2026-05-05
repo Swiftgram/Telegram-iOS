@@ -1420,7 +1420,6 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
                 })
             })
         }, openScheduledMessages: {
-        }, openPeersNearby: {
         }, displaySearchResultsTooltip: { _, _ in
         }, unarchivePeer: {
         }, scrollToTop: {

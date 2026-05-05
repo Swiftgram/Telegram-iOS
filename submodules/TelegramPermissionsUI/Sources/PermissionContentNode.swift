@@ -6,7 +6,6 @@ import TelegramCore
 import TelegramPresentationData
 import TextFormat
 import TelegramPermissions
-import PeersNearbyIconNode
 import SolidRoundedButtonNode
 import PresentationDataUtils
 import Markdown
@@ -38,7 +37,6 @@ public final class PermissionContentNode: ASDisplayNode {
     private let filterHitTest: Bool
 
     private let iconNode: ASImageNode
-    private let nearbyIconNode: PeersNearbyIconNode?
     private let animationNode: AnimatedStickerNode?
     private let titleNode: ImmediateTextNode
     private let subtitleNode: ImmediateTextNode
@@ -78,13 +76,7 @@ public final class PermissionContentNode: ASDisplayNode {
             
             self.animationNode?.setup(source: AnimatedStickerNodeLocalFileSource(name: animation), width: 320, height: 320, playbackMode: .once, mode: .direct(cachePathPrefix: nil))
             self.animationNode?.visibility = true
-            
-            self.nearbyIconNode = nil
-        } else if kind == PermissionKind.nearbyLocation.rawValue {
-            self.nearbyIconNode = PeersNearbyIconNode(theme: theme)
-            self.animationNode = nil
         } else {
-            self.nearbyIconNode = nil
             self.animationNode = nil
         }
         
@@ -149,7 +141,6 @@ public final class PermissionContentNode: ASDisplayNode {
         }
         
         self.addSubnode(self.iconNode)
-        self.nearbyIconNode.flatMap { self.addSubnode($0) }
         self.animationNode.flatMap { self.addSubnode($0) }
         self.addSubnode(self.titleNode)
         self.addSubnode(self.subtitleNode)
@@ -255,11 +246,6 @@ public final class PermissionContentNode: ASDisplayNode {
             imageSize = icon.size
             contentHeight += imageSize.height + imageSpacing
         }
-        if let _ = self.nearbyIconNode, size.width < size.height {
-            imageSpacing = floor(availableHeight * 0.12)
-            imageSize = CGSize(width: 120.0, height: 120.0)
-            contentHeight += imageSize.height + imageSpacing
-        }
         if let _ = self.animationNode, size.width < size.height {
             imageSpacing = floor(availableHeight * 0.12)
             imageSize = CGSize(width: 240.0, height: 240.0)
@@ -275,7 +261,6 @@ public final class PermissionContentNode: ASDisplayNode {
         
         let contentOrigin = insets.top + floor((size.height - insets.top - insets.bottom - contentHeight) / 2.0) - verticalOffset
         let iconFrame = CGRect(origin: CGPoint(x: floor((size.width - imageSize.width) / 2.0), y: contentOrigin), size: imageSize)
-        let nearbyIconFrame = CGRect(origin: CGPoint(x: floor((size.width - imageSize.width) / 2.0), y: contentOrigin), size: imageSize)
         let animationFrame = CGRect(origin: CGPoint(x: floor((size.width - imageSize.width) / 2.0), y: contentOrigin), size: imageSize)
         let titleFrame = CGRect(origin: CGPoint(x: floor((size.width - titleSize.width) / 2.0), y: iconFrame.maxY + imageSpacing), size: titleSize)
         
@@ -300,9 +285,6 @@ public final class PermissionContentNode: ASDisplayNode {
         }
         
         transition.updateFrame(node: self.iconNode, frame: iconFrame)
-        if let nearbyIconNode = self.nearbyIconNode {
-            transition.updateFrame(node: nearbyIconNode, frame: nearbyIconFrame)
-        }
         if let animationNode = self.animationNode {
             transition.updateFrame(node: animationNode, frame: animationFrame)
             animationNode.updateLayout(size: animationFrame.size)

@@ -48,6 +48,7 @@ swift_library(
         "//submodules/TelegramUI/Components/PlainButtonComponent",
         "//submodules/Utils/DeviceModel",
         "//submodules/PresentationDataUtils",
+        "//submodules/TelegramUI/Components/GlassBarButtonComponent",
     ],
     visibility = [
         "//visibility:public",

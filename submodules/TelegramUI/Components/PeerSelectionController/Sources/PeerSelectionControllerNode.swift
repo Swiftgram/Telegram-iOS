@@ -792,7 +792,6 @@ final class PeerSelectionControllerNode: ASDisplayNode {
                 strongSelf.presentInGlobalOverlay(controller, nil)
             })
         }, openScheduledMessages: {
-        }, openPeersNearby: {
         }, displaySearchResultsTooltip: { _, _ in
         }, unarchivePeer: {
         }, scrollToTop: {

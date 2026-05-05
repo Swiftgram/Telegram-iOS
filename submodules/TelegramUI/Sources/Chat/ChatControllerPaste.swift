@@ -205,6 +205,7 @@ extension ChatControllerImpl {
             videoVolume: nil,
             additionalVideoPath: nil,
             additionalVideoIsDual: false,
+            additionalVideoMirroringChanges: [],
             additionalVideoPosition: nil,
             additionalVideoScale: nil,
             additionalVideoRotation: nil,

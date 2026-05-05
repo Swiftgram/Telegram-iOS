@@ -132,7 +132,6 @@ final class PeerInfoSelectionPanelNode: ASDisplayNode {
         }, displaySlowmodeTooltip: { _, _ in
         }, displaySendMessageOptions: { _, _ in
         }, openScheduledMessages: {
-        }, openPeersNearby: {
         }, displaySearchResultsTooltip: { _, _ in
         }, unarchivePeer: {
         }, scrollToTop: {

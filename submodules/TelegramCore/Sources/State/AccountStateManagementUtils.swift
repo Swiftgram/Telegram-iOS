@@ -1819,19 +1819,6 @@ private func finalStateWithUpdatesAndServerTime(accountPeerId: PeerId, postbox: 
                             updatedState.updatePeerChatInclusion(peerId: peer.peerId, groupId: PeerGroupId(rawValue: folderId), changedGroup: true)
                     }
                 }
-            case let .updatePeerLocated(updatePeerLocatedData):
-                var peersNearby: [PeerNearby] = []
-                for peer in updatePeerLocatedData.peers {
-                    switch peer {
-                        case let .peerLocated(peerLocatedData):
-                            let (peer, expires, distance) = (peerLocatedData.peer, peerLocatedData.expires, peerLocatedData.distance)
-                            peersNearby.append(.peer(id: peer.peerId, expires: expires, distance: distance))
-                        case let .peerSelfLocated(peerSelfLocatedData):
-                            let expires = peerSelfLocatedData.expires
-                            peersNearby.append(.selfPeer(expires: expires))
-                    }
-                }
-                updatedState.updatePeersNearby(peersNearby)
             case let .updateNewScheduledMessage(updateNewScheduledMessageData):
                 var peerIsForum = false
                 if let peerId = updateNewScheduledMessageData.message.peerId {
@@ -3808,7 +3795,7 @@ private func optimizedOperations(_ operations: [AccountStateMutationOperation]) 
     var currentAddQuickReplyMessages: OptimizeAddMessagesState?
     for operation in operations {
         switch operation {
-        case .DeleteMessages, .DeleteMessagesWithGlobalIds, .EditMessage, .UpdateMessagePoll, .UpdateMessageReactions, .UpdateMedia, .MergeApiChats, .MergeApiUsers, .MergePeerPresences, .UpdatePeer, .ReadInbox, .ReadOutbox, .ReadGroupFeedInbox, .ResetReadState, .ResetIncomingReadState, .UpdatePeerChatUnreadMark, .ResetMessageTagSummary, .UpdateNotificationSettings, .UpdateGlobalNotificationSettings, .UpdateSecretChat, .AddSecretMessages, .ReadSecretOutbox, .AddPeerInputActivity, .AddPeerLiveTypingDraftUpdate, .UpdateCachedPeerData, .UpdatePinnedItemIds, .UpdatePinnedSavedItemIds, .UpdatePinnedTopic, .UpdatePinnedTopicOrder, .ReadMessageContents, .UpdateMessageImpressionCount, .UpdateMessageForwardsCount, .UpdateInstalledStickerPacks, .UpdateRecentGifs, .UpdateChatInputState, .UpdateCall, .AddCallSignalingData, .UpdateLangPack, .UpdateMinAvailableMessage, .UpdateIsContact, .UpdatePeerChatInclusion, .UpdatePeersNearby, .UpdateTheme, .SyncChatListFilters, .UpdateChatListFilter, .UpdateChatListFilterOrder, .UpdateReadThread, .UpdateMessagesPinned, .UpdateGroupCallParticipants, .UpdateGroupCall, .UpdateGroupCallChainBlocks, .UpdateGroupCallMessage, .UpdateGroupCallOpaqueMessage, .UpdateAutoremoveTimeout, .UpdateAttachMenuBots, .UpdateAudioTranscription, .UpdateConfig, .UpdateExtendedMedia, .ResetForumTopic, .UpdateStory, .UpdateReadStories, .UpdateStoryStealthMode, .UpdateStorySentReaction, .UpdateNewAuthorization, .UpdateWallpaper, .UpdateStarsBalance, .UpdateStarsRevenueStatus, .UpdateStarsReactionsDefaultPrivacy, .ReportMessageDelivery, .UpdateMonoForumNoPaidException, .UpdateStarGiftAuctionState, .UpdateStarGiftAuctionMyState, .UpdateEmojiGameInfo:
+        case .DeleteMessages, .DeleteMessagesWithGlobalIds, .EditMessage, .UpdateMessagePoll, .UpdateMessageReactions, .UpdateMedia, .MergeApiChats, .MergeApiUsers, .MergePeerPresences, .UpdatePeer, .ReadInbox, .ReadOutbox, .ReadGroupFeedInbox, .ResetReadState, .ResetIncomingReadState, .UpdatePeerChatUnreadMark, .ResetMessageTagSummary, .UpdateNotificationSettings, .UpdateGlobalNotificationSettings, .UpdateSecretChat, .AddSecretMessages, .ReadSecretOutbox, .AddPeerInputActivity, .AddPeerLiveTypingDraftUpdate, .UpdateCachedPeerData, .UpdatePinnedItemIds, .UpdatePinnedSavedItemIds, .UpdatePinnedTopic, .UpdatePinnedTopicOrder, .ReadMessageContents, .UpdateMessageImpressionCount, .UpdateMessageForwardsCount, .UpdateInstalledStickerPacks, .UpdateRecentGifs, .UpdateChatInputState, .UpdateCall, .AddCallSignalingData, .UpdateLangPack, .UpdateMinAvailableMessage, .UpdateIsContact, .UpdatePeerChatInclusion, .UpdateTheme, .SyncChatListFilters, .UpdateChatListFilter, .UpdateChatListFilterOrder, .UpdateReadThread, .UpdateMessagesPinned, .UpdateGroupCallParticipants, .UpdateGroupCall, .UpdateGroupCallChainBlocks, .UpdateGroupCallMessage, .UpdateGroupCallOpaqueMessage, .UpdateAutoremoveTimeout, .UpdateAttachMenuBots, .UpdateAudioTranscription, .UpdateConfig, .UpdateExtendedMedia, .ResetForumTopic, .UpdateStory, .UpdateReadStories, .UpdateStoryStealthMode, .UpdateStorySentReaction, .UpdateNewAuthorization, .UpdateWallpaper, .UpdateStarsBalance, .UpdateStarsRevenueStatus, .UpdateStarsReactionsDefaultPrivacy, .ReportMessageDelivery, .UpdateMonoForumNoPaidException, .UpdateStarGiftAuctionState, .UpdateStarGiftAuctionMyState, .UpdateEmojiGameInfo:
                 if let currentAddMessages = currentAddMessages, !currentAddMessages.messages.isEmpty {
                     result.append(.AddMessages(currentAddMessages.messages, currentAddMessages.location))
                 }
@@ -3927,7 +3914,6 @@ func replayFinalState(
     var updatedGroupCallParticipants: [(Int64, GroupCallParticipantsContext.Update)] = []
     var groupCallMessageUpdates: [GroupCallMessageUpdate] = []
     var storyUpdates: [InternalStoryUpdate] = []
-    var updatedPeersNearby: [PeerNearby]?
     var isContactUpdates: [(PeerId, Bool)] = []
     var stickerPackOperations: [AccountStateUpdateStickerPacksOperation] = []
     var recentlyUsedStickers: [MediaId: (MessageIndex, TelegramMediaFile)] = [:]
@@ -5220,8 +5206,6 @@ func replayFinalState(
                 }
             case let .UpdateIsContact(peerId, value):
                 isContactUpdates.append((peerId, value))
-            case let .UpdatePeersNearby(peersNearby):
-                updatedPeersNearby = peersNearby
             case let .UpdateTheme(theme):
                 updatedThemes[theme.id] = theme
             case let .UpdateWallpaper(peerId, wallpaper):
@@ -6159,7 +6143,6 @@ func replayFinalState(
         updatedGroupCallParticipants: updatedGroupCallParticipants,
         groupCallMessageUpdates: groupCallMessageUpdates,
         storyUpdates: storyUpdates,
-        updatedPeersNearby: updatedPeersNearby,
         isContactUpdates: isContactUpdates,
         delayNotificatonsUntil: delayNotificatonsUntil,
         updatedIncomingThreadReadStates: updatedIncomingThreadReadStates,

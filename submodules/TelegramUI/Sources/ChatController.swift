@@ -1588,17 +1588,32 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             }
                             
                             if let mediaReference = mediaReference, let peer = message.peers[message.id.peerId] {
+                                let hasSilentPosting = peer.id != self.context.account.peerId
+                                let hasSchedule = self.presentationInterfaceState.subject != .scheduledMessages && peer.id.namespace != Namespaces.Peer.SecretChat && self.presentationInterfaceState.sendPaidMessageStars == nil
                                 legacyMediaEditor(context: self.context, peer: EnginePeer(peer), threadTitle: self.contentData?.state.threadInfo?.title, media: mediaReference, mode: .draw, initialCaption: NSAttributedString(), snapshots: snapshots, transitionCompletion: {
                                     transitionCompletion()
                                 }, getCaptionPanelView: { [weak self] in
                                     return self?.getCaptionPanelView(isFile: false)
-                                }, sendMessagesWithSignals: { [weak self] signals, _, _, isCaptionAbove in
+                                }, hasSilentPosting: hasSilentPosting, hasSchedule: hasSchedule, reminder: peer.id == self.context.account.peerId, presentSchedulePicker: { [weak self] _, done in
+                                    guard let self else {
+                                        return
+                                    }
+                                    self.presentScheduleTimePicker(style: .media, presentInOverlay: true, completion: { [weak self] result in
+                                        guard let self else {
+                                            return
+                                        }
+                                        done(result.time, result.silentPosting)
+                                        if self.presentationInterfaceState.subject != .scheduledMessages && result.time != scheduleWhenOnlineTimestamp {
+                                            self.openScheduledMessages()
+                                        }
+                                    })
+                                }, sendMessagesWithSignals: { [weak self] signals, silentPosting, scheduleTime, isCaptionAbove in
                                     if let self {
                                         var parameters: ChatSendMessageActionSheetController.SendParameters?
                                         if isCaptionAbove {
                                             parameters = ChatSendMessageActionSheetController.SendParameters(effect: nil, textIsAboveMedia: true)
                                         }
-                                        self.enqueueMediaMessages(signals: signals, silentPosting: false, replyToSubject: .init(messageId: message.id, quote: nil, innerSubject: nil), parameters: parameters)
+                                        self.enqueueMediaMessages(signals: signals, silentPosting: silentPosting, scheduleTime: scheduleTime == 0 ? nil : scheduleTime, replyToSubject: .init(messageId: message.id, quote: nil, innerSubject: nil), parameters: parameters)
                                     }
                                 }, present: { [weak self] c, a in
                                     self?.present(c, in: .window(.root), with: a)
@@ -10426,13 +10441,13 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         )
     }
     
-    func presentScheduleTimePicker(style: ChatScheduleTimeControllerStyle = .default, selectedTime: Int32? = nil, selectedRepeatPeriod: Int32? = nil, dismissByTapOutside: Bool = true, completion: @escaping (Int32, Int32?) -> Void) {
-        self.presentScheduleTimePicker(style: style, selectedTime: selectedTime, selectedRepeatPeriod: selectedRepeatPeriod, dismissByTapOutside: dismissByTapOutside, completion: { result in
+    func presentScheduleTimePicker(style: ChatScheduleTimeControllerStyle = .default, selectedTime: Int32? = nil, selectedRepeatPeriod: Int32? = nil, dismissByTapOutside: Bool = true, presentInOverlay: Bool = false, completion: @escaping (Int32, Int32?) -> Void) {
+        self.presentScheduleTimePicker(style: style, selectedTime: selectedTime, selectedRepeatPeriod: selectedRepeatPeriod, dismissByTapOutside: dismissByTapOutside, presentInOverlay: presentInOverlay, completion: { result in
             completion(result.time, result.repeatPeriod)
         })
     }
     
-    func presentScheduleTimePicker(style: ChatScheduleTimeControllerStyle = .default, selectedTime: Int32? = nil, selectedRepeatPeriod: Int32? = nil, dismissByTapOutside: Bool = true, completion: @escaping (ChatScheduleTimeScreen.Result) -> Void) {
+    func presentScheduleTimePicker(style: ChatScheduleTimeControllerStyle = .default, selectedTime: Int32? = nil, selectedRepeatPeriod: Int32? = nil, dismissByTapOutside: Bool = true, presentInOverlay: Bool = false, completion: @escaping (ChatScheduleTimeScreen.Result) -> Void) {
         guard let peerId = self.chatLocation.peerId else {
             return
         }
@@ -10470,7 +10485,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 }
             )
             strongSelf.chatDisplayNode.dismissInput()
-            if strongSelf.videoRecorderValue != nil {
+            if presentInOverlay || strongSelf.videoRecorderValue != nil {
                 strongSelf.present(controller, in: .window(.root))
             } else {
                 strongSelf.push(controller)

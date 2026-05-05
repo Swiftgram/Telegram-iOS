@@ -13,10 +13,6 @@ public final class TelegramEngine {
         return SecureId(account: self.account)
     }()
 
-    public lazy var peersNearby: PeersNearby = {
-        return PeersNearby(account: self.account)
-    }()
-
     public lazy var payments: Payments = {
         return Payments(account: self.account)
     }()

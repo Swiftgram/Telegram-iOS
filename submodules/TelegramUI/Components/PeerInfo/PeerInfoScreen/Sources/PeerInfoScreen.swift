@@ -518,9 +518,6 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             openLocation: { [weak self] in
                 self?.openLocation()
             },
-            editingOpenSetupLocation: { [weak self] in
-                self?.editingOpenSetupLocation()
-            },
             openPeerInfo: { [weak self] peer, isMember in
                 self?.openPeerInfo(peer: peer, isMember: isMember)
             },
@@ -4299,40 +4296,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         let controller = LocationViewController(context: context, updatedPresentationData: self.controller?.updatedPresentationData, subject: EngineMessage(message), params: controllerParams)
         self.controller?.push(controller)
     }
-    
-    private func editingOpenSetupLocation() {
-        guard let data = self.data, let peer = data.peer else {
-            return
-        }
         
-        let controller = LocationPickerController(context: self.context, updatedPresentationData: self.controller?.updatedPresentationData, mode: .pick, completion: { [weak self] location, _, _, address, _ in
-            guard let strongSelf = self else {
-                return
-            }
-            let addressSignal: Signal<String, NoError>
-            if let address = address {
-                addressSignal = .single(address)
-            } else {
-                addressSignal = reverseGeocodeLocation(latitude: location.latitude, longitude: location.longitude)
-                |> map { placemark in
-                    if let placemark = placemark {
-                        return placemark.fullAddress
-                    } else {
-                        return "\(location.latitude), \(location.longitude)"
-                    }
-                }
-            }
-            
-            let context = strongSelf.context
-            let _ = (addressSignal
-            |> mapToSignal { address -> Signal<Bool, NoError> in
-                return updateChannelGeoLocation(postbox: context.account.postbox, network: context.account.network, channelId: peer.id, coordinate: (location.latitude, location.longitude), address: address)
-            }
-            |> deliverOnMainQueue).startStandalone()
-        })
-        self.controller?.push(controller)
-    }
-    
     private func openPeerInfo(peer: EnginePeer, isMember: Bool) {
         let mode: PeerInfoControllerMode = .generic
         if let infoController = self.context.sharedContext.makePeerInfoController(context: self.context, updatedPresentationData: nil, peer: peer, mode: mode, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {

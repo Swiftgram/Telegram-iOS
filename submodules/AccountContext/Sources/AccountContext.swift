@@ -736,7 +736,6 @@ public enum PeerInfoControllerMode {
     
     case generic
     case calls(messages: [EngineMessage])
-    case nearbyPeer(distance: Int32)
     case group(sourceMessageId: MessageId)
     case reaction(MessageId)
     case forumTopic(thread: ChatReplyThreadMessage)
@@ -1371,7 +1370,6 @@ public protocol SharedAccountContext: AnyObject {
     func makePeerInfoController(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, peer: EnginePeer, mode: PeerInfoControllerMode, avatarInitiallyExpanded: Bool, fromChat: Bool, requestsContext: PeerInvitationImportersContext?) -> ViewController?
     func makeChannelAdminController(context: AccountContext, peerId: PeerId, adminId: PeerId, initialParticipant: ChannelParticipant) -> ViewController?
     func makeDeviceContactInfoController(context: ShareControllerAccountContext, environment: ShareControllerEnvironment, subject: DeviceContactInfoSubject, completed: (() -> Void)?, cancelled: (() -> Void)?) -> ViewController
-    func makePeersNearbyController(context: AccountContext) -> ViewController
     func makeComposeController(context: AccountContext) -> ViewController
     func makeChatListController(context: AccountContext, location: ChatListControllerLocation, controlsHistoryPreload: Bool, hideNetworkActivityStatus: Bool, previewing: Bool, enableDebugActions: Bool) -> ChatListController
     func makeChatController(context: AccountContext, chatLocation: ChatLocation, subject: ChatControllerSubject?, botStart: ChatControllerInitialBotStart?, mode: ChatControllerPresentationMode, params: ChatControllerParams?) -> ChatController
@@ -1469,7 +1467,7 @@ public protocol SharedAccountContext: AnyObject {
     func makeGiftStoreController(context: AccountContext, peerId: EnginePeer.Id, gift: StarGift.Gift) -> ViewController
     func makePremiumPrivacyControllerController(context: AccountContext, subject: PremiumPrivacySubject, peerId: EnginePeer.Id) -> ViewController
     func makePremiumBoostLevelsController(context: AccountContext, peerId: EnginePeer.Id, subject: BoostSubject, boostStatus: ChannelBoostStatus, myBoostStatus: MyBoostStatus, forceDark: Bool, openStats: (() -> Void)?) -> ViewController
-    func makeStickerPackScreen(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, mainStickerPack: StickerPackReference, stickerPacks: [StickerPackReference], loadedStickerPacks: [LoadedStickerPack], actionTitle: String?, isEditing: Bool, expandIfNeeded: Bool, parentNavigationController: NavigationController?, sendSticker: ((FileMediaReference, UIView?, CGRect?) -> Bool)?, actionPerformed: ((Bool) -> Void)?) -> ViewController
+    func makeStickerPackScreen(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, mainStickerPack: StickerPackReference, stickerPacks: [StickerPackReference], loadedStickerPacks: [LoadedStickerPack], actionTitle: String?, isEditing: Bool, expandIfNeeded: Bool, parentNavigationController: NavigationController?, sendSticker: ((FileMediaReference, UIView?, CGRect?) -> Bool)?, actionPerformed: (([StickerPackScreenActionResult]) -> Void)?) -> ViewController
     func makeCameraScreen(context: AccountContext, mode: CameraScreenMode, cameraHolder: Any?, transitionIn: CameraScreenTransitionIn?, transitionOut: @escaping (Bool) -> CameraScreenTransitionOut?, completion: @escaping (Any, @escaping () -> Void) -> Void, transitionedOut: (() -> Void)?) -> ViewController
     func makeMediaPickerScreen(context: AccountContext, hasSearch: Bool, completion: @escaping (Any) -> Void) -> ViewController
     func makeStoryMediaEditorScreen(context: AccountContext, source: Any?, text: String?, link: (url: String, name: String?)?, remainingCount: Int32, completion: @escaping ([MediaEditorScreenResult], MediaEditorTransitionOutExternalState, @escaping (@escaping () -> Void) -> Void) -> Void) -> ViewController
@@ -1636,6 +1634,23 @@ public protocol ChatSendMessageActionSheetControllerSourceSendButtonNode: ASDisp
 public protocol ChatSendMessageActionSheetController: ViewController {
     typealias SendMode = ChatSendMessageActionSheetControllerSendMode
     typealias SendParameters = ChatSendMessageActionSheetControllerSendParameters
+}
+
+public enum StickerPackScreenActionKind {
+    case add
+    case remove(positionInList: Int)
+}
+
+public struct StickerPackScreenActionResult {
+    public let info: StickerPackCollectionInfo
+    public let items: [StickerPackItem]
+    public let action: StickerPackScreenActionKind
+
+    public init(info: StickerPackCollectionInfo, items: [StickerPackItem], action: StickerPackScreenActionKind) {
+        self.info = info
+        self.items = items
+        self.action = action
+    }
 }
 
 public protocol AccountContext: AnyObject {
