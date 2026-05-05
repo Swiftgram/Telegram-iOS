@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import Display
 import AsyncDisplayKit
-import Postbox
 import TelegramCore
 import SwiftSignalKit
 import AccountContext
@@ -802,19 +801,19 @@ private final class StickerPackContainer: ASDisplayNode {
     private func emojiSuggestionPeekContent(itemLayer: CALayer, file: TelegramMediaFile) -> Signal<(UIView, CGRect, PeekControllerContent)?, NoError> {
         let context = self.context
         
-        var collectionId: ItemCollectionId?
+        var collectionId: EngineItemCollectionId?
         for attribute in file.attributes {
             if case let .CustomEmoji(_, _, _, packReference) = attribute {
                 switch packReference {
                 case let .id(id, _):
-                    collectionId = ItemCollectionId(namespace: Namespaces.ItemCollection.CloudEmojiPacks, id: id)
+                    collectionId = EngineItemCollectionId(namespace: Namespaces.ItemCollection.CloudEmojiPacks, id: id)
                 default:
                     break
                 }
             }
         }
         
-        var bubbleUpEmojiOrStickersets: [ItemCollectionId] = []
+        var bubbleUpEmojiOrStickersets: [EngineItemCollectionId] = []
         if let collectionId {
             bubbleUpEmojiOrStickersets.append(collectionId)
         }
@@ -859,9 +858,9 @@ private final class StickerPackContainer: ASDisplayNode {
                     case let .CustomEmoji(_, _, displayText, stickerPackReference):
                         text = displayText
                         
-                        var packId: ItemCollectionId?
+                        var packId: EngineItemCollectionId?
                         if case let .id(id, _) = stickerPackReference {
-                            packId = ItemCollectionId(namespace: Namespaces.ItemCollection.CloudEmojiPacks, id: id)
+                            packId = EngineItemCollectionId(namespace: Namespaces.ItemCollection.CloudEmojiPacks, id: id)
                         }
                         emojiAttribute = ChatTextInputTextCustomEmojiAttribute(interactivelySelectedFromPackId: packId, fileId: file.fileId.id, file: file)
                         break loop
@@ -1468,12 +1467,12 @@ private final class StickerPackContainer: ASDisplayNode {
             }
             
             if installedCount == self.currentStickerPacks.count {
-                var removedPacks: Signal<[(info: ItemCollectionInfo, index: Int, items: [ItemCollectionItem])], NoError> = .single([])
+                var removedPacks: Signal<[(info: EngineRawItemCollectionInfo, index: Int, items: [EngineRawItemCollectionItem])], NoError> = .single([])
                 for (info, _, _) in self.currentStickerPacks {
                     removedPacks = removedPacks
-                    |> mapToSignal { current -> Signal<[(info: ItemCollectionInfo, index: Int, items: [ItemCollectionItem])], NoError> in
+                    |> mapToSignal { current -> Signal<[(info: EngineRawItemCollectionInfo, index: Int, items: [EngineRawItemCollectionItem])], NoError> in
                         return self.context.engine.stickers.removeStickerPackInteractively(id: info.id, option: .delete)
-                        |> map { result -> [(info: ItemCollectionInfo, index: Int, items: [ItemCollectionItem])] in
+                        |> map { result -> [(info: EngineRawItemCollectionInfo, index: Int, items: [EngineRawItemCollectionItem])] in
                             if let result = result {
                                 return current + [(info, result.0, result.1)]
                             } else {
@@ -2968,13 +2967,6 @@ public final class StickerPackScreenImpl: ViewController, StickerPackScreen {
                 }
                 return .single(result)
             }
-            |> mapToSignal { peer -> Signal<Peer?, NoError> in
-                if let peer = peer {
-                    return .single(peer._asPeer())
-                } else {
-                    return .single(nil)
-                }
-            }
             |> deliverOnMainQueue).start(next: { peer in
                 guard let strongSelf = self else {
                     return
@@ -2982,7 +2974,7 @@ public final class StickerPackScreenImpl: ViewController, StickerPackScreen {
                 if let peer {
                     if let parentNavigationController = strongSelf.parentNavigationController {
                         strongSelf.controllerNode.dismiss()
-                        strongSelf.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: parentNavigationController, context: strongSelf.context, chatLocation: .peer(EnginePeer(peer)), keepStack: .always, animated: true))
+                        strongSelf.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: parentNavigationController, context: strongSelf.context, chatLocation: .peer(peer), keepStack: .always, animated: true))
                     }
                 } else {
                     strongSelf.present(textAlertController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, title: nil, text: strongSelf.presentationData.strings.Resolve_ErrorNotFound, actions: [TextAlertAction(type: .defaultAction, title: strongSelf.presentationData.strings.Common_OK, action: {})]), in: .window(.root))

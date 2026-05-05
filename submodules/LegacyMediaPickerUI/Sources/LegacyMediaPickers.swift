@@ -361,48 +361,6 @@ public func legacyEnqueueGifMessage(account: Account, data: Data, correlationId:
     } |> runOn(Queue.concurrentDefaultQueue())
 }
 
-public func legacyEnqueueVideoMessage(account: Account, data: Data, correlationId: Int64? = nil) -> Signal<EnqueueMessage, Void> {
-    return Signal { subscriber in
-        if let previewImage = UIImage(data: data) {
-            let dimensions = previewImage.size
-            var previewRepresentations: [TelegramMediaImageRepresentation] = []
-            
-            let thumbnailSize = dimensions.aspectFitted(CGSize(width: 320.0, height: 320.0))
-            let thumbnailImage = TGScaleImageToPixelSize(previewImage, thumbnailSize)!
-            if let thumbnailData = thumbnailImage.jpegData(compressionQuality: 0.4) {
-                let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max))
-                account.postbox.mediaBox.storeResourceData(resource.id, data: thumbnailData)
-                previewRepresentations.append(TelegramMediaImageRepresentation(dimensions: PixelDimensions(thumbnailSize), resource: resource, progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false))
-            }
-            
-            var randomId: Int64 = 0
-            arc4random_buf(&randomId, 8)
-            let tempFilePath = NSTemporaryDirectory() + "\(randomId).mp4"
-            
-            let _ = try? FileManager.default.removeItem(atPath: tempFilePath)
-            let _ = try? data.write(to: URL(fileURLWithPath: tempFilePath), options: [.atomic])
-        
-            let resource = LocalFileGifMediaResource(randomId: Int64.random(in: Int64.min ... Int64.max), path: tempFilePath)
-            let fileName: String = "video.mp4"
-            
-            let finalDimensions = TGMediaVideoConverter.dimensions(for: dimensions, adjustments: nil, preset: TGMediaVideoConversionPresetAnimation)
-            
-            var fileAttributes: [TelegramMediaFileAttribute] = []
-            fileAttributes.append(.Video(duration: 0.0, size: PixelDimensions(finalDimensions), flags: [.supportsStreaming], preloadSize: nil, coverTime: nil, videoCodec: nil))
-            fileAttributes.append(.FileName(fileName: fileName))
-            fileAttributes.append(.Animated)
-            
-            let media = TelegramMediaFile(fileId: MediaId(namespace: Namespaces.Media.LocalFile, id: Int64.random(in: Int64.min ... Int64.max)), partialReference: nil, resource: resource, previewRepresentations: previewRepresentations, videoThumbnails: [], immediateThumbnailData: nil, mimeType: "video/mp4", size: nil, attributes: fileAttributes, alternativeRepresentations: [])
-            subscriber.putNext(.message(text: "", attributes: [], inlineStickers: [:], mediaReference: .standalone(media: media), threadId: nil, replyToMessageId: nil, replyToStoryId: nil, localGroupingKey: nil, correlationId: correlationId, bubbleUpEmojiOrStickersets: []))
-            subscriber.putCompletion()
-        } else {
-            subscriber.putError(Void())
-        }
-        
-        return EmptyDisposable
-    } |> runOn(Queue.concurrentDefaultQueue())
-}
-
 public struct LegacyAssetPickerEnqueueMessage {
     public var message: EnqueueMessage
     public var uniqueId: String?

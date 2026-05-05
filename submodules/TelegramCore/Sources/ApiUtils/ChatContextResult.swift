@@ -5,10 +5,6 @@ import TelegramApi
 import MtProtoKit
 
 
-public enum ChatContextResultMessageDecodingError: Error {
-    case generic
-}
-
 public enum ChatContextResultMessage: PostboxCoding, Equatable, Codable {
     enum CodingKeys: String, CodingKey {
         case data

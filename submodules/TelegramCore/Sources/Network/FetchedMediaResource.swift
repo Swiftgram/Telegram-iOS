@@ -671,7 +671,7 @@ final class MediaReferenceRevalidationContext {
                 }
                 |> map { [$0] }
             } else {
-                signal = telegramWallpapers(postbox: postbox, network: network, forceUpdate: true)
+                signal = _internal_telegramWallpapers(postbox: postbox, network: network, forceUpdate: true)
                 |> last
                 |> mapError { _ -> RevalidateMediaReferenceError in
                 }
@@ -697,7 +697,7 @@ final class MediaReferenceRevalidationContext {
     
     func themes(postbox: Postbox, network: Network, background: Bool) -> Signal<[TelegramTheme], RevalidateMediaReferenceError> {
         return self.genericItem(key: .themes, background: background, request: { next, error in
-            return (telegramThemes(postbox: postbox, network: network, accountManager: nil, forceUpdate: true)
+            return (_internal_telegramThemes(postbox: postbox, network: network, accountManager: nil, forceUpdate: true)
             |> take(1)
             |> mapError { _ -> RevalidateMediaReferenceError in
             }).start(next: { value in

@@ -212,7 +212,7 @@ func isTopmostChatController(_ controller: ChatControllerImpl) -> Bool {
     return true
 }
 
-func calculateSlowmodeActiveUntilTimestamp(account: Account, untilTimestamp: Int32?) -> Int32? {
+func calculateSlowmodeActiveUntilTimestamp(untilTimestamp: Int32?) -> Int32? {
     guard let untilTimestamp = untilTimestamp else {
         return nil
     }

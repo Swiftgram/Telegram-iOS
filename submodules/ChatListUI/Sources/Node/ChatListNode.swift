@@ -16,7 +16,6 @@ import ChatListSearchItemHeader
 import PremiumUI
 import AnimationCache
 import MultiAnimationRenderer
-import Postbox
 import ChatFolderLinkPreviewScreen
 import StoryContainerScreen
 import ChatListHeaderComponent
@@ -1239,7 +1238,7 @@ public final class ChatListNode: ListViewImpl {
                 case .Header, .Hole:
                     return nil
                 case let .PeerId(value):
-                    return PeerId(value)
+                    return EnginePeer.Id(value)
                 case .ThreadId, .GroupId, .ContactId, .ArchiveIntro, .EmptyIntro, .SectionHeader, .Notice, .additionalCategory, .TopPeer:
                     return nil
                 }
@@ -2618,7 +2617,7 @@ public final class ChatListNode: ListViewImpl {
                     strongSelf.enqueueHistoryPreloadUpdate()
                 }
                 
-                var refreshStoryPeerIds: [PeerId] = []
+                var refreshStoryPeerIds: [EnginePeer.Id] = []
                 var isHiddenItemVisible = false
                 if let range = range.visibleRange {
                     let entryCount = chatListView.filteredEntries.count

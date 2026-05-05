@@ -284,7 +284,7 @@ public final class ThemePreviewController: ViewController {
             switch theme {
                 case let .cloud(info):
                     resolvedWallpaper = info.resolvedWallpaper
-                    return telegramThemes(postbox: context.account.postbox, network: context.account.network, accountManager: context.sharedContext.accountManager)
+                    return context.engine.themes.themes(accountManager: context.sharedContext.accountManager)
                     |> take(1)
                     |> map { themes -> Bool in
                         if let _ = themes.first(where: { $0.id == info.theme.id }) {
@@ -317,7 +317,7 @@ public final class ThemePreviewController: ViewController {
                         }, scale: 1.0)
                         let themeThumbnailData = themeThumbnail?.jpegData(compressionQuality: 0.6)
                         
-                        return telegramThemes(postbox: context.account.postbox, network: context.account.network, accountManager: context.sharedContext.accountManager)
+                        return context.engine.themes.themes(accountManager: context.sharedContext.accountManager)
                         |> take(1)
                         |> mapToSignal { themes -> Signal<(PresentationThemeReference, Bool), NoError> in
                             let similarTheme = themes.first(where: { $0.isCreator && $0.title == info.title })

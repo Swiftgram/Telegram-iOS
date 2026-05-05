@@ -1907,7 +1907,7 @@ extension ChatControllerImpl {
                             canBypassRestrictions = true
                         }
                         if !canBypassRestrictions, let channel = combinedInitialData.initialData?.peer as? TelegramChannel, channel.isRestrictedBySlowmode, let timeout = cachedData.slowModeTimeout {
-                            if let slowmodeUntilTimestamp = calculateSlowmodeActiveUntilTimestamp(account: context.account, untilTimestamp: cachedData.slowModeValidUntilTimestamp) {
+                            if let slowmodeUntilTimestamp = calculateSlowmodeActiveUntilTimestamp(untilTimestamp: cachedData.slowModeValidUntilTimestamp) {
                                 slowmodeState = ChatSlowmodeState(timeout: timeout, variant: .timestamp(slowmodeUntilTimestamp))
                             }
                         }
@@ -2313,7 +2313,7 @@ extension ChatControllerImpl {
                             if let channel = strongSelf.state.renderedPeer?.peer as? TelegramChannel, channel.isRestrictedBySlowmode, let timeout = cachedData.slowModeTimeout {
                                 if hasPendingMessages {
                                     slowmodeState = ChatSlowmodeState(timeout: timeout, variant: .pendingMessages)
-                                } else if let slowmodeUntilTimestamp = calculateSlowmodeActiveUntilTimestamp(account: context.account, untilTimestamp: cachedData.slowModeValidUntilTimestamp) {
+                                } else if let slowmodeUntilTimestamp = calculateSlowmodeActiveUntilTimestamp(untilTimestamp: cachedData.slowModeValidUntilTimestamp) {
                                     slowmodeState = ChatSlowmodeState(timeout: timeout, variant: .timestamp(slowmodeUntilTimestamp))
                                 }
                             }

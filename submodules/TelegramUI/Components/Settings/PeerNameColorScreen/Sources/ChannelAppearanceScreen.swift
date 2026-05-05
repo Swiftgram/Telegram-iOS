@@ -4,7 +4,6 @@ import Photos
 import Display
 import AsyncDisplayKit
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramPresentationData
 import TelegramUIPreferences
@@ -98,7 +97,7 @@ final class ChannelAppearanceScreenComponent: Component {
                     TelegramEngine.EngineData.Item.Peer.StickerPack(id: peerId),
                     TelegramEngine.EngineData.Item.Peer.Wallpaper(id: peerId)
                 ),
-                telegramThemes(postbox: context.account.postbox, network: context.account.network, accountManager: context.sharedContext.accountManager)
+                context.engine.themes.themes(accountManager: context.sharedContext.accountManager)
             )
             |> map { peerData, cloudThemes -> ContentsData in
                 let (peer, subscriberCount, emojiPack, canSetStickerPack, stickerPack, wallpaper) = peerData
@@ -695,9 +694,9 @@ final class ChannelAppearanceScreenComponent: Component {
             self.previousEmojiSetupTimestamp = currentTimestamp
             
             self.emojiStatusSelectionController?.dismiss()
-            var selectedItems = Set<MediaId>()
+            var selectedItems = Set<EngineMedia.Id>()
             if let currentFileId {
-                selectedItems.insert(MediaId(namespace: Namespaces.Media.CloudFile, id: currentFileId))
+                selectedItems.insert(EngineMedia.Id(namespace: Namespaces.Media.CloudFile, id: currentFileId))
             }
             
             let mappedSubject: EmojiPagerContentComponent.Subject
@@ -1303,7 +1302,7 @@ final class ChannelAppearanceScreenComponent: Component {
                 
                 var emojiPackFile: TelegramMediaFile?
                 if let thumbnail = emojiPack?.thumbnail {
-                    emojiPackFile = TelegramMediaFile(fileId: MediaId(namespace: 0, id: 0), partialReference: nil, resource: thumbnail.resource, previewRepresentations: [], videoThumbnails: [], immediateThumbnailData: thumbnail.immediateThumbnailData, mimeType: "", size: nil, attributes: [], alternativeRepresentations: [])
+                    emojiPackFile = TelegramMediaFile(fileId: EngineMedia.Id(namespace: 0, id: 0), partialReference: nil, resource: thumbnail.resource, previewRepresentations: [], videoThumbnails: [], immediateThumbnailData: thumbnail.immediateThumbnailData, mimeType: "", size: nil, attributes: [], alternativeRepresentations: [])
                 }
                 
                 let emojiPackSectionSize = self.emojiPackSection.update(
@@ -1435,7 +1434,7 @@ final class ChannelAppearanceScreenComponent: Component {
                 
                 var stickerPackFile: TelegramMediaFile?
                 if let peerStickerPack = contentsData.peerStickerPack, let thumbnail = peerStickerPack.thumbnail {
-                    stickerPackFile = TelegramMediaFile(fileId: MediaId(namespace: 0, id: peerStickerPack.id.id), partialReference: nil, resource: thumbnail.resource, previewRepresentations: [], videoThumbnails: [], immediateThumbnailData: thumbnail.immediateThumbnailData, mimeType: "", size: nil, attributes: [], alternativeRepresentations: [])
+                    stickerPackFile = TelegramMediaFile(fileId: EngineMedia.Id(namespace: 0, id: peerStickerPack.id.id), partialReference: nil, resource: thumbnail.resource, previewRepresentations: [], videoThumbnails: [], immediateThumbnailData: thumbnail.immediateThumbnailData, mimeType: "", size: nil, attributes: [], alternativeRepresentations: [])
                 }
                 
                 let stickerPackSectionSize = self.stickerPackSection.update(
@@ -1505,7 +1504,7 @@ final class ChannelAppearanceScreenComponent: Component {
             if !isGroup {
                 let messageItem = PeerNameColorChatPreviewItem.MessageItem(
                     outgoing: false,
-                    peerId: EnginePeer.Id(namespace: peer.id.namespace, id: PeerId.Id._internalFromInt64Value(0)),
+                    peerId: EnginePeer.Id(namespace: peer.id.namespace, id: EnginePeer.Id.Id._internalFromInt64Value(0)),
                     author: peer.compactDisplayTitle,
                     photo: peer.profileImageRepresentations,
                     nameColor: .preset(resolvedState.nameColor),
@@ -1644,7 +1643,7 @@ final class ChannelAppearanceScreenComponent: Component {
                 if isGroup {
                     let incomingMessageItem = PeerNameColorChatPreviewItem.MessageItem(
                         outgoing: false,
-                        peerId: EnginePeer.Id(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(0)),
+                        peerId: EnginePeer.Id(namespace: Namespaces.Peer.CloudUser, id: EnginePeer.Id.Id._internalFromInt64Value(0)),
                         author: environment.strings.Group_Appearance_PreviewAuthor,
                         photo: [],
                         nameColor: .preset(.red),
@@ -1656,7 +1655,7 @@ final class ChannelAppearanceScreenComponent: Component {
                     
                     let outgoingMessageItem = PeerNameColorChatPreviewItem.MessageItem(
                         outgoing: true,
-                        peerId: EnginePeer.Id(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(1)),
+                        peerId: EnginePeer.Id(namespace: Namespaces.Peer.CloudUser, id: EnginePeer.Id.Id._internalFromInt64Value(1)),
                         author: peer.compactDisplayTitle,
                         photo: peer.profileImageRepresentations,
                         nameColor: .preset(.blue),

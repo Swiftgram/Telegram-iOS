@@ -181,7 +181,7 @@ public func deleteAccountOptionsController(context: AccountContext, navigationCo
     let supportPeerDisposable = MetaDisposable()
     
     let arguments = DeleteAccountOptionsArguments(changePhoneNumber: {
-        addAppLogEvent(postbox: context.account.postbox, type: "deactivate.options_phone_change_tap")
+        context.engine.accountData.addAppLogEvent(type: "deactivate.options_phone_change_tap")
         
         let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: context.engine.account.peerId))
         |> deliverOnMainQueue).start(next: { accountPeer in
@@ -195,7 +195,7 @@ public func deleteAccountOptionsController(context: AccountContext, navigationCo
             dismissImpl?()
         })
     }, addAccount: {
-        addAppLogEvent(postbox: context.account.postbox, type: "deactivate.options_add_account_tap")
+        context.engine.accountData.addAppLogEvent(type: "deactivate.options_add_account_tap")
         
         let _ = (activeAccountsAndPeers(context: context)
         |> take(1)
@@ -233,11 +233,11 @@ public func deleteAccountOptionsController(context: AccountContext, navigationCo
             }
         })
     }, setupPrivacy: {
-        addAppLogEvent(postbox: context.account.postbox, type: "deactivate.options_privacy_tap")
+        context.engine.accountData.addAppLogEvent(type: "deactivate.options_privacy_tap")
         
         replaceTopControllerImpl?(makePrivacyAndSecurityController(context: context), false)
     }, setupTwoStepAuth: {
-        addAppLogEvent(postbox: context.account.postbox, type: "deactivate.options_2fa_tap")
+        context.engine.accountData.addAppLogEvent(type: "deactivate.options_2fa_tap")
         
         if let data = twoStepAuthData {
             switch data {
@@ -263,7 +263,7 @@ public func deleteAccountOptionsController(context: AccountContext, navigationCo
         let controller = twoStepVerificationUnlockSettingsController(context: context, mode: .access(intro: false, data: twoStepAuthData.flatMap({ Signal<TwoStepVerificationUnlockSettingsControllerData, NoError>.single(.access(configuration: $0)) })))
         replaceTopControllerImpl?(controller, false)
     }, setPasscode: {
-        addAppLogEvent(postbox: context.account.postbox, type: "deactivate.options_passcode_tap")
+        context.engine.accountData.addAppLogEvent(type: "deactivate.options_passcode_tap")
         
         let _ = passcodeOptionsAccessController(context: context, pushController: { controller in
             replaceTopControllerImpl?(controller, false)
@@ -276,18 +276,18 @@ public func deleteAccountOptionsController(context: AccountContext, navigationCo
         })
         dismissImpl?()
     }, clearCache: {
-        addAppLogEvent(postbox: context.account.postbox, type: "deactivate.options_clear_cache_tap")
+        context.engine.accountData.addAppLogEvent(type: "deactivate.options_clear_cache_tap")
         
         pushControllerImpl?(StorageUsageScreen(context: context, makeStorageUsageExceptionsScreen: { category in
             return storageUsageExceptionsScreen(context: context, category: category)
         }))
         dismissImpl?()
     }, clearSyncedContacts: {
-        addAppLogEvent(postbox: context.account.postbox, type: "deactivate.options_clear_contacts_tap")
+        context.engine.accountData.addAppLogEvent(type: "deactivate.options_clear_contacts_tap")
         
         replaceTopControllerImpl?(dataPrivacyController(context: context), false)
     }, deleteChats: {
-        addAppLogEvent(postbox: context.account.postbox, type: "deactivate.options_delete_chats_tap")
+        context.engine.accountData.addAppLogEvent(type: "deactivate.options_delete_chats_tap")
         
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
         
@@ -325,7 +325,7 @@ public func deleteAccountOptionsController(context: AccountContext, navigationCo
         
         openFaq(resolvedUrlPromise)
     }, contactSupport: { [weak navigationController] in
-        addAppLogEvent(postbox: context.account.postbox, type: "deactivate.options_support_tap")
+        context.engine.accountData.addAppLogEvent(type: "deactivate.options_support_tap")
         
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
         
@@ -394,7 +394,7 @@ public func deleteAccountOptionsController(context: AccountContext, navigationCo
             ]
         )
         alertController.dismissed = { _ in
-            addAppLogEvent(postbox: context.account.postbox, type: "deactivate.options_support_cancel")
+            context.engine.accountData.addAppLogEvent(type: "deactivate.options_support_cancel")
         }
         presentControllerImpl?(alertController, nil)
     }, deleteAccount: {
@@ -464,7 +464,7 @@ public func deleteAccountOptionsController(context: AccountContext, navigationCo
         let _ = controller?.dismiss()
     }
     
-    addAppLogEvent(postbox: context.account.postbox, type: "deactivate.options_show")
+    context.engine.accountData.addAppLogEvent(type: "deactivate.options_show")
 
     return controller
 }
