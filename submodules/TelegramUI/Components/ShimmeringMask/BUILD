@@ -10,10 +10,9 @@ swift_library(
         "-warnings-as-errors",
     ],
     deps = [
-        "//submodules/AsyncDisplayKit",
-        "//submodules/Display",
-        "//submodules/ShimmerEffect",
         "//submodules/ComponentFlow",
+        "//submodules/Display",
+        "//submodules/Components/HierarchyTrackingLayer",
     ],
     visibility = [
         "//visibility:public",

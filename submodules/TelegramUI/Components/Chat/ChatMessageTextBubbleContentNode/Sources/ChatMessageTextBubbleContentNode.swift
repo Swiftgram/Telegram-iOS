@@ -88,7 +88,8 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
     private let containerNode: ContainerNode
     private let textNode: InteractiveTextNodeWithEntities
     private var streamingStatusTextNode: InteractiveTextNodeWithEntities?
-    
+    private var streamingStatusShimmerView: ShimmeringMaskView?
+
     private let textAccessibilityOverlayNode: TextAccessibilityOverlayNode
     public var statusNode: ChatMessageDateAndStatusNode?
     private var linkHighlightingNode: LinkHighlightingNode?
@@ -979,10 +980,10 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                                             guard let strongSelf, let streamingStatusTextNode = strongSelf.streamingStatusTextNode else {
                                                 return
                                             }
-                                            if let textNodeContainer = streamingStatusTextNode.textNode.view.superview {
+                                            if let shimmerView = strongSelf.streamingStatusShimmerView {
                                                 sourceView.frame = CGRect(origin: streamingStatusTextNode.textNode.frame.origin, size: sourceView.bounds.size)
-                                                textNodeContainer.addSubview(sourceView)
-                                                
+                                                shimmerView.addSubview(sourceView)
+
                                                 sourceView.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.12, removeOnCompletion: false, completion: { [weak sourceView] _ in
                                                     sourceView?.removeFromSuperview()
                                                 })
@@ -991,18 +992,37 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                                         }
                                     )
                                 ))
-                                if streamingStatusTextNode !== strongSelf.streamingStatusTextNode {
-                                    strongSelf.streamingStatusTextNode?.textNode.removeFromSupernode()
-                                    strongSelf.streamingStatusTextNode = streamingStatusTextNode
-                                    strongSelf.containerNode.addSubnode(streamingStatusTextNode.textNode)
+
+                                let streamingStatusShimmerView: ShimmeringMaskView
+                                if let current = strongSelf.streamingStatusShimmerView {
+                                    streamingStatusShimmerView = current
+                                } else {
+                                    streamingStatusShimmerView = ShimmeringMaskView(peakAlpha: 0.3, duration: 1.0)
+                                    strongSelf.streamingStatusShimmerView = streamingStatusShimmerView
+                                    strongSelf.containerNode.view.addSubview(streamingStatusShimmerView)
                                 }
-                                animation.animator.updatePosition(layer: streamingStatusTextNode.textNode.layer, position: streamingTextFrame.center, completion: nil)
+
+                                if streamingStatusTextNode !== strongSelf.streamingStatusTextNode {
+                                    strongSelf.streamingStatusTextNode?.textNode.view.removeFromSuperview()
+                                    strongSelf.streamingStatusTextNode = streamingStatusTextNode
+                                    streamingStatusShimmerView.contentView.addSubview(streamingStatusTextNode.textNode.view)
+                                }
+                                animation.animator.updatePosition(layer: streamingStatusShimmerView.layer, position: streamingTextFrame.center, completion: nil)
+                                animation.animator.updateBounds(layer: streamingStatusShimmerView.layer, bounds: CGRect(origin: CGPoint(), size: streamingTextFrame.size), completion: nil)
+                                animation.animator.updatePosition(layer: streamingStatusTextNode.textNode.layer, position: CGPoint(x: streamingTextFrame.size.width * 0.5, y: streamingTextFrame.size.height * 0.5), completion: nil)
                                 animation.animator.updateBounds(layer: streamingStatusTextNode.textNode.layer, bounds: CGRect(origin: CGPoint(), size: streamingTextFrame.size), completion: nil)
-                            } else if let streamingStatusTextNode = strongSelf.streamingStatusTextNode {
+                                streamingStatusShimmerView.update(
+                                    size: streamingTextFrame.size,
+                                    containerWidth: streamingTextFrame.size.width,
+                                    offsetX: 0.0,
+                                    gradientWidth: 200.0,
+                                    transition: .immediate
+                                )
+                            } else if let streamingStatusShimmerView = strongSelf.streamingStatusShimmerView {
                                 strongSelf.streamingStatusTextNode = nil
-                                let streamingStatusTextNodeNode = streamingStatusTextNode.textNode
-                                animation.animator.updateAlpha(layer: streamingStatusTextNodeNode.layer, alpha: 0.0, completion: { [weak streamingStatusTextNodeNode] _ in
-                                    streamingStatusTextNodeNode?.removeFromSupernode()
+                                strongSelf.streamingStatusShimmerView = nil
+                                animation.animator.updateAlpha(layer: streamingStatusShimmerView.layer, alpha: 0.0, completion: { [weak streamingStatusShimmerView] _ in
+                                    streamingStatusShimmerView?.removeFromSuperview()
                                 })
                             }
                             
