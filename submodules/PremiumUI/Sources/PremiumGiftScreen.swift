@@ -4,7 +4,6 @@ import Display
 import ComponentFlow
 import SwiftSignalKit
 import TelegramCore
-import Postbox
 import TelegramPresentationData
 import PresentationDataUtils
 import ViewControllerComponent
@@ -154,13 +153,13 @@ private final class PremiumGiftScreenContentComponent: CombinedComponent {
             
             let _ = updatePremiumPromoConfigurationOnce(account: context.account).start()
             
-            let stickersKey: PostboxViewKey = .orderedItemList(id: Namespaces.OrderedItemList.CloudPremiumStickers)
+            let stickersKey: EngineRawPostboxViewKey = .orderedItemList(id: Namespaces.OrderedItemList.CloudPremiumStickers)
             self.stickersDisposable = (self.context.account.postbox.combinedView(keys: [stickersKey])
             |> deliverOnMainQueue).start(next: { [weak self] views in
                 guard let strongSelf = self else {
                     return
                 }
-                if let view = views.views[stickersKey] as? OrderedItemListView {
+                if let view = views.views[stickersKey] as? EngineRawOrderedItemListView {
                     for item in view.items {
                         if let mediaItem = item.contents.get(RecentMediaItem.self) {
                             let file = mediaItem.media._parse()

@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import Display
 import AsyncDisplayKit
-import Postbox
 import TelegramCore
 import SwiftSignalKit
 import TelegramPresentationData
@@ -357,19 +356,19 @@ public final class CallController: ViewController {
             self.superDismiss()
         }
         
-        let callPeerView: Signal<PeerView?, NoError>
-        callPeerView = self.account.postbox.peerView(id: self.call.peerId) |> map(Optional.init)
-        
+        let callPeerView: Signal<EnginePeer?, NoError>
+        callPeerView = TelegramEngine(account: self.account).data.subscribe(TelegramEngine.EngineData.Item.Peer.Peer(id: self.call.peerId))
+
         self.peerDisposable = (combineLatest(queue: .mainQueue(),
-            self.account.postbox.peerView(id: self.account.peerId) |> take(1),
+            TelegramEngine(account: self.account).data.subscribe(TelegramEngine.EngineData.Item.Peer.Peer(id: self.account.peerId)) |> take(1),
             callPeerView,
             self.sharedContext.activeAccountsWithInfo |> take(1)
         )
         |> deliverOnMainQueue).start(next: { [weak self] accountView, view, activeAccountsWithInfo in
             if let strongSelf = self {
                 if let view {
-                    if let accountPeer = accountView.peers[accountView.peerId], let peer = view.peers[view.peerId] {
-                        strongSelf.controllerNode.updatePeer(accountPeer: EnginePeer(accountPeer), peer: EnginePeer(peer), hasOther: activeAccountsWithInfo.accounts.count > 1)
+                    if let accountPeer = accountView {
+                        strongSelf.controllerNode.updatePeer(accountPeer: accountPeer, peer: view, hasOther: activeAccountsWithInfo.accounts.count > 1)
                         strongSelf.isDataReady.set(.single(true))
                     }
                 } else {

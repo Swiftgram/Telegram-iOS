@@ -4,7 +4,6 @@ import AsyncDisplayKit
 import Display
 import ComponentFlow
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import Markdown
 import TextFormat
@@ -138,7 +137,7 @@ private final class SheetContent: CombinedComponent {
                         
             var text: String = ""
             var entities: TextEntitiesMessageAttribute?
-            var media: [Media] = []
+            var media: [EngineRawMedia] = []
             var replyMarkup: ReplyMarkupMessageAttribute?
             
             switch component.preparedMessage.result {

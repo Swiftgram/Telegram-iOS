@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import Display
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramPresentationData
 import TelegramUIPreferences
@@ -42,7 +41,7 @@ extension ChatControllerImpl {
     enum AttachMenuSubject {
         case `default`
         case edit(mediaOptions: MessageMediaEditingOptions, mediaReference: AnyMediaReference)
-        case bot(id: PeerId, payload: String?, justInstalled: Bool)
+        case bot(id: EnginePeer.Id, payload: String?, justInstalled: Bool)
         case gift
     }
 
@@ -386,7 +385,7 @@ extension ChatControllerImpl {
                             groupingKey = Int64.random(in: .min ..< .max)
                         }
 
-                        var attributes: [MessageAttribute] = []
+                        var attributes: [EngineMessage.Attribute] = []
                         var text = ""
                         if let caption {
                             text = caption.string
@@ -436,7 +435,7 @@ extension ChatControllerImpl {
                             groupingKey = Int64.random(in: .min ..< .max)
                         }
 
-                        var attributes: [MessageAttribute] = []
+                        var attributes: [EngineMessage.Attribute] = []
                         var text = ""
                         if let caption {
                             text = caption.string
@@ -472,7 +471,7 @@ extension ChatControllerImpl {
                         controller.prepareForReuse()
                         return true
                     }
-                    let selfPeerId: PeerId
+                    let selfPeerId: EnginePeer.Id
                     if let peer = strongSelf.presentationInterfaceState.renderedPeer?.peer {
                         if let peer = peer as? TelegramChannel, case .broadcast = peer.info {
                             selfPeerId = peer.id
@@ -540,7 +539,7 @@ extension ChatControllerImpl {
                         if let strongSelf = self, let (peers, _, silent, scheduleTime, text, parameters) = peers {
                             var textEnqueueMessage: EnqueueMessage?
                             if let text = text, text.length > 0 {
-                                var attributes: [MessageAttribute] = []
+                                var attributes: [EngineMessage.Attribute] = []
                                 let entities = generateTextEntities(text.string, enabledTypes: .all, currentEntities: generateChatInputTextEntities(text))
                                 if !entities.isEmpty {
                                     attributes.append(TextEntitiesMessageAttribute(entities: entities))
@@ -606,7 +605,7 @@ extension ChatControllerImpl {
                                     strongSelf.sendMessages(strongSelf.transformEnqueueMessages(enqueueMessages, silentPosting: silent, scheduleTime: scheduleTime))
                                 })
                             } else if let peer = peers.first {
-                                let dataSignal: Signal<(Peer?,  DeviceContactExtendedData?), NoError>
+                                let dataSignal: Signal<(EngineRawPeer?,  DeviceContactExtendedData?), NoError>
                                 switch peer {
                                 case let .peer(contact, _, _):
                                     guard case let .user(contact) = contact, let phoneNumber = contact.phone else {
@@ -616,7 +615,7 @@ extension ChatControllerImpl {
                                     let context = strongSelf.context
                                     dataSignal = (strongSelf.context.sharedContext.contactDataManager?.basicData() ?? .single([:]))
                                     |> take(1)
-                                    |> mapToSignal { basicData -> Signal<(Peer?,  DeviceContactExtendedData?), NoError> in
+                                    |> mapToSignal { basicData -> Signal<(EngineRawPeer?,  DeviceContactExtendedData?), NoError> in
                                         var stableId: String?
                                         let queryPhoneNumber = formatPhoneNumber(context: context, number: phoneNumber)
                                         outer: for (id, data) in basicData {
@@ -631,7 +630,7 @@ extension ChatControllerImpl {
                                         if let stableId = stableId {
                                             return (context.sharedContext.contactDataManager?.extendedData(stableId: stableId) ?? .single(nil))
                                             |> take(1)
-                                            |> map { extendedData -> (Peer?,  DeviceContactExtendedData?) in
+                                            |> map { extendedData -> (EngineRawPeer?,  DeviceContactExtendedData?) in
                                                 return (contact, extendedData)
                                             }
                                         } else {
@@ -641,7 +640,7 @@ extension ChatControllerImpl {
                                 case let .deviceContact(id, _):
                                     dataSignal = (strongSelf.context.sharedContext.contactDataManager?.extendedData(stableId: id) ?? .single(nil))
                                     |> take(1)
-                                    |> map { extendedData -> (Peer?,  DeviceContactExtendedData?) in
+                                    |> map { extendedData -> (EngineRawPeer?,  DeviceContactExtendedData?) in
                                         return (nil, extendedData)
                                     }
                                 }
@@ -666,7 +665,7 @@ extension ChatControllerImpl {
                                             if let textEnqueueMessage = textEnqueueMessage {
                                                 enqueueMessages.append(textEnqueueMessage)
                                             }
-                                            var attributes: [MessageAttribute] = []
+                                            var attributes: [EngineMessage.Attribute] = []
                                             if let parameters {
                                                 if let effect = parameters.effect {
                                                     attributes.append(EffectMessageAttribute(id: effect.id))
@@ -1267,7 +1266,7 @@ extension ChatControllerImpl {
                                         attributes.append(.Audio(isVoice: false, duration: audioMetadata.duration, title: audioMetadata.title, performer: audioMetadata.performer, waveform: nil))
                                     }
 
-                                    let file = TelegramMediaFile(fileId: MediaId(namespace: Namespaces.Media.LocalFile, id: fileId), partialReference: nil, resource: ICloudFileResource(urlData: item.urlData, thumbnail: false), previewRepresentations: previewRepresentations, videoThumbnails: [], immediateThumbnailData: nil, mimeType: mimeType, size: Int64(item.fileSize), attributes: attributes, alternativeRepresentations: [])
+                                    let file = TelegramMediaFile(fileId: EngineMedia.Id(namespace: Namespaces.Media.LocalFile, id: fileId), partialReference: nil, resource: ICloudFileResource(urlData: item.urlData, thumbnail: false), previewRepresentations: previewRepresentations, videoThumbnails: [], immediateThumbnailData: nil, mimeType: mimeType, size: Int64(item.fileSize), attributes: attributes, alternativeRepresentations: [])
                                     let message: EnqueueMessage = .message(text: "", attributes: [], inlineStickers: [:], mediaReference: .standalone(media: file), threadId: strongSelf.chatLocation.threadId, replyToMessageId: replyMessageSubject?.subjectModel, replyToStoryId: nil, localGroupingKey: groupingKey, correlationId: nil, bubbleUpEmojiOrStickersets: [])
                                     messages.append(message)
                                 }
@@ -1691,7 +1690,7 @@ extension ChatControllerImpl {
         guard let peer = self.presentationInterfaceState.renderedPeer?.peer else {
             return
         }
-        let selfPeerId: PeerId
+        let selfPeerId: EnginePeer.Id
         if let peer = peer as? TelegramChannel, case .broadcast = peer.info {
             selfPeerId = peer.id
         } else if let peer = peer as? TelegramChannel, case .group = peer.info, peer.hasPermission(.canBeAnonymous) {
@@ -1785,7 +1784,7 @@ extension ChatControllerImpl {
                         strongSelf.sendMessages(enqueueMessages, postpone: postpone)
                     })
                 } else if let peer = peers.first {
-                    let dataSignal: Signal<(Peer?,  DeviceContactExtendedData?), NoError>
+                    let dataSignal: Signal<(EngineRawPeer?,  DeviceContactExtendedData?), NoError>
                     switch peer {
                         case let .peer(contact, _, _):
                             guard case let .user(contact) = contact, let phoneNumber = contact.phone else {
@@ -1795,7 +1794,7 @@ extension ChatControllerImpl {
                             let context = strongSelf.context
                             dataSignal = (strongSelf.context.sharedContext.contactDataManager?.basicData() ?? .single([:]))
                             |> take(1)
-                            |> mapToSignal { basicData -> Signal<(Peer?,  DeviceContactExtendedData?), NoError> in
+                            |> mapToSignal { basicData -> Signal<(EngineRawPeer?,  DeviceContactExtendedData?), NoError> in
                                 var stableId: String?
                                 let queryPhoneNumber = formatPhoneNumber(context: context, number: phoneNumber)
                                 outer: for (id, data) in basicData {
@@ -1810,7 +1809,7 @@ extension ChatControllerImpl {
                                 if let stableId = stableId {
                                     return (context.sharedContext.contactDataManager?.extendedData(stableId: stableId) ?? .single(nil))
                                     |> take(1)
-                                    |> map { extendedData -> (Peer?,  DeviceContactExtendedData?) in
+                                    |> map { extendedData -> (EngineRawPeer?,  DeviceContactExtendedData?) in
                                         return (contact, extendedData)
                                     }
                                 } else {
@@ -1820,7 +1819,7 @@ extension ChatControllerImpl {
                         case let .deviceContact(id, _):
                             dataSignal = (strongSelf.context.sharedContext.contactDataManager?.extendedData(stableId: id) ?? .single(nil))
                             |> take(1)
-                            |> map { extendedData -> (Peer?,  DeviceContactExtendedData?) in
+                            |> map { extendedData -> (EngineRawPeer?,  DeviceContactExtendedData?) in
                                 return (nil, extendedData)
                             }
                     }
@@ -2112,7 +2111,7 @@ extension ChatControllerImpl {
                         }
                     }, nil)
 
-                    var attributes: [MessageAttribute] = []
+                    var attributes: [EngineMessage.Attribute] = []
                     if !poll.description.entities.isEmpty {
                         attributes.append(TextEntitiesMessageAttribute(entities: poll.description.entities))
                     }
@@ -2122,7 +2121,7 @@ extension ChatControllerImpl {
                         attributes: attributes,
                         inlineStickers: [:],
                         mediaReference: .standalone(media: TelegramMediaPoll(
-                            pollId: MediaId(namespace: Namespaces.Media.LocalPoll, id: Int64.random(in: Int64.min...Int64.max)),
+                            pollId: EngineMedia.Id(namespace: Namespaces.Media.LocalPoll, id: Int64.random(in: Int64.min...Int64.max)),
                             publicity: poll.publicity,
                             kind: poll.kind,
                             text: poll.text.string,

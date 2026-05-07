@@ -9044,13 +9044,9 @@ func hasFirstResponder(_ view: UIView) -> Bool {
 }
 
 private func allowedStoryReactions(context: AccountContext) -> Signal<[ReactionItem], NoError> {
-    let viewKey: PostboxViewKey = .orderedItemList(id: Namespaces.OrderedItemList.CloudTopReactions)
-    let topReactions = context.account.postbox.combinedView(keys: [viewKey])
-    |> map { views -> [RecentReactionItem] in
-        guard let view = views.views[viewKey] as? OrderedItemListView else {
-            return []
-        }
-        return view.items.compactMap { item -> RecentReactionItem? in
+    let topReactions = context.engine.data.subscribe(TelegramEngine.EngineData.Item.OrderedLists.ListItems(collectionId: Namespaces.OrderedItemList.CloudTopReactions))
+    |> map { items -> [RecentReactionItem] in
+        return items.compactMap { item -> RecentReactionItem? in
             return item.contents.get(RecentReactionItem.self)
         }
     }

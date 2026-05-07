@@ -320,7 +320,7 @@ extension ChatControllerImpl {
                                     return (nil, value)
                                 }
                             } else {
-                                return context.peerChannelMemberCategoriesContextsManager.recentOnlineSmall(engine: context.engine, postbox: context.account.postbox, network: context.account.network, accountPeerId: context.account.peerId, peerId: peerId)
+                                return context.peerChannelMemberCategoriesContextsManager.recentOnlineSmall(engine: context.engine, accountPeerId: context.account.peerId, peerId: peerId)
                                 |> map { value -> (total: Int32?, recent: Int32?) in
                                     return (value.total, value.recent)
                                 }
@@ -811,8 +811,8 @@ extension ChatControllerImpl {
                     strongSelf.state.threadInfo = threadInfo
                     if wasGroupChannel != isGroupChannel {
                         if let isGroupChannel = isGroupChannel, isGroupChannel {
-                            let (recentDisposable, _) = context.peerChannelMemberCategoriesContextsManager.recent(engine: context.engine, postbox: context.account.postbox, network: context.account.network, accountPeerId: context.account.peerId, peerId: peerView.peerId, updated: { _ in })
-                            let (adminsDisposable, _) = context.peerChannelMemberCategoriesContextsManager.admins(engine: context.engine, postbox: context.account.postbox, network: context.account.network, accountPeerId: context.account.peerId, peerId: peerView.peerId, updated: { _ in })
+                            let (recentDisposable, _) = context.peerChannelMemberCategoriesContextsManager.recent(engine: context.engine, accountPeerId: context.account.peerId, peerId: peerView.peerId, updated: { _ in })
+                            let (adminsDisposable, _) = context.peerChannelMemberCategoriesContextsManager.admins(engine: context.engine, accountPeerId: context.account.peerId, peerId: peerView.peerId, updated: { _ in })
                             let disposable = DisposableSet()
                             disposable.add(recentDisposable)
                             disposable.add(adminsDisposable)
@@ -1380,7 +1380,7 @@ extension ChatControllerImpl {
                                     return (nil, value)
                                 }
                             } else {
-                                return context.peerChannelMemberCategoriesContextsManager.recentOnlineSmall(engine: context.engine, postbox: context.account.postbox, network: context.account.network, accountPeerId: context.account.peerId, peerId: peerId)
+                                return context.peerChannelMemberCategoriesContextsManager.recentOnlineSmall(engine: context.engine, accountPeerId: context.account.peerId, peerId: peerId)
                                 |> map { value -> (total: Int32?, recent: Int32?) in
                                     return (value.total, value.recent)
                                 }
@@ -1694,8 +1694,8 @@ extension ChatControllerImpl {
                         
                         if wasGroupChannel != isGroupChannel {
                             if let isGroupChannel = isGroupChannel, isGroupChannel {
-                                let (recentDisposable, _) = context.peerChannelMemberCategoriesContextsManager.recent(engine: context.engine, postbox: context.account.postbox, network: context.account.network, accountPeerId: context.account.peerId, peerId: peerView.peerId, updated: { _ in })
-                                let (adminsDisposable, _) = context.peerChannelMemberCategoriesContextsManager.admins(engine: context.engine, postbox: context.account.postbox, network: context.account.network, accountPeerId: context.account.peerId, peerId: peerView.peerId, updated: { _ in })
+                                let (recentDisposable, _) = context.peerChannelMemberCategoriesContextsManager.recent(engine: context.engine, accountPeerId: context.account.peerId, peerId: peerView.peerId, updated: { _ in })
+                                let (adminsDisposable, _) = context.peerChannelMemberCategoriesContextsManager.admins(engine: context.engine, accountPeerId: context.account.peerId, peerId: peerView.peerId, updated: { _ in })
                                 let disposable = DisposableSet()
                                 disposable.add(recentDisposable)
                                 disposable.add(adminsDisposable)

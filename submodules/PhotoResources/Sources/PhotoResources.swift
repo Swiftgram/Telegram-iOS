@@ -3102,7 +3102,8 @@ private func drawAlbumArtPlaceholder(into c: CGContext, arguments: TransformImag
     }
 }
 
-public func playerAlbumArt(postbox: Postbox, engine: TelegramEngine, fileReference: FileMediaReference?, albumArt: SharedMediaPlaybackAlbumArt?, thumbnail: Bool, overlayColor: UIColor? = nil, emptyColor: UIColor? = nil, drawPlaceholderWhenEmpty: Bool = true, attemptSynchronously: Bool = false) -> Signal<(TransformImageArguments) -> DrawingContext?, NoError> {
+public func playerAlbumArt(engine: TelegramEngine, fileReference: FileMediaReference?, albumArt: SharedMediaPlaybackAlbumArt?, thumbnail: Bool, overlayColor: UIColor? = nil, emptyColor: UIColor? = nil, drawPlaceholderWhenEmpty: Bool = true, attemptSynchronously: Bool = false) -> Signal<(TransformImageArguments) -> DrawingContext?, NoError> {
+    let postbox = engine.account.postbox
     var fileArtworkData: Signal<Data?, NoError> = .single(nil)
     if let fileReference = fileReference {
         let size = thumbnail ? CGSize(width: 48.0, height: 48.0) : CGSize(width: 320.0, height: 320.0)

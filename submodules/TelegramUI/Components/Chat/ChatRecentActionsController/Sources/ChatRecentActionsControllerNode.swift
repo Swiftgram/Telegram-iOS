@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import AsyncDisplayKit
 import TelegramCore
-import Postbox
 import SwiftSignalKit
 import Display
 import TelegramPresentationData
@@ -43,7 +42,7 @@ private final class ChatRecentActionsListOpaqueState {
 
 final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
     private let context: AccountContext
-    private let peer: Peer
+    private let peer: EngineRawPeer
     private var presentationData: PresentationData
     
     private let pushController: (ViewController) -> Void
@@ -95,20 +94,20 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
     private let eventLogContext: ChannelAdminEventLogContext
     
     private var enqueuedTransitions: [(ChatRecentActionsHistoryTransition, Bool)] = []
-    private var searchResultsState: (String, [MessageIndex])?
+    private var searchResultsState: (String, [EngineMessage.Index])?
     
     private var historyDisposable: Disposable?
     private let resolvePeerByNameDisposable = MetaDisposable()
     private var adminsDisposable: Disposable?
     private var adminsState: ChannelMemberListState?
-    private let banDisposables = DisposableDict<PeerId>()
-    private let reportFalsePositiveDisposables = DisposableDict<MessageId>()
+    private let banDisposables = DisposableDict<EnginePeer.Id>()
+    private let reportFalsePositiveDisposables = DisposableDict<EngineMessage.Id>()
     
     private weak var antiSpamTooltipController: UndoOverlayController?
     
     private weak var controller: ChatRecentActionsController?
     
-    init(context: AccountContext, controller: ChatRecentActionsController, peer: Peer, presentationData: PresentationData, pushController: @escaping (ViewController) -> Void, presentController: @escaping (ViewController, PresentationContextType, Any?) -> Void, getNavigationController: @escaping () -> NavigationController?) {
+    init(context: AccountContext, controller: ChatRecentActionsController, peer: EngineRawPeer, presentationData: PresentationData, pushController: @escaping (ViewController) -> Void, presentController: @escaping (ViewController, PresentationContextType, Any?) -> Void, getNavigationController: @escaping () -> NavigationController?) {
         self.context = context
         self.controller = controller
         self.peer = peer
@@ -158,7 +157,7 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
         self.panelButtonNode.addTarget(self, action: #selector(self.settingsButtonPressed), forControlEvents: .touchUpInside)
         self.panelInfoButtonNode.addTarget(self, action: #selector(self.infoButtonPressed), forControlEvents: .touchUpInside)
         
-        let (adminsDisposable, _) = self.context.peerChannelMemberCategoriesContextsManager.admins(engine: self.context.engine, postbox: self.context.account.postbox, network: self.context.account.network, accountPeerId: context.account.peerId, peerId: self.peer.id, searchQuery: nil, updated: { [weak self] state in
+        let (adminsDisposable, _) = self.context.peerChannelMemberCategoriesContextsManager.admins(engine: self.context.engine, accountPeerId: context.account.peerId, peerId: self.peer.id, searchQuery: nil, updated: { [weak self] state in
             self?.adminsState = state
         })
         self.adminsDisposable = adminsDisposable
@@ -270,7 +269,7 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
                     if let strongSelf = self {
                         strongSelf.temporaryHiddenGalleryMediaDisposable.set((signal |> deliverOnMainQueue).startStrict(next: { messageId in
                             if let strongSelf = self, let controllerInteraction = strongSelf.controllerInteraction {
-                                var messageIdAndMedia: [MessageId: [Media]] = [:]
+                                var messageIdAndMedia: [EngineMessage.Id: [EngineRawMedia]] = [:]
                                 
                                 if let messageId = messageId {
                                     messageIdAndMedia[messageId] = [media]
@@ -345,7 +344,7 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
             guard let strongSelf = self else {
                 return
             }
-            let resolveSignal: Signal<Peer?, NoError>
+            let resolveSignal: Signal<EngineRawPeer?, NoError>
             if let peerName = peerName {
                 resolveSignal = strongSelf.context.engine.peers.resolvePeerByName(name: peerName, referrer: nil)
                 |> mapToSignal { result -> Signal<EnginePeer?, NoError> in
@@ -354,7 +353,7 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
                     }
                     return .single(result)
                 }
-                |> mapToSignal { peer -> Signal<Peer?, NoError> in
+                |> mapToSignal { peer -> Signal<EngineRawPeer?, NoError> in
                     return .single(peer?._asPeer())
                 }
             } else {
@@ -730,10 +729,10 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
             
             let toggledDeletedMessageIds = previousExpandedDeletedMessages.symmetricDifference(expandedDeletedMessages)
             
-            var searchResultsState: (String, [MessageIndex])?
+            var searchResultsState: (String, [EngineMessage.Index])?
             if update.3, let query = self?.filter.query {
                 searchResultsState = (query, processedView.compactMap { entry in
-                    return entry.entry.event.action.messageId.flatMap { MessageIndex(id: $0, timestamp: entry.entry.event.date) }
+                    return entry.entry.event.action.messageId.flatMap { EngineMessage.Index(id: $0, timestamp: entry.entry.event.date) }
                 })
             } else {
                 searchResultsState = nil
@@ -754,7 +753,7 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
         let mediaManager = self.context.sharedContext.mediaManager
         self.galleryHiddenMesageAndMediaDisposable.set(mediaManager.galleryHiddenMediaManager.hiddenIds().startStrict(next: { [weak self] ids in
             if let strongSelf = self, let controllerInteraction = strongSelf.controllerInteraction {
-                var messageIdAndMedia: [MessageId: [Media]] = [:]
+                var messageIdAndMedia: [EngineMessage.Id: [EngineRawMedia]] = [:]
                 
                 for id in ids {
                     if case let .chat(accountId, messageId, media) = id, accountId == strongSelf.context.account.id {
@@ -968,13 +967,13 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
     
     func updateItemNodesSearchTextHighlightStates() {
         var searchString: String?
-        var resultsMessageIndices: [MessageIndex]? = nil
+        var resultsMessageIndices: [EngineMessage.Index]? = nil
         if let (query, indices) = self.searchResultsState {
             searchString = query
             resultsMessageIndices = indices
         }
         if searchString != self.controllerInteraction?.searchTextHighightState?.0 || resultsMessageIndices != self.controllerInteraction?.searchTextHighightState?.1 {
-            var searchTextHighightState: (String, [MessageIndex])?
+            var searchTextHighightState: (String, [EngineMessage.Index])?
             if let searchString = searchString, let resultsMessageIndices = resultsMessageIndices {
                 searchTextHighightState = (searchString, resultsMessageIndices)
             }
@@ -987,7 +986,7 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
         }
     }
     
-    func updateFilter(events: AdminLogEventsFlags, adminPeerIds: [PeerId]?) {
+    func updateFilter(events: AdminLogEventsFlags, adminPeerIds: [EnginePeer.Id]?) {
         self.filter = self.filter.withEvents(events).withAdminPeerIds(adminPeerIds)
         self.eventLogContext.setFilter(self.filter)
     }
@@ -1007,7 +1006,7 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
                 return false
             }), .window(.root), nil)
         } else {
-            let peerSignal: Signal<Peer?, NoError> = .single(peer._asPeer())
+            let peerSignal: Signal<EngineRawPeer?, NoError> = .single(peer._asPeer())
             self.navigationActionDisposable.set((peerSignal |> take(1) |> deliverOnMainQueue).startStrict(next: { [weak self] peer in
                 if let strongSelf = self, let peer = peer {
                     if peer is TelegramChannel, let navigationController = strongSelf.getNavigationController() {
@@ -1041,7 +1040,7 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
         }))
     }
     
-    private func openMessageContextMenu(message: Message, selectAll: Bool, node: ASDisplayNode, frame: CGRect, recognizer: TapLongTapOrDoubleTapGestureRecognizer? = nil, gesture: ContextGesture? = nil, location: CGPoint? = nil) {
+    private func openMessageContextMenu(message: EngineRawMessage, selectAll: Bool, node: ASDisplayNode, frame: CGRect, recognizer: TapLongTapOrDoubleTapGestureRecognizer? = nil, gesture: ContextGesture? = nil, location: CGPoint? = nil) {
         guard let controller = self.controller else {
             return
         }
@@ -1313,7 +1312,7 @@ final class ChatRecentActionsControllerNode: ViewControllerTracingNode {
                                         if let photoRepresentation = invite.photoRepresentation {
                                             photo.append(photoRepresentation)
                                         }
-                                        let channel = TelegramChannel(id: PeerId(namespace: Namespaces.Peer.CloudChannel, id: PeerId.Id._internalFromInt64Value(0)), accessHash: .genericPublic(0), title: invite.title, username: nil, photo: photo, creationDate: 0, version: 0, participationStatus: .left, info: .broadcast(TelegramChannelBroadcastInfo(flags: [])), flags: [], restrictionInfo: nil, adminRights: nil, bannedRights: nil, defaultBannedRights: nil, usernames: [], storiesHidden: nil, nameColor: invite.nameColor, backgroundEmojiId: nil, profileColor: nil, profileBackgroundEmojiId: nil, emojiStatus: nil, approximateBoostLevel: nil, subscriptionUntilDate: nil, verificationIconFileId: nil, sendPaidMessageStars: nil, linkedMonoforumId: nil)
+                                        let channel = TelegramChannel(id: EnginePeer.Id(namespace: Namespaces.Peer.CloudChannel, id: EnginePeer.Id.Id._internalFromInt64Value(0)), accessHash: .genericPublic(0), title: invite.title, username: nil, photo: photo, creationDate: 0, version: 0, participationStatus: .left, info: .broadcast(TelegramChannelBroadcastInfo(flags: [])), flags: [], restrictionInfo: nil, adminRights: nil, bannedRights: nil, defaultBannedRights: nil, usernames: [], storiesHidden: nil, nameColor: invite.nameColor, backgroundEmojiId: nil, profileColor: nil, profileBackgroundEmojiId: nil, emojiStatus: nil, approximateBoostLevel: nil, subscriptionUntilDate: nil, verificationIconFileId: nil, sendPaidMessageStars: nil, linkedMonoforumId: nil)
                                         let invoice = TelegramMediaInvoice(title: "", description: "", photo: nil, receiptMessageId: nil, currency: "XTR", totalAmount: subscriptionPricing.amount.value, startParam: "", extendedMedia: nil, subscriptionPeriod: nil, flags: [], version: 0)
                                         
                                         inputData.set(.single(BotCheckoutController.InputData(
@@ -1549,14 +1548,14 @@ final class ChatRecentActionsMessageContextExtractedContentSource: ContextExtrac
     let blurBackground: Bool = true
     
     private weak var controllerNode: ChatRecentActionsControllerNode?
-    private let message: Message
+    private let message: EngineRawMessage
     private let selectAll: Bool
     
     var shouldBeDismissed: Signal<Bool, NoError> {
         return .single(false)
     }
     
-    init(controllerNode: ChatRecentActionsControllerNode, message: Message, selectAll: Bool) {
+    init(controllerNode: ChatRecentActionsControllerNode, message: EngineRawMessage, selectAll: Bool) {
         self.controllerNode = controllerNode
         self.message = message
         self.selectAll = selectAll
@@ -1618,7 +1617,7 @@ final class ChatMessageContextLocationContentSource: ContextLocationContentSourc
 }
 
 extension AdminLogEventAction {
-    var messageId: MessageId? {
+    var messageId: EngineMessage.Id? {
         switch self {
         case let .editMessage(_, new):
             return new.id

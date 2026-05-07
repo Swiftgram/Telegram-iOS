@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import Display
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramPresentationData
 import ItemListUI
@@ -425,7 +424,7 @@ func completeRights(_ flags: TelegramChatBannedRightsFlags) -> TelegramChatBanne
     return result
 }
 
-private func channelBannedMemberControllerEntries(presentationData: PresentationData, state: ChannelBannedMemberControllerState, accountPeerId: PeerId, channelPeer: EnginePeer?, memberPeer: EnginePeer?, memberPresence: EnginePeer.Presence?, initialParticipant: ChannelParticipant?, initialBannedBy: EnginePeer?, editMember: Bool) -> [ChannelBannedMemberEntry] {
+private func channelBannedMemberControllerEntries(presentationData: PresentationData, state: ChannelBannedMemberControllerState, accountPeerId: EnginePeer.Id, channelPeer: EnginePeer?, memberPeer: EnginePeer?, memberPresence: EnginePeer.Presence?, initialParticipant: ChannelParticipant?, initialBannedBy: EnginePeer?, editMember: Bool) -> [ChannelBannedMemberEntry] {
     var entries: [ChannelBannedMemberEntry] = []
     
     if case let .channel(channel) = channelPeer, let defaultBannedRights = channel.defaultBannedRights, let member = memberPeer {
@@ -586,7 +585,7 @@ private func channelBannedMemberControllerEntries(presentationData: Presentation
     return entries
 }
 
-public func channelBannedMemberController(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil, peerId: PeerId, memberId: PeerId, editMember: Bool = false, initialParticipant: ChannelParticipant?, updated: @escaping (TelegramChatBannedRights?) -> Void, upgradedToSupergroup: @escaping (PeerId, @escaping () -> Void) -> Void) -> ViewController {
+public func channelBannedMemberController(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil, peerId: EnginePeer.Id, memberId: EnginePeer.Id, editMember: Bool = false, initialParticipant: ChannelParticipant?, updated: @escaping (TelegramChatBannedRights?) -> Void, upgradedToSupergroup: @escaping (EnginePeer.Id, @escaping () -> Void) -> Void) -> ViewController {
     let initialState = ChannelBannedMemberControllerState(referenceTimestamp: Int32(Date().timeIntervalSince1970), updatedFlags: nil, updatedTimeout: nil, updating: false, updatedRank: nil, focusedOnRank: false)
     let statePromise = ValuePromise(initialState, ignoreRepeated: true)
     let stateValue = Atomic(value: initialState)
@@ -609,20 +608,20 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
     var errorImpl: (() -> Void)?
     var scrollToRankImpl: (() -> Void)?
     
-    let peerView = Promise<PeerView>()
-    peerView.set(context.account.viewTracker.peerView(peerId))
+    let peerSignal = Promise<EnginePeer?>()
+    peerSignal.set(context.engine.data.subscribe(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId)))
     
     let arguments = ChannelBannedMemberControllerArguments(context: context, toggleRight: { rights, value in
-        let _ = (peerView.get()
+        let _ = (peerSignal.get()
         |> take(1)
-        |> deliverOnMainQueue).start(next: { view in
+        |> deliverOnMainQueue).start(next: { peer in
             var defaultBannedRightsFlagsValue: TelegramChatBannedRightsFlags?
-            guard let peer = view.peers[peerId] else {
+            guard let peer else {
                 return
             }
-            if let channel = peer as? TelegramChannel, let initialRightFlags = channel.defaultBannedRights?.flags {
+            if case let .channel(channel) = peer, let initialRightFlags = channel.defaultBannedRights?.flags {
                 defaultBannedRightsFlagsValue = initialRightFlags
-            } else if let group = peer as? TelegramGroup, let initialRightFlags = group.defaultBannedRights?.flags {
+            } else if case let .legacyGroup(group) = peer, let initialRightFlags = group.defaultBannedRights?.flags {
                 defaultBannedRightsFlagsValue = initialRightFlags
             }
             guard let defaultBannedRightsFlags = defaultBannedRightsFlagsValue else {
@@ -648,7 +647,7 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
                         }
                     } else {
                         effectiveRightsFlags.insert(rights)
-                        for (right, _) in allGroupPermissionList(peer: EnginePeer(peer), expandMedia: false) {
+                        for (right, _) in allGroupPermissionList(peer: peer, expandMedia: false) {
                             if groupPermissionDependencies(right).contains(rights) {
                                 effectiveRightsFlags.insert(right)
                             }
@@ -656,7 +655,7 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
                         
                         for item in banSendMediaSubList() {
                             effectiveRightsFlags.insert(item.0)
-                            for (right, _) in allGroupPermissionList(peer: EnginePeer(peer), expandMedia: false) {
+                            for (right, _) in allGroupPermissionList(peer: peer, expandMedia: false) {
                                 if groupPermissionDependencies(right).contains(item.0) {
                                     effectiveRightsFlags.insert(right)
                                 }
@@ -669,7 +668,7 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
                         effectiveRightsFlags = effectiveRightsFlags.subtracting(groupPermissionDependencies(rights))
                     } else {
                         effectiveRightsFlags.insert(rights)
-                        for (right, _) in allGroupPermissionList(peer: EnginePeer(peer), expandMedia: false) {
+                        for (right, _) in allGroupPermissionList(peer: peer, expandMedia: false) {
                             if groupPermissionDependencies(right).contains(rights) {
                                 effectiveRightsFlags.insert(right)
                             }
@@ -681,10 +680,10 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
             }
         })
     }, toggleRightWhileDisabled: { right in
-        let _ = (peerView.get()
+        let _ = (peerSignal.get()
         |> take(1)
-        |> deliverOnMainQueue).start(next: { view in
-            guard let channel = view.peers[view.peerId] as? TelegramChannel else {
+        |> deliverOnMainQueue).start(next: { peer in
+            guard case let .channel(channel) = peer else {
                 return
             }
             guard let defaultBannedRights = channel.defaultBannedRights else {
@@ -839,16 +838,16 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
         var footerButtonTitle: String = presentationData.strings.GroupPermission_SaveChanges
 
         let rightButtonActionImpl = {
-            let _ = (peerView.get()
+            let _ = (peerSignal.get()
             |> take(1)
-            |> deliverOnMainQueue).start(next: { view in
+            |> deliverOnMainQueue).start(next: { peer in
                 var defaultBannedRightsFlagsValue: TelegramChatBannedRightsFlags?
-                guard let peer = view.peers[peerId] else {
+                guard let peer else {
                     return
                 }
-                if let channel = peer as? TelegramChannel, let initialRightFlags = channel.defaultBannedRights?.flags {
+                if case let .channel(channel) = peer, let initialRightFlags = channel.defaultBannedRights?.flags {
                     defaultBannedRightsFlagsValue = initialRightFlags
-                } else if let group = peer as? TelegramGroup, let initialRightFlags = group.defaultBannedRights?.flags {
+                } else if case let .legacyGroup(group) = peer, let initialRightFlags = group.defaultBannedRights?.flags {
                     defaultBannedRightsFlagsValue = initialRightFlags
                 }
                 guard let defaultBannedRightsFlags = defaultBannedRightsFlagsValue else {
@@ -933,7 +932,7 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
                     previousRights = banInfo?.rights
                 }
                 
-                let updateRankSignal: (PeerId) -> Signal<Void, NoError>
+                let updateRankSignal: (EnginePeer.Id) -> Signal<Void, NoError>
                 if let updateRank {
                     updateRankSignal = { peerId in
                         return context.peerChannelMemberCategoriesContextsManager.updateMemberRank(engine: context.engine, peerId: peerId, memberId: memberId, rank: updateRank)
@@ -965,7 +964,7 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
                             if peerId.namespace == Namespaces.Peer.CloudGroup {
                                 let signal = context.engine.peers.convertGroupToSupergroup(peerId: peerId)
                                 |> map(Optional.init)
-                                |> `catch` { error -> Signal<PeerId?, NoError> in
+                                |> `catch` { error -> Signal<EnginePeer.Id?, NoError> in
                                     switch error {
                                     case .tooManyChannels:
                                         Queue.mainQueue().async {
@@ -976,7 +975,7 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
                                     }
                                     return .single(nil)
                                 }
-                                |> mapToSignal { upgradedPeerId -> Signal<PeerId?, NoError> in
+                                |> mapToSignal { upgradedPeerId -> Signal<EnginePeer.Id?, NoError> in
                                     guard let upgradedPeerId = upgradedPeerId else {
                                         return .single(nil)
                                     }
@@ -984,9 +983,9 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
                                     let rankSignal = updateRankSignal(upgradedPeerId)
                                     
                                     return context.peerChannelMemberCategoriesContextsManager.updateMemberBannedRights(engine: context.engine, peerId: upgradedPeerId, memberId: memberId, bannedRights: cleanResolvedRights)
-                                    |> mapToSignal { _ -> Signal<PeerId?, NoError> in
+                                    |> mapToSignal { _ -> Signal<EnginePeer.Id?, NoError> in
                                         return rankSignal
-                                        |> mapToSignal { _ -> Signal<PeerId?, NoError> in
+                                        |> mapToSignal { _ -> Signal<EnginePeer.Id?, NoError> in
                                             return .complete()
                                         }
                                     }

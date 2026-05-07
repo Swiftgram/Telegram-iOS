@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import Display
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import LegacyComponents
 import TelegramPresentationData
@@ -933,10 +932,10 @@ public func dataAndStorageController(context: AccountContext, focusOnItemTag: Da
         }
     })
     
-    let preferencesKey: PostboxViewKey = .preferences(keys: Set([ApplicationSpecificPreferencesKeys.mediaAutoSaveSettings]))
+    let preferencesKey: EngineRawPostboxViewKey = .preferences(keys: Set([ApplicationSpecificPreferencesKeys.mediaAutoSaveSettings]))
     let preferences = context.account.postbox.combinedView(keys: [preferencesKey])
     |> map { views -> MediaAutoSaveSettings in
-        guard let view = views.views[preferencesKey] as? PreferencesView else {
+        guard let view = views.views[preferencesKey] as? EngineRawPreferencesView else {
             return .default
         }
         return view.values[ApplicationSpecificPreferencesKeys.mediaAutoSaveSettings]?.get(MediaAutoSaveSettings.self) ?? MediaAutoSaveSettings.default

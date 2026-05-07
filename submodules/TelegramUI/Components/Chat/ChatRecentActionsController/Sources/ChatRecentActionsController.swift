@@ -331,7 +331,7 @@ public final class ChatRecentActionsController: TelegramBaseController {
     func openFilterSetup() {
         if self.adminsPromise == nil {
             self.adminsPromise = Promise()
-            let (disposable, _) = self.context.peerChannelMemberCategoriesContextsManager.admins(engine: self.context.engine, postbox: self.context.account.postbox, network: self.context.account.network, accountPeerId: self.context.account.peerId, peerId: self.peer.id) { membersState in
+            let (disposable, _) = self.context.peerChannelMemberCategoriesContextsManager.admins(engine: self.context.engine, accountPeerId: self.context.account.peerId, peerId: self.peer.id) { membersState in
                 if case .loading = membersState.loadingState, membersState.list.isEmpty {
                     self.adminsPromise?.set(.single(nil))
                 } else {

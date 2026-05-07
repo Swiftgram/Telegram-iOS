@@ -66,4 +66,48 @@ public extension TelegramEngine.EngineData.Item {
             }
         }
     }
+
+    enum ItemCollections {
+        public struct InstalledPackInfos: TelegramEngineDataItem, PostboxViewDataItem {
+            public typealias Result = [EngineRawItemCollectionInfoEntry]
+
+            private let namespace: ItemCollectionId.Namespace
+
+            public init(namespace: ItemCollectionId.Namespace) {
+                self.namespace = namespace
+            }
+
+            var key: PostboxViewKey {
+                return .itemCollectionInfos(namespaces: [self.namespace])
+            }
+
+            func extract(view: PostboxView) -> Result {
+                guard let view = view as? ItemCollectionInfosView else {
+                    preconditionFailure()
+                }
+                return view.entriesByNamespace[self.namespace] ?? []
+            }
+        }
+
+        public struct InstalledPackIds: TelegramEngineDataItem, PostboxViewDataItem {
+            public typealias Result = [ItemCollectionId]
+
+            private let namespace: ItemCollectionId.Namespace
+
+            public init(namespace: ItemCollectionId.Namespace) {
+                self.namespace = namespace
+            }
+
+            var key: PostboxViewKey {
+                return .itemCollectionIds(namespaces: [self.namespace])
+            }
+
+            func extract(view: PostboxView) -> Result {
+                guard let view = view as? ItemCollectionIdsView else {
+                    preconditionFailure()
+                }
+                return Array(view.idsByNamespace[self.namespace] ?? [])
+            }
+        }
+    }
 }

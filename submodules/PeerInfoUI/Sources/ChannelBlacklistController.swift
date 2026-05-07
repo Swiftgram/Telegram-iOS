@@ -431,7 +431,7 @@ public func channelBlacklistController(context: AccountContext, updatedPresentat
         })
     })
     
-    let (listDisposable, loadMoreControl) = context.peerChannelMemberCategoriesContextsManager.banned(engine: context.engine, postbox: context.account.postbox, network: context.account.network, accountPeerId: context.account.peerId, peerId: peerId, updated: { listState in
+    let (listDisposable, loadMoreControl) = context.peerChannelMemberCategoriesContextsManager.banned(engine: context.engine, accountPeerId: context.account.peerId, peerId: peerId, updated: { listState in
         if case .loading(true) = listState.loadingState, listState.list.isEmpty {
             blacklistPromise.set(.single(nil))
         } else {

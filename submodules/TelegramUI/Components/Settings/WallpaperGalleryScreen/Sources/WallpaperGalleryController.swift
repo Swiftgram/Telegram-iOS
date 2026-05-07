@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import Display
 import QuickLook
-import Postbox
 import SwiftSignalKit
 import AsyncDisplayKit
 import TelegramCore
@@ -25,14 +24,14 @@ public enum WallpaperListType {
 
 public enum WallpaperListSource {
     case list(wallpapers: [TelegramWallpaper], central: TelegramWallpaper, type: WallpaperListType)
-    case wallpaper(TelegramWallpaper, WallpaperPresentationOptions?, [UInt32], Int32?, Int32?, Message?)
-    case slug(String, TelegramMediaFile?, WallpaperPresentationOptions?, [UInt32], Int32?, Int32?, Message?)
+    case wallpaper(TelegramWallpaper, WallpaperPresentationOptions?, [UInt32], Int32?, Int32?, EngineRawMessage?)
+    case slug(String, TelegramMediaFile?, WallpaperPresentationOptions?, [UInt32], Int32?, Int32?, EngineRawMessage?)
     case asset(PHAsset)
     case contextResult(ChatContextResult)
     case customColor(UInt32?)
 }
 
-private func areMessagesEqual(_ lhsMessage: Message?, _ rhsMessage: Message?) -> Bool {
+private func areMessagesEqual(_ lhsMessage: EngineRawMessage?, _ rhsMessage: EngineRawMessage?) -> Bool {
     if lhsMessage == nil && rhsMessage == nil {
         return true
     }
@@ -49,7 +48,7 @@ private func areMessagesEqual(_ lhsMessage: Message?, _ rhsMessage: Message?) ->
 }
 
 public enum WallpaperGalleryEntry: Equatable {
-    case wallpaper(TelegramWallpaper, Message?)
+    case wallpaper(TelegramWallpaper, EngineRawMessage?)
     case asset(PHAsset)
     case contextResult(ChatContextResult)
     
@@ -551,7 +550,7 @@ public class WallpaperGalleryController: ViewController {
                         let apply = strongSelf.apply
                         if case .peer = strongSelf.mode {
                             if case let .wallpaper(wallpaper, _) = entry, options.contains(.blur) {
-                                var resource: MediaResource?
+                                var resource: TelegramMediaResource?
                                 switch wallpaper {
                                     case let .file(file):
                                         resource = file.file.resource
@@ -589,7 +588,7 @@ public class WallpaperGalleryController: ViewController {
                         
                         switch entry {
                             case let .wallpaper(wallpaper, _):
-                                var resource: MediaResource?
+                                var resource: TelegramMediaResource?
                                 switch wallpaper {
                                     case let .file(file):
                                         resource = file.file.resource

@@ -3,7 +3,6 @@ import UIKit
 import Display
 import AsyncDisplayKit
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramPresentationData
 import TelegramUIPreferences
@@ -795,7 +794,7 @@ private struct ChannelVisibilityControllerState: Equatable {
         self.approveMembers = nil
     }
     
-    init(selectedType: CurrentChannelType?, editingPublicLinkText: String?, addressNameValidationStatus: AddressNameValidationStatus?, updatingAddressName: Bool, revealedRevokePeerId: PeerId?, revokingPeerId: PeerId?, revokingPrivateLink: Bool, forwardingEnabled: Bool?, joinToSend: CurrentChannelJoinToSend?, approveMembers: Bool?) {
+    init(selectedType: CurrentChannelType?, editingPublicLinkText: String?, addressNameValidationStatus: AddressNameValidationStatus?, updatingAddressName: Bool, revealedRevokePeerId: EnginePeer.Id?, revokingPeerId: EnginePeer.Id?, revokingPrivateLink: Bool, forwardingEnabled: Bool?, joinToSend: CurrentChannelJoinToSend?, approveMembers: Bool?) {
         self.selectedType = selectedType
         self.editingPublicLinkText = editingPublicLinkText
         self.addressNameValidationStatus = addressNameValidationStatus
@@ -883,7 +882,7 @@ private struct ChannelVisibilityControllerState: Equatable {
     }
 }
 
-private func channelVisibilityControllerEntries(presentationData: PresentationData, mode: ChannelVisibilityControllerMode, view: PeerView, publicChannelsToRevoke: [EnginePeer]?, importers: PeerInvitationImportersState?, state: ChannelVisibilityControllerState, limits: EngineConfiguration.UserLimits, premiumLimits: EngineConfiguration.UserLimits, isPremium: Bool, isPremiumDisabled: Bool, temporaryOrder: [String]?) -> [ChannelVisibilityEntry] {
+private func channelVisibilityControllerEntries(presentationData: PresentationData, mode: ChannelVisibilityControllerMode, view: EngineRawPeerView, publicChannelsToRevoke: [EnginePeer]?, importers: PeerInvitationImportersState?, state: ChannelVisibilityControllerState, limits: EngineConfiguration.UserLimits, premiumLimits: EngineConfiguration.UserLimits, isPremium: Bool, isPremiumDisabled: Bool, temporaryOrder: [String]?) -> [ChannelVisibilityEntry] {
     var entries: [ChannelVisibilityEntry] = []
     
     let isInitialSetup: Bool
@@ -1321,7 +1320,7 @@ private func channelVisibilityControllerEntries(presentationData: PresentationDa
     return entries
 }
 
-private func effectiveChannelType(mode: ChannelVisibilityControllerMode, state: ChannelVisibilityControllerState, peer: TelegramChannel, cachedData: CachedPeerData?) -> CurrentChannelType {
+private func effectiveChannelType(mode: ChannelVisibilityControllerMode, state: ChannelVisibilityControllerState, peer: TelegramChannel, cachedData: EngineCachedPeerData?) -> CurrentChannelType {
     let selectedType: CurrentChannelType
     if let current = state.selectedType {
         selectedType = current
@@ -1339,7 +1338,7 @@ private func effectiveChannelType(mode: ChannelVisibilityControllerMode, state: 
     return selectedType
 }
 
-private func updatedAddressName(mode: ChannelVisibilityControllerMode, state: ChannelVisibilityControllerState, peer: EnginePeer, cachedData: CachedPeerData?) -> String? {
+private func updatedAddressName(mode: ChannelVisibilityControllerMode, state: ChannelVisibilityControllerState, peer: EnginePeer, cachedData: EngineCachedPeerData?) -> String? {
     if case let .channel(peer) = peer {
         let selectedType = effectiveChannelType(mode: mode, state: state, peer: peer, cachedData: cachedData)
         
@@ -1995,12 +1994,12 @@ public func channelVisibilityController(context: AccountContext, updatedPresenta
                             _ = ApplicationSpecificNotice.markAsSeenSetPublicChannelLink(accountManager: context.sharedContext.accountManager).start()
                             
                             let signal = context.engine.peers.convertGroupToSupergroup(peerId: peerId)
-                            |> mapToSignal { upgradedPeerId -> Signal<PeerId?, ConvertGroupToSupergroupError> in
+                            |> mapToSignal { upgradedPeerId -> Signal<EnginePeer.Id?, ConvertGroupToSupergroupError> in
                                 return context.engine.peers.updateAddressName(domain: .peer(upgradedPeerId), name: updatedAddressNameValue.isEmpty ? nil : updatedAddressNameValue)
                                 |> `catch` { _ -> Signal<Void, NoError> in
                                     return .complete()
                                 }
-                                |> mapToSignal { _ -> Signal<PeerId?, NoError> in
+                                |> mapToSignal { _ -> Signal<EnginePeer.Id?, NoError> in
                                     return .complete()
                                 }
                                 |> then(.single(upgradedPeerId))
@@ -2305,7 +2304,7 @@ public func channelVisibilityController(context: AccountContext, updatedPresenta
                         peerIds = peerIdsValue
                     }
                     
-                    let filteredPeerIds = peerIds.compactMap({ peerId -> PeerId? in
+                    let filteredPeerIds = peerIds.compactMap({ peerId -> EnginePeer.Id? in
                         if case let .peer(id) = peerId {
                             return id
                         } else {
