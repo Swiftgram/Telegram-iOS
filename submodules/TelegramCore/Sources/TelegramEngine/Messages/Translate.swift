@@ -264,7 +264,7 @@ private func _internal_translateMessagesByPeerId(account: Account, peerId: Engin
                     }
                 }
             } else {
-                msgs = account.network.request(Api.functions.messages.translateText(flags: flags, peer: inputPeer, id: id, text: nil, toLang: toLang, tone: tone.rawValue))
+                msgs = account.network.request(Api.functions.messages.translateText(flags: flags, peer: inputPeer, id: id, text: nil, toLang: sgTranslationLangFix(toLang), tone: tone != .neutral ? tone.rawValue : nil))
                 |> map(Optional.init)
                 |> mapError { error -> TranslationError in
                     if error.errorDescription.hasPrefix("FLOOD_WAIT") {
@@ -451,6 +451,234 @@ func _internal_togglePeerMessagesTranslationHidden(account: Account, peerId: Eng
 }
 
 public enum TelegramComposeAIMessageMode {
+    public final class CloudStyle: Equatable, Codable {
+        public enum Id: Hashable {
+            case standard(String)
+            case custom(Int64)
+        }
+        
+        public enum Reference: Hashable {
+            case standard(String)
+            case custom(id: Int64, accessHash: Int64)
+            
+            public var id: Id {
+                switch self {
+                case let .standard(type):
+                    return .standard(type)
+                case let .custom(id, _):
+                    return .custom(id)
+                }
+            }
+        }
+        
+        public final class Standard: Codable, Equatable {
+            private enum CodingKeys: String, CodingKey {
+                case type
+                case title
+                case emojiFileId
+            }
+            
+            public let type: String
+            public let title: String
+            public let emojiFileId: Int64?
+            
+            public init(type: String, title: String, emojiFileId: Int64?) {
+                self.type = type
+                self.title = title
+                self.emojiFileId = emojiFileId
+            }
+            
+            public init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.type = try container.decode(String.self, forKey: .type)
+                self.title = try container.decode(String.self, forKey: .title)
+                self.emojiFileId = try container.decodeIfPresent(Int64.self, forKey: .emojiFileId)
+            }
+            
+            public func encode(to encoder: any Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(self.type, forKey: .type)
+                try container.encode(self.title, forKey: .title)
+                try container.encodeIfPresent(self.emojiFileId, forKey: .emojiFileId)
+            }
+            
+            public static func ==(lhs: Standard, rhs: Standard) -> Bool {
+                if lhs.type != rhs.type {
+                    return false
+                }
+                if lhs.title != rhs.title {
+                    return false
+                }
+                if lhs.emojiFileId != rhs.emojiFileId {
+                    return false
+                }
+                return true
+            }
+        }
+        
+        public final class Custom: Codable, Equatable {
+            private enum CodingKeys: String, CodingKey {
+                case isCreator
+                case id
+                case accessHash
+                case slug
+                case emojiFileId
+                case title
+                case prompt
+                case userCount
+                case authorId
+            }
+            
+            public let isCreator: Bool
+            public let id: Int64
+            public let accessHash: Int64
+            public let slug: String
+            public let emojiFileId: Int64?
+            public let title: String
+            public let prompt: String?
+            public let userCount: Int?
+            public let authorId: EnginePeer.Id?
+            
+            public init(isCreator: Bool, id: Int64, accessHash: Int64, slug: String, emojiFileId: Int64?, title: String, prompt: String?, userCount: Int?, authorId: EnginePeer.Id?) {
+                self.isCreator = isCreator
+                self.id = id
+                self.accessHash = accessHash
+                self.slug = slug
+                self.emojiFileId = emojiFileId
+                self.title = title
+                self.prompt = prompt
+                self.userCount = userCount
+                self.authorId = authorId
+            }
+            
+            public init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                
+                self.isCreator = try container.decode(Bool.self, forKey: .isCreator)
+                self.id = try container.decode(Int64.self, forKey: .id)
+                self.accessHash = try container.decode(Int64.self, forKey: .accessHash)
+                self.slug = try container.decode(String.self, forKey: .slug)
+                self.emojiFileId = try container.decodeIfPresent(Int64.self, forKey: .emojiFileId)
+                self.title = try container.decode(String.self, forKey: .title)
+                self.prompt = try container.decodeIfPresent(String.self, forKey: .prompt)
+                self.userCount = try container.decodeIfPresent(Int32.self, forKey: .userCount).flatMap(Int.init)
+                self.authorId = try container.decodeIfPresent(EnginePeer.Id.self, forKey: .authorId)
+            }
+            
+            public func encode(to encoder: any Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                
+                try container.encode(self.isCreator, forKey: .isCreator)
+                try container.encode(self.id, forKey: .id)
+                try container.encode(self.accessHash, forKey: .accessHash)
+                try container.encode(self.slug, forKey: .slug)
+                try container.encodeIfPresent(self.emojiFileId, forKey: .emojiFileId)
+                try container.encode(self.title, forKey: .title)
+                try container.encodeIfPresent(self.prompt, forKey: .prompt)
+                try container.encodeIfPresent(self.userCount.flatMap(Int32.init(clamping:)), forKey: .userCount)
+                try container.encodeIfPresent(self.authorId, forKey: .authorId)
+            }
+            
+            public static func ==(lhs: Custom, rhs: Custom) -> Bool {
+                if lhs.isCreator != rhs.isCreator {
+                    return false
+                }
+                if lhs.id != rhs.id {
+                    return false
+                }
+                if lhs.accessHash != rhs.accessHash {
+                    return false
+                }
+                if lhs.slug != rhs.slug {
+                    return false
+                }
+                if lhs.emojiFileId != rhs.emojiFileId {
+                    return false
+                }
+                if lhs.title != rhs.title {
+                    return false
+                }
+                if lhs.prompt != rhs.prompt {
+                    return false
+                }
+                if lhs.userCount != rhs.userCount {
+                    return false
+                }
+                if lhs.authorId != rhs.authorId {
+                    return false
+                }
+                return true
+            }
+        }
+        
+        public enum Content: Equatable, Codable {
+            private enum CodingKeys: String, CodingKey {
+                case discriminator = "d"
+                case value = "v"
+            }
+            
+            case standard(Standard)
+            case custom(Custom)
+            
+            public init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                
+                switch try container.decode(Int32.self, forKey: .discriminator) {
+                case 0:
+                    self = .standard(try container.decode(Standard.self, forKey: .value))
+                case 1:
+                    self = .custom(try container.decode(Custom.self, forKey: .value))
+                default:
+                    throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: [], debugDescription: ""))
+                }
+            }
+            
+            public func encode(to encoder: any Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                
+                switch self {
+                case let .standard(standard):
+                    try container.encode(0 as Int32, forKey: .discriminator)
+                    try container.encode(standard, forKey: .value)
+                case let .custom(custom):
+                    try container.encode(1 as Int32, forKey: .discriminator)
+                    try container.encode(custom, forKey: .value)
+                }
+            }
+        }
+        
+        public let content: Content
+        
+        public var id: StyleId {
+            switch self.content {
+            case let .standard(standard):
+                return .style(.standard(standard.type))
+            case let .custom(custom):
+                return .style(.custom(custom.id))
+            }
+        }
+        
+        public var reference: Reference {
+            switch self.content {
+            case let .standard(standard):
+                return .standard(standard.type)
+            case let .custom(custom):
+                return .custom(id: custom.id, accessHash: custom.accessHash)
+            }
+        }
+        
+        public init(content: Content) {
+            self.content = content
+        }
+        
+        public static func ==(lhs: CloudStyle, rhs: CloudStyle) -> Bool {
+            if lhs.content != rhs.content {
+                return false
+            }
+            return true
+        }
+    }
+    
     public enum StyleId: Hashable {
         case neutral
         case style(CloudStyle.Id)
@@ -543,12 +771,10 @@ public enum TelegramAIComposeMessageError {
 
 func _internal_composeAIMessage(account: Account, text: TextWithEntities, mode: TelegramComposeAIMessageMode) -> Signal<TelegramAIComposeMessageResult, TelegramAIComposeMessageError> {
     var flags: Int32 = 0
-    var proofread: Bool = false
-    var emojify: Bool = false
     var translateToLang: String?
     var changeTone: Api.InputAiComposeTone?
     switch mode {
-    case let .translate(toLanguage, emojifyValue, style):
+    case let .translate(toLanguage, emojify, style):
         translateToLang = toLanguage
         flags |= (1 << 1)
         
@@ -570,27 +796,14 @@ func _internal_composeAIMessage(account: Account, text: TextWithEntities, mode: 
             flags |= (1 << 2)
         }
     case .proofread:
-        proofread = true
-    }
-
-    if proofread {
         flags |= (1 << 0)
     }
-    if translateToLang != nil {
-        flags |= (1 << 1)
-    }
-    if changeTone != nil {
-        flags |= (1 << 2)
-    }
-    if emojify {
-        flags |= (1 << 3)
-    }
-
+    
     let inputText: Api.TextWithEntities = .textWithEntities(Api.TextWithEntities.Cons_textWithEntities(text: text.text, entities: apiEntitiesFromMessageTextEntities(text.entities, associatedPeers: SimpleDictionary())))
     
     return account.network.request(Api.functions.messages.composeMessageWithAI(flags: flags, text: inputText, translateToLang: translateToLang, tone: changeTone))
     |> `catch` { error -> Signal<Api.messages.ComposedMessageWithAI, TelegramAIComposeMessageError> in
-        if error.errorDescription == "AICOMPOSE_FLOOD_PREMIUM" || error.errorDescription.hasPrefix("AICOMPOSE_FLOOD_PREMIUM ") {
+        if error.errorDescription == "AICOMPOSE_FLOOD_PREMIUM" {
             return .fail(.nonPremiumFlood)
         } else {
             return .fail(.generic)
