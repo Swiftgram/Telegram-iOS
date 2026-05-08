@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "Setări Conținut";
+
+"Settings.Tabs.Header" = "FERESTRE";
+"Settings.Tabs.HideTabBar" = "Ascunde bara de filă";
+"Settings.Tabs.ShowContacts" = "Vizualizare contacte";
+"Settings.Tabs.ShowNames" = "Arată Fereastra cu Numele";
+
+"Settings.Folders.BottomTab" = "Dosare de jos";
+"Settings.Folders.BottomTabStyle" = "Stil directoare de jos";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegramă";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "Ascundeți „%@\"";
+"Settings.Folders.RememberLast" = "Deschideți ultimul dosar";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram va deschide ultimul folder utilizat atunci când reporniți aplicația sau schimbați conturile.";
+
+"Settings.Folders.CompactNames" = "Spațiere mai mică";
+"Settings.Folders.AllChatsTitle" = "Titlul \"Toate conversațiile\"";
+"Settings.Folders.AllChatsTitle.short" = "Scurt";
+"Settings.Folders.AllChatsTitle.long" = "Lungă";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Implicit";
+
+
+"Settings.ChatList.Header" = "LISTA CHAT";
+"Settings.CompactChatList" = "Lista compactă de Chat";
+
+"Settings.Profiles.Header" = "PROFILES";
+
+"Settings.Stories.Hide" = "Ascunde povestiri";
+"Settings.Stories.WarnBeforeView" = "Întreabă înainte de vizualizare";
+"Settings.Stories.DisableSwipeToRecord" = "Dezactivează glisarea pentru înregistrare";
+
+"Settings.Translation.QuickTranslateButton" = "Butonul Traducere Rapidă";
+
+"Stories.Warning.Author" = "Autor";
+"Stories.Warning.ViewStory" = "Vezi povestirea?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ VOR FI ACĂ SĂ VEDEȚI că le-ați văzut povestea lor.";
+"Stories.Warning.NoticeStealth" = "%@ nu va putea vedea povestea lor.";
+
+"Settings.Photo.Quality.Notice" = "Calitatea fotografiilor și povestirilor încărcate.";
+"Settings.Photo.SendLarge" = "Trimite fotografii mari";
+"Settings.Photo.SendLarge.Notice" = "Crește limita laterală a imaginilor comprimate la 2560px.";
+
+"Settings.VideoNotes.Header" = "VIDEO ROTUND";
+"Settings.VideoNotes.StartWithRearCam" = "Începe cu camera posterioară";
+
+"Settings.CustomColors.Header" = "COLORTURI DE CONT";
+"Settings.CustomColors.Saturation" = "SATURARE";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Setați la 0%% pentru a dezactiva culorile contului.";
+
+"Settings.UploadsBoost" = "Accelerare Încărcare";
+"Settings.DownloadsBoost" = "Impuls descărcare";
+"Settings.DownloadsBoost.Notice" = "Crește numărul de conexiuni paralele și dimensiunea fragmentelor de fișier. Dacă rețeaua ta nu poate gestiona încărcătura, încearcă diferite opțiuni care se potrivesc conexiunii tale.";
+"Settings.DownloadsBoost.none" = "Dezactivat";
+"Settings.DownloadsBoost.medium" = "Medie";
+"Settings.DownloadsBoost.maximum" = "Maxim";
+
+"Settings.ShowProfileID" = "Arată ID-ul profilului";
+"Settings.ShowDC" = "Arată Centrul de date";
+"Settings.ShowCreationDate" = "Arată data creării chat-ului";
+"Settings.ShowCreationDate.Notice" = "Data creării poate fi necunoscută pentru unele conversații.";
+
+"Settings.ShowRegDate" = "Arată data înregistrării";
+"Settings.ShowRegDate.Notice" = "Data înregistrării este aproximativă.";
+
+"Settings.SendWithReturnKey" = "Trimite cu cheia \"Returnare\"";
+"Settings.HidePhoneInSettingsUI" = "Ascunde telefonul din setări";
+"Settings.HidePhoneInSettingsUI.Notice" = "Acest lucru va ascunde numărul de telefon din interfața de setări. Pentru a-l ascunde de alții, mergi la confidențialitate și securitate.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "Dacă este plecat timp de 5 secunde";
+
+"ProxySettings.UseSystemDNS" = "Utilizați DNS sistem";
+"ProxySettings.UseSystemDNS.Notice" = "Utilizați DNS pentru a ocoli timeout-ul dacă nu aveți acces la Google DNS";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "Nu ai nevoie de ** %@!";
+"Common.RestartRequired" = "Repornire necesară";
+"Common.RestartNow" = "Repornește acum";
+"Common.OpenTelegram" = "Deschide telegrama";
+"Common.UseTelegramForPremium" = "Vă rugăm să reţineţi că, pentru a obţine Telegram Premium, trebuie să utilizaţi aplicaţia oficială Telegram. Odată ce ai obţinut Telegram Premium, toate caracteristicile sale vor deveni disponibile în Swiftgram.";
+
+"Message.HoldToShowOrReport" = "Țineți apăsat pentru a afișa sau raporta.";
+
+"Auth.AccountBackupReminder" = "Asigurați-vă că aveți o metodă de acces de rezervă. Păstrați un SIM pentru SMS sau o sesiune adițională conectată pentru a evita blocarea.";
+"Auth.UnofficialAppCodeTitle" = "Poți obține codul doar cu aplicația oficială";
+
+"Settings.SmallReactions" = "Reacţii mici";
+"Settings.HideReactions" = "Ascunde Reacțiile";
+
+"ContextMenu.SaveToCloud" = "Salvează în Cloud";
+"ContextMenu.SelectFromUser" = "Selectați din autor";
+
+"Settings.ContextMenu" = "MENIU CONTEXTUAL";
+"Settings.ContextMenu.Notice" = "Intrările dezactivate vor fi disponibile în submeniul 'Swiftgram'.";
+
+
+"Settings.ChatSwipeOptions" = "Opțiuni de glisare a chatului";
+"Settings.DeleteChatSwipeOption" = "Glisați pentru ștergere chat";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Trageţi pentru următorul canal necitit";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Trageți către Următorul Subiect";
+"Settings.GalleryCamera" = "Cameră foto în Galerie";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "Butonul \"%@\"";
+"Settings.SnapDeletionEffect" = "Efecte ștergere mesaj";
+
+"Settings.Stickers.Size" = "MISIUNE";
+"Settings.Stickers.Timestamp" = "Arată Ora";
+
+"Settings.RecordingButton" = "Butonul Înregistrare Voce";
+
+"Settings.DefaultEmojisFirst" = "Prioritize emoticoanele standard";
+"Settings.DefaultEmojisFirst.Notice" = "Afișați emoticoanele standard înainte de cele premium în tastatura emoji";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "creat: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "S-a alăturat %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Înregistrat";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Apăsați de două ori pentru a edita mesajul";
+
+"Settings.wideChannelPosts" = "Postări late în canale";
+"Settings.ForceEmojiTab" = "Tastatură emoji implicită";
+
+"Settings.forceBuiltInMic" = "Forțează Microfon Dispozitiv";
+"Settings.forceBuiltInMic.Notice" = "Dacă este activat, aplicația va folosi doar microfonul dispozitivului chiar dacă sunt conectate căștile.";
+
+"Settings.hideChannelBottomButton" = "Ascundeți panoul de jos al canalului";
+
+"Settings.CallConfirmation" = "Confirmare apel";
+"Settings.CallConfirmation.Notice" = "Swiftgram va solicita confirmarea dumneavoastră înainte de a efectua un apel.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Ești sigur că vrei să faci un apel?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Ești sigur că vrei să faci un apel video?";
+
+"MutualContact.Label" = "contact mutual";
+
+"Settings.swipeForVideoPIP" = "Video PIP cu gestul de glisare";
+"Settings.swipeForVideoPIP.Notice" = "Dacă este activat, glisarea video va deschide în modul imagine în imagine.";

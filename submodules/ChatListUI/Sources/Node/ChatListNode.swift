@@ -1,3 +1,5 @@
+import SGAPIToken
+import SGAPIWebSettings
 import Foundation
 import UIKit
 import Display
@@ -74,6 +76,7 @@ public final class ChatListNodeInteraction {
     }
     
     let activateSearch: () -> Void
+    let openSGAnnouncement: (String, String, Bool, Bool) -> Void
     let peerSelected: (EnginePeer, EnginePeer?, Int64?, ChatListNodeEntryPromoInfo?, Bool) -> Void
     let disabledPeerSelected: (EnginePeer, Int64?, ChatListDisabledPeerReason) -> Void
     let togglePeerSelected: (EnginePeer, Int64?) -> Void
@@ -134,6 +137,8 @@ public final class ChatListNodeInteraction {
         animationCache: AnimationCache,
         animationRenderer: MultiAnimationRenderer,
         activateSearch: @escaping () -> Void,
+        // MARK: Swiftgram
+        openSGAnnouncement: @escaping (String, String, Bool, Bool) -> Void = { _, _, _, _ in },
         peerSelected: @escaping (EnginePeer, EnginePeer?, Int64?, ChatListNodeEntryPromoInfo?, Bool) -> Void,
         disabledPeerSelected: @escaping (EnginePeer, Int64?, ChatListDisabledPeerReason) -> Void,
         togglePeerSelected: @escaping (EnginePeer, Int64?) -> Void,
@@ -179,6 +184,7 @@ public final class ChatListNodeInteraction {
         openUrl: @escaping (String) -> Void
     ) {
         self.activateSearch = activateSearch
+        self.openSGAnnouncement = openSGAnnouncement
         self.peerSelected = peerSelected
         self.disabledPeerSelected = disabledPeerSelected
         self.togglePeerSelected = togglePeerSelected
@@ -1348,14 +1354,18 @@ public final class ChatListNode: ListViewImpl {
     
     public var startedScrollingAtUpperBound: Bool = false
     
+    // MARK: Swiftgram
+    public var getNavigationController: (()-> NavigationController?)?
+    
     private let autoSetReady: Bool
     
     public let isMainTab = ValuePromise<Bool>(false, ignoreRepeated: true)
     
     public var synchronousDrawingWhenNotAnimated: Bool = false
     
-    public init(context: AccountContext, location: ChatListControllerLocation, chatListFilter: ChatListFilter? = nil, previewing: Bool, fillPreloadItems: Bool, mode: ChatListNodeMode, isPeerEnabled: ((EnginePeer) -> Bool)? = nil, theme: PresentationTheme, fontSize: PresentationFontSize, strings: PresentationStrings, dateTimeFormat: PresentationDateTimeFormat, nameSortOrder: PresentationPersonNameOrder, nameDisplayOrder: PresentationPersonNameOrder, animationCache: AnimationCache, animationRenderer: MultiAnimationRenderer, disableAnimations: Bool, isInlineMode: Bool, autoSetReady: Bool, isMainTab: Bool?) {
+    public init(getNavigationController: (() -> NavigationController?)? = nil, context: AccountContext, location: ChatListControllerLocation, chatListFilter: ChatListFilter? = nil, previewing: Bool, fillPreloadItems: Bool, mode: ChatListNodeMode, isPeerEnabled: ((EnginePeer) -> Bool)? = nil, theme: PresentationTheme, fontSize: PresentationFontSize, strings: PresentationStrings, dateTimeFormat: PresentationDateTimeFormat, nameSortOrder: PresentationPersonNameOrder, nameDisplayOrder: PresentationPersonNameOrder, animationCache: AnimationCache, animationRenderer: MultiAnimationRenderer, disableAnimations: Bool, isInlineMode: Bool, autoSetReady: Bool, isMainTab: Bool?) {
         self.context = context
+        self.getNavigationController = getNavigationController
         self.location = location
         self.chatListFilter = chatListFilter
         self.chatListFilterValue.set(.single(chatListFilter))
@@ -1395,6 +1405,31 @@ public final class ChatListNode: ListViewImpl {
         let nodeInteraction = ChatListNodeInteraction(context: context, animationCache: self.animationCache, animationRenderer: self.animationRenderer, activateSearch: { [weak self] in
             if let strongSelf = self, let activateSearch = strongSelf.activateSearch {
                 activateSearch()
+            }
+        }, openSGAnnouncement: { [weak self] announcementId, url, needAuth, permanent in
+            if let strongSelf = self {
+                if needAuth {
+                    let _ = (getSGSettingsURL(context: strongSelf.context, url: url)
+                             |> deliverOnMainQueue).start(next: { [weak self] url in
+                        guard let strongSelf = self else {
+                            return
+                        }
+                        strongSelf.context.sharedContext.openExternalUrl(context: strongSelf.context, urlContext: .generic, url: url, forceExternal: false, presentationData: strongSelf.context.sharedContext.currentPresentationData.with { $0 }, navigationController: strongSelf.getNavigationController?(), dismissInput: {})
+                    })
+                } else {
+                    Queue.mainQueue().async {
+                        strongSelf.context.sharedContext.openExternalUrl(context: strongSelf.context, urlContext: .generic, url: url, forceExternal: false, presentationData: strongSelf.context.sharedContext.currentPresentationData.with { $0 }, navigationController: strongSelf.getNavigationController?(), dismissInput: {})
+                    }
+                    
+                }
+                if !permanent {
+                    Queue.mainQueue().after(0.6) { [weak self] in
+                        if let strongSelf = self {
+                            dismissSGProvidedSuggestion(suggestionId: announcementId)
+                            postSGWebSettingsInteractivelly(context: strongSelf.context, data: ["skip_announcement_id": announcementId])
+                        }
+                    }
+                }
             }
         }, peerSelected: { [weak self] peer, _, threadId, promoInfo, _ in
             if let strongSelf = self, let peerSelected = strongSelf.peerSelected {

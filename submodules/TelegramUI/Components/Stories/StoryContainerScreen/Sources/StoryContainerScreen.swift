@@ -1,3 +1,7 @@
+// MARK: Swiftgram
+import TelegramUIPreferences
+import SGSimpleSettings
+
 import Foundation
 import UIKit
 import Display
@@ -425,7 +429,12 @@ private final class StoryContainerScreenComponent: Component {
         var longPressRecognizer: StoryLongPressRecognizer?
         
         private var pendingNavigationToItemId: StoryId?
-                
+        
+        private let storiesWarning = ComponentView<Empty>()
+        private var requestedDisplayStoriesWarning: Bool = SGSimpleSettings.shared.warnOnStoriesOpen // MARK: Swiftgram
+        private var displayStoriesWarningDisposable: Disposable?
+        private var isDisplayingStoriesWarning: Bool = false
+        
         private let interactionGuide = ComponentView<Empty>()
         private var isDisplayingInteractionGuide: Bool = false
         private var displayInteractionGuideDisposable: Disposable?
@@ -458,7 +467,7 @@ private final class StoryContainerScreenComponent: Component {
                 guard let self, let stateValue = self.stateValue, let slice = stateValue.slice, let itemSetView = self.visibleItemSetViews[slice.peer.id], let itemSetComponentView = itemSetView.view.view as? StoryItemSetContainerComponent.View else {
                     return []
                 }
-                if self.isDisplayingInteractionGuide {
+                if self.isDisplayingInteractionGuide || self.isDisplayingStoriesWarning {
                     return []
                 }
                 if let environment = self.environment, case .regular = environment.metrics.widthClass {
@@ -591,7 +600,7 @@ private final class StoryContainerScreenComponent: Component {
                 guard let self else {
                     return false
                 }
-                if self.isDisplayingInteractionGuide {
+                if self.isDisplayingInteractionGuide || self.isDisplayingStoriesWarning {
                     return false
                 }
                 if let stateValue = self.stateValue, let slice = stateValue.slice, let itemSetView = self.visibleItemSetViews[slice.peer.id] {
@@ -744,6 +753,7 @@ private final class StoryContainerScreenComponent: Component {
         
         deinit {
             self.contentUpdatedDisposable?.dispose()
+            self.displayStoriesWarningDisposable?.dispose()
             self.volumeButtonsListenerShouldBeActiveDisposable?.dispose()
             self.headphonesDisposable?.dispose()
             self.stealthModeDisposable?.dispose()
@@ -1075,7 +1085,7 @@ private final class StoryContainerScreenComponent: Component {
                     guard let self else {
                         return
                     }
-                    if !value && !self.isDisplayingInteractionGuide {
+                    if !value && (!self.isDisplayingInteractionGuide || !self.isDisplayingStoriesWarning) {
                         if let stateValue = self.stateValue, let slice = stateValue.slice, let itemSetView = self.visibleItemSetViews[slice.peer.id], let currentItemView = itemSetView.view.view as? StoryItemSetContainerComponent.View {
                             currentItemView.maybeDisplayReactionTooltip()
                         }
@@ -1326,6 +1336,16 @@ private final class StoryContainerScreenComponent: Component {
                     }
                 })
                 
+                // MARK: Swiftgram
+                self.requestedDisplayStoriesWarning = SGSimpleSettings.shared.warnOnStoriesOpen
+                if self.requestedDisplayStoriesWarning {
+                    self.isDisplayingStoriesWarning = true
+                    if update {
+                        self.state?.updated(transition: .immediate)
+                    }
+                }
+                //
+                
                 update = true
             }
             
@@ -1384,6 +1404,11 @@ private final class StoryContainerScreenComponent: Component {
                         if case .file = slice.item.storyItem.media {
                             isVideo = true
                         }
+                        // TODO(swiftgram): Show warning on each new peerId story
+                        /* if self.requestedDisplayStoriesWarning, let previousSlice = stateValue?.previousSlice, previousSlice.peer.id != slice.peer.id {
+                            self.isDisplayingStoriesWarning = self.requestedDisplayStoriesWarning
+                            update = false
+                        }*/
                     }
                     self.focusedItem.set(focusedItemId)
                     self.contentWantsVolumeButtonMonitoring.set(isVideo)
@@ -1512,7 +1537,7 @@ private final class StoryContainerScreenComponent: Component {
             if self.pendingNavigationToItemId != nil {
                 isProgressPaused = true
             }
-            if self.isDisplayingInteractionGuide {
+            if self.isDisplayingInteractionGuide || self.isDisplayingStoriesWarning {
                 isProgressPaused = true
             }
             
@@ -1975,6 +2000,54 @@ private final class StoryContainerScreenComponent: Component {
                     inVoiceOver: false
                 )
                 controller.presentationContext.containerLayoutUpdated(subLayout, transition: transition.containedViewLayoutTransition)
+            }
+            
+            // MARK: Swiftgram
+            if self.isDisplayingStoriesWarning {
+                let _ = self.storiesWarning.update(
+                    transition: .immediate,
+                    component: AnyComponent(
+                        SGStoryWarningComponent(
+                            context: component.context,
+                            theme: environment.theme,
+                            strings: environment.strings,
+                            peer: component.content.stateValue?.slice?.peer,
+                            isInStealthMode: stealthModeTimeout != nil || SGSimpleSettings.shared.isStealthModeEnabled,
+                            action: { [weak self] in
+                                self?.isDisplayingStoriesWarning = false
+                                self?.state?.updated(transition: .immediate)
+                                if let view = self?.storiesWarning.view as? SGStoryWarningComponent.View {
+                                    view.animateOut(completion: {
+                                        view.removeFromSuperview()
+                                    })
+                                }
+                            },
+                            close: { [weak self] in
+                                self?.environment?.controller()?.dismiss()
+                                if let view = self?.storiesWarning.view as? SGStoryWarningComponent.View {
+                                    view.animateOut(completion: {
+                                        view.removeFromSuperview()
+                                    })
+                                }
+                            }
+                        )
+                    ),
+                    environment: {},
+                    containerSize: availableSize
+                )
+                if let view = self.storiesWarning.view as? SGStoryWarningComponent.View {
+                    if view.superview == nil {
+                        self.addSubview(view)
+                        
+                        view.animateIn()
+                    }
+                    view.layer.zPosition = 1000.0
+                    view.frame = CGRect(origin: .zero, size: availableSize)
+                }
+            } else if let view = self.storiesWarning.view as? StoryInteractionGuideComponent.View, view.superview != nil {
+                view.animateOut(completion: {
+                    view.removeFromSuperview()
+                })
             }
             
             if self.isDisplayingInteractionGuide {

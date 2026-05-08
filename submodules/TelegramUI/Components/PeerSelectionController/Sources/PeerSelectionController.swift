@@ -14,6 +14,7 @@ import ChatListFilterTabContainerNode
 
 public final class PeerSelectionControllerImpl: ViewController, PeerSelectionController {
     private let context: AccountContext
+    private let forceHideNames: Bool
     
     private var presentationData: PresentationData
     private var presentationDataDisposable: Disposable?
@@ -97,6 +98,7 @@ public final class PeerSelectionControllerImpl: ViewController, PeerSelectionCon
     
     public init(_ params: PeerSelectionControllerParams) {
         self.context = params.context
+        self.forceHideNames = params.forceHideNames
         self.filter = params.filter
         self.forumPeerId = params.forumPeerId
         self.hasFilters = params.hasFilters
@@ -265,7 +267,7 @@ public final class PeerSelectionControllerImpl: ViewController, PeerSelectionCon
     override public func loadDisplayNode() {
         self.navigationBar?.secondaryContentHeight = 44.0 + 10.0
         
-        self.displayNode = PeerSelectionControllerNode(context: self.context, controller: self, presentationData: self.presentationData, filter: self.filter, forumPeerId: self.forumPeerId, hasFilters: self.hasFilters, hasChatListSelector: self.hasChatListSelector, hasContactSelector: self.hasContactSelector, hasGlobalSearch: self.hasGlobalSearch, forwardedMessageIds: self.forwardedMessageIds, hasTypeHeaders: self.hasTypeHeaders, requestPeerType: self.requestPeerType, hasCreation: self.hasCreation, createNewGroup: self.createNewGroup, suggestedPeers: self.suggestedPeers, present: { [weak self] c, a in
+        self.displayNode = PeerSelectionControllerNode(context: self.context, forceHideNames: self.forceHideNames, controller: self, presentationData: self.presentationData, filter: self.filter, forumPeerId: self.forumPeerId, hasFilters: self.hasFilters, hasChatListSelector: self.hasChatListSelector, hasContactSelector: self.hasContactSelector, hasGlobalSearch: self.hasGlobalSearch, forwardedMessageIds: self.forwardedMessageIds, hasTypeHeaders: self.hasTypeHeaders, requestPeerType: self.requestPeerType, hasCreation: self.hasCreation, createNewGroup: self.createNewGroup, suggestedPeers: self.suggestedPeers, present: { [weak self] c, a in
             self?.present(c, in: .window(.root), with: a)
         }, presentInGlobalOverlay: { [weak self] c, a in
             self?.presentInGlobalOverlay(c, with: a)

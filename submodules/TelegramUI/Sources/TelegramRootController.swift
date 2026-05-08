@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import Display
@@ -199,7 +200,7 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         super.containerLayoutUpdated(layout, transition: transition)
     }
     
-    public func addRootControllers(showCallsTab: Bool) {
+    public func addRootControllers(hidePhoneInSettings: Bool, showContactsTab: Bool, showCallsTab: Bool) {
         let tabBarController = TabBarControllerImpl(theme: self.presentationData.theme, strings: self.presentationData.strings)
         tabBarController.navigationPresentation = .master
         let chatListController = self.context.sharedContext.makeChatListController(context: self.context, location: .chatList(groupId: .root), controlsHistoryPreload: true, hideNetworkActivityStatus: false, previewing: false, enableDebugActions: !GlobalExperimentalSettings.isAppStoreBuild)
@@ -214,7 +215,10 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         contactsController.switchToChatsController = {  [weak self] in
             self?.openChatsController(activateSearch: false)
         }
-        controllers.append(contactsController)
+        // MARK: Swiftgram
+        if showContactsTab {
+            controllers.append(contactsController)
+        }
         
         if showCallsTab {
             controllers.append(callListController)
@@ -230,7 +234,7 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
             sharedContext.switchingData = (nil, nil, nil)
         }
         
-        let accountSettingsController = PeerInfoScreenImpl(context: self.context, updatedPresentationData: nil, peerId: self.context.account.peerId, avatarInitiallyExpanded: false, isOpenedFromChat: false, reactionSourceMessageId: nil, callMessages: [], isSettings: true)
+        let accountSettingsController = PeerInfoScreenImpl(hidePhoneInSettings: hidePhoneInSettings, context: self.context, updatedPresentationData: nil, peerId: self.context.account.peerId, avatarInitiallyExpanded: false, isOpenedFromChat: false, reactionSourceMessageId: nil, callMessages: [], isSettings: true)
         accountSettingsController.tabBarItemDebugTapAction = { [weak self] in
             guard let strongSelf = self else {
                 return
@@ -250,12 +254,14 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         self.pushViewController(tabBarController, animated: false)
     }
         
-    public func updateRootControllers(showCallsTab: Bool) {
+    public func updateRootControllers(showContactsTab: Bool, showCallsTab: Bool) {
         guard let rootTabController = self.rootTabController as? TabBarControllerImpl else {
             return
         }
         var controllers: [ViewController] = []
-        controllers.append(self.contactsController!)
+        if showContactsTab {
+            controllers.append(self.contactsController!)
+        }
         if showCallsTab {
             controllers.append(self.callListController!)
         }
@@ -699,7 +705,7 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
                         defer {
                             TempBox.shared.dispose(tempFile)
                         }
-                        if let imageData = compressImageToJPEG(image, quality: 0.7, tempFilePath: tempFile.path) {
+                        if let imageData = compressImageToJPEG(image, quality: Float(SGSimpleSettings.shared.outgoingPhotoQuality) / 100.0, tempFilePath: tempFile.path) {
                             media = .image(dimensions: dimensions, data: imageData, stickers: result.stickers)
                         }
                     case let .video(content, firstFrameImage, values, duration, dimensions):
@@ -722,7 +728,7 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
                             defer {
                                 TempBox.shared.dispose(tempFile)
                             }
-                            let imageData = firstFrameImage.flatMap { compressImageToJPEG($0, quality: 0.6, tempFilePath: tempFile.path) }
+                            let imageData = firstFrameImage.flatMap { compressImageToJPEG($0, quality: Float(SGSimpleSettings.shared.outgoingPhotoQuality) / 100.0, tempFilePath: tempFile.path) }
                             let firstFrameFile = imageData.flatMap { data -> TempBoxFile? in
                                 let file = TempBox.shared.tempFile(fileName: "image.jpg")
                                 if let _ = try? data.write(to: URL(fileURLWithPath: file.path)) {

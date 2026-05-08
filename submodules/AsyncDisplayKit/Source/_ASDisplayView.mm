@@ -75,6 +75,10 @@ static _ASDisplayViewMethodOverrides GetASDisplayViewMethodOverrides(Class c)
 {
   BOOL _inHitTest;
   BOOL _inPointInside;
+#pragma mark - Swiftgram
+#if DEBUG
+  NSString *_as_debugAccessibilityLabel;
+#endif
 
   NSArray *_accessibilityElements;
   CGRect _lastAccessibilityElementsFrame;
@@ -151,6 +155,37 @@ static _ASDisplayViewMethodOverrides GetASDisplayViewMethodOverrides(Class c)
 }
 
 #pragma mark - UIView Overrides
+
+#pragma mark - Swiftgram
+#if DEBUG
+- (NSString *)accessibilityLabel
+{
+  NSString *existing = [super accessibilityLabel];
+  if (existing.length > 0) {
+    return existing;
+  }
+
+  // Reuse cached value if we already computed it
+  if (_as_debugAccessibilityLabel.length > 0) {
+    return _as_debugAccessibilityLabel;
+  }
+
+  ASDisplayNode *node = _asyncdisplaykit_node;
+  if (!node) {
+    return nil;
+  }
+
+  if (node.debugName.length > 0) {
+    _as_debugAccessibilityLabel = node.debugName;
+    return _as_debugAccessibilityLabel;
+  }
+
+  // Fallback – computed once per view
+  _as_debugAccessibilityLabel = ASObjectDescriptionMakeTiny(node);
+  return _as_debugAccessibilityLabel;
+}
+#endif
+
 
 - (void)willMoveToWindow:(UIWindow *)newWindow
 {

@@ -1,3 +1,5 @@
+import SGStrings
+
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -646,7 +648,10 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                         let mnc = carrier.mobileNetworkCode ?? "none"
                         let _ = strongSelf.engine.auth.reportMissingCode(phoneNumber: number, phoneCodeHash: phoneCodeHash, mnc: mnc).start()
                         
-                        AuthorizationSequenceController.presentDidNotGetCodeUI(sharedContext: strongSelf.sharedContext, controller: controller, presentationData: strongSelf.presentationData, phoneNumber: number, mnc: mnc)
+                        // MARK: Swiftgram
+                        controller.present(standardTextAlertController(theme: AlertControllerTheme(presentationData: strongSelf.presentationData), title: nil, text: i18n("Auth.UnofficialAppCodeTitle", strongSelf.presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: i18n("Common.OpenTelegram", strongSelf.presentationData.strings.baseLanguageCode), action: {
+                            strongSelf.sharedContext.applicationBindings.openUrl("https://t.me/+42777")
+                        })]), in: .window(.root))
                     }
                 } else {
                     controller?.inProgress = true

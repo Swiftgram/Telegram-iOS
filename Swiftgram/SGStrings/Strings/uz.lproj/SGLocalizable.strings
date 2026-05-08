@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "Kontent sozlamalari";
+
+"Settings.Tabs.Header" = "Oynalar";
+"Settings.Tabs.HideTabBar" = "Oynalarni yashirish";
+"Settings.Tabs.ShowContacts" = "Kontaktlarni oynasini ko'rsatish";
+"Settings.Tabs.ShowNames" = "Oyna nomini ko'rsatish";
+
+"Settings.Folders.BottomTab" = "Qurollar pastda";
+"Settings.Folders.BottomTabStyle" = "Pastki Qurollar uslubi";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iPhone";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "\"%@\"ni yashirish";
+"Settings.Folders.RememberLast" = "Oxirgi Jildni ochish";
+"Settings.Folders.RememberLast.Notice" = "Ilovani qayta ishga tushirganingizda yoki hisoblarni almashtirganingizda Swiftgram oxirgi foydalanilgan jildni ochadi.";
+
+"Settings.Folders.CompactNames" = "Kichik bo'sh joy";
+"Settings.Folders.AllChatsTitle" = "\"Barcha Chatlar\" nomi";
+"Settings.Folders.AllChatsTitle.short" = "Qisqa";
+"Settings.Folders.AllChatsTitle.long" = "Uzoq";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Standart";
+
+
+"Settings.ChatList.Header" = "CHAT RO'YXI";
+"Settings.CompactChatList" = "Qisqa Chat Ro'yxi";
+
+"Settings.Profiles.Header" = "PROFILLAR";
+
+"Settings.Stories.Hide" = "Hikoyalarni yashirish";
+"Settings.Stories.WarnBeforeView" = "Ko'rishdan avval tasdiqlash";
+"Settings.Stories.DisableSwipeToRecord" = "Kayd qilishni o'chirish";
+
+"Settings.Translation.QuickTranslateButton" = "Tezkor tarjima tugmasi";
+
+"Stories.Warning.Author" = "Muallif";
+"Stories.Warning.ViewStory" = "Hikoyani ko'rasizmi?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ hatto siz ularning Hikoyasini ko'rganini ko'rsatishadi.";
+"Stories.Warning.NoticeStealth" = "%@ ularning Hikoyasini ko'rgani ko'rsatmaydi.";
+
+"Settings.Photo.Quality.Notice" = "Yuklanadigan fotosuratlar va hikoyalarning sifati.";
+"Settings.Photo.SendLarge" = "Katta rasmlarni yuborish";
+"Settings.Photo.SendLarge.Notice" = "Tasodifiy rasmlarni to'g'rilangan hajmini 2560px ga oshiring.";
+
+"Settings.VideoNotes.Header" = "Aylana video";
+"Settings.VideoNotes.StartWithRearCam" = "Orqa kamerada boshlash";
+
+"Settings.CustomColors.Header" = "Hisob ranglari";
+"Settings.CustomColors.Saturation" = "SATURATSIYA";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Hisob ranglarini o'chirish uchun 0%% ga sozlang.";
+
+"Settings.UploadsBoost" = "Yuklashni kuchaytirish";
+"Settings.DownloadsBoost" = "Yuklab olishni kuchaytirish";
+"Settings.DownloadsBoost.Notice" = "Parallel ulanishlar sonini va fayl bo'laklari o'lchamini oshiradi. Agar sizning tarmog'ingiz yuklamani boshqarolmasa, ulanishingizga mos keladigan boshqa variantlarni sinab ko'ring.";
+"Settings.DownloadsBoost.none" = "O'chirilgan";
+"Settings.DownloadsBoost.medium" = "O'rtacha";
+"Settings.DownloadsBoost.maximum" = "Maksimum";
+
+"Settings.ShowProfileID" = "Profil Id'ni ko'rsatish";
+"Settings.ShowDC" = "Ma'lumotlar bazasini ko'rsatish";
+"Settings.ShowCreationDate" = "Suxbat yaratilgan sanani ko'rsatish";
+"Settings.ShowCreationDate.Notice" = "Ba'zi sahifalarning yaratilish sanasi ma'lum emas.";
+
+"Settings.ShowRegDate" = "Ro'yhatdan o'tish sanasini ko'rsatish";
+"Settings.ShowRegDate.Notice" = "Ro'yhatdan o'tgan sana yakunlanmagan.";
+
+"Settings.SendWithReturnKey" = "Enter orqali yuborish";
+"Settings.HidePhoneInSettingsUI" = "Telefonni sozlamalarda yashirish";
+"Settings.HidePhoneInSettingsUI.Notice" = "Bu faqat sozlamalardan telefon raqamingizni yashiradi. Uni boshqalar dan yashirish uchun, Farovonlik va Xavfsizlik ga o'ting.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "5 soniya uzoq bo'lsa";
+
+"ProxySettings.UseSystemDNS" = "Tizim DNSni ishlat";
+"ProxySettings.UseSystemDNS.Notice" = "Agar sizda Google DNS guruhlaringiz bo'lmasa, istisnodan o'tish uchun tizim DNS ni ishlatishingiz kerak.";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "Sizga %@ kerak emas!";
+"Common.RestartRequired" = "Qayta ishga tushirish lozim";
+"Common.RestartNow" = "Hozir qayta ishlash";
+"Common.OpenTelegram" = "Telegramni ochish";
+"Common.UseTelegramForPremium" = "Iltimos, Telegram Premiumni olish uchun rasmiy Telegram ilovasidan foydalaning. Telegram Premiumni olinganidan so'ng, barcha xususiyatlar Swiftgram da mavjud bo'ladi.";
+
+"Message.HoldToShowOrReport" = "Ko'rsatish yoki hisobga olish uchun tuting.";
+
+"Auth.AccountBackupReminder" = "Oldin saqlash usulini to'g'riroq o'rnatganingizni tekshiring. Alockli qilish uchun SMS uchun SIM kartni yoki qo'shimcha sessiyani tarqatib turish uchun qo'shimcha kirish usuliga kirish olib qo'ying.";
+"Auth.UnofficialAppCodeTitle" = "Siz faqat rasmiy ilovadan faqat kodingizni olasiz";
+
+"Settings.SmallReactions" = "Kichik Reaktsiyalar";
+"Settings.HideReactions" = "Reaksiyalarni yashirish";
+
+"ContextMenu.SaveToCloud" = "Bulutga saqlash";
+"ContextMenu.SelectFromUser" = "Avtordan tanlash";
+
+"Settings.ContextMenu" = "KONTEKS MENYU";
+"Settings.ContextMenu.Notice" = "O'chirilgan kirishlar \"Swiftgram\" pastki menudasiga o'tkaziladi.";
+
+
+"Settings.ChatSwipeOptions" = "Chat Ro'yxati Sürüş variantlari";
+"Settings.DeleteChatSwipeOption" = "Sohbetni o'chirish uchun sug'urta";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Keyingi O'qilmagan Kanalga burilish";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Keyingi mavzuga torting";
+"Settings.GalleryCamera" = "Galereyadagi Kamera";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" Tugma";
+"Settings.SnapDeletionEffect" = "Xabar O'chirish O'zgartirishlari";
+
+"Settings.Stickers.Size" = "OLCHAM";
+"Settings.Stickers.Timestamp" = "Vaqtni Ko'rsatish";
+
+"Settings.RecordingButton" = "Ovozni Yozish Tugmasi";
+
+"Settings.DefaultEmojisFirst" = "Standart emoyilarni prioritetga qo'ying";
+"Settings.DefaultEmojisFirst.Notice" = "Emojilar klaviaturasida premiumdan oldin standart alifbo emoyilarni ko'rsating";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "yaratildi: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "%@\" ga qo'shildi";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Ro'yhatga olingan";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Xabarni tahrirlash uchun ikki marta bosing";
+
+"Settings.wideChannelPosts" = "Keng postlar kanallarda";
+"Settings.ForceEmojiTab" = "Emoji klaviatura sukutiga";
+
+"Settings.forceBuiltInMic" = "Qurilma Mikrofonini Kuchaytirish";
+"Settings.forceBuiltInMic.Notice" = "Agar yoqilsa, ilova faqat qurilma mikrofonidan foydalanadi, hattoki naushnik bog'langan bo'lsa ham.";
+
+"Settings.hideChannelBottomButton" = "Kanal Pastki Panellini yashirish";
+
+"Settings.CallConfirmation" = "Qo'ng'iroq tasdiqlanishi";
+"Settings.CallConfirmation.Notice" = "Swiftgram sizdan qo'ng'iroq qilishdan oldin tasdiqlashni so'raydi.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Qo'ng'iroq qilish?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Video qo'ng'iroq qilish?";
+
+"MutualContact.Label" = "o'zaro aloqa";
+
+"Settings.swipeForVideoPIP" = "Video PIP bilan Surish";
+"Settings.swipeForVideoPIP.Notice" = "Agar yoqilgan bo'lsa, videoni surish uni Tasvir ichida Tasvir rejimida ochadi.";

@@ -4477,7 +4477,6 @@ func settingsSearchableItems(
         
         let storiesItems = myProfileSearchableItems(context: context)
         allItems.append(contentsOf: storiesItems)
-        
         if let hasTwoStepAuth = hasTwoStepAuth,
            hasTwoStepAuth {
             let passport = SettingsSearchableItem(

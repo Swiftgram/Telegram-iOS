@@ -40,19 +40,27 @@ apple_resource_bundle(
     ],
 )
 
+sgdeps = [
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+]
+
+sgsrcs = [
+    "//Swiftgram/SGNY:SGNY"
+]
+
 swift_library(
     name = "WallpaperBackgroundNode",
     module_name = "WallpaperBackgroundNode",
     srcs = glob([
         "Sources/**/*.swift",
-    ]),
+    ]) + sgsrcs,
     copts = [
         "-warnings-as-errors",
     ],
     data = [
         ":WallpaperBackgroundNodeBundle",
     ],
-    deps = [
+    deps = sgdeps + [
         "//submodules/AsyncDisplayKit:AsyncDisplayKit",
         "//submodules/Display:Display",
         "//submodules/GradientBackground:GradientBackground",

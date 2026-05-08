@@ -816,6 +816,10 @@ public func recentSessionsController(context: AccountContext, activeSessionsCont
         guard let appConfiguration = view?.get(AppConfiguration.self) else {
             return false
         }
+        // MARK: Swiftgram
+        if appConfiguration.sgWebSettings.global.qrLogin {
+            return true
+        }
         guard let data = appConfiguration.data, let enableQR = data["qr_login_camera"] as? Bool, enableQR else {
             return false
         }

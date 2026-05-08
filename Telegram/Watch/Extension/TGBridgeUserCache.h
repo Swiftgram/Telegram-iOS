@@ -11,8 +11,8 @@
 - (void)storeUsers:(NSArray *)users;
 - (NSArray *)applyUserChanges:(NSArray *)userChanges;
 
-- (TGBridgeBotInfo *)botInfoForUserId:(int32_t)userId;
-- (void)storeBotInfo:(TGBridgeBotInfo *)botInfo forUserId:(int32_t)userId;
+- (TGBridgeBotInfo *)botInfoForUserId:(int64_t)userId;
+- (void)storeBotInfo:(TGBridgeBotInfo *)botInfo forUserId:(int64_t)userId;
 
 + (instancetype)instance;
 

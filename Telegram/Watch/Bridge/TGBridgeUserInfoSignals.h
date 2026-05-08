@@ -2,7 +2,7 @@
 
 @interface TGBridgeUserInfoSignals : NSObject
 
-+ (SSignal *)userInfoWithUserId:(int32_t)userId;
++ (SSignal *)userInfoWithUserId:(int64_t)userId;
 + (SSignal *)usersInfoWithUserIds:(NSArray *)userIds;
 
 @end

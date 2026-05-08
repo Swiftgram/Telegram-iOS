@@ -192,7 +192,7 @@ func presentLegacyMediaPickerGallery(
             recipientName = peer?.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)
         }
     }
-    
+    let currentAppConfiguration = context.currentAppConfiguration.with { $0 }
     let model = TGMediaPickerGalleryModel(
         context: legacyController.context,
         items: items,
@@ -208,6 +208,8 @@ func presentLegacyMediaPickerGallery(
         hasCamera: false,
         recipientName: recipientName,
         isScheduledMessages: isScheduledMessages,
+        canShowTelescope: currentAppConfiguration.sgWebSettings.global.canShowTelescope,
+        canSendTelescope: currentAppConfiguration.sgWebSettings.user.canSendTelescope,
         hasCoverButton: hasCoverButton
     )!
     model.stickersContext = paintStickersContext

@@ -1148,16 +1148,17 @@ private final class PremiumBoostLevelsSheetComponent: CombinedComponent {
                                     title: presentationData.strings.ChannelBoost_MoreBoosts_Title,
                                     text: presentationData.strings.ChannelBoost_MoreBoosts_Text(peer.compactDisplayTitle, "\(premiumConfiguration.boostsPerGiftCount)").string,
                                     actions: [
-                                        TextAlertAction(type: .defaultAction, title: presentationData.strings.ChannelBoost_MoreBoosts_Gift, action: { [weak controller] in
-                                            if let navigationController = controller?.navigationController {
-                                                controller?.dismissAnimated()
+                                        // MARK: Swiftgram
+                                        // TextAlertAction(type: .defaultAction, title: presentationData.strings.ChannelBoost_MoreBoosts_Gift, action: { [weak controller] in
+                                        //     if let navigationController = controller?.navigationController {
+                                        //         controller?.dismissAnimated()
                                                 
-                                                Queue.mainQueue().after(0.4) {
-                                                    let giftController = context.sharedContext.makePremiumGiftController(context: context, source: .channelBoost, completion: nil)
-                                                    navigationController.pushViewController(giftController, animated: true)
-                                                }
-                                            }
-                                        }),
+                                        //         Queue.mainQueue().after(0.4) {
+                                        //             let giftController = context.sharedContext.makePremiumGiftController(context: context, source: .channelBoost, completion: nil)
+                                        //             navigationController.pushViewController(giftController, animated: true)
+                                        //         }
+                                        //     }
+                                        // }),
                                         TextAlertAction(type: .genericAction, title: presentationData.strings.Common_Close, action: {})
                                     ],
                                     actionLayout: .vertical,

@@ -20,6 +20,15 @@
     }];
 }
 
++ (void)presentInputControllerWithEmojisForInterfaceController:(TGInterfaceController *)interfaceController completion:(void (^)(NSString *))completion;
+{
+    [interfaceController presentTextInputControllerWithSuggestions:nil allowedInputMode:WKTextInputModeAllowEmoji completion:^(NSArray *results)
+    {
+        if (completion != nil && results.count > 0 && [results.firstObject isKindOfClass:[NSString class]])
+            completion(results.firstObject);
+    }];
+}
+
 + (void)presentInputControllerForInterfaceController:(TGInterfaceController *)interfaceController suggestionsForText:(NSString *)text completion:(void (^)(NSString *))completion
 {
     [interfaceController presentTextInputControllerWithSuggestions:[self suggestionsForText:text] allowedInputMode:WKTextInputModeAllowEmoji completion:^(NSArray *results)

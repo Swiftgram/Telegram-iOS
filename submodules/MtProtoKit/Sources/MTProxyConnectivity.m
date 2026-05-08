@@ -64,7 +64,7 @@
             MTPayloadData payloadData;
             NSData *data = [MTDiscoverConnectionSignals payloadData:&payloadData context:context address:address];
             
-            MTContext *proxyContext = [[MTContext alloc] initWithSerialization:context.serialization encryptionProvider:context.encryptionProvider apiEnvironment:[[context apiEnvironment] withUpdatedSocksProxySettings:settings]  isTestingEnvironment:context.isTestingEnvironment useTempAuthKeys:false];
+            MTContext *proxyContext = [[MTContext alloc] initWithSerialization:context.serialization encryptionProvider:context.encryptionProvider apiEnvironment:[[context apiEnvironment] withUpdatedSocksProxySettings:settings]  isTestingEnvironment:context.isTestingEnvironment useTempAuthKeys:false forceLocalDNS:context.forceLocalDNS];
             
             proxyContext.makeTcpConnectionInterface = context.makeTcpConnectionInterface;
             

@@ -198,7 +198,7 @@
                 case TGBridgeMessageActionChatDeleteMember:
                 {
                     NSString *authorName = [TGStringUtils initialsForFirstName:author.firstName lastName:author.lastName single:false];
-                    TGBridgeUser *user = users[@([actionAttachment.actionData[@"uid"] int32Value])];
+                    TGBridgeUser *user = users[@([actionAttachment.actionData[@"uid"] int64Value])];
                     
                     if (user.identifier == author.identifier)
                     {
@@ -276,7 +276,7 @@
                     
                 case TGBridgeMessageActionChannelInviter:
                 {
-                    TGBridgeUser *user = users[@([actionAttachment.actionData[@"uid"] int32Value])];
+                    TGBridgeUser *user = users[@([actionAttachment.actionData[@"uid"] int64Value])];
                     NSString *authorName = [TGStringUtils initialsForFirstName:user.firstName lastName:user.lastName single:false];
                     NSString *formatString = TGLocalized(@"Notification.ChannelInviter");
                     

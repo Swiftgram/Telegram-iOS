@@ -1,4 +1,5 @@
 import Foundation
+import SGSimpleSettings
 import UIKit
 import AsyncDisplayKit
 import Display
@@ -334,6 +335,11 @@ private final class ItemNode: ASDisplayNode {
     }
     
     func updateLayout(height: CGFloat, transition: ContainedViewLayoutTransition) -> (width: CGFloat, shortWidth: CGFloat) {
+        // MARK: Swiftgram
+        var height = height
+        if SGSimpleSettings.shared.hideTabBar {
+            height = 46.0
+        }
         let titleSize = self.titleNode.updateLayout(CGSize(width: 160.0, height: .greatestFiniteMagnitude))
         let _ = self.titleActiveNode.updateLayout(CGSize(width: 160.0, height: .greatestFiniteMagnitude))
         let titleFrame = CGRect(origin: CGPoint(x: -self.titleNode.insets.left, y: floor((height - titleSize.height) / 2.0)), size: titleSize)
@@ -380,6 +386,11 @@ private final class ItemNode: ASDisplayNode {
     }
     
     func updateArea(size: CGSize, sideInset: CGFloat, useShortTitle: Bool, transition: ContainedViewLayoutTransition) {
+        // MARK: Swiftgram
+        var size = size
+        if SGSimpleSettings.shared.hideTabBar {
+            size.height = 46.0
+        }
         transition.updateAlpha(node: self.titleContainer, alpha: useShortTitle ? 0.0 : 1.0)
         transition.updateAlpha(node: self.shortTitleContainer, alpha: useShortTitle ? 1.0 : 0.0)
         
@@ -534,7 +545,11 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
         }
     }
     
-    public init(context: AccountContext) {
+    // MARK: Swiftgram
+    public let inline: Bool
+    private var backgroundNode: NavigationBackgroundNode? = nil
+    
+    public init(inline: Bool = false, context: AccountContext) {
         self.context = context
         
         self.backgroundContainerView = GlassBackgroundContainerView()
@@ -546,6 +561,13 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
         self.selectedBackgroundNode = ASImageNode()
         self.selectedBackgroundNode.displaysAsynchronously = false
         self.selectedBackgroundNode.displayWithoutProcessing = true
+        
+        // MARK: Swiftgram
+        self.inline = inline
+        if self.inline {
+            let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+            self.backgroundNode = NavigationBackgroundNode(color: presentationData.theme.rootController.navigationBar.blurredBackgroundColor)
+        }
         
         super.init()
         
@@ -828,7 +850,7 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
                 selectionFraction = 0.0
             }
             
-            itemNode.updateText(strings: presentationData.strings, title: filter.title(strings: presentationData.strings), shortTitle: i == 0 ? filter.shortTitle(strings: presentationData.strings) : filter.title(strings: presentationData.strings), unreadCount: unreadCount, unreadHasUnmuted: unreadHasUnmuted, isNoFilter: isNoFilter, selectionFraction: selectionFraction, isEditing: isEditing, isReordering: isReordering, canReorderAllChats: canReorderAllChats, isDisabled: isDisabled, presentationData: presentationData, transition: itemNodeTransition)
+            itemNode.updateText(strings: presentationData.strings, title: filter.title(strings: presentationData.strings), shortTitle: filter.shortTitle(strings: presentationData.strings), unreadCount: unreadCount, unreadHasUnmuted: unreadHasUnmuted, isNoFilter: isNoFilter, selectionFraction: selectionFraction, isEditing: isEditing, isReordering: isReordering, canReorderAllChats: canReorderAllChats, isDisabled: isDisabled, presentationData: presentationData, transition: itemNodeTransition)
         }
         var removeKeys: [ChatListFilterTabEntryId] = []
         for (id, _) in self.itemNodes {
@@ -875,7 +897,7 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
             }
         }
         
-        let minSpacing: CGFloat = 26.0
+        let minSpacing: CGFloat = 26.0 / (SGSimpleSettings.shared.compactFolderNames ? 2.5 : 1.0)
         
         let resolvedSideInset: CGFloat = 14.0
         var leftOffset: CGFloat = resolvedSideInset
@@ -898,7 +920,7 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
                 itemNodeTransition = .immediate
             }
             
-            let useShortTitle = itemId == .all && useShortTitles
+            let useShortTitle = itemId == .all && sgUseShortAllChatsTitle(useShortTitles)
             let paneNodeSize = useShortTitle ? paneNodeShortSize : paneNodeLongSize
             
             let paneFrame = CGRect(origin: CGPoint(x: leftOffset, y: floor((backgroundSize.height - paneNodeSize.height) / 2.0)), size: paneNodeSize)

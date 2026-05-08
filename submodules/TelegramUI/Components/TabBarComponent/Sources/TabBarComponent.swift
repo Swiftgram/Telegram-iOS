@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import Display
@@ -653,7 +654,28 @@ public final class TabBarComponent: Component {
             let _ = alphaTransition
 
             let innerInset: CGFloat = 4.0
-            let availableSize = CGSize(width: min(500.0, availableSize.width), height: availableSize.height)
+            var availableSize = CGSize(width: min(500.0, availableSize.width), height: availableSize.height)
+            if !(SGSimpleSettings.shared.wideTabBar || component.search?.isActive ?? false) { 
+                let widthReducer: CGFloat
+
+                switch component.items.count {
+                case 1:
+                    widthReducer = 1.75
+                case 2:
+                    widthReducer = 1.5
+                case 3:
+                    widthReducer = 1.25
+                case 4:
+                    widthReducer = 1.0
+                default:
+                    widthReducer = 1.0
+                }
+                availableSize.width = availableSize.width / widthReducer
+                if !SGSimpleSettings.shared.tabBarSearchEnabled {
+                    availableSize.width -= 48.0
+                    availableSize.width -= innerInset * 2.0
+                }
+            }
             
             let previousComponent = self.component
             self.component = component
@@ -661,7 +683,7 @@ public final class TabBarComponent: Component {
             
             self.overrideUserInterfaceStyle = component.theme.overallDarkAppearance ? .dark : .light
 
-            let barHeight: CGFloat = 56.0 + innerInset * 2.0
+            let barHeight: CGFloat = (SGSimpleSettings.shared.showTabNames ? 56.0 : 40.0) + innerInset * 2.0
 
             var availableItemsWidth: CGFloat = availableSize.width - innerInset * 2.0
             if component.search != nil {
@@ -695,7 +717,7 @@ public final class TabBarComponent: Component {
                         isUnconstrained: true
                     )),
                     environment: {},
-                    containerSize: CGSize(width: 200.0, height: 56.0)
+                    containerSize: CGSize(width: 200.0, height: SGSimpleSettings.shared.showTabNames ? 56.0 : 40.0)
                 )
                 
                 unboundItemWidths.append(itemSize.width)
@@ -724,7 +746,7 @@ public final class TabBarComponent: Component {
                 totalItemsWidth = total
             }
 
-            let itemHeight: CGFloat = 56.0
+            let itemHeight: CGFloat = (SGSimpleSettings.shared.showTabNames ? 56.0 : 40.0)
             let contentWidth: CGFloat = innerInset * 2.0 + totalItemsWidth
             let tabsSize = CGSize(width: min(availableSize.width, contentWidth), height: itemHeight + innerInset * 2.0)
 
@@ -867,7 +889,7 @@ public final class TabBarComponent: Component {
             } else if let selectionFrame {
                 lensSelection = (selectionFrame.minX - innerInset, selectionFrame.width + innerInset * 2.0)
             } else {
-                lensSelection = (0.0, 56.0)
+                lensSelection = (0.0, (SGSimpleSettings.shared.showTabNames ? 56.0 : 40.0))
             }
 
             var lensSize: CGSize = tabsSize
@@ -1281,7 +1303,7 @@ private final class ItemComponent: Component {
                 containerSize: CGSize(width: availableSize.width, height: 100.0)
             )
             let titleFrame = CGRect(origin: CGPoint(x: floor((availableSize.width - titleSize.width) * 0.5), y: availableSize.height - 8.0 - titleSize.height), size: titleSize)
-            if let titleView = self.title.view {
+            if SGSimpleSettings.shared.showTabNames, let titleView = self.title.view {
                 if titleView.superview == nil {
                     self.contextContainerView.contentView.addSubview(titleView)
                 }
