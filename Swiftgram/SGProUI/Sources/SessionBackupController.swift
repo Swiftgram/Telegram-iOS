@@ -473,12 +473,10 @@ func backupSessionsFromView(_ view: AccountRecordsView<TelegramAccountManagerTyp
     for (peerId, record) in recordsToBackup {
         var backupName: String? = nil
         if let accountWithInfo = accountsWithInfo.first(where: { $0.peer.id == PeerId(peerId) }) {
-            if let user = accountWithInfo.peer as? TelegramUser {
-                if let username = user.username {
-                    backupName = "@\(username)"
-                } else {
-                    backupName = user.nameOrPhone
-                }
+            if let username = accountWithInfo.peer.addressName {
+                backupName = "@\(username)"
+            } else {
+                backupName = accountWithInfo.peer.debugDisplayTitle
             }
         }
         let backup = SessionBackup(name: backupName, accountRecord: record)

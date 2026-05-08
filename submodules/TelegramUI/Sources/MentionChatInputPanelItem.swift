@@ -17,7 +17,7 @@ final class MentionChatInputPanelItem: ListViewItem {
     fileprivate let revealed: Bool
     fileprivate let inverted: Bool
     fileprivate let peer: EnginePeer
-    private let peerSelected: (EnginePeer, Bool) -> Void
+    fileprivate let peerSelected: (EnginePeer, Bool) -> Void
     fileprivate let setPeerIdRevealed: (EnginePeer.Id?) -> Void
     fileprivate let removeRequested: (EnginePeer.Id) -> Void
 
@@ -486,7 +486,7 @@ extension MentionChatInputPanelItemNode {
         switch gestureRecognizer.state {
             case .began:
                 if let item = self.item {
-                    item.peerSelected(EnginePeer(item.peer), true)
+                    item.peerSelected(item.peer, true)
                 }
             default:
                 break

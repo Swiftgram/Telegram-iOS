@@ -86,8 +86,8 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
     if showProfileId {
         var idText = ""
         
-        if let user = data.peer as? TelegramUser {
-            idText = String(user.id.id._internalGetInt64Value())
+        if let peer = data.peer {
+            idText = String(peer.id.id._internalGetInt64Value())
         }
         
         items[.edit]!.append(

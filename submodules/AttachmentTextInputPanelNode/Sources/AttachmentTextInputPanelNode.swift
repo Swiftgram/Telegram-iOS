@@ -1283,16 +1283,23 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
 
         self.updateCounterTextNode(transition: transition, panelHeight: panelContentHeight, panelOriginY: panelOriginY)
         self.actionButtons.updateAccessibility()
-        
-        if self.glass {
-            panelHeight += 11.0
+
+        if let inputMediaNode = inputMediaNodeForLayout {
+            if isNewInputMediaNode && transition.isAnimated {
+                inputMediaNode.view.frame = inputMediaFrame.offsetBy(dx: 0.0, dy: inputMediaHeight)
+                inputMediaNode.view.alpha = 0.0
+                inputMediaNode.view.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
+            }
+            inputMediaNode.view.alpha = 1.0
+            transition.updateFrame(view: inputMediaNode.view, frame: inputMediaFrame)
         }
-        
-        return panelHeight
+
+        self.currentHeight = totalHeight
+        return totalHeight
     }
     
-    private func updateFieldAndButtonsLayout(inputHasText: Bool, panelHeight: CGFloat, transition: ContainedViewLayoutTransition) -> CGFloat {
-        guard let (width, leftInsetValue, rightInsetValue, additionalSideInsets, _, metrics, _) = self.validLayout else {
+    private func updateFieldAndButtonsLayout(inputHasText: Bool, panelHeight: CGFloat, panelOriginY: CGFloat, textInputFrame: CGRect, transition: ContainedViewLayoutTransition) -> CGFloat {
+        guard let layout = self.validLayout else {
             return 0.0
         }
 
