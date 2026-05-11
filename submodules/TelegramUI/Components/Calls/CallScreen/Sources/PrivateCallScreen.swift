@@ -74,6 +74,7 @@ public final class PrivateCallScreen: OverlayMaskContainerView, AVPictureInPictu
         public var shortName: String
         public var avatarImage: UIImage?
         public var audioOutput: AudioOutput
+        public var canSwitchAudioOutput: Bool
         public var isLocalAudioMuted: Bool
         public var isRemoteAudioMuted: Bool
         public var localVideo: VideoSource?
@@ -90,6 +91,7 @@ public final class PrivateCallScreen: OverlayMaskContainerView, AVPictureInPictu
             shortName: String,
             avatarImage: UIImage?,
             audioOutput: AudioOutput,
+            canSwitchAudioOutput: Bool,
             isLocalAudioMuted: Bool,
             isRemoteAudioMuted: Bool,
             localVideo: VideoSource?,
@@ -105,6 +107,7 @@ public final class PrivateCallScreen: OverlayMaskContainerView, AVPictureInPictu
             self.shortName = shortName
             self.avatarImage = avatarImage
             self.audioOutput = audioOutput
+            self.canSwitchAudioOutput = canSwitchAudioOutput
             self.isLocalAudioMuted = isLocalAudioMuted
             self.isRemoteAudioMuted = isRemoteAudioMuted
             self.localVideo = localVideo
@@ -132,6 +135,9 @@ public final class PrivateCallScreen: OverlayMaskContainerView, AVPictureInPictu
                 return false
             }
             if lhs.audioOutput != rhs.audioOutput {
+                return false
+            }
+            if lhs.canSwitchAudioOutput != rhs.canSwitchAudioOutput {
                 return false
             }
             if lhs.isLocalAudioMuted != rhs.isLocalAudioMuted {
@@ -822,7 +828,7 @@ public final class PrivateCallScreen: OverlayMaskContainerView, AVPictureInPictu
                 self.flipCameraAction?()
             }), at: 0)
         } else {
-            buttons.insert(ButtonGroupView.Button(content: .speaker(audioOutput: params.state.audioOutput), isEnabled: !isTerminated, action: { [weak self] in
+            buttons.insert(ButtonGroupView.Button(content: .speaker(audioOutput: params.state.audioOutput), isEnabled: !isTerminated && params.state.canSwitchAudioOutput, action: { [weak self] in
                 guard let self else {
                     return
                 }
