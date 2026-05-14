@@ -174,7 +174,7 @@ public final class LiveLocationHeaderPanelComponent: Component {
                             presentLiveLocationController(context: component.context, peerId: peerId, controller: controller)
                         }
                     },
-                    close: { [weak self] in
+                    close: { [weak self] _ in
                         guard let self, let component = self.component, let controller = component.controller() else {
                             return
                         }

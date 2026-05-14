@@ -3323,6 +3323,7 @@ public final class StorageUsageScreen: ViewControllerComponentContainer {
         
         if peer != nil {
             self.navigationPresentation = .modal
+            self._hasGlassStyle = true
         }
         
         self.readyValue.set(componentReady.get() |> timeout(0.3, queue: .mainQueue(), alternate: .single(true)))

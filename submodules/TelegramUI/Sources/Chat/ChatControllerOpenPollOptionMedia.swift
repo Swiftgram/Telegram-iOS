@@ -14,6 +14,7 @@ import TelegramStringFormatting
 import TelegramPresentationData
 import StickerPeekUI
 import StickerPackPreviewUI
+import PresentationDataUtils
 
 extension ChatControllerImpl {
     func openPollMedia(message: EngineMessage, subject: ChatControllerInteraction.PollMediaSubject) -> Void {
@@ -104,6 +105,41 @@ extension ChatControllerImpl {
                 self.presentInGlobalOverlay(peekController)
                 
             })
+        } else if case let .webpage(webpage) = media {
+            guard let url = webpage.content.url else {
+                return
+            }
+            let _ = self.context.sharedContext.openUserGeneratedUrl(
+                context: self.context,
+                peerId: nil,
+                url: url,
+                webpage: webpage,
+                concealed: true,
+                forceConcealed: true,
+                skipUrlAuth: true,
+                skipConcealedAlert: false,
+                forceDark: false,
+                present: { [weak self] c in
+                    self?.present(c, in: .window(.root))
+                },
+                openResolved: { [weak self] result in
+                    guard let self, let navigationController = self.effectiveNavigationController else {
+                        return
+                    }
+                    let context = self.context
+                    context.sharedContext.openResolvedUrl(result, context: context, urlContext: .generic, navigationController: navigationController, forceExternal: false, forceUpdate: false, openPeer: { peer, navigation in
+
+                    }, sendFile: nil, sendSticker: nil, sendEmoji: nil, requestMessageActionUrlAuth: nil, joinVoiceChat: { _, _, _ in
+                    }, present: { [weak self] c, a in
+                        self?.present(c, in: .window(.root), with: a)
+                    }, dismissInput: {
+                        context.sharedContext.mainWindow?.viewController?.view.endEditing(false)
+                    }, contentContext: nil, progress: nil, completion: nil)
+                },
+                progress: nil,
+                alertDisplayUpdated: nil,
+                concealedAlertOption: nil
+            )
         } else {
             let _ = self.context.sharedContext.openChatMessage(OpenChatMessageParams(
                 context: self.context,

@@ -298,17 +298,17 @@ class ContactMultiselectionControllerImpl: ViewController, ContactMultiselection
         case .peerSelection:
             self.titleView.title = CounterControllerTitle(title: self.params.title ?? self.presentationData.strings.PrivacyLastSeenSettings_EmpryUsersPlaceholder, counter: "")
             if self.rightNavigationButton == nil {
-                let rightNavigationButton = UIBarButtonItem(title: self.presentationData.strings.Common_Done, style: .done, target: self, action: #selector(self.rightNavigationButtonPressed))
+                let rightNavigationButton = UIBarButtonItem(title: "___done", style: .done, target: self, action: #selector(self.rightNavigationButtonPressed))
                 self.rightNavigationButton = rightNavigationButton
-                self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: self.presentationData.strings.Common_Cancel, style: .plain, target: self, action: #selector(cancelPressed))
+                self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "___close", style: .plain, target: self, action: #selector(cancelPressed))
                 self.navigationItem.rightBarButtonItem = self.rightNavigationButton
             }
         case let .chatSelection(chatSelection):
             self.titleView.title = CounterControllerTitle(title: self.params.title ?? chatSelection.title, counter: "")
             if self.rightNavigationButton == nil {
-                let rightNavigationButton = UIBarButtonItem(title: self.presentationData.strings.Common_Done, style: .done, target: self, action: #selector(self.rightNavigationButtonPressed))
+                let rightNavigationButton = UIBarButtonItem(title: "___done", style: .done, target: self, action: #selector(self.rightNavigationButtonPressed))
                 self.rightNavigationButton = rightNavigationButton
-                self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: self.presentationData.strings.Common_Cancel, style: .plain, target: self, action: #selector(cancelPressed))
+                self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "___close", style: .plain, target: self, action: #selector(cancelPressed))
                 self.navigationItem.rightBarButtonItem = self.rightNavigationButton
             }
         }

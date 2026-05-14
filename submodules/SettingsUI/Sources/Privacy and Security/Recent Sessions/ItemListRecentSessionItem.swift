@@ -289,7 +289,7 @@ class ItemListRecentSessionItemNode: ItemListRevealOptionsItemNode {
             
             let peerRevealOptions: [ItemListRevealOption]
             if item.editable && item.enabled {
-                peerRevealOptions = [ItemListRevealOption(key: 0, title: item.presentationData.strings.AuthSessions_Terminate, icon: .none, color: item.presentationData.theme.list.itemDisclosureActions.destructive.fillColor, textColor: item.presentationData.theme.list.itemDisclosureActions.destructive.foregroundColor)]
+                peerRevealOptions = [ItemListRevealOption(key: 0, title: item.presentationData.strings.AuthSessions_Terminate, icon: .none, color: item.presentationData.theme.list.itemDisclosureActions.destructive.fillColor, iconColor: item.presentationData.theme.list.itemDisclosureActions.destructive.foregroundColor, textColor: item.presentationData.theme.list.itemSecondaryTextColor)]
             } else {
                 peerRevealOptions = []
             }

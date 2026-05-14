@@ -825,6 +825,7 @@ final class GiftsListView: UIView {
                 component: AnyComponent(
                     ButtonComponent(
                         background: ButtonComponent.Background(
+                            style: .glass,
                             color: presentationData.theme.list.itemCheckColors.fillColor,
                             foreground: presentationData.theme.list.itemCheckColors.foregroundColor,
                             pressedColor: presentationData.theme.list.itemCheckColors.fillColor.withMultipliedAlpha(0.8)
@@ -840,7 +841,7 @@ final class GiftsListView: UIView {
                     )
                 ),
                 environment: {},
-                containerSize: CGSize(width: 240.0, height: 50.0)
+                containerSize: CGSize(width: 240.0, height: 52.0)
             )
   
             let emptyTotalHeight = emptyResultsTitleSize.height + emptyTextSpacing + emptyResultsTextSize.height + emptyTextSpacing + emptyResultsActionSize.height

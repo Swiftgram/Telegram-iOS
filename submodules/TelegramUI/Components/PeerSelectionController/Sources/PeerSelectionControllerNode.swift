@@ -700,7 +700,7 @@ final class PeerSelectionControllerNode: ASDisplayNode {
                     }
                 }
 
-                let controller = chatTextLinkEditController(context: context, updatedPresentationData: (presentationData, .never()), text: text?.string ?? "", link: link, apply: { [weak self] link in
+                let controller = chatTextLinkEditController(context: context, updatedPresentationData: (presentationData, .never()), text: presentationData.strings.TextFormat_AddLinkText(text?.string ?? "").string, link: link, apply: { [weak self] link, _ in
                     if let strongSelf = self, let inputMode = inputMode, let selectionRange = selectionRange {
                         if let link = link {
                             strongSelf.updateChatPresentationInterfaceState(animated: true, { state in

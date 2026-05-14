@@ -3135,6 +3135,18 @@ private func privacySearchableItems(context: AccountContext, privacySettings: Ac
     )
     items.append(
         SettingsSearchableItem(
+            id: "privacy/open-links",
+            title: strings.ChatSettings_OpenLinksIn,
+            alternate: synonyms(strings.SettingsSearch_Synonyms_ChatSettings_OpenLinksIn),
+            icon: icon,
+            breadcrumbs: [strings.Settings_PrivacySettings],
+            present: { context, _, present in
+                present(.push, webBrowserSettingsController(context: context))
+            }
+        )
+    )
+    items.append(
+        SettingsSearchableItem(
             id: "privacy/data-settings/delete-synced",
             title: strings.Privacy_ContactsReset,
             alternate: synonyms(strings.SettingsSearch_Synonyms_Privacy_Data_ContactsReset),
@@ -3668,16 +3680,6 @@ private func dataSearchableItems(context: AccountContext) -> [SettingsSearchable
             isVisible: false,
             present: { context, _, present in
                 presentDataSettings(context, present, .sensitiveContent)
-            }
-        ),
-        SettingsSearchableItem(
-            id: "data/open-links",
-            title: strings.ChatSettings_OpenLinksIn,
-            alternate: synonyms(strings.SettingsSearch_Synonyms_ChatSettings_OpenLinksIn),
-            icon: icon,
-            breadcrumbs: [strings.Settings_ChatSettings],
-            present: { context, _, present in
-                present(.push, webBrowserSettingsController(context: context))
             }
         ),
         SettingsSearchableItem(

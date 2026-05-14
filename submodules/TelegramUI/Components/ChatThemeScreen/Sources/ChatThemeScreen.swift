@@ -216,7 +216,7 @@ private func generateBorderImage(theme: PresentationTheme, bordered: Bool, selec
     if let image = cachedBorderImages[key] {
         return image
     } else {
-        let image = generateImage(CGSize(width: 18.0, height: 18.0), rotatedContext: { size, context in
+        let image = generateImage(CGSize(width: 32.0, height: 32.0), rotatedContext: { size, context in
             let bounds = CGRect(origin: CGPoint(), size: size)
             context.clear(bounds)
 
@@ -242,7 +242,7 @@ private func generateBorderImage(theme: PresentationTheme, bordered: Bool, selec
                 context.setLineWidth(lineWidth)
                 context.strokeEllipse(in: bounds.insetBy(dx: 1.0 + lineWidth / 2.0, dy: 1.0 + lineWidth / 2.0))
             }
-        })?.stretchableImage(withLeftCapWidth: 9, topCapHeight: 9)
+        })?.stretchableImage(withLeftCapWidth: 16, topCapHeight: 16)
         cachedBorderImages[key] = image
         return image
     }
@@ -288,7 +288,7 @@ private final class ThemeSettingsThemeItemIconNode : ListViewItemNode {
         self.imageNode = TransformImageNode()
         self.imageNode.frame = CGRect(origin: CGPoint(), size: CGSize(width: 82.0, height: 108.0))
         self.imageNode.isLayerBacked = true
-        self.imageNode.cornerRadius = 8.0
+        self.imageNode.cornerRadius = 16.0
         self.imageNode.clipsToBounds = true
         self.imageNode.contentAnimations = [.subsequentUpdates]
         

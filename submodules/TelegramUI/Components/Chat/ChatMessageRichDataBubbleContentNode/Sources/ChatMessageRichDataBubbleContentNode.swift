@@ -3,7 +3,6 @@ import UIKit
 import AsyncDisplayKit
 import Display
 import TelegramCore
-import Postbox
 import SwiftSignalKit
 import AccountContext
 import ChatMessageBubbleContentNode
@@ -697,7 +696,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         }
     }
     
-    override public func updateSearchTextHighlightState(text: String?, messages: [MessageIndex]?) {
+    override public func updateSearchTextHighlightState(text: String?, messages: [EngineMessage.Index]?) {
     }
     
     override public func willUpdateIsExtractedToContextPreview(_ value: Bool) {
@@ -779,7 +778,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         self.textSelectionNode = textSelectionNode
     }
 
-    override public func transitionNode(messageId: MessageId, media: Media, adjustRect: Bool) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
+    override public func transitionNode(messageId: EngineMessage.Id, media: EngineRawMedia, adjustRect: Bool) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
         guard let item = self.item, item.message.id == messageId else {
             return nil
         }
@@ -797,7 +796,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         return nil
     }
 
-    override public func updateHiddenMedia(_ media: [Media]?) -> Bool {
+    override public func updateHiddenMedia(_ media: [EngineRawMedia]?) -> Bool {
         var hiddenMedia: InstantPageMedia?
         if let media, !media.isEmpty, let layout = self.currentPageLayout?.layout {
             for raw in media {
@@ -813,7 +812,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         return hiddenMedia != nil
     }
 
-    private func findInstantPageMedia(in items: [InstantPageItem], mediaId: MediaId) -> InstantPageMedia? {
+    private func findInstantPageMedia(in items: [InstantPageItem], mediaId: EngineMedia.Id) -> InstantPageMedia? {
         for item in items {
             if let detailsItem = item as? InstantPageDetailsItem {
                 if let found = self.findInstantPageMedia(in: detailsItem.items, mediaId: mediaId) {

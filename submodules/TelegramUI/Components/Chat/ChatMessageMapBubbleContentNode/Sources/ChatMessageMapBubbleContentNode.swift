@@ -3,7 +3,6 @@ import UIKit
 import AsyncDisplayKit
 import Display
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import LiveLocationTimerNode
 import PhotoResources
@@ -505,7 +504,7 @@ public class ChatMessageMapBubbleContentNode: ChatMessageBubbleContentNode {
         self.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false)
     }
     
-    override public func transitionNode(messageId: MessageId, media: Media, adjustRect: Bool) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
+    override public func transitionNode(messageId: EngineMessage.Id, media: EngineRawMedia, adjustRect: Bool) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
         if self.item?.message.id == messageId, let currentMedia = self.media, currentMedia.isEqual(to: media) {
             let imageNode = self.imageNode
             return (self.imageNode, self.imageNode.bounds, { [weak imageNode] in
@@ -515,7 +514,7 @@ public class ChatMessageMapBubbleContentNode: ChatMessageBubbleContentNode {
         return nil
     }
     
-    override public func updateHiddenMedia(_ media: [Media]?) -> Bool {
+    override public func updateHiddenMedia(_ media: [EngineRawMedia]?) -> Bool {
         var mediaHidden = false
         if let currentMedia = self.media, let media = media {
             for item in media {

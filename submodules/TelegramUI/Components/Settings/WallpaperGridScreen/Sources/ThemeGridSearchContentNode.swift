@@ -3,7 +3,6 @@ import UIKit
 import AsyncDisplayKit
 import Display
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramPresentationData
 import MergeLists
@@ -464,7 +463,7 @@ final class ThemeGridSearchContentNode: SearchDisplayControllerContentNode {
             return .single(([], true))
             |> then(
                 configuration
-                |> mapToSignal { configuration -> Signal<Peer?, NoError> in
+                |> mapToSignal { configuration -> Signal<EngineRawPeer?, NoError> in
                     guard let name = configuration.imageBotUsername else {
                         return .single(nil)
                     }
@@ -475,7 +474,7 @@ final class ThemeGridSearchContentNode: SearchDisplayControllerContentNode {
                         }
                         return .single(result)
                     }
-                    |> mapToSignal { peer -> Signal<Peer?, NoError> in
+                    |> mapToSignal { peer -> Signal<EngineRawPeer?, NoError> in
                         if let peer = peer {
                             return .single(peer._asPeer())
                         } else {

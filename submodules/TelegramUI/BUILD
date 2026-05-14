@@ -115,6 +115,7 @@ swift_library(
         "//submodules/TelegramUI/Components/ComposePollScreen",
         "//submodules/AlertUI:AlertUI",
         "//submodules/PresentationDataUtils:PresentationDataUtils",
+        "//submodules/TelegramUI/Components/OpenUserGeneratedUrl:OpenUserGeneratedUrl",
         "//submodules/TouchDownGesture:TouchDownGesture",
         "//submodules/SwipeToDismissGesture:SwipeToDismissGesture",
         "//submodules/DirectionalPanGesture:DirectionalPanGesture",

@@ -372,7 +372,7 @@ class ItemListStickerPackItemNode: ItemListRevealOptionsItemNode {
             
             let packRevealOptions: [ItemListRevealOption]
             if item.editing.editable && item.enabled && !item.editing.editing {
-                packRevealOptions = [ItemListRevealOption(key: 0, title: item.presentationData.strings.Common_Delete, icon: .none, color: item.presentationData.theme.list.itemDisclosureActions.destructive.fillColor, textColor: item.presentationData.theme.list.itemDisclosureActions.destructive.foregroundColor)]
+                packRevealOptions = [ItemListRevealOption(key: 0, title: item.presentationData.strings.Common_Delete, icon: .none, color: item.presentationData.theme.list.itemDisclosureActions.destructive.fillColor, iconColor: item.presentationData.theme.list.itemDisclosureActions.destructive.foregroundColor, textColor: item.presentationData.theme.list.itemSecondaryTextColor)]
             } else {
                 packRevealOptions = []
             }

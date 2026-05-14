@@ -2957,7 +2957,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             self.controller?.push(controller)
             
             openUrlImpl = { [weak self, weak controller] url, concealed, forceUpdate, commit in
-                let _ = openUserGeneratedUrl(context: context, peerId: peerId, url: url, concealed: concealed, present: { [weak self] c in
+                let _ = context.sharedContext.openUserGeneratedUrl(context: context, peerId: peerId, url: url, webpage: nil, concealed: concealed, forceConcealed: false, skipUrlAuth: false, skipConcealedAlert: false, forceDark: false, present: { [weak self] c in
                     self?.controller?.present(c, in: .window(.root))
                 }, openResolved: { result in
                     var navigationController: NavigationController?
@@ -2983,7 +2983,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                     }, dismissInput: {
                         context.sharedContext.mainWindow?.viewController?.view.endEditing(false)
                     }, contentContext: nil, progress: nil, completion: nil)
-                })
+                }, progress: nil, alertDisplayUpdated: nil, concealedAlertOption: nil)
             }
             presentImpl = { [weak controller] c, a in
                 controller?.present(c, in: .window(.root), with: a)
@@ -6140,14 +6140,19 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         self.joinChannelDisposable.set((
             self.context.peerChannelMemberCategoriesContextsManager.join(engine: self.context.engine, peerId: peer.id, hash: nil)
             |> deliverOnMainQueue
-            |> afterCompleted { [weak self] in
-                Queue.mainQueue().async {
-                    if let self {
-                        self.controller?.present(UndoOverlayController(presentationData: presentationData, content: .succeed(text: presentationData.strings.Chat_SimilarChannels_JoinedChannel(peer.compactDisplayTitle).string, timeout: nil, customUndoText: nil), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .window(.root))
-                    }
+        ).startStrict(next: { [weak self] result in
+            guard let self else {
+                return
+            }
+            switch result {
+            case .joined:
+                self.controller?.present(UndoOverlayController(presentationData: presentationData, content: .succeed(text: presentationData.strings.Chat_SimilarChannels_JoinedChannel(peer.compactDisplayTitle).string, timeout: nil, customUndoText: nil), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .window(.root))
+            case let .webView(webView):
+                if let controller = self.controller {
+                    self.context.sharedContext.openJoinChatWebView(context: self.context, parentController: controller, updatedPresentationData: self.controller?.updatedPresentationData, webView: webView)
                 }
             }
-        ).startStrict(error: { [weak self] error in
+        }, error: { [weak self] error in
             guard let self else {
                 return
             }

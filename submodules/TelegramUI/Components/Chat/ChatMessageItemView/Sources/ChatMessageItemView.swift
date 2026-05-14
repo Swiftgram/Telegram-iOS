@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import AsyncDisplayKit
 import Display
-import Postbox
 import TelegramCore
 import AccountContext
 import LocalizedPeerData
@@ -105,7 +104,7 @@ public final class ChatMessageAccessibilityData {
             }
         }
         
-        let dataForMessage: (Message, Bool) -> (String, String) = { message, isReply -> (String, String) in
+        let dataForMessage: (EngineRawMessage, Bool) -> (String, String) = { message, isReply -> (String, String) in
             var label: String = ""
             var value: String = ""
             
@@ -634,12 +633,12 @@ public enum InternalBubbleTapAction {
     }
     
     public struct OpenContextMenu {
-        public var tapMessage: Message
+        public var tapMessage: EngineRawMessage
         public var selectAll: Bool
         public var subFrame: CGRect
         public var disableDefaultPressAnimation: Bool
         
-        public init(tapMessage: Message, selectAll: Bool, subFrame: CGRect, disableDefaultPressAnimation: Bool = false) {
+        public init(tapMessage: EngineRawMessage, selectAll: Bool, subFrame: CGRect, disableDefaultPressAnimation: Bool = false) {
             self.tapMessage = tapMessage
             self.selectAll = selectAll
             self.subFrame = subFrame
@@ -727,7 +726,7 @@ open class ChatMessageItemView: ListViewItemNode, ChatMessageItemNodeProtocol {
         }
     }
     
-    public func matchesMessage(id: MessageId) -> Bool {
+    public func matchesMessage(id: EngineMessage.Id) -> Bool {
         if let item = self.item {
             for (message, _) in item.content {
                 if message.id == id {
@@ -738,18 +737,18 @@ open class ChatMessageItemView: ListViewItemNode, ChatMessageItemNodeProtocol {
         return false
     }
     
-    public func messages() -> [Message] {
+    public func messages() -> [EngineRawMessage] {
         guard let item = self.item else {
             return []
         }
-        var messages: [Message] = []
+        var messages: [EngineRawMessage] = []
         for (message, _) in item.content {
             messages.append(message)
         }
         return messages
     }
     
-    open func transitionNode(id: MessageId, media: Media, adjustRect: Bool) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
+    open func transitionNode(id: EngineMessage.Id, media: EngineRawMedia, adjustRect: Bool) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
         return nil
     }
     
@@ -828,7 +827,7 @@ open class ChatMessageItemView: ListViewItemNode, ChatMessageItemNodeProtocol {
                 case let .callback(requiresPassword, data):
                     item.controllerInteraction.requestMessageActionCallback(item.message, data, false, requiresPassword, progress)
                 case let .switchInline(samePeer, query, peerTypes):
-                    var botPeer: Peer?
+                    var botPeer: EngineRawPeer?
                     
                     var found = false
                     for attribute in item.message.attributes {
@@ -843,7 +842,7 @@ open class ChatMessageItemView: ListViewItemNode, ChatMessageItemNodeProtocol {
                         botPeer = item.message.author
                     }
                     
-                    var peerId: PeerId?
+                    var peerId: EnginePeer.Id?
                     if samePeer {
                         peerId = item.message.id.peerId
                     }
@@ -895,11 +894,15 @@ open class ChatMessageItemView: ListViewItemNode, ChatMessageItemNodeProtocol {
         return nil
     }
     
-    open func targetForStoryTransition(id: StoryId) -> UIView? {
+    open func targetForStoryTransition(id: EngineStoryId) -> UIView? {
         return nil
     }
     
     open func getStatusNode() -> ASDisplayNode? {
+        return nil
+    }
+    
+    open func getAuthorNameNode() -> ASDisplayNode? {
         return nil
     }
 
@@ -995,7 +998,7 @@ open class ChatMessageItemView: ListViewItemNode, ChatMessageItemNodeProtocol {
         return nil
     }
     
-    private func playEffectAnimation(resource: MediaResource) {
+    private func playEffectAnimation(resource: EngineRawMediaResource) {
         guard let item = self.item else {
             return
         }

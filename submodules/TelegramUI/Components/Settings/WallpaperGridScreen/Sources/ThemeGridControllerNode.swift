@@ -633,7 +633,7 @@ final class ThemeGridControllerNode: ASDisplayNode {
         switch self.mode {
         case .generic:
             self.wallpapersPromise.set(combineLatest(queue: .mainQueue(),
-                telegramWallpapers(postbox: self.context.account.postbox, network: self.context.account.network),
+                self.context.engine.themes.wallpapers(),
                 self.context.sharedContext.accountManager.sharedData(keys: [SharedDataKeys.wallapersState])
             )
             |> map { remoteWallpapers, sharedData -> [Wallpaper] in

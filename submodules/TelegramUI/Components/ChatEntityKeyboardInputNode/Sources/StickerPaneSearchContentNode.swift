@@ -6,7 +6,6 @@ import ButtonComponent
 import ComponentFlow
 import EdgeEffect
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramPresentationData
 import PresentationDataUtils
@@ -132,7 +131,7 @@ private final class StickerSearchPackTopPanelItemComponent: Component {
 
     final class View: UIView {
         private var itemLayer: InlineStickerItemLayer?
-        private var itemFileId: MediaId?
+        private var itemFileId: EngineMedia.Id?
         private var titleView: ComponentView<Empty>?
         private var component: StickerSearchPackTopPanelItemComponent?
 
@@ -317,7 +316,7 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
     private var searchIsActive: Bool = false
     private var selectedPack: StickerPaneSearchPack?
     private var isPackPanelExpanded: Bool = true
-    private var installedPackIds = Set<ItemCollectionId>()
+    private var installedPackIds = Set<EngineItemCollectionId>()
     private var stickerSearchContext: StickerSearchContext?
     private var currentSearchStickerCount: Int = 0
     private var currentStickerCount: Int = 0
@@ -666,15 +665,11 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
                 )
             }
 
-            let installedPackIds = context.account.postbox.combinedView(keys: [.itemCollectionInfos(namespaces: [Namespaces.ItemCollection.CloudStickerPacks])])
-            |> map { view -> Set<ItemCollectionId> in
-                var installedPacks = Set<ItemCollectionId>()
-                if let stickerPacksView = view.views[.itemCollectionInfos(namespaces: [Namespaces.ItemCollection.CloudStickerPacks])] as? ItemCollectionInfosView {
-                    if let packsEntries = stickerPacksView.entriesByNamespace[Namespaces.ItemCollection.CloudStickerPacks] {
-                        for entry in packsEntries {
-                            installedPacks.insert(entry.id)
-                        }
-                    }
+            let installedPackIds = context.engine.data.subscribe(TelegramEngine.EngineData.Item.ItemCollections.InstalledPackInfos(namespace: Namespaces.ItemCollection.CloudStickerPacks))
+            |> map { entries -> Set<EngineItemCollectionId> in
+                var installedPacks = Set<EngineItemCollectionId>()
+                for entry in entries {
+                    installedPacks.insert(entry.id)
                 }
                 return installedPacks
             }
@@ -782,7 +777,7 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
     private func entries(stickers: [FoundStickerItem]) -> [StickerSearchEntry] {
         var entries: [StickerSearchEntry] = []
         var index = 0
-        var existingStickerIds = Set<MediaId>()
+        var existingStickerIds = Set<EngineMedia.Id>()
         for sticker in stickers {
             if let id = sticker.file.id, !existingStickerIds.contains(id) {
                 entries.append(.sticker(index: index, code: nil, stickerItem: sticker, theme: self.theme))
@@ -796,7 +791,7 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
 
     private func packs(from packs: FoundStickerSets) -> [StickerPaneSearchPack] {
         var result: [StickerPaneSearchPack] = []
-        var existingIds = Set<ItemCollectionId>()
+        var existingIds = Set<EngineItemCollectionId>()
         for (collectionId, info, _, installed) in packs.infos {
             guard !existingIds.contains(collectionId), let info = info as? StickerPackCollectionInfo else {
                 continue
@@ -817,7 +812,7 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
 
     private func entries(packItems: [StickerPackItem]) -> [StickerSearchEntry] {
         var entries: [StickerSearchEntry] = []
-        var existingStickerIds = Set<MediaId>()
+        var existingStickerIds = Set<EngineMedia.Id>()
         var index = 0
         for item in packItems {
             let file = item.file._parse()
@@ -855,7 +850,7 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
         return !selectedPack.installed && !self.installedPackIds.contains(selectedPack.info.id)
     }
     
-    func setPackInstalledState(id: ItemCollectionId, installed: Bool, transition: ContainedViewLayoutTransition = .animated(duration: 0.2, curve: .easeInOut)) {
+    func setPackInstalledState(id: EngineItemCollectionId, installed: Bool, transition: ContainedViewLayoutTransition = .animated(duration: 0.2, curve: .easeInOut)) {
         if installed {
             self.installedPackIds.insert(id)
         } else {

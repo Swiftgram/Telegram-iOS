@@ -147,11 +147,18 @@ final class ComposePollScreenComponent: Component {
             self.media = media
         }
         
+        deinit {
+            self.uploadDisposable?.dispose()
+        }
+        
         var requiresUpload: Bool {
             if let image = self.media.media as? TelegramMediaImage, let largest = largestImageRepresentation(image.representations), !(largest.resource is CloudPhotoSizeMediaResource) {
                 return true
             }
             if let file = self.media.media as? TelegramMediaFile, !(file.resource is CloudDocumentMediaResource) {
+                return true
+            }
+            if let webpage = self.media.media as? TelegramMediaWebpage, webpage.id?.namespace == Namespaces.Media.LocalFile {
                 return true
             }
             return false
@@ -920,7 +927,7 @@ final class ComposePollScreenComponent: Component {
             case .description, .quizAnswer:
                 availableButtons = [.gallery, .file, .location]
             default:
-                availableButtons = [.gallery, .sticker, .location]
+                availableButtons = [.gallery, .sticker, .location, .link]
             }
             
             let pollAttachmentSubject: PollAttachmentSubject
@@ -964,7 +971,10 @@ final class ComposePollScreenComponent: Component {
             guard let component = self.component, media.requiresUpload, media.uploadDisposable == nil else {
                 return
             }
-            media.progress = 0.0
+            if media.media.media is TelegramMediaWebpage {
+            } else {
+                media.progress = 0.0
+            }
             
             if let image = media.media.media as? TelegramMediaImage, let largest = largestImageRepresentation(image.representations) {
                 media.uploadDisposable = (standaloneUploadedImage(
@@ -1034,6 +1044,29 @@ final class ComposePollScreenComponent: Component {
                             media.uploadDisposable = nil
                             transition = .easeInOut(duration: 0.2)
                         }
+                    }
+                    if !self.isUpdating {
+                        self.state?.updated(transition: transition)
+                    }
+                })
+            }
+            if let webpage = media.media.media as? TelegramMediaWebpage, case let .Loaded(content) = webpage.content {
+                media.uploadDisposable = (webpagePreview(account: component.context.account, urls: [content.url])
+                |> deliverOnMainQueue).startStrict(next: { [weak self] result in
+                    guard let self else {
+                        return
+                    }
+                    var transition: ComponentTransition = .immediate
+                    switch result {
+                    case let .result(result):
+                        if let result {
+                            media.media = .standalone(media: result.webpage)
+                        }
+//                        media.uploadDisposable?.dispose()
+//                        media.uploadDisposable = nil
+                        transition = .easeInOut(duration: 0.2)
+                    default:
+                        break
                     }
                     if !self.isUpdating {
                         self.state?.updated(transition: transition)

@@ -3,7 +3,6 @@ import UIKit
 import AsyncDisplayKit
 import Display
 import TelegramCore
-import Postbox
 import TextFormat
 import UrlEscaping
 import SwiftSignalKit
@@ -407,7 +406,7 @@ private final class ChatMessageTodoItemNode: ASDisplayNode {
     let separatorNode: ASDisplayNode
     
     var context: AccountContext?
-    var message: Message?
+    var message: EngineRawMessage?
     var option: TelegramMediaTodo.Item?
     
     var pressed: (() -> Void)?
@@ -727,7 +726,7 @@ private final class ChatMessageTodoItemNode: ASDisplayNode {
         return ChatMessageBubbleContentTapAction(content: .none)
     }
     
-    static func asyncLayout(_ maybeNode: ChatMessageTodoItemNode?) -> (_ context: AccountContext, _ presentationData: ChatPresentationData, _ presentationContext: ChatPresentationContext, _ message: Message, _ todo: TelegramMediaTodo, _ option: TelegramMediaTodo.Item, _ completion: TelegramMediaTodo.Completion?, _ translation: TranslationMessageAttribute.Additional?, _ constrainedWidth: CGFloat) -> (minimumWidth: CGFloat, layout: ((CGFloat) -> (CGSize, (Bool, Bool, Bool) -> ChatMessageTodoItemNode))) {
+    static func asyncLayout(_ maybeNode: ChatMessageTodoItemNode?) -> (_ context: AccountContext, _ presentationData: ChatPresentationData, _ presentationContext: ChatPresentationContext, _ message: EngineRawMessage, _ todo: TelegramMediaTodo, _ option: TelegramMediaTodo.Item, _ completion: TelegramMediaTodo.Completion?, _ translation: TranslationMessageAttribute.Additional?, _ constrainedWidth: CGFloat) -> (minimumWidth: CGFloat, layout: ((CGFloat) -> (CGSize, (Bool, Bool, Bool) -> ChatMessageTodoItemNode))) {
         let makeTitleLayout = TextNodeWithEntities.asyncLayout(maybeNode?.titleNode)
         let makeNameLayout = TextNode.asyncLayout(maybeNode?.nameNode)
         
@@ -1087,7 +1086,7 @@ public class ChatMessageTodoBubbleContentNode: ChatMessageBubbleContentNode {
         let makeViewResultsTextLayout = TextNode.asyncLayout(self.buttonViewResultsTextNode)
         let statusLayout = self.statusNode.asyncLayout()
                 
-        var previousOptionNodeLayouts: [Int32: (_ contet: AccountContext, _ presentationData: ChatPresentationData, _ presentationContext: ChatPresentationContext, _ message: Message, _ poll: TelegramMediaTodo, _ option: TelegramMediaTodo.Item, _ completion: TelegramMediaTodo.Completion?, _ translation: TranslationMessageAttribute.Additional?, _ constrainedWidth: CGFloat) -> (minimumWidth: CGFloat, layout: ((CGFloat) -> (CGSize, (Bool, Bool, Bool) -> ChatMessageTodoItemNode)))] = [:]
+        var previousOptionNodeLayouts: [Int32: (_ contet: AccountContext, _ presentationData: ChatPresentationData, _ presentationContext: ChatPresentationContext, _ message: EngineRawMessage, _ poll: TelegramMediaTodo, _ option: TelegramMediaTodo.Item, _ completion: TelegramMediaTodo.Completion?, _ translation: TranslationMessageAttribute.Additional?, _ constrainedWidth: CGFloat) -> (minimumWidth: CGFloat, layout: ((CGFloat) -> (CGSize, (Bool, Bool, Bool) -> ChatMessageTodoItemNode)))] = [:]
         for optionNode in self.optionNodes {
             if let option = optionNode.option {
                 previousOptionNodeLayouts[option.id] = ChatMessageTodoItemNode.asyncLayout(optionNode)
@@ -1293,7 +1292,7 @@ public class ChatMessageTodoBubbleContentNode: ChatMessageBubbleContentNode {
                     for i in 0 ..< todo.items.count {
                         let todoItem = todo.items[i]
                         
-                        let makeLayout: (_ context: AccountContext, _ presentationData: ChatPresentationData, _ presentationContext: ChatPresentationContext, _ message: Message, _ todo: TelegramMediaTodo, _ item: TelegramMediaTodo.Item, _ completion: TelegramMediaTodo.Completion?, _ translation: TranslationMessageAttribute.Additional?, _ constrainedWidth: CGFloat) -> (minimumWidth: CGFloat, layout: ((CGFloat) -> (CGSize, (Bool, Bool, Bool) -> ChatMessageTodoItemNode)))
+                        let makeLayout: (_ context: AccountContext, _ presentationData: ChatPresentationData, _ presentationContext: ChatPresentationContext, _ message: EngineRawMessage, _ todo: TelegramMediaTodo, _ item: TelegramMediaTodo.Item, _ completion: TelegramMediaTodo.Completion?, _ translation: TranslationMessageAttribute.Additional?, _ constrainedWidth: CGFloat) -> (minimumWidth: CGFloat, layout: ((CGFloat) -> (CGSize, (Bool, Bool, Bool) -> ChatMessageTodoItemNode)))
                         if let previous = previousOptionNodeLayouts[todoItem.id] {
                             makeLayout = previous
                         } else {

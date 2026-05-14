@@ -24,7 +24,6 @@ swift_library(
         "//submodules/Components/ComponentDisplayAdapters:ComponentDisplayAdapters",
         "//submodules/Components/PagerComponent:PagerComponent",
         "//submodules/Components/MultilineTextComponent:MultilineTextComponent",
-        "//submodules/Components/SolidRoundedButtonComponent:SolidRoundedButtonComponent",
         "//submodules/TelegramPresentationData:TelegramPresentationData",
         "//submodules/AccountContext:AccountContext",
         "//submodules/lottie-ios:Lottie",
@@ -33,6 +32,8 @@ swift_library(
         "//submodules/GZip:GZip",
         "//submodules/TelegramStringFormatting:TelegramStringFormatting",
         "//submodules/PresentationDataUtils:PresentationDataUtils",
+        "//submodules/TelegramUI/Components/ChatTimerScreen",
+        "//submodules/Components/SheetComponent",
     ],
     visibility = [
         "//visibility:public",

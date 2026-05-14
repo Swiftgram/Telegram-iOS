@@ -3825,20 +3825,20 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
             return
         case let .link(_, url):
             let action = {
-                let _ = openUserGeneratedUrl(context: component.context, peerId: component.slice.effectivePeer.id, url: url, concealed: false, skipUrlAuth: false, skipConcealedAlert: false, forceDark: true, present: { [weak controller] c in
+                let _ = component.context.sharedContext.openUserGeneratedUrl(context: component.context, peerId: component.slice.effectivePeer.id, url: url, webpage: nil, concealed: false, forceConcealed: false, skipUrlAuth: false, skipConcealedAlert: false, forceDark: true, present: { [weak controller] c in
                     controller?.present(c, in: .window(.root))
                 }, openResolved: { [weak self, weak view] resolved in
                     guard let self, let view else {
                         return
                     }
                     self.openResolved(view: view, result: resolved, forceExternal: false, concealed: false)
-                }, alertDisplayUpdated: { [weak self, weak view] alertController in
+                }, progress: nil, alertDisplayUpdated: { [weak self, weak view] alertController in
                     guard let self, let view else {
                         return
                     }
                     self.statusController = alertController
                     view.updateIsProgressPaused()
-                })
+                }, concealedAlertOption: nil)
             }
             if immediate {
                 action()
@@ -3852,20 +3852,20 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         case let .starGift(_, slug):
             useGesturePosition = true
             let action = {
-                let _ = openUserGeneratedUrl(context: component.context, peerId: nil, url: "https://t.me/nft/\(slug)", concealed: false, skipUrlAuth: false, skipConcealedAlert: false, forceDark: true, present: { [weak controller] c in
+                let _ = component.context.sharedContext.openUserGeneratedUrl(context: component.context, peerId: nil, url: "https://t.me/nft/\(slug)", webpage: nil, concealed: false, forceConcealed: false, skipUrlAuth: false, skipConcealedAlert: false, forceDark: true, present: { [weak controller] c in
                     controller?.present(c, in: .window(.root))
                 }, openResolved: { [weak self, weak view] resolved in
                     guard let self, let view else {
                         return
                     }
                     self.openResolved(view: view, result: resolved, forceExternal: false, concealed: false)
-                }, alertDisplayUpdated: { [weak self, weak view] alertController in
+                }, progress: nil, alertDisplayUpdated: { [weak self, weak view] alertController in
                     guard let self, let view else {
                         return
                     }
                     self.statusController = alertController
                     view.updateIsProgressPaused()
-                })
+                }, concealedAlertOption: nil)
             }
             if immediate {
                 action()

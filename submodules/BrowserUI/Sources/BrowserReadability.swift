@@ -1,7 +1,6 @@
 import Foundation
 import WebKit
 import AppBundle
-import Postbox
 import TelegramCore
 import InstantPageUI
 
@@ -115,14 +114,14 @@ private func parseJson(_ input: [String: Any], url: String) -> TelegramMediaWebp
     let byline = input["byline"] as? String
     let excerpt = input["excerpt"] as? String
     
-    var media: [MediaId: Media] = [:]
+    var media: [EngineMedia.Id: EngineRawMedia] = [:]
     let blocks = parseContent(input, url, &media)
         
     guard !blocks.isEmpty else {
         return nil
     }
     return TelegramMediaWebpage(
-        webpageId: MediaId(namespace: 0, id: 0),
+        webpageId: EngineMedia.Id(namespace: 0, id: 0),
         content: .Loaded(
             TelegramMediaWebpageLoadedContent(
                 url: url,
@@ -156,7 +155,7 @@ private func parseJson(_ input: [String: Any], url: String) -> TelegramMediaWebp
     )
 }
 
-private func parseContent(_ input: [String: Any], _ url: String, _ media: inout [MediaId: Media]) -> [InstantPageBlock] {
+private func parseContent(_ input: [String: Any], _ url: String, _ media: inout [EngineMedia.Id: EngineRawMedia]) -> [InstantPageBlock] {
     let title = input["title"] as? String
     let byline = input["byline"] as? String
     let date = input["publishedTime"] as? String
@@ -185,7 +184,7 @@ private func parseRichText(_ input: String) -> RichText {
     return .plain(input)
 }
 
-private func parseRichText(_ input: [String: Any], _ media: inout [MediaId: Media]) -> RichText {
+private func parseRichText(_ input: [String: Any], _ media: inout [EngineMedia.Id: EngineRawMedia]) -> RichText {
     var text: RichText
     if let string = input["content"] as? String {
         text = parseRichText(string)
@@ -204,7 +203,7 @@ private func parseRichText(_ input: [String: Any], _ media: inout [MediaId: Medi
     return text
 }
 
-private func parseRichText(_ input: [Any], _ media: inout [MediaId: Media]) -> RichText {
+private func parseRichText(_ input: [Any], _ media: inout [EngineMedia.Id: EngineRawMedia]) -> RichText {
     var result: [RichText] = []
     
     for item in input {
@@ -258,7 +257,7 @@ private func parseRichText(_ input: [Any], _ media: inout [MediaId: Media]) -> R
                     } else {
                         height = 0
                     }
-                    let id = MediaId(namespace: Namespaces.Media.CloudFile, id: Int64(media.count))
+                    let id = EngineMedia.Id(namespace: Namespaces.Media.CloudFile, id: Int64(media.count))
                     media[id] = TelegramMediaImage(
                         imageId: id,
                         representations: [
@@ -489,7 +488,7 @@ private func applyAnchor(_ input: RichText, item: [String: Any]) -> RichText {
     return .anchor(text: input, name: id)
 }
 
-private func parseTable(_ input: [String: Any], _ media: inout [MediaId: Media]) -> InstantPageBlock {
+private func parseTable(_ input: [String: Any], _ media: inout [EngineMedia.Id: EngineRawMedia]) -> InstantPageBlock {
     let title = (input["title"] as? String) ?? ""
     return .table(
         title: trim(applyAnchor(parseRichText(title), item: input)),
@@ -499,7 +498,7 @@ private func parseTable(_ input: [String: Any], _ media: inout [MediaId: Media])
     )
 }
 
-private func parseTableRows(_ input: [Any], _ media: inout [MediaId: Media]) -> [InstantPageTableRow] {
+private func parseTableRows(_ input: [Any], _ media: inout [EngineMedia.Id: EngineRawMedia]) -> [InstantPageTableRow] {
     var result: [InstantPageTableRow] = []
     for item in input {
         if let item = item as? [String: Any] {
@@ -514,7 +513,7 @@ private func parseTableRows(_ input: [Any], _ media: inout [MediaId: Media]) -> 
     return result
 }
 
-private func parseTableRow(_ input: [String: Any], _ media: inout [MediaId: Media]) -> InstantPageTableRow {
+private func parseTableRow(_ input: [String: Any], _ media: inout [EngineMedia.Id: EngineRawMedia]) -> InstantPageTableRow {
     var cells: [InstantPageTableCell] = []
     
     if let content = input["content"] as? [Any] {
@@ -552,7 +551,7 @@ private func parseTableRow(_ input: [String: Any], _ media: inout [MediaId: Medi
     return InstantPageTableRow(cells: cells)
 }
 
-private func parseDetails(_ item: [String: Any], _ url: String, _ media: inout [MediaId: Media]) -> InstantPageBlock? {
+private func parseDetails(_ item: [String: Any], _ url: String, _ media: inout [EngineMedia.Id: EngineRawMedia]) -> InstantPageBlock? {
     guard var content = item["contant"] as? [Any] else {
         return nil
     }
@@ -576,7 +575,7 @@ private func parseDetails(_ item: [String: Any], _ url: String, _ media: inout [
 }
 
 private let nonListCharacters = CharacterSet(charactersIn: "0123456789").inverted
-private func parseList(_ input: [String: Any], _ url: String, _ media: inout [MediaId: Media]) -> InstantPageBlock? {
+private func parseList(_ input: [String: Any], _ url: String, _ media: inout [EngineMedia.Id: EngineRawMedia]) -> InstantPageBlock? {
     guard let content = input["content"] as? [Any], let tag = input["tag"] as? String else {
         return nil
     }
@@ -625,7 +624,7 @@ private func parseList(_ input: [String: Any], _ url: String, _ media: inout [Me
     return .list(items: items, ordered: ordered)
 }
 
-private func parseImage(_ input: [String: Any], _ media: inout [MediaId: Media]) -> InstantPageBlock? {
+private func parseImage(_ input: [String: Any], _ media: inout [EngineMedia.Id: EngineRawMedia]) -> InstantPageBlock? {
     guard let src = input["src"] as? String else {
         return nil
     }
@@ -654,7 +653,7 @@ private func parseImage(_ input: [String: Any], _ media: inout [MediaId: Media])
         height = 0
     }
     
-    let id = MediaId(namespace: Namespaces.Media.CloudImage, id: Int64(media.count))
+    let id = EngineMedia.Id(namespace: Namespaces.Media.CloudImage, id: Int64(media.count))
     media[id] = TelegramMediaImage(
         imageId: id,
         representations: [
@@ -679,7 +678,7 @@ private func parseImage(_ input: [String: Any], _ media: inout [MediaId: Media])
     )
 }
 
-private func parseVideo(_ input: [String: Any], _ media: inout [MediaId: Media]) -> InstantPageBlock? {
+private func parseVideo(_ input: [String: Any], _ media: inout [EngineMedia.Id: EngineRawMedia]) -> InstantPageBlock? {
     guard let src = input["src"] as? String else {
         return nil
     }
@@ -709,7 +708,7 @@ private func parseVideo(_ input: [String: Any], _ media: inout [MediaId: Media])
     )
 }
 
-private func parseFigure(_ input: [String: Any], _ media: inout [MediaId: Media]) -> InstantPageBlock? {
+private func parseFigure(_ input: [String: Any], _ media: inout [EngineMedia.Id: EngineRawMedia]) -> InstantPageBlock? {
     guard let content = input["content"] as? [Any] else {
         return nil
     }
@@ -743,7 +742,7 @@ private func parseFigure(_ input: [String: Any], _ media: inout [MediaId: Media]
     return block
 }
 
-private func parsePageBlocks(_ input: [Any], _ url: String, _ media: inout [MediaId: Media]) -> [InstantPageBlock] {
+private func parsePageBlocks(_ input: [Any], _ url: String, _ media: inout [EngineMedia.Id: EngineRawMedia]) -> [InstantPageBlock] {
     var result: [InstantPageBlock] = []
     for item in input {
         if let string = item as? String {

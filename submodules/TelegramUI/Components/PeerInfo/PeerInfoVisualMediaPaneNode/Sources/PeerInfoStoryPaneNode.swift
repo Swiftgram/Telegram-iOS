@@ -4,7 +4,6 @@ import UIKit
 import Display
 import TelegramCore
 import SwiftSignalKit
-import Postbox
 import TelegramPresentationData
 import PresentationDataUtils
 import AccountContext
@@ -56,7 +55,7 @@ private final class VisualMediaItemInteraction {
     let openItemContextActions: (EngineStoryItem, ASDisplayNode, CGRect, ContextGesture?) -> Void
     let toggleSelection: (Int32, Bool) -> Void
     
-    var hiddenStories = Set<StoryId>()
+    var hiddenStories = Set<EngineStoryId>()
     var selectedIds: Set<Int32>?
     
     init(
@@ -71,7 +70,7 @@ private final class VisualMediaItemInteraction {
 }
 
 private final class VisualMediaHoleAnchor: SparseItemGrid.HoleAnchor {
-    let storyId: StoryId
+    let storyId: EngineStoryId
     override var id: AnyHashable {
         return AnyHashable(self.storyId)
     }
@@ -86,7 +85,7 @@ private final class VisualMediaHoleAnchor: SparseItemGrid.HoleAnchor {
         return self.localMonthTimestamp
     }
 
-    init(index: Int, storyId: StoryId, localMonthTimestamp: Int32) {
+    init(index: Int, storyId: EngineStoryId, localMonthTimestamp: Int32) {
         self.indexValue = index
         self.storyId = storyId
         self.localMonthTimestamp = localMonthTimestamp
@@ -103,7 +102,7 @@ private final class VisualMediaItem: SparseItemGrid.Item {
     }
     let localMonthTimestamp: Int32
     let peer: PeerReference
-    let storyId: StoryId
+    let storyId: EngineStoryId
     let story: EngineStoryItem
     let authorPeer: EnginePeer?
     let isPinned: Bool
@@ -122,7 +121,7 @@ private final class VisualMediaItem: SparseItemGrid.Item {
         return VisualMediaHoleAnchor(index: self.index, storyId: self.storyId, localMonthTimestamp: self.localMonthTimestamp)
     }
     
-    init(index: Int, peer: PeerReference, storyId: StoryId, story: EngineStoryItem, authorPeer: EnginePeer?, isPinned: Bool, localMonthTimestamp: Int32, isReorderable: Bool, isEnabled: Bool) {
+    init(index: Int, peer: PeerReference, storyId: EngineStoryId, story: EngineStoryItem, authorPeer: EnginePeer?, isPinned: Bool, localMonthTimestamp: Int32, isReorderable: Bool, isEnabled: Bool) {
         self.indexValue = index
         self.peer = peer
         self.storyId = storyId
@@ -855,7 +854,7 @@ private final class ItemLayer: CALayer, SparseItemGridLayer {
                 binding.bindLayers(items: [item], layers: [displayItem], size: size, insets: insets, synchronous: .none)
             } else {
                 if let layer = displayItem.layer as? ItemLayer {
-                    var selectedMedia: Media?
+                    var selectedMedia: EngineRawMedia?
                     if let image = item.story.media._asMedia() as? TelegramMediaImage {
                         selectedMedia = image
                     } else if let file = item.story.media._asMedia() as? TelegramMediaFile {
@@ -1124,7 +1123,7 @@ private final class SparseItemGridBindingImpl: SparseItemGridBinding {
     var updateShimmerLayersImpl: ((SparseItemGridDisplayItem) -> Void)?
     var reorderIfPossibleImpl: ((SparseItemGrid.Item, Int) -> Void)?
     
-    var revealedSpoilerMessageIds = Set<MessageId>()
+    var revealedSpoilerMessageIds = Set<EngineMessage.Id>()
 
     private var shimmerImages: [CGFloat: UIImage] = [:]
 
@@ -1211,7 +1210,7 @@ private final class SparseItemGridBindingImpl: SparseItemGridBinding {
             let hasSpoiler = false
             layer.updateHasSpoiler(hasSpoiler: hasSpoiler)
             
-            var selectedMedia: Media?
+            var selectedMedia: EngineRawMedia?
             if let image = story.media._asMedia() as? TelegramMediaImage {
                 selectedMedia = image
             } else if let file = story.media._asMedia() as? TelegramMediaFile {
@@ -1322,7 +1321,7 @@ private final class SparseItemGridBindingImpl: SparseItemGridBinding {
         }
     }
     
-    func updateLayerData(story: EngineStoryItem, item: VisualMediaItem, selectedMedia: Media, layer: ItemLayer, synchronous: SparseItemGrid.Synchronous) {
+    func updateLayerData(story: EngineStoryItem, item: VisualMediaItem, selectedMedia: EngineRawMedia, layer: ItemLayer, synchronous: SparseItemGrid.Synchronous) {
         var viewCount: Int32?
         if let value = story.views?.seenCount {
             viewCount = Int32(value)
@@ -1587,7 +1586,7 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
     private let directMediaImageCache: DirectMediaImageCache
     private var items: SparseItemGrid.Items?
     private var pinnedIds: Set<Int32> = Set()
-    private var reorderedIds: [StoryId]?
+    private var reorderedIds: [EngineStoryId]?
     private var itemCount: Int?
     private var didUpdateItemsOnce: Bool = false
     private var itemTabId: AnyHashable?
@@ -2556,7 +2555,7 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
                             if let story = folderPreview.item {
                                 var imageSignal: Signal<UIImage?, NoError>?
                                 
-                                var selectedMedia: Media?
+                                var selectedMedia: EngineRawMedia?
                                 if let image = story.media._asMedia() as? TelegramMediaImage {
                                     selectedMedia = image
                                 } else if let file = story.media._asMedia() as? TelegramMediaFile {
@@ -2771,7 +2770,7 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
                         }
                         
                         let shareController = self.context.sharedContext.makeShareController(context: self.context, params: ShareControllerParams(
-                            subject: .media(.story(peer: peerReference, id: item.id, media: TelegramMediaStory(storyId: StoryId(peerId: peer.id, id: item.id), isMention: false)), nil),
+                            subject: .media(.story(peer: peerReference, id: item.id, media: TelegramMediaStory(storyId: EngineStoryId(peerId: peer.id, id: item.id), isMention: false)), nil),
                             externalShare: false
                         ))
                         self.parentController?.present(shareController, in: .window(.root))
@@ -3038,7 +3037,7 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
         if let reorderedIds = self.reorderedIds {
             var fixedStateItems: [StoryListContext.State.Item] = []
             
-            var seenIds = Set<StoryId>()
+            var seenIds = Set<EngineStoryId>()
             for id in reorderedIds {
                 if let index = stateItems.firstIndex(where: { $0.id == id }) {
                     seenIds.insert(id)
@@ -3100,7 +3099,7 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
             ))
         }
         if mappedItems.count < state.totalCount, let lastItem = state.items.last, let _ = state.loadMoreToken {
-            mappedHoles.append(VisualMediaHoleAnchor(index: mappedItems.count, storyId: StoryId(peerId: context.account.peerId, id: Int32.max), localMonthTimestamp: Month(localTimestamp: lastItem.storyItem.timestamp + timezoneOffset).packedValue))
+            mappedHoles.append(VisualMediaHoleAnchor(index: mappedItems.count, storyId: EngineStoryId(peerId: context.account.peerId, id: Int32.max), localMonthTimestamp: Month(localTimestamp: lastItem.storyItem.timestamp + timezoneOffset).packedValue))
         }
         totalCount = state.totalCount
         totalCount = max(mappedItems.count, totalCount)
@@ -3262,7 +3261,7 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
                 return
             }
             
-            var ids = items.items.compactMap { item -> StoryId? in
+            var ids = items.items.compactMap { item -> EngineStoryId? in
                 return (item as? VisualMediaItem)?.storyId
             }
             
@@ -3605,9 +3604,9 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
                 controller?.dismissAnimated()
             }
             
-            var mappedMedia: [Media] = []
+            var mappedMedia: [EngineRawMedia] = []
             if let items = self.items {
-                mappedMedia = items.items.compactMap { item -> Media? in
+                mappedMedia = items.items.compactMap { item -> EngineRawMedia? in
                     guard let item = item as? VisualMediaItem else {
                         return nil
                     }
@@ -5223,9 +5222,9 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
             return
         }
         
-        var mappedMedia: [Media] = []
+        var mappedMedia: [EngineRawMedia] = []
         if let items = self.items {
-            mappedMedia = items.items.compactMap { item -> Media? in
+            mappedMedia = items.items.compactMap { item -> EngineRawMedia? in
                 guard let item = item as? VisualMediaItem else {
                     return nil
                 }
@@ -5321,7 +5320,7 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
                 self.reorderedIds = nil
                 if case .botPreview = self.scope, let listSource = self.listSource as? BotPreviewStoryListContext {
                     if let items = self.items {
-                        var reorderedMedia: [Media] = []
+                        var reorderedMedia: [EngineRawMedia] = []
                         
                         for id in reorderedIds {
                             if let item = items.items.first(where: { ($0 as? VisualMediaItem)?.storyId == id }) as? VisualMediaItem {

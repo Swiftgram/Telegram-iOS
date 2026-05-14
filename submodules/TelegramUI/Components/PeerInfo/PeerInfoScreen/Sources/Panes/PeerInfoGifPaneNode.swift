@@ -3,7 +3,6 @@ import UIKit
 import Display
 import TelegramCore
 import SwiftSignalKit
-import Postbox
 import TelegramPresentationData
 import AccountContext
 import ContextUI
@@ -25,17 +24,17 @@ private let mediaBadgeBackgroundColor = UIColor(white: 0.0, alpha: 0.6)
 private let mediaBadgeTextColor = UIColor.white
 
 private final class VisualMediaItemInteraction {
-    let openMessage: (Message) -> Void
-    let openMessageContextActions: (Message, ASDisplayNode, CGRect, ContextGesture?) -> Void
-    let toggleSelection: (MessageId, Bool) -> Void
-    
-    var hiddenMedia: [MessageId: [Media]] = [:]
-    var selectedMessageIds: Set<MessageId>?
-    
+    let openMessage: (EngineRawMessage) -> Void
+    let openMessageContextActions: (EngineRawMessage, ASDisplayNode, CGRect, ContextGesture?) -> Void
+    let toggleSelection: (EngineMessage.Id, Bool) -> Void
+
+    var hiddenMedia: [EngineMessage.Id: [EngineRawMedia]] = [:]
+    var selectedMessageIds: Set<EngineMessage.Id>?
+
     init(
-        openMessage: @escaping (Message) -> Void,
-        openMessageContextActions: @escaping (Message, ASDisplayNode, CGRect, ContextGesture?) -> Void,
-        toggleSelection: @escaping (MessageId, Bool) -> Void
+        openMessage: @escaping (EngineRawMessage) -> Void,
+        openMessageContextActions: @escaping (EngineRawMessage, ASDisplayNode, CGRect, ContextGesture?) -> Void,
+        toggleSelection: @escaping (EngineMessage.Id, Bool) -> Void
     ) {
         self.openMessage = openMessage
         self.openMessageContextActions = openMessageContextActions
@@ -58,9 +57,9 @@ private final class VisualMediaItemNode: ASDisplayNode {
     
     private let fetchStatusDisposable = MetaDisposable()
     private let fetchDisposable = MetaDisposable()
-    private var resourceStatus: MediaResourceStatus?
-    
-    private var item: (VisualMediaItem, Media?, CGSize, CGSize?)?
+    private var resourceStatus: EngineMediaResourceStatus?
+
+    private var item: (VisualMediaItem, EngineRawMedia?, CGSize, CGSize?)?
     private var theme: PresentationTheme?
     
     private var hasVisibility: Bool = false
@@ -118,7 +117,7 @@ private final class VisualMediaItemNode: ASDisplayNode {
             if let (gesture, _) = recognizer.lastRecognizedGestureAndLocation {
                 if case .tap = gesture {
                     if let (item, _, _, _) = self.item {
-                        var media: Media?
+                        var media: EngineRawMedia?
                         for value in item.message.media {
                             if let image = value as? TelegramMediaImage {
                                 media = image
@@ -150,8 +149,8 @@ private final class VisualMediaItemNode: ASDisplayNode {
         guard let message = self.item?.0.message else {
             return
         }
-        
-        var media: Media?
+
+        var media: EngineRawMedia?
         for value in message.media {
             if let image = value as? TelegramMediaImage {
                 media = image
@@ -183,7 +182,7 @@ private final class VisualMediaItemNode: ASDisplayNode {
             return
         }
         self.theme = theme
-        var media: Media?
+        var media: EngineRawMedia?
         for value in item.message.media {
             if let image = value as? TelegramMediaImage {
                 media = image
@@ -417,11 +416,11 @@ private final class VisualMediaItemNode: ASDisplayNode {
 }
 
 private final class VisualMediaItem {
-    let message: Message
+    let message: EngineRawMessage
     let dimensions: CGSize
     let aspectRatio: CGFloat
-    
-    init(message: Message) {
+
+    init(message: EngineRawMessage) {
         self.message = message
         
         var aspectRatio: CGFloat = 1.0
@@ -488,7 +487,7 @@ private final class FloatingHeaderNode: ASDisplayNode {
     }
 }
 
-private func tagMaskForType(_ type: PeerInfoGifPaneNode.ContentType) -> MessageTags {
+private func tagMaskForType(_ type: PeerInfoGifPaneNode.ContentType) -> EngineMessage.Tags {
     switch type {
     case .photoOrVideo:
         return .photoOrVideo
@@ -616,7 +615,7 @@ final class PeerInfoGifPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScrollViewDe
     }
     
     private let context: AccountContext
-    private let peerId: PeerId
+    private let peerId: EnginePeer.Id
     private let chatLocation: ChatLocation
     private let chatLocationContextHolder: Atomic<ChatLocationContextHolder?>
     private let chatControllerInteraction: ChatControllerInteraction
@@ -651,7 +650,7 @@ final class PeerInfoGifPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScrollViewDe
     private var visibleMediaItems: [UInt32: VisualMediaItemNode] = [:]
     
     private var numberOfItemsToRequest: Int = 50
-    private var currentView: MessageHistoryView?
+    private var currentView: EngineRawMessageHistoryView?
     private var isRequestingView: Bool = false
     private var isFirstHistoryView: Bool = true
     
@@ -667,7 +666,7 @@ final class PeerInfoGifPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScrollViewDe
         return 0.0
     }
     
-    init(context: AccountContext, chatControllerInteraction: ChatControllerInteraction, peerId: PeerId, chatLocation: ChatLocation, chatLocationContextHolder: Atomic<ChatLocationContextHolder?>, contentType: ContentType) {
+    init(context: AccountContext, chatControllerInteraction: ChatControllerInteraction, peerId: EnginePeer.Id, chatLocation: ChatLocation, chatLocationContextHolder: Atomic<ChatLocationContextHolder?>, contentType: ContentType) {
         self.context = context
         self.peerId = peerId
         self.chatLocation = chatLocation
@@ -714,7 +713,7 @@ final class PeerInfoGifPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScrollViewDe
             guard let strongSelf = self else {
                 return
             }
-            var hiddenMedia: [MessageId: [Media]] = [:]
+            var hiddenMedia: [EngineMessage.Id: [EngineRawMedia]] = [:]
             for id in ids {
                 if case let .chat(accountId, messageId, media) = id, accountId == strongSelf.context.account.id {
                     hiddenMedia[messageId] = [media]
@@ -781,7 +780,7 @@ final class PeerInfoGifPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScrollViewDe
         }))
     }
     
-    private func updateHistory(view: MessageHistoryView, updateType: ViewUpdateType) {
+    private func updateHistory(view: EngineRawMessageHistoryView, updateType: EngineViewUpdateType) {
         self.currentView = view
         
         switch updateType {
@@ -988,7 +987,7 @@ final class PeerInfoGifPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScrollViewDe
         
         let (minVisibleIndex, maxVisibleIndex) = itemsLayout.visibleRange(rect: visibleRect)
         
-        var headerItem: Message?
+        var headerItem: EngineRawMessage?
         
         var validIds = Set<UInt32>()
         if minVisibleIndex <= maxVisibleIndex {

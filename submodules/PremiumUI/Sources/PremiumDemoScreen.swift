@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import Display
 import AsyncDisplayKit
-import Postbox
 import TelegramCore
 import SwiftSignalKit
 import AccountContext
@@ -556,21 +555,10 @@ private final class DemoSheetContent: CombinedComponent {
                 EngineDataMap(accountSpecificStickerOverrides.map(\.messageId).map(TelegramEngine.EngineData.Item.Messages.Message.init))
             )
             
-            let stickersKey: PostboxViewKey = .orderedItemList(id: Namespaces.OrderedItemList.CloudPremiumStickers)
             self.disposable = (combineLatest(
                 queue: Queue.mainQueue(),
                 self.context.engine.stickers.availableReactions(),
-                self.context.account.postbox.combinedView(keys: [stickersKey])
-                |> map { views -> [OrderedItemListEntry]? in
-                    if let view = views.views[stickersKey] as? OrderedItemListView {
-                        return view.items
-                    } else {
-                        return nil
-                    }
-                }
-                |> filter { items in
-                    return items != nil
-                }
+                self.context.engine.data.subscribe(TelegramEngine.EngineData.Item.OrderedLists.ListItems(collectionId: Namespaces.OrderedItemList.CloudPremiumStickers))
                 |> take(1),
                 self.context.engine.data.get(
                     TelegramEngine.EngineData.Item.Peer.Peer(id: self.context.account.peerId),
@@ -604,11 +592,9 @@ private final class DemoSheetContent: CombinedComponent {
                 
                 if let reactions = reactions {
                     var result: [TelegramMediaFile] = []
-                    if let items = items {
-                        for item in items {
-                            if let mediaItem = item.contents.get(RecentMediaItem.self) {
-                                result.append(mediaItem.media._parse())
-                            }
+                    for item in items {
+                        if let mediaItem = item.contents.get(RecentMediaItem.self) {
+                            result.append(mediaItem.media._parse())
                         }
                     }
                     return (reactions.reactions.filter({ $0.isPremium }).map { reaction -> AvailableReactions.Reaction in

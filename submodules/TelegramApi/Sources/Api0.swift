@@ -211,7 +211,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[1605510357] = { return Api.ChatAdminRights.parse_chatAdminRights($0) }
     dict[-219353309] = { return Api.ChatAdminWithInvites.parse_chatAdminWithInvites($0) }
     dict[-1626209256] = { return Api.ChatBannedRights.parse_chatBannedRights($0) }
-    dict[-455036259] = { return Api.ChatFull.parse_channelFull($0) }
+    dict[-1605464774] = { return Api.ChatFull.parse_channelFull($0) }
     dict[640893467] = { return Api.ChatFull.parse_chatFull($0) }
     dict[1553807106] = { return Api.ChatInvite.parse_chatInvite($0) }
     dict[1516793212] = { return Api.ChatInvite.parse_chatInviteAlready($0) }
@@ -232,7 +232,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[878246344] = { return Api.ChatTheme.parse_chatThemeUniqueGift($0) }
     dict[-1390068360] = { return Api.CodeSettings.parse_codeSettings($0) }
     dict[-870702050] = { return Api.Config.parse_config($0) }
-    dict[-849058964] = { return Api.ConnectedBot.parse_connectedBot($0) }
+    dict[54448129] = { return Api.ConnectedBot.parse_connectedBot($0) }
     dict[429997937] = { return Api.ConnectedBotStarRef.parse_connectedBotStarRef($0) }
     dict[341499403] = { return Api.Contact.parse_contact($0) }
     dict[496600883] = { return Api.ContactBirthday.parse_contactBirthday($0) }
@@ -548,6 +548,10 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[736157604] = { return Api.JSONValue.parse_jsonNumber($0) }
     dict[-1715350371] = { return Api.JSONValue.parse_jsonObject($0) }
     dict[-1222740358] = { return Api.JSONValue.parse_jsonString($0) }
+    dict[-1374344599] = { return Api.JoinChatBotResult.parse_joinChatBotResultApproved($0) }
+    dict[251265428] = { return Api.JoinChatBotResult.parse_joinChatBotResultDeclined($0) }
+    dict[-1734105024] = { return Api.JoinChatBotResult.parse_joinChatBotResultQueued($0) }
+    dict[-689719277] = { return Api.JoinChatBotResult.parse_joinChatBotResultWebView($0) }
     dict[45580630] = { return Api.KeyboardButton.parse_inputKeyboardButtonRequestPeer($0) }
     dict[1744911986] = { return Api.KeyboardButton.parse_inputKeyboardButtonUrlAuth($0) }
     dict[2103314375] = { return Api.KeyboardButton.parse_inputKeyboardButtonUserProfile($0) }
@@ -1109,7 +1113,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[-1964652166] = { return Api.Update.parse_updateBotBusinessConnect($0) }
     dict[-1177566067] = { return Api.Update.parse_updateBotCallbackQuery($0) }
     dict[-1873947492] = { return Api.Update.parse_updateBotChatBoost($0) }
-    dict[299870598] = { return Api.Update.parse_updateBotChatInviteRequester($0) }
+    dict[2092125561] = { return Api.Update.parse_updateBotChatInviteRequester($0) }
     dict[1299263278] = { return Api.Update.parse_updateBotCommands($0) }
     dict[-1607821266] = { return Api.Update.parse_updateBotDeleteBusinessMessage($0) }
     dict[132077692] = { return Api.Update.parse_updateBotEditBusinessMessage($0) }
@@ -1177,6 +1181,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[-667783411] = { return Api.Update.parse_updateGroupCallMessage($0) }
     dict[-219423922] = { return Api.Update.parse_updateGroupCallParticipants($0) }
     dict[1763610706] = { return Api.Update.parse_updateInlineBotCallbackQuery($0) }
+    dict[-1112768912] = { return Api.Update.parse_updateJoinChatWebViewDecision($0) }
     dict[1442983757] = { return Api.Update.parse_updateLangPack($0) }
     dict[1180041828] = { return Api.Update.parse_updateLangPackTooLong($0) }
     dict[1448076945] = { return Api.Update.parse_updateLoginToken($0) }
@@ -1189,6 +1194,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[-1618924792] = { return Api.Update.parse_updateMonoForumNoPaidException($0) }
     dict[-2030252155] = { return Api.Update.parse_updateMoveStickerSetToTop($0) }
     dict[-1991136273] = { return Api.Update.parse_updateNewAuthorization($0) }
+    dict[-1306491994] = { return Api.Update.parse_updateNewBotConnection($0) }
     dict[1656358105] = { return Api.Update.parse_updateNewChannelMessage($0) }
     dict[314359194] = { return Api.Update.parse_updateNewEncryptedMessage($0) }
     dict[522914557] = { return Api.Update.parse_updateNewMessage($0) }
@@ -1257,6 +1263,8 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[88680979] = { return Api.Update.parse_updateUserPhone($0) }
     dict[-440534818] = { return Api.Update.parse_updateUserStatus($0) }
     dict[706199388] = { return Api.Update.parse_updateUserTyping($0) }
+    dict[335872721] = { return Api.Update.parse_updateWebBrowserException($0) }
+    dict[-1013306658] = { return Api.Update.parse_updateWebBrowserSettings($0) }
     dict[2139689491] = { return Api.Update.parse_updateWebPage($0) }
     dict[361936797] = { return Api.Update.parse_updateWebViewResultSent($0) }
     dict[2027216577] = { return Api.Updates.parse_updateShort($0) }
@@ -1290,6 +1298,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[-1493633966] = { return Api.WebAuthorization.parse_webAuthorization($0) }
     dict[475467473] = { return Api.WebDocument.parse_webDocument($0) }
     dict[-104284986] = { return Api.WebDocument.parse_webDocumentNoProxy($0) }
+    dict[-1824741993] = { return Api.WebDomainException.parse_webDomainException($0) }
     dict[-392411726] = { return Api.WebPage.parse_webPage($0) }
     dict[555358088] = { return Api.WebPage.parse_webPageEmpty($0) }
     dict[1930545681] = { return Api.WebPage.parse_webPageNotModified($0) }
@@ -1341,6 +1350,8 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[-842824308] = { return Api.account.WallPapers.parse_wallPapers($0) }
     dict[471437699] = { return Api.account.WallPapers.parse_wallPapersNotModified($0) }
     dict[-313079300] = { return Api.account.WebAuthorizations.parse_webAuthorizations($0) }
+    dict[2045480115] = { return Api.account.WebBrowserSettings.parse_webBrowserSettings($0) }
+    dict[-1021538482] = { return Api.account.WebBrowserSettings.parse_webBrowserSettingsNotModified($0) }
     dict[1822232318] = { return Api.aicompose.Tones.parse_tones($0) }
     dict[-1040948989] = { return Api.aicompose.Tones.parse_tonesNotModified($0) }
     dict[782418132] = { return Api.auth.Authorization.parse_authorization($0) }
@@ -1452,6 +1463,8 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[-1231326505] = { return Api.messages.ChatAdminsWithInvites.parse_chatAdminsWithInvites($0) }
     dict[-438840932] = { return Api.messages.ChatFull.parse_chatFull($0) }
     dict[-2118733814] = { return Api.messages.ChatInviteImporters.parse_chatInviteImporters($0) }
+    dict[1146512295] = { return Api.messages.ChatInviteJoinResult.parse_chatInviteJoinResultOk($0) }
+    dict[2001452532] = { return Api.messages.ChatInviteJoinResult.parse_chatInviteJoinResultWebView($0) }
     dict[1694474197] = { return Api.messages.Chats.parse_chats($0) }
     dict[-1663561404] = { return Api.messages.Chats.parse_chatsSlice($0) }
     dict[-1571952873] = { return Api.messages.CheckedHistoryImportPeer.parse_checkedHistoryImportPeer($0) }
@@ -2058,6 +2071,8 @@ public extension Api {
             _1.serialize(buffer, boxed)
         case let _1 as Api.JSONValue:
             _1.serialize(buffer, boxed)
+        case let _1 as Api.JoinChatBotResult:
+            _1.serialize(buffer, boxed)
         case let _1 as Api.KeyboardButton:
             _1.serialize(buffer, boxed)
         case let _1 as Api.KeyboardButtonRow:
@@ -2428,6 +2443,8 @@ public extension Api {
             _1.serialize(buffer, boxed)
         case let _1 as Api.WebDocument:
             _1.serialize(buffer, boxed)
+        case let _1 as Api.WebDomainException:
+            _1.serialize(buffer, boxed)
         case let _1 as Api.WebPage:
             _1.serialize(buffer, boxed)
         case let _1 as Api.WebPageAttribute:
@@ -2491,6 +2508,8 @@ public extension Api {
         case let _1 as Api.account.WallPapers:
             _1.serialize(buffer, boxed)
         case let _1 as Api.account.WebAuthorizations:
+            _1.serialize(buffer, boxed)
+        case let _1 as Api.account.WebBrowserSettings:
             _1.serialize(buffer, boxed)
         case let _1 as Api.aicompose.Tones:
             _1.serialize(buffer, boxed)
@@ -2627,6 +2646,8 @@ public extension Api {
         case let _1 as Api.messages.ChatFull:
             _1.serialize(buffer, boxed)
         case let _1 as Api.messages.ChatInviteImporters:
+            _1.serialize(buffer, boxed)
+        case let _1 as Api.messages.ChatInviteJoinResult:
             _1.serialize(buffer, boxed)
         case let _1 as Api.messages.Chats:
             _1.serialize(buffer, boxed)

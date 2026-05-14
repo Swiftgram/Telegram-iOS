@@ -2732,7 +2732,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                 }
             } else {
                 if !finalQuery.isEmpty {
-                    addAppLogEvent(postbox: context.account.postbox, type: "search_global_query")
+                    context.engine.accountData.addAppLogEvent(type: "search_global_query")
                 }
                 
                 let searchSignals: [Signal<(SearchMessagesResult, SearchMessagesState), NoError>]
@@ -3517,6 +3517,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
         }, openActiveSessions: {
         }, openBirthdaySetup: {
         }, performActiveSessionAction: { _, _ in
+        }, performBotConnectionReviewAction: { _, _ in
         }, openChatFolderUpdates: {
         }, hideChatFolderUpdates: {
         }, openStories: { [weak self] subject, sourceNode in
@@ -5814,6 +5815,7 @@ public final class ChatListSearchShimmerNode: ASDisplayNode {
             }, present: { _ in }, openForumThread: { _, _ in }, openStorageManagement: {}, openPasswordSetup: {}, openPremiumIntro: {}, openPremiumGift: { _, _ in }, openPremiumManagement: {}, openActiveSessions: {
             }, openBirthdaySetup: {
             }, performActiveSessionAction: { _, _ in
+            }, performBotConnectionReviewAction: { _, _ in
             }, openChatFolderUpdates: {}, hideChatFolderUpdates: {
             }, openStories: { _, _ in
             }, openStarsTopup: { _ in

@@ -183,6 +183,7 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
     private var scrollContainerNode: ScrollContainerNode?
     private var containerNode: ASDisplayNode?
     private var overlayNavigationBar: ChatOverlayNavigationBar?
+    private var contextTransitionContainer: UIView?
     
     var overlayTitle: String? {
         didSet {
@@ -3528,7 +3529,11 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
         }
 
         self.derivedLayoutState = ChatControllerNodeDerivedLayoutState(inputContextPanelsFrame: inputContextPanelsFrame, inputContextPanelsOverMainPanelFrame: inputContextPanelsOverMainPanelFrame, inputNodeHeight: inputNodeHeightAndOverflow?.0, inputNodeAdditionalHeight: inputNodeHeightAndOverflow?.1, upperInputPositionBound: inputNodeHeightAndOverflow?.0 != nil ? self.upperInputPositionBound : nil)
-        
+
+        if let contextTransitionContainer = self.contextTransitionContainer {
+            contextTransitionContainer.frame = self.view.convert(self.frameForVisibleArea(), to: self.contentContainerNode.contentNode.view)
+        }
+
         //self.notifyTransitionCompletionListeners(transition: transition)
     }
     
@@ -4035,6 +4040,37 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
         self.textInputPanelNode?.isMediaDeleted = isDeleted
     }
     
+    func ensureContextTransitionContainer() -> UIView? {
+        // Frames are expressed in self.view coords by frameForVisibleArea(), but the
+        // container lives inside self.contentContainerNode.contentNode.view (the
+        // direct parent of historyNodeContainer) so chat-side ancestor clipping
+        // applies and chrome above contentContainerNode (input panel, nav, etc.)
+        // renders over it. Convert at the boundary.
+        //
+        // In overlay chat mode (self.containerNode != nil) historyNodeContainer is
+        // reparented out of contentContainerNode (see line ~1299), making the
+        // `aboveSubview: historyNodeContainer.view` insertion invalid. Return nil
+        // so callers fall back to CCEPN's clipping path — portal-style transitions
+        // are not supported in overlay mode.
+        guard self.containerNode == nil else { return nil }
+        let parent = self.contentContainerNode.contentNode.view
+        let frame = self.view.convert(self.frameForVisibleArea(), to: parent)
+        if let existing = self.contextTransitionContainer {
+            existing.frame = frame
+            return existing
+        }
+        let container = UIView()
+        // No clipsToBounds: the source-side wrapper is faded out via alpha during the
+        // crossfade, so we don't rely on clipping to hide it. Clipping the wrapper
+        // would also clip the iOS portal mirror (which reflects ancestor clipping),
+        // producing visibly clipped pixels in the clone at intermediate positions.
+        container.isUserInteractionEnabled = false
+        container.frame = frame
+        parent.insertSubview(container, aboveSubview: self.historyNodeContainer.view)
+        self.contextTransitionContainer = container
+        return container
+    }
+
     func frameForVisibleArea() -> CGRect {
         var rect = CGRect(origin: CGPoint(x: self.visibleAreaInset.left, y: self.visibleAreaInset.top), size: CGSize(width: self.bounds.size.width - self.visibleAreaInset.left - self.visibleAreaInset.right, height: self.bounds.size.height - self.visibleAreaInset.top - self.visibleAreaInset.bottom))
         if let inputContextPanelNode = self.inputContextPanelNode, let topItemFrame = inputContextPanelNode.topItemFrame {

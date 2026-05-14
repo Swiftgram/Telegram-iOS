@@ -359,7 +359,7 @@ public final class ThemeGridController: ViewController {
                                     })
                                 }).start()
                                 
-                                let _ = (telegramWallpapers(postbox: strongSelf.context.account.postbox, network: strongSelf.context.account.network)
+                                let _ = (strongSelf.context.engine.themes.wallpapers()
                                 |> deliverOnMainQueue).start(completed: { [weak self, weak controller] in
                                     controller?.dismiss()
                                     if let strongSelf = self {

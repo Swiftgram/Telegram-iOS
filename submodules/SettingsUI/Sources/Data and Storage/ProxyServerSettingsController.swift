@@ -319,10 +319,14 @@ func proxyServerSettingsController(sharedContext: SharedAccountContext, context:
     let signal = combineLatest(updatedPresentationData, statePromise.get())
     |> deliverOnMainQueue
     |> map { presentationData, state -> (ItemListControllerState, (ItemListNodeState, Any)) in
-        let leftNavigationButton = ItemListNavigationButton(content: .text("___close"), style: .regular, enabled: true, action: {
+        var presentationData = presentationData
+        let updatedTheme = presentationData.theme.withModalBlocksBackground()
+        presentationData = presentationData.withUpdated(theme: updatedTheme)
+        
+        let leftNavigationButton = ItemListNavigationButton(content: .icon(.close), style: .regular, enabled: true, action: {
             dismissImpl?()
         })
-        let rightNavigationButton = ItemListNavigationButton(content: .text("___done"), style: .bold, enabled: state.isComplete, action: {
+        let rightNavigationButton = ItemListNavigationButton(content: .icon(.done), style: .bold, enabled: state.isComplete, action: {
             if let proxyServerSettings = proxyServerSettings(with: state) {
                 let _ = (updateProxySettingsInteractively(accountManager: accountManager, { settings in
                     var settings = settings

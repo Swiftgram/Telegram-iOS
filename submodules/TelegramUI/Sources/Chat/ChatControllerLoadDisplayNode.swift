@@ -380,6 +380,9 @@ extension ChatControllerImpl {
         if previousState.slowmodeState != contentData.state.slowmodeState || previousState.boostsToUnrestrict != contentData.state.boostsToUnrestrict {
             animated = true
         }
+        if previousState.canStopIncomingStreamingMessage != contentData.state.canStopIncomingStreamingMessage {
+            animated = true
+        }
         
         var transition: ContainedViewLayoutTransition = animated ? .animated(duration: 0.4, curve: .spring) : .immediate
         if let forceAnimationTransition {
@@ -444,6 +447,7 @@ extension ChatControllerImpl {
             presentationInterfaceState = presentationInterfaceState.updatedRemovePaidMessageFeeData(contentData.state.removePaidMessageFeeData)
             presentationInterfaceState = presentationInterfaceState.updatedViewForumAsMessages(contentData.state.viewForumAsMessages)
             presentationInterfaceState = presentationInterfaceState.updatedHasTopics(contentData.state.hasTopics)
+            presentationInterfaceState = presentationInterfaceState.updatedCanStopIncomingStreamingMessage(contentData.state.canStopIncomingStreamingMessage)
             
             presentationInterfaceState = presentationInterfaceState.updatedTitlePanelContext({ context in
                 if contentData.state.pinnedMessageId != nil {
@@ -3782,7 +3786,7 @@ extension ChatControllerImpl {
                     }
                 }
                 
-                let controller = chatTextLinkEditController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, text: text?.string ?? "", link: link, apply: { [weak self] link in
+                let controller = chatTextLinkEditController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, text: strongSelf.presentationData.strings.TextFormat_AddLinkText(text?.string ?? "").string, link: link, apply: { [weak self] link, _ in
                     if let strongSelf = self, let inputMode = inputMode, let selectionRange = selectionRange {
                         if let link {
                             if !link.isEmpty {

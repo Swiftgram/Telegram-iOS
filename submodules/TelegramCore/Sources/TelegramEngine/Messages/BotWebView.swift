@@ -702,7 +702,10 @@ func _internal_removeChatManagingBot(account: Account, chatId: EnginePeer.Id) ->
                         excludePeers: excludePeers,
                         exclude: connectedBot.recipients.exclude
                     ),
-                    rights: connectedBot.rights
+                    rights: connectedBot.rights,
+                    device: connectedBot.device,
+                    date: connectedBot.date,
+                    location: connectedBot.location
                 ))
             } else {
                 return current

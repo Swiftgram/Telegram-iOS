@@ -52,7 +52,7 @@ extension PeerInfoScreenNode {
     }
     
     func openUrl(url: String, concealed: Bool, external: Bool, forceExternal: Bool = false, commit: @escaping () -> Void = {}) {
-        let _ = openUserGeneratedUrl(context: self.context, peerId: self.peerId, url: url, concealed: concealed, present: { [weak self] c in
+        let _ = self.context.sharedContext.openUserGeneratedUrl(context: self.context, peerId: self.peerId, url: url, webpage: nil, concealed: concealed, forceConcealed: false, skipUrlAuth: false, skipConcealedAlert: false, forceDark: false, present: { [weak self] c in
             self?.controller?.present(c, in: .window(.root))
         }, openResolved: { [weak self] tempResolved in
             guard let strongSelf = self else {
@@ -76,7 +76,7 @@ extension PeerInfoScreenNode {
             }, dismissInput: {
                 self?.view.endEditing(true)
             }, contentContext: nil, progress: nil, completion: nil)
-        })
+        }, progress: nil, alertDisplayUpdated: nil, concealedAlertOption: nil)
     }
     
     func openUrlIn(_ url: String) {

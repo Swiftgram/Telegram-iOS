@@ -1435,6 +1435,8 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
                             self.effectiveContainerNode.currentItemNode.interaction?.openPremiumGift(peers, birthdays)
                         case .reviewLogin:
                             break
+                        case .reviewBotConnection:
+                            break
                         case let .starsSubscriptionLowBalance(amount, _):
                             self.effectiveContainerNode.currentItemNode.interaction?.openStarsTopup(amount.value)
                         case .setupPhoto:
@@ -1458,6 +1460,8 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
                         switch notice {
                         case let .reviewLogin(newSessionReview, _):
                             self.effectiveContainerNode.currentItemNode.interaction?.performActiveSessionAction(newSessionReview, isPositive)
+                        case let .reviewBotConnection(newBotConnectionReview, _, _):
+                            self.effectiveContainerNode.currentItemNode.interaction?.performBotConnectionReviewAction(newBotConnectionReview, isPositive)
                         default:
                             break
                         }

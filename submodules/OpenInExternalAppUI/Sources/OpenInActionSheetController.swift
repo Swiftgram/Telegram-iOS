@@ -1,14 +1,19 @@
 import Foundation
 import UIKit
 import Display
-import AsyncDisplayKit
+import ComponentFlow
 import SwiftSignalKit
 import TelegramCore
 import MapKit
 import TelegramPresentationData
 import AccountContext
-import PhotoResources
 import AppBundle
+import ViewControllerComponent
+import SheetComponent
+import ButtonComponent
+import GlassBarButtonComponent
+import BundleIconComponent
+import MultilineTextComponent
 
 public struct OpenInControllerAction {
     public let title: String
@@ -20,37 +25,16 @@ public struct OpenInControllerAction {
     }
 }
 
-public final class OpenInActionSheetController: ActionSheetController {
-    private var presentationDisposable: Disposable?
-    
-    private let _ready = Promise<Bool>()
-    override public var ready: Promise<Bool> {
-        return self._ready
-    }
-    
-    public init(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil,  forceTheme: PresentationTheme? = nil, item: OpenInItem, additionalAction: OpenInControllerAction? = nil, openUrl: @escaping (String) -> Void) {
-        var presentationData = updatedPresentationData?.initial ?? context.sharedContext.currentPresentationData.with { $0 }
-        if let forceTheme = forceTheme {
-            presentationData = presentationData.withUpdated(theme: forceTheme)
-        }
-    
-        let strings = presentationData.strings
-        
-        super.init(theme: ActionSheetControllerTheme(presentationData: presentationData))
-        
-        self.presentationDisposable = (updatedPresentationData?.signal ?? context.sharedContext.presentationData).start(next: { [weak self] presentationData in
-            if let strongSelf = self {
-                var presentationData = presentationData
-                if let forceTheme = forceTheme {
-                    presentationData = presentationData.withUpdated(theme: forceTheme)
-                }
-                strongSelf.theme = ActionSheetControllerTheme(presentationData: presentationData)
-            }
-        })
-        
-        self._ready.set(.single(true))
-        
-        let invokeActionImpl: (OpenInAction) -> Void = { action in
+public final class OpenInActionSheetController: ViewControllerComponentContainer {
+    public init(
+        context: AccountContext,
+        updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil,
+        forceTheme: PresentationTheme? = nil,
+        item: OpenInItem,
+        additionalAction: OpenInControllerAction? = nil,
+        openUrl: @escaping (String) -> Void
+    ) {
+        let invokeAction: (OpenInAction) -> Void = { action in
             switch action {
             case let .openUrl(url):
                 openUrl(url)
@@ -59,7 +43,7 @@ public final class OpenInActionSheetController: ActionSheetController {
                 let mapItem = MKMapItem(placemark: placemark)
                 
                 if let directions = directions {
-                    let options = [ MKLaunchOptionsDirectionsModeKey: directions.launchOptions ]
+                    let options = [MKLaunchOptionsDirectionsModeKey: directions.launchOptions]
                     MKMapItem.openMaps(with: [MKMapItem.forCurrentLocation(), mapItem], launchOptions: options)
                 } else {
                     mapItem.openInMaps(launchOptions: nil)
@@ -69,196 +53,485 @@ public final class OpenInActionSheetController: ActionSheetController {
             }
         }
         
-        var items: [ActionSheetItem] = []
-        items.append(OpenInActionSheetItem(context: context, strings: strings, options: availableOpenInOptions(context: context, item: item), invokeAction: invokeActionImpl))
-        
-        if let action = additionalAction {
-            items.append(ActionSheetButtonItem(title: action.title, action: { [weak self] in
-                action.action()
-                self?.dismissAnimated()
-            }))
+        let effectiveUpdatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?
+        if let forceTheme {
+            let initial = updatedPresentationData?.initial ?? context.sharedContext.currentPresentationData.with { $0 }
+            let signal = updatedPresentationData?.signal ?? context.sharedContext.presentationData
+            effectiveUpdatedPresentationData = (
+                initial: initial.withUpdated(theme: forceTheme),
+                signal: signal |> map { presentationData in
+                    presentationData.withUpdated(theme: forceTheme)
+                }
+            )
+        } else {
+            effectiveUpdatedPresentationData = updatedPresentationData
         }
         
-        self.setItemGroups([
-            ActionSheetItemGroup(items: items),
-            ActionSheetItemGroup(items: [
-                ActionSheetButtonItem(title: strings.Common_Cancel, action: { [weak self] in
-                    self?.dismissAnimated()
-                })
-            ])
-        ])
+        super.init(
+            context: context,
+            component: OpenInActionSheetScreenComponent(
+                context: context,
+                options: availableOpenInOptions(context: context, item: item),
+                additionalAction: additionalAction,
+                invokeAction: invokeAction
+            ),
+            navigationBarAppearance: .none,
+            statusBarStyle: .ignore,
+            updatedPresentationData: effectiveUpdatedPresentationData
+        )
+        
+        self.blocksBackgroundWhenInOverlay = true
+        self.navigationPresentation = .flatModal
     }
     
     required public init(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    deinit {
-        self.presentationDisposable?.dispose()
+    public func dismissAnimated() {
+        if let view = self.node.hostView.findTaggedView(tag: SheetComponent<ViewControllerComponentContainer.Environment>.View.Tag()) as? SheetComponent<ViewControllerComponentContainer.Environment>.View {
+            view.dismissAnimated()
+        }
     }
 }
 
-private final class OpenInActionSheetItem: ActionSheetItem {
+private final class OpenInActionSheetScreenComponent: Component {
+    typealias EnvironmentType = ViewControllerComponentContainer.Environment
+    
     let context: AccountContext
-    let strings: PresentationStrings
     let options: [OpenInOption]
+    let additionalAction: OpenInControllerAction?
     let invokeAction: (OpenInAction) -> Void
     
-    init(context: AccountContext, strings: PresentationStrings, options: [OpenInOption], invokeAction: @escaping (OpenInAction) -> Void) {
+    init(
+        context: AccountContext,
+        options: [OpenInOption],
+        additionalAction: OpenInControllerAction?,
+        invokeAction: @escaping (OpenInAction) -> Void
+    ) {
         self.context = context
-        self.strings = strings
         self.options = options
+        self.additionalAction = additionalAction
         self.invokeAction = invokeAction
     }
     
-    func node(theme: ActionSheetControllerTheme) -> ActionSheetItemNode {
-        return OpenInActionSheetItemNode(context: self.context, theme: theme, strings: self.strings, options: self.options, invokeAction: self.invokeAction)
+    static func ==(lhs: OpenInActionSheetScreenComponent, rhs: OpenInActionSheetScreenComponent) -> Bool {
+        if lhs.context !== rhs.context {
+            return false
+        }
+        if lhs.options.map(\.identifier) != rhs.options.map(\.identifier) {
+            return false
+        }
+        if lhs.additionalAction?.title != rhs.additionalAction?.title {
+            return false
+        }
+        return true
     }
     
-    func updateNode(_ node: ActionSheetItemNode) {
-    }
-}
-
-private final class OpenInActionSheetItemNode: ActionSheetItemNode {
-    let theme: ActionSheetControllerTheme
-    let strings: PresentationStrings
-    
-    let titleNode: ASTextNode
-    let scrollNode: ASScrollNode
-    
-    let openInNodes: [OpenInAppNode]
-    
-    init(context: AccountContext, theme: ActionSheetControllerTheme, strings: PresentationStrings, options: [OpenInOption], invokeAction: @escaping (OpenInAction) -> Void) {
-        self.theme = theme
-        self.strings = strings
+    final class View: UIView {
+        private let sheet = ComponentView<(ViewControllerComponentContainer.Environment, SheetComponentEnvironment)>()
+        private let sheetAnimateOut = ActionSlot<Action<Void>>()
         
-        let titleFont = Font.medium(floor(theme.baseFontSize * 20.0 / 17.0))
+        private var environment: EnvironmentType?
         
-        self.titleNode = ASTextNode()
-        self.titleNode.isUserInteractionEnabled = false
-        self.titleNode.displaysAsynchronously = true
-        self.titleNode.attributedText = NSAttributedString(string: strings.Map_OpenIn, font: titleFont, textColor: theme.primaryTextColor, paragraphAlignment: .center)
-        
-        self.scrollNode = ASScrollNode()
-        self.scrollNode.view.showsVerticalScrollIndicator = false
-        self.scrollNode.view.showsHorizontalScrollIndicator = false
-        self.scrollNode.view.clipsToBounds = false
-        self.scrollNode.view.scrollsToTop = false
-        self.scrollNode.view.delaysContentTouches = false
-        self.scrollNode.scrollableDirections = [.left, .right]
-        
-        self.openInNodes = options.map { option in
-            let node = OpenInAppNode()
-            node.setup(context: context, theme: theme, option: option, invokeAction: invokeAction)
-            return node
+        override init(frame: CGRect) {
+            super.init(frame: frame)
         }
         
-        super.init(theme: theme)
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
         
-        self.addSubnode(self.titleNode)
-        
-        if !self.openInNodes.isEmpty {
-            for openInNode in openInNodes {
-                self.scrollNode.addSubnode(openInNode)
+        private func dismiss(animated: Bool) {
+            guard let controller = self.environment?.controller() else {
+                return
             }
-            self.addSubnode(self.scrollNode)
-        }
-    }
-    
-    public override func updateLayout(constrainedSize: CGSize, transition: ContainedViewLayoutTransition) -> CGSize {
-        let size = CGSize(width: constrainedSize.width, height: 148.0)
-       
-        let titleSize = self.titleNode.measure(size)
-        self.titleNode.frame = CGRect(origin: CGPoint(x: 0.0, y: 16.0), size: CGSize(width: size.width, height: titleSize.height))
-        
-        self.scrollNode.frame = CGRect(origin: CGPoint(x: 0, y: 36.0), size: CGSize(width: size.width, height: size.height - 36.0))
-        
-        let nodeInset: CGFloat = 2.0
-        let nodeSize = CGSize(width: 80.0, height: 112.0)
-        var nodeOffset = nodeInset
-        
-        for node in self.openInNodes {
-            node.frame = CGRect(origin: CGPoint(x: nodeOffset, y: 0.0), size: nodeSize)
-            nodeOffset += nodeSize.width
-        }
-        
-        if let lastNode = self.openInNodes.last {
-            let contentSize = CGSize(width: lastNode.frame.maxX + nodeInset, height: self.scrollNode.frame.height)
-            if self.scrollNode.view.contentSize != contentSize {
-                self.scrollNode.view.contentSize = contentSize
+            
+            if animated {
+                self.sheetAnimateOut.invoke(Action { _ in
+                    controller.dismiss(completion: nil)
+                })
+            } else {
+                controller.dismiss(animated: false, completion: nil)
             }
         }
         
-        self.updateInternalLayout(size, constrainedSize: constrainedSize)
-        return size
+        func update(component: OpenInActionSheetScreenComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<ViewControllerComponentContainer.Environment>, transition: ComponentTransition) -> CGSize {
+            let environment = environment[ViewControllerComponentContainer.Environment.self].value
+            self.environment = environment
+            
+            let sheetEnvironment = SheetComponentEnvironment(
+                metrics: environment.metrics,
+                deviceMetrics: environment.deviceMetrics,
+                isDisplaying: environment.isVisible,
+                isCentered: environment.metrics.widthClass == .regular,
+                hasInputHeight: !environment.inputHeight.isZero,
+                regularMetricsSize: CGSize(width: 430.0, height: 900.0),
+                dismiss: { [weak self] animated in
+                    self?.dismiss(animated: animated)
+                }
+            )
+            
+            let _ = self.sheet.update(
+                transition: transition,
+                component: AnyComponent(SheetComponent(
+                    content: AnyComponent(OpenInActionSheetContentComponent(
+                        context: component.context,
+                        options: component.options,
+                        additionalAction: component.additionalAction,
+                        invokeAction: component.invokeAction,
+                        dismiss: { [weak self] in
+                            self?.dismiss(animated: true)
+                        }
+                    )),
+                    style: .glass,
+                    backgroundColor: .color(environment.theme.actionSheet.opaqueItemBackgroundColor),
+                    followContentSizeChanges: true,
+                    clipsContent: true,
+                    animateOut: self.sheetAnimateOut
+                )),
+                environment: {
+                    environment
+                    sheetEnvironment
+                },
+                containerSize: availableSize
+            )
+            
+            if let sheetView = self.sheet.view {
+                if sheetView.superview == nil {
+                    self.addSubview(sheetView)
+                }
+                transition.setFrame(view: sheetView, frame: CGRect(origin: CGPoint(), size: availableSize))
+            }
+            
+            return availableSize
+        }
+    }
+    
+    func makeView() -> View {
+        return View(frame: CGRect())
+    }
+    
+    func update(view: View, availableSize: CGSize, state: EmptyComponentState, environment: Environment<ViewControllerComponentContainer.Environment>, transition: ComponentTransition) -> CGSize {
+        return view.update(component: self, availableSize: availableSize, state: state, environment: environment, transition: transition)
     }
 }
 
-private final class OpenInAppNode : ASDisplayNode {
-    private let iconNode: TransformImageNode
-    private let textNode: ASTextNode
+private final class OpenInActionSheetContentComponent: Component {
+    typealias EnvironmentType = ViewControllerComponentContainer.Environment
+    
+    let context: AccountContext
+    let options: [OpenInOption]
+    let additionalAction: OpenInControllerAction?
+    let invokeAction: (OpenInAction) -> Void
+    let dismiss: () -> Void
+    
+    init(
+        context: AccountContext,
+        options: [OpenInOption],
+        additionalAction: OpenInControllerAction?,
+        invokeAction: @escaping (OpenInAction) -> Void,
+        dismiss: @escaping () -> Void
+    ) {
+        self.context = context
+        self.options = options
+        self.additionalAction = additionalAction
+        self.invokeAction = invokeAction
+        self.dismiss = dismiss
+    }
+    
+    static func ==(lhs: OpenInActionSheetContentComponent, rhs: OpenInActionSheetContentComponent) -> Bool {
+        if lhs.context !== rhs.context {
+            return false
+        }
+        if lhs.options.map(\.identifier) != rhs.options.map(\.identifier) {
+            return false
+        }
+        if lhs.additionalAction?.title != rhs.additionalAction?.title {
+            return false
+        }
+        return true
+    }
+    
+    final class View: UIView {
+        private let closeButton = ComponentView<Empty>()
+        private let title = ComponentView<Empty>()
+        private let scrollView: UIScrollView
+        private var optionViews: [String: OpenInAppView] = [:]
+        private var shareButton: ComponentView<Empty>?
+        
+        override init(frame: CGRect) {
+            self.scrollView = UIScrollView()
+            self.scrollView.showsVerticalScrollIndicator = false
+            self.scrollView.showsHorizontalScrollIndicator = false
+            self.scrollView.clipsToBounds = false
+            self.scrollView.scrollsToTop = false
+            self.scrollView.delaysContentTouches = false
+            self.scrollView.alwaysBounceHorizontal = true
+            if #available(iOSApplicationExtension 11.0, iOS 11.0, *) {
+                self.scrollView.contentInsetAdjustmentBehavior = .never
+            }
+            
+            super.init(frame: frame)
+            
+            self.addSubview(self.scrollView)
+        }
+        
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+        
+        func update(component: OpenInActionSheetContentComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<ViewControllerComponentContainer.Environment>, transition: ComponentTransition) -> CGSize {
+            let environment = environment[ViewControllerComponentContainer.Environment.self].value
+            let theme = environment.theme
+            let strings = environment.strings
+            
+            let closeButtonSize = self.closeButton.update(
+                transition: transition,
+                component: AnyComponent(GlassBarButtonComponent(
+                    size: CGSize(width: 44.0, height: 44.0),
+                    backgroundColor: nil,
+                    isDark: theme.overallDarkAppearance,
+                    state: .glass,
+                    component: AnyComponentWithIdentity(id: "close", component: AnyComponent(
+                        BundleIconComponent(
+                            name: "Navigation/Close",
+                            tintColor: theme.chat.inputPanel.panelControlColor
+                        )
+                    )),
+                    action: { _ in
+                        component.dismiss()
+                    }
+                )),
+                environment: {},
+                containerSize: CGSize(width: 44.0, height: 44.0)
+            )
+            if let closeButtonView = self.closeButton.view {
+                if closeButtonView.superview == nil {
+                    self.addSubview(closeButtonView)
+                }
+                transition.setFrame(view: closeButtonView, frame: CGRect(origin: CGPoint(x: 16.0, y: 16.0), size: closeButtonSize))
+            }
+            
+            let titleSize = self.title.update(
+                transition: transition,
+                component: AnyComponent(MultilineTextComponent(
+                    text: .plain(NSAttributedString(
+                        string: strings.Map_OpenIn,
+                        font: Font.medium(20.0),
+                        textColor: theme.actionSheet.primaryTextColor,
+                        paragraphAlignment: .center
+                    )),
+                    horizontalAlignment: .center,
+                    maximumNumberOfLines: 1
+                )),
+                environment: {},
+                containerSize: CGSize(width: max(1.0, availableSize.width - 32.0 - 60.0), height: CGFloat.greatestFiniteMagnitude)
+            )
+            if let titleView = self.title.view {
+                if titleView.superview == nil {
+                    self.addSubview(titleView)
+                }
+                transition.setFrame(view: titleView, frame: CGRect(
+                    origin: CGPoint(
+                        x: floorToScreenPixels((availableSize.width - titleSize.width) / 2.0),
+                        y: floorToScreenPixels(38.0 - titleSize.height / 2.0)
+                    ),
+                    size: titleSize
+                ))
+            }
+            
+            let optionInset: CGFloat = 2.0
+            let optionSize = CGSize(width: 80.0, height: 112.0)
+            let scrollFrame = CGRect(origin: CGPoint(x: 0.0, y: 64.0), size: CGSize(width: availableSize.width, height: optionSize.height))
+            transition.setFrame(view: self.scrollView, frame: scrollFrame)
+            
+            var validIds = Set<String>()
+            for (index, option) in component.options.enumerated() {
+                validIds.insert(option.identifier)
+                
+                let optionView: OpenInAppView
+                if let current = self.optionViews[option.identifier] {
+                    optionView = current
+                } else {
+                    optionView = OpenInAppView()
+                    self.optionViews[option.identifier] = optionView
+                    self.scrollView.addSubview(optionView)
+                }
+                
+                optionView.update(context: component.context, theme: theme, option: option, action: {
+                    component.invokeAction(option.action())
+                    component.dismiss()
+                })
+                
+                let optionOriginX: CGFloat
+                if component.options.count == 1 {
+                    optionOriginX = floorToScreenPixels(max(0.0, (availableSize.width - optionSize.width) / 2.0))
+                } else {
+                    optionOriginX = optionInset + CGFloat(index) * optionSize.width
+                }
+                
+                transition.setFrame(view: optionView, frame: CGRect(
+                    origin: CGPoint(x: optionOriginX, y: 0.0),
+                    size: optionSize
+                ))
+            }
+            
+            for id in Array(self.optionViews.keys) {
+                if !validIds.contains(id) {
+                    let optionView = self.optionViews.removeValue(forKey: id)
+                    optionView?.removeFromSuperview()
+                }
+            }
+            
+            let optionsContentWidth: CGFloat
+            if component.options.isEmpty {
+                optionsContentWidth = availableSize.width
+            } else {
+                optionsContentWidth = optionInset * 2.0 + CGFloat(component.options.count) * optionSize.width
+            }
+            self.scrollView.contentSize = CGSize(width: max(availableSize.width, optionsContentWidth), height: optionSize.height)
+            
+            var contentHeight = scrollFrame.maxY + 18.0
+            if let additionalAction = component.additionalAction {
+                let shareButton: ComponentView<Empty>
+                if let current = self.shareButton {
+                    shareButton = current
+                } else {
+                    shareButton = ComponentView<Empty>()
+                    self.shareButton = shareButton
+                }
+                
+                let buttonInsets = ContainerViewLayout.concentricInsets(bottomInset: environment.safeInsets.bottom, innerDiameter: 52.0, sideInset: 30.0)
+                let buttonSize = shareButton.update(
+                    transition: transition,
+                    component: AnyComponent(ButtonComponent(
+                        background: ButtonComponent.Background(
+                            style: .glass,
+                            color: theme.list.itemCheckColors.fillColor,
+                            foreground: theme.list.itemCheckColors.foregroundColor,
+                            pressedColor: theme.list.itemCheckColors.fillColor.withMultipliedAlpha(0.9)
+                        ),
+                        content: AnyComponentWithIdentity(
+                            id: AnyHashable(additionalAction.title),
+                            component: AnyComponent(MultilineTextComponent(
+                                text: .plain(NSAttributedString(
+                                    string: additionalAction.title,
+                                    font: Font.semibold(17.0),
+                                    textColor: theme.list.itemCheckColors.foregroundColor,
+                                    paragraphAlignment: .center
+                                )),
+                                horizontalAlignment: .center,
+                                maximumNumberOfLines: 1
+                            ))
+                        ),
+                        action: {
+                            additionalAction.action()
+                            component.dismiss()
+                        }
+                    )),
+                    environment: {},
+                    containerSize: CGSize(width: availableSize.width - buttonInsets.left - buttonInsets.right, height: 52.0)
+                )
+                
+                if let shareButtonView = shareButton.view {
+                    if shareButtonView.superview == nil {
+                        self.addSubview(shareButtonView)
+                    }
+                    transition.setFrame(view: shareButtonView, frame: CGRect(
+                        origin: CGPoint(x: floorToScreenPixels((availableSize.width - buttonSize.width) / 2.0), y: contentHeight),
+                        size: buttonSize
+                    ))
+                }
+                contentHeight += buttonSize.height
+                contentHeight += buttonInsets.bottom
+            } else {
+                if let shareButton = self.shareButton {
+                    self.shareButton = nil
+                    shareButton.view?.removeFromSuperview()
+                }
+                contentHeight += max(20.0, environment.safeInsets.bottom + 12.0)
+            }
+            
+            return CGSize(width: availableSize.width, height: contentHeight)
+        }
+    }
+    
+    func makeView() -> View {
+        return View(frame: CGRect())
+    }
+    
+    func update(view: View, availableSize: CGSize, state: EmptyComponentState, environment: Environment<ViewControllerComponentContainer.Environment>, transition: ComponentTransition) -> CGSize {
+        return view.update(component: self, availableSize: availableSize, state: state, environment: environment, transition: transition)
+    }
+}
+
+private final class OpenInAppView: UIControl {
+    private let iconView: TransformImageView
+    private let titleLabel: UILabel
+    
+    private var currentIdentifier: String?
     private var action: (() -> Void)?
     
-    override init() {
-        self.iconNode = TransformImageNode()
-        self.iconNode.frame = CGRect(origin: CGPoint(), size: CGSize(width: 60.0, height: 60.0))
-        self.iconNode.isLayerBacked = true
+    override init(frame: CGRect) {
+        self.iconView = TransformImageView(frame: CGRect(origin: CGPoint(), size: CGSize(width: 60.0, height: 60.0)))
+        self.titleLabel = UILabel()
         
-        self.textNode = ASTextNode()
-        self.textNode.isUserInteractionEnabled = false
-        self.textNode.displaysAsynchronously = true
+        super.init(frame: frame)
         
-        super.init()
+        self.titleLabel.textAlignment = .center
+        self.titleLabel.numberOfLines = 1
+        self.titleLabel.adjustsFontSizeToFitWidth = true
+        self.titleLabel.minimumScaleFactor = 0.75
         
-        self.addSubnode(self.iconNode)
-        self.addSubnode(self.textNode)
+        self.isAccessibilityElement = true
+        
+        self.addSubview(self.iconView)
+        self.addSubview(self.titleLabel)
+        
+        self.addTarget(self, action: #selector(self.pressed), for: .touchUpInside)
     }
     
-    func setup(context: AccountContext, theme: ActionSheetControllerTheme, option: OpenInOption, invokeAction: @escaping (OpenInAction) -> Void) {
-        let textFont = Font.regular(floor(theme.baseFontSize * 11.0 / 17.0))
-        self.textNode.attributedText = NSAttributedString(string: option.title, font: textFont, textColor: theme.primaryTextColor, paragraphAlignment: .center)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func update(context: AccountContext, theme: PresentationTheme, option: OpenInOption, action: @escaping () -> Void) {
+        self.action = action
+        self.accessibilityLabel = option.title
+        self.titleLabel.attributedText = NSAttributedString(string: option.title, font: Font.regular(11.0), textColor: theme.actionSheet.primaryTextColor, paragraphAlignment: .center)
         
         let iconSize = CGSize(width: 60.0, height: 60.0)
-        let makeLayout = self.iconNode.asyncLayout()
+        let makeLayout = self.iconView.asyncLayout()
         let applyLayout = makeLayout(TransformImageArguments(corners: ImageCorners(radius: 16.0), imageSize: iconSize, boundingSize: iconSize, intrinsicInsets: UIEdgeInsets()))
         applyLayout()
         
-        switch option.application {
+        if self.currentIdentifier != option.identifier {
+            self.currentIdentifier = option.identifier
+            
+            switch option.application {
             case .safari:
                 if let image = UIImage(bundleImageName: "Open In/Safari") {
-                    self.iconNode.setSignal(openInAppIcon(engine: context.engine, appIcon: .image(image: image)))
+                    self.iconView.setSignal(openInAppIcon(engine: context.engine, appIcon: .image(image: image)))
                 }
             case .maps:
                 if let image = UIImage(bundleImageName: "Open In/Maps") {
-                    self.iconNode.setSignal(openInAppIcon(engine: context.engine, appIcon: .image(image: image)))
+                    self.iconView.setSignal(openInAppIcon(engine: context.engine, appIcon: .image(image: image)))
                 }
             case let .other(_, identifier, _, store):
-                self.iconNode.setSignal(openInAppIcon(engine: context.engine, appIcon: .resource(resource: OpenInAppIconResource(appStoreId: identifier, store: store))))
-        }
-        
-        self.action = {
-            invokeAction(option.action())
+                self.iconView.setSignal(openInAppIcon(engine: context.engine, appIcon: .resource(resource: OpenInAppIconResource(appStoreId: identifier, store: store))))
+            }
         }
     }
     
-    override func didLoad() {
-        super.didLoad()
-        
-        self.view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.tapGesture(_:))))
+    @objc private func pressed() {
+        self.action?()
     }
     
-    @objc func tapGesture(_ recognizer: UITapGestureRecognizer) {
-        if case .ended = recognizer.state {
-            self.action?()
-        }
-    }
-    
-    override func layout() {
-        super.layout()
+    override func layoutSubviews() {
+        super.layoutSubviews()
         
-        let bounds = self.bounds
-        
-        self.iconNode.frame = CGRect(origin: CGPoint(x: 10.0, y: 14.0), size: CGSize(width: 60.0, height: 60.0))
-        self.textNode.frame = CGRect(origin: CGPoint(x: 0.0, y: 14.0 + 60.0 + 4.0), size: CGSize(width: bounds.size.width, height: 16.0))
+        self.iconView.frame = CGRect(origin: CGPoint(x: 10.0, y: 14.0), size: CGSize(width: 60.0, height: 60.0))
+        self.titleLabel.frame = CGRect(origin: CGPoint(x: 0.0, y: 78.0), size: CGSize(width: self.bounds.width, height: 16.0))
     }
 }

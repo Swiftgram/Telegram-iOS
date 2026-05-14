@@ -385,7 +385,7 @@ public final class ThemeAccentColorController: ViewController {
         
         let _ = (combineLatest(
             self.context.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.presentationThemeSettings]) |> take(1),
-            telegramWallpapers(postbox: context.account.postbox, network: context.account.network) |> take(1)
+            context.engine.themes.wallpapers() |> take(1)
         )
         |> deliverOnMainQueue).start(next: { [weak self] sharedData, wallpapers in
             guard let strongSelf = self else {

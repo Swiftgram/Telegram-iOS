@@ -1430,7 +1430,8 @@ private final class ChatFolderLinkPreviewScreenComponent: Component {
                             badge: resolvedData.actionButtonBadge,
                             textColor: theme.list.itemCheckColors.foregroundColor,
                             badgeBackground: theme.list.itemCheckColors.foregroundColor,
-                            badgeForeground: theme.list.itemCheckColors.fillColor
+                            badgeForeground: theme.list.itemCheckColors.fillColor,
+                            combinedAlignment: true
                         ))
                     ),
                     isEnabled: resolvedData.actionButtonEnabled,

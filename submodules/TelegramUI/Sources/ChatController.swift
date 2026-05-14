@@ -212,7 +212,7 @@ func isTopmostChatController(_ controller: ChatControllerImpl) -> Bool {
     return true
 }
 
-func calculateSlowmodeActiveUntilTimestamp(account: Account, untilTimestamp: Int32?) -> Int32? {
+func calculateSlowmodeActiveUntilTimestamp(untilTimestamp: Int32?) -> Int32? {
     guard let untilTimestamp = untilTimestamp else {
         return nil
     }
@@ -484,6 +484,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     weak var emojiPackTooltipController: TooltipScreen?
     weak var birthdayTooltipController: TooltipScreen?
     weak var scheduledVideoProcessingTooltipController: TooltipScreen?
+    weak var guestChatMessageTooltipController: TooltipScreen?
     
     weak var slowmodeTooltipController: ChatSlowmodeHintController?
     
@@ -5227,14 +5228,17 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 self.joinChannelDisposable.set((
                     self.context.peerChannelMemberCategoriesContextsManager.join(engine: self.context.engine, peerId: peer.id, hash: nil)
                     |> deliverOnMainQueue
-                    |> afterCompleted { [weak self] in
-                        Queue.mainQueue().async {
-                            if let self {
-                                self.present(UndoOverlayController(presentationData: presentationData, content: .succeed(text: presentationData.strings.Chat_SimilarChannels_JoinedChannel(peer.compactDisplayTitle).string, timeout: nil, customUndoText: nil), elevatedLayout: false, position: .top, animateInAsReplacement: false, action: { _ in return false }), in: .current)
-                            }
-                        }
+                ).startStrict(next: { [weak self] result in
+                    guard let self else {
+                        return
                     }
-                ).startStrict(error: { [weak self] error in
+                    switch result {
+                    case .joined:
+                        self.present(UndoOverlayController(presentationData: presentationData, content: .succeed(text: presentationData.strings.Chat_SimilarChannels_JoinedChannel(peer.compactDisplayTitle).string, timeout: nil, customUndoText: nil), elevatedLayout: false, position: .top, animateInAsReplacement: false, action: { _ in return false }), in: .current)
+                    case let .webView(webView):
+                        self.context.sharedContext.openJoinChatWebView(context: self.context, parentController: self, updatedPresentationData: self.updatedPresentationData, webView: webView)
+                    }
+                }, error: { [weak self] error in
                     guard let self else {
                         return
                     }
@@ -7756,12 +7760,17 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             }
                             strongSelf.peekTimerDisposable.set(
                                 (strongSelf.context.engine.peers.joinChatInteractively(with: peekData.linkData)
-                                |> deliverOnMainQueue).startStrict(next: { peerId in
+                                |> deliverOnMainQueue).startStrict(next: { [weak self] result in
                                     guard let strongSelf = self else {
                                         return
                                     }
-                                    if peerId == nil {
-                                        strongSelf.dismiss()
+                                    switch result {
+                                    case let .joined(peer):
+                                        if peer == nil {
+                                            strongSelf.dismiss()
+                                        }
+                                    case let .webView(webView):
+                                        strongSelf.context.sharedContext.openJoinChatWebView(context: strongSelf.context, parentController: strongSelf, updatedPresentationData: strongSelf.updatedPresentationData, webView: webView)
                                     }
                                 }, error: { _ in
                                     guard let strongSelf = self else {
@@ -9702,11 +9711,11 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             guard let self else {
                 return
             }
-            let disposable = openUserGeneratedUrl(context: self.context, peerId: self.contentData?.state.peerView?.peerId, url: url, concealed: concealed, skipUrlAuth: skipUrlAuth, skipConcealedAlert: skipConcealedAlert, present: { [weak self] c in
+            let disposable = self.context.sharedContext.openUserGeneratedUrl(context: self.context, peerId: self.contentData?.state.peerView?.peerId, url: url, webpage: nil, concealed: concealed, forceConcealed: false, skipUrlAuth: skipUrlAuth, skipConcealedAlert: skipConcealedAlert, forceDark: false, present: { [weak self] c in
                 self?.present(c, in: .window(.root))
             }, openResolved: { [weak self] resolved in
                 self?.openResolved(result: resolved, sourceMessageId: message?.id, progress: progress, forceExternal: forceExternal, concealed: concealed, commit: commit)
-            }, progress: progress)
+            }, progress: progress, alertDisplayUpdated: nil, concealedAlertOption: nil)
             self.navigationActionDisposable.set(disposable)
         }, performAction: true)
     }
@@ -10162,6 +10171,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         self.mediaRestrictedTooltipController?.dismiss()
         self.checksTooltipController?.dismiss()
         self.copyProtectionTooltipController?.dismiss()
+        self.guestChatMessageTooltipController?.dismiss()
         
         self.window?.forEachController({ controller in
             if let controller = controller as? UndoOverlayController {

@@ -87,7 +87,7 @@ final class ChatMessageContextExtractedContentSource: ContextExtractedContentSou
                 return
             }
             if item.content.contains(where: { $0.0.stableId == self.message.stableId }), let contentNode = itemNode.getMessageContextSourceNode(stableId: self.selectAll ? nil : self.message.stableId) {
-                result = ContextControllerTakeViewInfo(containingItem: .node(contentNode), contentAreaInScreenSpace: chatNode.convert(chatNode.frameForVisibleArea(), to: nil))
+                result = ContextControllerTakeViewInfo(containingItem: .node(contentNode), contentAreaInScreenSpace: chatNode.convert(chatNode.frameForVisibleArea(), to: nil), sourceTransitionSurface: chatNode.ensureContextTransitionContainer())
             
                 if self.snapshot, let snapshotView = contentNode.contentNode.view.snapshotContentTree(unhide: false, keepPortals: true, keepTransform: true) {
                     contentNode.view.superview?.addSubview(snapshotView)
@@ -112,10 +112,10 @@ final class ChatMessageContextExtractedContentSource: ContextExtractedContentSou
                 return
             }
             if item.content.contains(where: { $0.0.stableId == self.message.stableId }) {
-                result = ContextControllerPutBackViewInfo(contentAreaInScreenSpace: chatNode.convert(chatNode.frameForVisibleArea(), to: nil))
+                result = ContextControllerPutBackViewInfo(contentAreaInScreenSpace: chatNode.convert(chatNode.frameForVisibleArea(), to: nil), sourceTransitionSurface: chatNode.ensureContextTransitionContainer())
             }
         }
-        
+
         return result
     }
 }
@@ -463,17 +463,17 @@ final class ChatMessageReactionContextExtractedContentSource: ContextExtractedCo
                 return
             }
             if item.content.contains(where: { $0.0.stableId == self.message.stableId }) {
-                result = ContextControllerTakeViewInfo(containingItem: .view(self.contentView), contentAreaInScreenSpace: chatNode.convert(chatNode.frameForVisibleArea(), to: nil))
+                result = ContextControllerTakeViewInfo(containingItem: .view(self.contentView), contentAreaInScreenSpace: chatNode.convert(chatNode.frameForVisibleArea(), to: nil), sourceTransitionSurface: chatNode.ensureContextTransitionContainer())
             }
         }
         return result
     }
-    
+
     func putBack() -> ContextControllerPutBackViewInfo? {
         guard let chatNode = self.chatNode else {
             return nil
         }
-        
+
         var result: ContextControllerPutBackViewInfo?
         chatNode.historyNode.forEachItemNode { itemNode in
             guard let itemNode = itemNode as? ChatMessageItemView else {
@@ -483,7 +483,7 @@ final class ChatMessageReactionContextExtractedContentSource: ContextExtractedCo
                 return
             }
             if item.content.contains(where: { $0.0.stableId == self.message.stableId }) {
-                result = ContextControllerPutBackViewInfo(contentAreaInScreenSpace: chatNode.convert(chatNode.frameForVisibleArea(), to: nil))
+                result = ContextControllerPutBackViewInfo(contentAreaInScreenSpace: chatNode.convert(chatNode.frameForVisibleArea(), to: nil), sourceTransitionSurface: chatNode.ensureContextTransitionContainer())
             }
         }
         return result

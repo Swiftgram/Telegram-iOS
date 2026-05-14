@@ -149,7 +149,7 @@ private enum StorageUsageExceptionsEntry: ItemListNodeEntry {
         switch self {
         case let .addException(text):
             let icon: UIImage? = PresentationResourcesItemList.createGroupIcon(presentationData.theme)
-            return ItemListPeerActionItem(presentationData: presentationData, icon: icon, title: text, alwaysPlain: false, sectionId: self.section, editing: false, action: {
+            return ItemListPeerActionItem(presentationData: presentationData, systemStyle: .glass, icon: icon, title: text, alwaysPlain: false, sectionId: self.section, editing: false, action: {
                 arguments.openAddException()
             })
         case let .exceptionsHeader(text):
@@ -173,7 +173,7 @@ private enum StorageUsageExceptionsEntry: ItemListNodeEntry {
                 title = peer.peer.displayTitle(strings: presentationData.strings, displayOrder: .firstLast)
             }
             
-            return ItemListDisclosureItem(presentationData: presentationData, icon: nil, context: arguments.context, iconPeer: peer.peer, title: title, enabled: true, titleFont: .bold, label: optionText, labelStyle: .text, additionalDetailLabel: additionalDetailLabel, sectionId: self.section, style: .blocks, disclosureStyle: .optionArrows, action: {
+            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, icon: nil, context: arguments.context, iconPeer: peer.peer, title: title, enabled: true, titleFont: .bold, label: optionText, labelStyle: .text, additionalDetailLabel: additionalDetailLabel, sectionId: self.section, style: .blocks, disclosureStyle: .optionArrows, action: {
                 arguments.openPeerMenu(peer.peer.id, value)
             }, tag: StorageUsageExceptionsEntryTag.peer(peer.peer.id))
         }
@@ -448,7 +448,7 @@ public func storageUsageExceptionsScreen(
     )
     |> deliverOnMainQueue
     |> map { presentationData, peerExceptions, state -> (ItemListControllerState, (ItemListNodeState, Any)) in
-        let leftNavigationButton = isModal ? ItemListNavigationButton(content: .text(presentationData.strings.Common_Cancel), style: .regular, enabled: true, action: {
+        let leftNavigationButton = isModal ? ItemListNavigationButton(content: .icon(.close), style: .regular, enabled: true, action: {
             dismissImpl?()
         }) : nil
         

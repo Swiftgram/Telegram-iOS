@@ -2075,7 +2075,7 @@ public func chatListFilterPresetController(context: AccountContext, currentPrese
         
         let isPremium = peerView.peers[peerView.peerId]?.isPremium ?? false
         
-        let leftNavigationButton = ItemListNavigationButton(content: .text("___close"), style: .regular, enabled: true, action: {
+        let leftNavigationButton = ItemListNavigationButton(content: .icon(.close), style: .regular, enabled: true, action: {
             if let attemptNavigationImpl {
                 attemptNavigationImpl({ value in
                     if value {
@@ -2086,7 +2086,7 @@ public func chatListFilterPresetController(context: AccountContext, currentPrese
                 dismissImpl?()
             }
         })
-        let rightNavigationButton = ItemListNavigationButton(content: .text("___done"), style: .bold, enabled: state.isComplete, action: {
+        let rightNavigationButton = ItemListNavigationButton(content: .icon(.done), style: .bold, enabled: state.isComplete, action: {
             applyImpl?(false, {
                 dismissImpl?()
             })

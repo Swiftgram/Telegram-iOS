@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import AsyncDisplayKit
 import Display
-import Postbox
 import TelegramCore
 import SwiftSignalKit
 import Photos
@@ -49,7 +48,7 @@ private let cloudFetchIcon = generateTintedImage(image: UIImage(bundleImageName:
 
 enum ChatItemGalleryFooterContent: Equatable {
     case info
-    case fetch(status: MediaResourceStatus, seekable: Bool)
+    case fetch(status: EngineMediaResource.FetchStatus, seekable: Bool)
     case playback(paused: Bool, seekable: Bool)
     
     static func ==(lhs: ChatItemGalleryFooterContent, rhs: ChatItemGalleryFooterContent) -> Bool {
@@ -80,11 +79,11 @@ enum ChatItemGalleryFooterContentTapAction {
     case none
     case url(url: String, concealed: Bool)
     case textMention(String)
-    case peerMention(PeerId, String)
+    case peerMention(EnginePeer.Id, String)
     case botCommand(String)
     case hashtag(String?, String)
     case instantPage
-    case call(PeerId)
+    case call(EnginePeer.Id)
     case openMessage
     case ignore
 }
@@ -169,8 +168,8 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
     
     private var currentMessageText: NSAttributedString?
     
-    private var currentMessage: Message?
-    private var currentWebPageAndMedia: (TelegramMediaWebpage, Media)?
+    private var currentMessage: EngineRawMessage?
+    private var currentWebPageAndMedia: (TelegramMediaWebpage, EngineRawMedia)?
     private var mediaSubject: GalleryMediaSubject?
     private let messageContextDisposable = MetaDisposable()
     
@@ -208,7 +207,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
     private var currentSpeechHolder: SpeechSynthesizerHolder?
     
     var performAction: ((GalleryControllerInteractionTapAction) -> Void)?
-    var openActionOptions: ((GalleryControllerInteractionTapAction, Message) -> Void)?
+    var openActionOptions: ((GalleryControllerInteractionTapAction, EngineRawMessage) -> Void)?
     
     private var isAd: Bool {
         if self.currentMessage?.adAttribute != nil {
@@ -846,7 +845,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         }
     }
     
-    func setMessage(_ message: Message, mediaSubject: GalleryMediaSubject? = nil, displayInfo: Bool = true, translateToLanguage: String? = nil, peerIsCopyProtected: Bool = false, displayPictureInPictureButton: Bool = false, settingsButtonState: SettingsButtonState? = nil, displayTextRecognitionButton: Bool = false, displayStickersButton: Bool = false, animated: Bool = false) {
+    func setMessage(_ message: EngineRawMessage, mediaSubject: GalleryMediaSubject? = nil, displayInfo: Bool = true, translateToLanguage: String? = nil, peerIsCopyProtected: Bool = false, displayPictureInPictureButton: Bool = false, settingsButtonState: SettingsButtonState? = nil, displayTextRecognitionButton: Bool = false, displayStickersButton: Bool = false, animated: Bool = false) {
         self.currentMessage = message
         self.mediaSubject = mediaSubject
         
@@ -1141,7 +1140,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         }
     }
     
-    func setWebPage(_ webPage: TelegramMediaWebpage, media: Media) {
+    func setWebPage(_ webPage: TelegramMediaWebpage, media: EngineRawMedia) {
         self.currentWebPageAndMedia = (webPage, media)
     }
     
@@ -1665,7 +1664,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                 var items: [ActionSheetItem] = []
                 var personalPeerName: String?
                 var isChannel = false
-                let peerId: PeerId = messages[0].id.peerId
+                let peerId: EnginePeer.Id = messages[0].id.peerId
                 if let user = messages[0].peers[messages[0].id.peerId] as? TelegramUser {
                     personalPeerName = EnginePeer(user).compactDisplayTitle
                 } else if let channel = messages[0].peers[messages[0].id.peerId] as? TelegramChannel, case .broadcast = channel.info {
@@ -1743,7 +1742,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                     for message in messages {
                         var currentKind = messageContentKind(contentSettings: strongSelf.context.currentContentSettings.with { $0 }, message: message, strings: presentationData.strings, nameDisplayOrder: presentationData.nameDisplayOrder, dateTimeFormat: presentationData.dateTimeFormat, accountPeerId: strongSelf.context.account.peerId)
                         if case .poll = currentKind, let poll = message.media.first(where: { $0 is TelegramMediaPoll }) as? TelegramMediaPoll {
-                            var media: Media?
+                            var media: EngineRawMedia?
                             switch strongSelf.mediaSubject {
                             case .pollDescription:
                                 media = poll.attachedMedia
@@ -1993,7 +1992,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                             }
                         }
                         
-                        let shareAction: ([Message]) -> Void = { messages in
+                        let shareAction: ([EngineRawMessage]) -> Void = { messages in
                             if let strongSelf = self {
                                 let shareController = strongSelf.context.sharedContext.makeShareController(context: strongSelf.context, params: ShareControllerParams(subject: .messages(messages), preferredAction: preferredAction, forceTheme: forceTheme, actionCompleted: { [weak self] in
                                     if let strongSelf = self {

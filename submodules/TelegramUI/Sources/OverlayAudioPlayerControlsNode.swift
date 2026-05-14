@@ -758,7 +758,7 @@ final class OverlayAudioPlayerControlsNode: ASDisplayNode {
         if self.currentAlbumArt != albumArt || !self.currentAlbumArtInitialized {
             self.currentAlbumArtInitialized = true
             self.currentAlbumArt = albumArt
-            self.albumArtNode.setSignal(playerAlbumArt(postbox: self.account.postbox, engine: self.engine, fileReference: self.currentFileReference, albumArt: albumArt, thumbnail: true))
+            self.albumArtNode.setSignal(playerAlbumArt(engine: self.engine, fileReference: self.currentFileReference, albumArt: albumArt, thumbnail: true))
             self.requestAlbumArtDisplay?(nil)
         }
     }

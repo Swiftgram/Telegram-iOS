@@ -112,22 +112,26 @@ public extension Api {
             }
         }
         public class Cons_updateBotChatInviteRequester: TypeConstructorDescription {
+            public var flags: Int32
             public var peer: Api.Peer
             public var date: Int32
             public var userId: Int64
             public var about: String
             public var invite: Api.ExportedChatInvite
             public var qts: Int32
-            public init(peer: Api.Peer, date: Int32, userId: Int64, about: String, invite: Api.ExportedChatInvite, qts: Int32) {
+            public var queryId: Int64?
+            public init(flags: Int32, peer: Api.Peer, date: Int32, userId: Int64, about: String, invite: Api.ExportedChatInvite, qts: Int32, queryId: Int64?) {
+                self.flags = flags
                 self.peer = peer
                 self.date = date
                 self.userId = userId
                 self.about = about
                 self.invite = invite
                 self.qts = qts
+                self.queryId = queryId
             }
             public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("updateBotChatInviteRequester", [("peer", ConstructorParameterDescription(self.peer)), ("date", ConstructorParameterDescription(self.date)), ("userId", ConstructorParameterDescription(self.userId)), ("about", ConstructorParameterDescription(self.about)), ("invite", ConstructorParameterDescription(self.invite)), ("qts", ConstructorParameterDescription(self.qts))])
+                return ("updateBotChatInviteRequester", [("flags", ConstructorParameterDescription(self.flags)), ("peer", ConstructorParameterDescription(self.peer)), ("date", ConstructorParameterDescription(self.date)), ("userId", ConstructorParameterDescription(self.userId)), ("about", ConstructorParameterDescription(self.about)), ("invite", ConstructorParameterDescription(self.invite)), ("qts", ConstructorParameterDescription(self.qts)), ("queryId", ConstructorParameterDescription(self.queryId))])
             }
         }
         public class Cons_updateBotCommands: TypeConstructorDescription {
@@ -1019,6 +1023,19 @@ public extension Api {
                 return ("updateInlineBotCallbackQuery", [("flags", ConstructorParameterDescription(self.flags)), ("queryId", ConstructorParameterDescription(self.queryId)), ("userId", ConstructorParameterDescription(self.userId)), ("msgId", ConstructorParameterDescription(self.msgId)), ("chatInstance", ConstructorParameterDescription(self.chatInstance)), ("data", ConstructorParameterDescription(self.data)), ("gameShortName", ConstructorParameterDescription(self.gameShortName))])
             }
         }
+        public class Cons_updateJoinChatWebViewDecision: TypeConstructorDescription {
+            public var peer: Api.Peer
+            public var queryId: Int64
+            public var result: Api.JoinChatBotResult
+            public init(peer: Api.Peer, queryId: Int64, result: Api.JoinChatBotResult) {
+                self.peer = peer
+                self.queryId = queryId
+                self.result = result
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("updateJoinChatWebViewDecision", [("peer", ConstructorParameterDescription(self.peer)), ("queryId", ConstructorParameterDescription(self.queryId)), ("result", ConstructorParameterDescription(self.result))])
+            }
+        }
         public class Cons_updateLangPack: TypeConstructorDescription {
             public var difference: Api.LangPackDifference
             public init(difference: Api.LangPackDifference) {
@@ -1170,6 +1187,23 @@ public extension Api {
             }
             public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
                 return ("updateNewAuthorization", [("flags", ConstructorParameterDescription(self.flags)), ("hash", ConstructorParameterDescription(self.hash)), ("date", ConstructorParameterDescription(self.date)), ("device", ConstructorParameterDescription(self.device)), ("location", ConstructorParameterDescription(self.location))])
+            }
+        }
+        public class Cons_updateNewBotConnection: TypeConstructorDescription {
+            public var flags: Int32
+            public var botId: Int64
+            public var date: Int32?
+            public var device: String?
+            public var location: String?
+            public init(flags: Int32, botId: Int64, date: Int32?, device: String?, location: String?) {
+                self.flags = flags
+                self.botId = botId
+                self.date = date
+                self.device = device
+                self.location = location
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("updateNewBotConnection", [("flags", ConstructorParameterDescription(self.flags)), ("botId", ConstructorParameterDescription(self.botId)), ("date", ConstructorParameterDescription(self.date)), ("device", ConstructorParameterDescription(self.device)), ("location", ConstructorParameterDescription(self.location))])
             }
         }
         public class Cons_updateNewChannelMessage: TypeConstructorDescription {
@@ -1878,6 +1912,28 @@ public extension Api {
                 return ("updateUserTyping", [("flags", ConstructorParameterDescription(self.flags)), ("userId", ConstructorParameterDescription(self.userId)), ("topMsgId", ConstructorParameterDescription(self.topMsgId)), ("action", ConstructorParameterDescription(self.action))])
             }
         }
+        public class Cons_updateWebBrowserException: TypeConstructorDescription {
+            public var flags: Int32
+            public var openExternalBrowser: Api.Bool?
+            public var exception: Api.WebDomainException
+            public init(flags: Int32, openExternalBrowser: Api.Bool?, exception: Api.WebDomainException) {
+                self.flags = flags
+                self.openExternalBrowser = openExternalBrowser
+                self.exception = exception
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("updateWebBrowserException", [("flags", ConstructorParameterDescription(self.flags)), ("openExternalBrowser", ConstructorParameterDescription(self.openExternalBrowser)), ("exception", ConstructorParameterDescription(self.exception))])
+            }
+        }
+        public class Cons_updateWebBrowserSettings: TypeConstructorDescription {
+            public var flags: Int32
+            public init(flags: Int32) {
+                self.flags = flags
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("updateWebBrowserSettings", [("flags", ConstructorParameterDescription(self.flags))])
+            }
+        }
         public class Cons_updateWebPage: TypeConstructorDescription {
             public var webpage: Api.WebPage
             public var pts: Int32
@@ -1974,6 +2030,7 @@ public extension Api {
         case updateGroupCallMessage(Cons_updateGroupCallMessage)
         case updateGroupCallParticipants(Cons_updateGroupCallParticipants)
         case updateInlineBotCallbackQuery(Cons_updateInlineBotCallbackQuery)
+        case updateJoinChatWebViewDecision(Cons_updateJoinChatWebViewDecision)
         case updateLangPack(Cons_updateLangPack)
         case updateLangPackTooLong(Cons_updateLangPackTooLong)
         case updateLoginToken
@@ -1986,6 +2043,7 @@ public extension Api {
         case updateMonoForumNoPaidException(Cons_updateMonoForumNoPaidException)
         case updateMoveStickerSetToTop(Cons_updateMoveStickerSetToTop)
         case updateNewAuthorization(Cons_updateNewAuthorization)
+        case updateNewBotConnection(Cons_updateNewBotConnection)
         case updateNewChannelMessage(Cons_updateNewChannelMessage)
         case updateNewEncryptedMessage(Cons_updateNewEncryptedMessage)
         case updateNewMessage(Cons_updateNewMessage)
@@ -2054,6 +2112,8 @@ public extension Api {
         case updateUserPhone(Cons_updateUserPhone)
         case updateUserStatus(Cons_updateUserStatus)
         case updateUserTyping(Cons_updateUserTyping)
+        case updateWebBrowserException(Cons_updateWebBrowserException)
+        case updateWebBrowserSettings(Cons_updateWebBrowserSettings)
         case updateWebPage(Cons_updateWebPage)
         case updateWebViewResultSent(Cons_updateWebViewResultSent)
 
@@ -2108,14 +2168,18 @@ public extension Api {
                 break
             case .updateBotChatInviteRequester(let _data):
                 if boxed {
-                    buffer.appendInt32(299870598)
+                    buffer.appendInt32(2092125561)
                 }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
                 _data.peer.serialize(buffer, true)
                 serializeInt32(_data.date, buffer: buffer, boxed: false)
                 serializeInt64(_data.userId, buffer: buffer, boxed: false)
                 serializeString(_data.about, buffer: buffer, boxed: false)
                 _data.invite.serialize(buffer, true)
                 serializeInt32(_data.qts, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 0) != 0 {
+                    serializeInt64(_data.queryId!, buffer: buffer, boxed: false)
+                }
                 break
             case .updateBotCommands(let _data):
                 if boxed {
@@ -2808,6 +2872,14 @@ public extension Api {
                     serializeString(_data.gameShortName!, buffer: buffer, boxed: false)
                 }
                 break
+            case .updateJoinChatWebViewDecision(let _data):
+                if boxed {
+                    buffer.appendInt32(-1112768912)
+                }
+                _data.peer.serialize(buffer, true)
+                serializeInt64(_data.queryId, buffer: buffer, boxed: false)
+                _data.result.serialize(buffer, true)
+                break
             case .updateLangPack(let _data):
                 if boxed {
                     buffer.appendInt32(1442983757)
@@ -2933,6 +3005,22 @@ public extension Api {
                     serializeString(_data.device!, buffer: buffer, boxed: false)
                 }
                 if Int(_data.flags) & Int(1 << 0) != 0 {
+                    serializeString(_data.location!, buffer: buffer, boxed: false)
+                }
+                break
+            case .updateNewBotConnection(let _data):
+                if boxed {
+                    buffer.appendInt32(-1306491994)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                serializeInt64(_data.botId, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 1) != 0 {
+                    serializeInt32(_data.date!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 1) != 0 {
+                    serializeString(_data.device!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 1) != 0 {
                     serializeString(_data.location!, buffer: buffer, boxed: false)
                 }
                 break
@@ -3506,6 +3594,22 @@ public extension Api {
                 }
                 _data.action.serialize(buffer, true)
                 break
+            case .updateWebBrowserException(let _data):
+                if boxed {
+                    buffer.appendInt32(335872721)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 0) != 0 {
+                    _data.openExternalBrowser!.serialize(buffer, true)
+                }
+                _data.exception.serialize(buffer, true)
+                break
+            case .updateWebBrowserSettings(let _data):
+                if boxed {
+                    buffer.appendInt32(-1013306658)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                break
             case .updateWebPage(let _data):
                 if boxed {
                     buffer.appendInt32(2139689491)
@@ -3538,7 +3642,7 @@ public extension Api {
             case .updateBotChatBoost(let _data):
                 return ("updateBotChatBoost", [("peer", ConstructorParameterDescription(_data.peer)), ("boost", ConstructorParameterDescription(_data.boost)), ("qts", ConstructorParameterDescription(_data.qts))])
             case .updateBotChatInviteRequester(let _data):
-                return ("updateBotChatInviteRequester", [("peer", ConstructorParameterDescription(_data.peer)), ("date", ConstructorParameterDescription(_data.date)), ("userId", ConstructorParameterDescription(_data.userId)), ("about", ConstructorParameterDescription(_data.about)), ("invite", ConstructorParameterDescription(_data.invite)), ("qts", ConstructorParameterDescription(_data.qts))])
+                return ("updateBotChatInviteRequester", [("flags", ConstructorParameterDescription(_data.flags)), ("peer", ConstructorParameterDescription(_data.peer)), ("date", ConstructorParameterDescription(_data.date)), ("userId", ConstructorParameterDescription(_data.userId)), ("about", ConstructorParameterDescription(_data.about)), ("invite", ConstructorParameterDescription(_data.invite)), ("qts", ConstructorParameterDescription(_data.qts)), ("queryId", ConstructorParameterDescription(_data.queryId))])
             case .updateBotCommands(let _data):
                 return ("updateBotCommands", [("peer", ConstructorParameterDescription(_data.peer)), ("botId", ConstructorParameterDescription(_data.botId)), ("commands", ConstructorParameterDescription(_data.commands))])
             case .updateBotDeleteBusinessMessage(let _data):
@@ -3673,6 +3777,8 @@ public extension Api {
                 return ("updateGroupCallParticipants", [("call", ConstructorParameterDescription(_data.call)), ("participants", ConstructorParameterDescription(_data.participants)), ("version", ConstructorParameterDescription(_data.version))])
             case .updateInlineBotCallbackQuery(let _data):
                 return ("updateInlineBotCallbackQuery", [("flags", ConstructorParameterDescription(_data.flags)), ("queryId", ConstructorParameterDescription(_data.queryId)), ("userId", ConstructorParameterDescription(_data.userId)), ("msgId", ConstructorParameterDescription(_data.msgId)), ("chatInstance", ConstructorParameterDescription(_data.chatInstance)), ("data", ConstructorParameterDescription(_data.data)), ("gameShortName", ConstructorParameterDescription(_data.gameShortName))])
+            case .updateJoinChatWebViewDecision(let _data):
+                return ("updateJoinChatWebViewDecision", [("peer", ConstructorParameterDescription(_data.peer)), ("queryId", ConstructorParameterDescription(_data.queryId)), ("result", ConstructorParameterDescription(_data.result))])
             case .updateLangPack(let _data):
                 return ("updateLangPack", [("difference", ConstructorParameterDescription(_data.difference))])
             case .updateLangPackTooLong(let _data):
@@ -3697,6 +3803,8 @@ public extension Api {
                 return ("updateMoveStickerSetToTop", [("flags", ConstructorParameterDescription(_data.flags)), ("stickerset", ConstructorParameterDescription(_data.stickerset))])
             case .updateNewAuthorization(let _data):
                 return ("updateNewAuthorization", [("flags", ConstructorParameterDescription(_data.flags)), ("hash", ConstructorParameterDescription(_data.hash)), ("date", ConstructorParameterDescription(_data.date)), ("device", ConstructorParameterDescription(_data.device)), ("location", ConstructorParameterDescription(_data.location))])
+            case .updateNewBotConnection(let _data):
+                return ("updateNewBotConnection", [("flags", ConstructorParameterDescription(_data.flags)), ("botId", ConstructorParameterDescription(_data.botId)), ("date", ConstructorParameterDescription(_data.date)), ("device", ConstructorParameterDescription(_data.device)), ("location", ConstructorParameterDescription(_data.location))])
             case .updateNewChannelMessage(let _data):
                 return ("updateNewChannelMessage", [("message", ConstructorParameterDescription(_data.message)), ("pts", ConstructorParameterDescription(_data.pts)), ("ptsCount", ConstructorParameterDescription(_data.ptsCount))])
             case .updateNewEncryptedMessage(let _data):
@@ -3833,6 +3941,10 @@ public extension Api {
                 return ("updateUserStatus", [("userId", ConstructorParameterDescription(_data.userId)), ("status", ConstructorParameterDescription(_data.status))])
             case .updateUserTyping(let _data):
                 return ("updateUserTyping", [("flags", ConstructorParameterDescription(_data.flags)), ("userId", ConstructorParameterDescription(_data.userId)), ("topMsgId", ConstructorParameterDescription(_data.topMsgId)), ("action", ConstructorParameterDescription(_data.action))])
+            case .updateWebBrowserException(let _data):
+                return ("updateWebBrowserException", [("flags", ConstructorParameterDescription(_data.flags)), ("openExternalBrowser", ConstructorParameterDescription(_data.openExternalBrowser)), ("exception", ConstructorParameterDescription(_data.exception))])
+            case .updateWebBrowserSettings(let _data):
+                return ("updateWebBrowserSettings", [("flags", ConstructorParameterDescription(_data.flags))])
             case .updateWebPage(let _data):
                 return ("updateWebPage", [("webpage", ConstructorParameterDescription(_data.webpage)), ("pts", ConstructorParameterDescription(_data.pts)), ("ptsCount", ConstructorParameterDescription(_data.ptsCount))])
             case .updateWebViewResultSent(let _data):
@@ -3925,30 +4037,38 @@ public extension Api {
             }
         }
         public static func parse_updateBotChatInviteRequester(_ reader: BufferReader) -> Update? {
-            var _1: Api.Peer?
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Api.Peer?
             if let signature = reader.readInt32() {
-                _1 = Api.parse(reader, signature: signature) as? Api.Peer
+                _2 = Api.parse(reader, signature: signature) as? Api.Peer
             }
-            var _2: Int32?
-            _2 = reader.readInt32()
-            var _3: Int64?
-            _3 = reader.readInt64()
-            var _4: String?
-            _4 = parseString(reader)
-            var _5: Api.ExportedChatInvite?
+            var _3: Int32?
+            _3 = reader.readInt32()
+            var _4: Int64?
+            _4 = reader.readInt64()
+            var _5: String?
+            _5 = parseString(reader)
+            var _6: Api.ExportedChatInvite?
             if let signature = reader.readInt32() {
-                _5 = Api.parse(reader, signature: signature) as? Api.ExportedChatInvite
+                _6 = Api.parse(reader, signature: signature) as? Api.ExportedChatInvite
             }
-            var _6: Int32?
-            _6 = reader.readInt32()
+            var _7: Int32?
+            _7 = reader.readInt32()
+            var _8: Int64?
+            if Int(_1 ?? 0) & Int(1 << 0) != 0 {
+                _8 = reader.readInt64()
+            }
             let _c1 = _1 != nil
             let _c2 = _2 != nil
             let _c3 = _3 != nil
             let _c4 = _4 != nil
             let _c5 = _5 != nil
             let _c6 = _6 != nil
-            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 {
-                return Api.Update.updateBotChatInviteRequester(Cons_updateBotChatInviteRequester(peer: _1!, date: _2!, userId: _3!, about: _4!, invite: _5!, qts: _6!))
+            let _c7 = _7 != nil
+            let _c8 = (Int(_1 ?? 0) & Int(1 << 0) == 0) || _8 != nil
+            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 && _c7 && _c8 {
+                return Api.Update.updateBotChatInviteRequester(Cons_updateBotChatInviteRequester(flags: _1!, peer: _2!, date: _3!, userId: _4!, about: _5!, invite: _6!, qts: _7!, queryId: _8))
             }
             else {
                 return nil
@@ -5364,6 +5484,27 @@ public extension Api {
                 return nil
             }
         }
+        public static func parse_updateJoinChatWebViewDecision(_ reader: BufferReader) -> Update? {
+            var _1: Api.Peer?
+            if let signature = reader.readInt32() {
+                _1 = Api.parse(reader, signature: signature) as? Api.Peer
+            }
+            var _2: Int64?
+            _2 = reader.readInt64()
+            var _3: Api.JoinChatBotResult?
+            if let signature = reader.readInt32() {
+                _3 = Api.parse(reader, signature: signature) as? Api.JoinChatBotResult
+            }
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            let _c3 = _3 != nil
+            if _c1 && _c2 && _c3 {
+                return Api.Update.updateJoinChatWebViewDecision(Cons_updateJoinChatWebViewDecision(peer: _1!, queryId: _2!, result: _3!))
+            }
+            else {
+                return nil
+            }
+        }
         public static func parse_updateLangPack(_ reader: BufferReader) -> Update? {
             var _1: Api.LangPackDifference?
             if let signature = reader.readInt32() {
@@ -5608,6 +5749,35 @@ public extension Api {
             let _c5 = (Int(_1 ?? 0) & Int(1 << 0) == 0) || _5 != nil
             if _c1 && _c2 && _c3 && _c4 && _c5 {
                 return Api.Update.updateNewAuthorization(Cons_updateNewAuthorization(flags: _1!, hash: _2!, date: _3, device: _4, location: _5))
+            }
+            else {
+                return nil
+            }
+        }
+        public static func parse_updateNewBotConnection(_ reader: BufferReader) -> Update? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Int64?
+            _2 = reader.readInt64()
+            var _3: Int32?
+            if Int(_1 ?? 0) & Int(1 << 1) != 0 {
+                _3 = reader.readInt32()
+            }
+            var _4: String?
+            if Int(_1 ?? 0) & Int(1 << 1) != 0 {
+                _4 = parseString(reader)
+            }
+            var _5: String?
+            if Int(_1 ?? 0) & Int(1 << 1) != 0 {
+                _5 = parseString(reader)
+            }
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            let _c3 = (Int(_1 ?? 0) & Int(1 << 1) == 0) || _3 != nil
+            let _c4 = (Int(_1 ?? 0) & Int(1 << 1) == 0) || _4 != nil
+            let _c5 = (Int(_1 ?? 0) & Int(1 << 1) == 0) || _5 != nil
+            if _c1 && _c2 && _c3 && _c4 && _c5 {
+                return Api.Update.updateNewBotConnection(Cons_updateNewBotConnection(flags: _1!, botId: _2!, date: _3, device: _4, location: _5))
             }
             else {
                 return nil
@@ -6700,6 +6870,40 @@ public extension Api {
             let _c4 = _4 != nil
             if _c1 && _c2 && _c3 && _c4 {
                 return Api.Update.updateUserTyping(Cons_updateUserTyping(flags: _1!, userId: _2!, topMsgId: _3, action: _4!))
+            }
+            else {
+                return nil
+            }
+        }
+        public static func parse_updateWebBrowserException(_ reader: BufferReader) -> Update? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Api.Bool?
+            if Int(_1 ?? 0) & Int(1 << 0) != 0 {
+                if let signature = reader.readInt32() {
+                    _2 = Api.parse(reader, signature: signature) as? Api.Bool
+                }
+            }
+            var _3: Api.WebDomainException?
+            if let signature = reader.readInt32() {
+                _3 = Api.parse(reader, signature: signature) as? Api.WebDomainException
+            }
+            let _c1 = _1 != nil
+            let _c2 = (Int(_1 ?? 0) & Int(1 << 0) == 0) || _2 != nil
+            let _c3 = _3 != nil
+            if _c1 && _c2 && _c3 {
+                return Api.Update.updateWebBrowserException(Cons_updateWebBrowserException(flags: _1!, openExternalBrowser: _2, exception: _3!))
+            }
+            else {
+                return nil
+            }
+        }
+        public static func parse_updateWebBrowserSettings(_ reader: BufferReader) -> Update? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            let _c1 = _1 != nil
+            if _c1 {
+                return Api.Update.updateWebBrowserSettings(Cons_updateWebBrowserSettings(flags: _1!))
             }
             else {
                 return nil

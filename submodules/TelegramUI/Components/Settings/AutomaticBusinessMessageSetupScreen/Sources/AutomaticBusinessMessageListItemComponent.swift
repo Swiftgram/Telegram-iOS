@@ -196,6 +196,8 @@ final class GreetingMessageListItemComponent: Component {
                     },
                     performActiveSessionAction: { _, _ in
                     },
+                    performBotConnectionReviewAction: { _, _ in
+                    },
                     openChatFolderUpdates: {
                     },
                     hideChatFolderUpdates: {

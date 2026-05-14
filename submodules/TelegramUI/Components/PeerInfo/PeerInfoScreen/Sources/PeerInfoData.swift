@@ -1936,7 +1936,7 @@ func peerInfoScreenData(
                                 return (nil, value)
                             }
                         } else {
-                            return context.peerChannelMemberCategoriesContextsManager.recentOnlineSmall(engine: context.engine, postbox: context.account.postbox, network: context.account.network, accountPeerId: context.account.peerId, peerId: peerId)
+                            return context.peerChannelMemberCategoriesContextsManager.recentOnlineSmall(engine: context.engine, accountPeerId: context.account.peerId, peerId: peerId)
                             |> map { value -> (total: Int32?, recent: Int32?) in
                                 return (value.total, value.recent)
                             }

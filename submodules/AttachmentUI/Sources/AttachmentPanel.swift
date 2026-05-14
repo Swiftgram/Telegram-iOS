@@ -12,7 +12,6 @@ import AccountContext
 import AttachmentTextInputPanelNode
 import ChatPresentationInterfaceState
 import ChatSendMessageActionUI
-import ChatTextLinkEditUI
 import PhotoResources
 import AnimatedStickerComponent
 import SemanticStatusNode
@@ -244,6 +243,10 @@ private final class AttachButtonComponent: CombinedComponent {
             case .audio:
                 name = strings.Attachment_Audio
                 imageName = "Chat/Attach Menu/Audio"
+            case .link:
+                //TODO:localize
+                name = "Link"
+                imageName = "Chat/Attach Menu/Link"
             case let .app(bot):
                 botPeer = bot.peer
                 name = bot.shortName
@@ -1248,7 +1251,7 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
                 }
 
                 let presentationData = strongSelf.context.sharedContext.currentPresentationData.with { $0 }
-                let controller = chatTextLinkEditController(context: strongSelf.context, updatedPresentationData: (presentationData, .never()), text: text?.string ?? "", link: link, apply: { [weak self] link in
+                let controller = strongSelf.context.sharedContext.makeLinkEditController(context: strongSelf.context, updatedPresentationData: (presentationData, .never()), text: text?.string ?? "", link: link, apply: { [weak self] link, _ in
                     if let strongSelf = self, let inputMode = inputMode, let selectionRange = selectionRange {
                         if let link = link {
                             strongSelf.updateChatPresentationInterfaceState(animated: true, { state in
@@ -1989,6 +1992,8 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
         var width = layout.size.width
         if buttons.count == 3 {
             width = smallPanelWidth
+        } else if buttons.count == 4 {
+            width = 300
         }
 
         var panelSideInset: CGFloat
@@ -2000,7 +2005,7 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
         }
 
         var distanceBetweenNodes = floorToScreenPixels((width - panelSideInset * 2.0 - self.buttonSize.width) / CGFloat(max(1, buttons.count - 1)))
-        if buttons.count == 3 {
+        if buttons.count == 3 || buttons.count == 4 {
             distanceBetweenNodes = floorToScreenPixels((width - panelSideInset * 2.0 - 32.0) / CGFloat(max(1, buttons.count - 1)))
         }
         let internalWidth = distanceBetweenNodes * CGFloat(max(0, buttons.count - 1))
@@ -2016,7 +2021,7 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
         case .legacy:
             leftNodeOriginX = (width - internalWidth) / 2.0
         }
-        if buttons.count == 3 {
+        if buttons.count == 3 || buttons.count == 4 {
             leftNodeOriginX = floor((layout.size.width - width) / 2.0) + 16.0
         }
 
@@ -2170,6 +2175,9 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
                 accessibilityTitle = "Emoji"
             case .audio:
                 accessibilityTitle = self.presentationData.strings.Attachment_Audio
+            case .link:
+                //TODO:localize
+                accessibilityTitle = "Link"
             case let .app(bot):
                 accessibilityTitle = bot.shortName
             case .standalone:
@@ -2543,6 +2551,8 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
             let buttonsPanelWidth: CGFloat
             if buttons.count == 3 {
                 buttonsPanelWidth = smallPanelWidth
+            } else if buttons.count == 4 {
+                buttonsPanelWidth = 300
             } else {
                 buttonsPanelWidth = layout.size.width - layout.safeInsets.left - layout.safeInsets.right - panelSideInset * 2.0
             }

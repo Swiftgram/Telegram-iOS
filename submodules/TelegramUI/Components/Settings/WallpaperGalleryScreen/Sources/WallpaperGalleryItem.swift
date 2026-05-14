@@ -3,7 +3,6 @@ import UIKit
 import Display
 import AsyncDisplayKit
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import LegacyComponents
 import TelegramPresentationData
@@ -78,7 +77,7 @@ class WallpaperGalleryItem: GalleryItem {
 private let progressDiameter: CGFloat = 50.0
 private let motionAmount: CGFloat = 32.0
 
-private func reference(for resource: MediaResource, media: Media, message: Message?, slug: String?) -> MediaResourceReference {
+private func reference(for resource: TelegramMediaResource, media: EngineRawMedia, message: EngineRawMessage?, slug: String?) -> MediaResourceReference {
     if let message = message {
         return .media(media: .message(message: MessageReference(message), media: media), resource: resource)
     }
@@ -614,7 +613,7 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
             let imagePromise = Promise<UIImage?>()
             
             let signal: Signal<(TransformImageArguments) -> DrawingContext?, NoError>
-            let fetchSignal: Signal<FetchResourceSourceType, FetchResourceError>
+            let fetchSignal: Signal<EngineFetchResourceSourceType, EngineFetchResourceError>
             let statusSignal: Signal<EngineMediaResource.FetchStatus, NoError>
             let subtitleSignal: Signal<String?, NoError>
             var actionSignal: Signal<UIBarButtonItem?, NoError> = .single(nil)
@@ -719,7 +718,7 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
                         case .builtin, .emoticon:
                             displaySize = CGSize(width: 1308.0, height: 2688.0).fitted(CGSize(width: 1280.0, height: 1280.0)).dividedByScreenScale().integralFloor
                             contentSize = displaySize
-                            signal = settingsBuiltinWallpaperImage(account: self.context.account)
+                            signal = settingsBuiltinWallpaperImage()
                             fetchSignal = .complete()
                             statusSignal = .single(.Local)
                             subtitleSignal = .single(nil)
@@ -875,7 +874,7 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
                     let dimensions = CGSize(width: asset.pixelWidth, height: asset.pixelHeight)
                     contentSize = dimensions
                     displaySize = dimensions.aspectFittedOrSmaller(CGSize(width: 2048.0, height: 2048.0))
-                    signal = photoWallpaper(postbox: context.account.postbox, photoLibraryResource: PhotoLibraryMediaResource(localIdentifier: asset.localIdentifier, uniqueId: Int64.random(in: Int64.min ... Int64.max)))
+                    signal = photoWallpaper(photoLibraryResource: PhotoLibraryMediaResource(localIdentifier: asset.localIdentifier, uniqueId: Int64.random(in: Int64.min ... Int64.max)))
                     fetchSignal = .complete()
                     statusSignal = .single(.Local)
                     subtitleSignal = .single(nil)
@@ -923,7 +922,7 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
                             representations.append(TelegramMediaImageRepresentation(dimensions: PixelDimensions(thumbnailDimensions), resource: thumbnailResource, progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false))
                         }
                         representations.append(TelegramMediaImageRepresentation(dimensions: PixelDimensions(imageDimensions), resource: imageResource, progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false))
-                        let tmpImage = TelegramMediaImage(imageId: MediaId(namespace: 0, id: 0), representations: representations, immediateThumbnailData: nil, reference: nil, partialReference: nil, flags: [])
+                        let tmpImage = TelegramMediaImage(imageId: EngineMedia.Id(namespace: 0, id: 0), representations: representations, immediateThumbnailData: nil, reference: nil, partialReference: nil, flags: [])
                         
                         signal = chatMessagePhoto(postbox: context.account.postbox, userLocation: .other, photoReference: .standalone(media: tmpImage))
                         fetchSignal = context.engine.resources.fetch(reference: .media(media: .standalone(media: tmpImage), resource: imageResource), userLocation: .other, userContentType: .other)
@@ -1506,24 +1505,24 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
         }
 
         var items: [ListViewItem] = []
-        var peerId = PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(1))
+        var peerId = EnginePeer.Id(namespace: Namespaces.Peer.CloudUser, id: EnginePeer.Id.Id._internalFromInt64Value(1))
         let otherPeerId = self.context.account.peerId
-        var peers = SimpleDictionary<PeerId, Peer>()
-        var messages = SimpleDictionary<MessageId, Message>()
+        var peers = EngineSimpleDictionary<EnginePeer.Id, EngineRawPeer>()
+        var messages = EngineSimpleDictionary<EngineMessage.Id, EngineRawMessage>()
         
         let replyAuthor = self.presentationData.strings.Appearance_ThemePreview_Chat_2_ReplyName
         
-        var messageAuthor: Peer = TelegramUser(id: peerId, accessHash: nil, firstName: self.presentationData.strings.Appearance_PreviewReplyAuthor, lastName: "", username: nil, phone: nil, photo: [], botInfo: nil, restrictionInfo: nil, flags: [], emojiStatus: nil, usernames: [], storiesHidden: nil, nameColor: .preset(.blue), backgroundEmojiId: nil, profileColor: nil, profileBackgroundEmojiId: nil, subscriberCount: nil, verificationIconFileId: nil)
+        var messageAuthor: EngineRawPeer = TelegramUser(id: peerId, accessHash: nil, firstName: self.presentationData.strings.Appearance_PreviewReplyAuthor, lastName: "", username: nil, phone: nil, photo: [], botInfo: nil, restrictionInfo: nil, flags: [], emojiStatus: nil, usernames: [], storiesHidden: nil, nameColor: .preset(.blue), backgroundEmojiId: nil, profileColor: nil, profileBackgroundEmojiId: nil, subscriberCount: nil, verificationIconFileId: nil)
         let otherAuthor = TelegramUser(id: otherPeerId, accessHash: nil, firstName: replyAuthor, lastName: "", username: nil, phone: nil, photo: [], botInfo: nil, restrictionInfo: nil, flags: [], emojiStatus: nil, usernames: [], storiesHidden: nil, nameColor: .preset(.blue), backgroundEmojiId: nil, profileColor: nil, profileBackgroundEmojiId: nil, subscriberCount: nil, verificationIconFileId: nil)
         peers[otherPeerId] = otherAuthor
         
-        var messageAttributes: [MessageAttribute] = []
+        var messageAttributes: [EngineMessage.Attribute] = []
         if let mode = self.mode, case let .peer(peer, _) = mode, case .channel = peer {
             peerId = peer.id
             messageAuthor = peer._asPeer()
             
-            let replyMessageId = MessageId(peerId: peerId, namespace: 0, id: 3)
-            messages[replyMessageId] = Message(stableId: 3, stableVersion: 0, id: replyMessageId, globallyUniqueId: nil, groupingKey: nil, groupInfo: nil, threadId: nil, timestamp: 66000, flags: [], tags: [], globalTags: [], localTags: [], customTags: [], forwardInfo: nil, author: messageAuthor, text: self.presentationData.strings.WallpaperPreview_ChannelReplyText, attributes: [], media: [], peers: peers, associatedMessages: SimpleDictionary(), associatedMessageIds: [], associatedMedia: [:], associatedThreadInfo: nil, associatedStories: [:])
+            let replyMessageId = EngineMessage.Id(peerId: peerId, namespace: 0, id: 3)
+            messages[replyMessageId] = EngineRawMessage(stableId: 3, stableVersion: 0, id: replyMessageId, globallyUniqueId: nil, groupingKey: nil, groupInfo: nil, threadId: nil, timestamp: 66000, flags: [], tags: [], globalTags: [], localTags: [], customTags: [], forwardInfo: nil, author: messageAuthor, text: self.presentationData.strings.WallpaperPreview_ChannelReplyText, attributes: [], media: [], peers: peers, associatedMessages: EngineSimpleDictionary(), associatedMessageIds: [], associatedMedia: [:], associatedThreadInfo: nil, associatedStories: [:])
             messageAttributes = [ReplyMessageAttribute(messageId: replyMessageId, threadMessageId: nil, quote: nil, isQuote: false, innerSubject: nil)]
         }
         
@@ -1626,19 +1625,19 @@ final class WallpaperGalleryItemNode: GalleryItemNode {
         let theme = self.presentationData.theme
                    
         if !bottomMessageText.isEmpty {
-            let message1 = Message(stableId: 2, stableVersion: 0, id: MessageId(peerId: peerId, namespace: 0, id: 2), globallyUniqueId: nil, groupingKey: nil, groupInfo: nil, threadId: nil, timestamp: 66001, flags: [], tags: [], globalTags: [], localTags: [], customTags: [], forwardInfo: nil, author: peers[otherPeerId], text: bottomMessageText, attributes: [], media: [], peers: peers, associatedMessages: messages, associatedMessageIds: [], associatedMedia: [:], associatedThreadInfo: nil, associatedStories: [:])
+            let message1 = EngineRawMessage(stableId: 2, stableVersion: 0, id: EngineMessage.Id(peerId: peerId, namespace: 0, id: 2), globallyUniqueId: nil, groupingKey: nil, groupInfo: nil, threadId: nil, timestamp: 66001, flags: [], tags: [], globalTags: [], localTags: [], customTags: [], forwardInfo: nil, author: peers[otherPeerId], text: bottomMessageText, attributes: [], media: [], peers: peers, associatedMessages: messages, associatedMessageIds: [], associatedMedia: [:], associatedThreadInfo: nil, associatedStories: [:])
             items.append(self.context.sharedContext.makeChatMessagePreviewItem(context: self.context, messages: [message1], theme: theme, strings: self.presentationData.strings, wallpaper: currentWallpaper, fontSize: self.presentationData.chatFontSize, chatBubbleCorners: self.presentationData.chatBubbleCorners, dateTimeFormat: self.presentationData.dateTimeFormat, nameOrder: self.presentationData.nameDisplayOrder, forcedResourceStatus: nil, tapMessage: nil, clickThroughMessage: nil, backgroundNode: self.nativeNode, availableReactions: nil, accountPeer: nil, isCentered: false, isPreview: true, isStandalone: false, rank: nil, rankRole: nil))
         }
     
         
-        let message2 = Message(stableId: 1, stableVersion: 0, id: MessageId(peerId: peerId, namespace: 0, id: 1), globallyUniqueId: nil, groupingKey: nil, groupInfo: nil, threadId: nil, timestamp: 66000, flags: [.Incoming], tags: [], globalTags: [], localTags: [], customTags: [], forwardInfo: nil, author: peers[peerId], text: topMessageText, attributes: messageAttributes, media: [], peers: peers, associatedMessages: messages, associatedMessageIds: [], associatedMedia: [:], associatedThreadInfo: nil, associatedStories: [:])
+        let message2 = EngineRawMessage(stableId: 1, stableVersion: 0, id: EngineMessage.Id(peerId: peerId, namespace: 0, id: 1), globallyUniqueId: nil, groupingKey: nil, groupInfo: nil, threadId: nil, timestamp: 66000, flags: [.Incoming], tags: [], globalTags: [], localTags: [], customTags: [], forwardInfo: nil, author: peers[peerId], text: topMessageText, attributes: messageAttributes, media: [], peers: peers, associatedMessages: messages, associatedMessageIds: [], associatedMedia: [:], associatedThreadInfo: nil, associatedStories: [:])
         items.append(self.context.sharedContext.makeChatMessagePreviewItem(context: self.context, messages: [message2], theme: theme, strings: self.presentationData.strings, wallpaper: currentWallpaper, fontSize: self.presentationData.chatFontSize, chatBubbleCorners: self.presentationData.chatBubbleCorners, dateTimeFormat: self.presentationData.dateTimeFormat, nameOrder: self.presentationData.nameDisplayOrder, forcedResourceStatus: nil, tapMessage: nil, clickThroughMessage: nil, backgroundNode: self.nativeNode, availableReactions: nil, accountPeer: nil, isCentered: false, isPreview: true, isStandalone: false, rank: nil, rankRole: nil))
         
         if let serviceMessageText {
             let attributedText = convertMarkdownToAttributes(NSAttributedString(string: serviceMessageText))
             let entities = generateChatInputTextEntities(attributedText)
             
-            let message3 = Message(stableId: 0, stableVersion: 0, id: MessageId(peerId: peerId, namespace: 0, id: 0), globallyUniqueId: nil, groupingKey: nil, groupInfo: nil, threadId: nil, timestamp: 66002, flags: [.Incoming], tags: [], globalTags: [], localTags: [], customTags: [], forwardInfo: nil, author: peers[peerId], text: "", attributes: [], media: [TelegramMediaAction(action: .customText(text: attributedText.string, entities: entities, additionalAttributes: nil))], peers: peers, associatedMessages: messages, associatedMessageIds: [], associatedMedia: [:], associatedThreadInfo: nil, associatedStories: [:])
+            let message3 = EngineRawMessage(stableId: 0, stableVersion: 0, id: EngineMessage.Id(peerId: peerId, namespace: 0, id: 0), globallyUniqueId: nil, groupingKey: nil, groupInfo: nil, threadId: nil, timestamp: 66002, flags: [.Incoming], tags: [], globalTags: [], localTags: [], customTags: [], forwardInfo: nil, author: peers[peerId], text: "", attributes: [], media: [TelegramMediaAction(action: .customText(text: attributedText.string, entities: entities, additionalAttributes: nil))], peers: peers, associatedMessages: messages, associatedMessageIds: [], associatedMedia: [:], associatedThreadInfo: nil, associatedStories: [:])
             items.append(self.context.sharedContext.makeChatMessagePreviewItem(context: self.context, messages: [message3], theme: theme, strings: self.presentationData.strings, wallpaper: currentWallpaper, fontSize: self.presentationData.chatFontSize, chatBubbleCorners: self.presentationData.chatBubbleCorners, dateTimeFormat: self.presentationData.dateTimeFormat, nameOrder: self.presentationData.nameDisplayOrder, forcedResourceStatus: nil, tapMessage: nil, clickThroughMessage: nil, backgroundNode: self.nativeNode, availableReactions: nil, accountPeer: nil, isCentered: false, isPreview: true, isStandalone: false, rank: nil, rankRole: nil))
         }
         

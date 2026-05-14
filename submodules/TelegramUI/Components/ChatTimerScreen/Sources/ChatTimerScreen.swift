@@ -204,38 +204,89 @@ private let autoremoveTimerValues: [Int32] = [
     365 * 24 * 60 * 60 as Int32
 ]
 
-private final class ChatTimerSheetContentComponent: Component {
-    typealias EnvironmentType = ViewControllerComponentContainer.Environment
+public final class ChatTimerPickerContentComponent: Component {
+    public typealias EnvironmentType = Empty
 
-    let configuration: ChatTimerScreen.Configuration
-    let dismiss: () -> Void
+    public final class LeadingAction: Equatable {
+        public enum Icon {
+            case close
+            case back
+        }
 
-    init(
+        public let icon: Icon
+        public let action: () -> Void
+
+        public init(
+            icon: Icon,
+            action: @escaping () -> Void
+        ) {
+            self.icon = icon
+            self.action = action
+        }
+
+        public static func ==(lhs: LeadingAction, rhs: LeadingAction) -> Bool {
+            return lhs === rhs
+        }
+    }
+
+    public let configuration: ChatTimerScreen.Configuration
+    public let theme: PresentationTheme
+    public let strings: PresentationStrings
+    public let dateTimeFormat: PresentationDateTimeFormat
+    public let safeInsets: UIEdgeInsets
+    public let leadingAction: LeadingAction?
+    public let completion: (Int32?) -> Void
+
+    public init(
         configuration: ChatTimerScreen.Configuration,
-        dismiss: @escaping () -> Void
+        theme: PresentationTheme,
+        strings: PresentationStrings,
+        dateTimeFormat: PresentationDateTimeFormat,
+        safeInsets: UIEdgeInsets,
+        leadingAction: LeadingAction?,
+        completion: @escaping (Int32?) -> Void
     ) {
         self.configuration = configuration
-        self.dismiss = dismiss
+        self.theme = theme
+        self.strings = strings
+        self.dateTimeFormat = dateTimeFormat
+        self.safeInsets = safeInsets
+        self.leadingAction = leadingAction
+        self.completion = completion
     }
 
-    static func ==(lhs: ChatTimerSheetContentComponent, rhs: ChatTimerSheetContentComponent) -> Bool {
-        return lhs.configuration == rhs.configuration
+    public static func ==(lhs: ChatTimerPickerContentComponent, rhs: ChatTimerPickerContentComponent) -> Bool {
+        return false
     }
 
-    final class View: UIView, UIPickerViewDataSource, UIPickerViewDelegate {
-        private let closeButton = ComponentView<Empty>()
+    public final class View: UIView, UIPickerViewDataSource, UIPickerViewDelegate {
+        private struct PickerConfigurationSignature: Equatable {
+            enum Picker: Equatable {
+                case timeOfDay
+                case date
+                case dateTime
+                case fixedValues(values: [Int32], selectionStrategy: ChatTimerScreen.Configuration.FixedSelectionStrategy)
+            }
+
+            let picker: Picker
+            let currentValue: Int32?
+            let minimumDate: Date?
+            let maximumDate: Date?
+            let pickerValueMapping: ChatTimerScreen.Configuration.PickerValueMapping
+        }
+
+        private let leadingButton = ComponentView<Empty>()
         private let title = ComponentView<Empty>()
         private let primaryButton = ComponentView<Empty>()
         private let secondaryButton = ComponentView<Empty>()
 
-        private var component: ChatTimerSheetContentComponent?
-        private var environment: EnvironmentType?
+        private var component: ChatTimerPickerContentComponent?
         private weak var state: EmptyComponentState?
 
         private var pickerView: TimerPickerView?
         private var isCompleting = false
 
-        override init(frame: CGRect) {
+        public override init(frame: CGRect) {
             super.init(frame: frame)
         }
 
@@ -243,17 +294,38 @@ private final class ChatTimerSheetContentComponent: Component {
             fatalError("init(coder:) has not been implemented")
         }
 
-        private func pickerTextColor(configuration: ChatTimerScreen.Configuration, environment: EnvironmentType) -> UIColor {
+        private func pickerTextColor(configuration: ChatTimerScreen.Configuration, theme: PresentationTheme) -> UIColor {
             if let pickerTextColor = configuration.pickerTextColor {
-                return pickerTextColor(environment.theme)
+                return pickerTextColor(theme)
             }
 
             switch configuration.style {
             case .default:
-                return environment.theme.actionSheet.primaryTextColor
+                return theme.actionSheet.primaryTextColor
             case .media:
                 return .white
             }
+        }
+
+        private func pickerConfigurationSignature(_ configuration: ChatTimerScreen.Configuration) -> PickerConfigurationSignature {
+            let picker: PickerConfigurationSignature.Picker
+            switch configuration.picker {
+            case .timeOfDay:
+                picker = .timeOfDay
+            case .date:
+                picker = .date
+            case .dateTime:
+                picker = .dateTime
+            case let .fixedValues(values, selectionStrategy, _):
+                picker = .fixedValues(values: values, selectionStrategy: selectionStrategy)
+            }
+            return PickerConfigurationSignature(
+                picker: picker,
+                currentValue: configuration.currentValue,
+                minimumDate: configuration.minimumDate,
+                maximumDate: configuration.maximumDate,
+                pickerValueMapping: configuration.pickerValueMapping
+            )
         }
 
         private func mapPickerTimestamp(_ timestamp: Int32, mapping: ChatTimerScreen.Configuration.PickerValueMapping) -> Int32 {
@@ -318,7 +390,7 @@ private final class ChatTimerSheetContentComponent: Component {
             }
         }
 
-        private func setupPickerView(configuration: ChatTimerScreen.Configuration, environment: EnvironmentType) {
+        private func setupPickerView(configuration: ChatTimerScreen.Configuration, theme: PresentationTheme, strings: PresentationStrings) {
             let previousSelectedValue = self.selectedValue()
             let previousDate = (self.pickerView as? TimerDatePickerView)?.date
 
@@ -329,7 +401,7 @@ private final class ChatTimerSheetContentComponent: Component {
                 let pickerView = TimerCustomPickerView()
                 pickerView.dataSource = self
                 pickerView.delegate = self
-                pickerView.selectorColor = self.pickerTextColor(configuration: configuration, environment: environment).withMultipliedAlpha(0.18)
+                pickerView.selectorColor = self.pickerTextColor(configuration: configuration, theme: theme).withMultipliedAlpha(0.18)
                 self.addSubview(pickerView)
                 self.pickerView = pickerView
 
@@ -345,8 +417,8 @@ private final class ChatTimerSheetContentComponent: Component {
                 if #available(iOS 13.4, *) {
                     pickerView.preferredDatePickerStyle = .wheels
                 }
-                pickerView.setValue(self.pickerTextColor(configuration: configuration, environment: environment), forKey: "textColor")
-                pickerView.selectorColor = self.pickerTextColor(configuration: configuration, environment: environment).withMultipliedAlpha(0.18)
+                pickerView.setValue(self.pickerTextColor(configuration: configuration, theme: theme), forKey: "textColor")
+                pickerView.selectorColor = self.pickerTextColor(configuration: configuration, theme: theme).withMultipliedAlpha(0.18)
                 pickerView.addTarget(self, action: #selector(self.datePickerChanged), for: .valueChanged)
                 let initialTimestamp: Int32
                 if let currentValue = configuration.currentValue {
@@ -362,14 +434,14 @@ private final class ChatTimerSheetContentComponent: Component {
                 let pickerView = TimerDatePickerView()
                 pickerView.datePickerMode = .date
                 pickerView.timeZone = TimeZone(secondsFromGMT: 0)
-                pickerView.locale = localeWithStrings(environment.strings)
+                pickerView.locale = localeWithStrings(strings)
                 if #available(iOS 13.4, *) {
                     pickerView.preferredDatePickerStyle = .wheels
                 }
                 pickerView.minimumDate = configuration.minimumDate
                 pickerView.maximumDate = configuration.maximumDate ?? Date(timeIntervalSince1970: Double(Int32.max - 1))
-                pickerView.setValue(self.pickerTextColor(configuration: configuration, environment: environment), forKey: "textColor")
-                pickerView.selectorColor = self.pickerTextColor(configuration: configuration, environment: environment).withMultipliedAlpha(0.18)
+                pickerView.setValue(self.pickerTextColor(configuration: configuration, theme: theme), forKey: "textColor")
+                pickerView.selectorColor = self.pickerTextColor(configuration: configuration, theme: theme).withMultipliedAlpha(0.18)
                 pickerView.addTarget(self, action: #selector(self.datePickerChanged), for: .valueChanged)
                 let initialTimestamp: Int32
                 if let currentValue = configuration.currentValue {
@@ -390,15 +462,15 @@ private final class ChatTimerSheetContentComponent: Component {
             case .dateTime:
                 let pickerView = TimerDatePickerView()
                 pickerView.datePickerMode = .dateAndTime
-                pickerView.locale = localeWithStrings(environment.strings)
+                pickerView.locale = localeWithStrings(strings)
                 pickerView.minimumDate = configuration.minimumDate ?? Date()
                 pickerView.maximumDate = configuration.maximumDate
                 if #available(iOS 13.4, *) {
                     pickerView.preferredDatePickerStyle = .wheels
                 }
-                pickerView.setValue(self.pickerTextColor(configuration: configuration, environment: environment), forKey: "textColor")
+                pickerView.setValue(self.pickerTextColor(configuration: configuration, theme: theme), forKey: "textColor")
                 pickerView.setValue(false, forKey: "highlightsToday")
-                pickerView.selectorColor = self.pickerTextColor(configuration: configuration, environment: environment).withMultipliedAlpha(0.18)
+                pickerView.selectorColor = self.pickerTextColor(configuration: configuration, theme: theme).withMultipliedAlpha(0.18)
                 pickerView.addTarget(self, action: #selector(self.datePickerChanged), for: .valueChanged)
 
                 var date = previousDate ?? configuration.currentValue.flatMap { Date(timeIntervalSince1970: Double($0)) } ?? Date()
@@ -430,87 +502,92 @@ private final class ChatTimerSheetContentComponent: Component {
             } else {
                 transformedValue = nil
             }
-            if let controller = self.environment?.controller() as? ChatTimerScreen {
-                controller.completion(transformedValue)
-            }
-            self.component?.dismiss()
+            self.component?.completion(transformedValue)
         }
 
-        func update(
-            component: ChatTimerSheetContentComponent,
+        public func update(
+            component: ChatTimerPickerContentComponent,
             availableSize: CGSize,
             state: EmptyComponentState,
-            environment: Environment<EnvironmentType>,
+            environment: Environment<Empty>,
             transition: ComponentTransition
         ) -> CGSize {
-            let environment = environment[EnvironmentType.self].value
             let previousComponent = self.component
-            let previousEnvironment = self.environment
-            let themeUpdated: Bool
-            let stringsUpdated: Bool
-            if let previousEnvironment {
-                themeUpdated = previousEnvironment.theme !== environment.theme
-                stringsUpdated = previousEnvironment.strings !== environment.strings
+            let themeUpdated = previousComponent?.theme !== component.theme
+            let stringsUpdated = previousComponent?.strings !== component.strings
+            let pickerConfigurationUpdated: Bool
+            if let previousConfiguration = previousComponent?.configuration {
+                pickerConfigurationUpdated = self.pickerConfigurationSignature(previousConfiguration) != self.pickerConfigurationSignature(component.configuration)
             } else {
-                themeUpdated = false
-                stringsUpdated = false
+                pickerConfigurationUpdated = true
             }
 
             self.component = component
-            self.environment = environment
             self.state = state
 
-            if self.pickerView == nil || previousComponent?.configuration != component.configuration || themeUpdated || stringsUpdated {
-                self.setupPickerView(configuration: component.configuration, environment: environment)
+            if self.pickerView == nil || themeUpdated || stringsUpdated || pickerConfigurationUpdated {
+                self.setupPickerView(configuration: component.configuration, theme: component.theme, strings: component.strings)
             }
 
             let titleColor: UIColor
             switch component.configuration.style {
             case .default:
-                titleColor = environment.theme.actionSheet.primaryTextColor
+                titleColor = component.theme.actionSheet.primaryTextColor
             case .media:
                 titleColor = .white
             }
 
             let barButtonSize = CGSize(width: 44.0, height: 44.0)
-            let closeButtonSize = self.closeButton.update(
-                transition: transition,
-                component: AnyComponent(
-                    GlassBarButtonComponent(
-                        size: barButtonSize,
-                        backgroundColor: nil,
-                        isDark: environment.theme.overallDarkAppearance,
-                        state: .glass,
-                        component: AnyComponentWithIdentity(id: "close", component: AnyComponent(
-                            BundleIconComponent(
-                                name: "Navigation/Close",
-                                tintColor: environment.theme.chat.inputPanel.panelControlColor
-                            )
-                        )),
-                        action: { [weak self] _ in
-                            self?.component?.dismiss()
-                        }
-                    )
-                ),
-                environment: {},
-                containerSize: barButtonSize
-            )
-            if let closeButtonView = self.closeButton.view {
-                if closeButtonView.superview == nil {
-                    self.addSubview(closeButtonView)
+            if let leadingAction = component.leadingAction {
+                let iconName: String
+                switch leadingAction.icon {
+                case .close:
+                    iconName = "Navigation/Close"
+                case .back:
+                    iconName = "Navigation/Back"
                 }
-                transition.setFrame(view: closeButtonView, frame: CGRect(origin: CGPoint(x: 16.0, y: 16.0), size: closeButtonSize))
+                let leadingButtonSize = self.leadingButton.update(
+                    transition: transition,
+                    component: AnyComponent(
+                        GlassBarButtonComponent(
+                            size: barButtonSize,
+                            backgroundColor: nil,
+                            isDark: component.theme.overallDarkAppearance,
+                            state: .glass,
+                            component: AnyComponentWithIdentity(id: iconName, component: AnyComponent(
+                                BundleIconComponent(
+                                    name: iconName,
+                                    tintColor: component.theme.chat.inputPanel.panelControlColor
+                                )
+                            )),
+                            action: { [weak self] _ in
+                                self?.component?.leadingAction?.action()
+                            }
+                        )
+                    ),
+                    environment: {},
+                    containerSize: barButtonSize
+                )
+                if let leadingButtonView = self.leadingButton.view {
+                    if leadingButtonView.superview == nil {
+                        self.addSubview(leadingButtonView)
+                    }
+                    transition.setFrame(view: leadingButtonView, frame: CGRect(origin: CGPoint(x: 16.0, y: 16.0), size: leadingButtonSize))
+                }
+            } else if let leadingButtonView = self.leadingButton.view, leadingButtonView.superview != nil {
+                leadingButtonView.removeFromSuperview()
             }
 
-            let titleText = component.configuration.title(environment.strings)
+            let titleText = component.configuration.title(component.strings)
             if let titleText, !titleText.isEmpty {
+                let titleWidth = availableSize.width - (component.leadingAction != nil ? 120.0 : 60.0)
                 let titleSize = self.title.update(
                     transition: transition,
                     component: AnyComponent(
                         Text(text: titleText, font: Font.semibold(17.0), color: titleColor)
                     ),
                     environment: {},
-                    containerSize: CGSize(width: availableSize.width - 120.0, height: 44.0)
+                    containerSize: CGSize(width: titleWidth, height: 44.0)
                 )
                 if let titleView = self.title.view {
                     if titleView.superview == nil {
@@ -540,20 +617,20 @@ private final class ChatTimerSheetContentComponent: Component {
             contentHeight += pickerHeight
             contentHeight += 17.0
 
-            let buttonSideInset: CGFloat = 30.0
+            let buttonInsets = ContainerViewLayout.concentricInsets(bottomInset: component.safeInsets.bottom, innerDiameter: 52.0, sideInset: 30.0)
             let selectedValue = self.selectedValue()
-            let primaryButtonTitle = component.configuration.primaryActionTitle(environment.strings, environment.dateTimeFormat, selectedValue)
+            let primaryButtonTitle = component.configuration.primaryActionTitle(component.strings, component.dateTimeFormat, selectedValue)
             let primaryButtonSize = self.primaryButton.update(
                 transition: transition,
                 component: AnyComponent(ButtonComponent(
                     background: ButtonComponent.Background(
                         style: .glass,
-                        color: environment.theme.list.itemCheckColors.fillColor,
-                        foreground: environment.theme.list.itemCheckColors.foregroundColor,
-                        pressedColor: environment.theme.list.itemCheckColors.fillColor.withMultipliedAlpha(0.8)
+                        color: component.theme.list.itemCheckColors.fillColor,
+                        foreground: component.theme.list.itemCheckColors.foregroundColor,
+                        pressedColor: component.theme.list.itemCheckColors.fillColor.withMultipliedAlpha(0.8)
                     ),
                     content: AnyComponentWithIdentity(id: AnyHashable(primaryButtonTitle), component: AnyComponent(
-                        Text(text: primaryButtonTitle, font: Font.semibold(17.0), color: environment.theme.list.itemCheckColors.foregroundColor)
+                        Text(text: primaryButtonTitle, font: Font.semibold(17.0), color: component.theme.list.itemCheckColors.foregroundColor)
                     )),
                     isEnabled: true,
                     displaysProgress: false,
@@ -562,13 +639,13 @@ private final class ChatTimerSheetContentComponent: Component {
                     }
                 )),
                 environment: {},
-                containerSize: CGSize(width: availableSize.width - buttonSideInset * 2.0, height: 52.0)
+                containerSize: CGSize(width: availableSize.width - buttonInsets.left - buttonInsets.right, height: 52.0)
             )
             if let primaryButtonView = self.primaryButton.view {
                 if primaryButtonView.superview == nil {
                     self.addSubview(primaryButtonView)
                 }
-                transition.setFrame(view: primaryButtonView, frame: CGRect(origin: CGPoint(x: buttonSideInset, y: contentHeight), size: primaryButtonSize))
+                transition.setFrame(view: primaryButtonView, frame: CGRect(origin: CGPoint(x: buttonInsets.left, y: contentHeight), size: primaryButtonSize))
             }
             contentHeight += primaryButtonSize.height
 
@@ -578,11 +655,11 @@ private final class ChatTimerSheetContentComponent: Component {
                 let foregroundColor: UIColor
                 switch secondaryAction.style {
                 case .accent:
-                    foregroundColor = environment.theme.actionSheet.controlAccentColor
+                    foregroundColor = component.theme.actionSheet.controlAccentColor
                 case .destructive:
-                    foregroundColor = environment.theme.list.itemDestructiveColor
+                    foregroundColor = component.theme.list.itemDestructiveColor
                 }
-                let secondaryButtonTitle = secondaryAction.title(environment.strings)
+                let secondaryButtonTitle = secondaryAction.title(component.strings)
                 let secondaryButtonSize = self.secondaryButton.update(
                     transition: transition,
                     component: AnyComponent(ButtonComponent(
@@ -602,30 +679,29 @@ private final class ChatTimerSheetContentComponent: Component {
                         }
                     )),
                     environment: {},
-                    containerSize: CGSize(width: availableSize.width - buttonSideInset * 2.0, height: 52.0)
+                    containerSize: CGSize(width: availableSize.width - buttonInsets.left - buttonInsets.right, height: 52.0)
                 )
                 if let secondaryButtonView = self.secondaryButton.view {
                     if secondaryButtonView.superview == nil {
                         self.addSubview(secondaryButtonView)
                     }
-                    transition.setFrame(view: secondaryButtonView, frame: CGRect(origin: CGPoint(x: buttonSideInset, y: contentHeight), size: secondaryButtonSize))
+                    transition.setFrame(view: secondaryButtonView, frame: CGRect(origin: CGPoint(x: buttonInsets.left, y: contentHeight), size: secondaryButtonSize))
                 }
                 contentHeight += secondaryButtonSize.height
             } else if let secondaryButtonView = self.secondaryButton.view, secondaryButtonView.superview != nil {
                 secondaryButtonView.removeFromSuperview()
             }
 
-            let bottomInset: CGFloat = environment.safeInsets.bottom > 0.0 ? environment.safeInsets.bottom + 5.0 : 15.0
-            contentHeight += bottomInset
+            contentHeight += buttonInsets.bottom
 
             return CGSize(width: availableSize.width, height: contentHeight)
         }
 
-        func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        public func numberOfComponents(in pickerView: UIPickerView) -> Int {
             return 1
         }
 
-        func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        public func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
             guard let configuration = self.component?.configuration else {
                 return 0
             }
@@ -638,8 +714,8 @@ private final class ChatTimerSheetContentComponent: Component {
             }
         }
 
-        func pickerView(_ pickerView: UIPickerView, viewForRow row: Int, forComponent componentIndex: Int, reusing view: UIView?) -> UIView {
-            guard let configuration = self.component?.configuration, let environment = self.environment else {
+        public func pickerView(_ pickerView: UIPickerView, viewForRow row: Int, forComponent componentIndex: Int, reusing view: UIView?) -> UIView {
+            guard let component = self.component else {
                 return UIView()
             }
 
@@ -649,12 +725,12 @@ private final class ChatTimerSheetContentComponent: Component {
             } else {
                 itemView = TimerPickerItemView()
             }
-            itemView.textColor = self.pickerTextColor(configuration: configuration, environment: environment)
+            itemView.textColor = self.pickerTextColor(configuration: component.configuration, theme: component.theme)
 
-            switch configuration.picker {
+            switch component.configuration.picker {
             case let .fixedValues(values, _, formatter):
                 let value = values[row]
-                itemView.value = (value, formatter(environment.strings, value))
+                itemView.value = (value, formatter(component.strings, value))
             case .timeOfDay, .date, .dateTime:
                 break
             }
@@ -662,8 +738,100 @@ private final class ChatTimerSheetContentComponent: Component {
             return itemView
         }
 
-        func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        public func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
             self.state?.updated(transition: .immediate)
+        }
+    }
+
+    public func makeView() -> View {
+        return View(frame: CGRect())
+    }
+
+    public func update(view: View, availableSize: CGSize, state: EmptyComponentState, environment: Environment<Empty>, transition: ComponentTransition) -> CGSize {
+        return view.update(component: self, availableSize: availableSize, state: state, environment: environment, transition: transition)
+    }
+}
+
+private final class ChatTimerSheetContentComponent: Component {
+    typealias EnvironmentType = ViewControllerComponentContainer.Environment
+
+    let configuration: ChatTimerScreen.Configuration
+    let dismiss: () -> Void
+
+    init(
+        configuration: ChatTimerScreen.Configuration,
+        dismiss: @escaping () -> Void
+    ) {
+        self.configuration = configuration
+        self.dismiss = dismiss
+    }
+
+    static func ==(lhs: ChatTimerSheetContentComponent, rhs: ChatTimerSheetContentComponent) -> Bool {
+        return lhs.configuration == rhs.configuration
+    }
+
+    final class View: UIView {
+        private let content = ComponentView<Empty>()
+
+        private var component: ChatTimerSheetContentComponent?
+        private var environment: EnvironmentType?
+        private weak var state: EmptyComponentState?
+
+        override init(frame: CGRect) {
+            super.init(frame: frame)
+        }
+
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+
+        func update(
+            component: ChatTimerSheetContentComponent,
+            availableSize: CGSize,
+            state: EmptyComponentState,
+            environment: Environment<EnvironmentType>,
+            transition: ComponentTransition
+        ) -> CGSize {
+            let environment = environment[EnvironmentType.self].value
+
+            self.component = component
+            self.environment = environment
+            self.state = state
+
+            self.content.parentState = state
+            let contentSize = self.content.update(
+                transition: transition,
+                component: AnyComponent(ChatTimerPickerContentComponent(
+                    configuration: component.configuration,
+                    theme: environment.theme,
+                    strings: environment.strings,
+                    dateTimeFormat: environment.dateTimeFormat,
+                    safeInsets: environment.safeInsets,
+                    leadingAction: ChatTimerPickerContentComponent.LeadingAction(
+                        icon: .close,
+                        action: { [weak self] in
+                            self?.component?.dismiss()
+                        }
+                    ),
+                    completion: { [weak self] value in
+                        guard let self, let controller = self.environment?.controller() as? ChatTimerScreen else {
+                            return
+                        }
+                        controller.completion(value)
+                        self.component?.dismiss()
+                    }
+                )),
+                environment: {},
+                containerSize: availableSize
+            )
+            if let contentView = self.content.view {
+                if contentView.superview == nil {
+                    self.addSubview(contentView)
+                }
+                transition.setFrame(view: contentView, frame: CGRect(origin: .zero, size: contentSize))
+            }
+
+            return contentSize
         }
     }
 

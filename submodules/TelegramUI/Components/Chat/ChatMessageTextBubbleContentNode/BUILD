@@ -37,6 +37,7 @@ swift_library(
         "//submodules/TelegramUI/Components/TextLoadingEffect",
         "//submodules/TelegramUI/Components/ChatControllerInteraction",
         "//submodules/TelegramUI/Components/InteractiveTextComponent",
+        "//submodules/TelegramUI/Components/ShimmeringMask",
     ],
     visibility = [
         "//visibility:public",

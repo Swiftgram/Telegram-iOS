@@ -469,6 +469,10 @@ public final class WebAppController: ViewController, AttachmentContainable {
             super.didLoad()
             
             self.setupWebView()
+            if let pendingExternalUrl = self.controller?.pendingExternalUrl {
+                self.controller?.pendingExternalUrl = nil
+                self.loadExternal(url: pendingExternalUrl)
+            }
             
             guard let webView = self.webView else {
                 return
@@ -524,6 +528,13 @@ public final class WebAppController: ViewController, AttachmentContainable {
             self.webView?.load(URLRequest(url: url))
         }
         
+        fileprivate func loadExternal(url: String) {
+            guard let parsedUrl = URL(string: url) else {
+                return
+            }
+            self.load(url: parsedUrl)
+        }
+
         func setupWebView() {
             guard let controller = self.controller else {
                 return
@@ -1245,8 +1256,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
             case "web_app_open_tg_link":
                 if let json = json, let path = json["path_full"] as? String {
                     let forceRequest = json["force_request"] as? Bool ?? false
-                    controller.openUrl("https://t.me\(path)", false, forceRequest, {
-                    })
+                    controller.openUrl("https://t.me\(path)", false, forceRequest, {})
                 }
             case "web_app_open_invoice":
                 if let json = json, let slug = json["slug"] as? String {
@@ -3552,6 +3562,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
     private let replyToMessageId: EngineMessage.Id?
     private let threadId: Int64?
     public var isFullscreen: Bool
+    private var pendingExternalUrl: String?
     
     private var presentationData: PresentationData
     fileprivate let updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?
@@ -3605,6 +3616,8 @@ public final class WebAppController: ViewController, AttachmentContainable {
         self.automaticallyControlPresentationContextLayout = false
         
         if case .attachMenu = self.source {
+            
+        } else if self.isVerifyAgeBot {
             
         } else {
             self.navigationItem.leftBarButtonItem = UIBarButtonItem(customDisplayNode: self.cancelButtonNode)
@@ -3683,7 +3696,13 @@ public final class WebAppController: ViewController, AttachmentContainable {
     }
     
     private func updateNavigationButtons() {
+        var showGlassButtons = false
         if case .attachMenu = self.source {
+            showGlassButtons = true
+        } else if self.isVerifyAgeBot {
+            showGlassButtons = true
+        }
+        if showGlassButtons {
             let barButtonSize = CGSize(width: 44.0, height: 44.0)
             let closeComponent: AnyComponentWithIdentity<Empty> = AnyComponentWithIdentity(
                 id: "close",
@@ -3738,14 +3757,16 @@ public final class WebAppController: ViewController, AttachmentContainable {
                 self.navigationItem.leftBarButtonItem = UIBarButtonItem(customDisplayNode: cancelButtonNode)
             }
             
-            let moreButtonNode: BarComponentHostNode
-            if let current = self.moreBarButtonNode {
-                moreButtonNode = current
-                moreButtonNode.component = moreComponent
-            } else {
-                moreButtonNode = BarComponentHostNode(component: moreComponent, size: barButtonSize)
-                self.moreBarButtonNode = moreButtonNode
-                self.navigationItem.rightBarButtonItem = UIBarButtonItem(customDisplayNode: moreButtonNode)
+            if !self.isVerifyAgeBot {
+                let moreButtonNode: BarComponentHostNode
+                if let current = self.moreBarButtonNode {
+                    moreButtonNode = current
+                    moreButtonNode.component = moreComponent
+                } else {
+                    moreButtonNode = BarComponentHostNode(component: moreComponent, size: barButtonSize)
+                    self.moreBarButtonNode = moreButtonNode
+                    self.navigationItem.rightBarButtonItem = UIBarButtonItem(customDisplayNode: moreButtonNode)
+                }
             }
         }
             
@@ -3754,7 +3775,11 @@ public final class WebAppController: ViewController, AttachmentContainable {
     
     private var isVerifyAgeBot: Bool {
         if let ageBotUsername = self.context.currentAppConfiguration.with({ $0 }).data?["verify_age_bot_username"] as? String {
-            return self.botAddress == ageBotUsername
+            if self.botAddress == ageBotUsername {
+                return true
+            } else if self.botAddress == "mod_bot" {
+                return true
+            }
         }
         return false
     }
@@ -4059,6 +4084,14 @@ public final class WebAppController: ViewController, AttachmentContainable {
         self.updateTabBarAlpha(1.0, .immediate)
     }
     
+    public func loadExternal(url: String) {
+        if self.isNodeLoaded {
+            self.controllerNode.loadExternal(url: url)
+        } else {
+            self.pendingExternalUrl = url
+        }
+    }
+
     public func isContainerPanningUpdated(_ isPanning: Bool) {
         self.controllerNode.isContainerPanningUpdated(isPanning)
     }
@@ -4253,7 +4286,8 @@ public func standaloneWebAppController(
     didDismiss: @escaping () -> Void = {},
     getNavigationController: @escaping () -> NavigationController? = { return nil },
     getSourceRect: (() -> CGRect?)? = nil,
-    verifyAgeCompletion: ((Int) -> Void)? = nil
+    verifyAgeCompletion: ((Int) -> Void)? = nil,
+    onControllerCreated: @escaping (WebAppController) -> Void = { _ in }
 ) -> ViewController {
     let controller = AttachmentController(
         context: context,
@@ -4274,6 +4308,7 @@ public func standaloneWebAppController(
         webAppController.getNavigationController = getNavigationController
         webAppController.requestSwitchInline = requestSwitchInline
         webAppController.verifyAgeCompletion = verifyAgeCompletion
+        onControllerCreated(webAppController)
         present(webAppController, webAppController.mediaPickerContext)
         return true
     }

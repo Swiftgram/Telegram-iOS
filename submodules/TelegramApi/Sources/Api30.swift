@@ -1,4 +1,359 @@
 public extension Api {
+    enum WebPage: TypeConstructorDescription {
+        public class Cons_webPage: TypeConstructorDescription {
+            public var flags: Int32
+            public var id: Int64
+            public var url: String
+            public var displayUrl: String
+            public var hash: Int32
+            public var type: String?
+            public var siteName: String?
+            public var title: String?
+            public var description: String?
+            public var photo: Api.Photo?
+            public var embedUrl: String?
+            public var embedType: String?
+            public var embedWidth: Int32?
+            public var embedHeight: Int32?
+            public var duration: Int32?
+            public var author: String?
+            public var document: Api.Document?
+            public var cachedPage: Api.Page?
+            public var attributes: [Api.WebPageAttribute]?
+            public init(flags: Int32, id: Int64, url: String, displayUrl: String, hash: Int32, type: String?, siteName: String?, title: String?, description: String?, photo: Api.Photo?, embedUrl: String?, embedType: String?, embedWidth: Int32?, embedHeight: Int32?, duration: Int32?, author: String?, document: Api.Document?, cachedPage: Api.Page?, attributes: [Api.WebPageAttribute]?) {
+                self.flags = flags
+                self.id = id
+                self.url = url
+                self.displayUrl = displayUrl
+                self.hash = hash
+                self.type = type
+                self.siteName = siteName
+                self.title = title
+                self.description = description
+                self.photo = photo
+                self.embedUrl = embedUrl
+                self.embedType = embedType
+                self.embedWidth = embedWidth
+                self.embedHeight = embedHeight
+                self.duration = duration
+                self.author = author
+                self.document = document
+                self.cachedPage = cachedPage
+                self.attributes = attributes
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("webPage", [("flags", ConstructorParameterDescription(self.flags)), ("id", ConstructorParameterDescription(self.id)), ("url", ConstructorParameterDescription(self.url)), ("displayUrl", ConstructorParameterDescription(self.displayUrl)), ("hash", ConstructorParameterDescription(self.hash)), ("type", ConstructorParameterDescription(self.type)), ("siteName", ConstructorParameterDescription(self.siteName)), ("title", ConstructorParameterDescription(self.title)), ("description", ConstructorParameterDescription(self.description)), ("photo", ConstructorParameterDescription(self.photo)), ("embedUrl", ConstructorParameterDescription(self.embedUrl)), ("embedType", ConstructorParameterDescription(self.embedType)), ("embedWidth", ConstructorParameterDescription(self.embedWidth)), ("embedHeight", ConstructorParameterDescription(self.embedHeight)), ("duration", ConstructorParameterDescription(self.duration)), ("author", ConstructorParameterDescription(self.author)), ("document", ConstructorParameterDescription(self.document)), ("cachedPage", ConstructorParameterDescription(self.cachedPage)), ("attributes", ConstructorParameterDescription(self.attributes))])
+            }
+        }
+        public class Cons_webPageEmpty: TypeConstructorDescription {
+            public var flags: Int32
+            public var id: Int64
+            public var url: String?
+            public init(flags: Int32, id: Int64, url: String?) {
+                self.flags = flags
+                self.id = id
+                self.url = url
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("webPageEmpty", [("flags", ConstructorParameterDescription(self.flags)), ("id", ConstructorParameterDescription(self.id)), ("url", ConstructorParameterDescription(self.url))])
+            }
+        }
+        public class Cons_webPageNotModified: TypeConstructorDescription {
+            public var flags: Int32
+            public var cachedPageViews: Int32?
+            public init(flags: Int32, cachedPageViews: Int32?) {
+                self.flags = flags
+                self.cachedPageViews = cachedPageViews
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("webPageNotModified", [("flags", ConstructorParameterDescription(self.flags)), ("cachedPageViews", ConstructorParameterDescription(self.cachedPageViews))])
+            }
+        }
+        public class Cons_webPagePending: TypeConstructorDescription {
+            public var flags: Int32
+            public var id: Int64
+            public var url: String?
+            public var date: Int32
+            public init(flags: Int32, id: Int64, url: String?, date: Int32) {
+                self.flags = flags
+                self.id = id
+                self.url = url
+                self.date = date
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("webPagePending", [("flags", ConstructorParameterDescription(self.flags)), ("id", ConstructorParameterDescription(self.id)), ("url", ConstructorParameterDescription(self.url)), ("date", ConstructorParameterDescription(self.date))])
+            }
+        }
+        case webPage(Cons_webPage)
+        case webPageEmpty(Cons_webPageEmpty)
+        case webPageNotModified(Cons_webPageNotModified)
+        case webPagePending(Cons_webPagePending)
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .webPage(let _data):
+                if boxed {
+                    buffer.appendInt32(-392411726)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                serializeInt64(_data.id, buffer: buffer, boxed: false)
+                serializeString(_data.url, buffer: buffer, boxed: false)
+                serializeString(_data.displayUrl, buffer: buffer, boxed: false)
+                serializeInt32(_data.hash, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 0) != 0 {
+                    serializeString(_data.type!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 1) != 0 {
+                    serializeString(_data.siteName!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 2) != 0 {
+                    serializeString(_data.title!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 3) != 0 {
+                    serializeString(_data.description!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 4) != 0 {
+                    _data.photo!.serialize(buffer, true)
+                }
+                if Int(_data.flags) & Int(1 << 5) != 0 {
+                    serializeString(_data.embedUrl!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 5) != 0 {
+                    serializeString(_data.embedType!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 6) != 0 {
+                    serializeInt32(_data.embedWidth!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 6) != 0 {
+                    serializeInt32(_data.embedHeight!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 7) != 0 {
+                    serializeInt32(_data.duration!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 8) != 0 {
+                    serializeString(_data.author!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 9) != 0 {
+                    _data.document!.serialize(buffer, true)
+                }
+                if Int(_data.flags) & Int(1 << 10) != 0 {
+                    _data.cachedPage!.serialize(buffer, true)
+                }
+                if Int(_data.flags) & Int(1 << 12) != 0 {
+                    buffer.appendInt32(481674261)
+                    buffer.appendInt32(Int32(_data.attributes!.count))
+                    for item in _data.attributes! {
+                        item.serialize(buffer, true)
+                    }
+                }
+                break
+            case .webPageEmpty(let _data):
+                if boxed {
+                    buffer.appendInt32(555358088)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                serializeInt64(_data.id, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 0) != 0 {
+                    serializeString(_data.url!, buffer: buffer, boxed: false)
+                }
+                break
+            case .webPageNotModified(let _data):
+                if boxed {
+                    buffer.appendInt32(1930545681)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 0) != 0 {
+                    serializeInt32(_data.cachedPageViews!, buffer: buffer, boxed: false)
+                }
+                break
+            case .webPagePending(let _data):
+                if boxed {
+                    buffer.appendInt32(-1328464313)
+                }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
+                serializeInt64(_data.id, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 0) != 0 {
+                    serializeString(_data.url!, buffer: buffer, boxed: false)
+                }
+                serializeInt32(_data.date, buffer: buffer, boxed: false)
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .webPage(let _data):
+                return ("webPage", [("flags", ConstructorParameterDescription(_data.flags)), ("id", ConstructorParameterDescription(_data.id)), ("url", ConstructorParameterDescription(_data.url)), ("displayUrl", ConstructorParameterDescription(_data.displayUrl)), ("hash", ConstructorParameterDescription(_data.hash)), ("type", ConstructorParameterDescription(_data.type)), ("siteName", ConstructorParameterDescription(_data.siteName)), ("title", ConstructorParameterDescription(_data.title)), ("description", ConstructorParameterDescription(_data.description)), ("photo", ConstructorParameterDescription(_data.photo)), ("embedUrl", ConstructorParameterDescription(_data.embedUrl)), ("embedType", ConstructorParameterDescription(_data.embedType)), ("embedWidth", ConstructorParameterDescription(_data.embedWidth)), ("embedHeight", ConstructorParameterDescription(_data.embedHeight)), ("duration", ConstructorParameterDescription(_data.duration)), ("author", ConstructorParameterDescription(_data.author)), ("document", ConstructorParameterDescription(_data.document)), ("cachedPage", ConstructorParameterDescription(_data.cachedPage)), ("attributes", ConstructorParameterDescription(_data.attributes))])
+            case .webPageEmpty(let _data):
+                return ("webPageEmpty", [("flags", ConstructorParameterDescription(_data.flags)), ("id", ConstructorParameterDescription(_data.id)), ("url", ConstructorParameterDescription(_data.url))])
+            case .webPageNotModified(let _data):
+                return ("webPageNotModified", [("flags", ConstructorParameterDescription(_data.flags)), ("cachedPageViews", ConstructorParameterDescription(_data.cachedPageViews))])
+            case .webPagePending(let _data):
+                return ("webPagePending", [("flags", ConstructorParameterDescription(_data.flags)), ("id", ConstructorParameterDescription(_data.id)), ("url", ConstructorParameterDescription(_data.url)), ("date", ConstructorParameterDescription(_data.date))])
+            }
+        }
+
+        public static func parse_webPage(_ reader: BufferReader) -> WebPage? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Int64?
+            _2 = reader.readInt64()
+            var _3: String?
+            _3 = parseString(reader)
+            var _4: String?
+            _4 = parseString(reader)
+            var _5: Int32?
+            _5 = reader.readInt32()
+            var _6: String?
+            if Int(_1 ?? 0) & Int(1 << 0) != 0 {
+                _6 = parseString(reader)
+            }
+            var _7: String?
+            if Int(_1 ?? 0) & Int(1 << 1) != 0 {
+                _7 = parseString(reader)
+            }
+            var _8: String?
+            if Int(_1 ?? 0) & Int(1 << 2) != 0 {
+                _8 = parseString(reader)
+            }
+            var _9: String?
+            if Int(_1 ?? 0) & Int(1 << 3) != 0 {
+                _9 = parseString(reader)
+            }
+            var _10: Api.Photo?
+            if Int(_1 ?? 0) & Int(1 << 4) != 0 {
+                if let signature = reader.readInt32() {
+                    _10 = Api.parse(reader, signature: signature) as? Api.Photo
+                }
+            }
+            var _11: String?
+            if Int(_1 ?? 0) & Int(1 << 5) != 0 {
+                _11 = parseString(reader)
+            }
+            var _12: String?
+            if Int(_1 ?? 0) & Int(1 << 5) != 0 {
+                _12 = parseString(reader)
+            }
+            var _13: Int32?
+            if Int(_1 ?? 0) & Int(1 << 6) != 0 {
+                _13 = reader.readInt32()
+            }
+            var _14: Int32?
+            if Int(_1 ?? 0) & Int(1 << 6) != 0 {
+                _14 = reader.readInt32()
+            }
+            var _15: Int32?
+            if Int(_1 ?? 0) & Int(1 << 7) != 0 {
+                _15 = reader.readInt32()
+            }
+            var _16: String?
+            if Int(_1 ?? 0) & Int(1 << 8) != 0 {
+                _16 = parseString(reader)
+            }
+            var _17: Api.Document?
+            if Int(_1 ?? 0) & Int(1 << 9) != 0 {
+                if let signature = reader.readInt32() {
+                    _17 = Api.parse(reader, signature: signature) as? Api.Document
+                }
+            }
+            var _18: Api.Page?
+            if Int(_1 ?? 0) & Int(1 << 10) != 0 {
+                if let signature = reader.readInt32() {
+                    _18 = Api.parse(reader, signature: signature) as? Api.Page
+                }
+            }
+            var _19: [Api.WebPageAttribute]?
+            if Int(_1 ?? 0) & Int(1 << 12) != 0 {
+                if let _ = reader.readInt32() {
+                    _19 = Api.parseVector(reader, elementSignature: 0, elementType: Api.WebPageAttribute.self)
+                }
+            }
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            let _c3 = _3 != nil
+            let _c4 = _4 != nil
+            let _c5 = _5 != nil
+            let _c6 = (Int(_1 ?? 0) & Int(1 << 0) == 0) || _6 != nil
+            let _c7 = (Int(_1 ?? 0) & Int(1 << 1) == 0) || _7 != nil
+            let _c8 = (Int(_1 ?? 0) & Int(1 << 2) == 0) || _8 != nil
+            let _c9 = (Int(_1 ?? 0) & Int(1 << 3) == 0) || _9 != nil
+            let _c10 = (Int(_1 ?? 0) & Int(1 << 4) == 0) || _10 != nil
+            let _c11 = (Int(_1 ?? 0) & Int(1 << 5) == 0) || _11 != nil
+            let _c12 = (Int(_1 ?? 0) & Int(1 << 5) == 0) || _12 != nil
+            let _c13 = (Int(_1 ?? 0) & Int(1 << 6) == 0) || _13 != nil
+            let _c14 = (Int(_1 ?? 0) & Int(1 << 6) == 0) || _14 != nil
+            let _c15 = (Int(_1 ?? 0) & Int(1 << 7) == 0) || _15 != nil
+            let _c16 = (Int(_1 ?? 0) & Int(1 << 8) == 0) || _16 != nil
+            let _c17 = (Int(_1 ?? 0) & Int(1 << 9) == 0) || _17 != nil
+            let _c18 = (Int(_1 ?? 0) & Int(1 << 10) == 0) || _18 != nil
+            let _c19 = (Int(_1 ?? 0) & Int(1 << 12) == 0) || _19 != nil
+            if _c1 && _c2 && _c3 && _c4 && _c5 && _c6 && _c7 && _c8 && _c9 && _c10 && _c11 && _c12 && _c13 && _c14 && _c15 && _c16 && _c17 && _c18 && _c19 {
+                return Api.WebPage.webPage(Cons_webPage(flags: _1!, id: _2!, url: _3!, displayUrl: _4!, hash: _5!, type: _6, siteName: _7, title: _8, description: _9, photo: _10, embedUrl: _11, embedType: _12, embedWidth: _13, embedHeight: _14, duration: _15, author: _16, document: _17, cachedPage: _18, attributes: _19))
+            }
+            else {
+                return nil
+            }
+        }
+        public static func parse_webPageEmpty(_ reader: BufferReader) -> WebPage? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Int64?
+            _2 = reader.readInt64()
+            var _3: String?
+            if Int(_1 ?? 0) & Int(1 << 0) != 0 {
+                _3 = parseString(reader)
+            }
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            let _c3 = (Int(_1 ?? 0) & Int(1 << 0) == 0) || _3 != nil
+            if _c1 && _c2 && _c3 {
+                return Api.WebPage.webPageEmpty(Cons_webPageEmpty(flags: _1!, id: _2!, url: _3))
+            }
+            else {
+                return nil
+            }
+        }
+        public static func parse_webPageNotModified(_ reader: BufferReader) -> WebPage? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Int32?
+            if Int(_1 ?? 0) & Int(1 << 0) != 0 {
+                _2 = reader.readInt32()
+            }
+            let _c1 = _1 != nil
+            let _c2 = (Int(_1 ?? 0) & Int(1 << 0) == 0) || _2 != nil
+            if _c1 && _c2 {
+                return Api.WebPage.webPageNotModified(Cons_webPageNotModified(flags: _1!, cachedPageViews: _2))
+            }
+            else {
+                return nil
+            }
+        }
+        public static func parse_webPagePending(_ reader: BufferReader) -> WebPage? {
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: Int64?
+            _2 = reader.readInt64()
+            var _3: String?
+            if Int(_1 ?? 0) & Int(1 << 0) != 0 {
+                _3 = parseString(reader)
+            }
+            var _4: Int32?
+            _4 = reader.readInt32()
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            let _c3 = (Int(_1 ?? 0) & Int(1 << 0) == 0) || _3 != nil
+            let _c4 = _4 != nil
+            if _c1 && _c2 && _c3 && _c4 {
+                return Api.WebPage.webPagePending(Cons_webPagePending(flags: _1!, id: _2!, url: _3, date: _4!))
+            }
+            else {
+                return nil
+            }
+        }
+    }
+}
+public extension Api {
     indirect enum WebPageAttribute: TypeConstructorDescription {
         public class Cons_webPageAttributeAiComposeTone: TypeConstructorDescription {
             public var emojiId: Int64
@@ -1602,164 +1957,6 @@ public extension Api.account {
             let _c3 = (Int(_1 ?? 0) & Int(1 << 1) == 0) || _3 != nil
             if _c1 && _c2 && _c3 {
                 return Api.account.PasswordSettings.passwordSettings(Cons_passwordSettings(flags: _1!, email: _2, secureSettings: _3))
-            }
-            else {
-                return nil
-            }
-        }
-    }
-}
-public extension Api.account {
-    enum PrivacyRules: TypeConstructorDescription {
-        public class Cons_privacyRules: TypeConstructorDescription {
-            public var rules: [Api.PrivacyRule]
-            public var chats: [Api.Chat]
-            public var users: [Api.User]
-            public init(rules: [Api.PrivacyRule], chats: [Api.Chat], users: [Api.User]) {
-                self.rules = rules
-                self.chats = chats
-                self.users = users
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("privacyRules", [("rules", ConstructorParameterDescription(self.rules)), ("chats", ConstructorParameterDescription(self.chats)), ("users", ConstructorParameterDescription(self.users))])
-            }
-        }
-        case privacyRules(Cons_privacyRules)
-
-        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
-            switch self {
-            case .privacyRules(let _data):
-                if boxed {
-                    buffer.appendInt32(1352683077)
-                }
-                buffer.appendInt32(481674261)
-                buffer.appendInt32(Int32(_data.rules.count))
-                for item in _data.rules {
-                    item.serialize(buffer, true)
-                }
-                buffer.appendInt32(481674261)
-                buffer.appendInt32(Int32(_data.chats.count))
-                for item in _data.chats {
-                    item.serialize(buffer, true)
-                }
-                buffer.appendInt32(481674261)
-                buffer.appendInt32(Int32(_data.users.count))
-                for item in _data.users {
-                    item.serialize(buffer, true)
-                }
-                break
-            }
-        }
-
-        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-            switch self {
-            case .privacyRules(let _data):
-                return ("privacyRules", [("rules", ConstructorParameterDescription(_data.rules)), ("chats", ConstructorParameterDescription(_data.chats)), ("users", ConstructorParameterDescription(_data.users))])
-            }
-        }
-
-        public static func parse_privacyRules(_ reader: BufferReader) -> PrivacyRules? {
-            var _1: [Api.PrivacyRule]?
-            if let _ = reader.readInt32() {
-                _1 = Api.parseVector(reader, elementSignature: 0, elementType: Api.PrivacyRule.self)
-            }
-            var _2: [Api.Chat]?
-            if let _ = reader.readInt32() {
-                _2 = Api.parseVector(reader, elementSignature: 0, elementType: Api.Chat.self)
-            }
-            var _3: [Api.User]?
-            if let _ = reader.readInt32() {
-                _3 = Api.parseVector(reader, elementSignature: 0, elementType: Api.User.self)
-            }
-            let _c1 = _1 != nil
-            let _c2 = _2 != nil
-            let _c3 = _3 != nil
-            if _c1 && _c2 && _c3 {
-                return Api.account.PrivacyRules.privacyRules(Cons_privacyRules(rules: _1!, chats: _2!, users: _3!))
-            }
-            else {
-                return nil
-            }
-        }
-    }
-}
-public extension Api.account {
-    enum ResetPasswordResult: TypeConstructorDescription {
-        public class Cons_resetPasswordFailedWait: TypeConstructorDescription {
-            public var retryDate: Int32
-            public init(retryDate: Int32) {
-                self.retryDate = retryDate
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("resetPasswordFailedWait", [("retryDate", ConstructorParameterDescription(self.retryDate))])
-            }
-        }
-        public class Cons_resetPasswordRequestedWait: TypeConstructorDescription {
-            public var untilDate: Int32
-            public init(untilDate: Int32) {
-                self.untilDate = untilDate
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("resetPasswordRequestedWait", [("untilDate", ConstructorParameterDescription(self.untilDate))])
-            }
-        }
-        case resetPasswordFailedWait(Cons_resetPasswordFailedWait)
-        case resetPasswordOk
-        case resetPasswordRequestedWait(Cons_resetPasswordRequestedWait)
-
-        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
-            switch self {
-            case .resetPasswordFailedWait(let _data):
-                if boxed {
-                    buffer.appendInt32(-478701471)
-                }
-                serializeInt32(_data.retryDate, buffer: buffer, boxed: false)
-                break
-            case .resetPasswordOk:
-                if boxed {
-                    buffer.appendInt32(-383330754)
-                }
-                break
-            case .resetPasswordRequestedWait(let _data):
-                if boxed {
-                    buffer.appendInt32(-370148227)
-                }
-                serializeInt32(_data.untilDate, buffer: buffer, boxed: false)
-                break
-            }
-        }
-
-        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-            switch self {
-            case .resetPasswordFailedWait(let _data):
-                return ("resetPasswordFailedWait", [("retryDate", ConstructorParameterDescription(_data.retryDate))])
-            case .resetPasswordOk:
-                return ("resetPasswordOk", [])
-            case .resetPasswordRequestedWait(let _data):
-                return ("resetPasswordRequestedWait", [("untilDate", ConstructorParameterDescription(_data.untilDate))])
-            }
-        }
-
-        public static func parse_resetPasswordFailedWait(_ reader: BufferReader) -> ResetPasswordResult? {
-            var _1: Int32?
-            _1 = reader.readInt32()
-            let _c1 = _1 != nil
-            if _c1 {
-                return Api.account.ResetPasswordResult.resetPasswordFailedWait(Cons_resetPasswordFailedWait(retryDate: _1!))
-            }
-            else {
-                return nil
-            }
-        }
-        public static func parse_resetPasswordOk(_ reader: BufferReader) -> ResetPasswordResult? {
-            return Api.account.ResetPasswordResult.resetPasswordOk
-        }
-        public static func parse_resetPasswordRequestedWait(_ reader: BufferReader) -> ResetPasswordResult? {
-            var _1: Int32?
-            _1 = reader.readInt32()
-            let _c1 = _1 != nil
-            if _c1 {
-                return Api.account.ResetPasswordResult.resetPasswordRequestedWait(Cons_resetPasswordRequestedWait(untilDate: _1!))
             }
             else {
                 return nil

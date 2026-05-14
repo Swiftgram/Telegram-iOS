@@ -97,6 +97,7 @@ public struct Namespaces {
         public static let CloudDisabledChannelStatusEmoji: Int32 = 28
         public static let CloudDefaultTagReactions: Int32 = 29
         public static let CloudUniqueStarGifts: Int32 = 30
+        public static let NewBotConnectionReviews: Int32 = 31
     }
     
     public struct CachedItemCollection {
@@ -328,6 +329,7 @@ private enum PreferencesKeyValues: Int32 {
     case globalPostSearchState = 46
     case savedMusicIds = 47
     case emojiGameInfo = 48
+    case webBrowserSettings = 49
 }
 
 public func applicationSpecificPreferencesKey(_ value: Int32) -> ValueBoxKey {
@@ -424,6 +426,12 @@ public struct PreferencesKeys {
     public static let contentSettings: ValueBoxKey = {
         let key = ValueBoxKey(length: 4)
         key.setInt32(0, value: PreferencesKeyValues.contentSettings.rawValue)
+        return key
+    }()
+    
+    public static let webBrowserSettings: ValueBoxKey = {
+        let key = ValueBoxKey(length: 4)
+        key.setInt32(0, value: PreferencesKeyValues.webBrowserSettings.rawValue)
         return key
     }()
     

@@ -216,6 +216,7 @@ public final class ChatChannelSubscriberInputPanelNode: ChatInputPanelNode {
             if let (width, leftInset, rightInset, bottomInset, additionalSideInsets, maxHeight, maxOverlayHeight, isSecondary, metrics, deviceMetrics) = self.layoutData, let presentationInterfaceState = self.presentationInterfaceState {
                 let _ = self.updateLayout(width: width, leftInset: leftInset, rightInset: rightInset, bottomInset: bottomInset, additionalSideInsets: additionalSideInsets, maxHeight: maxHeight, maxOverlayHeight: maxOverlayHeight, isSecondary: isSecondary, transition: .immediate, interfaceState: presentationInterfaceState, metrics: metrics, deviceMetrics: deviceMetrics, force: true)
             }
+            var didJoin = false
             self.actionDisposable.set((context.peerChannelMemberCategoriesContextsManager.join(engine: context.engine, peerId: peer.id, hash: nil)
             |> afterDisposed { [weak self] in
                 Queue.mainQueue().async {
@@ -223,7 +224,19 @@ public final class ChatChannelSubscriberInputPanelNode: ChatInputPanelNode {
                         strongSelf.isJoining = false
                     }
                 }
-            }).startStrict(error: { [weak self] error in
+            }).startStrict(next: { [weak self] result in
+                guard let strongSelf = self else {
+                    return
+                }
+                switch result {
+                case .joined:
+                    didJoin = true
+                case let .webView(webView):
+                    if let controller = strongSelf.interfaceInteraction?.getNavigationController()?.viewControllers.last as? ViewController {
+                        context.sharedContext.openJoinChatWebView(context: context, parentController: controller, updatedPresentationData: nil, webView: webView)
+                    }
+                }
+            }, error: { [weak self] error in
                 guard let strongSelf = self, let presentationInterfaceState = strongSelf.presentationInterfaceState, let peer = presentationInterfaceState.renderedPeer?.peer else {
                     return
                 }
@@ -252,6 +265,9 @@ public final class ChatChannelSubscriberInputPanelNode: ChatInputPanelNode {
                 strongSelf.interfaceInteraction?.presentController(textAlertController(context: context, title: nil, text: text, actions: [TextAlertAction(type: .defaultAction, title: presentationInterfaceState.strings.Common_OK, action: {})]), nil)
             }, completed: { [weak self] in
                 guard let self else {
+                    return
+                }
+                if !didJoin {
                     return
                 }
                 Queue.mainQueue().after(0.5) {

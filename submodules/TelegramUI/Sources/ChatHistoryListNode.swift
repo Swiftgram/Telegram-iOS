@@ -761,6 +761,7 @@ public final class ChatHistoryListNodeImpl: ListViewImpl, ChatHistoryNode, ChatH
     var frozenMessageForScrollingReset: EngineMessage.Id?
     
     private var hasDisplayedBusinessBotMessageTooltip: Bool = false
+    private var hasDisplayedGuestChatMessageTooltip: Bool = false
     
     private let _isReady = ValuePromise<Bool>(false, ignoreRepeated: true)
     public var isReady: Signal<Bool, NoError> {
@@ -2909,6 +2910,7 @@ public final class ChatHistoryListNodeImpl: ListViewImpl, ChatHistoryNode, ChatH
             var visibleAdOpaqueIds: [Data] = []
             var peerIdsWithRefreshStories: [PeerId] = []
             var visibleBusinessBotMessageId: EngineMessage.Id?
+            var visibleGuestChatMessageId: EngineMessage.Id?
             
             if indexRange.0 <= indexRange.1 {
                 for i in (indexRange.0 ... indexRange.1) {
@@ -3127,6 +3129,15 @@ public final class ChatHistoryListNodeImpl: ListViewImpl, ChatHistoryNode, ChatH
                             visibleBusinessBotMessageId = message.id
                         }
                     }
+                    if message.id.namespace == Namespaces.Message.Cloud, message.flags.contains(.Incoming), message.guestChatAttribute != nil {
+                        if let visibleGuestChatMessageIdValue = visibleGuestChatMessageId {
+                            if visibleGuestChatMessageIdValue < message.id {
+                                visibleGuestChatMessageId = message.id
+                            }
+                        } else {
+                            visibleGuestChatMessageId = message.id
+                        }
+                    }
                     switch message.id.peerId.namespace {
                     case Namespaces.Peer.CloudGroup, Namespaces.Peer.CloudChannel:
                         messageIdsWithPossibleReactions.append(message.id)
@@ -3142,6 +3153,15 @@ public final class ChatHistoryListNodeImpl: ListViewImpl, ChatHistoryNode, ChatH
                                 }
                             } else {
                                 visibleBusinessBotMessageId = message.id
+                            }
+                        }
+                        if message.id.namespace == Namespaces.Message.Cloud, message.flags.contains(.Incoming), message.guestChatAttribute != nil {
+                            if let visibleGuestChatMessageIdValue = visibleGuestChatMessageId {
+                                if visibleGuestChatMessageIdValue < message.id {
+                                    visibleGuestChatMessageId = message.id
+                                }
+                            } else {
+                                visibleGuestChatMessageId = message.id
                             }
                         }
                         switch message.id.peerId.namespace {
@@ -3337,6 +3357,23 @@ public final class ChatHistoryListNodeImpl: ListViewImpl, ChatHistoryNode, ChatH
                     
                     if let controllerNode = self.controllerInteraction.chatControllerNode() as? ChatControllerNode, let chatController = controllerNode.interfaceInteraction?.chatController() as? ChatControllerImpl {
                         chatController.displayBusinessBotMessageTooltip(itemNode: foundItemNode)
+                    }
+                }
+            }
+            
+            if let visibleGuestChatMessageId, !self.hasDisplayedGuestChatMessageTooltip {
+                var foundItemNode: ChatMessageItemView?
+                self.forEachItemNode { itemNode in
+                    if let itemNode = itemNode as? ChatMessageItemView, let item = itemNode.item, item.message.id == visibleGuestChatMessageId, itemNode.getAuthorNameNode() != nil {
+                        foundItemNode = itemNode
+                    }
+                }
+                
+                if let foundItemNode {
+                    self.hasDisplayedGuestChatMessageTooltip = true
+                    
+                    if let controllerNode = self.controllerInteraction.chatControllerNode() as? ChatControllerNode, let chatController = controllerNode.interfaceInteraction?.chatController() as? ChatControllerImpl {
+                        chatController.displayGuestChatMessageTooltip(itemNode: foundItemNode)
                     }
                 }
             }

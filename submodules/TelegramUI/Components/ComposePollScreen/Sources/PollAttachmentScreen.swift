@@ -15,6 +15,7 @@ import LocationUI
 import AttachmentFileController
 import ChatEntityKeyboardInputNode
 import ICloudResources
+import ChatTextLinkEditUI
 
 public enum PollAttachmentSubject {
     case description
@@ -232,6 +233,53 @@ public func presentPollAttachmentScreen(
                 controllerCompletion(controller, controller.mediaPickerContext)
             })
             return true
+        case .link:
+            attachmentController?.dismiss(animated: true)
+
+            //TODO:localize
+            let controller = chatTextLinkEditController(
+                context: context,
+                updatedPresentationData: updatedPresentationData,
+                text: "Attach a link to this option.",
+                link: nil,
+                preview: true,
+                apply: { link, webpage in
+                    guard let link else {
+                        return
+                    }
+                    if let webpage {
+                        completion(.standalone(media: webpage))
+                        return
+                    }
+                    let mediaId = Int64.random(in: Int64.min ... Int64.max)
+                    let webPage = TelegramMediaWebpage(
+                        webpageId: EngineMedia.Id(namespace: Namespaces.Media.LocalFile, id: mediaId),
+                        content: .Loaded(TelegramMediaWebpageLoadedContent(
+                            url: link,
+                            displayUrl: link,
+                            hash: 0,
+                            type: nil,
+                            websiteName: nil,
+                            title: nil,
+                            text: nil,
+                            embedUrl: nil,
+                            embedType: nil,
+                            embedSize: nil,
+                            duration: nil,
+                            author: nil,
+                            isMediaLargeByDefault: nil,
+                            imageIsVideoCover: false,
+                            image: nil,
+                            file: nil,
+                            story: nil,
+                            attributes: [],
+                            instantPage: nil
+                    )))
+                    completion(.standalone(media: webPage))
+                }
+            )
+            present(controller, false)
+            return false
         default:
             return false
         }

@@ -335,7 +335,7 @@ public func editThemeController(context: AccountContext, mode: EditThemeControll
             settingsPromise.set(.single(info.theme.settings?.first))
             if let file = info.theme.file, let path = context.sharedContext.accountManager.resources.completedResourcePath(resource: EngineMediaResource(file.resource)), let data = try? Data(contentsOf: URL(fileURLWithPath: path)), let theme = makePresentationTheme(data: data, resolvedWallpaper: info.resolvedWallpaper) {
                 if case let .file(file) = theme.chat.defaultWallpaper, file.id == 0 {
-                    previewThemePromise.set(cachedWallpaper(account: context.account, slug: file.slug, settings: file.settings)
+                    previewThemePromise.set(cachedWallpaper(engine: context.engine, network: context.account.network, slug: file.slug, settings: file.settings)
                     |> map ({ wallpaper -> PresentationTheme in
                         if let wallpaper = wallpaper {
                             return theme.withUpdated(name: nil, defaultWallpaper: wallpaper.wallpaper)
@@ -404,7 +404,7 @@ public func editThemeController(context: AccountContext, mode: EditThemeControll
             if let url = urls.first{
                 if let data = try? Data(contentsOf: url), let theme = makePresentationTheme(data: data) {
                     if case let .file(file) = theme.chat.defaultWallpaper, file.id == 0 {
-                        let _ = (cachedWallpaper(account: context.account, slug: file.slug, settings: file.settings)
+                        let _ = (cachedWallpaper(engine: context.engine, network: context.account.network, slug: file.slug, settings: file.settings)
                         |> mapToSignal { wallpaper -> Signal<TelegramWallpaper?, NoError> in
                             if let wallpaper = wallpaper, case let .file(file) = wallpaper.wallpaper {
                                 var convertedRepresentations: [ImageRepresentationWithReference] = []
@@ -496,7 +496,7 @@ public func editThemeController(context: AccountContext, mode: EditThemeControll
     
     let signal = combineLatest(queue: .mainQueue(), context.sharedContext.presentationData, statePromise.get(), previewThemePromise.get(), settingsPromise.get())
     |> map { presentationData, state, previewTheme, currentSettings -> (ItemListControllerState, (ItemListNodeState, Any)) in
-        let leftNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Cancel), style: .regular, enabled: true, action: {
+        let leftNavigationButton = ItemListNavigationButton(content: .icon(.close), style: .regular, enabled: true, action: {
             dismissImpl?()
         })
         
@@ -516,7 +516,7 @@ public func editThemeController(context: AccountContext, mode: EditThemeControll
                 isComplete = !state.title.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty && !state.slug.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty
             }
             
-            rightNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Done), style: .bold, enabled: isComplete, action: {
+            rightNavigationButton = ItemListNavigationButton(content: .icon(.done), style: .bold, enabled: isComplete, action: {
                 if state.title.count > 128 {
                     errorImpl?(.title)
                     return

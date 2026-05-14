@@ -1033,10 +1033,8 @@ public final class StarsPurchaseScreen: ViewControllerComponentContainer {
                 completionImpl?(stars)
             }
         ), navigationBarAppearance: .default, presentationMode: .modal, theme: customTheme.flatMap { .custom($0) } ?? .default)
-        
-        let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-        
-        let cancelItem = UIBarButtonItem(title: presentationData.strings.Common_Close, style: .plain, target: self, action: #selector(self.cancelPressed))
+                
+        let cancelItem = UIBarButtonItem(title: "___close", style: .plain, target: self, action: #selector(self.cancelPressed))
         self.navigationItem.setLeftBarButton(cancelItem, animated: false)
         self.navigationPresentation = .modal
         

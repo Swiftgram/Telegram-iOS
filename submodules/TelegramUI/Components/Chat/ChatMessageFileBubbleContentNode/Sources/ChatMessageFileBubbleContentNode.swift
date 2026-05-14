@@ -3,7 +3,6 @@ import UIKit
 import AsyncDisplayKit
 import Display
 import SwiftSignalKit
-import Postbox
 import TelegramCore
 import TelegramUIPreferences
 import ComponentFlow
@@ -201,7 +200,7 @@ public class ChatMessageFileBubbleContentNode: ChatMessageBubbleContentNode {
         }
     }
     
-    override public func transitionNode(messageId: MessageId, media: Media, adjustRect: Bool) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
+    override public func transitionNode(messageId: EngineMessage.Id, media: EngineRawMedia, adjustRect: Bool) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
         if self.item?.message.id == messageId {
             return self.interactiveFileNode.transitionNode(media: media)
         } else {
@@ -209,7 +208,7 @@ public class ChatMessageFileBubbleContentNode: ChatMessageBubbleContentNode {
         }
     }
     
-    override public func updateHiddenMedia(_ media: [Media]?) -> Bool {
+    override public func updateHiddenMedia(_ media: [EngineRawMedia]?) -> Bool {
         return self.interactiveFileNode.updateHiddenMedia(media)
     }
     

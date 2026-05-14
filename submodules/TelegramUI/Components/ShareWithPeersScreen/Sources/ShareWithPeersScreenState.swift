@@ -523,11 +523,11 @@ public extension ShareWithPeersScreen {
                 let contactsState = Promise<ChannelMemberListState>()
 
                 let disposableAndLoadMoreControl: (Disposable, PeerChannelMemberCategoryControl?)
-                disposableAndLoadMoreControl = context.peerChannelMemberCategoriesContextsManager.recent(engine: context.engine, postbox: context.account.postbox, network: context.account.network, accountPeerId: context.account.peerId, peerId: peerId, searchQuery: searchQuery, updated: { state in
+                disposableAndLoadMoreControl = context.peerChannelMemberCategoriesContextsManager.recent(engine: context.engine, accountPeerId: context.account.peerId, peerId: peerId, searchQuery: searchQuery, updated: { state in
                     membersState.set(.single(state))
                 })
                 
-                let contactsDisposableAndLoadMoreControl = context.peerChannelMemberCategoriesContextsManager.contacts(engine: context.engine, postbox: context.account.postbox, network: context.account.network, accountPeerId: context.account.peerId, peerId: peerId, searchQuery: searchQuery, updated: { state in
+                let contactsDisposableAndLoadMoreControl = context.peerChannelMemberCategoriesContextsManager.contacts(engine: context.engine, accountPeerId: context.account.peerId, peerId: peerId, searchQuery: searchQuery, updated: { state in
                     contactsState.set(.single(state))
                 })
                 

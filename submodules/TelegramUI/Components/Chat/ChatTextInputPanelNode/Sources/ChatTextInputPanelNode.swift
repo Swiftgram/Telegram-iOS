@@ -712,6 +712,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         self.sendActionButtons.micButton.alpha = 0.0
         self.sendActionButtons.micButtonTintMaskView.alpha = 0.0
         self.sendActionButtons.expandMediaInputButtonBackgroundView.alpha = 0.0
+        self.sendActionButtons.stopButtonIcon.alpha = 0.0
         
         self.mediaActionButtons = ChatTextInputActionButtonsNode(context: context, presentationInterfaceState: presentationInterfaceState, presentationContext: presentationContext, presentController: presentController)
         self.mediaActionButtons.sendContainerNode.alpha = 0.0
@@ -4612,7 +4613,9 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             hideMicButton = true
         }
         
+        var displayStop = false
         if let interfaceState = self.presentationInterfaceState {
+            displayStop = interfaceState.canStopIncomingStreamingMessage
             if case let .customChatContents(customChatContents) = interfaceState.subject {
                 switch customChatContents.kind {
                 case .hashTagSearch:
@@ -4625,13 +4628,33 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             }
         }
         
-        if hideMicButton || (mediaInputIsActive && !hideExpandMediaInput) {
+        if displayStop {
+            let alphaTransition = ComponentTransition(alphaTransition)
+            alphaTransition.setAlpha(view: self.mediaActionButtons.micButton, alpha: 0.0)
+            alphaTransition.setAlpha(view: self.mediaActionButtons.micButtonBackgroundView, alpha: 1.0)
+            alphaTransition.setAlpha(view: self.mediaActionButtons.micButtonTintMaskView, alpha: 0.0)
+            alphaTransition.setAlpha(view: self.mediaActionButtons.stopButtonIcon, alpha: 1.0)
+            
+            ComponentTransition(transition).setScale(view: self.mediaActionButtons.stopButtonIcon, scale: 1.0)
+            ComponentTransition(transition).setScale(view: self.mediaActionButtons.micButton, scale: 0.001)
+            ComponentTransition(transition).setScale(view: self.mediaActionButtons.micButtonTintMaskView, scale: 0.001)
+        } else if hideMicButton || (mediaInputIsActive && !hideExpandMediaInput) {
+            ComponentTransition(alphaTransition).setAlpha(view: self.mediaActionButtons.stopButtonIcon, alpha: 0.0)
+            ComponentTransition(transition).setScale(view: self.mediaActionButtons.stopButtonIcon, scale: 0.001)
+            ComponentTransition(transition).setScale(view: self.mediaActionButtons.micButton, scale: 1.0)
+            ComponentTransition(transition).setScale(view: self.mediaActionButtons.micButtonTintMaskView, scale: 1.0)
+            
             if !self.mediaActionButtons.micButton.alpha.isZero {
                 alphaTransition.updateAlpha(layer: self.mediaActionButtons.micButton.layer, alpha: 0.0)
                 alphaTransition.updateAlpha(layer: self.mediaActionButtons.micButtonBackgroundView.layer, alpha: 0.0)
                 alphaTransition.updateAlpha(layer: self.mediaActionButtons.micButtonTintMaskView.layer, alpha: 0.0)
             }
         } else {
+            ComponentTransition(alphaTransition).setAlpha(view: self.mediaActionButtons.stopButtonIcon, alpha: 0.0)
+            ComponentTransition(transition).setScale(view: self.mediaActionButtons.stopButtonIcon, scale: 0.001)
+            ComponentTransition(transition).setScale(view: self.mediaActionButtons.micButton, scale: 1.0)
+            ComponentTransition(transition).setScale(view: self.mediaActionButtons.micButtonTintMaskView, scale: 1.0)
+            
             let micAlpha: CGFloat = self.mediaActionButtons.micButton.fadeDisabled ? 0.5 : 1.0
             if !self.mediaActionButtons.micButton.alpha.isEqual(to: micAlpha) {
                 alphaTransition.updateAlpha(layer: self.mediaActionButtons.micButton.layer, alpha: micAlpha)

@@ -7234,6 +7234,13 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         return nil
     }
     
+    override public func getAuthorNameNode() -> ASDisplayNode? {
+        guard let item = self.item, item.content.firstMessage.guestChatAttribute != nil else {
+            return nil
+        }
+        return self.nameNode
+    }
+    
     public func getQuoteRect(quote: String, offset: Int?) -> CGRect? {
         for contentNode in self.contentNodes {
             if let contentNode = contentNode as? ChatMessageTextBubbleContentNode {

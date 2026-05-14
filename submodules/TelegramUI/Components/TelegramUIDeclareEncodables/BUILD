@@ -10,7 +10,7 @@ swift_library(
         "-warnings-as-errors",
     ],
     deps = [
-        "//submodules/Postbox",
+        "//submodules/TelegramCore",
         "//submodules/TemporaryCachedPeerDataManager",
         "//submodules/TelegramUIPreferences",
         "//submodules/TelegramNotices",

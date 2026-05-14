@@ -144,14 +144,14 @@ public func groupPreHistorySetupController(context: AccountContext, updatedPrese
     |> deliverOnMainQueue
     |> map { presentationData, state, view -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let defaultValue: Bool = (view.cachedData as? CachedChannelData)?.flags.contains(.preHistoryEnabled) ?? false
-        let leftNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Cancel), style: .regular, enabled: true, action: {
+        let leftNavigationButton = ItemListNavigationButton(content: .icon(.close), style: .regular, enabled: true, action: {
             dismissImpl?()
         })
         var rightNavigationButton: ItemListNavigationButton?
         if state.applyingSetting {
             rightNavigationButton = ItemListNavigationButton(content: .none, style: .activity, enabled: true, action: {})
         } else {
-            rightNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Done), style: .bold, enabled: true, action: {
+            rightNavigationButton = ItemListNavigationButton(content: .icon(.done), style: .bold, enabled: true, action: {
                 var value: Bool?
                 updateState { state in
                     var state = state

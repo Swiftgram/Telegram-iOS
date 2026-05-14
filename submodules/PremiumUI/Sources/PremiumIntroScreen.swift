@@ -1682,7 +1682,7 @@ private final class PremiumIntroScreenContentComponent: CombinedComponent {
                     jsonString += "]}}"
                     
                     if let context = screenContext.context, let data = jsonString.data(using: .utf8), let json = JSON(data: data) {
-                        addAppLogEvent(postbox: context.account.postbox, type: "premium.promo_screen_show", data: json)
+                        context.engine.accountData.addAppLogEvent(type: "premium.promo_screen_show", data: json)
                     }
                 }
             })
@@ -2260,7 +2260,7 @@ private final class PremiumIntroScreenContentComponent: CombinedComponent {
                             }
                             updateIsFocused(true)
 
-                            addAppLogEvent(postbox: accountContext.account.postbox, type: "premium.promo_screen_tap", data: ["item": perk.identifier])
+                            accountContext.engine.accountData.addAppLogEvent(type: "premium.promo_screen_tap", data: ["item": perk.identifier])
                         },
                         highlighting: accountContext != nil ? .default : .disabled
                     ))))
@@ -3262,7 +3262,7 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
             }
                         
             if let context = self.screenContext.context {
-                addAppLogEvent(postbox: context.account.postbox, type: "premium.promo_screen_accept")
+                context.engine.accountData.addAppLogEvent(type: "premium.promo_screen_accept")
             }
             
             self.inProgress = true
@@ -3316,7 +3316,7 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
                                         self.updated(transition: .immediate)
                                         
                                         if let context = self.screenContext.context {
-                                            addAppLogEvent(postbox: context.account.postbox, type: "premium.promo_screen_fail")
+                                            context.engine.accountData.addAppLogEvent(type: "premium.promo_screen_fail")
                                         }
                                         
                                         let errorText = presentationData.strings.Premium_Purchase_ErrorUnknown
@@ -3368,7 +3368,7 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
                             
                             if let errorText = errorText {
                                 if let context = self.screenContext.context {
-                                    addAppLogEvent(postbox: context.account.postbox, type: "premium.promo_screen_fail")
+                                    context.engine.accountData.addAppLogEvent(type: "premium.promo_screen_fail")
                                 }
                                 
                                 let alertController = textAlertController(sharedContext: self.screenContext.sharedContext, title: nil, text: errorText, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})])

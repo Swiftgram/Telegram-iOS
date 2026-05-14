@@ -994,6 +994,83 @@ public extension Api {
     }
 }
 public extension Api {
+    enum JoinChatBotResult: TypeConstructorDescription {
+        public class Cons_joinChatBotResultWebView: TypeConstructorDescription {
+            public var url: String
+            public init(url: String) {
+                self.url = url
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("joinChatBotResultWebView", [("url", ConstructorParameterDescription(self.url))])
+            }
+        }
+        case joinChatBotResultApproved
+        case joinChatBotResultDeclined
+        case joinChatBotResultQueued
+        case joinChatBotResultWebView(Cons_joinChatBotResultWebView)
+
+        public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
+            switch self {
+            case .joinChatBotResultApproved:
+                if boxed {
+                    buffer.appendInt32(-1374344599)
+                }
+                break
+            case .joinChatBotResultDeclined:
+                if boxed {
+                    buffer.appendInt32(251265428)
+                }
+                break
+            case .joinChatBotResultQueued:
+                if boxed {
+                    buffer.appendInt32(-1734105024)
+                }
+                break
+            case .joinChatBotResultWebView(let _data):
+                if boxed {
+                    buffer.appendInt32(-689719277)
+                }
+                serializeString(_data.url, buffer: buffer, boxed: false)
+                break
+            }
+        }
+
+        public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+            switch self {
+            case .joinChatBotResultApproved:
+                return ("joinChatBotResultApproved", [])
+            case .joinChatBotResultDeclined:
+                return ("joinChatBotResultDeclined", [])
+            case .joinChatBotResultQueued:
+                return ("joinChatBotResultQueued", [])
+            case .joinChatBotResultWebView(let _data):
+                return ("joinChatBotResultWebView", [("url", ConstructorParameterDescription(_data.url))])
+            }
+        }
+
+        public static func parse_joinChatBotResultApproved(_ reader: BufferReader) -> JoinChatBotResult? {
+            return Api.JoinChatBotResult.joinChatBotResultApproved
+        }
+        public static func parse_joinChatBotResultDeclined(_ reader: BufferReader) -> JoinChatBotResult? {
+            return Api.JoinChatBotResult.joinChatBotResultDeclined
+        }
+        public static func parse_joinChatBotResultQueued(_ reader: BufferReader) -> JoinChatBotResult? {
+            return Api.JoinChatBotResult.joinChatBotResultQueued
+        }
+        public static func parse_joinChatBotResultWebView(_ reader: BufferReader) -> JoinChatBotResult? {
+            var _1: String?
+            _1 = parseString(reader)
+            let _c1 = _1 != nil
+            if _c1 {
+                return Api.JoinChatBotResult.joinChatBotResultWebView(Cons_joinChatBotResultWebView(url: _1!))
+            }
+            else {
+                return nil
+            }
+        }
+    }
+}
+public extension Api {
     indirect enum KeyboardButton: TypeConstructorDescription {
         public class Cons_inputKeyboardButtonRequestPeer: TypeConstructorDescription {
             public var flags: Int32

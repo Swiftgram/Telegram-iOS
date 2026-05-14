@@ -200,6 +200,18 @@ public struct PresentationResourcesRootController {
         })
     }
     
+    public static func navigationBackIcon(_ theme: PresentationTheme) -> UIImage? {
+        return theme.image(PresentationResourceKey.navigationBackIcon.rawValue, { theme in
+            return generateTintedImage(image: UIImage(bundleImageName: "Navigation/Back"), color: .white)
+        })
+    }
+    
+    public static func navigationCloseIcon(_ theme: PresentationTheme) -> UIImage? {
+        return theme.image(PresentationResourceKey.navigationCloseIcon.rawValue, { theme in
+            return generateTintedImage(image: UIImage(bundleImageName: "Navigation/Close"), color: .white)
+        })
+    }
+    
     public static func callListCallIcon(_ theme: PresentationTheme) -> UIImage? {
         return theme.image(PresentationResourceKey.callListCallIcon.rawValue, { theme in
             return generateTintedImage(image: UIImage(bundleImageName: "Call List/NewCallListIcon"), color: theme.rootController.navigationBar.accentTextColor)

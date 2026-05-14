@@ -185,9 +185,6 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
     }
     
     open func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        /*if gestureRecognizer === self.recognizer && otherGestureRecognizer is InteractiveTransitionGestureRecognizer {
-            return true
-        }*/
         return false
     }
     

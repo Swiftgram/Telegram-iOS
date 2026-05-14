@@ -1,6 +1,5 @@
 import Foundation
 import UIKit
-import Postbox
 import TelegramCore
 import AccountContext
 import InstantPageUI
@@ -211,7 +210,7 @@ private final class MarkdownConversionBudget {
 
 private struct MarkdownPageResult {
     let blocks: [InstantPageBlock]
-    let media: [MediaId: Media]
+    let media: [EngineMedia.Id: EngineRawMedia]
 }
 
 private enum MarkdownFormulaMode {
@@ -315,7 +314,7 @@ private struct MarkdownInlineContent {
 }
 
 private struct MarkdownResolvedImage {
-    let mediaId: MediaId
+    let mediaId: EngineMedia.Id
     let inlineDimensions: PixelDimensions
     let caption: InstantPageCaption
     let linkUrl: String?
@@ -340,7 +339,7 @@ private final class MarkdownConversionContext {
     private var nextRemoteMediaId: Int64 = 0
     private var nextLocalMediaId: Int64 = 0
 
-    private(set) var media: [MediaId: Media] = [:]
+    private(set) var media: [EngineMedia.Id: EngineRawMedia] = [:]
 
     init(context: AccountContext, documentURL: URL, formulasByPlaceholder: [String: MarkdownFormulaDescriptor], budget: MarkdownConversionBudget) {
         self.context = context
@@ -426,14 +425,14 @@ private final class MarkdownConversionContext {
         }
     }
     
-    private func nextMediaId(namespace: Int32) -> MediaId {
+    private func nextMediaId(namespace: Int32) -> EngineMedia.Id {
         switch namespace {
         case Namespaces.Media.LocalImage:
             self.nextLocalMediaId += 1
-            return MediaId(namespace: namespace, id: self.nextLocalMediaId)
+            return EngineMedia.Id(namespace: namespace, id: self.nextLocalMediaId)
         default:
             self.nextRemoteMediaId += 1
-            return MediaId(namespace: namespace, id: self.nextRemoteMediaId)
+            return EngineMedia.Id(namespace: namespace, id: self.nextRemoteMediaId)
         }
     }
 }
@@ -1028,7 +1027,7 @@ private func markdownWebpage(context: AccountContext, file: FileMediaReference, 
     )
     
     return TelegramMediaWebpage(
-        webpageId: MediaId(namespace: 0, id: 0),
+        webpageId: EngineMedia.Id(namespace: 0, id: 0),
         content: .Loaded(
             TelegramMediaWebpageLoadedContent(
                 url: fileURL.absoluteString,

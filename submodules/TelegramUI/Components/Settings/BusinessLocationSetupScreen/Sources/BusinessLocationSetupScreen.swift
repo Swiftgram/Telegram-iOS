@@ -521,6 +521,7 @@ final class BusinessLocationSetupScreenComponent: Component {
                     items: [
                         AnyComponentWithIdentity(id: 0, component: AnyComponent(ListActionItemComponent(
                             theme: environment.theme,
+                            style: .glass,
                             title: AnyComponent(VStack([
                                 AnyComponentWithIdentity(id: AnyHashable(0), component: AnyComponent(MultilineTextComponent(
                                     text: .plain(NSAttributedString(
@@ -609,7 +610,7 @@ final class BusinessLocationSetupScreenComponent: Component {
                     if let current = self.applyButtonItem {
                         applyButtonItem = current
                     } else {
-                        applyButtonItem = UIBarButtonItem(title: environment.strings.Common_Save, style: .done, target: self, action: #selector(self.savePressed))
+                        applyButtonItem = UIBarButtonItem(title: "___done", style: .done, target: self, action: #selector(self.savePressed))
                     }
                     if controller.navigationItem.rightBarButtonItem !== applyButtonItem {
                         controller.navigationItem.setRightBarButton(applyButtonItem, animated: true)

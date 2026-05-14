@@ -162,7 +162,7 @@ private final class PeerInfoMembersContextImpl {
         self.pushState()
         
         if peerId.namespace == Namespaces.Peer.CloudChannel {
-            let (disposable, control) = context.peerChannelMemberCategoriesContextsManager.recent(engine: context.engine, postbox: context.account.postbox, network: context.account.network, accountPeerId: context.account.peerId, peerId: peerId, requestUpdate: true, updated: { [weak self] state in
+            let (disposable, control) = context.peerChannelMemberCategoriesContextsManager.recent(engine: context.engine, accountPeerId: context.account.peerId, peerId: peerId, requestUpdate: true, updated: { [weak self] state in
                 queue.async {
                     guard let strongSelf = self else {
                         return

@@ -25,6 +25,8 @@ public enum ItemListNavigationButtonContentIcon {
     case search
     case add
     case action
+    case close
+    case done
 }
 
 public enum ItemListNavigationButtonContent: Equatable {
@@ -426,16 +428,27 @@ open class ItemListController: ViewController, KeyShortcutResponder, Presentable
                                 case let .text(value):
                                     item = UIBarButtonItem(title: value, style: leftNavigationButton.style.barButtonItemStyle, target: strongSelf, action: #selector(strongSelf.leftNavigationButtonPressed))
                                 case let .icon(icon):
-                                    var image: UIImage?
-                                    switch icon {
+                                    if [.close, .done].contains(icon) {
+                                        switch icon {
+                                        case .done:
+                                            item = UIBarButtonItem(title: "___done", style: leftNavigationButton.style.barButtonItemStyle, target: strongSelf, action: #selector(strongSelf.leftNavigationButtonPressed))
+                                        default:
+                                            item = UIBarButtonItem(title: "___close", style: leftNavigationButton.style.barButtonItemStyle, target: strongSelf, action: #selector(strongSelf.leftNavigationButtonPressed))
+                                        }
+                                    } else {
+                                        var image: UIImage?
+                                        switch icon {
                                         case .search:
                                             image = PresentationResourcesRootController.navigationCompactSearchIcon(controllerState.presentationData.theme)
                                         case .add:
                                             image = PresentationResourcesRootController.navigationAddIcon(controllerState.presentationData.theme)
                                         case .action:
                                             image = PresentationResourcesRootController.navigationShareIcon(controllerState.presentationData.theme)
+                                        default:
+                                            image = nil
+                                        }
+                                        item = UIBarButtonItem(image: image, style: leftNavigationButton.style.barButtonItemStyle, target: strongSelf, action: #selector(strongSelf.leftNavigationButtonPressed))
                                     }
-                                    item = UIBarButtonItem(image: image, style: leftNavigationButton.style.barButtonItemStyle, target: strongSelf, action: #selector(strongSelf.leftNavigationButtonPressed))
                                 case let .node(node):
                                     item = UIBarButtonItem(customDisplayNode: node)
                                     item.setCustomAction({ [weak self] in
@@ -488,16 +501,27 @@ open class ItemListController: ViewController, KeyShortcutResponder, Presentable
                                     case let .text(value):
                                         item = UIBarButtonItem(title: value, style: style.barButtonItemStyle, target: strongSelf, action: action)
                                     case let .icon(icon):
-                                        var image: UIImage?
-                                        switch icon {
+                                        if [.close, .done].contains(icon) {
+                                            switch icon {
+                                            case .done:
+                                                item = UIBarButtonItem(title: "___done", style: style.barButtonItemStyle, target: strongSelf, action: action)
+                                            default:
+                                                item = UIBarButtonItem(title: "___close", style: style.barButtonItemStyle, target: strongSelf, action: action)
+                                            }
+                                        } else {
+                                            var image: UIImage?
+                                            switch icon {
                                             case .search:
                                                 image = PresentationResourcesRootController.navigationCompactSearchIcon(controllerState.presentationData.theme)
                                             case .add:
                                                 image = PresentationResourcesRootController.navigationAddIcon(controllerState.presentationData.theme)
                                             case .action:
                                                 image = PresentationResourcesRootController.navigationShareIcon(controllerState.presentationData.theme)
+                                            default:
+                                                image = nil
+                                            }
+                                            item = UIBarButtonItem(image: image, style: style.barButtonItemStyle, target: strongSelf, action: action)
                                         }
-                                        item = UIBarButtonItem(image: image, style: style.barButtonItemStyle, target: strongSelf, action: action)
                                     case let .node(node):
                                         item = UIBarButtonItem(customDisplayNode: node)
                                         item.setCustomAction({ [weak self] in
