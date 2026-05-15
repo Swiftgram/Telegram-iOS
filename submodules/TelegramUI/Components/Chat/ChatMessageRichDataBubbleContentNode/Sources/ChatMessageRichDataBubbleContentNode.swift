@@ -463,7 +463,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                             let pageView = self.ensurePageView()
                             pageView.update(layout: pageLayout, theme: pageTheme, animation: animation)
                             pageView.frame = CGRect(
-                                origin: .zero,
+                                origin: CGPoint(x: -1.0, y: 0.0),
                                 size: pageLayout.contentSize
                             )
                         } else {

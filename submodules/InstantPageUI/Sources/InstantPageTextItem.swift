@@ -820,7 +820,7 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
     }
 }
 
-func layoutTextItemWithString(_ string: NSAttributedString, boundingWidth: CGFloat, horizontalInset: CGFloat = 0.0, alignment: NSTextAlignment = .natural, offset: CGPoint, media: [EngineMedia.Id: EngineMedia] = [:], webpage: TelegramMediaWebpage? = nil, minimizeWidth: Bool = false, maxNumberOfLines: Int = 0, opaqueBackground: Bool = false) -> (InstantPageTextItem?, [InstantPageItem], CGSize) {
+func layoutTextItemWithString(_ string: NSAttributedString, boundingWidth: CGFloat, horizontalInset: CGFloat = 0.0, alignment: NSTextAlignment = .natural, offset: CGPoint, media: [EngineMedia.Id: EngineMedia] = [:], webpage: TelegramMediaWebpage? = nil, minimizeWidth: Bool = false, fitToWidth: Bool = false, maxNumberOfLines: Int = 0, opaqueBackground: Bool = false) -> (InstantPageTextItem?, [InstantPageItem], CGSize) {
     if string.length == 0 {
         return (nil, [], CGSize())
     }
@@ -1091,6 +1091,9 @@ func layoutTextItemWithString(_ string: NSAttributedString, boundingWidth: CGFlo
     }
     
     var textWidth = boundingWidth
+    if fitToWidth {
+        textWidth = maxLineWidth
+    }
     var requiresScroll = false
     if (!imageItems.isEmpty || !formulaItems.isEmpty) && maxLineWidth > boundingWidth + 10.0 {
         textWidth = maxLineWidth

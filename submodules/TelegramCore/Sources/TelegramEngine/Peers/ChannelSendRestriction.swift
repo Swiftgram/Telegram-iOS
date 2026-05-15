@@ -39,7 +39,7 @@ func _internal_toggleChannelJoinRequest(postbox: Postbox, network: Network, acco
         guard let peer = peer, let inputChannel = apiInputChannel(peer) else {
             return .fail(.generic)
         }
-        return network.request(Api.functions.channels.toggleJoinRequest(channel: inputChannel, enabled: enabled ? .boolTrue : .boolFalse))
+        return network.request(Api.functions.channels.toggleJoinRequest(flags: 0, channel: inputChannel, enabled: enabled ? .boolTrue : .boolFalse, guardBot: nil))
         |> `catch` { _ -> Signal<Api.Updates, UpdateChannelJoinRequestError> in
             return .fail(.generic)
         }

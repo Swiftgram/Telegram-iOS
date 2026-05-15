@@ -848,7 +848,7 @@ extension StoreMessage {
     convenience init?(apiMessage: Api.Message, accountPeerId: PeerId, peerIsForum: Bool, namespace: MessageId.Namespace = Namespaces.Message.Cloud) {
         switch apiMessage {
             case let .message(messageData):
-            let (flags, flags2, id, fromId, boosts, rank, chatPeerId, savedPeerId, fwdFrom, viaBotId, viaBusinessBotId, guestChatViaFrom, replyTo, date, message, media, replyMarkup, entities, views, forwards, replies, editDate, postAuthor, groupingId, reactions, restrictionReason, ttlPeriod, quickReplyShortcutId, messageEffectId, factCheck, reportDeliveryUntilDate, paidMessageStars, suggestedPost, scheduledRepeatPeriod, summaryFromLanguage) = (messageData.flags, messageData.flags2, messageData.id, messageData.fromId, messageData.fromBoostsApplied, messageData.fromRank, messageData.peerId, messageData.savedPeerId, messageData.fwdFrom, messageData.viaBotId, messageData.viaBusinessBotId, messageData.guestchatViaFrom, messageData.replyTo, messageData.date, messageData.message, messageData.media, messageData.replyMarkup, messageData.entities, messageData.views, messageData.forwards, messageData.replies, messageData.editDate, messageData.postAuthor, messageData.groupedId, messageData.reactions, messageData.restrictionReason, messageData.ttlPeriod, messageData.quickReplyShortcutId, messageData.effect, messageData.factcheck, messageData.reportDeliveryUntilDate, messageData.paidMessageStars, messageData.suggestedPost, messageData.scheduleRepeatPeriod, messageData.summaryFromLanguage)
+                let (flags, flags2, id, fromId, boosts, rank, chatPeerId, savedPeerId, fwdFrom, viaBotId, viaBusinessBotId, guestChatViaFrom, replyTo, date, message, media, replyMarkup, entities, views, forwards, replies, editDate, postAuthor, groupingId, reactions, restrictionReason, ttlPeriod, quickReplyShortcutId, messageEffectId, factCheck, reportDeliveryUntilDate, paidMessageStars, suggestedPost, scheduledRepeatPeriod, summaryFromLanguage) = (messageData.flags, messageData.flags2, messageData.id, messageData.fromId, messageData.fromBoostsApplied, messageData.fromRank, messageData.peerId, messageData.savedPeerId, messageData.fwdFrom, messageData.viaBotId, messageData.viaBusinessBotId, messageData.guestchatViaFrom, messageData.replyTo, messageData.date, messageData.message, messageData.media, messageData.replyMarkup, messageData.entities, messageData.views, messageData.forwards, messageData.replies, messageData.editDate, messageData.postAuthor, messageData.groupedId, messageData.reactions, messageData.restrictionReason, messageData.ttlPeriod, messageData.quickReplyShortcutId, messageData.effect, messageData.factcheck, messageData.reportDeliveryUntilDate, messageData.paidMessageStars, messageData.suggestedPost, messageData.scheduleRepeatPeriod, messageData.summaryFromLanguage)
                 var attributes: [MessageAttribute] = []
 
                 if (flags2 & (1 << 4)) != 0 {
@@ -1133,7 +1133,7 @@ extension StoreMessage {
                 }
             
                 var entitiesAttribute: TextEntitiesMessageAttribute?
-                if let entities = entities, !entities.isEmpty {
+                if let entities, !entities.isEmpty {
                     let attribute = TextEntitiesMessageAttribute(entities: messageTextEntitiesFromApiEntities(entities))
                     entitiesAttribute = attribute
                     attributes.append(attribute)
@@ -1154,6 +1154,10 @@ extension StoreMessage {
                         entitiesAttribute = attribute
                         attributes.append(attribute)
                     }
+                }
+            
+                if let richMessage = messageData.richMessage {
+                    attributes.append(RichTextMessageAttribute(apiRichMessage: richMessage))
                 }
                 
                 if (flags & (1 << 19)) != 0 {

@@ -333,7 +333,7 @@ private enum MarkdownTaskListState {
 
 private final class MarkdownConversionContext {
     private let context: AccountContext
-    fileprivate let documentURL: URL
+    fileprivate let documentURL: URL?
     fileprivate let formulasByPlaceholder: [String: MarkdownFormulaDescriptor]
     fileprivate let budget: MarkdownConversionBudget
     private var nextRemoteMediaId: Int64 = 0
@@ -341,7 +341,7 @@ private final class MarkdownConversionContext {
 
     private(set) var media: [EngineMedia.Id: EngineRawMedia] = [:]
 
-    init(context: AccountContext, documentURL: URL, formulasByPlaceholder: [String: MarkdownFormulaDescriptor], budget: MarkdownConversionBudget) {
+    init(context: AccountContext, documentURL: URL?, formulasByPlaceholder: [String: MarkdownFormulaDescriptor], budget: MarkdownConversionBudget) {
         self.context = context
         self.documentURL = documentURL
         self.formulasByPlaceholder = formulasByPlaceholder
@@ -977,14 +977,27 @@ func markdownWebpage(context: AccountContext, file: FileMediaReference) -> (webP
     guard let data = try? Data(contentsOf: fileURL) else {
         return nil
     }
-    guard let webPage = markdownWebpage(context: context, file: file, fileURL: fileURL, data: data) else {
+    guard let webPage = markdownWebpage(context: context, file: (file, fileURL), data: data) else {
         return nil
     }
     return (webPage, fileURL)
 }
 
+public func inputRichTextAttributeFromText(context: AccountContext, text: String) -> RichTextMessageAttribute? {
+    guard #available(iOS 15.0, *) else {
+        return nil
+    }
+    guard let data = text.data(using: .utf8) else {
+        return nil
+    }
+    guard let webpage = markdownWebpage(context: context, file: nil, data: data), case let .Loaded(content) = webpage.content, let instantPage = content.instantPage else {
+        return nil
+    }
+    return RichTextMessageAttribute(instantPage: instantPage._parse())
+}
+
 @available(iOS 15.0, *)
-private func markdownWebpage(context: AccountContext, file: FileMediaReference, fileURL: URL, data: Data) -> TelegramMediaWebpage? {
+private func markdownWebpage(context: AccountContext, file: (file: FileMediaReference, url: URL)?, data: Data) -> TelegramMediaWebpage? {
     let limits = markdownSafetyLimits
     guard markdownPassesPreflight(data: data, limits: limits) else {
         return nil
@@ -996,17 +1009,23 @@ private func markdownWebpage(context: AccountContext, file: FileMediaReference, 
 
     let attributedString: NSAttributedString
     do {
+        let baseURL: URL?
+        if let file {
+            baseURL = file.url.deletingLastPathComponent()
+        } else {
+            baseURL = nil
+        }
         attributedString = try NSAttributedString(
             markdown: Data(preparedSource.text.utf8),
             options: .init(),
-            baseURL: fileURL.deletingLastPathComponent()
+            baseURL: baseURL
         )
     } catch {
         return nil
     }
     
     let budget = MarkdownConversionBudget(limits: limits)
-    let conversionContext = MarkdownConversionContext(context: context, documentURL: fileURL, formulasByPlaceholder: preparedSource.formulasByPlaceholder, budget: budget)
+    let conversionContext = MarkdownConversionContext(context: context, documentURL: file?.url, formulasByPlaceholder: preparedSource.formulasByPlaceholder, budget: budget)
     guard let pageResult = markdownPageResult(from: attributedString, context: conversionContext) else {
         return nil
     }
@@ -1015,14 +1034,17 @@ private func markdownWebpage(context: AccountContext, file: FileMediaReference, 
         return nil
     }
     
-    let title = markdownTitle(from: blocks, file: file, fileURL: fileURL)
+    var title: String?
+    if let file {
+        title = markdownTitle(from: blocks, file: file.file, fileURL: file.url)
+    }
     let text = markdownFirstParagraphText(from: blocks)
     let instantPage = InstantPage(
         blocks: blocks,
         media: pageResult.media,
         isComplete: true,
         rtl: false,
-        url: fileURL.absoluteString,
+        url: file?.url.absoluteString ?? "",
         views: nil
     )
     
@@ -1030,8 +1052,8 @@ private func markdownWebpage(context: AccountContext, file: FileMediaReference, 
         webpageId: EngineMedia.Id(namespace: 0, id: 0),
         content: .Loaded(
             TelegramMediaWebpageLoadedContent(
-                url: fileURL.absoluteString,
-                displayUrl: fileURL.absoluteString,
+                url: file?.url.absoluteString ?? "",
+                displayUrl: file?.url.absoluteString ?? "",
                 hash: 0,
                 type: "article",
                 websiteName: nil,
@@ -1764,7 +1786,7 @@ private func markdownInlineImageDimensions(attributes: [NSAttributedString.Key: 
     return PixelDimensions(width: side, height: side)
 }
 
-private func markdownLink(attributes: [NSAttributedString.Key: Any], documentURL: URL) -> String? {
+private func markdownLink(attributes: [NSAttributedString.Key: Any], documentURL: URL?) -> String? {
     if let value = attributes[markdownLinkAttribute] as? URL {
         return markdownNormalizedLink(value, documentURL: documentURL)
     }
@@ -1783,14 +1805,14 @@ private func markdownLink(attributes: [NSAttributedString.Key: Any], documentURL
     return nil
 }
 
-private func markdownNormalizedLink(_ url: URL, documentURL: URL) -> String {
+private func markdownNormalizedLink(_ url: URL, documentURL: URL?) -> String {
     if url.baseURL != nil {
         let relative = url.relativeString
         if relative.hasPrefix("#") {
             return relative
         }
     }
-    if let fragment = url.fragment, markdownMatchesDocument(url, documentURL: documentURL) {
+    if let documentURL, let fragment = url.fragment, markdownMatchesDocument(url, documentURL: documentURL) {
         return "#\(fragment)"
     }
     return url.absoluteString

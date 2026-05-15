@@ -18,7 +18,7 @@ func _internal_joinChannel(account: Account, peerId: PeerId, hash: String?) -> S
     |> castError(JoinChannelError.self)
     |> mapToSignal { peer -> Signal<RenderedChannelParticipant?, JoinChannelError> in
         
-        let request: Signal<Api.Updates, MTRpcError>
+        let request: Signal<Api.messages.ChatInviteJoinResult, MTRpcError>
         if let hash = hash {
             request = account.network.request(Api.functions.messages.importChatInvite(hash: hash))
         } else if let inputChannel = apiInputChannel(peer) {
@@ -40,54 +40,57 @@ func _internal_joinChannel(account: Account, peerId: PeerId, hash: String?) -> S
                     return .generic
             }
         }
-        |> mapToSignal { updates -> Signal<RenderedChannelParticipant?, JoinChannelError> in
-            account.stateManager.addUpdates(updates)
-            
-            let channels = updates.chats.compactMap { parseTelegramGroupOrChannel(chat: $0) }.compactMap(apiInputChannel)
-            
-            if let inputChannel = channels.first {
-                return account.network.request(Api.functions.channels.getParticipant(channel: inputChannel, participant: .inputPeerSelf))
-                |> map(Optional.init)
-                |> `catch` { _ -> Signal<Api.channels.ChannelParticipant?, JoinChannelError> in
-                    return .single(nil)
-                }
-                |> mapToSignal { result -> Signal<RenderedChannelParticipant?, JoinChannelError> in
-                    guard let result = result else {
-                        return .fail(.generic)
+        |> mapToSignal { result -> Signal<RenderedChannelParticipant?, JoinChannelError> in
+            switch result {
+            case let .chatInviteJoinResultOk(result):
+                account.stateManager.addUpdates(result.updates)
+                
+                let channels = result.updates.chats.compactMap { parseTelegramGroupOrChannel(chat: $0) }.compactMap(apiInputChannel)
+                
+                if let inputChannel = channels.first {
+                    return account.network.request(Api.functions.channels.getParticipant(channel: inputChannel, participant: .inputPeerSelf))
+                    |> map(Optional.init)
+                    |> `catch` { _ -> Signal<Api.channels.ChannelParticipant?, JoinChannelError> in
+                        return .single(nil)
                     }
-                    return account.postbox.transaction { transaction -> RenderedChannelParticipant? in
-                        var peers: [EnginePeer.Id: EnginePeer] = [:]
-                        var presences: [PeerId: PeerPresence] = [:]
-                        guard let peer = transaction.getPeer(account.peerId) else {
-                            return nil
+                    |> mapToSignal { result -> Signal<RenderedChannelParticipant?, JoinChannelError> in
+                        guard let result = result else {
+                            return .fail(.generic)
                         }
-                        peers[account.peerId] = EnginePeer(peer)
-                        if let presence = transaction.getPeerPresence(peerId: account.peerId) {
-                            presences[account.peerId] = presence
-                        }
-                        let updatedParticipant: ChannelParticipant
-                        switch result {
-                            case let .channelParticipant(channelParticipantData):
-                                let participant = channelParticipantData.participant
-                                updatedParticipant = ChannelParticipant(apiParticipant: participant)
-                        }
-                        if case let .member(_, _, maybeAdminInfo, _, _, _) = updatedParticipant {
-                            if let adminInfo = maybeAdminInfo {
-                                if let peer = transaction.getPeer(adminInfo.promotedBy) {
-                                    peers[peer.id] = EnginePeer(peer)
+                        return account.postbox.transaction { transaction -> RenderedChannelParticipant? in
+                            var peers: [EnginePeer.Id: EnginePeer] = [:]
+                            var presences: [PeerId: PeerPresence] = [:]
+                            guard let peer = transaction.getPeer(account.peerId) else {
+                                return nil
+                            }
+                            peers[account.peerId] = EnginePeer(peer)
+                            if let presence = transaction.getPeerPresence(peerId: account.peerId) {
+                                presences[account.peerId] = presence
+                            }
+                            let updatedParticipant: ChannelParticipant
+                            switch result {
+                                case let .channelParticipant(channelParticipantData):
+                                    let participant = channelParticipantData.participant
+                                    updatedParticipant = ChannelParticipant(apiParticipant: participant)
+                            }
+                            if case let .member(_, _, maybeAdminInfo, _, _, _) = updatedParticipant {
+                                if let adminInfo = maybeAdminInfo {
+                                    if let peer = transaction.getPeer(adminInfo.promotedBy) {
+                                        peers[peer.id] = EnginePeer(peer)
+                                    }
                                 }
                             }
+                            
+                            return RenderedChannelParticipant(participant: updatedParticipant, peer: EnginePeer(peer), peers: peers, presences: presences)
                         }
-                        
-                        return RenderedChannelParticipant(participant: updatedParticipant, peer: EnginePeer(peer), peers: peers, presences: presences)
+                        |> castError(JoinChannelError.self)
                     }
-                    |> castError(JoinChannelError.self)
+                } else {
+                    return .fail(.generic)
                 }
-            } else {
+            case .chatInviteJoinResultWebView:
                 return .fail(.generic)
             }
-            
-            
         }
         |> afterCompleted {
             if hash == nil {

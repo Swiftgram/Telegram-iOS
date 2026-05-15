@@ -383,16 +383,24 @@ private func contentNodeMessagesAndClassesForItem(_ item: ChatMessageItem) -> ([
                     if let attribute = message.attributes.first(where: { $0 is WebpagePreviewMessageAttribute }) as? WebpagePreviewMessageAttribute, attribute.leadingPreview {
                         result.insert((message, ChatMessageWebpageBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)), at: addedPriceInfo ? 1 : 0)
                     } else {
-                        if content.instantPage != nil && item.context.sharedContext.immediateExperimentalUISettings.debugRichText {
-                            result.append((message, ChatMessageRichDataBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)))
-                        } else {
-                            result.append((message, ChatMessageWebpageBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)))
-                        }
+                        result.append((message, ChatMessageWebpageBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)))
                     }
                     needReactions = false
                 }
                 break inner
             }
+        }
+        
+        var richText: RichTextMessageAttribute?
+        for attribute in item.message.attributes {
+            if let attribute = attribute as? RichTextMessageAttribute {
+                richText = attribute
+                break
+            }
+        }
+        
+        if richText != nil {
+            result.append((message, ChatMessageRichDataBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)))
         }
         
         if message.adAttribute != nil {
@@ -1627,9 +1635,12 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         let chatLocationPeerId: PeerId = item.chatLocation.peerId ?? item.content.firstMessage.id.peerId
         
         var isInlinePage = false
-        if item.context.sharedContext.immediateExperimentalUISettings.debugRichText, let webpage = item.message.media.first(where: { $0 is TelegramMediaWebpage }) as? TelegramMediaWebpage, case let .Loaded(content) = webpage.content, content.instantPage != nil {
-            allowFullWidth = true
-            isInlinePage = true
+        for attribute in item.message.attributes {
+            if attribute is RichTextMessageAttribute {
+                allowFullWidth = true
+                isInlinePage = true
+                break
+            }
         }
                 
         do {

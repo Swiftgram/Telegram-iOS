@@ -2257,6 +2257,7 @@ extension ChatControllerImpl {
                         text: "",
                         media: .update(.standalone(media: todo)),
                         entities: nil,
+                        richText: nil,
                         inlineStickers: [:]
                     ).start()
                 } else {

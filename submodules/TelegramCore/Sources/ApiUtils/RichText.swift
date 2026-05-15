@@ -6,53 +6,102 @@ import TelegramApi
 extension RichText {
     init(apiText: Api.RichText) {
         switch apiText {
-            case .textEmpty:
-                self = .empty
-            case let .textPlain(textPlainData):
-                let text = textPlainData.text
-                self = .plain(text)
-            case let .textBold(textBoldData):
-                let text = textBoldData.text
-                self = .bold(RichText(apiText: text))
-            case let .textItalic(textItalicData):
-                let text = textItalicData.text
-                self = .italic(RichText(apiText: text))
-            case let .textUnderline(textUnderlineData):
-                let text = textUnderlineData.text
-                self = .underline(RichText(apiText: text))
-            case let .textStrike(textStrikeData):
-                let text = textStrikeData.text
-                self = .strikethrough(RichText(apiText: text))
-            case let .textFixed(textFixedData):
-                let text = textFixedData.text
-                self = .fixed(RichText(apiText: text))
-            case let .textUrl(textUrlData):
-                let (text, url, webpageId) = (textUrlData.text, textUrlData.url, textUrlData.webpageId)
-                self = .url(text: RichText(apiText: text), url: url, webpageId: webpageId == 0 ? nil : MediaId(namespace: Namespaces.Media.CloudWebpage, id: webpageId))
-            case let .textEmail(textEmailData):
-                let (text, email) = (textEmailData.text, textEmailData.email)
-                self = .email(text: RichText(apiText: text), email: email)
-            case let .textConcat(textConcatData):
-                let texts = textConcatData.texts
-                self = .concat(texts.map({ RichText(apiText: $0) }))
-            case let .textSubscript(textSubscriptData):
-                let text = textSubscriptData.text
-                self = .subscript(RichText(apiText: text))
-            case let .textSuperscript(textSuperscriptData):
-                let text = textSuperscriptData.text
-                self = .superscript(RichText(apiText: text))
-            case let .textMarked(textMarkedData):
-                let text = textMarkedData.text
-                self = .marked(RichText(apiText: text))
-            case let .textPhone(textPhoneData):
-                let (text, phone) = (textPhoneData.text, textPhoneData.phone)
-                self = .phone(text: RichText(apiText: text), phone: phone)
-            case let .textImage(textImageData):
-                let (documentId, w, h) = (textImageData.documentId, textImageData.w, textImageData.h)
-                self = .image(id: MediaId(namespace: Namespaces.Media.CloudFile, id: documentId), dimensions: PixelDimensions(width: w, height: h))
-            case let .textAnchor(textAnchorData):
-                let (text, name) = (textAnchorData.text, textAnchorData.name)
-                self = .anchor(text: RichText(apiText: text), name: name)
+        case .textEmpty:
+            self = .empty
+        case let .textPlain(textPlainData):
+            let text = textPlainData.text
+            self = .plain(text)
+        case let .textBold(textBoldData):
+            let text = textBoldData.text
+            self = .bold(RichText(apiText: text))
+        case let .textItalic(textItalicData):
+            let text = textItalicData.text
+            self = .italic(RichText(apiText: text))
+        case let .textUnderline(textUnderlineData):
+            let text = textUnderlineData.text
+            self = .underline(RichText(apiText: text))
+        case let .textStrike(textStrikeData):
+            let text = textStrikeData.text
+            self = .strikethrough(RichText(apiText: text))
+        case let .textFixed(textFixedData):
+            let text = textFixedData.text
+            self = .fixed(RichText(apiText: text))
+        case let .textUrl(textUrlData):
+            let (text, url, webpageId) = (textUrlData.text, textUrlData.url, textUrlData.webpageId)
+            self = .url(text: RichText(apiText: text), url: url, webpageId: webpageId == 0 ? nil : MediaId(namespace: Namespaces.Media.CloudWebpage, id: webpageId))
+        case let .textEmail(textEmailData):
+            let (text, email) = (textEmailData.text, textEmailData.email)
+            self = .email(text: RichText(apiText: text), email: email)
+        case let .textConcat(textConcatData):
+            let texts = textConcatData.texts
+            self = .concat(texts.map({ RichText(apiText: $0) }))
+        case let .textSubscript(textSubscriptData):
+            let text = textSubscriptData.text
+            self = .subscript(RichText(apiText: text))
+        case let .textSuperscript(textSuperscriptData):
+            let text = textSuperscriptData.text
+            self = .superscript(RichText(apiText: text))
+        case let .textMarked(textMarkedData):
+            let text = textMarkedData.text
+            self = .marked(RichText(apiText: text))
+        case let .textPhone(textPhoneData):
+            let (text, phone) = (textPhoneData.text, textPhoneData.phone)
+            self = .phone(text: RichText(apiText: text), phone: phone)
+        case let .textImage(textImageData):
+            let (documentId, w, h) = (textImageData.documentId, textImageData.w, textImageData.h)
+            self = .image(id: MediaId(namespace: Namespaces.Media.CloudFile, id: documentId), dimensions: PixelDimensions(width: w, height: h))
+        case let .textAnchor(textAnchorData):
+            let (text, name) = (textAnchorData.text, textAnchorData.name)
+            self = .anchor(text: RichText(apiText: text), name: name)
+        case .inputTextImage:
+            self = .plain("")
+        case .textCustomEmoji:
+            //TODO:localize
+            self = .plain("")
+        case let .textMath(textMath):
+            self = .formula(latex: textMath.source)
+        }
+    }
+    
+    func apiRichText() -> Api.RichText {
+        switch self {
+        case .empty:
+            return .textPlain(Api.RichText.Cons_textPlain(text: ""))
+        case let .plain(value):
+            return .textPlain(Api.RichText.Cons_textPlain(text: value))
+        case let .bold(value):
+            return .textBold(Api.RichText.Cons_textBold(text: value.apiRichText()))
+        case let .italic(value):
+            return .textItalic(Api.RichText.Cons_textItalic(text: value.apiRichText()))
+        case let .underline(value):
+            return .textUnderline(Api.RichText.Cons_textUnderline(text: value.apiRichText()))
+        case let .strikethrough(value):
+            return .textStrike(Api.RichText.Cons_textStrike(text: value.apiRichText()))
+        case let .fixed(value):
+            return .textFixed(Api.RichText.Cons_textFixed(text: value.apiRichText()))
+        case let .url(text, url, webpageId):
+            return .textUrl(Api.RichText.Cons_textUrl(text: text.apiRichText(), url: url, webpageId: webpageId?.id ?? 0))
+        case let .email(text, email):
+            return .textEmail(Api.RichText.Cons_textEmail(text: text.apiRichText(), email: email))
+        case let .concat(values):
+            return .textConcat(Api.RichText.Cons_textConcat(texts: values.map { $0.apiRichText() }))
+        case let .`subscript`(value):
+            return .textSubscript(Api.RichText.Cons_textSubscript(text: value.apiRichText()))
+        case let .superscript(value):
+            return .textSuperscript(Api.RichText.Cons_textSuperscript(text: value.apiRichText()))
+        case let .marked(value):
+            return .textMarked(Api.RichText.Cons_textMarked(text: value.apiRichText()))
+        case let .phone(text, phone):
+            return .textPhone(Api.RichText.Cons_textPhone(text: text.apiRichText(), phone: phone))
+        case let .image(id, dimensions):
+            //TODO:localize
+            let _ = id
+            assertionFailure()
+            return .inputTextImage(Api.RichText.Cons_inputTextImage(document: .inputDocumentEmpty, w: dimensions.width, h: dimensions.height))
+        case let .anchor(text, name):
+            return .textAnchor(Api.RichText.Cons_textAnchor(text: text.apiRichText(), name: name))
+        case let .formula(latex):
+            return .textMath(Api.RichText.Cons_textMath(source: latex))
         }
     }
 }

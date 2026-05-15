@@ -80,21 +80,26 @@ func _internal_joinChatInteractively(with hash: String, account: Account) -> Sig
                 }
         }
     }
-    |> mapToSignal { updates -> Signal<PeerId?, JoinLinkError> in
-        account.stateManager.addUpdates(updates)
-        if let peerId = apiUpdatesGroups(updates).first?.peerId {
-            return account.postbox.multiplePeersView([peerId])
-            |> castError(JoinLinkError.self)
-            |> filter { view in
-                return view.peers[peerId] != nil
+    |> mapToSignal { result -> Signal<PeerId?, JoinLinkError> in
+        switch result {
+        case let .chatInviteJoinResultOk(result):
+            account.stateManager.addUpdates(result.updates)
+            if let peerId = apiUpdatesGroups(result.updates).first?.peerId {
+                return account.postbox.multiplePeersView([peerId])
+                |> castError(JoinLinkError.self)
+                |> filter { view in
+                    return view.peers[peerId] != nil
+                }
+                |> take(1)
+                |> map { _ in
+                    return peerId
+                }
+                |> timeout(5.0, queue: Queue.concurrentDefaultQueue(), alternate: .single(nil) |> castError(JoinLinkError.self))
             }
-            |> take(1)
-            |> map { _ in
-                return peerId
-            }
-            |> timeout(5.0, queue: Queue.concurrentDefaultQueue(), alternate: .single(nil) |> castError(JoinLinkError.self))
+            return .single(nil)
+        case .chatInviteJoinResultWebView:
+            return .fail(.generic)
         }
-        return .single(nil)
     }
 }
 

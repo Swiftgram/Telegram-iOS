@@ -72,6 +72,9 @@ public final class EngineMessage: Equatable {
     public var text: String {
         return self.impl.text
     }
+    public var richText: RichTextMessageAttribute? {
+        return self.impl.richText
+    }
     public var attributes: [Attribute] {
         return self.impl.attributes
     }
