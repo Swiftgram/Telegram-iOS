@@ -230,17 +230,9 @@ public func storageUsageExceptionsScreen(
         return cacheSettings
     })
     
-    let viewKey: PostboxViewKey = .preferences(keys: Set([PreferencesKeys.accountSpecificCacheStorageSettings]))
-    let accountSpecificSettings: Signal<AccountSpecificCacheStorageSettings, NoError> = context.account.postbox.combinedView(keys: [viewKey])
-    |> map { views -> AccountSpecificCacheStorageSettings in
-        let cacheSettings: AccountSpecificCacheStorageSettings
-        if let view = views.views[viewKey] as? PreferencesView, let value = view.values[PreferencesKeys.accountSpecificCacheStorageSettings]?.get(AccountSpecificCacheStorageSettings.self) {
-            cacheSettings = value
-        } else {
-            cacheSettings = AccountSpecificCacheStorageSettings.defaultSettings
-        }
-
-        return cacheSettings
+    let accountSpecificSettings: Signal<AccountSpecificCacheStorageSettings, NoError> = context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.accountSpecificCacheStorageSettings))
+    |> map { entry -> AccountSpecificCacheStorageSettings in
+        return entry?.get(AccountSpecificCacheStorageSettings.self) ?? AccountSpecificCacheStorageSettings.defaultSettings
     }
     |> distinctUntilChanged
     

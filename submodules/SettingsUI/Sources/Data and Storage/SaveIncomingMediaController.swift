@@ -514,13 +514,9 @@ public func saveIncomingMediaController(context: AccountContext, scope: SaveInco
             controller.peerSelected = { [weak controller] peer, _ in
                 let peerId = peer.id
                 
-                let preferencesKey: EngineRawPostboxViewKey = .preferences(keys: Set([ApplicationSpecificPreferencesKeys.mediaAutoSaveSettings]))
-                let preferences = context.account.postbox.combinedView(keys: [preferencesKey])
-                |> map { views -> MediaAutoSaveSettings in
-                    guard let view = views.views[preferencesKey] as? EngineRawPreferencesView else {
-                        return .default
-                    }
-                    return view.values[ApplicationSpecificPreferencesKeys.mediaAutoSaveSettings]?.get(MediaAutoSaveSettings.self) ?? MediaAutoSaveSettings.default
+                let preferences = context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: ApplicationSpecificPreferencesKeys.mediaAutoSaveSettings))
+                |> map { entry -> MediaAutoSaveSettings in
+                    return entry?.get(MediaAutoSaveSettings.self) ?? MediaAutoSaveSettings.default
                 }
                 
                 let _ = (preferences
@@ -621,13 +617,9 @@ public func saveIncomingMediaController(context: AccountContext, scope: SaveInco
         }
     )
     
-    let preferencesKey: EngineRawPostboxViewKey = .preferences(keys: Set([ApplicationSpecificPreferencesKeys.mediaAutoSaveSettings]))
-    let preferences = context.account.postbox.combinedView(keys: [preferencesKey])
-    |> map { views -> MediaAutoSaveSettings in
-        guard let view = views.views[preferencesKey] as? EngineRawPreferencesView else {
-            return .default
-        }
-        return view.values[ApplicationSpecificPreferencesKeys.mediaAutoSaveSettings]?.get(MediaAutoSaveSettings.self) ?? MediaAutoSaveSettings.default
+    let preferences = context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: ApplicationSpecificPreferencesKeys.mediaAutoSaveSettings))
+    |> map { entry -> MediaAutoSaveSettings in
+        return entry?.get(MediaAutoSaveSettings.self) ?? MediaAutoSaveSettings.default
     }
     
     let peer: Signal<(EnginePeer?, EnginePeer.Presence?), NoError>

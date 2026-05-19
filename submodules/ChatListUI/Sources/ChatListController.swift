@@ -1401,12 +1401,11 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                 }
                 
                 let _ = (combineLatest(queue: .mainQueue(),
-                    self.context.account.postbox.combinedView(keys: [.cachedPeerData(peerId: peer.id)])
-                    |> take(1),
+                    self.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.CachedData(id: peer.id)),
                     forumSourcePeer
                 )
-                |> deliverOnMainQueue).start(next: { [weak self] combinedView, forumSourcePeer in
-                    guard let self, let cachedDataView = combinedView.views[.cachedPeerData(peerId: peer.id)] as? CachedPeerDataView else {
+                |> deliverOnMainQueue).start(next: { [weak self] cachedPeerData, forumSourcePeer in
+                    guard let self else {
                         return
                     }
                     guard let navigationController = self.navigationController as? NavigationController else {
@@ -1432,7 +1431,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                     } else if case let .channel(channel) = peer, channel.flags.contains(.displayForumAsTabs) {
                         openAsInlineForum = false
                     } else {
-                        if let cachedData = cachedDataView.cachedPeerData as? CachedChannelData, case let .known(viewForumAsMessages) = cachedData.viewForumAsMessages, viewForumAsMessages {
+                        if let cachedData = cachedPeerData as? CachedChannelData, case let .known(viewForumAsMessages) = cachedData.viewForumAsMessages, viewForumAsMessages {
                             openAsInlineForum = false
                         }
                     }

@@ -652,16 +652,9 @@ extension ChatControllerImpl {
                 
                 let threadInfo: Signal<EngineMessageHistoryThread.Info?, NoError>
                 if let threadId = chatLocation.threadId {
-                    let viewKey: PostboxViewKey = .messageHistoryThreadInfo(peerId: peerId, threadId: threadId)
-                    threadInfo = context.account.postbox.combinedView(keys: [viewKey])
-                    |> map { views -> EngineMessageHistoryThread.Info? in
-                        guard let view = views.views[viewKey] as? MessageHistoryThreadInfoView else {
-                            return nil
-                        }
-                        guard let data = view.info?.data.get(MessageHistoryThreadData.self) else {
-                            return nil
-                        }
-                        return data.info
+                    threadInfo = context.engine.data.subscribe(TelegramEngine.EngineData.Item.Messages.ThreadInfo(peerId: peerId, threadId: threadId))
+                    |> map { threadData -> EngineMessageHistoryThread.Info? in
+                        return threadData?.info
                     }
                     |> distinctUntilChanged
                 } else {
@@ -1244,26 +1237,24 @@ extension ChatControllerImpl {
                     guard let replyThreadId = replyThreadId else {
                         return .single((message, nil, 0))
                     }
-                    let viewKey: PostboxViewKey = .messageHistoryThreadInfo(peerId: peerId, threadId: replyThreadId)
-                    let countViewKey: PostboxViewKey = .historyTagSummaryView(tag: MessageTags(), peerId: peerId, threadId: replyThreadId, namespace: Namespaces.Message.Cloud, customTag: nil)
-                    let localCountViewKey: PostboxViewKey = .historyTagSummaryView(tag: MessageTags(), peerId: peerId, threadId: replyThreadId, namespace: Namespaces.Message.Local, customTag: nil)
-                    return context.account.postbox.combinedView(keys: [viewKey, countViewKey, localCountViewKey])
-                    |> map { views -> (message: Message?, threadData: MessageHistoryThreadData?, messageCount: Int) in
-                        guard let view = views.views[viewKey] as? MessageHistoryThreadInfoView else {
-                            return (message, nil, 0)
-                        }
+                    return context.engine.data.subscribe(
+                        TelegramEngine.EngineData.Item.Messages.ThreadInfo(peerId: peerId, threadId: replyThreadId),
+                        TelegramEngine.EngineData.Item.Messages.MessageCount(peerId: peerId, threadId: replyThreadId, tag: MessageTags()),
+                        TelegramEngine.EngineData.Item.Messages.MessageCount(peerId: peerId, threadId: replyThreadId, tag: MessageTags(), namespace: Namespaces.Message.Local)
+                    )
+                    |> map { threadData, cloudCount, localCount -> (message: Message?, threadData: MessageHistoryThreadData?, messageCount: Int) in
                         var messageCount = 0
-                        if let summaryView = views.views[countViewKey] as? MessageHistoryTagSummaryView, let count = summaryView.count {
+                        if let count = cloudCount {
                             if replyThreadId == 1 {
-                                messageCount += Int(count)
+                                messageCount += count
                             } else {
-                                messageCount += max(Int(count) - 1, 0)
+                                messageCount += max(count - 1, 0)
                             }
                         }
-                        if let summaryView = views.views[localCountViewKey] as? MessageHistoryTagSummaryView, let count = summaryView.count {
-                            messageCount += Int(count)
+                        if let count = localCount {
+                            messageCount += count
                         }
-                        return (message, view.info?.data.get(MessageHistoryThreadData.self), messageCount)
+                        return (message, threadData, messageCount)
                     }
                 }
                 
@@ -1277,29 +1268,16 @@ extension ChatControllerImpl {
                 let savedMessagesPeer: Signal<(peer: EnginePeer?, messageCount: Int, presence: EnginePeer.Presence?, isMonoforumFeeRemoved: Bool)?, NoError>
                 if let savedMessagesPeerId {
                     let threadPeerId = savedMessagesPeerId
-                    let basicPeerKey: PostboxViewKey = .peer(peerId: threadPeerId, components: [])
-                    let countViewKey: PostboxViewKey = .historyTagSummaryView(tag: MessageTags(), peerId: peerId, threadId: savedMessagesPeerId.toInt64(), namespace: Namespaces.Message.Cloud, customTag: nil)
-                    let threadInfoKey: PostboxViewKey = .messageHistoryThreadInfo(peerId: peerId, threadId: savedMessagesPeerId.toInt64())
-                    
-                    savedMessagesPeer = context.account.postbox.combinedView(keys: [basicPeerKey, countViewKey, threadInfoKey])
-                    |> map { views -> (peer: EnginePeer?, messageCount: Int, presence: EnginePeer.Presence?, isMonoforumFeeRemoved: Bool)? in
-                        var peer: EnginePeer?
-                        var presence: EnginePeer.Presence?
-                        if let peerView = views.views[basicPeerKey] as? PeerView {
-                            peer = peerViewMainPeer(peerView).flatMap(EnginePeer.init)
-                            presence = peerView.peerPresences[threadPeerId].flatMap(EnginePeer.Presence.init)
-                        }
-                        
-                        var messageCount = 0
-                        if let summaryView = views.views[countViewKey] as? MessageHistoryTagSummaryView, let count = summaryView.count {
-                            messageCount += Int(count)
-                        }
-                        
-                        var isMonoforumFeeRemoved = false
-                        if let threadInfoView = views.views[threadInfoKey] as? MessageHistoryThreadInfoView, let threadInfo = threadInfoView.info?.data.get(MessageHistoryThreadData.self) {
-                            isMonoforumFeeRemoved = threadInfo.isMessageFeeRemoved
-                        }
-                        
+
+                    savedMessagesPeer = context.engine.data.subscribe(
+                        TelegramEngine.EngineData.Item.Peer.MainPeer(id: threadPeerId),
+                        TelegramEngine.EngineData.Item.Peer.Presence(id: threadPeerId),
+                        TelegramEngine.EngineData.Item.Messages.MessageCount(peerId: peerId, threadId: savedMessagesPeerId.toInt64(), tag: MessageTags()),
+                        TelegramEngine.EngineData.Item.Messages.ThreadInfo(peerId: peerId, threadId: savedMessagesPeerId.toInt64())
+                    )
+                    |> map { peer, presence, count, threadInfo -> (peer: EnginePeer?, messageCount: Int, presence: EnginePeer.Presence?, isMonoforumFeeRemoved: Bool)? in
+                        let messageCount = count.flatMap(Int.init) ?? 0
+                        let isMonoforumFeeRemoved = threadInfo?.isMessageFeeRemoved ?? false
                         return (peer, messageCount, presence, isMonoforumFeeRemoved)
                     }
                     |> distinctUntilChanged(isEqual: { lhs, rhs in
@@ -2134,13 +2112,9 @@ extension ChatControllerImpl {
                 let threadData: Signal<ChatPresentationInterfaceState.ThreadData?, NoError>
                 let forumTopicData: Signal<ChatPresentationInterfaceState.ThreadData?, NoError>
                 if let threadId = chatLocation.threadId {
-                    let viewKey: PostboxViewKey = .messageHistoryThreadInfo(peerId: peerId, threadId: threadId)
-                    threadData = context.account.postbox.combinedView(keys: [viewKey])
-                    |> map { views -> ChatPresentationInterfaceState.ThreadData? in
-                        guard let view = views.views[viewKey] as? MessageHistoryThreadInfoView else {
-                            return nil
-                        }
-                        guard let data = view.info?.data.get(MessageHistoryThreadData.self) else {
+                    threadData = context.engine.data.subscribe(TelegramEngine.EngineData.Item.Messages.ThreadInfo(peerId: peerId, threadId: threadId))
+                    |> map { threadData -> ChatPresentationInterfaceState.ThreadData? in
+                        guard let data = threadData else {
                             return nil
                         }
                         return ChatPresentationInterfaceState.ThreadData(title: data.info.title, icon: data.info.icon, iconColor: data.info.iconColor, isOwnedByMe: data.isOwnedByMe, isClosed: data.isClosed)
@@ -2151,13 +2125,9 @@ extension ChatControllerImpl {
                     forumTopicData = isForum
                     |> mapToSignal { isForum -> Signal<ChatPresentationInterfaceState.ThreadData?, NoError> in
                         if isForum {
-                            let viewKey: PostboxViewKey = .messageHistoryThreadInfo(peerId: peerId, threadId: 1)
-                            return context.account.postbox.combinedView(keys: [viewKey])
-                            |> map { views -> ChatPresentationInterfaceState.ThreadData? in
-                                guard let view = views.views[viewKey] as? MessageHistoryThreadInfoView else {
-                                    return nil
-                                }
-                                guard let data = view.info?.data.get(MessageHistoryThreadData.self) else {
+                            return context.engine.data.subscribe(TelegramEngine.EngineData.Item.Messages.ThreadInfo(peerId: peerId, threadId: 1))
+                            |> map { threadData -> ChatPresentationInterfaceState.ThreadData? in
+                                guard let data = threadData else {
                                     return nil
                                 }
                                 return ChatPresentationInterfaceState.ThreadData(title: data.info.title, icon: data.info.icon, iconColor: data.info.iconColor, isOwnedByMe: data.isOwnedByMe, isClosed: data.isClosed)
