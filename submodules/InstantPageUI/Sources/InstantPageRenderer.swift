@@ -1342,6 +1342,7 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
         self.scrollView.alwaysBounceVertical = false
         self.scrollView.showsHorizontalScrollIndicator = item.contentSize.width > item.frame.width
         self.scrollView.showsVerticalScrollIndicator = false
+        self.scrollView.disablesInteractiveTransitionGestureRecognizer = true
         self.addSubview(self.scrollView)
 
         self.contentView.frame = CGRect(origin: .zero, size: item.contentSize)
@@ -1677,6 +1678,7 @@ final class InstantPageV2FormulaView: UIView, InstantPageItemView {
             scroll.alwaysBounceHorizontal = false
             scroll.alwaysBounceVertical = false
             scroll.contentInsetAdjustmentBehavior = .never
+            scroll.disablesInteractiveTransitionGestureRecognizer = true
             self.addSubview(scroll)
 
             // Layers don't autoresize with their superview; host the image layer inside a UIView

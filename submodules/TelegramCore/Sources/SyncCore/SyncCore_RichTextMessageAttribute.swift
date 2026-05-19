@@ -84,7 +84,10 @@ extension RichTextMessageAttribute {
         
         return Api.InputRichMessage.inputRichMessage(Api.InputRichMessage.Cons_inputRichMessage(
             flags: flags,
-            blocks: self.instantPage.blocks.compactMap { $0.apiInputBlock() }
+            blocks: self.instantPage.blocks.compactMap { $0.apiInputBlock() },
+            photos: nil,
+            documents: nil,
+            users: nil
         ))
     }
 }

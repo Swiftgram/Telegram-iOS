@@ -19,10 +19,12 @@ public final class TextRevealController {
     public private(set) var latestLength: Int
     public private(set) var isFinalizing: Bool = false
     private var lastFrameTime: Double?
+    public var durationMultiplier: Double
 
-    public init(initialRevealedCount: Int, initialLength: Int) {
+    public init(initialRevealedCount: Int, initialLength: Int, durationMultiplier: Double = 1.0) {
         self.revealedCount = Double(initialRevealedCount)
         self.latestLength = initialLength
+        self.durationMultiplier = max(0.0001, durationMultiplier)
     }
 
     public var currentGlyphCount: Int {
@@ -80,7 +82,7 @@ public final class TextRevealController {
         }
         let smoothing = min(1.0, dt / TextRevealController.velocityTau)
         self.velocity += (targetVelocity - self.velocity) * smoothing
-        self.revealedCount = min(Double(self.latestLength), self.revealedCount + self.velocity * dt)
+        self.revealedCount = min(Double(self.latestLength), self.revealedCount + self.velocity * dt / self.durationMultiplier)
         self.lastFrameTime = now
         let isComplete = self.isFinalizing && self.revealedCount >= Double(self.latestLength)
         return (Int(self.revealedCount), isComplete)

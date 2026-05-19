@@ -9011,9 +9011,9 @@ public extension Api.functions.messages {
     }
 }
 public extension Api.functions.messages {
-    static func saveDraft(flags: Int32, replyTo: Api.InputReplyTo?, peer: Api.InputPeer, message: String, entities: [Api.MessageEntity]?, media: Api.InputMedia?, effect: Int64?, suggestedPost: Api.SuggestedPost?) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.Bool>) {
+    static func saveDraft(flags: Int32, replyTo: Api.InputReplyTo?, peer: Api.InputPeer, message: String, entities: [Api.MessageEntity]?, media: Api.InputMedia?, effect: Int64?, suggestedPost: Api.SuggestedPost?, richMessage: Api.InputRichMessage?) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.Bool>) {
         let buffer = Buffer()
-        buffer.appendInt32(1420701838)
+        buffer.appendInt32(-1391484580)
         serializeInt32(flags, buffer: buffer, boxed: false)
         if Int(flags) & Int(1 << 4) != 0 {
             replyTo!.serialize(buffer, true)
@@ -9036,7 +9036,10 @@ public extension Api.functions.messages {
         if Int(flags) & Int(1 << 8) != 0 {
             suggestedPost!.serialize(buffer, true)
         }
-        return (FunctionDescription(name: "messages.saveDraft", parameters: [("flags", ConstructorParameterDescription(flags)), ("replyTo", ConstructorParameterDescription(replyTo)), ("peer", ConstructorParameterDescription(peer)), ("message", ConstructorParameterDescription(message)), ("entities", ConstructorParameterDescription(entities)), ("media", ConstructorParameterDescription(media)), ("effect", ConstructorParameterDescription(effect)), ("suggestedPost", ConstructorParameterDescription(suggestedPost))]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> Api.Bool? in
+        if Int(flags) & Int(1 << 9) != 0 {
+            richMessage!.serialize(buffer, true)
+        }
+        return (FunctionDescription(name: "messages.saveDraft", parameters: [("flags", ConstructorParameterDescription(flags)), ("replyTo", ConstructorParameterDescription(replyTo)), ("peer", ConstructorParameterDescription(peer)), ("message", ConstructorParameterDescription(message)), ("entities", ConstructorParameterDescription(entities)), ("media", ConstructorParameterDescription(media)), ("effect", ConstructorParameterDescription(effect)), ("suggestedPost", ConstructorParameterDescription(suggestedPost)), ("richMessage", ConstructorParameterDescription(richMessage))]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> Api.Bool? in
             let reader = BufferReader(buffer)
             var result: Api.Bool?
             if let signature = reader.readInt32() {

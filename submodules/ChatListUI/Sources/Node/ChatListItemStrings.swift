@@ -117,8 +117,9 @@ extension RichText {
             return "Photo"
         case let .anchor(value, _):
             return value.previewText()
-        case let .formula(latex):
-            return latex
+        case .formula:
+            //TODO:localize
+            return "Fx"
         }
     }
 }
@@ -168,8 +169,8 @@ extension InstantPageBlock {
             return text.previewText()
         case let .heading(text, _):
             return text.previewText()
-        case let .formula(latex):
-            return latex
+        case .formula:
+            return "Fx"
         case let .paragraph(text):
             return text.previewText()
         case let .preformatted(text, _):

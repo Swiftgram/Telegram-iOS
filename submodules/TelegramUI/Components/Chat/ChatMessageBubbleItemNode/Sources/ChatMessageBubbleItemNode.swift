@@ -329,8 +329,16 @@ private func contentNodeMessagesAndClassesForItem(_ item: ChatMessageItem) -> ([
         if let updatingMedia = itemAttributes.updatingMedia {
             messageText = updatingMedia.text
         }
+        
+        var richText: RichTextMessageAttribute?
+        for attribute in item.message.attributes {
+            if let attribute = attribute as? RichTextMessageAttribute {
+                richText = attribute
+                break
+            }
+        }
                 
-        if !messageText.isEmpty || message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) || isUnsupportedMedia || isStoryWithText {
+        if !messageText.isEmpty || (message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) && richText == nil) || isUnsupportedMedia || isStoryWithText {
             if !skipText {
                 if case .group = item.content, !isFile {
                     messageWithCaptionToAdd = (message, itemAttributes)
@@ -391,15 +399,7 @@ private func contentNodeMessagesAndClassesForItem(_ item: ChatMessageItem) -> ([
             }
         }
         
-        var richText: RichTextMessageAttribute?
-        for attribute in item.message.attributes {
-            if let attribute = attribute as? RichTextMessageAttribute {
-                richText = attribute
-                break
-            }
-        }
-        
-        if richText != nil {
+        if richText != nil && !skipText {
             result.append((message, ChatMessageRichDataBubbleContentNode.self, itemAttributes, BubbleItemAttributes(isAttachment: false, neighborType: .text, neighborSpacing: .default)))
         }
         

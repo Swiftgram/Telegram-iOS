@@ -302,7 +302,7 @@ extension InstantPageBlock {
                 self = .heading(text: RichText(apiText: pageBlockHeading6.text), level: 6)
             case let .pageBlockMath(pageBlockMath):
                 self = .formula(latex: pageBlockMath.source)
-            case .inputPageBlockPhoto, .inputPageBlockVideo, .inputPageBlockAudio, .inputPageBlockMap, .inputPageBlockOrderedList:
+            case .inputPageBlockMap, .inputPageBlockOrderedList:
                 self = .unsupported
         }
     }
@@ -350,21 +350,23 @@ extension InstantPageBlock {
             return .pageBlockBlockquote(Api.PageBlock.Cons_pageBlockBlockquote(text: text.apiRichText(), caption: caption.apiRichText()))
         case let .pullQuote(text, caption):
             return .pageBlockPullquote(Api.PageBlock.Cons_pageBlockPullquote(text: text.apiRichText(), caption: caption.apiRichText()))
-        case let .image(id, caption, url, _):
-            //TODO:localize
-            let _ = id
-            assertionFailure()
-            return .inputPageBlockPhoto(Api.PageBlock.Cons_inputPageBlockPhoto(flags: 0, photo: .inputPhotoEmpty, caption: .pageCaption(Api.PageCaption.Cons_pageCaption(text: caption.text.apiRichText(), credit: caption.credit.apiRichText())), url: url))
+        case let .image(id, caption, url, webpageId):
+            var flags: Int32 = 0
+            if url != nil && webpageId != nil {
+                flags |= 1 << 0
+            }
+            return .pageBlockPhoto(Api.PageBlock.Cons_pageBlockPhoto(flags: flags, photoId: id.id, caption: .pageCaption(Api.PageCaption.Cons_pageCaption(text: caption.text.apiRichText(), credit: caption.credit.apiRichText())), url: url, webpageId: webpageId?.id))
         case let .video(id, caption, autoplay, loop):
-            //TODO:localize
-            let _ = autoplay
-            let _ = loop
-            let _ = id
-            assertionFailure()
-            return .inputPageBlockVideo(Api.PageBlock.Cons_inputPageBlockVideo(flags: 0, video: .inputDocumentEmpty, caption: .pageCaption(Api.PageCaption.Cons_pageCaption(text: caption.text.apiRichText(), credit: caption.credit.apiRichText()))))
+            var flags: Int32 = 0
+            if autoplay {
+                flags |= 1 << 0
+            }
+            if loop {
+                flags |= 1 << 1
+            }
+            return .pageBlockVideo(Api.PageBlock.Cons_pageBlockVideo(flags: flags, videoId: id.id, caption: .pageCaption(Api.PageCaption.Cons_pageCaption(text: caption.text.apiRichText(), credit: caption.credit.apiRichText()))))
         case let .audio(id, caption):
-            let _ = id
-            return .inputPageBlockAudio(Api.PageBlock.Cons_inputPageBlockAudio(audio: .inputDocumentEmpty, caption: .pageCaption(Api.PageCaption.Cons_pageCaption(text: caption.text.apiRichText(), credit: caption.credit.apiRichText()))))
+            return .pageBlockAudio(Api.PageBlock.Cons_pageBlockAudio(audioId: id.id, caption: .pageCaption(Api.PageCaption.Cons_pageCaption(text: caption.text.apiRichText(), credit: caption.credit.apiRichText()))))
         case let .collage(items, caption):
             return .pageBlockCollage(Api.PageBlock.Cons_pageBlockCollage(items: items.compactMap { $0.apiInputBlock() }, caption: .pageCaption(Api.PageCaption.Cons_pageCaption(text: caption.text.apiRichText(), credit: caption.credit.apiRichText()))))
         case let .slideshow(items, caption):

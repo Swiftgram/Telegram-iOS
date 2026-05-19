@@ -53,13 +53,55 @@ extension RichText {
         case let .textAnchor(textAnchorData):
             let (text, name) = (textAnchorData.text, textAnchorData.name)
             self = .anchor(text: RichText(apiText: text), name: name)
-        case .inputTextImage:
-            self = .plain("")
         case .textCustomEmoji:
             //TODO:localize
             self = .plain("")
         case let .textMath(textMath):
             self = .formula(latex: textMath.source)
+        case let .textAutoEmail(email):
+            let _ = email
+            //TODO:localize
+            self = .plain("")
+        case let .textAutoPhone(phone):
+            let _ = phone
+            //TODO:localize
+            self = .plain("")
+        case let .textAutoUrl(url):
+            let _ = url
+            //TODO:localize
+            self = .plain("")
+        case let .textBankCard(value):
+            let _ = value
+            //TODO:localize
+            self = .plain("")
+        case let .textBotCommand(value):
+            let _ = value
+            //TODO:localize
+            self = .plain("")
+        case let .textCashtag(value):
+            let _ = value
+            //TODO:localize
+            self = .plain("")
+        case let .textDate(value):
+            let _ = value
+            //TODO:localize
+            self = .plain("")
+        case let .textHashtag(value):
+            let _ = value
+            //TODO:localize
+            self = .plain("")
+        case let .textMention(value):
+            let _ = value
+            //TODO:localize
+            self = .plain("")
+        case let .textMentionName(value):
+            let _ = value
+            //TODO:localize
+            self = .plain("")
+        case let .textSpoiler(value):
+            let _ = value
+            //TODO:localize
+            self = .plain("")
         }
     }
     
@@ -94,10 +136,7 @@ extension RichText {
         case let .phone(text, phone):
             return .textPhone(Api.RichText.Cons_textPhone(text: text.apiRichText(), phone: phone))
         case let .image(id, dimensions):
-            //TODO:localize
-            let _ = id
-            assertionFailure()
-            return .inputTextImage(Api.RichText.Cons_inputTextImage(document: .inputDocumentEmpty, w: dimensions.width, h: dimensions.height))
+            return .textImage(Api.RichText.Cons_textImage(documentId: id.id, w: dimensions.width, h: dimensions.height))
         case let .anchor(text, name):
             return .textAnchor(Api.RichText.Cons_textAnchor(text: text.apiRichText(), name: name))
         case let .formula(latex):

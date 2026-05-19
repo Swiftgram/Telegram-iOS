@@ -413,17 +413,6 @@ public extension Api {
 }
 public extension Api {
     indirect enum PageBlock: TypeConstructorDescription {
-        public class Cons_inputPageBlockAudio: TypeConstructorDescription {
-            public var audio: Api.InputDocument
-            public var caption: Api.PageCaption
-            public init(audio: Api.InputDocument, caption: Api.PageCaption) {
-                self.audio = audio
-                self.caption = caption
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("inputPageBlockAudio", [("audio", ConstructorParameterDescription(self.audio)), ("caption", ConstructorParameterDescription(self.caption))])
-            }
-        }
         public class Cons_inputPageBlockMap: TypeConstructorDescription {
             public var geo: Api.InputGeoPoint
             public var zoom: Int32
@@ -454,34 +443,6 @@ public extension Api {
             }
             public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
                 return ("inputPageBlockOrderedList", [("flags", ConstructorParameterDescription(self.flags)), ("items", ConstructorParameterDescription(self.items)), ("start", ConstructorParameterDescription(self.start)), ("type", ConstructorParameterDescription(self.type))])
-            }
-        }
-        public class Cons_inputPageBlockPhoto: TypeConstructorDescription {
-            public var flags: Int32
-            public var photo: Api.InputPhoto
-            public var caption: Api.PageCaption
-            public var url: String?
-            public init(flags: Int32, photo: Api.InputPhoto, caption: Api.PageCaption, url: String?) {
-                self.flags = flags
-                self.photo = photo
-                self.caption = caption
-                self.url = url
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("inputPageBlockPhoto", [("flags", ConstructorParameterDescription(self.flags)), ("photo", ConstructorParameterDescription(self.photo)), ("caption", ConstructorParameterDescription(self.caption)), ("url", ConstructorParameterDescription(self.url))])
-            }
-        }
-        public class Cons_inputPageBlockVideo: TypeConstructorDescription {
-            public var flags: Int32
-            public var video: Api.InputDocument
-            public var caption: Api.PageCaption
-            public init(flags: Int32, video: Api.InputDocument, caption: Api.PageCaption) {
-                self.flags = flags
-                self.video = video
-                self.caption = caption
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("inputPageBlockVideo", [("flags", ConstructorParameterDescription(self.flags)), ("video", ConstructorParameterDescription(self.video)), ("caption", ConstructorParameterDescription(self.caption))])
             }
         }
         public class Cons_pageBlockAnchor: TypeConstructorDescription {
@@ -858,11 +819,8 @@ public extension Api {
                 return ("pageBlockVideo", [("flags", ConstructorParameterDescription(self.flags)), ("videoId", ConstructorParameterDescription(self.videoId)), ("caption", ConstructorParameterDescription(self.caption))])
             }
         }
-        case inputPageBlockAudio(Cons_inputPageBlockAudio)
         case inputPageBlockMap(Cons_inputPageBlockMap)
         case inputPageBlockOrderedList(Cons_inputPageBlockOrderedList)
-        case inputPageBlockPhoto(Cons_inputPageBlockPhoto)
-        case inputPageBlockVideo(Cons_inputPageBlockVideo)
         case pageBlockAnchor(Cons_pageBlockAnchor)
         case pageBlockAudio(Cons_pageBlockAudio)
         case pageBlockAuthorDate(Cons_pageBlockAuthorDate)
@@ -902,13 +860,6 @@ public extension Api {
 
         public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
             switch self {
-            case .inputPageBlockAudio(let _data):
-                if boxed {
-                    buffer.appendInt32(-1715334046)
-                }
-                _data.audio.serialize(buffer, true)
-                _data.caption.serialize(buffer, true)
-                break
             case .inputPageBlockMap(let _data):
                 if boxed {
                     buffer.appendInt32(1464557951)
@@ -935,25 +886,6 @@ public extension Api {
                 if Int(_data.flags) & Int(1 << 1) != 0 {
                     serializeString(_data.type!, buffer: buffer, boxed: false)
                 }
-                break
-            case .inputPageBlockPhoto(let _data):
-                if boxed {
-                    buffer.appendInt32(719646565)
-                }
-                serializeInt32(_data.flags, buffer: buffer, boxed: false)
-                _data.photo.serialize(buffer, true)
-                _data.caption.serialize(buffer, true)
-                if Int(_data.flags) & Int(1 << 0) != 0 {
-                    serializeString(_data.url!, buffer: buffer, boxed: false)
-                }
-                break
-            case .inputPageBlockVideo(let _data):
-                if boxed {
-                    buffer.appendInt32(-249943466)
-                }
-                serializeInt32(_data.flags, buffer: buffer, boxed: false)
-                _data.video.serialize(buffer, true)
-                _data.caption.serialize(buffer, true)
                 break
             case .pageBlockAnchor(let _data):
                 if boxed {
@@ -1254,16 +1186,10 @@ public extension Api {
 
         public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
             switch self {
-            case .inputPageBlockAudio(let _data):
-                return ("inputPageBlockAudio", [("audio", ConstructorParameterDescription(_data.audio)), ("caption", ConstructorParameterDescription(_data.caption))])
             case .inputPageBlockMap(let _data):
                 return ("inputPageBlockMap", [("geo", ConstructorParameterDescription(_data.geo)), ("zoom", ConstructorParameterDescription(_data.zoom)), ("w", ConstructorParameterDescription(_data.w)), ("h", ConstructorParameterDescription(_data.h)), ("caption", ConstructorParameterDescription(_data.caption))])
             case .inputPageBlockOrderedList(let _data):
                 return ("inputPageBlockOrderedList", [("flags", ConstructorParameterDescription(_data.flags)), ("items", ConstructorParameterDescription(_data.items)), ("start", ConstructorParameterDescription(_data.start)), ("type", ConstructorParameterDescription(_data.type))])
-            case .inputPageBlockPhoto(let _data):
-                return ("inputPageBlockPhoto", [("flags", ConstructorParameterDescription(_data.flags)), ("photo", ConstructorParameterDescription(_data.photo)), ("caption", ConstructorParameterDescription(_data.caption)), ("url", ConstructorParameterDescription(_data.url))])
-            case .inputPageBlockVideo(let _data):
-                return ("inputPageBlockVideo", [("flags", ConstructorParameterDescription(_data.flags)), ("video", ConstructorParameterDescription(_data.video)), ("caption", ConstructorParameterDescription(_data.caption))])
             case .pageBlockAnchor(let _data):
                 return ("pageBlockAnchor", [("name", ConstructorParameterDescription(_data.name))])
             case .pageBlockAudio(let _data):
@@ -1339,24 +1265,6 @@ public extension Api {
             }
         }
 
-        public static func parse_inputPageBlockAudio(_ reader: BufferReader) -> PageBlock? {
-            var _1: Api.InputDocument?
-            if let signature = reader.readInt32() {
-                _1 = Api.parse(reader, signature: signature) as? Api.InputDocument
-            }
-            var _2: Api.PageCaption?
-            if let signature = reader.readInt32() {
-                _2 = Api.parse(reader, signature: signature) as? Api.PageCaption
-            }
-            let _c1 = _1 != nil
-            let _c2 = _2 != nil
-            if _c1 && _c2 {
-                return Api.PageBlock.inputPageBlockAudio(Cons_inputPageBlockAudio(audio: _1!, caption: _2!))
-            }
-            else {
-                return nil
-            }
-        }
         public static func parse_inputPageBlockMap(_ reader: BufferReader) -> PageBlock? {
             var _1: Api.InputGeoPoint?
             if let signature = reader.readInt32() {
@@ -1405,53 +1313,6 @@ public extension Api {
             let _c4 = (Int(_1 ?? 0) & Int(1 << 1) == 0) || _4 != nil
             if _c1 && _c2 && _c3 && _c4 {
                 return Api.PageBlock.inputPageBlockOrderedList(Cons_inputPageBlockOrderedList(flags: _1!, items: _2!, start: _3, type: _4))
-            }
-            else {
-                return nil
-            }
-        }
-        public static func parse_inputPageBlockPhoto(_ reader: BufferReader) -> PageBlock? {
-            var _1: Int32?
-            _1 = reader.readInt32()
-            var _2: Api.InputPhoto?
-            if let signature = reader.readInt32() {
-                _2 = Api.parse(reader, signature: signature) as? Api.InputPhoto
-            }
-            var _3: Api.PageCaption?
-            if let signature = reader.readInt32() {
-                _3 = Api.parse(reader, signature: signature) as? Api.PageCaption
-            }
-            var _4: String?
-            if Int(_1 ?? 0) & Int(1 << 0) != 0 {
-                _4 = parseString(reader)
-            }
-            let _c1 = _1 != nil
-            let _c2 = _2 != nil
-            let _c3 = _3 != nil
-            let _c4 = (Int(_1 ?? 0) & Int(1 << 0) == 0) || _4 != nil
-            if _c1 && _c2 && _c3 && _c4 {
-                return Api.PageBlock.inputPageBlockPhoto(Cons_inputPageBlockPhoto(flags: _1!, photo: _2!, caption: _3!, url: _4))
-            }
-            else {
-                return nil
-            }
-        }
-        public static func parse_inputPageBlockVideo(_ reader: BufferReader) -> PageBlock? {
-            var _1: Int32?
-            _1 = reader.readInt32()
-            var _2: Api.InputDocument?
-            if let signature = reader.readInt32() {
-                _2 = Api.parse(reader, signature: signature) as? Api.InputDocument
-            }
-            var _3: Api.PageCaption?
-            if let signature = reader.readInt32() {
-                _3 = Api.parse(reader, signature: signature) as? Api.PageCaption
-            }
-            let _c1 = _1 != nil
-            let _c2 = _2 != nil
-            let _c3 = _3 != nil
-            if _c1 && _c2 && _c3 {
-                return Api.PageBlock.inputPageBlockVideo(Cons_inputPageBlockVideo(flags: _1!, video: _2!, caption: _3!))
             }
             else {
                 return nil
