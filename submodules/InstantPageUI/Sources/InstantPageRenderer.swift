@@ -522,7 +522,7 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
             if !line.strikethroughItems.isEmpty {
                 for item in line.strikethroughItems {
                     let itemFrame = item.frame.offsetBy(dx: lineFrame.minX, dy: 0.0)
-                    context.fill(CGRect(x: itemFrame.minX, y: itemFrame.minY + floor((lineFrame.size.height / 2.0) + 1.0), width: itemFrame.size.width, height: 1.0))
+                    context.fill(CGRect(x: itemFrame.minX, y: itemFrame.minY + floor((itemFrame.size.height / 2.0) + 1.0), width: itemFrame.size.width, height: 1.0))
                 }
             }
 
@@ -540,7 +540,7 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
                         context.setFillColor(color.cgColor)
                     }
                     let itemFrame = item.frame.offsetBy(dx: lineFrame.minX, dy: 0.0)
-                    context.fill(CGRect(x: itemFrame.minX, y: itemFrame.minY + lineFrame.size.height + 2.0, width: itemFrame.size.width, height: 1.0))
+                    context.fill(CGRect(x: itemFrame.minX, y: itemFrame.minY + itemFrame.size.height + 2.0, width: itemFrame.size.width, height: 1.0))
                 }
             }
         }
@@ -616,13 +616,13 @@ final class InstantPageV2ListMarkerView: UIView, InstantPageItemView {
     }
 
     private func rebuildContents() {
+        for subview in Array(self.subviews) {
+            subview.removeFromSuperview()
+        }
         if let sublayers = self.layer.sublayers {
-            for sublayer in sublayers {
+            for sublayer in Array(sublayers) {
                 sublayer.removeFromSuperlayer()
             }
-        }
-        for subview in self.subviews {
-            subview.removeFromSuperview()
         }
 
         let item = self.item

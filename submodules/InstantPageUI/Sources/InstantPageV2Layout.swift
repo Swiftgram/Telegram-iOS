@@ -2412,6 +2412,20 @@ private func v2LocalAttachmentBoundsForRange(_ range: NSRange, imageItems: [Inst
     return result
 }
 
+private struct PendingV2ImageAttachment {
+    let xOffset: CGFloat
+    let range: NSRange
+    let id: Int64
+    let size: CGSize
+}
+
+private struct PendingV2FormulaAttachment {
+    let xOffset: CGFloat
+    let range: NSRange
+    let attachment: InstantPageMathAttachment
+    let baselineOffset: CGFloat
+}
+
 func layoutTextItem(
     _ string: NSAttributedString,
     boundingWidth: CGFloat,
@@ -2458,6 +2472,8 @@ func layoutTextItem(
 
     let fontLineHeight = floor(fontAscent + fontDescent)
     let fontLineSpacing = floor(fontLineHeight * lineSpacingFactor)
+    let fontDescentBelowBaseline = max(0.0, -fontDescent)
+    let baselineToNextTopSlack = max(0.0, fontLineSpacing - 4.0)
 
     var lastIndex: CFIndex = 0
     var currentLineOrigin = CGPoint()
@@ -2499,7 +2515,6 @@ func layoutTextItem(
             var line = CTTypesetterCreateLineWithOffset(typesetter, CFRangeMake(lastIndex, lineCharacterCount), 100.0)
             var lineWidth = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
             let lineRange = NSMakeRange(lastIndex, lineCharacterCount)
-            let substring = string.attributedSubstring(from: lineRange).string
 
             var stop = false
             if maxNumberOfLines > 0 && lines.count == maxNumberOfLines - 1 && lastIndex + lineCharacterCount < string.length {
@@ -2519,68 +2534,71 @@ func layoutTextItem(
             extraDescent = 0.0
             var lineImageItems: [InstantPageTextImageItem] = []
             var lineFormulaItems: [InstantPageTextFormulaRun] = []
-            var lineMaxAttachmentHeight: CGFloat = 0.0
+            var pendingImages: [PendingV2ImageAttachment] = []
+            var pendingFormulas: [PendingV2FormulaAttachment] = []
             var isRTL = false
             if let glyphRuns = CTLineGetGlyphRuns(line) as? [CTRun], !glyphRuns.isEmpty {
                 if let run = glyphRuns.first, CTRunGetStatus(run).contains(CTRunStatus.rightToLeft) {
                     isRTL = true
                 }
 
-                var appliedLineOffset: CGFloat = 0.0
                 for run in glyphRuns {
                     let cfRunRange = CTRunGetStringRange(run)
                     let runRange = NSMakeRange(cfRunRange.location == kCFNotFound ? NSNotFound : cfRunRange.location, cfRunRange.length)
                     string.enumerateAttributes(in: runRange, options: []) { attributes, range, _ in
                         if let id = attributes[NSAttributedString.Key.init(rawValue: InstantPageMediaIdAttribute)] as? Int64, let dimensions = attributes[NSAttributedString.Key.init(rawValue: InstantPageMediaDimensionsAttribute)] as? PixelDimensions {
-                            var imageFrame = CGRect(origin: CGPoint(), size: dimensions.cgSize.fitted(CGSize(width: boundingWidth, height: boundingWidth)))
-
+                            let imageSize = dimensions.cgSize.fitted(CGSize(width: boundingWidth, height: boundingWidth))
                             let xOffset = CTLineGetOffsetForStringIndex(line, CTRunGetStringRange(run).location, nil)
-                            let yOffset = fontLineHeight.isZero ? 0.0 : floorToScreenPixels((fontLineHeight - imageFrame.size.height) / 2.0)
-                            imageFrame.origin = imageFrame.origin.offsetBy(dx: workingLineOrigin.x + xOffset, dy: workingLineOrigin.y + yOffset)
-
-                            let minSpacing = fontLineSpacing - 4.0
-                            let delta = workingLineOrigin.y - minSpacing - imageFrame.minY - appliedLineOffset
-                            if !fontAscent.isZero && delta > 0.0 {
-                                workingLineOrigin.y += delta
-                                appliedLineOffset += delta
-                                imageFrame.origin = imageFrame.origin.offsetBy(dx: 0.0, dy: delta)
-                            }
-                            if !fontLineHeight.isZero {
-                                extraDescent = max(extraDescent, imageFrame.maxY - (workingLineOrigin.y + fontLineHeight + minSpacing))
-                            }
-                            lineMaxAttachmentHeight = max(lineMaxAttachmentHeight, imageFrame.height)
-                            lineImageItems.append(InstantPageTextImageItem(frame: imageFrame, range: range, id: EngineMedia.Id(namespace: Namespaces.Media.CloudFile, id: id)))
+                            pendingImages.append(PendingV2ImageAttachment(xOffset: xOffset, range: range, id: id, size: imageSize))
                         } else if let attachment = attributes[NSAttributedString.Key(rawValue: InstantPageFormulaAttribute)] as? InstantPageMathAttachment {
                             let xOffset = CTLineGetOffsetForStringIndex(line, range.location, nil)
                             let baselineOffset = (attributes[NSAttributedString.Key.baselineOffset] as? CGFloat) ?? 0.0
-                            var formulaFrame = CGRect(
-                                origin: CGPoint(
-                                    x: workingLineOrigin.x + xOffset,
-                                    y: workingLineOrigin.y + fontLineHeight + baselineOffset - attachment.rendered.ascent
-                                ),
-                                size: attachment.rendered.size
-                            )
-
-                            let minSpacing = fontLineSpacing - 4.0
-                            let delta = workingLineOrigin.y - minSpacing - formulaFrame.minY - appliedLineOffset
-                            if !fontAscent.isZero && delta > 0.0 {
-                                workingLineOrigin.y += delta
-                                appliedLineOffset += delta
-                                formulaFrame.origin = formulaFrame.origin.offsetBy(dx: 0.0, dy: delta)
-                            }
-                            if !fontLineHeight.isZero {
-                                extraDescent = max(extraDescent, formulaFrame.maxY - (workingLineOrigin.y + fontLineHeight + minSpacing))
-                            }
-                            lineMaxAttachmentHeight = max(lineMaxAttachmentHeight, formulaFrame.height)
-                            lineFormulaItems.append(InstantPageTextFormulaRun(frame: formulaFrame, range: range, attachment: attachment))
+                            pendingFormulas.append(PendingV2FormulaAttachment(xOffset: xOffset, range: range, attachment: attachment, baselineOffset: baselineOffset))
                         }
                     }
                 }
             }
 
-            if substring.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && (!lineImageItems.isEmpty || !lineFormulaItems.isEmpty) {
-                extraDescent += max(6.0, fontLineSpacing / 2.0)
+            var lineAscent: CGFloat = fontLineHeight
+            var lineDescent: CGFloat = fontDescentBelowBaseline
+            for image in pendingImages {
+                if image.size.height > lineAscent {
+                    lineAscent = image.size.height
+                }
             }
+            for formula in pendingFormulas {
+                let formulaAscent = formula.attachment.rendered.size.height - formula.attachment.rendered.descent
+                if formulaAscent > lineAscent {
+                    lineAscent = formulaAscent
+                }
+                if formula.attachment.rendered.descent > lineDescent {
+                    lineDescent = formula.attachment.rendered.descent
+                }
+            }
+            let baselineY = workingLineOrigin.y + lineAscent
+
+            for image in pendingImages {
+                let imageFrame = CGRect(
+                    x: workingLineOrigin.x + image.xOffset,
+                    y: baselineY - image.size.height,
+                    width: image.size.width,
+                    height: image.size.height
+                )
+                lineImageItems.append(InstantPageTextImageItem(frame: imageFrame, range: image.range, id: EngineMedia.Id(namespace: Namespaces.Media.CloudFile, id: image.id)))
+            }
+            for formula in pendingFormulas {
+                let attachment = formula.attachment
+                let formulaAscent = attachment.rendered.size.height - attachment.rendered.descent
+                let formulaFrame = CGRect(
+                    x: workingLineOrigin.x + formula.xOffset,
+                    y: baselineY - formulaAscent + formula.baselineOffset,
+                    width: attachment.rendered.size.width,
+                    height: attachment.rendered.size.height
+                )
+                lineFormulaItems.append(InstantPageTextFormulaRun(frame: formulaFrame, range: formula.range, attachment: attachment))
+            }
+
+            extraDescent = max(0.0, lineDescent - baselineToNextTopSlack)
 
             if !minimizeWidth && !hadIndexOffset && lineCharacterCount > 1 && lineWidth > currentMaxWidth + 5.0 {
                 if let imageItem = lineImageItems.last {
@@ -2603,14 +2621,14 @@ func layoutTextItem(
                     let lowerX = floor(CTLineGetOffsetForStringIndex(line, range.location, nil))
                     let upperX = ceil(CTLineGetOffsetForStringIndex(line, range.location + range.length, nil))
                     let x = lowerX < upperX ? lowerX : upperX
-                    strikethroughItems.append(InstantPageTextStrikethroughItem(frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y, width: abs(upperX - lowerX), height: fontLineHeight)))
+                    strikethroughItems.append(InstantPageTextStrikethroughItem(frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y + (lineAscent - fontLineHeight), width: abs(upperX - lowerX), height: fontLineHeight)))
                 }
                 if let _ = attributes[NSAttributedString.Key.underlineStyle] {
                     let lowerX = floor(CTLineGetOffsetForStringIndex(line, range.location, nil))
                     let upperX = ceil(CTLineGetOffsetForStringIndex(line, range.location + range.length, nil))
                     let x = lowerX < upperX ? lowerX : upperX
                     underlineItems.append(InstantPageTextUnderlineItem(
-                        frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y, width: abs(upperX - lowerX), height: fontLineHeight),
+                        frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y + (lineAscent - fontLineHeight), width: abs(upperX - lowerX), height: fontLineHeight),
                         range: range,
                         color: attributes[NSAttributedString.Key.underlineColor] as? UIColor
                     ))
@@ -2626,7 +2644,7 @@ func layoutTextItem(
                     let lowerX = floor(CTLineGetOffsetForStringIndex(line, range.location, nil))
                     let upperX = ceil(CTLineGetOffsetForStringIndex(line, range.location + range.length, nil))
                     let x = lowerX < upperX ? lowerX : upperX
-                    markedItems.append(InstantPageTextMarkedItem(frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y + delta, width: abs(upperX - lowerX), height: lineHeight), color: color, range: range))
+                    markedItems.append(InstantPageTextMarkedItem(frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y + (lineAscent - fontLineHeight) + delta, width: abs(upperX - lowerX), height: lineHeight), color: color, range: range))
                 }
                 if let item = attributes[NSAttributedString.Key.init(rawValue: InstantPageAnchorAttribute)] as? Dictionary<String, Any>, let name = item["name"] as? String, let empty = item["empty"] as? Bool {
                     anchorItems.append(InstantPageTextAnchorItem(name: name, anchorText: item["text"] as? NSAttributedString, empty: empty))
@@ -2641,19 +2659,7 @@ func layoutTextItem(
                 workingLineOrigin.y += fontLineSpacing
             }
 
-            let height = !fontLineHeight.isZero ? max(fontLineHeight, lineMaxAttachmentHeight) : lineMaxAttachmentHeight
-            if !lineFormulaItems.isEmpty {
-                let baselineAdjustment = height - fontLineHeight
-                if !baselineAdjustment.isZero {
-                    lineFormulaItems = lineFormulaItems.map { item in
-                        InstantPageTextFormulaRun(
-                            frame: item.frame.offsetBy(dx: 0.0, dy: baselineAdjustment),
-                            range: item.range,
-                            attachment: item.attachment
-                        )
-                    }
-                }
-            }
+            let height = lineAscent
             if !markedItems.isEmpty {
                 markedItems = markedItems.map { item in
                     if let attachmentBounds = v2LocalAttachmentBoundsForRange(item.range, imageItems: lineImageItems, formulaItems: lineFormulaItems) {
@@ -2676,7 +2682,7 @@ func layoutTextItem(
             }
 
             workingLineOrigin.x = 0.0
-            workingLineOrigin.y += fontLineHeight + fontLineSpacing + extraDescent
+            workingLineOrigin.y += lineAscent + fontLineSpacing + extraDescent
             currentLineOrigin = workingLineOrigin
 
             lastIndex += lineCharacterCount
