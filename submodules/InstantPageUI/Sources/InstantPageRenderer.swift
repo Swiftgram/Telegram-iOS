@@ -98,13 +98,21 @@ extension InstantPageItemView {
 
 // MARK: - Text view (port of V1 InstantPageTextItem.drawInTile)
 
+/// Per-side padding applied to `InstantPageV2TextView`'s backing store, beyond the
+/// item's typographic frame. Marker rounded rects extend ±2pt past their run, italic
+/// or accented glyphs can overhang past the line's advance width, and the last line's
+/// underline sits 2pt below `lineFrame.maxY`. The view grows by this amount on each
+/// side and the draw context translates by the same amount so visual position is
+/// unchanged.
+private let v2TextViewClippingInset: CGFloat = 4.0
+
 final class InstantPageV2TextView: UIView, InstantPageItemView {
     let item: InstantPageV2TextItem
     var itemFrame: CGRect { return self.item.frame }
 
     init(item: InstantPageV2TextItem) {
         self.item = item
-        super.init(frame: item.frame)
+        super.init(frame: item.frame.insetBy(dx: -v2TextViewClippingInset, dy: -v2TextViewClippingInset))
         self.backgroundColor = .clear
         self.isOpaque = false
         self.contentMode = .redraw
@@ -120,14 +128,15 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
 
         context.saveGState()
         context.textMatrix = CGAffineTransform(scaleX: 1.0, y: -1.0)
-        // No translateBy here — the view's coordinate origin is already local to the text item.
+        context.translateBy(x: v2TextViewClippingInset, y: v2TextViewClippingInset)
 
         let textItem = self.item.textItem
         let boundsWidth = textItem.frame.size.width
+        let intersectRect = rect.offsetBy(dx: -v2TextViewClippingInset, dy: -v2TextViewClippingInset)
 
         for line in textItem.lines {
             let lineFrame = v2FrameForLine(line, boundingWidth: boundsWidth, alignment: textItem.alignment)
-            if !rect.intersects(lineFrame) {
+            if !intersectRect.intersects(lineFrame) {
                 continue
             }
 
