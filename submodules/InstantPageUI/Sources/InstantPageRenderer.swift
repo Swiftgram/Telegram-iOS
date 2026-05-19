@@ -1,8 +1,77 @@
 import Foundation
 import UIKit
 import Display
+import SwiftSignalKit
 import TelegramCore
 import TelegramPresentationData
+import TelegramUIPreferences
+import AccountContext
+import GalleryUI
+
+// MARK: - Stable item identity (for view reuse on re-layouts)
+
+/// Stable identity for an `InstantPageV2LaidOutItem` across `update()` calls. The renderer
+/// uses this to harvest existing item views and reuse them when the new layout still has
+/// an item with the same id — preventing the media wrappers from torching their fetch
+/// signals + image content on every chat-bubble re-apply.
+///
+/// Media items use their `media.index` (already unique within a page and used as the
+/// gallery registry key). Details items use their `details.index`. Other items have no
+/// intrinsic identity, so the renderer assigns them a `(case-tag, positional-index-in-items)`
+/// pair.
+public enum InstantPageV2StableItemId: Hashable {
+    case media(Int)                          // media.index (4 media cases share this namespace)
+    case details(Int)                        // details.index
+    case positional(InstantPageV2ItemKind, Int)  // (caseTag, items-array position)
+}
+
+public enum InstantPageV2ItemKind: Hashable {
+    case text, codeBlock, divider, listMarker, blockQuoteBar, shape, mediaPlaceholder, table, anchor, formula
+}
+
+// MARK: - Render context
+
+/// Bundle of render-time dependencies required to display real media inside an InstantPage V2
+/// view. Tied to an `InstantPageV2View` for the view's lifetime — if any field would change
+/// (typically because the bubble was recycled with a different webpage), the caller must
+/// rebuild the V2View with a fresh render context.
+///
+/// `renderContext == nil` is permitted: the V2View falls back to grey-placeholder rendering
+/// for the four media kinds (image/video/map/coverImage). This keeps the existing zero-arg
+/// `InstantPageV2View()` constructor usable.
+public final class InstantPageV2RenderContext {
+    public let context: AccountContext
+    public let webpage: TelegramMediaWebpage
+    public let sourceLocation: InstantPageSourceLocation
+    public let imageReference: (TelegramMediaImage) -> ImageMediaReference
+    public let fileReference: (TelegramMediaFile) -> FileMediaReference
+    public let present: (ViewController, Any?) -> Void
+    public let push: (ViewController) -> Void
+    public let openUrl: (InstantPageUrlItem) -> Void
+    public let baseNavigationController: () -> NavigationController?
+
+    public init(
+        context: AccountContext,
+        webpage: TelegramMediaWebpage,
+        sourceLocation: InstantPageSourceLocation,
+        imageReference: @escaping (TelegramMediaImage) -> ImageMediaReference,
+        fileReference: @escaping (TelegramMediaFile) -> FileMediaReference,
+        present: @escaping (ViewController, Any?) -> Void,
+        push: @escaping (ViewController) -> Void,
+        openUrl: @escaping (InstantPageUrlItem) -> Void,
+        baseNavigationController: @escaping () -> NavigationController?
+    ) {
+        self.context = context
+        self.webpage = webpage
+        self.sourceLocation = sourceLocation
+        self.imageReference = imageReference
+        self.fileReference = fileReference
+        self.present = present
+        self.push = push
+        self.openUrl = openUrl
+        self.baseNavigationController = baseNavigationController
+    }
+}
 
 // MARK: - Public renderer
 
@@ -14,15 +83,46 @@ public final class InstantPageV2View: UIView {
     public var detailsTapped: ((_ index: Int) -> Void)?
 
     private var itemViews: [InstantPageItemView] = []
+    private var itemViewStableIds: [InstantPageV2StableItemId] = []
 
-    public override init(frame: CGRect) {
-        super.init(frame: frame)
+    public let renderContext: InstantPageV2RenderContext?
+
+    // Weak references to every media wrapper in the tree, keyed by `InstantPageMedia.index`.
+    // Used by `transitionArgsFor` and `applyHiddenMedia` so the gallery transition + hidden-source
+    // state can find a wrapper without walking the view hierarchy. Nested V2Views (details body,
+    // table cells) forward their registrations to the root via `rootMediaRegistryHost`.
+    var mediaRegistry: [Int: Weak<UIView>] = [:]
+
+    // Pointer to the root V2View's registry host. The root sets this to `self`; nested views
+    // inherit it via `propagateRegistryHost(to:)` in `update(layout:theme:animation:)`.
+    weak var rootMediaRegistryHost: InstantPageV2View?
+
+    var effectiveRegistryHost: InstantPageV2View {
+        return self.rootMediaRegistryHost ?? self
+    }
+
+    /// Walks the `rootMediaRegistryHost` chain transitively until it finds a self-referencing
+    /// host (the true root). Necessary because nested details blocks can leave an inner body's
+    /// `rootMediaRegistryHost` pointing at an intermediate body rather than the outer root —
+    /// `propagateRegistryHost(to:)` only walks one hop, so the chain must be followed at lookup.
+    var trueRegistryRoot: InstantPageV2View {
+        var host: InstantPageV2View = self
+        while let next = host.rootMediaRegistryHost, next !== host {
+            host = next
+        }
+        return host
+    }
+
+    public init(renderContext: InstantPageV2RenderContext?) {
+        self.renderContext = renderContext
+        super.init(frame: .zero)
         self.backgroundColor = .clear
         self.isOpaque = false
+        self.rootMediaRegistryHost = self
     }
 
     public convenience init() {
-        self.init(frame: .zero)
+        self.init(renderContext: nil)
     }
 
     @available(*, unavailable)
@@ -32,24 +132,194 @@ public final class InstantPageV2View: UIView {
 
     /// Rebuilds the child view hierarchy from `layout`. The caller is responsible for
     /// sizing `self.frame` to `layout.contentSize`; this method does not touch its own frame.
+    ///
+    /// Reuse pass: existing item views are harvested into a `[stableId: view]` map keyed
+    /// off `itemViewStableIds`. For each new item we look up its stable id; on a hit (and
+    /// matching concrete view class) the existing view is reused via its typed
+    /// `update(item:theme:[renderContext:])`, on a miss we fall back to `makeItemView`. Un-reused
+    /// views are removed from the superview at the end. This preserves the four media wrappers
+    /// (and any nested V2Views inside details/table) across chat-bubble re-applies, which would
+    /// otherwise torch in-flight image fetches on every list update.
     public func update(
         layout: InstantPageV2Layout,
         theme: InstantPageTheme,
         animation: ListViewItemUpdateAnimation
     ) {
-        for view in self.itemViews {
-            view.removeFromSuperview()
-        }
-        self.itemViews.removeAll()
-
-        self.currentLayout = layout
-        self.currentTheme = theme
         let _ = animation   // reserved for future per-item animation
 
-        for item in layout.items {
-            guard let view = self.makeItemView(for: item, theme: theme) else { continue }
-            self.addSubview(view)
-            self.itemViews.append(view)
+        // Build map of existing views by stable id.
+        var oldViewsById: [InstantPageV2StableItemId: InstantPageItemView] = [:]
+        for (oldIndex, oldId) in self.itemViewStableIds.enumerated() {
+            oldViewsById[oldId] = self.itemViews[oldIndex]
+        }
+
+        var newItemViews: [InstantPageItemView] = []
+        var newStableIds: [InstantPageV2StableItemId] = []
+        var reusedIds: Set<InstantPageV2StableItemId> = []
+
+        for (position, item) in layout.items.enumerated() {
+            let id = InstantPageV2View.stableId(for: item, atPosition: position)
+
+            if let existing = oldViewsById[id], let reusedView = self.reuse(existingView: existing, for: item, theme: theme) {
+                reusedView.frame = InstantPageV2View.actualFrame(forItem: item)   // parent positions child
+                newItemViews.append(reusedView)
+                newStableIds.append(id)
+                reusedIds.insert(id)
+                // Already in subviews from the previous update; just keep it.
+            } else {
+                guard let newView = self.makeItemView(for: item, theme: theme) else { continue }
+                newItemViews.append(newView)
+                newStableIds.append(id)
+                self.addSubview(newView)
+                self.propagateRegistryHost(to: newView)
+            }
+        }
+
+        // Remove views that weren't reused.
+        for (id, view) in oldViewsById where !reusedIds.contains(id) {
+            view.removeFromSuperview()
+        }
+
+        // Z-order: bring the reused views to the front in declaration order so the
+        // sublayer/subview stack matches `layout.items` order.
+        for view in newItemViews {
+            self.bringSubviewToFront(view)
+        }
+
+        self.itemViews = newItemViews
+        self.itemViewStableIds = newStableIds
+        self.currentLayout = layout
+        self.currentTheme = theme
+    }
+
+    /// Returns the input view typed-updated against `item`, or `nil` if the existing view's
+    /// concrete class doesn't match the item's case (e.g. a `text` slot has been replaced by
+    /// a `divider` in the new layout). Caller falls back to `makeItemView`.
+    private func reuse(existingView: InstantPageItemView, for item: InstantPageV2LaidOutItem, theme: InstantPageTheme) -> InstantPageItemView? {
+        switch item {
+        case let .text(text):
+            guard let v = existingView as? InstantPageV2TextView else { return nil }
+            v.update(item: text, theme: theme)
+            return v
+        case let .codeBlock(block):
+            guard let v = existingView as? InstantPageV2CodeBlockView else { return nil }
+            v.update(item: block, theme: theme)
+            return v
+        case let .divider(divider):
+            guard let v = existingView as? InstantPageV2DividerView else { return nil }
+            v.update(item: divider, theme: theme)
+            return v
+        case let .listMarker(marker):
+            guard let v = existingView as? InstantPageV2ListMarkerView else { return nil }
+            v.update(item: marker, theme: theme)
+            return v
+        case let .blockQuoteBar(bar):
+            guard let v = existingView as? InstantPageV2BlockQuoteBarView else { return nil }
+            v.update(item: bar, theme: theme)
+            return v
+        case let .shape(shape):
+            guard let v = existingView as? InstantPageV2ShapeView else { return nil }
+            v.update(item: shape, theme: theme)
+            return v
+        case let .mediaPlaceholder(media):
+            guard let v = existingView as? InstantPageV2MediaPlaceholderView else { return nil }
+            v.update(item: media, theme: theme)
+            return v
+        case let .details(details):
+            guard let v = existingView as? InstantPageV2DetailsView else { return nil }
+            v.update(item: details, theme: theme, renderContext: self.renderContext)
+            return v
+        case let .table(table):
+            guard let v = existingView as? InstantPageV2TableView else { return nil }
+            v.update(item: table, theme: theme)
+            return v
+        case let .anchor(anchor):
+            guard let v = existingView as? InstantPageV2AnchorView else { return nil }
+            v.update(item: anchor, theme: theme)
+            return v
+        case let .formula(formula):
+            guard let v = existingView as? InstantPageV2FormulaView else { return nil }
+            v.update(item: formula, theme: theme)
+            return v
+        case let .mediaImage(media):
+            guard let v = existingView as? InstantPageV2MediaImageView, let rc = self.renderContext else { return nil }
+            v.update(item: media, theme: theme, renderContext: rc)
+            return v
+        case let .mediaVideo(media):
+            guard let v = existingView as? InstantPageV2MediaVideoView, let rc = self.renderContext else { return nil }
+            v.update(item: media, theme: theme, renderContext: rc)
+            return v
+        case let .mediaMap(media):
+            guard let v = existingView as? InstantPageV2MediaMapView, let rc = self.renderContext else { return nil }
+            v.update(item: media, theme: theme, renderContext: rc)
+            return v
+        case let .mediaCoverImage(media):
+            guard let v = existingView as? InstantPageV2MediaCoverImageView, let rc = self.renderContext else { return nil }
+            v.update(item: media, theme: theme, renderContext: rc)
+            return v
+        }
+    }
+
+    static func stableId(for item: InstantPageV2LaidOutItem, atPosition position: Int) -> InstantPageV2StableItemId {
+        switch item {
+        case let .mediaImage(m):       return .media(m.media.index)
+        case let .mediaVideo(m):       return .media(m.media.index)
+        case let .mediaMap(m):         return .media(m.media.index)
+        case let .mediaCoverImage(m):  return .media(m.media.index)
+        case let .details(d):          return .details(d.index)
+        case .text:                    return .positional(.text, position)
+        case .codeBlock:               return .positional(.codeBlock, position)
+        case .divider:                 return .positional(.divider, position)
+        case .listMarker:              return .positional(.listMarker, position)
+        case .blockQuoteBar:           return .positional(.blockQuoteBar, position)
+        case .shape:                   return .positional(.shape, position)
+        case .mediaPlaceholder:        return .positional(.mediaPlaceholder, position)
+        case .table:                   return .positional(.table, position)
+        case .anchor:                  return .positional(.anchor, position)
+        case .formula:                 return .positional(.formula, position)
+        }
+    }
+
+    private func propagateRegistryHost(to view: InstantPageItemView) {
+        let host = self.effectiveRegistryHost
+        if let details = view as? InstantPageV2DetailsView {
+            details.forEachSubLayoutView { sub in
+                sub.rootMediaRegistryHost = host
+            }
+        }
+        if let table = view as? InstantPageV2TableView {
+            table.forEachSubLayoutView { sub in
+                sub.rootMediaRegistryHost = host
+            }
+        }
+    }
+
+    /// Looks up the wrapper view registered under `media.index` and returns gallery transition
+    /// arguments backed by its wrapped `InstantPageImageNode`. Returns `nil` if the wrapper is
+    /// not currently registered (e.g. the media is inside a collapsed details block).
+    func transitionArgsFor(_ media: InstantPageMedia, addToTransitionSurface: @escaping (UIView) -> Void) -> GalleryTransitionArguments? {
+        guard let wrapperBox = self.trueRegistryRoot.mediaRegistry[media.index], let wrapper = wrapperBox.value else {
+            return nil
+        }
+        let imageNode: InstantPageImageNode? =
+            (wrapper as? InstantPageV2MediaImageView)?.wrappedNode
+            ?? (wrapper as? InstantPageV2MediaVideoView)?.wrappedNode
+            ?? (wrapper as? InstantPageV2MediaMapView)?.wrappedNode
+            ?? (wrapper as? InstantPageV2MediaCoverImageView)?.wrappedNode
+        guard let imageNode else { return nil }
+        guard let transitionNode = imageNode.transitionNode(media: media) else { return nil }
+        return GalleryTransitionArguments(transitionNode: transitionNode, addToTransitionSurface: addToTransitionSurface)
+    }
+
+    /// Forwards a hidden-media tick from the gallery's `hiddenMedia` signal to every registered
+    /// wrapper, calling `updateHiddenMedia(media:)` on each wrapped image node.
+    func applyHiddenMedia(_ hidden: InstantPageMedia?) {
+        for (_, weakBox) in self.trueRegistryRoot.mediaRegistry {
+            guard let wrapper = weakBox.value else { continue }
+            if let v = wrapper as? InstantPageV2MediaImageView      { v.wrappedNode.updateHiddenMedia(media: hidden) }
+            if let v = wrapper as? InstantPageV2MediaVideoView      { v.wrappedNode.updateHiddenMedia(media: hidden) }
+            if let v = wrapper as? InstantPageV2MediaMapView        { v.wrappedNode.updateHiddenMedia(media: hidden) }
+            if let v = wrapper as? InstantPageV2MediaCoverImageView { v.wrappedNode.updateHiddenMedia(media: hidden) }
         }
     }
 
@@ -72,17 +342,83 @@ public final class InstantPageV2View: UIView {
         case let .mediaPlaceholder(media):
             return InstantPageV2MediaPlaceholderView(item: media, theme: theme)
         case let .details(details):
-            let view = InstantPageV2DetailsView(item: details, theme: theme)
+            let view = InstantPageV2DetailsView(item: details, theme: theme, renderContext: self.renderContext)
             view.onTitleTapped = { [weak self] index in
                 self?.detailsTapped?(index)
             }
             return view
         case let .table(table):
-            return InstantPageV2TableView(item: table, theme: theme)
+            return InstantPageV2TableView(item: table, theme: theme, renderContext: self.renderContext)
+        case let .mediaImage(media):
+            if let renderContext = self.renderContext {
+                return InstantPageV2MediaImageView(item: media, renderContext: renderContext, theme: theme)
+            } else {
+                return InstantPageV2MediaPlaceholderView(item: placeholderFallback(for: media), theme: theme)
+            }
+        case let .mediaVideo(media):
+            if let renderContext = self.renderContext {
+                return InstantPageV2MediaVideoView(item: media, renderContext: renderContext, theme: theme)
+            } else {
+                return InstantPageV2MediaPlaceholderView(item: placeholderFallback(for: media), theme: theme)
+            }
+        case let .mediaMap(media):
+            if let renderContext = self.renderContext {
+                return InstantPageV2MediaMapView(item: media, renderContext: renderContext, theme: theme)
+            } else {
+                return InstantPageV2MediaPlaceholderView(item: placeholderFallback(for: media), theme: theme)
+            }
+        case let .mediaCoverImage(media):
+            if let renderContext = self.renderContext {
+                return InstantPageV2MediaCoverImageView(item: media, renderContext: renderContext, theme: theme)
+            } else {
+                return InstantPageV2MediaPlaceholderView(item: placeholderFallback(for: media), theme: theme)
+            }
         case let .formula(formula):
             return InstantPageV2FormulaView(item: formula)
         }
     }
+
+    /// Returns the frame the parent should assign to the view for `item`.
+    ///
+    /// For most item types this is `item.frame`. `InstantPageV2TextView` widens its backing store
+    /// by `v2TextViewClippingInset` on every side to accommodate glyph overhang and underline
+    /// rendering past the text's logical `maxY` — the same inset its `init` applies when
+    /// constructing the view. The reuse path must apply the same expansion so that re-layout
+    /// (theme change, bubble resize, etc.) does not clip italic glyphs or underlines.
+    ///
+    /// Keep this helper aligned with each view class's init-time frame computation.
+    private static func actualFrame(forItem item: InstantPageV2LaidOutItem) -> CGRect {
+        switch item {
+        case let .text(textItem):
+            return textItem.frame.insetBy(dx: -v2TextViewClippingInset, dy: -v2TextViewClippingInset)
+        default:
+            return item.frame
+        }
+    }
+}
+
+// MARK: - Placeholder fallbacks for the four typed media items
+//
+// Used by `makeItemView` when `renderContext == nil` (the zero-arg V2View constructor):
+// we still need to emit a sized grey rectangle for image/video/map/coverImage so the
+// surrounding layout doesn't collapse. Each helper synthesizes a placeholder item with
+// the same frame + cornerRadius as the typed item, picking the kind that matches the
+// closest existing placeholder visual.
+
+private func placeholderFallback(for item: InstantPageV2MediaImageItem) -> InstantPageV2MediaPlaceholderItem {
+    return InstantPageV2MediaPlaceholderItem(frame: item.frame, kind: .image, cornerRadius: item.cornerRadius)
+}
+
+private func placeholderFallback(for item: InstantPageV2MediaVideoItem) -> InstantPageV2MediaPlaceholderItem {
+    return InstantPageV2MediaPlaceholderItem(frame: item.frame, kind: .video, cornerRadius: item.cornerRadius)
+}
+
+private func placeholderFallback(for item: InstantPageV2MediaMapItem) -> InstantPageV2MediaPlaceholderItem {
+    return InstantPageV2MediaPlaceholderItem(frame: item.frame, kind: .map, cornerRadius: item.cornerRadius)
+}
+
+private func placeholderFallback(for item: InstantPageV2MediaCoverImageItem) -> InstantPageV2MediaPlaceholderItem {
+    return InstantPageV2MediaPlaceholderItem(frame: item.frame, kind: .webEmbed, cornerRadius: item.cornerRadius)
 }
 
 // MARK: - Item view protocol
@@ -109,7 +445,7 @@ extension InstantPageItemView {
 private let v2TextViewClippingInset: CGFloat = 4.0
 
 final class InstantPageV2TextView: UIView, InstantPageItemView {
-    let item: InstantPageV2TextItem
+    private(set) var item: InstantPageV2TextItem
     var itemFrame: CGRect { return self.item.frame }
 
     init(item: InstantPageV2TextItem) {
@@ -123,6 +459,12 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    func update(item: InstantPageV2TextItem, theme: InstantPageTheme) {
+        let _ = theme
+        self.item = item
+        self.setNeedsDisplay()
     }
 
     override func draw(_ rect: CGRect) {
@@ -210,7 +552,7 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
 // MARK: - Divider view
 
 final class InstantPageV2DividerView: UIView, InstantPageItemView {
-    let item: InstantPageV2DividerItem
+    private(set) var item: InstantPageV2DividerItem
     var itemFrame: CGRect { return self.item.frame }
 
     init(item: InstantPageV2DividerItem) {
@@ -221,12 +563,18 @@ final class InstantPageV2DividerView: UIView, InstantPageItemView {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func update(item: InstantPageV2DividerItem, theme: InstantPageTheme) {
+        let _ = theme
+        self.item = item
+        self.backgroundColor = item.color
+    }
 }
 
 // MARK: - Anchor view (zero-height; nothing to render)
 
 final class InstantPageV2AnchorView: UIView, InstantPageItemView {
-    let item: InstantPageV2AnchorItem
+    private(set) var item: InstantPageV2AnchorItem
     var itemFrame: CGRect { return self.item.frame }
 
     init(item: InstantPageV2AnchorItem) {
@@ -237,12 +585,17 @@ final class InstantPageV2AnchorView: UIView, InstantPageItemView {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func update(item: InstantPageV2AnchorItem, theme: InstantPageTheme) {
+        let _ = theme
+        self.item = item
+    }
 }
 
 // MARK: - List marker view
 
 final class InstantPageV2ListMarkerView: UIView, InstantPageItemView {
-    let item: InstantPageV2ListMarkerItem
+    private(set) var item: InstantPageV2ListMarkerItem
     var itemFrame: CGRect { return self.item.frame }
 
     init(item: InstantPageV2ListMarkerItem) {
@@ -250,7 +603,29 @@ final class InstantPageV2ListMarkerView: UIView, InstantPageItemView {
         super.init(frame: item.frame)
         self.backgroundColor = .clear
         self.isOpaque = false
+        self.rebuildContents()
+    }
 
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func update(item: InstantPageV2ListMarkerItem, theme: InstantPageTheme) {
+        let _ = theme
+        self.item = item
+        self.rebuildContents()
+    }
+
+    private func rebuildContents() {
+        if let sublayers = self.layer.sublayers {
+            for sublayer in sublayers {
+                sublayer.removeFromSuperlayer()
+            }
+        }
+        for subview in self.subviews {
+            subview.removeFromSuperview()
+        }
+
+        let item = self.item
         switch item.kind {
         case .bullet:
             let radius: CGFloat = min(item.frame.width, item.frame.height) / 2.0
@@ -279,26 +654,23 @@ final class InstantPageV2ListMarkerView: UIView, InstantPageItemView {
             outer.borderColor = item.color.cgColor
             outer.borderWidth = 1.0
             outer.cornerRadius = 3.0
-            outer.frame = self.bounds
+            outer.frame = CGRect(origin: .zero, size: item.frame.size)
             self.layer.addSublayer(outer)
             if checked {
                 let fill = CALayer()
                 fill.backgroundColor = item.color.cgColor
                 fill.cornerRadius = 3.0
-                fill.frame = self.bounds.insetBy(dx: 2.0, dy: 2.0)
+                fill.frame = CGRect(origin: .zero, size: item.frame.size).insetBy(dx: 2.0, dy: 2.0)
                 self.layer.addSublayer(fill)
             }
         }
     }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 }
 
 // MARK: - Quote bar view
 
 final class InstantPageV2BlockQuoteBarView: UIView, InstantPageItemView {
-    let item: InstantPageV2BarItem
+    private(set) var item: InstantPageV2BarItem
     var itemFrame: CGRect { return self.item.frame }
 
     init(item: InstantPageV2BarItem) {
@@ -310,34 +682,52 @@ final class InstantPageV2BlockQuoteBarView: UIView, InstantPageItemView {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func update(item: InstantPageV2BarItem, theme: InstantPageTheme) {
+        let _ = theme
+        self.item = item
+        self.backgroundColor = item.color
+        self.layer.cornerRadius = item.cornerRadius
+    }
 }
 
 // MARK: - Shape view (for pullQuote line ornaments)
 
 final class InstantPageV2ShapeView: UIView, InstantPageItemView {
-    let item: InstantPageV2ShapeItem
+    private(set) var item: InstantPageV2ShapeItem
     var itemFrame: CGRect { return self.item.frame }
 
     init(item: InstantPageV2ShapeItem) {
         self.item = item
         super.init(frame: item.frame)
-        switch item.kind {
-        case let .roundedRect(cornerRadius):
-            self.backgroundColor = item.color
-            self.layer.cornerRadius = cornerRadius
-        case .line(_):
-            self.backgroundColor = item.color
-        }
+        self.applyKind()
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func update(item: InstantPageV2ShapeItem, theme: InstantPageTheme) {
+        let _ = theme
+        self.item = item
+        self.applyKind()
+    }
+
+    private func applyKind() {
+        switch self.item.kind {
+        case let .roundedRect(cornerRadius):
+            self.backgroundColor = self.item.color
+            self.layer.cornerRadius = cornerRadius
+        case .line(_):
+            self.backgroundColor = self.item.color
+            self.layer.cornerRadius = 0.0
+        }
+    }
 }
 
 // MARK: - Media placeholder view (V0: gray rectangle)
 
 final class InstantPageV2MediaPlaceholderView: UIView, InstantPageItemView {
-    let item: InstantPageV2MediaPlaceholderItem
+    private(set) var item: InstantPageV2MediaPlaceholderItem
     var itemFrame: CGRect { return self.item.frame }
 
     init(item: InstantPageV2MediaPlaceholderItem, theme: InstantPageTheme) {
@@ -350,24 +740,36 @@ final class InstantPageV2MediaPlaceholderView: UIView, InstantPageItemView {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func update(item: InstantPageV2MediaPlaceholderItem, theme: InstantPageTheme) {
+        self.item = item
+        self.backgroundColor = theme.imageTintColor?.withAlphaComponent(0.2) ?? UIColor(white: 0.85, alpha: 1.0)
+        self.layer.cornerRadius = item.cornerRadius
+        self.clipsToBounds = item.cornerRadius > 0.0
+    }
 }
 
 // MARK: - Details view
 
 final class InstantPageV2DetailsView: UIView, InstantPageItemView {
-    let item: InstantPageV2DetailsItem
+    private(set) var item: InstantPageV2DetailsItem
     var itemFrame: CGRect { return self.item.frame }
 
     private let titleTextView: InstantPageV2TextView
     private let chevronLayer: CALayer
     private let separator: UIView
     private var bodyView: InstantPageV2View?
+    private let titleHitView: UIView
 
     var onTitleTapped: ((Int) -> Void)?
 
     var subLayoutView: InstantPageV2View? { return self.bodyView }
 
-    init(item: InstantPageV2DetailsItem, theme: InstantPageTheme) {
+    func forEachSubLayoutView(_ body: (InstantPageV2View) -> Void) {
+        if let bodyView = self.bodyView { body(bodyView) }
+    }
+
+    init(item: InstantPageV2DetailsItem, theme: InstantPageTheme, renderContext: InstantPageV2RenderContext?) {
         self.item = item
 
         let titleV2Item = InstantPageV2TextItem(
@@ -388,6 +790,9 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
         self.separator = UIView()
         self.separator.backgroundColor = item.separatorColor
         self.separator.isUserInteractionEnabled = false
+
+        self.titleHitView = UIView(frame: item.titleFrame)
+        self.titleHitView.backgroundColor = .clear
 
         super.init(frame: item.frame)
         self.backgroundColor = .clear
@@ -414,7 +819,7 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
         )
 
         if item.isExpanded, let innerLayout = item.innerLayout {
-            let body = InstantPageV2View()
+            let body = InstantPageV2View(renderContext: renderContext)
             body.update(layout: innerLayout, theme: theme, animation: .None)
             body.frame = CGRect(
                 origin: CGPoint(x: 0.0, y: item.titleFrame.maxY),
@@ -425,10 +830,8 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
         }
 
         let tap = UITapGestureRecognizer(target: self, action: #selector(self.titleTapped))
-        let titleHitView = UIView(frame: item.titleFrame)
-        titleHitView.backgroundColor = .clear
-        self.insertSubview(titleHitView, at: 0)
-        titleHitView.addGestureRecognizer(tap)
+        self.insertSubview(self.titleHitView, at: 0)
+        self.titleHitView.addGestureRecognizer(tap)
     }
 
     @available(*, unavailable)
@@ -437,12 +840,69 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
     @objc private func titleTapped() {
         self.onTitleTapped?(self.item.index)
     }
+
+    func update(item: InstantPageV2DetailsItem, theme: InstantPageTheme, renderContext: InstantPageV2RenderContext?) {
+        let previousIsExpanded = self.item.isExpanded
+        self.item = item
+
+        let titleV2Item = InstantPageV2TextItem(
+            frame: item.titleTextItem.frame,
+            textItem: item.titleTextItem
+        )
+        self.titleTextView.update(item: titleV2Item, theme: theme)
+
+        let chevronImage = UIImage(systemName: item.isExpanded ? "chevron.up" : "chevron.down")?
+            .withTintColor(theme.textCategories.paragraph.color, renderingMode: .alwaysOriginal)
+        self.chevronLayer.contents = chevronImage?.cgImage
+        let chevronSize = CGSize(width: 18.0, height: 18.0)
+        self.chevronLayer.frame = CGRect(
+            x: item.titleFrame.maxX - chevronSize.width - 12.0,
+            y: item.titleFrame.midY - chevronSize.height / 2.0,
+            width: chevronSize.width,
+            height: chevronSize.height
+        )
+
+        self.separator.backgroundColor = item.separatorColor
+        self.separator.frame = CGRect(
+            x: 0.0,
+            y: item.titleFrame.maxY - 0.5,
+            width: item.frame.width,
+            height: 0.5
+        )
+
+        self.titleHitView.frame = item.titleFrame
+
+        // Body recursion: if both old and new are expanded with a body, forward the update.
+        // If the expand state changed, tear down and rebuild (task B refines).
+        if previousIsExpanded && item.isExpanded, let innerLayout = item.innerLayout, let existingBody = self.bodyView {
+            existingBody.update(layout: innerLayout, theme: theme, animation: .None)
+            existingBody.frame = CGRect(
+                origin: CGPoint(x: 0.0, y: item.titleFrame.maxY),
+                size: innerLayout.contentSize
+            )
+        } else {
+            if let existingBody = self.bodyView {
+                existingBody.removeFromSuperview()
+                self.bodyView = nil
+            }
+            if item.isExpanded, let innerLayout = item.innerLayout {
+                let body = InstantPageV2View(renderContext: renderContext)
+                body.update(layout: innerLayout, theme: theme, animation: .None)
+                body.frame = CGRect(
+                    origin: CGPoint(x: 0.0, y: item.titleFrame.maxY),
+                    size: innerLayout.contentSize
+                )
+                self.addSubview(body)
+                self.bodyView = body
+            }
+        }
+    }
 }
 
 // MARK: - Code block view
 
 final class InstantPageV2CodeBlockView: UIView, InstantPageItemView {
-    let item: InstantPageV2CodeBlockItem
+    private(set) var item: InstantPageV2CodeBlockItem
     var itemFrame: CGRect { return self.item.frame }
 
     private let backgroundLayer: CALayer
@@ -471,12 +931,25 @@ final class InstantPageV2CodeBlockView: UIView, InstantPageItemView {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func update(item: InstantPageV2CodeBlockItem, theme: InstantPageTheme) {
+        self.item = item
+        self.backgroundLayer.backgroundColor = item.backgroundColor.cgColor
+        self.backgroundLayer.cornerRadius = item.cornerRadius
+        self.backgroundLayer.frame = CGRect(origin: .zero, size: item.frame.size)
+
+        let innerV2TextItem = InstantPageV2TextItem(
+            frame: item.textItem.frame,
+            textItem: item.textItem
+        )
+        self.textView.update(item: innerV2TextItem, theme: theme)
+    }
 }
 
 // MARK: - Table view
 
 final class InstantPageV2TableView: UIView, InstantPageItemView {
-    let item: InstantPageV2TableItem
+    private(set) var item: InstantPageV2TableItem
     var itemFrame: CGRect { return self.item.frame }
 
     private let scrollView: UIScrollView
@@ -488,7 +961,12 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
 
     var subLayoutView: InstantPageV2View? { return nil }
 
-    init(item: InstantPageV2TableItem, theme: InstantPageTheme) {
+    func forEachSubLayoutView(_ body: (InstantPageV2View) -> Void) {
+        if let titleView = self.titleSubView { body(titleView) }
+        for cellView in self.cellSubViews { body(cellView) }
+    }
+
+    init(item: InstantPageV2TableItem, theme: InstantPageTheme, renderContext: InstantPageV2RenderContext?) {
         self.item = item
         self.scrollView = UIScrollView()
         self.contentView = UIView()
@@ -508,7 +986,7 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
 
         // Title sub-layout (above the grid, inside the scroll view's content).
         if let titleLayout = item.titleSubLayout, let titleFrame = item.titleFrame {
-            let v = InstantPageV2View()
+            let v = InstantPageV2View(renderContext: renderContext)
             v.update(layout: titleLayout, theme: theme, animation: .None)
             v.frame = CGRect(x: v2TableCellInsets.left, y: titleFrame.minY + v2TableCellInsets.top,
                              width: titleLayout.contentSize.width, height: titleLayout.contentSize.height)
@@ -529,7 +1007,7 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
                 self.stripeLayers.append(stripe)
             }
             if let subLayout = cell.subLayout {
-                let v = InstantPageV2View()
+                let v = InstantPageV2View(renderContext: renderContext)
                 v.update(layout: subLayout, theme: theme, animation: .None)
                 // The sub-layout items are already offset by cell insets inside the cell frame.
                 v.frame = cell.frame.offsetBy(dx: 0.0, dy: gridOffsetY)
@@ -573,6 +1051,55 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func update(item: InstantPageV2TableItem, theme: InstantPageTheme) {
+        self.item = item
+
+        self.scrollView.frame = CGRect(origin: .zero, size: item.frame.size)
+        self.scrollView.contentSize = item.contentSize
+        self.scrollView.showsHorizontalScrollIndicator = item.contentSize.width > item.frame.width
+        self.contentView.frame = CGRect(origin: .zero, size: item.contentSize)
+
+        // Forward updates to nested V2 sub-layouts (title + each cell). Recursive update
+        // propagation. Cell-count or title-presence changes fall back to rebuild via the
+        // V2View's internal `update(layout:theme:animation:)` (task B refines).
+        if let titleLayout = item.titleSubLayout, let titleView = self.titleSubView, let titleFrame = item.titleFrame {
+            titleView.update(layout: titleLayout, theme: theme, animation: .None)
+            titleView.frame = CGRect(
+                x: v2TableCellInsets.left,
+                y: titleFrame.minY + v2TableCellInsets.top,
+                width: titleLayout.contentSize.width,
+                height: titleLayout.contentSize.height
+            )
+        }
+
+        let gridOffsetY = item.titleFrame?.height ?? 0.0
+        var cellLayoutIndex = 0
+        for cell in item.cells {
+            if let subLayout = cell.subLayout, cellLayoutIndex < self.cellSubViews.count {
+                let cellView = self.cellSubViews[cellLayoutIndex]
+                cellView.update(layout: subLayout, theme: theme, animation: .None)
+                cellView.frame = cell.frame.offsetBy(dx: 0.0, dy: gridOffsetY)
+                cellLayoutIndex += 1
+            }
+        }
+
+        // Stripe layers (cell backgrounds) — update color + frame in original order.
+        var stripeIndex = 0
+        for cell in item.cells {
+            if let bg = cell.backgroundColor, stripeIndex < self.stripeLayers.count {
+                let stripe = self.stripeLayers[stripeIndex]
+                stripe.backgroundColor = bg.cgColor
+                stripe.frame = cell.frame.offsetBy(dx: 0.0, dy: gridOffsetY)
+                stripeIndex += 1
+            }
+        }
+
+        // Line layers (borders) — update color in place; frames recomputed in original order.
+        for line in self.lineLayers {
+            line.backgroundColor = item.borderColor.cgColor
+        }
+    }
 }
 
 // MARK: - Public helpers on InstantPageV2View
@@ -736,7 +1263,7 @@ private func collectSelectableTextItems(
 /// matching V1's `InstantPageScrollableNode` (no bounce on non-overflowing content,
 /// scroll indicator hidden — appropriate for content embedded inside a chat bubble).
 final class InstantPageV2FormulaView: UIView, InstantPageItemView {
-    let item: InstantPageV2FormulaItem
+    private(set) var item: InstantPageV2FormulaItem
     var itemFrame: CGRect { return self.item.frame }
 
     init(item: InstantPageV2FormulaItem) {
@@ -744,8 +1271,26 @@ final class InstantPageV2FormulaView: UIView, InstantPageItemView {
         super.init(frame: item.frame)
         self.backgroundColor = .clear
         self.isOpaque = false
-        self.clipsToBounds = true
+        self.buildContents()
+    }
 
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func update(item: InstantPageV2FormulaItem, theme: InstantPageTheme) {
+        let _ = theme
+        self.item = item
+
+        // Image content and scroll/non-scroll shape may change with width; rebuild.
+        for sub in self.subviews { sub.removeFromSuperview() }
+        if let sublayers = self.layer.sublayers {
+            for layer in sublayers { layer.removeFromSuperlayer() }
+        }
+        self.buildContents()
+    }
+
+    private func buildContents() {
+        let item = self.item
         let imageLayer = CALayer()
         imageLayer.contents = item.attachment.rendered.image.cgImage
         imageLayer.contentsScale = item.attachment.rendered.image.scale
@@ -753,7 +1298,9 @@ final class InstantPageV2FormulaView: UIView, InstantPageItemView {
         imageLayer.frame = item.imageFrame
 
         if item.isScrollable {
-            let scroll = UIScrollView(frame: self.bounds)
+            self.clipsToBounds = true
+            self.isUserInteractionEnabled = true
+            let scroll = UIScrollView(frame: CGRect(origin: .zero, size: item.frame.size))
             scroll.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             scroll.contentSize = item.scrollContentSize
             scroll.showsHorizontalScrollIndicator = false
@@ -775,7 +1322,4 @@ final class InstantPageV2FormulaView: UIView, InstantPageItemView {
             self.layer.addSublayer(imageLayer)
         }
     }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 }

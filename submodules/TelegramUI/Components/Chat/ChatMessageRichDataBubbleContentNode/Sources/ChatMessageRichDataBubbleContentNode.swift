@@ -23,6 +23,11 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     // `init()` may run off the main thread; UIView construction must happen on the main thread.
     // The page view is built lazily inside the apply closure (always main-thread) via ensurePageView().
     private var pageView: InstantPageV2View?
+    // Tracks the message (id + stableVersion) baked into the current pageView's render context.
+    // The synthesized webpage uses a sentinel id (namespace 0, id 0) shared across all richText
+    // messages, so we key cache invalidation on the message itself. When the bubble is recycled
+    // with a different message we must discard pageView (render context is constructor-fixed).
+    private var pageViewMessageKey: (id: EngineMessage.Id, stableVersion: UInt32)?
     private var currentPageLayout: (boundingWidth: CGFloat,
                                     presentationThemeIdentity: ObjectIdentifier,
                                     expandedDetails: [Int: Bool],
@@ -44,12 +49,49 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         self.addSubnode(self.containerNode)
     }
 
-    private func ensurePageView() -> InstantPageV2View {
-        if let existing = self.pageView {
+    /// Builds (or reuses) the V2View. The render context is constructor-fixed on V2View, so
+    /// when the bubble is recycled with a different webpage we must rebuild the V2View.
+    private func ensurePageView(item: ChatMessageBubbleContentItem, webpage: TelegramMediaWebpage) -> InstantPageV2View {
+        let key = (id: item.message.id, stableVersion: item.message.stableVersion)
+        if let existing = self.pageView,
+           let current = self.pageViewMessageKey,
+           current.id == key.id,
+           current.stableVersion == key.stableVersion {
             return existing
         }
-        let view = InstantPageV2View()
+        self.pageView?.removeFromSuperview()
+        self.pageView = nil
+
+        // Capture only the MessageReference (value type) — the closures are retained on the
+        // render context which is owned by the V2View, so we must avoid making them retain
+        // the bubble (`self`) or the message indirectly via `item`.
+        let messageReference = MessageReference(item.message)
+        let renderContext = InstantPageV2RenderContext(
+            context: item.context,
+            webpage: webpage,
+            sourceLocation: InstantPageSourceLocation(userLocation: .other, peerType: .channel),
+            imageReference: { image in
+                return ImageMediaReference.message(message: messageReference, media: image)
+            },
+            fileReference: { file in
+                return FileMediaReference.message(message: messageReference, media: file)
+            },
+            present: { [weak self] controller, args in
+                self?.item?.controllerInteraction.presentController(controller, args)
+            },
+            push: { [weak self] controller in
+                self?.item?.controllerInteraction.navigationController()?.pushViewController(controller)
+            },
+            openUrl: { [weak self] urlItem in
+                self?.openInstantPageUrl(urlItem)
+            },
+            baseNavigationController: { [weak self] in
+                self?.item?.controllerInteraction.navigationController()
+            }
+        )
+        let view = InstantPageV2View(renderContext: renderContext)
         self.pageView = view
+        self.pageViewMessageKey = key
         self.containerNode.view.addSubview(view)
         view.detailsTapped = { [weak self] index in
             guard let self else { return }
@@ -94,7 +136,9 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                 var boundingSize = CGSize(width: suggestedBoundingWidth, height: 0.0)
 
                 var pageLayout: InstantPageV2Layout?
-                
+                // Built alongside pageLayout so the apply closure can hand it to ensurePageView.
+                var pageWebpage: TelegramMediaWebpage?
+
                 let isDark = item.presentationData.theme.theme.overallDarkAppearance
                 let isIncoming = item.message.effectivelyIncoming(item.context.account.peerId)
                 let messageTheme = isIncoming ? item.presentationData.theme.theme.chat.message.incoming : item.presentationData.theme.theme.chat.message.outgoing
@@ -201,6 +245,29 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                 )
                 
                 if let attribute = item.message.richText {
+                    let webpage = TelegramMediaWebpage(webpageId: EngineMedia.Id(namespace: 0, id: 0), content: .Loaded(TelegramMediaWebpageLoadedContent(
+                        url: "",
+                        displayUrl: "",
+                        hash: 0,
+                        type: nil,
+                        websiteName: nil,
+                        title: nil,
+                        text: nil,
+                        embedUrl: nil,
+                        embedType: nil,
+                        embedSize: nil,
+                        duration: nil,
+                        author: nil,
+                        isMediaLargeByDefault: nil,
+                        imageIsVideoCover: false,
+                        image: nil,
+                        file: nil,
+                        story: nil,
+                        attributes: [],
+                        instantPage: attribute.instantPage
+                    )))
+                    pageWebpage = webpage
+
                     let presentationThemeIdentity = ObjectIdentifier(item.presentationData.theme.theme)
                     if let current = currentPageLayout,
                        current.boundingWidth == suggestedBoundingWidth,
@@ -208,27 +275,6 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                        current.expandedDetails == currentExpandedDetails {
                         pageLayout = current.layout
                     } else {
-                        let webpage = TelegramMediaWebpage(webpageId: EngineMedia.Id(namespace: 0, id: 0), content: .Loaded(TelegramMediaWebpageLoadedContent(
-                            url: "",
-                            displayUrl: "",
-                            hash: 0,
-                            type: nil,
-                            websiteName: nil,
-                            title: nil,
-                            text: nil,
-                            embedUrl: nil,
-                            embedType: nil,
-                            embedSize: nil,
-                            duration: nil,
-                            author: nil,
-                            isMediaLargeByDefault: nil,
-                            imageIsVideoCover: false,
-                            image: nil,
-                            file: nil,
-                            story: nil,
-                            attributes: [],
-                            instantPage: attribute.instantPage
-                        )))
                         pageLayout = layoutInstantPageV2(
                             webpage: webpage,
                             instantPage: attribute.instantPage,
@@ -453,14 +499,14 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                             self.statusNode?.pressed = nil
                         }
 
-                        if let pageLayout {
+                        if let pageLayout, let pageWebpage, let _ = item.message.richText {
                             self.currentPageLayout = (
                                 suggestedBoundingWidth,
                                 ObjectIdentifier(item.presentationData.theme.theme),
                                 self.currentExpandedDetails,
                                 pageLayout
                             )
-                            let pageView = self.ensurePageView()
+                            let pageView = self.ensurePageView(item: item, webpage: pageWebpage)
                             pageView.update(layout: pageLayout, theme: pageTheme, animation: animation)
                             pageView.frame = CGRect(
                                 origin: CGPoint(x: -1.0, y: 0.0),
@@ -473,6 +519,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                                 theme: pageTheme,
                                 animation: animation
                             )
+                            self.pageViewMessageKey = nil
                         }
                     })
                 })
@@ -554,6 +601,18 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         return pageView.urlItemAt(point: local).map {
             (item: $0.item, urlItem: $0.urlItem, parentOffset: $0.parentOffset, localPoint: $0.localPoint)
         }
+    }
+
+    /// Bridges an InstantPageUrlItem (used by the gallery's caption URL handler) to the
+    /// chat layer's URL handler. `concealed: true` matches `tapActionAtPoint` for the same
+    /// reason: V2 cannot reliably compare displayed link text to the resolved URL.
+    private func openInstantPageUrl(_ url: InstantPageUrlItem) {
+        guard let item = self.item else { return }
+        item.controllerInteraction.openUrl(ChatControllerInteraction.OpenUrl(
+            url: url.url,
+            concealed: true,
+            allowInlineWebpageResolution: url.webpageId != nil
+        ))
     }
 
     private func computeHighlightRects(item: InstantPageTextItem, parentOffset: CGPoint, localPoint: CGPoint) -> [CGRect] {
