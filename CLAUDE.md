@@ -46,6 +46,34 @@ This matters in two places specifically:
 
 Rare exceptions: top-level view-controller views integrating with the system's first-responder/inset model. If you find yourself wanting `self.frame = …` from inside a child view, refactor so the parent positions it instead.
 
+## AI streaming animation (rich-text bubbles)
+
+`ChatMessageRichDataBubbleContentNode` shows a "Thinking…" shimmer header and progressively reveals InstantPage V2 content while `TypingDraftMessageAttribute` is on the message. Mirrors the older animation in `ChatMessageTextBubbleContentNode`, adapted to the heterogeneous V2 layout.
+
+Spec: [`docs/superpowers/specs/2026-05-19-richdata-streaming-animation-design.md`](docs/superpowers/specs/2026-05-19-richdata-streaming-animation-design.md). Plan: [`docs/superpowers/plans/2026-05-19-richdata-streaming-animation.md`](docs/superpowers/plans/2026-05-19-richdata-streaming-animation.md).
+
+### Where things live
+
+| File | Responsibility |
+|---|---|
+| `submodules/TelegramUI/Components/StreamingTextReveal/Sources/TextRevealController.swift` | Pacing controller, shared by both bubbles. EWMA inter-arrival → velocity-smoothed cursor. |
+| `submodules/InstantPageUI/Sources/InstantPageRenderer.swift` (`InstantPageV2TextView`) | Drawing split: private `TextRenderView` does `draw(_)` inside a `renderContainer` whose layer carries a `revealMaskLayer`; new chars spawn cropped `SnippetLayer` siblings of the render container that animate in (blur + alpha + scale + position) and are absorbed into the mask on completion. Ported from `InteractiveTextComponent`. |
+| `submodules/InstantPageUI/Sources/InstantPageV2RevealCost.swift` | `InstantPageV2RevealCostMap` + `InstantPageV2View.applyReveal(revealedCount:costMap:animated:)`. Bridges the global width-based cursor to per-text-view char counts (via `charCountForWidthBudget`) and per-item visibility / table-row pop-in. |
+| `submodules/InstantPageUI/Sources/InstantPageV2Layout.swift` | `InstantPageTextLine.characterRects` (line-local CT coords, baseline-relative positive-up) populated when `computeRevealCharacterRects: true` is passed to `layoutInstantPageV2(...)`. Uses `CTFontGetBoundingRectsForGlyphs` for actual glyph ink, not advance widths. |
+| `submodules/TelegramUI/Components/Chat/ChatMessageRichDataBubbleContentNode/...` | Streaming detection (`TypingDraftMessageAttribute`), "Thinking…" header layout, display-link wiring, container sizing. |
+
+### Non-obvious invariants
+
+- **Cost unit is points of width, not characters.** Each item's cost = its width in points along the reading direction. Text contributes sum of glyph ink widths; non-text items contribute `frame.width`. Table cells are floored at `cell.frame.width` so narrow- or empty-cell tables don't race through the cursor. Reveal pace becomes "points per second" — uniform across content types.
+- **Mask uses per-glyph ink bounds, unioned per line.** Each revealed glyph's mask rect comes from `CTFontGetBoundingRectsForGlyphs` (not advance widths) so italics, accents, descenders are covered exactly. Per line, glyphs are unioned into one mask rect; consecutive fully-revealed lines union further — fully-revealed prefix is always one `CALayer`.
+- **`containerNode` does ALL the clipping.** During streaming, containerNode is sized to `streamingHeaderOffset + revealedItemsMaxY` (no closing pad). The bubble itself is taller (`revealedContentSize.height + 2`) — the strip below containerNode is empty bubble background. pageView keeps its full `pageLayout.contentSize`; anything past containerNode's bottom is clipped at containerNode (`clipsToBounds = true` set in init). Do NOT shorten the pageView or set `pageView.clipsToBounds`.
+- **The pageView is rebuilt on every `stableVersion` bump.** V2View's render context is constructor-fixed, so each AI chunk creates a brand-new `InstantPageV2View`. The reveal cursor survives on `TextRevealController` (owned by the bubble). The seed call `applyReveal(revealedCount: previousAnimateGlyphCount, …, animated: false)` after `ensurePageView` re-applies state to the fresh V2View so there's no flash of full-text-then-mask.
+- **Layout cache key includes `message.stableVersion`.** Each AI chunk bumps stableVersion; without this the cached layout would shadow newly-arrived content.
+- **`TypingDraftMessageAttribute` is the streaming gate.** Same trigger TextBubble uses. The InstantPage's `isComplete` flag is informational only.
+- **Width-based cost → char count bridge.** Mask APIs (`updateRevealCharacterCount`) still take character counts. `applyRevealEntry` calls `charCountForWidthBudget(textItem:widthBudget:)` to translate the width-based local cursor into the per-text-view character count.
+- **`Thinking…` header positioning matches TextBubble.** `streamingTextFrame.origin = (bubbleInsets.left - textInsets.left, topInset - textInsets.top)`. `streamingHeaderOffset` = visible bottom + 1pt spacing = where pageView's `frame.origin.y` and statusFrame y-shift attach. Bubble minimum width includes `visible_thinking_width + bubbleInsets.left + bubbleInsets.right + 2`.
+- **Display-link tick re-layouts on extent change.** Tick reads `revealedContentSize` at the new cursor; if the height differs from the previous cursor, calls `requestFullUpdate`. So the bubble grows in flight when the cursor crosses a line/item boundary, not just between chunks. Tick passes `animated: true` to `applyReveal` to fire the snippet pop-in.
+
 ## Postbox → TelegramEngine refactor (in progress)
 
 A gradual migration is underway to eliminate direct `import Postbox` from consumer submodules in favor of `TelegramEngine`.

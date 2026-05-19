@@ -80,8 +80,9 @@ public final class InstantPageTextLine {
     let formulaItems: [InstantPageTextFormulaRun]
     public let anchorItems: [InstantPageTextAnchorItem]
     let isRTL: Bool
+    public let characterRects: [CGRect]?   // line-local, one rect per character in `range`; nil = not computed
 
-    init(line: CTLine, range: NSRange, frame: CGRect, strikethroughItems: [InstantPageTextStrikethroughItem], underlineItems: [InstantPageTextUnderlineItem], markedItems: [InstantPageTextMarkedItem], imageItems: [InstantPageTextImageItem], formulaItems: [InstantPageTextFormulaRun], anchorItems: [InstantPageTextAnchorItem], isRTL: Bool) {
+    init(line: CTLine, range: NSRange, frame: CGRect, strikethroughItems: [InstantPageTextStrikethroughItem], underlineItems: [InstantPageTextUnderlineItem], markedItems: [InstantPageTextMarkedItem], imageItems: [InstantPageTextImageItem], formulaItems: [InstantPageTextFormulaRun], anchorItems: [InstantPageTextAnchorItem], isRTL: Bool, characterRects: [CGRect]? = nil) {
         self.line = line
         self.range = range
         self.frame = frame
@@ -92,6 +93,7 @@ public final class InstantPageTextLine {
         self.formulaItems = formulaItems
         self.anchorItems = anchorItems
         self.isRTL = isRTL
+        self.characterRects = characterRects
     }
 }
 

@@ -30,6 +30,7 @@ swift_library(
         "//submodules/TranslateUI:TranslateUI",
         "//submodules/Tuples:Tuples",
         "//third-party/SwiftMath:SwiftMath",
+        "//submodules/ComponentFlow:ComponentFlow",
     ],
     visibility = [
         "//visibility:public",

@@ -298,7 +298,7 @@ public struct InstantPageV2AnchorItem {
     public let name: String
 }
 
-// MARK: - Public entry points (stubs; filled in later tasks)
+// MARK: - Public entry points
 
 public func layoutInstantPageV2(
     webpage: TelegramMediaWebpage,
@@ -311,7 +311,8 @@ public func layoutInstantPageV2(
     dateTimeFormat: PresentationDateTimeFormat,
     cachedMessageSyntaxHighlight: CachedMessageSyntaxHighlight?,
     expandedDetails: [Int: Bool],
-    fitToWidth: Bool
+    fitToWidth: Bool,
+    computeRevealCharacterRects: Bool = false
 ) -> InstantPageV2Layout {
     guard case let .Loaded(loadedContent) = webpage.content else {
         return InstantPageV2Layout(contentSize: .zero, items: [], detailsIndices: [])
@@ -335,6 +336,7 @@ public func layoutInstantPageV2(
         cachedMessageSyntaxHighlight: cachedMessageSyntaxHighlight,
         rtl: instantPage.rtl,
         fitToWidth: fitToWidth,
+        computeRevealCharacterRects: computeRevealCharacterRects,
         mediaIndexCounter: 0,
         detailsIndexCounter: 0,
         expandedDetails: expandedDetails
@@ -404,6 +406,7 @@ private struct LayoutContext {
     let cachedMessageSyntaxHighlight: CachedMessageSyntaxHighlight?
     let rtl: Bool
     let fitToWidth: Bool
+    let computeRevealCharacterRects: Bool
 
     var mediaIndexCounter: Int = 0
     var detailsIndexCounter: Int = 0
@@ -879,7 +882,8 @@ private func layoutDetails(
         offset: CGPoint(x: horizontalInset, y: 12.0),
         media: context.media,
         webpage: context.webpage,
-        fitToWidth: context.fitToWidth
+        fitToWidth: context.fitToWidth,
+        computeRevealCharacterRects: context.computeRevealCharacterRects
     )
     guard let titleTextItem = titleTextItem else { return [] }
 
@@ -982,7 +986,8 @@ private func layoutTable(
                     media: context.media,
                     webpage: context.webpage,
                     minimizeWidth: true,
-                    fitToWidth: context.fitToWidth
+                    fitToWidth: context.fitToWidth,
+                    computeRevealCharacterRects: context.computeRevealCharacterRects
                 ).0 {
                     minCellWidth = shortestItem.effectiveWidth() + totalCellPadding
                 }
@@ -992,7 +997,8 @@ private func layoutTable(
                     offset: CGPoint(),
                     media: context.media,
                     webpage: context.webpage,
-                    fitToWidth: context.fitToWidth
+                    fitToWidth: context.fitToWidth,
+                    computeRevealCharacterRects: context.computeRevealCharacterRects
                 ).0 {
                     maxCellWidth = max(minCellWidth, longestItem.effectiveWidth() + totalCellPadding)
                 }
@@ -1464,7 +1470,8 @@ private func layoutCaptionAndCredit(
             offset: CGPoint(x: horizontalInset, y: y),
             media: context.media,
             webpage: context.webpage,
-            fitToWidth: context.fitToWidth
+            fitToWidth: context.fitToWidth,
+            computeRevealCharacterRects: context.computeRevealCharacterRects
         )
         totalHeight += captionSize.height
         y += captionSize.height
@@ -1492,7 +1499,8 @@ private func layoutCaptionAndCredit(
             offset: CGPoint(x: horizontalInset, y: y),
             media: context.media,
             webpage: context.webpage,
-            fitToWidth: context.fitToWidth
+            fitToWidth: context.fitToWidth,
+            computeRevealCharacterRects: context.computeRevealCharacterRects
         )
         totalHeight += creditSize.height
         items.append(contentsOf: creditItems)
@@ -1633,7 +1641,8 @@ private func layoutSimpleText(
         offset: CGPoint(x: horizontalInset, y: 0.0),
         media: context.media,
         webpage: context.webpage,
-        fitToWidth: context.fitToWidth
+        fitToWidth: context.fitToWidth,
+        computeRevealCharacterRects: context.computeRevealCharacterRects
     )
     return items
 }
@@ -1654,7 +1663,8 @@ private func layoutHeading(
         offset: CGPoint(x: horizontalInset, y: 0.0),
         media: context.media,
         webpage: context.webpage,
-        fitToWidth: context.fitToWidth
+        fitToWidth: context.fitToWidth,
+        computeRevealCharacterRects: context.computeRevealCharacterRects
     )
     return items
 }
@@ -1678,7 +1688,8 @@ private func layoutParagraph(
         offset: CGPoint(x: horizontalInset, y: 0.0),
         media: context.media,
         webpage: context.webpage,
-        fitToWidth: context.fitToWidth
+        fitToWidth: context.fitToWidth,
+        computeRevealCharacterRects: context.computeRevealCharacterRects
     )
     return items
 }
@@ -1749,7 +1760,8 @@ private func layoutAuthorDate(
         offset: CGPoint(x: horizontalInset, y: 0.0),
         media: context.media,
         webpage: context.webpage,
-        fitToWidth: context.fitToWidth
+        fitToWidth: context.fitToWidth,
+        computeRevealCharacterRects: context.computeRevealCharacterRects
     )
     return items
 }
@@ -1813,7 +1825,8 @@ private func layoutCodeBlock(
         media: context.media,
         webpage: context.webpage,
         fitToWidth: context.fitToWidth,
-        opaqueBackground: true
+        opaqueBackground: true,
+        computeRevealCharacterRects: context.computeRevealCharacterRects
     )
     guard let textItem = textItem else { return [] }
 
@@ -1895,7 +1908,8 @@ private func layoutBlockQuote(
         offset: CGPoint(x: textX, y: contentHeight),
         media: context.media,
         webpage: context.webpage,
-        fitToWidth: context.fitToWidth
+        fitToWidth: context.fitToWidth,
+        computeRevealCharacterRects: context.computeRevealCharacterRects
     )
     result.append(contentsOf: bodyItems)
     contentHeight += bodySize.height   // V1 line 530/567
@@ -1917,7 +1931,8 @@ private func layoutBlockQuote(
             offset: CGPoint(x: textX, y: contentHeight),
             media: context.media,
             webpage: context.webpage,
-            fitToWidth: context.fitToWidth
+            fitToWidth: context.fitToWidth,
+            computeRevealCharacterRects: context.computeRevealCharacterRects
         )
         result.append(contentsOf: captionItems)
         contentHeight += captionSize.height   // V1 lines 542/582
@@ -2031,7 +2046,8 @@ private func layoutList(
                 attrStr,
                 boundingWidth: boundingWidth - horizontalInset * 2.0,
                 offset: .zero,
-                fitToWidth: context.fitToWidth
+                fitToWidth: context.fitToWidth,
+                computeRevealCharacterRects: context.computeRevealCharacterRects
             )
             let w: CGFloat
             if let textItem = textItem, let firstLine = textItem.lines.first {
@@ -2083,7 +2099,8 @@ private func layoutList(
                 offset: CGPoint(x: textX, y: contentHeight),
                 media: context.media,
                 webpage: context.webpage,
-                fitToWidth: context.fitToWidth
+                fitToWidth: context.fitToWidth,
+                computeRevealCharacterRects: context.computeRevealCharacterRects
             )
 
             // Compute marker vertical position: align to mid of first text line.
@@ -2437,7 +2454,8 @@ func layoutTextItem(
     minimizeWidth: Bool = false,
     fitToWidth: Bool = false,
     maxNumberOfLines: Int = 0,
-    opaqueBackground: Bool = false
+    opaqueBackground: Bool = false,
+    computeRevealCharacterRects: Bool = false
 ) -> (InstantPageTextItem?, [InstantPageV2LaidOutItem], CGSize) {
     if string.length == 0 {
         return (nil, [], CGSize())
@@ -2669,7 +2687,63 @@ func layoutTextItem(
                     }
                 }
             }
-            let textLine = InstantPageTextLine(line: line, range: lineRange, frame: CGRect(x: workingLineOrigin.x, y: workingLineOrigin.y, width: lineWidth, height: height), strikethroughItems: strikethroughItems, underlineItems: underlineItems, markedItems: markedItems, imageItems: lineImageItems, formulaItems: lineFormulaItems, anchorItems: anchorItems, isRTL: isRTL)
+            // Per-character rects use each glyph's actual ink bounds via
+            // CTFontGetBoundingRectsForGlyphs — caret-position advance-width
+            // math (CTLineGetOffsetForStringIndex) is too tight for italics,
+            // accented marks, and any glyph with side bearings, which causes
+            // the reveal mask to visibly clip the glyph edges. Mirrors
+            // InteractiveTextComponent.computeCharacterRectsForLine.
+            //
+            // For ligatures (one glyph for multiple chars), only the first
+            // char's slot is populated; the rest stay CGRect.zero and the
+            // consumer's `rect.isEmpty` guard skips them.
+            let lineCharacterRects: [CGRect]?
+            if computeRevealCharacterRects {
+                var rects = [CGRect](repeating: CGRect.zero, count: lineRange.length)
+                let glyphRuns = CTLineGetGlyphRuns(line) as NSArray
+                for run in glyphRuns {
+                    let run = run as! CTRun
+                    let glyphCount = CTRunGetGlyphCount(run)
+                    if glyphCount == 0 {
+                        continue
+                    }
+
+                    var glyphs = [CGGlyph](repeating: 0, count: glyphCount)
+                    CTRunGetGlyphs(run, CFRangeMake(0, glyphCount), &glyphs)
+
+                    var positions = [CGPoint](repeating: CGPoint.zero, count: glyphCount)
+                    CTRunGetPositions(run, CFRangeMake(0, glyphCount), &positions)
+
+                    var stringIndices = [CFIndex](repeating: 0, count: glyphCount)
+                    CTRunGetStringIndices(run, CFRangeMake(0, glyphCount), &stringIndices)
+
+                    let attributes = CTRunGetAttributes(run) as NSDictionary
+                    guard let font = attributes[kCTFontAttributeName] as! CTFont? else {
+                        continue
+                    }
+
+                    var boundingRects = [CGRect](repeating: CGRect.zero, count: glyphCount)
+                    CTFontGetBoundingRectsForGlyphs(font, .default, &glyphs, &boundingRects, glyphCount)
+
+                    for i in 0 ..< glyphCount {
+                        let charIndex = stringIndices[i] - lineRange.location
+                        if charIndex >= 0 && charIndex < lineRange.length {
+                            let pos = positions[i]
+                            let bbox = boundingRects[i]
+                            rects[charIndex] = CGRect(
+                                x: pos.x + bbox.origin.x,
+                                y: pos.y + bbox.origin.y,
+                                width: bbox.width,
+                                height: bbox.height
+                            )
+                        }
+                    }
+                }
+                lineCharacterRects = rects
+            } else {
+                lineCharacterRects = nil
+            }
+            let textLine = InstantPageTextLine(line: line, range: lineRange, frame: CGRect(x: workingLineOrigin.x, y: workingLineOrigin.y, width: lineWidth, height: height), strikethroughItems: strikethroughItems, underlineItems: underlineItems, markedItems: markedItems, imageItems: lineImageItems, formulaItems: lineFormulaItems, anchorItems: anchorItems, isRTL: isRTL, characterRects: lineCharacterRects)
 
             lines.append(textLine)
             imageItems.append(contentsOf: lineImageItems)

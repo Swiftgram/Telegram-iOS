@@ -7,6 +7,7 @@ import TelegramPresentationData
 import TelegramUIPreferences
 import AccountContext
 import GalleryUI
+import ComponentFlow
 
 // MARK: - Stable item identity (for view reuse on re-layouts)
 
@@ -82,7 +83,7 @@ public final class InstantPageV2View: UIView {
     /// Invoked when a details title is tapped. Bubble routes to its expand-state mutation + requestUpdate.
     public var detailsTapped: ((_ index: Int) -> Void)?
 
-    private var itemViews: [InstantPageItemView] = []
+    var itemViews: [InstantPageItemView] = []
     private var itemViewStableIds: [InstantPageV2StableItemId] = []
 
     public let renderContext: InstantPageV2RenderContext?
@@ -448,12 +449,31 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
     private(set) var item: InstantPageV2TextItem
     var itemFrame: CGRect { return self.item.frame }
 
+    private let renderContainer: UIView
+    private let renderView: TextRenderView
+
+    // Reveal mask state — populated in Task 5.
+    private var maxCharacterDrawCount: Int?
+    private var previousMaxCharacterDrawCount: Int = 0
+    private var revealMaskLayer: SimpleLayer?
+    private var revealLineMaskLayers: [SimpleLayer] = []
+    private var animatingSnippetLayers: [SnippetLayer] = []
+
     init(item: InstantPageV2TextItem) {
         self.item = item
+        self.renderContainer = UIView()
+        self.renderView = TextRenderView(item: item)
         super.init(frame: item.frame.insetBy(dx: -v2TextViewClippingInset, dy: -v2TextViewClippingInset))
         self.backgroundColor = .clear
         self.isOpaque = false
-        self.contentMode = .redraw
+
+        self.renderContainer.frame = self.bounds
+        self.renderContainer.backgroundColor = .clear
+        self.renderContainer.isOpaque = false
+        self.addSubview(self.renderContainer)
+
+        self.renderView.frame = self.bounds
+        self.renderContainer.addSubview(self.renderView)
     }
 
     @available(*, unavailable)
@@ -464,7 +484,324 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
     func update(item: InstantPageV2TextItem, theme: InstantPageTheme) {
         let _ = theme
         self.item = item
-        self.setNeedsDisplay()
+        self.renderView.item = item
+        self.renderView.setNeedsDisplay()
+    }
+
+    func updateRevealCharacterCount(value: Int?, animated: Bool) {
+        if self.maxCharacterDrawCount == value {
+            return
+        }
+        self.maxCharacterDrawCount = value
+        self.updateRevealMask(animateNewSegments: animated)
+    }
+
+    private struct RevealLineInfo {
+        let lineFrame: CGRect
+        let lineHeight: CGFloat
+        let revealedWidth: CGFloat
+        let isFull: Bool
+        let isRTL: Bool
+    }
+
+    private func computeRevealedLines(characterLimit: Int) -> [RevealLineInfo] {
+        var result: [RevealLineInfo] = []
+        var remainingCharacters = characterLimit
+
+        let textItem = self.item.textItem
+        let boundsWidth = textItem.frame.size.width
+
+        for line in textItem.lines {
+            let lineFrame = v2FrameForLine(line, boundingWidth: boundsWidth, alignment: textItem.alignment)
+            // Translate from textItem-local to renderView-local coords (renderView's draw(_) translates by the inset).
+            let renderLocalLineFrame = lineFrame.offsetBy(dx: v2TextViewClippingInset, dy: v2TextViewClippingInset)
+            let lineHeight = lineFrame.size.height
+
+            guard let characterRects = line.characterRects else {
+                let revealedWidth: CGFloat = remainingCharacters > 0 ? renderLocalLineFrame.width : 0.0
+                result.append(RevealLineInfo(lineFrame: renderLocalLineFrame, lineHeight: lineHeight, revealedWidth: revealedWidth, isFull: remainingCharacters > 0, isRTL: line.isRTL))
+                if remainingCharacters > 0 {
+                    remainingCharacters -= line.range.length
+                }
+                continue
+            }
+
+            if remainingCharacters <= 0 {
+                result.append(RevealLineInfo(lineFrame: renderLocalLineFrame, lineHeight: lineHeight, revealedWidth: 0.0, isFull: false, isRTL: line.isRTL))
+                continue
+            }
+
+            let revealCount = min(characterRects.count, remainingCharacters)
+            var revealedWidth: CGFloat = 0.0
+            if line.isRTL {
+                var minX: CGFloat = .greatestFiniteMagnitude
+                for j in 0 ..< revealCount {
+                    let rect = characterRects[j]
+                    if !rect.isEmpty {
+                        minX = min(minX, rect.minX)
+                    }
+                }
+                if minX != .greatestFiniteMagnitude {
+                    revealedWidth = ceil(renderLocalLineFrame.width - minX)
+                }
+            } else {
+                for j in 0 ..< revealCount {
+                    let rect = characterRects[j]
+                    if !rect.isEmpty {
+                        revealedWidth = max(revealedWidth, rect.maxX)
+                    }
+                }
+                revealedWidth = ceil(revealedWidth)
+            }
+
+            remainingCharacters -= characterRects.count
+            let isFull = remainingCharacters >= 0
+
+            result.append(RevealLineInfo(lineFrame: renderLocalLineFrame, lineHeight: lineHeight, revealedWidth: revealedWidth, isFull: isFull, isRTL: line.isRTL))
+        }
+
+        return result
+    }
+
+    private func updateRevealMask(animateNewSegments: Bool) {
+        let textItem = self.item.textItem
+        let lines = textItem.lines
+        let boundsWidth = textItem.frame.size.width
+        let layerSize = self.renderContainer.bounds.size
+
+        let effectiveCharacterDrawCount: Int
+        if let maxCharacterDrawCount = self.maxCharacterDrawCount {
+            effectiveCharacterDrawCount = maxCharacterDrawCount
+        } else {
+            if self.previousMaxCharacterDrawCount > 0 || !self.animatingSnippetLayers.isEmpty {
+                var totalCharCount = 0
+                for line in lines {
+                    if let characterRects = line.characterRects {
+                        totalCharCount += characterRects.count
+                    } else {
+                        totalCharCount += line.range.length
+                    }
+                }
+                effectiveCharacterDrawCount = totalCharCount
+            } else {
+                if let _ = self.revealMaskLayer {
+                    self.renderContainer.layer.mask = nil
+                    self.revealMaskLayer = nil
+                    self.revealLineMaskLayers.removeAll()
+                }
+                self.previousMaxCharacterDrawCount = 0
+                return
+            }
+        }
+
+        let revealMaskLayer: SimpleLayer
+        if let existing = self.revealMaskLayer {
+            revealMaskLayer = existing
+        } else {
+            revealMaskLayer = SimpleLayer()
+            revealMaskLayer.backgroundColor = UIColor.clear.cgColor
+            self.revealMaskLayer = revealMaskLayer
+            self.renderContainer.layer.mask = revealMaskLayer
+        }
+        revealMaskLayer.frame = CGRect(origin: .zero, size: layerSize)
+
+        let currentLineInfos = self.computeRevealedLines(characterLimit: effectiveCharacterDrawCount)
+
+        // Snippet spawn pass — animate newly-revealed characters.
+        if self.previousMaxCharacterDrawCount < effectiveCharacterDrawCount,
+           let contents = self.renderView.layer.contents,
+           animateNewSegments {
+            let containerOrigin = self.renderContainer.frame.origin
+            var previousRemaining = self.previousMaxCharacterDrawCount
+            var currentRemaining = effectiveCharacterDrawCount
+            var globalCharIndex = 0
+
+            for i in 0 ..< lines.count {
+                let line = lines[i]
+                let lineInfo = currentLineInfos[i]
+                guard let characterRects = line.characterRects else { continue }
+
+                let lineCharCount = characterRects.count
+                let prevCount = min(max(0, previousRemaining), lineCharCount)
+                let curCount = min(max(0, currentRemaining), lineCharCount)
+
+                previousRemaining -= lineCharCount
+                currentRemaining -= lineCharCount
+
+                if curCount <= prevCount {
+                    globalCharIndex += lineCharCount
+                    continue
+                }
+
+                for j in prevCount ..< curCount {
+                    let charRect = characterRects[j]
+                    if charRect.isEmpty { continue }
+
+                    let snippetRect = CGRect(
+                        x: lineInfo.lineFrame.minX + charRect.origin.x,
+                        y: lineInfo.lineFrame.minY,
+                        width: charRect.width,
+                        height: lineInfo.lineHeight
+                    )
+
+                    if snippetRect.width < 0.5 { continue }
+
+                    let contentsRect = CGRect(
+                        x: snippetRect.minX / layerSize.width,
+                        y: snippetRect.minY / layerSize.height,
+                        width: snippetRect.width / layerSize.width,
+                        height: snippetRect.height / layerSize.height
+                    )
+
+                    let snippetLayer = SnippetLayer(characterIndex: globalCharIndex + j)
+                    snippetLayer.contents = contents
+                    snippetLayer.contentsRect = contentsRect
+                    snippetLayer.contentsScale = self.renderView.layer.contentsScale
+                    snippetLayer.contentsGravity = self.renderView.layer.contentsGravity
+                    snippetLayer.frame = snippetRect.offsetBy(dx: containerOrigin.x, dy: containerOrigin.y)
+
+                    self.layer.addSublayer(snippetLayer)
+                    self.animatingSnippetLayers.append(snippetLayer)
+
+                    ComponentTransition(animation: .curve(duration: 0.22, curve: .easeInOut)).animateBlur(layer: snippetLayer, fromRadius: 2.0, toRadius: 0.0)
+                    snippetLayer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
+                    snippetLayer.animatePosition(from: CGPoint(x: 0.0, y: 6.0), to: .zero, duration: 0.2, additive: true)
+                    snippetLayer.animateScale(from: 0.5, to: 1.0, duration: 0.2, completion: { [weak self, weak snippetLayer] _ in
+                        guard let self, let snippetLayer else { return }
+                        snippetLayer.removeFromSuperlayer()
+                        self.animatingSnippetLayers.removeAll(where: { $0 === snippetLayer })
+                        self.updateRevealMask(animateNewSegments: false)
+                    })
+                }
+                globalCharIndex += lineCharCount
+            }
+        }
+
+        // Mask rebuild — when snippets are in flight, clamp to the lowest animating one
+        // (so the mask never exposes a char a snippet is still flying for). With no animations
+        // in flight, snap directly to the current target — `previousMaxCharacterDrawCount`
+        // would lag by one call (it's updated at the end of this function) and is 0 on a fresh
+        // view, which would hide every char until the next tick.
+        let maskCharacterLimit: Int
+        if let lowestAnimating = self.animatingSnippetLayers.min(by: { $0.characterIndex < $1.characterIndex })?.characterIndex {
+            maskCharacterLimit = lowestAnimating
+        } else {
+            maskCharacterLimit = effectiveCharacterDrawCount
+        }
+        // Build mask rects from each revealed glyph's ink bbox, unioned per line.
+        // Per-character rects are stored in line-local CT coords (y positive-up,
+        // baseline-relative; rect.minY is negative for descenders); convert to
+        // renderContainer-local UIKit coords as:
+        //   x = renderLocalLineFrame.minX + rect.minX
+        //   y = renderLocalLineFrame.minY + lineAscent - rect.maxY
+        // where `lineAscent = lineFrame.size.height` (top of line frame → baseline).
+        //
+        // Per-glyph rect captures descenders, italic overhang, accents exactly. Per
+        // line we accumulate the union of revealed glyphs into one mask rect (one
+        // CALayer sublayer per line), and consecutive fully-revealed lines collapse
+        // further into a single rect — so a fully-revealed prefix is always one
+        // sublayer regardless of line count.
+        //
+        // Lines without per-character data (computeRevealCharacterRects == false on
+        // a non-streaming layout) fall back to a line-spanning rect, treated as a
+        // full line for merging.
+        var maskRects: [CGRect] = []
+        var pendingFullPrefix: CGRect? = nil
+        var remainingChars = maskCharacterLimit
+
+        for line in lines {
+            if remainingChars <= 0 {
+                break
+            }
+
+            let lineFrame = v2FrameForLine(line, boundingWidth: boundsWidth, alignment: textItem.alignment)
+            let renderLocalLineFrame = lineFrame.offsetBy(dx: v2TextViewClippingInset, dy: v2TextViewClippingInset)
+            let lineAscent = lineFrame.size.height
+
+            let lineUnion: CGRect?
+            let isFullLine: Bool
+            if let characterRects = line.characterRects {
+                let revealCount = min(characterRects.count, remainingChars)
+                isFullLine = revealCount >= characterRects.count
+                var union: CGRect? = nil
+                for j in 0 ..< revealCount {
+                    let rect = characterRects[j]
+                    if rect.isEmpty {
+                        continue
+                    }
+                    let glyphRect = CGRect(
+                        x: renderLocalLineFrame.minX + rect.minX,
+                        y: renderLocalLineFrame.minY + lineAscent - rect.maxY,
+                        width: rect.width,
+                        height: rect.height
+                    )
+                    union = union?.union(glyphRect) ?? glyphRect
+                }
+                lineUnion = union
+                remainingChars -= characterRects.count
+            } else {
+                // No per-character data — expose the whole line.
+                lineUnion = line.range.length > 0 ? renderLocalLineFrame : nil
+                isFullLine = remainingChars >= line.range.length
+                remainingChars -= line.range.length
+            }
+
+            guard let lineUnion else {
+                continue
+            }
+
+            if isFullLine {
+                pendingFullPrefix = pendingFullPrefix?.union(lineUnion) ?? lineUnion
+            } else {
+                if let pending = pendingFullPrefix {
+                    maskRects.append(pending)
+                    pendingFullPrefix = nil
+                }
+                maskRects.append(lineUnion)
+            }
+        }
+        if let pending = pendingFullPrefix {
+            maskRects.append(pending)
+        }
+
+        while self.revealLineMaskLayers.count < maskRects.count {
+            let childLayer = SimpleLayer()
+            childLayer.backgroundColor = UIColor.white.cgColor
+            revealMaskLayer.addSublayer(childLayer)
+            self.revealLineMaskLayers.append(childLayer)
+        }
+        while self.revealLineMaskLayers.count > maskRects.count {
+            let removed = self.revealLineMaskLayers.removeLast()
+            removed.removeFromSuperlayer()
+        }
+        for i in 0 ..< maskRects.count {
+            self.revealLineMaskLayers[i].frame = maskRects[i]
+        }
+
+        self.previousMaxCharacterDrawCount = effectiveCharacterDrawCount
+
+        if self.maxCharacterDrawCount == nil && self.animatingSnippetLayers.isEmpty {
+            self.renderContainer.layer.mask = nil
+            self.revealMaskLayer = nil
+            self.revealLineMaskLayers.removeAll()
+        }
+    }
+}
+
+private final class TextRenderView: UIView {
+    var item: InstantPageV2TextItem
+
+    init(item: InstantPageV2TextItem) {
+        self.item = item
+        super.init(frame: .zero)
+        self.backgroundColor = .clear
+        self.isOpaque = false
+        self.contentMode = .redraw
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 
     override func draw(_ rect: CGRect) {
@@ -546,6 +883,32 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
         }
 
         context.restoreGState()
+    }
+}
+
+/// Private snippet layer for the streaming reveal pop-in animation.
+/// Each instance represents one character cropped from the renderView's backing texture,
+/// animating in (blur + alpha + position + scale) before the mask absorbs its rect.
+private final class SnippetLayer: SimpleLayer {
+    let characterIndex: Int
+
+    init(characterIndex: Int) {
+        self.characterIndex = characterIndex
+        super.init()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override init(layer: Any) {
+        if let other = layer as? SnippetLayer {
+            self.characterIndex = other.characterIndex
+        } else {
+            self.characterIndex = 0
+        }
+        super.init(layer: layer)
     }
 }
 
@@ -755,10 +1118,10 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
     private(set) var item: InstantPageV2DetailsItem
     var itemFrame: CGRect { return self.item.frame }
 
-    private let titleTextView: InstantPageV2TextView
+    let titleTextView: InstantPageV2TextView
     private let chevronLayer: CALayer
     private let separator: UIView
-    private var bodyView: InstantPageV2View?
+    var bodyView: InstantPageV2View?
     private let titleHitView: UIView
 
     var onTitleTapped: ((Int) -> Void)?
@@ -906,7 +1269,7 @@ final class InstantPageV2CodeBlockView: UIView, InstantPageItemView {
     var itemFrame: CGRect { return self.item.frame }
 
     private let backgroundLayer: CALayer
-    private let textView: InstantPageV2TextView
+    let textView: InstantPageV2TextView
 
     init(item: InstantPageV2CodeBlockItem) {
         self.item = item
@@ -953,9 +1316,9 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
     var itemFrame: CGRect { return self.item.frame }
 
     private let scrollView: UIScrollView
-    private let contentView: UIView
-    private var titleSubView: InstantPageV2View?
-    private var cellSubViews: [InstantPageV2View] = []
+    let contentView: UIView
+    var titleSubView: InstantPageV2View?
+    var cellSubViews: [InstantPageV2View] = []
     private var stripeLayers: [CALayer] = []
     private var lineLayers: [CALayer] = []
 

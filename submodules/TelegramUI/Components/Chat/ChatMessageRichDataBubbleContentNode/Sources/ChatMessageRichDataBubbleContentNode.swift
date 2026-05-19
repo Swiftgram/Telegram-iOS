@@ -13,6 +13,10 @@ import InstantPageUI
 import TelegramUIPreferences
 import TextLoadingEffect
 import TextSelectionNode
+import StreamingTextReveal
+import ShimmeringMask
+import InteractiveTextComponent
+import TextNodeWithEntities
 
 public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode {
     public final class ContainerNode: ASDisplayNode {
@@ -28,9 +32,13 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     // messages, so we key cache invalidation on the message itself. When the bubble is recycled
     // with a different message we must discard pageView (render context is constructor-fixed).
     private var pageViewMessageKey: (id: EngineMessage.Id, stableVersion: UInt32)?
+    // messageStableVersion is in the cache key because the synthesized instantPage content
+    // mutates between streamed AI message chunks (each chunk bumps stableVersion); without
+    // this, the cached layout would shadow newly-arrived content during streaming.
     private var currentPageLayout: (boundingWidth: CGFloat,
                                     presentationThemeIdentity: ObjectIdentifier,
                                     expandedDetails: [Int: Bool],
+                                    messageStableVersion: UInt32,
                                     layout: InstantPageV2Layout)?
     private var currentExpandedDetails: [Int: Bool] = [:]
     private var linkProgressDisposable: Disposable?
@@ -39,6 +47,17 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     private var linkProgressView: TextLoadingEffectView?
     private var textSelectionAdapter: InstantPageMultiTextAdapter?
     private var textSelectionNode: TextSelectionNode?
+
+    private var streamingStatusTextNode: InteractiveTextNodeWithEntities?
+    private var streamingStatusShimmerView: ShimmeringMaskView?
+
+    private var textRevealController: TextRevealController?
+    private var textRevealLink: SharedDisplayLinkDriver.Link?
+    private var currentRevealCostMap: InstantPageV2RevealCostMap?
+    // Cursor value pushed into pageView.applyReveal on the prior tick. The display-link tick
+    // compares the revealed prefix's height at this cursor vs the new cursor to decide when
+    // to request a full bubble re-layout (so the bubble grows with the reveal).
+    private var lastAppliedRevealedCount: Int = 0
 
     required public init() {
         self.containerNode = ContainerNode()
@@ -123,14 +142,40 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
     
     override public func asyncLayoutContent() -> (_ item: ChatMessageBubbleContentItem, _ layoutConstants: ChatMessageItemLayoutConstants, _ preparePosition: ChatMessageBubblePreparePosition, _ messageSelection: Bool?, _ constrainedSize: CGSize, _ avatarInset: CGFloat) -> (ChatMessageBubbleContentProperties, CGSize?, CGFloat, (CGSize, ChatMessageBubbleContentPosition) -> (CGFloat, (CGFloat) -> (CGSize, (ListViewItemUpdateAnimation, Bool, ListViewItemApply?) -> Void))) {
+        let previousItem = self.item
+        let streamingStatusTextLayout = InteractiveTextNodeWithEntities.asyncLayout(self.streamingStatusTextNode)
         let currentPageLayout = self.currentPageLayout
         let currentExpandedDetails = self.currentExpandedDetails
         let statusLayout = ChatMessageDateAndStatusNode.asyncLayout(self.statusNode)
+        // Captured at main-thread, top of asyncLayoutContent. Mirrors TextBubble's
+        // `currentMaxGlyphCount` (TextBubble:313). The bubble's bounding size is sized
+        // to this revealed prefix during streaming, so it grows with the reveal rather
+        // than being final-sized from the first chunk.
+        let currentMaxGlyphCount: Int? = self.textRevealController?.currentGlyphCount
 
-        return { [weak self] item, _, _, _, _, _ in
+        return { [weak self] item, layoutConstants, _, _, _, _ in
             let contentProperties = ChatMessageBubbleContentProperties(hidesSimpleAuthorHeader: false, headerSpacing: 0.0, hidesBackground: .never, forceFullCorners: false, forceAlignment: .none)
 
             return (contentProperties, nil, CGFloat.greatestFiniteMagnitude, { constrainedSize, position in
+                // topInset matches TextBubble's logic at lines 234-249 — gives the "Thinking…"
+                // header the same vertical alignment as TextBubble's status header does inside
+                // its bubble.
+                var topInset: CGFloat = 0.0
+                if case let .linear(top, _) = position {
+                    switch top {
+                    case .None:
+                        topInset = layoutConstants.text.bubbleInsets.top
+                    case let .Neighbour(_, topType, _):
+                        switch topType {
+                        case .text:
+                            topInset = layoutConstants.text.bubbleInsets.top - 2.0
+                        case .header, .footer, .media, .reactions:
+                            topInset = layoutConstants.text.bubbleInsets.top
+                        }
+                    default:
+                        topInset = layoutConstants.text.bubbleInsets.top
+                    }
+                }
                 let suggestedBoundingWidth: CGFloat = constrainedSize.width
 
                 var boundingSize = CGSize(width: suggestedBoundingWidth, height: 0.0)
@@ -244,6 +289,15 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     overlayPanelColor: isDark ? UIColor(white: 0.0, alpha: 0.13) : UIColor(white: 1.0, alpha: 0.13)
                 )
                 
+                var hasDraft = false
+                if item.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+                    hasDraft = true
+                }
+                var hadDraft = false
+                if let previousItem, previousItem.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+                    hadDraft = true
+                }
+
                 if let attribute = item.message.richText {
                     let webpage = TelegramMediaWebpage(webpageId: EngineMedia.Id(namespace: 0, id: 0), content: .Loaded(TelegramMediaWebpageLoadedContent(
                         url: "",
@@ -269,10 +323,12 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     pageWebpage = webpage
 
                     let presentationThemeIdentity = ObjectIdentifier(item.presentationData.theme.theme)
+                    let currentMessageStableVersion = item.message.stableVersion
                     if let current = currentPageLayout,
                        current.boundingWidth == suggestedBoundingWidth,
                        current.presentationThemeIdentity == presentationThemeIdentity,
-                       current.expandedDetails == currentExpandedDetails {
+                       current.expandedDetails == currentExpandedDetails,
+                       current.messageStableVersion == currentMessageStableVersion {
                         pageLayout = current.layout
                     } else {
                         pageLayout = layoutInstantPageV2(
@@ -286,14 +342,91 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                             dateTimeFormat: item.presentationData.dateTimeFormat,
                             cachedMessageSyntaxHighlight: nil,
                             expandedDetails: currentExpandedDetails,
-                            fitToWidth: true
+                            fitToWidth: true,
+                            computeRevealCharacterRects: hasDraft || hadDraft
                         )
                     }
                 }
                 
+                // Cost map computed here (not in apply) so we can size the bubble to the
+                // revealed prefix this layout pass. Mirrors TextBubble's clippedGlyphCountLayout.
+                let revealCostMap: InstantPageV2RevealCostMap? = (hasDraft || hadDraft) ? pageLayout?.computeRevealCostMap() : nil
+                let revealedGlyphCount: Int? = (hasDraft || hadDraft) ? (currentMaxGlyphCount ?? 0) : nil
+
                 if let pageLayout {
-                    boundingSize.width = pageLayout.contentSize.width
-                    boundingSize.height = pageLayout.contentSize.height + 2.0
+                    let effectiveSize: CGSize
+                    if let costMap = revealCostMap, let glyphCount = revealedGlyphCount {
+                        effectiveSize = costMap.revealedContentSize(revealedCount: glyphCount, layout: pageLayout)
+                    } else {
+                        effectiveSize = pageLayout.contentSize
+                    }
+                    boundingSize.width = effectiveSize.width
+                    boundingSize.height = effectiveSize.height + 2.0
+                }
+
+                let textFont = item.presentationData.messageFont
+                let textInsets = UIEdgeInsets(top: 2.0, left: 2.0, bottom: 5.0, right: 2.0)
+                let streamingTextSpacing: CGFloat = 1.0
+
+                let textConstrainedSize = CGSize(width: suggestedBoundingWidth - 4.0, height: .greatestFiniteMagnitude)
+                var streamingTextLayoutAndApply: (layout: InteractiveTextNodeLayout, apply: (InteractiveTextNodeWithEntities.Arguments) -> InteractiveTextNodeWithEntities)?
+                if hasDraft || hadDraft {
+                    //TODO:localize
+                    streamingTextLayoutAndApply = streamingStatusTextLayout(InteractiveTextNodeLayoutArguments(
+                        attributedString: NSAttributedString(string: "Thinking...", font: textFont, textColor: messageTheme.fileDescriptionColor),
+                        backgroundColor: nil,
+                        maximumNumberOfLines: 1,
+                        truncationType: .end,
+                        constrainedSize: textConstrainedSize,
+                        alignment: .natural,
+                        cutout: nil,
+                        insets: textInsets,
+                        lineColor: messageTheme.accentControlColor,
+                        customTruncationToken: nil,
+                        computeCharacterRects: true
+                    ))
+                }
+
+                // Origin mirrors TextBubble:783 — (bubbleInsets.left - textInsets.left,
+                // topInset - textInsets.top). The negative textInset offsets cancel the
+                // inset that's baked into the InteractiveTextNode layout, so the visible
+                // glyph origin aligns with (bubbleInsets.left, topInset).
+                var streamingTextFrame: CGRect?
+                if let streamingTextLayoutAndApply {
+                    streamingTextFrame = CGRect(
+                        origin: CGPoint(
+                            x: layoutConstants.text.bubbleInsets.left - textInsets.left,
+                            y: topInset - textInsets.top
+                        ),
+                        size: streamingTextLayoutAndApply.layout.size
+                    )
+                }
+                // Offset for the pageView (and status node y-shift) — places the pageView
+                // right below the streaming header's *visible* bottom (= origin.y + height
+                // - inset.bottom, since the layout-baked inset.bottom isn't visible content)
+                // plus a 1pt spacing.
+                let streamingHeaderOffset: CGFloat
+                if let streamingTextFrame {
+                    streamingHeaderOffset = streamingTextFrame.origin.y + streamingTextFrame.height - textInsets.bottom + streamingTextSpacing
+                } else {
+                    streamingHeaderOffset = 0.0
+                }
+
+                if let streamingTextFrame {
+                    // Mirrors TextBubble's suggestedBoundingWidth contribution at lines 886-893:
+                    //   visible_thinking_width + bubbleInsets.left + bubbleInsets.right
+                    // where visible_thinking_width = streamingTextFrame.width - textInsets.left
+                    // - textInsets.right. Adds 2pt for RichData's 1pt-per-side containerNode
+                    // border that TextBubble doesn't have. Without this, an empty-pageLayout
+                    // bubble was sized too narrow to fit the "Thinking…" label.
+                    let visibleThinkingWidth = streamingTextFrame.width - textInsets.left - textInsets.right
+                    let thinkingMinBubbleWidth = visibleThinkingWidth + layoutConstants.text.bubbleInsets.left + layoutConstants.text.bubbleInsets.right + 2.0
+                    boundingSize.width = max(boundingSize.width, thinkingMinBubbleWidth)
+                    // Adds exactly the vertical space the streaming header consumes before the
+                    // pageView starts (= where pageView's frame.origin.y will be set). Keeps
+                    // the bubble's total height consistent with `containerHeight + closingPad + 2`
+                    // computed in the apply closure.
+                    boundingSize.height += streamingHeaderOffset
                 }
 
                 let message = item.message
@@ -419,7 +552,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     ))
                 }
 
-                if let statusSuggestedWidthAndContinue {
+                if let statusSuggestedWidthAndContinue, !hasDraft {
                     let statusLeftEdgeInBubble: CGFloat
                     if let lastTextLineFrame {
                         statusLeftEdgeInBubble = 1.0 + lastTextLineFrame.minX
@@ -431,7 +564,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
 
                 return (boundingSize.width, { boundingWidth in
                     let statusSizeAndApply = statusSuggestedWidthAndContinue?.1(boundingWidth)
-                    if let statusSizeAndApply {
+                    if let statusSizeAndApply, !hasDraft {
                         boundingSize.height += statusSizeAndApply.0.height
                     }
 
@@ -441,7 +574,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                         }
                         self.item = item
 
-                        self.containerNode.frame = CGRect(origin: CGPoint(x: 1.0, y: 1.0), size: CGSize(width: boundingWidth - 2.0, height: boundingSize.height - 2.0))
+                        animation.animator.updateFrame(layer: self.containerNode.layer, frame: CGRect(origin: CGPoint(x: 1.0, y: 1.0), size: CGSize(width: boundingWidth - 2.0, height: boundingSize.height)), completion: nil)
 
                         if let statusSizeAndApply {
                             let statusFrameX: CGFloat
@@ -456,7 +589,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                                 statusFrameX = 1.0
                                 statusFrameY = 1.0
                             }
-                            let statusFrame = CGRect(origin: CGPoint(x: statusFrameX, y: statusFrameY), size: statusSizeAndApply.0)
+                            let statusFrame = CGRect(origin: CGPoint(x: statusFrameX, y: statusFrameY + streamingHeaderOffset), size: statusSizeAndApply.0)
                             let statusNode = statusSizeAndApply.1(self.statusNode == nil ? .None : animation)
 
                             if self.statusNode !== statusNode {
@@ -504,12 +637,13 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                                 suggestedBoundingWidth,
                                 ObjectIdentifier(item.presentationData.theme.theme),
                                 self.currentExpandedDetails,
+                                item.message.stableVersion,
                                 pageLayout
                             )
                             let pageView = self.ensurePageView(item: item, webpage: pageWebpage)
                             pageView.update(layout: pageLayout, theme: pageTheme, animation: animation)
                             pageView.frame = CGRect(
-                                origin: CGPoint(x: -1.0, y: 0.0),
+                                origin: CGPoint(x: -1.0, y: streamingHeaderOffset),
                                 size: pageLayout.contentSize
                             )
                         } else {
@@ -521,12 +655,172 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                             )
                             self.pageViewMessageKey = nil
                         }
+
+                        // === Streaming state apply ===
+
+                        // 1. Compute / cache the cost map.
+                        // Reuse the cost map computed in the layout pass (the bubble's
+                        // size depended on it) — don't recompute.
+                        self.currentRevealCostMap = revealCostMap
+
+                        // 2. Update the "Thinking…" header.
+                        if let streamingTextFrame, let streamingTextLayoutAndApply {
+                            var statusAnimation = animation
+                            if self.streamingStatusTextNode == nil {
+                                statusAnimation = .None
+                            }
+                            let streamingStatusTextNode = streamingTextLayoutAndApply.apply(InteractiveTextNodeWithEntities.Arguments(
+                                context: item.context,
+                                cache: item.controllerInteraction.presentationContext.animationCache,
+                                renderer: item.controllerInteraction.presentationContext.animationRenderer,
+                                placeholderColor: messageTheme.mediaPlaceholderColor,
+                                attemptSynchronous: false,
+                                textColor: messageTheme.primaryTextColor,
+                                spoilerEffectColor: messageTheme.secondaryTextColor,
+                                applyArguments: InteractiveTextNode.ApplyArguments(
+                                    animation: statusAnimation,
+                                    spoilerTextColor: messageTheme.primaryTextColor,
+                                    spoilerEffectColor: messageTheme.secondaryTextColor,
+                                    areContentAnimationsEnabled: item.context.sharedContext.energyUsageSettings.loopEmoji,
+                                    spoilerExpandRect: nil,
+                                    crossfadeContents: nil
+                                )
+                            ))
+
+                            let streamingStatusShimmerView: ShimmeringMaskView
+                            if let current = self.streamingStatusShimmerView {
+                                streamingStatusShimmerView = current
+                            } else {
+                                streamingStatusShimmerView = ShimmeringMaskView(peakAlpha: 0.3, duration: 1.0)
+                                self.streamingStatusShimmerView = streamingStatusShimmerView
+                                self.containerNode.view.addSubview(streamingStatusShimmerView)
+                            }
+
+                            if streamingStatusTextNode !== self.streamingStatusTextNode {
+                                self.streamingStatusTextNode?.textNode.view.removeFromSuperview()
+                                self.streamingStatusTextNode = streamingStatusTextNode
+                                streamingStatusShimmerView.contentView.addSubview(streamingStatusTextNode.textNode.view)
+                            }
+                            statusAnimation.animator.updatePosition(layer: streamingStatusShimmerView.layer, position: streamingTextFrame.center, completion: nil)
+                            statusAnimation.animator.updateBounds(layer: streamingStatusShimmerView.layer, bounds: CGRect(origin: .zero, size: streamingTextFrame.size), completion: nil)
+                            statusAnimation.animator.updatePosition(layer: streamingStatusTextNode.textNode.layer, position: CGPoint(x: streamingTextFrame.size.width * 0.5, y: streamingTextFrame.size.height * 0.5), completion: nil)
+                            statusAnimation.animator.updateBounds(layer: streamingStatusTextNode.textNode.layer, bounds: CGRect(origin: .zero, size: streamingTextFrame.size), completion: nil)
+                            streamingStatusShimmerView.update(
+                                size: streamingTextFrame.size,
+                                containerWidth: streamingTextFrame.size.width,
+                                offsetX: 0.0,
+                                gradientWidth: 200.0,
+                                transition: .immediate
+                            )
+                        } else if let streamingStatusShimmerView = self.streamingStatusShimmerView {
+                            self.streamingStatusTextNode = nil
+                            self.streamingStatusShimmerView = nil
+                            animation.animator.updateAlpha(layer: streamingStatusShimmerView.layer, alpha: 0.0, completion: { [weak streamingStatusShimmerView] _ in
+                                streamingStatusShimmerView?.removeFromSuperview()
+                            })
+                        }
+
+                        // 3. Drive the reveal controller.
+                        let previousAnimateGlyphCount: Int? = (hasDraft || hadDraft) ? (self.textRevealController?.currentGlyphCount ?? 0) : nil
+                        if previousAnimateGlyphCount != nil || self.textRevealController != nil || hasDraft || hadDraft {
+                            if hasDraft {
+                                self.statusNode?.alpha = 0.0
+                            }
+                            // Seed the V2 view to the previous count so we don't flash full text at the start.
+                            self.pageView?.applyReveal(revealedCount: previousAnimateGlyphCount ?? 0,
+                                                       costMap: self.currentRevealCostMap,
+                                                       animated: false)
+                            self.lastAppliedRevealedCount = previousAnimateGlyphCount ?? 0
+                            self.updateTextRevealAnimation(previousGlyphCount: previousAnimateGlyphCount ?? 0,
+                                                           hasDraft: hasDraft,
+                                                           hadDraft: hadDraft)
+                        }
                     })
                 })
             })
         }
     }
     
+    private func updateTextRevealAnimation(previousGlyphCount: Int, hasDraft: Bool, hadDraft: Bool) {
+        let toCount = self.currentRevealCostMap?.total ?? 0
+        let now = CACurrentMediaTime()
+
+        if hasDraft, let controller = self.textRevealController, controller.isFinalizing {
+            self.textRevealController = nil
+            self.textRevealLink = nil
+        }
+
+        if self.textRevealController == nil && (hasDraft || hadDraft) {
+            self.textRevealController = TextRevealController(initialRevealedCount: previousGlyphCount, initialLength: toCount, durationMultiplier: 10.0)
+        }
+
+        guard let controller = self.textRevealController else { return }
+
+        if hasDraft {
+            controller.observeUpdate(latestLength: toCount, at: now)
+        } else if hadDraft {
+            controller.finalize(finalLength: toCount)
+        }
+
+        if controller.isFinalizing && controller.revealedCount >= Double(controller.latestLength) {
+            self.textRevealController = nil
+            self.textRevealLink = nil
+            self.pageView?.applyReveal(revealedCount: nil, costMap: nil, animated: false)
+            self.lastAppliedRevealedCount = 0
+            return
+        }
+
+        guard toCount > 0 else { return }
+
+        if self.textRevealLink == nil {
+            self.textRevealLink = SharedDisplayLinkDriver.shared.add { [weak self] _ in
+                guard let self else { return }
+                guard let item = self.item else {
+                    self.textRevealController = nil
+                    self.textRevealLink = nil
+                    return
+                }
+                guard let controller = self.textRevealController, let costMap = self.currentRevealCostMap else {
+                    self.textRevealLink = nil
+                    return
+                }
+                let now = CACurrentMediaTime()
+                let (revealedGlyphCount, isComplete) = controller.tick(now: now)
+
+                if isComplete {
+                    self.textRevealController = nil
+                    self.textRevealLink = nil
+                    self.pageView?.applyReveal(revealedCount: nil, costMap: nil, animated: false)
+                    self.lastAppliedRevealedCount = 0
+
+                    if let statusNode = self.statusNode,
+                       !item.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+                        ContainedViewLayoutTransition.animated(duration: 0.2, curve: .easeInOut).updateAlpha(node: statusNode, alpha: 1.0)
+                    }
+                    self.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
+                } else {
+                    // If the revealed prefix's bottom y would change at the new cursor (i.e.
+                    // crossing a line/item boundary), trigger a full bubble re-layout so the
+                    // bubble grows with the reveal. Mirrors TextBubble's
+                    // `cachedLayout.sizeForCharacterCount(...)` check at lines 1209-1216.
+                    var requestUpdate = false
+                    if let pageLayout = self.currentPageLayout?.layout, self.lastAppliedRevealedCount != revealedGlyphCount {
+                        let prevHeight = costMap.revealedContentSize(revealedCount: self.lastAppliedRevealedCount, layout: pageLayout).height
+                        let newHeight = costMap.revealedContentSize(revealedCount: revealedGlyphCount, layout: pageLayout).height
+                        if prevHeight != newHeight {
+                            requestUpdate = true
+                        }
+                    }
+                    self.pageView?.applyReveal(revealedCount: revealedGlyphCount, costMap: costMap, animated: true)
+                    self.lastAppliedRevealedCount = revealedGlyphCount
+                    if requestUpdate {
+                        self.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
+                    }
+                }
+            }
+        }
+    }
+
     override public func animateInsertion(_ currentTimestamp: Double, duration: Double) {
         if let statusNode = self.statusNode, statusNode.alpha != 0.0 {
             statusNode.layer.animateAlpha(from: 0.0, to: statusNode.alpha, duration: 0.2)
