@@ -1,0 +1,2360 @@
+import Foundation
+import UIKit
+import TelegramCore
+import Display
+import TelegramPresentationData
+import TelegramUIPreferences
+import TextFormat
+import TelegramStringFormatting
+
+// MARK: - Public layout data types
+
+public struct InstantPageV2Layout {
+    public let contentSize: CGSize
+    public let items: [InstantPageV2LaidOutItem]
+    /// Snapshot of the `index` values of every `.details` item present in `items`, captured at layout time.
+    public let detailsIndices: [Int]
+
+    public init(contentSize: CGSize, items: [InstantPageV2LaidOutItem], detailsIndices: [Int]) {
+        self.contentSize = contentSize
+        self.items = items
+        self.detailsIndices = detailsIndices
+    }
+}
+
+public enum InstantPageV2LaidOutItem {
+    case text(InstantPageV2TextItem)
+    case codeBlock(InstantPageV2CodeBlockItem)
+    case divider(InstantPageV2DividerItem)
+    case listMarker(InstantPageV2ListMarkerItem)
+    case blockQuoteBar(InstantPageV2BarItem)
+    case shape(InstantPageV2ShapeItem)
+    case mediaPlaceholder(InstantPageV2MediaPlaceholderItem)
+    case details(InstantPageV2DetailsItem)
+    case table(InstantPageV2TableItem)
+    case anchor(InstantPageV2AnchorItem)
+
+    public var frame: CGRect {
+        switch self {
+        case let .text(item):              return item.frame
+        case let .codeBlock(item):         return item.frame
+        case let .divider(item):           return item.frame
+        case let .listMarker(item):        return item.frame
+        case let .blockQuoteBar(item):     return item.frame
+        case let .shape(item):             return item.frame
+        case let .mediaPlaceholder(item):  return item.frame
+        case let .details(item):           return item.frame
+        case let .table(item):             return item.frame
+        case let .anchor(item):            return item.frame
+        }
+    }
+
+    /// Returns a copy of `self` with its top-level frame translated by `delta`.
+    /// Sub-layouts inside details/table cells are not re-translated — they're already
+    /// expressed in their parent's local coordinates.
+    public func offsetBy(_ delta: CGPoint) -> InstantPageV2LaidOutItem {
+        switch self {
+        case var .text(item):             item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .text(item)
+        case var .codeBlock(item):        item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .codeBlock(item)
+        case var .divider(item):          item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .divider(item)
+        case var .listMarker(item):       item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .listMarker(item)
+        case var .blockQuoteBar(item):    item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .blockQuoteBar(item)
+        case var .shape(item):            item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .shape(item)
+        case var .mediaPlaceholder(item): item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .mediaPlaceholder(item)
+        case var .details(item):          item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .details(item)
+        case var .table(item):            item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .table(item)
+        case var .anchor(item):           item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .anchor(item)
+        }
+    }
+}
+
+public struct InstantPageV2TextItem {
+    public var frame: CGRect
+    public let textItem: InstantPageTextItem   // V1 type reused as payload
+}
+
+public struct InstantPageV2CodeBlockItem {
+    public var frame: CGRect
+    public let backgroundColor: UIColor
+    public let cornerRadius: CGFloat
+    public let textItem: InstantPageTextItem
+    public let inset: UIEdgeInsets
+}
+
+public struct InstantPageV2DividerItem {
+    public var frame: CGRect
+    public let color: UIColor
+}
+
+public enum InstantPageV2ListMarkerKind {
+    case bullet
+    case number(String)
+    case checklist(checked: Bool)
+}
+
+public struct InstantPageV2ListMarkerItem {
+    public var frame: CGRect
+    public let kind: InstantPageV2ListMarkerKind
+    public let color: UIColor
+}
+
+public struct InstantPageV2BarItem {
+    public var frame: CGRect
+    public let color: UIColor
+    public let cornerRadius: CGFloat
+}
+
+public enum InstantPageV2ShapeKind {
+    case roundedRect(cornerRadius: CGFloat)
+    case line(thickness: CGFloat)
+}
+
+public struct InstantPageV2ShapeItem {
+    public var frame: CGRect
+    public let kind: InstantPageV2ShapeKind
+    public let color: UIColor
+}
+
+public enum InstantPageV2MediaPlaceholderKind {
+    case image
+    case video
+    case audio
+    case webEmbed
+    case postEmbed
+    case collage
+    case slideshow
+    case channelBanner
+    case map
+    case relatedArticles
+    case formula
+}
+
+public struct InstantPageV2MediaPlaceholderItem {
+    public var frame: CGRect
+    public let kind: InstantPageV2MediaPlaceholderKind
+    public let cornerRadius: CGFloat
+}
+
+public struct InstantPageV2DetailsItem {
+    public var frame: CGRect
+    public let index: Int
+    public let titleTextItem: InstantPageTextItem
+    public let titleFrame: CGRect            // local to this item's frame
+    public let separatorColor: UIColor
+    public let isExpanded: Bool
+    public let innerLayout: InstantPageV2Layout?
+    public let defaultExpanded: Bool         // from the InstantPageBlock model
+}
+
+public enum InstantPageV2TableVerticalAlignment {
+    case top, middle, bottom
+}
+
+public struct InstantPageV2TableCell {
+    public let frame: CGRect                 // local to the table's content area
+    public let isHeader: Bool
+    public let horizontalAlignment: NSTextAlignment
+    public let verticalAlignment: InstantPageV2TableVerticalAlignment
+    public let backgroundColor: UIColor?
+    public let subLayout: InstantPageV2Layout?
+}
+
+public struct InstantPageV2TableItem {
+    public var frame: CGRect
+    public let titleSubLayout: InstantPageV2Layout?
+    public let titleFrame: CGRect?
+    public let contentSize: CGSize           // grid intrinsic size; may exceed frame.width → scroll
+    public let cells: [InstantPageV2TableCell]
+    public let horizontalLines: [CGRect]
+    public let verticalLines: [CGRect]
+    public let bordered: Bool
+    public let striped: Bool
+    public let borderColor: UIColor
+}
+
+public struct InstantPageV2AnchorItem {
+    public var frame: CGRect                 // zero-height
+    public let name: String
+}
+
+// MARK: - Public entry points (stubs; filled in later tasks)
+
+public func layoutInstantPageV2(
+    webpage: TelegramMediaWebpage,
+    instantPage: InstantPage,
+    userLocation: MediaResourceUserLocation,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    theme: InstantPageTheme,
+    strings: PresentationStrings,
+    dateTimeFormat: PresentationDateTimeFormat,
+    cachedMessageSyntaxHighlight: CachedMessageSyntaxHighlight?,
+    expandedDetails: [Int: Bool],
+    fitToWidth: Bool
+) -> InstantPageV2Layout {
+    guard case let .Loaded(loadedContent) = webpage.content else {
+        return InstantPageV2Layout(contentSize: .zero, items: [], detailsIndices: [])
+    }
+
+    var media = instantPage.media.mapValues(EngineMedia.init)
+    if let image = loadedContent.image, let id = image.id {
+        media[id] = .image(image)
+    }
+    if let video = loadedContent.file, let id = video.id {
+        media[id] = .file(video)
+    }
+
+    var context = LayoutContext(
+        theme: theme,
+        strings: strings,
+        dateTimeFormat: dateTimeFormat,
+        userLocation: userLocation,
+        webpage: webpage,
+        media: media,
+        cachedMessageSyntaxHighlight: cachedMessageSyntaxHighlight,
+        rtl: instantPage.rtl,
+        fitToWidth: fitToWidth,
+        mediaIndexCounter: 0,
+        detailsIndexCounter: 0,
+        expandedDetails: expandedDetails
+    )
+
+    return layoutBlockSequence(
+        instantPage.blocks,
+        boundingWidth: boundingWidth,
+        horizontalInset: horizontalInset,
+        context: &context
+    )
+}
+
+/// Used by `ChatMessageRichDataBubbleContentNode` to anchor the date/checks status node at the
+/// bottom-right of the last text line in the bubble.
+public func lastTextLineFrame(in layout: InstantPageV2Layout) -> CGRect? {
+    // Walk items in reverse; descend into the LAST sub-layout when the last container has one.
+    for item in layout.items.reversed() {
+        switch item {
+        case let .text(text):
+            if let last = text.textItem.lines.last {
+                return last.frame.offsetBy(dx: text.frame.minX, dy: text.frame.minY)
+            }
+        case let .codeBlock(block):
+            if let last = block.textItem.lines.last {
+                return last.frame
+                    .offsetBy(dx: block.textItem.frame.minX, dy: block.textItem.frame.minY)
+                    .offsetBy(dx: block.frame.minX, dy: block.frame.minY)
+            }
+        case let .details(details):
+            if let inner = details.innerLayout, let innerFrame = lastTextLineFrame(in: inner) {
+                return innerFrame.offsetBy(dx: details.frame.minX, dy: details.frame.minY + details.titleFrame.maxY)
+            }
+            // Title fallback
+            if let last = details.titleTextItem.lines.last {
+                return last.frame
+                    .offsetBy(dx: details.titleTextItem.frame.minX, dy: details.titleTextItem.frame.minY)
+                    .offsetBy(dx: details.frame.minX, dy: details.frame.minY)
+            }
+        case let .table(table):
+            // Walk cells in reverse row-major order (last cell of last row first).
+            // The renderer shifts cells down by gridOffsetY (title height) — match that here.
+            let gridOffsetY = table.titleFrame?.height ?? 0.0
+            for cell in table.cells.reversed() {
+                if let subLayout = cell.subLayout, let frame = lastTextLineFrame(in: subLayout) {
+                    return frame
+                        .offsetBy(dx: cell.frame.minX, dy: cell.frame.minY + gridOffsetY)
+                        .offsetBy(dx: table.frame.minX, dy: table.frame.minY)
+                }
+            }
+        default:
+            continue
+        }
+    }
+    return nil
+}
+
+// MARK: - Layout context
+
+private struct LayoutContext {
+    let theme: InstantPageTheme
+    let strings: PresentationStrings
+    let dateTimeFormat: PresentationDateTimeFormat
+    let userLocation: MediaResourceUserLocation
+    let webpage: TelegramMediaWebpage
+    let media: [EngineMedia.Id: EngineMedia]
+    let cachedMessageSyntaxHighlight: CachedMessageSyntaxHighlight?
+    let rtl: Bool
+    let fitToWidth: Bool
+
+    var mediaIndexCounter: Int = 0
+    var detailsIndexCounter: Int = 0
+
+    let expandedDetails: [Int: Bool]
+}
+
+// MARK: - Driver
+
+private func layoutBlockSequence(
+    _ blocks: [InstantPageBlock],
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    context: inout LayoutContext
+) -> InstantPageV2Layout {
+    var items: [InstantPageV2LaidOutItem] = []
+    var detailsIndices: [Int] = []
+    var contentHeight: CGFloat = 0.0
+    var previousBlock: InstantPageBlock?
+
+    for (i, block) in blocks.enumerated() {
+        let spacing = spacingBetweenBlocks(upper: previousBlock, lower: block, fitToWidth: context.fitToWidth)
+        let localItems = layoutBlock(
+            block,
+            boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset,
+            isCover: false,
+            previousItems: items,
+            isLast: i == blocks.count - 1,
+            context: &context
+        )
+
+        // Translate local items by (0, contentHeight + spacing) and append.
+        let dy = contentHeight + spacing
+        var blockMaxY: CGFloat = 0.0
+        for var item in localItems {
+            item = item.offsetBy(CGPoint(x: 0.0, y: dy))
+            if case let .details(d) = item {
+                detailsIndices.append(d.index)
+            }
+            let f = item.frame
+            if f.maxY > blockMaxY {
+                blockMaxY = f.maxY
+            }
+            items.append(item)
+        }
+
+        if blockMaxY > contentHeight {
+            contentHeight = blockMaxY
+            previousBlock = block
+        }
+    }
+
+    let closingSpacing = spacingBetweenBlocks(upper: previousBlock, lower: nil, fitToWidth: context.fitToWidth)
+    contentHeight += closingSpacing
+
+    var contentSize = CGSize(width: boundingWidth, height: contentHeight)
+    if context.fitToWidth {
+        // Match V1 InstantPageLayout.swift:1114 — include `+ horizontalInset` so the contentSize
+        // reserves a right margin equal to the left inset. Without this, the longest text item's
+        // right edge equals contentSize.width, and the bubble's containerNode (sized to
+        // boundingSize.width - 2) clips the last 2pt of text.
+        var maxX: CGFloat = 0.0
+        for item in items {
+            maxX = max(maxX, ceil(item.frame.maxX) + horizontalInset)
+        }
+        contentSize.width = min(maxX, boundingWidth)
+    }
+
+    return InstantPageV2Layout(contentSize: contentSize, items: items, detailsIndices: detailsIndices)
+}
+
+private func layoutBlock(
+    _ block: InstantPageBlock,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    isCover: Bool,
+    previousItems: [InstantPageV2LaidOutItem],
+    isLast: Bool,
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    let _ = isLast  // reserved for Tasks 7–9
+    switch block {
+    case let .cover(inner):
+        return layoutBlock(inner, boundingWidth: boundingWidth, horizontalInset: horizontalInset,
+                           isCover: true, previousItems: previousItems, isLast: isLast, context: &context)
+    case let .title(text):
+        return layoutSimpleText(text, category: .header, boundingWidth: boundingWidth,
+                                horizontalInset: horizontalInset, context: &context)
+    case let .subtitle(text):
+        return layoutSimpleText(text, category: .subheader, boundingWidth: boundingWidth,
+                                horizontalInset: horizontalInset, context: &context)
+    case let .kicker(text):
+        return layoutSimpleText(text, category: .kicker, boundingWidth: boundingWidth,
+                                horizontalInset: horizontalInset, context: &context)
+    case let .header(text):
+        return layoutSimpleText(text, category: .header, boundingWidth: boundingWidth,
+                                horizontalInset: horizontalInset, context: &context)
+    case let .subheader(text):
+        return layoutSimpleText(text, category: .subheader, boundingWidth: boundingWidth,
+                                horizontalInset: horizontalInset, context: &context)
+    case let .heading(text, level):
+        return layoutHeading(text, level: level, boundingWidth: boundingWidth,
+                             horizontalInset: horizontalInset, context: &context)
+    case let .footer(text):
+        return layoutSimpleText(text, category: .caption, boundingWidth: boundingWidth,
+                                horizontalInset: horizontalInset, context: &context)
+    case let .paragraph(text):
+        return layoutParagraph(text, boundingWidth: boundingWidth, horizontalInset: horizontalInset,
+                               previousItems: previousItems, context: &context)
+    case let .authorDate(author, date):
+        return layoutAuthorDate(author: author, date: date, boundingWidth: boundingWidth,
+                                horizontalInset: horizontalInset, previousItems: previousItems, context: &context)
+    case .divider:
+        return layoutDivider(boundingWidth: boundingWidth, context: context)
+    case let .anchor(name):
+        return [.anchor(InstantPageV2AnchorItem(frame: CGRect(x: 0.0, y: 0.0, width: 0.0, height: 0.0), name: name))]
+
+    case let .list(items, ordered):
+        return layoutList(items, ordered: ordered, boundingWidth: boundingWidth,
+                          horizontalInset: horizontalInset, context: &context)
+
+    case let .preformatted(text, language):
+        return layoutCodeBlock(text, language: language, boundingWidth: boundingWidth,
+                               horizontalInset: horizontalInset, context: &context)
+
+    case let .blockQuote(text, caption):
+        return layoutBlockQuote(text: text, caption: caption, isPull: false,
+                                boundingWidth: boundingWidth, horizontalInset: horizontalInset,
+                                context: &context)
+    case let .pullQuote(text, caption):
+        return layoutBlockQuote(text: text, caption: caption, isPull: true,
+                                boundingWidth: boundingWidth, horizontalInset: horizontalInset,
+                                context: &context)
+
+    case let .image(id, caption, url, webpageId):
+        let _ = url; let _ = webpageId
+        let naturalSize: CGSize
+        if case let .image(image) = context.media[id], let largest = largestImageRepresentation(image.representations) {
+            naturalSize = CGSize(width: CGFloat(largest.dimensions.width), height: CGFloat(largest.dimensions.height))
+        } else {
+            naturalSize = CGSize(width: boundingWidth, height: 200.0)
+        }
+        return layoutMediaWithCaption(kind: .image, naturalSize: naturalSize, caption: caption,
+            isCover: isCover, cornerRadius: 8.0, boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset, context: &context)
+
+    case let .video(id, caption, _, _):
+        let naturalSize: CGSize
+        if case let .file(file) = context.media[id], let dimensions = file.dimensions {
+            naturalSize = CGSize(width: CGFloat(dimensions.width), height: CGFloat(dimensions.height))
+        } else {
+            naturalSize = CGSize(width: boundingWidth, height: 220.0)
+        }
+        return layoutMediaWithCaption(kind: .video, naturalSize: naturalSize, caption: caption,
+            isCover: isCover, cornerRadius: 8.0, boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset, context: &context)
+
+    case let .audio(_, caption):
+        return layoutMediaWithCaption(kind: .audio,
+            naturalSize: CGSize(width: boundingWidth, height: 56.0), caption: caption,
+            isCover: false, cornerRadius: 8.0, boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset, context: &context)
+
+    case let .webEmbed(_, _, dimensions, caption, _, _, _):
+        let h: CGFloat = CGFloat(dimensions?.height ?? 240)
+        return layoutMediaWithCaption(kind: .webEmbed,
+            naturalSize: CGSize(width: boundingWidth, height: h), caption: caption,
+            isCover: false, cornerRadius: 0.0, boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset, context: &context)
+
+    case let .postEmbed(_, _, _, _, _, _, caption):
+        return layoutMediaWithCaption(kind: .postEmbed,
+            naturalSize: CGSize(width: boundingWidth, height: 140.0), caption: caption,
+            isCover: false, cornerRadius: 8.0, boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset, context: &context)
+
+    case let .collage(_, caption):
+        return layoutMediaWithCaption(kind: .collage,
+            naturalSize: CGSize(width: boundingWidth, height: 240.0), caption: caption,
+            isCover: false, cornerRadius: 8.0, boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset, context: &context)
+
+    case let .slideshow(_, caption):
+        return layoutMediaWithCaption(kind: .slideshow,
+            naturalSize: CGSize(width: boundingWidth, height: 240.0), caption: caption,
+            isCover: false, cornerRadius: 8.0, boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset, context: &context)
+
+    case let .channelBanner(channel):
+        if channel == nil { return [] }
+        return layoutMediaWithCaption(kind: .channelBanner,
+            naturalSize: CGSize(width: boundingWidth, height: 60.0),
+            caption: InstantPageCaption(text: .empty, credit: .empty),
+            isCover: false, cornerRadius: 0.0, boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset, context: &context)
+
+    case let .map(_, _, _, dimensions, caption):
+        let naturalSize = CGSize(width: CGFloat(dimensions.width), height: CGFloat(dimensions.height))
+        return layoutMediaWithCaption(kind: .map, naturalSize: naturalSize, caption: caption,
+            isCover: false, cornerRadius: 8.0, boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset, context: &context)
+
+    case let .relatedArticles(_, articles):
+        let h = min(CGFloat(articles.count) * 80.0, 320.0)
+        return layoutMediaWithCaption(kind: .relatedArticles,
+            naturalSize: CGSize(width: boundingWidth, height: max(h, 80.0)),
+            caption: InstantPageCaption(text: .empty, credit: .empty),
+            isCover: false, cornerRadius: 0.0, boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset, context: &context)
+
+    case let .formula(latex):
+        let _ = latex
+        return layoutMediaWithCaption(kind: .formula,
+            naturalSize: CGSize(width: boundingWidth, height: 40.0),
+            caption: InstantPageCaption(text: .empty, credit: .empty),
+            isCover: false, cornerRadius: 0.0, boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset, context: &context)
+
+    case let .details(title, blocks, expanded):
+        return layoutDetails(title: title, blocks: blocks, defaultExpanded: expanded,
+                             boundingWidth: boundingWidth, horizontalInset: horizontalInset,
+                             context: &context)
+
+    case let .table(title, rows, bordered, striped):
+        return layoutTable(title: title, rows: rows, bordered: bordered, striped: striped,
+                           boundingWidth: boundingWidth, horizontalInset: horizontalInset,
+                           context: &context)
+
+    // Block kinds filled in by later tasks:
+    case .unsupported:
+        return []
+    }
+}
+
+// MARK: - Details layout
+
+private func layoutDetails(
+    title: RichText,
+    blocks: [InstantPageBlock],
+    defaultExpanded: Bool,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    let index = context.detailsIndexCounter
+    context.detailsIndexCounter += 1
+
+    // Title text item at top.
+    // V1 (InstantPageDetailsItem.swift:98–101): boundingWidth - detailsInset*2 - titleInset, titleHeight = max(44, titleSize.height + 26).
+    let titleStyleStack = InstantPageTextStyleStack()
+    setupStyleStack(titleStyleStack, theme: context.theme, category: .paragraph, link: false)
+    let (titleTextItem, _, _) = layoutTextItem(
+        attributedStringForRichText(title, styleStack: titleStyleStack),
+        boundingWidth: boundingWidth - horizontalInset * 2.0 - 32.0,   // reserve right edge for chevron
+        offset: CGPoint(x: horizontalInset, y: 12.0),
+        media: context.media,
+        webpage: context.webpage,
+        fitToWidth: context.fitToWidth
+    )
+    guard let titleTextItem = titleTextItem else { return [] }
+
+    let isExpanded = context.expandedDetails[index] ?? defaultExpanded
+
+    // V1 uses max(44.0, titleSize.height + 26.0); matched here.
+    let titleHeight = max(44.0, titleTextItem.frame.height + 26.0)
+    let titleFrame = CGRect(x: 0.0, y: 0.0, width: boundingWidth, height: titleHeight)
+
+    var innerLayout: InstantPageV2Layout?
+    var totalHeight = titleHeight
+    if isExpanded {
+        let layout = layoutBlockSequence(
+            blocks,
+            boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset,
+            context: &context
+        )
+        innerLayout = layout
+        totalHeight += layout.contentSize.height
+    }
+
+    let item = InstantPageV2DetailsItem(
+        frame: CGRect(x: 0.0, y: 0.0, width: boundingWidth, height: totalHeight),
+        index: index,
+        titleTextItem: titleTextItem,
+        titleFrame: titleFrame,
+        separatorColor: context.theme.controlColor.withMultipliedAlpha(0.25),
+        isExpanded: isExpanded,
+        innerLayout: innerLayout,
+        defaultExpanded: defaultExpanded
+    )
+    return [.details(item)]
+}
+
+// MARK: - Table layout
+
+private struct V2TableRow {
+    var minColumnWidths: [Int: CGFloat]
+    var maxColumnWidths: [Int: CGFloat]
+}
+
+let v2TableCellInsets = UIEdgeInsets(top: 14.0, left: 12.0, bottom: 14.0, right: 12.0)
+let v2TableBorderWidth: CGFloat = 1.0
+
+private func layoutTable(
+    title: RichText,
+    rows: [InstantPageTableRow],
+    bordered: Bool,
+    striped: Bool,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    if rows.isEmpty {
+        return []
+    }
+
+    // Style stack shared across all cell text measurements.
+    let styleStack = InstantPageTextStyleStack()
+    setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
+
+    let borderWidth = bordered ? v2TableBorderWidth : 0.0
+    let totalCellPadding = v2TableCellInsets.left + v2TableCellInsets.right
+    let cellWidthLimit = boundingWidth - totalCellPadding
+
+    var tableRows: [V2TableRow] = []
+    var columnCount: Int = 0
+
+    var columnSpans: [Range<Int>: (CGFloat, CGFloat)] = [:]
+    var rowSpans: [Int: [(Int, Int)]] = [:]
+
+    // Pass 1: measure min/max intrinsic width per cell.
+    var r: Int = 0
+    for row in rows {
+        var minColumnWidths: [Int: CGFloat] = [:]
+        var maxColumnWidths: [Int: CGFloat] = [:]
+        var i: Int = 0
+
+        for cell in row.cells {
+            // Advance i past any rowspan-inherited columns (matches V1 lines 311–319).
+            if let rowSpan = rowSpans[r] {
+                for columnAndSpan in rowSpan {
+                    if columnAndSpan.0 == i {
+                        i += columnAndSpan.1
+                    } else {
+                        break
+                    }
+                }
+            }
+
+            var minCellWidth: CGFloat = 1.0
+            var maxCellWidth: CGFloat = 1.0
+            if let text = cell.text {
+                let attrStr = attributedStringForRichText(text, styleStack: styleStack)
+                if let shortestItem = layoutTextItem(
+                    attrStr,
+                    boundingWidth: cellWidthLimit - totalCellPadding,
+                    offset: CGPoint(),
+                    media: context.media,
+                    webpage: context.webpage,
+                    minimizeWidth: true,
+                    fitToWidth: context.fitToWidth
+                ).0 {
+                    minCellWidth = shortestItem.effectiveWidth() + totalCellPadding
+                }
+                if let longestItem = layoutTextItem(
+                    attrStr,
+                    boundingWidth: cellWidthLimit - totalCellPadding,
+                    offset: CGPoint(),
+                    media: context.media,
+                    webpage: context.webpage,
+                    fitToWidth: context.fitToWidth
+                ).0 {
+                    maxCellWidth = max(minCellWidth, longestItem.effectiveWidth() + totalCellPadding)
+                }
+            }
+
+            if cell.colspan > 1 {
+                minColumnWidths[i] = 1.0
+                maxColumnWidths[i] = 1.0
+                let spanRange = i ..< i + Int(cell.colspan)
+                if let (minSW, maxSW) = columnSpans[spanRange] {
+                    columnSpans[spanRange] = (max(minSW, minCellWidth), max(maxSW, maxCellWidth))
+                } else {
+                    columnSpans[spanRange] = (minCellWidth, maxCellWidth)
+                }
+            } else {
+                minColumnWidths[i] = minCellWidth
+                maxColumnWidths[i] = maxCellWidth
+            }
+
+            let colspan = cell.colspan > 1 ? Int(clamping: cell.colspan) : 1
+            if cell.rowspan > 1 {
+                for j in r ..< r + Int(cell.rowspan) {
+                    if rowSpans[j] == nil {
+                        rowSpans[j] = [(i, colspan)]
+                    } else {
+                        rowSpans[j]!.append((i, colspan))
+                    }
+                }
+            }
+
+            i += colspan
+        }
+        tableRows.append(V2TableRow(minColumnWidths: minColumnWidths, maxColumnWidths: maxColumnWidths))
+        columnCount = max(columnCount, i)
+        r += 1
+    }
+
+    // Aggregate column min/max across all rows.
+    let maxContentWidth = boundingWidth - borderWidth
+    var availableWidth = maxContentWidth
+    var minColumnWidths: [Int: CGFloat] = [:]
+    var maxColumnWidths: [Int: CGFloat] = [:]
+    var maxTotalWidth: CGFloat = 0.0
+    for i in 0 ..< columnCount {
+        var minWidth: CGFloat = 1.0
+        var maxWidth: CGFloat = 1.0
+        for row in tableRows {
+            if let w = row.minColumnWidths[i] { minWidth = max(minWidth, w) }
+            if let w = row.maxColumnWidths[i] { maxWidth = max(maxWidth, w) }
+        }
+        minColumnWidths[i] = minWidth
+        maxColumnWidths[i] = maxWidth
+        availableWidth -= minWidth
+        maxTotalWidth += maxWidth
+    }
+
+    // Apply colspan constraints.
+    for (range, span) in columnSpans {
+        let (minSpanWidth, maxSpanWidth) = span
+        var minWidth: CGFloat = 0.0
+        var maxWidth: CGFloat = 0.0
+        for i in range {
+            if let w = minColumnWidths[i] { minWidth += w }
+            if let w = maxColumnWidths[i] { maxWidth += w }
+        }
+        if minWidth < minSpanWidth {
+            let delta = minSpanWidth - minWidth
+            for i in range {
+                if let w = minColumnWidths[i] {
+                    let growth = floor(delta / CGFloat(range.count))
+                    minColumnWidths[i] = w + growth
+                    availableWidth -= growth
+                }
+            }
+        }
+        if maxWidth < maxSpanWidth {
+            let delta = maxSpanWidth - maxWidth
+            for i in range {
+                if let w = maxColumnWidths[i] {
+                    let growth = round(delta / CGFloat(range.count))
+                    maxColumnWidths[i] = w + growth
+                    maxTotalWidth += growth
+                }
+            }
+        }
+    }
+
+    // Width allocation: distribute available width across columns.
+    var totalWidth = maxTotalWidth
+    var finalColumnWidths: [Int: CGFloat]
+    let widthToDistribute: CGFloat
+    if availableWidth > 0 {
+        widthToDistribute = availableWidth
+        finalColumnWidths = minColumnWidths
+    } else {
+        widthToDistribute = maxContentWidth - maxTotalWidth
+        finalColumnWidths = maxColumnWidths
+    }
+
+    if widthToDistribute > 0.0 {
+        var distributedWidth = widthToDistribute
+        for i in 0 ..< finalColumnWidths.count {
+            var width = finalColumnWidths[i]!
+            let maxWidth = maxColumnWidths[i]!
+            let growth = min(round(widthToDistribute * maxWidth / maxTotalWidth), distributedWidth)
+            width += growth
+            distributedWidth -= growth
+            finalColumnWidths[i] = width
+        }
+        totalWidth = boundingWidth
+    } else {
+        totalWidth += borderWidth
+    }
+
+    // Pass 2 & 3: produce per-cell frames + sub-layouts.
+    // Private struct to hold an in-progress cell before row height is known.
+    struct PendingCell {
+        let rowIndex: Int
+        let column: Int
+        let colspan: Int
+        let rowspan: Int
+        let cell: InstantPageTableCell
+        var frame: CGRect          // height is tentative until row height resolved
+        let isHeader: Bool
+        let isFilled: Bool         // background fill (header or stripe)
+        let subLayout: InstantPageV2Layout?
+        let subLayoutContentHeight: CGFloat  // height of cell content (before padding)
+    }
+
+    var finalizedCells: [InstantPageV2TableCell] = []
+    var origin = CGPoint(x: borderWidth / 2.0, y: borderWidth / 2.0)
+    var totalHeight: CGFloat = 0.0
+    var rowHeights: [Int: CGFloat] = [:]
+
+    var awaitingSpanCells: [Int: [(Int, PendingCell)]] = [:]
+
+    for i in 0 ..< rows.count {
+        let row = rows[i]
+        var maxRowHeight: CGFloat = 0.0
+        var isEmptyRow = true
+        origin.x = borderWidth / 2.0
+
+        var k: Int = 0
+        var rowCells: [PendingCell] = []
+
+        for cell in row.cells {
+            // Skip columns occupied by row spans.
+            if let cells = awaitingSpanCells[i] {
+                for colAndCell in cells {
+                    if colAndCell.1.column == k {
+                        for j in 0 ..< colAndCell.1.colspan {
+                            if let width = finalColumnWidths[k + j] {
+                                origin.x += width
+                            }
+                        }
+                        k += colAndCell.1.colspan
+                    } else {
+                        break
+                    }
+                }
+            }
+
+            let colspan: Int = cell.colspan > 1 ? Int(clamping: cell.colspan) : 1
+            let rowspan: Int = cell.rowspan > 1 ? Int(clamping: cell.rowspan) : 1
+
+            var cellWidth: CGFloat = 0.0
+            for j in 0 ..< colspan {
+                if let width = finalColumnWidths[k + j] {
+                    cellWidth += width
+                }
+            }
+
+            // Build cell sub-layout via recursive layoutBlockSequence.
+            var subLayout: InstantPageV2Layout?
+            var subLayoutHeight: CGFloat = 0.0
+            if let cellText = cell.text {
+                let cellContentWidth = cellWidth - totalCellPadding
+                if cellContentWidth > 0.0 {
+                    let cellLayout = layoutBlockSequence(
+                        [.paragraph(cellText)],
+                        boundingWidth: cellContentWidth,
+                        horizontalInset: 0.0,
+                        context: &context
+                    )
+                    subLayout = cellLayout
+                    subLayoutHeight = cellLayout.contentSize.height
+                    isEmptyRow = false
+                }
+            }
+
+            var cellHeight: CGFloat?
+            if subLayout != nil {
+                cellHeight = ceil(subLayoutHeight) + v2TableCellInsets.top + v2TableCellInsets.bottom
+            }
+
+            var isFilled = cell.header
+            if !isFilled && striped {
+                isFilled = i % 2 == 0
+            }
+
+            let pendingCell = PendingCell(
+                rowIndex: i,
+                column: k,
+                colspan: colspan,
+                rowspan: rowspan,
+                cell: cell,
+                frame: CGRect(x: origin.x, y: origin.y, width: cellWidth, height: cellHeight ?? 20.0),
+                isHeader: cell.header,
+                isFilled: isFilled,
+                subLayout: subLayout,
+                subLayoutContentHeight: subLayoutHeight
+            )
+
+            if rowspan == 1 {
+                rowCells.append(pendingCell)
+                if let ch = cellHeight {
+                    maxRowHeight = max(maxRowHeight, ch)
+                }
+            } else {
+                for j in i ..< i + rowspan {
+                    if awaitingSpanCells[j] == nil {
+                        awaitingSpanCells[j] = [(k, pendingCell)]
+                    } else {
+                        awaitingSpanCells[j]!.append((k, pendingCell))
+                    }
+                }
+            }
+
+            k += colspan
+            origin.x += cellWidth
+        }
+
+        // Capture theme color value before the closure to avoid capturing `inout context`.
+        let tableHeaderColor = context.theme.tableHeaderColor
+
+        // Helper: finalize a pending cell with known row height → produce InstantPageV2TableCell.
+        let finalizeCell: (PendingCell, CGFloat) -> InstantPageV2TableCell = { pending, height in
+            let finalFrame = CGRect(x: pending.frame.minX, y: pending.frame.minY,
+                                    width: pending.frame.width, height: height)
+
+            // Compute sub-layout frame within the cell (horizontal inset + vertical alignment).
+            var subLayout = pending.subLayout
+            if var sl = subLayout {
+                let textHeight = pending.subLayoutContentHeight
+                let vertOffset: CGFloat
+                switch pending.cell.verticalAlignment {
+                case .top:
+                    vertOffset = v2TableCellInsets.top
+                case .middle:
+                    vertOffset = max(v2TableCellInsets.top, (height - textHeight) / 2.0)
+                case .bottom:
+                    vertOffset = max(v2TableCellInsets.top, height - textHeight - v2TableCellInsets.bottom)
+                }
+                let horizOffset: CGFloat
+                switch pending.cell.alignment {
+                case .left:
+                    horizOffset = v2TableCellInsets.left
+                case .center:
+                    horizOffset = (pending.frame.width - sl.contentSize.width) / 2.0
+                case .right:
+                    horizOffset = pending.frame.width - sl.contentSize.width - v2TableCellInsets.right
+                }
+                // Translate all items in the sub-layout by the inset.
+                let delta = CGPoint(x: horizOffset, y: vertOffset)
+                let translatedItems = sl.items.map { $0.offsetBy(delta) }
+                sl = InstantPageV2Layout(contentSize: sl.contentSize, items: translatedItems, detailsIndices: sl.detailsIndices)
+                subLayout = sl
+            }
+
+            let bgColor: UIColor? = pending.isFilled ? tableHeaderColor : nil
+            let hAlign: NSTextAlignment
+            switch pending.cell.alignment {
+            case .left: hAlign = .left
+            case .center: hAlign = .center
+            case .right: hAlign = .right
+            }
+            let vAlign: InstantPageV2TableVerticalAlignment
+            switch pending.cell.verticalAlignment {
+            case .top: vAlign = .top
+            case .middle: vAlign = .middle
+            case .bottom: vAlign = .bottom
+            }
+
+            return InstantPageV2TableCell(
+                frame: finalFrame,
+                isHeader: pending.isHeader,
+                horizontalAlignment: hAlign,
+                verticalAlignment: vAlign,
+                backgroundColor: bgColor,
+                subLayout: subLayout
+            )
+        }
+
+        if !isEmptyRow {
+            rowHeights[i] = maxRowHeight
+        } else {
+            rowHeights[i] = 0.0
+            maxRowHeight = 0.0
+        }
+
+        // Resolve any row-spanning cells whose bottom row is now known.
+        var completedSpans = [Int: Set<Int>]()
+        if let cells = awaitingSpanCells[i] {
+            isEmptyRow = false
+            for colAndCell in cells {
+                let pending = colAndCell.1
+                let utmostRow = pending.rowIndex + pending.rowspan - 1
+                if rowHeights[utmostRow] == nil {
+                    continue
+                }
+
+                var cellHeight: CGFloat = 0.0
+                for k in pending.rowIndex ..< utmostRow + 1 {
+                    if let h = rowHeights[k] { cellHeight += h }
+                    if completedSpans[k] == nil {
+                        completedSpans[k] = Set([colAndCell.0])
+                    } else {
+                        completedSpans[k]!.insert(colAndCell.0)
+                    }
+                }
+
+                if pending.frame.height > cellHeight {
+                    let delta = pending.frame.height - cellHeight
+                    cellHeight = pending.frame.height
+                    maxRowHeight += delta
+                    rowHeights[i] = maxRowHeight
+                }
+
+                finalizedCells.append(finalizeCell(pending, cellHeight))
+            }
+        }
+
+        for pending in rowCells {
+            finalizedCells.append(finalizeCell(pending, maxRowHeight))
+        }
+
+        // Remove completed span cells from awaitingSpanCells.
+        if !completedSpans.isEmpty {
+            awaitingSpanCells = awaitingSpanCells.reduce([Int: [(Int, PendingCell)]]()) { current, rowAndValue in
+                var result = current
+                let cells = rowAndValue.value.filter { column, _ in
+                    if let completedSet = completedSpans[rowAndValue.key] {
+                        return !completedSet.contains(column)
+                    }
+                    return true
+                }
+                if !cells.isEmpty { result[rowAndValue.key] = cells }
+                return result
+            }
+        }
+
+        if !isEmptyRow {
+            totalHeight += maxRowHeight
+            origin.y += maxRowHeight
+        }
+    }
+    totalHeight += borderWidth
+
+    // RTL: flip all cell frames horizontally within totalWidth.
+    if context.rtl {
+        finalizedCells = finalizedCells.map { cell in
+            let flippedX = totalWidth - cell.frame.minX - cell.frame.width
+            let flippedFrame = CGRect(x: flippedX, y: cell.frame.minY,
+                                      width: cell.frame.width, height: cell.frame.height)
+            return InstantPageV2TableCell(
+                frame: flippedFrame,
+                isHeader: cell.isHeader,
+                horizontalAlignment: cell.horizontalAlignment,
+                verticalAlignment: cell.verticalAlignment,
+                backgroundColor: cell.backgroundColor,
+                subLayout: cell.subLayout
+            )
+        }
+    }
+
+    // Build border lines (table-local coords).
+    var horizontalLines: [CGRect] = []
+    var verticalLines: [CGRect] = []
+    if bordered {
+        // Interior lines: for each cell, emit a top line if not in the first row,
+        // and a left line if not in the first column.
+        for cell in finalizedCells {
+            let isFirstRow = cell.frame.minY <= borderWidth / 2.0 + 0.5
+            let isFirstCol = cell.frame.minX <= borderWidth / 2.0 + 0.5
+            if !isFirstRow {
+                horizontalLines.append(CGRect(x: cell.frame.minX, y: cell.frame.minY,
+                                              width: cell.frame.width, height: borderWidth))
+            }
+            if !isFirstCol {
+                verticalLines.append(CGRect(x: cell.frame.minX, y: cell.frame.minY,
+                                            width: borderWidth, height: cell.frame.height))
+            }
+        }
+    }
+
+    // Title sub-layout (above the grid).
+    var titleSubLayout: InstantPageV2Layout?
+    var titleFrame: CGRect?
+    if case .empty = title {
+        // no title
+    } else {
+        let titleLayout = layoutBlockSequence(
+            [.paragraph(title)],
+            boundingWidth: totalWidth - v2TableCellInsets.left * 2.0,
+            horizontalInset: 0.0,
+            context: &context
+        )
+        titleSubLayout = titleLayout
+        let titleHeight = titleLayout.contentSize.height + v2TableCellInsets.top + v2TableCellInsets.bottom
+        titleFrame = CGRect(x: 0.0, y: 0.0, width: totalWidth, height: titleHeight)
+    }
+
+    // The table item frame spans the full boundingWidth slot in the bubble;
+    // contentSize.width is the intrinsic grid width (may exceed frame.width → horizontal scroll).
+    let tableFrame = CGRect(x: 0.0, y: 0.0,
+                            width: boundingWidth + horizontalInset * 2.0,
+                            height: totalHeight + (titleFrame?.height ?? 0.0))
+    let contentSize = CGSize(
+        width: totalWidth,
+        height: totalHeight + (titleFrame?.height ?? 0.0)
+    )
+
+    let tableItem = InstantPageV2TableItem(
+        frame: tableFrame,
+        titleSubLayout: titleSubLayout,
+        titleFrame: titleFrame,
+        contentSize: contentSize,
+        cells: finalizedCells,
+        horizontalLines: horizontalLines,
+        verticalLines: verticalLines,
+        bordered: bordered,
+        striped: striped,
+        borderColor: context.theme.tableBorderColor
+    )
+    return [.table(tableItem)]
+}
+
+// MARK: - Media placeholder layout
+
+/// Caption+credit sub-helper. Items are positioned in block-global coordinates (y measured from the
+/// top of the media block); `offset` is the y-position of the bottom of the placeholder, so
+/// caption items start at `offset + topPadding`. The caller uses the returned total height to
+/// compute block size. Returns (items, totalHeight).
+private func layoutCaptionAndCredit(
+    _ caption: InstantPageCaption,
+    offset: CGFloat,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    context: inout LayoutContext
+) -> ([InstantPageV2LaidOutItem], CGFloat) {
+    var items: [InstantPageV2LaidOutItem] = []
+    var y = offset
+    var totalHeight: CGFloat = 0.0
+    var rtl = context.rtl
+    var captionIsEmpty = true
+
+    if case .empty = caption.text {
+        // no caption text
+    } else {
+        captionIsEmpty = false
+        totalHeight += 14.0
+        y += 14.0
+        let styleStack = InstantPageTextStyleStack()
+        setupStyleStack(styleStack, theme: context.theme, category: .caption, link: false)
+        let attributedString = attributedStringForRichText(caption.text, styleStack: styleStack)
+        let (textItem, captionItems, captionSize) = layoutTextItem(
+            attributedString,
+            boundingWidth: boundingWidth - horizontalInset * 2.0,
+            offset: CGPoint(x: horizontalInset, y: y),
+            media: context.media,
+            webpage: context.webpage,
+            fitToWidth: context.fitToWidth
+        )
+        totalHeight += captionSize.height
+        y += captionSize.height
+        items.append(contentsOf: captionItems)
+        rtl = textItem?.containsRTL ?? rtl
+    }
+
+    if case .empty = caption.credit {
+        // no credit text
+    } else {
+        if captionIsEmpty {
+            totalHeight += 14.0
+            y += 14.0
+        } else {
+            totalHeight += 10.0
+            y += 10.0
+        }
+        let styleStack = InstantPageTextStyleStack()
+        setupStyleStack(styleStack, theme: context.theme, category: .credit, link: false)
+        let attributedString = attributedStringForRichText(caption.credit, styleStack: styleStack)
+        let (_, creditItems, creditSize) = layoutTextItem(
+            attributedString,
+            boundingWidth: boundingWidth - horizontalInset * 2.0,
+            alignment: rtl ? .right : .natural,
+            offset: CGPoint(x: horizontalInset, y: y),
+            media: context.media,
+            webpage: context.webpage,
+            fitToWidth: context.fitToWidth
+        )
+        totalHeight += creditSize.height
+        items.append(contentsOf: creditItems)
+    }
+
+    return (items, totalHeight)
+}
+
+private func layoutMediaWithCaption(
+    kind: InstantPageV2MediaPlaceholderKind,
+    naturalSize: CGSize,
+    caption: InstantPageCaption,
+    isCover: Bool,
+    cornerRadius: CGFloat,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    // Scale naturalSize to fit within (boundingWidth - horizontalInset*2) × naturalSize.height.
+    let availableWidth = boundingWidth - horizontalInset * 2.0
+    let scaledSize: CGSize
+    if naturalSize.width > 0.0 && naturalSize.height > 0.0 {
+        let scale = min(availableWidth / naturalSize.width, 1.0)
+        scaledSize = CGSize(width: floor(naturalSize.width * scale), height: floor(naturalSize.height * scale))
+    } else {
+        scaledSize = CGSize(width: availableWidth, height: naturalSize.height)
+    }
+
+    let placeholderFrame = CGRect(
+        x: horizontalInset,
+        y: 0.0,
+        width: scaledSize.width,
+        height: scaledSize.height
+    )
+    let placeholderItem = InstantPageV2MediaPlaceholderItem(
+        frame: placeholderFrame,
+        kind: kind,
+        cornerRadius: cornerRadius
+    )
+
+    var result: [InstantPageV2LaidOutItem] = [.mediaPlaceholder(placeholderItem)]
+
+    let (captionItems, captionHeight) = layoutCaptionAndCredit(
+        caption,
+        offset: scaledSize.height,
+        boundingWidth: boundingWidth,
+        horizontalInset: horizontalInset,
+        context: &context
+    )
+    result.append(contentsOf: captionItems)
+
+    // isCover adds extra 14pt bottom padding — but only when caption/credit text was actually
+    // rendered (matches V1 lines 204-206: `contentSize.height > 0 && isCover`). For an
+    // empty-caption cover image no padding is added.
+    // Implemented by extending the last text item's frame rather than emitting an invisible shape
+    // view that would silently consume tap area.
+    if isCover && captionHeight > 0.0 {
+        if let lastIndex = result.lastIndex(where: { if case .text = $0 { return true } else { return false } }) {
+            if case var .text(lastText) = result[lastIndex] {
+                lastText.frame = CGRect(
+                    origin: lastText.frame.origin,
+                    size: CGSize(width: lastText.frame.width, height: lastText.frame.height + 14.0)
+                )
+                result[lastIndex] = .text(lastText)
+            }
+        }
+    }
+
+    return result
+}
+
+// MARK: - Simple-block layout functions
+
+private func layoutSimpleText(
+    _ text: RichText,
+    category: InstantPageTextCategoryType,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    let styleStack = InstantPageTextStyleStack()
+    setupStyleStack(styleStack, theme: context.theme, category: category, link: false)
+    let attributedString = attributedStringForRichText(text, styleStack: styleStack)
+    let (_, items, _) = layoutTextItem(
+        attributedString,
+        boundingWidth: boundingWidth - horizontalInset * 2.0,
+        offset: CGPoint(x: horizontalInset, y: 0.0),
+        media: context.media,
+        webpage: context.webpage,
+        fitToWidth: context.fitToWidth
+    )
+    return items
+}
+
+private func layoutHeading(
+    _ text: RichText,
+    level: Int32,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    let styleStack = InstantPageTextStyleStack()
+    setupStyleStack(styleStack, theme: context.theme, attributes: context.theme.headingTextAttributes(level: level, link: false))
+    let attributedString = attributedStringForRichText(text, styleStack: styleStack)
+    let (_, items, _) = layoutTextItem(
+        attributedString,
+        boundingWidth: boundingWidth - horizontalInset * 2.0,
+        offset: CGPoint(x: horizontalInset, y: 0.0),
+        media: context.media,
+        webpage: context.webpage,
+        fitToWidth: context.fitToWidth
+    )
+    return items
+}
+
+private func layoutParagraph(
+    _ text: RichText,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    previousItems: [InstantPageV2LaidOutItem],
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    let _ = previousItems
+
+    let styleStack = InstantPageTextStyleStack()
+    setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
+    let attributedString = attributedStringForRichText(text, styleStack: styleStack)
+
+    let (_, items, _) = layoutTextItem(
+        attributedString,
+        boundingWidth: boundingWidth - horizontalInset * 2.0,
+        offset: CGPoint(x: horizontalInset, y: 0.0),
+        media: context.media,
+        webpage: context.webpage,
+        fitToWidth: context.fitToWidth
+    )
+    return items
+}
+
+private func layoutAuthorDate(
+    author: RichText,
+    date: Int32,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    previousItems: [InstantPageV2LaidOutItem],
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    // Literal port of V1 InstantPageLayout.swift case .authorDate (lines 231–272).
+    // Reads context.strings, formats date via DateFormatter with locale from localeWithStrings,
+    // splices author and date into InstantPage_AuthorAndDateTitle format string.
+    let styleStack = InstantPageTextStyleStack()
+    setupStyleStack(styleStack, theme: context.theme, category: .caption, link: false)
+
+    // Capture strings by value to avoid capturing inout context in an escaping closure.
+    let strings = context.strings
+    let stringForDate: (Int32) -> String = { d in
+        let formatter = DateFormatter()
+        formatter.locale = localeWithStrings(strings)
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        return formatter.string(from: Date(timeIntervalSince1970: Double(d)))
+    }
+
+    var text: RichText?
+    if case .empty = author {
+        if date != 0 {
+            text = .plain(stringForDate(date))
+        }
+    } else {
+        if date != 0 {
+            let dateText = RichText.plain(stringForDate(date))
+            let formatString = context.strings.InstantPage_AuthorAndDateTitle("%1$@", "%2$@").string
+            let authorRange = formatString.range(of: "%1$@")!
+            let dateRange = formatString.range(of: "%2$@")!
+            if authorRange.lowerBound < dateRange.lowerBound {
+                let byPart = String(formatString[formatString.startIndex ..< authorRange.lowerBound])
+                let middlePart = String(formatString[authorRange.upperBound ..< dateRange.lowerBound])
+                let endPart = String(formatString[dateRange.upperBound...])
+                text = .concat([.plain(byPart), author, .plain(middlePart), dateText, .plain(endPart)])
+            } else {
+                let beforePart = String(formatString[formatString.startIndex ..< dateRange.lowerBound])
+                let middlePart = String(formatString[dateRange.upperBound ..< authorRange.lowerBound])
+                let endPart = String(formatString[authorRange.upperBound...])
+                text = .concat([.plain(beforePart), dateText, .plain(middlePart), author, .plain(endPart)])
+            }
+        } else {
+            text = author
+        }
+    }
+
+    guard let resolvedText = text else { return [] }
+
+    var previousItemHasRTL = false
+    if case let .text(prev) = previousItems.last, prev.textItem.containsRTL {
+        previousItemHasRTL = true
+    }
+    let alignment: NSTextAlignment = (context.rtl || previousItemHasRTL) ? .right : .natural
+
+    let (_, items, _) = layoutTextItem(
+        attributedStringForRichText(resolvedText, styleStack: styleStack),
+        boundingWidth: boundingWidth - horizontalInset * 2.0,
+        alignment: alignment,
+        offset: CGPoint(x: horizontalInset, y: 0.0),
+        media: context.media,
+        webpage: context.webpage,
+        fitToWidth: context.fitToWidth
+    )
+    return items
+}
+
+private func layoutDivider(
+    boundingWidth: CGFloat,
+    context: LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    // Geometry matches V1 InstantPageLayout.swift lines 361–363:
+    //   lineWidth = floor(boundingWidth / 2.0), x = floor((boundingWidth - lineWidth) / 2.0), h = 1pt.
+    // Color matches V1: theme.textCategories.caption.color.
+    let lineWidth = floor(boundingWidth / 2.0)
+    let frame = CGRect(
+        x: floor((boundingWidth - lineWidth) / 2.0),
+        y: 0.0,
+        width: lineWidth,
+        height: 1.0
+    )
+    return [.divider(InstantPageV2DividerItem(frame: frame, color: context.theme.textCategories.caption.color))]
+}
+
+// MARK: - Code block layout (ported from V1 InstantPageLayout.swift lines 329–351)
+
+private func layoutCodeBlock(
+    _ text: RichText,
+    language: String?,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    // V1 InstantPageLayout.swift line 330: backgroundInset = 14.0 (top + bottom padding).
+    let backgroundInset: CGFloat = 14.0
+    // V1 line 342: text x offset is 17.0 (hardcoded, not backgroundInset).
+    let textXOffset: CGFloat = 17.0
+    // V1 line 348: shape is .rect — no corner radius.
+    let cornerRadius: CGFloat = 0.0
+
+    let attributedString: NSAttributedString
+    if let language, !language.isEmpty {
+        // V1 line 333: call attributedStringForPreformattedText with language.
+        attributedString = attributedStringForPreformattedText(
+            text,
+            language: language,
+            theme: context.theme,
+            cachedMessageSyntaxHighlight: context.cachedMessageSyntaxHighlight
+        )
+    } else {
+        // V1 lines 335–338: fall back to plain paragraph style when no language.
+        let styleStack = InstantPageTextStyleStack()
+        setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
+        attributedString = attributedStringForRichText(text, styleStack: styleStack)
+    }
+
+    // V1 line 341: text bounding width excludes horizontalInset×2 and backgroundInset×2.
+    let innerWidth = boundingWidth - horizontalInset * 2.0 - backgroundInset * 2.0
+    // V1 line 342: offset is (17.0, backgroundInset); V2 lays the text in block-local coords.
+    let (textItem, _, textSize) = layoutTextItem(
+        attributedString,
+        boundingWidth: innerWidth,
+        offset: CGPoint(x: 0.0, y: 0.0),
+        media: context.media,
+        webpage: context.webpage,
+        fitToWidth: context.fitToWidth,
+        opaqueBackground: true
+    )
+    guard let textItem = textItem else { return [] }
+
+    // Position text within the block's content area.
+    // V1 line 342: x=17.0, y=backgroundInset (block-local).
+    textItem.frame = CGRect(
+        x: textXOffset,
+        y: backgroundInset,
+        width: textItem.frame.width,
+        height: textItem.frame.height
+    )
+
+    // V1 line 348: block spans full boundingWidth (x=0), height = contentSize.height + backgroundInset*2.
+    let blockHeight = textSize.height + backgroundInset * 2.0
+    let blockFrame = CGRect(
+        x: 0.0,
+        y: 0.0,
+        width: boundingWidth,
+        height: blockHeight
+    )
+
+    return [.codeBlock(InstantPageV2CodeBlockItem(
+        frame: blockFrame,
+        backgroundColor: context.theme.codeBlockBackgroundColor,
+        cornerRadius: cornerRadius,
+        textItem: textItem,
+        inset: UIEdgeInsets(top: backgroundInset, left: textXOffset, bottom: backgroundInset, right: backgroundInset)
+    ))]
+}
+
+// MARK: - Block quote / pull quote layout (ported from V1 InstantPageLayout.swift lines 517–586)
+
+private func layoutBlockQuote(
+    text: RichText,
+    caption: RichText,
+    isPull: Bool,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    // V1 line 518/553: verticalInset = 4.0 for both variants.
+    let verticalInset: CGFloat = 4.0
+    // V1 line 518: lineInset = 20.0 (blockQuote only; pullQuote uses full width).
+    let lineInset: CGFloat = isPull ? 0.0 : 20.0
+
+    var result: [InstantPageV2LaidOutItem] = []
+    var contentHeight: CGFloat = verticalInset   // V1 line 520/554: starts at verticalInset
+
+    // Body text style: paragraph + italic (V1 lines 524–526 / 558–560).
+    let styleStack = InstantPageTextStyleStack()
+    setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
+    styleStack.push(.italic)
+
+    if isPull {
+        // pullQuote: top horizontal rule (plan-specified; matches V1 divider geometry for caption color).
+        // V1 doesn't emit shape ornaments for pullQuote, but the plan calls for them.
+        // Geometry mirrors V1 divider (InstantPageLayout.swift line 362):
+        //   lineWidth = boundingWidth - horizontalInset * 2.0, x = horizontalInset, h = 1.0.
+        let lineWidth = boundingWidth - horizontalInset * 2.0
+        let topLine = InstantPageV2ShapeItem(
+            frame: CGRect(x: horizontalInset, y: contentHeight, width: lineWidth, height: 1.0),
+            kind: .line(thickness: 1.0),
+            color: context.theme.textCategories.caption.color
+        )
+        result.append(.shape(topLine))
+        contentHeight += 1.0 + verticalInset   // rule + small gap before body text
+    }
+
+    // Body text (V1 line 528 / 562).
+    let textBoundingWidth = boundingWidth - horizontalInset * 2.0 - lineInset
+    let textX: CGFloat = horizontalInset + lineInset
+    let textAlignment: NSTextAlignment = isPull ? .center : .natural
+
+    let attributedBody = attributedStringForRichText(text, styleStack: styleStack)
+    let (_, bodyItems, bodySize) = layoutTextItem(
+        attributedBody,
+        boundingWidth: textBoundingWidth,
+        alignment: textAlignment,
+        offset: CGPoint(x: textX, y: contentHeight),
+        media: context.media,
+        webpage: context.webpage,
+        fitToWidth: context.fitToWidth
+    )
+    result.append(contentsOf: bodyItems)
+    contentHeight += bodySize.height   // V1 line 530/567
+
+    // Optional caption (V1 lines 533–544 / 570–583).
+    if case .empty = caption {
+        // no caption
+    } else {
+        contentHeight += 14.0   // V1 lines 535/572: 14pt gap before caption
+
+        let captionStyleStack = InstantPageTextStyleStack()
+        setupStyleStack(captionStyleStack, theme: context.theme, category: .caption, link: false)
+
+        let attributedCaption = attributedStringForRichText(caption, styleStack: captionStyleStack)
+        let (_, captionItems, captionSize) = layoutTextItem(
+            attributedCaption,
+            boundingWidth: textBoundingWidth,
+            alignment: textAlignment,
+            offset: CGPoint(x: textX, y: contentHeight),
+            media: context.media,
+            webpage: context.webpage,
+            fitToWidth: context.fitToWidth
+        )
+        result.append(contentsOf: captionItems)
+        contentHeight += captionSize.height   // V1 lines 542/582
+    }
+
+    contentHeight += verticalInset   // V1 lines 545/585
+
+    if isPull {
+        // pullQuote: bottom horizontal rule (plan-specified; mirrors top rule).
+        let lineWidth = boundingWidth - horizontalInset * 2.0
+        let bottomLine = InstantPageV2ShapeItem(
+            frame: CGRect(x: horizontalInset, y: contentHeight - 1.0, width: lineWidth, height: 1.0),
+            kind: .line(thickness: 1.0),
+            color: context.theme.textCategories.caption.color
+        )
+        // Insert bottom rule before caption trailing space is consumed — append after final verticalInset.
+        result.append(.shape(bottomLine))
+    } else {
+        // blockQuote: vertical bar on the leading edge (V1 lines 547–549).
+        // V1: frame = CGRect(x: horizontalInset, y: 0.0, width: 3.0, height: contentSize.height)
+        // V1 shape: .roundLine (rounded caps) → cornerRadius = barWidth / 2 = 1.5.
+        let barWidth: CGFloat = 3.0   // V1 line 547
+        let bar = InstantPageV2BarItem(
+            frame: CGRect(x: horizontalInset, y: 0.0, width: barWidth, height: contentHeight),
+            color: context.theme.textCategories.paragraph.color,   // V1 line 547
+            cornerRadius: barWidth / 2.0   // V1 .roundLine ≈ half-width rounded caps
+        )
+        result.append(.blockQuoteBar(bar))
+    }
+
+    return result
+}
+
+// MARK: - Task-list marker helpers (copied verbatim from V1 InstantPageLayout.swift:134–146)
+
+private let instantPageTaskListUncheckedNumber = "\u{001f}tg-md-task:unchecked"
+private let instantPageTaskListCheckedNumber = "\u{001f}tg-md-task:checked"
+
+private func instantPageTaskListMarkerState(_ number: String?) -> Bool? {
+    switch number {
+    case instantPageTaskListUncheckedNumber:
+        return false
+    case instantPageTaskListCheckedNumber:
+        return true
+    default:
+        return nil
+    }
+}
+
+// MARK: - List layout (ported from V1 InstantPageLayout.swift lines 365–516)
+
+private func layoutList(
+    _ listItems: [InstantPageListItem],
+    ordered: Bool,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    // Determine marker characteristics.
+    var maxIndexWidth: CGFloat = 0.0
+    var hasTaskMarkers = false
+    var hasNums = false
+
+    if ordered {
+        for item in listItems {
+            if instantPageTaskListMarkerState(item.num) != nil {
+                hasTaskMarkers = true
+            } else if let num = item.num, !num.isEmpty {
+                hasNums = true
+            }
+        }
+    } else {
+        for item in listItems {
+            if instantPageTaskListMarkerState(item.num) != nil {
+                hasTaskMarkers = true
+                break
+            }
+        }
+    }
+
+    // Build per-item marker descriptors and measure their natural widths.
+    struct MarkerInfo {
+        let kind: InstantPageV2ListMarkerKind
+        let naturalWidth: CGFloat   // for right-aligning number markers
+    }
+    let checklistMarkerSize = CGSize(width: 18.0, height: 18.0)
+
+    var markerInfos: [MarkerInfo] = []
+    for (i, item) in listItems.enumerated() {
+        if let checked = instantPageTaskListMarkerState(item.num) {
+            if ordered {
+                maxIndexWidth = max(maxIndexWidth, checklistMarkerSize.width)
+            }
+            markerInfos.append(MarkerInfo(kind: .checklist(checked: checked), naturalWidth: checklistMarkerSize.width))
+        } else if ordered {
+            let value: String
+            if hasNums {
+                if let num = item.num {
+                    value = "\(num)."
+                } else {
+                    value = " "
+                }
+            } else {
+                value = "\(i + 1)."
+            }
+            // Measure using a UILabel to get the expected label width.
+            let styleStack = InstantPageTextStyleStack()
+            setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
+            let attrStr = attributedStringForRichText(.plain(value), styleStack: styleStack)
+            let (textItem, _, _) = layoutTextItem(
+                attrStr,
+                boundingWidth: boundingWidth - horizontalInset * 2.0,
+                offset: .zero,
+                fitToWidth: context.fitToWidth
+            )
+            let w: CGFloat
+            if let textItem = textItem, let firstLine = textItem.lines.first {
+                w = firstLine.frame.width
+            } else {
+                w = 0.0
+            }
+            maxIndexWidth = max(maxIndexWidth, w)
+            markerInfos.append(MarkerInfo(kind: .number(value), naturalWidth: w))
+        } else {
+            // Bullet: 6×6 ellipse (matches V1 InstantPageShapeItem dimensions).
+            markerInfos.append(MarkerInfo(kind: .bullet, naturalWidth: 6.0))
+        }
+    }
+
+    // indexSpacing = gap between the right edge of markers and the text content.
+    // V1 values: ordered-task=16, ordered-num=12, unordered-task=24, unordered-bullet=20.
+    let indexSpacing: CGFloat = ordered ? (hasTaskMarkers ? 16.0 : 12.0) : (hasTaskMarkers ? 24.0 : 20.0)
+
+    // Layout each item.
+    var result: [InstantPageV2LaidOutItem] = []
+    var contentHeight: CGFloat = 0.0
+
+    for (i, item) in listItems.enumerated() {
+        // Inter-item spacing (matches V1: 18pt normal, 12pt fitToWidth).
+        if i != 0 {
+            contentHeight += context.fitToWidth ? 12.0 : 18.0
+        }
+
+        let markerInfo = markerInfos[i]
+
+        // Effective item: if a .blocks item is empty, treat as a single space.
+        var effectiveItem = item
+        if case let .blocks(blocks, num) = effectiveItem, blocks.isEmpty {
+            effectiveItem = .text(.plain(" "), num)
+        }
+
+        switch effectiveItem {
+        case let .text(text, _):
+            // Layout text content.
+            let styleStack = InstantPageTextStyleStack()
+            setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
+            let attrStr = attributedStringForRichText(text, styleStack: styleStack)
+            let textX = horizontalInset + indexSpacing + maxIndexWidth
+            let textWidth = boundingWidth - horizontalInset * 2.0 - indexSpacing - maxIndexWidth
+            let (textItem, textLaidOutItems, textSize) = layoutTextItem(
+                attrStr,
+                boundingWidth: textWidth,
+                offset: CGPoint(x: textX, y: contentHeight),
+                media: context.media,
+                webpage: context.webpage,
+                fitToWidth: context.fitToWidth
+            )
+
+            // Compute marker vertical position: align to mid of first text line.
+            var lineMidY: CGFloat = contentHeight
+            if let textItem = textItem {
+                if let firstLine = textItem.lines.first {
+                    lineMidY = textItem.frame.minY + firstLine.frame.midY
+                } else {
+                    lineMidY = textItem.frame.midY
+                }
+            }
+
+            // Compute marker frame.
+            let markerFrame = markerFrameFor(
+                kind: markerInfo.kind,
+                naturalWidth: markerInfo.naturalWidth,
+                maxIndexWidth: maxIndexWidth,
+                horizontalInset: horizontalInset,
+                indexSpacing: indexSpacing,
+                ordered: ordered,
+                checklistMarkerSize: checklistMarkerSize,
+                lineMidY: lineMidY,
+                rtl: context.rtl,
+                boundingWidth: boundingWidth
+            )
+
+            result.append(.listMarker(InstantPageV2ListMarkerItem(
+                frame: markerFrame,
+                kind: markerInfo.kind,
+                color: context.theme.textCategories.paragraph.color
+            )))
+            result.append(contentsOf: textLaidOutItems)
+            contentHeight += textSize.height
+
+        case let .blocks(blocks, _):
+            // Nested block content (e.g. sub-list, paragraphs).
+            var previousBlock: InstantPageBlock?
+            let originY = contentHeight
+            var firstBlockLineMidY: CGFloat?
+
+            for (j, subBlock) in blocks.enumerated() {
+                let subItems = layoutBlock(
+                    subBlock,
+                    boundingWidth: boundingWidth - horizontalInset * 2.0 - indexSpacing - maxIndexWidth,
+                    horizontalInset: 0.0,
+                    isCover: false,
+                    previousItems: result,
+                    isLast: j == blocks.count - 1,
+                    context: &context
+                )
+                let subLocalMaxY: CGFloat = subItems.map { $0.frame.maxY }.max() ?? 0.0
+                let spacing: CGFloat = (previousBlock != nil && subLocalMaxY > 0.0) ? spacingBetweenBlocks(upper: previousBlock, lower: subBlock, fitToWidth: context.fitToWidth) : 0.0
+                let offsetX = horizontalInset + indexSpacing + maxIndexWidth
+                let offsetY = contentHeight + spacing
+                let translatedItems = subItems.map { $0.offsetBy(CGPoint(x: offsetX, y: offsetY)) }
+
+                if firstBlockLineMidY == nil {
+                    // Find the mid-Y of the first text line in the first block.
+                    for translated in translatedItems {
+                        if case let .text(tv) = translated {
+                            if let firstLine = tv.textItem.lines.first {
+                                firstBlockLineMidY = tv.frame.minY + firstLine.frame.midY
+                            } else {
+                                firstBlockLineMidY = tv.frame.midY
+                            }
+                            break
+                        }
+                    }
+                }
+
+                // Compute block height contribution.
+                // offsetY = contentHeight + spacing, so blockMaxY already accounts for spacing.
+                var blockMaxY: CGFloat = offsetY
+                for ti in translatedItems {
+                    blockMaxY = max(blockMaxY, ti.frame.maxY)
+                }
+
+                result.append(contentsOf: translatedItems)
+                contentHeight = blockMaxY
+                previousBlock = subBlock
+            }
+
+            // V1 alignment: number and bullet markers are positioned at originY (top of
+            // first sub-block); only checklist markers use firstBlockLineMidY for centering.
+            let markerLineMidY: CGFloat
+            switch markerInfo.kind {
+            case .checklist:
+                markerLineMidY = firstBlockLineMidY ?? originY
+            case .number, .bullet:
+                markerLineMidY = originY
+            }
+            let markerFrame = markerFrameFor(
+                kind: markerInfo.kind,
+                naturalWidth: markerInfo.naturalWidth,
+                maxIndexWidth: maxIndexWidth,
+                horizontalInset: horizontalInset,
+                indexSpacing: indexSpacing,
+                ordered: ordered,
+                checklistMarkerSize: checklistMarkerSize,
+                lineMidY: markerLineMidY,
+                rtl: context.rtl,
+                boundingWidth: boundingWidth
+            )
+
+            result.append(.listMarker(InstantPageV2ListMarkerItem(
+                frame: markerFrame,
+                kind: markerInfo.kind,
+                color: context.theme.textCategories.paragraph.color
+            )))
+
+        default:
+            break
+        }
+    }
+
+    return result
+}
+
+/// Computes the frame for a list marker, handling RTL and all three marker kinds.
+private func markerFrameFor(
+    kind: InstantPageV2ListMarkerKind,
+    naturalWidth: CGFloat,
+    maxIndexWidth: CGFloat,
+    horizontalInset: CGFloat,
+    indexSpacing: CGFloat,
+    ordered: Bool,
+    checklistMarkerSize: CGSize,
+    lineMidY: CGFloat,
+    rtl: Bool,
+    boundingWidth: CGFloat
+) -> CGRect {
+    switch kind {
+    case .bullet:
+        // Bullet: 6×6 ellipse at vertically centred position.
+        let size = CGSize(width: 6.0, height: 6.0)
+        if rtl {
+            let x = boundingWidth - horizontalInset - maxIndexWidth - indexSpacing + (maxIndexWidth - size.width)
+            return CGRect(x: x, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
+        } else {
+            return CGRect(x: horizontalInset, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
+        }
+    case .number:
+        // Number: right-aligned within [horizontalInset, horizontalInset+maxIndexWidth].
+        let size = CGSize(width: naturalWidth, height: 20.0)
+        if rtl {
+            let x = boundingWidth - horizontalInset - maxIndexWidth
+            return CGRect(x: x, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
+        } else {
+            let x = horizontalInset + maxIndexWidth - naturalWidth
+            return CGRect(x: x, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
+        }
+    case .checklist:
+        let size = checklistMarkerSize
+        if ordered {
+            if rtl {
+                let x = boundingWidth - horizontalInset - maxIndexWidth
+                return CGRect(x: x, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
+            } else {
+                let x = horizontalInset + maxIndexWidth - size.width
+                return CGRect(x: x, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
+            }
+        } else {
+            if rtl {
+                let x = boundingWidth - horizontalInset - size.width
+                return CGRect(x: x, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
+            } else {
+                return CGRect(x: horizontalInset, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
+            }
+        }
+    }
+}
+
+// MARK: - Style helpers (ported from V1 InstantPageLayout.swift lines 32–88)
+
+private func setupStyleStack(_ stack: InstantPageTextStyleStack, theme: InstantPageTheme, attributes: InstantPageTextAttributes) {
+    stack.push(.textColor(attributes.color))
+    stack.push(.markerColor(theme.markerColor))
+    stack.push(.linkColor(theme.linkColor))
+    stack.push(.linkMarkerColor(theme.linkHighlightColor))
+    switch attributes.font.style {
+        case .sans:
+            stack.push(.fontSerif(false))
+        case .serif:
+            stack.push(.fontSerif(true))
+    }
+    stack.push(.fontSize(attributes.font.size))
+    stack.push(.lineSpacingFactor(attributes.font.lineSpacingFactor))
+    if attributes.underline {
+        stack.push(.underline)
+    }
+}
+
+private func setupStyleStack(_ stack: InstantPageTextStyleStack, theme: InstantPageTheme, category: InstantPageTextCategoryType, link: Bool) {
+    setupStyleStack(stack, theme: theme, attributes: theme.textCategories.attributes(type: category, link: link))
+}
+
+private func instantPageFont(style: InstantPageTextAttributes, bold: Bool = false, italic: Bool = false, fixed: Bool = false) -> UIFont {
+    let size = style.font.size
+    if fixed {
+        if bold && italic {
+            return UIFont(name: "Menlo-BoldItalic", size: size) ?? Font.semiboldItalic(size)
+        } else if bold {
+            return UIFont(name: "Menlo-Bold", size: size) ?? Font.bold(size)
+        } else if italic {
+            return UIFont(name: "Menlo-Italic", size: size) ?? Font.italic(size)
+        } else {
+            return UIFont(name: "Menlo", size: size) ?? Font.regular(size)
+        }
+    }
+    switch style.font.style {
+    case .serif:
+        if bold && italic {
+            return UIFont(name: "Georgia-BoldItalic", size: size) ?? Font.semiboldItalic(size)
+        } else if bold {
+            return UIFont(name: "Georgia-Bold", size: size) ?? Font.bold(size)
+        } else if italic {
+            return UIFont(name: "Georgia-Italic", size: size) ?? Font.italic(size)
+        } else {
+            return UIFont(name: "Georgia", size: size) ?? Font.regular(size)
+        }
+    case .sans:
+        if bold && italic {
+            return Font.semiboldItalic(size)
+        } else if bold {
+            return Font.bold(size)
+        } else if italic {
+            return Font.italic(size)
+        } else {
+            return Font.regular(size)
+        }
+    }
+}
+
+// MARK: - Preformatted text (ported from V1 InstantPageLayout.swift lines 91–132)
+
+private func attributedStringForPreformattedText(_ text: RichText, language: String?, theme: InstantPageTheme, cachedMessageSyntaxHighlight: CachedMessageSyntaxHighlight?) -> NSAttributedString {
+    let paragraphAttributes = theme.textCategories.attributes(type: .paragraph, link: false)
+    let textValue = text.plainText
+    guard !textValue.isEmpty else {
+        return NSAttributedString(
+            string: "",
+            attributes: [
+                .font: instantPageFont(style: paragraphAttributes, fixed: true),
+                .foregroundColor: paragraphAttributes.color,
+                NSAttributedString.Key(rawValue: InstantPageLineSpacingFactorAttribute): paragraphAttributes.font.lineSpacingFactor as NSNumber
+            ]
+        )
+    }
+
+    let attributedString = stringWithAppliedEntities(
+        textValue,
+        entities: [
+            MessageTextEntity(range: 0 ..< (textValue as NSString).length, type: .Pre(language: language))
+        ],
+        baseColor: paragraphAttributes.color,
+        linkColor: theme.linkColor,
+        codeBlockTitleColor: paragraphAttributes.color,
+        codeBlockAccentColor: paragraphAttributes.color,
+        codeBlockBackgroundColor: theme.codeBlockBackgroundColor,
+        baseFont: instantPageFont(style: paragraphAttributes),
+        linkFont: instantPageFont(style: paragraphAttributes),
+        boldFont: instantPageFont(style: paragraphAttributes, bold: true),
+        italicFont: instantPageFont(style: paragraphAttributes, italic: true),
+        boldItalicFont: instantPageFont(style: paragraphAttributes, bold: true, italic: true),
+        fixedFont: instantPageFont(style: paragraphAttributes, fixed: true),
+        blockQuoteFont: instantPageFont(style: paragraphAttributes),
+        underlineLinks: false,
+        message: nil,
+        cachedMessageSyntaxHighlight: cachedMessageSyntaxHighlight
+    ).mutableCopy() as! NSMutableAttributedString
+    attributedString.addAttribute(
+        NSAttributedString.Key(rawValue: InstantPageLineSpacingFactorAttribute),
+        value: paragraphAttributes.font.lineSpacingFactor as NSNumber,
+        range: NSRange(location: 0, length: attributedString.length)
+    )
+    return attributedString
+}
+
+// MARK: - V2 text-item layout (ported from V1 InstantPageTextItem.swift layoutTextItemWithString)
+//
+// V0 difference from V1:
+//   * Inline image runs produce `.mediaPlaceholder(kind: .image, frame:, cornerRadius: 0)` items
+//     instead of `InstantPageImageItem`.
+//   * Inline formula runs produce `.mediaPlaceholder(kind: .formula, frame:, cornerRadius: 0)` items.
+//   * No `InstantPageScrollableTextItem` wrapping: even if `requiresScroll` would be true in V1,
+//     V2 takes the non-scroll path (text item kept flat; long preformatted lines simply clip
+//     outside the bubble width). Deferred to a future iteration.
+
+// Internal helpers ported from V1 InstantPageTextItem.swift (declared private there; copied here).
+// `internal` (not private) so that InstantPageRenderer.swift can call them from the same module.
+func v2FrameForLine(_ line: InstantPageTextLine, boundingWidth: CGFloat, alignment: NSTextAlignment) -> CGRect {
+    var lineFrame = line.frame
+    if alignment == .center {
+        lineFrame.origin.x = floor((boundingWidth - lineFrame.size.width) / 2.0)
+    } else if alignment == .right || (alignment == .natural && line.isRTL) {
+        lineFrame.origin.x = boundingWidth - lineFrame.size.width
+    }
+    return lineFrame
+}
+
+private func v2LocalAttachmentBoundsForRange(_ range: NSRange, imageItems: [InstantPageTextImageItem], formulaItems: [InstantPageTextFormulaRun]) -> CGRect? {
+    var result: CGRect?
+
+    for imageItem in imageItems {
+        if NSIntersectionRange(range, imageItem.range).length != 0 {
+            if let current = result {
+                result = current.union(imageItem.frame)
+            } else {
+                result = imageItem.frame
+            }
+        }
+    }
+
+    for formulaItem in formulaItems {
+        if NSIntersectionRange(range, formulaItem.range).length != 0 {
+            if let current = result {
+                result = current.union(formulaItem.frame)
+            } else {
+                result = formulaItem.frame
+            }
+        }
+    }
+
+    return result
+}
+
+func layoutTextItem(
+    _ string: NSAttributedString,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat = 0.0,
+    alignment: NSTextAlignment = .natural,
+    offset: CGPoint,
+    media: [EngineMedia.Id: EngineMedia] = [:],
+    webpage: TelegramMediaWebpage? = nil,
+    minimizeWidth: Bool = false,
+    fitToWidth: Bool = false,
+    maxNumberOfLines: Int = 0,
+    opaqueBackground: Bool = false
+) -> (InstantPageTextItem?, [InstantPageV2LaidOutItem], CGSize) {
+    if string.length == 0 {
+        return (nil, [], CGSize())
+    }
+
+    var lines: [InstantPageTextLine] = []
+    var imageItems: [InstantPageTextImageItem] = []
+    var hasFormulaItems: Bool = false
+    var font = string.attribute(NSAttributedString.Key.font, at: 0, effectiveRange: nil) as? UIFont
+    if font == nil {
+        let range = NSMakeRange(0, string.length)
+        string.enumerateAttributes(in: range, options: []) { attributes, range, _ in
+            if font == nil, let furtherFont = attributes[NSAttributedString.Key.font] as? UIFont {
+                font = furtherFont
+            }
+        }
+    }
+    let image = string.attribute(NSAttributedString.Key.init(rawValue: InstantPageMediaIdAttribute), at: 0, effectiveRange: nil)
+    let formula = string.attribute(NSAttributedString.Key(rawValue: InstantPageFormulaAttribute), at: 0, effectiveRange: nil)
+    guard font != nil || image != nil || formula != nil else {
+        return (nil, [], CGSize())
+    }
+
+    var lineSpacingFactor: CGFloat = 1.12
+    if let lineSpacingFactorAttribute = string.attribute(NSAttributedString.Key(rawValue: InstantPageLineSpacingFactorAttribute), at: 0, effectiveRange: nil) {
+        lineSpacingFactor = CGFloat((lineSpacingFactorAttribute as! NSNumber).floatValue)
+    }
+
+    let typesetter = CTTypesetterCreateWithAttributedString(string)
+    let fontAscent = font?.ascender ?? 0.0
+    let fontDescent = font?.descender ?? 0.0
+
+    let fontLineHeight = floor(fontAscent + fontDescent)
+    let fontLineSpacing = floor(fontLineHeight * lineSpacingFactor)
+
+    var lastIndex: CFIndex = 0
+    var currentLineOrigin = CGPoint()
+
+    var hasAnchors = false
+    var maxLineWidth: CGFloat = 0.0
+    var extraDescent: CGFloat = 0.0
+    let text = string.string
+    var indexOffset: CFIndex?
+    while true {
+        var workingLineOrigin = currentLineOrigin
+
+        let currentMaxWidth = boundingWidth - workingLineOrigin.x
+        var lineCharacterCount: CFIndex
+        var hadIndexOffset = false
+        if minimizeWidth {
+            var count = 0
+            for ch in text.suffix(text.count - lastIndex) {
+                count += 1
+                if ch == " " || ch == "\n" || ch == "\t" {
+                    break
+                }
+            }
+            lineCharacterCount = count
+        } else {
+            let suggestedLineBreak = CTTypesetterSuggestLineBreak(typesetter, lastIndex, Double(currentMaxWidth))
+            if let offset = indexOffset {
+                lineCharacterCount = suggestedLineBreak + offset
+                if lineCharacterCount <= 0 {
+                    lineCharacterCount = suggestedLineBreak
+                }
+                indexOffset = nil
+                hadIndexOffset = true
+            } else {
+                lineCharacterCount = suggestedLineBreak
+            }
+        }
+        if lineCharacterCount > 0 {
+            var line = CTTypesetterCreateLineWithOffset(typesetter, CFRangeMake(lastIndex, lineCharacterCount), 100.0)
+            var lineWidth = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
+            let lineRange = NSMakeRange(lastIndex, lineCharacterCount)
+            let substring = string.attributedSubstring(from: lineRange).string
+
+            var stop = false
+            if maxNumberOfLines > 0 && lines.count == maxNumberOfLines - 1 && lastIndex + lineCharacterCount < string.length {
+                let attributes = string.attributes(at: lastIndex + lineCharacterCount - 1, effectiveRange: nil)
+                if let truncateString = CFAttributedStringCreate(nil, "\u{2026}" as CFString, attributes as CFDictionary) {
+                    let truncateToken = CTLineCreateWithAttributedString(truncateString)
+                    let tokenWidth = CGFloat(CTLineGetTypographicBounds(truncateToken, nil, nil, nil) + 3.0)
+                    if let truncatedLine = CTLineCreateTruncatedLine(line, Double(lineWidth - tokenWidth), .end, truncateToken) {
+                        lineWidth += tokenWidth
+                        line = truncatedLine
+                    }
+                }
+                stop = true
+            }
+
+            let hadExtraDescent = extraDescent > 0.0
+            extraDescent = 0.0
+            var lineImageItems: [InstantPageTextImageItem] = []
+            var lineFormulaItems: [InstantPageTextFormulaRun] = []
+            var lineMaxAttachmentHeight: CGFloat = 0.0
+            var isRTL = false
+            if let glyphRuns = CTLineGetGlyphRuns(line) as? [CTRun], !glyphRuns.isEmpty {
+                if let run = glyphRuns.first, CTRunGetStatus(run).contains(CTRunStatus.rightToLeft) {
+                    isRTL = true
+                }
+
+                var appliedLineOffset: CGFloat = 0.0
+                for run in glyphRuns {
+                    let cfRunRange = CTRunGetStringRange(run)
+                    let runRange = NSMakeRange(cfRunRange.location == kCFNotFound ? NSNotFound : cfRunRange.location, cfRunRange.length)
+                    string.enumerateAttributes(in: runRange, options: []) { attributes, range, _ in
+                        if let id = attributes[NSAttributedString.Key.init(rawValue: InstantPageMediaIdAttribute)] as? Int64, let dimensions = attributes[NSAttributedString.Key.init(rawValue: InstantPageMediaDimensionsAttribute)] as? PixelDimensions {
+                            var imageFrame = CGRect(origin: CGPoint(), size: dimensions.cgSize.fitted(CGSize(width: boundingWidth, height: boundingWidth)))
+
+                            let xOffset = CTLineGetOffsetForStringIndex(line, CTRunGetStringRange(run).location, nil)
+                            let yOffset = fontLineHeight.isZero ? 0.0 : floorToScreenPixels((fontLineHeight - imageFrame.size.height) / 2.0)
+                            imageFrame.origin = imageFrame.origin.offsetBy(dx: workingLineOrigin.x + xOffset, dy: workingLineOrigin.y + yOffset)
+
+                            let minSpacing = fontLineSpacing - 4.0
+                            let delta = workingLineOrigin.y - minSpacing - imageFrame.minY - appliedLineOffset
+                            if !fontAscent.isZero && delta > 0.0 {
+                                workingLineOrigin.y += delta
+                                appliedLineOffset += delta
+                                imageFrame.origin = imageFrame.origin.offsetBy(dx: 0.0, dy: delta)
+                            }
+                            if !fontLineHeight.isZero {
+                                extraDescent = max(extraDescent, imageFrame.maxY - (workingLineOrigin.y + fontLineHeight + minSpacing))
+                            }
+                            lineMaxAttachmentHeight = max(lineMaxAttachmentHeight, imageFrame.height)
+                            lineImageItems.append(InstantPageTextImageItem(frame: imageFrame, range: range, id: EngineMedia.Id(namespace: Namespaces.Media.CloudFile, id: id)))
+                        } else if let attachment = attributes[NSAttributedString.Key(rawValue: InstantPageFormulaAttribute)] as? InstantPageMathAttachment {
+                            let xOffset = CTLineGetOffsetForStringIndex(line, range.location, nil)
+                            let baselineOffset = (attributes[NSAttributedString.Key.baselineOffset] as? CGFloat) ?? 0.0
+                            var formulaFrame = CGRect(
+                                origin: CGPoint(
+                                    x: workingLineOrigin.x + xOffset,
+                                    y: workingLineOrigin.y + fontLineHeight + baselineOffset - attachment.rendered.ascent
+                                ),
+                                size: attachment.rendered.size
+                            )
+
+                            let minSpacing = fontLineSpacing - 4.0
+                            let delta = workingLineOrigin.y - minSpacing - formulaFrame.minY - appliedLineOffset
+                            if !fontAscent.isZero && delta > 0.0 {
+                                workingLineOrigin.y += delta
+                                appliedLineOffset += delta
+                                formulaFrame.origin = formulaFrame.origin.offsetBy(dx: 0.0, dy: delta)
+                            }
+                            if !fontLineHeight.isZero {
+                                extraDescent = max(extraDescent, formulaFrame.maxY - (workingLineOrigin.y + fontLineHeight + minSpacing))
+                            }
+                            lineMaxAttachmentHeight = max(lineMaxAttachmentHeight, formulaFrame.height)
+                            lineFormulaItems.append(InstantPageTextFormulaRun(frame: formulaFrame, range: range, attachment: attachment))
+                        }
+                    }
+                }
+            }
+
+            if substring.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && (!lineImageItems.isEmpty || !lineFormulaItems.isEmpty) {
+                extraDescent += max(6.0, fontLineSpacing / 2.0)
+            }
+
+            if !minimizeWidth && !hadIndexOffset && lineCharacterCount > 1 && lineWidth > currentMaxWidth + 5.0 {
+                if let imageItem = lineImageItems.last {
+                    indexOffset = -(lastIndex + lineCharacterCount - imageItem.range.lowerBound)
+                    continue
+                }
+                if let formulaItem = lineFormulaItems.last {
+                    indexOffset = -(lastIndex + lineCharacterCount - formulaItem.range.lowerBound)
+                    continue
+                }
+            }
+
+            var strikethroughItems: [InstantPageTextStrikethroughItem] = []
+            var underlineItems: [InstantPageTextUnderlineItem] = []
+            var markedItems: [InstantPageTextMarkedItem] = []
+            var anchorItems: [InstantPageTextAnchorItem] = []
+
+            string.enumerateAttributes(in: lineRange, options: []) { attributes, range, _ in
+                if let _ = attributes[NSAttributedString.Key.strikethroughStyle] {
+                    let lowerX = floor(CTLineGetOffsetForStringIndex(line, range.location, nil))
+                    let upperX = ceil(CTLineGetOffsetForStringIndex(line, range.location + range.length, nil))
+                    let x = lowerX < upperX ? lowerX : upperX
+                    strikethroughItems.append(InstantPageTextStrikethroughItem(frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y, width: abs(upperX - lowerX), height: fontLineHeight)))
+                }
+                if let _ = attributes[NSAttributedString.Key.underlineStyle] {
+                    let lowerX = floor(CTLineGetOffsetForStringIndex(line, range.location, nil))
+                    let upperX = ceil(CTLineGetOffsetForStringIndex(line, range.location + range.length, nil))
+                    let x = lowerX < upperX ? lowerX : upperX
+                    underlineItems.append(InstantPageTextUnderlineItem(
+                        frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y, width: abs(upperX - lowerX), height: fontLineHeight),
+                        range: range,
+                        color: attributes[NSAttributedString.Key.underlineColor] as? UIColor
+                    ))
+                }
+                if let color = attributes[NSAttributedString.Key.init(rawValue: InstantPageMarkerColorAttribute)] as? UIColor {
+                    var lineHeight = fontLineHeight
+                    var delta: CGFloat = 0.0
+
+                    if let offset = attributes[NSAttributedString.Key.baselineOffset] as? CGFloat {
+                        lineHeight = floorToScreenPixels(lineHeight * 0.85)
+                        delta = offset * 0.6
+                    }
+                    let lowerX = floor(CTLineGetOffsetForStringIndex(line, range.location, nil))
+                    let upperX = ceil(CTLineGetOffsetForStringIndex(line, range.location + range.length, nil))
+                    let x = lowerX < upperX ? lowerX : upperX
+                    markedItems.append(InstantPageTextMarkedItem(frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y + delta, width: abs(upperX - lowerX), height: lineHeight), color: color, range: range))
+                }
+                if let item = attributes[NSAttributedString.Key.init(rawValue: InstantPageAnchorAttribute)] as? Dictionary<String, Any>, let name = item["name"] as? String, let empty = item["empty"] as? Bool {
+                    anchorItems.append(InstantPageTextAnchorItem(name: name, anchorText: item["text"] as? NSAttributedString, empty: empty))
+                }
+            }
+
+            if !anchorItems.isEmpty {
+                hasAnchors = true
+            }
+
+            if hadExtraDescent && extraDescent > 0 {
+                workingLineOrigin.y += fontLineSpacing
+            }
+
+            let height = !fontLineHeight.isZero ? max(fontLineHeight, lineMaxAttachmentHeight) : lineMaxAttachmentHeight
+            if !lineFormulaItems.isEmpty {
+                let baselineAdjustment = height - fontLineHeight
+                if !baselineAdjustment.isZero {
+                    lineFormulaItems = lineFormulaItems.map { item in
+                        InstantPageTextFormulaRun(
+                            frame: item.frame.offsetBy(dx: 0.0, dy: baselineAdjustment),
+                            range: item.range,
+                            attachment: item.attachment
+                        )
+                    }
+                }
+            }
+            if !markedItems.isEmpty {
+                markedItems = markedItems.map { item in
+                    if let attachmentBounds = v2LocalAttachmentBoundsForRange(item.range, imageItems: lineImageItems, formulaItems: lineFormulaItems) {
+                        return InstantPageTextMarkedItem(frame: attachmentBounds, color: item.color, range: item.range)
+                    } else {
+                        return item
+                    }
+                }
+            }
+            let textLine = InstantPageTextLine(line: line, range: lineRange, frame: CGRect(x: workingLineOrigin.x, y: workingLineOrigin.y, width: lineWidth, height: height), strikethroughItems: strikethroughItems, underlineItems: underlineItems, markedItems: markedItems, imageItems: lineImageItems, formulaItems: lineFormulaItems, anchorItems: anchorItems, isRTL: isRTL)
+
+            lines.append(textLine)
+            imageItems.append(contentsOf: lineImageItems)
+            if !lineFormulaItems.isEmpty {
+                hasFormulaItems = true
+            }
+
+            if lineWidth > maxLineWidth {
+                maxLineWidth = lineWidth
+            }
+
+            workingLineOrigin.x = 0.0
+            workingLineOrigin.y += fontLineHeight + fontLineSpacing + extraDescent
+            currentLineOrigin = workingLineOrigin
+
+            lastIndex += lineCharacterCount
+
+            if stop {
+                break
+            }
+        } else {
+            break
+        }
+    }
+
+    var height: CGFloat = 0.0
+    if !lines.isEmpty && !(string.string == "\u{200b}" && hasAnchors) {
+        height = lines.last!.frame.maxY + extraDescent
+    }
+
+    var textWidth = boundingWidth
+    if fitToWidth {
+        textWidth = maxLineWidth
+    }
+    if (!imageItems.isEmpty || hasFormulaItems) && maxLineWidth > boundingWidth + 10.0 {
+        textWidth = maxLineWidth
+    }
+
+    let textItem = InstantPageTextItem(frame: CGRect(x: 0.0, y: 0.0, width: textWidth, height: height), attributedString: string, alignment: alignment, opaqueBackground: opaqueBackground, lines: lines)
+    textItem.frame = textItem.frame.offsetBy(dx: offset.x, dy: offset.y)
+    var items: [InstantPageV2LaidOutItem] = []
+    if imageItems.isEmpty || string.length > 1 {
+        items.append(.text(InstantPageV2TextItem(frame: textItem.frame, textItem: textItem)))
+    }
+
+    var topInset: CGFloat = 0.0
+    var bottomInset: CGFloat = 0.0
+    var additionalItems: [InstantPageV2LaidOutItem] = []
+    let effectiveOffset = offset
+    for line in textItem.lines {
+        let lineFrame = v2FrameForLine(line, boundingWidth: boundingWidth, alignment: alignment)
+        if let _ = webpage {
+            for imageItem in line.imageItems {
+                if media[imageItem.id] != nil {
+                    let placeholderFrame = imageItem.frame.offsetBy(dx: lineFrame.minX + effectiveOffset.x, dy: effectiveOffset.y)
+                    let placeholder = InstantPageV2MediaPlaceholderItem(
+                        frame: placeholderFrame,
+                        kind: .image,
+                        cornerRadius: 0.0
+                    )
+                    additionalItems.append(.mediaPlaceholder(placeholder))
+                    if placeholderFrame.minY < topInset { topInset = placeholderFrame.minY }
+                    if placeholderFrame.maxY > height { bottomInset = max(bottomInset, placeholderFrame.maxY - height) }
+                }
+            }
+        }
+        for formulaItem in line.formulaItems {
+            let formulaFrame = formulaItem.frame.offsetBy(dx: lineFrame.minX + effectiveOffset.x, dy: effectiveOffset.y)
+            let placeholder = InstantPageV2MediaPlaceholderItem(
+                frame: formulaFrame,
+                kind: .formula,
+                cornerRadius: 0.0
+            )
+            additionalItems.append(.mediaPlaceholder(placeholder))
+            if formulaFrame.minY < topInset { topInset = formulaFrame.minY }
+            if formulaFrame.maxY > height { bottomInset = max(bottomInset, formulaFrame.maxY - height) }
+        }
+    }
+
+    let _ = topInset
+    let _ = bottomInset
+    items.append(contentsOf: additionalItems)
+
+    return (textItem, items, textItem.frame.size)
+}
