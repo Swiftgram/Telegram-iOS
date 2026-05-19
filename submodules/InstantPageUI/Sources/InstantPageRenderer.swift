@@ -79,6 +79,8 @@ public final class InstantPageV2View: UIView {
             return view
         case let .table(table):
             return InstantPageV2TableView(item: table, theme: theme)
+        case let .formula(formula):
+            return InstantPageV2FormulaView(item: formula)
         }
     }
 }
@@ -722,4 +724,58 @@ private func collectSelectableTextItems(
             continue
         }
     }
+}
+
+// MARK: - Formula view
+
+/// Renders both block (`InstantPageBlock.formula(latex:)`) and inline (`InstantPageFormulaAttribute`)
+/// math, sourcing the pre-rendered Retina image from `InstantPageMathAttachment.rendered`.
+///
+/// For block formulas wider than the bubble's available width, the layout sets
+/// `isScrollable = true`; this view then wraps the image in a horizontal `UIScrollView`
+/// matching V1's `InstantPageScrollableNode` (no bounce on non-overflowing content,
+/// scroll indicator hidden — appropriate for content embedded inside a chat bubble).
+final class InstantPageV2FormulaView: UIView, InstantPageItemView {
+    let item: InstantPageV2FormulaItem
+    var itemFrame: CGRect { return self.item.frame }
+
+    init(item: InstantPageV2FormulaItem) {
+        self.item = item
+        super.init(frame: item.frame)
+        self.backgroundColor = .clear
+        self.isOpaque = false
+        self.clipsToBounds = true
+
+        let imageLayer = CALayer()
+        imageLayer.contents = item.attachment.rendered.image.cgImage
+        imageLayer.contentsScale = item.attachment.rendered.image.scale
+        imageLayer.contentsGravity = .resizeAspect
+        imageLayer.frame = item.imageFrame
+
+        if item.isScrollable {
+            let scroll = UIScrollView(frame: self.bounds)
+            scroll.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            scroll.contentSize = item.scrollContentSize
+            scroll.showsHorizontalScrollIndicator = false
+            scroll.showsVerticalScrollIndicator = false
+            scroll.alwaysBounceHorizontal = false
+            scroll.alwaysBounceVertical = false
+            scroll.contentInsetAdjustmentBehavior = .never
+            self.addSubview(scroll)
+
+            // Layers don't autoresize with their superview; host the image layer inside a UIView
+            // so the scroll view's content-size growth keeps the image positioned correctly.
+            let imageHost = UIView(frame: CGRect(origin: .zero, size: item.scrollContentSize))
+            imageHost.layer.addSublayer(imageLayer)
+            scroll.addSubview(imageHost)
+        } else {
+            // Inline and centered-block formulas don't accept touches; the bubble's link/long-press
+            // recognizers run against the underlying text view instead.
+            self.isUserInteractionEnabled = false
+            self.layer.addSublayer(imageLayer)
+        }
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 }

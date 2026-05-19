@@ -33,6 +33,7 @@ public enum InstantPageV2LaidOutItem {
     case details(InstantPageV2DetailsItem)
     case table(InstantPageV2TableItem)
     case anchor(InstantPageV2AnchorItem)
+    case formula(InstantPageV2FormulaItem)
 
     public var frame: CGRect {
         switch self {
@@ -46,6 +47,7 @@ public enum InstantPageV2LaidOutItem {
         case let .details(item):           return item.frame
         case let .table(item):             return item.frame
         case let .anchor(item):            return item.frame
+        case let .formula(item):           return item.frame
         }
     }
 
@@ -64,6 +66,7 @@ public enum InstantPageV2LaidOutItem {
         case var .details(item):          item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .details(item)
         case var .table(item):            item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .table(item)
         case var .anchor(item):           item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .anchor(item)
+        case var .formula(item):          item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .formula(item)
         }
     }
 }
@@ -115,6 +118,14 @@ public struct InstantPageV2ShapeItem {
     public let color: UIColor
 }
 
+public struct InstantPageV2FormulaItem {
+    public var frame: CGRect                          // outer frame in parent coords
+    public let attachment: InstantPageMathAttachment  // rendered image + dimensions (theme-baked)
+    public let isScrollable: Bool                     // true only for block formulas wider than bounds
+    public let imageFrame: CGRect                     // image rect in this item's local coords; size must equal attachment.rendered.size for pixel-perfect rendering
+    public let scrollContentSize: CGSize              // == frame.size unless isScrollable
+}
+
 public enum InstantPageV2MediaPlaceholderKind {
     case image
     case video
@@ -126,7 +137,6 @@ public enum InstantPageV2MediaPlaceholderKind {
     case channelBanner
     case map
     case relatedArticles
-    case formula
 }
 
 public struct InstantPageV2MediaPlaceholderItem {
@@ -495,12 +505,10 @@ private func layoutBlock(
             horizontalInset: horizontalInset, context: &context)
 
     case let .formula(latex):
-        let _ = latex
-        return layoutMediaWithCaption(kind: .formula,
-            naturalSize: CGSize(width: boundingWidth, height: 40.0),
-            caption: InstantPageCaption(text: .empty, credit: .empty),
-            isCover: false, cornerRadius: 0.0, boundingWidth: boundingWidth,
-            horizontalInset: horizontalInset, context: &context)
+        return layoutFormulaBlock(latex: latex,
+                                  boundingWidth: boundingWidth,
+                                  horizontalInset: horizontalInset,
+                                  context: &context)
 
     case let .details(title, blocks, expanded):
         return layoutDetails(title: title, blocks: blocks, defaultExpanded: expanded,
@@ -515,6 +523,73 @@ private func layoutBlock(
     // Block kinds filled in by later tasks:
     case .unsupported:
         return []
+    }
+}
+
+// MARK: - Formula block layout
+
+/// Lays out a top-level `InstantPageBlock.formula(latex:)`. The latex is rendered synchronously
+/// through `instantPageMathAttachment(...)` (SwiftMath → `MTMathRenderer`) using the current
+/// paragraph theme's color and font size; the resulting pre-rendered `UIImage` is wrapped in
+/// an `InstantPageV2FormulaItem`. Wide formulas set `isScrollable = true`; on render failure
+/// the raw latex source is laid out as a regular paragraph (matches V1 fallback).
+private func layoutFormulaBlock(
+    latex: String,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    // Style stack matches V1's per-block formula (paragraph category, not header).
+    let styleStack = InstantPageTextStyleStack()
+    setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
+    let attributes = styleStack.textAttributes()
+    let textColor = (attributes[.foregroundColor] as? UIColor)
+                    ?? context.theme.textCategories.paragraph.color
+    let fontSize = (attributes[.font] as? UIFont)?.pointSize
+                    ?? context.theme.textCategories.paragraph.font.size
+
+    guard let attachment = instantPageMathAttachment(latex: latex,
+                                                     fontSize: fontSize,
+                                                     textColor: textColor,
+                                                     mode: .block) else {
+        // Render failure: fall back to the raw latex source as a regular paragraph.
+        return layoutParagraph(.plain(latex),
+                               boundingWidth: boundingWidth,
+                               horizontalInset: horizontalInset,
+                               previousItems: [],
+                               context: &context)
+    }
+
+    let availableWidth = boundingWidth - horizontalInset * 2.0
+    let renderedSize = attachment.rendered.size
+
+    if renderedSize.width > availableWidth {
+        // Wide formula: scroll view fills the bubble's available width so the image can pan inside.
+        let frame = CGRect(x: 0.0, y: 0.0, width: boundingWidth, height: renderedSize.height)
+        let item = InstantPageV2FormulaItem(
+            frame: frame,
+            attachment: attachment,
+            isScrollable: true,
+            imageFrame: CGRect(x: horizontalInset, y: 0.0,
+                               width: renderedSize.width, height: renderedSize.height),
+            scrollContentSize: CGSize(width: renderedSize.width + horizontalInset * 2.0,
+                                      height: renderedSize.height)
+        )
+        return [.formula(item)]
+    } else {
+        // Narrow formula: report the image's natural extent (left-inset + width) so the
+        // bubble's `fitToWidth` contentSize shrinks instead of stretching to `boundingWidth`.
+        // When the formula is the widest item, the bubble centers itself in the chat row.
+        let frame = CGRect(x: horizontalInset, y: 0.0,
+                           width: renderedSize.width, height: renderedSize.height)
+        let item = InstantPageV2FormulaItem(
+            frame: frame,
+            attachment: attachment,
+            isScrollable: false,
+            imageFrame: CGRect(origin: .zero, size: renderedSize),
+            scrollContentSize: renderedSize
+        )
+        return [.formula(item)]
     }
 }
 
@@ -1978,7 +2053,9 @@ private func attributedStringForPreformattedText(_ text: RichText, language: Str
 // V0 difference from V1:
 //   * Inline image runs produce `.mediaPlaceholder(kind: .image, frame:, cornerRadius: 0)` items
 //     instead of `InstantPageImageItem`.
-//   * Inline formula runs produce `.mediaPlaceholder(kind: .formula, frame:, cornerRadius: 0)` items.
+//   * Inline formula runs produce `.formula(InstantPageV2FormulaItem(...))` items carrying the
+//     rendered math image (see `InstantPageV2FormulaView`); the line's `formulaItems` field
+//     already provides the attachment + frame.
 //   * No `InstantPageScrollableTextItem` wrapping: even if `requiresScroll` would be true in V1,
 //     V2 takes the non-scroll path (text item kept flat; long preformatted lines simply clip
 //     outside the bubble width). Deferred to a future iteration.
@@ -2341,12 +2418,14 @@ func layoutTextItem(
         }
         for formulaItem in line.formulaItems {
             let formulaFrame = formulaItem.frame.offsetBy(dx: lineFrame.minX + effectiveOffset.x, dy: effectiveOffset.y)
-            let placeholder = InstantPageV2MediaPlaceholderItem(
+            let item = InstantPageV2FormulaItem(
                 frame: formulaFrame,
-                kind: .formula,
-                cornerRadius: 0.0
+                attachment: formulaItem.attachment,
+                isScrollable: false,
+                imageFrame: CGRect(origin: .zero, size: formulaFrame.size),
+                scrollContentSize: formulaFrame.size
             )
-            additionalItems.append(.mediaPlaceholder(placeholder))
+            additionalItems.append(.formula(item))
             if formulaFrame.minY < topInset { topInset = formulaFrame.minY }
             if formulaFrame.maxY > height { bottomInset = max(bottomInset, formulaFrame.maxY - height) }
         }
