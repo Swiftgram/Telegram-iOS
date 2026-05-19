@@ -120,34 +120,105 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
     
     private var isSummaryApplied = false
     
-    private final class TextRevealAnimationState {
-        let fromCount: Int
-        let toCount: Int
-        let startTimestamp: Double
-        let duration: Double
-        
-        init(fromCount: Int, toCount: Int, startTimestamp: Double, duration: Double) {
-            self.fromCount = fromCount
-            self.toCount = toCount
-            self.startTimestamp = startTimestamp
-            self.duration = duration
+    private final class TextRevealController {
+        private static let headroomTime: Double = 0.4
+        private static let responseTime: Double = 0.3
+        private static let velocityTau: Double = 0.15
+        private static let rateEwmaAlpha: Double = 0.4
+        private static let initialInputRate: Double = 40.0
+        private static let minInterArrival: Double = 0.05
+        private static let finalizeTime: Double = 0.3
+        private static let frameDtCap: Double = 0.05
+
+        private(set) var revealedCount: Double
+        private var velocity: Double = 0.0
+        private var inputRate: Double = TextRevealController.initialInputRate
+        private var lastSampleTime: Double?
+        private var lastSampleLength: Int?
+        private(set) var latestLength: Int
+        private(set) var isFinalizing: Bool = false
+        private var lastFrameTime: Double?
+
+        init(initialRevealedCount: Int, initialLength: Int) {
+            self.revealedCount = Double(initialRevealedCount)
+            self.latestLength = initialLength
         }
-        
-        func fraction(timestamp: Double) -> CGFloat {
-            var animationFraction = (timestamp - self.startTimestamp) / self.duration
-            animationFraction = max(0.0, min(1.0, animationFraction))
-            return animationFraction
+
+        var currentGlyphCount: Int {
+            return Int(self.revealedCount)
         }
-        
-        func glyphCount(timestamp: Double) -> Int {
-            let animationFraction = self.fraction(timestamp: timestamp)
-            let glyphCount = (1.0 - animationFraction) * Double(self.fromCount) + animationFraction * Double(self.toCount)
-            return Int(glyphCount)
+
+        func observeUpdate(latestLength: Int, at now: Double) {
+            let prevLength = self.lastSampleLength
+            let prevTime = self.lastSampleTime
+            let prevRate = self.inputRate
+            if let lastLen = self.lastSampleLength {
+                if latestLength > lastLen {
+                    if let lastTime = self.lastSampleTime {
+                        let dt = max(now - lastTime, TextRevealController.minInterArrival)
+                        let sampleRate = Double(latestLength - lastLen) / dt
+                        self.inputRate = TextRevealController.rateEwmaAlpha * sampleRate
+                            + (1.0 - TextRevealController.rateEwmaAlpha) * self.inputRate
+                    }
+                    self.lastSampleTime = now
+                    self.lastSampleLength = latestLength
+                } else if latestLength < lastLen {
+                    self.lastSampleLength = latestLength
+                }
+            } else {
+                self.lastSampleTime = now
+                self.lastSampleLength = latestLength
+            }
+            self.latestLength = latestLength
+            if self.revealedCount > Double(latestLength) {
+                self.revealedCount = Double(latestLength)
+            }
+            let dtStr: String
+            if let pt = prevTime {
+                dtStr = String(format: "%.3f", now - pt)
+            } else {
+                dtStr = "n/a"
+            }
+            let prevLenStr = prevLength.map { "\($0)" } ?? "nil"
+            print("[reveal] observeUpdate prev=\(prevLenStr) new=\(latestLength) dt=\(dtStr)s rate=\(String(format: "%.1f", prevRate))→\(String(format: "%.1f", self.inputRate)) revealed=\(String(format: "%.1f", self.revealedCount))")
+        }
+
+        func finalize(finalLength: Int) {
+            print("[reveal] finalize finalLen=\(finalLength) revealed=\(String(format: "%.1f", self.revealedCount)) lag=\(String(format: "%.1f", Double(finalLength) - self.revealedCount)) inputRate=\(String(format: "%.1f", self.inputRate)) v=\(String(format: "%.1f", self.velocity))")
+            self.latestLength = finalLength
+            self.isFinalizing = true
+            if self.revealedCount > Double(finalLength) {
+                self.revealedCount = Double(finalLength)
+            }
+        }
+
+        func tick(now: Double) -> (revealedGlyphCount: Int, isComplete: Bool) {
+            let dt = min(now - (self.lastFrameTime ?? now), TextRevealController.frameDtCap)
+            let lag = max(0.0, Double(self.latestLength) - self.revealedCount)
+            let targetVelocity: Double
+            if self.isFinalizing {
+                targetVelocity = max(self.velocity, lag / TextRevealController.finalizeTime)
+            } else {
+                let targetLag = self.inputRate * TextRevealController.headroomTime
+                let excess = max(0.0, lag - targetLag)
+                targetVelocity = self.inputRate + excess / TextRevealController.responseTime
+            }
+            let smoothing = min(1.0, dt / TextRevealController.velocityTau)
+            let prevIntCount = Int(self.revealedCount)
+            self.velocity += (targetVelocity - self.velocity) * smoothing
+            self.revealedCount = min(Double(self.latestLength), self.revealedCount + self.velocity * dt)
+            self.lastFrameTime = now
+            let newIntCount = Int(self.revealedCount)
+            let isComplete = self.isFinalizing && self.revealedCount >= Double(self.latestLength)
+            if newIntCount != prevIntCount || isComplete {
+                print("[reveal] tick \(prevIntCount)→\(newIntCount)/\(self.latestLength) v=\(String(format: "%.1f", self.velocity)) target=\(String(format: "%.1f", targetVelocity)) lag=\(String(format: "%.1f", lag)) inputRate=\(String(format: "%.1f", self.inputRate)) dt=\(String(format: "%.4f", dt))s\(self.isFinalizing ? " FIN" : "")\(isComplete ? " COMPLETE" : "")")
+            }
+            return (newIntCount, isComplete)
         }
     }
     
     private var textRevealLink: SharedDisplayLinkDriver.Link?
-    private var textRevealAnimationState: TextRevealAnimationState?
+    private var textRevealController: TextRevealController?
     
     private var relativeDateTimer: (timer: SwiftSignalKit.Timer, period: Int32)?
     
@@ -249,12 +320,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         let currentCachedChatMessageText = self.cachedChatMessageText
         let expandedBlockIds = self.expandedBlockIds
         let displayContentsUnderSpoilers = self.displayContentsUnderSpoilers
-        let currentMaxGlyphCount: Int?
-        if let textRevealAnimationState = self.textRevealAnimationState {
-            currentMaxGlyphCount = textRevealAnimationState.glyphCount(timestamp: CACurrentMediaTime())
-        } else {
-            currentMaxGlyphCount = nil
-        }
+        let currentMaxGlyphCount: Int? = self.textRevealController?.currentGlyphCount
         let previousGlyphCount = self.textNode.textNode.cachedLayout?.attributedString?.length ?? 0
         
         return { item, layoutConstants, _, _, _, _ in
@@ -1161,14 +1227,14 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                                 codeHighlightState.disposable.dispose()
                             }
                             
-                            if previousAnimateGlyphCount != nil || strongSelf.textRevealAnimationState != nil || hasDraft || hadDraft {
+                            if previousAnimateGlyphCount != nil || strongSelf.textRevealController != nil || hasDraft || hadDraft {
                                 if strongSelf.textNode.textNode.revealCharacterCount == nil {
                                     if hasDraft {
                                         strongSelf.statusNode?.alpha = 0.0
                                     }
                                     strongSelf.textNode.textNode.updateRevealCharacterCount(count: previousAnimateGlyphCount ?? 0, animated: false)
                                 }
-                                strongSelf.updateTextRevealAnimation(previousGlyphCount: previousAnimateGlyphCount ?? 0)
+                                strongSelf.updateTextRevealAnimation(previousGlyphCount: previousAnimateGlyphCount ?? 0, hasDraft: hasDraft, hadDraft: hadDraft)
                             }
                         }
                     })
@@ -1177,73 +1243,83 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         }
     }
     
-    private func updateTextRevealAnimation(previousGlyphCount: Int) {
-        var fromCount = previousGlyphCount
+    private func updateTextRevealAnimation(previousGlyphCount: Int, hasDraft: Bool, hadDraft: Bool) {
         let toCount = self.textNode.textNode.cachedLayout?.attributedString?.length ?? 0
-        let timestamp = CACurrentMediaTime()
-        if let textRevealAnimationState = self.textRevealAnimationState {
-            if textRevealAnimationState.toCount == toCount {
-                return
-            }
-            fromCount = textRevealAnimationState.glyphCount(timestamp: timestamp)
+        let now = CACurrentMediaTime()
+        print("[reveal] updateTextRevealAnimation prevGlyph=\(previousGlyphCount) toCount=\(toCount) hasDraft=\(hasDraft) hadDraft=\(hadDraft) hasController=\(self.textRevealController != nil)")
+
+        if hasDraft, let controller = self.textRevealController, controller.isFinalizing {
+            print("[reveal] reset controller (re-entering draft after finalize)")
+            self.textRevealController = nil
+            self.textRevealLink = nil
         }
-        if fromCount == toCount {
-            if self.textRevealAnimationState != nil {
-                self.textRevealAnimationState = nil
-                self.textRevealLink = nil
-                self.textNode.textNode.updateRevealCharacterCount(count: nil, animated: false)
-            }
+
+        if self.textRevealController == nil && (hasDraft || hadDraft) {
+            print("[reveal] create controller initialRevealed=\(previousGlyphCount) initialLength=\(toCount)")
+            self.textRevealController = TextRevealController(initialRevealedCount: previousGlyphCount, initialLength: toCount)
+        }
+
+        guard let controller = self.textRevealController else {
             return
         }
-        
-        var duration: Double = Double(toCount - fromCount) / 40.0
-        duration = max(0.1, min(duration, 1.0))
-        
-        self.textRevealAnimationState = TextRevealAnimationState(
-            fromCount: fromCount,
-            toCount: toCount,
-            startTimestamp: timestamp,
-            duration: duration
-        )
-        if self.textRevealLink == nil, self.textRevealAnimationState != nil {
+
+        if hasDraft {
+            controller.observeUpdate(latestLength: toCount, at: now)
+        } else if hadDraft {
+            controller.finalize(finalLength: toCount)
+        }
+
+        if controller.isFinalizing && controller.revealedCount >= Double(controller.latestLength) {
+            print("[reveal] teardown (already complete after finalize)")
+            self.textRevealController = nil
+            self.textRevealLink = nil
+            self.textNode.textNode.updateRevealCharacterCount(count: nil, animated: false)
+            return
+        }
+
+        if self.textRevealLink == nil {
+            print("[reveal] arm display link")
             self.textRevealLink = SharedDisplayLinkDriver.shared.add { [weak self] _ in
-                guard let self, let item = self.item else {
+                guard let self else {
                     return
                 }
-                guard let textRevealAnimationState = self.textRevealAnimationState else {
+                guard let item = self.item else {
+                    print("[reveal] teardown (item is nil from link callback)")
+                    self.textRevealController = nil
                     self.textRevealLink = nil
                     return
                 }
-                let timestamp = CACurrentMediaTime()
-                if textRevealAnimationState.fraction(timestamp: timestamp) >= 1.0 {
-                    self.textRevealAnimationState = nil
+                guard let controller = self.textRevealController else {
+                    print("[reveal] teardown (controller is nil from link callback)")
                     self.textRevealLink = nil
-                    
+                    return
+                }
+                let now = CACurrentMediaTime()
+                let (revealedGlyphCount, isComplete) = controller.tick(now: now)
+                if isComplete {
+                    print("[reveal] teardown (complete from link callback)")
+                    self.textRevealController = nil
+                    self.textRevealLink = nil
+
                     self.textNode.textNode.updateRevealCharacterCount(count: nil, animated: false)
-                    
+
                     if let statusNode = self.statusNode, !item.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
                         ContainedViewLayoutTransition.animated(duration: 0.2, curve: .easeInOut).updateAlpha(node: statusNode, alpha: 1.0)
                     }
-                    
+
                     self.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
                 } else {
                     var requestUpdate = false
-                    let glyphCount = textRevealAnimationState.glyphCount(timestamp: timestamp)
-                    if let previousRevealGlyphCount = self.textNode.textNode.revealCharacterCount, previousRevealGlyphCount != glyphCount {
+                    if let previousRevealGlyphCount = self.textNode.textNode.revealCharacterCount, previousRevealGlyphCount != revealedGlyphCount {
                         if let cachedLayout = self.textNode.textNode.cachedLayout {
-                            if cachedLayout.sizeForCharacterCount(characterCount: previousRevealGlyphCount) != cachedLayout.sizeForCharacterCount(characterCount: glyphCount) {
+                            if cachedLayout.sizeForCharacterCount(characterCount: previousRevealGlyphCount) != cachedLayout.sizeForCharacterCount(characterCount: revealedGlyphCount) {
                                 requestUpdate = true
                             }
                         } else {
                             requestUpdate = true
                         }
-                        if requestUpdate {
-                            //print("glyphCount: request update")
-                        }
-                        
-                        self.textNode.textNode.updateRevealCharacterCount(count: glyphCount, animated: true)
+                        self.textNode.textNode.updateRevealCharacterCount(count: revealedGlyphCount, animated: true)
                     }
-                    
                     if requestUpdate {
                         self.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
                     }
