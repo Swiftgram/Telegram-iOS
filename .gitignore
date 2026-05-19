@@ -81,3 +81,5 @@ xcode-files
 **/.claude/settings.local.json
 **/.vscode/launch.json
 /buildbox/*
+**/node_modules/
+tools/sim-watcher/dist/
