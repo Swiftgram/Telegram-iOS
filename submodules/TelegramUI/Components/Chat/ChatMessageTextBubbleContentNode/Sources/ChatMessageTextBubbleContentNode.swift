@@ -121,20 +121,21 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
     private var isSummaryApplied = false
     
     private final class TextRevealController {
-        private static let headroomTime: Double = 0.4
-        private static let responseTime: Double = 0.3
-        private static let velocityTau: Double = 0.15
-        private static let rateEwmaAlpha: Double = 0.4
-        private static let initialInputRate: Double = 40.0
-        private static let minInterArrival: Double = 0.05
+        private static let velocityTau: Double = 0.12
+        private static let gapEwmaAlpha: Double = 0.4
+        private static let initialGap: Double = 0.5
+        private static let stallFloor: Double = 0.10
         private static let finalizeTime: Double = 0.3
         private static let frameDtCap: Double = 0.05
+        private static let initialInputRate: Double = 40.0
 
         private(set) var revealedCount: Double
         private var velocity: Double = 0.0
-        private var inputRate: Double = TextRevealController.initialInputRate
+        private var avgInterArrival: Double = TextRevealController.initialGap
         private var lastSampleTime: Double?
         private var lastSampleLength: Int?
+        private var predictedNextArrivalTime: Double?
+        private var chunkCount: Int = 0
         private(set) var latestLength: Int
         private(set) var isFinalizing: Bool = false
         private var lastFrameTime: Double?
@@ -149,42 +150,33 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         }
 
         func observeUpdate(latestLength: Int, at now: Double) {
-            let prevLength = self.lastSampleLength
-            let prevTime = self.lastSampleTime
-            let prevRate = self.inputRate
             if let lastLen = self.lastSampleLength {
                 if latestLength > lastLen {
                     if let lastTime = self.lastSampleTime {
-                        let dt = max(now - lastTime, TextRevealController.minInterArrival)
-                        let sampleRate = Double(latestLength - lastLen) / dt
-                        self.inputRate = TextRevealController.rateEwmaAlpha * sampleRate
-                            + (1.0 - TextRevealController.rateEwmaAlpha) * self.inputRate
+                        let interArrival = max(now - lastTime, 0.001)
+                        self.avgInterArrival = TextRevealController.gapEwmaAlpha * interArrival
+                            + (1.0 - TextRevealController.gapEwmaAlpha) * self.avgInterArrival
                     }
                     self.lastSampleTime = now
                     self.lastSampleLength = latestLength
+                    self.predictedNextArrivalTime = now + self.avgInterArrival
+                    self.chunkCount += 1
                 } else if latestLength < lastLen {
                     self.lastSampleLength = latestLength
                 }
             } else {
                 self.lastSampleTime = now
                 self.lastSampleLength = latestLength
+                self.predictedNextArrivalTime = now + self.avgInterArrival
+                self.chunkCount += 1
             }
             self.latestLength = latestLength
             if self.revealedCount > Double(latestLength) {
                 self.revealedCount = Double(latestLength)
             }
-            let dtStr: String
-            if let pt = prevTime {
-                dtStr = String(format: "%.3f", now - pt)
-            } else {
-                dtStr = "n/a"
-            }
-            let prevLenStr = prevLength.map { "\($0)" } ?? "nil"
-            print("[reveal] observeUpdate prev=\(prevLenStr) new=\(latestLength) dt=\(dtStr)s rate=\(String(format: "%.1f", prevRate))→\(String(format: "%.1f", self.inputRate)) revealed=\(String(format: "%.1f", self.revealedCount))")
         }
 
         func finalize(finalLength: Int) {
-            print("[reveal] finalize finalLen=\(finalLength) revealed=\(String(format: "%.1f", self.revealedCount)) lag=\(String(format: "%.1f", Double(finalLength) - self.revealedCount)) inputRate=\(String(format: "%.1f", self.inputRate)) v=\(String(format: "%.1f", self.velocity))")
             self.latestLength = finalLength
             self.isFinalizing = true
             if self.revealedCount > Double(finalLength) {
@@ -198,22 +190,20 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
             let targetVelocity: Double
             if self.isFinalizing {
                 targetVelocity = max(self.velocity, lag / TextRevealController.finalizeTime)
+            } else if self.chunkCount < 2 {
+                targetVelocity = lag > 0.0 ? TextRevealController.initialInputRate : 0.0
+            } else if let predNext = self.predictedNextArrivalTime {
+                let timeToNext = max(TextRevealController.stallFloor, predNext - now)
+                targetVelocity = lag / timeToNext
             } else {
-                let targetLag = self.inputRate * TextRevealController.headroomTime
-                let excess = max(0.0, lag - targetLag)
-                targetVelocity = self.inputRate + excess / TextRevealController.responseTime
+                targetVelocity = lag > 0.0 ? TextRevealController.initialInputRate : 0.0
             }
             let smoothing = min(1.0, dt / TextRevealController.velocityTau)
-            let prevIntCount = Int(self.revealedCount)
             self.velocity += (targetVelocity - self.velocity) * smoothing
             self.revealedCount = min(Double(self.latestLength), self.revealedCount + self.velocity * dt)
             self.lastFrameTime = now
-            let newIntCount = Int(self.revealedCount)
             let isComplete = self.isFinalizing && self.revealedCount >= Double(self.latestLength)
-            if newIntCount != prevIntCount || isComplete {
-                print("[reveal] tick \(prevIntCount)→\(newIntCount)/\(self.latestLength) v=\(String(format: "%.1f", self.velocity)) target=\(String(format: "%.1f", targetVelocity)) lag=\(String(format: "%.1f", lag)) inputRate=\(String(format: "%.1f", self.inputRate)) dt=\(String(format: "%.4f", dt))s\(self.isFinalizing ? " FIN" : "")\(isComplete ? " COMPLETE" : "")")
-            }
-            return (newIntCount, isComplete)
+            return (Int(self.revealedCount), isComplete)
         }
     }
     
@@ -1246,16 +1236,13 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
     private func updateTextRevealAnimation(previousGlyphCount: Int, hasDraft: Bool, hadDraft: Bool) {
         let toCount = self.textNode.textNode.cachedLayout?.attributedString?.length ?? 0
         let now = CACurrentMediaTime()
-        print("[reveal] updateTextRevealAnimation prevGlyph=\(previousGlyphCount) toCount=\(toCount) hasDraft=\(hasDraft) hadDraft=\(hadDraft) hasController=\(self.textRevealController != nil)")
 
         if hasDraft, let controller = self.textRevealController, controller.isFinalizing {
-            print("[reveal] reset controller (re-entering draft after finalize)")
             self.textRevealController = nil
             self.textRevealLink = nil
         }
 
         if self.textRevealController == nil && (hasDraft || hadDraft) {
-            print("[reveal] create controller initialRevealed=\(previousGlyphCount) initialLength=\(toCount)")
             self.textRevealController = TextRevealController(initialRevealedCount: previousGlyphCount, initialLength: toCount)
         }
 
@@ -1270,7 +1257,6 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         }
 
         if controller.isFinalizing && controller.revealedCount >= Double(controller.latestLength) {
-            print("[reveal] teardown (already complete after finalize)")
             self.textRevealController = nil
             self.textRevealLink = nil
             self.textNode.textNode.updateRevealCharacterCount(count: nil, animated: false)
@@ -1278,26 +1264,22 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         }
 
         if self.textRevealLink == nil {
-            print("[reveal] arm display link")
             self.textRevealLink = SharedDisplayLinkDriver.shared.add { [weak self] _ in
                 guard let self else {
                     return
                 }
                 guard let item = self.item else {
-                    print("[reveal] teardown (item is nil from link callback)")
                     self.textRevealController = nil
                     self.textRevealLink = nil
                     return
                 }
                 guard let controller = self.textRevealController else {
-                    print("[reveal] teardown (controller is nil from link callback)")
                     self.textRevealLink = nil
                     return
                 }
                 let now = CACurrentMediaTime()
                 let (revealedGlyphCount, isComplete) = controller.tick(now: now)
                 if isComplete {
-                    print("[reveal] teardown (complete from link callback)")
                     self.textRevealController = nil
                     self.textRevealLink = nil
 
