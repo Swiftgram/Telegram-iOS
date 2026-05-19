@@ -746,23 +746,30 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
 
     override public func updateIsExtractedToContextPreview(_ value: Bool) {
-        guard value, self.textSelectionNode == nil, let messageItem = self.item, self.currentPageLayout?.layout != nil, let rootNode = messageItem.controllerInteraction.chatControllerNode() else {
+        guard value, self.textSelectionNode == nil, let messageItem = self.item, self.currentPageLayout?.layout != nil, let pageView = self.pageView, let rootNode = messageItem.controllerInteraction.chatControllerNode() else {
             return
         }
 
-        // V0 spec: root-level selection only (cross-sub-layout selection deferred).
-        // Root-level items have parentOffset == item.frame.origin (no sub-layout descent).
-        let items = (self.pageView?.selectableTextItems() ?? [])
-            .filter { entry in
-                entry.parentOffset == entry.item.frame.origin
+        // pageView sits at (-1, 0) inside containerNode; the adapter is placed at
+        // containerNode.bounds, so shift each item's page-space origin into
+        // containerNode-local coords for the adapter to operate in.
+        let pageOrigin = pageView.frame.origin
+        let entries = pageView.selectableTextItems()
+            .filter { $0.item.selectable && !$0.item.attributedString.string.isEmpty }
+            .map { entry in
+                InstantPageMultiTextAdapter.Entry(
+                    item: entry.item,
+                    frameOrigin: CGPoint(
+                        x: entry.parentOffset.x + pageOrigin.x,
+                        y: entry.parentOffset.y + pageOrigin.y
+                    )
+                )
             }
-            .map { $0.item }
-            .filter { $0.selectable && !$0.attributedString.string.isEmpty }
-        guard !items.isEmpty else {
+        guard !entries.isEmpty else {
             return
         }
 
-        let adapter = InstantPageMultiTextAdapter(items: items)
+        let adapter = InstantPageMultiTextAdapter(entries: entries)
         adapter.frame = self.containerNode.bounds
         self.textSelectionAdapter = adapter
         self.containerNode.addSubnode(adapter)

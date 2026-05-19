@@ -1223,6 +1223,12 @@ private func collectSelectableTextItems(
                 )))
             }
         case let .details(details):
+            if details.titleTextItem.selectable && !details.titleTextItem.attributedString.string.isEmpty {
+                result.append((details.titleTextItem, CGPoint(
+                    x: accumulatedOffset.x + details.frame.minX + details.titleTextItem.frame.minX,
+                    y: accumulatedOffset.y + details.frame.minY + details.titleTextItem.frame.minY
+                )))
+            }
             if let inner = details.innerLayout {
                 let innerOffset = CGPoint(
                     x: accumulatedOffset.x + details.frame.minX,
