@@ -6,6 +6,7 @@ import TelegramCore
 import SwiftSignalKit
 import AccountContext
 import ChatMessageBubbleContentNode
+import ChatMessageDateAndStatusNode
 import ChatMessageItemCommon
 import ChatControllerInteraction
 import InstantPageUI
@@ -18,6 +19,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
     
     private let containerNode: ContainerNode
+    public var statusNode: ChatMessageDateAndStatusNode?
     private var currentLayoutTiles: [InstantPageTile] = []
     private var visibleTiles: [Int: InstantPageTileNode] = [:]
     private var visibleItemsWithNodes: [Int: InstantPageNode] = [:]
@@ -62,140 +64,295 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         let previousItem = self.item
         let currentPageLayout = self.currentPageLayout
         let previousCurrentLayoutTiles = self.currentLayoutTiles
-        
+        let statusLayout = ChatMessageDateAndStatusNode.asyncLayout(self.statusNode)
+
         return { [weak self] item, layoutConstants, _, _, _, _ in
             let contentProperties = ChatMessageBubbleContentProperties(hidesSimpleAuthorHeader: false, headerSpacing: 0.0, hidesBackground: .never, forceFullCorners: false, forceAlignment: .none)
             
             return (contentProperties, nil, CGFloat.greatestFiniteMagnitude, { constrainedSize, position in
                 let suggestedBoundingWidth: CGFloat = constrainedSize.width
                 
-                return (suggestedBoundingWidth, { boundingWidth in
-                    var boundingSize = CGSize(width: boundingWidth, height: 0.0)
-                    
-                    var pageLayout: InstantPageLayout?
-                    var currentLayoutTiles: [InstantPageTile] = []
-                    
-                    let isDark = item.presentationData.theme.theme.overallDarkAppearance
-                    let isIncoming = item.message.effectivelyIncoming(item.context.account.peerId)
-                    let messageTheme = isIncoming ? item.presentationData.theme.theme.chat.message.incoming : item.presentationData.theme.theme.chat.message.outgoing
-                    
-                    var underlineLinks = true
-                    if !messageTheme.primaryTextColor.isEqual(messageTheme.linkTextColor) {
-                        underlineLinks = false
+                var boundingSize = CGSize(width: suggestedBoundingWidth, height: 0.0)
+                
+                var pageLayout: InstantPageLayout?
+                var currentLayoutTiles: [InstantPageTile] = []
+                
+                let isDark = item.presentationData.theme.theme.overallDarkAppearance
+                let isIncoming = item.message.effectivelyIncoming(item.context.account.peerId)
+                let messageTheme = isIncoming ? item.presentationData.theme.theme.chat.message.incoming : item.presentationData.theme.theme.chat.message.outgoing
+                
+                var underlineLinks = true
+                if !messageTheme.primaryTextColor.isEqual(messageTheme.linkTextColor) {
+                    underlineLinks = false
+                }
+                let _ = underlineLinks
+                
+                let author = item.message.author
+                let mainColor: UIColor
+                var secondaryColor: UIColor? = nil
+                var tertiaryColor: UIColor? = nil
+                
+                let nameColors: PeerNameColors.Colors?
+                switch author?.nameColor {
+                case let .preset(nameColor):
+                    nameColors = item.context.peerNameColors.get(nameColor, dark: item.presentationData.theme.theme.overallDarkAppearance)
+                case let .collectible(collectibleColor):
+                    nameColors = collectibleColor.peerNameColors(dark: item.presentationData.theme.theme.overallDarkAppearance)
+                default:
+                    nameColors = nil
+                }
+                
+                let codeBlockTitleColor: UIColor
+                let codeBlockAccentColor: UIColor
+                let codeBlockBackgroundColor: UIColor
+                if !isIncoming {
+                    mainColor = messageTheme.accentTextColor
+                    if let _ = nameColors?.secondary {
+                        secondaryColor = .clear
                     }
-                    let _ = underlineLinks
-                    
-                    let author = item.message.author
-                    let mainColor: UIColor
-                    var secondaryColor: UIColor? = nil
-                    var tertiaryColor: UIColor? = nil
-                    
-                    let nameColors: PeerNameColors.Colors?
-                    switch author?.nameColor {
-                    case let .preset(nameColor):
-                        nameColors = item.context.peerNameColors.get(nameColor, dark: item.presentationData.theme.theme.overallDarkAppearance)
-                    case let .collectible(collectibleColor):
-                        nameColors = collectibleColor.peerNameColors(dark: item.presentationData.theme.theme.overallDarkAppearance)
-                    default:
-                        nameColors = nil
+                    if let _ = nameColors?.tertiary {
+                        tertiaryColor = .clear
                     }
                     
-                    let codeBlockTitleColor: UIColor
-                    let codeBlockAccentColor: UIColor
-                    let codeBlockBackgroundColor: UIColor
-                    if !isIncoming {
-                        mainColor = messageTheme.accentTextColor
-                        if let _ = nameColors?.secondary {
-                            secondaryColor = .clear
-                        }
-                        if let _ = nameColors?.tertiary {
-                            tertiaryColor = .clear
-                        }
-                        
-                        if item.presentationData.theme.theme.overallDarkAppearance {
-                            codeBlockTitleColor = .white
-                            codeBlockAccentColor = UIColor(white: 1.0, alpha: 0.5)
-                            codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.25)
-                        } else {
-                            codeBlockTitleColor = mainColor
-                            codeBlockAccentColor = mainColor
-                            codeBlockBackgroundColor = mainColor.withMultipliedAlpha(0.1)
-                        }
+                    if item.presentationData.theme.theme.overallDarkAppearance {
+                        codeBlockTitleColor = .white
+                        codeBlockAccentColor = UIColor(white: 1.0, alpha: 0.5)
+                        codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.25)
                     } else {
-                        let authorNameColor = nameColors?.main
-                        secondaryColor = nameColors?.secondary
-                        tertiaryColor = nameColors?.tertiary
-                        
-                        if let authorNameColor {
-                            mainColor = authorNameColor
-                        } else {
-                            mainColor = messageTheme.accentTextColor
-                        }
-                        
                         codeBlockTitleColor = mainColor
                         codeBlockAccentColor = mainColor
-                        
-                        if item.presentationData.theme.theme.overallDarkAppearance {
-                            codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.65)
-                        } else {
-                            codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.05)
+                        codeBlockBackgroundColor = mainColor.withMultipliedAlpha(0.1)
+                    }
+                } else {
+                    let authorNameColor = nameColors?.main
+                    secondaryColor = nameColors?.secondary
+                    tertiaryColor = nameColors?.tertiary
+                    
+                    if let authorNameColor {
+                        mainColor = authorNameColor
+                    } else {
+                        mainColor = messageTheme.accentTextColor
+                    }
+                    
+                    codeBlockTitleColor = mainColor
+                    codeBlockAccentColor = mainColor
+                    
+                    if item.presentationData.theme.theme.overallDarkAppearance {
+                        codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.65)
+                    } else {
+                        codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.05)
+                    }
+                }
+                
+                let _ = secondaryColor
+                let _ = tertiaryColor
+                
+                let _ = codeBlockTitleColor
+                let _ = codeBlockAccentColor
+                
+                let textCategories = InstantPageTextCategories(
+                    kicker: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
+                    header: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 24.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
+                    subheader: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 19.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
+                    paragraph: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 17.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
+                    caption: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
+                    credit: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 13.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
+                    table: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
+                    article: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 18.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor)
+                )
+                let pageTheme = InstantPageTheme(
+                    type: isDark ? .dark : .light,
+                    pageBackgroundColor: .clear,
+                    textCategories: textCategories,
+                    serif: false,
+                    codeBlockBackgroundColor: codeBlockBackgroundColor,
+                    linkColor: messageTheme.linkTextColor,
+                    textHighlightColor: messageTheme.accentTextColor.withMultipliedAlpha(0.1),
+                    linkHighlightColor: messageTheme.linkTextColor.withMultipliedAlpha(0.1),
+                    markerColor: UIColor(rgb: 0xfef3bc),
+                    panelBackgroundColor: messageTheme.accentControlColor.withMultipliedAlpha(0.1),
+                    panelHighlightedBackgroundColor: messageTheme.accentControlColor.withMultipliedAlpha(0.25),
+                    panelPrimaryColor: messageTheme.primaryTextColor,
+                    panelSecondaryColor: messageTheme.secondaryTextColor,
+                    panelAccentColor: messageTheme.accentTextColor,
+                    tableBorderColor: isDark || !isIncoming ? messageTheme.accentControlColor.withMultipliedAlpha(0.25) : UIColor(white: 0.0, alpha: 0.1),
+                    tableHeaderColor: isDark || !isIncoming ? messageTheme.accentControlColor.withMultipliedAlpha(0.1) : UIColor(white: 0.0, alpha: 0.05),
+                    controlColor: messageTheme.accentControlColor,
+                    imageTintColor: nil,
+                    overlayPanelColor: isDark ? UIColor(white: 0.0, alpha: 0.13) : UIColor(white: 1.0, alpha: 0.13)
+                )
+                
+                if let attribute = item.message.richText {
+                    if let current = currentPageLayout, current.boundingWidth == suggestedBoundingWidth, previousItem?.presentationData.theme.theme === item.presentationData.theme.theme {
+                        pageLayout = current.layout
+                        currentLayoutTiles = previousCurrentLayoutTiles
+                    } else {
+                        let webpage = TelegramMediaWebpage(webpageId: EngineMedia.Id(namespace: 0, id: 0), content: .Loaded(TelegramMediaWebpageLoadedContent(
+                            url: "",
+                            displayUrl: "",
+                            hash: 0,
+                            type: nil,
+                            websiteName: nil,
+                            title: nil,
+                            text: nil,
+                            embedUrl: nil,
+                            embedType: nil,
+                            embedSize: nil,
+                            duration: nil,
+                            author: nil,
+                            isMediaLargeByDefault: nil,
+                            imageIsVideoCover: false,
+                            image: nil,
+                            file: nil,
+                            story: nil,
+                            attributes: [],
+                            instantPage: attribute.instantPage
+                        )))
+                        pageLayout = instantPageLayoutForWebPage(webpage, instantPage: attribute.instantPage, userLocation: .other, boundingWidth: suggestedBoundingWidth - 2.0, sideInset: 10.0, safeInset: 0.0, strings: item.presentationData.strings, theme: pageTheme, dateTimeFormat: item.presentationData.dateTimeFormat, webEmbedHeights: [:], addFeedback: false, fitToWidth: true)
+                        if let pageLayout {
+                            currentLayoutTiles = instantPageTilesFromLayout(pageLayout, boundingWidth: suggestedBoundingWidth)
                         }
                     }
-                    
-                    let _ = secondaryColor
-                    let _ = tertiaryColor
-                    
-                    let _ = codeBlockTitleColor
-                    let _ = codeBlockAccentColor
-                    
-                    let textCategories = InstantPageTextCategories(
-                        kicker: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
-                        header: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 24.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
-                        subheader: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 19.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
-                        paragraph: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 17.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
-                        caption: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
-                        credit: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 13.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
-                        table: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
-                        article: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 18.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor)
-                    )
-                    let pageTheme = InstantPageTheme(
-                        type: isDark ? .dark : .light,
-                        pageBackgroundColor: .clear,
-                        textCategories: textCategories,
-                        serif: false,
-                        codeBlockBackgroundColor: codeBlockBackgroundColor,
-                        linkColor: messageTheme.linkTextColor,
-                        textHighlightColor: messageTheme.accentTextColor.withMultipliedAlpha(0.1),
-                        linkHighlightColor: messageTheme.linkTextColor.withMultipliedAlpha(0.1),
-                        markerColor: UIColor(rgb: 0xfef3bc),
-                        panelBackgroundColor: messageTheme.accentControlColor.withMultipliedAlpha(0.1),
-                        panelHighlightedBackgroundColor: messageTheme.accentControlColor.withMultipliedAlpha(0.25),
-                        panelPrimaryColor: messageTheme.primaryTextColor,
-                        panelSecondaryColor: messageTheme.secondaryTextColor,
-                        panelAccentColor: messageTheme.accentTextColor,
-                        tableBorderColor: isDark || !isIncoming ? messageTheme.accentControlColor.withMultipliedAlpha(0.25) : UIColor(white: 0.0, alpha: 0.1),
-                        tableHeaderColor: isDark || !isIncoming ? messageTheme.accentControlColor.withMultipliedAlpha(0.1) : UIColor(white: 0.0, alpha: 0.05),
-                        controlColor: messageTheme.accentControlColor,
-                        imageTintColor: nil,
-                        overlayPanelColor: isDark ? UIColor(white: 0.0, alpha: 0.13) : UIColor(white: 1.0, alpha: 0.13)
-                    )
-                    
-                    if let webpage = item.message.media.first(where: { $0 is TelegramMediaWebpage }) as? TelegramMediaWebpage, case let .Loaded(content) = webpage.content, let instantPage = content.instantPage {
-                        if let current = currentPageLayout, current.boundingWidth == boundingSize.width, previousItem?.presentationData.theme.theme === item.presentationData.theme.theme {
-                            pageLayout = current.layout
-                            currentLayoutTiles = previousCurrentLayoutTiles
+                }
+                
+                if let pageLayout {
+                    boundingSize.width = pageLayout.contentSize.width
+                    boundingSize.height = pageLayout.contentSize.height + 2.0
+                }
+
+                let message = item.message
+                let incoming = isIncoming
+
+                var edited = false
+                if item.attributes.updatingMedia != nil {
+                    edited = true
+                }
+                var viewCount: Int?
+                var dateReplies = 0
+                var starsCount: Int64?
+                var dateReactionsAndPeers = mergedMessageReactionsAndPeers(accountPeerId: item.context.account.peerId, accountPeer: item.associatedData.accountPeer, message: item.topMessage)
+                if item.message.isRestricted(platform: "ios", contentSettings: item.context.currentContentSettings.with { $0 }) {
+                    dateReactionsAndPeers = ([], [])
+                }
+
+                for attribute in item.message.attributes {
+                    if let attribute = attribute as? EditedMessageAttribute {
+                        edited = !attribute.isHidden
+                    } else if let attribute = attribute as? ViewCountMessageAttribute {
+                        viewCount = attribute.count
+                    } else if let attribute = attribute as? ReplyThreadMessageAttribute, case .peer = item.chatLocation {
+                        if let channel = item.message.peers[item.message.id.peerId] as? TelegramChannel, case .group = channel.info {
+                            dateReplies = Int(attribute.count)
+                        }
+                    } else if let attribute = attribute as? PaidStarsMessageAttribute, item.message.id.peerId.namespace == Namespaces.Peer.CloudChannel {
+                        starsCount = attribute.stars.value
+                    }
+                }
+
+                let dateFormat: MessageTimestampStatusFormat
+                if item.presentationData.isPreview {
+                    dateFormat = .full
+                } else if let subject = item.associatedData.subject, case .messageOptions = subject {
+                    dateFormat = .minimal
+                } else {
+                    dateFormat = .regular
+                }
+                let dateText = stringForMessageTimestampStatus(accountPeerId: item.context.account.peerId, message: EngineMessage(item.message), dateTimeFormat: item.presentationData.dateTimeFormat, nameDisplayOrder: item.presentationData.nameDisplayOrder, strings: item.presentationData.strings, format: dateFormat, associatedData: item.associatedData)
+
+                let statusType: ChatMessageDateAndStatusType?
+                var displayStatus = false
+                switch position {
+                case let .linear(_, neighbor):
+                    if case .None = neighbor {
+                        displayStatus = true
+                    } else if case .Neighbour(true, _, _) = neighbor {
+                        displayStatus = true
+                    }
+                default:
+                    break
+                }
+                if case let .customChatContents(contents) = item.associatedData.subject {
+                    if case .hashTagSearch = contents.kind {
+                        displayStatus = true
+                    } else {
+                        displayStatus = false
+                    }
+                } else if !item.presentationData.chatBubbleCorners.hasTails {
+                    displayStatus = false
+                } else if case let .messageOptions(_, _, info) = item.associatedData.subject, case let .link(link) = info, link.isCentered {
+                    displayStatus = false
+                }
+                if displayStatus {
+                    if incoming {
+                        statusType = .BubbleIncoming
+                    } else {
+                        if message.flags.contains(.Failed) {
+                            statusType = .BubbleOutgoing(.Failed)
+                        } else if (message.flags.isSending && !message.isSentOrAcknowledged) || item.attributes.updatingMedia != nil {
+                            statusType = .BubbleOutgoing(.Sending)
                         } else {
-                            pageLayout = instantPageLayoutForWebPage(webpage, instantPage: instantPage._parse(), userLocation: .other, boundingWidth: boundingWidth - 2.0, sideInset: 10.0, safeInset: 0.0, strings: item.presentationData.strings, theme: pageTheme, dateTimeFormat: item.presentationData.dateTimeFormat, webEmbedHeights: [:], addFeedback: false)
-                            if let pageLayout {
-                                currentLayoutTiles = instantPageTilesFromLayout(pageLayout, boundingWidth: boundingWidth)
-                            }
+                            statusType = .BubbleOutgoing(.Sent(read: item.read))
                         }
                     }
-                    
-                    if let pageLayout {
-                        boundingSize.height = pageLayout.contentSize.height + 2.0
+                } else {
+                    statusType = nil
+                }
+
+                let lastTextLineInfo: (item: InstantPageTextItem, lastLineWidth: CGFloat)?
+                if let lastItem = pageLayout?.items.last as? InstantPageTextItem, let lastLine = lastItem.lines.last {
+                    lastTextLineInfo = (lastItem, lastLine.frame.width)
+                } else {
+                    lastTextLineInfo = nil
+                }
+
+                var statusSuggestedWidthAndContinue: (CGFloat, (CGFloat) -> (CGSize, (ListViewItemUpdateAnimation) -> ChatMessageDateAndStatusNode))?
+                if let statusType = statusType {
+                    var isReplyThread = false
+                    if case .replyThread = item.chatLocation {
+                        isReplyThread = true
                     }
-                    
+
+                    let trailingWidthToMeasure: CGFloat = lastTextLineInfo?.lastLineWidth ?? 10000.0
+
+                    let dateLayoutInput: ChatMessageDateAndStatusNode.LayoutInput = .trailingContent(contentWidth: trailingWidthToMeasure, reactionSettings: ChatMessageDateAndStatusNode.TrailingReactionSettings(displayInline: shouldDisplayInlineDateReactions(message: EngineMessage(item.message), isPremium: item.associatedData.isPremium, forceInline: item.associatedData.forceInlineReactions), preferAdditionalInset: false))
+
+                    statusSuggestedWidthAndContinue = statusLayout(ChatMessageDateAndStatusNode.Arguments(
+                        context: item.context,
+                        presentationData: item.presentationData,
+                        edited: edited && !item.presentationData.isPreview,
+                        impressionCount: !item.presentationData.isPreview ? viewCount : nil,
+                        dateText: dateText,
+                        type: statusType,
+                        layoutInput: dateLayoutInput,
+                        constrainedSize: CGSize(width: suggestedBoundingWidth, height: .greatestFiniteMagnitude),
+                        availableReactions: item.associatedData.availableReactions,
+                        savedMessageTags: item.associatedData.savedMessageTags,
+                        reactions: item.presentationData.isPreview ? [] : dateReactionsAndPeers.reactions,
+                        reactionPeers: dateReactionsAndPeers.peers,
+                        displayAllReactionPeers: item.message.id.peerId.namespace == Namespaces.Peer.CloudUser,
+                        areReactionsTags: item.topMessage.areReactionsTags(accountPeerId: item.context.account.peerId),
+                        areStarReactionsEnabled: item.associatedData.areStarReactionsEnabled,
+                        messageEffect: item.topMessage.messageEffect(availableMessageEffects: item.associatedData.availableMessageEffects),
+                        replyCount: dateReplies,
+                        starsCount: starsCount,
+                        isPinned: item.message.tags.contains(.pinned) && (!item.associatedData.isInPinnedListMode || isReplyThread),
+                        hasAutoremove: item.message.isSelfExpiring,
+                        canViewReactionList: canViewMessageReactionList(message: EngineMessage(item.topMessage)),
+                        animationCache: item.controllerInteraction.presentationContext.animationCache,
+                        animationRenderer: item.controllerInteraction.presentationContext.animationRenderer
+                    ))
+                }
+
+                if let statusSuggestedWidthAndContinue {
+                    boundingSize.width = max(boundingSize.width, statusSuggestedWidthAndContinue.0)
+                }
+
+                return (boundingSize.width, { boundingWidth in
+                    let statusSizeAndApply = statusSuggestedWidthAndContinue?.1(boundingWidth)
+                    if let statusSizeAndApply {
+                        boundingSize.height += statusSizeAndApply.0.height
+                    }
+
                     return (boundingSize, { animation, synchronousLoads, itemApply in
                         guard let self else {
                             return
@@ -203,10 +360,66 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                         self.item = item
                         self.pageTheme = pageTheme
                         
-                        self.containerNode.frame = CGRect(origin: CGPoint(x: 1.0, y: 1.0), size: CGSize(width: boundingSize.width - 2.0, height: boundingSize.height - 2.0))
-                        
+                        self.containerNode.frame = CGRect(origin: CGPoint(x: 1.0, y: 1.0), size: CGSize(width: boundingWidth - 2.0, height: boundingSize.height - 2.0))
+
+                        if let statusSizeAndApply {
+                            let statusFrameX: CGFloat
+                            let statusFrameY: CGFloat
+                            if let lastTextLineInfo {
+                                statusFrameX = 1.0 + lastTextLineInfo.item.frame.minX
+                                statusFrameY = 1.0 + lastTextLineInfo.item.frame.maxY
+                            } else if let pageLayout {
+                                statusFrameX = 1.0
+                                statusFrameY = 1.0 + pageLayout.contentSize.height
+                            } else {
+                                statusFrameX = 1.0
+                                statusFrameY = 1.0
+                            }
+                            let statusFrame = CGRect(origin: CGPoint(x: statusFrameX, y: statusFrameY), size: statusSizeAndApply.0)
+                            let statusNode = statusSizeAndApply.1(self.statusNode == nil ? .None : animation)
+
+                            if self.statusNode !== statusNode {
+                                self.statusNode?.removeFromSupernode()
+                                self.statusNode = statusNode
+
+                                self.addSubnode(statusNode)
+
+                                statusNode.reactionSelected = { [weak self] _, value, sourceView in
+                                    guard let self, let item = self.item else {
+                                        return
+                                    }
+                                    item.controllerInteraction.updateMessageReaction(item.topMessage, .reaction(value), false, sourceView)
+                                }
+                                statusNode.openReactionPreview = { [weak self] gesture, sourceNode, value in
+                                    guard let self, let item = self.item else {
+                                        gesture?.cancel()
+                                        return
+                                    }
+                                    item.controllerInteraction.openMessageReactionContextMenu(item.topMessage, sourceNode, gesture, value)
+                                }
+                                statusNode.frame = statusFrame
+                            } else {
+                                animation.animator.updatePosition(layer: statusNode.layer, position: statusFrame.center, completion: nil)
+                                animation.animator.updateBounds(layer: statusNode.layer, bounds: CGRect(origin: .zero, size: statusFrame.size), completion: nil)
+                            }
+                        } else if let statusNode = self.statusNode {
+                            self.statusNode = nil
+                            statusNode.removeFromSupernode()
+                        }
+
+                        if let forwardInfo = item.message.forwardInfo, forwardInfo.flags.contains(.isImported), let statusNode = self.statusNode {
+                            statusNode.pressed = { [weak self] in
+                                guard let self, let statusNode = self.statusNode, let item = self.item else {
+                                    return
+                                }
+                                item.controllerInteraction.displayImportedMessageTooltip(statusNode)
+                            }
+                        } else {
+                            self.statusNode?.pressed = nil
+                        }
+
                         if let pageLayout {
-                            self.currentPageLayout = (boundingSize.width, pageLayout)
+                            self.currentPageLayout = (suggestedBoundingWidth, pageLayout)
                             self.currentLayoutTiles = currentLayoutTiles
 
                             var currentLayoutItemsWithNodes: [InstantPageItem] = []
@@ -476,24 +689,21 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
     
     override public func animateInsertion(_ currentTimestamp: Double, duration: Double) {
-        /*self.textNode.textNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
         if let statusNode = self.statusNode, statusNode.alpha != 0.0 {
             statusNode.layer.animateAlpha(from: 0.0, to: statusNode.alpha, duration: 0.2)
-        }*/
+        }
     }
     
     override public func animateAdded(_ currentTimestamp: Double, duration: Double) {
-        /*self.textNode.textNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
         if let statusNode = self.statusNode, statusNode.alpha != 0.0 {
             statusNode.layer.animateAlpha(from: 0.0, to: statusNode.alpha, duration: 0.2)
-        }*/
+        }
     }
     
     override public func animateRemoved(_ currentTimestamp: Double, duration: Double) {
-        /*self.textNode.textNode.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false)
         if let statusNode = self.statusNode, statusNode.alpha != 0.0 {
             statusNode.layer.animateAlpha(from: statusNode.alpha, to: 0.0, duration: 0.2, removeOnCompletion: false)
-        }*/
+        }
     }
     
     override public func tapActionAtPoint(_ point: CGPoint, gesture: TapLongTapOrDoubleTapGesture, isEstimating: Bool) -> ChatMessageBubbleContentTapAction {
@@ -660,6 +870,9 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
 
     override public func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        if let statusNode = self.statusNode, statusNode.supernode != nil, let result = statusNode.hitTest(self.view.convert(point, to: statusNode.view), with: event) {
+            return result
+        }
         return super.hitTest(point, with: event)
     }
     
@@ -865,22 +1078,21 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
 
     override public func reactionTargetView(value: MessageReaction.Reaction) -> UIView? {
-        /*if let statusNode = self.statusNode, !statusNode.isHidden {
+        if let statusNode = self.statusNode, !statusNode.isHidden {
             return statusNode.reactionView(value: value)
-        }*/
+        }
         return nil
     }
     
     override public func messageEffectTargetView() -> UIView? {
-        /*if let statusNode = self.statusNode, !statusNode.isHidden {
+        if let statusNode = self.statusNode, !statusNode.isHidden {
             return statusNode.messageEffectTargetView()
-        }*/
+        }
         return nil
     }
     
     override public func getStatusNode() -> ASDisplayNode? {
-        return nil
-        //return self.statusNode
+        return self.statusNode
     }
 
     private func splitAnchor(_ url: String) -> (base: String, anchor: String?) {

@@ -17,6 +17,7 @@ swift_library(
         "//submodules/AccountContext",
         "//submodules/InstantPageUI",
         "//submodules/TelegramUI/Components/Chat/ChatMessageBubbleContentNode",
+        "//submodules/TelegramUI/Components/Chat/ChatMessageDateAndStatusNode",
         "//submodules/TelegramUI/Components/Chat/ChatMessageItemCommon",
         "//submodules/TelegramUI/Components/ChatControllerInteraction",
         "//submodules/TelegramUI/Components/TextLoadingEffect",
