@@ -30,6 +30,7 @@ private enum RichTextTypes: Int32 {
     case textHashtag = 24
     case textMention = 25
     case textMentionName = 26
+    case textSpoiler = 27
 }
 
 public indirect enum RichText: PostboxCoding, Equatable {
@@ -60,6 +61,7 @@ public indirect enum RichText: PostboxCoding, Equatable {
     case textHashtag(text: RichText)
     case textMention(text: RichText)
     case textMentionName(text: RichText, peerId: Int64)
+    case textSpoiler(text: RichText)
 
     public init(decoder: PostboxDecoder) {
         switch decoder.decodeInt32ForKey("r", orElse: 0) {
@@ -123,6 +125,8 @@ public indirect enum RichText: PostboxCoding, Equatable {
                 self = .textMention(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText)
             case RichTextTypes.textMentionName.rawValue:
                 self = .textMentionName(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText, peerId: decoder.decodeInt64ForKey("mn.p", orElse: 0))
+            case RichTextTypes.textSpoiler.rawValue:
+                self = .textSpoiler(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText)
             default:
                 self = .empty
         }
@@ -226,6 +230,9 @@ public indirect enum RichText: PostboxCoding, Equatable {
                 encoder.encodeInt32(RichTextTypes.textMentionName.rawValue, forKey: "r")
                 encoder.encodeObject(text, forKey: "t")
                 encoder.encodeInt64(peerId, forKey: "mn.p")
+            case let .textSpoiler(text):
+                encoder.encodeInt32(RichTextTypes.textSpoiler.rawValue, forKey: "r")
+                encoder.encodeObject(text, forKey: "t")
         }
     }
     
@@ -357,6 +364,8 @@ public indirect enum RichText: PostboxCoding, Equatable {
                 if case .textMention(text) = rhs { return true } else { return false }
             case let .textMentionName(lhsText, lhsPeerId):
                 if case let .textMentionName(rhsText, rhsPeerId) = rhs, lhsText == rhsText, lhsPeerId == rhsPeerId { return true } else { return false }
+            case let .textSpoiler(text):
+                if case .textSpoiler(text) = rhs { return true } else { return false }
         }
     }
 }
@@ -421,6 +430,8 @@ public extension RichText {
             case let .textMention(text):
                 return text.plainText
             case let .textMentionName(text, _):
+                return text.plainText
+            case let .textSpoiler(text):
                 return text.plainText
         }
     }
@@ -564,6 +575,11 @@ extension RichText {
                 throw FlatBuffersError.missingRequiredField()
             }
             self = .textMentionName(text: try RichText(flatBuffersObject: value.text), peerId: value.peerId)
+        case .richtextSpoiler:
+            guard let value = flatBuffersObject.value(type: TelegramCore_RichText_Spoiler.self) else {
+                throw FlatBuffersError.missingRequiredField()
+            }
+            self = .textSpoiler(text: try RichText(flatBuffersObject: value.text))
         case .none_:
             self = .empty
         }
@@ -748,6 +764,12 @@ extension RichText {
             TelegramCore_RichText_MentionName.add(text: textOffset, &builder)
             TelegramCore_RichText_MentionName.add(peerId: peerId, &builder)
             offset = TelegramCore_RichText_MentionName.endRichText_MentionName(&builder, start: start)
+        case let .textSpoiler(text):
+            valueType = .richtextSpoiler
+            let textOffset = text.encodeToFlatBuffers(builder: &builder)
+            let start = TelegramCore_RichText_Spoiler.startRichText_Spoiler(&builder)
+            TelegramCore_RichText_Spoiler.add(text: textOffset, &builder)
+            offset = TelegramCore_RichText_Spoiler.endRichText_Spoiler(&builder, start: start)
         }
 
         return TelegramCore_RichText.createRichText(&builder, valueType: valueType, valueOffset: offset)

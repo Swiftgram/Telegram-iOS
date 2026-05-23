@@ -2688,6 +2688,7 @@ func layoutTextItem(
             var strikethroughItems: [InstantPageTextStrikethroughItem] = []
             var underlineItems: [InstantPageTextUnderlineItem] = []
             var markedItems: [InstantPageTextMarkedItem] = []
+            var spoilerItems: [InstantPageTextSpoilerItem] = []
             var anchorItems: [InstantPageTextAnchorItem] = []
 
             string.enumerateAttributes(in: lineRange, options: []) { attributes, range, _ in
@@ -2719,6 +2720,12 @@ func layoutTextItem(
                     let upperX = ceil(CTLineGetOffsetForStringIndex(line, range.location + range.length, nil))
                     let x = lowerX < upperX ? lowerX : upperX
                     markedItems.append(InstantPageTextMarkedItem(frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y + (lineAscent - fontLineHeight) + delta, width: abs(upperX - lowerX), height: lineHeight), color: color, range: range))
+                }
+                if attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.Spoiler)] != nil {
+                    let lowerX = floor(CTLineGetOffsetForStringIndex(line, range.location, nil))
+                    let upperX = ceil(CTLineGetOffsetForStringIndex(line, range.location + range.length, nil))
+                    let x = lowerX < upperX ? lowerX : upperX
+                    spoilerItems.append(InstantPageTextSpoilerItem(frame: CGRect(x: workingLineOrigin.x + x, y: workingLineOrigin.y + (lineAscent - fontLineHeight), width: abs(upperX - lowerX), height: fontLineHeight), range: range))
                 }
                 if let item = attributes[NSAttributedString.Key.init(rawValue: InstantPageAnchorAttribute)] as? Dictionary<String, Any>, let name = item["name"] as? String, let empty = item["empty"] as? Bool {
                     anchorItems.append(InstantPageTextAnchorItem(name: name, anchorText: item["text"] as? NSAttributedString, empty: empty))
@@ -2810,7 +2817,7 @@ func layoutTextItem(
             } else {
                 lineCharacterRects = nil
             }
-            let textLine = InstantPageTextLine(line: line, range: lineRange, frame: CGRect(x: workingLineOrigin.x, y: workingLineOrigin.y, width: lineWidth, height: height), strikethroughItems: strikethroughItems, underlineItems: underlineItems, markedItems: markedItems, imageItems: lineImageItems, formulaItems: lineFormulaItems, emojiItems: lineEmojiItems, anchorItems: anchorItems, isRTL: isRTL, characterRects: lineCharacterRects)
+            let textLine = InstantPageTextLine(line: line, range: lineRange, frame: CGRect(x: workingLineOrigin.x, y: workingLineOrigin.y, width: lineWidth, height: height), strikethroughItems: strikethroughItems, underlineItems: underlineItems, markedItems: markedItems, spoilerItems: spoilerItems, imageItems: lineImageItems, formulaItems: lineFormulaItems, emojiItems: lineEmojiItems, anchorItems: anchorItems, isRTL: isRTL, characterRects: lineCharacterRects)
 
             lines.append(textLine)
             imageItems.append(contentsOf: lineImageItems)

@@ -346,7 +346,7 @@ private func trimStart(_ input: RichText) -> RichText {
         break
     case .textCustomEmoji:
         break
-    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName:
+    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName, .textSpoiler:
         break
     }
     return text
@@ -394,7 +394,7 @@ private func trimEnd(_ input: RichText) -> RichText {
         break
     case .textCustomEmoji:
         break
-    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName:
+    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName, .textSpoiler:
         break
     }
     return text
@@ -443,7 +443,7 @@ private func trim(_ input: RichText) -> RichText {
         break
     case .textCustomEmoji:
         break
-    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName:
+    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName, .textSpoiler:
         break
     }
     return text
@@ -491,7 +491,7 @@ private func addNewLine(_ input: RichText) -> RichText {
         text = .concat([.formula(latex: latex), .plain("\n")])
     case .textCustomEmoji:
         break
-    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName:
+    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName, .textSpoiler:
         break
     }
     return text

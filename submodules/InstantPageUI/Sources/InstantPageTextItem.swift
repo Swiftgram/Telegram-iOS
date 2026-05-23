@@ -29,6 +29,11 @@ struct InstantPageTextMarkedItem {
     let range: NSRange
 }
 
+struct InstantPageTextSpoilerItem {
+    let frame: CGRect
+    let range: NSRange
+}
+
 struct InstantPageTextStrikethroughItem {
     let frame: CGRect
 }
@@ -82,6 +87,7 @@ public final class InstantPageTextLine {
     let strikethroughItems: [InstantPageTextStrikethroughItem]
     let underlineItems: [InstantPageTextUnderlineItem]
     let markedItems: [InstantPageTextMarkedItem]
+    let spoilerItems: [InstantPageTextSpoilerItem]
     let imageItems: [InstantPageTextImageItem]
     let formulaItems: [InstantPageTextFormulaRun]
     let emojiItems: [InstantPageTextEmojiItem]
@@ -89,13 +95,14 @@ public final class InstantPageTextLine {
     let isRTL: Bool
     public let characterRects: [CGRect]?   // line-local, one rect per character in `range`; nil = not computed
 
-    init(line: CTLine, range: NSRange, frame: CGRect, strikethroughItems: [InstantPageTextStrikethroughItem], underlineItems: [InstantPageTextUnderlineItem], markedItems: [InstantPageTextMarkedItem], imageItems: [InstantPageTextImageItem], formulaItems: [InstantPageTextFormulaRun], emojiItems: [InstantPageTextEmojiItem] = [], anchorItems: [InstantPageTextAnchorItem], isRTL: Bool, characterRects: [CGRect]? = nil) {
+    init(line: CTLine, range: NSRange, frame: CGRect, strikethroughItems: [InstantPageTextStrikethroughItem], underlineItems: [InstantPageTextUnderlineItem], markedItems: [InstantPageTextMarkedItem], spoilerItems: [InstantPageTextSpoilerItem] = [], imageItems: [InstantPageTextImageItem], formulaItems: [InstantPageTextFormulaRun], emojiItems: [InstantPageTextEmojiItem] = [], anchorItems: [InstantPageTextAnchorItem], isRTL: Bool, characterRects: [CGRect]? = nil) {
         self.line = line
         self.range = range
         self.frame = frame
         self.strikethroughItems = strikethroughItems
         self.underlineItems = underlineItems
         self.markedItems = markedItems
+        self.spoilerItems = spoilerItems
         self.imageItems = imageItems
         self.formulaItems = formulaItems
         self.emojiItems = emojiItems
@@ -952,6 +959,13 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
                 ChatTextInputAttributes.customEmoji: emojiAttribute
             ], range: NSMakeRange(0, mutableAttributedString.length))
             return mutableAttributedString
+        case let .textSpoiler(text):
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let mutable = result.mutableCopy() as! NSMutableAttributedString
+            if mutable.length != 0 {
+                mutable.addAttribute(NSAttributedString.Key(rawValue: TelegramTextAttributes.Spoiler), value: true, range: NSRange(location: 0, length: mutable.length))
+            }
+            return mutable
     }
 }
 

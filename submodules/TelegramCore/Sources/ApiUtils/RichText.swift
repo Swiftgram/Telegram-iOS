@@ -79,10 +79,8 @@ extension RichText {
             self = .textMention(text: RichText(apiText: textMentionData.text))
         case let .textMentionName(textMentionNameData):
             self = .textMentionName(text: RichText(apiText: textMentionNameData.text), peerId: textMentionNameData.userId)
-        case let .textSpoiler(value):
-            let _ = value
-            //TODO:localize
-            self = .plain("")
+        case let .textSpoiler(textSpoilerData):
+            self = .textSpoiler(text: RichText(apiText: textSpoilerData.text))
         }
     }
     
@@ -142,6 +140,8 @@ extension RichText {
             return .textMention(Api.RichText.Cons_textMention(text: text.apiRichText()))
         case let .textMentionName(text, peerId):
             return .textMentionName(Api.RichText.Cons_textMentionName(text: text.apiRichText(), userId: peerId))
+        case let .textSpoiler(text):
+            return .textSpoiler(Api.RichText.Cons_textSpoiler(text: text.apiRichText()))
         }
     }
 }

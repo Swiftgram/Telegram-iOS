@@ -59,6 +59,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     // compares the revealed prefix's height at this cursor vs the new cursor to decide when
     // to request a full bubble re-layout (so the bubble grows with the reveal).
     private var lastAppliedRevealedCount: Int = 0
+    private var displayContentsUnderSpoilers: Bool = false
 
     override public var visibility: ListViewItemNodeVisibility {
         didSet {
@@ -549,7 +550,9 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                 // through to the contentSize.height anchor and sits below all content.
                 let lastTextLine = pageLayout.flatMap(InstantPageUI.lastTextLineFrameIfLastItemIsText(in:))
                 let lastTextLineFrame: CGRect? = lastTextLine?.frame
-                // Applied only when the date trails on the line (not when it wraps below it).
+                // Baseline → visible-text-bottom compensation. Applied whether the date trails on
+                // the last line or wraps onto its own line below it (0 for attachment-inflated lines,
+                // whose maxY already sits at the visible bottom).
                 let lastTextLineTrailingPadding: CGFloat = lastTextLine?.trailingBottomPadding ?? 0.0
 
                 var statusSuggestedWidthAndContinue: (CGFloat, (CGFloat) -> (CGSize, (ListViewItemUpdateAnimation) -> ChatMessageDateAndStatusNode))?
@@ -605,11 +608,13 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                         // closure below.
                         let statusAnchorY: CGFloat
                         if let lastTextLineFrame {
-                            // Trailing date (statusHeight == 0) gets the 5pt text-rect pad so it
-                            // aligns with the visible text; a date that wraps onto its own line
-                            // below (statusHeight > 0) sits at the bare maxY.
-                            let trailingPadding = statusSizeAndApply.0.height.isZero ? lastTextLineTrailingPadding : 0.0
-                            statusAnchorY = 1.0 + lastTextLineFrame.maxY + trailingPadding + streamingHeaderOffset
+                            // The renderer draws the baseline at the line frame's maxY, so the
+                            // visible text sits `trailingBottomPadding` below it. Apply that pad
+                            // whether the date trails on the line OR wraps onto its own line below:
+                            // in both cases the date should reference the visible text bottom, not
+                            // the baseline (mirrors TextBubble, whose status anchors at the text
+                            // frame's maxY). Without it the wrapped date crowded the last line.
+                            statusAnchorY = 1.0 + lastTextLineFrame.maxY + lastTextLineTrailingPadding + streamingHeaderOffset
                         } else if let pageLayout {
                             statusAnchorY = 1.0 + pageLayout.contentSize.height + streamingHeaderOffset
                         } else {
@@ -637,11 +642,11 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                             // node positions the date trailing/below relative to this origin.
                             let statusFrameY: CGFloat
                             if let lastTextLineFrame {
-                                // Add the 5pt text-rect pad only when the date trails on the line
-                                // (statusHeight == 0); a date wrapped onto its own line below sits
-                                // at the bare maxY so it isn't pushed too far down.
-                                let trailingPadding = statusSizeAndApply.0.height.isZero ? lastTextLineTrailingPadding : 0.0
-                                statusFrameY = 1.0 + lastTextLineFrame.maxY + trailingPadding
+                                // Apply the text-rect pad (baseline → visible text bottom) for both
+                                // the trailing and wrapped cases, so the date references the visible
+                                // text bottom rather than the baseline. Mirrors the measure closure
+                                // and TextBubble. Without it the wrapped date crowded the last line.
+                                statusFrameY = 1.0 + lastTextLineFrame.maxY + lastTextLineTrailingPadding
                             } else if let pageLayout {
                                 statusFrameY = 1.0 + pageLayout.contentSize.height
                             } else {
@@ -705,6 +710,9 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                                 size: pageLayout.contentSize
                             )
                             self.updatePageViewVisibilityRect()
+                            if self.displayContentsUnderSpoilers {
+                                pageView.setDisplayContentsUnderSpoilers(true, atLocation: nil, animated: false)
+                            }
                         } else {
                             self.currentPageLayout = nil
                             self.pageView?.update(
@@ -719,8 +727,17 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
 
                         // 1. Compute / cache the cost map.
                         // Reuse the cost map computed in the layout pass (the bubble's
-                        // size depended on it) — don't recompute.
-                        self.currentRevealCostMap = revealCostMap
+                        // size depended on it) — don't recompute. Keep the previous map
+                        // alive while a reveal/finalize is still in flight: on a post-
+                        // streaming pass (hasDraft && hadDraft both false) revealCostMap is
+                        // nil, and clobbering it would strand the display-link tick (whose
+                        // guard requires a cost map), aborting the finalize before it can
+                        // clear the mask and restore the status alpha.
+                        if let revealCostMap {
+                            self.currentRevealCostMap = revealCostMap
+                        } else if self.textRevealController == nil {
+                            self.currentRevealCostMap = nil
+                        }
 
                         // 2. Update the "Thinking…" header.
                         if let streamingTextFrame, let streamingTextLayoutAndApply {
@@ -785,11 +802,16 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                             if hasDraft {
                                 self.statusNode?.alpha = 0.0
                             }
-                            // Seed the V2 view to the previous count so we don't flash full text at the start.
-                            self.pageView?.applyReveal(revealedCount: previousAnimateGlyphCount ?? 0,
+                            // Seed the (possibly freshly rebuilt) V2 view to the reveal cursor's
+                            // current position so we don't flash full text. Use the live controller
+                            // count rather than `previousAnimateGlyphCount`, which is nil — and would
+                            // reset the reveal to 0 — on post-streaming finalize passes where the
+                            // controller is still animating.
+                            let seedCount = self.textRevealController?.currentGlyphCount ?? previousAnimateGlyphCount ?? 0
+                            self.pageView?.applyReveal(revealedCount: seedCount,
                                                        costMap: self.currentRevealCostMap,
                                                        animated: false)
-                            self.lastAppliedRevealedCount = previousAnimateGlyphCount ?? 0
+                            self.lastAppliedRevealedCount = seedCount
                             self.updateTextRevealAnimation(previousGlyphCount: previousAnimateGlyphCount ?? 0,
                                                            hasDraft: hasDraft,
                                                            hadDraft: hadDraft)
@@ -826,6 +848,13 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
             self.textRevealLink = nil
             self.pageView?.applyReveal(revealedCount: nil, costMap: nil, animated: false)
             self.lastAppliedRevealedCount = 0
+            // The cursor already caught up at finalize time, so the display-link `isComplete`
+            // branch (which normally restores the status alpha) will never run. Restore it
+            // here too, mirroring that branch.
+            if let item = self.item, let statusNode = self.statusNode,
+               !item.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+                ContainedViewLayoutTransition.animated(duration: 0.2, curve: .easeInOut).updateAlpha(node: statusNode, alpha: 1.0)
+            }
             return
         }
 
@@ -906,6 +935,12 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
             }
         }
 
+        if case .tap = gesture, !self.displayContentsUnderSpoilers, let entityHit = self.entityForTapLocation(point), entityHit.attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.Spoiler)] != nil {
+            return ChatMessageBubbleContentTapAction(content: .custom({ [weak self] in
+                self?.revealSpoilers(atContentPoint: point)
+            }))
+        }
+
         guard let urlHit = self.urlForTapLocation(point) else {
             if let entityHit = self.entityForTapLocation(point), let content = self.entityTapContent(entityHit.attributes) {
                 let rects = self.computeHighlightRects(item: entityHit.item, parentOffset: entityHit.parentOffset, localPoint: entityHit.localPoint)
@@ -971,6 +1006,15 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         let localPoint = CGPoint(x: local.x - hit.parentOffset.x, y: local.y - hit.parentOffset.y)
         guard let (_, attributes) = hit.item.attributesAtPoint(localPoint, orNearest: false) else { return nil }
         return (item: hit.item, parentOffset: hit.parentOffset, localPoint: localPoint, attributes: attributes)
+    }
+
+    private func revealSpoilers(atContentPoint point: CGPoint) {
+        guard !self.displayContentsUnderSpoilers, let pageView = self.pageView else {
+            return
+        }
+        self.displayContentsUnderSpoilers = true
+        let local = self.view.convert(point, to: pageView)
+        pageView.setDisplayContentsUnderSpoilers(true, atLocation: local, animated: true)
     }
 
     private func entityTapContent(_ attributes: [NSAttributedString.Key: Any]) -> ChatMessageBubbleContentTapAction.Content? {

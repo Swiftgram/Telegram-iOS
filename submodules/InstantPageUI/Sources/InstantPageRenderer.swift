@@ -12,6 +12,7 @@ import TextFormat
 import EmojiTextAttachmentView
 import AnimationCache
 import MultiAnimationRenderer
+import InvisibleInkDustNode
 
 // MARK: - Stable item identity (for view reuse on re-layouts)
 
@@ -118,6 +119,7 @@ public final class InstantPageV2View: UIView {
             }
         }
     }
+    public private(set) var displayContentsUnderSpoilers: Bool = false
 
     // Weak references to every media wrapper in the tree, keyed by `InstantPageMedia.index`.
     // Used by `transitionArgsFor` and `applyHiddenMedia` so the gallery transition + hidden-source
@@ -223,6 +225,18 @@ public final class InstantPageV2View: UIView {
         self.currentLayout = layout
         self.currentTheme = theme
         self.updateInlineEmoji()
+        let enableSpoilerAnimations = self.renderContext.map { $0.context.sharedContext.energyUsageSettings.fullTranslucency } ?? true
+        for view in self.itemViews {
+            if let textView = view as? InstantPageV2TextView {
+                textView.enableSpoilerAnimations = enableSpoilerAnimations
+                // makeItemView builds fresh text views via init only (no update(item:theme:)), so
+                // build their dust here; updateSpoiler is idempotent (no-op when there are no spoilers).
+                textView.updateSpoiler(animated: false)
+            }
+        }
+        // Force the current reveal state (true OR false) onto every text view every layout, so a
+        // positionally-reused text view cannot retain a stale reveal flag from prior content.
+        self.setDisplayContentsUnderSpoilers(self.displayContentsUnderSpoilers, atLocation: nil, animated: false)
     }
 
     func updateInlineEmoji() {
@@ -372,6 +386,23 @@ public final class InstantPageV2View: UIView {
                 if nested.visibilityRect != childRect {
                     nested.visibilityRect = childRect
                 }
+            }
+        }
+    }
+
+    /// Reveals (or re-hides) every spoiler in this view and nested details/table V2 views.
+    /// `location` (this view's coords) drives the dust explosion origin for whichever text view
+    /// contains it; the rest just toggle. Single-flag behavior mirrors ChatMessageTextBubbleContentNode.
+    public func setDisplayContentsUnderSpoilers(_ value: Bool, atLocation location: CGPoint?, animated: Bool) {
+        self.displayContentsUnderSpoilers = value
+        for view in self.itemViews {
+            if let textView = view as? InstantPageV2TextView {
+                let childLocation = location.map { self.convert($0, to: textView) }
+                textView.setDisplayContentsUnderSpoilers(value, atLocation: childLocation, animated: animated)
+            }
+            for nested in InstantPageV2View.nestedV2Views(of: view) {
+                let childLocation = location.map { self.convert($0, to: nested) }
+                nested.setDisplayContentsUnderSpoilers(value, atLocation: childLocation, animated: animated)
             }
         }
     }
@@ -649,6 +680,18 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
     private let renderContainer: UIView
     private let renderView: TextRenderView
     let emojiContainerView: UIView = UIView()
+    let spoilerContainerView: UIView = UIView()
+    private var dustNode: InvisibleInkDustNode?
+    private var displayContentsUnderSpoilers: Bool = false
+    var enableSpoilerAnimations: Bool = true {
+        didSet {
+            if oldValue != self.enableSpoilerAnimations, let dustNode = self.dustNode {
+                self.dustNode = nil
+                dustNode.view.removeFromSuperview()
+                self.updateSpoiler(animated: false)
+            }
+        }
+    }
 
     // Reveal mask state — populated in Task 5.
     private var maxCharacterDrawCount: Int?
@@ -676,6 +719,10 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
         self.emojiContainerView.frame = self.bounds
         self.emojiContainerView.isUserInteractionEnabled = false
         self.addSubview(self.emojiContainerView)
+
+        self.spoilerContainerView.frame = self.bounds
+        self.spoilerContainerView.isUserInteractionEnabled = false
+        self.addSubview(self.spoilerContainerView)
     }
 
     @available(*, unavailable)
@@ -689,6 +736,75 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
         self.renderView.item = item
         self.renderView.setNeedsDisplay()
         self.emojiContainerView.frame = self.bounds
+        self.spoilerContainerView.frame = self.bounds
+        self.renderView.displayContentsUnderSpoilers = self.displayContentsUnderSpoilers
+        self.updateSpoiler(animated: false)
+    }
+
+    private func spoilerRectsInContainer() -> [CGRect] {
+        let textItem = self.item.textItem
+        let boundsWidth = textItem.frame.size.width
+        var rects: [CGRect] = []
+        for line in textItem.lines {
+            if line.spoilerItems.isEmpty { continue }
+            let lineFrame = v2FrameForLine(line, boundingWidth: boundsWidth, alignment: textItem.alignment)
+            for spoiler in line.spoilerItems {
+                let localX = lineFrame.minX + (spoiler.frame.minX - line.frame.minX)
+                rects.append(CGRect(x: localX + v2TextViewClippingInset, y: spoiler.frame.minY + v2TextViewClippingInset, width: spoiler.frame.width, height: spoiler.frame.height))
+            }
+        }
+        return rects
+    }
+
+    func updateSpoiler(animated: Bool) {
+        let rects = self.spoilerRectsInContainer()
+        if rects.isEmpty || self.displayContentsUnderSpoilers {
+            if let dustNode = self.dustNode {
+                self.dustNode = nil
+                dustNode.view.removeFromSuperview()
+            }
+            return
+        }
+
+        let dustNode: InvisibleInkDustNode
+        if let current = self.dustNode {
+            dustNode = current
+        } else {
+            dustNode = InvisibleInkDustNode(textNode: nil, enableAnimations: self.enableSpoilerAnimations)
+            self.dustNode = dustNode
+            self.spoilerContainerView.addSubview(dustNode.view)
+        }
+
+        var color: UIColor = UIColor(white: 0.0, alpha: 1.0)
+        let textItem = self.item.textItem
+        if let firstRange = textItem.lines.first(where: { !$0.spoilerItems.isEmpty })?.spoilerItems.first?.range, firstRange.location < textItem.attributedString.length {
+            if let fg = textItem.attributedString.attribute(.foregroundColor, at: firstRange.location, effectiveRange: nil) as? UIColor {
+                color = fg
+            }
+        }
+
+        dustNode.view.frame = self.spoilerContainerView.bounds
+        dustNode.update(size: self.spoilerContainerView.bounds.size, color: color, textColor: color, rects: rects, wordRects: rects)
+    }
+
+    func setDisplayContentsUnderSpoilers(_ value: Bool, atLocation location: CGPoint?, animated: Bool) {
+        if self.displayContentsUnderSpoilers == value {
+            return
+        }
+        self.displayContentsUnderSpoilers = value
+        self.renderView.displayContentsUnderSpoilers = value
+        self.renderView.setNeedsDisplay()
+        if value {
+            if let dustNode = self.dustNode {
+                if let location, animated {
+                    dustNode.revealAtLocation(self.convert(location, to: self.spoilerContainerView))
+                } else {
+                    dustNode.update(revealed: true, animated: animated)
+                }
+            }
+        } else {
+            self.updateSpoiler(animated: animated)
+        }
     }
 
     func updateRevealCharacterCount(value: Int?, animated: Bool) {
@@ -997,6 +1113,7 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
 
 private final class TextRenderView: UIView {
     var item: InstantPageV2TextItem
+    var displayContentsUnderSpoilers: Bool = false
 
     init(item: InstantPageV2TextItem) {
         self.item = item
@@ -1017,6 +1134,31 @@ private final class TextRenderView: UIView {
         context.saveGState()
         context.textMatrix = CGAffineTransform(scaleX: 1.0, y: -1.0)
         context.translateBy(x: v2TextViewClippingInset, y: v2TextViewClippingInset)
+
+        if !self.displayContentsUnderSpoilers {
+            let textItemForClip = self.item.textItem
+            let clipBoundsWidth = textItemForClip.frame.size.width
+            var spoilerRects: [CGRect] = []
+            for line in textItemForClip.lines {
+                if line.spoilerItems.isEmpty { continue }
+                let lineFrame = v2FrameForLine(line, boundingWidth: clipBoundsWidth, alignment: textItemForClip.alignment)
+                for spoiler in line.spoilerItems {
+                    spoilerRects.append(spoiler.frame.offsetBy(dx: lineFrame.minX - line.frame.minX, dy: 0.0))
+                }
+            }
+            if !spoilerRects.isEmpty {
+                // Even-odd subtracts each spoiler rect from the full-bounds rect. Spoiler rects never
+                // overlap (same-line ranges are horizontally monotonic; cross-line rects differ in y),
+                // so no hole is accidentally re-included by an odd crossing count.
+                let path = CGMutablePath()
+                path.addRect(CGRect(origin: .zero, size: textItemForClip.frame.size).insetBy(dx: -v2TextViewClippingInset, dy: -v2TextViewClippingInset))
+                for rect in spoilerRects {
+                    path.addRect(rect)
+                }
+                context.addPath(path)
+                context.clip(using: .evenOdd)
+            }
+        }
 
         let textItem = self.item.textItem
         let boundsWidth = textItem.frame.size.width
