@@ -797,6 +797,15 @@ public extension Api {
                 return ("pageBlockTable", [("flags", ConstructorParameterDescription(self.flags)), ("title", ConstructorParameterDescription(self.title)), ("rows", ConstructorParameterDescription(self.rows))])
             }
         }
+        public class Cons_pageBlockThinking: TypeConstructorDescription {
+            public var text: Api.RichText
+            public init(text: Api.RichText) {
+                self.text = text
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("pageBlockThinking", [("text", ConstructorParameterDescription(self.text))])
+            }
+        }
         public class Cons_pageBlockTitle: TypeConstructorDescription {
             public var text: Api.RichText
             public init(text: Api.RichText) {
@@ -854,6 +863,7 @@ public extension Api {
         case pageBlockSubheader(Cons_pageBlockSubheader)
         case pageBlockSubtitle(Cons_pageBlockSubtitle)
         case pageBlockTable(Cons_pageBlockTable)
+        case pageBlockThinking(Cons_pageBlockThinking)
         case pageBlockTitle(Cons_pageBlockTitle)
         case pageBlockUnsupported
         case pageBlockVideo(Cons_pageBlockVideo)
@@ -1162,6 +1172,12 @@ public extension Api {
                     item.serialize(buffer, true)
                 }
                 break
+            case .pageBlockThinking(let _data):
+                if boxed {
+                    buffer.appendInt32(1009361890)
+                }
+                _data.text.serialize(buffer, true)
+                break
             case .pageBlockTitle(let _data):
                 if boxed {
                     buffer.appendInt32(1890305021)
@@ -1256,6 +1272,8 @@ public extension Api {
                 return ("pageBlockSubtitle", [("text", ConstructorParameterDescription(_data.text))])
             case .pageBlockTable(let _data):
                 return ("pageBlockTable", [("flags", ConstructorParameterDescription(_data.flags)), ("title", ConstructorParameterDescription(_data.title)), ("rows", ConstructorParameterDescription(_data.rows))])
+            case .pageBlockThinking(let _data):
+                return ("pageBlockThinking", [("text", ConstructorParameterDescription(_data.text))])
             case .pageBlockTitle(let _data):
                 return ("pageBlockTitle", [("text", ConstructorParameterDescription(_data.text))])
             case .pageBlockUnsupported:
@@ -1856,6 +1874,19 @@ public extension Api {
             let _c3 = _3 != nil
             if _c1 && _c2 && _c3 {
                 return Api.PageBlock.pageBlockTable(Cons_pageBlockTable(flags: _1!, title: _2!, rows: _3!))
+            }
+            else {
+                return nil
+            }
+        }
+        public static func parse_pageBlockThinking(_ reader: BufferReader) -> PageBlock? {
+            var _1: Api.RichText?
+            if let signature = reader.readInt32() {
+                _1 = Api.parse(reader, signature: signature) as? Api.RichText
+            }
+            let _c1 = _1 != nil
+            if _c1 {
+                return Api.PageBlock.pageBlockThinking(Cons_pageBlockThinking(text: _1!))
             }
             else {
                 return nil

@@ -64,6 +64,16 @@ enum AccountStateGlobalNotificationSettingsSubject {
     case channels
 }
 
+struct UpdatedApiPresence {
+    var status: Api.UserStatus
+    var isMin: Bool
+    
+    init(status: Api.UserStatus, isMin: Bool) {
+        self.status = status
+        self.isMin = isMin
+    }
+}
+
 enum AccountStateMutationOperation {
     case AddMessages([StoreMessage], AddMessagesLocation)
     case AddScheduledMessages([StoreMessage])
@@ -93,7 +103,7 @@ enum AccountStateMutationOperation {
     case UpdateCachedPeerData(PeerId, (CachedPeerData?) -> CachedPeerData?)
     case UpdateMessagesPinned([MessageId], Bool)
     case MergeApiUsers([Api.User])
-    case MergePeerPresences([PeerId: Api.UserStatus], Bool)
+    case MergePeerPresences([PeerId: UpdatedApiPresence], Bool)
     case UpdateSecretChat(chat: Api.EncryptedChat, timestamp: Int32)
     case AddSecretMessages([Api.EncryptedMessage])
     case ReadSecretOutbox(peerId: PeerId, maxTimestamp: Int32, actionTimestamp: Int32)
@@ -575,17 +585,18 @@ struct AccountMutableState {
     mutating func mergeUsers(_ users: [Api.User]) {
         self.addOperation(.MergeApiUsers(users))
         
-        var presences: [PeerId: Api.UserStatus] = [:]
+        var presences: [PeerId: UpdatedApiPresence] = [:]
         for user in users {
             switch user {
-                case let .user(userData):
-                    let (id, status) = (userData.id, userData.status)
-                    if let status = status {
-                        presences[PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(id))] = status
-                    }
-                    break
-                case .userEmpty:
-                    break
+            case let .user(userData):
+                let (id, status) = (userData.id, userData.status)
+                let isMin = (userData.flags & (1 << 20)) != 0
+                if let status = status {
+                    presences[PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(id))] = UpdatedApiPresence(status: status, isMin: isMin)
+                }
+                break
+            case .userEmpty:
+                break
             }
         }
         if !presences.isEmpty {
@@ -594,7 +605,7 @@ struct AccountMutableState {
     }
     
     mutating func mergePeerPresences(_ presences: [PeerId: Api.UserStatus], explicit: Bool) {
-        self.addOperation(.MergePeerPresences(presences, explicit))
+        self.addOperation(.MergePeerPresences(presences.mapValues({ UpdatedApiPresence(status: $0, isMin: false) }), explicit))
     }
     
     mutating func updateSecretChat(chat: Api.EncryptedChat, timestamp: Int32) {

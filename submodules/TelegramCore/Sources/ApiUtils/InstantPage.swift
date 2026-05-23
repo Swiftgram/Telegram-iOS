@@ -302,7 +302,7 @@ extension InstantPageBlock {
                 self = .heading(text: RichText(apiText: pageBlockHeading6.text), level: 6)
             case let .pageBlockMath(pageBlockMath):
                 self = .formula(latex: pageBlockMath.source)
-            case .inputPageBlockMap, .inputPageBlockOrderedList:
+            case .inputPageBlockMap, .inputPageBlockOrderedList, .pageBlockThinking:
                 self = .unsupported
         }
     }

@@ -4923,26 +4923,24 @@ func replayFinalState(
                     })
                 }
             case let .MergePeerPresences(statuses, explicit):
-                var presences: [PeerId: PeerPresence] = [:]
+                var presences: [PeerId: UpdatedApiPresence] = [:]
                 for (peerId, status) in statuses {
                     if peerId == accountPeerId {
                         if explicit {
-                            switch status {
-                                case let .userStatusOnline(userStatusOnlineData):
-                                    let timestamp = userStatusOnlineData.expires
-                                    delayNotificatonsUntil = timestamp + 30
-                                case let .userStatusOffline(userStatusOfflineData):
-                                    let timestamp = userStatusOfflineData.wasOnline
-                                    delayNotificatonsUntil = timestamp
-                                default:
-                                    break
+                            switch status.status {
+                            case let .userStatusOnline(userStatusOnlineData):
+                                let timestamp = userStatusOnlineData.expires
+                                delayNotificatonsUntil = timestamp + 30
+                            case let .userStatusOffline(userStatusOfflineData):
+                                let timestamp = userStatusOfflineData.wasOnline
+                                delayNotificatonsUntil = timestamp
+                            default:
+                                break
                             }
                         }
                     } else {
-                        let presence = TelegramUserPresence(apiStatus: status)
-                        presences[peerId] = presence
+                        presences[peerId] = status
                     }
-                    
                 }
                 updatePeerPresencesClean(transaction: transaction, accountPeerId: accountPeerId, peerPresences: presences)
             case let .UpdateSecretChat(chat, _):

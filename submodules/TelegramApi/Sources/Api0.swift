@@ -790,6 +790,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[-248793375] = { return Api.PageBlock.parse_pageBlockSubheader($0) }
     dict[-1879401953] = { return Api.PageBlock.parse_pageBlockSubtitle($0) }
     dict[-1085412734] = { return Api.PageBlock.parse_pageBlockTable($0) }
+    dict[1009361890] = { return Api.PageBlock.parse_pageBlockThinking($0) }
     dict[1890305021] = { return Api.PageBlock.parse_pageBlockTitle($0) }
     dict[324435594] = { return Api.PageBlock.parse_pageBlockUnsupported($0) }
     dict[2089805750] = { return Api.PageBlock.parse_pageBlockVideo($0) }

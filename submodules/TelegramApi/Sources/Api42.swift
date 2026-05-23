@@ -4922,12 +4922,13 @@ public extension Api.functions.contacts {
     }
 }
 public extension Api.functions.contacts {
-    static func search(q: String, limit: Int32) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.contacts.Found>) {
+    static func search(flags: Int32, q: String, limit: Int32) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.contacts.Found>) {
         let buffer = Buffer()
-        buffer.appendInt32(301470424)
+        buffer.appendInt32(99978511)
+        serializeInt32(flags, buffer: buffer, boxed: false)
         serializeString(q, buffer: buffer, boxed: false)
         serializeInt32(limit, buffer: buffer, boxed: false)
-        return (FunctionDescription(name: "contacts.search", parameters: [("q", ConstructorParameterDescription(q)), ("limit", ConstructorParameterDescription(limit))]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> Api.contacts.Found? in
+        return (FunctionDescription(name: "contacts.search", parameters: [("flags", ConstructorParameterDescription(flags)), ("q", ConstructorParameterDescription(q)), ("limit", ConstructorParameterDescription(limit))]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> Api.contacts.Found? in
             let reader = BufferReader(buffer)
             var result: Api.contacts.Found?
             if let signature = reader.readInt32() {
