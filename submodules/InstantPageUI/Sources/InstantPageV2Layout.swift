@@ -2443,6 +2443,13 @@ private struct PendingV2FormulaAttachment {
     let baselineOffset: CGFloat
 }
 
+private struct PendingV2EmojiAttachment {
+    let xOffset: CGFloat
+    let range: NSRange
+    let emoji: ChatTextInputTextCustomEmojiAttribute
+    let size: CGFloat
+}
+
 func layoutTextItem(
     _ string: NSAttributedString,
     boundingWidth: CGFloat,
@@ -2554,6 +2561,8 @@ func layoutTextItem(
             var lineFormulaItems: [InstantPageTextFormulaRun] = []
             var pendingImages: [PendingV2ImageAttachment] = []
             var pendingFormulas: [PendingV2FormulaAttachment] = []
+            var lineEmojiItems: [InstantPageTextEmojiItem] = []
+            var pendingEmoji: [PendingV2EmojiAttachment] = []
             var isRTL = false
             if let glyphRuns = CTLineGetGlyphRuns(line) as? [CTRun], !glyphRuns.isEmpty {
                 if let run = glyphRuns.first, CTRunGetStatus(run).contains(CTRunStatus.rightToLeft) {
@@ -2572,6 +2581,11 @@ func layoutTextItem(
                             let xOffset = CTLineGetOffsetForStringIndex(line, range.location, nil)
                             let baselineOffset = (attributes[NSAttributedString.Key.baselineOffset] as? CGFloat) ?? 0.0
                             pendingFormulas.append(PendingV2FormulaAttachment(xOffset: xOffset, range: range, attachment: attachment, baselineOffset: baselineOffset))
+                        } else if let emoji = attributes[ChatTextInputAttributes.customEmoji] as? ChatTextInputTextCustomEmojiAttribute {
+                            let xOffset = CTLineGetOffsetForStringIndex(line, range.location, nil)
+                            let font = (attributes[NSAttributedString.Key.font] as? UIFont) ?? UIFont.systemFont(ofSize: 17.0)
+                            let itemSize = font.pointSize * 24.0 / 17.0
+                            pendingEmoji.append(PendingV2EmojiAttachment(xOffset: xOffset, range: range, emoji: emoji, size: itemSize))
                         }
                     }
                 }
@@ -2591,6 +2605,11 @@ func layoutTextItem(
                 }
                 if formula.attachment.rendered.descent > lineDescent {
                     lineDescent = formula.attachment.rendered.descent
+                }
+            }
+            for emoji in pendingEmoji {
+                if emoji.size > lineAscent {
+                    lineAscent = emoji.size
                 }
             }
             let baselineY = workingLineOrigin.y + lineAscent
@@ -2614,6 +2633,15 @@ func layoutTextItem(
                     height: attachment.rendered.size.height
                 )
                 lineFormulaItems.append(InstantPageTextFormulaRun(frame: formulaFrame, range: formula.range, attachment: attachment))
+            }
+            for emoji in pendingEmoji {
+                let emojiFrame = CGRect(
+                    x: workingLineOrigin.x + emoji.xOffset,
+                    y: baselineY - emoji.size,
+                    width: emoji.size,
+                    height: emoji.size
+                )
+                lineEmojiItems.append(InstantPageTextEmojiItem(frame: emojiFrame, range: emoji.range, emoji: emoji.emoji))
             }
 
             extraDescent = max(0.0, lineDescent - baselineToNextTopSlack)
@@ -2739,11 +2767,22 @@ func layoutTextItem(
                         }
                     }
                 }
+                for emoji in pendingEmoji {
+                    let localIndex = emoji.range.location - lineRange.location
+                    if localIndex >= 0 && localIndex < rects.count {
+                        let x = CTLineGetOffsetForStringIndex(line, emoji.range.location, nil)
+                        // characterRects are baseline-relative (positive-up). The emoji cell sits
+                        // bottom-on-baseline (see frame loop: y = baselineY - emoji.size), so its
+                        // baseline-relative bottom is 0 and maxY = emoji.size — the width feeds the
+                        // reveal cost map; maxY feeds the reveal-mask y conversion in the renderer.
+                        rects[localIndex] = CGRect(x: x, y: 0.0, width: emoji.size, height: emoji.size)
+                    }
+                }
                 lineCharacterRects = rects
             } else {
                 lineCharacterRects = nil
             }
-            let textLine = InstantPageTextLine(line: line, range: lineRange, frame: CGRect(x: workingLineOrigin.x, y: workingLineOrigin.y, width: lineWidth, height: height), strikethroughItems: strikethroughItems, underlineItems: underlineItems, markedItems: markedItems, imageItems: lineImageItems, formulaItems: lineFormulaItems, anchorItems: anchorItems, isRTL: isRTL, characterRects: lineCharacterRects)
+            let textLine = InstantPageTextLine(line: line, range: lineRange, frame: CGRect(x: workingLineOrigin.x, y: workingLineOrigin.y, width: lineWidth, height: height), strikethroughItems: strikethroughItems, underlineItems: underlineItems, markedItems: markedItems, imageItems: lineImageItems, formulaItems: lineFormulaItems, emojiItems: lineEmojiItems, anchorItems: anchorItems, isRTL: isRTL, characterRects: lineCharacterRects)
 
             lines.append(textLine)
             imageItems.append(contentsOf: lineImageItems)

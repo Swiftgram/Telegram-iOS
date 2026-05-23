@@ -59,6 +59,35 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     // to request a full bubble re-layout (so the bubble grows with the reveal).
     private var lastAppliedRevealedCount: Int = 0
 
+    override public var visibility: ListViewItemNodeVisibility {
+        didSet {
+            if oldValue != self.visibility {
+                self.updatePageViewVisibilityRect()
+            }
+        }
+    }
+
+    // Pushes the current `visibility` sub-rect into `pageView.visibilityRect`, translated into the
+    // page view's coordinate space (the page view sits at `streamingHeaderOffset` inside the bubble).
+    // Re-invoked from the apply closure after `pageView.frame` is set, because that offset shifts
+    // across streamed chunks without a `visibility` change, which would otherwise leave the
+    // animation-gating rect stale.
+    private func updatePageViewVisibilityRect() {
+        guard let pageView = self.pageView else {
+            return
+        }
+        switch self.visibility {
+        case .none:
+            pageView.visibilityRect = nil
+        case let .visible(_, subRect):
+            var rect = subRect
+            rect.origin.x = 0.0
+            rect.size.width = 10000.0
+            rect.origin.y -= pageView.frame.minY
+            pageView.visibilityRect = rect
+        }
+    }
+
     required public init() {
         self.containerNode = ContainerNode()
         self.containerNode.clipsToBounds = true
@@ -646,6 +675,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                                 origin: CGPoint(x: -1.0, y: streamingHeaderOffset),
                                 size: pageLayout.contentSize
                             )
+                            self.updatePageViewVisibilityRect()
                         } else {
                             self.currentPageLayout = nil
                             self.pageView?.update(

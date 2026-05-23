@@ -20,7 +20,8 @@ union RichText_Value {
     RichText_Phone,
     RichText_Image,
     RichText_Anchor,
-    RichText_Formula
+    RichText_Formula,
+    RichText_CustomEmoji
 }
 
 table RichText {
@@ -97,4 +98,9 @@ table RichText_Anchor {
 
 table RichText_Formula {
     latex:string (id: 0, required);
+}
+
+table RichText_CustomEmoji {
+    fileId:long (id: 0);
+    alt:string (id: 1, required);
 }

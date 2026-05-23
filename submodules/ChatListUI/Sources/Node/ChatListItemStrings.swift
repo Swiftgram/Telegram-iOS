@@ -120,6 +120,8 @@ extension RichText {
         case .formula:
             //TODO:localize
             return "Fx"
+        case let .textCustomEmoji(_, alt):
+            return alt
         }
     }
 }

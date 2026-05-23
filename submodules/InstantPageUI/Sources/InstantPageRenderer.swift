@@ -8,6 +8,10 @@ import TelegramUIPreferences
 import AccountContext
 import GalleryUI
 import ComponentFlow
+import TextFormat
+import EmojiTextAttachmentView
+import AnimationCache
+import MultiAnimationRenderer
 
 // MARK: - Stable item identity (for view reuse on re-layouts)
 
@@ -74,6 +78,19 @@ public final class InstantPageV2RenderContext {
     }
 }
 
+// MARK: - Emoji layer data
+
+private final class InstantPageEmojiLayerData {
+    let itemLayer: InlineStickerItemLayer
+    weak var textView: InstantPageV2TextView?
+    var charIndexInItem: Int = 0
+    var revealed: Bool = false
+
+    init(itemLayer: InlineStickerItemLayer) {
+        self.itemLayer = itemLayer
+    }
+}
+
 // MARK: - Public renderer
 
 public final class InstantPageV2View: UIView {
@@ -87,6 +104,20 @@ public final class InstantPageV2View: UIView {
     private var itemViewStableIds: [InstantPageV2StableItemId] = []
 
     public let renderContext: InstantPageV2RenderContext?
+
+    private var inlineStickerItemLayers: [InlineStickerItemLayer.Key: InstantPageEmojiLayerData] = [:]
+    private var emojiEnableLooping: Bool = true
+
+    /// Scroll-visibility rect in this view's coordinate space; gates emoji animation looping.
+    /// `nil` means "not visible" → emoji don't animate. The root rect is set by the bubble and
+    /// propagated down the nested tree (details/table) by `propagateVisibilityRect`.
+    public var visibilityRect: CGRect? {
+        didSet {
+            if oldValue != self.visibilityRect {
+                self.updateEmojiVisibility()
+            }
+        }
+    }
 
     // Weak references to every media wrapper in the tree, keyed by `InstantPageMedia.index`.
     // Used by `transitionArgsFor` and `applyHiddenMedia` so the gallery transition + hidden-source
@@ -191,6 +222,172 @@ public final class InstantPageV2View: UIView {
         self.itemViewStableIds = newStableIds
         self.currentLayout = layout
         self.currentTheme = theme
+        self.updateInlineEmoji()
+    }
+
+    func updateInlineEmoji() {
+        guard let rc = self.renderContext else { return }
+        let context = rc.context
+        let cache = context.animationCache
+        let renderer = context.animationRenderer
+        self.emojiEnableLooping = context.sharedContext.energyUsageSettings.loopEmoji
+
+        var nextIndexById: [Int64: Int] = [:]
+        var validIds: [InlineStickerItemLayer.Key] = []
+
+        for view in self.itemViews {
+            guard let textView = view as? InstantPageV2TextView else { continue }
+            let textItem = textView.item.textItem
+            let boundsWidth = textItem.frame.size.width
+            for line in textItem.lines {
+                if line.emojiItems.isEmpty { continue }
+                let lineFrame = v2FrameForLine(line, boundingWidth: boundsWidth, alignment: textItem.alignment)
+                for emojiItem in line.emojiItems {
+                    let index = nextIndexById[emojiItem.emoji.fileId] ?? 0
+                    nextIndexById[emojiItem.emoji.fileId] = index + 1
+                    let id = InlineStickerItemLayer.Key(id: emojiItem.emoji.fileId, index: index)
+                    validIds.append(id)
+
+                    let itemSize = emojiItem.frame.width
+                    let localX = lineFrame.minX + (emojiItem.frame.minX - line.frame.minX)
+                    let itemFrame = CGRect(
+                        x: localX + v2TextViewClippingInset,
+                        y: emojiItem.frame.minY + v2TextViewClippingInset,
+                        width: itemSize,
+                        height: itemSize
+                    )
+
+                    var textColor: UIColor?
+                    if emojiItem.range.location < textItem.attributedString.length {
+                        textColor = textItem.attributedString.attribute(.foregroundColor, at: emojiItem.range.location, effectiveRange: nil) as? UIColor
+                    }
+
+                    let data: InstantPageEmojiLayerData
+                    if let existing = self.inlineStickerItemLayers[id] {
+                        data = existing
+                        if data.itemLayer.superlayer !== textView.emojiContainerView.layer {
+                            textView.emojiContainerView.layer.addSublayer(data.itemLayer)
+                        }
+                    } else {
+                        let pointSize = floor(itemSize * 1.3)
+                        let layer = InlineStickerItemLayer(
+                            context: context,
+                            userLocation: .other,
+                            attemptSynchronousLoad: false,
+                            emoji: emojiItem.emoji,
+                            file: emojiItem.emoji.file,
+                            cache: cache,
+                            renderer: renderer,
+                            placeholderColor: UIColor(white: 0.5, alpha: 0.3),
+                            pointSize: CGSize(width: pointSize, height: pointSize),
+                            dynamicColor: textColor
+                        )
+                        layer.opacity = 0.0
+                        data = InstantPageEmojiLayerData(itemLayer: layer)
+                        self.inlineStickerItemLayers[id] = data
+                        textView.emojiContainerView.layer.addSublayer(layer)
+                    }
+
+                    data.itemLayer.dynamicColor = textColor
+                    data.itemLayer.frame = itemFrame
+                    data.textView = textView
+                    data.charIndexInItem = emojiItem.range.location
+                }
+            }
+        }
+
+        var removeKeys: [InlineStickerItemLayer.Key] = []
+        for (key, data) in self.inlineStickerItemLayers where !validIds.contains(key) {
+            removeKeys.append(key)
+            data.itemLayer.removeFromSuperlayer()
+        }
+        for key in removeKeys {
+            self.inlineStickerItemLayers.removeValue(forKey: key)
+        }
+
+        self.updateEmojiReveal(animated: false)
+    }
+
+    func updateEmojiReveal(animated: Bool) {
+        for (_, data) in self.inlineStickerItemLayers {
+            let revealed: Bool
+            if let textView = data.textView, let count = textView.currentRevealCharacterCount {
+                revealed = data.charIndexInItem < count
+            } else {
+                revealed = true
+            }
+            if data.revealed == revealed {
+                continue
+            }
+            data.revealed = revealed
+            if revealed {
+                if animated {
+                    data.itemLayer.opacity = 1.0
+                    let opacityAnim = CABasicAnimation(keyPath: "opacity")
+                    opacityAnim.fromValue = 0.0
+                    opacityAnim.toValue = 1.0
+                    opacityAnim.duration = 0.2
+                    data.itemLayer.add(opacityAnim, forKey: "emojiRevealOpacity")
+                    let scaleAnim = CABasicAnimation(keyPath: "transform.scale")
+                    scaleAnim.fromValue = 0.1
+                    scaleAnim.toValue = 1.0
+                    scaleAnim.duration = 0.2
+                    scaleAnim.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                    data.itemLayer.add(scaleAnim, forKey: "emojiRevealScale")
+                } else {
+                    data.itemLayer.opacity = 1.0
+                }
+            } else {
+                data.itemLayer.opacity = 0.0
+            }
+        }
+        self.updateEmojiVisibility()
+    }
+
+    func updateEmojiVisibility() {
+        for (_, data) in self.inlineStickerItemLayers {
+            let onScreen: Bool
+            if let visibilityRect = self.visibilityRect, let textView = data.textView {
+                let rectInSelf = textView.convert(data.itemLayer.frame, to: self)
+                onScreen = rectInSelf.intersects(visibilityRect)
+            } else {
+                // No visibility rect == not tracked / off-screen → don't animate. The root view's
+                // rect is propagated down the nested tree (details bodies, table cells/title) by
+                // `propagateVisibilityRect`, so a nil here genuinely means "not visible".
+                onScreen = false
+            }
+            data.itemLayer.isVisibleForAnimations = self.emojiEnableLooping && data.revealed && onScreen
+        }
+        self.propagateVisibilityRect()
+    }
+
+    // Pushes this view's `visibilityRect` down into every nested V2 view (details body, table
+    // title + cells), converted into each child's coordinate space. Each child's `visibilityRect`
+    // didSet re-runs `updateEmojiVisibility`, which propagates one level further — so a single
+    // root assignment fans out across the whole tree.
+    private func propagateVisibilityRect() {
+        for view in self.itemViews {
+            for nested in InstantPageV2View.nestedV2Views(of: view) {
+                let childRect = self.visibilityRect.map { self.convert($0, to: nested) }
+                if nested.visibilityRect != childRect {
+                    nested.visibilityRect = childRect
+                }
+            }
+        }
+    }
+
+    private static func nestedV2Views(of view: InstantPageItemView) -> [InstantPageV2View] {
+        if let detailsView = view as? InstantPageV2DetailsView {
+            return detailsView.bodyView.map { [$0] } ?? []
+        } else if let tableView = view as? InstantPageV2TableView {
+            var result: [InstantPageV2View] = []
+            if let titleSubView = tableView.titleSubView {
+                result.append(titleSubView)
+            }
+            result.append(contentsOf: tableView.cellSubViews)
+            return result
+        }
+        return []
     }
 
     /// Returns the input view typed-updated against `item`, or `nil` if the existing view's
@@ -451,6 +648,7 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
 
     private let renderContainer: UIView
     private let renderView: TextRenderView
+    let emojiContainerView: UIView = UIView()
 
     // Reveal mask state — populated in Task 5.
     private var maxCharacterDrawCount: Int?
@@ -474,6 +672,10 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
 
         self.renderView.frame = self.bounds
         self.renderContainer.addSubview(self.renderView)
+
+        self.emojiContainerView.frame = self.bounds
+        self.emojiContainerView.isUserInteractionEnabled = false
+        self.addSubview(self.emojiContainerView)
     }
 
     @available(*, unavailable)
@@ -486,6 +688,7 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
         self.item = item
         self.renderView.item = item
         self.renderView.setNeedsDisplay()
+        self.emojiContainerView.frame = self.bounds
     }
 
     func updateRevealCharacterCount(value: Int?, animated: Bool) {
@@ -494,6 +697,10 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
         }
         self.maxCharacterDrawCount = value
         self.updateRevealMask(animateNewSegments: animated)
+    }
+
+    var currentRevealCharacterCount: Int? {
+        return self.maxCharacterDrawCount
     }
 
     private struct RevealLineInfo {

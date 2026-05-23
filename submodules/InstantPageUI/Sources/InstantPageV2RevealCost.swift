@@ -350,6 +350,7 @@ public extension InstantPageV2View {
             for view in self.itemViews {
                 clearRevealOn(view: view, animated: animated)
             }
+            self.updateEmojiReveal(animated: animated)
             return
         }
 
@@ -368,6 +369,7 @@ public extension InstantPageV2View {
                 clearRevealOn(view: self.itemViews[i], animated: animated)
             }
         }
+        self.updateEmojiReveal(animated: animated)
     }
 }
 

@@ -53,9 +53,8 @@ extension RichText {
         case let .textAnchor(textAnchorData):
             let (text, name) = (textAnchorData.text, textAnchorData.name)
             self = .anchor(text: RichText(apiText: text), name: name)
-        case .textCustomEmoji:
-            //TODO:localize
-            self = .plain("")
+        case let .textCustomEmoji(data):
+            self = .textCustomEmoji(fileId: data.documentId, alt: data.alt)
         case let .textMath(textMath):
             self = .formula(latex: textMath.source)
         case let .textAutoEmail(email):
@@ -141,6 +140,8 @@ extension RichText {
             return .textAnchor(Api.RichText.Cons_textAnchor(text: text.apiRichText(), name: name))
         case let .formula(latex):
             return .textMath(Api.RichText.Cons_textMath(source: latex))
+        case let .textCustomEmoji(fileId, alt):
+            return .textCustomEmoji(Api.RichText.Cons_textCustomEmoji(documentId: fileId, alt: alt))
         }
     }
 }

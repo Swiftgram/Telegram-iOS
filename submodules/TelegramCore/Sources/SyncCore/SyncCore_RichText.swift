@@ -20,6 +20,7 @@ private enum RichTextTypes: Int32 {
     case image = 14
     case anchor = 15
     case formula = 16
+    case textCustomEmoji = 17
 }
 
 public indirect enum RichText: PostboxCoding, Equatable {
@@ -40,7 +41,8 @@ public indirect enum RichText: PostboxCoding, Equatable {
     case image(id: MediaId, dimensions: PixelDimensions)
     case anchor(text: RichText, name: String)
     case formula(latex: String)
-    
+    case textCustomEmoji(fileId: Int64, alt: String)
+
     public init(decoder: PostboxDecoder) {
         switch decoder.decodeInt32ForKey("r", orElse: 0) {
             case RichTextTypes.empty.rawValue:
@@ -83,6 +85,8 @@ public indirect enum RichText: PostboxCoding, Equatable {
                 self = .anchor(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText, name: decoder.decodeStringForKey("n", orElse: ""))
             case RichTextTypes.formula.rawValue:
                 self = .formula(latex: decoder.decodeStringForKey("l", orElse: ""))
+            case RichTextTypes.textCustomEmoji.rawValue:
+                self = .textCustomEmoji(fileId: decoder.decodeInt64ForKey("ce.f", orElse: 0), alt: decoder.decodeStringForKey("ce.a", orElse: ""))
             default:
                 self = .empty
         }
@@ -154,6 +158,10 @@ public indirect enum RichText: PostboxCoding, Equatable {
             case let .formula(latex):
                 encoder.encodeInt32(RichTextTypes.formula.rawValue, forKey: "r")
                 encoder.encodeString(latex, forKey: "l")
+            case let .textCustomEmoji(fileId, alt):
+                encoder.encodeInt32(RichTextTypes.textCustomEmoji.rawValue, forKey: "r")
+                encoder.encodeInt64(fileId, forKey: "ce.f")
+                encoder.encodeString(alt, forKey: "ce.a")
         }
     }
     
@@ -261,6 +269,12 @@ public indirect enum RichText: PostboxCoding, Equatable {
                 } else {
                     return false
                 }
+            case let .textCustomEmoji(lhsFileId, lhsAlt):
+                if case let .textCustomEmoji(rhsFileId, rhsAlt) = rhs, lhsFileId == rhsFileId, lhsAlt == rhsAlt {
+                    return true
+                } else {
+                    return false
+                }
         }
     }
 }
@@ -306,6 +320,8 @@ public extension RichText {
                 return text.plainText
             case let .formula(latex):
                 return latex
+            case let .textCustomEmoji(_, alt):
+                return alt
         }
     }
 }
@@ -398,6 +414,11 @@ extension RichText {
                 throw FlatBuffersError.missingRequiredField()
             }
             self = .formula(latex: value.latex)
+        case .richtextCustomemoji:
+            guard let value = flatBuffersObject.value(type: TelegramCore_RichText_CustomEmoji.self) else {
+                throw FlatBuffersError.missingRequiredField()
+            }
+            self = .textCustomEmoji(fileId: value.fileId, alt: value.alt)
         case .none_:
             self = .empty
         }
@@ -520,8 +541,15 @@ extension RichText {
             let start = TelegramCore_RichText_Formula.startRichText_Formula(&builder)
             TelegramCore_RichText_Formula.add(latex: latexOffset, &builder)
             offset = TelegramCore_RichText_Formula.endRichText_Formula(&builder, start: start)
+        case let .textCustomEmoji(fileId, alt):
+            valueType = .richtextCustomemoji
+            let altOffset = builder.create(string: alt)
+            let start = TelegramCore_RichText_CustomEmoji.startRichText_CustomEmoji(&builder)
+            TelegramCore_RichText_CustomEmoji.add(fileId: fileId, &builder)
+            TelegramCore_RichText_CustomEmoji.add(alt: altOffset, &builder)
+            offset = TelegramCore_RichText_CustomEmoji.endRichText_CustomEmoji(&builder, start: start)
         }
-        
+
         return TelegramCore_RichText.createRichText(&builder, valueType: valueType, valueOffset: offset)
     }
 }

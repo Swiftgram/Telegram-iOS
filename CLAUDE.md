@@ -74,6 +74,31 @@ Spec: [`docs/superpowers/specs/2026-05-19-richdata-streaming-animation-design.md
 - **`Thinking…` header positioning matches TextBubble.** `streamingTextFrame.origin = (bubbleInsets.left - textInsets.left, topInset - textInsets.top)`. `streamingHeaderOffset` = visible bottom + 1pt spacing = where pageView's `frame.origin.y` and statusFrame y-shift attach. Bubble minimum width includes `visible_thinking_width + bubbleInsets.left + bubbleInsets.right + 2`.
 - **Display-link tick re-layouts on extent change.** Tick reads `revealedContentSize` at the new cursor; if the height differs from the previous cursor, calls `requestFullUpdate`. So the bubble grows in flight when the cursor crosses a line/item boundary, not just between chunks. Tick passes `animated: true` to `applyReveal` to fire the snippet pop-in.
 
+## Inline custom emoji (RichText.textCustomEmoji)
+
+`RichText.textCustomEmoji(fileId:alt:)` renders an inline **animated** custom emoji inside rich-data bubbles. Covers API parsing, Postbox + FlatBuffers serialization, and display in the InstantPage V2 renderer; the emoji participates in the streaming reveal above.
+
+### Where things live
+
+| File | Responsibility |
+|---|---|
+| `submodules/TelegramCore/Sources/SyncCore/SyncCore_RichText.swift` | Enum case `textCustomEmoji(fileId: Int64, alt: String)` + Postbox coding (discriminator 17, keys `ce.f`/`ce.a`), `==`, `plainText` (returns `alt`), and FlatBuffers codec. |
+| `submodules/TelegramCore/FlatSerialization/Models/RichText.fbs` | FlatBuffers schema — `RichText_CustomEmoji` union member + table. **Source of truth**; the Bazel `flatc` genrule regenerates `*_generated.swift` at build time (the checked-in `Sources/*_generated.swift` is stale). |
+| `submodules/TelegramCore/Sources/ApiUtils/RichText.swift` | `Api.RichText.textCustomEmoji` ⇄ Swift, lossless both ways. |
+| `submodules/InstantPageUI/Sources/InstantPageTextItem.swift` (`attributedStringForRichText`) | Emits a single placeholder char carrying `ChatTextInputAttributes.customEmoji` (a `ChatTextInputTextCustomEmojiAttribute`) + a `CTRunDelegate` sized `font.pointSize · 24/17`. |
+| `submodules/InstantPageUI/Sources/InstantPageV2Layout.swift` (line-breaker) | Collects per-line `InstantPageTextLine.emojiItems`; overwrites each placeholder char's `characterRect` with a full cell (`width = itemSize`) so it feeds the reveal cost map. |
+| `submodules/InstantPageUI/Sources/InstantPageRenderer.swift` (`InstantPageV2View`) | Owns the `InlineStickerItemLayer`s: `updateInlineEmoji` (create/reuse/remove/position), `updateEmojiReveal` (reveal-driven pop-in), `updateEmojiVisibility` + `propagateVisibilityRect`. Layers attach to each text view's `emojiContainerView`. |
+
+### Non-obvious invariants
+
+- **flatc casing/`required` gotchas.** Edit `RichText.fbs`, not the generated Swift. Scalars (`long`) cannot be `(required)` — only strings/tables can. A union member `RichText_CustomEmoji` generates the Swift enum case `.richtextCustomemoji` (everything after the suffix's first letter is lowercased); the table type stays `TelegramCore_RichText_CustomEmoji` and field accessors keep `.fbs` casing (`value.fileId`). See the `flatbuffers-codegen` memory.
+- **`ChatTextInputTextCustomEmojiAttribute` is reused end-to-end** (display layer ⇄ layout model). The attribute is written to the placeholder in `attributedStringForRichText` and read back by the V2 line-breaker under the SAME key (`ChatTextInputAttributes.customEmoji`); `InlineStickerItemLayer.init` consumes it directly and resolves the file lazily from `fileId`.
+- **Emoji participates in the streaming reveal.** Its placeholder char's `characterRect` is overwritten to a full cell (width = `itemSize`, baseline-relative bottom at `y=0`), so the width-based cost map charges it like other content. `updateEmojiReveal` pops the layer in (alpha 0→1 + scale) when `charIndexInItem < currentRevealCharacterCount`; unrevealed → opacity 0.
+- **Layers sit ABOVE the reveal mask.** They attach to `InstantPageV2TextView.emojiContainerView` (a sibling above `renderContainer`), NOT inside it — so the reveal mask wipes glyphs while emoji pop in independently. Adding a CTRunDelegate-glyph to the mask would clip-wipe them instead.
+- **Layers are owned by `InstantPageV2View`, not the text view.** Keyed by `InlineStickerItemLayer.Key(id: fileId, index: occurrence)`. The pageView is rebuilt per `stableVersion` bump (see streaming section), so the dict starts fresh each chunk — no orphan/leak across rebuilds; within one view, stale keys are pruned.
+- **`visibilityRect` gates looping; `nil` means "not visible".** The bubble's `visibility` override pushes a full-width sub-rect to the root `pageView.visibilityRect`, re-pushed in the apply closure after `pageView.frame` is set (because `streamingHeaderOffset` shifts across chunks without a `visibility` change). `propagateVisibilityRect` converts the rect into each nested V2View's coordinate space (`self.convert(_:to:)`) for details bodies / table cells+title, fanning out via each child's `didSet`.
+- **CTRunDelegate extent buffers must be freed.** Every inline-attachment arm (`.image`/`.formula`/`.textCustomEmoji`) in `attributedStringForRichText` allocates an `extentBuffer`; the `dealloc` callback must `deallocate()` it (it re-runs per layout pass).
+
 ## Postbox → TelegramEngine refactor (in progress)
 
 A gradual migration is underway to eliminate direct `import Postbox` from consumer submodules in favor of `TelegramEngine`.

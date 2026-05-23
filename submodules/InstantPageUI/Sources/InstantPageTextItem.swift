@@ -51,6 +51,12 @@ struct InstantPageTextFormulaRun {
     let attachment: InstantPageMathAttachment
 }
 
+struct InstantPageTextEmojiItem {
+    let frame: CGRect
+    let range: NSRange
+    let emoji: ChatTextInputTextCustomEmojiAttribute
+}
+
 public struct InstantPageTextAnchorItem {
     public let name: String
     public let anchorText: NSAttributedString?
@@ -78,11 +84,12 @@ public final class InstantPageTextLine {
     let markedItems: [InstantPageTextMarkedItem]
     let imageItems: [InstantPageTextImageItem]
     let formulaItems: [InstantPageTextFormulaRun]
+    let emojiItems: [InstantPageTextEmojiItem]
     public let anchorItems: [InstantPageTextAnchorItem]
     let isRTL: Bool
     public let characterRects: [CGRect]?   // line-local, one rect per character in `range`; nil = not computed
 
-    init(line: CTLine, range: NSRange, frame: CGRect, strikethroughItems: [InstantPageTextStrikethroughItem], underlineItems: [InstantPageTextUnderlineItem], markedItems: [InstantPageTextMarkedItem], imageItems: [InstantPageTextImageItem], formulaItems: [InstantPageTextFormulaRun], anchorItems: [InstantPageTextAnchorItem], isRTL: Bool, characterRects: [CGRect]? = nil) {
+    init(line: CTLine, range: NSRange, frame: CGRect, strikethroughItems: [InstantPageTextStrikethroughItem], underlineItems: [InstantPageTextUnderlineItem], markedItems: [InstantPageTextMarkedItem], imageItems: [InstantPageTextImageItem], formulaItems: [InstantPageTextFormulaRun], emojiItems: [InstantPageTextEmojiItem] = [], anchorItems: [InstantPageTextAnchorItem], isRTL: Bool, characterRects: [CGRect]? = nil) {
         self.line = line
         self.range = range
         self.frame = frame
@@ -91,6 +98,7 @@ public final class InstantPageTextLine {
         self.markedItems = markedItems
         self.imageItems = imageItems
         self.formulaItems = formulaItems
+        self.emojiItems = emojiItems
         self.anchorItems = anchorItems
         self.isRTL = isRTL
         self.characterRects = characterRects
@@ -754,7 +762,8 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
             }
             let extentBuffer = UnsafeMutablePointer<RunStruct>.allocate(capacity: 1)
             extentBuffer.initialize(to: RunStruct(ascent: 0.0, descent: 0.0, width: dimensions.cgSize.width))
-            var callbacks = CTRunDelegateCallbacks(version: kCTRunDelegateVersion1, dealloc: { (pointer) in
+            var callbacks = CTRunDelegateCallbacks(version: kCTRunDelegateVersion1, dealloc: { pointer in
+                pointer.assumingMemoryBound(to: RunStruct.self).deallocate()
             }, getAscent: { (pointer) -> CGFloat in
                 let d = pointer.assumingMemoryBound(to: RunStruct.self)
                 return d.pointee.ascent
@@ -789,7 +798,8 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
             }
             let extentBuffer = UnsafeMutablePointer<RunStruct>.allocate(capacity: 1)
             extentBuffer.initialize(to: RunStruct(ascent: attachment.rendered.ascent, descent: attachment.rendered.descent, width: attachment.rendered.size.width))
-            var callbacks = CTRunDelegateCallbacks(version: kCTRunDelegateVersion1, dealloc: { _ in
+            var callbacks = CTRunDelegateCallbacks(version: kCTRunDelegateVersion1, dealloc: { pointer in
+                pointer.assumingMemoryBound(to: RunStruct.self).deallocate()
             }, getAscent: { pointer -> CGFloat in
                 let data = pointer.assumingMemoryBound(to: RunStruct.self)
                 return data.pointee.ascent
@@ -819,6 +829,37 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
             let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
             styleStack.pop()
             return result
+        case let .textCustomEmoji(fileId, _):
+            struct RunStruct {
+                let ascent: CGFloat
+                let descent: CGFloat
+                let width: CGFloat
+            }
+            let attributes = styleStack.textAttributes()
+            let font = (attributes[NSAttributedString.Key.font] as? UIFont) ?? UIFont.systemFont(ofSize: 17.0)
+            let itemSize = font.pointSize * 24.0 / 17.0
+            let extentBuffer = UnsafeMutablePointer<RunStruct>.allocate(capacity: 1)
+            extentBuffer.initialize(to: RunStruct(ascent: font.ascender, descent: font.descender, width: itemSize))
+            var callbacks = CTRunDelegateCallbacks(version: kCTRunDelegateVersion1, dealloc: { pointer in
+                pointer.assumingMemoryBound(to: RunStruct.self).deallocate()
+            }, getAscent: { pointer -> CGFloat in
+                let d = pointer.assumingMemoryBound(to: RunStruct.self)
+                return d.pointee.ascent
+            }, getDescent: { pointer -> CGFloat in
+                let d = pointer.assumingMemoryBound(to: RunStruct.self)
+                return d.pointee.descent
+            }, getWidth: { pointer -> CGFloat in
+                let d = pointer.assumingMemoryBound(to: RunStruct.self)
+                return d.pointee.width
+            })
+            let delegate = CTRunDelegateCreate(&callbacks, extentBuffer)
+            let emojiAttribute = ChatTextInputTextCustomEmojiAttribute(interactivelySelectedFromPackId: nil, fileId: fileId, file: nil)
+            let mutableAttributedString = attributedStringForRichText(.plain(" "), styleStack: styleStack, url: url).mutableCopy() as! NSMutableAttributedString
+            mutableAttributedString.addAttributes([
+                kCTRunDelegateAttributeName as NSAttributedString.Key: delegate as Any,
+                ChatTextInputAttributes.customEmoji: emojiAttribute
+            ], range: NSMakeRange(0, mutableAttributedString.length))
+            return mutableAttributedString
     }
 }
 
