@@ -16,6 +16,7 @@ swift_library(
         "//submodules/SSignalKit/SwiftSignalKit",
         "//submodules/AccountContext",
         "//submodules/InstantPageUI",
+        "//submodules/TextFormat:TextFormat",
         "//submodules/TelegramUI/Components/Chat/ChatMessageBubbleContentNode",
         "//submodules/TelegramUI/Components/Chat/ChatMessageDateAndStatusNode",
         "//submodules/TelegramUI/Components/Chat/ChatMessageItemCommon",

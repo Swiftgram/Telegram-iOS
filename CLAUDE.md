@@ -74,6 +74,15 @@ Spec: [`docs/superpowers/specs/2026-05-19-richdata-streaming-animation-design.md
 - **`Thinking…` header positioning matches TextBubble.** `streamingTextFrame.origin = (bubbleInsets.left - textInsets.left, topInset - textInsets.top)`. `streamingHeaderOffset` = visible bottom + 1pt spacing = where pageView's `frame.origin.y` and statusFrame y-shift attach. Bubble minimum width includes `visible_thinking_width + bubbleInsets.left + bubbleInsets.right + 2`.
 - **Display-link tick re-layouts on extent change.** Tick reads `revealedContentSize` at the new cursor; if the height differs from the previous cursor, calls `requestFullUpdate`. So the bubble grows in flight when the cursor crosses a line/item boundary, not just between chunks. Tick passes `animated: true` to `applyReveal` to fire the snippet pop-in.
 
+### Status node (date/time/checks) positioning
+
+The `ChatMessageDateAndStatusNode` mirrors TextBubble's placement, adapted to the heterogeneous V2 layout. The node is a child of `self` (the content node), **not** of the clipping `containerNode`, so it is never clipped — the bubble height must be grown to contain it.
+
+- **X is a fixed left edge, not the last line's `minX`.** Anchor x = `pageHorizontalInset` (10pt, the page layout's text inset; pageView sits at self-x 0). The status layout is measured with `boundingWidth - 2·pageHorizontalInset` (mirrors TextBubble's `boundingWidth - sideInsets`) so the right-aligned date lands at the right inset instead of off the bubble. Using `lastTextLineFrame.minX` (which is large for nested/indented last lines) shoved the date off to the right.
+- **Trail the last line only when the bottom-most item is text.** `lastTextLineFrameIfLastItemIsText(in:)` (in `InstantPageV2Layout.swift`) returns the last line frame *only* when the bottom-most top-level item (max `maxY`) is a `.text`; otherwise nil, so the date wraps below all content (anchored at `contentSize.height`). For tables/images/etc. the date must not trail text buried above the final item.
+- **InstantPage draws the baseline at the line frame's `maxY`** (`InstantPageRenderer` draws each line at `lineOrigin.y + lineFrame.height`), so the visible text of a plain line sits ~5pt below `maxY`. A date that **trails** on the line (`statusHeight == 0`) adds `trailingBottomPadding` (5pt) to align with the text; a date that **wraps** onto its own line below (`statusHeight > 0`) sits at the bare `maxY`. The pad is 0 for lines taller than their font line height (an inline animated emoji, ~`pointSize·24/17`, already pushes `maxY` down). `lastTextLineFrameIfLastItemIsText` returns `(frame, trailingBottomPadding)`; the bubble applies the pad only in the trailing case.
+- **Bubble height leaves ~6pt below the date.** One unified formula for all cases: `boundingSize.height = max(boundingSize.height, statusBottomEdge + 6.0)`, where `statusBottomEdge = statusAnchorY + max(1, statusHeight)`. The `statusAnchorY` in the measure (`continue`) closure must mirror the `statusFrameY (+ streamingHeaderOffset)` in the apply closure exactly, or the date will be clipped/misplaced. 6pt matches TextBubble's bottom bubble inset.
+
 ## Inline custom emoji (RichText.textCustomEmoji)
 
 `RichText.textCustomEmoji(fileId:alt:)` renders an inline **animated** custom emoji inside rich-data bubbles. Covers API parsing, Postbox + FlatBuffers serialization, and display in the InstantPage V2 renderer; the emoji participates in the streaming reveal above.
@@ -98,6 +107,26 @@ Spec: [`docs/superpowers/specs/2026-05-19-richdata-streaming-animation-design.md
 - **Layers are owned by `InstantPageV2View`, not the text view.** Keyed by `InlineStickerItemLayer.Key(id: fileId, index: occurrence)`. The pageView is rebuilt per `stableVersion` bump (see streaming section), so the dict starts fresh each chunk — no orphan/leak across rebuilds; within one view, stale keys are pruned.
 - **`visibilityRect` gates looping; `nil` means "not visible".** The bubble's `visibility` override pushes a full-width sub-rect to the root `pageView.visibilityRect`, re-pushed in the apply closure after `pageView.frame` is set (because `streamingHeaderOffset` shifts across chunks without a `visibility` change). `propagateVisibilityRect` converts the rect into each nested V2View's coordinate space (`self.convert(_:to:)`) for details bodies / table cells+title, fanning out via each child's `didSet`.
 - **CTRunDelegate extent buffers must be freed.** Every inline-attachment arm (`.image`/`.formula`/`.textCustomEmoji`) in `attributedStringForRichText` allocates an `extentBuffer`; the `dealloc` callback must `deallocate()` it (it re-runs per layout pass).
+
+## RichText entity cases (mention / hashtag / bot command / bank card / auto link)
+
+`RichText.textMention`, `.textMentionName(text:peerId:)`, `.textHashtag`, `.textCashtag`, `.textBotCommand`, `.textBankCard`, `.textAutoUrl`, `.textAutoEmail`, `.textAutoPhone` render the message-entity flavors of rich text inside rich-data bubbles with full tap interaction mirroring `ChatMessageTextBubbleContentNode`. Covers API parsing, Postbox + FlatBuffers serialization, display, and tap routing. (`textDate`/`textSpoiler` remain unimplemented — `.plain("")`.)
+
+### Where things live
+
+| File | Responsibility |
+|---|---|
+| `submodules/TelegramCore/Sources/SyncCore/SyncCore_RichText.swift` | The 9 enum cases (each wraps `text: RichText`; `textMentionName` adds raw `peerId: Int64`) + Postbox coding (discriminators 18–26, wrapped text under key `"t"`, mention-name peerId under `"mn.p"`), `==`, `plainText`, FlatBuffers codec. |
+| `submodules/TelegramCore/FlatSerialization/Models/RichText.fbs` | Union members + tables (`RichText_MentionName` adds `peerId:long`). Source of truth — same flatc gotchas as the custom-emoji section above. |
+| `submodules/TelegramCore/Sources/ApiUtils/RichText.swift` | `Api.RichText` ⇄ Swift, lossless. `textMentionName` carries `userId` ⇄ `peerId`. |
+| `submodules/InstantPageUI/Sources/InstantPageTextItem.swift` (`attributedStringForRichText`) | Display: auto url/email/phone reuse the `InstantPageUrlItem` (`url:`) path; the six entity cases push `.link(false)`, recurse, then attach the matching `TelegramTextAttributes.*` key over the produced range. |
+| `submodules/TelegramUI/Components/Chat/ChatMessageRichDataBubbleContentNode/...` | Tap routing: `entityForTapLocation` reads the attribute dict at the tapped point; `entityTapContent` maps keys → `ChatMessageBubbleContentTapAction.Content`. |
+
+### Non-obvious invariants
+
+- **Display attaches the same `TelegramTextAttributes.*` keys the chat text bubble uses; the bubble reads them back.** Contract: `textMention`→`PeerTextMention` (String); `textMentionName`→`PeerMention` (`TelegramPeerMention`, peerId built as `EnginePeer.Id(namespace: Namespaces.Peer.CloudUser, …)` — `InstantPageTextItem` imports TelegramCore but NOT Postbox, so bare `PeerId` is out of scope); `textHashtag` AND `textCashtag`→`Hashtag` (`TelegramHashtag`; no dedicated cashtag key/tap-action — the leading `$` distinguishes them); `textBotCommand`→`BotCommand`; `textBankCard`→`BankCard`. Auto url/email/phone go through the URL path (`mailto:`/`tel:`/raw), NOT an entity key.
+- **`linkSelectionRects` and the bubble tap path check all six interactive keys** (URL + the five entity keys), not just URL, so press-highlight and the link-loading shimmer cover entities too.
+- **Rich-data text selection must reach a line's trailing edge.** This is general to rich-data selection, not just entities: `InstantPageTextItem.attributesAtPoint(_:orNearest:)`'s `orNearest: true` (selection-drag) path returns `line.range.upperBound` (via `CTLineGetStringRange`) when the point is at/past `lineFrame.maxX`. `TextSelectionNode` uses that index as the **exclusive** upper bound, so clamping to the last character's index — as the `orNearest: false` hit-testing path correctly does — would leave the last character/item of every line unselectable. Mirrors `Display.TextNode`. Do not collapse the two `orNearest` paths back together.
 
 ## Postbox → TelegramEngine refactor (in progress)
 

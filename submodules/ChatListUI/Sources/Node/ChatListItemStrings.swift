@@ -122,6 +122,8 @@ extension RichText {
             return "Fx"
         case let .textCustomEmoji(_, alt):
             return alt
+        case let .textAutoEmail(value), let .textAutoPhone(value), let .textAutoUrl(value), let .textBankCard(value), let .textBotCommand(value), let .textCashtag(value), let .textHashtag(value), let .textMention(value), let .textMentionName(value, _):
+            return value.previewText()
         }
     }
 }

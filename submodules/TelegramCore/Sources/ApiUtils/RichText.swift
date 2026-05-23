@@ -57,46 +57,28 @@ extension RichText {
             self = .textCustomEmoji(fileId: data.documentId, alt: data.alt)
         case let .textMath(textMath):
             self = .formula(latex: textMath.source)
-        case let .textAutoEmail(email):
-            let _ = email
-            //TODO:localize
-            self = .plain("")
-        case let .textAutoPhone(phone):
-            let _ = phone
-            //TODO:localize
-            self = .plain("")
-        case let .textAutoUrl(url):
-            let _ = url
-            //TODO:localize
-            self = .plain("")
-        case let .textBankCard(value):
-            let _ = value
-            //TODO:localize
-            self = .plain("")
-        case let .textBotCommand(value):
-            let _ = value
-            //TODO:localize
-            self = .plain("")
-        case let .textCashtag(value):
-            let _ = value
-            //TODO:localize
-            self = .plain("")
+        case let .textAutoEmail(textAutoEmailData):
+            self = .textAutoEmail(text: RichText(apiText: textAutoEmailData.text))
+        case let .textAutoPhone(textAutoPhoneData):
+            self = .textAutoPhone(text: RichText(apiText: textAutoPhoneData.text))
+        case let .textAutoUrl(textAutoUrlData):
+            self = .textAutoUrl(text: RichText(apiText: textAutoUrlData.text))
+        case let .textBankCard(textBankCardData):
+            self = .textBankCard(text: RichText(apiText: textBankCardData.text))
+        case let .textBotCommand(textBotCommandData):
+            self = .textBotCommand(text: RichText(apiText: textBotCommandData.text))
+        case let .textCashtag(textCashtagData):
+            self = .textCashtag(text: RichText(apiText: textCashtagData.text))
         case let .textDate(value):
             let _ = value
             //TODO:localize
             self = .plain("")
-        case let .textHashtag(value):
-            let _ = value
-            //TODO:localize
-            self = .plain("")
-        case let .textMention(value):
-            let _ = value
-            //TODO:localize
-            self = .plain("")
-        case let .textMentionName(value):
-            let _ = value
-            //TODO:localize
-            self = .plain("")
+        case let .textHashtag(textHashtagData):
+            self = .textHashtag(text: RichText(apiText: textHashtagData.text))
+        case let .textMention(textMentionData):
+            self = .textMention(text: RichText(apiText: textMentionData.text))
+        case let .textMentionName(textMentionNameData):
+            self = .textMentionName(text: RichText(apiText: textMentionNameData.text), peerId: textMentionNameData.userId)
         case let .textSpoiler(value):
             let _ = value
             //TODO:localize
@@ -142,6 +124,24 @@ extension RichText {
             return .textMath(Api.RichText.Cons_textMath(source: latex))
         case let .textCustomEmoji(fileId, alt):
             return .textCustomEmoji(Api.RichText.Cons_textCustomEmoji(documentId: fileId, alt: alt))
+        case let .textAutoEmail(text):
+            return .textAutoEmail(Api.RichText.Cons_textAutoEmail(text: text.apiRichText()))
+        case let .textAutoPhone(text):
+            return .textAutoPhone(Api.RichText.Cons_textAutoPhone(text: text.apiRichText()))
+        case let .textAutoUrl(text):
+            return .textAutoUrl(Api.RichText.Cons_textAutoUrl(text: text.apiRichText()))
+        case let .textBankCard(text):
+            return .textBankCard(Api.RichText.Cons_textBankCard(text: text.apiRichText()))
+        case let .textBotCommand(text):
+            return .textBotCommand(Api.RichText.Cons_textBotCommand(text: text.apiRichText()))
+        case let .textCashtag(text):
+            return .textCashtag(Api.RichText.Cons_textCashtag(text: text.apiRichText()))
+        case let .textHashtag(text):
+            return .textHashtag(Api.RichText.Cons_textHashtag(text: text.apiRichText()))
+        case let .textMention(text):
+            return .textMention(Api.RichText.Cons_textMention(text: text.apiRichText()))
+        case let .textMentionName(text, peerId):
+            return .textMentionName(Api.RichText.Cons_textMentionName(text: text.apiRichText(), userId: peerId))
         }
     }
 }

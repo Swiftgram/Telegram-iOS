@@ -102,11 +102,11 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
             }
         }
     } else {
-        if let upper = upper, case .relatedArticles = upper {
+        if let upper, case .relatedArticles = upper {
             return 0.0
         } else {
             if fitToWidth {
-                return 10.0
+                return 5.0
             } else {
                 return 25.0
             }

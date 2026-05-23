@@ -394,6 +394,34 @@ public func lastTextLineFrame(in layout: InstantPageV2Layout) -> CGRect? {
     return nil
 }
 
+/// Variant of `lastTextLineFrame(in:)` that returns the last text line frame only when the
+/// bottom-most top-level item in the layout is itself a text item. When the layout ends in a
+/// non-text item (table, image, divider, list marker, details, …) it returns nil, so callers
+/// place the trailing status below all content rather than beside text buried above the final
+/// item.
+///
+/// Also returns `trailingBottomPadding`: the renderer draws the baseline at the line frame's maxY,
+/// so the visible text of a plain line sits ~5pt below it. A status that *trails on the line* should
+/// anchor at `maxY + trailingBottomPadding` to align with where the text actually renders. The pad
+/// is 0 when the line is taller than its font line height (an inline animated emoji, ~pointSize·24/17,
+/// already pushes maxY down to the right spot). Callers should NOT apply the pad when the status
+/// wraps onto its own line below the text — there it should sit at the bare maxY.
+public func lastTextLineFrameIfLastItemIsText(in layout: InstantPageV2Layout) -> (frame: CGRect, trailingBottomPadding: CGFloat)? {
+    guard let bottomItem = layout.items.max(by: { $0.frame.maxY < $1.frame.maxY }),
+          case let .text(text) = bottomItem,
+          let last = text.textItem.lines.last
+    else {
+        return nil
+    }
+    let lineFrame = last.frame.offsetBy(dx: text.frame.minX, dy: text.frame.minY)
+    var ascent: CGFloat = 0.0
+    var descent: CGFloat = 0.0
+    var leading: CGFloat = 0.0
+    _ = CTLineGetTypographicBounds(last.line, &ascent, &descent, &leading)
+    let isInflatedByAttachment = lineFrame.height > ascent + descent + 1.0
+    return (lineFrame, isInflatedByAttachment ? 0.0 : 5.0)
+}
+
 // MARK: - Layout context
 
 private struct LayoutContext {

@@ -1958,6 +1958,8 @@ private func markdownDroppingPrefixLength(_ length: Int, from text: RichText) ->
         return dropped == .empty ? .empty : .anchor(text: dropped, name: name)
     case .textCustomEmoji:
         return text
+    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName:
+        return text
     }
 }
 
@@ -1989,6 +1991,8 @@ private func markdownHasDisplayableContent(_ richText: RichText) -> Bool {
         return !latex.isEmpty
     case .textCustomEmoji:
         return true
+    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName:
+        return true
     }
 }
 
@@ -2019,6 +2023,8 @@ private func markdownIsWhitespaceOnly(_ richText: RichText) -> Bool {
     case let .formula(latex):
         return latex.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     case .textCustomEmoji:
+        return false
+    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName:
         return false
     }
 }

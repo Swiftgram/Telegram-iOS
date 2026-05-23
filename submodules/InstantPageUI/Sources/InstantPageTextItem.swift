@@ -333,13 +333,16 @@ public final class InstantPageTextItem: InstantPageItem {
     }
 
     public func attributesAtPoint(_ point: CGPoint, orNearest: Bool) -> (Int, [NSAttributedString.Key: Any])? {
-        if let direct = self.attributesAtPoint(point) {
-            return direct
+        // Hit-testing (taps on links/entities) wants the character under the finger — keep the
+        // strict, clamping behavior.
+        if !orNearest {
+            return self.attributesAtPoint(point)
         }
-        guard orNearest, !self.lines.isEmpty else {
+        guard !self.lines.isEmpty else {
             return nil
         }
 
+        // Selection drags can travel outside the text bounds, so pick the vertically-closest line.
         let boundsWidth = self.frame.width
         var nearestLineIndex = 0
         var nearestDistance = CGFloat.greatestFiniteMagnitude
@@ -361,21 +364,31 @@ public final class InstantPageTextItem: InstantPageItem {
 
         let line = self.lines[nearestLineIndex]
         let lineFrame = expandedFrameForLine(line, boundingWidth: boundsWidth, alignment: self.alignment)
-        let clampedX = max(lineFrame.minX, min(lineFrame.maxX, point.x))
-        var index = CTLineGetStringIndexForPosition(line.line, CGPoint(x: clampedX - lineFrame.minX, y: 0.0))
-        if index == self.attributedString.length {
-            index -= 1
-        } else if index != 0 {
-            var glyphStart: CGFloat = 0.0
-            CTLineGetOffsetForStringIndex(line.line, index, &glyphStart)
-            if clampedX - lineFrame.minX < glyphStart {
-                index -= 1
+        let lineRange = CTLineGetStringRange(line.line)
+        var index: Int
+        if point.x <= lineFrame.minX {
+            index = lineRange.location
+        } else if point.x >= lineFrame.maxX {
+            // Trailing edge: return the line's upper bound (one past its last character) so a
+            // right-handle drag can include the last character/item of the line. The selection
+            // upper bound is exclusive, so clamping to the last character's index — as the strict
+            // path does — would always leave it unselected. Mirrors Display.TextNode.
+            index = lineRange.location + lineRange.length
+        } else {
+            index = CTLineGetStringIndexForPosition(line.line, CGPoint(x: point.x - lineFrame.minX, y: 0.0))
+            if index != 0 {
+                var glyphStart: CGFloat = 0.0
+                CTLineGetOffsetForStringIndex(line.line, index, &glyphStart)
+                if point.x - lineFrame.minX < glyphStart {
+                    index -= 1
+                }
             }
         }
-        guard index >= 0, index < self.attributedString.length else {
+        guard index >= 0, index <= self.attributedString.length else {
             return nil
         }
-        return (index, self.attributedString.attributes(at: index, effectiveRange: nil))
+        let attributes = index < self.attributedString.length ? self.attributedString.attributes(at: index, effectiveRange: nil) : [:]
+        return (index, attributes)
     }
 
     private func attributeRects(name: NSAttributedString.Key, at index: Int) -> [CGRect]? {
@@ -424,8 +437,17 @@ public final class InstantPageTextItem: InstantPageItem {
     
     public func linkSelectionRects(at point: CGPoint) -> [CGRect] {
         if let (index, dict) = self.attributesAtPoint(point) {
-            if let _ = dict[NSAttributedString.Key(rawValue: TelegramTextAttributes.URL)] {
-                if let rects = self.attributeRects(name: NSAttributedString.Key(rawValue: TelegramTextAttributes.URL), at: index) {
+            let interactiveKeys = [
+                TelegramTextAttributes.URL,
+                TelegramTextAttributes.PeerMention,
+                TelegramTextAttributes.PeerTextMention,
+                TelegramTextAttributes.BotCommand,
+                TelegramTextAttributes.Hashtag,
+                TelegramTextAttributes.BankCard
+            ]
+            for key in interactiveKeys {
+                let attrKey = NSAttributedString.Key(rawValue: key)
+                if dict[attrKey] != nil, let rects = self.attributeRects(name: attrKey, at: index) {
                     return rects.compactMap { rect in
                         if rect.width > 5.0 {
                             return rect.insetBy(dx: 0.0, dy: -3.0)
@@ -829,6 +851,76 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
             let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
             styleStack.pop()
             return result
+        case let .textAutoUrl(text):
+            styleStack.push(.link(false))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: text.plainText, webpageId: nil))
+            styleStack.pop()
+            return result
+        case let .textAutoEmail(text):
+            styleStack.push(.link(false))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: "mailto:\(text.plainText)", webpageId: nil))
+            styleStack.pop()
+            return result
+        case let .textAutoPhone(text):
+            styleStack.push(.link(false))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: "tel:\(text.plainText)", webpageId: nil))
+            styleStack.pop()
+            return result
+        case let .textMention(text):
+            styleStack.push(.link(false))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            styleStack.pop()
+            let mutable = result.mutableCopy() as! NSMutableAttributedString
+            if mutable.length != 0 {
+                mutable.addAttribute(NSAttributedString.Key(rawValue: TelegramTextAttributes.PeerTextMention), value: mutable.string, range: NSRange(location: 0, length: mutable.length))
+            }
+            return mutable
+        case let .textMentionName(text, peerId):
+            styleStack.push(.link(false))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            styleStack.pop()
+            let mutable = result.mutableCopy() as! NSMutableAttributedString
+            if mutable.length != 0 {
+                let mention = TelegramPeerMention(peerId: EnginePeer.Id(namespace: Namespaces.Peer.CloudUser, id: EnginePeer.Id.Id._internalFromInt64Value(peerId)), mention: mutable.string)
+                mutable.addAttribute(NSAttributedString.Key(rawValue: TelegramTextAttributes.PeerMention), value: mention, range: NSRange(location: 0, length: mutable.length))
+            }
+            return mutable
+        case let .textHashtag(text):
+            styleStack.push(.link(false))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            styleStack.pop()
+            let mutable = result.mutableCopy() as! NSMutableAttributedString
+            if mutable.length != 0 {
+                mutable.addAttribute(NSAttributedString.Key(rawValue: TelegramTextAttributes.Hashtag), value: TelegramHashtag(peerName: nil, hashtag: mutable.string), range: NSRange(location: 0, length: mutable.length))
+            }
+            return mutable
+        case let .textCashtag(text):
+            styleStack.push(.link(false))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            styleStack.pop()
+            let mutable = result.mutableCopy() as! NSMutableAttributedString
+            if mutable.length != 0 {
+                mutable.addAttribute(NSAttributedString.Key(rawValue: TelegramTextAttributes.Hashtag), value: TelegramHashtag(peerName: nil, hashtag: mutable.string), range: NSRange(location: 0, length: mutable.length))
+            }
+            return mutable
+        case let .textBotCommand(text):
+            styleStack.push(.link(false))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            styleStack.pop()
+            let mutable = result.mutableCopy() as! NSMutableAttributedString
+            if mutable.length != 0 {
+                mutable.addAttribute(NSAttributedString.Key(rawValue: TelegramTextAttributes.BotCommand), value: mutable.string, range: NSRange(location: 0, length: mutable.length))
+            }
+            return mutable
+        case let .textBankCard(text):
+            styleStack.push(.link(false))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            styleStack.pop()
+            let mutable = result.mutableCopy() as! NSMutableAttributedString
+            if mutable.length != 0 {
+                mutable.addAttribute(NSAttributedString.Key(rawValue: TelegramTextAttributes.BankCard), value: mutable.string, range: NSRange(location: 0, length: mutable.length))
+            }
+            return mutable
         case let .textCustomEmoji(fileId, _):
             struct RunStruct {
                 let ascent: CGFloat

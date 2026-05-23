@@ -21,6 +21,15 @@ private enum RichTextTypes: Int32 {
     case anchor = 15
     case formula = 16
     case textCustomEmoji = 17
+    case textAutoEmail = 18
+    case textAutoPhone = 19
+    case textAutoUrl = 20
+    case textBankCard = 21
+    case textBotCommand = 22
+    case textCashtag = 23
+    case textHashtag = 24
+    case textMention = 25
+    case textMentionName = 26
 }
 
 public indirect enum RichText: PostboxCoding, Equatable {
@@ -42,6 +51,15 @@ public indirect enum RichText: PostboxCoding, Equatable {
     case anchor(text: RichText, name: String)
     case formula(latex: String)
     case textCustomEmoji(fileId: Int64, alt: String)
+    case textAutoEmail(text: RichText)
+    case textAutoPhone(text: RichText)
+    case textAutoUrl(text: RichText)
+    case textBankCard(text: RichText)
+    case textBotCommand(text: RichText)
+    case textCashtag(text: RichText)
+    case textHashtag(text: RichText)
+    case textMention(text: RichText)
+    case textMentionName(text: RichText, peerId: Int64)
 
     public init(decoder: PostboxDecoder) {
         switch decoder.decodeInt32ForKey("r", orElse: 0) {
@@ -87,6 +105,24 @@ public indirect enum RichText: PostboxCoding, Equatable {
                 self = .formula(latex: decoder.decodeStringForKey("l", orElse: ""))
             case RichTextTypes.textCustomEmoji.rawValue:
                 self = .textCustomEmoji(fileId: decoder.decodeInt64ForKey("ce.f", orElse: 0), alt: decoder.decodeStringForKey("ce.a", orElse: ""))
+            case RichTextTypes.textAutoEmail.rawValue:
+                self = .textAutoEmail(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText)
+            case RichTextTypes.textAutoPhone.rawValue:
+                self = .textAutoPhone(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText)
+            case RichTextTypes.textAutoUrl.rawValue:
+                self = .textAutoUrl(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText)
+            case RichTextTypes.textBankCard.rawValue:
+                self = .textBankCard(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText)
+            case RichTextTypes.textBotCommand.rawValue:
+                self = .textBotCommand(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText)
+            case RichTextTypes.textCashtag.rawValue:
+                self = .textCashtag(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText)
+            case RichTextTypes.textHashtag.rawValue:
+                self = .textHashtag(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText)
+            case RichTextTypes.textMention.rawValue:
+                self = .textMention(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText)
+            case RichTextTypes.textMentionName.rawValue:
+                self = .textMentionName(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText, peerId: decoder.decodeInt64ForKey("mn.p", orElse: 0))
             default:
                 self = .empty
         }
@@ -162,6 +198,34 @@ public indirect enum RichText: PostboxCoding, Equatable {
                 encoder.encodeInt32(RichTextTypes.textCustomEmoji.rawValue, forKey: "r")
                 encoder.encodeInt64(fileId, forKey: "ce.f")
                 encoder.encodeString(alt, forKey: "ce.a")
+            case let .textAutoEmail(text):
+                encoder.encodeInt32(RichTextTypes.textAutoEmail.rawValue, forKey: "r")
+                encoder.encodeObject(text, forKey: "t")
+            case let .textAutoPhone(text):
+                encoder.encodeInt32(RichTextTypes.textAutoPhone.rawValue, forKey: "r")
+                encoder.encodeObject(text, forKey: "t")
+            case let .textAutoUrl(text):
+                encoder.encodeInt32(RichTextTypes.textAutoUrl.rawValue, forKey: "r")
+                encoder.encodeObject(text, forKey: "t")
+            case let .textBankCard(text):
+                encoder.encodeInt32(RichTextTypes.textBankCard.rawValue, forKey: "r")
+                encoder.encodeObject(text, forKey: "t")
+            case let .textBotCommand(text):
+                encoder.encodeInt32(RichTextTypes.textBotCommand.rawValue, forKey: "r")
+                encoder.encodeObject(text, forKey: "t")
+            case let .textCashtag(text):
+                encoder.encodeInt32(RichTextTypes.textCashtag.rawValue, forKey: "r")
+                encoder.encodeObject(text, forKey: "t")
+            case let .textHashtag(text):
+                encoder.encodeInt32(RichTextTypes.textHashtag.rawValue, forKey: "r")
+                encoder.encodeObject(text, forKey: "t")
+            case let .textMention(text):
+                encoder.encodeInt32(RichTextTypes.textMention.rawValue, forKey: "r")
+                encoder.encodeObject(text, forKey: "t")
+            case let .textMentionName(text, peerId):
+                encoder.encodeInt32(RichTextTypes.textMentionName.rawValue, forKey: "r")
+                encoder.encodeObject(text, forKey: "t")
+                encoder.encodeInt64(peerId, forKey: "mn.p")
         }
     }
     
@@ -275,6 +339,24 @@ public indirect enum RichText: PostboxCoding, Equatable {
                 } else {
                     return false
                 }
+            case let .textAutoEmail(text):
+                if case .textAutoEmail(text) = rhs { return true } else { return false }
+            case let .textAutoPhone(text):
+                if case .textAutoPhone(text) = rhs { return true } else { return false }
+            case let .textAutoUrl(text):
+                if case .textAutoUrl(text) = rhs { return true } else { return false }
+            case let .textBankCard(text):
+                if case .textBankCard(text) = rhs { return true } else { return false }
+            case let .textBotCommand(text):
+                if case .textBotCommand(text) = rhs { return true } else { return false }
+            case let .textCashtag(text):
+                if case .textCashtag(text) = rhs { return true } else { return false }
+            case let .textHashtag(text):
+                if case .textHashtag(text) = rhs { return true } else { return false }
+            case let .textMention(text):
+                if case .textMention(text) = rhs { return true } else { return false }
+            case let .textMentionName(lhsText, lhsPeerId):
+                if case let .textMentionName(rhsText, rhsPeerId) = rhs, lhsText == rhsText, lhsPeerId == rhsPeerId { return true } else { return false }
         }
     }
 }
@@ -322,6 +404,24 @@ public extension RichText {
                 return latex
             case let .textCustomEmoji(_, alt):
                 return alt
+            case let .textAutoEmail(text):
+                return text.plainText
+            case let .textAutoPhone(text):
+                return text.plainText
+            case let .textAutoUrl(text):
+                return text.plainText
+            case let .textBankCard(text):
+                return text.plainText
+            case let .textBotCommand(text):
+                return text.plainText
+            case let .textCashtag(text):
+                return text.plainText
+            case let .textHashtag(text):
+                return text.plainText
+            case let .textMention(text):
+                return text.plainText
+            case let .textMentionName(text, _):
+                return text.plainText
         }
     }
 }
@@ -419,6 +519,51 @@ extension RichText {
                 throw FlatBuffersError.missingRequiredField()
             }
             self = .textCustomEmoji(fileId: value.fileId, alt: value.alt)
+        case .richtextAutoemail:
+            guard let value = flatBuffersObject.value(type: TelegramCore_RichText_AutoEmail.self) else {
+                throw FlatBuffersError.missingRequiredField()
+            }
+            self = .textAutoEmail(text: try RichText(flatBuffersObject: value.text))
+        case .richtextAutophone:
+            guard let value = flatBuffersObject.value(type: TelegramCore_RichText_AutoPhone.self) else {
+                throw FlatBuffersError.missingRequiredField()
+            }
+            self = .textAutoPhone(text: try RichText(flatBuffersObject: value.text))
+        case .richtextAutourl:
+            guard let value = flatBuffersObject.value(type: TelegramCore_RichText_AutoUrl.self) else {
+                throw FlatBuffersError.missingRequiredField()
+            }
+            self = .textAutoUrl(text: try RichText(flatBuffersObject: value.text))
+        case .richtextBankcard:
+            guard let value = flatBuffersObject.value(type: TelegramCore_RichText_BankCard.self) else {
+                throw FlatBuffersError.missingRequiredField()
+            }
+            self = .textBankCard(text: try RichText(flatBuffersObject: value.text))
+        case .richtextBotcommand:
+            guard let value = flatBuffersObject.value(type: TelegramCore_RichText_BotCommand.self) else {
+                throw FlatBuffersError.missingRequiredField()
+            }
+            self = .textBotCommand(text: try RichText(flatBuffersObject: value.text))
+        case .richtextCashtag:
+            guard let value = flatBuffersObject.value(type: TelegramCore_RichText_Cashtag.self) else {
+                throw FlatBuffersError.missingRequiredField()
+            }
+            self = .textCashtag(text: try RichText(flatBuffersObject: value.text))
+        case .richtextHashtag:
+            guard let value = flatBuffersObject.value(type: TelegramCore_RichText_Hashtag.self) else {
+                throw FlatBuffersError.missingRequiredField()
+            }
+            self = .textHashtag(text: try RichText(flatBuffersObject: value.text))
+        case .richtextMention:
+            guard let value = flatBuffersObject.value(type: TelegramCore_RichText_Mention.self) else {
+                throw FlatBuffersError.missingRequiredField()
+            }
+            self = .textMention(text: try RichText(flatBuffersObject: value.text))
+        case .richtextMentionname:
+            guard let value = flatBuffersObject.value(type: TelegramCore_RichText_MentionName.self) else {
+                throw FlatBuffersError.missingRequiredField()
+            }
+            self = .textMentionName(text: try RichText(flatBuffersObject: value.text), peerId: value.peerId)
         case .none_:
             self = .empty
         }
@@ -548,6 +693,61 @@ extension RichText {
             TelegramCore_RichText_CustomEmoji.add(fileId: fileId, &builder)
             TelegramCore_RichText_CustomEmoji.add(alt: altOffset, &builder)
             offset = TelegramCore_RichText_CustomEmoji.endRichText_CustomEmoji(&builder, start: start)
+        case let .textAutoEmail(text):
+            valueType = .richtextAutoemail
+            let textOffset = text.encodeToFlatBuffers(builder: &builder)
+            let start = TelegramCore_RichText_AutoEmail.startRichText_AutoEmail(&builder)
+            TelegramCore_RichText_AutoEmail.add(text: textOffset, &builder)
+            offset = TelegramCore_RichText_AutoEmail.endRichText_AutoEmail(&builder, start: start)
+        case let .textAutoPhone(text):
+            valueType = .richtextAutophone
+            let textOffset = text.encodeToFlatBuffers(builder: &builder)
+            let start = TelegramCore_RichText_AutoPhone.startRichText_AutoPhone(&builder)
+            TelegramCore_RichText_AutoPhone.add(text: textOffset, &builder)
+            offset = TelegramCore_RichText_AutoPhone.endRichText_AutoPhone(&builder, start: start)
+        case let .textAutoUrl(text):
+            valueType = .richtextAutourl
+            let textOffset = text.encodeToFlatBuffers(builder: &builder)
+            let start = TelegramCore_RichText_AutoUrl.startRichText_AutoUrl(&builder)
+            TelegramCore_RichText_AutoUrl.add(text: textOffset, &builder)
+            offset = TelegramCore_RichText_AutoUrl.endRichText_AutoUrl(&builder, start: start)
+        case let .textBankCard(text):
+            valueType = .richtextBankcard
+            let textOffset = text.encodeToFlatBuffers(builder: &builder)
+            let start = TelegramCore_RichText_BankCard.startRichText_BankCard(&builder)
+            TelegramCore_RichText_BankCard.add(text: textOffset, &builder)
+            offset = TelegramCore_RichText_BankCard.endRichText_BankCard(&builder, start: start)
+        case let .textBotCommand(text):
+            valueType = .richtextBotcommand
+            let textOffset = text.encodeToFlatBuffers(builder: &builder)
+            let start = TelegramCore_RichText_BotCommand.startRichText_BotCommand(&builder)
+            TelegramCore_RichText_BotCommand.add(text: textOffset, &builder)
+            offset = TelegramCore_RichText_BotCommand.endRichText_BotCommand(&builder, start: start)
+        case let .textCashtag(text):
+            valueType = .richtextCashtag
+            let textOffset = text.encodeToFlatBuffers(builder: &builder)
+            let start = TelegramCore_RichText_Cashtag.startRichText_Cashtag(&builder)
+            TelegramCore_RichText_Cashtag.add(text: textOffset, &builder)
+            offset = TelegramCore_RichText_Cashtag.endRichText_Cashtag(&builder, start: start)
+        case let .textHashtag(text):
+            valueType = .richtextHashtag
+            let textOffset = text.encodeToFlatBuffers(builder: &builder)
+            let start = TelegramCore_RichText_Hashtag.startRichText_Hashtag(&builder)
+            TelegramCore_RichText_Hashtag.add(text: textOffset, &builder)
+            offset = TelegramCore_RichText_Hashtag.endRichText_Hashtag(&builder, start: start)
+        case let .textMention(text):
+            valueType = .richtextMention
+            let textOffset = text.encodeToFlatBuffers(builder: &builder)
+            let start = TelegramCore_RichText_Mention.startRichText_Mention(&builder)
+            TelegramCore_RichText_Mention.add(text: textOffset, &builder)
+            offset = TelegramCore_RichText_Mention.endRichText_Mention(&builder, start: start)
+        case let .textMentionName(text, peerId):
+            valueType = .richtextMentionname
+            let textOffset = text.encodeToFlatBuffers(builder: &builder)
+            let start = TelegramCore_RichText_MentionName.startRichText_MentionName(&builder)
+            TelegramCore_RichText_MentionName.add(text: textOffset, &builder)
+            TelegramCore_RichText_MentionName.add(peerId: peerId, &builder)
+            offset = TelegramCore_RichText_MentionName.endRichText_MentionName(&builder, start: start)
         }
 
         return TelegramCore_RichText.createRichText(&builder, valueType: valueType, valueOffset: offset)

@@ -10,6 +10,7 @@ import ChatMessageDateAndStatusNode
 import ChatMessageItemCommon
 import ChatControllerInteraction
 import InstantPageUI
+import TextFormat
 import TelegramUIPreferences
 import TextLoadingEffect
 import TextSelectionNode
@@ -213,6 +214,12 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                 // Built alongside pageLayout so the apply closure can hand it to ensurePageView.
                 var pageWebpage: TelegramMediaWebpage?
 
+                // Horizontal text inset baked into the InstantPage layout. The pageView sits at
+                // self-x 0 (containerNode at 1, pageView at -1 inside it), so the page's text
+                // left edge in the status node's coordinate space is exactly this value. Used as
+                // the status node's left edge + side inset, mirroring TextBubble's bubbleInsets.
+                let pageHorizontalInset: CGFloat = 10.0
+
                 let isDark = item.presentationData.theme.theme.overallDarkAppearance
                 let isIncoming = item.message.effectivelyIncoming(item.context.account.peerId)
                 let messageTheme = isIncoming ? item.presentationData.theme.theme.chat.message.incoming : item.presentationData.theme.theme.chat.message.outgoing
@@ -365,7 +372,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                             instantPage: attribute.instantPage,
                             userLocation: .other,
                             boundingWidth: suggestedBoundingWidth - 2.0,
-                            horizontalInset: 10.0,
+                            horizontalInset: pageHorizontalInset,
                             theme: pageTheme,
                             strings: item.presentationData.strings,
                             dateTimeFormat: item.presentationData.dateTimeFormat,
@@ -521,10 +528,6 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     displayStatus = false
                 }
                 
-                if "".isEmpty {
-                    displayStatus = false
-                }
-                
                 if displayStatus {
                     if incoming {
                         statusType = .BubbleIncoming
@@ -541,7 +544,13 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     statusType = nil
                 }
 
-                let lastTextLineFrame: CGRect? = pageLayout.flatMap(InstantPageUI.lastTextLineFrame(in:))
+                // Only trail the status inline with the last text line when the bottom-most page
+                // item is itself a text item; otherwise (table/image/etc. last) the status falls
+                // through to the contentSize.height anchor and sits below all content.
+                let lastTextLine = pageLayout.flatMap(InstantPageUI.lastTextLineFrameIfLastItemIsText(in:))
+                let lastTextLineFrame: CGRect? = lastTextLine?.frame
+                // Applied only when the date trails on the line (not when it wraps below it).
+                let lastTextLineTrailingPadding: CGFloat = lastTextLine?.trailingBottomPadding ?? 0.0
 
                 var statusSuggestedWidthAndContinue: (CGFloat, (CGFloat) -> (CGSize, (ListViewItemUpdateAnimation) -> ChatMessageDateAndStatusNode))?
                 if let statusType = statusType {
@@ -582,19 +591,35 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                 }
 
                 if let statusSuggestedWidthAndContinue, !hasDraft {
-                    let statusLeftEdgeInBubble: CGFloat
-                    if let lastTextLineFrame {
-                        statusLeftEdgeInBubble = 1.0 + lastTextLineFrame.minX
-                    } else {
-                        statusLeftEdgeInBubble = 1.0
-                    }
-                    boundingSize.width = max(boundingSize.width, statusLeftEdgeInBubble * 2.0 + statusSuggestedWidthAndContinue.0)
+                    // Mirrors TextBubble: max(contentWidth, statusWidth + sideInsets), where
+                    // sideInsets = left + right text inset (= pageHorizontalInset on each side).
+                    boundingSize.width = max(boundingSize.width, statusSuggestedWidthAndContinue.0 + pageHorizontalInset * 2.0)
                 }
 
                 return (boundingSize.width, { boundingWidth in
-                    let statusSizeAndApply = statusSuggestedWidthAndContinue?.1(boundingWidth)
+                    // Mirrors TextBubble's `boundingWidth - sideInsets` so the right-aligned date
+                    // lands at the right text inset rather than past the bubble's right edge.
+                    let statusSizeAndApply = statusSuggestedWidthAndContinue?.1(boundingWidth - pageHorizontalInset * 2.0)
                     if let statusSizeAndApply, !hasDraft {
-                        boundingSize.height += statusSizeAndApply.0.height
+                        // Status node anchor Y in the content node's space — mirrors the apply
+                        // closure below.
+                        let statusAnchorY: CGFloat
+                        if let lastTextLineFrame {
+                            // Trailing date (statusHeight == 0) gets the 5pt text-rect pad so it
+                            // aligns with the visible text; a date that wraps onto its own line
+                            // below (statusHeight > 0) sits at the bare maxY.
+                            let trailingPadding = statusSizeAndApply.0.height.isZero ? lastTextLineTrailingPadding : 0.0
+                            statusAnchorY = 1.0 + lastTextLineFrame.maxY + trailingPadding + streamingHeaderOffset
+                        } else if let pageLayout {
+                            statusAnchorY = 1.0 + pageLayout.contentSize.height + streamingHeaderOffset
+                        } else {
+                            statusAnchorY = 1.0 + streamingHeaderOffset
+                        }
+                        // Date's bottom edge: a trailing date sits ~1pt below the anchor; a wrapped
+                        // date extends `statusHeight` below it. Leave ~6pt to the bubble's bottom
+                        // edge, matching TextBubble's bottom inset.
+                        let statusBottomEdge = statusAnchorY + max(1.0, statusSizeAndApply.0.height)
+                        boundingSize.height = max(boundingSize.height, statusBottomEdge + 6.0)
                     }
 
                     return (boundingSize, { animation, _, _ in
@@ -606,19 +631,23 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                         animation.animator.updateFrame(layer: self.containerNode.layer, frame: CGRect(origin: CGPoint(x: 1.0, y: 1.0), size: CGSize(width: boundingWidth - 2.0, height: boundingSize.height)), completion: nil)
 
                         if let statusSizeAndApply {
-                            let statusFrameX: CGFloat
+                            // Match TextBubble: anchor the status node's x at the fixed text-block
+                            // left edge (not the last line's minX, which is large for nested
+                            // content and shoves the right-aligned date off the bubble). The status
+                            // node positions the date trailing/below relative to this origin.
                             let statusFrameY: CGFloat
                             if let lastTextLineFrame {
-                                statusFrameX = 1.0 + lastTextLineFrame.minX
-                                statusFrameY = 1.0 + lastTextLineFrame.maxY
+                                // Add the 5pt text-rect pad only when the date trails on the line
+                                // (statusHeight == 0); a date wrapped onto its own line below sits
+                                // at the bare maxY so it isn't pushed too far down.
+                                let trailingPadding = statusSizeAndApply.0.height.isZero ? lastTextLineTrailingPadding : 0.0
+                                statusFrameY = 1.0 + lastTextLineFrame.maxY + trailingPadding
                             } else if let pageLayout {
-                                statusFrameX = 1.0
                                 statusFrameY = 1.0 + pageLayout.contentSize.height
                             } else {
-                                statusFrameX = 1.0
                                 statusFrameY = 1.0
                             }
-                            let statusFrame = CGRect(origin: CGPoint(x: statusFrameX, y: statusFrameY + streamingHeaderOffset), size: statusSizeAndApply.0)
+                            let statusFrame = CGRect(origin: CGPoint(x: pageHorizontalInset, y: statusFrameY + streamingHeaderOffset), size: statusSizeAndApply.0)
                             let statusNode = statusSizeAndApply.1(self.statusNode == nil ? .None : animation)
 
                             if self.statusNode !== statusNode {
@@ -878,6 +907,14 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         }
 
         guard let urlHit = self.urlForTapLocation(point) else {
+            if let entityHit = self.entityForTapLocation(point), let content = self.entityTapContent(entityHit.attributes) {
+                let rects = self.computeHighlightRects(item: entityHit.item, parentOffset: entityHit.parentOffset, localPoint: entityHit.localPoint)
+                return ChatMessageBubbleContentTapAction(
+                    content: content,
+                    rects: rects,
+                    activate: self.makeActivate(item: entityHit.item, parentOffset: entityHit.parentOffset, localPoint: entityHit.localPoint)
+                )
+            }
             return ChatMessageBubbleContentTapAction(content: .none)
         }
 
@@ -925,6 +962,32 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         return pageView.urlItemAt(point: local).map {
             (item: $0.item, urlItem: $0.urlItem, parentOffset: $0.parentOffset, localPoint: $0.localPoint)
         }
+    }
+
+    private func entityForTapLocation(_ point: CGPoint) -> (item: InstantPageTextItem, parentOffset: CGPoint, localPoint: CGPoint, attributes: [NSAttributedString.Key: Any])? {
+        guard let pageView = self.pageView else { return nil }
+        let local = self.view.convert(point, to: pageView)
+        guard let hit = pageView.textItemAt(point: local) else { return nil }
+        let localPoint = CGPoint(x: local.x - hit.parentOffset.x, y: local.y - hit.parentOffset.y)
+        guard let (_, attributes) = hit.item.attributesAtPoint(localPoint, orNearest: false) else { return nil }
+        return (item: hit.item, parentOffset: hit.parentOffset, localPoint: localPoint, attributes: attributes)
+    }
+
+    private func entityTapContent(_ attributes: [NSAttributedString.Key: Any]) -> ChatMessageBubbleContentTapAction.Content? {
+        if let mention = attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.PeerMention)] as? TelegramPeerMention {
+            return .peerMention(peerId: mention.peerId, mention: mention.mention, openProfile: false)
+        } else if let peerName = attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.PeerTextMention)] as? String {
+            return .textMention(peerName)
+        } else if let botCommand = attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.BotCommand)] as? String {
+            return .botCommand(botCommand)
+        } else if let hashtag = attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.Hashtag)] as? TelegramHashtag {
+            // Cashtags are carried as a Hashtag attribute (no dedicated cashtag key/tap-action exists);
+            // the leading "$" in the string distinguishes them, and the chat hashtag handler searches both.
+            return .hashtag(hashtag.peerName, hashtag.hashtag)
+        } else if let bankCard = attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.BankCard)] as? String {
+            return .bankCard(bankCard)
+        }
+        return nil
     }
 
     /// Bridges an InstantPageUrlItem (used by the gallery's caption URL handler) to the
@@ -1027,8 +1090,12 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         }
 
         var rects: [CGRect]?
-        if let point, let urlHit = self.urlForTapLocation(point) {
-            rects = self.computeHighlightRects(item: urlHit.item, parentOffset: urlHit.parentOffset, localPoint: urlHit.localPoint)
+        if let point {
+            if let urlHit = self.urlForTapLocation(point) {
+                rects = self.computeHighlightRects(item: urlHit.item, parentOffset: urlHit.parentOffset, localPoint: urlHit.localPoint)
+            } else if let entityHit = self.entityForTapLocation(point), self.entityTapContent(entityHit.attributes) != nil {
+                rects = self.computeHighlightRects(item: entityHit.item, parentOffset: entityHit.parentOffset, localPoint: entityHit.localPoint)
+            }
         }
 
         if let rects, !rects.isEmpty {
