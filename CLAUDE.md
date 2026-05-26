@@ -128,6 +128,27 @@ The `ChatMessageDateAndStatusNode` mirrors TextBubble's placement, adapted to th
 - **`linkSelectionRects` and the bubble tap path check all six interactive keys** (URL + the five entity keys), not just URL, so press-highlight and the link-loading shimmer cover entities too.
 - **Rich-data text selection must reach a line's trailing edge.** This is general to rich-data selection, not just entities: `InstantPageTextItem.attributesAtPoint(_:orNearest:)`'s `orNearest: true` (selection-drag) path returns `line.range.upperBound` (via `CTLineGetStringRange`) when the point is at/past `lineFrame.maxX`. `TextSelectionNode` uses that index as the **exclusive** upper bound, so clamping to the last character's index — as the `orNearest: false` hit-testing path correctly does — would leave the last character/item of every line unselectable. Mirrors `Display.TextNode`. Do not collapse the two `orNearest` paths back together.
 
+## Markdown send: entity vs. rich detection
+
+On message send, the app auto-decides: if the typed markdown maps onto the regular message-entity set (bold/italic/code/strikethrough/spoiler/links/blockquote/fenced-code) it sends a **normal message** via the existing entity path; if it contains structure the entity set can't represent it sends a **rich message** (`RichTextMessageAttribute` carrying an `InstantPage`, rendered by `ChatMessageRichDataBubbleContentNode`). Always-on (no flag). **Effective rich triggers are headings, lists, and tables only.**
+
+### Where things live
+
+| File | Responsibility |
+|---|---|
+| `submodules/BrowserUI/Sources/BrowserMarkdown.swift` | The classifier `richMarkdownAttributeIfNeeded(context:text:)` (pre-filter `markdownMightNeedRichLayout` → parse via existing `inputRichTextAttributeFromText` → block inspection `instantPageNeedsRichLayout`/`blockIsEntityExpressible`/`richTextIsEntityExpressible`), plus the markdown→InstantPage conversion (`markdownWebpage`, `markdownBlocks(from:)`, `markdownBlocksWithGeneratedAnchors`). |
+| `submodules/TelegramUI/Sources/ChatControllerNode.swift` (`sendCurrentMessage`, ~line 4860) | The gate: `if !isSpecialChatContents, let attribute = richMarkdownAttributeIfNeeded(context:, text: effectiveInputText.string)` routes to the rich branch; the unchanged `else` is the entity path. |
+
+### Non-obvious invariants
+
+- **Boundary rule:** send rich iff the parse yields an `InstantPageBlock` with no entity equivalent. Entity-expressible whitelist (→ normal): `.paragraph`, `.preformatted`, `.blockQuote` (empty caption), `.anchor`, `.unsupported`, **and `.divider`/`.formula`** — the latter two are *deliberately excluded as triggers* (`---` and `$…$` are too common in casual text, e.g. `$5-$10`/`$FOO=$BAR`). Inline `.formula` is likewise treated as expressible. So effective triggers = headings, lists, tables.
+- **Approach A (parse-then-inspect):** the classifier reuses the real parser, so "what triggers rich" can't drift from "what the rich renderer shows." `markdownMightNeedRichLayout` is a cheap necessary-condition over-approximation — it may over-trigger a parse but must **never** false-negative. It detects `#`, list markers, dash-lines (`-{1,}`, which also catches setext-H2 underlines → heading blocks), `\n=` (setext H1), `|`, `![`. It deliberately does **not** detect `$`/`\(` (formulas don't trigger rich).
+- **Chat vs. document path = `file == nil` / `context.documentURL == nil`.** `inputRichTextAttributeFromText` passes `file: nil`; the document-attachment path passes a real file. Two chat-only behaviors key off this: (a) generated heading anchors are **skipped** (`markdownBlocksWithGeneratedAnchors` runs only for documents — anchors exist for intra-document `#slug` links and otherwise prepend a spurious invisible `.anchor` block per heading); (b) a level-1 `#` heading maps to `.heading(text:, level: 1)`, not `.title` (the document/article-title treatment). H2–H6 → `.heading(level: 2…6)` for both paths. This converter only ever emits `.title` (H1-doc) or `.heading` — never `.header`/`.subheader`.
+- **The classifier is fed the RAW `effectiveInputText.string`**, not the post-`convertMarkdownToAttributes` `inputText`, so inline `**bold**` survives into the rich render. The entity branch still uses the converted `inputText`.
+- **Bypassed for `.customChatContents`** (business links / quick replies) via `isSpecialChatContents`. **Editing is out of scope** — the gate is only on the compose/send path; edits route earlier to `editMessage`.
+- **Transmission:** `RichTextMessageAttribute` → `Api.InputRichMessage` via `messages.sendMessage(richMessage:)` (flag bit 23, `StandaloneSendMessage.swift`); recipients reconstruct it from the incoming `richMessage` field (`StoreMessage_Telegram.swift`). The rich branch sends `text: ""` + the attribute, nils `mediaReference` (no separate webpage preview), and bypasses 4096-char chunking. iOS < 15 / oversize markdown → `inputRichTextAttributeFromText` returns nil → entity path (which chunks). 
+- **`debugRichText` experimental flag is now orphaned** — it previously gated this path and is no longer read anywhere, though `DebugController`/`ExperimentalUISettings` still define/persist it. Optional cleanup.
+
 ## Postbox → TelegramEngine refactor (in progress)
 
 A gradual migration is underway to eliminate direct `import Postbox` from consumer submodules in favor of `TelegramEngine`.

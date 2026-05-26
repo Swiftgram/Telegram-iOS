@@ -996,6 +996,126 @@ public func inputRichTextAttributeFromText(context: AccountContext, text: String
     return RichTextMessageAttribute(instantPage: instantPage._parse())
 }
 
+// MARK: - Markdown classification (entity-expressible vs. rich layout)
+
+private let markdownBlockHeuristicRegex = try? NSRegularExpression(
+    pattern: "(^|\\n)[ \\t]*(#{1,6}[ \\t]|[-*+][ \\t]|\\d{1,9}[.)][ \\t]|-{1,}[ \\t]*(\\n|$))",
+    options: []
+)
+
+// Cheap necessary-condition pre-filter. A safe over-approximation: if it
+// returns false, the text cannot contain a rich-only construct, so the
+// expensive markdown parse is skipped and the entity path is used.
+private func markdownMightNeedRichLayout(_ text: String) -> Bool {
+    // Tables ('|') and images ('![') can appear anywhere on a line. This over-approximates
+    // (prose containing '|' also triggers a parse); the parse + block inspection resolves it.
+    if text.contains("|") || text.contains("![") {
+        return true
+    }
+    // Setext H1 heading: a line of '=' underlining the previous line.
+    // (Setext H2 dash-underlines are caught by the dash-line branch in the regex.)
+    if text.contains("\n=") {
+        return true
+    }
+    // Line-anchored block markers: headings, list items, setext-H2 dash underlines.
+    if let regex = markdownBlockHeuristicRegex {
+        let range = NSRange(text.startIndex..., in: text)
+        if regex.firstMatch(in: text, options: [], range: range) != nil {
+            return true
+        }
+    }
+    return false
+}
+
+// True when this inline RichText maps onto Telegram message entities.
+// Returns false for inline content that forces the rich path (inline image,
+// sub/superscript, highlight). Inline formulas are intentionally treated as
+// expressible: '$'-delimited spans are too common in casual text ('$5-$10').
+private func richTextIsEntityExpressible(_ text: RichText) -> Bool {
+    switch text {
+    case .empty, .plain:
+        return true
+    case .bold(let inner), .italic(let inner), .underline(let inner), .strikethrough(let inner), .fixed(let inner):
+        return richTextIsEntityExpressible(inner)
+    case .superscript, .marked, .`subscript`:
+        return false
+    case .url(let inner, _, _):
+        return richTextIsEntityExpressible(inner)
+    case .email(let inner, _):
+        return richTextIsEntityExpressible(inner)
+    case .concat(let items):
+        return items.allSatisfy(richTextIsEntityExpressible)
+    case .phone(let inner, _):
+        return richTextIsEntityExpressible(inner)
+    case .image:
+        return false
+    case .anchor(let inner, _):
+        return richTextIsEntityExpressible(inner)
+    case .formula:
+        return true
+    case .textCustomEmoji:
+        return true
+    case .textAutoEmail(let inner), .textAutoPhone(let inner), .textAutoUrl(let inner), .textBankCard(let inner), .textBotCommand(let inner), .textCashtag(let inner), .textHashtag(let inner), .textMention(let inner), .textSpoiler(let inner):
+        return richTextIsEntityExpressible(inner)
+    case .textMentionName(let inner, _):
+        return richTextIsEntityExpressible(inner)
+    }
+}
+
+private func isEmptyRichText(_ text: RichText) -> Bool {
+    switch text {
+    case .empty:
+        return true
+    case .plain(let value):
+        return value.isEmpty
+    default:
+        return false
+    }
+}
+
+// Block types that do NOT trigger a rich-layout message. Besides the genuinely
+// entity-expressible blocks (paragraph/preformatted/blockQuote/anchor), dividers
+// and formulas are intentionally excluded as triggers too: '---' and '$'-delimited
+// spans are too common in casual text to justify a rich message. Effective rich
+// triggers are therefore headings, lists, and tables.
+private func blockIsEntityExpressible(_ block: InstantPageBlock) -> Bool {
+    switch block {
+    case .paragraph(let text):
+        return richTextIsEntityExpressible(text)
+    case .preformatted(let text, _):
+        return richTextIsEntityExpressible(text)
+    case .blockQuote(let text, let caption):
+        return isEmptyRichText(caption) && richTextIsEntityExpressible(text)
+    case .anchor, .unsupported:
+        return true
+    case .divider, .formula:
+        return true
+    default:
+        return false
+    }
+}
+
+private func instantPageNeedsRichLayout(_ blocks: [InstantPageBlock]) -> Bool {
+    return blocks.contains { !blockIsEntityExpressible($0) }
+}
+
+// Returns a RichTextMessageAttribute IFF the markdown in `text` produces an
+// InstantPage block with no entity equivalent. Returns nil (-> send via the
+// regular entity path) for plain text, pre-iOS-15, oversize markdown, or
+// markdown that maps cleanly onto entities.
+public func richMarkdownAttributeIfNeeded(context: AccountContext, text: String) -> RichTextMessageAttribute? {
+    guard markdownMightNeedRichLayout(text) else {
+        return nil
+    }
+    guard let attribute = inputRichTextAttributeFromText(context: context, text: text) else {
+        return nil
+    }
+    guard instantPageNeedsRichLayout(attribute.instantPage.blocks) else {
+        return nil
+    }
+    return attribute
+}
+
 @available(iOS 15.0, *)
 private func markdownWebpage(context: AccountContext, file: (file: FileMediaReference, url: URL)?, data: Data) -> TelegramMediaWebpage? {
     let limits = markdownSafetyLimits
@@ -1029,7 +1149,15 @@ private func markdownWebpage(context: AccountContext, file: (file: FileMediaRefe
     guard let pageResult = markdownPageResult(from: attributedString, context: conversionContext) else {
         return nil
     }
-    let blocks = markdownBlocksWithGeneratedAnchors(pageResult.blocks)
+    // Heading anchors exist for intra-document navigation ([link](#slug)); they are
+    // noise in a chat message, where they prepend an invisible block per heading.
+    // Only generate them for the document path (file != nil).
+    let blocks: [InstantPageBlock]
+    if file != nil {
+        blocks = markdownBlocksWithGeneratedAnchors(pageResult.blocks)
+    } else {
+        blocks = pageResult.blocks
+    }
     guard !blocks.isEmpty, budget.validateFinalBlocks(blocks) else {
         return nil
     }
@@ -1190,7 +1318,12 @@ private func markdownBlocks(from node: MarkdownIntentNode, context: MarkdownConv
         }
         switch level {
         case Int.min ... 1:
-            return [.title(text)]
+            if context.documentURL == nil {
+                // Chat message: a single '#' is a normal heading, not a document title.
+                return [.heading(text: text, level: 1)]
+            } else {
+                return [.title(text)]
+            }
         default:
             return [.heading(text: text, level: Int32(max(2, min(level, 6))))]
         }
