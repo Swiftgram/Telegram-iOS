@@ -1107,6 +1107,40 @@ if __name__ == '__main__':
         type=str,
         help='Bazel remote cache host address.'
     )
+    remote_build_parser.add_argument(
+        '--embedWatchApp',
+        action='store_true',
+        default=False,
+        help='Embed the tgwatch watch app (from the in-repo Telegram/WatchApp snapshot) under Watch/ in the remote device build.'
+    )
+    remote_build_parser.add_argument(
+        '--watchApiId',
+        required=False,
+        type=str,
+        help='TG_API_ID for the watch build.',
+        metavar='api_id'
+    )
+    remote_build_parser.add_argument(
+        '--watchApiHash',
+        required=False,
+        type=str,
+        help='TG_API_HASH for the watch build.',
+        metavar='api_hash'
+    )
+    remote_build_parser.add_argument(
+        '--watchSigningIdentity',
+        required=False,
+        type=str,
+        help='Codesigning identity (SHA1 hash) for the watch app. The matching certificate must be present in the uploaded codesigning material.',
+        metavar='identity'
+    )
+    remote_build_parser.add_argument(
+        '--watchProvisioningProfile',
+        required=False,
+        type=str,
+        help='Local absolute path to the watchkitapp .mobileprovision file; uploaded to the remote build environment.',
+        metavar='path'
+    )
 
     vm_build_parser = subparsers.add_parser('vm-build', help='Build the app using a VM.')
     add_codesigning_common_arguments(vm_build_parser)
@@ -1327,13 +1361,27 @@ if __name__ == '__main__':
             
             shutil.copyfile(args.configurationPath, remote_input_path + '/configuration.json')
 
+            watch_provisioning_profile_remote_path = None
+            if args.embedWatchApp:
+                if args.watchApiId is None or args.watchApiHash is None:
+                    raise Exception('--embedWatchApp requires --watchApiId and --watchApiHash (the embedded watch app build needs API credentials).')
+                if args.watchProvisioningProfile is not None:
+                    shutil.copyfile(args.watchProvisioningProfile, remote_input_path + '/watch_provisioning_profile.mobileprovision')
+                    # remote_input_path is uploaded to the guest as $HOME/telegram-build-input.
+                    watch_provisioning_profile_remote_path = '$HOME/telegram-build-input/watch_provisioning_profile.mobileprovision'
+
             RemoteBuild.remote_build_darwin_containers(
                 darwin_containers_path=args.darwinContainers,
                 darwin_containers_host=args.darwinContainersHost,
                 macos_version=versions.macos_version,
                 bazel_cache_host=args.cacheHost,
                 configuration=args.configuration,
-                build_input_data_path=remote_input_path
+                build_input_data_path=remote_input_path,
+                embed_watch_app=args.embedWatchApp,
+                watch_api_id=args.watchApiId,
+                watch_api_hash=args.watchApiHash,
+                watch_signing_identity=args.watchSigningIdentity,
+                watch_provisioning_profile_remote_path=watch_provisioning_profile_remote_path
             )
         elif args.commandName == 'vm-build':
             base_path = os.getcwd()
