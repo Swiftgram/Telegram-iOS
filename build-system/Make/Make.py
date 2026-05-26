@@ -636,11 +636,25 @@ def build(bazel, arguments):
         if arguments.configuration in ('debug_arm64', 'release_arm64'):
             if arguments.watchApiId is None or arguments.watchApiHash is None:
                 raise Exception('--embedWatchApp requires --watchApiId and --watchApiHash (the embedded watch app build needs API credentials).')
+            watch_provisioning_profile = arguments.watchProvisioningProfile
+            if watch_provisioning_profile is None:
+                # Default to the watchkitapp profile that resolve_configuration() just
+                # extracted from the codesigning material (renamed via the bundle-id
+                # mapping in BuildConfiguration.py). This matches the active codesigning
+                # type (e.g. appstore) and the host app's identity, so the embedded watch
+                # app is signed correctly without requiring an explicit
+                # --watchProvisioningProfile. The worker derives the signing identity
+                # (cert) from this profile when --watchSigningIdentity is omitted.
+                resolved_watch_profile = os.path.join(os.getcwd(), 'build-input/configuration-repository/provisioning/WatchApp.mobileprovision')
+                if os.path.exists(resolved_watch_profile):
+                    watch_provisioning_profile = resolved_watch_profile
+                else:
+                    print('TelegramBuild: warning: --embedWatchApp is set but no watch provisioning profile was found (pass --watchProvisioningProfile, or use codesigning material that includes the watchkitapp profile; looked for {}). The embedded watch app will be UNSIGNED and rejected by the App Store.'.format(resolved_watch_profile))
             bazel_command_line.set_watch_app(
                 arguments.watchApiId,
                 arguments.watchApiHash,
                 arguments.watchSigningIdentity,
-                arguments.watchProvisioningProfile
+                watch_provisioning_profile
             )
         else:
             print('TelegramBuild: warning: --embedWatchApp requires a device configuration (debug_arm64 or release_arm64); ignored for simulator builds.')

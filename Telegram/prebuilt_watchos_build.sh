@@ -2,9 +2,9 @@
 # Worker for the apple_prebuilt_watchos_application Bazel rule.
 #
 # Builds the tgwatch watch app via xcodebuild (device, Release, UNSIGNED), then
-# — if a signing identity is supplied — codesigns the app and its nested
-# frameworks with the Telegram distribution/development identity + the watchkitapp
-# provisioning profile, and finally zips the .app into the rule's output archive.
+# — if a provisioning profile is supplied — codesigns the app and its nested
+# frameworks with the watchkitapp provisioning profile and a matching identity,
+# and finally zips the .app into the rule's output archive.
 #
 # The host ios_application embeds this archive under Watch/ and re-seals the host;
 # it does NOT re-sign the watch app, so the watch signing must happen here.
@@ -15,8 +15,8 @@
 #   $2 output_zip   Path (declared by Bazel) to write the .app archive to
 #   $3 api_id       TG_API_ID build setting
 #   $4 api_hash     TG_API_HASH build setting
-#   $5 identity     Codesigning identity (SHA1 hash); empty => unsigned build
-#   $6 profile      Path to the watchkitapp .mobileprovision; empty => none
+#   $5 identity     Codesigning identity (SHA1 hash); empty => derived from $6's cert
+#   $6 profile      Path to the watchkitapp .mobileprovision; empty => unsigned build
 set -euo pipefail
 
 SRC="$1"; OUT_ZIP="$2"; API_ID="$3"; API_HASH="$4"; IDENTITY="${5:-}"; PROFILE="${6:-}"; INFOPLIST_OUT="${7:-}"; VERSIONS_JSON="${8:-}"; BUILD_NUMBER="${9:-1}"
@@ -67,11 +67,18 @@ if [ -n "$INFOPLIST_OUT" ]; then
   cp "$APP/Info.plist" "$INFOPLIST_OUT"
 fi
 
-if [ -n "$IDENTITY" ]; then
-  if [ -z "$PROFILE" ]; then
-    echo "error: a signing identity was given but no provisioning profile (set --define=watchProvisioningProfile=<abs path>)" >&2
-    exit 1
-  fi
+if [ -n "$IDENTITY" ] && [ -z "$PROFILE" ]; then
+  echo "error: a signing identity was given but no provisioning profile (set --watchProvisioningProfile=<abs path>)" >&2
+  exit 1
+fi
+
+# Sign the watch app whenever a provisioning profile is available. When no explicit
+# identity is supplied, derive it from the certificate embedded in that profile, so
+# the watch app is signed with the same distribution/development identity as the host
+# app (resolved from the shared codesigning material) — required for App Store, where
+# every nested bundle must carry the Apple submission certificate. Without a profile
+# the app is left unsigned (the host does not re-sign it).
+if [ -n "$PROFILE" ]; then
   cp "$PROFILE" "$APP/embedded.mobileprovision"
   ENT="$(mktemp)"
   trap 'rm -rf "$DD" "$ENT" "$ENT.plist"' EXIT
@@ -80,15 +87,38 @@ if [ -n "$IDENTITY" ]; then
     echo "error: provisioning profile has no Entitlements key: $PROFILE" >&2
     exit 1
   fi
+
+  if [ -z "$IDENTITY" ]; then
+    # The identity is the SHA-1 of the profile's first embedded certificate, which is
+    # exactly how codesign / the keychain reference it. The matching private key must
+    # be in the keychain (it is: the same cert signs the host app).
+    IDENTITY="$(python3 -c "import sys,plistlib,subprocess,hashlib; d=plistlib.loads(subprocess.run(['security','cms','-D','-i',sys.argv[1]],capture_output=True).stdout); print(hashlib.sha1(d['DeveloperCertificates'][0]).hexdigest().upper())" "$APP/embedded.mobileprovision")"
+    if [ -z "$IDENTITY" ]; then
+      echo "error: could not derive a signing identity from the provisioning profile (no DeveloperCertificates): $PROFILE" >&2
+      exit 1
+    fi
+    echo "note: signing watch app with identity $IDENTITY derived from $(basename "$PROFILE")" >&2
+  fi
+
+  # Distribution profiles (App Store / Ad Hoc) set get-task-allow=false and require a
+  # secure timestamp; development builds set it true and can skip the timestamp (faster,
+  # no round-trip to Apple's timestamp service).
+  TS_FLAG="--timestamp"
+  if /usr/libexec/PlistBuddy -c 'Print :get-task-allow' "$ENT" 2>/dev/null | grep -qi '^true$'; then
+    TS_FLAG="--timestamp=none"
+  fi
+
   # Sign inside-out: nested frameworks first, then the app bundle.
   if [ -d "$APP/Frameworks" ]; then
     for fw in "$APP/Frameworks/"*; do
       [ -e "$fw" ] || continue
-      codesign --force --timestamp=none --sign "$IDENTITY" "$fw" 1>&2
+      codesign --force "$TS_FLAG" --sign "$IDENTITY" "$fw" 1>&2
     done
   fi
-  codesign --force --timestamp=none --sign "$IDENTITY" --entitlements "$ENT" "$APP" 1>&2
+  codesign --force "$TS_FLAG" --sign "$IDENTITY" --entitlements "$ENT" "$APP" 1>&2
   codesign --verify --deep --strict "$APP" 1>&2
+else
+  echo "warning: no watch provisioning profile supplied; the watch app will be UNSIGNED and will be rejected by the App Store. Pass --watchProvisioningProfile, or build with codesigning material that includes the watchkitapp profile." >&2
 fi
 
 # $OUT_ZIP is execroot-relative; the action's cwd is the execroot, so do NOT cd

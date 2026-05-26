@@ -34,7 +34,8 @@ def _apple_prebuilt_watchos_application_impl(ctx):
 
     # The provisioning profile is an external, machine-specific absolute path passed via
     # --define rather than a Bazel label, so the gitignored profile need not be exposed as
-    # a target. The local action reads it directly. Empty => unsigned build.
+    # a target. The local action reads it directly. Empty => unsigned build; when set but
+    # the identity is empty, the worker derives the signing identity from the profile.
     profile = ctx.var.get("watchProvisioningProfile", "")
     # The embedded watch app's CFBundleShortVersionString / CFBundleVersion must match
     # the host app, or rules_apple's child-version verification fails. Source the
@@ -73,7 +74,7 @@ def _apple_prebuilt_watchos_application_impl(ctx):
         inputs = inputs,
         outputs = [archive, infoplist],
         mnemonic = "PrebuiltWatchosBuild",
-        progress_message = "Building%s watch app via xcodebuild" % (" + signing" if identity else ""),
+        progress_message = "Building%s watch app via xcodebuild" % (" + signing" if profile else ""),
         execution_requirements = exec_requirements,
         use_default_shell_env = True,
     )
