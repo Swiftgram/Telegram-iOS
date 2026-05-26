@@ -145,9 +145,31 @@ On message send, the app auto-decides: if the typed markdown maps onto the regul
 - **Approach A (parse-then-inspect):** the classifier reuses the real parser, so "what triggers rich" can't drift from "what the rich renderer shows." `markdownMightNeedRichLayout` is a cheap necessary-condition over-approximation — it may over-trigger a parse but must **never** false-negative. It detects `#`, list markers, dash-lines (`-{1,}`, which also catches setext-H2 underlines → heading blocks), `\n=` (setext H1), `|`, `![`. It deliberately does **not** detect `$`/`\(` (formulas don't trigger rich).
 - **Chat vs. document path = `file == nil` / `context.documentURL == nil`.** `inputRichTextAttributeFromText` passes `file: nil`; the document-attachment path passes a real file. Two chat-only behaviors key off this: (a) generated heading anchors are **skipped** (`markdownBlocksWithGeneratedAnchors` runs only for documents — anchors exist for intra-document `#slug` links and otherwise prepend a spurious invisible `.anchor` block per heading); (b) a level-1 `#` heading maps to `.heading(text:, level: 1)`, not `.title` (the document/article-title treatment). H2–H6 → `.heading(level: 2…6)` for both paths. This converter only ever emits `.title` (H1-doc) or `.heading` — never `.header`/`.subheader`.
 - **The classifier is fed the RAW `effectiveInputText.string`**, not the post-`convertMarkdownToAttributes` `inputText`, so inline `**bold**` survives into the rich render. The entity branch still uses the converted `inputText`.
-- **Bypassed for `.customChatContents`** (business links / quick replies) via `isSpecialChatContents`. **Editing is out of scope** — the gate is only on the compose/send path; edits route earlier to `editMessage`.
+- **Bypassed for `.customChatContents`** (business links / quick replies) via `isSpecialChatContents`. The compose/send gate lives here; **editing has its own symmetric re-classification** — see "Editing rich messages" below.
 - **Transmission:** `RichTextMessageAttribute` → `Api.InputRichMessage` via `messages.sendMessage(richMessage:)` (flag bit 23, `StandaloneSendMessage.swift`); recipients reconstruct it from the incoming `richMessage` field (`StoreMessage_Telegram.swift`). The rich branch sends `text: ""` + the attribute, nils `mediaReference` (no separate webpage preview), and bypasses 4096-char chunking. iOS < 15 / oversize markdown → `inputRichTextAttributeFromText` returns nil → entity path (which chunks). 
 - **`debugRichText` experimental flag is now orphaned** — it previously gated this path and is no longer read anywhere, though `DebugController`/`ExperimentalUISettings` still define/persist it. Optional cleanup.
+
+## Editing rich messages (InstantPage → markdown)
+
+Rich messages (`RichTextMessageAttribute`, `text == ""`) are made editable by reconstructing markdown source from the stored `InstantPage`, populating the editor with it, and re-classifying on save — the inverse of the send path above. Always-on (no flag). Images/videos are out of scope (skipped by the converter).
+
+### Where things live
+
+| File | Responsibility |
+|---|---|
+| `submodules/BrowserUI/Sources/InstantPageToMarkdown.swift` | `markdownStringFromInstantPage(_:)` — the inverse converter (block + inline + list + table + escaping). Pure, best-effort, never fails. |
+| `submodules/TelegramUI/Sources/Chat/ChatControllerLoadDisplayNode.swift` | `setupEditMessage`: rich message → reconstruct markdown into the edit field. `editMessage` (save): re-classify the raw input, route rich-or-plain. |
+| `submodules/TelegramStringFormatting/Sources/InstantPagePreviewText.swift` | `previewText()` extensions (`RichText`/`InstantPage*`) — one-line plaintext previews. |
+| `submodules/TelegramStringFormatting/Sources/MessageContentKind.swift` | `messageContentKind` returns `.text(instantPage.previewText())` for rich, cascading to all preview surfaces. |
+
+### Non-obvious invariants
+
+- **The converter emits CommonMark inline, NOT the entity-regex dialect.** `**bold**`, `*italic*`, `` `code` ``, `~~strike~~`, `[text](url)` — because re-send re-parses the text through the *rich* path (`richMarkdownAttributeIfNeeded` → `NSAttributedString(markdown:)`, Apple CommonMark), not `convertMarkdownToAttributes` (whose dialect is `__italic__`/`||spoiler||`). The two parsers disagree on `__`/`*`; the rich round-trip is the contract.
+- **Re-classify every edit (edit ≡ send).** `editMessage` runs the same `richMarkdownAttributeIfNeeded` on the RAW input string. Rich → `pendingUpdateMessageManager.add(text: "", entities: nil, richText: attr, …)`; else the unchanged plain path. So normal→rich (add a table) and rich→plain (drop all triggers) both work. Bypassed for `.customChatContents`.
+- **Change-detection compares the rich attribute.** The save guard adds `currentRichText != richTextAttribute` (rich branch — skips no-op rich edits) and `currentRichText != nil` (plain branch — so rich→plain still saves even when `text.string` looks unchanged). `RichTextMessageAttribute` is `Equatable` on `instantPage`.
+- **The `text.length == 0` early-return guard is safe for rich.** `convertMarkdownToAttributes` only rewrites inline tokens, never strips `#`/`-`/`|`, so a rich message's markdown source stays non-empty and passes; the rich branch then sends `text: ""`.
+- **Known limitation:** a rich→plain edit that leaves only inline-formatted text loses `*italic*` (the entity path recognizes only `__…__`). Rare edge; the rich round-trip contract holds.
+- **`previewText()` lives in TelegramStringFormatting, not TextFormat/TelegramCore.** It will gain a `strings: PresentationStrings` param (to localize the `"Photo"`/`"Video"`/`"Table"` placeholders), so it must sit in a UI-string module — `messageContentKind`/`descriptionStringForMessage` (same module) already take `strings:`. Teaching `messageContentKind` about rich cascades the preview to the edit accessory panel, reply/pinned panels, and forward preview in one place (those surfaces need no individual change).
 
 ## Postbox → TelegramEngine refactor (in progress)
 
