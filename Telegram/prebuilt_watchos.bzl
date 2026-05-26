@@ -7,8 +7,9 @@ it through the providers that `ios_application(watch_application = ...)` consume
   * AppleBundleInfo      — bundle metadata (the host reads only `.product_type`).
   * AppleEmbeddableInfo  — `watch_bundles` (the zipped .app placed under Watch/).
 
-The watch source tree lives at an external, machine-specific absolute path passed via
-`--define=watchAppSourcePath=...`; the build action is therefore local/uncached.
+The watch source tree is the committed in-repo snapshot at `Telegram/WatchApp/` (tracked
+inputs). To update it, re-sync from the standalone tgwatch repo via
+`tgwatch/tools/export-sources.sh`.
 
 Notes on the rules_apple providers used here:
   * AppleBundleInfo's public init is banned; we build it with the internal raw
@@ -24,17 +25,16 @@ load(
 load("@build_bazel_rules_apple//apple/internal/providers:embeddable_info.bzl", "AppleEmbeddableInfo")
 
 def _apple_prebuilt_watchos_application_impl(ctx):
-    source_path = ctx.var.get("watchAppSourcePath", "")
-    if not source_path:
-        fail("apple_prebuilt_watchos_application requires --define=watchAppSourcePath=<abs path to exported tgwatch sources>")
+    # The watch app is built from the committed in-repo snapshot at Telegram/WatchApp,
+    # tracked as inputs (incremental + cacheable).
+    source_path = ctx.attr.in_repo_source_dir
     api_id = ctx.var.get("watchApiId", "0")
     api_hash = ctx.var.get("watchApiHash", "placeholder")
     identity = ctx.var.get("watchSigningIdentity", "")
 
-    # The provisioning profile is an external, machine-specific absolute path
-    # (like watchAppSourcePath), passed via --define rather than a Bazel label so
-    # the gitignored profile need not be exposed as a target. The local action
-    # reads it directly. Empty => unsigned build.
+    # The provisioning profile is an external, machine-specific absolute path passed via
+    # --define rather than a Bazel label, so the gitignored profile need not be exposed as
+    # a target. The local action reads it directly. Empty => unsigned build.
     profile = ctx.var.get("watchProvisioningProfile", "")
     # The embedded watch app's CFBundleShortVersionString / CFBundleVersion must match
     # the host app, or rules_apple's child-version verification fails. Source the
@@ -46,6 +46,15 @@ def _apple_prebuilt_watchos_application_impl(ctx):
     # to verify WKCompanionAppBundleIdentifier against the host bundle id, so expose it as a
     # separate output (resources.bzl bundle_verification crashes on a None infoplist).
     infoplist = ctx.actions.declare_file(ctx.label.name + "_Info.plist")
+
+    # Track the in-repo snapshot so the watch build re-runs only when it changes.
+    inputs = [ctx.file._worker, ctx.file.versions_json] + ctx.files.srcs
+    exec_requirements = {
+        "no-sandbox": "1",
+        "no-remote": "1",
+        "local": "1",
+        "requires-network": "1",
+    }
 
     ctx.actions.run(
         executable = "/bin/bash",
@@ -61,19 +70,11 @@ def _apple_prebuilt_watchos_application_impl(ctx):
             ctx.file.versions_json.path,
             build_number,
         ],
-        inputs = [ctx.file._worker, ctx.file.versions_json],
+        inputs = inputs,
         outputs = [archive, infoplist],
         mnemonic = "PrebuiltWatchosBuild",
         progress_message = "Building%s watch app via xcodebuild" % (" + signing" if identity else ""),
-        # The watch source tree is an external absolute path, not a tracked input,
-        # so the action cannot be cached or sandboxed and may fetch SwiftPM deps.
-        execution_requirements = {
-            "no-cache": "1",
-            "no-sandbox": "1",
-            "no-remote": "1",
-            "local": "1",
-            "requires-network": "1",
-        },
+        execution_requirements = exec_requirements,
         use_default_shell_env = True,
     )
 
@@ -114,6 +115,15 @@ apple_prebuilt_watchos_application = rule(
         "bundle_id": attr.string(default = "ph.telegra.Telegraph.watchkitapp"),
         "bundle_name": attr.string(default = "tgwatch Watch App"),
         "minimum_os_version": attr.string(default = "26.0"),
+        "srcs": attr.label(
+            default = "//Telegram/WatchApp:sources",
+            allow_files = True,
+            doc = "Committed in-repo watch source snapshot (tracked inputs).",
+        ),
+        "in_repo_source_dir": attr.string(
+            default = "Telegram/WatchApp",
+            doc = "Execroot-relative path to the committed snapshot (must match the package of 'srcs').",
+        ),
         "versions_json": attr.label(
             allow_single_file = True,
             default = "//:versions.json",

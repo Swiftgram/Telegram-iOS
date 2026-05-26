@@ -1794,10 +1794,9 @@ ios_application(
             ":BroadcastUploadExtension",
         ],
     }),
-    # Embed the xcodebuild-built tgwatch watch app under Watch/ only when
+    # Embed the in-repo tgwatch watch app (Telegram/WatchApp) under Watch/ only when
     # --//Telegram:embedWatchApp is set (Make.py sets it for device configs when
-    # --watchAppSourcePath is provided). Off by default, so simulator/dev builds
-    # are unaffected.
+    # --embedWatchApp is passed). Off by default, so simulator/dev builds are unaffected.
     watch_application = select({
         ":embedWatchAppSetting": ":TelegramWatchApp",
         "//conditions:default": None,

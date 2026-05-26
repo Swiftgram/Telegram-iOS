@@ -10,7 +10,8 @@
 # it does NOT re-sign the watch app, so the watch signing must happen here.
 #
 # Args:
-#   $1 source_path  Absolute path to the exported tgwatch source tree (contains tgwatch.xcodeproj)
+#   $1 source_path  Execroot-relative path to the committed in-repo snapshot
+#                   (Telegram/WatchApp), which contains tgwatch.xcodeproj.
 #   $2 output_zip   Path (declared by Bazel) to write the .app archive to
 #   $3 api_id       TG_API_ID build setting
 #   $4 api_hash     TG_API_HASH build setting
@@ -21,7 +22,7 @@ set -euo pipefail
 SRC="$1"; OUT_ZIP="$2"; API_ID="$3"; API_HASH="$4"; IDENTITY="${5:-}"; PROFILE="${6:-}"; INFOPLIST_OUT="${7:-}"; VERSIONS_JSON="${8:-}"; BUILD_NUMBER="${9:-1}"
 
 if [ ! -e "$SRC/tgwatch.xcodeproj" ]; then
-  echo "error: no tgwatch.xcodeproj at watchAppSourcePath=$SRC (run tools/export-sources.sh first)" >&2
+  echo "error: no tgwatch.xcodeproj at $SRC (re-sync the Telegram/WatchApp snapshot via tgwatch/tools/export-sources.sh)" >&2
   exit 1
 fi
 
@@ -35,8 +36,15 @@ fi
 DD="$(mktemp -d)"
 trap 'rm -rf "$DD"' EXIT
 
+# Build from a writable copy so xcodebuild/SwiftPM never write into the (possibly
+# in-repo, read-only) source tree — e.g. SwiftPM's Package.resolved or the workspace.
+# The tree is small (~12M); a plain cp on each (uncached) build is acceptable.
+WORKSRC="$DD/src"
+mkdir -p "$WORKSRC"
+cp -R "$SRC/." "$WORKSRC/"
+
 xcodebuild \
-  -project "$SRC/tgwatch.xcodeproj" \
+  -project "$WORKSRC/tgwatch.xcodeproj" \
   -scheme "tgwatch Watch App" \
   -configuration Release \
   -destination 'generic/platform=watchOS' \

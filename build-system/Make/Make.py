@@ -47,7 +47,7 @@ class BazelCommandLine:
         self.enable_sandbox = False
         self.disable_provisioning_profiles = False
         self.profile_swift = False
-        self.watch_app_source_path = None
+        self.embed_watch_app = False
         self.watch_api_id = None
         self.watch_api_hash = None
         self.watch_signing_identity = None
@@ -195,8 +195,8 @@ class BazelCommandLine:
         else:
             raise Exception('Unknown configuration {}'.format(configuration))
 
-    def set_watch_app(self, source_path, api_id, api_hash, signing_identity, provisioning_profile):
-        self.watch_app_source_path = source_path
+    def set_watch_app(self, api_id, api_hash, signing_identity, provisioning_profile):
+        self.embed_watch_app = True
         self.watch_api_id = api_id
         self.watch_api_hash = api_hash
         self.watch_signing_identity = signing_identity
@@ -225,14 +225,15 @@ class BazelCommandLine:
         args = [
             '--define=buildNumber={}'.format(self.build_number),
         ]
-        if self.watch_app_source_path is not None:
+        if self.embed_watch_app:
+            args += ['--//Telegram:embedWatchApp']
+            # watch_api_id/hash are guaranteed non-None here: set_watch_app is the only
+            # setter of embed_watch_app, and build() raises if they are missing.
             args += [
-                '--define=watchAppSourcePath={}'.format(self.watch_app_source_path),
                 '--define=watchApiId={}'.format(self.watch_api_id),
                 '--define=watchApiHash={}'.format(self.watch_api_hash),
                 '--define=watchSigningIdentity={}'.format(self.watch_signing_identity or ''),
                 '--define=watchProvisioningProfile={}'.format(self.watch_provisioning_profile or ''),
-                '--//Telegram:embedWatchApp',
             ]
         return args
 
@@ -631,19 +632,18 @@ def build(bazel, arguments):
     )
 
     bazel_command_line.set_configuration(arguments.configuration)
-    if arguments.watchAppSourcePath is not None:
+    if arguments.embedWatchApp:
         if arguments.configuration in ('debug_arm64', 'release_arm64'):
             if arguments.watchApiId is None or arguments.watchApiHash is None:
-                raise Exception('--watchAppSourcePath requires --watchApiId and --watchApiHash (the embedded watch app build needs API credentials).')
+                raise Exception('--embedWatchApp requires --watchApiId and --watchApiHash (the embedded watch app build needs API credentials).')
             bazel_command_line.set_watch_app(
-                arguments.watchAppSourcePath,
                 arguments.watchApiId,
                 arguments.watchApiHash,
                 arguments.watchSigningIdentity,
                 arguments.watchProvisioningProfile
             )
         else:
-            print('TelegramBuild: warning: --watchAppSourcePath requires a device configuration (debug_arm64 or release_arm64); watch embedding is disabled for simulator builds.')
+            print('TelegramBuild: warning: --embedWatchApp requires a device configuration (debug_arm64 or release_arm64); ignored for simulator builds.')
     bazel_command_line.set_build_number(arguments.buildNumber)
     bazel_command_line.set_custom_target(arguments.target)
     bazel_command_line.set_continue_on_error(arguments.continueOnError)
@@ -1045,11 +1045,10 @@ if __name__ == '__main__':
         help='Respect MODULE.bazel.lock.'
     )
     buildParser.add_argument(
-        '--watchAppSourcePath',
-        required=False,
-        type=str,
-        help='Absolute path to the exported tgwatch source tree. When provided with a device configuration, embeds the prebuilt watch app.',
-        metavar='path'
+        '--embedWatchApp',
+        action='store_true',
+        default=False,
+        help='Embed the tgwatch watch app (from the in-repo Telegram/WatchApp snapshot) under Watch/ in a device build.'
     )
     buildParser.add_argument(
         '--watchApiId',
