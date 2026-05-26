@@ -748,6 +748,11 @@ private func markdownBlockFormulaReplacement(
     }
 
     let openerContent = String(trimmedStart.dropFirst(opener.count))
+    // Block opener must be exactly `$$` (not `$$$`); a `$$$…` line is not a block and
+    // falls through to inline handling.
+    if opener == "$$", openerContent.first == "$" {
+        return nil
+    }
     var latex = ""
 
     if let closeRange = markdownFirstUnescapedRange(of: closer, in: openerContent, from: openerContent.startIndex) {
@@ -770,6 +775,11 @@ private func markdownBlockFormulaReplacement(
         return (indentation + descriptor.placeholder + ending, startLineIndex + 1, descriptor)
     }
 
+    // Reached only when there is no closer on the opener line (multi-line form).
+    // A multi-line block opener must be a bare `$$` line; `$$ content` is not a block.
+    if opener == "$$", !openerContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        return nil
+    }
     let (_, openerEnding) = markdownLineContentAndEnding(lines[startLineIndex])
     latex.append(contentsOf: openerContent)
     latex.append(contentsOf: openerEnding)
@@ -862,29 +872,47 @@ private func markdownReplacingInlineFormulas(
         }
 
         if content[index] == "$", !markdownIsEscaped(content, at: index) {
-            guard let bodyStart = markdownIndex(content, offsetBy: 1, from: index), bodyStart < content.endIndex else {
+            // Outer boundary before the opener: line start, or a non-alphanumeric char.
+            // (Rejects `cost$5$total`, the `$` after `5` in `$5-$10`, etc.)
+            if index > content.startIndex {
+                let beforeOpener = content[content.index(before: index)]
+                if beforeOpener.isLetter || beforeOpener.isNumber {
+                    result.append(content[index])
+                    index = content.index(after: index)
+                    continue
+                }
+            }
+            // Opener: 1 or 2 leading `$` (a 3rd `$` becomes inner content).
+            let openerRunEnd = markdownIndex(afterRepeating: "$", in: content, from: index)
+            let openerCount = min(2, content.distance(from: index, to: openerRunEnd))
+            let bodyStart = content.index(index, offsetBy: openerCount)
+            // Inner boundary after the opener: must exist and be non-whitespace.
+            guard bodyStart < content.endIndex, !content[bodyStart].isWhitespace else {
                 result.append(content[index])
                 index = content.index(after: index)
                 continue
             }
-            if content[bodyStart] == "$" || content[bodyStart].isWhitespace {
-                result.append(content[index])
-                index = content.index(after: index)
-                continue
-            }
-
+            let closerPattern = String(repeating: "$", count: openerCount)
             var searchIndex = bodyStart
             var matchedRange: Range<String.Index>?
-            while let closeRange = markdownFirstUnescapedRange(of: "$", in: content, from: searchIndex) {
-                let closerIndex = closeRange.lowerBound
-                let previousIndex = content.index(before: closerIndex)
-                if !content[previousIndex].isWhitespace {
-                    matchedRange = closeRange
-                    break
+            while let closeRange = markdownFirstUnescapedRange(of: closerPattern, in: content, from: searchIndex) {
+                // Inner boundary before the closer: non-whitespace.
+                let beforeCloser = content[content.index(before: closeRange.lowerBound)]
+                if beforeCloser.isWhitespace {
+                    searchIndex = closeRange.upperBound
+                    continue
                 }
-                searchIndex = closeRange.upperBound
+                // Outer boundary after the closer: line end, or a non-alphanumeric char.
+                if closeRange.upperBound < content.endIndex {
+                    let afterCloser = content[closeRange.upperBound]
+                    if afterCloser.isLetter || afterCloser.isNumber {
+                        searchIndex = closeRange.upperBound
+                        continue
+                    }
+                }
+                matchedRange = closeRange
+                break
             }
-
             if let matchedRange {
                 let latex = String(content[bodyStart ..< matchedRange.lowerBound])
                 if let descriptor = markdownAcceptedFormulaDescriptor(
@@ -1012,6 +1040,11 @@ private func markdownMightNeedRichLayout(_ text: String) -> Bool {
     if text.contains("|") || text.contains("![") {
         return true
     }
+    // Math delimiters. Over-approximates (any `$` triggers a parse); the strict
+    // detection + gate decide whether a formula block is actually produced.
+    if text.contains("$") || text.contains("\\(") || text.contains("\\[") {
+        return true
+    }
     // Setext H1 heading: a line of '=' underlining the previous line.
     // (Setext H2 dash-underlines are caught by the dash-line branch in the regex.)
     if text.contains("\n=") {
@@ -1029,8 +1062,8 @@ private func markdownMightNeedRichLayout(_ text: String) -> Bool {
 
 // True when this inline RichText maps onto Telegram message entities.
 // Returns false for inline content that forces the rich path (inline image,
-// sub/superscript, highlight). Inline formulas are intentionally treated as
-// expressible: '$'-delimited spans are too common in casual text ('$5-$10').
+// sub/superscript, highlight, formula). Formulas trigger the rich path; casual
+// '$' usage is excluded by the strict boundary rule in the detection step, not here.
 private func richTextIsEntityExpressible(_ text: RichText) -> Bool {
     switch text {
     case .empty, .plain:
@@ -1052,7 +1085,7 @@ private func richTextIsEntityExpressible(_ text: RichText) -> Bool {
     case .anchor(let inner, _):
         return richTextIsEntityExpressible(inner)
     case .formula:
-        return true
+        return false
     case .textCustomEmoji:
         return true
     case .textAutoEmail(let inner), .textAutoPhone(let inner), .textAutoUrl(let inner), .textBankCard(let inner), .textBotCommand(let inner), .textCashtag(let inner), .textHashtag(let inner), .textMention(let inner), .textSpoiler(let inner):
@@ -1075,9 +1108,10 @@ private func isEmptyRichText(_ text: RichText) -> Bool {
 
 // Block types that do NOT trigger a rich-layout message. Besides the genuinely
 // entity-expressible blocks (paragraph/preformatted/blockQuote/anchor), dividers
-// and formulas are intentionally excluded as triggers too: '---' and '$'-delimited
-// spans are too common in casual text to justify a rich message. Effective rich
-// triggers are therefore headings, lists, and tables.
+// are intentionally excluded as triggers too ('---' is too common in casual text).
+// Formulas DO trigger the rich path; casual '$' usage is excluded by the strict
+// boundary rule in the detection step. Effective rich triggers are therefore
+// headings, lists, tables, and formulas.
 private func blockIsEntityExpressible(_ block: InstantPageBlock) -> Bool {
     switch block {
     case .paragraph(let text):
@@ -1088,7 +1122,7 @@ private func blockIsEntityExpressible(_ block: InstantPageBlock) -> Bool {
         return isEmptyRichText(caption) && richTextIsEntityExpressible(text)
     case .anchor, .unsupported:
         return true
-    case .divider, .formula:
+    case .divider:
         return true
     default:
         return false
