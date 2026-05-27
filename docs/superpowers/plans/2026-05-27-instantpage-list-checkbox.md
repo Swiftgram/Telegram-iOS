@@ -17,7 +17,7 @@
 - **Commit once, at the end** (Task 11), after the build is green and verification passes — intermediate states don't compile. This matches the repo's feature-level commit style.
 - **Build command** (from repo root, Task 10):
   ```sh
-  source ~/.zshrc 2>/dev/null; python3 build-system/Make.py --overrideXcodeVersion \
+  source ~/.zshrc 2>/dev/null; python3 build-system/Make/Make.py --overrideXcodeVersion \
     --cacheDir ~/telegram-bazel-cache build \
     --configurationPath build-system/appstore-configuration.json \
     --gitCodesigningRepository git@gitlab.com:peter-iakovlev/fastlanematch.git \
