@@ -197,6 +197,36 @@ markdown-send gate above.
 - **Block `$$` detection** (`markdownBlockFormulaReplacement`): single-line `$$…$$` requires an exact `$$` opener (not `$$$`) and trailing whitespace only; multi-line requires a **bare** `$$` opener line. `$$x$$ trailing text` falls through to the inline rule. The `\[…\]` opener path is unchanged and exempt from these `$$`-only guards.
 - **Detection is shared with the document path; the gate is chat-only.** `markdownPreparedSource` (detection) runs for both chat and document attachments. The triggers (`richTextIsEntityExpressible`/`blockIsEntityExpressible` → `.formula` is non-expressible; `$`/`\(`/`\[` in `markdownMightNeedRichLayout`) are read only by the chat classifier `richMarkdownAttributeIfNeeded`.
 
+## InstantPageListItem task-list checkboxes (`- [ ]` / `- [x]`)
+
+`InstantPageListItem` carries a first-class `checked: Bool?` — the **third** associated value of `.text(RichText, String?, Bool?)` / `.blocks([InstantPageBlock], String?, Bool?)`, orthogonal to the ordered-list `num` — representing a GitHub-style task-list checkbox. `nil` = not a checkbox item, `false` = unchecked, `true` = checked. Covers markdown parse, Postbox + FlatBuffers serialization, Telegram API transmission, display (V1 + V2), the edit round-trip, and previews.
+
+Spec: [`docs/superpowers/specs/2026-05-27-instantpage-list-checkbox-design.md`](docs/superpowers/specs/2026-05-27-instantpage-list-checkbox-design.md). Plan: [`docs/superpowers/plans/2026-05-27-instantpage-list-checkbox.md`](docs/superpowers/plans/2026-05-27-instantpage-list-checkbox.md).
+
+### Where things live
+
+| File | Responsibility |
+|---|---|
+| `submodules/TelegramCore/Sources/SyncCore/SyncCore_InstantPage.swift` | The `checked: Bool?` enum payload; Postbox coding (key `"ck"`, tri-state Int32); `==`; FlatBuffers codec. Internal tri-state helpers `checkedFromTriState`/`triState(fromChecked:)`. |
+| `submodules/TelegramCore/FlatSerialization/Models/InstantPageBlock.fbs` | `checkState:int32 (id: 2)` on `InstantPageListItem_Text` + `_Blocks`. **Source of truth**; the Bazel `flatc` genrule regenerates the Swift (checked-in `*_generated.swift` is stale). |
+| `submodules/TelegramCore/Sources/ApiUtils/InstantPage.swift` | `checked` / `num` accessors; reads & writes the API `checkbox`=flags.0 / `checked`=flags.1 bits via `checkedFromApiFlags` / `apiFlags(fromChecked:)` across all four list-item types. |
+| `submodules/BrowserUI/Sources/BrowserMarkdown.swift` | Forward parse: `markdownTaskListMarker` detects `[ ]`/`[x]`/`[X]`; the result routes into `checked` (NOT `num`). |
+| `submodules/BrowserUI/Sources/InstantPageToMarkdown.swift` | Reverse: emits `- [ ] ` / `- [x] ` from `item.checked` for the edit round-trip. |
+| `submodules/InstantPageUI/Sources/InstantPageV2Layout.swift` | V2 detection via `item.checked`; `.checklist(checked:colors:)` marker carrying `InstantPageV2CheckboxColors`. |
+| `submodules/InstantPageUI/Sources/InstantPageRenderer.swift` | V2 marker view (`InstantPageV2ListMarkerView`) hosts a real `CheckNode`. |
+| `submodules/InstantPageUI/Sources/InstantPageLayout.swift` | V1 detection via `item.checked` (renders the existing `InstantPageChecklistMarkerItem`). |
+| `submodules/TelegramStringFormatting/Sources/InstantPagePreviewText.swift` | `previewText()` renders a `☐`/`☑︎` glyph + body for checkbox items. |
+
+### Non-obvious invariants
+
+- **`checked` is orthogonal to `num`.** The API keeps `checkbox`/`checked` as flags **separate from the list number**, so an ordered item can be both numbered AND a checkbox. This is exactly why the first-class field replaced an earlier sentinel-string-in-`num` prototype (which could not represent both). No `\u{001f}tg-md-task:*` sentinel remains anywhere.
+- **API bits are `checkbox`=flags.0, `checked`=flags.1 on ALL FOUR list-item constructors** (`pageListItemText`/`Blocks` and `pageListOrderedItemText`/`Blocks`, in and out — `pageListItemText#2f58683c`, `pageListOrderedItemText#cd3ea036`, etc.). The iOS `Api.*` layer exposes only `flags: Int32`; mask the bits (`apiFlags(fromChecked:)` / `checkedFromApiFlags`). Because state rides the flags (not the text), it survives the server round-trip for sender + recipients — **including the sender's own send-confirmation echo** (`applyUpdateMessage` replaces local attributes with the server's reconstruction, `ApplyUpdateMessage.swift`).
+- **Tri-state persistence `0=nil, 1=unchecked, 2=checked`** in BOTH Postbox (key `"ck"`, decoded with `decodeInt32ForKey(orElse: 0)`) and FlatBuffers (`checkState:int32`, default 0). Absent/0 → `nil`, so pre-existing stored pages decode unchanged.
+- **Detection reads `item.checked != nil`** in both layout engines (was `instantPageTaskListMarkerState(item.num)`); the V2 marker kind is `.checklist(checked: item.checked == true, colors:)`. The empty-blocks `.blocks → .text(.plain(" "), num, checked)` promotion must carry `checked` through, not drop it.
+- **V2 `CheckNode` is hosted directly in a plain `UIView`**, not an ASDisplayNode tree, so `checkNode.displaysAsynchronously = false` is set to avoid a first-draw blank flash (the V2 pageView is rebuilt per streaming chunk — see the AI streaming section). `InstantPageV2CheckboxColors` (background←`panelAccentColor`, stroke←`pageBackgroundColor`, border←`controlColor`) is carried on the `.checklist` payload and mirrors the V1 `instantPageChecklistMarkerTheme`.
+- **Forward parser keeps `[ ]` detection but routes to `checked`.** `markdownApplyTaskListMarker`/`markdownStrippingTaskListMarker`/`markdownTaskListMarker` still strip the marker from the item text; the state flows into `checked` while ordered items keep their real `"\(ordinal)"` number. The reverse converter emits lowercase `[x]` / `[ ]`, which the forward `hasPrefix` guards re-parse — that is the round-trip contract.
+- **The enum-arity change is compile-enforced.** Adding the third associated value broke every `.text`/`.blocks` construction/destructure; the full build is the completeness gate. Read-only consumers outside the core set exist (`BrowserInstantPageContent.swift`, `CachedFaqInstantPage.swift`) — grep `\.(text|blocks)\(` repo-wide when touching the enum again.
+
 ## Postbox → TelegramEngine refactor (in progress)
 
 A gradual migration is underway to eliminate direct `import Postbox` from consumer submodules in favor of `TelegramEngine`.
