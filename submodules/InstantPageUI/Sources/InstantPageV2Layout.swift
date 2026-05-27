@@ -136,10 +136,22 @@ public struct InstantPageV2DividerItem {
     public let color: UIColor
 }
 
+public struct InstantPageV2CheckboxColors {
+    public let background: UIColor
+    public let stroke: UIColor
+    public let border: UIColor
+
+    public init(background: UIColor, stroke: UIColor, border: UIColor) {
+        self.background = background
+        self.stroke = stroke
+        self.border = border
+    }
+}
+
 public enum InstantPageV2ListMarkerKind {
     case bullet
     case number(String)
-    case checklist(checked: Bool)
+    case checklist(checked: Bool, colors: InstantPageV2CheckboxColors)
 }
 
 public struct InstantPageV2ListMarkerItem {
@@ -1994,22 +2006,6 @@ private func layoutBlockQuote(
     return result
 }
 
-// MARK: - Task-list marker helpers (copied verbatim from V1 InstantPageLayout.swift:134–146)
-
-private let instantPageTaskListUncheckedNumber = "\u{001f}tg-md-task:unchecked"
-private let instantPageTaskListCheckedNumber = "\u{001f}tg-md-task:checked"
-
-private func instantPageTaskListMarkerState(_ number: String?) -> Bool? {
-    switch number {
-    case instantPageTaskListUncheckedNumber:
-        return false
-    case instantPageTaskListCheckedNumber:
-        return true
-    default:
-        return nil
-    }
-}
-
 // MARK: - List layout (ported from V1 InstantPageLayout.swift lines 365–516)
 
 private func layoutList(
@@ -2026,7 +2022,7 @@ private func layoutList(
 
     if ordered {
         for item in listItems {
-            if instantPageTaskListMarkerState(item.num) != nil {
+            if item.checked != nil {
                 hasTaskMarkers = true
             } else if let num = item.num, !num.isEmpty {
                 hasNums = true
@@ -2034,7 +2030,7 @@ private func layoutList(
         }
     } else {
         for item in listItems {
-            if instantPageTaskListMarkerState(item.num) != nil {
+            if item.checked != nil {
                 hasTaskMarkers = true
                 break
             }
@@ -2048,13 +2044,18 @@ private func layoutList(
     }
     let checklistMarkerSize = CGSize(width: 18.0, height: 18.0)
 
+    let checkboxColors = InstantPageV2CheckboxColors(
+        background: context.theme.panelAccentColor,
+        stroke: context.theme.pageBackgroundColor,
+        border: context.theme.controlColor
+    )
     var markerInfos: [MarkerInfo] = []
     for (i, item) in listItems.enumerated() {
-        if let checked = instantPageTaskListMarkerState(item.num) {
+        if let checked = item.checked {
             if ordered {
                 maxIndexWidth = max(maxIndexWidth, checklistMarkerSize.width)
             }
-            markerInfos.append(MarkerInfo(kind: .checklist(checked: checked), naturalWidth: checklistMarkerSize.width))
+            markerInfos.append(MarkerInfo(kind: .checklist(checked: checked, colors: checkboxColors), naturalWidth: checklistMarkerSize.width))
         } else if ordered {
             let value: String
             if hasNums {
@@ -2109,12 +2110,12 @@ private func layoutList(
 
         // Effective item: if a .blocks item is empty, treat as a single space.
         var effectiveItem = item
-        if case let .blocks(blocks, num) = effectiveItem, blocks.isEmpty {
-            effectiveItem = .text(.plain(" "), num)
+        if case let .blocks(blocks, num, checked) = effectiveItem, blocks.isEmpty {
+            effectiveItem = .text(.plain(" "), num, checked)
         }
 
         switch effectiveItem {
-        case let .text(text, _):
+        case let .text(text, _, _):
             // Layout text content.
             let styleStack = InstantPageTextStyleStack()
             setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
@@ -2163,7 +2164,7 @@ private func layoutList(
             result.append(contentsOf: textLaidOutItems)
             contentHeight += textSize.height
 
-        case let .blocks(blocks, _):
+        case let .blocks(blocks, _, _):
             // Nested block content (e.g. sub-list, paragraphs).
             var previousBlock: InstantPageBlock?
             let originY = contentHeight

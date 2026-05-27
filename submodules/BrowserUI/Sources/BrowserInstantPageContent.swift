@@ -629,7 +629,7 @@ final class BrowserInstantPageContent: UIView, BrowserContent, UIScrollViewDeleg
                     collect(blocks: blocks)
                 case let .list(items, _):
                     for item in items {
-                        if case let .blocks(blocks, _) = item {
+                        if case let .blocks(blocks, _, _) = item {
                             collect(blocks: blocks)
                         }
                     }

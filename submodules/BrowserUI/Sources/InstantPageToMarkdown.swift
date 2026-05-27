@@ -166,14 +166,24 @@ private func markdownList(items: [InstantPageListItem], ordered: Bool, indent: I
     var lines: [String] = []
     var index = 1
     for item in items {
-        // The stored per-item marker string (`InstantPageListItem`'s `String?`) is
-        // intentionally ignored: ordered markers are regenerated from the running
-        // index (CommonMark renumbers anyway) and the unordered marker is fixed.
-        let marker = ordered ? "\(index). " : "- "
+        // Ordered markers are regenerated from the running index (CommonMark renumbers
+        // anyway); the unordered marker is fixed. A task-list `checked` state is emitted
+        // as a GitHub task marker so re-classification on save re-parses it as a checkbox.
+        let listMarker = ordered ? "\(index). " : "- "
+        let taskMarker: String
+        switch item.checked {
+        case .some(false):
+            taskMarker = "[ ] "
+        case .some(true):
+            taskMarker = "[x] "
+        case .none:
+            taskMarker = ""
+        }
+        let marker = "\(listMarker)\(taskMarker)"
         switch item {
-        case let .text(text, _):
+        case let .text(text, _, _):
             lines.append("\(indentString)\(marker)\(markdownInline(from: text))")
-        case let .blocks(blocks, _):
+        case let .blocks(blocks, _, _):
             var remainder = blocks
             var markerLineText = ""
             if case let .paragraph(text)? = remainder.first {

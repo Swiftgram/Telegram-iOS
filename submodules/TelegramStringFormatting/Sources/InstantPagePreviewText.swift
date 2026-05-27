@@ -57,13 +57,16 @@ extension InstantPageListItem {
         switch self {
         case .unknown:
             return ""
-        case let .text(text, num):
-            if let num, !num.isEmpty {
-                return "\(num). \(text.previewText())"
+        case let .text(text, num, checked):
+            let body = text.previewText()
+            if let checked {
+                return "\(checked ? "☑︎" : "☐") \(body)"
+            } else if let num, !num.isEmpty {
+                return "\(num). \(body)"
             } else {
-                return text.previewText()
+                return body
             }
-        case let .blocks(blocks, num):
+        case let .blocks(blocks, num, checked):
             var blocksText = ""
             for block in blocks {
                 if !blocksText.isEmpty {
@@ -71,7 +74,9 @@ extension InstantPageListItem {
                 }
                 blocksText.append(block.previewText())
             }
-            if let num {
+            if let checked {
+                return "\(checked ? "☑︎" : "☐") \(blocksText)"
+            } else if let num {
                 return "\(num). \(blocksText)"
             } else {
                 return blocksText

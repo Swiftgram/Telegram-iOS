@@ -16,13 +16,42 @@ extension InstantPageCaption {
 public extension InstantPageListItem {
     var num: String? {
         switch self {
-            case let .text(_, num):
+            case let .text(_, num, _):
                 return num
-            case let .blocks(_, num):
+            case let .blocks(_, num, _):
                 return num
             default:
                 return nil
         }
+    }
+
+    var checked: Bool? {
+        switch self {
+            case let .text(_, _, checked):
+                return checked
+            case let .blocks(_, _, checked):
+                return checked
+            default:
+                return nil
+        }
+    }
+
+    static func checkedFromApiFlags(_ flags: Int32) -> Bool? {
+        guard (flags & (1 << 0)) != 0 else {
+            return nil
+        }
+        return (flags & (1 << 1)) != 0
+    }
+
+    static func apiFlags(fromChecked checked: Bool?) -> Int32 {
+        guard let checked else {
+            return 0
+        }
+        var flags: Int32 = 1 << 0
+        if checked {
+            flags |= (1 << 1)
+        }
+        return flags
     }
 }
 
@@ -31,10 +60,10 @@ extension InstantPageListItem {
         switch apiListItem {
             case let .pageListItemText(pageListItemTextData):
                 let text = pageListItemTextData.text
-                self = .text(RichText(apiText: text), nil)
+                self = .text(RichText(apiText: text), nil, InstantPageListItem.checkedFromApiFlags(pageListItemTextData.flags))
             case let .pageListItemBlocks(pageListItemBlocksData):
                 let blocks = pageListItemBlocksData.blocks
-                self = .blocks(blocks.map({ InstantPageBlock(apiBlock: $0) }), nil)
+                self = .blocks(blocks.map({ InstantPageBlock(apiBlock: $0) }), nil, InstantPageListItem.checkedFromApiFlags(pageListItemBlocksData.flags))
         }
     }
     
@@ -42,19 +71,19 @@ extension InstantPageListItem {
         switch apiListOrderedItem {
             case let .pageListOrderedItemText(pageListOrderedItemTextData):
                 let (num, text) = (pageListOrderedItemTextData.num, pageListOrderedItemTextData.text)
-                self = .text(RichText(apiText: text), num)
+                self = .text(RichText(apiText: text), num, InstantPageListItem.checkedFromApiFlags(pageListOrderedItemTextData.flags))
             case let .pageListOrderedItemBlocks(pageListOrderedItemBlocksData):
                 let (num, blocks) = (pageListOrderedItemBlocksData.num, pageListOrderedItemBlocksData.blocks)
-                self = .blocks(blocks.map({ InstantPageBlock(apiBlock: $0) }), num)
+                self = .blocks(blocks.map({ InstantPageBlock(apiBlock: $0) }), num, InstantPageListItem.checkedFromApiFlags(pageListOrderedItemBlocksData.flags))
         }
     }
     
     func apiInputPageListItem() -> Api.PageListItem {
         switch self {
-        case let .text(value, _):
-            return .pageListItemText(Api.PageListItem.Cons_pageListItemText(flags: 0, text: value.apiRichText()))
-        case let .blocks(blocks, _):
-            return .pageListItemBlocks(Api.PageListItem.Cons_pageListItemBlocks(flags: 0, blocks: blocks.compactMap { $0.apiInputBlock() }))
+        case let .text(value, _, checked):
+            return .pageListItemText(Api.PageListItem.Cons_pageListItemText(flags: InstantPageListItem.apiFlags(fromChecked: checked), text: value.apiRichText()))
+        case let .blocks(blocks, _, checked):
+            return .pageListItemBlocks(Api.PageListItem.Cons_pageListItemBlocks(flags: InstantPageListItem.apiFlags(fromChecked: checked), blocks: blocks.compactMap { $0.apiInputBlock() }))
         case .unknown:
             return .pageListItemText(Api.PageListItem.Cons_pageListItemText(flags: 0, text: .textPlain(Api.RichText.Cons_textPlain(text: ""))))
         }
@@ -62,25 +91,25 @@ extension InstantPageListItem {
     
     func apiInputPageOrderedListItem() -> Api.InputPageListOrderedItem {
         switch self {
-        case let .text(value, num):
-            var flags: Int32 = 0
-            
+        case let .text(value, num, checked):
+            var flags: Int32 = InstantPageListItem.apiFlags(fromChecked: checked)
+
             var inputNum: Int32?
             if let num, let numValue = Int32(num) {
                 inputNum = numValue
                 flags |= (1 << 2)
             }
-            
+
             return .inputPageListOrderedItemText(Api.InputPageListOrderedItem.Cons_inputPageListOrderedItemText(flags: flags, text: value.apiRichText(), value: inputNum, type: nil))
-        case let .blocks(blocks, num):
-            var flags: Int32 = 0
-            
+        case let .blocks(blocks, num, checked):
+            var flags: Int32 = InstantPageListItem.apiFlags(fromChecked: checked)
+
             var inputNum: Int32?
             if let num, let numValue = Int32(num) {
                 inputNum = numValue
                 flags |= (1 << 2)
             }
-            
+
             return .inputPageListOrderedItemBlocks(Api.InputPageListOrderedItem.Cons_inputPageListOrderedItemBlocks(flags: flags, blocks: blocks.compactMap { $0.apiInputBlock() }, value: inputNum, type: nil))
         case .unknown:
             return .inputPageListOrderedItemText(Api.InputPageListOrderedItem.Cons_inputPageListOrderedItemText(flags: 0, text: .textPlain(Api.RichText.Cons_textPlain(text: "")), value: nil, type: nil))

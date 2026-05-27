@@ -214,11 +214,13 @@ table InstantPageListItem {
 table InstantPageListItem_Text {
     text:RichText (id: 0, required);
     number:string (id: 1);
+    checkState:int32 (id: 2);
 }
 
 table InstantPageListItem_Blocks {
     blocks:[InstantPageBlock] (id: 0, required);
     number:string (id: 1);
+    checkState:int32 (id: 2);
 }
 
 table InstantPageListItem_Unknown {}

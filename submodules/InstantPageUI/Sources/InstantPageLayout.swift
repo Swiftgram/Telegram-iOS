@@ -131,20 +131,7 @@ private func attributedStringForPreformattedText(_ text: RichText, language: Str
     return attributedString
 }
 
-private let instantPageTaskListUncheckedNumber = "\u{001f}tg-md-task:unchecked"
-private let instantPageTaskListCheckedNumber = "\u{001f}tg-md-task:checked"
 private let instantPageChecklistMarkerSize = CGSize(width: 18.0, height: 18.0)
-
-private func instantPageTaskListMarkerState(_ number: String?) -> Bool? {
-    switch number {
-    case instantPageTaskListUncheckedNumber:
-        return false
-    case instantPageTaskListCheckedNumber:
-        return true
-    default:
-        return nil
-    }
-}
 
 private func instantPageFirstTextLineMidY(in items: [InstantPageItem]) -> CGFloat? {
     for item in items {
@@ -372,7 +359,7 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
             var hasNums = false
             if ordered {
                 for item in contentItems {
-                    if instantPageTaskListMarkerState(item.num) != nil {
+                    if item.checked != nil {
                         hasTaskMarkers = true
                     } else if let num = item.num, !num.isEmpty {
                         hasNums = true
@@ -380,7 +367,7 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
                 }
             } else {
                 for item in contentItems {
-                    if instantPageTaskListMarkerState(item.num) != nil {
+                    if item.checked != nil {
                         hasTaskMarkers = true
                         break
                     }
@@ -389,7 +376,7 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
             
             for i in 0 ..< contentItems.count {
                 let item = contentItems[i]
-                if let checked = instantPageTaskListMarkerState(item.num) {
+                if let checked = item.checked {
                     let checklistItem = InstantPageChecklistMarkerItem(frame: CGRect(origin: .zero, size: instantPageChecklistMarkerSize), checked: checked)
                     if ordered {
                         maxIndexWidth = max(maxIndexWidth, instantPageChecklistMarkerSize.width)
@@ -432,11 +419,11 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
                 setupStyleStack(styleStack, theme: theme, category: .paragraph, link: false)
                 
                 var effectiveItem = item
-                if case let .blocks(blocks, num) = effectiveItem, blocks.isEmpty {
-                    effectiveItem = .text(.plain(" "), num)
+                if case let .blocks(blocks, num, checked) = effectiveItem, blocks.isEmpty {
+                    effectiveItem = .text(.plain(" "), num, checked)
                 }
                 switch effectiveItem {
-                    case let .text(text, _):
+                    case let .text(text, _, _):
                         let (textItem, textItems, textItemSize) = layoutTextItemWithString(attributedStringForRichText(text, styleStack: styleStack), boundingWidth: boundingWidth - horizontalInset * 2.0 - indexSpacing - maxIndexWidth, offset: CGPoint(x: horizontalInset + indexSpacing + maxIndexWidth, y: contentSize.height), media: media, webpage: webpage, fitToWidth: fitToWidth)
 
                         contentSize.height += textItemSize.height
@@ -466,7 +453,7 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
                         indexItems[i].frame = itemFrame
                         listItems.append(indexItems[i])
                         listItems.append(contentsOf: textItems)
-                    case let .blocks(blocks, _):
+                    case let .blocks(blocks, _, _):
                         var previousBlock: InstantPageBlock?
                         var originY: CGFloat = contentSize.height
                         var firstBlockLineMidY: CGFloat?
