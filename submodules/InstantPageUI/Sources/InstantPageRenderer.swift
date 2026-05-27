@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 import Display
+import CheckNode
 import SwiftSignalKit
 import TelegramCore
 import TelegramPresentationData
@@ -1359,22 +1360,21 @@ final class InstantPageV2ListMarkerView: UIView, InstantPageItemView {
             label.textAlignment = .right
             label.frame = CGRect(origin: .zero, size: item.frame.size)
             self.addSubview(label)
-        case let .checklist(checked):
-            // V0 placeholder: simple square outline (unchecked) or filled square (checked).
-            // The existing V1 InstantPageChecklistMarkerItem artwork can be ported later if needed.
-            let outer = CALayer()
-            outer.borderColor = item.color.cgColor
-            outer.borderWidth = 1.0
-            outer.cornerRadius = 3.0
-            outer.frame = CGRect(origin: .zero, size: item.frame.size)
-            self.layer.addSublayer(outer)
-            if checked {
-                let fill = CALayer()
-                fill.backgroundColor = item.color.cgColor
-                fill.cornerRadius = 3.0
-                fill.frame = CGRect(origin: .zero, size: item.frame.size).insetBy(dx: 2.0, dy: 2.0)
-                self.layer.addSublayer(fill)
-            }
+        case let .checklist(checked, colors):
+            let checkNodeTheme = CheckNodeTheme(
+                backgroundColor: colors.background,
+                strokeColor: colors.stroke,
+                borderColor: colors.border,
+                overlayBorder: false,
+                hasInset: false,
+                hasShadow: false
+            )
+            let checkNode = CheckNode(theme: checkNodeTheme, content: .check(isRectangle: true))
+            checkNode.displaysAsynchronously = false
+            checkNode.isUserInteractionEnabled = false
+            checkNode.frame = CGRect(origin: .zero, size: item.frame.size)
+            checkNode.setSelected(checked, animated: false)
+            self.addSubview(checkNode.view)
         }
     }
 }

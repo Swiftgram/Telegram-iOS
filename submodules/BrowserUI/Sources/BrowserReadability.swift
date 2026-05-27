@@ -610,17 +610,17 @@ private func parseList(_ input: [String: Any], _ url: String, _ media: inout [En
             if parseAsBlocks {
                 let blocks = parsePageBlocks(subcontent, url, &media)
                 if !blocks.isEmpty {
-                    items.append(.blocks(blocks, nil))
+                    items.append(.blocks(blocks, nil, nil))
                 }
             } else {
-                items.append(.text(trim(parseRichText(item, &media)), nil))
+                items.append(.text(trim(parseRichText(item, &media)), nil, nil))
             }
         }
     }
     let ordered = tag == "ol"
     var allEmpty = true
     for item in items {
-        if case let .text(text, _) = item {
+        if case let .text(text, _, _) = item {
             if case .empty = text {
             } else {
                 let plainText = text.plainText

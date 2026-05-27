@@ -20,8 +20,6 @@ private let markdownInlineHTMLInlineIntent = InlinePresentationIntent(rawValue: 
 private let markdownDefaultBlockImageDimensions = PixelDimensions(width: 1200, height: 900)
 private let markdownDefaultInlineImageDimensions = PixelDimensions(width: 18, height: 18)
 private let markdownImageParsingEnabled = false
-private let markdownTaskListUncheckedNumber = "\u{001f}tg-md-task:unchecked"
-private let markdownTaskListCheckedNumber = "\u{001f}tg-md-task:checked"
 private let markdownRawHTMLTagRegex = try! NSRegularExpression(pattern: #"</?([A-Za-z][A-Za-z0-9:-]*)\b[^>]*?>"#)
 private let markdownFormulaPlaceholderRegex = try! NSRegularExpression(pattern: #"TGMDMATH\d+TGMD"#)
 private let markdownVoidHTMLTags: Set<String> = [
@@ -200,7 +198,7 @@ private final class MarkdownConversionBudget {
         guard self.registerBlockDepth(depth) else {
             return false
         }
-        if case let .blocks(blocks, _) = listItem {
+        if case let .blocks(blocks, _, _) = listItem {
             return self.validate(blocks: blocks, depth: depth + 1, count: &count)
         } else {
             return true
@@ -1447,40 +1445,33 @@ private func markdownListItems(from nodes: [MarkdownIntentNode], ordered: Bool, 
             return nil
         }
         let taskListState = markdownApplyTaskListMarker(to: &blocks)
-        let number: String?
-        if let taskListState {
-            number = markdownTaskListNumber(for: taskListState)
-        } else if ordered {
-            number = "\(ordinal)"
-        } else {
-            number = nil
+        let checked: Bool?
+        switch taskListState {
+        case .unchecked:
+            checked = false
+        case .checked:
+            checked = true
+        case nil:
+            checked = nil
         }
+        let number: String? = ordered ? "\(ordinal)" : nil
         if blocks.isEmpty {
-            if let number {
-                result.append(.text(.plain(" "), number))
+            if checked != nil || number != nil {
+                result.append(.text(.plain(" "), number, checked))
             }
             continue
         }
         if blocks.count == 1, case let .paragraph(text) = blocks[0] {
-            if number != nil && markdownIsWhitespaceOnly(text) {
-                result.append(.text(.plain(" "), number))
+            if markdownIsWhitespaceOnly(text) && (checked != nil || number != nil) {
+                result.append(.text(.plain(" "), number, checked))
             } else {
-                result.append(.text(text, number))
+                result.append(.text(text, number, checked))
             }
         } else {
-            result.append(.blocks(blocks, number))
+            result.append(.blocks(blocks, number, checked))
         }
     }
     return result
-}
-
-private func markdownTaskListNumber(for state: MarkdownTaskListState) -> String {
-    switch state {
-    case .unchecked:
-        return markdownTaskListUncheckedNumber
-    case .checked:
-        return markdownTaskListCheckedNumber
-    }
 }
 
 private func markdownApplyTaskListMarker(to blocks: inout [InstantPageBlock]) -> MarkdownTaskListState? {
@@ -2285,11 +2276,11 @@ private func markdownFirstParagraphText(from blocks: [InstantPageBlock], depth: 
         case let .list(items, _):
             for item in items {
                 switch item {
-                case let .text(text, _):
+                case let .text(text, _, _):
                     if !text.plainText.isEmpty {
                         return text.plainText
                     }
-                case let .blocks(blocks, _):
+                case let .blocks(blocks, _, _):
                     if let text = markdownFirstParagraphText(from: blocks, depth: depth + 1) {
                         return text
                     }
