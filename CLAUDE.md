@@ -35,6 +35,20 @@ The build needs `TELEGRAM_CODESIGNING_GIT_PASSWORD` in the environment. It is se
 - External code is located in `third-party/`
 - No tests are used at the moment
 
+## Embedded watch app (`Telegram/WatchApp`)
+
+A standalone watchOS Telegram client (developed in the separate `~/build/tgwatch` repo) is vendored into this repo at `Telegram/WatchApp/` and can be embedded into the **device** IPA under `Telegram.app/Watch/`. It is built by `xcodebuild` (not Bazel) and codesigned by the Bazel build.
+
+**Build it:** add `--embedWatchApp` to a Make.py **device** build (`--configuration=debug_arm64` or `release_arm64`) together with `--watchApiId`, `--watchApiHash`, `--watchSigningIdentity`, `--watchProvisioningProfile`. Off by default (it adds a ~4-min xcodebuild step); simulator builds never embed, and the default `debug_sim_arm64` build is unaffected.
+
+**`Telegram/WatchApp/` is a synced snapshot — do not hand-edit it.** The source of truth and dev tooling live in the `tgwatch` repo. To change the watch app, edit it there, then re-sync with `tgwatch/tools/export-sources.sh /abs/path/to/telegram-ios/Telegram/WatchApp` and commit the result. The committed `tgwatch.xcodeproj` is generated (kept via a `!tgwatch.xcodeproj` negation in `Telegram/WatchApp/.gitignore`, since the root `.gitignore` ignores `*.xcodeproj`); `.build`/`.swiftpm`/`xcuserdata` are excluded.
+
+**How it's wired:** `//Telegram:TelegramWatchApp` (rule in `Telegram/prebuilt_watchos.bzl`, worker `Telegram/prebuilt_watchos_build.sh`) runs xcodebuild on the snapshot in a writable temp copy, codesigns the `.app` + nested `TDLibFramework.framework` (identity + `ph.telegra.Telegraph.watchkitapp` profile from `--define`s), and feeds it to the `Telegram` `ios_application`'s `watch_application` slot (gated by the `//Telegram:embedWatchApp` flag). The snapshot is a tracked Bazel input, so the watch build re-runs only when it changes.
+
+**Non-obvious invariants** (also in the `.bzl` comments): `AppleBundleInfo`'s public init is banned — use the internal `new_applebundleinfo`; `watch_application` requires BOTH `AppleBundleInfo` (with a non-None `infoplist` File) AND `WatchosApplicationBundleInfo`; the embedded watch app's `CFBundleShortVersionString`/`CFBundleVersion` must exactly equal the host's (sourced from `versions.json['app']` + `--define=buildNumber`); the host does NOT re-sign the embedded watch app, so the worker must sign it; the watch bundle id `ph.telegra.Telegraph.watchkitapp` must track the host `telegram_bundle_id`.
+
+**Status:** verified with **development** signing on `debug_arm64` only. Open follow-ups before App Store shipping: secure timestamp (drop `codesign --timestamp=none`), distribution profile (`get-task-allow=false`), `release_arm64` + `altool --validate-app`, and committing a `Package.resolved` for hermetic remote-SwiftPM resolution.
+
 ## View frame ownership
 
 A view does not control its own `frame`. The parent (or a layout system) sets the frame; the view positions its own subviews against `self.bounds` in response.
@@ -127,6 +141,61 @@ The `ChatMessageDateAndStatusNode` mirrors TextBubble's placement, adapted to th
 - **Display attaches the same `TelegramTextAttributes.*` keys the chat text bubble uses; the bubble reads them back.** Contract: `textMention`→`PeerTextMention` (String); `textMentionName`→`PeerMention` (`TelegramPeerMention`, peerId built as `EnginePeer.Id(namespace: Namespaces.Peer.CloudUser, …)` — `InstantPageTextItem` imports TelegramCore but NOT Postbox, so bare `PeerId` is out of scope); `textHashtag` AND `textCashtag`→`Hashtag` (`TelegramHashtag`; no dedicated cashtag key/tap-action — the leading `$` distinguishes them); `textBotCommand`→`BotCommand`; `textBankCard`→`BankCard`. Auto url/email/phone go through the URL path (`mailto:`/`tel:`/raw), NOT an entity key.
 - **`linkSelectionRects` and the bubble tap path check all six interactive keys** (URL + the five entity keys), not just URL, so press-highlight and the link-loading shimmer cover entities too.
 - **Rich-data text selection must reach a line's trailing edge.** This is general to rich-data selection, not just entities: `InstantPageTextItem.attributesAtPoint(_:orNearest:)`'s `orNearest: true` (selection-drag) path returns `line.range.upperBound` (via `CTLineGetStringRange`) when the point is at/past `lineFrame.maxX`. `TextSelectionNode` uses that index as the **exclusive** upper bound, so clamping to the last character's index — as the `orNearest: false` hit-testing path correctly does — would leave the last character/item of every line unselectable. Mirrors `Display.TextNode`. Do not collapse the two `orNearest` paths back together.
+
+## Markdown send: entity vs. rich detection
+
+On message send, the app auto-decides: if the typed markdown maps onto the regular message-entity set (bold/italic/code/strikethrough/spoiler/links/blockquote/fenced-code) it sends a **normal message** via the existing entity path; if it contains structure the entity set can't represent it sends a **rich message** (`RichTextMessageAttribute` carrying an `InstantPage`, rendered by `ChatMessageRichDataBubbleContentNode`). Always-on (no flag). **Effective rich triggers are headings, lists, and tables only.**
+
+### Where things live
+
+| File | Responsibility |
+|---|---|
+| `submodules/BrowserUI/Sources/BrowserMarkdown.swift` | The classifier `richMarkdownAttributeIfNeeded(context:text:)` (pre-filter `markdownMightNeedRichLayout` → parse via existing `inputRichTextAttributeFromText` → block inspection `instantPageNeedsRichLayout`/`blockIsEntityExpressible`/`richTextIsEntityExpressible`), plus the markdown→InstantPage conversion (`markdownWebpage`, `markdownBlocks(from:)`, `markdownBlocksWithGeneratedAnchors`). |
+| `submodules/TelegramUI/Sources/ChatControllerNode.swift` (`sendCurrentMessage`, ~line 4860) | The gate: `if !isSpecialChatContents, let attribute = richMarkdownAttributeIfNeeded(context:, text: effectiveInputText.string)` routes to the rich branch; the unchanged `else` is the entity path. |
+
+### Non-obvious invariants
+
+- **Boundary rule:** send rich iff the parse yields an `InstantPageBlock` with no entity equivalent. Entity-expressible whitelist (→ normal): `.paragraph`, `.preformatted`, `.blockQuote` (empty caption), `.anchor`, `.unsupported`, **and `.divider`** (`---` is too common in casual text to trigger rich). **`.formula` (block and inline) DOES trigger rich**, gated by strict math detection (see "Formulas trigger rich messages" below) so casual `$` usage (`$5-$10`, `$FOO=$BAR`) stays plain. So effective triggers = headings, lists, tables, formulas.
+- **Approach A (parse-then-inspect):** the classifier reuses the real parser, so "what triggers rich" can't drift from "what the rich renderer shows." `markdownMightNeedRichLayout` is a cheap necessary-condition over-approximation — it may over-trigger a parse but must **never** false-negative. It detects `#`, list markers, dash-lines (`-{1,}`, which also catches setext-H2 underlines → heading blocks), `\n=` (setext H1), `|`, `![`, and math delimiters `$`/`\(`/`\[` (formulas now trigger rich; the strict detection step decides whether a `$` run is actually math).
+- **Chat vs. document path = `file == nil` / `context.documentURL == nil`.** `inputRichTextAttributeFromText` passes `file: nil`; the document-attachment path passes a real file. Two chat-only behaviors key off this: (a) generated heading anchors are **skipped** (`markdownBlocksWithGeneratedAnchors` runs only for documents — anchors exist for intra-document `#slug` links and otherwise prepend a spurious invisible `.anchor` block per heading); (b) a level-1 `#` heading maps to `.heading(text:, level: 1)`, not `.title` (the document/article-title treatment). H2–H6 → `.heading(level: 2…6)` for both paths. This converter only ever emits `.title` (H1-doc) or `.heading` — never `.header`/`.subheader`.
+- **The classifier is fed the RAW `effectiveInputText.string`**, not the post-`convertMarkdownToAttributes` `inputText`, so inline `**bold**` survives into the rich render. The entity branch still uses the converted `inputText`.
+- **Bypassed for `.customChatContents`** (business links / quick replies) via `isSpecialChatContents`. The compose/send gate lives here; **editing has its own symmetric re-classification** — see "Editing rich messages" below.
+- **Transmission:** `RichTextMessageAttribute` → `Api.InputRichMessage` via `messages.sendMessage(richMessage:)` (flag bit 23, `StandaloneSendMessage.swift`); recipients reconstruct it from the incoming `richMessage` field (`StoreMessage_Telegram.swift`). The rich branch sends `text: ""` + the attribute, nils `mediaReference` (no separate webpage preview), and bypasses 4096-char chunking. iOS < 15 / oversize markdown → `inputRichTextAttributeFromText` returns nil → entity path (which chunks). 
+- **`debugRichText` experimental flag is now orphaned** — it previously gated this path and is no longer read anywhere, though `DebugController`/`ExperimentalUISettings` still define/persist it. Optional cleanup.
+
+## Editing rich messages (InstantPage → markdown)
+
+Rich messages (`RichTextMessageAttribute`, `text == ""`) are made editable by reconstructing markdown source from the stored `InstantPage`, populating the editor with it, and re-classifying on save — the inverse of the send path above. Always-on (no flag). Images/videos are out of scope (skipped by the converter).
+
+### Where things live
+
+| File | Responsibility |
+|---|---|
+| `submodules/BrowserUI/Sources/InstantPageToMarkdown.swift` | `markdownStringFromInstantPage(_:)` — the inverse converter (block + inline + list + table + escaping). Pure, best-effort, never fails. |
+| `submodules/TelegramUI/Sources/Chat/ChatControllerLoadDisplayNode.swift` | `setupEditMessage`: rich message → reconstruct markdown into the edit field. `editMessage` (save): re-classify the raw input, route rich-or-plain. |
+| `submodules/TelegramStringFormatting/Sources/InstantPagePreviewText.swift` | `previewText()` extensions (`RichText`/`InstantPage*`) — one-line plaintext previews. |
+| `submodules/TelegramStringFormatting/Sources/MessageContentKind.swift` | `messageContentKind` returns `.text(instantPage.previewText())` for rich, cascading to all preview surfaces. |
+
+### Non-obvious invariants
+
+- **The converter emits CommonMark inline, NOT the entity-regex dialect.** `**bold**`, `*italic*`, `` `code` ``, `~~strike~~`, `[text](url)` — because re-send re-parses the text through the *rich* path (`richMarkdownAttributeIfNeeded` → `NSAttributedString(markdown:)`, Apple CommonMark), not `convertMarkdownToAttributes` (whose dialect is `__italic__`/`||spoiler||`). The two parsers disagree on `__`/`*`; the rich round-trip is the contract.
+- **Re-classify every edit (edit ≡ send).** `editMessage` runs the same `richMarkdownAttributeIfNeeded` on the RAW input string. Rich → `pendingUpdateMessageManager.add(text: "", entities: nil, richText: attr, …)`; else the unchanged plain path. So normal→rich (add a table) and rich→plain (drop all triggers) both work. Bypassed for `.customChatContents`.
+- **Change-detection compares the rich attribute.** The save guard adds `currentRichText != richTextAttribute` (rich branch — skips no-op rich edits) and `currentRichText != nil` (plain branch — so rich→plain still saves even when `text.string` looks unchanged). `RichTextMessageAttribute` is `Equatable` on `instantPage`.
+- **The `text.length == 0` early-return guard is safe for rich.** `convertMarkdownToAttributes` only rewrites inline tokens, never strips `#`/`-`/`|`, so a rich message's markdown source stays non-empty and passes; the rich branch then sends `text: ""`.
+- **Known limitation:** a rich→plain edit that leaves only inline-formatted text loses `*italic*` (the entity path recognizes only `__…__`). Rare edge; the rich round-trip contract holds.
+- **`previewText()` lives in TelegramStringFormatting, not TextFormat/TelegramCore.** It will gain a `strings: PresentationStrings` param (to localize the `"Photo"`/`"Video"`/`"Table"` placeholders), so it must sit in a UI-string module — `messageContentKind`/`descriptionStringForMessage` (same module) already take `strings:`. Teaching `messageContentKind` about rich cascades the preview to the edit accessory panel, reply/pinned panels, and forward preview in one place (those surfaces need no individual change).
+
+## Formulas trigger rich messages (strict math detection)
+
+`$…$`/`$$…$$` (and `\(…\)`/`\[…\]`) math triggers a rich message, gated by a
+strict boundary rule so casual `$` stays plain. Inverse companion of the
+markdown-send gate above.
+
+### Non-obvious invariants
+
+- **Inline `$…$`/`$$…$$` detection requires a 4-way boundary** (in `markdownReplacingInlineFormulas`, `BrowserMarkdown.swift`): outer side of each delimiter = line edge OR non-alphanumeric; inner side = non-whitespace; opener/closer `$`-counts must match (1 or 2). This is what rejects `$5-$10`/`$FOO=$BAR`/`cost$5$total` (alphanumeric outer) while keeping `$x$`, `($x$)`, `the answer is $x$.`. The outer check is the addition over a plain "no-space-inside" rule.
+- **Block `$$` detection** (`markdownBlockFormulaReplacement`): single-line `$$…$$` requires an exact `$$` opener (not `$$$`) and trailing whitespace only; multi-line requires a **bare** `$$` opener line. `$$x$$ trailing text` falls through to the inline rule. The `\[…\]` opener path is unchanged and exempt from these `$$`-only guards.
+- **Detection is shared with the document path; the gate is chat-only.** `markdownPreparedSource` (detection) runs for both chat and document attachments. The triggers (`richTextIsEntityExpressible`/`blockIsEntityExpressible` → `.formula` is non-expressible; `$`/`\(`/`\[` in `markdownMightNeedRichLayout`) are read only by the chat classifier `richMarkdownAttributeIfNeeded`.
 
 ## Postbox → TelegramEngine refactor (in progress)
 

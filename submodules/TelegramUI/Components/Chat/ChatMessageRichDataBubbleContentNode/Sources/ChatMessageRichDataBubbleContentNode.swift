@@ -634,6 +634,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                         self.item = item
 
                         animation.animator.updateFrame(layer: self.containerNode.layer, frame: CGRect(origin: CGPoint(x: 1.0, y: 1.0), size: CGSize(width: boundingWidth - 2.0, height: boundingSize.height)), completion: nil)
+                        self.containerNode.cornerRadius = layoutConstants.image.defaultCornerRadius
 
                         if let statusSizeAndApply {
                             // Match TextBubble: anchor the status node's x at the fixed text-block

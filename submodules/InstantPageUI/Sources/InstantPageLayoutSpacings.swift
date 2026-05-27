@@ -92,7 +92,7 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
         }
     } else if let lower {
         switch lower {
-        case .cover, .channelBanner, .details, .anchor:
+        case .cover, .channelBanner, .details, .anchor, .table:
             return 0.0
         default:
             if fitToWidth {
