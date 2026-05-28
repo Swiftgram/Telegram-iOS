@@ -281,6 +281,9 @@ public func messageTextWithAttributes(message: EngineMessage) -> NSAttributedStr
             }
             
             let range = NSRange(location: entity.range.lowerBound, length: entity.range.upperBound - entity.range.lowerBound)
+            if range.upperBound >= updatedString.length {
+                continue
+            }
             
             let currentDict = updatedString.attributes(at: range.lowerBound, effectiveRange: nil)
             var updatedAttributes: [NSAttributedString.Key: Any] = currentDict
