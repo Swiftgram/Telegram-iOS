@@ -437,7 +437,16 @@ public func lastTextLineFrameIfLastItemIsText(in layout: InstantPageV2Layout) ->
     else {
         return nil
     }
-    let lineFrame = last.frame.offsetBy(dx: text.frame.minX, dy: text.frame.minY)
+    // The stored line frame always has minX = 0 — alignment (center / right / natural-RTL) is
+    // applied at render time by `v2FrameForLine`. Apply the same correction here so the returned
+    // frame's `maxX` reflects the line's actual on-screen right edge, not just its width anchored
+    // at the textItem's left. Without this, a right-aligned or RTL last line — whose visible right
+    // edge sits at `textItem.width`, all the way at the right text inset — would feed the status
+    // node a `contentWidth` equal to just `lineWidth`. The trail/wrap decision would then think
+    // the date fits trailing the line, and place it directly on top of the line at the right text
+    // inset where the line itself ends. The width is unchanged; only `origin.x` shifts.
+    let displayedLineFrame = v2FrameForLine(last, boundingWidth: text.textItem.frame.width, alignment: text.textItem.alignment)
+    let lineFrame = displayedLineFrame.offsetBy(dx: text.frame.minX, dy: text.frame.minY)
     var ascent: CGFloat = 0.0
     var descent: CGFloat = 0.0
     var leading: CGFloat = 0.0

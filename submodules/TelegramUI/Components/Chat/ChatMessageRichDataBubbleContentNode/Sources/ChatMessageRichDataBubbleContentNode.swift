@@ -576,7 +576,15 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                         isReplyThread = true
                     }
 
-                    let trailingWidthToMeasure: CGFloat = lastTextLineFrame?.width ?? 10000.0
+                    // Measure trailing extent from the line's actual visible RIGHT EDGE (after
+                    // alignment, in page coords) — not just its intrinsic width. A right-aligned
+                    // or RTL last line has `lineWidth` worth of glyphs but sits all the way at
+                    // the right text inset (lineFrame.maxX == text.frame.minX + textItem.width).
+                    // Feeding the status node just `lineWidth` would let the trail/wrap decision
+                    // place the date inline with the line — on top of it. `pageHorizontalInset`
+                    // is the offset between page-coords and status-node-local coords (the status
+                    // node sits at x=pageHorizontalInset in self, and pageView sits at self-x 0).
+                    let trailingWidthToMeasure: CGFloat = lastTextLineFrame.map { $0.maxX - pageHorizontalInset } ?? 10000.0
 
                     let dateLayoutInput: ChatMessageDateAndStatusNode.LayoutInput = .trailingContent(contentWidth: trailingWidthToMeasure, reactionSettings: ChatMessageDateAndStatusNode.TrailingReactionSettings(displayInline: shouldDisplayInlineDateReactions(message: EngineMessage(item.message), isPremium: item.associatedData.isPremium, forceInline: item.associatedData.forceInlineReactions), preferAdditionalInset: false))
 
