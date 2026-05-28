@@ -6,13 +6,17 @@ it through the providers that `ios_application(watch_application = ...)` consume
   1. PrebuiltWatchosCompile (prebuilt_watchos_compile.sh) — runs `xcodebuild` against
      the exported tgwatch source tree with PLACEHOLDER version/api values, emitting an
      unsigned .app archive. Depends only on the source snapshot.
-  2. PrebuiltWatchosPatchSign (prebuilt_watchos_patch.sh) — rewrites the four per-build
-     Info.plist keys (version, build number, api id/hash) on the compiled app, then
-     optionally codesigns it.
+  2. PrebuiltWatchosPatchSign (prebuilt_watchos_patch.sh) — rewrites the six per-build
+     Info.plist keys (version, build number, api id/hash, watch CFBundleIdentifier,
+     WKCompanionAppBundleIdentifier) on the compiled app, then optionally codesigns
+     it. The watch + companion bundle ids must track the host's `telegram_bundle_id`
+     (rules_apple validates both via the parent ios_application's
+     bundle_verification_targets), so they live in the patch action — not in the
+     xcodebuild snapshot — to keep the compile cached across host-bundle-id changes.
 
 Splitting them lets Bazel cache the (expensive, ~4-min) compile whenever only the
-version/build number/api/identity change — those values never reach the compiled
-binary, only the Info.plist.
+version/build number/api/identity/bundle-id change — those values never reach the
+compiled binary, only the Info.plist.
 
 The providers exposed:
 
@@ -43,6 +47,19 @@ def _apple_prebuilt_watchos_application_impl(ctx):
     api_id = ctx.var.get("watchApiId", "0")
     api_hash = ctx.var.get("watchApiHash", "placeholder")
     identity = ctx.var.get("watchSigningIdentity", "")
+
+    # The watch bundle id is `<host>.watchkitapp`; strip the suffix to recover the
+    # host bundle id, which the patch worker writes to WKCompanionAppBundleIdentifier
+    # (and the watch's own CFBundleIdentifier needs to be the watch bundle id, not the
+    # hardcoded one baked in by xcodebuild from the snapshot's pbxproj). The host
+    # ios_application validates both: child CFBundleIdentifier must start with
+    # `<host>.`, and child WKCompanionAppBundleIdentifier must equal the host's
+    # bundle id (see rules_apple's bundle_verification_targets in ios_rules.bzl).
+    watch_bundle_id = ctx.attr.bundle_id
+    _watchkitapp_suffix = ".watchkitapp"
+    if not watch_bundle_id.endswith(_watchkitapp_suffix):
+        fail("apple_prebuilt_watchos_application bundle_id must end with '.watchkitapp' (got %r)" % watch_bundle_id)
+    host_bundle_id = watch_bundle_id[:-len(_watchkitapp_suffix)]
 
     # The provisioning profile is an external, machine-specific absolute path passed via
     # --define rather than a Bazel label, so the gitignored profile need not be exposed as
@@ -104,6 +121,8 @@ def _apple_prebuilt_watchos_application_impl(ctx):
             infoplist.path,
             ctx.file.versions_json.path,
             build_number,
+            host_bundle_id,
+            watch_bundle_id,
         ],
         inputs = [ctx.file._patch_worker, compiled_archive, ctx.file.versions_json],
         outputs = [archive, infoplist],
