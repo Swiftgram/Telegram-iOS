@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ReplyBar: View {
     let onAttachTap: () -> Void
-    let onTextTap: () -> Void
+    let onSend: (String) -> Void
 
     // Circular "+" button and reply-field capsule share a single pill
     // diameter so they line up vertically and visually mirror the
@@ -25,17 +25,31 @@ struct ReplyBar: View {
             .padding(.leading, 11)
             .accessibilityIdentifier("replyBarAttach")
 
-            Button(action: onTextTap) {
+            // TextFieldLink renders an arbitrary label and, when tapped,
+            // presents the watchOS system text input UI (QuickboardViewService).
+            // It returns the committed string in onSubmit. The label IS our
+            // glassy pill — fully styled, no double-chrome artifacts.
+            //
+            // Limitation: TextFieldLink does not accept an initial value, so
+            // the input UI opens blank every time. Existing server-side drafts
+            // are not visible or editable from the watch under this design —
+            // accepted regression vs. the prior ComposeSheet flow.
+            TextFieldLink(prompt: Text("Reply…")) {
                 HStack(spacing: 0) {
                     Text("Reply…")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 12)
                 .frame(height: Self.pillHeight)
                 .contentShape(Rectangle())
                 .glassEffect()
+            } onSubmit: { newText in
+                let snapshot = newText.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !snapshot.isEmpty else { return }
+                onSend(snapshot)
             }
             .buttonStyle(.plain)
             .layoutPriority(1)
@@ -64,7 +78,7 @@ private struct ReplyBarGeometryPreviewHost: View {
                 .padding(.top, 6)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-            ReplyBar(onAttachTap: {}, onTextTap: {})
+            ReplyBar(onAttachTap: {}, onSend: { _ in })
                 .padding(.horizontal, 4)
                 .padding(.bottom, 19)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)

@@ -75,7 +75,6 @@
 		A0899809BBC92D1563AC4160 /* ReplyBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7584BF25A84BAD24AB992A79 /* ReplyBar.swift */; };
 		A121DA7622C910B267D69B6E /* PhotoBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0F7533C5A9B419B29727C86 /* PhotoBubbleView.swift */; };
 		A6179A26CB7FB298567682E6 /* DocumentVisual.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF2515F0EDA29D5270610A69 /* DocumentVisual.swift */; };
-		A73233E40B531EA2D4A81B78 /* ComposeSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54149DBDF74BC221A94FB1AD /* ComposeSheet.swift */; };
 		A7967495A54936FE19218DC4 /* ServiceMessageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF393D904BF677AC5721EC7E /* ServiceMessageView.swift */; };
 		A8EF6F72C78B619893C05AFE /* ChatPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3448938C1F69F0D9DE679238 /* ChatPreview.swift */; };
 		AA3F067A7BC4CDA579CFFC39 /* PollVisual.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE4D691106D7EA2FEE35F37F /* PollVisual.swift */; };
@@ -149,7 +148,6 @@
 		4DB3C8238D41374CBAC66303 /* EmojiText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmojiText.swift; sourceTree = "<group>"; };
 		4E049ECC956A583A92C5C7CB /* SecretsValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretsValidator.swift; sourceTree = "<group>"; };
 		53B9831274FA56126E3F5A42 /* LocationSendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSendView.swift; sourceTree = "<group>"; };
-		54149DBDF74BC221A94FB1AD /* ComposeSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposeSheet.swift; sourceTree = "<group>"; };
 		596AF8BF88C38D2018397A33 /* LocationBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationBubbleView.swift; sourceTree = "<group>"; };
 		5D3A8FBA5EBDBFDE5AA2FFEC /* QrLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QrLoginView.swift; sourceTree = "<group>"; };
 		5EA750417DF3AD62C7B788F6 /* MessageListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageListView.swift; sourceTree = "<group>"; };
@@ -340,7 +338,6 @@
 				3EEAE6237003C5CDA788E928 /* BubbleStyle.swift */,
 				C2C84B842AD08D079BFF08A0 /* ChatHistoryLoader.swift */,
 				182DA99AD90B93DE2FB37A41 /* ChatHistoryStore.swift */,
-				54149DBDF74BC221A94FB1AD /* ComposeSheet.swift */,
 				E855E4C62401AD1CF41D1835 /* DaySeparatorView.swift */,
 				BDBE08BBB88597B10CDF0142 /* DocumentBubbleView.swift */,
 				FF2515F0EDA29D5270610A69 /* DocumentVisual.swift */,
@@ -536,7 +533,6 @@
 				E48523AFA2E23409CC0C2C2C /* ChatRow.swift in Sources */,
 				7BF1C89F67290EBAF50900F8 /* ChatRowView.swift in Sources */,
 				04CEF3F9C267D8A7CEC5EC3C /* ClosedView.swift in Sources */,
-				A73233E40B531EA2D4A81B78 /* ComposeSheet.swift in Sources */,
 				EF499261BE49A6B1C7B3B1F4 /* ContentView.swift in Sources */,
 				FD5515DB22C571F4D3E5F5FA /* DaySeparatorView.swift in Sources */,
 				F5596A4EF4D2055B10B4A183 /* DocumentBubbleView.swift in Sources */,
