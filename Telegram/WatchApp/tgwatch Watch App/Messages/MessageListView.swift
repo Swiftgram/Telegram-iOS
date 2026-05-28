@@ -250,8 +250,16 @@ struct MessageListView: View {
                             }
                         }
                         .padding(.horizontal, 4)
-                        .padding(.vertical, 4)
+                        .padding(.top, 4)
+                        // 19pt bottom content inset so the ReplyBar's "+" and
+                        // pill sit 19pt above the *physical* screen edge when
+                        // the chat is scrolled to the tail. Combined with
+                        // .ignoresSafeArea(edges: .bottom) on the ScrollView
+                        // below — without that, the system bottom safe-area
+                        // adds extra space and the total inset overshoots.
+                        .padding(.bottom, 19)
                     }
+                    .ignoresSafeArea(edges: .bottom)
                     .defaultScrollAnchor(.bottom)
                     .environment(store)
                     .task {
