@@ -89,30 +89,25 @@ extension InstantPageListItem {
         }
     }
     
-    func apiInputPageOrderedListItem() -> Api.InputPageListOrderedItem {
+    func apiInputPageOrderedListItem() -> Api.PageListOrderedItem {
         switch self {
         case let .text(value, num, checked):
             var flags: Int32 = InstantPageListItem.apiFlags(fromChecked: checked)
 
-            var inputNum: Int32?
-            if let num, let numValue = Int32(num) {
-                inputNum = numValue
+            if num != nil {
                 flags |= (1 << 2)
             }
-
-            return .inputPageListOrderedItemText(Api.InputPageListOrderedItem.Cons_inputPageListOrderedItemText(flags: flags, text: value.apiRichText(), value: inputNum, type: nil))
+            return .pageListOrderedItemText(Api.PageListOrderedItem.Cons_pageListOrderedItemText(flags: flags, num: num, text: value.apiRichText(), value: nil, type: nil))
         case let .blocks(blocks, num, checked):
             var flags: Int32 = InstantPageListItem.apiFlags(fromChecked: checked)
 
-            var inputNum: Int32?
-            if let num, let numValue = Int32(num) {
-                inputNum = numValue
+            if num != nil {
                 flags |= (1 << 2)
             }
 
-            return .inputPageListOrderedItemBlocks(Api.InputPageListOrderedItem.Cons_inputPageListOrderedItemBlocks(flags: flags, blocks: blocks.compactMap { $0.apiInputBlock() }, value: inputNum, type: nil))
+            return .pageListOrderedItemBlocks(Api.PageListOrderedItem.Cons_pageListOrderedItemBlocks(flags: flags, num: num, blocks: blocks.compactMap { $0.apiInputBlock() }, value: nil, type: nil))
         case .unknown:
-            return .inputPageListOrderedItemText(Api.InputPageListOrderedItem.Cons_inputPageListOrderedItemText(flags: 0, text: .textPlain(Api.RichText.Cons_textPlain(text: "")), value: nil, type: nil))
+            return .pageListOrderedItemText(Api.PageListOrderedItem.Cons_pageListOrderedItemText(flags: 0, num: nil, text: .textPlain(Api.RichText.Cons_textPlain(text: "")), value: nil, type: nil))
         }
     }
 }
@@ -331,7 +326,7 @@ extension InstantPageBlock {
                 self = .heading(text: RichText(apiText: pageBlockHeading6.text), level: 6)
             case let .pageBlockMath(pageBlockMath):
                 self = .formula(latex: pageBlockMath.source)
-            case .inputPageBlockMap, .inputPageBlockOrderedList, .pageBlockThinking:
+            case .inputPageBlockMap, .pageBlockThinking:
                 self = .unsupported
         }
     }
