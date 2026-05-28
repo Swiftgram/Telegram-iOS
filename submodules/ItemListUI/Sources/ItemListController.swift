@@ -689,6 +689,16 @@ open class ItemListController: ViewController, KeyShortcutResponder, Presentable
         }
     }
     
+    public func itemNode(forTag tag: ItemListItemTag) -> ListViewItemNode? {
+        var result: ListViewItemNode?
+        self.forEachItemNode { itemNode in
+            if result == nil, let taggedItemNode = itemNode as? ItemListItemNode, let itemTag = taggedItemNode.tag, itemTag.isEqual(to: tag) {
+                result = itemNode
+            }
+        }
+        return result
+    }
+
     public func ensureItemNodeVisible(_ itemNode: ListViewItemNode, animated: Bool = true, overflow: CGFloat = 0.0, atTop: Bool = false, curve: ListViewAnimationCurve = .Default(duration: 0.25)) {
         self.controllerNode.listNode.ensureItemNodeVisible(itemNode, animated: animated, overflow: overflow, atTop: atTop, curve: curve)
     }

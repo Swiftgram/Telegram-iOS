@@ -572,7 +572,7 @@ func moveReplyMessageToAnotherChat(selfController: ChatControllerImpl, replySubj
             var suggestedPeers: [EnginePeer] = []
             if let message = await selfController.context.engine.data.get(
                 TelegramEngine.EngineData.Item.Messages.Message(id: replySubject.messageId)
-            ).get(), case let .user(author) = message.author {
+            ).get(), case let .user(author) = message.author, author.id != selfController.context.account.peerId {
                 suggestedPeers.append(.user(author))
             }
             

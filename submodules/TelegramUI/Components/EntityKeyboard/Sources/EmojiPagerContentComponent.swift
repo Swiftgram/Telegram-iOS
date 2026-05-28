@@ -19,7 +19,8 @@ import StickerResources
 import AppBundle
 import UndoUI
 import AudioToolbox
-import SolidRoundedButtonComponent
+import ButtonComponent
+import LottieComponent
 import EmojiTextAttachmentView
 import EmojiStatusComponent
 import TelegramNotices
@@ -3354,23 +3355,40 @@ public final class EmojiPagerContentComponent: Component {
                             gloss = false
                         }
                         
+                        var groupPremiumButtonItems: [AnyComponentWithIdentity<Empty>] = []
+                        groupPremiumButtonItems.append(AnyComponentWithIdentity(id: "title", component: AnyComponent(ButtonTextContentComponent(
+                            text: title,
+                            badge: 0,
+                            textColor: foregroundColor,
+                            badgeBackground: foregroundColor,
+                            badgeForeground: backgroundColor
+                        ))))
+                        if let animationName {
+                            groupPremiumButtonItems.append(AnyComponentWithIdentity(id: "animation", component: AnyComponent(LottieComponent(
+                                content: LottieComponent.AppBundleContent(name: animationName),
+                                color: foregroundColor,
+                                startingPosition: .begin,
+                                size: CGSize(width: 30.0, height: 30.0),
+                                loop: true
+                            ))))
+                        }
+
                         let groupPremiumButtonSize = groupPremiumButton.update(
                             transition: groupPremiumButtonTransition,
-                            component: AnyComponent(SolidRoundedButtonComponent(
-                                title: title,
-                                theme: SolidRoundedButtonComponent.Theme(
-                                    backgroundColor: backgroundColor,
-                                    backgroundColors: backgroundColors,
-                                    foregroundColor: foregroundColor
+                            component: AnyComponent(ButtonComponent(
+                                background: ButtonComponent.Background(
+                                    style: .glass,
+                                    color: backgroundColor,
+                                    foreground: foregroundColor,
+                                    pressedColor: backgroundColor.withMultipliedAlpha(0.8),
+                                    cornerRadius: groupBorderRadius,
+                                    isShimmering: gloss,
+                                    gradient: backgroundColors.count > 1 ? ButtonComponent.Background.Gradient(colors: backgroundColors) : nil
                                 ),
-                                font: .bold,
-                                fontSize: 17.0,
-                                height: 50.0,
-                                cornerRadius: groupBorderRadius,
-                                gloss: gloss,
-                                animationName: animationName,
-                                iconPosition: .right,
-                                iconSpacing: 4.0,
+                                content: AnyComponentWithIdentity(
+                                    id: AnyHashable("\(title)-\(animationName ?? "")"),
+                                    component: AnyComponent(HStack(groupPremiumButtonItems, spacing: 4.0))
+                                ),
                                 action: { [weak self] in
                                     guard let strongSelf = self, let component = strongSelf.component else {
                                         return

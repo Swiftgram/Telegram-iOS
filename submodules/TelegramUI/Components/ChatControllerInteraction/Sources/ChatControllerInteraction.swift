@@ -209,7 +209,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
     public let clickThroughMessage: (UIView?, CGPoint?) -> Void
     public let toggleMessagesSelection: ([EngineMessage.Id], Bool) -> Void
     public let sendCurrentMessage: (Bool, ChatSendMessageEffect?) -> Void
-    public let sendMessage: (String) -> Void
+    public let sendMessage: (String, EngineMessage.Id?) -> Void
     public let sendSticker: (FileMediaReference, Bool, Bool, String?, Bool, UIView?, CGRect?, CALayer?, [EngineItemCollectionId]) -> Bool
     public let sendEmoji: (String, ChatTextInputTextCustomEmojiAttribute, Bool) -> Void
     public let sendGif: (FileMediaReference, UIView, CGRect, Bool, Bool) -> Bool
@@ -220,8 +220,8 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
     public let activateSwitchInline: (EnginePeer.Id?, String, ReplyMarkupButtonAction.PeerTypes?) -> Void
     public let openUrl: (OpenUrl) -> Void
     public let openExternalInstantPage: (OpenInstantPage) -> Void
-    public let shareCurrentLocation: () -> Void
-    public let shareAccountContact: () -> Void
+    public let shareCurrentLocation: (EngineMessage.Id?) -> Void
+    public let shareAccountContact: (EngineMessage.Id?) -> Void
     public let sendBotCommand: (EngineMessage.Id?, String) -> Void
     public let openInstantPage: (EngineRawMessage, ChatMessageItemAssociatedData?) -> Void
     public let openWallpaper: (EngineRawMessage) -> Void
@@ -264,7 +264,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
     public let displaySwipeToReplyHint: () -> Void
     public let dismissReplyMarkupMessage: (EngineRawMessage) -> Void
     public let openMessagePollResults: (EngineMessage.Id, Data) -> Void
-    public let openPollCreation: (Bool?) -> Void
+    public let openPollCreation: (EngineMessage.Id?, Bool?) -> Void
     public let openPollMedia: (EngineRawMessage, PollMediaSubject) -> Void
     public let displayPollSolution: (TelegramMediaPollResults.Solution?, ASDisplayNode?) -> Void
     public let displayPsa: (String, ASDisplayNode) -> Void
@@ -389,7 +389,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         clickThroughMessage: @escaping (UIView?, CGPoint?) -> Void,
         toggleMessagesSelection: @escaping ([EngineMessage.Id], Bool) -> Void,
         sendCurrentMessage: @escaping (Bool, ChatSendMessageEffect?) -> Void,
-        sendMessage: @escaping (String) -> Void,
+        sendMessage: @escaping (String, EngineMessage.Id?) -> Void,
         sendSticker: @escaping (FileMediaReference, Bool, Bool, String?, Bool, UIView?, CGRect?, CALayer?, [EngineItemCollectionId]) -> Bool,
         sendEmoji: @escaping (String, ChatTextInputTextCustomEmojiAttribute, Bool) -> Void,
         sendGif: @escaping (FileMediaReference, UIView, CGRect, Bool, Bool) -> Bool,
@@ -400,8 +400,8 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         activateSwitchInline: @escaping (EnginePeer.Id?, String, ReplyMarkupButtonAction.PeerTypes?) -> Void,
         openUrl: @escaping (OpenUrl) -> Void,
         openExternalInstantPage: @escaping (OpenInstantPage) -> Void,
-        shareCurrentLocation: @escaping () -> Void,
-        shareAccountContact: @escaping () -> Void,
+        shareCurrentLocation: @escaping (EngineMessage.Id?) -> Void,
+        shareAccountContact: @escaping (EngineMessage.Id?) -> Void,
         sendBotCommand: @escaping (EngineMessage.Id?, String) -> Void,
         openInstantPage: @escaping (EngineRawMessage, ChatMessageItemAssociatedData?) -> Void,
         openWallpaper: @escaping (EngineRawMessage) -> Void,
@@ -444,7 +444,7 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         displaySwipeToReplyHint: @escaping () -> Void,
         dismissReplyMarkupMessage: @escaping (EngineRawMessage) -> Void,
         openMessagePollResults: @escaping (EngineMessage.Id, Data) -> Void,
-        openPollCreation: @escaping (Bool?) -> Void,
+        openPollCreation: @escaping (EngineMessage.Id?, Bool?) -> Void,
         openPollMedia: @escaping (EngineRawMessage, PollMediaSubject) -> Void,
         displayPollSolution: @escaping (TelegramMediaPollResults.Solution?, ASDisplayNode?) -> Void,
         displayPsa: @escaping (String, ASDisplayNode) -> Void,

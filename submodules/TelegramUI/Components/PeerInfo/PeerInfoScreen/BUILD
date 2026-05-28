@@ -122,7 +122,6 @@ swift_library(
         "//submodules/TranslateUI",
         "//submodules/UndoUI",
         "//submodules/MediaPlayer:UniversalMediaPlayer",
-        "//submodules/WebSearchUI",
         "//submodules/WebUI",
         "//submodules/TelegramUI/Components/MultiScaleTextNode",
         "//submodules/GridMessageSelectionNode",

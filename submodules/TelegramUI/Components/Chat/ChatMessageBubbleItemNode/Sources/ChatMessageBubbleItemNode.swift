@@ -796,7 +796,17 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
     private var currentInputParams: Params?
     private var currentApplyParams: ListViewItemApply?
     private var contentLayoutInsets = UIEdgeInsets()
-    
+
+    private func isQuickReplyMessageInputCustomContents() -> Bool {
+        guard let item = self.item else {
+            return false
+        }
+        if case let .customChatContents(contents) = item.associatedData.subject, case .quickReplyMessageInput = contents.kind {
+            return true
+        }
+        return false
+    }
+
     required public init(rotated: Bool) {
         self.mainContextSourceNode = ContextExtractedContentContainingNode()
         self.mainContainerNode = ContextControllerSourceNode()
@@ -832,12 +842,8 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             if let item = strongSelf.item, item.controllerInteraction.focusedPollAddOptionMessageId != nil {
                 return .none
             }
-            if let action = strongSelf.gestureRecognized(gesture: .tap, location: location, recognizer: nil) {
-                if case let .action(action) = action, !action.contextMenuOnLongPress {
-                    return .none
-                }
-            }
-            if let action = strongSelf.gestureRecognized(gesture: .longTap, location: location, recognizer: nil) {
+
+            let resolveLongTapAction: (InternalBubbleTapAction) -> ContextControllerSourceNode.ShouldBegin = { action in
                 switch action {
                 case .action:
                     return .none
@@ -854,6 +860,19 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                         return .none
                     }
                 }
+            }
+
+            let isQuickReplyMessageInputCustomContents = strongSelf.isQuickReplyMessageInputCustomContents()
+            if isQuickReplyMessageInputCustomContents, let action = strongSelf.gestureRecognized(gesture: .longTap, location: location, recognizer: nil) {
+                return resolveLongTapAction(action)
+            }
+            if let action = strongSelf.gestureRecognized(gesture: .tap, location: location, recognizer: nil) {
+                if case let .action(action) = action, !action.contextMenuOnLongPress {
+                    return .none
+                }
+            }
+            if !isQuickReplyMessageInputCustomContents, let action = strongSelf.gestureRecognized(gesture: .longTap, location: location, recognizer: nil) {
+                return resolveLongTapAction(action)
             }
             return .default
         }
@@ -4636,18 +4655,27 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                     if strongSelf.selectionNode != nil {
                         return false
                     }
-                    if let action = strongSelf.gestureRecognized(gesture: .tap, location: location, recognizer: nil) {
-                        if case .action = action {
-                            return false
-                        }
-                    }
-                    if let action = strongSelf.gestureRecognized(gesture: .longTap, location: location, recognizer: nil) {
+
+                    let resolveLongTapAction: (InternalBubbleTapAction) -> Bool = { action in
                         switch action {
                         case .action, .optionalAction:
                             return false
                         case let .openContextMenu(openContextMenu):
                             return !openContextMenu.selectAll
                         }
+                    }
+
+                    let isQuickReplyMessageInputCustomContents = strongSelf.isQuickReplyMessageInputCustomContents()
+                    if isQuickReplyMessageInputCustomContents, let action = strongSelf.gestureRecognized(gesture: .longTap, location: location, recognizer: nil) {
+                        return resolveLongTapAction(action)
+                    }
+                    if let action = strongSelf.gestureRecognized(gesture: .tap, location: location, recognizer: nil) {
+                        if case .action = action {
+                            return false
+                        }
+                    }
+                    if !isQuickReplyMessageInputCustomContents, let action = strongSelf.gestureRecognized(gesture: .longTap, location: location, recognizer: nil) {
+                        return resolveLongTapAction(action)
                     }
                     return true
                 }
@@ -5420,7 +5448,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                 }
             }
         }
-        if item.message.timestamp < 10 {
+        if item.message.timestamp < 10 && !strongSelf.isQuickReplyMessageInputCustomContents() {
             hasMenuGesture = false
         }
         strongSelf.mainContainerNode.isGestureEnabled = hasMenuGesture

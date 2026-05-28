@@ -360,6 +360,9 @@ final class ThemeAccentColorControllerNode: ASDisplayNode, ASScrollViewDelegate 
         self.backgroundContainerNode.addSubnode(self.backgroundWrapperNode)
         self.backgroundWrapperNode.addSubnode(self.backgroundNode)
 
+        self.patternButtonNode.dark = true
+        self.colorsButtonNode.dark = true
+        
         self.patternButtonNode.addTarget(self, action: #selector(self.togglePattern), forControlEvents: .touchUpInside)
         self.colorsButtonNode.addTarget(self, action: #selector(self.toggleColors), forControlEvents: .touchUpInside)
         self.playButtonNode.addTarget(self, action: #selector(self.playPressed), forControlEvents: .touchUpInside)
@@ -601,8 +604,6 @@ final class ThemeAccentColorControllerNode: ASDisplayNode, ASScrollViewDelegate 
             if let strongSelf = self {
                 strongSelf.patternPanelNode.serviceBackgroundColor = color
                 strongSelf.pageControlBackgroundNode.backgroundColor = color
-                strongSelf.patternButtonNode.buttonColor = color
-                strongSelf.colorsButtonNode.buttonColor = color
                 strongSelf.playButtonBackgroundNode.updateColor(color: color, transition: .immediate)
             }
         })
@@ -625,6 +626,8 @@ final class ThemeAccentColorControllerNode: ASDisplayNode, ASScrollViewDelegate 
         self.scrollNode.view.showsHorizontalScrollIndicator = false
         self.scrollNode.view.isPagingEnabled = true
         self.scrollNode.view.delegate = self.wrappedScrollViewDelegate
+        self.scrollNode.view.scrollsToTop = false
+        
         self.pageControlNode.setPage(0.0)
         self.colorPanelNode.view.disablesInteractiveTransitionGestureRecognizer = true
         self.patternPanelNode.view.disablesInteractiveTransitionGestureRecognizer = true
@@ -1147,7 +1150,7 @@ final class ThemeAccentColorControllerNode: ASDisplayNode, ASScrollViewDelegate 
             self.messageNodes = messageNodes
         }
                 
-        let toolbarHeight = 49.0 + layout.intrinsicInsets.bottom
+        let toolbarHeight = 52.0 + layout.intrinsicInsets.bottom
         var relativeOffset: CGFloat = 0.0
         if !self.state.colorPanelCollapsed && self.state.section == .messages {
             relativeOffset = (CGFloat(self.state.selectedColor) / CGFloat(max(1, self.state.messagesColors.count))) * (self.colorPanelNode.frame.height + toolbarHeight + 144.0) * -1.0
@@ -1208,13 +1211,13 @@ final class ThemeAccentColorControllerNode: ASDisplayNode, ASScrollViewDelegate 
         if case let .peer(peer) = self.resultMode, case .user = peer, !self.state.displayPatternPanel {
             toolbarBottomInset += 58.0
         }
-        let toolbarHeight = 49.0 + toolbarBottomInset
+        let toolbarHeight = 52.0 + toolbarBottomInset
         transition.updateFrame(node: self.toolbarNode, frame: CGRect(origin: CGPoint(x: 0.0, y: layout.size.height - toolbarHeight), size: CGSize(width: layout.size.width, height: toolbarHeight)))
-        self.toolbarNode.updateLayout(size: CGSize(width: layout.size.width, height: 49.0), layout: layout, transition: transition)
+        self.toolbarNode.updateLayout(size: CGSize(width: layout.size.width, height: 52.0), layout: layout, transition: transition)
         
         var bottomInset = toolbarHeight
-        let standardInputHeight = layout.deviceMetrics.keyboardHeight(inLandscape: false)
-        let inputFieldPanelHeight: CGFloat = 47.0
+        let standardInputHeight = layout.deviceMetrics.keyboardHeight(inLandscape: false) + 17.0
+        let inputFieldPanelHeight = WallpaperColorPanelNode.topControlsHeight(for: layout.size.width)
         let colorPanelHeight = max(standardInputHeight, layout.inputHeight ?? 0.0) - bottomInset + inputFieldPanelHeight
         
         var colorPanelOffset: CGFloat = 0.0
@@ -1250,7 +1253,7 @@ final class ThemeAccentColorControllerNode: ASDisplayNode, ASScrollViewDelegate 
         transition.updateBounds(node: self.messagesContainerNode, bounds: CGRect(x: 0.0, y: 0.0, width: bounds.width, height: bounds.height))
         transition.updatePosition(node: self.messagesContainerNode, position: CGRect(x: 0.0, y: 0.0, width: bounds.width, height: bounds.height).center)
         
-        let backgroundSize = CGSize(width: bounds.width, height: bounds.height - (colorPanelHeight - colorPanelOffset))
+        let backgroundSize = CGSize(width: bounds.width, height: bounds.height - (colorPanelHeight - colorPanelOffset) + 20.0)
         transition.updateFrame(node: self.backgroundContainerNode, frame: CGRect(origin: CGPoint(), size: backgroundSize))
 
         transition.updateFrame(node: self.backgroundNode, frame: CGRect(origin: CGPoint(), size: layout.size))

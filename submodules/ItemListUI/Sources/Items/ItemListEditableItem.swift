@@ -67,6 +67,7 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
     private var enableAnimations: Bool = true
     
     private var initialRevealOffset: CGFloat = 0.0
+    private var hasActiveRevealGestureOffset: Bool = false
     public private(set) var revealOffset: CGFloat = 0.0
     
     private var recognizer: ItemListRevealOptionsGestureRecognizer?
@@ -190,9 +191,13 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
     
     @objc private func revealTapGesture(_ recognizer: UITapGestureRecognizer) {
         if case .ended = recognizer.state {
-            self.updateRevealOffsetInternal(offset: 0.0, transition: .animated(duration: 0.3, curve: .spring))
+            self.updateRevealOffsetInternal(offset: 0.0, transition: .animated(duration: 0.6, curve: self.revealSpringCurve(initialVelocity: 0.0)))
             self.revealOptionsInteractivelyClosed()
         }
+    }
+
+    private func revealSpringCurve(initialVelocity: CGFloat = 0.0) -> ContainedViewLayoutTransitionCurve {
+        return .customSpring(mass: 2.0, stiffness: 200.0, damping: 100.0, initialVelocity: initialVelocity)
     }
 
     @objc private func revealGesture(_ recognizer: ItemListRevealOptionsGestureRecognizer) {
@@ -201,6 +206,7 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
         }
         switch recognizer.state {
             case .began:
+                self.hasActiveRevealGestureOffset = !self.revealOffset.isZero
                 if let leftRevealNode = self.leftRevealNode {
                     let revealSize = leftRevealNode.bounds.size
                     let location = recognizer.location(in: self.view)
@@ -232,16 +238,26 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
                 if self.leftRevealNode == nil && CGFloat(0.0).isLess(than: translation.x) {
                     self.setupAndAddLeftRevealNode()
                     self.revealOptionsInteractivelyOpened()
+                    self.hasActiveRevealGestureOffset = true
                 } else if self.rightRevealNode == nil && translation.x.isLess(than: 0.0) {
                     self.setupAndAddRightRevealNode()
                     self.revealOptionsInteractivelyOpened()
+                    self.hasActiveRevealGestureOffset = true
+                }
+                if !translation.x.isZero {
+                    self.hasActiveRevealGestureOffset = true
                 }
                 self.updateRevealOffsetInternal(offset: translation.x, transition: .immediate)
-                if self.leftRevealNode == nil && self.rightRevealNode == nil {
+                if self.leftRevealNode == nil && self.rightRevealNode == nil && !self.hasActiveRevealGestureOffset {
                     self.revealOptionsInteractivelyClosed()
                 }
             case .ended, .cancelled:
+                let hasActiveRevealGestureOffset = self.hasActiveRevealGestureOffset
+                self.hasActiveRevealGestureOffset = false
                 guard let recognizer = self.recognizer else {
+                    if hasActiveRevealGestureOffset {
+                        self.revealOptionsInteractivelyClosed()
+                    }
                     break
                 }
                 
@@ -270,7 +286,7 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
                         reveal = false
                         selectedOption = self.revealOptions.left.first
                     } else {
-                        self.updateRevealOffsetInternal(offset: reveal ?revealSize.width : 0.0, transition: .animated(duration: 0.3, curve: .spring))
+                        self.updateRevealOffsetInternal(offset: reveal ?revealSize.width : 0.0, transition: .animated(duration: 0.6, curve: self.revealSpringCurve(initialVelocity: 0.0)))
                     }
             
                     if let selectedOption = selectedOption {
@@ -305,7 +321,7 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
                         reveal = false
                         selectedOption = self.revealOptions.right.last
                     } else {
-                        self.updateRevealOffsetInternal(offset: reveal ? -revealSize.width : 0.0, transition: .animated(duration: 0.3, curve: .spring))
+                        self.updateRevealOffsetInternal(offset: reveal ? -revealSize.width : 0.0, transition: .animated(duration: 0.6, curve: self.revealSpringCurve(initialVelocity: 0.0)))
                     }
                     
                     if let selectedOption = selectedOption {
@@ -315,6 +331,8 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
                             self.revealOptionsInteractivelyClosed()
                         }
                     }
+                } else if hasActiveRevealGestureOffset {
+                    self.revealOptionsInteractivelyClosed()
                 }
             default:
                 break
@@ -473,7 +491,7 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
             }
             let transition: ContainedViewLayoutTransition
             if animated {
-                transition = .animated(duration: 0.3, curve: .spring)
+                transition = .animated(duration: 0.6, curve: self.revealSpringCurve(initialVelocity: 0.0))
             } else {
                 transition = .immediate
             }
@@ -495,7 +513,7 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
     open func animateRevealOptionsFill(completion: (() -> Void)? = nil) {
         if let validLayout = self.validLayout {
             self.layer.allowsGroupOpacity = true
-            self.updateRevealOffsetInternal(offset: -validLayout.0.width - 74.0, transition: .animated(duration: 0.3, curve: .spring), completion: {
+            self.updateRevealOffsetInternal(offset: -validLayout.0.width - 74.0, transition: .animated(duration: 0.6, curve: self.revealSpringCurve(initialVelocity: 0.0)), completion: {
                 self.layer.allowsGroupOpacity = false
                 completion?()
             })

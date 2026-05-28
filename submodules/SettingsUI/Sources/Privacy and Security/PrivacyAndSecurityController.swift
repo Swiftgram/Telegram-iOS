@@ -21,6 +21,7 @@ import AuthorizationUI
 import AuthenticationServices
 import ChatTimerScreen
 import PasskeysScreen
+import ContextUI
 
 private final class PrivacyAndSecurityControllerArguments {
     let account: Account
@@ -560,6 +561,18 @@ private struct PrivacyAndSecurityControllerState: Equatable {
     var updatingOnlyAllowPremiumNonContacts: Bool? = nil
 }
 
+private final class PrivacyAndSecurityContextReferenceContentSource: ContextReferenceContentSource {
+    private let sourceView: UIView
+
+    init(sourceView: UIView) {
+        self.sourceView = sourceView
+    }
+
+    func transitionInfo() -> ContextControllerReferenceViewInfo? {
+        return ContextControllerReferenceViewInfo(referenceView: self.sourceView, contentAreaInScreenSpace: UIScreen.main.bounds, insets: UIEdgeInsets(top: -4.0, left: 0.0, bottom: -4.0, right: 0.0))
+    }
+}
+
 private func countForSelectivePeers(_ peers: [PeerId: SelectivePrivacyPeer]) -> Int {
     var result = 0
     for (_, peer) in peers {
@@ -860,7 +873,9 @@ public func privacyAndSecurityController(
     var pushControllerImpl: ((ViewController, Bool) -> Void)?
     var replaceTopControllerImpl: ((ViewController) -> Void)?
     var presentControllerImpl: ((ViewController) -> Void)?
+    var presentInGlobalOverlayImpl: ((ViewController) -> Void)?
     var getNavigationControllerImpl: (() -> NavigationController?)?
+    var findAccountTimeoutReferenceNode: (() -> ItemListDisclosureItemNode?)?
     
     let actionsDisposable = DisposableSet()
     
@@ -1335,12 +1350,8 @@ public func privacyAndSecurityController(
         |> take(1)
         |> deliverOnMainQueue
         updateAccountTimeoutDisposable.set(signal.start(next: { [weak updateAccountTimeoutDisposable] privacySettingsValue in
-            if let _ = privacySettingsValue {
+            if let privacySettingsValue = privacySettingsValue {
                 let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-                let controller = ActionSheetController(presentationData: presentationData)
-                let dismissAction: () -> Void = { [weak controller] in
-                    controller?.dismissAnimated()
-                }
                 let timeoutAction: (Int32) -> Void = { timeout in
                     if let updateAccountTimeoutDisposable = updateAccountTimeoutDisposable {
                         updateState { state in
@@ -1377,15 +1388,24 @@ public func privacyAndSecurityController(
                     548 * 24 * 60 * 60,
                     730 * 24 * 60 * 60
                 ]
-                var timeoutItems: [ActionSheetItem] = timeoutValues.map { value in
-                    return ActionSheetButtonItem(title: presentationData.strings.MessageTimer_Months(max(1, value / (60 * 60 * 24 * 30))), action: {
-                        dismissAction()
+                var timeoutItems: [ContextMenuItem] = timeoutValues.map { value in
+                    return .action(ContextMenuActionItem(text: presentationData.strings.MessageTimer_Months(max(1, value / (60 * 60 * 24 * 30))), icon: { theme in
+                        if privacySettingsValue.accountRemovalTimeout == value {
+                            return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Check"), color: theme.contextMenu.primaryColor)
+                        } else {
+                            return UIImage()
+                        }
+                    }, action: { _, f in
+                        f(.default)
                         timeoutAction(value)
-                    })
+                    }))
                 }
-                timeoutItems.append(ActionSheetButtonItem(title: presentationData.strings.PrivacySettings_DeleteAccountNow, color: .destructive, action: {
-                    dismissAction()
-                    
+                timeoutItems.append(.separator)
+                timeoutItems.append(.action(ContextMenuActionItem(text: presentationData.strings.PrivacySettings_DeleteAccountNow, textColor: .destructive, icon: { _ in
+                    return nil
+                }, action: { _, f in
+                    f(.default)
+
                     guard let navigationController = getNavigationControllerImpl?() else {
                         return
                     }
@@ -1396,12 +1416,22 @@ public func privacyAndSecurityController(
                         let optionsController = deleteAccountOptionsController(context: context, navigationController: navigationController, hasTwoStepAuth: hasTwoStepAuth ?? false, twoStepAuthData: twoStepAuthData)
                         pushControllerImpl?(optionsController, true)
                     })
-                }))
-                controller.setItemGroups([
-                    ActionSheetItemGroup(items: timeoutItems),
-                    ActionSheetItemGroup(items: [ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, action: { dismissAction() })])
-                ])
-                presentControllerImpl?(controller)
+                })))
+
+                guard let sourceNode = findAccountTimeoutReferenceNode?() else {
+                    return
+                }
+                let contextController = makeContextController(
+                    presentationData: presentationData,
+                    source: .reference(PrivacyAndSecurityContextReferenceContentSource(sourceView: sourceNode.labelNode.view)),
+                    items: .single(ContextController.Items(content: .list(timeoutItems))),
+                    gesture: nil
+                )
+                sourceNode.updateHasContextMenu(hasContextMenu: true)
+                contextController.dismissed = { [weak sourceNode] in
+                    sourceNode?.updateHasContextMenu(hasContextMenu: false)
+                }
+                presentInGlobalOverlayImpl?(contextController)
             }
         }))
     }, setupMessageAutoremove: {
@@ -1623,8 +1653,14 @@ public func privacyAndSecurityController(
     presentControllerImpl = { [weak controller] c in
         controller?.present(c, in: .window(.root), with: nil)
     }
+    presentInGlobalOverlayImpl = { [weak controller] c in
+        controller?.presentInGlobalOverlay(c, with: nil)
+    }
     getNavigationControllerImpl = {  [weak controller] in
         return (controller?.navigationController as? NavigationController)
+    }
+    findAccountTimeoutReferenceNode = { [weak controller] in
+        return controller?.itemNode(forTag: PrivacyAndSecurityEntryTag.accountTimeout) as? ItemListDisclosureItemNode
     }
 
     controller.didAppear = { _ in

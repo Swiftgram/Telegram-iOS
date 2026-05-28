@@ -15,6 +15,7 @@ import ComponentFlow
 import AlertComponent
 import AlertCheckComponent
 import AppBundle
+import ContextUI
 
 private final class RecentSessionsControllerArguments {
     let context: AccountContext
@@ -615,6 +616,18 @@ private func recentSessionsControllerEntries(presentationData: PresentationData,
 private final class RecentSessionsControllerImpl: ItemListController, RecentSessionsController {
 }
 
+private final class RecentSessionsContextReferenceContentSource: ContextReferenceContentSource {
+    private let sourceView: UIView
+
+    init(sourceView: UIView) {
+        self.sourceView = sourceView
+    }
+
+    func transitionInfo() -> ContextControllerReferenceViewInfo? {
+        return ContextControllerReferenceViewInfo(referenceView: self.sourceView, contentAreaInScreenSpace: UIScreen.main.bounds, insets: UIEdgeInsets(top: -4.0, left: 0.0, bottom: -4.0, right: 0.0))
+    }
+}
+
 public func recentSessionsController(context: AccountContext, activeSessionsContext: ActiveSessionsContext, webSessionsContext: WebSessionsContext, websitesOnly: Bool, focusOnItemTag: RecentSessionsEntryTag? = nil) -> ViewController & RecentSessionsController {
     let statePromise = ValuePromise(RecentSessionsControllerState(), ignoreRepeated: true)
     let stateValue = Atomic(value: RecentSessionsControllerState())
@@ -632,8 +645,11 @@ public func recentSessionsController(context: AccountContext, activeSessionsCont
     webSessionsContext.loadMore()
     
     var presentControllerImpl: ((ViewController, ViewControllerPresentationArguments?) -> Void)?
+    var presentInGlobalOverlayImpl: ((ViewController) -> Void)?
     var pushControllerImpl: ((ViewController) -> Void)?
     var dismissImpl: (() -> Void)?
+    var findAutoTerminateReferenceNode: (() -> ItemListDisclosureItemNode?)?
+    var currentAuthorizationTTLDays: Int32?
     
     let actionsDisposable = DisposableSet()
     
@@ -894,10 +910,6 @@ public func recentSessionsController(context: AccountContext, activeSessionsCont
         context.sharedContext.openExternalUrl(context: context, urlContext: .generic, url: "https://telegram.org/apps", forceExternal: true, presentationData: context.sharedContext.currentPresentationData.with { $0 }, navigationController: nil, dismissInput: {})
     }, setupAuthorizationTTL: {
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-        let controller = ActionSheetController(presentationData: presentationData)
-        let dismissAction: () -> Void = { [weak controller] in
-            controller?.dismissAnimated()
-        }
         let ttlAction: (Int32) -> Void = { ttl in
             updateAuthorizationTTLDisposable.set(activeSessionsContext.updateAuthorizationTTL(days: ttl).start())
         }
@@ -907,17 +919,32 @@ public func recentSessionsController(context: AccountContext, activeSessionsCont
             90,
             180
         ]
-        let timeoutItems: [ActionSheetItem] = timeoutValues.map { value in
-            return ActionSheetButtonItem(title: timeIntervalString(strings: presentationData.strings, value: value * 24 * 60 * 60), action: {
-                dismissAction()
+        let timeoutItems: [ContextMenuItem] = timeoutValues.map { value in
+            return .action(ContextMenuActionItem(text: timeIntervalString(strings: presentationData.strings, value: value * 24 * 60 * 60), icon: { theme in
+                if currentAuthorizationTTLDays == value {
+                    return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Check"), color: theme.contextMenu.primaryColor)
+                } else {
+                    return UIImage()
+                }
+            }, action: { _, f in
+                f(.default)
                 ttlAction(value)
-            })
+            }))
         }
-        controller.setItemGroups([
-            ActionSheetItemGroup(items: timeoutItems),
-            ActionSheetItemGroup(items: [ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, action: { dismissAction() })])
-        ])
-        presentControllerImpl?(controller, nil)
+        guard let sourceNode = findAutoTerminateReferenceNode?() else {
+            return
+        }
+        let contextController = makeContextController(
+            presentationData: presentationData,
+            source: .reference(RecentSessionsContextReferenceContentSource(sourceView: sourceNode.labelNode.view)),
+            items: .single(ContextController.Items(content: .list(timeoutItems))),
+            gesture: nil
+        )
+        sourceNode.updateHasContextMenu(hasContextMenu: true)
+        contextController.dismissed = { [weak sourceNode] in
+            sourceNode?.updateHasContextMenu(hasContextMenu: false)
+        }
+        presentInGlobalOverlayImpl?(contextController)
     }, openDesktopLink: {
         context.sharedContext.openExternalUrl(context: context, urlContext: .generic, url: "https://getdesktop.telegram.org", forceExternal: true, presentationData: context.sharedContext.currentPresentationData.with { $0 }, navigationController: nil, dismissInput: {})
     }, openWebLink: {
@@ -959,6 +986,8 @@ public func recentSessionsController(context: AccountContext, activeSessionsCont
     let signal = combineLatest(context.sharedContext.presentationData, mode.get(), statePromise.get(), activeSessionsContext.state, webSessionsContext.state, enableQRLogin, connectedBotAndPeer)
     |> deliverOnMainQueue
     |> map { presentationData, mode, state, sessionsState, websitesAndPeers, enableQRLogin, connectedBotAndPeer -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        currentAuthorizationTTLDays = sessionsState.ttlDays
+
         var rightNavigationButton: ItemListNavigationButton?
         let websites = websitesAndPeers.sessions
         let peers = websitesAndPeers.peers
@@ -982,11 +1011,6 @@ public func recentSessionsController(context: AccountContext, activeSessionsCont
         }
         
         let emptyStateItem: ItemListControllerEmptyStateItem? = nil
-//        if sessionsState.sessions.count == 1 && mode == .sessions {
-//            emptyStateItem = RecentSessionsEmptyStateItem(theme: presentationData.theme, strings: presentationData.strings)
-//        } else {
-//            emptyStateItem = nil
-//        }
         
         let title: ItemListControllerTitle
         let entries: [RecentSessionsEntry]
@@ -1032,11 +1056,17 @@ public func recentSessionsController(context: AccountContext, activeSessionsCont
             controller.present(c, in: .window(.root), with: p)
         }
     }
+    presentInGlobalOverlayImpl = { [weak controller] c in
+        controller?.presentInGlobalOverlay(c, with: nil)
+    }
     pushControllerImpl = { [weak controller] c in
         controller?.push(c)
     }
     dismissImpl = { [weak controller] in
         controller?.dismiss()
+    }
+    findAutoTerminateReferenceNode = { [weak controller] in
+        return controller?.itemNode(forTag: RecentSessionsEntryTag.autoTerminate) as? ItemListDisclosureItemNode
     }
     
     if let focusOnItemTag {

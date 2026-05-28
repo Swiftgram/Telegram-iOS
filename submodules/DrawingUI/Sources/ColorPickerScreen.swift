@@ -14,6 +14,8 @@ import SegmentControlComponent
 import MultilineTextComponent
 import HexColor
 import MediaEditor
+import GlassBarButtonComponent
+import BundleIconComponent
 
 private let palleteColors: [UInt32] = [
     0xffffff, 0xebebeb, 0xd6d6d6, 0xc2c2c2, 0xadadad, 0x999999, 0x858585, 0x707070, 0x5c5c5c, 0x474747, 0x333333, 0x000000,
@@ -1819,30 +1821,6 @@ private final class ColorPickerContent: CombinedComponent {
     }
     
     final class State: ComponentState {
-        var cachedEyedropperImage: UIImage?
-        var eyedropperImage: UIImage {
-            let eyedropperImage: UIImage
-            if let image = self.cachedEyedropperImage {
-                eyedropperImage = image
-            } else {
-                eyedropperImage = generateTintedImage(image: UIImage(bundleImageName: "Media Editor/Eyedropper"), color: .white)!
-                self.cachedEyedropperImage = eyedropperImage
-            }
-            return eyedropperImage
-        }
-        
-        var cachedCloseImage: UIImage?
-        var closeImage: UIImage {
-            let closeImage: UIImage
-            if let image = self.cachedCloseImage {
-                closeImage = image
-            } else {
-                closeImage = generateCloseButtonImage(backgroundColor: .clear, foregroundColor: UIColor(rgb: 0xffffff))!
-                self.cachedCloseImage = closeImage
-            }
-            return closeImage
-        }
-        
         var selectedMode: Int = 0
         var selectedColor: DrawingColor
         
@@ -1884,8 +1862,8 @@ private final class ColorPickerContent: CombinedComponent {
     }
     
     static var body: Body {
-        let eyedropperButton = Child(Button.self)
-        let closeButton = Child(Button.self)
+        let eyedropperButton = Child(GlassBarButtonComponent.self)
+        let closeButton = Child(GlassBarButtonComponent.self)
         let title = Child(MultilineTextComponent.self)
         let modeControl = Child(SegmentControlComponent.self)
         
@@ -1918,50 +1896,45 @@ private final class ColorPickerContent: CombinedComponent {
             let sideInset: CGFloat = 16.0
                         
             let eyedropperButton = eyedropperButton.update(
-                component: Button(
-                    content: AnyComponent(
-                        Image(image: state.eyedropperImage)
+                component: GlassBarButtonComponent(
+                    size: CGSize(width: 44.0, height: 44.0),
+                    backgroundColor: nil,
+                    isDark: true,
+                    state: .glass,
+                    component: AnyComponentWithIdentity(
+                        id: "icon",
+                        component: AnyComponent(BundleIconComponent(name: "Media Editor/Eyedropper", tintColor: .white))
                     ),
-                    action: { [weak component] in
-                        component?.eyedropper()
+                    action: { _ in
+                        component.eyedropper()
                     }
-                ).minSize(CGSize(width: 30.0, height: 30.0)),
-                availableSize: CGSize(width: 19.0, height: 19.0),
+                ),
+                availableSize: CGSize(width: 44.0, height: 44.0),
                 transition: .immediate
             )
             context.add(eyedropperButton
-                .position(CGPoint(x: environment.safeInsets.left + eyedropperButton.size.width + 1.0, y: 29.0))
+                .position(CGPoint(x: context.availableSize.width - environment.safeInsets.right - eyedropperButton.size.width / 2.0 - 16.0, y: 16.0 + eyedropperButton.size.height / 2.0))
             )
             
             let closeButton = closeButton.update(
-                component: Button(
-                    content: AnyComponent(ZStack([
-                        AnyComponentWithIdentity(
-                            id: "background",
-                            component: AnyComponent(
-                                BlurredBackgroundComponent(
-                                    color:  UIColor(rgb: 0x888888, alpha: 0.1)
-                                )
-                            )
-                        ),
-                        AnyComponentWithIdentity(
-                            id: "icon",
-                            component: AnyComponent(
-                                Image(image: state.closeImage)
-                            )
-                        ),
-                    ])),
-                    action: { [weak component] in
-                        component?.dismiss()
+                component: GlassBarButtonComponent(
+                    size: CGSize(width: 44.0, height: 44.0),
+                    backgroundColor: nil,
+                    isDark: true,
+                    state: .glass,
+                    component: AnyComponentWithIdentity(
+                        id: "icon",
+                        component: AnyComponent(BundleIconComponent(name: "Navigation/Close", tintColor: .white))
+                    ),
+                    action: { _ in
+                        component.dismiss()
                     }
                 ),
                 availableSize: CGSize(width: 30.0, height: 30.0),
                 transition: .immediate
             )
             context.add(closeButton
-                .position(CGPoint(x: context.availableSize.width - environment.safeInsets.right - closeButton.size.width - 1.0, y: 29.0))
-                .clipsToBounds(true)
-                .cornerRadius(15.0)
+                .position(CGPoint(x: 16.0 + closeButton.size.width / 2.0, y: 16.0 + closeButton.size.height / 2.0))
             )
             
             let title = title.update(
@@ -1979,12 +1952,11 @@ private final class ColorPickerContent: CombinedComponent {
                 transition: .immediate
             )
             context.add(title
-                .position(CGPoint(x: context.availableSize.width / 2.0, y: 29.0))
+                .position(CGPoint(x: context.availableSize.width / 2.0, y: 16.0 + 22.0))
             )
             
-            var contentHeight: CGFloat = 58.0
+            var contentHeight: CGFloat = 76.0
             
-            //backgroundColor: .clear, foregroundColor: UIColor(rgb: 0x6f7075, alpha: 0.6), shadowColor: .black, textColor: UIColor(rgb: 0xffffff), dividerColor: UIColor(rgb: 0x505155, alpha: 0.6)
             let modeControl = modeControl.update(
                 component: SegmentControlComponent(
                     theme: SegmentControlComponent.Theme(backgroundColor: UIColor(rgb: 0xffffff, alpha: 0.07), legacyBackgroundColor: .clear, foregroundColor: UIColor(rgb: 0x6f7075, alpha: 0.6), textColor: .white, dividerColor: UIColor(rgb: 0x505155, alpha: 0.6)),

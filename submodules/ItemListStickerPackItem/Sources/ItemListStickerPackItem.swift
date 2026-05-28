@@ -410,14 +410,7 @@ class ItemListStickerPackItemNode: ItemListRevealOptionsItemNode {
             
             let leftInset: CGFloat = 65.0 + params.leftInset
             
-            let verticalInset: CGFloat
-            switch item.systemStyle {
-            case .glass:
-                verticalInset = 13.0
-            case .legacy:
-                verticalInset = 11.0
-            }
-            
+            let verticalInset: CGFloat = 11.0
             let titleSpacing: CGFloat = 2.0
             
             let separatorHeight = UIScreenPixel

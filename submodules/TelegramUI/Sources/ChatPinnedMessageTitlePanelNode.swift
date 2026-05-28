@@ -934,7 +934,7 @@ final class ChatPinnedMessageTitlePanelNode: ChatTitleAccessoryPanelNode {
                     let button = attribute.rows[0].buttons[0]
                     switch button.action {
                     case .text:
-                        controllerInteraction.sendMessage(button.title)
+                        controllerInteraction.sendMessage(button.title, message.id)
                         return
                     case let .url(url):
                         var isConcealed = true
@@ -944,10 +944,10 @@ final class ChatPinnedMessageTitlePanelNode: ChatTitleAccessoryPanelNode {
                         controllerInteraction.openUrl(ChatControllerInteraction.OpenUrl(url: url, concealed: isConcealed, progress: Promise()))
                         return
                     case .requestMap:
-                        controllerInteraction.shareCurrentLocation()
+                        controllerInteraction.shareCurrentLocation(message.id)
                         return
                     case .requestPhone:
-                        controllerInteraction.shareAccountContact()
+                        controllerInteraction.shareAccountContact(message.id)
                         return
                     case .openWebApp:
                         let progressPromise = Promise<Bool>()

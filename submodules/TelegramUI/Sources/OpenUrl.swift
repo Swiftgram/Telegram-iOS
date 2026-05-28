@@ -1014,7 +1014,16 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
         if let host = parsedUrl.host, telegramMeHosts.contains(host) {
             continueHandling()
         } else {
-            if isTelegraPhLink(parsedUrl.absoluteString) {
+            if isTelegramWebShortLink(parsedUrl.absoluteString) {
+                handleInternetUrl(
+                    parsedUrl: parsedUrl,
+                    originalUrl: url,
+                    context: context,
+                    presentationData: presentationData,
+                    navigationController: navigationController,
+                    handleInternalUrl: handleInternalUrl
+                )
+            } else if isTelegraPhLink(parsedUrl.absoluteString) {
                 continueHandling()
             } else {
                 context.sharedContext.applicationBindings.openUniversalUrl(url, TelegramApplicationOpenUrlCompletion(completion: { success in

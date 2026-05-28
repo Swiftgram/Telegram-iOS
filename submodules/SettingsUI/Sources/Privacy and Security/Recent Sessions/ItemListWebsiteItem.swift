@@ -214,19 +214,12 @@ class ItemListWebsiteItemNode: ItemListRevealOptionsItemNode {
         return { item, params, neighbors in
             var updatedTheme: PresentationTheme?
             
-            let titleFont = Font.medium(floor(item.presentationData.fontSize.itemListBaseFontSize * 16.0 / 17.0))
-            let textFont = Font.regular(floor(item.presentationData.fontSize.itemListBaseFontSize * 14.0 / 17.0))
+            let titleFont = Font.medium(floor(item.presentationData.fontSize.itemListBaseFontSize * 17.0 / 17.0))
+            let textFont = Font.regular(floor(item.presentationData.fontSize.itemListBaseFontSize * 15.0 / 17.0))
             
-            let verticalInset: CGFloat
-            switch item.systemStyle {
-            case .glass:
-                verticalInset = 14.0
-            case .legacy:
-                verticalInset = 10.0
-            }
-            
+            let verticalInset: CGFloat = 11.0
             let titleSpacing: CGFloat = 1.0
-            let textSpacing: CGFloat = 3.0
+            let textSpacing: CGFloat = 2.0
             
             if currentItem?.presentationData !== item.presentationData.theme {
                 updatedTheme = item.presentationData.theme
@@ -288,7 +281,7 @@ class ItemListWebsiteItemNode: ItemListRevealOptionsItemNode {
             let (locationLayout, locationApply) = makeLocationLayout(TextNodeLayoutArguments(attributedString: locationAttributedString, backgroundColor: nil, maximumNumberOfLines: 1, truncationType: .end, constrainedSize: CGSize(width: params.width - leftInset - 8.0 - editingOffset - rightInset, height: CGFloat.greatestFiniteMagnitude), alignment: .natural, cutout: nil, insets: UIEdgeInsets()))
             
             let insets = itemListNeighborsGroupedInsets(neighbors, params)
-            let contentSize = CGSize(width: params.width, height: verticalInset * 2.0 + titleLayout.size.height + titleSpacing + appLayout.size.height + textSpacing + locationLayout.size.height)
+            let contentSize = CGSize(width: params.width, height: verticalInset * 2.0 + titleLayout.size.height + titleSpacing + appLayout.size.height + textSpacing + locationLayout.size.height - 4.0)
             let separatorHeight = UIScreenPixel
             let separatorRightInset: CGFloat = item.systemStyle == .glass ? 16.0 : 0.0
             
@@ -447,9 +440,9 @@ class ItemListWebsiteItemNode: ItemListRevealOptionsItemNode {
                     transition.updateFrame(node: strongSelf.bottomStripeNode, frame: CGRect(origin: CGPoint(x: bottomStripeInset, y: contentSize.height + bottomStripeOffset), size: CGSize(width: layoutSize.width - bottomStripeInset - params.rightInset - separatorRightInset, height: separatorHeight)))
                     
                     
-                    transition.updateFrame(node: strongSelf.avatarNode, frame: CGRect(origin: CGPoint(x: params.leftInset + revealOffset + editingOffset + 16.0, y: 12.0), size: CGSize(width: 30.0, height: 30.0)))
+                    transition.updateFrame(node: strongSelf.avatarNode, frame: CGRect(origin: CGPoint(x: params.leftInset + revealOffset + editingOffset + 16.0, y: 15.0), size: CGSize(width: 30.0, height: 30.0)))
                     
-                    transition.updateFrame(node: strongSelf.titleNode, frame: CGRect(origin: CGPoint(x: leftInset + revealOffset + editingOffset, y: verticalInset), size: titleLayout.size))
+                    transition.updateFrame(node: strongSelf.titleNode, frame: CGRect(origin: CGPoint(x: leftInset + revealOffset + editingOffset, y: verticalInset - 2.0), size: titleLayout.size))
                     transition.updateFrame(node: strongSelf.appNode, frame: CGRect(origin: CGPoint(x: leftInset + revealOffset + editingOffset, y: strongSelf.titleNode.frame.maxY + titleSpacing), size: appLayout.size))
                     transition.updateFrame(node: strongSelf.locationNode, frame: CGRect(origin: CGPoint(x: leftInset + revealOffset + editingOffset, y: strongSelf.appNode.frame.maxY + textSpacing), size: locationLayout.size))
                     
@@ -556,8 +549,6 @@ class ItemListWebsiteItemNode: ItemListRevealOptionsItemNode {
         }
     }
 }
-
-private let connectedBotAvatarFont = avatarPlaceholderFont(size: 11.0)
 
 final class ItemListConnectedBotSessionItem: ListViewItem, ItemListItem {
     let context: AccountContext
@@ -690,7 +681,7 @@ private final class ItemListConnectedBotSessionItemNode: ItemListRevealOptionsIt
         
         self.containerNode = ASDisplayNode()
         
-        self.avatarNode = AvatarNode(font: connectedBotAvatarFont)
+        self.avatarNode = AvatarNode(font: avatarFont)
         self.avatarNode.cornerRadius = 7.0
         self.avatarNode.clipsToBounds = true
         
@@ -736,19 +727,12 @@ private final class ItemListConnectedBotSessionItemNode: ItemListRevealOptionsIt
         return { item, params, neighbors in
             var updatedTheme: PresentationTheme?
             
-            let titleFont = Font.medium(floor(item.presentationData.fontSize.itemListBaseFontSize * 16.0 / 17.0))
-            let textFont = Font.regular(floor(item.presentationData.fontSize.itemListBaseFontSize * 14.0 / 17.0))
+            let titleFont = Font.semibold(floor(item.presentationData.fontSize.itemListBaseFontSize * 17.0 / 17.0))
+            let textFont = Font.regular(floor(item.presentationData.fontSize.itemListBaseFontSize * 15.0 / 17.0))
         
-            let verticalInset: CGFloat
-            switch item.systemStyle {
-            case .glass:
-                verticalInset = 14.0
-            case .legacy:
-                verticalInset = 10.0
-            }
-            
+            let verticalInset: CGFloat = 11.0
             let titleSpacing: CGFloat = 1.0
-            let textSpacing: CGFloat = 3.0
+            let textSpacing: CGFloat = 2.0
             
             if currentItem?.presentationData.theme !== item.presentationData.theme {
                 updatedTheme = item.presentationData.theme
@@ -780,7 +764,7 @@ private final class ItemListConnectedBotSessionItemNode: ItemListRevealOptionsIt
             let (locationLayout, locationApply) = makeLocationLayout(TextNodeLayoutArguments(attributedString: locationAttributedString, backgroundColor: nil, maximumNumberOfLines: 1, truncationType: .end, constrainedSize: CGSize(width: params.width - leftInset - 8.0 - rightInset, height: CGFloat.greatestFiniteMagnitude), alignment: .natural, cutout: nil, insets: UIEdgeInsets()))
             
             let insets = itemListNeighborsGroupedInsets(neighbors, params)
-            let contentSize = CGSize(width: params.width, height: verticalInset * 2.0 + titleLayout.size.height + titleSpacing + appLayout.size.height + textSpacing + locationLayout.size.height)
+            let contentSize = CGSize(width: params.width, height: verticalInset * 2.0 + titleLayout.size.height + titleSpacing + appLayout.size.height + textSpacing + locationLayout.size.height  - 4.0)
             let separatorHeight = UIScreenPixel
             let separatorRightInset: CGFloat = item.systemStyle == .glass ? 16.0 : 0.0
             
@@ -901,8 +885,8 @@ private final class ItemListConnectedBotSessionItemNode: ItemListRevealOptionsIt
                 transition.updateFrame(node: self.topStripeNode, frame: CGRect(origin: CGPoint(x: 0.0, y: -min(insets.top, separatorHeight)), size: CGSize(width: layoutSize.width, height: separatorHeight)))
                 transition.updateFrame(node: self.bottomStripeNode, frame: CGRect(origin: CGPoint(x: bottomStripeInset, y: contentSize.height + bottomStripeOffset), size: CGSize(width: layoutSize.width - bottomStripeInset - params.rightInset - separatorRightInset, height: separatorHeight)))
                 
-                transition.updateFrame(node: self.avatarNode, frame: CGRect(origin: CGPoint(x: params.leftInset + 16.0, y: 12.0), size: CGSize(width: 30.0, height: 30.0)))
-                transition.updateFrame(node: self.titleNode, frame: CGRect(origin: CGPoint(x: leftInset, y: verticalInset), size: titleLayout.size))
+                transition.updateFrame(node: self.avatarNode, frame: CGRect(origin: CGPoint(x: params.leftInset + 16.0, y: 15.0), size: CGSize(width: 30.0, height: 30.0)))
+                transition.updateFrame(node: self.titleNode, frame: CGRect(origin: CGPoint(x: leftInset, y: verticalInset - 2.0), size: titleLayout.size))
                 transition.updateFrame(node: self.appNode, frame: CGRect(origin: CGPoint(x: leftInset, y: self.titleNode.frame.maxY + titleSpacing), size: appLayout.size))
                 transition.updateFrame(node: self.locationNode, frame: CGRect(origin: CGPoint(x: leftInset, y: self.appNode.frame.maxY + textSpacing), size: locationLayout.size))
                 

@@ -297,15 +297,9 @@ public func storageUsageExceptionsScreen(
         }
     }
     
-    var presentControllerImpl: ((ViewController, PresentationContextType, Any?) -> Void)?
-    let _ = presentControllerImpl
     var pushControllerImpl: ((ViewController) -> Void)?
-    
     var findPeerReferenceNode: ((EnginePeer.Id) -> ItemListDisclosureItemNode?)?
-    let _ = findPeerReferenceNode
-    
     var presentInGlobalOverlay: ((ViewController) -> Void)?
-    let _ = presentInGlobalOverlay
     
     let actionDisposables = DisposableSet()
     
@@ -465,9 +459,6 @@ public func storageUsageExceptionsScreen(
     if isModal {
         controller.navigationPresentation = .modal
         controller.supportedOrientations = ViewControllerSupportedOrientations(regularSize: .all, compactSize: .portrait)
-    }
-    presentControllerImpl = { [weak controller] c, contextType, a in
-        controller?.present(c, in: contextType, with: a)
     }
     pushControllerImpl = { [weak controller] c in
         controller?.push(c)

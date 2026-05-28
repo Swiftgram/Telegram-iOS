@@ -609,7 +609,7 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
 
         let query = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let signal: Signal<(StickerPaneSearchStickerState, FoundStickerSets, Bool, FoundStickerSets?)?, NoError>
-        if query.count >= 2 {
+        if query.isSingleEmoji || query.count >= 2 {
             let context = self.context
             let stickers: Signal<StickerPaneSearchStickerState, NoError>
             if query.isSingleEmoji {

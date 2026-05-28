@@ -34,7 +34,6 @@ swift_library(
         "//submodules/LegacyUI:LegacyUI",
         "//submodules/GalleryUI:GalleryUI",
         "//submodules/ShareController:ShareController",
-        "//submodules/WebSearchUI:WebSearchUI",
         "//submodules/SearchBarNode:SearchBarNode",
         "//submodules/ContactsPeerItem:ContactsPeerItem",
         "//submodules/PasswordSetupUI:PasswordSetupUI",

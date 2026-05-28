@@ -16339,3 +16339,6 @@ Error: %8$@";
 "RecentSessions.ConnectedBot.TerminateCheckbox" = "Also terminate %@";
 
 "Chat.GuestChatMessageTooltip" = "This bot can't read the chat – only the messages where it was mentioned.";
+
+"MediaPicker.SetNewGroupPhoto" = "Set new group photo";
+"MediaPicker.SetNewChannelPhoto" = "Set new channel photo";

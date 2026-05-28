@@ -176,16 +176,46 @@ public func toggleWebBrowserSettingsException(postbox: Postbox, network: Network
         guard let result else {
             return .single(false)
         }
-        switch result {
-        case .boolTrue:
-            return Signal<Bool, NoError> { subscriber in
-                return _internal_getAccountWebBrowserSettings(postbox: postbox, network: network, forceUpdate: true).start(completed: {
-                    subscriber.putNext(true)
-                    subscriber.putCompletion()
+
+        return postbox.transaction { transaction -> Bool in
+            var settings = transaction.getPreferencesEntry(key: PreferencesKeys.webBrowserSettings)?.get(AccountWebBrowserSettings.self) ?? AccountWebBrowserSettings.defaultSettings
+            var updated = false
+            for update in result.allUpdates {
+                switch update {
+                case let .updateWebBrowserSettings(updateWebBrowserSettingsData):
+                    settings = settings.withUpdatedOpenExternalBrowser((updateWebBrowserSettingsData.flags & (1 << 0)) != 0)
+                    updated = true
+                case let .updateWebBrowserException(updateWebBrowserExceptionData):
+                    let openExternalBrowser: Bool?
+                    if let value = updateWebBrowserExceptionData.openExternalBrowser {
+                        switch value {
+                        case .boolFalse:
+                            openExternalBrowser = false
+                        case .boolTrue:
+                            openExternalBrowser = true
+                        }
+                    } else {
+                        openExternalBrowser = nil
+                    }
+
+                    settings = settings.withAppliedExceptionUpdate(
+                        openExternalBrowser: openExternalBrowser,
+                        delete: (updateWebBrowserExceptionData.flags & (1 << 1)) != 0,
+                        exception: AccountWebBrowserException(apiWebDomainException: updateWebBrowserExceptionData.exception)
+                    )
+                    updated = true
+                default:
+                    break
+                }
+            }
+
+            if updated {
+                transaction.updatePreferencesEntry(key: PreferencesKeys.webBrowserSettings, { _ in
+                    return PreferencesEntry(settings)
                 })
             }
-        case .boolFalse:
-            return .single(false)
+
+            return updated
         }
     }
 }

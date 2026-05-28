@@ -20,7 +20,6 @@ import ButtonComponent
 import BundleIconComponent
 import GlassBarButtonComponent
 import MultilineTextComponent
-import SolidRoundedButtonComponent
 
 private func sendInviteLinkHasInviteSection(subject: SendInviteLinkScreenSubject, peers: [TelegramForbiddenInvitePeer]) -> Bool {
     let premiumRestrictedUsers = peers.filter { peer in
@@ -330,35 +329,39 @@ private final class SendInviteLinkContentComponent: Component {
                 contentHeight += premiumTextSize.height
                 contentHeight += 22.0
                 
+                let premiumButtonGradientColors = [
+                    UIColor(rgb: 0x0077ff),
+                    UIColor(rgb: 0x6b93ff),
+                    UIColor(rgb: 0x8878ff),
+                    UIColor(rgb: 0xe46ace)
+                ]
                 let premiumButtonSize = premiumButton.update(
                     transition: premiumItemsTransition,
-                    component: AnyComponent(SolidRoundedButtonComponent(
-                        title: environment.strings.SendInviteLink_SubscribeToPremiumButton,
-                        badge: nil,
-                        theme: SolidRoundedButtonComponent.Theme(
-                            backgroundColor: .black,
-                            backgroundColors: [
-                                UIColor(rgb: 0x0077ff),
-                                UIColor(rgb: 0x6b93ff),
-                                UIColor(rgb: 0x8878ff),
-                                UIColor(rgb: 0xe46ace)
-                            ],
-                            foregroundColor: .white
+                    component: AnyComponent(ButtonComponent(
+                        background: ButtonComponent.Background(
+                            style: .glass,
+                            color: premiumButtonGradientColors[0],
+                            foreground: .white,
+                            pressedColor: premiumButtonGradientColors[0],
+                            isShimmering: false,
+                            gradient: ButtonComponent.Background.Gradient(colors: premiumButtonGradientColors)
                         ),
-                        font: .bold,
-                        fontSize: 17.0,
-                        height: 50.0,
-                        cornerRadius: 11.0,
-                        gloss: false,
-                        animationName: nil,
-                        iconPosition: .right,
-                        iconSpacing: 4.0,
+                        content: AnyComponentWithIdentity(
+                            id: AnyHashable(environment.strings.SendInviteLink_SubscribeToPremiumButton),
+                            component: AnyComponent(ButtonTextContentComponent(
+                                text: environment.strings.SendInviteLink_SubscribeToPremiumButton,
+                                badge: 0,
+                                textColor: .white,
+                                badgeBackground: .white,
+                                badgeForeground: premiumButtonGradientColors[0]
+                            ))
+                        ),
                         action: {
                             component.openPremium()
                         }
                     )),
                     environment: {},
-                    containerSize: CGSize(width: availableSize.width - sideInset * 2.0, height: 50.0)
+                    containerSize: CGSize(width: availableSize.width - sideInset * 2.0, height: 52.0)
                 )
                 let premiumButtonFrame = CGRect(origin: CGPoint(x: sideInset, y: contentHeight), size: premiumButtonSize)
                 if let premiumButtonView = premiumButton.view {

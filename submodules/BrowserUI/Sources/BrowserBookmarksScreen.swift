@@ -65,7 +65,7 @@ public final class BrowserBookmarksScreen: ViewController {
             }, tapMessage: nil, clickThroughMessage: { _, _ in
             }, toggleMessagesSelection: { _, _ in
             }, sendCurrentMessage: { _, _ in
-            }, sendMessage: { _ in
+            }, sendMessage: { _, _ in
             }, sendSticker: { _, _, _, _, _, _, _, _, _ in
                 return false
             }, sendEmoji: { _, _, _ in
@@ -83,8 +83,8 @@ public final class BrowserBookmarksScreen: ViewController {
                     controller.dismiss()
                 }
             }, openExternalInstantPage: { _ in
-            }, shareCurrentLocation: {
-            }, shareAccountContact: {
+            }, shareCurrentLocation: { _ in
+            }, shareAccountContact: { _ in
             }, sendBotCommand: { _, _ in
             }, openInstantPage: { message, _ in
                 if let openMessageImpl = openMessageImpl {
@@ -134,7 +134,7 @@ public final class BrowserBookmarksScreen: ViewController {
             }, displaySwipeToReplyHint: {
             }, dismissReplyMarkupMessage: { _ in
             }, openMessagePollResults: { _, _ in
-            }, openPollCreation: { _ in
+            }, openPollCreation: { _, _ in
             }, openPollMedia: { _, _ in
             }, displayPollSolution: { _, _ in
             }, displayPsa: { _, _ in

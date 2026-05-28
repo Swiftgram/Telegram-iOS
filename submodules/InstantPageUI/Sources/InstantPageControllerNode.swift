@@ -140,6 +140,7 @@ final class InstantPageControllerNode: ASDisplayNode, ASScrollViewDelegate {
         self.addSubnode(self.navigationBar)
         self.scrollNode.view.delaysContentTouches = false
         self.scrollNode.view.delegate = self.wrappedScrollViewDelegate
+        self.scrollNode.view.scrollsToTop = false
         
         self.navigationBar.back = navigateBack
         self.navigationBar.share = { [weak self] in
@@ -1789,12 +1790,12 @@ final class InstantPageControllerNode: ASDisplayNode, ASScrollViewDelegate {
     
     private func openUrlIn(_ url: InstantPageUrlItem) {
         let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
-        let actionSheet = OpenInActionSheetController(context: self.context, item: .url(url: url.url), openUrl: { [weak self] url in
+        let actionSheet = OpenInOptionsScreen(context: self.context, item: .url(url: url.url), openUrl: { [weak self] url in
             if let strongSelf = self, let navigationController = strongSelf.getNavigationController() {
                 strongSelf.context.sharedContext.openExternalUrl(context: strongSelf.context, urlContext: .generic, url: url, forceExternal: true, presentationData: presentationData, navigationController: navigationController, dismissInput: {})
             }
         })
-        self.present(actionSheet, nil)
+        self.pushController(actionSheet)
     }
     
     private func mediasFromItems(_ items: [InstantPageItem]) -> [InstantPageMedia] {

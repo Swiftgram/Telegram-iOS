@@ -60,6 +60,9 @@ func _internal_requestSimpleWebView(postbox: Postbox, network: Network, botId: P
                 if (flags & (1 << 2)) != 0 {
                     resultFlags.insert(.fullScreen)
                 }
+                if (flags & (1 << 3)) != 0 {
+                    resultFlags.insert(.sameOrigin)
+                }
                 return .single(RequestWebViewResult(flags: resultFlags, queryId: queryId, url: url, keepAliveSignal: nil))
             }
         }
@@ -111,6 +114,9 @@ func _internal_requestMainWebView(postbox: Postbox, network: Network, peerId: Pe
                 if (flags & (1 << 2)) != 0 {
                     resultFlags.insert(.fullScreen)
                 }
+                if (flags & (1 << 3)) != 0 {
+                    resultFlags.insert(.sameOrigin)
+                }
                 return .single(RequestWebViewResult(flags: resultFlags, queryId: queryId, url: url, keepAliveSignal: nil))
             }
         }
@@ -137,6 +143,7 @@ public struct RequestWebViewResult {
         
         public static let fullSize = Flags(rawValue: 1 << 0)
         public static let fullScreen = Flags(rawValue: 1 << 1)
+        public static let sameOrigin = Flags(rawValue: 1 << 2)
     }
     
     public let flags: Flags
@@ -270,6 +277,9 @@ func _internal_requestWebView(postbox: Postbox, network: Network, stateManager: 
                 if (webViewFlags & (1 << 2)) != 0 {
                     resultFlags.insert(.fullScreen)
                 }
+                if (webViewFlags & (1 << 3)) != 0 {
+                    resultFlags.insert(.sameOrigin)
+                }
                 let keepAlive: Signal<Never, KeepWebViewError>?
                 if let queryId {
                     keepAlive = keepWebViewSignal(network: network, stateManager: stateManager, flags: flags, peer: inputPeer, monoforumPeerId: monoforumPeerId, bot: inputBot, queryId: queryId, replyToMessageId: replyToMessageId, threadId: threadId, sendAs: nil)
@@ -362,6 +372,9 @@ func _internal_requestAppWebView(postbox: Postbox, network: Network, stateManage
                 }
                 if (flags & (1 << 2)) != 0 {
                     resultFlags.insert(.fullScreen)
+                }
+                if (flags & (1 << 3)) != 0 {
+                    resultFlags.insert(.sameOrigin)
                 }
                 return .single(RequestWebViewResult(flags: resultFlags, queryId: queryId, url: url, keepAliveSignal: nil))
             }

@@ -34,7 +34,40 @@ public class Readability: NSObject, WKNavigationDelegate {
         
         if let (html, subresources) = extractHtmlString(from: archiveData) {
             self.subresources = subresources
-            self.webView.loadHTMLString(html, baseURL: url.baseURL)
+            self.sanitizeHtmlString(html) { [weak self] html in
+                guard let self else {
+                    return
+                }
+                self.webView.loadHTMLString(html, baseURL: url.baseURL)
+            }
+        }
+    }
+    
+    private func sanitizeHtmlString(_ html: String, completion: @escaping (String) -> Void) {
+        guard let readerModeJS = loadFile(name: "ReaderMode", type: "js") else {
+            completion(htmlByRemovingScriptTags(html))
+            return
+        }
+        
+        let domPurifyJS = extractDOMPurifyScript(from: readerModeJS) ?? readerModeJS
+        self.webView.evaluateJavaScript(domPurifyJS) { [weak self] _, error in
+            guard let self else {
+                return
+            }
+            
+            guard error == nil, let htmlLiteral = javascriptStringLiteral(html) else {
+                completion(htmlByRemovingScriptTags(html))
+                return
+            }
+            
+            let sanitizeJS = """
+            (function(html) {
+                return DOMPurify.sanitize(html, {WHOLE_DOCUMENT: true, ADD_TAGS: ["iframe"]});
+            })(\(htmlLiteral));
+            """
+            self.webView.evaluateJavaScript(sanitizeJS) { result, _ in
+                completion((result as? String) ?? htmlByRemovingScriptTags(html))
+            }
         }
     }
     
@@ -49,6 +82,7 @@ public class Readability: NSObject, WKNavigationDelegate {
                 return
             }
             guard let page = parseJson(result, url: self.url.absoluteString) else {
+                completion(nil, error)
                 return
             }
             completion(page, nil)
@@ -93,6 +127,32 @@ func loadFile(name: String, type: String) -> String? {
         return nil
     }
     return userScript
+}
+
+private func extractDOMPurifyScript(from readerModeJS: String) -> String? {
+    guard let range = readerModeJS.range(of: "\n\n(function () {") else {
+        return nil
+    }
+    return String(readerModeJS[..<range.lowerBound])
+}
+
+private func javascriptStringLiteral(_ input: String) -> String? {
+    guard let data = try? JSONSerialization.data(withJSONObject: [input], options: []),
+          var arrayString = String(data: data, encoding: .utf8),
+          arrayString.count >= 2 else {
+        return nil
+    }
+    arrayString.removeFirst()
+    arrayString.removeLast()
+    return arrayString
+}
+
+private func htmlByRemovingScriptTags(_ input: String) -> String {
+    guard let regex = try? NSRegularExpression(pattern: "<script\\b[^>]*>[\\s\\S]*?</script\\s*>", options: [.caseInsensitive]) else {
+        return input
+    }
+    let range = NSRange(input.startIndex ..< input.endIndex, in: input)
+    return regex.stringByReplacingMatches(in: input, options: [], range: range, withTemplate: "")
 }
 
 private func extractHtmlString(from webArchiveData: Data) -> (String, [Any]?)? {
@@ -708,30 +768,38 @@ private func parseVideo(_ input: [String: Any], _ media: inout [EngineMedia.Id: 
     )
 }
 
+private func firstElement(withTag tag: String, in input: [Any], skippingSubtreesWithTag skippedTag: String? = nil) -> [String: Any]? {
+    for item in input {
+        guard let item = item as? [String: Any] else {
+            continue
+        }
+        let itemTag = item["tag"] as? String
+        if itemTag == tag {
+            return item
+        }
+        if itemTag == skippedTag {
+            continue
+        }
+        if let content = item["content"] as? [Any], let result = firstElement(withTag: tag, in: content, skippingSubtreesWithTag: skippedTag) {
+            return result
+        }
+    }
+    return nil
+}
+
 private func parseFigure(_ input: [String: Any], _ media: inout [EngineMedia.Id: EngineRawMedia]) -> InstantPageBlock? {
     guard let content = input["content"] as? [Any] else {
         return nil
     }
     var block: InstantPageBlock?
     var caption: RichText?
-    for item in content {
-        if let item = item as? [String: Any], let tag = item["tag"] as? String {
-            if tag == "p", let content = item["content"] as? [Any] {
-                for item in content {
-                    if let item = item as? [String: Any], let tag = item["tag"] as? String {
-                        if tag == "iframe" {
-                            block = parseVideo(item, &media)
-                        }
-                    }
-                }
-            } else if tag == "iframe" {
-                block = parseVideo(item, &media)
-            } else if tag == "img" {
-                block = parseImage(item, &media)
-            } else if tag == "figcaption" {
-                caption = trim(parseRichText(item, &media))
-            }
-        }
+    if let iframe = firstElement(withTag: "iframe", in: content, skippingSubtreesWithTag: "figcaption") {
+        block = parseVideo(iframe, &media)
+    } else if let image = firstElement(withTag: "img", in: content, skippingSubtreesWithTag: "figcaption") {
+        block = parseImage(image, &media)
+    }
+    if let figcaption = firstElement(withTag: "figcaption", in: content) {
+        caption = trim(parseRichText(figcaption, &media))
     }
     guard var block else {
         return nil

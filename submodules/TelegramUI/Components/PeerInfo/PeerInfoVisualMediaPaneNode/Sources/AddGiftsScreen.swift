@@ -266,7 +266,7 @@ public final class AddGiftsScreen: ViewControllerComponentContainer {
         }
         self.filterButton.addTarget(self, action: #selector(self.filterPressed), forControlEvents: .touchUpInside)
         
-        self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: presentationData.strings.Common_Cancel, style: .plain, target: self, action: #selector(self.cancelPressed))
+        self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "___close", style: .plain, target: self, action: #selector(self.cancelPressed))
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(customDisplayNode: self.filterButton)
     }
     

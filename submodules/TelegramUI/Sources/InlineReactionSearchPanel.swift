@@ -82,6 +82,7 @@ private final class InlineReactionSearchStickersNode: ASDisplayNode, ASScrollVie
         self.scrollNode.view.showsVerticalScrollIndicator = false
         self.scrollNode.view.showsHorizontalScrollIndicator = false
         self.scrollNode.view.delegate = self.wrappedScrollViewDelegate
+        self.scrollNode.view.scrollsToTop = false
         
         self.addSubnode(self.scrollNode)
     }

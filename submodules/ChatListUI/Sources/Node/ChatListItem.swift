@@ -640,9 +640,9 @@ private let ungroupIcon = ItemListRevealOptionIcon.animation(animation: "anim_un
 private let readIcon = ItemListRevealOptionIcon.animation(animation: "anim_read", scale: 1.0, offset: 0.0, replaceColors: nil, flip: false)
 private let unreadIcon = ItemListRevealOptionIcon.animation(animation: "anim_unread", scale: 1.0, offset: 0.0, replaceColors: [0x2194fa], flip: false)
 private let archiveIcon = ItemListRevealOptionIcon.animation(animation: "anim_archive", scale: 1.0, offset: 2.0, replaceColors: [0xa9a9ad], flip: false)
-private let unarchiveIcon = ItemListRevealOptionIcon.animation(animation: "anim_unarchive", scale: 0.642, offset: -9.0, replaceColors: [0xa9a9ad], flip: false)
-private let hideIcon = ItemListRevealOptionIcon.animation(animation: "anim_hide", scale: 1.0, offset: 2.0, replaceColors: [0xbdbdc2], flip: false)
-private let unhideIcon = ItemListRevealOptionIcon.animation(animation: "anim_hide", scale: 1.0, offset: -20.0, replaceColors: [0xbdbdc2], flip: true)
+private let unarchiveIcon = ItemListRevealOptionIcon.animation(animation: "anim_unarchive", scale: 0.52, offset: -6.0, replaceColors: [0xa9a9ad], flip: false)
+private let hideIcon = ItemListRevealOptionIcon.animation(animation: "anim_hide", scale: 1.1, offset: 2.0, replaceColors: [0xbdbdc2], flip: false)
+private let unhideIcon = ItemListRevealOptionIcon.animation(animation: "anim_hide", scale: 1.0, offset: -15.0, replaceColors: [0xbdbdc2], flip: true)
 private let startIcon = ItemListRevealOptionIcon.animation(animation: "anim_play", scale: 1.0, offset: 0.0, replaceColors: [0xbdbdc2], flip: false)
 private let closeIcon = ItemListRevealOptionIcon.animation(animation: "anim_pause", scale: 1.0, offset: 0.0, replaceColors: [0xbdbdc2], flip: false)
 
@@ -1393,8 +1393,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
     
     private var isHighlighted: Bool = false
     private var isRevealHighlighted: Bool = false
-    private var isSeparatorHiddenByLowerReveal: Bool = false
-    private weak var revealHighlightedUpperNeighbor: ChatListItemNode?
+    private var keepRevealHighlightUntilClosed: Bool = false
     private var nextHasActiveRevealControls: Bool = false
     private var skipFadeout: Bool = false
     private var customAnimationInProgress: Bool = false
@@ -1744,7 +1743,6 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
     }
     
     deinit {
-        self.revealHighlightedUpperNeighbor?.updateSeparatorHiddenByLowerReveal(false, transition: .immediate)
         self.cachedDataDisposable.dispose()
     }
     
@@ -2147,40 +2145,11 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
     }
 
     private func updateSeparatorAlpha(transition: ContainedViewLayoutTransition, inlineNavigationProgress: CGFloat? = nil) {
-        let revealSeparatorAlpha: CGFloat = (self.isRevealHighlighted || self.nextHasActiveRevealControls || self.isSeparatorHiddenByLowerReveal) ? 0.0 : 1.0
+        let revealSeparatorAlpha: CGFloat = (self.isRevealHighlighted || self.nextHasActiveRevealControls) ? 0.0 : 1.0
         if let inlineNavigationProgress = inlineNavigationProgress ?? self.item?.interaction.inlineNavigationLocation?.progress {
             transition.updateAlpha(node: self.separatorNode, alpha: (1.0 - inlineNavigationProgress) * revealSeparatorAlpha)
         } else {
             transition.updateAlpha(node: self.separatorNode, alpha: revealSeparatorAlpha)
-        }
-    }
-
-    private func updateSeparatorHiddenByLowerReveal(_ value: Bool, transition: ContainedViewLayoutTransition) {
-        self.isSeparatorHiddenByLowerReveal = value
-        self.updateSeparatorAlpha(transition: transition)
-    }
-
-    private func updateUpperNeighborSeparatorForReveal(_ value: Bool, transition: ContainedViewLayoutTransition) {
-        if value {
-            var upperNeighbor: ChatListItemNode?
-            if let supernode = self.supernode, let subnodes = supernode.subnodes {
-                for case let node as ChatListItemNode in subnodes {
-                    if node !== self && abs(node.frame.maxY - self.frame.minY) <= 2.0 {
-                        if upperNeighbor == nil || node.frame.maxY > upperNeighbor!.frame.maxY {
-                            upperNeighbor = node
-                        }
-                    }
-                }
-            }
-
-            if self.revealHighlightedUpperNeighbor !== upperNeighbor {
-                self.revealHighlightedUpperNeighbor?.updateSeparatorHiddenByLowerReveal(false, transition: transition)
-                self.revealHighlightedUpperNeighbor = upperNeighbor
-            }
-            upperNeighbor?.updateSeparatorHiddenByLowerReveal(true, transition: transition)
-        } else if let upperNeighbor = self.revealHighlightedUpperNeighbor {
-            upperNeighbor.updateSeparatorHiddenByLowerReveal(false, transition: transition)
-            self.revealHighlightedUpperNeighbor = nil
         }
     }
     
@@ -3559,7 +3528,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
             let (mentionBadgeLayout, mentionBadgeApply) = mentionBadgeLayout(CGSize(width: rawContentWidth, height: CGFloat.greatestFiniteMagnitude), badgeDiameter, badgeFont, currentMentionBadgeImage, mentionBadgeContent)
             
             var actionButtonTitleNodeLayoutAndApply: (TextNodeLayout, () -> TextNode)?
-            if case .none = badgeContent, case .none = mentionBadgeContent, case let .chat(itemPeer) = contentPeer, case let .user(user) = itemPeer.chatMainPeer, let botInfo = user.botInfo, botInfo.flags.contains(.hasWebApp) {
+            if !item.editing, case .none = badgeContent, case .none = mentionBadgeContent, case let .chat(itemPeer) = contentPeer, case let .user(user) = itemPeer.chatMainPeer, let botInfo = user.botInfo, botInfo.flags.contains(.hasWebApp) {
                 actionButtonTitleNodeLayoutAndApply = makeActionButtonTitleNodeLayout(TextNodeLayoutArguments(attributedString: NSAttributedString(string: item.presentationData.strings.ChatList_InlineButtonOpenApp, font: Font.semibold(floor(item.presentationData.fontSize.itemListBaseFontSize * 15.0 / 17.0)), textColor: theme.unreadBadgeActiveTextColor), backgroundColor: nil, maximumNumberOfLines: 1, truncationType: .end, constrainedSize: CGSize(width: rawContentWidth, height: CGFloat.greatestFiniteMagnitude), alignment: .natural, cutout: nil, insets: UIEdgeInsets()))
             }
             
@@ -4413,16 +4382,17 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                     strongSelf.statusNode.fontSize = item.presentationData.fontSize.itemListBaseFontSize
                     let _ = strongSelf.statusNode.transitionToState(statusState, animated: animateContent)
                     
+                    let rightAccessoryVerticalOffset: CGFloat = -2.0
                     var nextBadgeX: CGFloat = contentRect.maxX
                     if let _ = currentBadgeBackgroundImage {
-                        let badgeFrame = CGRect(x: nextBadgeX - badgeLayout.width, y: contentRect.maxY - badgeLayout.height - 2.0, width: badgeLayout.width, height: badgeLayout.height)
+                        let badgeFrame = CGRect(x: nextBadgeX - badgeLayout.width, y: contentRect.maxY - badgeLayout.height - 2.0 + rightAccessoryVerticalOffset, width: badgeLayout.width, height: badgeLayout.height)
                         
                         transition.updateFrame(node: strongSelf.badgeNode, frame: badgeFrame)
                         nextBadgeX -= badgeLayout.width + 6.0
                     }
                     
                     if currentMentionBadgeImage != nil || currentBadgeBackgroundImage != nil {
-                        let badgeFrame = CGRect(x: nextBadgeX - mentionBadgeLayout.width, y: contentRect.maxY - mentionBadgeLayout.height - 2.0, width: mentionBadgeLayout.width, height: mentionBadgeLayout.height)
+                        let badgeFrame = CGRect(x: nextBadgeX - mentionBadgeLayout.width, y: contentRect.maxY - mentionBadgeLayout.height - 2.0 + rightAccessoryVerticalOffset, width: mentionBadgeLayout.width, height: mentionBadgeLayout.height)
                         
                         transition.updateFrame(node: strongSelf.mentionBadgeNode, frame: badgeFrame)
                         nextBadgeX -= mentionBadgeLayout.width + 6.0
@@ -4433,7 +4403,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                         strongSelf.pinnedIconNode.isHidden = false
                         
                         let pinnedIconSize = currentPinnedIconImage.size
-                        let pinnedIconFrame = CGRect(x: nextBadgeX - pinnedIconSize.width, y: contentRect.maxY - pinnedIconSize.height - 2.0, width: pinnedIconSize.width, height: pinnedIconSize.height)
+                        let pinnedIconFrame = CGRect(x: nextBadgeX - pinnedIconSize.width, y: contentRect.maxY - pinnedIconSize.height - 2.0 + rightAccessoryVerticalOffset, width: pinnedIconSize.width, height: pinnedIconSize.height)
                         
                         strongSelf.pinnedIconNode.frame = pinnedIconFrame
                         nextBadgeX -= pinnedIconSize.width + 6.0
@@ -4450,11 +4420,14 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                         let actionButtonSize = CGSize(width: actionButtonTitleNodeLayout.size.width + actionButtonSideInset * 2.0, height: actionButtonTitleNodeLayout.size.height + actionButtonTopInset + actionButtonBottomInset)
                         var actionButtonFrame = CGRect(x: nextBadgeX - actionButtonSize.width, y: contentRect.minY + floor((contentRect.height - actionButtonSize.height) * 0.5), width: actionButtonSize.width, height: actionButtonSize.height)
                         actionButtonFrame.origin.y = max(actionButtonFrame.origin.y, dateFrame.maxY + floor(item.presentationData.fontSize.itemListBaseFontSize * 4.0 / 17.0))
+                        actionButtonFrame.origin.y += 4.0
                         
                         let actionButtonNode: HighlightableButtonNode
+                        var animateActionButtonIn = false
                         if let current = strongSelf.actionButtonNode {
                             actionButtonNode = current
                         } else {
+                            animateActionButtonIn = true
                             actionButtonNode = HighlightableButtonNode()
                             strongSelf.actionButtonNode = actionButtonNode
                             strongSelf.mainContentContainerNode.addSubnode(actionButtonNode)
@@ -4483,23 +4456,40 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                             actionButtonNode.addSubnode(actionButtonTitleNode)
                         }
                         
+                        actionButtonNode.isUserInteractionEnabled = true
                         actionButtonNode.frame = actionButtonFrame
                         actionButtonBackgroundView.frame = CGRect(origin: CGPoint(), size: actionButtonFrame.size)
                         actionButtonTitleNode.frame = CGRect(origin: CGPoint(x: floorToScreenPixels((actionButtonFrame.width - actionButtonTitleNodeLayout.size.width) * 0.5), y: actionButtonTopInset), size: actionButtonTitleNodeLayout.size)
+                        if animateActionButtonIn {
+                            actionButtonNode.alpha = 0.0
+                        }
+                        transition.updateAlpha(node: actionButtonNode, alpha: 1.0)
                         
                         nextBadgeX -= actionButtonSize.width + 6.0
                     } else {
-                        if let actionButtonTitleNode = strongSelf.actionButtonTitleNode {
-                            actionButtonTitleNode.removeFromSupernode()
-                            strongSelf.actionButtonTitleNode = nil
-                        }
-                        if let actionButtonBackgroundView = strongSelf.actionButtonBackgroundView {
-                            actionButtonBackgroundView.removeFromSuperview()
-                            strongSelf.actionButtonBackgroundView = nil
-                        }
                         if let actionButtonNode = strongSelf.actionButtonNode {
-                            actionButtonNode.removeFromSupernode()
+                            let actionButtonTitleNode = strongSelf.actionButtonTitleNode
+                            let actionButtonBackgroundView = strongSelf.actionButtonBackgroundView
+                            actionButtonNode.isUserInteractionEnabled = false
+
+                            strongSelf.actionButtonTitleNode = nil
+                            strongSelf.actionButtonBackgroundView = nil
                             strongSelf.actionButtonNode = nil
+
+                            transition.updateAlpha(node: actionButtonNode, alpha: 0.0, completion: { [weak actionButtonNode, weak actionButtonTitleNode, weak actionButtonBackgroundView] _ in
+                                actionButtonTitleNode?.removeFromSupernode()
+                                actionButtonBackgroundView?.removeFromSuperview()
+                                actionButtonNode?.removeFromSupernode()
+                            })
+                        } else {
+                            if let actionButtonTitleNode = strongSelf.actionButtonTitleNode {
+                                actionButtonTitleNode.removeFromSupernode()
+                                strongSelf.actionButtonTitleNode = nil
+                            }
+                            if let actionButtonBackgroundView = strongSelf.actionButtonBackgroundView {
+                                actionButtonBackgroundView.removeFromSuperview()
+                                strongSelf.actionButtonBackgroundView = nil
+                            }
                         }
                     }
                     
@@ -5140,7 +5130,6 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                     } else {
                         strongSelf.updateSeparatorAlpha(transition: transition)
                     }
-                    strongSelf.updateUpperNeighborSeparatorForReveal(strongSelf.isRevealHighlighted, transition: transition)
                     
                     if case let .peer(peerData) = item.content, let customMessageListData = peerData.customMessageListData {
                         if customMessageListData.hideSeparator {
@@ -5336,12 +5325,22 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
         let highlightedBackgroundFrame = self.highlightedBackgroundNode.frame
         transition.updateFrame(node: self.highlightedBackgroundNode, frame: CGRect(origin: CGPoint(x: offset, y: highlightedBackgroundFrame.minY), size: highlightedBackgroundFrame.size))
 
-        let isRevealHighlighted = !offset.isZero
+        if !offset.isZero {
+            self.keepRevealHighlightUntilClosed = true
+        }
+        let isRevealHighlighted = !offset.isZero || self.keepRevealHighlightUntilClosed
         if self.isRevealHighlighted != isRevealHighlighted {
             self.isRevealHighlighted = isRevealHighlighted
             self.updateIsHighlighted(transition: transition)
         }
-        self.updateUpperNeighborSeparatorForReveal(isRevealHighlighted, transition: transition)
+    }
+
+    private func clearRevealHighlightIfNeeded(transition: ContainedViewLayoutTransition) {
+        self.keepRevealHighlightUntilClosed = false
+        if self.revealOffset.isZero && self.isRevealHighlighted {
+            self.isRevealHighlighted = false
+            self.updateIsHighlighted(transition: transition)
+        }
     }
     
     override public func touchesToOtherItemsPrevented() {
@@ -5349,9 +5348,11 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
         if let item = self.item {
             item.interaction.setPeerIdWithRevealedOptions(nil, nil)
         }
+        self.clearRevealHighlightIfNeeded(transition: .immediate)
     }
     
     override public func revealOptionsInteractivelyOpened() {
+        self.keepRevealHighlightUntilClosed = true
         if let item = self.item {
             switch item.index {
             case let .chatList(index):
@@ -5363,6 +5364,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
     }
     
     override public func revealOptionsInteractivelyClosed() {
+        self.clearRevealHighlightIfNeeded(transition: .animated(duration: 0.2, curve: .easeInOut))
         if let item = self.item {
             switch item.index {
             case let .chatList(index):

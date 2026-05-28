@@ -1944,6 +1944,8 @@ func openResolvedUrlImpl(
                                             browserIdentifier = "duckDuckGo"
                                         } else if browser.hasPrefix("Alook") {
                                             browserIdentifier = "alook"
+                                        } else if browser.hasPrefix("Vivaldi") {
+                                            browserIdentifier = "vivaldi"
                                         }
                                     }
                                     

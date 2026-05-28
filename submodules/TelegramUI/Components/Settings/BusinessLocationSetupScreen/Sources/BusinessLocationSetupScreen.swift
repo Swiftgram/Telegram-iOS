@@ -219,7 +219,13 @@ final class BusinessLocationSetupScreenComponent: Component {
             guard let component = self.component else {
                 return
             }
-            let controller = LocationPickerController(context: component.context, updatedPresentationData: nil, mode: .pick, initialLocation: initialLocation, completion: { [weak self] location, _, _, address, _ in
+            let controller = LocationPickerController(
+                context: component.context,
+                style: .glass,
+                updatedPresentationData: nil,
+                mode: .pick,
+                initialLocation: initialLocation,
+                completion: { [weak self] location, _, _, address, _ in
                 guard let self else {
                     return
                 }

@@ -170,7 +170,6 @@ swift_library(
         "//submodules/YuvConversion:YuvConversion",
         "//submodules/JoinLinkPreviewUI:JoinLinkPreviewUI",
         "//submodules/LanguageLinkPreviewUI:LanguageLinkPreviewUI",
-        "//submodules/WebSearchUI:WebSearchUI",
         "//submodules/LegacyMediaPickerUI:LegacyMediaPickerUI",
         "//submodules/MimeTypes:MimeTypes",
         "//submodules/LocalMediaResources:LocalMediaResources",

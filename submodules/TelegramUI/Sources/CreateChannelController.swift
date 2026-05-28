@@ -13,7 +13,6 @@ import AlertUI
 import PresentationDataUtils
 import LegacyUI
 import ItemListAvatarAndNameInfoItem
-import WebSearchUI
 import PeerInfoUI
 import MapResourceToAvatarSizes
 import LegacyMediaPickerUI
@@ -493,7 +492,7 @@ public func createChannelController(context: AccountContext, mode: CreateChannel
         keyboardInputData.set(AvatarEditorScreen.inputData(context: context, isGroup: true))
         
         var dismissPickerImpl: (() -> Void)?
-        let (mainController, pickerHolder) = context.sharedContext.makeAvatarMediaPickerScreen(context: context, getSourceRect: { return nil }, canDelete: pendingAvatar != nil, performDelete: {
+        let (mainController, pickerHolder) = context.sharedContext.makeAvatarMediaPickerScreen(context: context, peerType: .channel, getSourceRect: { return nil }, canDelete: pendingAvatar != nil, performDelete: {
             clearPendingAvatar()
         }, completion: { result, transitionView, transitionRect, transitionImage, fromCamera, _, cancelled in
             avatarPickerHolder = nil

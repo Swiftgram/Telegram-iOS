@@ -16,14 +16,7 @@ extension ChatControllerImpl {
             guard let self, let itemNode else {
                 return
             }
-            
-            #if DEBUG
-            var value = value
-            if "".isEmpty {
-                value = 0
-            }
-            #endif
-            
+                        
             if value >= 2 {
                 return
             }
@@ -33,7 +26,7 @@ extension ChatControllerImpl {
             }
             
             Queue.mainQueue().after(0.5) {
-                let sourceRect = sourceNode.view.convert(sourceNode.view.bounds, to: nil).offsetBy(dx: -35.0, dy: 0.0)
+                let sourceRect = sourceNode.view.convert(sourceNode.view.bounds, to: nil)
                 
                 self.messageTooltipController?.dismiss()
                 self.guestChatMessageTooltipController?.dismiss()
@@ -55,16 +48,7 @@ extension ChatControllerImpl {
                         strongSelf.guestChatMessageTooltipController = nil
                     }
                 }
-                
-                //            let _ = self.chatDisplayNode.messageTransitionNode.addCustomOffsetHandler(itemNode: itemNode, update: { [weak tooltipScreen] offset, transition in
-                //                guard let tooltipScreen, tooltipScreen.isNodeLoaded else {
-                //                    return false
-                //                }
-                //                tooltipScreen.addRelativeScrollingOffset(-offset, transition: transition)
-                //
-                //                return true
-                //            })
-                
+                                
                 self.present(tooltipScreen, in: .current)
                 
                 let _ = ApplicationSpecificNotice.incrementGuestChatMessageTooltip(accountManager: self.context.sharedContext.accountManager).startStandalone()

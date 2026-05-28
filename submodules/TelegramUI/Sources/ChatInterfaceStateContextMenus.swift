@@ -496,11 +496,18 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
     if case .standard(.embedded) = chatPresentationInterfaceState.mode {
         isEmbeddedMode = true
     }
-    
+
     if case let .customChatContents(customChatContents) = chatPresentationInterfaceState.subject, case .hashTagSearch = customChatContents.kind {
         isEmbeddedMode = true
     }
-    
+
+    let isSharedMediaPolls: Bool
+    if isEmbeddedMode, case let .tag(tag)? = chatPresentationInterfaceState.subject, tag == .polls {
+        isSharedMediaPolls = true
+    } else {
+        isSharedMediaPolls = false
+    }
+
     var hasExpandedAudioTranscription = false
     if let messageNode = messageNode as? ChatMessageBubbleItemNode {
         hasExpandedAudioTranscription = messageNode.hasExpandedAudioTranscription()
@@ -941,9 +948,36 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
     |> deliverOnMainQueue
     |> map { data, updatingMessageMedia, infoSummaryData, appConfig, isMessageRead, messageViewsPrivacyTips, availableReactions, translationSettings, loggingSettings, notificationSoundList, accountPeer -> ContextController.Items in
         let isPremium = accountPeer?.isPremium ?? false
-        
+
         var actions: [ContextMenuItem] = []
-        
+
+        if isSharedMediaPolls && messages.count == 1 {
+            actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.SharedMedia_ViewInChat, icon: { theme in
+                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/GoToMessage"), color: theme.actionSheet.primaryTextColor)
+            }, action: { c, _ in
+                c?.dismiss(completion: {
+                    guard let navigationController = controllerInteraction.navigationController() else {
+                        return
+                    }
+                    guard let peer = message.peers[message.id.peerId].flatMap(EnginePeer.init) else {
+                        return
+                    }
+                    if case let .channel(channel) = peer, channel.isForumOrMonoForum, let threadId = message.threadId {
+                        let _ = context.sharedContext.navigateToForumThread(context: context, peerId: peer.id, threadId: threadId, messageId: message.id, navigationController: navigationController, activateInput: nil, scrollToEndIfExists: false, keepStack: .default, animated: true).startStandalone()
+                    } else {
+                        let targetLocation: NavigateToChatControllerParams.Location
+                        if case let .replyThread(replyThreadMessage) = chatPresentationInterfaceState.chatLocation {
+                            targetLocation = .replyThread(replyThreadMessage)
+                        } else {
+                            targetLocation = .peer(peer)
+                        }
+
+                        context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: context, chatLocation: targetLocation, subject: .message(id: .id(message.id), highlight: ChatControllerSubject.MessageHighlight(quote: nil), timecode: nil, setupReply: false), keepStack: .always, useExisting: true))
+                    }
+                })
+            })))
+        }
+
         var isPinnedMessages = false
         if case .pinnedMessages = chatPresentationInterfaceState.subject {
             isPinnedMessages = true

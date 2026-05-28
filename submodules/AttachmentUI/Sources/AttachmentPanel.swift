@@ -1563,12 +1563,22 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
                 if let data = view.cachedData as? CachedUserData {
                     return data.sendPaidMessageStars
                 } else if let channel = peerViewMainPeer(view) as? TelegramChannel {
-                    if channel.isMonoForum, let linkedMonoforumId = channel.linkedMonoforumId, let mainChannel = view.peers[linkedMonoforumId] as? TelegramChannel, mainChannel.hasPermission(.manageDirect) {
-                        return nil
-                    } else if let cachedData = view.cachedData as? CachedChannelData, let sendPaidMessageStarsValue = cachedData.sendPaidMessageStars, sendPaidMessageStarsValue == .zero {
-                        return nil
+                    if channel.isMonoForum {
+                        if let linkedMonoforumId = channel.linkedMonoforumId, let mainChannel = view.peers[linkedMonoforumId] as? TelegramChannel, mainChannel.hasPermission(.manageDirect) {
+                            return nil
+                        } else if let cachedData = view.cachedData as? CachedChannelData, let value = cachedData.sendPaidMessageStars, value == .zero {
+                            return nil
+                        } else {
+                            return channel.sendPaidMessageStars
+                        }
                     } else {
-                        return channel.sendPaidMessageStars
+                        if channel.flags.contains(.isCreator) || channel.adminRights != nil {
+                            return nil
+                        } else if let cachedData = view.cachedData as? CachedChannelData, let value = cachedData.sendPaidMessageStars {
+                            return value == .zero ? nil : value
+                        } else {
+                            return channel.sendPaidMessageStars
+                        }
                     }
                 } else {
                     return nil
@@ -1600,6 +1610,7 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
             self.containerNode.layer.cornerCurve = .continuous
         }
 
+        self.scrollNode.view.scrollsToTop = false
         self.scrollNode.view.delegate = self.wrappedScrollViewDelegate
         self.scrollNode.view.showsHorizontalScrollIndicator = false
         self.scrollNode.view.showsVerticalScrollIndicator = false

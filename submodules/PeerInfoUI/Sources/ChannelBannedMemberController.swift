@@ -14,6 +14,7 @@ import PresentationDataUtils
 import ItemListAvatarAndNameInfoItem
 import OldChannelsController
 import ChatTimerScreen
+import ContextUI
 
 private let rankMaxLength: Int32 = 16
 
@@ -55,6 +56,7 @@ private enum ChannelBannedMemberSection: Int32 {
 
 private enum ChannelBannedMemberEntryTag: ItemListItemTag {
     case rank
+    case timeout
 
     func isEqual(to other: ItemListItemTag) -> Bool {
         if let other = other as? ChannelBannedMemberEntryTag, self == other {
@@ -362,7 +364,7 @@ private enum ChannelBannedMemberEntry: ItemListNodeEntry {
             case let .timeout(_, text, value):
                 return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: text, label: value, sectionId: self.section, style: .blocks, action: {
                     arguments.openTimeout()
-                })
+                }, tag: ChannelBannedMemberEntryTag.timeout)
             case let .exceptionInfo(_, text):
                 return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
             case let .delete(_, text):
@@ -406,6 +408,18 @@ private struct ChannelBannedMemberControllerState: Equatable {
     var expandedPermissions = Set<TelegramChatBannedRightsFlags>()
     var updatedRank: String?
     var focusedOnRank: Bool
+}
+
+private final class ChannelBannedMemberContextReferenceContentSource: ContextReferenceContentSource {
+    private let sourceView: UIView
+
+    init(sourceView: UIView) {
+        self.sourceView = sourceView
+    }
+
+    func transitionInfo() -> ContextControllerReferenceViewInfo? {
+        return ContextControllerReferenceViewInfo(referenceView: self.sourceView, contentAreaInScreenSpace: UIScreen.main.bounds, insets: UIEdgeInsets(top: -4.0, left: 0.0, bottom: -4.0, right: 0.0))
+    }
 }
 
 func completeRights(_ flags: TelegramChatBannedRightsFlags) -> TelegramChatBannedRightsFlags {
@@ -604,10 +618,12 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
     
     var dismissImpl: (() -> Void)?
     var presentControllerImpl: ((ViewController, Any?) -> Void)?
+    var presentInGlobalOverlayImpl: ((ViewController) -> Void)?
     var pushControllerImpl: ((ViewController) -> Void)?
     var dismissInputImpl: (() -> Void)?
     var errorImpl: (() -> Void)?
     var scrollToRankImpl: (() -> Void)?
+    var findTimeoutReferenceNode: (() -> ItemListDisclosureItemNode?)?
     
     let peerSignal = Promise<EnginePeer?>()
     peerSignal.set(context.engine.data.subscribe(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId)))
@@ -715,12 +731,20 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
         }
     }, openTimeout: {
         let presentationData = updatedPresentationData?.initial ?? context.sharedContext.currentPresentationData.with { $0 }
-        let actionSheet = ActionSheetController(presentationData: presentationData)
         let intervals: [Int32] = [
             1 * 60 * 60 * 24,
             7 * 60 * 60 * 24,
             30 * 60 * 60 * 24
         ]
+        let currentTimeout: Int32 = stateValue.with { state in
+            if let updatedTimeout = state.updatedTimeout {
+                return updatedTimeout
+            } else if let initialParticipant = initialParticipant, case let .member(_, _, _, maybeBanInfo, _, _) = initialParticipant, let banInfo = maybeBanInfo {
+                return banInfo.rights.untilDate
+            } else {
+                return Int32.max
+            }
+        }
         let applyValue: (Int32?) -> Void = { value in
             updateState { state in
                 var state = state
@@ -728,19 +752,34 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
                 return state
             }
         }
-        var items: [ActionSheetItem] = []
+        var items: [ContextMenuItem] = []
         for interval in intervals {
-            items.append(ActionSheetButtonItem(title: timeIntervalString(strings: presentationData.strings, value: interval), color: .accent, action: { [weak actionSheet] in
-                actionSheet?.dismissAnimated()
-                applyValue(initialState.referenceTimestamp + interval)
-            }))
+            let timeoutValue = initialState.referenceTimestamp + interval
+            items.append(.action(ContextMenuActionItem(text: timeIntervalString(strings: presentationData.strings, value: interval), icon: { theme in
+                if currentTimeout == timeoutValue {
+                    return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Check"), color: theme.contextMenu.primaryColor)
+                } else {
+                    return UIImage()
+                }
+            }, action: { _, f in
+                f(.default)
+                applyValue(timeoutValue)
+            })))
         }
-        items.append(ActionSheetButtonItem(title: presentationData.strings.MessageTimer_Forever, color: .accent, action: { [weak actionSheet] in
-            actionSheet?.dismissAnimated()
+        items.append(.action(ContextMenuActionItem(text: presentationData.strings.MessageTimer_Forever, icon: { theme in
+            if currentTimeout == 0 || currentTimeout == Int32.max {
+                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Check"), color: theme.contextMenu.primaryColor)
+            } else {
+                return UIImage()
+            }
+        }, action: { _, f in
+            f(.default)
             applyValue(Int32.max)
-        }))
-        items.append(ActionSheetButtonItem(title: presentationData.strings.MessageTimer_Custom, color: .accent, action: { [weak actionSheet] in
-            actionSheet?.dismissAnimated()
+        })))
+        items.append(.action(ContextMenuActionItem(text: presentationData.strings.MessageTimer_Custom, icon: { _ in
+            return nil
+        }, action: { _, f in
+            f(.default)
             let controller = ChatTimerScreen(
                 context: context,
                 updatedPresentationData: updatedPresentationData,
@@ -763,13 +802,21 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
                 }
             )
             presentControllerImpl?(controller, nil)
-        }))
-        actionSheet.setItemGroups([ActionSheetItemGroup(items: items), ActionSheetItemGroup(items: [
-            ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, color: .accent, font: .bold, action: { [weak actionSheet] in
-                actionSheet?.dismissAnimated()
-            })
-        ])])
-        presentControllerImpl?(actionSheet, nil)
+        })))
+        guard let sourceNode = findTimeoutReferenceNode?() else {
+            return
+        }
+        let contextController = makeContextController(
+            presentationData: presentationData,
+            source: .reference(ChannelBannedMemberContextReferenceContentSource(sourceView: sourceNode.labelNode.view)),
+            items: .single(ContextController.Items(content: .list(items))),
+            gesture: nil
+        )
+        sourceNode.updateHasContextMenu(hasContextMenu: true)
+        contextController.dismissed = { [weak sourceNode] in
+            sourceNode?.updateHasContextMenu(hasContextMenu: false)
+        }
+        presentInGlobalOverlayImpl?(contextController)
     }, delete: {
         let presentationData = updatedPresentationData?.initial ?? context.sharedContext.currentPresentationData.with { $0 }
         let actionSheet = ActionSheetController(presentationData: presentationData)
@@ -1104,8 +1151,14 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
     presentControllerImpl = { [weak controller] value, presentationArguments in
         controller?.present(value, in: .window(.root), with: presentationArguments)
     }
+    presentInGlobalOverlayImpl = { [weak controller] value in
+        controller?.presentInGlobalOverlay(value, with: nil)
+    }
     pushControllerImpl = { [weak controller] c in
         controller?.push(c)
+    }
+    findTimeoutReferenceNode = { [weak controller] in
+        return controller?.itemNode(forTag: ChannelBannedMemberEntryTag.timeout) as? ItemListDisclosureItemNode
     }
     
     let hapticFeedback = HapticFeedback()

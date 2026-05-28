@@ -264,6 +264,23 @@ public extension ChatMessageItemAssociatedData {
             return false
         }
     }
+
+    func isPollVotingRestricted(poll: TelegramMediaPoll, accountTestingEnvironment: Bool, currentTimestamp: Int32) -> Bool {
+        if !poll.countries.isEmpty, let accountCountry = self.accountCountry, !poll.countries.contains(accountCountry) {
+            return true
+        }
+
+        if poll.restrictToSubscribers {
+            let period: Int32 = accountTestingEnvironment ? 5 * 60 : 24 * 60 * 60
+            if !self.isParticipant {
+                return true
+            } else if let invitedOn = self.invitedOn, invitedOn + period > currentTimestamp {
+                return true
+            }
+        }
+
+        return false
+    }
 }
 
 public enum ChatControllerInteractionLongTapAction {

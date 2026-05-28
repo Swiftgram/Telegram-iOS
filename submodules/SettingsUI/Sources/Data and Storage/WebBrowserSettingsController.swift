@@ -271,7 +271,7 @@ private enum WebBrowserSettingsControllerEntry: ItemListNodeEntry {
             case let .browserHeader(_, text):
                 return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
             case let .browser(_, title, application, identifier, selected, _):
-                return WebBrowserItem(context: arguments.context, presentationData: presentationData, systemStyle: .glass, title: title, application: application, checked: selected, sectionId: self.section) {
+                return WebBrowserItem(context: arguments.context, presentationData: presentationData, systemStyle: .glass, title: title, application: application, identifier: identifier, checked: selected, sectionId: self.section) {
                     arguments.updateDefaultBrowser(identifier)
                 }
             case let .browserInfo(_, text):
@@ -326,11 +326,11 @@ private func webBrowserSettingsControllerEntries(context: AccountContext, presen
     var entries: [WebBrowserSettingsControllerEntry] = []
     
     let options = availableOpenInOptions(context: context, item: .url(url: "https://telegram.org"))
-    let defaultExternalBrowser = localSettings.defaultWebBrowser ?? "safari"
+    let defaultExternalBrowser = localSettings.defaultWebBrowser ?? "default"
     
     entries.append(.browserHeader(presentationData.theme, presentationData.strings.WebBrowser_OpenLinksIn_Title))
     entries.append(.browser(presentationData.theme, presentationData.strings.WebBrowser_Telegram, nil, nil, !accountSettings.openExternalBrowser, 0))
-    
+        
     var index: Int32 = 1
     for option in options {
         entries.append(.browser(presentationData.theme, option.title, option.application, option.identifier, accountSettings.openExternalBrowser && option.identifier == defaultExternalBrowser, index))

@@ -106,7 +106,18 @@ final class ChatInviteRequestsTitlePanelNode: ChatTitleAccessoryPanelNode {
         if interfaceState.theme !== self.theme {
             self.theme = interfaceState.theme
             
-            self.closeButton.setImage(PresentationResourcesChat.chatInputPanelEncircledCloseIconImage(interfaceState.theme), for: [])
+            self.closeButton.setImage(generateImage(CGSize(width: 12.0, height: 12.0), contextGenerator: { size, context in
+                context.clear(CGRect(origin: CGPoint(), size: size))
+                context.setStrokeColor(interfaceState.theme.chat.inputPanel.panelControlColor.cgColor)
+                context.setLineWidth(1.33)
+                context.setLineCap(.round)
+                context.move(to: CGPoint(x: 1.0, y: 1.0))
+                context.addLine(to: CGPoint(x: size.width - 1.0, y: size.height - 1.0))
+                context.strokePath()
+                context.move(to: CGPoint(x: size.width - 1.0, y: 1.0))
+                context.addLine(to: CGPoint(x: 1.0, y: size.height - 1.0))
+                context.strokePath()
+            }), for: [])
             self.separatorNode.backgroundColor = interfaceState.theme.rootController.navigationBar.separatorColor
         }
 
@@ -115,14 +126,14 @@ final class ChatInviteRequestsTitlePanelNode: ChatTitleAccessoryPanelNode {
         let contentRightInset: CGFloat = 14.0 + rightInset
         
         let closeButtonSize = self.closeButton.measure(CGSize(width: 100.0, height: 100.0))
-        transition.updateFrame(node: self.closeButton, frame: CGRect(origin: CGPoint(x: width - contentRightInset - closeButtonSize.width, y: floorToScreenPixels((panelHeight - closeButtonSize.height) / 2.0)), size: closeButtonSize))
+        transition.updateFrame(node: self.closeButton, frame: CGRect(origin: CGPoint(x: width - contentRightInset - closeButtonSize.width - 3.0, y: floorToScreenPixels((panelHeight - closeButtonSize.height) / 2.0)), size: closeButtonSize))
         
-        self.buttonTitle.attributedText = NSAttributedString(string: interfaceState.strings.Conversation_RequestsToJoin(self.count), font: Font.regular(16.0), textColor: interfaceState.theme.rootController.navigationBar.accentTextColor)
+        self.buttonTitle.attributedText = NSAttributedString(string: interfaceState.strings.Conversation_RequestsToJoin(self.count), font: Font.medium(15.0), textColor: interfaceState.theme.chat.inputPanel.panelControlColor)
         
         transition.updateFrame(node: self.button, frame: CGRect(origin: CGPoint(x: 0.0, y: 0.0), size: CGSize(width: width, height: panelHeight)))
         
         let titleSize = self.buttonTitle.updateLayout(CGSize(width: width - leftInset - 90.0 - contentRightInset, height: 100.0))
-        var buttonTitleFrame = CGRect(origin: CGPoint(x: leftInset + floor((width - leftInset - titleSize.width) * 0.5), y: floor((panelHeight - titleSize.height) * 0.5)), size: titleSize)
+        var buttonTitleFrame = CGRect(origin: CGPoint(x: leftInset + floor((width - leftInset - titleSize.width) * 0.5), y: floor((panelHeight - titleSize.height) * 0.5) + 1.0), size: titleSize)
         buttonTitleFrame.origin.x = max(buttonTitleFrame.minX, leftInset + 90.0)
         transition.updatePosition(node: self.buttonTitle, position: buttonTitleFrame.origin)
         self.buttonTitle.bounds = CGRect(origin: CGPoint(), size: buttonTitleFrame.size)
@@ -132,7 +143,7 @@ final class ChatInviteRequestsTitlePanelNode: ChatTitleAccessoryPanelNode {
         
         if let avatarsContent = self.avatarsContent {
             let avatarsSize = self.avatarsNode.update(context: self.context, content: avatarsContent, itemSize: CGSize(width: 32.0, height: 32.0), animated: true, synchronousLoad: true)
-            transition.updateFrame(node: self.avatarsNode, frame: CGRect(origin: CGPoint(x: leftInset + 8.0, y: floor((panelHeight - avatarsSize.height) / 2.0)), size: avatarsSize))
+            transition.updateFrame(node: self.avatarsNode, frame: CGRect(origin: CGPoint(x: leftInset + 4.0, y: floor((panelHeight - avatarsSize.height) / 2.0)), size: avatarsSize))
         }
         
         self.activateAreaNode.frame = CGRect(origin: .zero, size: CGSize(width: width, height: panelHeight))

@@ -188,6 +188,7 @@ private final class TextSizeSelectionControllerNode: ASDisplayNode, ASScrollView
         self.scrollNode.view.showsHorizontalScrollIndicator = false
         self.scrollNode.view.isPagingEnabled = true
         self.scrollNode.view.delegate = self.wrappedScrollViewDelegate
+        self.scrollNode.view.scrollsToTop = false
         self.pageControlNode.setPage(0.0)
     }
     

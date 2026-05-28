@@ -23,7 +23,6 @@ swift_library(
         "//submodules/AppBundle",
         "//submodules/TelegramStringFormatting",
         "//submodules/PresentationDataUtils",
-        "//submodules/Components/SolidRoundedButtonComponent",
         "//submodules/Components/ResizableSheetComponent",
         "//submodules/Components/BundleIconComponent",
         "//submodules/TelegramUI/Components/ButtonComponent",

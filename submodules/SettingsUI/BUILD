@@ -68,7 +68,6 @@ swift_library(
         "//submodules/TextFormat:TextFormat",
         "//submodules/MediaPlayer:UniversalMediaPlayer",
         "//submodules/UrlEscaping:UrlEscaping",
-        "//submodules/WebSearchUI:WebSearchUI",
         "//submodules/UrlHandling:UrlHandling",
         "//submodules/HexColor:HexColor",
         "//submodules/QrCode:QrCode",

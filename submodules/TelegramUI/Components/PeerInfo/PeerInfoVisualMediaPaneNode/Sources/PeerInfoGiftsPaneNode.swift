@@ -212,6 +212,7 @@ public final class PeerInfoGiftsPaneNode: ASDisplayNode, PeerInfoPaneNode, UIScr
         
         self.scrollNode.view.contentInsetAdjustmentBehavior = .never
         self.scrollNode.view.delegate = self
+        self.scrollNode.view.scrollsToTop = false
         
         if let tabSelectorView = self.tabSelector.view {
             self.scrollNode.view.insertSubview(self.giftsListView, aboveSubview: tabSelectorView)
@@ -783,7 +784,7 @@ public final class PeerInfoGiftsPaneNode: ASDisplayNode, PeerInfoPaneNode, UIScr
                 buttonTitle = params.presentationData.strings.PeerInfo_Gifts_SendGift
             }
             
-            let buttonAttributedString = NSAttributedString(string: buttonTitle, font: Font.semibold(17.0), textColor: .white, paragraphAlignment: .center)
+            let buttonAttributedString = NSAttributedString(string: buttonTitle, font: Font.semibold(17.0), textColor: presentationData.theme.list.itemCheckColors.foregroundColor, paragraphAlignment: .center)
             var buttonTitleContent: AnyComponent<Empty> = AnyComponent(MultilineTextComponent(text: .plain(buttonAttributedString)))
             if let buttonIconName {
                 buttonTitleContent = AnyComponent(HStack([

@@ -14,7 +14,7 @@ public enum ContainedViewLayoutTransitionCurve: Equatable, Hashable {
     case easeInOut
     case easeIn
     case spring
-    case customSpring(damping: CGFloat, initialVelocity: CGFloat)
+    case customSpring(mass: CGFloat = 5.0, stiffness: CGFloat = 900.0, damping: CGFloat, initialVelocity: CGFloat)
     case custom(Float, Float, Float, Float)
     
     public static var slide: ContainedViewLayoutTransitionCurve {
@@ -52,8 +52,8 @@ public extension ContainedViewLayoutTransitionCurve {
                 return CAMediaTimingFunctionName.easeIn.rawValue
             case .spring:
                 return kCAMediaTimingFunctionSpring
-            case let .customSpring(damping, initialVelocity):
-                return "\(kCAMediaTimingFunctionCustomSpringPrefix)_\(damping)_\(initialVelocity)"
+            case let .customSpring(mass, stiffness, damping, initialVelocity):
+                return "\(kCAMediaTimingFunctionCustomSpringPrefix)_\(mass)_\(stiffness)_\(damping)_\(initialVelocity)"
             case .custom:
                 return CAMediaTimingFunctionName.easeInEaseOut.rawValue
         }
@@ -124,8 +124,8 @@ private extension CALayer {
         let timingFunction: String
         let mediaTimingFunction: CAMediaTimingFunction?
         switch curve {
-        case .spring:
-            timingFunction = kCAMediaTimingFunctionSpring
+        case .spring, .customSpring:
+            timingFunction = curve.timingFunction
             mediaTimingFunction = nil
         default:
             timingFunction = CAMediaTimingFunctionName.easeInEaseOut.rawValue

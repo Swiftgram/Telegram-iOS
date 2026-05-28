@@ -1570,6 +1570,8 @@ plist_fragment(
         <string>here-location</string>
         <string>yandexmaps</string>
         <string>yandexnavi</string>
+        <string>yandextaxi</string>
+        <string>yangoride</string>
         <string>comgooglemaps</string>
         <string>youtube</string>
         <string>twitter</string>
@@ -1598,6 +1600,7 @@ plist_fragment(
         <string>dolphin</string>
         <string>instagram-stories</string>
         <string>yangomaps</string>
+        <string>vivaldi</string>
     </array>
     <key>LSRequiresIPhoneOS</key>
     <true/>

@@ -613,6 +613,11 @@ public func chatListFilterPresetListController(context: AccountContext, mode: Ch
         )
     )
     |> map { presentationData, state, filtersWithCountsValue, preferences, updatedFilterOrderValue, suggestedFilters, peer, allLimits, displayTags -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        var presentationData = presentationData
+
+        let updatedTheme = presentationData.theme.withModalBlocksBackground()
+        presentationData = presentationData.withUpdated(theme: updatedTheme)
+        
         let isPremium = peer?.isPremium ?? false
         let limits = allLimits.0
         let premiumLimits = allLimits.1

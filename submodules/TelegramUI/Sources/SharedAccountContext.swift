@@ -2379,7 +2379,7 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             },
             toggleMessagesSelection: { _, _ in },
             sendCurrentMessage: { _, _ in },
-            sendMessage: { _ in },
+            sendMessage: { _, _ in },
             sendSticker: { _, _, _, _, _, _, _, _, _ in return false },
             sendEmoji: { _, _, _ in },
             sendGif: { _, _, _, _, _ in return false },
@@ -2394,8 +2394,8 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             openUrl: { _ in },
             openExternalInstantPage: { _ in
             },
-            shareCurrentLocation: {},
-            shareAccountContact: {},
+            shareCurrentLocation: { _ in },
+            shareAccountContact: { _ in },
             sendBotCommand: { _, _ in },
             openInstantPage: { _, _ in  },
             openWallpaper: { _ in  },
@@ -2474,7 +2474,7 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             },
             openMessagePollResults: { _, _ in
             },
-            openPollCreation: { _ in
+            openPollCreation: { _, _ in
             },
             openPollMedia: { _, _ in
             },
@@ -3967,8 +3967,8 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         return stickerMediaPickerController(context: context, getSourceRect: getSourceRect, completion: completion, dismissed: dismissed)
     }
     
-    public func makeAvatarMediaPickerScreen(context: AccountContext, getSourceRect: @escaping () -> CGRect?, canDelete: Bool, performDelete: @escaping () -> Void, completion: @escaping (Any?, UIView?, CGRect, UIImage?, Bool, @escaping (Bool?) -> (UIView, CGRect)?, @escaping () -> Void) -> Void, dismissed: @escaping () -> Void) -> (ViewController?, Any?) {
-        return avatarMediaPickerController(context: context, getSourceRect: getSourceRect, canDelete: canDelete, performDelete: performDelete, completion: completion, dismissed: dismissed)
+    public func makeAvatarMediaPickerScreen(context: AccountContext, peerType: PeerType, getSourceRect: @escaping () -> CGRect?, canDelete: Bool, performDelete: @escaping () -> Void, completion: @escaping (Any?, UIView?, CGRect, UIImage?, Bool, @escaping (Bool?) -> (UIView, CGRect)?, @escaping () -> Void) -> Void, dismissed: @escaping () -> Void) -> (ViewController?, Any?) {
+        return avatarMediaPickerController(context: context, peerType: peerType, getSourceRect: getSourceRect, canDelete: canDelete, performDelete: performDelete, completion: completion, dismissed: dismissed)
     }
 
     public func makeStickerPickerScreen(context: AccountContext, inputData: Promise<StickerPickerInput>, completion: @escaping (FileMediaReference) -> Void) -> ViewController {

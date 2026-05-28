@@ -8,7 +8,15 @@ import TelegramUIPreferences
 import TelegramNotices
 import AccountContext
 
-private let baseTelegramMePaths = ["telegram.me", "t.me", "telegram.dog"]
+private let baseTelegramMePaths = [
+    "telegram.me",
+    "t.me", "telegram.dog"
+]
+private let telegramWebShortLinkHosts = [
+    "a.t.me", 
+    "k.t.me",
+    "z.t.me"
+]
 private let baseTelegraPhPaths = [
     "telegra.ph/",
     "te.legra.ph/",
@@ -17,6 +25,20 @@ private let baseTelegraPhPaths = [
     "telegram.org/blog/",
     "telegram.org/tour/"
 ]
+
+public func isTelegramWebShortLink(_ url: String) -> Bool {
+    var urlWithScheme = url
+    if !urlWithScheme.contains("://") {
+        urlWithScheme = "https://\(urlWithScheme)"
+    }
+    guard let parsedUrl = URL(string: urlWithScheme), let host = parsedUrl.host?.lowercased() else {
+        return false
+    }
+    if let scheme = parsedUrl.scheme?.lowercased(), scheme != "http" && scheme != "https" {
+        return false
+    }
+    return telegramWebShortLinkHosts.contains(host)
+}
 
 extension ResolvedBotAdminRights {
     init?(_ string: String) {
@@ -1548,6 +1570,10 @@ public func resolveUrlImpl(context: AccountContext, peerId: EnginePeer.Id?, url:
                 }
             }
             
+            if isTelegramWebShortLink(url) {
+                return .single(.result(.externalUrl(url)))
+            }
+
             for basePath in baseTelegramMePaths {
                 for scheme in schemes {
                     let basePrefix = scheme + basePath + "/"

@@ -1253,7 +1253,7 @@ final class UserAppearanceScreenComponent: Component {
                 }
                 contentHeight += profilePreviewSize.height - 38.0
                 
-                let previewEdgeEffectFrame = CGRect(origin: CGPoint(x: profilePreviewFrame.minX, y: profilePreviewFrame.maxY - 32.0), size: CGSize(width: profilePreviewFrame.width, height: previewEdgeEffectHeight))
+                let previewEdgeEffectFrame = CGRect(origin: CGPoint(x: profilePreviewFrame.minX, y: profilePreviewFrame.maxY - 35.0), size: CGSize(width: profilePreviewFrame.width, height: previewEdgeEffectHeight))
                 previewTransition.setFrame(view: self.previewEdgeEffectView, frame: previewEdgeEffectFrame)
                 self.previewEdgeEffectView.update(content: environment.theme.list.blocksBackgroundColor, blur: true, alpha: 1.0, rect: previewEdgeEffectFrame, edge: .top, edgeSize: previewEdgeEffectFrame.height, transition: previewTransition)
                 previewTransition.setAlpha(view: self.previewEdgeEffectView, alpha: !self.scrolledUp ? 1.0 : 0.0)
@@ -1276,7 +1276,8 @@ final class UserAppearanceScreenComponent: Component {
                         return (TelegramTextAttributes.URL, contents)
                     }
                 )
-                let previewFooterText = NSMutableAttributedString(attributedString: parseMarkdownIntoAttributedString(environment.strings.ProfileColorSetup_ProfileColorPreviewInfo, attributes: footerAttributes))
+                let previewFooterRawText = environment.strings.ProfileColorSetup_ProfileColorPreviewInfo.replacingOccurrences(of: " >]", with: "\u{00A0}>]")
+                let previewFooterText = NSMutableAttributedString(attributedString: parseMarkdownIntoAttributedString(previewFooterRawText, attributes: footerAttributes))
                 if let range = previewFooterText.string.range(of: ">"), let chevronImage = self.cachedChevronImage?.0 {
                     previewFooterText.addAttribute(.attachment, value: chevronImage, range: NSRange(range, in: previewFooterText.string))
                 }

@@ -36,7 +36,6 @@ swift_library(
         "//submodules/PhoneNumberFormat",
         "//submodules/TelegramIntents",
         "//submodules/LegacyUI",
-        "//submodules/WebSearchUI",
         "//submodules/PremiumUI",
         "//submodules/ICloudResources",
         "//submodules/LegacyComponents",

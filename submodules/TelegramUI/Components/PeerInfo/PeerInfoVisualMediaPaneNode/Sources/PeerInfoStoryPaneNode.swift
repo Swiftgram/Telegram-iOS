@@ -1526,7 +1526,6 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
         var address: String?
         var distance: Double?
         var drivingTime: ExpectedTravelTime
-        var transitTime: ExpectedTravelTime
         var walkingTime: ExpectedTravelTime
         var hasEta: Bool
         
@@ -1535,7 +1534,6 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
             address: String?,
             distance: Double?,
             drivingTime: ExpectedTravelTime,
-            transitTime: ExpectedTravelTime,
             walkingTime: ExpectedTravelTime,
             hasEta: Bool
         ) {
@@ -1543,7 +1541,6 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
             self.address = address
             self.distance = distance
             self.drivingTime = drivingTime
-            self.transitTime = transitTime
             self.walkingTime = walkingTime
             self.hasEta = hasEta
         }
@@ -1561,7 +1558,6 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
 
     private let contextGestureContainerNode: ContextControllerSourceNode
     
-    private var mapOptionsNode: LocationOptionsNode?
     private var mapNode: LocationMapHeaderNode?
     private var mapDisposable: Disposable?
     
@@ -2191,7 +2187,7 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
         if case .location = scope {
             let mapNode = LocationMapHeaderNode(
                 presentationData: self.presentationData,
-                glass: false,
+                glass: true,
                 toggleMapModeSelection: { [weak self] in
                     guard let self else {
                         return
@@ -2201,7 +2197,15 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
                     state.displayingMapModeOptions = !state.displayingMapModeOptions
                     self.locationViewState = state
                 },
-                updateMapMode: { _ in
+                updateMapMode: { [weak self] mode in
+                    guard let self else {
+                        return
+                    }
+                    
+                    var state = self.locationViewState
+                    state.mapMode = mode
+                    state.displayingMapModeOptions = false
+                    self.locationViewState = state
                 },
                 goToUserLocation: { [weak self] in
                     guard let self else {
@@ -2333,7 +2337,6 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
             
             strongSelf.itemGridBinding.updatePresentationData(presentationData: presentationData)
             strongSelf.itemGrid.updatePresentationData(theme: presentationData.theme)
-            strongSelf.mapOptionsNode?.updatePresentationData(presentationData)
         })
         
         self.requestHistoryAroundVisiblePosition(synchronous: false, reloadAtTop: false)
@@ -2354,24 +2357,21 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
                 throttledUserLocation(mapNode.mapNode.userLocation)
             )
             
-            var eta: Signal<(ExpectedTravelTime, ExpectedTravelTime, ExpectedTravelTime), NoError> = .single((.calculating, .calculating, .calculating))
+            var eta: Signal<(ExpectedTravelTime, ExpectedTravelTime), NoError> = .single((.calculating, .calculating))
             var address: Signal<String?, NoError> = .single(nil)
             
             let locale = localeWithStrings(self.presentationData.strings)
-            eta = .single((.calculating, .calculating, .calculating))
-            |> then(combineLatest(queue: Queue.mainQueue(), getExpectedTravelTime(coordinate: locationCoordinate, transportType: .automobile), getExpectedTravelTime(coordinate: locationCoordinate, transportType: .transit), getExpectedTravelTime(coordinate: locationCoordinate, transportType: .walking))
-                    |> mapToSignal { drivingTime, transitTime, walkingTime -> Signal<(ExpectedTravelTime, ExpectedTravelTime, ExpectedTravelTime), NoError> in
+            eta = .single((.calculating, .calculating))
+            |> then(combineLatest(queue: Queue.mainQueue(), getExpectedTravelTime(coordinate: locationCoordinate, transportType: .automobile),  getExpectedTravelTime(coordinate: locationCoordinate, transportType: .walking))
+                    |> mapToSignal { drivingTime, walkingTime -> Signal<(ExpectedTravelTime, ExpectedTravelTime), NoError> in
                 if case .calculating = drivingTime {
-                    return .complete()
-                }
-                if case .calculating = transitTime {
                     return .complete()
                 }
                 if case .calculating = walkingTime {
                     return .complete()
                 }
                 
-                return .single((drivingTime, transitTime, walkingTime))
+                return .single((drivingTime, walkingTime))
             })
             
             /*if let venue = location.venue, let venueAddress = venue.address, !venueAddress.isEmpty {
@@ -2416,8 +2416,7 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
                     address: address,
                     distance: distance,
                     drivingTime: eta.0,
-                    transitTime: eta.1,
-                    walkingTime: eta.2,
+                    walkingTime: eta.1,
                     hasEta: false
                 )
                 
@@ -3755,12 +3754,10 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
                 address: addressString,
                 distance: distanceString,
                 drivingTime: mapInfoData.drivingTime,
-                transitTime: mapInfoData.transitTime,
                 walkingTime: mapInfoData.walkingTime,
                 hasEta: mapInfoData.hasEta,
                 action: {},
                 drivingAction: {},
-                transitAction: {},
                 walkingAction: {}
             )
             let (mapInfoLayout, mapInfoReadyAndApply) = mapInfoNode.asyncLayout()(
@@ -4200,30 +4197,6 @@ public final class PeerInfoStoryPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScr
         if self.mapNode != nil {
             self.updateMapLayout(size: size, topInset: topInset, bottomInset: bottomInset, deviceMetrics: deviceMetrics, transition: transition)
             gridTopInset += self.effectiveMapHeight
-            
-            let mapOptionsNode: LocationOptionsNode
-            if let current = self.mapOptionsNode {
-                mapOptionsNode = current
-            } else {
-                mapOptionsNode = LocationOptionsNode(presentationData: self.presentationData, hasBackground: false, updateMapMode: { [weak self] mode in
-                    guard let self else {
-                        return
-                    }
-                    
-                    var state = self.locationViewState
-                    state.mapMode = mode
-                    state.displayingMapModeOptions = false
-                    self.locationViewState = state
-                })
-                mapOptionsNode.clipsToBounds = true
-                self.mapOptionsNode = mapOptionsNode
-                self.parentController?.navigationBar?.additionalContentNode.addSubnode(mapOptionsNode)
-            }
-            
-            let mapOptionsFrame = CGRect(origin: CGPoint(x: 0.0, y: topInset - self.additionalNavigationHeight), size: CGSize(width: size.width, height: self.additionalNavigationHeight))
-            transition.updatePosition(node: mapOptionsNode, position: mapOptionsFrame.center)
-            transition.updateBounds(node: mapOptionsNode, bounds: CGRect(origin: CGPoint(x: 0.0, y: 38.0 - self.additionalNavigationHeight), size: mapOptionsFrame.size))
-            mapOptionsNode.updateLayout(size: mapOptionsFrame.size, leftInset: sideInset, rightInset: sideInset, transition: transition)
         }
         
         var hasBarBackground = false

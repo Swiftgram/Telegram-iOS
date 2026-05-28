@@ -2940,17 +2940,11 @@ public class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
                 
                 var isRestricted = false
                 if let poll = poll {
-                    if !poll.countries.isEmpty, let accountCountry = item.associatedData.accountCountry, !poll.countries.contains(accountCountry) {
-                        isRestricted = true
-                    }
-                    if poll.restrictToSubscribers {
-                        let period: Int32 = item.context.account.testingEnvironment ? 5 * 60 : 24 * 60 * 60
-                        if !item.associatedData.isParticipant {
-                            isRestricted = true
-                        } else if let invitedOn = item.associatedData.invitedOn, invitedOn + period > Int32(CFAbsoluteTimeGetCurrent() + kCFAbsoluteTimeIntervalSince1970) {
-                            isRestricted = true
-                        }
-                    }
+                    isRestricted = item.associatedData.isPollVotingRestricted(
+                        poll: poll,
+                        accountTestingEnvironment: item.context.account.testingEnvironment,
+                        currentTimestamp: Int32(CFAbsoluteTimeGetCurrent() + kCFAbsoluteTimeIntervalSince1970)
+                    )
                     
                     orderedPollOptions = resolvedOptionOrder(for: item)
                     

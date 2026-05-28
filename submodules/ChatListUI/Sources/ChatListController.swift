@@ -6244,7 +6244,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         if case .chatList(.root) = self.chatListDisplayNode.mainContainerNode.location {
             super.setToolbar(toolbar, transition: transition)
         } else {
-            self.chatListDisplayNode.toolbar = toolbar
+            self.chatListDisplayNode.toolbarData = toolbar
             self.requestLayout(transition: transition)
         }
     }

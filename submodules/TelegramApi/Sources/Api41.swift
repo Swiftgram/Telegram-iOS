@@ -1644,19 +1644,19 @@ public extension Api.functions.account {
     }
 }
 public extension Api.functions.account {
-    static func toggleWebBrowserSettingsException(flags: Int32, openExternalBrowser: Api.Bool?, url: String) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.Bool>) {
+    static func toggleWebBrowserSettingsException(flags: Int32, openExternalBrowser: Api.Bool?, url: String) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.Updates>) {
         let buffer = Buffer()
-        buffer.appendInt32(755631473)
+        buffer.appendInt32(1626161705)
         serializeInt32(flags, buffer: buffer, boxed: false)
         if Int(flags) & Int(1 << 0) != 0 {
             openExternalBrowser!.serialize(buffer, true)
         }
         serializeString(url, buffer: buffer, boxed: false)
-        return (FunctionDescription(name: "account.toggleWebBrowserSettingsException", parameters: [("flags", ConstructorParameterDescription(flags)), ("openExternalBrowser", ConstructorParameterDescription(openExternalBrowser)), ("url", ConstructorParameterDescription(url))]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> Api.Bool? in
+        return (FunctionDescription(name: "account.toggleWebBrowserSettingsException", parameters: [("flags", ConstructorParameterDescription(flags)), ("openExternalBrowser", ConstructorParameterDescription(openExternalBrowser)), ("url", ConstructorParameterDescription(url))]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> Api.Updates? in
             let reader = BufferReader(buffer)
-            var result: Api.Bool?
+            var result: Api.Updates?
             if let signature = reader.readInt32() {
-                result = Api.parse(reader, signature: signature) as? Api.Bool
+                result = Api.parse(reader, signature: signature) as? Api.Updates
             }
             return result
         })
@@ -4922,12 +4922,13 @@ public extension Api.functions.contacts {
     }
 }
 public extension Api.functions.contacts {
-    static func search(q: String, limit: Int32) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.contacts.Found>) {
+    static func search(flags: Int32, q: String, limit: Int32) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.contacts.Found>) {
         let buffer = Buffer()
-        buffer.appendInt32(301470424)
+        buffer.appendInt32(99978511)
+        serializeInt32(flags, buffer: buffer, boxed: false)
         serializeString(q, buffer: buffer, boxed: false)
         serializeInt32(limit, buffer: buffer, boxed: false)
-        return (FunctionDescription(name: "contacts.search", parameters: [("q", ConstructorParameterDescription(q)), ("limit", ConstructorParameterDescription(limit))]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> Api.contacts.Found? in
+        return (FunctionDescription(name: "contacts.search", parameters: [("flags", ConstructorParameterDescription(flags)), ("q", ConstructorParameterDescription(q)), ("limit", ConstructorParameterDescription(limit))]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> Api.contacts.Found? in
             let reader = BufferReader(buffer)
             var result: Api.contacts.Found?
             if let signature = reader.readInt32() {
