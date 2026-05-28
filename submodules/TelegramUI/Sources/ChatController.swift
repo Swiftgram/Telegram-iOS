@@ -7743,11 +7743,12 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             }
                             strongSelf.peekTimerDisposable.set(
                                 (strongSelf.context.engine.peers.joinChatInteractively(with: peekData.linkData)
-                                |> deliverOnMainQueue).startStrict(next: { peerId in
+                                |> deliverOnMainQueue).startStrict(next: { result in
                                     guard let strongSelf = self else {
                                         return
                                     }
-                                    if peerId == nil {
+                                    if case let .joined(peer) = result, peer != nil {
+                                    } else {
                                         strongSelf.dismiss()
                                     }
                                 }, error: { _ in

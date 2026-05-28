@@ -139,12 +139,12 @@ public final class LegacyJoinLinkPreviewController: ViewController {
     }
     
     private func join() {
-        self.disposable.set((self.context.engine.peers.joinChatInteractively(with: self.link) |> deliverOnMainQueue).start(next: { [weak self] peer in
+        self.disposable.set((self.context.engine.peers.joinChatInteractively(with: self.link) |> deliverOnMainQueue).start(next: { [weak self] result in
             if let strongSelf = self {
                 if strongSelf.isRequest {
                     strongSelf.present(UndoOverlayController(presentationData: strongSelf.presentationData, content: .inviteRequestSent(title: strongSelf.presentationData.strings.MemberRequests_RequestToJoinSent, text: strongSelf.isGroup ? strongSelf.presentationData.strings.MemberRequests_RequestToJoinSentDescriptionGroup : strongSelf.presentationData.strings.MemberRequests_RequestToJoinSentDescriptionChannel ), elevatedLayout: true, animateInAsReplacement: false, action: { _ in return false }), in: .window(.root))
                 } else {
-                    if let peer = peer {
+                    if case let .joined(peer) = result, let peer {
                         strongSelf.navigateToPeer(peer, nil)
                     }
                 }

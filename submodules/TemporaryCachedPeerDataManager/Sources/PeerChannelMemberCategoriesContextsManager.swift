@@ -451,11 +451,18 @@ public final class PeerChannelMemberCategoriesContextsManager {
         return engine.peers.joinChannel(peerId: peerId, hash: hash)
         |> deliverOnMainQueue
         |> beforeNext { [weak self] result in
-            if let strongSelf = self, let updated = result {
+            if let strongSelf = self {
                 strongSelf.impl.with { impl in
                     for (contextPeerId, context) in impl.contexts {
                         if peerId == contextPeerId {
-                            context.replayUpdates([(nil, updated, nil)])
+                            switch result {
+                            case let .joined(participant):
+                                if let participant {
+                                    context.replayUpdates([(nil, participant, nil)])
+                                }
+                            case .webView:
+                                break
+                            }
                         }
                     }
                 }

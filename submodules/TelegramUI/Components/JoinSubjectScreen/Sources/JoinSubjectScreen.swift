@@ -350,7 +350,7 @@ private final class JoinSubjectScreenComponent: Component {
                 }
 
                 self.joinDisposable = (component.context.engine.peers.joinChatInteractively(with: group.link)
-                |> deliverOnMainQueue).start(next: { [weak self] peer in
+                |> deliverOnMainQueue).start(next: { [weak self] result in
                     guard let self, let component = self.component else {
                         return
                     }
@@ -358,7 +358,7 @@ private final class JoinSubjectScreenComponent: Component {
                         let presentationData = component.context.sharedContext.currentPresentationData.with { $0 }
                         self.environment?.controller()?.present(UndoOverlayController(presentationData: presentationData, content: .inviteRequestSent(title: presentationData.strings.MemberRequests_RequestToJoinSent, text: group.isGroup ? presentationData.strings.MemberRequests_RequestToJoinSentDescriptionGroup : presentationData.strings.MemberRequests_RequestToJoinSentDescriptionChannel ), elevatedLayout: true, animateInAsReplacement: false, action: { _ in return false }), in: .window(.root))
                     } else {
-                        if let peer {
+                        if case let .joined(peer) = result, let peer {
                             self.navigateToPeer(peer: peer)
                         }
                     }
