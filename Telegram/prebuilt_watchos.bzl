@@ -80,7 +80,29 @@ def _apple_prebuilt_watchos_application_impl(ctx):
     # separate output (resources.bzl bundle_verification crashes on a None infoplist).
     infoplist = ctx.actions.declare_file(ctx.label.name + "_Info.plist")
 
-    exec_requirements = {
+    # The compile action runs xcodebuild locally (needs the host's Xcode + SwiftPM
+    # network access), but its output — an unsigned, placeholder-version .app — is
+    # portable across machines that share the same Xcode SDK, so it IS shared via the
+    # remote cache: `no-remote-exec` (not `no-remote`) lets Bazel read/write the
+    # `--remote_cache` while still pinning execution local on cache miss. This is the
+    # big win when CI builders share a remote cache — a peer's xcodebuild result is
+    # reused instead of every fresh worker paying the ~4-min build. Caveat: if the
+    # build fleet runs different Xcode major versions, mismatched artifacts could be
+    # served (the action key does not include the Xcode version); align Xcode across
+    # builders, or downgrade to `no-remote-cache` to be safe.
+    compile_exec_requirements = {
+        "no-sandbox": "1",
+        "no-remote-exec": "1",
+        "local": "1",
+        "requires-network": "1",
+    }
+
+    # The patch+sign action cannot share results across machines: its inputs include
+    # the absolute `--watchProvisioningProfile` path and the codesigning identity is
+    # resolved from the local keychain, both machine-specific. Remote-cache lookups
+    # would essentially never hit and uploads would just waste bandwidth, so keep the
+    # umbrella `no-remote` here.
+    patch_exec_requirements = {
         "no-sandbox": "1",
         "no-remote": "1",
         "local": "1",
@@ -101,7 +123,7 @@ def _apple_prebuilt_watchos_application_impl(ctx):
         outputs = [compiled_archive],
         mnemonic = "PrebuiltWatchosCompile",
         progress_message = "Compiling watch app via xcodebuild",
-        execution_requirements = exec_requirements,
+        execution_requirements = compile_exec_requirements,
         use_default_shell_env = True,
     )
 
@@ -128,7 +150,7 @@ def _apple_prebuilt_watchos_application_impl(ctx):
         outputs = [archive, infoplist],
         mnemonic = "PrebuiltWatchosPatchSign",
         progress_message = "Patching%s watch app Info.plist" % (" + signing" if profile else ""),
-        execution_requirements = exec_requirements,
+        execution_requirements = patch_exec_requirements,
         use_default_shell_env = True,
     )
 
