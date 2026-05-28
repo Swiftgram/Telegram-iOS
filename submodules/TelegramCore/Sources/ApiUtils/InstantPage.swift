@@ -366,7 +366,7 @@ extension InstantPageBlock {
             return .pageBlockAnchor(Api.PageBlock.Cons_pageBlockAnchor(name: value))
         case let .list(items, ordered):
             if ordered {
-                return .inputPageBlockOrderedList(Api.PageBlock.Cons_inputPageBlockOrderedList(flags: 0, items: items.map { $0.apiInputPageOrderedListItem() }, start: nil, type: nil))
+                return .pageBlockOrderedList(Api.PageBlock.Cons_pageBlockOrderedList(flags: 0, items: items.map { $0.apiInputPageOrderedListItem() }, start: nil, type: nil))
             } else {
                 return .pageBlockList(Api.PageBlock.Cons_pageBlockList(items: items.map { $0.apiInputPageListItem() }))
             }

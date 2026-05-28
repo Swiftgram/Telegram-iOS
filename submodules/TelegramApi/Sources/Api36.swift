@@ -211,17 +211,15 @@ public extension Api.messages {
         }
         public class Cons_chatInviteJoinResultWebView: TypeConstructorDescription {
             public var botId: Int64
-            public var url: String
-            public var queryId: Int64
+            public var webview: Api.WebViewResult
             public var users: [Api.User]
-            public init(botId: Int64, url: String, queryId: Int64, users: [Api.User]) {
+            public init(botId: Int64, webview: Api.WebViewResult, users: [Api.User]) {
                 self.botId = botId
-                self.url = url
-                self.queryId = queryId
+                self.webview = webview
                 self.users = users
             }
             public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("chatInviteJoinResultWebView", [("botId", ConstructorParameterDescription(self.botId)), ("url", ConstructorParameterDescription(self.url)), ("queryId", ConstructorParameterDescription(self.queryId)), ("users", ConstructorParameterDescription(self.users))])
+                return ("chatInviteJoinResultWebView", [("botId", ConstructorParameterDescription(self.botId)), ("webview", ConstructorParameterDescription(self.webview)), ("users", ConstructorParameterDescription(self.users))])
             }
         }
         case chatInviteJoinResultOk(Cons_chatInviteJoinResultOk)
@@ -237,11 +235,10 @@ public extension Api.messages {
                 break
             case .chatInviteJoinResultWebView(let _data):
                 if boxed {
-                    buffer.appendInt32(2001452532)
+                    buffer.appendInt32(793887543)
                 }
                 serializeInt64(_data.botId, buffer: buffer, boxed: false)
-                serializeString(_data.url, buffer: buffer, boxed: false)
-                serializeInt64(_data.queryId, buffer: buffer, boxed: false)
+                _data.webview.serialize(buffer, true)
                 buffer.appendInt32(481674261)
                 buffer.appendInt32(Int32(_data.users.count))
                 for item in _data.users {
@@ -256,7 +253,7 @@ public extension Api.messages {
             case .chatInviteJoinResultOk(let _data):
                 return ("chatInviteJoinResultOk", [("updates", ConstructorParameterDescription(_data.updates))])
             case .chatInviteJoinResultWebView(let _data):
-                return ("chatInviteJoinResultWebView", [("botId", ConstructorParameterDescription(_data.botId)), ("url", ConstructorParameterDescription(_data.url)), ("queryId", ConstructorParameterDescription(_data.queryId)), ("users", ConstructorParameterDescription(_data.users))])
+                return ("chatInviteJoinResultWebView", [("botId", ConstructorParameterDescription(_data.botId)), ("webview", ConstructorParameterDescription(_data.webview)), ("users", ConstructorParameterDescription(_data.users))])
             }
         }
 
@@ -276,20 +273,19 @@ public extension Api.messages {
         public static func parse_chatInviteJoinResultWebView(_ reader: BufferReader) -> ChatInviteJoinResult? {
             var _1: Int64?
             _1 = reader.readInt64()
-            var _2: String?
-            _2 = parseString(reader)
-            var _3: Int64?
-            _3 = reader.readInt64()
-            var _4: [Api.User]?
+            var _2: Api.WebViewResult?
+            if let signature = reader.readInt32() {
+                _2 = Api.parse(reader, signature: signature) as? Api.WebViewResult
+            }
+            var _3: [Api.User]?
             if let _ = reader.readInt32() {
-                _4 = Api.parseVector(reader, elementSignature: 0, elementType: Api.User.self)
+                _3 = Api.parseVector(reader, elementSignature: 0, elementType: Api.User.self)
             }
             let _c1 = _1 != nil
             let _c2 = _2 != nil
             let _c3 = _3 != nil
-            let _c4 = _4 != nil
-            if _c1 && _c2 && _c3 && _c4 {
-                return Api.messages.ChatInviteJoinResult.chatInviteJoinResultWebView(Cons_chatInviteJoinResultWebView(botId: _1!, url: _2!, queryId: _3!, users: _4!))
+            if _c1 && _c2 && _c3 {
+                return Api.messages.ChatInviteJoinResult.chatInviteJoinResultWebView(Cons_chatInviteJoinResultWebView(botId: _1!, webview: _2!, users: _3!))
             }
             else {
                 return nil

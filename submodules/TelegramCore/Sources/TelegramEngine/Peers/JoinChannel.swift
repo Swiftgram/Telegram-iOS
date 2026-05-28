@@ -150,7 +150,10 @@ func _internal_joinChannel(account: Account, peerId: PeerId, hash: String?) -> S
                 }
                 |> castError(JoinChannelError.self)
                 |> map { _ -> JoinChannelOutcome in
-                    return .webView(botId: PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(data.botId)), url: data.url, queryId: data.queryId)
+                    switch data.webview {
+                    case let .webViewResultUrl(webViewResultUrl):
+                        return .webView(botId: PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(data.botId)), url: webViewResultUrl.url, queryId: webViewResultUrl.queryId ?? 0)
+                    }
                 }
             }
         }

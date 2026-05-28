@@ -430,21 +430,6 @@ public extension Api {
                 return ("inputPageBlockMap", [("geo", ConstructorParameterDescription(self.geo)), ("zoom", ConstructorParameterDescription(self.zoom)), ("w", ConstructorParameterDescription(self.w)), ("h", ConstructorParameterDescription(self.h)), ("caption", ConstructorParameterDescription(self.caption))])
             }
         }
-        public class Cons_inputPageBlockOrderedList: TypeConstructorDescription {
-            public var flags: Int32
-            public var items: [Api.InputPageListOrderedItem]
-            public var start: Int32?
-            public var type: String?
-            public init(flags: Int32, items: [Api.InputPageListOrderedItem], start: Int32?, type: String?) {
-                self.flags = flags
-                self.items = items
-                self.start = start
-                self.type = type
-            }
-            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("inputPageBlockOrderedList", [("flags", ConstructorParameterDescription(self.flags)), ("items", ConstructorParameterDescription(self.items)), ("start", ConstructorParameterDescription(self.start)), ("type", ConstructorParameterDescription(self.type))])
-            }
-        }
         public class Cons_pageBlockAnchor: TypeConstructorDescription {
             public var name: String
             public init(name: String) {
@@ -485,6 +470,17 @@ public extension Api {
             }
             public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
                 return ("pageBlockBlockquote", [("text", ConstructorParameterDescription(self.text)), ("caption", ConstructorParameterDescription(self.caption))])
+            }
+        }
+        public class Cons_pageBlockBlockquoteBlocks: TypeConstructorDescription {
+            public var blocks: [Api.PageBlock]
+            public var caption: Api.RichText
+            public init(blocks: [Api.PageBlock], caption: Api.RichText) {
+                self.blocks = blocks
+                self.caption = caption
+            }
+            public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
+                return ("pageBlockBlockquoteBlocks", [("blocks", ConstructorParameterDescription(self.blocks)), ("caption", ConstructorParameterDescription(self.caption))])
             }
         }
         public class Cons_pageBlockChannel: TypeConstructorDescription {
@@ -688,12 +684,18 @@ public extension Api {
             }
         }
         public class Cons_pageBlockOrderedList: TypeConstructorDescription {
+            public var flags: Int32
             public var items: [Api.PageListOrderedItem]
-            public init(items: [Api.PageListOrderedItem]) {
+            public var start: Int32?
+            public var type: String?
+            public init(flags: Int32, items: [Api.PageListOrderedItem], start: Int32?, type: String?) {
+                self.flags = flags
                 self.items = items
+                self.start = start
+                self.type = type
             }
             public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("pageBlockOrderedList", [("items", ConstructorParameterDescription(self.items))])
+                return ("pageBlockOrderedList", [("flags", ConstructorParameterDescription(self.flags)), ("items", ConstructorParameterDescription(self.items)), ("start", ConstructorParameterDescription(self.start)), ("type", ConstructorParameterDescription(self.type))])
             }
         }
         public class Cons_pageBlockParagraph: TypeConstructorDescription {
@@ -829,11 +831,11 @@ public extension Api {
             }
         }
         case inputPageBlockMap(Cons_inputPageBlockMap)
-        case inputPageBlockOrderedList(Cons_inputPageBlockOrderedList)
         case pageBlockAnchor(Cons_pageBlockAnchor)
         case pageBlockAudio(Cons_pageBlockAudio)
         case pageBlockAuthorDate(Cons_pageBlockAuthorDate)
         case pageBlockBlockquote(Cons_pageBlockBlockquote)
+        case pageBlockBlockquoteBlocks(Cons_pageBlockBlockquoteBlocks)
         case pageBlockChannel(Cons_pageBlockChannel)
         case pageBlockCollage(Cons_pageBlockCollage)
         case pageBlockCover(Cons_pageBlockCover)
@@ -880,23 +882,6 @@ public extension Api {
                 serializeInt32(_data.h, buffer: buffer, boxed: false)
                 _data.caption.serialize(buffer, true)
                 break
-            case .inputPageBlockOrderedList(let _data):
-                if boxed {
-                    buffer.appendInt32(-1186155733)
-                }
-                serializeInt32(_data.flags, buffer: buffer, boxed: false)
-                buffer.appendInt32(481674261)
-                buffer.appendInt32(Int32(_data.items.count))
-                for item in _data.items {
-                    item.serialize(buffer, true)
-                }
-                if Int(_data.flags) & Int(1 << 0) != 0 {
-                    serializeInt32(_data.start!, buffer: buffer, boxed: false)
-                }
-                if Int(_data.flags) & Int(1 << 1) != 0 {
-                    serializeString(_data.type!, buffer: buffer, boxed: false)
-                }
-                break
             case .pageBlockAnchor(let _data):
                 if boxed {
                     buffer.appendInt32(-837994576)
@@ -922,6 +907,17 @@ public extension Api {
                     buffer.appendInt32(641563686)
                 }
                 _data.text.serialize(buffer, true)
+                _data.caption.serialize(buffer, true)
+                break
+            case .pageBlockBlockquoteBlocks(let _data):
+                if boxed {
+                    buffer.appendInt32(242108356)
+                }
+                buffer.appendInt32(481674261)
+                buffer.appendInt32(Int32(_data.blocks.count))
+                for item in _data.blocks {
+                    item.serialize(buffer, true)
+                }
                 _data.caption.serialize(buffer, true)
                 break
             case .pageBlockChannel(let _data):
@@ -1084,12 +1080,19 @@ public extension Api {
                 break
             case .pageBlockOrderedList(let _data):
                 if boxed {
-                    buffer.appendInt32(-1702174239)
+                    buffer.appendInt32(534181569)
                 }
+                serializeInt32(_data.flags, buffer: buffer, boxed: false)
                 buffer.appendInt32(481674261)
                 buffer.appendInt32(Int32(_data.items.count))
                 for item in _data.items {
                     item.serialize(buffer, true)
+                }
+                if Int(_data.flags) & Int(1 << 0) != 0 {
+                    serializeInt32(_data.start!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 1) != 0 {
+                    serializeString(_data.type!, buffer: buffer, boxed: false)
                 }
                 break
             case .pageBlockParagraph(let _data):
@@ -1204,8 +1207,6 @@ public extension Api {
             switch self {
             case .inputPageBlockMap(let _data):
                 return ("inputPageBlockMap", [("geo", ConstructorParameterDescription(_data.geo)), ("zoom", ConstructorParameterDescription(_data.zoom)), ("w", ConstructorParameterDescription(_data.w)), ("h", ConstructorParameterDescription(_data.h)), ("caption", ConstructorParameterDescription(_data.caption))])
-            case .inputPageBlockOrderedList(let _data):
-                return ("inputPageBlockOrderedList", [("flags", ConstructorParameterDescription(_data.flags)), ("items", ConstructorParameterDescription(_data.items)), ("start", ConstructorParameterDescription(_data.start)), ("type", ConstructorParameterDescription(_data.type))])
             case .pageBlockAnchor(let _data):
                 return ("pageBlockAnchor", [("name", ConstructorParameterDescription(_data.name))])
             case .pageBlockAudio(let _data):
@@ -1214,6 +1215,8 @@ public extension Api {
                 return ("pageBlockAuthorDate", [("author", ConstructorParameterDescription(_data.author)), ("publishedDate", ConstructorParameterDescription(_data.publishedDate))])
             case .pageBlockBlockquote(let _data):
                 return ("pageBlockBlockquote", [("text", ConstructorParameterDescription(_data.text)), ("caption", ConstructorParameterDescription(_data.caption))])
+            case .pageBlockBlockquoteBlocks(let _data):
+                return ("pageBlockBlockquoteBlocks", [("blocks", ConstructorParameterDescription(_data.blocks)), ("caption", ConstructorParameterDescription(_data.caption))])
             case .pageBlockChannel(let _data):
                 return ("pageBlockChannel", [("channel", ConstructorParameterDescription(_data.channel))])
             case .pageBlockCollage(let _data):
@@ -1253,7 +1256,7 @@ public extension Api {
             case .pageBlockMath(let _data):
                 return ("pageBlockMath", [("source", ConstructorParameterDescription(_data.source))])
             case .pageBlockOrderedList(let _data):
-                return ("pageBlockOrderedList", [("items", ConstructorParameterDescription(_data.items))])
+                return ("pageBlockOrderedList", [("flags", ConstructorParameterDescription(_data.flags)), ("items", ConstructorParameterDescription(_data.items)), ("start", ConstructorParameterDescription(_data.start)), ("type", ConstructorParameterDescription(_data.type))])
             case .pageBlockParagraph(let _data):
                 return ("pageBlockParagraph", [("text", ConstructorParameterDescription(_data.text))])
             case .pageBlockPhoto(let _data):
@@ -1305,32 +1308,6 @@ public extension Api {
             let _c5 = _5 != nil
             if _c1 && _c2 && _c3 && _c4 && _c5 {
                 return Api.PageBlock.inputPageBlockMap(Cons_inputPageBlockMap(geo: _1!, zoom: _2!, w: _3!, h: _4!, caption: _5!))
-            }
-            else {
-                return nil
-            }
-        }
-        public static func parse_inputPageBlockOrderedList(_ reader: BufferReader) -> PageBlock? {
-            var _1: Int32?
-            _1 = reader.readInt32()
-            var _2: [Api.InputPageListOrderedItem]?
-            if let _ = reader.readInt32() {
-                _2 = Api.parseVector(reader, elementSignature: 0, elementType: Api.InputPageListOrderedItem.self)
-            }
-            var _3: Int32?
-            if Int(_1 ?? 0) & Int(1 << 0) != 0 {
-                _3 = reader.readInt32()
-            }
-            var _4: String?
-            if Int(_1 ?? 0) & Int(1 << 1) != 0 {
-                _4 = parseString(reader)
-            }
-            let _c1 = _1 != nil
-            let _c2 = _2 != nil
-            let _c3 = (Int(_1 ?? 0) & Int(1 << 0) == 0) || _3 != nil
-            let _c4 = (Int(_1 ?? 0) & Int(1 << 1) == 0) || _4 != nil
-            if _c1 && _c2 && _c3 && _c4 {
-                return Api.PageBlock.inputPageBlockOrderedList(Cons_inputPageBlockOrderedList(flags: _1!, items: _2!, start: _3, type: _4))
             }
             else {
                 return nil
@@ -1392,6 +1369,24 @@ public extension Api {
             let _c2 = _2 != nil
             if _c1 && _c2 {
                 return Api.PageBlock.pageBlockBlockquote(Cons_pageBlockBlockquote(text: _1!, caption: _2!))
+            }
+            else {
+                return nil
+            }
+        }
+        public static func parse_pageBlockBlockquoteBlocks(_ reader: BufferReader) -> PageBlock? {
+            var _1: [Api.PageBlock]?
+            if let _ = reader.readInt32() {
+                _1 = Api.parseVector(reader, elementSignature: 0, elementType: Api.PageBlock.self)
+            }
+            var _2: Api.RichText?
+            if let signature = reader.readInt32() {
+                _2 = Api.parse(reader, signature: signature) as? Api.RichText
+            }
+            let _c1 = _1 != nil
+            let _c2 = _2 != nil
+            if _c1 && _c2 {
+                return Api.PageBlock.pageBlockBlockquoteBlocks(Cons_pageBlockBlockquoteBlocks(blocks: _1!, caption: _2!))
             }
             else {
                 return nil
@@ -1708,13 +1703,26 @@ public extension Api {
             }
         }
         public static func parse_pageBlockOrderedList(_ reader: BufferReader) -> PageBlock? {
-            var _1: [Api.PageListOrderedItem]?
+            var _1: Int32?
+            _1 = reader.readInt32()
+            var _2: [Api.PageListOrderedItem]?
             if let _ = reader.readInt32() {
-                _1 = Api.parseVector(reader, elementSignature: 0, elementType: Api.PageListOrderedItem.self)
+                _2 = Api.parseVector(reader, elementSignature: 0, elementType: Api.PageListOrderedItem.self)
+            }
+            var _3: Int32?
+            if Int(_1 ?? 0) & Int(1 << 0) != 0 {
+                _3 = reader.readInt32()
+            }
+            var _4: String?
+            if Int(_1 ?? 0) & Int(1 << 1) != 0 {
+                _4 = parseString(reader)
             }
             let _c1 = _1 != nil
-            if _c1 {
-                return Api.PageBlock.pageBlockOrderedList(Cons_pageBlockOrderedList(items: _1!))
+            let _c2 = _2 != nil
+            let _c3 = (Int(_1 ?? 0) & Int(1 << 0) == 0) || _3 != nil
+            let _c4 = (Int(_1 ?? 0) & Int(1 << 1) == 0) || _4 != nil
+            if _c1 && _c2 && _c3 && _c4 {
+                return Api.PageBlock.pageBlockOrderedList(Cons_pageBlockOrderedList(flags: _1!, items: _2!, start: _3, type: _4))
             }
             else {
                 return nil

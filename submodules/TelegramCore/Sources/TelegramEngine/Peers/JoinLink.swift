@@ -110,7 +110,10 @@ func _internal_joinChatInteractively(with hash: String, account: Account) -> Sig
             }
             |> castError(JoinLinkError.self)
             |> map { _ -> JoinChatInteractivelyOutcome in
-                return .webView(botId: PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(data.botId)), url: data.url, queryId: data.queryId)
+                switch data.webview {
+                case let .webViewResultUrl(webViewResultUrl):
+                    return .webView(botId: PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(data.botId)), url: webViewResultUrl.url, queryId: webViewResultUrl.queryId ?? 0)
+                }
             }
         }
     }

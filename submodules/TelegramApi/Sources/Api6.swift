@@ -553,8 +553,8 @@ public extension Api {
             public var date: Int32
             public var effect: Int64?
             public var suggestedPost: Api.SuggestedPost?
-            public var richMessage: Api.InputRichMessage?
-            public init(flags: Int32, replyTo: Api.InputReplyTo?, message: String, entities: [Api.MessageEntity]?, media: Api.InputMedia?, date: Int32, effect: Int64?, suggestedPost: Api.SuggestedPost?, richMessage: Api.InputRichMessage?) {
+            public var richMessage: Api.RichMessage?
+            public init(flags: Int32, replyTo: Api.InputReplyTo?, message: String, entities: [Api.MessageEntity]?, media: Api.InputMedia?, date: Int32, effect: Int64?, suggestedPost: Api.SuggestedPost?, richMessage: Api.RichMessage?) {
                 self.flags = flags
                 self.replyTo = replyTo
                 self.message = message
@@ -587,7 +587,7 @@ public extension Api {
             switch self {
             case .draftMessage(let _data):
                 if boxed {
-                    buffer.appendInt32(-1743452271)
+                    buffer.appendInt32(1627271828)
                 }
                 serializeInt32(_data.flags, buffer: buffer, boxed: false)
                 if Int(_data.flags) & Int(1 << 4) != 0 {
@@ -671,10 +671,10 @@ public extension Api {
                     _8 = Api.parse(reader, signature: signature) as? Api.SuggestedPost
                 }
             }
-            var _9: Api.InputRichMessage?
+            var _9: Api.RichMessage?
             if Int(_1 ?? 0) & Int(1 << 9) != 0 {
                 if let signature = reader.readInt32() {
-                    _9 = Api.parse(reader, signature: signature) as? Api.InputRichMessage
+                    _9 = Api.parse(reader, signature: signature) as? Api.RichMessage
                 }
             }
             let _c1 = _1 != nil

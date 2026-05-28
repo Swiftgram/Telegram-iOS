@@ -1451,131 +1451,85 @@ public extension Api {
     }
 }
 public extension Api {
-    indirect enum InputPageListOrderedItem: TypeConstructorDescription {
-        public class Cons_inputPageListOrderedItemBlocks: TypeConstructorDescription {
-            public var flags: Int32
-            public var blocks: [Api.PageBlock]
-            public var value: Int32?
-            public var type: String?
-            public init(flags: Int32, blocks: [Api.PageBlock], value: Int32?, type: String?) {
-                self.flags = flags
-                self.blocks = blocks
-                self.value = value
-                self.type = type
+    enum InputPasskeyCredential: TypeConstructorDescription {
+        public class Cons_inputPasskeyCredentialFirebasePNV: TypeConstructorDescription {
+            public var pnvToken: String
+            public init(pnvToken: String) {
+                self.pnvToken = pnvToken
             }
             public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("inputPageListOrderedItemBlocks", [("flags", ConstructorParameterDescription(self.flags)), ("blocks", ConstructorParameterDescription(self.blocks)), ("value", ConstructorParameterDescription(self.value)), ("type", ConstructorParameterDescription(self.type))])
+                return ("inputPasskeyCredentialFirebasePNV", [("pnvToken", ConstructorParameterDescription(self.pnvToken))])
             }
         }
-        public class Cons_inputPageListOrderedItemText: TypeConstructorDescription {
-            public var flags: Int32
-            public var text: Api.RichText
-            public var value: Int32?
-            public var type: String?
-            public init(flags: Int32, text: Api.RichText, value: Int32?, type: String?) {
-                self.flags = flags
-                self.text = text
-                self.value = value
-                self.type = type
+        public class Cons_inputPasskeyCredentialPublicKey: TypeConstructorDescription {
+            public var id: String
+            public var rawId: String
+            public var response: Api.InputPasskeyResponse
+            public init(id: String, rawId: String, response: Api.InputPasskeyResponse) {
+                self.id = id
+                self.rawId = rawId
+                self.response = response
             }
             public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("inputPageListOrderedItemText", [("flags", ConstructorParameterDescription(self.flags)), ("text", ConstructorParameterDescription(self.text)), ("value", ConstructorParameterDescription(self.value)), ("type", ConstructorParameterDescription(self.type))])
+                return ("inputPasskeyCredentialPublicKey", [("id", ConstructorParameterDescription(self.id)), ("rawId", ConstructorParameterDescription(self.rawId)), ("response", ConstructorParameterDescription(self.response))])
             }
         }
-        case inputPageListOrderedItemBlocks(Cons_inputPageListOrderedItemBlocks)
-        case inputPageListOrderedItemText(Cons_inputPageListOrderedItemText)
+        case inputPasskeyCredentialFirebasePNV(Cons_inputPasskeyCredentialFirebasePNV)
+        case inputPasskeyCredentialPublicKey(Cons_inputPasskeyCredentialPublicKey)
 
         public func serialize(_ buffer: Buffer, _ boxed: Swift.Bool) {
             switch self {
-            case .inputPageListOrderedItemBlocks(let _data):
+            case .inputPasskeyCredentialFirebasePNV(let _data):
                 if boxed {
-                    buffer.appendInt32(2105227266)
+                    buffer.appendInt32(1528613672)
                 }
-                serializeInt32(_data.flags, buffer: buffer, boxed: false)
-                buffer.appendInt32(481674261)
-                buffer.appendInt32(Int32(_data.blocks.count))
-                for item in _data.blocks {
-                    item.serialize(buffer, true)
-                }
-                if Int(_data.flags) & Int(1 << 2) != 0 {
-                    serializeInt32(_data.value!, buffer: buffer, boxed: false)
-                }
-                if Int(_data.flags) & Int(1 << 3) != 0 {
-                    serializeString(_data.type!, buffer: buffer, boxed: false)
-                }
+                serializeString(_data.pnvToken, buffer: buffer, boxed: false)
                 break
-            case .inputPageListOrderedItemText(let _data):
+            case .inputPasskeyCredentialPublicKey(let _data):
                 if boxed {
-                    buffer.appendInt32(-1682665696)
+                    buffer.appendInt32(1009235855)
                 }
-                serializeInt32(_data.flags, buffer: buffer, boxed: false)
-                _data.text.serialize(buffer, true)
-                if Int(_data.flags) & Int(1 << 2) != 0 {
-                    serializeInt32(_data.value!, buffer: buffer, boxed: false)
-                }
-                if Int(_data.flags) & Int(1 << 3) != 0 {
-                    serializeString(_data.type!, buffer: buffer, boxed: false)
-                }
+                serializeString(_data.id, buffer: buffer, boxed: false)
+                serializeString(_data.rawId, buffer: buffer, boxed: false)
+                _data.response.serialize(buffer, true)
                 break
             }
         }
 
         public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
             switch self {
-            case .inputPageListOrderedItemBlocks(let _data):
-                return ("inputPageListOrderedItemBlocks", [("flags", ConstructorParameterDescription(_data.flags)), ("blocks", ConstructorParameterDescription(_data.blocks)), ("value", ConstructorParameterDescription(_data.value)), ("type", ConstructorParameterDescription(_data.type))])
-            case .inputPageListOrderedItemText(let _data):
-                return ("inputPageListOrderedItemText", [("flags", ConstructorParameterDescription(_data.flags)), ("text", ConstructorParameterDescription(_data.text)), ("value", ConstructorParameterDescription(_data.value)), ("type", ConstructorParameterDescription(_data.type))])
+            case .inputPasskeyCredentialFirebasePNV(let _data):
+                return ("inputPasskeyCredentialFirebasePNV", [("pnvToken", ConstructorParameterDescription(_data.pnvToken))])
+            case .inputPasskeyCredentialPublicKey(let _data):
+                return ("inputPasskeyCredentialPublicKey", [("id", ConstructorParameterDescription(_data.id)), ("rawId", ConstructorParameterDescription(_data.rawId)), ("response", ConstructorParameterDescription(_data.response))])
             }
         }
 
-        public static func parse_inputPageListOrderedItemBlocks(_ reader: BufferReader) -> InputPageListOrderedItem? {
-            var _1: Int32?
-            _1 = reader.readInt32()
-            var _2: [Api.PageBlock]?
-            if let _ = reader.readInt32() {
-                _2 = Api.parseVector(reader, elementSignature: 0, elementType: Api.PageBlock.self)
-            }
-            var _3: Int32?
-            if Int(_1 ?? 0) & Int(1 << 2) != 0 {
-                _3 = reader.readInt32()
-            }
-            var _4: String?
-            if Int(_1 ?? 0) & Int(1 << 3) != 0 {
-                _4 = parseString(reader)
-            }
+        public static func parse_inputPasskeyCredentialFirebasePNV(_ reader: BufferReader) -> InputPasskeyCredential? {
+            var _1: String?
+            _1 = parseString(reader)
             let _c1 = _1 != nil
-            let _c2 = _2 != nil
-            let _c3 = (Int(_1 ?? 0) & Int(1 << 2) == 0) || _3 != nil
-            let _c4 = (Int(_1 ?? 0) & Int(1 << 3) == 0) || _4 != nil
-            if _c1 && _c2 && _c3 && _c4 {
-                return Api.InputPageListOrderedItem.inputPageListOrderedItemBlocks(Cons_inputPageListOrderedItemBlocks(flags: _1!, blocks: _2!, value: _3, type: _4))
+            if _c1 {
+                return Api.InputPasskeyCredential.inputPasskeyCredentialFirebasePNV(Cons_inputPasskeyCredentialFirebasePNV(pnvToken: _1!))
             }
             else {
                 return nil
             }
         }
-        public static func parse_inputPageListOrderedItemText(_ reader: BufferReader) -> InputPageListOrderedItem? {
-            var _1: Int32?
-            _1 = reader.readInt32()
-            var _2: Api.RichText?
+        public static func parse_inputPasskeyCredentialPublicKey(_ reader: BufferReader) -> InputPasskeyCredential? {
+            var _1: String?
+            _1 = parseString(reader)
+            var _2: String?
+            _2 = parseString(reader)
+            var _3: Api.InputPasskeyResponse?
             if let signature = reader.readInt32() {
-                _2 = Api.parse(reader, signature: signature) as? Api.RichText
-            }
-            var _3: Int32?
-            if Int(_1 ?? 0) & Int(1 << 2) != 0 {
-                _3 = reader.readInt32()
-            }
-            var _4: String?
-            if Int(_1 ?? 0) & Int(1 << 3) != 0 {
-                _4 = parseString(reader)
+                _3 = Api.parse(reader, signature: signature) as? Api.InputPasskeyResponse
             }
             let _c1 = _1 != nil
             let _c2 = _2 != nil
-            let _c3 = (Int(_1 ?? 0) & Int(1 << 2) == 0) || _3 != nil
-            let _c4 = (Int(_1 ?? 0) & Int(1 << 3) == 0) || _4 != nil
-            if _c1 && _c2 && _c3 && _c4 {
-                return Api.InputPageListOrderedItem.inputPageListOrderedItemText(Cons_inputPageListOrderedItemText(flags: _1!, text: _2!, value: _3, type: _4))
+            let _c3 = _3 != nil
+            if _c1 && _c2 && _c3 {
+                return Api.InputPasskeyCredential.inputPasskeyCredentialPublicKey(Cons_inputPasskeyCredentialPublicKey(id: _1!, rawId: _2!, response: _3!))
             }
             else {
                 return nil
