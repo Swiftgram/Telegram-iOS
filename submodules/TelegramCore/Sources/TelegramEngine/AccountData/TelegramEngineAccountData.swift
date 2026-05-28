@@ -19,6 +19,10 @@ public extension TelegramEngine {
             _internal_addAppLogEvent(postbox: self.account.postbox, time: time, type: type, peerId: nil, data: data)
         }
 
+        public func addAppLogEvent(time: Double = Date().timeIntervalSince1970, type: String, peerId: EnginePeer.Id?, data: JSON = .dictionary([:])) {
+            _internal_addAppLogEvent(postbox: self.account.postbox, time: time, type: type, peerId: peerId, data: data)
+        }
+
         public func requestChangeAccountPhoneNumberVerification(apiId: Int32, apiHash: String, phoneNumber: String, pushNotificationConfiguration: AuthorizationCodePushNotificationConfiguration?, firebaseSecretStream: Signal<[String: String], NoError>) -> Signal<ChangeAccountPhoneNumberData, RequestChangeAccountPhoneNumberVerificationError> {
             return _internal_requestChangeAccountPhoneNumberVerification(account: self.account, apiId: apiId, apiHash: apiHash, phoneNumber: phoneNumber, pushNotificationConfiguration: pushNotificationConfiguration, firebaseSecretStream: firebaseSecretStream)
         }

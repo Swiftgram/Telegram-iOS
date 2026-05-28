@@ -264,6 +264,11 @@ public final class AccountStateManager {
         public var dismissBotWebViews: Signal<[Int64], NoError> {
             return self.dismissBotWebViewsPipe.signal()
         }
+
+        private let joinChatWebViewDecisionsPipe = ValuePipe<[JoinChatWebViewDecision]>()
+        public var joinChatWebViewDecisions: Signal<[JoinChatWebViewDecision], NoError> {
+            return self.joinChatWebViewDecisionsPipe.signal()
+        }
         
         private let externallyUpdatedPeerIdsPipe = ValuePipe<[PeerId]>()
         var externallyUpdatedPeerIds: Signal<[PeerId], NoError> {
@@ -481,6 +486,10 @@ public final class AccountStateManager {
         }
         
         func addUpdates(_ updates: Api.Updates) {
+            let decisions = extractJoinChatWebViewDecisions(from: updates)
+            if !decisions.isEmpty {
+                self.joinChatWebViewDecisionsPipe.putNext(decisions)
+            }
             self.queue.async {
                 self.updateService?.addUpdates(updates)
             }
@@ -1957,6 +1966,12 @@ public final class AccountStateManager {
         }
     }
     
+    public var joinChatWebViewDecisions: Signal<[JoinChatWebViewDecision], NoError> {
+        return self.impl.signalWith { impl, subscriber in
+            return impl.joinChatWebViewDecisions.start(next: subscriber.putNext, error: subscriber.putError, completed: subscriber.putCompletion)
+        }
+    }
+
     public var dismissBotWebViews: Signal<[Int64], NoError> {
         return self.impl.signalWith { impl, subscriber in
             return impl.dismissBotWebViews.start(next: subscriber.putNext, error: subscriber.putError, completed: subscriber.putCompletion)

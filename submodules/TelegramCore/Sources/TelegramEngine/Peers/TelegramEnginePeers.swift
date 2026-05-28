@@ -514,8 +514,8 @@ public extension TelegramEngine {
             return _internal_toggleChannelJoinToSend(postbox: self.account.postbox, network: self.account.network, accountStateManager: self.account.stateManager, peerId: peerId, enabled: enabled)
         }
         
-        public func toggleChannelJoinRequest(peerId: PeerId, enabled: Bool) -> Signal<Never, UpdateChannelJoinRequestError> {
-            return _internal_toggleChannelJoinRequest(postbox: self.account.postbox, network: self.account.network, accountStateManager: self.account.stateManager, peerId: peerId, enabled: enabled)
+        public func toggleChannelJoinRequest(peerId: PeerId, enabled: Bool, guardBotId: PeerId? = nil) -> Signal<Never, UpdateChannelJoinRequestError> {
+            return _internal_toggleChannelJoinRequest(postbox: self.account.postbox, network: self.account.network, accountStateManager: self.account.stateManager, peerId: peerId, enabled: enabled, guardBotId: guardBotId)
         }
         
         public func toggleAntiSpamProtection(peerId: PeerId, enabled: Bool) -> Signal<Void, NoError> {
@@ -538,7 +538,7 @@ public extension TelegramEngine {
             return _internal_updateGroupSpecificEmojiset(postbox: self.account.postbox, network: self.account.network, peerId: peerId, info: info)
         }
 
-        public func joinChannel(peerId: PeerId, hash: String?) -> Signal<RenderedChannelParticipant?, JoinChannelError> {
+        public func joinChannel(peerId: PeerId, hash: String?) -> Signal<JoinChannelOutcome, JoinChannelError> {
             return _internal_joinChannel(account: self.account, peerId: peerId, hash: hash)
         }
 
@@ -843,17 +843,27 @@ public extension TelegramEngine {
             }
         }
 
-        public func joinChatInteractively(with hash: String) -> Signal <EnginePeer?, JoinLinkError> {
+        public enum JoinChatInteractivelyResult {
+            case joined(EnginePeer?)
+            case webView(botId: EnginePeer.Id, url: String, queryId: Int64)
+        }
+
+        public func joinChatInteractively(with hash: String) -> Signal <JoinChatInteractivelyResult, JoinLinkError> {
             let account = self.account
             return _internal_joinChatInteractively(with: hash, account: self.account)
-            |> mapToSignal { id -> Signal <EnginePeer?, JoinLinkError> in
-                guard let id = id else {
-                    return .single(nil)
+            |> mapToSignal { outcome -> Signal <JoinChatInteractivelyResult, JoinLinkError> in
+                switch outcome {
+                case let .joined(id):
+                    guard let id = id else {
+                        return .single(.joined(nil))
+                    }
+                    return account.postbox.transaction { transaction -> JoinChatInteractivelyResult in
+                        return .joined(transaction.getPeer(id).flatMap(EnginePeer.init))
+                    }
+                    |> castError(JoinLinkError.self)
+                case let .webView(botId, url, queryId):
+                    return .single(.webView(botId: botId, url: url, queryId: queryId))
                 }
-                return account.postbox.transaction { transaction -> EnginePeer? in
-                    return transaction.getPeer(id).flatMap(EnginePeer.init)
-                }
-                |> castError(JoinLinkError.self)
             }
         }
 
