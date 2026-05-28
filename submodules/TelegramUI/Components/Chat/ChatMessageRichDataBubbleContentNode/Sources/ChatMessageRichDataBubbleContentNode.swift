@@ -148,7 +148,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
             let current = self.currentExpandedDetails[index] ?? self.defaultExpanded(forDetailsIndex: index)
             self.currentExpandedDetails[index] = !current
             if let item = self.item {
-                item.controllerInteraction.requestMessageUpdate(item.message.id, true, nil)
+                item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
             }
         }
         return view

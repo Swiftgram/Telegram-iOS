@@ -180,8 +180,6 @@ public final class InstantPageV2View: UIView {
         theme: InstantPageTheme,
         animation: ListViewItemUpdateAnimation
     ) {
-        let _ = animation   // reserved for future per-item animation
-
         // Build map of existing views by stable id.
         var oldViewsById: [InstantPageV2StableItemId: InstantPageItemView] = [:]
         for (oldIndex, oldId) in self.itemViewStableIds.enumerated() {
@@ -195,8 +193,19 @@ public final class InstantPageV2View: UIView {
         for (position, item) in layout.items.enumerated() {
             let id = InstantPageV2View.stableId(for: item, atPosition: position)
 
-            if let existing = oldViewsById[id], let reusedView = self.reuse(existingView: existing, for: item, theme: theme) {
-                reusedView.frame = InstantPageV2View.actualFrame(forItem: item)   // parent positions child
+            if let existing = oldViewsById[id], let reusedView = self.reuse(existingView: existing, for: item, theme: theme, animation: animation) {
+                let newFrame = InstantPageV2View.actualFrame(forItem: item)   // parent positions child
+                if animation.isAnimated && reusedView.frame != newFrame {
+                    // A collapsing details view keeps its body alive; remove it once this
+                    // frame-shrink (the clip that hides it) finishes — see finalizePendingCollapse().
+                    let detailsView = reusedView as? InstantPageV2DetailsView
+                    animation.animator.updateFrame(layer: reusedView.layer, frame: newFrame, completion: { [weak detailsView] _ in
+                        detailsView?.finalizePendingCollapse()
+                    })
+                } else {
+                    reusedView.frame = newFrame
+                    (reusedView as? InstantPageV2DetailsView)?.finalizePendingCollapse()
+                }
                 newItemViews.append(reusedView)
                 newStableIds.append(id)
                 reusedIds.insert(id)
@@ -425,7 +434,7 @@ public final class InstantPageV2View: UIView {
     /// Returns the input view typed-updated against `item`, or `nil` if the existing view's
     /// concrete class doesn't match the item's case (e.g. a `text` slot has been replaced by
     /// a `divider` in the new layout). Caller falls back to `makeItemView`.
-    private func reuse(existingView: InstantPageItemView, for item: InstantPageV2LaidOutItem, theme: InstantPageTheme) -> InstantPageItemView? {
+    private func reuse(existingView: InstantPageItemView, for item: InstantPageV2LaidOutItem, theme: InstantPageTheme, animation: ListViewItemUpdateAnimation) -> InstantPageItemView? {
         switch item {
         case let .text(text):
             guard let v = existingView as? InstantPageV2TextView else { return nil }
@@ -457,7 +466,7 @@ public final class InstantPageV2View: UIView {
             return v
         case let .details(details):
             guard let v = existingView as? InstantPageV2DetailsView else { return nil }
-            v.update(item: details, theme: theme, renderContext: self.renderContext)
+            v.update(item: details, theme: theme, renderContext: self.renderContext, animation: animation)
             return v
         case let .table(table):
             guard let v = existingView as? InstantPageV2TableView else { return nil }
@@ -1468,10 +1477,17 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
     var itemFrame: CGRect { return self.item.frame }
 
     let titleTextView: InstantPageV2TextView
-    private let chevronLayer: CALayer
+    private let chevronView: UIImageView
     private let separator: UIView
     var bodyView: InstantPageV2View?
     private let titleHitView: UIView
+
+    // The expanded chevron is the collapsed one rotated 180° (down → up).
+    private static let expandedChevronTransform = CATransform3DMakeRotation(CGFloat.pi, 0.0, 0.0, 1.0)
+    // On an animated collapse the body is kept until the toggle animation finishes (so the
+    // shrinking clip can hide it), then removed in finalizePendingCollapse() — which the parent
+    // (InstantPageV2View.update) calls from the completion of the frame-shrink (clip) animation.
+    private var bodyPendingRemoval = false
 
     var onTitleTapped: ((Int) -> Void)?
 
@@ -1491,13 +1507,16 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
         self.titleTextView = InstantPageV2TextView(item: titleV2Item)
         self.titleTextView.isUserInteractionEnabled = false
 
-        self.chevronLayer = CALayer()
-        // V1 uses a custom-drawn InstantPageDetailsArrowNode; V2 uses a SF Symbol for simplicity.
-        // (SF Symbol "chevron.up/down" is iOS 13+ which matches our minimum deployment target.)
-        let chevronImage = UIImage(systemName: item.isExpanded ? "chevron.up" : "chevron.down")?
-            .withTintColor(theme.textCategories.paragraph.color, renderingMode: .alwaysOriginal)
-        self.chevronLayer.contents = chevronImage?.cgImage
-        self.chevronLayer.contentsGravity = .resizeAspect
+        self.chevronView = UIImageView()
+        // Single downward chevron; the expanded state is a 180° rotation (animatable) rather than
+        // an instant chevron.up/chevron.down image swap. A template image + tintColor renders the
+        // SF Symbol in the message's primary text color — baking the color into a CALayer's cgImage
+        // contents drops the tint and renders black. (SF Symbol is iOS 13+.)
+        self.chevronView.image = UIImage(systemName: "chevron.down")?.withRenderingMode(.alwaysTemplate)
+        self.chevronView.tintColor = theme.textCategories.paragraph.color
+        self.chevronView.contentMode = .scaleAspectFit
+        // Decorative: let taps fall through to titleHitView (which carries the toggle gesture).
+        self.chevronView.isUserInteractionEnabled = false
 
         self.separator = UIView()
         self.separator.backgroundColor = item.separatorColor
@@ -1511,16 +1530,18 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
         self.clipsToBounds = true
 
         self.addSubview(self.titleTextView)
-        self.layer.addSublayer(self.chevronLayer)
+        self.addSubview(self.chevronView)
         self.addSubview(self.separator)
 
         let chevronSize = CGSize(width: 18.0, height: 18.0)
-        self.chevronLayer.frame = CGRect(
-            x: item.titleFrame.maxX - chevronSize.width - 12.0,
-            y: item.titleFrame.midY - chevronSize.height / 2.0,
-            width: chevronSize.width,
-            height: chevronSize.height
+        // bounds + center (not frame) so the rotation transform pivots around the center and the
+        // frame stays well-defined while a non-identity transform is applied.
+        self.chevronView.bounds = CGRect(origin: .zero, size: chevronSize)
+        self.chevronView.center = CGPoint(
+            x: item.titleFrame.maxX - chevronSize.width / 2.0 - 12.0,
+            y: item.titleFrame.midY
         )
+        self.chevronView.layer.transform = item.isExpanded ? InstantPageV2DetailsView.expandedChevronTransform : CATransform3DIdentity
 
         // V1 (InstantPageDetailsNode.swift:138): separator sits at titleHeight - UIScreenPixel.
         self.separator.frame = CGRect(
@@ -1553,8 +1574,7 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
         self.onTitleTapped?(self.item.index)
     }
 
-    func update(item: InstantPageV2DetailsItem, theme: InstantPageTheme, renderContext: InstantPageV2RenderContext?) {
-        let previousIsExpanded = self.item.isExpanded
+    func update(item: InstantPageV2DetailsItem, theme: InstantPageTheme, renderContext: InstantPageV2RenderContext?, animation: ListViewItemUpdateAnimation) {
         self.item = item
 
         let titleV2Item = InstantPageV2TextItem(
@@ -1563,15 +1583,12 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
         )
         self.titleTextView.update(item: titleV2Item, theme: theme)
 
-        let chevronImage = UIImage(systemName: item.isExpanded ? "chevron.up" : "chevron.down")?
-            .withTintColor(theme.textCategories.paragraph.color, renderingMode: .alwaysOriginal)
-        self.chevronLayer.contents = chevronImage?.cgImage
+        self.chevronView.tintColor = theme.textCategories.paragraph.color
         let chevronSize = CGSize(width: 18.0, height: 18.0)
-        self.chevronLayer.frame = CGRect(
-            x: item.titleFrame.maxX - chevronSize.width - 12.0,
-            y: item.titleFrame.midY - chevronSize.height / 2.0,
-            width: chevronSize.width,
-            height: chevronSize.height
+        self.chevronView.bounds = CGRect(origin: .zero, size: chevronSize)
+        self.chevronView.center = CGPoint(
+            x: item.titleFrame.maxX - chevronSize.width / 2.0 - 12.0,
+            y: item.titleFrame.midY
         )
 
         self.separator.backgroundColor = item.separatorColor
@@ -1584,29 +1601,58 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
 
         self.titleHitView.frame = item.titleFrame
 
-        // Body recursion: if both old and new are expanded with a body, forward the update.
-        // If the expand state changed, tear down and rebuild (task B refines).
-        if previousIsExpanded && item.isExpanded, let innerLayout = item.innerLayout, let existingBody = self.bodyView {
-            existingBody.update(layout: innerLayout, theme: theme, animation: .None)
-            existingBody.frame = CGRect(
-                origin: CGPoint(x: 0.0, y: item.titleFrame.maxY),
-                size: innerLayout.contentSize
-            )
-        } else {
-            if let existingBody = self.bodyView {
-                existingBody.removeFromSuperview()
-                self.bodyView = nil
-            }
-            if item.isExpanded, let innerLayout = item.innerLayout {
-                let body = InstantPageV2View(renderContext: renderContext)
-                body.update(layout: innerLayout, theme: theme, animation: .None)
+        // Body lifecycle. The reveal/hide of the body is produced by the parent animating this
+        // view's own frame height (clipsToBounds = true), not by the body itself — see
+        // InstantPageV2View.update. The body's internal layout is forwarded `animation` so a
+        // *nested* details block inside the body can also animate its own toggle.
+        if item.isExpanded {
+            if let innerLayout = item.innerLayout {
+                let body: InstantPageV2View
+                if let existingBody = self.bodyView {
+                    // Reuse: covers expanded→expanded content updates and a re-expand that
+                    // interrupts a still-pending collapse removal.
+                    body = existingBody
+                    self.bodyPendingRemoval = false
+                } else {
+                    body = InstantPageV2View(renderContext: renderContext)
+                    self.addSubview(body)
+                    self.bodyView = body
+                }
+                body.update(layout: innerLayout, theme: theme, animation: animation)
                 body.frame = CGRect(
                     origin: CGPoint(x: 0.0, y: item.titleFrame.maxY),
                     size: innerLayout.contentSize
                 )
-                self.addSubview(body)
-                self.bodyView = body
             }
+        } else {
+            if let existingBody = self.bodyView {
+                if animation.isAnimated {
+                    // Keep the body visible while the parent's frame-shrink clips it away;
+                    // it is removed in finalizePendingCollapse() (called from that clip animation's
+                    // completion in InstantPageV2View.update).
+                    self.bodyPendingRemoval = true
+                } else {
+                    existingBody.removeFromSuperview()
+                    self.bodyView = nil
+                }
+            }
+        }
+
+        // Chevron rotation. The body teardown on collapse is NOT tied to this completion — see
+        // finalizePendingCollapse(), which the parent calls from the frame-shrink (clip) animation.
+        let targetTransform = item.isExpanded ? InstantPageV2DetailsView.expandedChevronTransform : CATransform3DIdentity
+        animation.animator.updateTransform(layer: self.chevronView.layer, transform: targetTransform, completion: nil)
+    }
+
+    /// Removes the body kept alive across an animated collapse. The parent (InstantPageV2View.update)
+    /// calls this from the completion of the frame-shrink animation that clips the body away, so the
+    /// body is torn down exactly when it finishes being hidden. The guard makes a re-expand that
+    /// interrupts the collapse safe — the re-expand clears `bodyPendingRemoval` first.
+    func finalizePendingCollapse() {
+        if !self.item.isExpanded, self.bodyPendingRemoval {
+            self.bodyView?.removeFromSuperview()
+            self.bodyView = nil
+            self.bodyPendingRemoval = false
         }
     }
 }
