@@ -351,6 +351,7 @@ public extension InstantPageV2View {
                 clearRevealOn(view: view, animated: animated)
             }
             self.updateEmojiReveal(animated: animated)
+            self.updateImageReveal(animated: animated)
             return
         }
 
@@ -370,6 +371,7 @@ public extension InstantPageV2View {
             }
         }
         self.updateEmojiReveal(animated: animated)
+        self.updateImageReveal(animated: animated)
     }
 }
 

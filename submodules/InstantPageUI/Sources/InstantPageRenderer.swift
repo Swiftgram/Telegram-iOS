@@ -80,6 +80,27 @@ public final class InstantPageV2RenderContext {
     }
 }
 
+// MARK: - Inline image view data
+
+private struct InlineImageKey: Hashable {
+    let fileId: Int64
+    let occurrenceIndex: Int
+}
+
+/// Per-inline-image state owned by `InstantPageV2View`.
+/// `textView` is a weak reference back to the parent so `updateImageReveal` can
+/// look up the current per-text-view character count.
+private final class InstantPageInlineImageData {
+    let view: InstantPageV2InlineImageView
+    weak var textView: InstantPageV2TextView?
+    var charIndexInItem: Int = 0
+    var revealed: Bool = false
+
+    init(view: InstantPageV2InlineImageView) {
+        self.view = view
+    }
+}
+
 // MARK: - Emoji layer data
 
 private final class InstantPageEmojiLayerData {
@@ -108,6 +129,7 @@ public final class InstantPageV2View: UIView {
     public let renderContext: InstantPageV2RenderContext?
 
     private var inlineStickerItemLayers: [InlineStickerItemLayer.Key: InstantPageEmojiLayerData] = [:]
+    private var inlineImageViews: [InlineImageKey: InstantPageInlineImageData] = [:]
     private var emojiEnableLooping: Bool = true
 
     /// Scroll-visibility rect in this view's coordinate space; gates emoji animation looping.
@@ -234,6 +256,7 @@ public final class InstantPageV2View: UIView {
         self.itemViewStableIds = newStableIds
         self.currentLayout = layout
         self.currentTheme = theme
+        self.updateInlineImages()
         self.updateInlineEmoji()
         let enableSpoilerAnimations = self.renderContext.map { $0.context.sharedContext.energyUsageSettings.fullTranslucency } ?? true
         for view in self.itemViews {
@@ -332,6 +355,82 @@ public final class InstantPageV2View: UIView {
         self.updateEmojiReveal(animated: false)
     }
 
+    func updateInlineImages() {
+        guard let renderContext = self.renderContext,
+              let layout = self.currentLayout,
+              let theme = self.currentTheme
+        else { return }
+        let context = renderContext.context
+
+        var nextIndexById: [Int64: Int] = [:]
+        var validKeys: Set<InlineImageKey> = []
+
+        for view in self.itemViews {
+            guard let textView = view as? InstantPageV2TextView else { continue }
+            let textItem = textView.item.textItem
+            let boundsWidth = textItem.frame.size.width
+            for line in textItem.lines {
+                if line.imageItems.isEmpty { continue }
+                let lineFrame = v2FrameForLine(line, boundingWidth: boundsWidth, alignment: textItem.alignment)
+                for imageItem in line.imageItems {
+                    let index = nextIndexById[imageItem.id.id] ?? 0
+                    nextIndexById[imageItem.id.id] = index + 1
+                    let key = InlineImageKey(fileId: imageItem.id.id, occurrenceIndex: index)
+                    guard let media = layout.media[imageItem.id] else { continue }
+                    validKeys.insert(key)
+
+                    let localX = lineFrame.minX + (imageItem.frame.minX - line.frame.minX)
+                    let itemFrame = CGRect(
+                        x: localX + v2TextViewClippingInset,
+                        y: imageItem.frame.minY + v2TextViewClippingInset,
+                        width: imageItem.frame.width,
+                        height: imageItem.frame.height
+                    )
+
+                    let data: InstantPageInlineImageData
+                    if let existing = self.inlineImageViews[key] {
+                        data = existing
+                        if data.view.superview !== textView.imageContainerView {
+                            textView.imageContainerView.addSubview(data.view)
+                        }
+                    } else {
+                        let newView = InstantPageV2InlineImageView(
+                            media: media,
+                            webpage: layout.webpage,
+                            frame: itemFrame,
+                            context: context,
+                            userLocation: .other,
+                            theme: theme
+                        )
+                        // Image starts hidden; updateImageReveal pops it in when the streaming
+                        // cursor crosses its char-index. For non-streaming pages (no
+                        // `TypingDraftMessageAttribute`), `revealed = true` (via the fallback in
+                        // updateImageReveal) sets alpha = 1 unconditionally on the next call.
+                        newView.alpha = 0.0
+                        data = InstantPageInlineImageData(view: newView)
+                        self.inlineImageViews[key] = data
+                        textView.imageContainerView.addSubview(newView)
+                    }
+
+                    data.view.frame = itemFrame
+                    data.textView = textView
+                    data.charIndexInItem = imageItem.range.location
+                }
+            }
+        }
+
+        var removeKeys: [InlineImageKey] = []
+        for (key, data) in self.inlineImageViews where !validKeys.contains(key) {
+            removeKeys.append(key)
+            data.view.removeFromSuperview()
+        }
+        for key in removeKeys {
+            self.inlineImageViews.removeValue(forKey: key)
+        }
+
+        self.updateImageReveal(animated: false)
+    }
+
     func updateEmojiReveal(animated: Bool) {
         for (_, data) in self.inlineStickerItemLayers {
             let revealed: Bool
@@ -366,6 +465,41 @@ public final class InstantPageV2View: UIView {
             }
         }
         self.updateEmojiVisibility()
+    }
+
+    func updateImageReveal(animated: Bool) {
+        for (_, data) in self.inlineImageViews {
+            let revealed: Bool
+            if let textView = data.textView, let count = textView.currentRevealCharacterCount {
+                revealed = data.charIndexInItem < count
+            } else {
+                revealed = true
+            }
+            if data.revealed == revealed {
+                continue
+            }
+            data.revealed = revealed
+            if revealed {
+                if animated {
+                    data.view.layer.opacity = 1.0
+                    let opacityAnim = CABasicAnimation(keyPath: "opacity")
+                    opacityAnim.fromValue = 0.0
+                    opacityAnim.toValue = 1.0
+                    opacityAnim.duration = 0.2
+                    data.view.layer.add(opacityAnim, forKey: "inlineImageRevealOpacity")
+                    let scaleAnim = CABasicAnimation(keyPath: "transform.scale")
+                    scaleAnim.fromValue = 0.1
+                    scaleAnim.toValue = 1.0
+                    scaleAnim.duration = 0.2
+                    scaleAnim.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                    data.view.layer.add(scaleAnim, forKey: "inlineImageRevealScale")
+                } else {
+                    data.view.layer.opacity = 1.0
+                }
+            } else {
+                data.view.layer.opacity = 0.0
+            }
+        }
     }
 
     func updateEmojiVisibility() {
@@ -689,6 +823,11 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
 
     private let renderContainer: UIView
     private let renderView: TextRenderView
+    /// Sibling of `renderContainer`, holds inline `InstantPageV2InlineImageView`s
+    /// owned by the parent `InstantPageV2View`. Sits BELOW `emojiContainerView`
+    /// (so a colocated emoji renders above an image) and ABOVE `renderContainer`
+    /// (so the reveal mask wipes text without clipping images).
+    let imageContainerView: UIView = UIView()
     let emojiContainerView: UIView = UIView()
     let spoilerContainerView: UIView = UIView()
     private var dustNode: InvisibleInkDustNode?
@@ -726,6 +865,10 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
         self.renderView.frame = self.bounds
         self.renderContainer.addSubview(self.renderView)
 
+        self.imageContainerView.frame = self.bounds
+        self.imageContainerView.isUserInteractionEnabled = false
+        self.addSubview(self.imageContainerView)
+
         self.emojiContainerView.frame = self.bounds
         self.emojiContainerView.isUserInteractionEnabled = false
         self.addSubview(self.emojiContainerView)
@@ -745,6 +888,7 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
         self.item = item
         self.renderView.item = item
         self.renderView.setNeedsDisplay()
+        self.imageContainerView.frame = self.bounds
         self.emojiContainerView.frame = self.bounds
         self.spoilerContainerView.frame = self.bounds
         self.renderView.displayContentsUnderSpoilers = self.displayContentsUnderSpoilers
