@@ -2014,21 +2014,17 @@ private func layoutList(
 ) -> [InstantPageV2LaidOutItem] {
     // Determine marker characteristics.
     var maxIndexWidth: CGFloat = 0.0
-    var hasTaskMarkers = false
+    // hasNums: at least one ordered item carries an explicit `num` — in which case items
+    // without one fall back to a blank " " (preserves the source's numbering gaps) rather
+    // than auto-generated `(i + 1).`. Unordered lists never auto-generate numbers, so this
+    // flag is only meaningful when `ordered` is true. (`hasTaskMarkers` is no longer derived
+    // — the uniform 8pt gap below replaced the per-list `indexSpacing` ternary that consumed
+    // it; column right-alignment handles mixed bullet/checkbox lists without flagging.)
     var hasNums = false
-
     if ordered {
         for item in listItems {
-            if item.checked != nil {
-                hasTaskMarkers = true
-            } else if let num = item.num, !num.isEmpty {
+            if item.checked == nil, let num = item.num, !num.isEmpty {
                 hasNums = true
-            }
-        }
-    } else {
-        for item in listItems {
-            if item.checked != nil {
-                hasTaskMarkers = true
                 break
             }
         }
@@ -2046,12 +2042,18 @@ private func layoutList(
         stroke: context.theme.pageBackgroundColor,
         border: context.theme.controlColor
     )
+    // Track maxIndexWidth for ALL marker kinds (ordered + unordered, all three shapes), not
+    // just ordered as V1/older V2 did. With every kind contributing to the marker column width
+    // we can right-align every marker to a single shared column edge — so in a mixed unordered
+    // list (bullets + checkboxes) both right-align flush to the same x, and the same uniform
+    // gap separates them from the text. The column width simply equals the widest marker; for
+    // a pure bullet list `maxIndexWidth == 6` and the bullet sits at `horizontalInset` (visually
+    // identical to the pre-change formula), and for a pure checkbox list `maxIndexWidth == 18`
+    // matches the previous left-aligned placement too.
     var markerInfos: [MarkerInfo] = []
     for (i, item) in listItems.enumerated() {
         if let checked = item.checked {
-            if ordered {
-                maxIndexWidth = max(maxIndexWidth, checklistMarkerSize.width)
-            }
+            maxIndexWidth = max(maxIndexWidth, checklistMarkerSize.width)
             markerInfos.append(MarkerInfo(kind: .checklist(checked: checked, colors: checkboxColors), naturalWidth: checklistMarkerSize.width))
         } else if ordered {
             let value: String
@@ -2085,13 +2087,20 @@ private func layoutList(
             markerInfos.append(MarkerInfo(kind: .number(value), naturalWidth: w))
         } else {
             // Bullet: 6×6 ellipse (matches V1 InstantPageShapeItem dimensions).
+            maxIndexWidth = max(maxIndexWidth, 6.0)
             markerInfos.append(MarkerInfo(kind: .bullet, naturalWidth: 6.0))
         }
     }
 
-    // indexSpacing = gap between the right edge of markers and the text content.
-    // V1 values: ordered-task=16, ordered-num=12, unordered-task=24, unordered-bullet=20.
-    let indexSpacing: CGFloat = ordered ? (hasTaskMarkers ? 16.0 : 12.0) : (hasTaskMarkers ? 24.0 : 20.0)
+    // Uniform 8pt marker→text gap across all four cases (ordered/unordered × bullet/number/
+    // checkbox). With markers right-aligned to a shared column of width `maxIndexWidth`, text
+    // starts at `horizontalInset + maxIndexWidth + indexSpacing` — so `indexSpacing` IS the
+    // gap, regardless of marker shape. V1 used 12/16/20/24 (a mix of marker-area-width and
+    // gap-after-marker, depending on alignment); the four gaps came out to 12/16/14/6 — far
+    // from uniform, and a 14pt bullet gap looked especially loose. 8pt is a standard iOS list
+    // gap; it tightens bullets (14→8), numbers (12→8) and ordered-checkbox (16→8), and only
+    // loosens unordered-checkbox very slightly (6→8) so all four kinds match.
+    let indexSpacing: CGFloat = 8.0
 
     // Layout each item.
     var result: [InstantPageV2LaidOutItem] = []
@@ -2143,8 +2152,6 @@ private func layoutList(
                 naturalWidth: markerInfo.naturalWidth,
                 maxIndexWidth: maxIndexWidth,
                 horizontalInset: horizontalInset,
-                indexSpacing: indexSpacing,
-                ordered: ordered,
                 checklistMarkerSize: checklistMarkerSize,
                 lineMidY: lineMidY,
                 rtl: context.rtl,
@@ -2207,22 +2214,22 @@ private func layoutList(
                 previousBlock = subBlock
             }
 
-            // V1 alignment: number and bullet markers are positioned at originY (top of
-            // first sub-block); only checklist markers use firstBlockLineMidY for centering.
-            let markerLineMidY: CGFloat
-            switch markerInfo.kind {
-            case .checklist:
-                markerLineMidY = firstBlockLineMidY ?? originY
-            case .number, .bullet:
-                markerLineMidY = originY
-            }
+            // Mirror the .text case above (and what .checklist already does here): use the
+            // first text line's midY for centering. `originY` is the sub-block's TOP, NOT a
+            // line midpoint — `markerFrameFor` then subtracts `size.height / 2`, so feeding
+            // `originY` placed the marker straddling the sub-block boundary, ½·marker-height
+            // ABOVE the first text line. V1 hid the same arithmetic under a 6×12 shape with a
+            // 3pt internal offset (matching ½·fontLineHeight for 17pt paragraph text), which
+            // by coincidence equals `firstBlockLineMidY`. Using firstBlockLineMidY directly
+            // makes the alignment explicit, unifies the three marker kinds, and matches the
+            // .text case exactly. Fallback to `originY` when no text is in the first sub-block
+            // (image-first lists are rare); mirrors the existing .checklist fallback.
+            let markerLineMidY: CGFloat = firstBlockLineMidY ?? originY
             let markerFrame = markerFrameFor(
                 kind: markerInfo.kind,
                 naturalWidth: markerInfo.naturalWidth,
                 maxIndexWidth: maxIndexWidth,
                 horizontalInset: horizontalInset,
-                indexSpacing: indexSpacing,
-                ordered: ordered,
                 checklistMarkerSize: checklistMarkerSize,
                 lineMidY: markerLineMidY,
                 rtl: context.rtl,
@@ -2244,57 +2251,39 @@ private func layoutList(
 }
 
 /// Computes the frame for a list marker, handling RTL and all three marker kinds.
+///
+/// All marker kinds are right-aligned within the shared `[horizontalInset, horizontalInset +
+/// maxIndexWidth]` column (LTR) or left-aligned within the mirrored column on the right (RTL).
+/// For a pure-kind list `maxIndexWidth == markerWidth`, so the marker lands at `horizontalInset`
+/// exactly as before; for mixed unordered lists, bullets and checkboxes align flush at the
+/// column's inner edge. Column right-alignment is the single rule across every marker shape
+/// — no `ordered` / `indexSpacing` split — which is why those parameters dropped.
 private func markerFrameFor(
     kind: InstantPageV2ListMarkerKind,
     naturalWidth: CGFloat,
     maxIndexWidth: CGFloat,
     horizontalInset: CGFloat,
-    indexSpacing: CGFloat,
-    ordered: Bool,
     checklistMarkerSize: CGSize,
     lineMidY: CGFloat,
     rtl: Bool,
     boundingWidth: CGFloat
 ) -> CGRect {
+    let size: CGSize
     switch kind {
     case .bullet:
-        // Bullet: 6×6 ellipse at vertically centred position.
-        let size = CGSize(width: 6.0, height: 6.0)
-        if rtl {
-            let x = boundingWidth - horizontalInset - maxIndexWidth - indexSpacing + (maxIndexWidth - size.width)
-            return CGRect(x: x, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
-        } else {
-            return CGRect(x: horizontalInset, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
-        }
+        size = CGSize(width: 6.0, height: 6.0)
     case .number:
-        // Number: right-aligned within [horizontalInset, horizontalInset+maxIndexWidth].
-        let size = CGSize(width: naturalWidth, height: 20.0)
-        if rtl {
-            let x = boundingWidth - horizontalInset - maxIndexWidth
-            return CGRect(x: x, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
-        } else {
-            let x = horizontalInset + maxIndexWidth - naturalWidth
-            return CGRect(x: x, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
-        }
+        size = CGSize(width: naturalWidth, height: 20.0)
     case .checklist:
-        let size = checklistMarkerSize
-        if ordered {
-            if rtl {
-                let x = boundingWidth - horizontalInset - maxIndexWidth
-                return CGRect(x: x, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
-            } else {
-                let x = horizontalInset + maxIndexWidth - size.width
-                return CGRect(x: x, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
-            }
-        } else {
-            if rtl {
-                let x = boundingWidth - horizontalInset - size.width
-                return CGRect(x: x, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
-            } else {
-                return CGRect(x: horizontalInset, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
-            }
-        }
+        size = checklistMarkerSize
     }
+    let x: CGFloat
+    if rtl {
+        x = boundingWidth - horizontalInset - maxIndexWidth
+    } else {
+        x = horizontalInset + maxIndexWidth - size.width
+    }
+    return CGRect(x: x, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
 }
 
 // MARK: - Style helpers (ported from V1 InstantPageLayout.swift lines 32–88)
