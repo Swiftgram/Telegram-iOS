@@ -79,6 +79,17 @@ targets:
         CODE_SIGNING_ALLOWED: "NO"
         CODE_SIGNING_REQUIRED: "NO"
         CODE_SIGN_IDENTITY: ""
+      configs:
+        Release:
+          # Bazel consumes a plain `xcodebuild build`, so DEPLOYMENT_POSTPROCESSING
+          # stays NO and the default strip phase never runs — the executable ships
+          # with its full ~1M-symbol table, doubling each thinned slice to ~100MB
+          # and tripping App Store's 75MB watchOS limit (error 90389). Force the
+          # strip during build. Scoped to this target only: a project-wide setting
+          # also tries to strip the SPM static libs, which errors on COgg.o.
+          DEPLOYMENT_POSTPROCESSING: "YES"
+          STRIP_INSTALLED_PRODUCT: "YES"
+          STRIP_STYLE: "all"
     dependencies:
       - package: TDLibKit
       - package: QRCodeGenerator
