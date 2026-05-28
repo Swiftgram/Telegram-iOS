@@ -14,11 +14,23 @@ public struct InstantPageV2Layout {
     public let items: [InstantPageV2LaidOutItem]
     /// Snapshot of the `index` values of every `.details` item present in `items`, captured at layout time.
     public let detailsIndices: [Int]
+    /// Media dictionary inherited from the page's `LayoutContext.media`. Used by
+    /// `InstantPageV2View.updateInlineImages()` to resolve each text view's
+    /// `line.imageItems` MediaIds at update time. Nested layouts (details body,
+    /// table cells, table title) carry the parent's same map.
+    public let media: [EngineMedia.Id: EngineMedia]
+    /// Webpage carried for the same reason — `updateInlineImages()` needs it to
+    /// form the `WebpageReference` for `ImageMediaReference.webPage(...)`. May
+    /// be nil for non-webpage-anchored layouts; in that case the lookup proceeds
+    /// but no fetch signal can be bound (image view simply isn't created).
+    public let webpage: TelegramMediaWebpage?
 
-    public init(contentSize: CGSize, items: [InstantPageV2LaidOutItem], detailsIndices: [Int]) {
+    public init(contentSize: CGSize, items: [InstantPageV2LaidOutItem], detailsIndices: [Int], media: [EngineMedia.Id: EngineMedia] = [:], webpage: TelegramMediaWebpage? = nil) {
         self.contentSize = contentSize
         self.items = items
         self.detailsIndices = detailsIndices
+        self.media = media
+        self.webpage = webpage
     }
 
     /// Returns every `InstantPageMedia` produced by this layout (or its nested sub-layouts)
@@ -516,7 +528,7 @@ private func layoutBlockSequence(
         contentSize.width = min(maxX, boundingWidth)
     }
 
-    return InstantPageV2Layout(contentSize: contentSize, items: items, detailsIndices: detailsIndices)
+    return InstantPageV2Layout(contentSize: contentSize, items: items, detailsIndices: detailsIndices, media: context.media, webpage: context.webpage)
 }
 
 private func layoutBlock(
@@ -920,8 +932,6 @@ private func layoutDetails(
         attributedStringForRichText(title, styleStack: titleStyleStack),
         boundingWidth: boundingWidth - horizontalInset * 2.0 - 32.0,   // reserve right edge for chevron
         offset: CGPoint(x: horizontalInset, y: 12.0),
-        media: context.media,
-        webpage: context.webpage,
         fitToWidth: context.fitToWidth,
         computeRevealCharacterRects: context.computeRevealCharacterRects
     )
@@ -1023,8 +1033,6 @@ private func layoutTable(
                     attrStr,
                     boundingWidth: cellWidthLimit - totalCellPadding,
                     offset: CGPoint(),
-                    media: context.media,
-                    webpage: context.webpage,
                     minimizeWidth: true,
                     fitToWidth: context.fitToWidth,
                     computeRevealCharacterRects: context.computeRevealCharacterRects
@@ -1035,8 +1043,6 @@ private func layoutTable(
                     attrStr,
                     boundingWidth: cellWidthLimit - totalCellPadding,
                     offset: CGPoint(),
-                    media: context.media,
-                    webpage: context.webpage,
                     fitToWidth: context.fitToWidth,
                     computeRevealCharacterRects: context.computeRevealCharacterRects
                 ).0 {
@@ -1304,7 +1310,7 @@ private func layoutTable(
                 // Translate all items in the sub-layout by the inset.
                 let delta = CGPoint(x: horizOffset, y: vertOffset)
                 let translatedItems = sl.items.map { $0.offsetBy(delta) }
-                sl = InstantPageV2Layout(contentSize: sl.contentSize, items: translatedItems, detailsIndices: sl.detailsIndices)
+                sl = InstantPageV2Layout(contentSize: sl.contentSize, items: translatedItems, detailsIndices: sl.detailsIndices, media: sl.media, webpage: sl.webpage)
                 subLayout = sl
             }
 
@@ -1508,8 +1514,6 @@ private func layoutCaptionAndCredit(
             attributedString,
             boundingWidth: boundingWidth - horizontalInset * 2.0,
             offset: CGPoint(x: horizontalInset, y: y),
-            media: context.media,
-            webpage: context.webpage,
             fitToWidth: context.fitToWidth,
             computeRevealCharacterRects: context.computeRevealCharacterRects
         )
@@ -1537,8 +1541,6 @@ private func layoutCaptionAndCredit(
             boundingWidth: boundingWidth - horizontalInset * 2.0,
             alignment: rtl ? .right : .natural,
             offset: CGPoint(x: horizontalInset, y: y),
-            media: context.media,
-            webpage: context.webpage,
             fitToWidth: context.fitToWidth,
             computeRevealCharacterRects: context.computeRevealCharacterRects
         )
@@ -1679,8 +1681,6 @@ private func layoutSimpleText(
         attributedString,
         boundingWidth: boundingWidth - horizontalInset * 2.0,
         offset: CGPoint(x: horizontalInset, y: 0.0),
-        media: context.media,
-        webpage: context.webpage,
         fitToWidth: context.fitToWidth,
         computeRevealCharacterRects: context.computeRevealCharacterRects
     )
@@ -1701,8 +1701,6 @@ private func layoutHeading(
         attributedString,
         boundingWidth: boundingWidth - horizontalInset * 2.0,
         offset: CGPoint(x: horizontalInset, y: 0.0),
-        media: context.media,
-        webpage: context.webpage,
         fitToWidth: context.fitToWidth,
         computeRevealCharacterRects: context.computeRevealCharacterRects
     )
@@ -1726,8 +1724,6 @@ private func layoutParagraph(
         attributedString,
         boundingWidth: boundingWidth - horizontalInset * 2.0,
         offset: CGPoint(x: horizontalInset, y: 0.0),
-        media: context.media,
-        webpage: context.webpage,
         fitToWidth: context.fitToWidth,
         computeRevealCharacterRects: context.computeRevealCharacterRects
     )
@@ -1798,8 +1794,6 @@ private func layoutAuthorDate(
         boundingWidth: boundingWidth - horizontalInset * 2.0,
         alignment: alignment,
         offset: CGPoint(x: horizontalInset, y: 0.0),
-        media: context.media,
-        webpage: context.webpage,
         fitToWidth: context.fitToWidth,
         computeRevealCharacterRects: context.computeRevealCharacterRects
     )
@@ -1862,8 +1856,6 @@ private func layoutCodeBlock(
         attributedString,
         boundingWidth: innerWidth,
         offset: CGPoint(x: 0.0, y: 0.0),
-        media: context.media,
-        webpage: context.webpage,
         fitToWidth: context.fitToWidth,
         opaqueBackground: true,
         computeRevealCharacterRects: context.computeRevealCharacterRects
@@ -1946,8 +1938,6 @@ private func layoutBlockQuote(
         boundingWidth: textBoundingWidth,
         alignment: textAlignment,
         offset: CGPoint(x: textX, y: contentHeight),
-        media: context.media,
-        webpage: context.webpage,
         fitToWidth: context.fitToWidth,
         computeRevealCharacterRects: context.computeRevealCharacterRects
     )
@@ -1969,8 +1959,6 @@ private func layoutBlockQuote(
             boundingWidth: textBoundingWidth,
             alignment: textAlignment,
             offset: CGPoint(x: textX, y: contentHeight),
-            media: context.media,
-            webpage: context.webpage,
             fitToWidth: context.fitToWidth,
             computeRevealCharacterRects: context.computeRevealCharacterRects
         )
@@ -2126,8 +2114,6 @@ private func layoutList(
                 attrStr,
                 boundingWidth: textWidth,
                 offset: CGPoint(x: textX, y: contentHeight),
-                media: context.media,
-                webpage: context.webpage,
                 fitToWidth: context.fitToWidth,
                 computeRevealCharacterRects: context.computeRevealCharacterRects
             )
@@ -2411,8 +2397,10 @@ private func attributedStringForPreformattedText(_ text: RichText, language: Str
 // MARK: - V2 text-item layout (ported from V1 InstantPageTextItem.swift layoutTextItemWithString)
 //
 // V0 difference from V1:
-//   * Inline image runs produce `.mediaPlaceholder(kind: .image, frame:, cornerRadius: 0)` items
-//     instead of `InstantPageImageItem`.
+//   * Inline image runs are NOT emitted as items here. They are discovered at view-update time
+//     by `InstantPageV2View.updateInlineImages()`, which walks each text view's `line.imageItems`
+//     and creates `InstantPageV2InlineImageView`s attached to the text view's `imageContainerView`
+//     (the pop-in animation mirrors the inline custom-emoji ownership model).
 //   * Inline formula runs produce `.formula(InstantPageV2FormulaItem(...))` items carrying the
 //     rendered math image (see `InstantPageV2FormulaView`); the line's `formulaItems` field
 //     already provides the attachment + frame.
@@ -2485,8 +2473,6 @@ func layoutTextItem(
     horizontalInset: CGFloat = 0.0,
     alignment: NSTextAlignment = .natural,
     offset: CGPoint,
-    media: [EngineMedia.Id: EngineMedia] = [:],
-    webpage: TelegramMediaWebpage? = nil,
     minimizeWidth: Bool = false,
     fitToWidth: Bool = false,
     maxNumberOfLines: Int = 0,
@@ -2814,6 +2800,17 @@ func layoutTextItem(
                         rects[localIndex] = CGRect(x: x, y: 0.0, width: emoji.size, height: emoji.size)
                     }
                 }
+                for image in pendingImages {
+                    let localIndex = image.range.location - lineRange.location
+                    if localIndex >= 0 && localIndex < rects.count {
+                        let x = CTLineGetOffsetForStringIndex(line, image.range.location, nil)
+                        // Image cell sits bottom-on-baseline (frame loop: y = baselineY - image.size.height).
+                        // Baseline-relative cell: y = 0, height = image.size.height. The full width feeds
+                        // the reveal cost map so the streaming cursor is charged the image's width when
+                        // crossing it — same as an emoji cell.
+                        rects[localIndex] = CGRect(x: x, y: 0.0, width: image.size.width, height: image.size.height)
+                    }
+                }
                 lineCharacterRects = rects
             } else {
                 lineCharacterRects = nil
@@ -2870,21 +2867,12 @@ func layoutTextItem(
     let effectiveOffset = offset
     for line in textItem.lines {
         let lineFrame = v2FrameForLine(line, boundingWidth: boundingWidth, alignment: alignment)
-        if let _ = webpage {
-            for imageItem in line.imageItems {
-                if media[imageItem.id] != nil {
-                    let placeholderFrame = imageItem.frame.offsetBy(dx: lineFrame.minX + effectiveOffset.x, dy: effectiveOffset.y)
-                    let placeholder = InstantPageV2MediaPlaceholderItem(
-                        frame: placeholderFrame,
-                        kind: .image,
-                        cornerRadius: 0.0
-                    )
-                    additionalItems.append(.mediaPlaceholder(placeholder))
-                    if placeholderFrame.minY < topInset { topInset = placeholderFrame.minY }
-                    if placeholderFrame.maxY > height { bottomInset = max(bottomInset, placeholderFrame.maxY - height) }
-                }
-            }
-        }
+        // Inline images (RichText.image) are NOT emitted as top-level items here. They are
+        // discovered at view-update time by InstantPageV2View.updateInlineImages(), which
+        // walks each text view's `line.imageItems` and creates an InstantPageV2InlineImageView
+        // attached to the text view's imageContainerView. The pop-in animation reuses the
+        // emoji-style ownership model. See the inline-image design doc:
+        // docs/superpowers/specs/2026-05-28-instantpage-v2-inline-image-design.md.
         for formulaItem in line.formulaItems {
             let formulaFrame = formulaItem.frame.offsetBy(dx: lineFrame.minX + effectiveOffset.x, dy: effectiveOffset.y)
             let item = InstantPageV2FormulaItem(
