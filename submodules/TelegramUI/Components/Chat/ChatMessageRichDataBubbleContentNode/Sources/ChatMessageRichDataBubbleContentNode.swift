@@ -466,6 +466,20 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     boundingSize.height += streamingHeaderOffset
                 }
 
+                if hasDraft {
+                    // The bubble's bottom inset is supplied by the `statusBottomEdge + 6.0`
+                    // max() in the measure closure below — but that branch is gated by
+                    // `!hasDraft`, so during streaming the bubble has only its 1pt bottom rim
+                    // past `revealedContentSize.height` (= bounds.maxY + closingPad). Without
+                    // this, descenders of the last revealed line sit cramped against the
+                    // bubble's bottom edge and the bubble visibly grows by 6pt when streaming
+                    // ends and the status node fades in. 6pt matches the constant inside the
+                    // status max() (which itself tracks `TextBubble`'s `bubbleInsets.bottom`).
+                    // `hadDraft && !hasDraft` (the finalize pass) doesn't need this because
+                    // `!hasDraft` re-enables the status max(), which supplies the inset for it.
+                    boundingSize.height += 6.0
+                }
+
                 let message = item.message
                 let incoming = isIncoming
 
