@@ -1,17 +1,20 @@
 import SwiftUI
 import UIKit
 
-/// A 36pt circular chat avatar. Renders (priority): Saved-Messages bookmark glyph;
+/// A circular chat avatar (default 36pt, customizable via `size`). Renders (priority):
 /// crisp downloaded photo; blurred minithumbnail placeholder; initials on a
-/// per-chat color. Drives viewport-based download of the small photo via
-/// `.onScrollVisibilityChange` (same as `PhotoBubbleView`) — only while the photo
-/// exists and hasn't downloaded yet.
+/// per-chat color. When embedded in a `ScrollView`, drives viewport-based download
+/// of the small photo via `.onScrollVisibilityChange` (same as `PhotoBubbleView`) —
+/// only while the photo exists and hasn't downloaded yet. Outside a scroll
+/// container (e.g. as a `ToolbarItem`), the visibility callback fires once on
+/// appear and once on disappear, so the download path is "request on chat open,
+/// cancel on chat close."
 struct AvatarView: View {
     let avatar: AvatarVisual
     var onRequestDownload: (Int) -> Void = { _ in }
     var onCancelDownload: (Int) -> Void = { _ in }
 
-    private let size: CGFloat = 36
+    var size: CGFloat = 36
 
     var body: some View {
         content

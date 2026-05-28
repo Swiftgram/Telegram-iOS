@@ -56,6 +56,17 @@ struct MessageListView: View {
         }
         .navigationTitle(row.title)
         .accessibilityIdentifier("messageListView")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                AvatarView(
+                    avatar: row.avatar,
+                    onRequestDownload: { fileId in store?.requestFileDownload(fileId: fileId) },
+                    onCancelDownload:  { fileId in store?.cancelFileDownload(fileId: fileId) },
+                    size: 36
+                )
+                .glassEffect(in: Circle())
+            }
+        }
         .sheet(item: $presentedPhoto) { photo in
             PhotoViewerView(photo: photo)
         }

@@ -13,39 +13,42 @@ struct ChatListView: View {
     @FocusState private var listFocused: Bool
 
     var body: some View {
-        ZStack(alignment: .top) {
-            NavigationStack {
-                ScrollViewReader { proxy in
-                    VStack(spacing: 0) {
-                        if case .failed(let message) = store.loadState(for: store.currentFolder) {
-                            banner(text: message, kind: .retry)
-                        }
-                        if let err = client.lastError, dismissedLastError != err {
-                            banner(text: err, kind: .dismiss)
-                        }
-                        content(proxy: proxy)
+        NavigationStack {
+            ScrollViewReader { proxy in
+                VStack(spacing: 0) {
+                    if case .failed(let message) = store.loadState(for: store.currentFolder) {
+                        banner(text: message, kind: .retry)
                     }
-                    .navigationDestination(for: ChatRow.self) { row in
-                        MessageListView(row: row)
+                    if let err = client.lastError, dismissedLastError != err {
+                        banner(text: err, kind: .dismiss)
                     }
-                    .navigationTitle("")
-                    .navigationBarTitleDisplayMode(.inline)
-                    // Must live INSIDE the NavigationStack so the modifier's
-                    // .navigationDestination(isPresented:) attaches to it.
-                    .accountSwitcherSheet(presentation: .push, logoutAffordance: .allowed)
+                    content(proxy: proxy)
                 }
+                // Gradient is .overlay on the chat-list VStack — NOT a sibling
+                // of NavigationStack. Earlier this lived in an outer ZStack and
+                // rendered on top of every pushed destination (e.g. MessageListView's
+                // back chevron + title), since ZStack draws siblings front-to-back
+                // regardless of which destination is current. Scoping it to the
+                // root view's overlay restricts it to the chat list itself.
+                .overlay(alignment: .top) {
+                    LinearGradient(
+                        colors: [.black.opacity(0.8), .black.opacity(0)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 48)
+                    .allowsHitTesting(false)
+                    .ignoresSafeArea(edges: .top)
+                }
+                .navigationDestination(for: ChatRow.self) { row in
+                    MessageListView(row: row)
+                }
+                .navigationTitle("")
+                .navigationBarTitleDisplayMode(.inline)
+                // Must live INSIDE the NavigationStack so the modifier's
+                // .navigationDestination(isPresented:) attaches to it.
+                .accountSwitcherSheet(presentation: .push, logoutAffordance: .allowed)
             }
-            // Gradient that fades chat content behind the system clock area,
-            // so rows scrolling up under the clock don't visually collide
-            // with the time readout.
-            LinearGradient(
-                colors: [.black.opacity(0.8), .black.opacity(0)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 48)
-            .allowsHitTesting(false)
-            .ignoresSafeArea(edges: .top)
         }
         .accessibilityIdentifier("chatListView")
     }
