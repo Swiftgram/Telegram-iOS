@@ -1116,8 +1116,14 @@ private func blockIsEntityExpressible(_ block: InstantPageBlock) -> Bool {
         return richTextIsEntityExpressible(text)
     case .preformatted(let text, _):
         return richTextIsEntityExpressible(text)
-    case .blockQuote(let text, let caption):
-        return isEmptyRichText(caption) && richTextIsEntityExpressible(text)
+    case .blockQuote(let blocks, let caption):
+        guard isEmptyRichText(caption) else { return false }
+        return blocks.allSatisfy { child in
+            if case let .paragraph(text) = child {
+                return richTextIsEntityExpressible(text)
+            }
+            return false
+        }
     case .anchor, .unsupported:
         return true
     case .divider:
@@ -1392,24 +1398,17 @@ private func markdownBlocks(from node: MarkdownIntentNode, context: MarkdownConv
     case .thematicBreak:
         return [.divider]
     case .blockQuote:
-        var result: [InstantPageBlock] = []
+        var childBlocks: [InstantPageBlock] = []
         for child in node.children {
-            guard let childBlocks = markdownBlocks(from: child, context: context, depth: depth + 1) else {
+            guard let parsed = markdownBlocks(from: child, context: context, depth: depth + 1) else {
                 return nil
             }
-            for childBlock in childBlocks {
-                switch childBlock {
-                case let .paragraph(text):
-                    result.append(.blockQuote(text: text, caption: .empty))
-                default:
-                    let plainText = markdownPlainText(from: childBlock, depth: depth + 1)
-                    if !plainText.isEmpty {
-                        result.append(.blockQuote(text: .plain(plainText), caption: .empty))
-                    }
-                }
-            }
+            childBlocks.append(contentsOf: parsed)
         }
-        return result
+        guard !childBlocks.isEmpty else {
+            return []
+        }
+        return [.blockQuote(blocks: childBlocks, caption: .empty)]
     case .orderedList:
         guard let items = markdownListItems(from: node.children, ordered: true, context: context, depth: depth + 1) else {
             return nil
@@ -2213,8 +2212,9 @@ private func markdownPlainText(from block: InstantPageBlock, depth: Int = 0) -> 
         return text.plainText
     case let .footer(text):
         return text.plainText
-    case let .blockQuote(text, caption):
-        return text.plainText.isEmpty ? caption.plainText : text.plainText
+    case let .blockQuote(blocks, caption):
+        let blocksText = blocks.map { markdownPlainText(from: $0, depth: depth + 1) }.joined(separator: "\n")
+        return blocksText.isEmpty ? caption.plainText : blocksText
     case let .pullQuote(text, caption):
         return text.plainText.isEmpty ? caption.plainText : text.plainText
     case let .kicker(text):

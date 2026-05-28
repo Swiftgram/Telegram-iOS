@@ -246,7 +246,9 @@ extension InstantPageBlock {
                 self = .anchor(name)
             case let .pageBlockBlockquote(pageBlockBlockquoteData):
                 let (text, caption) = (pageBlockBlockquoteData.text, pageBlockBlockquoteData.caption)
-                self = .blockQuote(text: RichText(apiText: text), caption: RichText(apiText: caption))
+                self = .blockQuote(blocks: [.paragraph(RichText(apiText: text))], caption: RichText(apiText: caption))
+            case let .pageBlockBlockquoteBlocks(pageBlockBlockquoteBlocksData):
+                self = .blockQuote(blocks: pageBlockBlockquoteBlocksData.blocks.map { InstantPageBlock(apiBlock: $0) }, caption: RichText(apiText: pageBlockBlockquoteBlocksData.caption))
             case let .pageBlockPullquote(pageBlockPullquoteData):
                 let (text, caption) = (pageBlockPullquoteData.text, pageBlockPullquoteData.caption)
                 self = .pullQuote(text: RichText(apiText: text), caption: RichText(apiText: caption))
@@ -370,8 +372,14 @@ extension InstantPageBlock {
             } else {
                 return .pageBlockList(Api.PageBlock.Cons_pageBlockList(items: items.map { $0.apiInputPageListItem() }))
             }
-        case let .blockQuote(text, caption):
-            return .pageBlockBlockquote(Api.PageBlock.Cons_pageBlockBlockquote(text: text.apiRichText(), caption: caption.apiRichText()))
+        case let .blockQuote(blocks, caption):
+            if blocks.isEmpty {
+                return .pageBlockBlockquote(Api.PageBlock.Cons_pageBlockBlockquote(text: RichText.empty.apiRichText(), caption: caption.apiRichText()))
+            }
+            if blocks.count == 1, case let .paragraph(text) = blocks[0] {
+                return .pageBlockBlockquote(Api.PageBlock.Cons_pageBlockBlockquote(text: text.apiRichText(), caption: caption.apiRichText()))
+            }
+            return .pageBlockBlockquoteBlocks(Api.PageBlock.Cons_pageBlockBlockquoteBlocks(blocks: blocks.compactMap { $0.apiInputBlock() }, caption: caption.apiRichText()))
         case let .pullQuote(text, caption):
             return .pageBlockPullquote(Api.PageBlock.Cons_pageBlockPullquote(text: text.apiRichText(), caption: caption.apiRichText()))
         case let .image(id, caption, url, webpageId):

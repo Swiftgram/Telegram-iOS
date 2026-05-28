@@ -594,14 +594,14 @@ private func layoutBlock(
         return layoutCodeBlock(text, language: language, boundingWidth: boundingWidth,
                                horizontalInset: horizontalInset, context: &context)
 
-    case let .blockQuote(text, caption):
-        return layoutBlockQuote(text: text, caption: caption, isPull: false,
+    case let .blockQuote(blocks, caption):
+        return layoutBlockQuote(blocks: blocks, caption: caption,
                                 boundingWidth: boundingWidth, horizontalInset: horizontalInset,
-                                context: &context)
+                                isLast: isLast, context: &context)
     case let .pullQuote(text, caption):
-        return layoutBlockQuote(text: text, caption: caption, isPull: true,
-                                boundingWidth: boundingWidth, horizontalInset: horizontalInset,
-                                context: &context)
+        return layoutQuoteText(text: text, caption: caption, isPull: true,
+                               boundingWidth: boundingWidth, horizontalInset: horizontalInset,
+                               context: &context)
 
     case let .image(id, caption, url, webpageId):
         if case let .image(image) = context.media[id], let largest = largestImageRepresentation(image.representations) {
@@ -1901,6 +1901,86 @@ private func layoutCodeBlock(
 // MARK: - Block quote / pull quote layout (ported from V1 InstantPageLayout.swift lines 517–586)
 
 private func layoutBlockQuote(
+    blocks: [InstantPageBlock],
+    caption: RichText,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    isLast: Bool,
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    // Legacy single-paragraph fast path: preserve today's italicized body styling.
+    if blocks.count == 1, case let .paragraph(text) = blocks[0] {
+        return layoutQuoteText(text: text, caption: caption, isPull: false,
+                               boundingWidth: boundingWidth, horizontalInset: horizontalInset,
+                               context: &context)
+    }
+
+    let verticalInset: CGFloat = 4.0
+    let lineInset: CGFloat = 20.0
+    let barWidth: CGFloat = 3.0
+
+    let innerBoundingWidth = boundingWidth - horizontalInset * 2.0 - lineInset
+    let innerHorizontalInset = horizontalInset + lineInset
+
+    var result: [InstantPageV2LaidOutItem] = []
+    var contentHeight: CGFloat = verticalInset
+
+    // Fixed, compact gap between a quote's child blocks. The full page-flow spacing
+    // (spacingBetweenBlocks ~27pt around quotes) is too airy when nested; the first
+    // child hugs the top (only verticalInset above it).
+    let childSpacing: CGFloat = 10.0
+    for (i, child) in blocks.enumerated() {
+        let spacing: CGFloat = i == 0 ? 0.0 : childSpacing
+        let childItems = layoutBlock(
+            child,
+            boundingWidth: innerBoundingWidth,
+            horizontalInset: innerHorizontalInset,
+            isCover: false,
+            previousItems: result,
+            isLast: i == blocks.count - 1 && isLast,
+            context: &context
+        )
+        let dy = contentHeight + spacing
+        let offsetItems = childItems.map { $0.offsetBy(CGPoint(x: 0.0, y: dy)) }
+        let childMaxY = offsetItems.map { $0.frame.maxY }.max() ?? dy
+        contentHeight = max(contentHeight, childMaxY)
+        result.append(contentsOf: offsetItems)
+    }
+
+    // Optional caption (mirrors layoutQuoteText's caption branch).
+    if case .empty = caption {
+        // no caption
+    } else {
+        contentHeight += 14.0
+        let captionStyleStack = InstantPageTextStyleStack()
+        setupStyleStack(captionStyleStack, theme: context.theme, category: .caption, link: false)
+        let attributedCaption = attributedStringForRichText(caption, styleStack: captionStyleStack)
+        let (_, captionItems, captionSize) = layoutTextItem(
+            attributedCaption,
+            boundingWidth: innerBoundingWidth,
+            alignment: .natural,
+            offset: CGPoint(x: innerHorizontalInset, y: contentHeight),
+            fitToWidth: context.fitToWidth,
+            computeRevealCharacterRects: context.computeRevealCharacterRects
+        )
+        result.append(contentsOf: captionItems)
+        contentHeight += captionSize.height
+    }
+
+    contentHeight += verticalInset
+
+    // Vertical bar on the leading edge (matches the blockQuote branch of layoutQuoteText).
+    let bar = InstantPageV2BarItem(
+        frame: CGRect(x: horizontalInset, y: 0.0, width: barWidth, height: contentHeight),
+        color: context.theme.textCategories.paragraph.color,
+        cornerRadius: barWidth / 2.0
+    )
+    result.append(.blockQuoteBar(bar))
+
+    return result
+}
+
+private func layoutQuoteText(
     text: RichText,
     caption: RichText,
     isPull: Bool,

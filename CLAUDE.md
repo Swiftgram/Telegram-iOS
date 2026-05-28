@@ -228,6 +228,34 @@ Spec: [`docs/superpowers/specs/2026-05-27-instantpage-list-checkbox-design.md`](
 - **Forward parser keeps `[ ]` detection but routes to `checked`.** `markdownApplyTaskListMarker`/`markdownStrippingTaskListMarker`/`markdownTaskListMarker` still strip the marker from the item text; the state flows into `checked` while ordered items keep their real `"\(ordinal)"` number. The reverse converter emits lowercase `[x]` / `[ ]`, which the forward `hasPrefix` guards re-parse — that is the round-trip contract.
 - **The enum-arity change is compile-enforced.** Adding the third associated value broke every `.text`/`.blocks` construction/destructure; the full build is the completeness gate. Read-only consumers outside the core set exist (`BrowserInstantPageContent.swift`, `CachedFaqInstantPage.swift`) — grep `\.(text|blocks)\(` repo-wide when touching the enum again.
 
+## InstantPageBlock.blockQuote nested blocks
+
+`InstantPageBlock.blockQuote` carries `(blocks: [InstantPageBlock], caption: RichText)` — a sequence of nested page blocks (paragraphs, headings, lists, code, even nested quotes), not the legacy text-only payload. `.pullQuote` is unchanged (still `(text: RichText, caption: RichText)`; the TL API has no `pullQuoteBlocks` constructor).
+
+Spec: [`docs/superpowers/specs/2026-05-29-instantpage-blockquote-blocks-design.md`](docs/superpowers/specs/2026-05-29-instantpage-blockquote-blocks-design.md). Plan: [`docs/superpowers/plans/2026-05-29-instantpage-blockquote-blocks.md`](docs/superpowers/plans/2026-05-29-instantpage-blockquote-blocks.md).
+
+### Where things live
+
+| File | Responsibility |
+|---|---|
+| `submodules/TelegramCore/Sources/SyncCore/SyncCore_InstantPage.swift` | Enum case shape; Postbox coding (legacy `"t"` lift → new `"b"` object array); equality (array-aware, mirrors `.collage`); FlatBuffers codec. |
+| `submodules/TelegramCore/FlatSerialization/Models/InstantPageBlock.fbs` | `InstantPageBlock_BlockQuote`: `text` (now optional, legacy fallback) + `caption (required)` + new `blocks:[InstantPageBlock] (id: 2)`. **Source of truth**; Bazel regenerates the `*_generated.swift`. |
+| `submodules/TelegramCore/Sources/ApiUtils/InstantPage.swift` | Parse both `pageBlockBlockquote` (lift text→`[.paragraph]`) and `pageBlockBlockquoteBlocks`; encode legacy-when-possible. |
+| `submodules/InstantPageUI/Sources/InstantPageV2Layout.swift` | `layoutBlockQuote(blocks:…)` recurses into children; legacy single-paragraph fast path delegates to `layoutQuoteText` (the renamed shared text core, also used by `.pullQuote`). |
+| `submodules/InstantPageUI/Sources/InstantPageLayout.swift` | V1 `.blockQuote` arm recurses via `layoutInstantPageBlock(...)`; same single-paragraph fast path. |
+| `submodules/BrowserUI/Sources/BrowserMarkdown.swift` | Forward: one quote carrying all child blocks. Entity-expressibility gate (below). |
+| `submodules/BrowserUI/Sources/InstantPageToMarkdown.swift` | Reverse: `markdownBlockQuoteBlocks(_:)` recurses per child and prefixes `> ` per line. |
+| `submodules/TelegramStringFormatting/Sources/InstantPagePreviewText.swift` | Concatenates child `previewText()`s + caption. |
+
+### Non-obvious invariants
+
+- **Legacy shapes lift to `[.paragraph(text)]` at every decode boundary.** API `pageBlockBlockquote`, the Postbox `"t"` key (old cached pages), and the FlatBuffers `text` field (now optional) each lift into a single-paragraph blocks array. New writes emit only `blocks` (`"b"` / the FB vector). So pre-existing stored pages and older senders decode unchanged.
+- **Outbound stays on the legacy wire constructor when the shape allows.** `apiInputBlock()` emits `pageBlockBlockquote` for empty or single-`.paragraph` quotes (so older recipients understand the common chat case) and `pageBlockBlockquoteBlocks` only for genuinely nested quotes.
+- **Both renderers share one text core for the single-paragraph fast path.** `layoutQuoteText` (V2; the function formerly named `layoutBlockQuote`, `isPull:` distinguishes pull vs block) and the V1 fast-path branch keep the legacy italicized-body styling; nested children render with their own normal category styling.
+- **Nested children use a FIXED 10pt inter-child gap, not `spacingBetweenBlocks`.** The full page-flow spacing (~27pt around quotes) is too airy when nested, and 0 is too tight. `childSpacing = 10.0` lives in both layout files; the first child hugs the container's `verticalInset` (no leading gap). Combined with a nested quote's own 4pt top inset this gives ~14pt effective separation.
+- **Entity-expressibility:** a quote is entity-expressible (→ regular message path) only if its caption is empty AND every child is an entity-expressible `.paragraph`. A nested-structure or multi-paragraph quote is not, so it sends via the rich path. **Behavior change:** markdown `> p1\n>\n> p2` is now ONE quote with two paragraphs (rich) rather than two consecutive entity quotes — correct semantics.
+- **The enum-arity change is compile-enforced** across all modules; the full Bazel build is the completeness gate (no per-module build). `CachedFaqInstantPage.swift` matches `case .blockQuote:` payload-less and needs no edit. `BrowserReadability.swift` constructs `.blockQuote(blocks: [.paragraph(.italic(...))], …)` and is easy to miss in the spec's file list — grep `\.blockQuote(` repo-wide when touching the case again.
+
 ## Postbox → TelegramEngine refactor (in progress)
 
 A gradual migration is underway to eliminate direct `import Postbox` from consumer submodules in favor of `TelegramEngine`.

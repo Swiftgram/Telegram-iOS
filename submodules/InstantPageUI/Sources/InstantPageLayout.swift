@@ -501,40 +501,65 @@ public func layoutInstantPageBlock(webpage: TelegramMediaWebpage, userLocation: 
                 }
             }
             return InstantPageLayout(origin: CGPoint(), contentSize: contentSize, items: listItems)
-        case let .blockQuote(text, caption):
+        case let .blockQuote(blocks, caption):
             let lineInset: CGFloat = 20.0
             let verticalInset: CGFloat = 4.0
             var contentSize = CGSize(width: boundingWidth, height: verticalInset)
-            
+
             var items: [InstantPageItem] = []
-            
-            let styleStack = InstantPageTextStyleStack()
-            setupStyleStack(styleStack, theme: theme, category: .paragraph, link: false)
-            styleStack.push(.italic)
-            
-            let (_, textItems, textContentSize) = layoutTextItemWithString(attributedStringForRichText(text, styleStack: styleStack), boundingWidth: boundingWidth - horizontalInset * 2.0 - lineInset, offset: CGPoint(x: horizontalInset + lineInset, y: contentSize.height), media: media, webpage: webpage, fitToWidth: fitToWidth)
-            
-            contentSize.height += textContentSize.height
-            items.append(contentsOf: textItems)
-            
+
+            let innerBoundingWidth = boundingWidth - horizontalInset * 2.0 - lineInset
+            let innerHorizontalInset = horizontalInset + lineInset
+
+            if blocks.count == 1, case let .paragraph(text) = blocks[0] {
+                // Legacy single-paragraph fast path: italicized body (unchanged from prior behavior).
+                let styleStack = InstantPageTextStyleStack()
+                setupStyleStack(styleStack, theme: theme, category: .paragraph, link: false)
+                styleStack.push(.italic)
+
+                let (_, textItems, textContentSize) = layoutTextItemWithString(attributedStringForRichText(text, styleStack: styleStack), boundingWidth: innerBoundingWidth, offset: CGPoint(x: innerHorizontalInset, y: contentSize.height), media: media, webpage: webpage, fitToWidth: fitToWidth)
+
+                contentSize.height += textContentSize.height
+                items.append(contentsOf: textItems)
+            } else {
+                var previousChildItems: [InstantPageItem] = []
+                // Fixed, compact gap between a quote's child blocks (the full page-flow
+                // spacing around quotes is too airy when nested); the first child hugs
+                // the top (only verticalInset above it).
+                let childSpacing: CGFloat = 10.0
+                for (i, child) in blocks.enumerated() {
+                    let childLayout = layoutInstantPageBlock(webpage: webpage, userLocation: userLocation, rtl: rtl, block: child, boundingWidth: innerBoundingWidth, horizontalInset: innerHorizontalInset, safeInset: safeInset, isCover: false, previousItems: previousChildItems, fillToSize: nil, media: media, mediaIndexCounter: &mediaIndexCounter, embedIndexCounter: &embedIndexCounter, detailsIndexCounter: &detailsIndexCounter, theme: theme, strings: strings, dateTimeFormat: dateTimeFormat, webEmbedHeights: webEmbedHeights, cachedMessageSyntaxHighlight: cachedMessageSyntaxHighlight, excludeCaptions: excludeCaptions, isLast: i == blocks.count - 1 && isLast, fitToWidth: fitToWidth)
+                    let spacing: CGFloat = i == 0 ? 0.0 : childSpacing
+                    contentSize.height += spacing
+                    var childItems: [InstantPageItem] = []
+                    for var item in childLayout.items {
+                        item.frame = item.frame.offsetBy(dx: 0.0, dy: contentSize.height)
+                        childItems.append(item)
+                    }
+                    items.append(contentsOf: childItems)
+                    previousChildItems = childItems
+                    contentSize.height += childLayout.contentSize.height
+                }
+            }
+
             if case .empty = caption {
             } else {
                 contentSize.height += 14.0
-                
+
                 let styleStack = InstantPageTextStyleStack()
                 setupStyleStack(styleStack, theme: theme, category: .caption, link: false)
-                
-                let (_, captionItems, captionContentSize) = layoutTextItemWithString(attributedStringForRichText(caption, styleStack: styleStack), boundingWidth: boundingWidth - horizontalInset * 2.0 - lineInset, offset: CGPoint(x: horizontalInset + lineInset, y: contentSize.height), media: media, webpage: webpage)
-                
+
+                let (_, captionItems, captionContentSize) = layoutTextItemWithString(attributedStringForRichText(caption, styleStack: styleStack), boundingWidth: innerBoundingWidth, offset: CGPoint(x: innerHorizontalInset, y: contentSize.height), media: media, webpage: webpage)
+
                 contentSize.height += captionContentSize.height
                 items.append(contentsOf: captionItems)
             }
             contentSize.height += verticalInset
-            
+
             let shapeItem = InstantPageShapeItem(frame: CGRect(origin: CGPoint(x: horizontalInset, y: 0.0), size: CGSize(width: 3.0, height: contentSize.height)), shapeFrame: CGRect(origin: CGPoint(x: 0.0, y: 0.0), size: CGSize(width: 3.0, height: contentSize.height)), shape: .roundLine, color: theme.textCategories.paragraph.color)
-            
+
             items.append(shapeItem)
-            
+
             return InstantPageLayout(origin: CGPoint(), contentSize: contentSize, items: items)
         case let .pullQuote(text, caption):
             let verticalInset: CGFloat = 4.0
