@@ -151,6 +151,8 @@ extension InstantPageBlock {
             return ""
         case .kicker:
             return ""
+        case .thinking:
+            return ""
         case .table:
             //TODO:localize
             return "Table"

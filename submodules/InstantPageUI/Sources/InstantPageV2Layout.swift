@@ -889,6 +889,8 @@ private func layoutBlock(
                            context: &context)
 
     // Block kinds filled in by later tasks:
+    case .thinking:
+        return []
     case .unsupported:
         return []
     }

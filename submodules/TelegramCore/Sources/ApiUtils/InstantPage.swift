@@ -328,14 +328,16 @@ extension InstantPageBlock {
                 self = .heading(text: RichText(apiText: pageBlockHeading6.text), level: 6)
             case let .pageBlockMath(pageBlockMath):
                 self = .formula(latex: pageBlockMath.source)
-            case .inputPageBlockMap, .pageBlockThinking:
+            case let .pageBlockThinking(pageBlockThinking):
+                self = .thinking(RichText(apiText: pageBlockThinking.text))
+            case .inputPageBlockMap:
                 self = .unsupported
         }
     }
     
     func apiInputBlock() -> Api.PageBlock? {
         switch self {
-        case .unsupported, .title, .subtitle, .kicker, .header, .subheader, .cover, .channelBanner, .authorDate, .relatedArticles, .webEmbed, .postEmbed:
+        case .unsupported, .title, .subtitle, .kicker, .header, .subheader, .cover, .channelBanner, .authorDate, .relatedArticles, .webEmbed, .postEmbed, .thinking:
             return nil
         case let .heading(text, level):
             let block: Api.PageBlock
