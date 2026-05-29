@@ -150,6 +150,13 @@ public struct RequestWebViewResult {
     public let queryId: Int64?
     public let url: String
     public let keepAliveSignal: Signal<Never, KeepWebViewError>?
+
+    public init(flags: Flags, queryId: Int64?, url: String, keepAliveSignal: Signal<Never, KeepWebViewError>?) {
+        self.flags = flags
+        self.queryId = queryId
+        self.url = url
+        self.keepAliveSignal = keepAliveSignal
+    }
 }
 
 public enum RequestWebViewError {

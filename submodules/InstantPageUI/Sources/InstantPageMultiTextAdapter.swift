@@ -5,28 +5,38 @@ import Display
 import TelegramCore
 
 public final class InstantPageMultiTextAdapter: ASDisplayNode, TextNodeProtocol {
-    private struct Entry {
+    public struct Entry {
+        public let item: InstantPageTextItem
+        public let frameOrigin: CGPoint
+
+        public init(item: InstantPageTextItem, frameOrigin: CGPoint) {
+            self.item = item
+            self.frameOrigin = frameOrigin
+        }
+    }
+
+    private struct InternalEntry {
         let item: InstantPageTextItem
         let charOffset: Int
         let frameOrigin: CGPoint
     }
 
-    private let entries: [Entry]
+    private let entries: [InternalEntry]
     private let combinedString: NSAttributedString
 
-    public init(items: [InstantPageTextItem]) {
+    public init(entries: [Entry]) {
         let separator = NSAttributedString(string: "\n\n")
         let combined = NSMutableAttributedString()
-        var entries: [Entry] = []
-        for (index, item) in items.enumerated() {
+        var internalEntries: [InternalEntry] = []
+        for (index, entry) in entries.enumerated() {
             let charOffset = combined.length
-            entries.append(Entry(item: item, charOffset: charOffset, frameOrigin: item.frame.origin))
-            combined.append(item.attributedString)
-            if index != items.count - 1 {
+            internalEntries.append(InternalEntry(item: entry.item, charOffset: charOffset, frameOrigin: entry.frameOrigin))
+            combined.append(entry.item.attributedString)
+            if index != entries.count - 1 {
                 combined.append(separator)
             }
         }
-        self.entries = entries
+        self.entries = internalEntries
         self.combinedString = combined
         super.init()
         self.isUserInteractionEnabled = false

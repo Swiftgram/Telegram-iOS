@@ -60,6 +60,17 @@ private func drawRectsImageContent(size: CGSize, context: CGContext, color: UICo
                 }
                 currentRects.removeAll()
             } else {
+                // The path-stitching loop below assumes consecutive rects in a group
+                // are adjacent (overlapping or sharing an edge). When they're disjoint
+                // — vertical gap, vertical inversion, or horizontal gap on the same
+                // line — it bridges them with a polygon perimeter that renders as a
+                // diagonal bridge across empty space. Split groups whenever the next
+                // rect doesn't intersect the last one (1pt slop in both axes matches
+                // the snap loop's adjacency test).
+                if let last = currentRects.last, !last.insetBy(dx: -1.0, dy: -1.0).intersects(rect) {
+                    combinedRects.append(currentRects)
+                    currentRects.removeAll()
+                }
                 currentRects.append(rect)
             }
         }

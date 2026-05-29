@@ -519,14 +519,16 @@ extension ChatControllerImpl {
                                     return
                                 }
                                 var entities: TextEntitiesMessageAttribute?
+                                var richText: RichTextMessageAttribute?
                                 for attribute in message.attributes {
                                     if let attribute = attribute as? TextEntitiesMessageAttribute {
                                         entities = attribute
-                                        break
+                                    } else if let attribute = attribute as? RichTextMessageAttribute {
+                                        richText = attribute
                                     }
                                 }
                                 let scheduleTime = message.timestamp + repeatAttribute.repeatPeriod
-                                self.editMessageDisposable.set((self.context.engine.messages.requestEditMessage(messageId: message.id, text: message.text, media: .keep, entities: entities, inlineStickers: [:], webpagePreviewAttribute: nil, disableUrlPreview: false, scheduleInfoAttribute: OutgoingScheduleInfoMessageAttribute(scheduleTime: scheduleTime, repeatPeriod: repeatAttribute.repeatPeriod)) |> deliverOnMainQueue).startStrict(next: { result in
+                                self.editMessageDisposable.set((self.context.engine.messages.requestEditMessage(messageId: message.id, text: message.text, media: .keep, entities: entities, richText: richText, inlineStickers: [:], webpagePreviewAttribute: nil, disableUrlPreview: false, scheduleInfoAttribute: OutgoingScheduleInfoMessageAttribute(scheduleTime: scheduleTime, repeatPeriod: repeatAttribute.repeatPeriod)) |> deliverOnMainQueue).startStrict(next: { result in
                                 }, error: { error in
                                 }))
                             }),

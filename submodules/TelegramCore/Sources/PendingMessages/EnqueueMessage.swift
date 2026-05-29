@@ -255,6 +255,8 @@ private func filterMessageAttributesForOutgoingMessage(_ attributes: [MessageAtt
         switch attribute {
         case _ as TextEntitiesMessageAttribute:
             return true
+        case _ as RichTextMessageAttribute:
+            return true
         case _ as InlineBotMessageAttribute:
             return true
         case _ as OutgoingMessageInfoAttribute:
@@ -305,6 +307,8 @@ private func filterMessageAttributesForForwardedMessage(_ attributes: [MessageAt
     return attributes.filter { attribute in
         switch attribute {
             case _ as TextEntitiesMessageAttribute:
+                return true
+            case _ as RichTextMessageAttribute:
                 return true
             case _ as InlineBotMessageAttribute:
                 return true

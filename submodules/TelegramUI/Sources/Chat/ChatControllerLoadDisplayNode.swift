@@ -15,6 +15,7 @@ import DeviceAccess
 import TextFormat
 import TelegramBaseController
 import AccountContext
+import BrowserUI
 import TelegramStringFormatting
 import OverlayStatusController
 import DeviceLocationManager
@@ -1778,7 +1779,12 @@ extension ChatControllerImpl {
                                 }
                             }
                             
-                            let inputText = chatInputStateStringWithAppliedEntities(message.text, entities: entities)
+                            let inputText: NSAttributedString
+                            if let richTextAttribute = message.attributes.first(where: { $0 is RichTextMessageAttribute }) as? RichTextMessageAttribute {
+                                inputText = NSAttributedString(string: markdownStringFromInstantPage(richTextAttribute.instantPage))
+                            } else {
+                                inputText = chatInputStateStringWithAppliedEntities(message.text, entities: entities)
+                            }
                             var disableUrlPreviews: [String] = []
                             if webpageUrl == nil {
                                 disableUrlPreviews = detectUrls(inputText)
@@ -2207,7 +2213,17 @@ extension ChatControllerImpl {
                 }
                 
                 let text = trimChatInputText(convertMarkdownToAttributes(expandedInputStateAttributedString(editMessage.inputState.inputText)))
-                
+
+                let rawEditText = expandedInputStateAttributedString(editMessage.inputState.inputText).string
+                var isSpecialChatContents = false
+                if case .customChatContents = strongSelf.presentationInterfaceState.subject {
+                    isSpecialChatContents = true
+                }
+                var richTextAttribute: RichTextMessageAttribute?
+                if !isSpecialChatContents {
+                    richTextAttribute = richMarkdownAttributeIfNeeded(context: strongSelf.context, text: rawEditText)
+                }
+
                 let entities = generateTextEntities(text.string, enabledTypes: .all, currentEntities: generateChatInputTextEntities(text))
                 var entitiesAttribute: TextEntitiesMessageAttribute?
                 if !entities.isEmpty {
@@ -2289,9 +2305,17 @@ extension ChatControllerImpl {
                         if let currentMessage = currentMessage {
                             let currentEntities = currentMessage.textEntitiesAttribute?.entities ?? []
                             let currentWebpagePreviewAttribute = currentMessage.webpagePreviewAttribute ?? WebpagePreviewMessageAttribute(leadingPreview: false, forceLargeMedia: nil, isManuallyAdded: true, isSafe: false)
-                            
-                            if currentMessage.text != text.string || currentEntities != entities || updatingMedia || webpagePreviewAttribute != currentWebpagePreviewAttribute || disableUrlPreview {
-                                strongSelf.context.account.pendingUpdateMessageManager.add(messageId: editMessage.messageId, text: text.string, media: media, entities: entitiesAttribute, inlineStickers: inlineStickers, webpagePreviewAttribute: webpagePreviewAttribute, invertMediaAttribute: invertedMediaAttribute, disableUrlPreview: disableUrlPreview)
+                            let currentRichText = currentMessage.attributes.first(where: { $0 is RichTextMessageAttribute }) as? RichTextMessageAttribute
+
+                            if let richTextAttribute = richTextAttribute {
+                                // Rich edit: empty text, no entities, carry the rich attribute.
+                                if currentRichText != richTextAttribute || !currentMessage.text.isEmpty || updatingMedia {
+                                    strongSelf.context.account.pendingUpdateMessageManager.add(messageId: editMessage.messageId, text: "", media: media, entities: nil, richText: richTextAttribute, inlineStickers: inlineStickers, webpagePreviewAttribute: webpagePreviewAttribute, invertMediaAttribute: invertedMediaAttribute, disableUrlPreview: disableUrlPreview)
+                                }
+                            } else {
+                                if currentMessage.text != text.string || currentEntities != entities || currentRichText != nil || updatingMedia || webpagePreviewAttribute != currentWebpagePreviewAttribute || disableUrlPreview {
+                                    strongSelf.context.account.pendingUpdateMessageManager.add(messageId: editMessage.messageId, text: text.string, media: media, entities: entitiesAttribute, richText: nil, inlineStickers: inlineStickers, webpagePreviewAttribute: webpagePreviewAttribute, invertMediaAttribute: invertedMediaAttribute, disableUrlPreview: disableUrlPreview)
+                                }
                             }
                         }
                         

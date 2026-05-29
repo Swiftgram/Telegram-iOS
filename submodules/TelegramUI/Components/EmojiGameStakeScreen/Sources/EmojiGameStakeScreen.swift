@@ -1008,7 +1008,6 @@ public final class AmountFieldComponent: Component {
             case .stars:
                 text = "\(value)"
             case .ton:
-                
                 text = "\(formatTonAmountText(value, dateTimeFormat: PresentationDateTimeFormat(timeFormat: component.dateTimeFormat.timeFormat, dateFormat: component.dateTimeFormat.dateFormat, dateSeparator: "", dateSuffix: "", requiresFullYear: false, decimalSeparator: component.dateTimeFormat.decimalSeparator, groupingSeparator: component.dateTimeFormat.groupingSeparator), maxDecimalPositions: nil))"
             }
             self.textField.text = text

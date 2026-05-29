@@ -1829,7 +1829,7 @@ extension ChatControllerImpl {
                 }
             }, presentSchedulePicker: { [weak self] _, done in
                 if let strongSelf = self {
-                    strongSelf.presentScheduleTimePicker(style: .media, completion: { [weak self] result in
+                    strongSelf.presentScheduleTimePicker(style: .media, presentInOverlay: true, completion: { [weak self] result in
                         if let strongSelf = self {
                             done(result.time, result.silentPosting)
                             if strongSelf.presentationInterfaceState.subject != .scheduledMessages && result.time != scheduleWhenOnlineTimestamp {
@@ -2120,6 +2120,7 @@ extension ChatControllerImpl {
                         text: "",
                         media: .update(.standalone(media: todo)),
                         entities: nil,
+                        richText: nil,
                         inlineStickers: [:]
                     ).start()
                 } else {

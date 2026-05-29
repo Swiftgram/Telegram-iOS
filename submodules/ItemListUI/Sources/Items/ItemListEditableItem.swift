@@ -69,15 +69,170 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
     private var initialRevealOffset: CGFloat = 0.0
     private var hasActiveRevealGestureOffset: Bool = false
     public private(set) var revealOffset: CGFloat = 0.0
-    
+    public private(set) var isRevealOptionsActive: Bool = false
+    public private(set) var isNextRevealOptionsActive: Bool = false
+    private weak var revealOptionsActivePreviousItemNode: ItemListRevealOptionsItemNode?
+
+    private weak var revealOptionsTopSeparatorNode: ASDisplayNode?
+    private weak var revealOptionsBottomSeparatorNode: ASDisplayNode?
+    private var revealOptionsTopSeparatorBaseIsHidden: Bool = false
+    private var revealOptionsBottomSeparatorBaseIsHidden: Bool = false
+    private var revealOptionsTopSeparatorHiddenByPreviousRevealOptions: Bool = false
+    private var revealOptionsBottomSeparatorHiddenByNextRevealOptions: Bool = false
+
+    private weak var revealOptionsHighlightedBackgroundNode: ASDisplayNode?
+    private var revealOptionsHighlightedBackgroundBaseFrame: CGRect?
+    private var revealOptionsHighlightedBackgroundTracksRevealOffset: Bool = false
+    private var revealOptionsHighlightedBackgroundActiveCornerRadius: CGFloat = 0.0
+
     private var recognizer: ItemListRevealOptionsGestureRecognizer?
     private var tapRecognizer: UITapGestureRecognizer?
     private var hapticFeedback: HapticFeedback?
     
     private var allowAnyDirection = false
-    
+
     public var isDisplayingRevealedOptions: Bool {
         return !self.revealOffset.isZero
+    }
+
+    private func updateRevealOptionsActive(_ isActive: Bool, transition: ContainedViewLayoutTransition) {
+        if self.isRevealOptionsActive != isActive {
+            self.isRevealOptionsActive = isActive
+            self.updatePreviousRevealOptionsItemNode(isActive: isActive, transition: transition)
+            self.revealOptionsActiveStateUpdated(isActive: isActive, transition: transition)
+        }
+    }
+
+    private func updateNextRevealOptionsActive(_ isActive: Bool, transition: ContainedViewLayoutTransition) {
+        if self.isNextRevealOptionsActive != isActive {
+            self.isNextRevealOptionsActive = isActive
+            self.nextRevealOptionsActiveStateUpdated(isActive: isActive, transition: transition)
+        }
+    }
+
+    private func previousRevealOptionsItemNode() -> ItemListRevealOptionsItemNode? {
+        guard let subnodes = self.supernode?.subnodes else {
+            return nil
+        }
+
+        if let index = self.index {
+            var candidate: ItemListRevealOptionsItemNode?
+            for subnode in subnodes {
+                guard let itemNode = subnode as? ItemListRevealOptionsItemNode, itemNode !== self, let itemIndex = itemNode.index, itemIndex < index else {
+                    continue
+                }
+                if let currentCandidate = candidate, let candidateIndex = currentCandidate.index {
+                    if itemIndex > candidateIndex {
+                        candidate = itemNode
+                    }
+                } else {
+                    candidate = itemNode
+                }
+            }
+            if let candidate = candidate {
+                return candidate
+            }
+        }
+
+        var candidate: ItemListRevealOptionsItemNode?
+        for subnode in subnodes {
+            guard let itemNode = subnode as? ItemListRevealOptionsItemNode, itemNode !== self else {
+                continue
+            }
+            if itemNode.frame.maxY <= self.frame.minY + UIScreenPixel {
+                if let currentCandidate = candidate {
+                    if itemNode.frame.maxY > currentCandidate.frame.maxY {
+                        candidate = itemNode
+                    }
+                } else {
+                    candidate = itemNode
+                }
+            }
+        }
+        return candidate
+    }
+
+    private func updatePreviousRevealOptionsItemNode(isActive: Bool, transition: ContainedViewLayoutTransition) {
+        let previousItemNode = isActive ? self.previousRevealOptionsItemNode() : nil
+        if self.revealOptionsActivePreviousItemNode !== previousItemNode {
+            self.revealOptionsActivePreviousItemNode?.updateNextRevealOptionsActive(false, transition: transition)
+            self.revealOptionsActivePreviousItemNode = previousItemNode
+        }
+        previousItemNode?.updateNextRevealOptionsActive(isActive, transition: transition)
+        if !isActive {
+            self.revealOptionsActivePreviousItemNode = nil
+        }
+    }
+
+    private func updateRevealOptionsSeparatorVisibility() {
+        self.revealOptionsTopSeparatorNode?.isHidden = self.revealOptionsTopSeparatorBaseIsHidden || self.revealOptionsTopSeparatorHiddenByPreviousRevealOptions || self.isRevealOptionsActive
+        self.revealOptionsBottomSeparatorNode?.isHidden = self.revealOptionsBottomSeparatorBaseIsHidden || self.revealOptionsBottomSeparatorHiddenByNextRevealOptions || self.isRevealOptionsActive || self.isNextRevealOptionsActive
+    }
+
+    private func updateRevealOptionsHighlightedBackgroundGeometry(transition: ContainedViewLayoutTransition) {
+        guard let highlightedBackgroundNode = self.revealOptionsHighlightedBackgroundNode, let baseFrame = self.revealOptionsHighlightedBackgroundBaseFrame else {
+            return
+        }
+
+        let frame: CGRect
+        if self.revealOptionsHighlightedBackgroundTracksRevealOffset && self.isRevealOptionsActive {
+            frame = baseFrame.offsetBy(dx: self.revealOffset, dy: 0.0)
+        } else {
+            frame = baseFrame
+        }
+        transition.updateFrame(node: highlightedBackgroundNode, frame: frame)
+        transition.updateCornerRadius(node: highlightedBackgroundNode, cornerRadius: self.isRevealOptionsActive ? self.revealOptionsHighlightedBackgroundActiveCornerRadius : 0.0)
+    }
+
+    public func updateRevealOptionsSeparatorNodes(top: ASDisplayNode?, bottom: ASDisplayNode?, topIsHidden: Bool, bottomIsHidden: Bool, topHiddenByPreviousRevealOptions: Bool = false, bottomHiddenByNextRevealOptions: Bool = false) {
+        self.revealOptionsTopSeparatorNode = top
+        self.revealOptionsBottomSeparatorNode = bottom
+        self.revealOptionsTopSeparatorBaseIsHidden = topIsHidden
+        self.revealOptionsBottomSeparatorBaseIsHidden = bottomIsHidden
+        self.revealOptionsTopSeparatorHiddenByPreviousRevealOptions = topHiddenByPreviousRevealOptions
+        self.revealOptionsBottomSeparatorHiddenByNextRevealOptions = bottomHiddenByNextRevealOptions
+        self.updateRevealOptionsSeparatorVisibility()
+    }
+
+    public func updateRevealOptionsHighlightedBackgroundFrame(_ highlightedBackgroundNode: ASDisplayNode, frame: CGRect, tracksRevealOffset: Bool = true, activeCornerRadius: CGFloat = 26.0, transition: ContainedViewLayoutTransition = .immediate) {
+        self.revealOptionsHighlightedBackgroundNode = highlightedBackgroundNode
+        self.revealOptionsHighlightedBackgroundBaseFrame = frame
+        self.revealOptionsHighlightedBackgroundTracksRevealOffset = tracksRevealOffset
+        self.revealOptionsHighlightedBackgroundActiveCornerRadius = activeCornerRadius
+        self.updateRevealOptionsHighlightedBackgroundGeometry(transition: transition)
+    }
+
+    public func updateRevealOptionsHighlightedBackgroundNode(_ highlightedBackgroundNode: ASDisplayNode, isHighlighted: Bool, transition: ContainedViewLayoutTransition, aboveNodes: [ASDisplayNode?]) {
+        self.revealOptionsHighlightedBackgroundNode = highlightedBackgroundNode
+        if isHighlighted {
+            highlightedBackgroundNode.alpha = 1.0
+            if highlightedBackgroundNode.supernode == nil {
+                var anchorNode: ASDisplayNode?
+                for node in aboveNodes {
+                    if let node = node, node.supernode != nil {
+                        anchorNode = node
+                        break
+                    }
+                }
+                if let anchorNode = anchorNode {
+                    self.insertSubnode(highlightedBackgroundNode, aboveSubnode: anchorNode)
+                } else {
+                    self.addSubnode(highlightedBackgroundNode)
+                }
+            }
+        } else if highlightedBackgroundNode.supernode != nil {
+            if transition.isAnimated {
+                highlightedBackgroundNode.layer.animateAlpha(from: highlightedBackgroundNode.alpha, to: 0.0, duration: 0.4, completion: { [weak highlightedBackgroundNode] completed in
+                    if completed {
+                        highlightedBackgroundNode?.removeFromSupernode()
+                    }
+                })
+                highlightedBackgroundNode.alpha = 0.0
+            } else {
+                highlightedBackgroundNode.removeFromSupernode()
+            }
+        }
+        self.updateRevealOptionsHighlightedBackgroundGeometry(transition: transition)
     }
     
     override open var canBeSelected: Bool {
@@ -86,6 +241,10 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
     
     override public init(layerBacked: Bool, rotated: Bool, seeThrough: Bool) {
         super.init(layerBacked: layerBacked, rotated: rotated, seeThrough: seeThrough)
+    }
+
+    deinit {
+        self.revealOptionsActivePreviousItemNode?.updateNextRevealOptionsActive(false, transition: .immediate)
     }
     
     open var controlsContainer: ASDisplayNode {
@@ -385,6 +544,9 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
     
     public func updateLayout(size: CGSize, leftInset: CGFloat, rightInset: CGFloat) {
         self.validLayout = (size, leftInset, rightInset)
+        if self.isRevealOptionsActive {
+            self.updatePreviousRevealOptionsItemNode(isActive: true, transition: .immediate)
+        }
         
         if let leftRevealNode = self.leftRevealNode {
             var revealSize = leftRevealNode.measure(CGSize(width: CGFloat.greatestFiniteMagnitude, height: size.height))
@@ -401,6 +563,7 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
     
     open func updateRevealOffsetInternal(offset: CGFloat, transition: ContainedViewLayoutTransition, completion: (() -> Void)? = nil) {
         self.revealOffset = offset
+        self.updateRevealOptionsActive(!offset.isZero, transition: transition)
         guard let (size, leftInset, rightInset) = self.validLayout else {
             return
         }
@@ -470,10 +633,20 @@ open class ItemListRevealOptionsItemNode: ListViewItemNode, ASGestureRecognizerD
         }
         
         self.updateRevealOffset(offset: offset, transition: transition)
+        self.updateRevealOptionsHighlightedBackgroundGeometry(transition: transition)
     }
     
     open func updateRevealOffset(offset: CGFloat, transition: ContainedViewLayoutTransition) {
         
+    }
+
+    open func revealOptionsActiveStateUpdated(isActive: Bool, transition: ContainedViewLayoutTransition) {
+        self.updateRevealOptionsSeparatorVisibility()
+        self.updateRevealOptionsHighlightedBackgroundGeometry(transition: transition)
+    }
+
+    open func nextRevealOptionsActiveStateUpdated(isActive: Bool, transition: ContainedViewLayoutTransition) {
+        self.updateRevealOptionsSeparatorVisibility()
     }
     
     open func revealOptionsInteractivelyOpened() {

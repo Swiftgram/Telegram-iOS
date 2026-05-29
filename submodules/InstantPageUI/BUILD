@@ -19,6 +19,10 @@ swift_library(
         "//submodules/TelegramPresentationData:TelegramPresentationData",
         "//submodules/TelegramUIPreferences:TelegramUIPreferences",
         "//submodules/TextFormat:TextFormat",
+        "//submodules/InvisibleInkDustNode:InvisibleInkDustNode",
+        "//submodules/TelegramUI/Components/EmojiTextAttachmentView:EmojiTextAttachmentView",
+        "//submodules/TelegramUI/Components/AnimationCache:AnimationCache",
+        "//submodules/TelegramUI/Components/MultiAnimationRenderer:MultiAnimationRenderer",
         "//submodules/GalleryUI:GalleryUI",
         "//submodules/MusicAlbumArtResources:MusicAlbumArtResources",
         "//submodules/LiveLocationPositionNode:LiveLocationPositionNode",
@@ -30,6 +34,7 @@ swift_library(
         "//submodules/TranslateUI:TranslateUI",
         "//submodules/Tuples:Tuples",
         "//third-party/SwiftMath:SwiftMath",
+        "//submodules/ComponentFlow:ComponentFlow",
     ],
     visibility = [
         "//visibility:public",

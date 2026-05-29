@@ -835,14 +835,9 @@ public final class ChatEntityKeyboardInputNode: ChatInputNode {
                     return
                 }
 
-                let viewKey = PostboxViewKey.orderedItemList(id: Namespaces.OrderedItemList.CloudFeaturedEmojiPacks)
-                let _ = (context.account.postbox.combinedView(keys: [viewKey])
-                |> take(1)
-                |> deliverOnMainQueue).start(next: { views in
-                    guard let view = views.views[viewKey] as? OrderedItemListView else {
-                        return
-                    }
-                    for featuredEmojiPack in view.items.lazy.map({ $0.contents.get(FeaturedStickerPackItem.self)! }) {
+                let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Collections.FeaturedEmojiPacks())
+                |> deliverOnMainQueue).start(next: { featuredEmojiPacks in
+                    for featuredEmojiPack in featuredEmojiPacks {
                         if featuredEmojiPack.info.id == collectionId {
                             if let strongSelf = self {
                                 strongSelf.scheduledContentAnimationHint = EmojiPagerContentComponent.ContentAnimation(type: .groupInstalled(id: collectionId, scrollToGroup: scrollToGroup))
@@ -877,15 +872,10 @@ public final class ChatEntityKeyboardInputNode: ChatInputNode {
                     ])])
                     interaction.presentController(actionSheet, nil)
                 } else if groupId == AnyHashable("featuredTop") {
-                    let viewKey = PostboxViewKey.orderedItemList(id: Namespaces.OrderedItemList.CloudFeaturedEmojiPacks)
-                    let _ = (context.account.postbox.combinedView(keys: [viewKey])
-                    |> take(1)
-                    |> deliverOnMainQueue).start(next: { views in
-                        guard let view = views.views[viewKey] as? OrderedItemListView else {
-                            return
-                        }
+                    let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Collections.FeaturedEmojiPacks())
+                    |> deliverOnMainQueue).start(next: { featuredEmojiPacks in
                         var emojiPackIds: [Int64] = []
-                        for featuredEmojiPack in view.items.lazy.map({ $0.contents.get(FeaturedStickerPackItem.self)! }) {
+                        for featuredEmojiPack in featuredEmojiPacks {
                             emojiPackIds.append(featuredEmojiPack.info.id.id)
                         }
                         let _ = ApplicationSpecificNotice.setDismissedTrendingEmojiPacks(accountManager: context.sharedContext.accountManager, values: emojiPackIds).start()
@@ -1355,14 +1345,9 @@ public final class ChatEntityKeyboardInputNode: ChatInputNode {
                     return
                 }
 
-                let viewKey = PostboxViewKey.orderedItemList(id: Namespaces.OrderedItemList.CloudFeaturedStickerPacks)
-                let _ = (context.account.postbox.combinedView(keys: [viewKey])
-                |> take(1)
-                |> deliverOnMainQueue).start(next: { views in
-                    guard let view = views.views[viewKey] as? OrderedItemListView else {
-                        return
-                    }
-                    for featuredStickerPack in view.items.lazy.map({ $0.contents.get(FeaturedStickerPackItem.self)! }) {
+                let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Collections.FeaturedStickerPacks())
+                |> deliverOnMainQueue).start(next: { featuredStickerPacks in
+                    for featuredStickerPack in featuredStickerPacks {
                         if featuredStickerPack.info.id == collectionId {
                             let _ = (context.engine.stickers.loadedStickerPack(reference: .id(id: featuredStickerPack.info.id.id, accessHash: featuredStickerPack.info.accessHash), forceActualized: false)
                             |> mapToSignal { result -> Signal<Void, NoError> in
@@ -1411,15 +1396,10 @@ public final class ChatEntityKeyboardInputNode: ChatInputNode {
                     ])])
                     interaction.presentController(actionSheet, nil)
                 } else if groupId == AnyHashable("featuredTop") {
-                    let viewKey = PostboxViewKey.orderedItemList(id: Namespaces.OrderedItemList.CloudFeaturedStickerPacks)
-                    let _ = (context.account.postbox.combinedView(keys: [viewKey])
-                    |> take(1)
-                    |> deliverOnMainQueue).start(next: { views in
-                        guard let view = views.views[viewKey] as? OrderedItemListView else {
-                            return
-                        }
+                    let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Collections.FeaturedStickerPacks())
+                    |> deliverOnMainQueue).start(next: { featuredStickerPacks in
                         var stickerPackIds: [Int64] = []
-                        for featuredStickerPack in view.items.lazy.map({ $0.contents.get(FeaturedStickerPackItem.self)! }) {
+                        for featuredStickerPack in featuredStickerPacks {
                             stickerPackIds.append(featuredStickerPack.info.id.id)
                         }
                         let _ = ApplicationSpecificNotice.setDismissedTrendingStickerPacks(accountManager: context.sharedContext.accountManager, values: stickerPackIds).start()

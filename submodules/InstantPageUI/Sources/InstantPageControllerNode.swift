@@ -73,7 +73,6 @@ final class InstantPageControllerNode: ASDisplayNode, ASScrollViewDelegate {
     private var previousContentOffset: CGPoint?
     private var isDeceleratingBecauseOfDragging = false
     
-    private let hiddenMediaDisposable = MetaDisposable()
     private let resolveUrlDisposable = MetaDisposable()
     private let loadWebpageDisposable = MetaDisposable()
     
@@ -224,7 +223,6 @@ final class InstantPageControllerNode: ASDisplayNode, ASScrollViewDelegate {
     }
     
     deinit {
-        self.hiddenMediaDisposable.dispose()
         self.resolveUrlDisposable.dispose()
         self.loadWebpageDisposable.dispose()
         self.loadProgressDisposable.dispose()
@@ -1818,21 +1816,7 @@ final class InstantPageControllerNode: ASDisplayNode, ASScrollViewDelegate {
         guard let items = self.currentLayout?.items, let (webPage, _) = self.webPage else {
             return
         }
-        
-        if case let .geo(map) = media.media {
-            let controllerParams = LocationViewParams(sendLiveLocation: { _ in
-            }, stopLiveLocation: { _ in
-            }, openUrl: { _ in }, openPeer: { _ in
-            }, showAll: false)
-            
-            let peer = TelegramUser(id: PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(0)), accessHash: nil, firstName: "", lastName: nil, username: nil, phone: nil, photo: [], botInfo: nil, restrictionInfo: nil, flags: [], emojiStatus: nil, usernames: [], storiesHidden: nil, nameColor: nil, backgroundEmojiId: nil, profileColor: nil, profileBackgroundEmojiId: nil, subscriberCount: nil, verificationIconFileId: nil)
-            let message = Message(stableId: 0, stableVersion: 0, id: MessageId(peerId: peer.id, namespace: 0, id: 0), globallyUniqueId: nil, groupingKey: nil, groupInfo: nil, threadId: nil, timestamp: 0, flags: [], tags: [], globalTags: [], localTags: [], customTags: [], forwardInfo: nil, author: peer, text: "", attributes: [], media: [map], peers: SimpleDictionary(), associatedMessages: SimpleDictionary(), associatedMessageIds: [], associatedMedia: [:], associatedThreadInfo: nil, associatedStories: [:])
-            
-            let controller = LocationViewController(context: self.context, subject: EngineMessage(message), params: controllerParams)
-            self.pushController(controller)
-            return
-        }
-        
+
         if case let .file(file) = media.media, (file.isVoice || file.isMusic) {
             var medias: [InstantPageMedia] = []
             var initialIndex = 0
@@ -1849,68 +1833,45 @@ final class InstantPageControllerNode: ASDisplayNode, ASScrollViewDelegate {
             self.context.sharedContext.mediaManager.setPlaylist((self.context, InstantPageMediaPlaylist(webPage: webPage, items: medias, initialItemIndex: initialIndex)), type: file.isVoice ? .voice : .music, control: .playback(.play))
             return
         }
-        
-        var fromPlayingVideo = false
-        
-        var entries: [InstantPageGalleryEntry] = []
-        if case let .webpage(webPage) = media.media {
-            entries.append(InstantPageGalleryEntry(index: 0, pageId: webPage.webpageId, media: media, caption: nil, credit: nil, location: nil))
-        } else if case let .file(file) = media.media, file.isAnimated {
-            fromPlayingVideo = true
-            entries.append(InstantPageGalleryEntry(index: Int32(media.index), pageId: webPage.webpageId, media: media, caption: media.caption, credit: media.credit, location: nil))
-        } else {
-            fromPlayingVideo = true
-            var medias: [InstantPageMedia] = mediasFromItems(items)
-            medias = medias.filter { item in
-                switch item.media {
-                case .image, .file:
-                    return true
-                default:
-                    return false
-                }
-            }
-            
-            for media in medias {
-                entries.append(InstantPageGalleryEntry(index: Int32(media.index), pageId: webPage.webpageId, media: media, caption: media.caption, credit: media.credit, location: InstantPageGalleryEntryLocation(position: Int32(entries.count), totalCount: Int32(medias.count))))
-            }
-        }
-        
-        var centralIndex: Int?
-        for i in 0 ..< entries.count {
-            if entries[i].media == media {
-                centralIndex = i
-                break
-            }
-        }
-        
-        if let centralIndex = centralIndex {
-            let controller = InstantPageGalleryController(context: self.context, userLocation: self.sourceLocation.userLocation, webPage: webPage, entries: entries, centralIndex: centralIndex, fromPlayingVideo: fromPlayingVideo, replaceRootController: { _, _ in
-            }, baseNavigationController: self.getNavigationController())
-            self.hiddenMediaDisposable.set((controller.hiddenMedia |> deliverOnMainQueue).start(next: { [weak self] entry in
-                if let strongSelf = self {
-                    for (_, itemNode) in strongSelf.visibleItemsWithNodes {
-                        itemNode.updateHiddenMedia(media: entry?.media)
-                    }
-                }
-            }))
-            controller.openUrl = { [weak self] url in
+
+        openInstantPageMedia(
+            media: media,
+            allMedias: self.mediasFromItems(items),
+            webPage: webPage,
+            context: self.context,
+            userLocation: self.sourceLocation.userLocation,
+            present: { [weak self] controller, args in
+                self?.present(controller, args)
+            },
+            push: { [weak self] controller in
+                self?.pushController(controller)
+            },
+            openUrl: { [weak self] url in
                 self?.openUrl(url)
-            }
-            self.present(controller, InstantPageGalleryControllerPresentationArguments(transitionArguments: { [weak self] entry -> GalleryTransitionArguments? in
-                if let strongSelf = self {
-                    for (_, itemNode) in strongSelf.visibleItemsWithNodes {
-                        if let transitionNode = itemNode.transitionNode(media: entry.media) {
-                            return GalleryTransitionArguments(transitionNode: transitionNode, addToTransitionSurface: { view in
-                                if let strongSelf = self {
-                                    strongSelf.scrollNode.view.superview?.insertSubview(view, aboveSubview: strongSelf.scrollNode.view)
-                                }
-                            })
-                        }
+            },
+            baseNavigationController: { [weak self] in
+                self?.getNavigationController()
+            },
+            transitionArgsForMedia: { [weak self] tappedMedia -> GalleryTransitionArguments? in
+                guard let strongSelf = self else { return nil }
+                for (_, itemNode) in strongSelf.visibleItemsWithNodes {
+                    if let transitionNode = itemNode.transitionNode(media: tappedMedia) {
+                        return GalleryTransitionArguments(transitionNode: transitionNode, addToTransitionSurface: { view in
+                            if let strongSelf = self {
+                                strongSelf.scrollNode.view.superview?.insertSubview(view, aboveSubview: strongSelf.scrollNode.view)
+                            }
+                        })
                     }
                 }
                 return nil
-            }))
-        }
+            },
+            hiddenMediaCallback: { [weak self] hidden in
+                guard let strongSelf = self else { return }
+                for (_, itemNode) in strongSelf.visibleItemsWithNodes {
+                    itemNode.updateHiddenMedia(media: hidden)
+                }
+            }
+        )
     }
     
     private func updateWebEmbedHeight(_ index: Int, _ height: CGFloat) {

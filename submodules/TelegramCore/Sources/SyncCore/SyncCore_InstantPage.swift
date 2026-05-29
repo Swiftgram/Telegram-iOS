@@ -41,7 +41,7 @@ private func decodeListItems(_ decoder: PostboxDecoder) -> [InstantPageListItem]
     if !legacyItems.isEmpty {
         var items: [InstantPageListItem] = []
         for item in legacyItems {
-            items.append(.text(item, nil))
+            items.append(.text(item, nil, nil))
         }
         return items
     }
@@ -1021,15 +1021,15 @@ private enum InstantPageListItemType: Int32 {
 
 public indirect enum InstantPageListItem: PostboxCoding, Equatable {
     case unknown
-    case text(RichText, String?)
-    case blocks([InstantPageBlock], String?)
+    case text(RichText, String?, Bool?)
+    case blocks([InstantPageBlock], String?, Bool?)
     
     public init(decoder: PostboxDecoder) {
         switch decoder.decodeInt32ForKey("r", orElse: 0) {
             case InstantPageListItemType.text.rawValue:
-                self = .text(decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText, decoder.decodeOptionalStringForKey("n"))
+                self = .text(decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText, decoder.decodeOptionalStringForKey("n"), InstantPageListItem.checkedFromTriState(decoder.decodeInt32ForKey("ck", orElse: 0)))
             case InstantPageListItemType.blocks.rawValue:
-                self = .blocks(decoder.decodeObjectArrayWithDecoderForKey("b"), decoder.decodeOptionalStringForKey("n"))
+                self = .blocks(decoder.decodeObjectArrayWithDecoderForKey("b"), decoder.decodeOptionalStringForKey("n"), InstantPageListItem.checkedFromTriState(decoder.decodeInt32ForKey("ck", orElse: 0)))
             default:
                 self = .unknown
         }
@@ -1037,7 +1037,7 @@ public indirect enum InstantPageListItem: PostboxCoding, Equatable {
     
     public func encode(_ encoder: PostboxEncoder) {
         switch self {
-            case let .text(text, num):
+            case let .text(text, num, checked):
                 encoder.encodeInt32(InstantPageListItemType.text.rawValue, forKey: "r")
                 encoder.encodeObject(text, forKey: "t")
                 if let num = num {
@@ -1045,7 +1045,12 @@ public indirect enum InstantPageListItem: PostboxCoding, Equatable {
                 } else {
                     encoder.encodeNil(forKey: "n")
                 }
-            case let .blocks(blocks, num):
+                if let triState = InstantPageListItem.triState(fromChecked: checked) {
+                    encoder.encodeInt32(triState, forKey: "ck")
+                } else {
+                    encoder.encodeNil(forKey: "ck")
+                }
+            case let .blocks(blocks, num, checked):
                 encoder.encodeInt32(InstantPageListItemType.blocks.rawValue, forKey: "r")
                 encoder.encodeObjectArray(blocks, forKey: "b")
                 if let num = num {
@@ -1053,11 +1058,33 @@ public indirect enum InstantPageListItem: PostboxCoding, Equatable {
                 } else {
                     encoder.encodeNil(forKey: "n")
                 }
+                if let triState = InstantPageListItem.triState(fromChecked: checked) {
+                    encoder.encodeInt32(triState, forKey: "ck")
+                } else {
+                    encoder.encodeNil(forKey: "ck")
+                }
             default:
                 break
         }
     }
     
+    static func checkedFromTriState(_ value: Int32) -> Bool? {
+        switch value {
+        case 1: return false
+        case 2: return true
+        default: return nil
+        }
+    }
+
+    /// Returns the persisted tri-state (1 = unchecked, 2 = checked) or nil when not a checkbox item.
+    static func triState(fromChecked checked: Bool?) -> Int32? {
+        switch checked {
+        case .some(false): return 1
+        case .some(true): return 2
+        case .none: return nil
+        }
+    }
+
     public static func ==(lhs: InstantPageListItem, rhs: InstantPageListItem) -> Bool {
         switch lhs {
             case .unknown:
@@ -1066,14 +1093,14 @@ public indirect enum InstantPageListItem: PostboxCoding, Equatable {
                 } else {
                     return false
                 }
-            case let .text(lhsText, lhsNum):
-                if case let .text(rhsText, rhsNum) = rhs, lhsText == rhsText, lhsNum == rhsNum {
+            case let .text(lhsText, lhsNum, lhsChecked):
+                if case let .text(rhsText, rhsNum, rhsChecked) = rhs, lhsText == rhsText, lhsNum == rhsNum, lhsChecked == rhsChecked {
                     return true
                 } else {
                     return false
                 }
-            case let .blocks(lhsBlocks, lhsNum):
-                if case let .blocks(rhsBlocks, rhsNum) = rhs, lhsBlocks == rhsBlocks, lhsNum == rhsNum {
+            case let .blocks(lhsBlocks, lhsNum, lhsChecked):
+                if case let .blocks(rhsBlocks, rhsNum, rhsChecked) = rhs, lhsBlocks == rhsBlocks, lhsNum == rhsNum, lhsChecked == rhsChecked {
                     return true
                 } else {
                     return false
@@ -1087,7 +1114,7 @@ public indirect enum InstantPageListItem: PostboxCoding, Equatable {
             guard let textValue = flatBuffersObject.value(type: TelegramCore_InstantPageListItem_Text.self) else {
                 throw FlatBuffersError.missingRequiredField()
             }
-            self = .text(try RichText(flatBuffersObject: textValue.text), textValue.number)
+            self = .text(try RichText(flatBuffersObject: textValue.text), textValue.number, InstantPageListItem.checkedFromTriState(textValue.checkState))
             
         case .instantpagelistitemBlocks:
             guard let blocksValue = flatBuffersObject.value(type: TelegramCore_InstantPageListItem_Blocks.self) else {
@@ -1096,7 +1123,7 @@ public indirect enum InstantPageListItem: PostboxCoding, Equatable {
             let blocks = try (0 ..< blocksValue.blocksCount).map { i in
                 return try InstantPageBlock(flatBuffersObject: blocksValue.blocks(at: i)!)
             }
-            self = .blocks(blocks, blocksValue.number)
+            self = .blocks(blocks, blocksValue.number, InstantPageListItem.checkedFromTriState(blocksValue.checkState))
         case .instantpagelistitemUnknown:
             self = .unknown
         case .none_:
@@ -1109,27 +1136,33 @@ public indirect enum InstantPageListItem: PostboxCoding, Equatable {
         let offset: Offset
         
         switch self {
-        case let .text(text, number):
+        case let .text(text, number, checked):
             valueType = .instantpagelistitemText
             let textOffset = text.encodeToFlatBuffers(builder: &builder)
             let numberOffset = number.map { builder.create(string: $0) } ?? Offset()
-            
+
             let start = TelegramCore_InstantPageListItem_Text.startInstantPageListItem_Text(&builder)
             TelegramCore_InstantPageListItem_Text.add(text: textOffset, &builder)
             if let _ = number {
                 TelegramCore_InstantPageListItem_Text.add(number: numberOffset, &builder)
             }
+            if let triState = InstantPageListItem.triState(fromChecked: checked) {
+                TelegramCore_InstantPageListItem_Text.add(checkState: triState, &builder)
+            }
             offset = TelegramCore_InstantPageListItem_Text.endInstantPageListItem_Text(&builder, start: start)
-        case let .blocks(blocks, number):
+        case let .blocks(blocks, number, checked):
             valueType = .instantpagelistitemBlocks
             let blocksOffsets = blocks.map { $0.encodeToFlatBuffers(builder: &builder) }
             let blocksOffset = builder.createVector(ofOffsets: blocksOffsets, len: blocksOffsets.count)
             let numberOffset = number.map { builder.create(string: $0) } ?? Offset()
-            
+
             let start = TelegramCore_InstantPageListItem_Blocks.startInstantPageListItem_Blocks(&builder)
             TelegramCore_InstantPageListItem_Blocks.addVectorOf(blocks: blocksOffset, &builder)
             if let _ = number {
                 TelegramCore_InstantPageListItem_Blocks.add(number: numberOffset, &builder)
+            }
+            if let triState = InstantPageListItem.triState(fromChecked: checked) {
+                TelegramCore_InstantPageListItem_Blocks.add(checkState: triState, &builder)
             }
             offset = TelegramCore_InstantPageListItem_Blocks.endInstantPageListItem_Blocks(&builder, start: start)
         case .unknown:

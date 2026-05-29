@@ -88,17 +88,6 @@ func apiUpdatesGroups(_ updates: Api.Updates) -> [Api.Chat] {
     }
 }
 
-func _internal_joinChatWebView(account: Account, botId: Int64, url: String, queryId: Int64, users: [Api.User], peerId: PeerId?) -> Signal<JoinChatWebView?, NoError> {
-    let botPeerId = PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(botId))
-    return account.postbox.transaction { transaction -> JoinChatWebView? in
-        updatePeers(transaction: transaction, accountPeerId: account.peerId, peers: AccumulatedPeers(users: users))
-        guard let botPeer = transaction.getPeer(botPeerId) else {
-            return nil
-        }
-        return JoinChatWebView(botPeer: EnginePeer(botPeer), url: url, queryId: queryId, peerId: peerId)
-    }
-}
-
 public enum ExternalJoiningChatState {
     public struct Invite: Equatable {
         public struct Flags: Equatable, Codable {
@@ -168,13 +157,18 @@ func _internal_joinChatInteractively(with hash: String, account: Account) -> Sig
             }
             return .single(.joined(nil))
         case let .chatInviteJoinResultWebView(data):
-            return _internal_joinChatWebView(account: account, botId: data.botId, url: data.url, queryId: data.queryId, users: data.users, peerId: nil)
-            |> castError(JoinLinkError.self)
-            |> mapToSignal { webView -> Signal<InternalJoinLinkResult, JoinLinkError> in
-                guard let webView else {
-                    return .fail(.generic)
+            switch data.webview {
+            case let .webViewResultUrl(urlData):
+                let botPeerId = PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(data.botId))
+                return account.postbox.transaction { transaction -> Signal<InternalJoinLinkResult, JoinLinkError> in
+                    updatePeers(transaction: transaction, accountPeerId: account.peerId, peers: AccumulatedPeers(users: data.users))
+                    guard let botPeer = transaction.getPeer(botPeerId) else {
+                        return .fail(.generic)
+                    }
+                    return .single(.webView(JoinChatWebView(botPeer: EnginePeer(botPeer), url: urlData.url, queryId: urlData.queryId ?? 0, peerId: nil)))
                 }
-                return .single(.webView(webView))
+                |> castError(JoinLinkError.self)
+                |> switchToLatest
             }
         }
     }

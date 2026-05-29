@@ -176,6 +176,7 @@ final class CallControllerNodeV2: ViewControllerTracingNode, CallControllerNodeP
             shortName: " ",
             avatarImage: nil,
             audioOutput: .internalSpeaker,
+            canSwitchAudioOutput: true,
             isLocalAudioMuted: false,
             isRemoteAudioMuted: false,
             localVideo: nil,
@@ -271,6 +272,11 @@ final class CallControllerNodeV2: ViewControllerTracingNode, CallControllerNodeP
         self.currentAudioOutput = currentOutput
         
         if var callScreenState = self.callScreenState {
+            var canSwitchAudioOutput = false
+            if availableOutputs.count > 1 {
+                canSwitchAudioOutput = true
+            }
+            
             let mappedOutput: PrivateCallScreen.State.AudioOutput
             if let currentOutput {
                 switch currentOutput {
@@ -301,8 +307,9 @@ final class CallControllerNodeV2: ViewControllerTracingNode, CallControllerNodeP
                 mappedOutput = .internalSpeaker
             }
             
-            if callScreenState.audioOutput != mappedOutput {
+            if callScreenState.audioOutput != mappedOutput || callScreenState.canSwitchAudioOutput != canSwitchAudioOutput {
                 callScreenState.audioOutput = mappedOutput
+                callScreenState.canSwitchAudioOutput = canSwitchAudioOutput
                 self.callScreenState = callScreenState
                 self.update(transition: .animated(duration: 0.3, curve: .spring))
                 

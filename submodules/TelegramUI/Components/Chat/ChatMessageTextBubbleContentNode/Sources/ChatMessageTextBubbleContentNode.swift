@@ -26,6 +26,7 @@ import TextLoadingEffect
 import ChatControllerInteraction
 import InteractiveTextComponent
 import ShimmeringMask
+import StreamingTextReveal
 
 private final class CachedChatMessageText {
     let text: String
@@ -119,35 +120,9 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
     private var displayContentsUnderSpoilers: (value: Bool, location: CGPoint?) = (false, nil)
     
     private var isSummaryApplied = false
-    
-    private final class TextRevealAnimationState {
-        let fromCount: Int
-        let toCount: Int
-        let startTimestamp: Double
-        let duration: Double
-        
-        init(fromCount: Int, toCount: Int, startTimestamp: Double, duration: Double) {
-            self.fromCount = fromCount
-            self.toCount = toCount
-            self.startTimestamp = startTimestamp
-            self.duration = duration
-        }
-        
-        func fraction(timestamp: Double) -> CGFloat {
-            var animationFraction = (timestamp - self.startTimestamp) / self.duration
-            animationFraction = max(0.0, min(1.0, animationFraction))
-            return animationFraction
-        }
-        
-        func glyphCount(timestamp: Double) -> Int {
-            let animationFraction = self.fraction(timestamp: timestamp)
-            let glyphCount = (1.0 - animationFraction) * Double(self.fromCount) + animationFraction * Double(self.toCount)
-            return Int(glyphCount)
-        }
-    }
-    
+
     private var textRevealLink: SharedDisplayLinkDriver.Link?
-    private var textRevealAnimationState: TextRevealAnimationState?
+    private var textRevealController: TextRevealController?
     
     private var relativeDateTimer: (timer: SwiftSignalKit.Timer, period: Int32)?
     
@@ -249,12 +224,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         let currentCachedChatMessageText = self.cachedChatMessageText
         let expandedBlockIds = self.expandedBlockIds
         let displayContentsUnderSpoilers = self.displayContentsUnderSpoilers
-        let currentMaxGlyphCount: Int?
-        if let textRevealAnimationState = self.textRevealAnimationState {
-            currentMaxGlyphCount = textRevealAnimationState.glyphCount(timestamp: CACurrentMediaTime())
-        } else {
-            currentMaxGlyphCount = nil
-        }
+        let currentMaxGlyphCount: Int? = self.textRevealController?.currentGlyphCount
         let previousGlyphCount = self.textNode.textNode.cachedLayout?.attributedString?.length ?? 0
         
         return { item, layoutConstants, _, _, _, _ in
@@ -1161,14 +1131,14 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                                 codeHighlightState.disposable.dispose()
                             }
                             
-                            if previousAnimateGlyphCount != nil || strongSelf.textRevealAnimationState != nil || hasDraft || hadDraft {
+                            if previousAnimateGlyphCount != nil || strongSelf.textRevealController != nil || hasDraft || hadDraft {
                                 if strongSelf.textNode.textNode.revealCharacterCount == nil {
                                     if hasDraft {
                                         strongSelf.statusNode?.alpha = 0.0
                                     }
                                     strongSelf.textNode.textNode.updateRevealCharacterCount(count: previousAnimateGlyphCount ?? 0, animated: false)
                                 }
-                                strongSelf.updateTextRevealAnimation(previousGlyphCount: previousAnimateGlyphCount ?? 0)
+                                strongSelf.updateTextRevealAnimation(previousGlyphCount: previousAnimateGlyphCount ?? 0, hasDraft: hasDraft, hadDraft: hadDraft)
                             }
                         }
                     })
@@ -1177,73 +1147,75 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         }
     }
     
-    private func updateTextRevealAnimation(previousGlyphCount: Int) {
-        var fromCount = previousGlyphCount
+    private func updateTextRevealAnimation(previousGlyphCount: Int, hasDraft: Bool, hadDraft: Bool) {
         let toCount = self.textNode.textNode.cachedLayout?.attributedString?.length ?? 0
-        let timestamp = CACurrentMediaTime()
-        if let textRevealAnimationState = self.textRevealAnimationState {
-            if textRevealAnimationState.toCount == toCount {
-                return
-            }
-            fromCount = textRevealAnimationState.glyphCount(timestamp: timestamp)
+        let now = CACurrentMediaTime()
+
+        if hasDraft, let controller = self.textRevealController, controller.isFinalizing {
+            self.textRevealController = nil
+            self.textRevealLink = nil
         }
-        if fromCount == toCount {
-            if self.textRevealAnimationState != nil {
-                self.textRevealAnimationState = nil
-                self.textRevealLink = nil
-                self.textNode.textNode.updateRevealCharacterCount(count: nil, animated: false)
-            }
+
+        if self.textRevealController == nil && (hasDraft || hadDraft) {
+            self.textRevealController = TextRevealController(initialRevealedCount: previousGlyphCount, initialLength: toCount)
+        }
+
+        guard let controller = self.textRevealController else {
             return
         }
-        
-        var duration: Double = Double(toCount - fromCount) / 40.0
-        duration = max(0.1, min(duration, 1.0))
-        
-        self.textRevealAnimationState = TextRevealAnimationState(
-            fromCount: fromCount,
-            toCount: toCount,
-            startTimestamp: timestamp,
-            duration: duration
-        )
-        if self.textRevealLink == nil, self.textRevealAnimationState != nil {
+
+        if hasDraft {
+            controller.observeUpdate(latestLength: toCount, at: now)
+        } else if hadDraft {
+            controller.finalize(finalLength: toCount)
+        }
+
+        if controller.isFinalizing && controller.revealedCount >= Double(controller.latestLength) {
+            self.textRevealController = nil
+            self.textRevealLink = nil
+            self.textNode.textNode.updateRevealCharacterCount(count: nil, animated: false)
+            return
+        }
+
+        if self.textRevealLink == nil {
             self.textRevealLink = SharedDisplayLinkDriver.shared.add { [weak self] _ in
-                guard let self, let item = self.item else {
+                guard let self else {
                     return
                 }
-                guard let textRevealAnimationState = self.textRevealAnimationState else {
+                guard let item = self.item else {
+                    self.textRevealController = nil
                     self.textRevealLink = nil
                     return
                 }
-                let timestamp = CACurrentMediaTime()
-                if textRevealAnimationState.fraction(timestamp: timestamp) >= 1.0 {
-                    self.textRevealAnimationState = nil
+                guard let controller = self.textRevealController else {
                     self.textRevealLink = nil
-                    
+                    return
+                }
+                let now = CACurrentMediaTime()
+                let (revealedGlyphCount, isComplete) = controller.tick(now: now)
+                if isComplete {
+                    self.textRevealController = nil
+                    self.textRevealLink = nil
+
                     self.textNode.textNode.updateRevealCharacterCount(count: nil, animated: false)
-                    
+
                     if let statusNode = self.statusNode, !item.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
                         ContainedViewLayoutTransition.animated(duration: 0.2, curve: .easeInOut).updateAlpha(node: statusNode, alpha: 1.0)
                     }
-                    
+
                     self.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
                 } else {
                     var requestUpdate = false
-                    let glyphCount = textRevealAnimationState.glyphCount(timestamp: timestamp)
-                    if let previousRevealGlyphCount = self.textNode.textNode.revealCharacterCount, previousRevealGlyphCount != glyphCount {
+                    if let previousRevealGlyphCount = self.textNode.textNode.revealCharacterCount, previousRevealGlyphCount != revealedGlyphCount {
                         if let cachedLayout = self.textNode.textNode.cachedLayout {
-                            if cachedLayout.sizeForCharacterCount(characterCount: previousRevealGlyphCount) != cachedLayout.sizeForCharacterCount(characterCount: glyphCount) {
+                            if cachedLayout.sizeForCharacterCount(characterCount: previousRevealGlyphCount) != cachedLayout.sizeForCharacterCount(characterCount: revealedGlyphCount) {
                                 requestUpdate = true
                             }
                         } else {
                             requestUpdate = true
                         }
-                        if requestUpdate {
-                            //print("glyphCount: request update")
-                        }
-                        
-                        self.textNode.textNode.updateRevealCharacterCount(count: glyphCount, animated: true)
+                        self.textNode.textNode.updateRevealCharacterCount(count: revealedGlyphCount, animated: true)
                     }
-                    
                     if requestUpdate {
                         self.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
                     }

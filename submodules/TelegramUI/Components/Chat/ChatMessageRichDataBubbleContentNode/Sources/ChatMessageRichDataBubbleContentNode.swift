@@ -6,26 +6,42 @@ import TelegramCore
 import SwiftSignalKit
 import AccountContext
 import ChatMessageBubbleContentNode
+import ChatMessageDateAndStatusNode
 import ChatMessageItemCommon
 import ChatControllerInteraction
 import InstantPageUI
+import TextFormat
 import TelegramUIPreferences
 import TextLoadingEffect
 import TextSelectionNode
+import StreamingTextReveal
+import ShimmeringMask
+import InteractiveTextComponent
+import TextNodeWithEntities
 
 public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode {
     public final class ContainerNode: ASDisplayNode {
     }
     
     private let containerNode: ContainerNode
-    private var currentLayoutTiles: [InstantPageTile] = []
-    private var visibleTiles: [Int: InstantPageTileNode] = [:]
-    private var visibleItemsWithNodes: [Int: InstantPageNode] = [:]
-    private var currentPageLayout: (boundingWidth: CGFloat, layout: InstantPageLayout)?
-    private var pageTheme: InstantPageTheme?
-    private var distanceThresholdGroupCount: [Int: Int] = [:]
-    private var currentLayoutItemsWithNodes: [InstantPageItem] = []
-    private var currentExpandedDetails: [Int : Bool]?
+    public var statusNode: ChatMessageDateAndStatusNode?
+    // `init()` may run off the main thread; UIView construction must happen on the main thread.
+    // The page view is built lazily inside the apply closure (always main-thread) via ensurePageView().
+    private var pageView: InstantPageV2View?
+    // Tracks the message (id + stableVersion) baked into the current pageView's render context.
+    // The synthesized webpage uses a sentinel id (namespace 0, id 0) shared across all richText
+    // messages, so we key cache invalidation on the message itself. When the bubble is recycled
+    // with a different message we must discard pageView (render context is constructor-fixed).
+    private var pageViewMessageKey: (id: EngineMessage.Id, stableVersion: UInt32)?
+    // messageStableVersion is in the cache key because the synthesized instantPage content
+    // mutates between streamed AI message chunks (each chunk bumps stableVersion); without
+    // this, the cached layout would shadow newly-arrived content during streaming.
+    private var currentPageLayout: (boundingWidth: CGFloat,
+                                    presentationThemeIdentity: ObjectIdentifier,
+                                    expandedDetails: [Int: Bool],
+                                    messageStableVersion: UInt32,
+                                    layout: InstantPageV2Layout)?
+    private var currentExpandedDetails: [Int: Bool] = [:]
     private var linkProgressDisposable: Disposable?
     private var linkProgressRects: [CGRect]?
     private var linkHighlightingNode: LinkHighlightingNode?
@@ -33,21 +49,119 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     private var textSelectionAdapter: InstantPageMultiTextAdapter?
     private var textSelectionNode: TextSelectionNode?
 
+    private var streamingStatusTextNode: InteractiveTextNodeWithEntities?
+    private var streamingStatusShimmerView: ShimmeringMaskView?
+
+    private var textRevealController: TextRevealController?
+    private var textRevealLink: SharedDisplayLinkDriver.Link?
+    private var currentRevealCostMap: InstantPageV2RevealCostMap?
+    // Cursor value pushed into pageView.applyReveal on the prior tick. The display-link tick
+    // compares the revealed prefix's height at this cursor vs the new cursor to decide when
+    // to request a full bubble re-layout (so the bubble grows with the reveal).
+    private var lastAppliedRevealedCount: Int = 0
+    private var displayContentsUnderSpoilers: Bool = false
+
     override public var visibility: ListViewItemNodeVisibility {
         didSet {
             if oldValue != self.visibility {
-                self.updateVisibility()
+                self.updatePageViewVisibilityRect()
             }
         }
     }
-    
+
+    // Pushes the current `visibility` sub-rect into `pageView.visibilityRect`, translated into the
+    // page view's coordinate space (the page view sits at `streamingHeaderOffset` inside the bubble).
+    // Re-invoked from the apply closure after `pageView.frame` is set, because that offset shifts
+    // across streamed chunks without a `visibility` change, which would otherwise leave the
+    // animation-gating rect stale.
+    private func updatePageViewVisibilityRect() {
+        guard let pageView = self.pageView else {
+            return
+        }
+        switch self.visibility {
+        case .none:
+            pageView.visibilityRect = nil
+        case let .visible(_, subRect):
+            var rect = subRect
+            rect.origin.x = 0.0
+            rect.size.width = 10000.0
+            rect.origin.y -= pageView.frame.minY
+            pageView.visibilityRect = rect
+        }
+    }
+
     required public init() {
         self.containerNode = ContainerNode()
         self.containerNode.clipsToBounds = true
-        
+
         super.init()
-        
+
         self.addSubnode(self.containerNode)
+    }
+
+    /// Builds (or reuses) the V2View. The render context is constructor-fixed on V2View, so
+    /// when the bubble is recycled with a different webpage we must rebuild the V2View.
+    private func ensurePageView(item: ChatMessageBubbleContentItem, webpage: TelegramMediaWebpage) -> InstantPageV2View {
+        let key = (id: item.message.id, stableVersion: item.message.stableVersion)
+        if let existing = self.pageView,
+           let current = self.pageViewMessageKey,
+           current.id == key.id,
+           current.stableVersion == key.stableVersion {
+            return existing
+        }
+        self.pageView?.removeFromSuperview()
+        self.pageView = nil
+
+        // Capture only the MessageReference (value type) — the closures are retained on the
+        // render context which is owned by the V2View, so we must avoid making them retain
+        // the bubble (`self`) or the message indirectly via `item`.
+        let messageReference = MessageReference(item.message)
+        let renderContext = InstantPageV2RenderContext(
+            context: item.context,
+            webpage: webpage,
+            sourceLocation: InstantPageSourceLocation(userLocation: .other, peerType: .channel),
+            imageReference: { image in
+                return ImageMediaReference.message(message: messageReference, media: image)
+            },
+            fileReference: { file in
+                return FileMediaReference.message(message: messageReference, media: file)
+            },
+            present: { [weak self] controller, args in
+                self?.item?.controllerInteraction.presentController(controller, args)
+            },
+            push: { [weak self] controller in
+                self?.item?.controllerInteraction.navigationController()?.pushViewController(controller)
+            },
+            openUrl: { [weak self] urlItem in
+                self?.openInstantPageUrl(urlItem)
+            },
+            baseNavigationController: { [weak self] in
+                self?.item?.controllerInteraction.navigationController()
+            }
+        )
+        let view = InstantPageV2View(renderContext: renderContext)
+        self.pageView = view
+        self.pageViewMessageKey = key
+        self.containerNode.view.addSubview(view)
+        view.detailsTapped = { [weak self] index in
+            guard let self else { return }
+            let current = self.currentExpandedDetails[index] ?? self.defaultExpanded(forDetailsIndex: index)
+            self.currentExpandedDetails[index] = !current
+            if let item = self.item {
+                item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
+            }
+        }
+        return view
+    }
+
+    private func defaultExpanded(forDetailsIndex index: Int) -> Bool {
+        guard let layout = self.currentPageLayout?.layout else { return false }
+        for item in layout.items {
+            if case let .details(d) = item, d.index == index {
+                return d.defaultExpanded
+            }
+        }
+        return false
     }
 
     required public init?(coder aDecoder: NSCoder) {
@@ -60,440 +174,772 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     
     override public func asyncLayoutContent() -> (_ item: ChatMessageBubbleContentItem, _ layoutConstants: ChatMessageItemLayoutConstants, _ preparePosition: ChatMessageBubblePreparePosition, _ messageSelection: Bool?, _ constrainedSize: CGSize, _ avatarInset: CGFloat) -> (ChatMessageBubbleContentProperties, CGSize?, CGFloat, (CGSize, ChatMessageBubbleContentPosition) -> (CGFloat, (CGFloat) -> (CGSize, (ListViewItemUpdateAnimation, Bool, ListViewItemApply?) -> Void))) {
         let previousItem = self.item
+        let streamingStatusTextLayout = InteractiveTextNodeWithEntities.asyncLayout(self.streamingStatusTextNode)
         let currentPageLayout = self.currentPageLayout
-        let previousCurrentLayoutTiles = self.currentLayoutTiles
-        
+        let currentExpandedDetails = self.currentExpandedDetails
+        let statusLayout = ChatMessageDateAndStatusNode.asyncLayout(self.statusNode)
+        // Captured at main-thread, top of asyncLayoutContent. Mirrors TextBubble's
+        // `currentMaxGlyphCount` (TextBubble:313). The bubble's bounding size is sized
+        // to this revealed prefix during streaming, so it grows with the reveal rather
+        // than being final-sized from the first chunk.
+        let currentMaxGlyphCount: Int? = self.textRevealController?.currentGlyphCount
+
         return { [weak self] item, layoutConstants, _, _, _, _ in
             let contentProperties = ChatMessageBubbleContentProperties(hidesSimpleAuthorHeader: false, headerSpacing: 0.0, hidesBackground: .never, forceFullCorners: false, forceAlignment: .none)
-            
+
             return (contentProperties, nil, CGFloat.greatestFiniteMagnitude, { constrainedSize, position in
-                let suggestedBoundingWidth: CGFloat = constrainedSize.width
-                
-                return (suggestedBoundingWidth, { boundingWidth in
-                    var boundingSize = CGSize(width: boundingWidth, height: 0.0)
-                    
-                    var pageLayout: InstantPageLayout?
-                    var currentLayoutTiles: [InstantPageTile] = []
-                    
-                    let isDark = item.presentationData.theme.theme.overallDarkAppearance
-                    let isIncoming = item.message.effectivelyIncoming(item.context.account.peerId)
-                    let messageTheme = isIncoming ? item.presentationData.theme.theme.chat.message.incoming : item.presentationData.theme.theme.chat.message.outgoing
-                    
-                    var underlineLinks = true
-                    if !messageTheme.primaryTextColor.isEqual(messageTheme.linkTextColor) {
-                        underlineLinks = false
-                    }
-                    let _ = underlineLinks
-                    
-                    let author = item.message.author
-                    let mainColor: UIColor
-                    var secondaryColor: UIColor? = nil
-                    var tertiaryColor: UIColor? = nil
-                    
-                    let nameColors: PeerNameColors.Colors?
-                    switch author?.nameColor {
-                    case let .preset(nameColor):
-                        nameColors = item.context.peerNameColors.get(nameColor, dark: item.presentationData.theme.theme.overallDarkAppearance)
-                    case let .collectible(collectibleColor):
-                        nameColors = collectibleColor.peerNameColors(dark: item.presentationData.theme.theme.overallDarkAppearance)
+                // topInset matches TextBubble's logic at lines 234-249 — gives the "Thinking…"
+                // header the same vertical alignment as TextBubble's status header does inside
+                // its bubble.
+                var topInset: CGFloat = 0.0
+                if case let .linear(top, _) = position {
+                    switch top {
+                    case .None:
+                        topInset = layoutConstants.text.bubbleInsets.top
+                    case let .Neighbour(_, topType, _):
+                        switch topType {
+                        case .text:
+                            topInset = layoutConstants.text.bubbleInsets.top - 2.0
+                        case .header, .footer, .media, .reactions:
+                            topInset = layoutConstants.text.bubbleInsets.top
+                        }
                     default:
-                        nameColors = nil
+                        topInset = layoutConstants.text.bubbleInsets.top
+                    }
+                }
+                let suggestedBoundingWidth: CGFloat = constrainedSize.width
+
+                var boundingSize = CGSize(width: suggestedBoundingWidth, height: 0.0)
+
+                var pageLayout: InstantPageV2Layout?
+                // Built alongside pageLayout so the apply closure can hand it to ensurePageView.
+                var pageWebpage: TelegramMediaWebpage?
+
+                // Horizontal text inset baked into the InstantPage layout. The pageView sits at
+                // self-x 0 (containerNode at 1, pageView at -1 inside it), so the page's text
+                // left edge in the status node's coordinate space is exactly this value. Used as
+                // the status node's left edge + side inset, mirroring TextBubble's bubbleInsets.
+                let pageHorizontalInset: CGFloat = 10.0
+
+                let isDark = item.presentationData.theme.theme.overallDarkAppearance
+                let isIncoming = item.message.effectivelyIncoming(item.context.account.peerId)
+                let messageTheme = isIncoming ? item.presentationData.theme.theme.chat.message.incoming : item.presentationData.theme.theme.chat.message.outgoing
+                
+                var underlineLinks = true
+                if !messageTheme.primaryTextColor.isEqual(messageTheme.linkTextColor) {
+                    underlineLinks = false
+                }
+                let _ = underlineLinks
+                
+                let author = item.message.author
+                let mainColor: UIColor
+                var secondaryColor: UIColor? = nil
+                var tertiaryColor: UIColor? = nil
+                
+                let nameColors: PeerNameColors.Colors?
+                switch author?.nameColor {
+                case let .preset(nameColor):
+                    nameColors = item.context.peerNameColors.get(nameColor, dark: item.presentationData.theme.theme.overallDarkAppearance)
+                case let .collectible(collectibleColor):
+                    nameColors = collectibleColor.peerNameColors(dark: item.presentationData.theme.theme.overallDarkAppearance)
+                default:
+                    nameColors = nil
+                }
+                
+                let codeBlockTitleColor: UIColor
+                let codeBlockAccentColor: UIColor
+                let codeBlockBackgroundColor: UIColor
+                if !isIncoming {
+                    mainColor = messageTheme.accentTextColor
+                    if let _ = nameColors?.secondary {
+                        secondaryColor = .clear
+                    }
+                    if let _ = nameColors?.tertiary {
+                        tertiaryColor = .clear
                     }
                     
-                    let codeBlockTitleColor: UIColor
-                    let codeBlockAccentColor: UIColor
-                    let codeBlockBackgroundColor: UIColor
-                    if !isIncoming {
-                        mainColor = messageTheme.accentTextColor
-                        if let _ = nameColors?.secondary {
-                            secondaryColor = .clear
-                        }
-                        if let _ = nameColors?.tertiary {
-                            tertiaryColor = .clear
-                        }
-                        
-                        if item.presentationData.theme.theme.overallDarkAppearance {
-                            codeBlockTitleColor = .white
-                            codeBlockAccentColor = UIColor(white: 1.0, alpha: 0.5)
-                            codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.25)
-                        } else {
-                            codeBlockTitleColor = mainColor
-                            codeBlockAccentColor = mainColor
-                            codeBlockBackgroundColor = mainColor.withMultipliedAlpha(0.1)
-                        }
+                    if item.presentationData.theme.theme.overallDarkAppearance {
+                        codeBlockTitleColor = .white
+                        codeBlockAccentColor = UIColor(white: 1.0, alpha: 0.5)
+                        codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.25)
                     } else {
-                        let authorNameColor = nameColors?.main
-                        secondaryColor = nameColors?.secondary
-                        tertiaryColor = nameColors?.tertiary
-                        
-                        if let authorNameColor {
-                            mainColor = authorNameColor
-                        } else {
-                            mainColor = messageTheme.accentTextColor
-                        }
-                        
                         codeBlockTitleColor = mainColor
                         codeBlockAccentColor = mainColor
-                        
-                        if item.presentationData.theme.theme.overallDarkAppearance {
-                            codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.65)
+                        codeBlockBackgroundColor = mainColor.withMultipliedAlpha(0.1)
+                    }
+                } else {
+                    let authorNameColor = nameColors?.main
+                    secondaryColor = nameColors?.secondary
+                    tertiaryColor = nameColors?.tertiary
+                    
+                    if let authorNameColor {
+                        mainColor = authorNameColor
+                    } else {
+                        mainColor = messageTheme.accentTextColor
+                    }
+                    
+                    codeBlockTitleColor = mainColor
+                    codeBlockAccentColor = mainColor
+                    
+                    if item.presentationData.theme.theme.overallDarkAppearance {
+                        codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.65)
+                    } else {
+                        codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.05)
+                    }
+                }
+                
+                let _ = secondaryColor
+                let _ = tertiaryColor
+                
+                let _ = codeBlockTitleColor
+                let _ = codeBlockAccentColor
+                
+                let textCategories = InstantPageTextCategories(
+                    kicker: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
+                    header: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 24.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
+                    subheader: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 19.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
+                    paragraph: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 17.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
+                    caption: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
+                    credit: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 13.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
+                    table: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
+                    article: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 18.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor)
+                )
+                let pageTheme = InstantPageTheme(
+                    type: isDark ? .dark : .light,
+                    pageBackgroundColor: .clear,
+                    textCategories: textCategories,
+                    serif: false,
+                    codeBlockBackgroundColor: codeBlockBackgroundColor,
+                    linkColor: messageTheme.linkTextColor,
+                    textHighlightColor: messageTheme.accentTextColor.withMultipliedAlpha(0.1),
+                    linkHighlightColor: messageTheme.linkTextColor.withMultipliedAlpha(0.1),
+                    markerColor: UIColor(rgb: 0xfef3bc),
+                    panelBackgroundColor: messageTheme.accentControlColor.withMultipliedAlpha(0.1),
+                    panelHighlightedBackgroundColor: messageTheme.accentControlColor.withMultipliedAlpha(0.25),
+                    panelPrimaryColor: messageTheme.primaryTextColor,
+                    panelSecondaryColor: messageTheme.secondaryTextColor,
+                    panelAccentColor: messageTheme.accentTextColor,
+                    tableBorderColor: isDark || !isIncoming ? messageTheme.accentControlColor.withMultipliedAlpha(0.25) : UIColor(white: 0.0, alpha: 0.1),
+                    tableHeaderColor: isDark || !isIncoming ? messageTheme.accentControlColor.withMultipliedAlpha(0.1) : UIColor(white: 0.0, alpha: 0.05),
+                    controlColor: messageTheme.accentControlColor,
+                    imageTintColor: nil,
+                    overlayPanelColor: isDark ? UIColor(white: 0.0, alpha: 0.13) : UIColor(white: 1.0, alpha: 0.13)
+                )
+                
+                var hasDraft = false
+                if item.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+                    hasDraft = true
+                }
+                var hadDraft = false
+                if let previousItem, previousItem.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+                    hadDraft = true
+                }
+
+                if let attribute = item.message.richText {
+                    let webpage = TelegramMediaWebpage(webpageId: EngineMedia.Id(namespace: 0, id: 0), content: .Loaded(TelegramMediaWebpageLoadedContent(
+                        url: "",
+                        displayUrl: "",
+                        hash: 0,
+                        type: nil,
+                        websiteName: nil,
+                        title: nil,
+                        text: nil,
+                        embedUrl: nil,
+                        embedType: nil,
+                        embedSize: nil,
+                        duration: nil,
+                        author: nil,
+                        isMediaLargeByDefault: nil,
+                        imageIsVideoCover: false,
+                        image: nil,
+                        file: nil,
+                        story: nil,
+                        attributes: [],
+                        instantPage: attribute.instantPage
+                    )))
+                    pageWebpage = webpage
+
+                    let presentationThemeIdentity = ObjectIdentifier(item.presentationData.theme.theme)
+                    let currentMessageStableVersion = item.message.stableVersion
+                    if let current = currentPageLayout,
+                       current.boundingWidth == suggestedBoundingWidth,
+                       current.presentationThemeIdentity == presentationThemeIdentity,
+                       current.expandedDetails == currentExpandedDetails,
+                       current.messageStableVersion == currentMessageStableVersion {
+                        pageLayout = current.layout
+                    } else {
+                        pageLayout = layoutInstantPageV2(
+                            webpage: webpage,
+                            instantPage: attribute.instantPage,
+                            userLocation: .other,
+                            boundingWidth: suggestedBoundingWidth - 2.0,
+                            horizontalInset: pageHorizontalInset,
+                            theme: pageTheme,
+                            strings: item.presentationData.strings,
+                            dateTimeFormat: item.presentationData.dateTimeFormat,
+                            cachedMessageSyntaxHighlight: nil,
+                            expandedDetails: currentExpandedDetails,
+                            fitToWidth: true,
+                            computeRevealCharacterRects: hasDraft || hadDraft
+                        )
+                    }
+                }
+                
+                // Cost map computed here (not in apply) so we can size the bubble to the
+                // revealed prefix this layout pass. Mirrors TextBubble's clippedGlyphCountLayout.
+                let revealCostMap: InstantPageV2RevealCostMap? = (hasDraft || hadDraft) ? pageLayout?.computeRevealCostMap() : nil
+                let revealedGlyphCount: Int? = (hasDraft || hadDraft) ? (currentMaxGlyphCount ?? 0) : nil
+
+                if let pageLayout {
+                    let effectiveSize: CGSize
+                    if let costMap = revealCostMap, let glyphCount = revealedGlyphCount {
+                        effectiveSize = costMap.revealedContentSize(revealedCount: glyphCount, layout: pageLayout)
+                    } else {
+                        effectiveSize = pageLayout.contentSize
+                    }
+                    boundingSize.width = effectiveSize.width
+                    boundingSize.height = effectiveSize.height + 2.0
+                }
+
+                let textFont = item.presentationData.messageFont
+                let textInsets = UIEdgeInsets(top: 2.0, left: 2.0, bottom: 5.0, right: 2.0)
+                let streamingTextSpacing: CGFloat = 1.0
+
+                let textConstrainedSize = CGSize(width: suggestedBoundingWidth - 4.0, height: .greatestFiniteMagnitude)
+                var streamingTextLayoutAndApply: (layout: InteractiveTextNodeLayout, apply: (InteractiveTextNodeWithEntities.Arguments) -> InteractiveTextNodeWithEntities)?
+                if hasDraft || hadDraft {
+                    //TODO:localize
+                    streamingTextLayoutAndApply = streamingStatusTextLayout(InteractiveTextNodeLayoutArguments(
+                        attributedString: NSAttributedString(string: "Thinking...", font: textFont, textColor: messageTheme.fileDescriptionColor),
+                        backgroundColor: nil,
+                        maximumNumberOfLines: 1,
+                        truncationType: .end,
+                        constrainedSize: textConstrainedSize,
+                        alignment: .natural,
+                        cutout: nil,
+                        insets: textInsets,
+                        lineColor: messageTheme.accentControlColor,
+                        customTruncationToken: nil,
+                        computeCharacterRects: true
+                    ))
+                }
+
+                // Origin mirrors TextBubble:783 — (bubbleInsets.left - textInsets.left,
+                // topInset - textInsets.top). The negative textInset offsets cancel the
+                // inset that's baked into the InteractiveTextNode layout, so the visible
+                // glyph origin aligns with (bubbleInsets.left, topInset).
+                var streamingTextFrame: CGRect?
+                if let streamingTextLayoutAndApply {
+                    streamingTextFrame = CGRect(
+                        origin: CGPoint(
+                            x: layoutConstants.text.bubbleInsets.left - textInsets.left,
+                            y: topInset - textInsets.top
+                        ),
+                        size: streamingTextLayoutAndApply.layout.size
+                    )
+                }
+                // Offset for the pageView (and status node y-shift) — places the pageView
+                // right below the streaming header's *visible* bottom (= origin.y + height
+                // - inset.bottom, since the layout-baked inset.bottom isn't visible content)
+                // plus a 1pt spacing.
+                let streamingHeaderOffset: CGFloat
+                if let streamingTextFrame {
+                    streamingHeaderOffset = streamingTextFrame.origin.y + streamingTextFrame.height - textInsets.bottom + streamingTextSpacing
+                } else {
+                    streamingHeaderOffset = 0.0
+                }
+
+                if let streamingTextFrame {
+                    // Mirrors TextBubble's suggestedBoundingWidth contribution at lines 886-893:
+                    //   visible_thinking_width + bubbleInsets.left + bubbleInsets.right
+                    // where visible_thinking_width = streamingTextFrame.width - textInsets.left
+                    // - textInsets.right. Adds 2pt for RichData's 1pt-per-side containerNode
+                    // border that TextBubble doesn't have. Without this, an empty-pageLayout
+                    // bubble was sized too narrow to fit the "Thinking…" label.
+                    let visibleThinkingWidth = streamingTextFrame.width - textInsets.left - textInsets.right
+                    let thinkingMinBubbleWidth = visibleThinkingWidth + layoutConstants.text.bubbleInsets.left + layoutConstants.text.bubbleInsets.right + 2.0
+                    boundingSize.width = max(boundingSize.width, thinkingMinBubbleWidth)
+                    // Adds exactly the vertical space the streaming header consumes before the
+                    // pageView starts (= where pageView's frame.origin.y will be set). Keeps
+                    // the bubble's total height consistent with `containerHeight + closingPad + 2`
+                    // computed in the apply closure.
+                    boundingSize.height += streamingHeaderOffset
+                }
+
+                if hasDraft {
+                    // The bubble's bottom inset is supplied by the `statusBottomEdge + 6.0`
+                    // max() in the measure closure below — but that branch is gated by
+                    // `!hasDraft`, so during streaming the bubble has only its 1pt bottom rim
+                    // past `revealedContentSize.height` (= bounds.maxY + closingPad). Without
+                    // this, descenders of the last revealed line sit cramped against the
+                    // bubble's bottom edge and the bubble visibly grows by 6pt when streaming
+                    // ends and the status node fades in. 6pt matches the constant inside the
+                    // status max() (which itself tracks `TextBubble`'s `bubbleInsets.bottom`).
+                    // `hadDraft && !hasDraft` (the finalize pass) doesn't need this because
+                    // `!hasDraft` re-enables the status max(), which supplies the inset for it.
+                    boundingSize.height += 6.0
+                }
+
+                let message = item.message
+                let incoming = isIncoming
+
+                var edited = false
+                if item.attributes.updatingMedia != nil {
+                    edited = true
+                }
+                var viewCount: Int?
+                var dateReplies = 0
+                var starsCount: Int64?
+                var dateReactionsAndPeers = mergedMessageReactionsAndPeers(accountPeerId: item.context.account.peerId, accountPeer: item.associatedData.accountPeer, message: item.topMessage)
+                if item.message.isRestricted(platform: "ios", contentSettings: item.context.currentContentSettings.with { $0 }) {
+                    dateReactionsAndPeers = ([], [])
+                }
+
+                for attribute in item.message.attributes {
+                    if let attribute = attribute as? EditedMessageAttribute {
+                        edited = !attribute.isHidden
+                    } else if let attribute = attribute as? ViewCountMessageAttribute {
+                        viewCount = attribute.count
+                    } else if let attribute = attribute as? ReplyThreadMessageAttribute, case .peer = item.chatLocation {
+                        if let channel = item.message.peers[item.message.id.peerId] as? TelegramChannel, case .group = channel.info {
+                            dateReplies = Int(attribute.count)
+                        }
+                    } else if let attribute = attribute as? PaidStarsMessageAttribute, item.message.id.peerId.namespace == Namespaces.Peer.CloudChannel {
+                        starsCount = attribute.stars.value
+                    }
+                }
+
+                let dateFormat: MessageTimestampStatusFormat
+                if item.presentationData.isPreview {
+                    dateFormat = .full
+                } else if let subject = item.associatedData.subject, case .messageOptions = subject {
+                    dateFormat = .minimal
+                } else {
+                    dateFormat = .regular
+                }
+                let dateText = stringForMessageTimestampStatus(accountPeerId: item.context.account.peerId, message: EngineMessage(item.message), dateTimeFormat: item.presentationData.dateTimeFormat, nameDisplayOrder: item.presentationData.nameDisplayOrder, strings: item.presentationData.strings, format: dateFormat, associatedData: item.associatedData)
+
+                let statusType: ChatMessageDateAndStatusType?
+                var displayStatus = false
+                switch position {
+                case let .linear(_, neighbor):
+                    if case .None = neighbor {
+                        displayStatus = true
+                    } else if case .Neighbour(true, _, _) = neighbor {
+                        displayStatus = true
+                    }
+                default:
+                    break
+                }
+                if case let .customChatContents(contents) = item.associatedData.subject {
+                    if case .hashTagSearch = contents.kind {
+                        displayStatus = true
+                    } else {
+                        displayStatus = false
+                    }
+                } else if !item.presentationData.chatBubbleCorners.hasTails {
+                    displayStatus = false
+                } else if case let .messageOptions(_, _, info) = item.associatedData.subject, case let .link(link) = info, link.isCentered {
+                    displayStatus = false
+                }
+                
+                if displayStatus {
+                    if incoming {
+                        statusType = .BubbleIncoming
+                    } else {
+                        if message.flags.contains(.Failed) {
+                            statusType = .BubbleOutgoing(.Failed)
+                        } else if (message.flags.isSending && !message.isSentOrAcknowledged) || item.attributes.updatingMedia != nil {
+                            statusType = .BubbleOutgoing(.Sending)
                         } else {
-                            codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.05)
+                            statusType = .BubbleOutgoing(.Sent(read: item.read))
                         }
                     }
-                    
-                    let _ = secondaryColor
-                    let _ = tertiaryColor
-                    
-                    let _ = codeBlockTitleColor
-                    let _ = codeBlockAccentColor
-                    
-                    let textCategories = InstantPageTextCategories(
-                        kicker: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
-                        header: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 24.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
-                        subheader: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 19.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
-                        paragraph: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 17.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
-                        caption: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
-                        credit: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 13.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
-                        table: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
-                        article: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 18.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor)
-                    )
-                    let pageTheme = InstantPageTheme(
-                        type: isDark ? .dark : .light,
-                        pageBackgroundColor: .clear,
-                        textCategories: textCategories,
-                        serif: false,
-                        codeBlockBackgroundColor: codeBlockBackgroundColor,
-                        linkColor: messageTheme.linkTextColor,
-                        textHighlightColor: messageTheme.accentTextColor.withMultipliedAlpha(0.1),
-                        linkHighlightColor: messageTheme.linkTextColor.withMultipliedAlpha(0.1),
-                        markerColor: UIColor(rgb: 0xfef3bc),
-                        panelBackgroundColor: messageTheme.accentControlColor.withMultipliedAlpha(0.1),
-                        panelHighlightedBackgroundColor: messageTheme.accentControlColor.withMultipliedAlpha(0.25),
-                        panelPrimaryColor: messageTheme.primaryTextColor,
-                        panelSecondaryColor: messageTheme.secondaryTextColor,
-                        panelAccentColor: messageTheme.accentTextColor,
-                        tableBorderColor: isDark || !isIncoming ? messageTheme.accentControlColor.withMultipliedAlpha(0.25) : UIColor(white: 0.0, alpha: 0.1),
-                        tableHeaderColor: isDark || !isIncoming ? messageTheme.accentControlColor.withMultipliedAlpha(0.1) : UIColor(white: 0.0, alpha: 0.05),
-                        controlColor: messageTheme.accentControlColor,
-                        imageTintColor: nil,
-                        overlayPanelColor: isDark ? UIColor(white: 0.0, alpha: 0.13) : UIColor(white: 1.0, alpha: 0.13)
-                    )
-                    
-                    if let webpage = item.message.media.first(where: { $0 is TelegramMediaWebpage }) as? TelegramMediaWebpage, case let .Loaded(content) = webpage.content, let instantPage = content.instantPage {
-                        if let current = currentPageLayout, current.boundingWidth == boundingSize.width, previousItem?.presentationData.theme.theme === item.presentationData.theme.theme {
-                            pageLayout = current.layout
-                            currentLayoutTiles = previousCurrentLayoutTiles
+                } else {
+                    statusType = nil
+                }
+
+                // Only trail the status inline with the last text line when the bottom-most page
+                // item is itself a text item; otherwise (table/image/etc. last) the status falls
+                // through to the contentSize.height anchor and sits below all content.
+                let lastTextLine = pageLayout.flatMap(InstantPageUI.lastTextLineFrameIfLastItemIsText(in:))
+                let lastTextLineFrame: CGRect? = lastTextLine?.frame
+                // Baseline → visible-text-bottom compensation. Applied whether the date trails on
+                // the last line or wraps onto its own line below it (0 for attachment-inflated lines,
+                // whose maxY already sits at the visible bottom).
+                let lastTextLineTrailingPadding: CGFloat = lastTextLine?.trailingBottomPadding ?? 0.0
+
+                var statusSuggestedWidthAndContinue: (CGFloat, (CGFloat) -> (CGSize, (ListViewItemUpdateAnimation) -> ChatMessageDateAndStatusNode))?
+                if let statusType = statusType {
+                    var isReplyThread = false
+                    if case .replyThread = item.chatLocation {
+                        isReplyThread = true
+                    }
+
+                    let trailingWidthToMeasure: CGFloat = lastTextLineFrame?.width ?? 10000.0
+
+                    let dateLayoutInput: ChatMessageDateAndStatusNode.LayoutInput = .trailingContent(contentWidth: trailingWidthToMeasure, reactionSettings: ChatMessageDateAndStatusNode.TrailingReactionSettings(displayInline: shouldDisplayInlineDateReactions(message: EngineMessage(item.message), isPremium: item.associatedData.isPremium, forceInline: item.associatedData.forceInlineReactions), preferAdditionalInset: false))
+
+                    statusSuggestedWidthAndContinue = statusLayout(ChatMessageDateAndStatusNode.Arguments(
+                        context: item.context,
+                        presentationData: item.presentationData,
+                        edited: edited && !item.presentationData.isPreview,
+                        impressionCount: !item.presentationData.isPreview ? viewCount : nil,
+                        dateText: dateText,
+                        type: statusType,
+                        layoutInput: dateLayoutInput,
+                        constrainedSize: CGSize(width: suggestedBoundingWidth, height: .greatestFiniteMagnitude),
+                        availableReactions: item.associatedData.availableReactions,
+                        savedMessageTags: item.associatedData.savedMessageTags,
+                        reactions: item.presentationData.isPreview ? [] : dateReactionsAndPeers.reactions,
+                        reactionPeers: dateReactionsAndPeers.peers,
+                        displayAllReactionPeers: item.message.id.peerId.namespace == Namespaces.Peer.CloudUser,
+                        areReactionsTags: item.topMessage.areReactionsTags(accountPeerId: item.context.account.peerId),
+                        areStarReactionsEnabled: item.associatedData.areStarReactionsEnabled,
+                        messageEffect: item.topMessage.messageEffect(availableMessageEffects: item.associatedData.availableMessageEffects),
+                        replyCount: dateReplies,
+                        starsCount: starsCount,
+                        isPinned: item.message.tags.contains(.pinned) && (!item.associatedData.isInPinnedListMode || isReplyThread),
+                        hasAutoremove: item.message.isSelfExpiring,
+                        canViewReactionList: canViewMessageReactionList(message: EngineMessage(item.topMessage)),
+                        animationCache: item.controllerInteraction.presentationContext.animationCache,
+                        animationRenderer: item.controllerInteraction.presentationContext.animationRenderer
+                    ))
+                }
+
+                if let statusSuggestedWidthAndContinue, !hasDraft {
+                    // Mirrors TextBubble: max(contentWidth, statusWidth + sideInsets), where
+                    // sideInsets = left + right text inset (= pageHorizontalInset on each side).
+                    boundingSize.width = max(boundingSize.width, statusSuggestedWidthAndContinue.0 + pageHorizontalInset * 2.0)
+                }
+
+                return (boundingSize.width, { boundingWidth in
+                    // Mirrors TextBubble's `boundingWidth - sideInsets` so the right-aligned date
+                    // lands at the right text inset rather than past the bubble's right edge.
+                    let statusSizeAndApply = statusSuggestedWidthAndContinue?.1(boundingWidth - pageHorizontalInset * 2.0)
+                    if let statusSizeAndApply, !hasDraft {
+                        // Status node anchor Y in the content node's space — mirrors the apply
+                        // closure below.
+                        let statusAnchorY: CGFloat
+                        if let lastTextLineFrame {
+                            // The renderer draws the baseline at the line frame's maxY, so the
+                            // visible text sits `trailingBottomPadding` below it. Apply that pad
+                            // whether the date trails on the line OR wraps onto its own line below:
+                            // in both cases the date should reference the visible text bottom, not
+                            // the baseline (mirrors TextBubble, whose status anchors at the text
+                            // frame's maxY). Without it the wrapped date crowded the last line.
+                            statusAnchorY = 1.0 + lastTextLineFrame.maxY + lastTextLineTrailingPadding + streamingHeaderOffset
+                        } else if let pageLayout {
+                            statusAnchorY = 1.0 + pageLayout.contentSize.height + streamingHeaderOffset
                         } else {
-                            pageLayout = instantPageLayoutForWebPage(webpage, instantPage: instantPage._parse(), userLocation: .other, boundingWidth: boundingWidth - 2.0, sideInset: 10.0, safeInset: 0.0, strings: item.presentationData.strings, theme: pageTheme, dateTimeFormat: item.presentationData.dateTimeFormat, webEmbedHeights: [:], addFeedback: false)
-                            if let pageLayout {
-                                currentLayoutTiles = instantPageTilesFromLayout(pageLayout, boundingWidth: boundingWidth)
-                            }
+                            statusAnchorY = 1.0 + streamingHeaderOffset
                         }
+                        // Date's bottom edge: a trailing date sits ~1pt below the anchor; a wrapped
+                        // date extends `statusHeight` below it. Leave ~6pt to the bubble's bottom
+                        // edge, matching TextBubble's bottom inset.
+                        let statusBottomEdge = statusAnchorY + max(1.0, statusSizeAndApply.0.height)
+                        boundingSize.height = max(boundingSize.height, statusBottomEdge + 6.0)
                     }
-                    
-                    if let pageLayout {
-                        boundingSize.height = pageLayout.contentSize.height + 2.0
-                    }
-                    
-                    return (boundingSize, { animation, synchronousLoads, itemApply in
+
+                    return (boundingSize, { animation, _, _ in
                         guard let self else {
                             return
                         }
                         self.item = item
-                        self.pageTheme = pageTheme
-                        
-                        self.containerNode.frame = CGRect(origin: CGPoint(x: 1.0, y: 1.0), size: CGSize(width: boundingSize.width - 2.0, height: boundingSize.height - 2.0))
-                        
-                        if let pageLayout {
-                            self.currentPageLayout = (boundingSize.width, pageLayout)
-                            self.currentLayoutTiles = currentLayoutTiles
 
-                            var currentLayoutItemsWithNodes: [InstantPageItem] = []
-                            var distanceThresholdGroupCount: [Int : Int] = [:]
+                        animation.animator.updateFrame(layer: self.containerNode.layer, frame: CGRect(origin: CGPoint(x: 1.0, y: 1.0), size: CGSize(width: boundingWidth - 2.0, height: boundingSize.height)), completion: nil)
+                        self.containerNode.cornerRadius = layoutConstants.image.defaultCornerRadius
 
-                            for item in pageLayout.items {
-                                if item.wantsNode {
-                                    currentLayoutItemsWithNodes.append(item)
-
-                                    if let group = item.distanceThresholdGroup() {
-                                        let count: Int
-                                        if let currentCount = distanceThresholdGroupCount[Int(group)] {
-                                            count = currentCount
-                                        } else {
-                                            count = 0
-                                        }
-                                        distanceThresholdGroupCount[Int(group)] = count + 1
-                                    }
-                                }
+                        if let statusSizeAndApply {
+                            // Match TextBubble: anchor the status node's x at the fixed text-block
+                            // left edge (not the last line's minX, which is large for nested
+                            // content and shoves the right-aligned date off the bubble). The status
+                            // node positions the date trailing/below relative to this origin.
+                            let statusFrameY: CGFloat
+                            if let lastTextLineFrame {
+                                // Apply the text-rect pad (baseline → visible text bottom) for both
+                                // the trailing and wrapped cases, so the date references the visible
+                                // text bottom rather than the baseline. Mirrors the measure closure
+                                // and TextBubble. Without it the wrapped date crowded the last line.
+                                statusFrameY = 1.0 + lastTextLineFrame.maxY + lastTextLineTrailingPadding
+                            } else if let pageLayout {
+                                statusFrameY = 1.0 + pageLayout.contentSize.height
+                            } else {
+                                statusFrameY = 1.0
                             }
+                            let statusFrame = CGRect(origin: CGPoint(x: pageHorizontalInset, y: statusFrameY + streamingHeaderOffset), size: statusSizeAndApply.0)
+                            let statusNode = statusSizeAndApply.1(self.statusNode == nil ? .None : animation)
 
-                            self.currentLayoutItemsWithNodes = currentLayoutItemsWithNodes
-                            self.distanceThresholdGroupCount = distanceThresholdGroupCount
+                            if self.statusNode !== statusNode {
+                                self.statusNode?.removeFromSupernode()
+                                self.statusNode = statusNode
+
+                                self.addSubnode(statusNode)
+
+                                statusNode.reactionSelected = { [weak self] _, value, sourceView in
+                                    guard let self, let item = self.item else {
+                                        return
+                                    }
+                                    item.controllerInteraction.updateMessageReaction(item.topMessage, .reaction(value), false, sourceView)
+                                }
+                                statusNode.openReactionPreview = { [weak self] gesture, sourceNode, value in
+                                    guard let self, let item = self.item else {
+                                        gesture?.cancel()
+                                        return
+                                    }
+                                    item.controllerInteraction.openMessageReactionContextMenu(item.topMessage, sourceNode, gesture, value)
+                                }
+                                statusNode.frame = statusFrame
+                            } else {
+                                animation.animator.updatePosition(layer: statusNode.layer, position: statusFrame.center, completion: nil)
+                                animation.animator.updateBounds(layer: statusNode.layer, bounds: CGRect(origin: .zero, size: statusFrame.size), completion: nil)
+                            }
+                        } else if let statusNode = self.statusNode {
+                            self.statusNode = nil
+                            statusNode.removeFromSupernode()
+                        }
+
+                        if let forwardInfo = item.message.forwardInfo, forwardInfo.flags.contains(.isImported), let statusNode = self.statusNode {
+                            statusNode.pressed = { [weak self] in
+                                guard let self, let statusNode = self.statusNode, let item = self.item else {
+                                    return
+                                }
+                                item.controllerInteraction.displayImportedMessageTooltip(statusNode)
+                            }
+                        } else {
+                            self.statusNode?.pressed = nil
+                        }
+
+                        if let pageLayout, let pageWebpage, let _ = item.message.richText {
+                            self.currentPageLayout = (
+                                suggestedBoundingWidth,
+                                ObjectIdentifier(item.presentationData.theme.theme),
+                                self.currentExpandedDetails,
+                                item.message.stableVersion,
+                                pageLayout
+                            )
+                            let pageView = self.ensurePageView(item: item, webpage: pageWebpage)
+                            pageView.update(layout: pageLayout, theme: pageTheme, animation: animation)
+                            pageView.frame = CGRect(
+                                origin: CGPoint(x: -1.0, y: streamingHeaderOffset),
+                                size: pageLayout.contentSize
+                            )
+                            self.updatePageViewVisibilityRect()
+                            if self.displayContentsUnderSpoilers {
+                                pageView.setDisplayContentsUnderSpoilers(true, atLocation: nil, animated: false)
+                            }
                         } else {
                             self.currentPageLayout = nil
-                            self.currentLayoutTiles = []
-                            self.currentLayoutItemsWithNodes = []
-                            self.distanceThresholdGroupCount = [:]
+                            self.pageView?.update(
+                                layout: InstantPageV2Layout(contentSize: .zero, items: [], detailsIndices: []),
+                                theme: pageTheme,
+                                animation: animation
+                            )
+                            self.pageViewMessageKey = nil
                         }
-                        
-                        self.updateVisibility()
+
+                        // === Streaming state apply ===
+
+                        // 1. Compute / cache the cost map.
+                        // Reuse the cost map computed in the layout pass (the bubble's
+                        // size depended on it) — don't recompute. Keep the previous map
+                        // alive while a reveal/finalize is still in flight: on a post-
+                        // streaming pass (hasDraft && hadDraft both false) revealCostMap is
+                        // nil, and clobbering it would strand the display-link tick (whose
+                        // guard requires a cost map), aborting the finalize before it can
+                        // clear the mask and restore the status alpha.
+                        if let revealCostMap {
+                            self.currentRevealCostMap = revealCostMap
+                        } else if self.textRevealController == nil {
+                            self.currentRevealCostMap = nil
+                        }
+
+                        // 2. Update the "Thinking…" header.
+                        if let streamingTextFrame, let streamingTextLayoutAndApply {
+                            var statusAnimation = animation
+                            if self.streamingStatusTextNode == nil {
+                                statusAnimation = .None
+                            }
+                            let streamingStatusTextNode = streamingTextLayoutAndApply.apply(InteractiveTextNodeWithEntities.Arguments(
+                                context: item.context,
+                                cache: item.controllerInteraction.presentationContext.animationCache,
+                                renderer: item.controllerInteraction.presentationContext.animationRenderer,
+                                placeholderColor: messageTheme.mediaPlaceholderColor,
+                                attemptSynchronous: false,
+                                textColor: messageTheme.primaryTextColor,
+                                spoilerEffectColor: messageTheme.secondaryTextColor,
+                                applyArguments: InteractiveTextNode.ApplyArguments(
+                                    animation: statusAnimation,
+                                    spoilerTextColor: messageTheme.primaryTextColor,
+                                    spoilerEffectColor: messageTheme.secondaryTextColor,
+                                    areContentAnimationsEnabled: item.context.sharedContext.energyUsageSettings.loopEmoji,
+                                    spoilerExpandRect: nil,
+                                    crossfadeContents: nil
+                                )
+                            ))
+
+                            let streamingStatusShimmerView: ShimmeringMaskView
+                            if let current = self.streamingStatusShimmerView {
+                                streamingStatusShimmerView = current
+                            } else {
+                                streamingStatusShimmerView = ShimmeringMaskView(peakAlpha: 0.3, duration: 1.0)
+                                self.streamingStatusShimmerView = streamingStatusShimmerView
+                                self.containerNode.view.addSubview(streamingStatusShimmerView)
+                            }
+
+                            if streamingStatusTextNode !== self.streamingStatusTextNode {
+                                self.streamingStatusTextNode?.textNode.view.removeFromSuperview()
+                                self.streamingStatusTextNode = streamingStatusTextNode
+                                streamingStatusShimmerView.contentView.addSubview(streamingStatusTextNode.textNode.view)
+                            }
+                            statusAnimation.animator.updatePosition(layer: streamingStatusShimmerView.layer, position: streamingTextFrame.center, completion: nil)
+                            statusAnimation.animator.updateBounds(layer: streamingStatusShimmerView.layer, bounds: CGRect(origin: .zero, size: streamingTextFrame.size), completion: nil)
+                            statusAnimation.animator.updatePosition(layer: streamingStatusTextNode.textNode.layer, position: CGPoint(x: streamingTextFrame.size.width * 0.5, y: streamingTextFrame.size.height * 0.5), completion: nil)
+                            statusAnimation.animator.updateBounds(layer: streamingStatusTextNode.textNode.layer, bounds: CGRect(origin: .zero, size: streamingTextFrame.size), completion: nil)
+                            streamingStatusShimmerView.update(
+                                size: streamingTextFrame.size,
+                                containerWidth: streamingTextFrame.size.width,
+                                offsetX: 0.0,
+                                gradientWidth: 200.0,
+                                transition: .immediate
+                            )
+                        } else if let streamingStatusShimmerView = self.streamingStatusShimmerView {
+                            self.streamingStatusTextNode = nil
+                            self.streamingStatusShimmerView = nil
+                            animation.animator.updateAlpha(layer: streamingStatusShimmerView.layer, alpha: 0.0, completion: { [weak streamingStatusShimmerView] _ in
+                                streamingStatusShimmerView?.removeFromSuperview()
+                            })
+                        }
+
+                        // 3. Drive the reveal controller.
+                        let previousAnimateGlyphCount: Int? = (hasDraft || hadDraft) ? (self.textRevealController?.currentGlyphCount ?? 0) : nil
+                        if previousAnimateGlyphCount != nil || self.textRevealController != nil || hasDraft || hadDraft {
+                            if hasDraft {
+                                self.statusNode?.alpha = 0.0
+                            }
+                            // Seed the (possibly freshly rebuilt) V2 view to the reveal cursor's
+                            // current position so we don't flash full text. Use the live controller
+                            // count rather than `previousAnimateGlyphCount`, which is nil — and would
+                            // reset the reveal to 0 — on post-streaming finalize passes where the
+                            // controller is still animating.
+                            let seedCount = self.textRevealController?.currentGlyphCount ?? previousAnimateGlyphCount ?? 0
+                            self.pageView?.applyReveal(revealedCount: seedCount,
+                                                       costMap: self.currentRevealCostMap,
+                                                       animated: false)
+                            self.lastAppliedRevealedCount = seedCount
+                            self.updateTextRevealAnimation(previousGlyphCount: previousAnimateGlyphCount ?? 0,
+                                                           hasDraft: hasDraft,
+                                                           hadDraft: hadDraft)
+                        }
                     })
                 })
             })
         }
     }
     
-    private func effectiveFrameForTile(_ tile: InstantPageTile) -> CGRect {
-        let layoutOrigin = tile.frame.origin
-        let origin = layoutOrigin
-        return CGRect(origin: origin, size: tile.frame.size)
-    }
-    
-    private func updateVisibility() {
-        switch self.visibility {
-        case .none:
-            self.updateVisibleItems(visibleBounds: CGRect(), animated: false)
-        case let .visible(_, subRect):
-            self.updateVisibleItems(visibleBounds: subRect, animated: false)
+    private func updateTextRevealAnimation(previousGlyphCount: Int, hasDraft: Bool, hadDraft: Bool) {
+        let toCount = self.currentRevealCostMap?.total ?? 0
+        let now = CACurrentMediaTime()
+
+        if hasDraft, let controller = self.textRevealController, controller.isFinalizing {
+            self.textRevealController = nil
+            self.textRevealLink = nil
         }
-    }
-    
-    private func updateVisibleItems(visibleBounds: CGRect, animated: Bool = false) {
-        guard let messageItem = self.item, let pageTheme = self.pageTheme else {
+
+        if self.textRevealController == nil && (hasDraft || hadDraft) {
+            self.textRevealController = TextRevealController(initialRevealedCount: previousGlyphCount, initialLength: toCount, durationMultiplier: 10.0)
+        }
+
+        guard let controller = self.textRevealController else { return }
+
+        if hasDraft {
+            controller.observeUpdate(latestLength: toCount, at: now)
+        } else if hadDraft {
+            controller.finalize(finalLength: toCount)
+        }
+
+        if controller.isFinalizing && controller.revealedCount >= Double(controller.latestLength) {
+            self.textRevealController = nil
+            self.textRevealLink = nil
+            self.pageView?.applyReveal(revealedCount: nil, costMap: nil, animated: false)
+            self.lastAppliedRevealedCount = 0
+            // The cursor already caught up at finalize time, so the display-link `isComplete`
+            // branch (which normally restores the status alpha) will never run. Restore it
+            // here too, mirroring that branch.
+            if let item = self.item, let statusNode = self.statusNode,
+               !item.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+                ContainedViewLayoutTransition.animated(duration: 0.2, curve: .easeInOut).updateAlpha(node: statusNode, alpha: 1.0)
+            }
             return
         }
-        let sourceLocation = InstantPageSourceLocation(userLocation: .other, peerType: .otherPrivate)
-        
-        var visibleTileIndices = Set<Int>()
-        var visibleItemIndices = Set<Int>()
-        
-        var topNode: ASDisplayNode?
-        let topTileNode = topNode
-        if let containerSubnodes = self.containerNode.subnodes {
-            for node in containerSubnodes.reversed() {
-                if let node = node as? InstantPageTileNode {
-                    topNode = node
-                    break
+
+        guard toCount > 0 else { return }
+
+        if self.textRevealLink == nil {
+            self.textRevealLink = SharedDisplayLinkDriver.shared.add { [weak self] _ in
+                guard let self else { return }
+                guard let item = self.item else {
+                    self.textRevealController = nil
+                    self.textRevealLink = nil
+                    return
                 }
-            }
-        }
-        
-        var collapseOffset: CGFloat = 0.0
-        collapseOffset = 0.0
-        let transition: ContainedViewLayoutTransition
-        if animated {
-            transition = .animated(duration: 0.3, curve: .spring)
-        } else {
-            transition = .immediate
-        }
-        
-        var itemIndex = -1
-        var embedIndex = -1
-        var detailsIndex = -1
-        
-        var previousDetailsNode: InstantPageDetailsNode?
-        
-        for item in self.currentLayoutItemsWithNodes {
-            itemIndex += 1
-            if item is InstantPageWebEmbedItem {
-                embedIndex += 1
-            }
-            if let imageItem = item as? InstantPageImageItem, case .webpage = imageItem.media.media {
-                embedIndex += 1
-            }
-            if item is InstantPageDetailsItem {
-                detailsIndex += 1
-            }
-    
-            var itemThreshold: CGFloat = 0.0
-            if let group = item.distanceThresholdGroup() {
-                var count: Int = 0
-                if let currentCount = self.distanceThresholdGroupCount[group] {
-                    count = currentCount
+                guard let controller = self.textRevealController, let costMap = self.currentRevealCostMap else {
+                    self.textRevealLink = nil
+                    return
                 }
-                itemThreshold = item.distanceThresholdWithGroupCount(count)
-            }
-            
-            let itemFrame = item.frame.offsetBy(dx: 0.0, dy: -collapseOffset)
-            var thresholdedItemFrame = itemFrame
-            thresholdedItemFrame.origin.y -= itemThreshold
-            thresholdedItemFrame.size.height += itemThreshold * 2.0
-            
-            if visibleBounds.intersects(thresholdedItemFrame) {
-                visibleItemIndices.insert(itemIndex)
-                
-                var itemNode = self.visibleItemsWithNodes[itemIndex]
-                if let currentItemNode = itemNode {
-                    if !item.matchesNode(currentItemNode) {
-                        currentItemNode.removeFromSupernode()
-                        self.visibleItemsWithNodes.removeValue(forKey: itemIndex)
-                        itemNode = nil
+                let now = CACurrentMediaTime()
+                let (revealedGlyphCount, isComplete) = controller.tick(now: now)
+
+                if isComplete {
+                    self.textRevealController = nil
+                    self.textRevealLink = nil
+                    self.pageView?.applyReveal(revealedCount: nil, costMap: nil, animated: false)
+                    self.lastAppliedRevealedCount = 0
+
+                    if let statusNode = self.statusNode,
+                       !item.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+                        ContainedViewLayoutTransition.animated(duration: 0.2, curve: .easeInOut).updateAlpha(node: statusNode, alpha: 1.0)
                     }
-                }
-                
-                if itemNode == nil {
-                    let itemIndex = itemIndex
-                    //let embedIndex = embedIndex
-                    //let detailsIndex = detailsIndex
-                    if let newNode = item.node(context: messageItem.context, strings: messageItem.presentationData.strings, nameDisplayOrder: messageItem.presentationData.nameDisplayOrder, theme: pageTheme, sourceLocation: sourceLocation, openMedia: { [weak self] media in
-                        guard let self, let item = self.item, let mediaId = media.media.id else {
-                            return
-                        }
-                        let _ = item.controllerInteraction.openMessage(item.message, OpenMessageParams(mode: .default, mediaSubject: .instantPageMedia(mediaId)))
-                    }, longPressMedia: { _ in
-                        // TODO
-                    }, activatePinchPreview: { _ in
-                        // TODO
-                    }, pinchPreviewFinished: { _ in
-                        // TODO
-                    }, openPeer: { [weak self] peer in
-                        guard let self, let item = self.item else {
-                            return
-                        }
-                        item.controllerInteraction.openPeer(peer, .chat(textInputState: nil, subject: nil, peekData: nil), nil, .default)
-                    }, openUrl: { [weak self] urlItem in
-                        guard let self, let item = self.item else {
-                            return
-                        }
-                        let split = self.splitAnchor(urlItem.url)
-                        if let webpage = self.currentLoadedWebpage(), webpage.url == split.base, let anchor = split.anchor {
-                            self.scrollToAnchor(anchor)
-                            return
-                        }
-                        item.controllerInteraction.openUrl(ChatControllerInteraction.OpenUrl(
-                            url: urlItem.url,
-                            concealed: false,
-                            message: item.message,
-                            allowInlineWebpageResolution: urlItem.webpageId != nil
-                        ))
-                    }, updateWebEmbedHeight: { _ in
-                        // TODO
-                    }, updateDetailsExpanded: { _ in
-                        // TODO
-                    }, currentExpandedDetails: self.currentExpandedDetails, getPreloadedResource: { _ in return nil }) {
-                        newNode.frame = itemFrame
-                        newNode.updateLayout(size: itemFrame.size, transition: transition)
-                        if let topNode = topNode {
-                            self.containerNode.insertSubnode(newNode, aboveSubnode: topNode)
-                        } else {
-                            self.containerNode.insertSubnode(newNode, at: 0)
-                        }
-                        topNode = newNode
-                        self.visibleItemsWithNodes[itemIndex] = newNode
-                        itemNode = newNode
-                        
-                        if let itemNode = itemNode as? InstantPageDetailsNode {
-                            itemNode.requestLayoutUpdate = { [weak self] animated in
-                                let _ = self
-                                /*if let strongSelf = self {
-                                    strongSelf.updateVisibleItems(visibleBounds: strongSelf.scrollNode.view.bounds, animated: animated)
-                                }*/
-                            }
-                            
-                            if let previousDetailsNode = previousDetailsNode {
-                                if itemNode.frame.minY - previousDetailsNode.frame.maxY < 1.0 {
-                                    itemNode.previousNode = previousDetailsNode
-                                }
-                            }
-                            previousDetailsNode = itemNode
-                        }
-                    }
+                    self.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
                 } else {
-                    if let itemNode = itemNode, itemNode.frame != itemFrame {
-                        transition.updateFrame(node: itemNode, frame: itemFrame)
-                        itemNode.updateLayout(size: itemFrame.size, transition: transition)
-                    }
-                }
-                
-                if let itemNode = itemNode as? InstantPageDetailsNode {
-                    itemNode.updateVisibleItems(visibleBounds: visibleBounds.offsetBy(dx: -itemNode.frame.minX, dy: -itemNode.frame.minY), animated: animated)
-                }
-            }
-        }
-        
-        topNode = topTileNode
-        
-        var tileIndex = -1
-        for tile in self.currentLayoutTiles {
-            tileIndex += 1
-            
-            let tileFrame = effectiveFrameForTile(tile)
-            var tileVisibleFrame = tileFrame
-            tileVisibleFrame.origin.y -= 400.0
-            tileVisibleFrame.size.height += 400.0 * 2.0
-            if tileVisibleFrame.intersects(visibleBounds) {
-                visibleTileIndices.insert(tileIndex)
-                
-                if self.visibleTiles[tileIndex] == nil {
-                    let tileNode = InstantPageTileNode(tile: tile, backgroundColor: .clear)
-                    tileNode.frame = tileFrame
-                    if let topNode = topNode {
-                        self.containerNode.insertSubnode(tileNode, aboveSubnode: topNode)
-                    } else {
-                        self.containerNode.insertSubnode(tileNode, at: 0)
-                    }
-                    topNode = tileNode
-                    self.visibleTiles[tileIndex] = tileNode
-                } else {
-                    if let tileNode = self.visibleTiles[tileIndex] {
-                        tileNode.update(tile: tile, backgroundColor: .clear)
-                        if tileNode.frame != tileFrame {
-                            transition.updateFrame(node: tileNode, frame: tileFrame)
+                    // If the revealed prefix's bottom y would change at the new cursor (i.e.
+                    // crossing a line/item boundary), trigger a full bubble re-layout so the
+                    // bubble grows with the reveal. Mirrors TextBubble's
+                    // `cachedLayout.sizeForCharacterCount(...)` check at lines 1209-1216.
+                    var requestUpdate = false
+                    if let pageLayout = self.currentPageLayout?.layout, self.lastAppliedRevealedCount != revealedGlyphCount {
+                        let prevHeight = costMap.revealedContentSize(revealedCount: self.lastAppliedRevealedCount, layout: pageLayout).height
+                        let newHeight = costMap.revealedContentSize(revealedCount: revealedGlyphCount, layout: pageLayout).height
+                        if prevHeight != newHeight {
+                            requestUpdate = true
                         }
                     }
+                    self.pageView?.applyReveal(revealedCount: revealedGlyphCount, costMap: costMap, animated: true)
+                    self.lastAppliedRevealedCount = revealedGlyphCount
+                    if requestUpdate {
+                        self.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
+                    }
                 }
             }
-        }
-        
-        var removeTileIndices: [Int] = []
-        for (index, tileNode) in self.visibleTiles {
-            if !visibleTileIndices.contains(index) {
-                removeTileIndices.append(index)
-                tileNode.removeFromSupernode()
-            }
-        }
-        for index in removeTileIndices {
-            self.visibleTiles.removeValue(forKey: index)
-        }
-        
-        var removeItemIndices: [Int] = []
-        for (index, itemNode) in self.visibleItemsWithNodes {
-            if !visibleItemIndices.contains(index) {
-                removeItemIndices.append(index)
-                itemNode.removeFromSupernode()
-            } else {
-                var itemFrame = itemNode.frame
-                let itemThreshold: CGFloat = 200.0
-                itemFrame.origin.y -= itemThreshold
-                itemFrame.size.height += itemThreshold * 2.0
-                itemNode.updateIsVisible(visibleBounds.intersects(itemFrame))
-            }
-        }
-        for index in removeItemIndices {
-            self.visibleItemsWithNodes.removeValue(forKey: index)
         }
     }
-    
+
     override public func animateInsertion(_ currentTimestamp: Double, duration: Double) {
-        /*self.textNode.textNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
         if let statusNode = self.statusNode, statusNode.alpha != 0.0 {
             statusNode.layer.animateAlpha(from: 0.0, to: statusNode.alpha, duration: 0.2)
-        }*/
+        }
     }
     
     override public func animateAdded(_ currentTimestamp: Double, duration: Double) {
-        /*self.textNode.textNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
         if let statusNode = self.statusNode, statusNode.alpha != 0.0 {
             statusNode.layer.animateAlpha(from: 0.0, to: statusNode.alpha, duration: 0.2)
-        }*/
+        }
     }
     
     override public func animateRemoved(_ currentTimestamp: Double, duration: Double) {
-        /*self.textNode.textNode.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false)
         if let statusNode = self.statusNode, statusNode.alpha != 0.0 {
             statusNode.layer.animateAlpha(from: statusNode.alpha, to: 0.0, duration: 0.2, removeOnCompletion: false)
-        }*/
+        }
     }
     
     override public func tapActionAtPoint(_ point: CGPoint, gesture: TapLongTapOrDoubleTapGesture, isEstimating: Bool) -> ChatMessageBubbleContentTapAction {
@@ -504,12 +950,26 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
             }
         }
 
+        if case .tap = gesture, !self.displayContentsUnderSpoilers, let entityHit = self.entityForTapLocation(point), entityHit.attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.Spoiler)] != nil {
+            return ChatMessageBubbleContentTapAction(content: .custom({ [weak self] in
+                self?.revealSpoilers(atContentPoint: point)
+            }))
+        }
+
         guard let urlHit = self.urlForTapLocation(point) else {
+            if let entityHit = self.entityForTapLocation(point), let content = self.entityTapContent(entityHit.attributes) {
+                let rects = self.computeHighlightRects(item: entityHit.item, parentOffset: entityHit.parentOffset, localPoint: entityHit.localPoint)
+                return ChatMessageBubbleContentTapAction(
+                    content: content,
+                    rects: rects,
+                    activate: self.makeActivate(item: entityHit.item, parentOffset: entityHit.parentOffset, localPoint: entityHit.localPoint)
+                )
+            }
             return ChatMessageBubbleContentTapAction(content: .none)
         }
 
         let split = self.splitAnchor(urlHit.urlItem.url)
-        if let webpage = self.currentLoadedWebpage(), webpage.url == split.base, let anchor = split.anchor {
+        if let webpage = self.currentLoadedWebpage(), webpage.content.url == split.base, let anchor = split.anchor {
             return ChatMessageBubbleContentTapAction(content: .custom({ [weak self] in
                 self?.scrollToAnchor(anchor)
             }))
@@ -541,55 +1001,72 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
 
     private func textItemAtLocation(_ location: CGPoint) -> (item: InstantPageTextItem, parentOffset: CGPoint)? {
-        guard let layout = self.currentPageLayout?.layout else {
-            return nil
+        guard let pageView = self.pageView else { return nil }
+        let local = self.view.convert(location, to: pageView)
+        return pageView.textItemAt(point: local)
+    }
+
+    private func urlForTapLocation(_ point: CGPoint) -> (item: InstantPageTextItem, urlItem: InstantPageUrlItem, parentOffset: CGPoint, localPoint: CGPoint)? {
+        guard let pageView = self.pageView else { return nil }
+        let local = self.view.convert(point, to: pageView)
+        return pageView.urlItemAt(point: local).map {
+            (item: $0.item, urlItem: $0.urlItem, parentOffset: $0.parentOffset, localPoint: $0.localPoint)
         }
-        // Translate from bubble-content-node coords to container-/layout-local coords.
-        let layoutLocation = location.offsetBy(dx: -1.0, dy: -1.0)
-        for item in layout.items {
-            let itemFrame = item.frame
-            if itemFrame.contains(layoutLocation) {
-                if let item = item as? InstantPageTextItem, item.selectable {
-                    return (item, CGPoint(x: itemFrame.minX - item.frame.minX, y: itemFrame.minY - item.frame.minY))
-                } else if let item = item as? InstantPageScrollableItem {
-                    let contentOffset = CGPoint.zero
-                    if let (textItem, parentOffset) = item.textItemAtLocation(layoutLocation.offsetBy(dx: -itemFrame.minX + contentOffset.x, dy: -itemFrame.minY)) {
-                        return (textItem, itemFrame.origin.offsetBy(dx: parentOffset.x - contentOffset.x, dy: parentOffset.y))
-                    }
-                } else if let item = item as? InstantPageDetailsItem {
-                    for (_, itemNode) in self.visibleItemsWithNodes {
-                        if let itemNode = itemNode as? InstantPageDetailsNode, itemNode.item === item {
-                            if let (textItem, parentOffset) = itemNode.textItemAtLocation(layoutLocation.offsetBy(dx: -itemFrame.minX, dy: -itemFrame.minY)) {
-                                return (textItem, itemFrame.origin.offsetBy(dx: parentOffset.x, dy: parentOffset.y))
-                            }
-                        }
-                    }
-                }
-            }
+    }
+
+    private func entityForTapLocation(_ point: CGPoint) -> (item: InstantPageTextItem, parentOffset: CGPoint, localPoint: CGPoint, attributes: [NSAttributedString.Key: Any])? {
+        guard let pageView = self.pageView else { return nil }
+        let local = self.view.convert(point, to: pageView)
+        guard let hit = pageView.textItemAt(point: local) else { return nil }
+        let localPoint = CGPoint(x: local.x - hit.parentOffset.x, y: local.y - hit.parentOffset.y)
+        guard let (_, attributes) = hit.item.attributesAtPoint(localPoint, orNearest: false) else { return nil }
+        return (item: hit.item, parentOffset: hit.parentOffset, localPoint: localPoint, attributes: attributes)
+    }
+
+    private func revealSpoilers(atContentPoint point: CGPoint) {
+        guard !self.displayContentsUnderSpoilers, let pageView = self.pageView else {
+            return
+        }
+        self.displayContentsUnderSpoilers = true
+        let local = self.view.convert(point, to: pageView)
+        pageView.setDisplayContentsUnderSpoilers(true, atLocation: local, animated: true)
+    }
+
+    private func entityTapContent(_ attributes: [NSAttributedString.Key: Any]) -> ChatMessageBubbleContentTapAction.Content? {
+        if let mention = attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.PeerMention)] as? TelegramPeerMention {
+            return .peerMention(peerId: mention.peerId, mention: mention.mention, openProfile: false)
+        } else if let peerName = attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.PeerTextMention)] as? String {
+            return .textMention(peerName)
+        } else if let botCommand = attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.BotCommand)] as? String {
+            return .botCommand(botCommand)
+        } else if let hashtag = attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.Hashtag)] as? TelegramHashtag {
+            // Cashtags are carried as a Hashtag attribute (no dedicated cashtag key/tap-action exists);
+            // the leading "$" in the string distinguishes them, and the chat hashtag handler searches both.
+            return .hashtag(hashtag.peerName, hashtag.hashtag)
+        } else if let bankCard = attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.BankCard)] as? String {
+            return .bankCard(bankCard)
         }
         return nil
     }
 
-    private func urlForTapLocation(_ point: CGPoint) -> (item: InstantPageTextItem, urlItem: InstantPageUrlItem, parentOffset: CGPoint, localPoint: CGPoint)? {
-        guard let (item, parentOffset) = self.textItemAtLocation(point) else {
-            return nil
-        }
-        // Translate bubble-content-node point → text-item-local point.
-        // (bubble-coords → layout-coords) is `- (1, 1)`; (layout → item-local) is `- item.frame.origin - parentOffset`.
-        let layoutPoint = point.offsetBy(dx: -1.0, dy: -1.0)
-        let localPoint = layoutPoint.offsetBy(dx: -item.frame.minX - parentOffset.x, dy: -item.frame.minY - parentOffset.y)
-        guard let urlItem = item.urlAttribute(at: localPoint) else {
-            return nil
-        }
-        return (item, urlItem, parentOffset, localPoint)
+    /// Bridges an InstantPageUrlItem (used by the gallery's caption URL handler) to the
+    /// chat layer's URL handler. `concealed: true` matches `tapActionAtPoint` for the same
+    /// reason: V2 cannot reliably compare displayed link text to the resolved URL.
+    private func openInstantPageUrl(_ url: InstantPageUrlItem) {
+        guard let item = self.item else { return }
+        item.controllerInteraction.openUrl(ChatControllerInteraction.OpenUrl(
+            url: url.url,
+            concealed: true,
+            allowInlineWebpageResolution: url.webpageId != nil
+        ))
     }
 
     private func computeHighlightRects(item: InstantPageTextItem, parentOffset: CGPoint, localPoint: CGPoint) -> [CGRect] {
         // Text item returns rects in its local coords; translate back into containerNode-local coords.
         // containerNode is offset by (1, 1) from the bubble-content-node, but the highlight overlay lives
         // *inside* containerNode, so we use layout-coords (= containerNode-local) for the rects.
-        let originX = item.frame.minX + parentOffset.x
-        let originY = item.frame.minY + parentOffset.y
+        let originX = parentOffset.x
+        let originY = parentOffset.y
         return item.linkSelectionRects(at: localPoint).map { rect in
             rect.offsetBy(dx: originX, dy: originY)
         }
@@ -660,6 +1137,9 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
 
     override public func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        if let statusNode = self.statusNode, statusNode.supernode != nil, let result = statusNode.hitTest(self.view.convert(point, to: statusNode.view), with: event) {
+            return result
+        }
         return super.hitTest(point, with: event)
     }
     
@@ -669,8 +1149,12 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         }
 
         var rects: [CGRect]?
-        if let point, let urlHit = self.urlForTapLocation(point) {
-            rects = self.computeHighlightRects(item: urlHit.item, parentOffset: urlHit.parentOffset, localPoint: urlHit.localPoint)
+        if let point {
+            if let urlHit = self.urlForTapLocation(point) {
+                rects = self.computeHighlightRects(item: urlHit.item, parentOffset: urlHit.parentOffset, localPoint: urlHit.localPoint)
+            } else if let entityHit = self.entityForTapLocation(point), self.entityTapContent(entityHit.attributes) != nil {
+                rects = self.computeHighlightRects(item: entityHit.item, parentOffset: entityHit.parentOffset, localPoint: entityHit.localPoint)
+            }
         }
 
         if let rects, !rects.isEmpty {
@@ -712,16 +1196,30 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
 
     override public func updateIsExtractedToContextPreview(_ value: Bool) {
-        guard value, self.textSelectionNode == nil, let messageItem = self.item, let layout = self.currentPageLayout?.layout, let rootNode = messageItem.controllerInteraction.chatControllerNode() else {
+        guard value, self.textSelectionNode == nil, let messageItem = self.item, self.currentPageLayout?.layout != nil, let pageView = self.pageView, let rootNode = messageItem.controllerInteraction.chatControllerNode() else {
             return
         }
 
-        let items = layout.items.compactMap { $0 as? InstantPageTextItem }.filter { $0.selectable && !$0.attributedString.string.isEmpty }
-        guard !items.isEmpty else {
+        // pageView sits at (-1, 0) inside containerNode; the adapter is placed at
+        // containerNode.bounds, so shift each item's page-space origin into
+        // containerNode-local coords for the adapter to operate in.
+        let pageOrigin = pageView.frame.origin
+        let entries = pageView.selectableTextItems()
+            .filter { $0.item.selectable && !$0.item.attributedString.string.isEmpty }
+            .map { entry in
+                InstantPageMultiTextAdapter.Entry(
+                    item: entry.item,
+                    frameOrigin: CGPoint(
+                        x: entry.parentOffset.x + pageOrigin.x,
+                        y: entry.parentOffset.y + pageOrigin.y
+                    )
+                )
+            }
+        guard !entries.isEmpty else {
             return
         }
 
-        let adapter = InstantPageMultiTextAdapter(items: items)
+        let adapter = InstantPageMultiTextAdapter(entries: entries)
         adapter.frame = self.containerNode.bounds
         self.textSelectionAdapter = adapter
         self.containerNode.addSubnode(adapter)
@@ -779,108 +1277,37 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
 
     override public func transitionNode(messageId: EngineMessage.Id, media: EngineRawMedia, adjustRect: Bool) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
-        guard let item = self.item, item.message.id == messageId else {
-            return nil
-        }
-        guard let mediaId = media.id, let layout = self.currentPageLayout?.layout else {
-            return nil
-        }
-        guard let match = self.findInstantPageMedia(in: layout.items, mediaId: mediaId) else {
-            return nil
-        }
-        for (_, itemNode) in self.visibleItemsWithNodes {
-            if let transition = itemNode.transitionNode(media: match) {
-                return transition
-            }
-        }
+        // V2 V0: media items render as gray placeholders; no transition node is exposed.
         return nil
     }
 
     override public func updateHiddenMedia(_ media: [EngineRawMedia]?) -> Bool {
-        var hiddenMedia: InstantPageMedia?
-        if let media, !media.isEmpty, let layout = self.currentPageLayout?.layout {
-            for raw in media {
-                if let id = raw.id, let match = self.findInstantPageMedia(in: layout.items, mediaId: id) {
-                    hiddenMedia = match
-                    break
-                }
-            }
-        }
-        for (_, itemNode) in self.visibleItemsWithNodes {
-            itemNode.updateHiddenMedia(media: hiddenMedia)
-        }
-        return hiddenMedia != nil
-    }
-
-    private func findInstantPageMedia(in items: [InstantPageItem], mediaId: EngineMedia.Id) -> InstantPageMedia? {
-        for item in items {
-            if let detailsItem = item as? InstantPageDetailsItem {
-                if let found = self.findInstantPageMedia(in: detailsItem.items, mediaId: mediaId) {
-                    return found
-                }
-            }
-            for itemMedia in item.medias {
-                if itemMedia.media.id == mediaId {
-                    return itemMedia
-                }
-            }
-        }
-        return nil
+        // V2 V0: media items render as gray placeholders; nothing to hide.
+        return false
     }
 
     override public func getAnchorRect(anchor: String) -> CGRect? {
-        guard let layout = self.currentPageLayout?.layout else {
-            return nil
-        }
-        if let rect = self.anchorRect(in: layout.items, anchor: anchor, baseY: 0.0) {
-            // Translate from layout/containerNode coords to bubble-content-node coords.
-            // containerNode is offset by (1, 1) from the bubble content node.
-            return rect.offsetBy(dx: 1.0, dy: 1.0)
-        }
-        return nil
-    }
-
-    private func anchorRect(in items: [InstantPageItem], anchor: String, baseY: CGFloat) -> CGRect? {
-        for item in items {
-            if let item = item as? InstantPageAnchorItem, item.anchor == anchor {
-                return CGRect(x: item.frame.minX, y: baseY + item.frame.minY, width: 1.0, height: 1.0)
-            } else if let item = item as? InstantPageTextItem {
-                if let (lineIndex, _) = item.anchors[anchor] {
-                    let lineFrame = item.lines[lineIndex].frame
-                    return CGRect(x: item.frame.minX + lineFrame.minX, y: baseY + item.frame.minY + lineFrame.minY, width: lineFrame.width, height: lineFrame.height)
-                }
-            } else if let item = item as? InstantPageTableItem {
-                if let (offset, _) = item.anchors[anchor] {
-                    return CGRect(x: item.frame.minX, y: baseY + item.frame.minY + offset, width: item.frame.width, height: 1.0)
-                }
-            } else if let item = item as? InstantPageDetailsItem {
-                // Inner items are laid out below the title bar, so the recursive base
-                // must include titleHeight (mirrors InstantPageDetailsNode.linkSelectionRects).
-                if let rect = self.anchorRect(in: item.items, anchor: anchor, baseY: baseY + item.frame.minY + item.titleHeight) {
-                    return rect
-                }
-            }
-        }
+        // V2 V0: anchor resolution lives in the V2 view (text-item anchors). Not yet wired through.
+        let _ = anchor
         return nil
     }
 
     override public func reactionTargetView(value: MessageReaction.Reaction) -> UIView? {
-        /*if let statusNode = self.statusNode, !statusNode.isHidden {
+        if let statusNode = self.statusNode, !statusNode.isHidden {
             return statusNode.reactionView(value: value)
-        }*/
+        }
         return nil
     }
     
     override public func messageEffectTargetView() -> UIView? {
-        /*if let statusNode = self.statusNode, !statusNode.isHidden {
+        if let statusNode = self.statusNode, !statusNode.isHidden {
             return statusNode.messageEffectTargetView()
-        }*/
+        }
         return nil
     }
     
     override public func getStatusNode() -> ASDisplayNode? {
-        return nil
-        //return self.statusNode
+        return self.statusNode
     }
 
     private func splitAnchor(_ url: String) -> (base: String, anchor: String?) {
@@ -892,17 +1319,8 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         return (url, nil)
     }
 
-    private func currentLoadedWebpage() -> TelegramMediaWebpageLoadedContent? {
-        guard let item = self.item else {
-            return nil
-        }
-        guard let webpage = item.message.media.first(where: { $0 is TelegramMediaWebpage }) as? TelegramMediaWebpage else {
-            return nil
-        }
-        if case let .Loaded(content) = webpage.content {
-            return content
-        }
-        return nil
+    private func currentLoadedWebpage() -> TelegramMediaWebpage? {
+        return nil   // V2 V0: media items are placeholders; no inline webpage resolution.
     }
 
     private func scrollToAnchor(_ anchor: String) {

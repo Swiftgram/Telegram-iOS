@@ -2,82 +2,114 @@ import Foundation
 import UIKit
 import TelegramCore
 
-func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?) -> CGFloat {
-    if let upper = upper, let lower = lower {
+func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fitToWidth: Bool) -> CGFloat {
+    if let upper, let lower {
         switch (upper, lower) {
-            case (_, .cover), (_, .channelBanner), (.details, .details), (.relatedArticles, _), (_, .anchor):
-                return 0.0
-            case (.divider, _), (_, .divider):
+        case (_, .cover), (_, .channelBanner), (.details, .details), (.relatedArticles, _), (_, .anchor):
+            return 0.0
+        case (.divider, _), (_, .divider):
+            if fitToWidth {
+                return 10.0
+            } else {
                 return 25.0
-            case (_, .blockQuote), (.blockQuote, _), (_, .pullQuote), (.pullQuote, _):
-                return 27.0
-            case (.kicker, .title), (.cover, .title):
-                return 16.0
-            case (_, .title):
-                return 20.0
-            case (.title, .authorDate), (.subtitle, .authorDate):
-                return 18.0
-            case (_, .authorDate):
-                return 20.0
-            case (.title, .paragraph), (.authorDate, .paragraph):
-                return 34.0
-            case (.header, .paragraph), (.subheader, .paragraph), (.heading, .paragraph):
+            }
+        case (_, .blockQuote), (.blockQuote, _), (_, .pullQuote), (.pullQuote, _):
+            return 27.0
+        case (.kicker, .title), (.cover, .title):
+            return 16.0
+        case (_, .title):
+            return 20.0
+        case (.title, .authorDate), (.subtitle, .authorDate):
+            return 18.0
+        case (_, .authorDate):
+            return 20.0
+        case (.title, .paragraph), (.authorDate, .paragraph):
+            return 34.0
+        case (.header, .paragraph), (.subheader, .paragraph), (.heading, .paragraph):
+            if fitToWidth {
+                return 10.0
+            } else {
                 return 25.0
-            case (.list, .paragraph):
-                return 31.0
-            case (.preformatted, .paragraph):
-                return 19.0
-            case (.formula, .paragraph):
-                return 19.0
-            case (.paragraph, .paragraph):
+            }
+        case (.list, .paragraph):
+            return 31.0
+        case (.preformatted, .paragraph):
+            return 19.0
+        case (.formula, .paragraph):
+            return 19.0
+        case (.paragraph, .paragraph):
+            if fitToWidth {
+                return 10.0
+            } else {
                 return 25.0
-            case (_, .paragraph):
-                return 20.0
-            case (.title, .formula), (.authorDate, .formula):
-                return 34.0
-            case (.header, .formula), (.subheader, .formula), (.heading, .formula):
+            }
+        case (_, .paragraph):
+            return 20.0
+        case (.title, .formula), (.authorDate, .formula):
+            return 34.0
+        case (.header, .formula), (.subheader, .formula), (.heading, .formula):
+            if fitToWidth {
+                return 10.0
+            } else {
                 return 25.0
-            case (.list, .formula):
-                return 31.0
-            case (.preformatted, .formula):
-                return 19.0
-            case (.paragraph, .formula):
-                return 19.0
-            case (_, .formula):
-                return 20.0
-            case (.title, .list), (.authorDate, .list):
-                return 34.0
-            case (.header, .list), (.subheader, .list), (.heading, .list):
-                return 31.0
-            case (.preformatted, .list):
-                return 19.0
-            case (.formula, .list):
+            }
+        case (.list, .formula):
+            return 31.0
+        case (.preformatted, .formula):
+            return 19.0
+        case (.paragraph, .formula):
+            return 19.0
+        case (_, .formula):
+            return 20.0
+        case (.title, .list), (.authorDate, .list):
+            return 34.0
+        case (.header, .list), (.subheader, .list), (.heading, .list):
+            return 31.0
+        case (.preformatted, .list):
+            return 19.0
+        case (.formula, .list):
+            if fitToWidth {
+                return 10.0
+            } else {
                 return 25.0
-            case (_, .list):
+            }
+        case (_, .list):
+            if fitToWidth {
+                return 10.0
+            } else {
                 return 25.0
-            case (.paragraph, .preformatted):
-                return 19.0
-            case (.formula, .preformatted):
-                return 19.0
-            case (_, .preformatted):
-                return 20.0
-            case (_, .header), (_, .subheader), (_, .heading):
-                return 32.0
-            default:
-                return 20.0
+            }
+        case (.paragraph, .preformatted):
+            return 19.0
+        case (.formula, .preformatted):
+            return 19.0
+        case (_, .preformatted):
+            return 20.0
+        case (_, .header), (_, .subheader), (_, .heading):
+            return 32.0
+        default:
+            return 20.0
         }
-    } else if let lower = lower {
+    } else if let lower {
         switch lower {
-            case .cover, .channelBanner, .details, .anchor:
-                return 0.0
-            default:
+        case .cover, .channelBanner, .details, .anchor, .table:
+            return 0.0
+        default:
+            if fitToWidth {
+                return 10.0
+            } else {
                 return 25.0
+            }
         }
     } else {
-        if let upper = upper, case .relatedArticles = upper {
+        if let upper, case .relatedArticles = upper {
             return 0.0
         } else {
-            return 25.0
+            if fitToWidth {
+                return 5.0
+            } else {
+                return 25.0
+            }
         }
     }
 }

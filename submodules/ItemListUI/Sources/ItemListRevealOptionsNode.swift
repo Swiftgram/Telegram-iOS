@@ -86,8 +86,17 @@ private let optionExpandedTransitionDistance: CGFloat = 16.0
 private let optionIconlessTitleHorizontalInset: CGFloat = 10.0
 private let optionIconAnimationResponse: CGFloat = 18.0
 private let optionIconAnimationSnapDistance: CGFloat = 0.5
-private let optionIconAnimationSnapSize: CGFloat = 0.5
-private let optionIconAnimationSnapAlpha: CGFloat = 0.01
+
+private extension ItemListRevealOptionIcon {
+    var hasVisualIcon: Bool {
+        switch self {
+        case .none:
+            return false
+        case .image, .animation:
+            return true
+        }
+    }
+}
 
 private struct ItemListRevealOptionLayoutMetrics {
     let shapeSize: CGSize
@@ -105,11 +114,11 @@ private struct ItemListRevealOptionLayoutMetrics {
         return floor((self.slotWidth - self.shapeSize.width) / 2.0)
     }
 
-    static func metrics(for height: CGFloat) -> ItemListRevealOptionLayoutMetrics {
+    static func metrics(for height: CGFloat, hasVisualIcons: Bool) -> ItemListRevealOptionLayoutMetrics {
         let regularShapeSize = CGSize(width: 50.0, height: 50.0)
         let compactShapeSize = CGSize(width: 60.0, height: 32.0)
         let regularContentHeight = regularShapeSize.height + optionTitleSpacing + ceil(titleFont.lineHeight)
-        if height < regularContentHeight {
+        if height < regularContentHeight || !hasVisualIcons {
             return ItemListRevealOptionLayoutMetrics(shapeSize: compactShapeSize, slotWidth: 70.0, titleWidth: 70.0, iconMaxSide: 20.0, cornerRadius: 16.0, expandedIconInset: 16.0)
         } else {
             return ItemListRevealOptionLayoutMetrics(shapeSize: regularShapeSize, slotWidth: 60.0, titleWidth: 60.0, iconMaxSide: 40.0, cornerRadius: 25.0, expandedIconInset: 20.0)
@@ -151,10 +160,6 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
     private weak var manuallyAnimatedIconNode: ASDisplayNode?
     private var currentIconCenter: CGPoint?
     private var targetIconCenter: CGPoint?
-    private var currentIconSize: CGSize?
-    private var targetIconSize: CGSize?
-    private var currentTitleAlpha: CGFloat?
-    private var targetTitleAlpha: CGFloat?
 
     private var didApplyLayout = false
     var isExpanded: Bool = false
@@ -250,33 +255,18 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
         self.stopManualIconAnimation()
     }
 
-    private func currentIconPresentationFrame(iconNode: ASDisplayNode) -> CGRect {
-        return iconNode.layer.presentation()?.frame ?? iconNode.frame
+    private func currentIconPresentationCenter(iconNode: ASDisplayNode) -> CGPoint {
+        return iconNode.layer.presentation()?.position ?? iconNode.position
     }
 
-    private func currentTitlePresentationAlpha() -> CGFloat {
-        if let presentation = self.titleNode.layer.presentation() {
-            return CGFloat(presentation.opacity)
-        } else {
-            return self.titleNode.alpha
-        }
-    }
-
-    private func applyManualIconState(iconNode: ASDisplayNode, center: CGPoint, size: CGSize, titleAlpha: CGFloat) {
-        iconNode.frame = CGRect(origin: CGPoint(x: floorToScreenPixels(center.x - size.width / 2.0), y: floorToScreenPixels(center.y - size.height / 2.0)), size: size)
-        self.titleNode.alpha = titleAlpha
-    }
-
-    private func isManualIconAnimationAtTarget(center: CGPoint, size: CGSize, titleAlpha: CGFloat) -> Bool {
-        guard let targetIconCenter = self.targetIconCenter, let targetIconSize = self.targetIconSize, let targetTitleAlpha = self.targetTitleAlpha else {
+    private func isManualIconAnimationAtTarget(center: CGPoint) -> Bool {
+        guard let targetIconCenter = self.targetIconCenter else {
             return true
         }
         let centerDeltaX = targetIconCenter.x - center.x
         let centerDeltaY = targetIconCenter.y - center.y
         let centerDistance = sqrt(centerDeltaX * centerDeltaX + centerDeltaY * centerDeltaY)
-        let sizeDistance = max(abs(targetIconSize.width - size.width), abs(targetIconSize.height - size.height))
-        let alphaDistance = abs(targetTitleAlpha - titleAlpha)
-        return centerDistance <= optionIconAnimationSnapDistance && sizeDistance <= optionIconAnimationSnapSize && alphaDistance <= optionIconAnimationSnapAlpha
+        return centerDistance <= optionIconAnimationSnapDistance
     }
 
     private func stopManualIconAnimation() {
@@ -286,40 +276,26 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
         self.manuallyAnimatedIconNode = nil
         self.currentIconCenter = nil
         self.targetIconCenter = nil
-        self.currentIconSize = nil
-        self.targetIconSize = nil
-        self.currentTitleAlpha = nil
-        self.targetTitleAlpha = nil
     }
 
-    private func updateManualIconAnimation(iconNode: ASDisplayNode, targetFrame: CGRect, targetTitleAlpha: CGFloat, forceImmediate: Bool) {
+    private func updateManualIconCenter(iconNode: ASDisplayNode, targetCenter: CGPoint, forceImmediate: Bool) {
         iconNode.layer.removeAnimation(forKey: "position")
-        iconNode.layer.removeAnimation(forKey: "bounds")
-        self.titleNode.layer.removeAnimation(forKey: "opacity")
 
-        let targetCenter = frameCenter(targetFrame)
-        let targetSize = targetFrame.size
-
-        if self.manuallyAnimatedIconNode !== iconNode || self.currentIconCenter == nil || self.currentIconSize == nil || self.currentTitleAlpha == nil {
-            let currentFrame = self.currentIconPresentationFrame(iconNode: iconNode)
-            self.currentIconCenter = frameCenter(currentFrame)
-            self.currentIconSize = currentFrame.size
-            self.currentTitleAlpha = self.currentTitlePresentationAlpha()
+        if self.manuallyAnimatedIconNode !== iconNode || self.currentIconCenter == nil {
+            self.currentIconCenter = self.currentIconPresentationCenter(iconNode: iconNode)
             self.manuallyAnimatedIconNode = iconNode
         }
 
         self.targetIconCenter = targetCenter
-        self.targetIconSize = targetSize
-        self.targetTitleAlpha = targetTitleAlpha
 
         if forceImmediate {
-            self.applyManualIconState(iconNode: iconNode, center: targetCenter, size: targetSize, titleAlpha: targetTitleAlpha)
+            iconNode.position = targetCenter
             self.stopManualIconAnimation()
             return
         }
 
-        if let currentIconCenter = self.currentIconCenter, let currentIconSize = self.currentIconSize, let currentTitleAlpha = self.currentTitleAlpha, self.isManualIconAnimationAtTarget(center: currentIconCenter, size: currentIconSize, titleAlpha: currentTitleAlpha) {
-            self.applyManualIconState(iconNode: iconNode, center: targetCenter, size: targetSize, titleAlpha: targetTitleAlpha)
+        if let currentIconCenter = self.currentIconCenter, self.isManualIconAnimationAtTarget(center: currentIconCenter) {
+            iconNode.position = targetCenter
             self.stopManualIconAnimation()
             return
         }
@@ -333,7 +309,7 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
     }
 
     private func tickManualIconAnimation(deltaTime: CGFloat) {
-        guard let iconNode = self.manuallyAnimatedIconNode, let currentIconCenter = self.currentIconCenter, let targetIconCenter = self.targetIconCenter, let currentIconSize = self.currentIconSize, let targetIconSize = self.targetIconSize, let currentTitleAlpha = self.currentTitleAlpha, let targetTitleAlpha = self.targetTitleAlpha else {
+        guard let iconNode = self.manuallyAnimatedIconNode, let currentIconCenter = self.currentIconCenter, let targetIconCenter = self.targetIconCenter else {
             self.stopManualIconAnimation()
             return
         }
@@ -344,20 +320,13 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
             x: currentIconCenter.x + (targetIconCenter.x - currentIconCenter.x) * progress,
             y: currentIconCenter.y + (targetIconCenter.y - currentIconCenter.y) * progress
         )
-        let updatedSize = CGSize(
-            width: currentIconSize.width + (targetIconSize.width - currentIconSize.width) * progress,
-            height: currentIconSize.height + (targetIconSize.height - currentIconSize.height) * progress
-        )
-        let updatedTitleAlpha = currentTitleAlpha + (targetTitleAlpha - currentTitleAlpha) * progress
 
-        if self.isManualIconAnimationAtTarget(center: updatedCenter, size: updatedSize, titleAlpha: updatedTitleAlpha) {
-            self.applyManualIconState(iconNode: iconNode, center: targetIconCenter, size: targetIconSize, titleAlpha: targetTitleAlpha)
+        if self.isManualIconAnimationAtTarget(center: updatedCenter) {
+            iconNode.position = targetIconCenter
             self.stopManualIconAnimation()
         } else {
             self.currentIconCenter = updatedCenter
-            self.currentIconSize = updatedSize
-            self.currentTitleAlpha = updatedTitleAlpha
-            self.applyManualIconState(iconNode: iconNode, center: updatedCenter, size: updatedSize, titleAlpha: updatedTitleAlpha)
+            iconNode.position = updatedCenter
         }
     }
 
@@ -400,6 +369,7 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
         transition.updateCornerRadius(node: self.backgroundNode, cornerRadius: metrics.cornerRadius)
         transition.updateCornerRadius(node: self.highlightNode, cornerRadius: metrics.cornerRadius)
 
+        let wasExpanded = self.isExpanded
         self.isExpanded = isExpanded
         self.didApplyLayout = true
         let contentAlpha: CGFloat
@@ -413,7 +383,7 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
         transition.updateTransform(node: self.contentContainerNode, transform: CGAffineTransform(scaleX: contentScale, y: contentScale))
 
         let titleAlpha: CGFloat = isPrimary && !self.displaysTitleInsidePill ? (1.0 - expandedProgress) : 1.0
-        var didApplyManualIconAnimation = false
+        var didApplyManualIconCenter = false
 
         let centeredIconCenterX = isPrimary ? backgroundFrame.midX : shapeFrame.midX
         let iconCenterX: CGFloat
@@ -440,8 +410,17 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
             let iconFrame = CGRect(origin: CGPoint(x: floorToScreenPixels(iconCenterX - imageSize.width / 2.0), y: floorToScreenPixels(iconCenterY - imageSize.height / 2.0) + 6.0 + self.animationNodeOffset), size: imageSize)
 
             if isPrimary {
-                didApplyManualIconAnimation = true
-                self.updateManualIconAnimation(iconNode: animationNode, targetFrame: iconFrame, targetTitleAlpha: titleAlpha, forceImmediate: !didApplyLayout || revealProgress < CGFloat.ulpOfOne)
+                didApplyManualIconCenter = true
+                transition.updateBounds(node: animationNode, bounds: CGRect(origin: CGPoint(), size: iconFrame.size))
+                let targetCenter = frameCenter(iconFrame)
+                if didApplyLayout && wasExpanded != isExpanded && revealProgress >= CGFloat.ulpOfOne {
+                    self.updateManualIconCenter(iconNode: animationNode, targetCenter: targetCenter, forceImmediate: false)
+                } else if self.manuallyAnimatedIconNode === animationNode && self.iconAnimationLink != nil && revealProgress >= CGFloat.ulpOfOne {
+                    self.updateManualIconCenter(iconNode: animationNode, targetCenter: targetCenter, forceImmediate: false)
+                } else {
+                    self.stopManualIconAnimation()
+                    transition.updatePosition(node: animationNode, position: targetCenter)
+                }
             } else {
                 transition.updateFrame(node: animationNode, frame: iconFrame)
             }
@@ -461,17 +440,26 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
             }
             let iconFrame = CGRect(origin: CGPoint(x: floorToScreenPixels(iconCenterX - fittedSize.width / 2.0), y: floorToScreenPixels(iconCenterY - fittedSize.height / 2.0)), size: fittedSize)
             if isPrimary {
-                didApplyManualIconAnimation = true
-                self.updateManualIconAnimation(iconNode: iconNode, targetFrame: iconFrame, targetTitleAlpha: titleAlpha, forceImmediate: !didApplyLayout || revealProgress < CGFloat.ulpOfOne)
+                didApplyManualIconCenter = true
+                transition.updateBounds(node: iconNode, bounds: CGRect(origin: CGPoint(), size: iconFrame.size))
+                let targetCenter = frameCenter(iconFrame)
+                if didApplyLayout && wasExpanded != isExpanded && revealProgress >= CGFloat.ulpOfOne {
+                    self.updateManualIconCenter(iconNode: iconNode, targetCenter: targetCenter, forceImmediate: false)
+                } else if self.manuallyAnimatedIconNode === iconNode && self.iconAnimationLink != nil && revealProgress >= CGFloat.ulpOfOne {
+                    self.updateManualIconCenter(iconNode: iconNode, targetCenter: targetCenter, forceImmediate: false)
+                } else {
+                    self.stopManualIconAnimation()
+                    transition.updatePosition(node: iconNode, position: targetCenter)
+                }
             } else {
                 transition.updateFrame(node: iconNode, frame: iconFrame)
             }
         }
 
-        if !didApplyManualIconAnimation {
+        if !didApplyManualIconCenter {
             self.stopManualIconAnimation()
-            transition.updateAlpha(node: self.titleNode, alpha: titleAlpha)
         }
+        transition.updateAlpha(node: self.titleNode, alpha: titleAlpha)
 
         let titleFrame: CGRect
         if self.displaysTitleInsidePill {
@@ -484,7 +472,7 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
     }
 
     override func calculateSizeThatFits(_ constrainedSize: CGSize) -> CGSize {
-        let metrics = ItemListRevealOptionLayoutMetrics.metrics(for: constrainedSize.height)
+        let metrics = ItemListRevealOptionLayoutMetrics.metrics(for: constrainedSize.height, hasVisualIcons: !self.displaysTitleInsidePill)
         let _ = self.titleNode.measure(CGSize(width: metrics.titleWidth, height: CGFloat.greatestFiniteMagnitude))
         return CGSize(width: metrics.slotWidth, height: constrainedSize.height)
     }
@@ -561,7 +549,7 @@ public final class ItemListRevealOptionsNode: ASDisplayNode {
     }
 
     override public func calculateSizeThatFits(_ constrainedSize: CGSize) -> CGSize {
-        let metrics = ItemListRevealOptionLayoutMetrics.metrics(for: constrainedSize.height)
+        let metrics = ItemListRevealOptionLayoutMetrics.metrics(for: constrainedSize.height, hasVisualIcons: self.options.contains(where: { $0.icon.hasVisualIcon }))
         for node in self.optionNodes {
             let _ = node.measure(constrainedSize)
         }
@@ -579,7 +567,7 @@ public final class ItemListRevealOptionsNode: ASDisplayNode {
         if size.width.isLessThanOrEqualTo(0.0) || self.optionNodes.isEmpty {
             return
         }
-        let metrics = ItemListRevealOptionLayoutMetrics.metrics(for: size.height)
+        let metrics = ItemListRevealOptionLayoutMetrics.metrics(for: size.height, hasVisualIcons: self.options.contains(where: { $0.icon.hasVisualIcon }))
         let revealedDistance = abs(self.revealOffset)
         let boundedRevealedDistance = min(revealedDistance, size.width)
         let overswipeDistance = max(0.0, revealedDistance - size.width)

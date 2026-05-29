@@ -260,12 +260,12 @@ public final class AccountStateManager {
         public var dismissBotWebViews: Signal<[Int64], NoError> {
             return self.dismissBotWebViewsPipe.signal()
         }
-        
+
         private let joinChatWebViewDecisionsPipe = ValuePipe<[JoinChatWebViewDecision]>()
         public var joinChatWebViewDecisions: Signal<[JoinChatWebViewDecision], NoError> {
             return self.joinChatWebViewDecisionsPipe.signal()
         }
-
+        
         private let externallyUpdatedPeerIdsPipe = ValuePipe<[PeerId]>()
         var externallyUpdatedPeerIds: Signal<[PeerId], NoError> {
             return self.externallyUpdatedPeerIdsPipe.signal()

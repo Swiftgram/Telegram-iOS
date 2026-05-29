@@ -405,12 +405,12 @@ public final class CachedChannelData: CachedPeerData {
         self.sendPaidMessageStars = sendPaidMessageStars
         self.mainProfileTab = mainProfileTab
         self.guardBotId = guardBotId
-        
+
         var peerIds = Set<PeerId>()
         for botInfo in botInfos {
             peerIds.insert(botInfo.peerId)
         }
-        
+
         if case let .known(linkedDiscussionPeerIdValue) = linkedDiscussionPeerId {
             if let linkedDiscussionPeerIdValue {
                 peerIds.insert(linkedDiscussionPeerIdValue)
@@ -590,7 +590,7 @@ public final class CachedChannelData: CachedPeerData {
     public func withUpdatedGuardBotId(_ guardBotId: EnginePeer.Id?) -> CachedChannelData {
         return CachedChannelData(isNotAccessible: self.isNotAccessible, flags: self.flags, about: self.about, participantsSummary: self.participantsSummary, exportedInvitation: self.exportedInvitation, botInfos: self.botInfos, peerStatusSettings: self.peerStatusSettings, pinnedMessageId: self.pinnedMessageId, stickerPack: self.stickerPack, minAvailableMessageId: self.minAvailableMessageId, migrationReference: self.migrationReference, linkedDiscussionPeerId: self.linkedDiscussionPeerId, peerGeoLocation: self.peerGeoLocation, slowModeTimeout: self.slowModeTimeout, slowModeValidUntilTimestamp: self.slowModeValidUntilTimestamp, hasScheduledMessages: self.hasScheduledMessages, statsDatacenterId: self.statsDatacenterId, invitedBy: self.invitedBy, invitedOn: self.invitedOn, photo: self.photo, activeCall: self.activeCall, callJoinPeerId: self.callJoinPeerId, autoremoveTimeout: self.autoremoveTimeout, pendingSuggestions: pendingSuggestions, chatTheme: self.chatTheme, inviteRequestsPending: self.inviteRequestsPending, sendAsPeerId: self.sendAsPeerId, reactionSettings: self.reactionSettings, membersHidden: self.membersHidden, viewForumAsMessages: self.viewForumAsMessages, wallpaper: self.wallpaper, boostsToUnrestrict: self.boostsToUnrestrict, appliedBoosts: self.appliedBoosts, emojiPack: self.emojiPack, verification: self.verification, starGiftsCount: self.starGiftsCount, sendPaidMessageStars: self.sendPaidMessageStars, mainProfileTab: self.mainProfileTab, guardBotId: guardBotId)
     }
-    
+
     public init(decoder: PostboxDecoder) {
         self.isNotAccessible = decoder.decodeInt32ForKey("isNotAccessible", orElse: 0) != 0
         self.flags = CachedChannelFlags(rawValue: decoder.decodeInt32ForKey("f", orElse: 0))

@@ -1392,8 +1392,6 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
     var layoutParams: (ChatListItem, first: Bool, last: Bool, firstWithHeader: Bool, nextIsPinned: Bool, nextHasActiveRevealControls: Bool, ListViewItemLayoutParams, countersSize: CGFloat)?
     
     private var isHighlighted: Bool = false
-    private var isRevealHighlighted: Bool = false
-    private var keepRevealHighlightUntilClosed: Bool = false
     private var nextHasActiveRevealControls: Bool = false
     private var skipFadeout: Bool = false
     private var customAnimationInProgress: Bool = false
@@ -2061,7 +2059,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
     }
     
     var reallyHighlighted: Bool {
-        var reallyHighlighted = self.isHighlighted || self.isRevealHighlighted
+        var reallyHighlighted = self.isHighlighted || self.isRevealOptionsActive
         if let item = self.item {
             if let itemChatLocation = item.content.chatLocation {
                 if itemChatLocation == item.interaction.highlightedChatLocation?.location {
@@ -2079,7 +2077,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
     
     func updateIsHighlighted(transition: ContainedViewLayoutTransition) {
         let highlightProgress: CGFloat = self.item?.interaction.highlightedChatLocation?.progress ?? 1.0
-        transition.updateCornerRadius(node: self.highlightedBackgroundNode, cornerRadius: self.isRevealHighlighted ? 26.0 : 0.0)
+        transition.updateCornerRadius(node: self.highlightedBackgroundNode, cornerRadius: self.isRevealOptionsActive ? 26.0 : 0.0)
         self.updateSeparatorAlpha(transition: transition)
         
         if self.reallyHighlighted {
@@ -2145,7 +2143,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
     }
 
     private func updateSeparatorAlpha(transition: ContainedViewLayoutTransition, inlineNavigationProgress: CGFloat? = nil) {
-        let revealSeparatorAlpha: CGFloat = (self.isRevealHighlighted || self.nextHasActiveRevealControls) ? 0.0 : 1.0
+        let revealSeparatorAlpha: CGFloat = (self.isRevealOptionsActive || self.isNextRevealOptionsActive || self.nextHasActiveRevealControls) ? 0.0 : 1.0
         if let inlineNavigationProgress = inlineNavigationProgress ?? self.item?.interaction.inlineNavigationLocation?.progress {
             transition.updateAlpha(node: self.separatorNode, alpha: (1.0 - inlineNavigationProgress) * revealSeparatorAlpha)
         } else {
@@ -5175,7 +5173,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                     strongSelf.highlightedBackgroundNode.backgroundColor = highlightedBackgroundColor
                     let topNegativeInset: CGFloat = 0.0
                     strongSelf.highlightedBackgroundNode.frame = CGRect(origin: CGPoint(x: strongSelf.revealOffset, y: layoutOffset - separatorHeight - topNegativeInset), size: CGSize(width: layout.contentSize.width, height: layout.contentSize.height + separatorHeight + topNegativeInset))
-                    transition.updateCornerRadius(node: strongSelf.highlightedBackgroundNode, cornerRadius: strongSelf.isRevealHighlighted ? 26.0 : 0.0)
+                    transition.updateCornerRadius(node: strongSelf.highlightedBackgroundNode, cornerRadius: strongSelf.isRevealOptionsActive ? 26.0 : 0.0)
                     
                     if let peerPresence = peerPresence {
                         strongSelf.peerPresenceManager?.reset(presence: EnginePeer.Presence(status: peerPresence.status, lastActivity: 0), isOnline: online)
@@ -5324,23 +5322,18 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
 
         let highlightedBackgroundFrame = self.highlightedBackgroundNode.frame
         transition.updateFrame(node: self.highlightedBackgroundNode, frame: CGRect(origin: CGPoint(x: offset, y: highlightedBackgroundFrame.minY), size: highlightedBackgroundFrame.size))
-
-        if !offset.isZero {
-            self.keepRevealHighlightUntilClosed = true
-        }
-        let isRevealHighlighted = !offset.isZero || self.keepRevealHighlightUntilClosed
-        if self.isRevealHighlighted != isRevealHighlighted {
-            self.isRevealHighlighted = isRevealHighlighted
-            self.updateIsHighlighted(transition: transition)
-        }
     }
 
-    private func clearRevealHighlightIfNeeded(transition: ContainedViewLayoutTransition) {
-        self.keepRevealHighlightUntilClosed = false
-        if self.revealOffset.isZero && self.isRevealHighlighted {
-            self.isRevealHighlighted = false
-            self.updateIsHighlighted(transition: transition)
-        }
+    override public func revealOptionsActiveStateUpdated(isActive: Bool, transition: ContainedViewLayoutTransition) {
+        super.revealOptionsActiveStateUpdated(isActive: isActive, transition: transition)
+
+        self.updateIsHighlighted(transition: transition)
+    }
+
+    override public func nextRevealOptionsActiveStateUpdated(isActive: Bool, transition: ContainedViewLayoutTransition) {
+        super.nextRevealOptionsActiveStateUpdated(isActive: isActive, transition: transition)
+
+        self.updateSeparatorAlpha(transition: transition)
     }
     
     override public func touchesToOtherItemsPrevented() {
@@ -5348,11 +5341,9 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
         if let item = self.item {
             item.interaction.setPeerIdWithRevealedOptions(nil, nil)
         }
-        self.clearRevealHighlightIfNeeded(transition: .immediate)
     }
     
     override public func revealOptionsInteractivelyOpened() {
-        self.keepRevealHighlightUntilClosed = true
         if let item = self.item {
             switch item.index {
             case let .chatList(index):
@@ -5364,7 +5355,6 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
     }
     
     override public func revealOptionsInteractivelyClosed() {
-        self.clearRevealHighlightIfNeeded(transition: .animated(duration: 0.2, curve: .easeInOut))
         if let item = self.item {
             switch item.index {
             case let .chatList(index):
