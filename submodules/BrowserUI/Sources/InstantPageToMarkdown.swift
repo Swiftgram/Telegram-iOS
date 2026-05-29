@@ -38,7 +38,10 @@ private func markdownString(from block: InstantPageBlock) -> String? {
         return rendered.isEmpty ? nil : escapeLeadingBlockMarker(rendered)
     case let .preformatted(text, language):
         let language = language ?? ""
-        return "```\(language)\n\(markdownInline(from: text))\n```"
+        // Code-fence body is raw text: the fences supply the code formatting, so do NOT run it
+        // through markdownInline (which re-wraps `.fixed` content in backticks and escapes markdown
+        // special chars). Use plainText to emit the literal source.
+        return "```\(language)\n\(text.plainText)\n```"
     case let .blockQuote(blocks, _):
         return markdownBlockQuoteBlocks(blocks)
     case let .pullQuote(text, _):
