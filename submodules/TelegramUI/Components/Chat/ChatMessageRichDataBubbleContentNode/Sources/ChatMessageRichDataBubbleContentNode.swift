@@ -1259,6 +1259,16 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                 guard let self, let item = self.item else {
                     return
                 }
+                if case .copy = action,
+                   let range = self.textSelectionNode?.getSelection(),
+                   range.length > 0,
+                   let adapter = self.textSelectionAdapter {
+                    let markdown = adapter.markdownForRange(range)
+                    if !markdown.isEmpty {
+                        item.controllerInteraction.performTextSelectionAction(item.message, true, NSAttributedString(string: markdown), nil, .copy)
+                        return
+                    }
+                }
                 item.controllerInteraction.performTextSelectionAction(item.message, true, text, nil, action)
             }
         )

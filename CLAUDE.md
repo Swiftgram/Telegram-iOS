@@ -186,6 +186,31 @@ Rich messages (`RichTextMessageAttribute`, `text == ""`) are made editable by re
 - **Known limitation:** a rich→plain edit that leaves only inline-formatted text loses `*italic*` (the entity path recognizes only `__…__`). Rare edge; the rich round-trip contract holds.
 - **`previewText()` lives in TelegramStringFormatting, not TextFormat/TelegramCore.** It will gain a `strings: PresentationStrings` param (to localize the `"Photo"`/`"Video"`/`"Table"` placeholders), so it must sit in a UI-string module — `messageContentKind`/`descriptionStringForMessage` (same module) already take `strings:`. Teaching `messageContentKind` about rich cascades the preview to the edit accessory panel, reply/pinned panels, and forward preview in one place (those surfaces need no individual change).
 
+## Copying rich messages as markdown (whole message + partial selection)
+
+Rich messages (`RichTextMessageAttribute`, `text == ""`) are copyable as markdown two ways: the context-menu **Copy** action copies the whole message; a **text selection** inside the rich-data bubble copies just the selected range. Both reconstruct markdown that mirrors the edit round-trip (`markdownStringFromInstantPage`). Always-on.
+
+### Where things live
+
+| File | Responsibility |
+|---|---|
+| `submodules/TelegramUI/Sources/ChatInterfaceStateContextMenus.swift` | Whole-message Copy. Computes `richMessageMarkdown` from the message's `RichTextMessageAttribute.instantPage` (after `let message = messages[0]`), opens the Copy gate with `richMessageMarkdown != nil`, and short-circuits `copyTextWithEntities` to `storeMessageTextInPasteboard(markdown, entities: nil)`. |
+| `submodules/BrowserUI/Sources/InstantPageToMarkdown.swift` | `markdownStringFromInstantPage` — the block-tree → markdown converter (also used by the edit round-trip). Blocks joined by `\n\n`; nested blockquotes via recursive `> ` wrapping. |
+| `submodules/InstantPageUI/Sources/InstantPageTextItem.swift` | `InstantPageMarkdownBlockContext` (`kind` + `quoteDepth`) and the `markdownContext: InstantPageMarkdownBlockContext?` field on `InstantPageTextItem`. |
+| `submodules/InstantPageUI/Sources/InstantPageV2Layout.swift` | `stampMarkdownContext`/`bumpQuoteDepth`; stamps `markdownContext` during layout (heading/title/code/list/blockQuote/`layoutQuoteText`/table-cell). |
+| `submodules/InstantPageUI/Sources/InstantPageMultiTextAdapter.swift` | `markdownForRange(_ range: NSRange)` + the private attributed-substring→inline-markdown converter `inlineMarkdown(from:)`. |
+| `submodules/TelegramUI/Components/Chat/ChatMessageRichDataBubbleContentNode/.../ChatMessageRichDataBubbleContentNode.swift` | Intercepts `.copy` in the `TextSelectionNode` `performAction` closure: `textSelectionNode.getSelection()` → `adapter.markdownForRange(range)` → stores as plain `NSAttributedString(string:)`. |
+
+### Non-obvious invariants
+
+- **The V2 layout discards block role.** A `.text` layout item from an `H2` heading is byte-identical to a body paragraph — heading level and the title category are dropped with no back-reference to the source `InstantPageBlock`. Precise structural markdown for a *selection* therefore requires stamping `markdownContext` at layout time (lists/code/tables/details are structurally recoverable; **heading level and `.title` are not**, so they MUST be stamped). Plain paragraphs stay `nil` (≡ plain).
+- **`quoteDepth` is orthogonal to `kind`** so a heading/list/code line inside a blockquote round-trips (e.g. `> ## Title`). `bumpQuoteDepth` lifts a quote's children by 1; nested quotes accumulate. `layoutQuoteText` (single-paragraph blockquote fast path AND `.pullQuote`) bumps once — it is never reached by the multi-block recursion, so no double-count.
+- **A blockquote is exploded into one text item per line.** `markdownForRange` must re-coalesce a run of consecutive `quoteDepth > 0` segments into ONE `\n`-joined block (each line prefixed at its own depth); otherwise every quote line becomes its own block separated by a blank line. Code/table/list runs are likewise coalesced (one fence; one pipe table; one tight list).
+- **Both converters emit compact nested-quote markers (`>>`, not `> >`).** Selection: `String(repeating: ">", count: depth) + " "`. Whole-message: when wrapping a line that already starts with `>`, prepend a bare `>`. Keep the two in sync.
+- **Inline markdown is read from display attributes, not the RichText tree.** `inlineMarkdown` inspects the slice's `UIFont` (bold/italic/mono — font-based, no symbolic-trait flag for named fonts), `.strikethroughStyle`, and `TelegramTextAttributes.URL` (→ `InstantPageUrlItem.url`, angle-bracketed if it contains `(`/`)`/space). Custom-emoji placeholders are dropped (no `alt` on the display attribute).
+- **`.copy` stores plain text.** Passing `NSAttributedString(string: markdown)` through the existing `performTextSelectionAction(.copy)` path (`storeAttributedTextInPasteboard`) generates no entities, so the literal `**`/`#`/`>`/`|` survive. The whole-message Copy uses `storeMessageTextInPasteboard(_, entities: nil)` directly.
+- **Fidelity caveats (intentional):** custom emoji omitted; ordered list + checkbox loses the ordinal (`-` wins); a partial table selection emits touched cells as rows (no forced header `---` separator); block prefixes apply to the whole touched line on a mid-line selection (correct markdown).
+
 ## Formulas trigger rich messages (strict math detection)
 
 `$…$`/`$$…$$` (and `\(…\)`/`\[…\]`) math triggers a rich message, gated by a

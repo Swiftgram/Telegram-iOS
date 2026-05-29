@@ -191,6 +191,29 @@ private func attachmentBoundsForRange(_ range: NSRange, line: InstantPageTextLin
     return alignedAttachmentFrame(localBounds, line: line, boundingWidth: boundingWidth, alignment: alignment)
 }
 
+/// Block-level role of a text item, used to reconstruct markdown from a
+/// selection. `kind` is the primary role; `quoteDepth` (0 = not quoted) is
+/// orthogonal so a heading/list/code line inside a blockquote can be emitted
+/// as e.g. `> ## Title`.
+public struct InstantPageMarkdownBlockContext: Equatable {
+    public enum Kind: Equatable {
+        case paragraph
+        case heading(level: Int)                                  // 1...6
+        case title                                                // InstantPageBlock.title → "# "
+        case listItem(ordered: Bool, marker: String, checked: Bool?)
+        case code(language: String?)
+        case tableCell(row: Int, column: Int, isHeader: Bool)
+    }
+
+    public var kind: Kind
+    public var quoteDepth: Int
+
+    public init(kind: Kind, quoteDepth: Int = 0) {
+        self.kind = kind
+        self.quoteDepth = quoteDepth
+    }
+}
+
 public final class InstantPageTextItem: InstantPageItem {
     public let attributedString: NSAttributedString
     public let lines: [InstantPageTextLine]
@@ -203,7 +226,8 @@ public final class InstantPageTextItem: InstantPageItem {
     public let wantsNode: Bool = false
     public let separatesTiles: Bool = false
     public var selectable: Bool = true
-    
+    public var markdownContext: InstantPageMarkdownBlockContext? = nil
+
     var containsRTL: Bool {
         return !self.rtlLineIndices.isEmpty
     }

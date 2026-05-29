@@ -76,7 +76,10 @@ private func markdownBlockQuoteBlocks(_ blocks: [InstantPageBlock]) -> String {
             continue
         }
         for line in body.split(separator: "\n", omittingEmptySubsequences: false) {
-            lines.append("> \(String(line))")
+            // Stack nested-quote markers without internal spaces (`>>` not `> >`):
+            // a line already starting with `>` (a nested quote) gets a bare `>`.
+            let text = String(line)
+            lines.append(text.hasPrefix(">") ? ">\(text)" : "> \(text)")
         }
     }
     return lines.joined(separator: "\n")

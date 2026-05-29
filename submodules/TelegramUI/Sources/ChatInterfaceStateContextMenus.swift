@@ -28,6 +28,7 @@ import TranslateUI
 import DebugSettingsUI
 import ChatPresentationInterfaceState
 import Pasteboard
+import BrowserUI
 import SettingsUI
 import TextNodeWithEntities
 import ChatControllerInteraction
@@ -1254,6 +1255,13 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         }
         
         let message = messages[0]
+        var richMessageMarkdown: String?
+        if let richTextAttribute = message.attributes.first(where: { $0 is RichTextMessageAttribute }) as? RichTextMessageAttribute {
+            let markdown = markdownStringFromInstantPage(richTextAttribute.instantPage)
+            if !markdown.isEmpty {
+                richMessageMarkdown = markdown
+            }
+        }
         var isExpired = false
         var isImage = false
         for media in message.media {
@@ -1266,7 +1274,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         }
         
         let isCopyProtected = chatPresentationInterfaceState.copyProtectionEnabled || message.isCopyProtected()
-        if !messageText.isEmpty || (resourceAvailable && isImage) || diceEmoji != nil {
+        if !messageText.isEmpty || richMessageMarkdown != nil || (resourceAvailable && isImage) || diceEmoji != nil {
             if !isExpired {
                 if !isPoll {
                     if !isCopyProtected {
@@ -1277,6 +1285,14 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                                 UIPasteboard.general.string = diceEmoji
                             } else {
                                 let copyTextWithEntities = {
+                                    if let richMessageMarkdown {
+                                        storeMessageTextInPasteboard(richMessageMarkdown, entities: nil)
+                                        Queue.mainQueue().after(0.2, {
+                                            let content: UndoOverlayContent = .copy(text: chatPresentationInterfaceState.strings.Conversation_MessageCopied)
+                                            controllerInteraction.displayUndo(content)
+                                        })
+                                        return
+                                    }
                                     var messageText = message.text
                                     var messageEntities: [MessageTextEntity]?
                                     var restrictedText: String?

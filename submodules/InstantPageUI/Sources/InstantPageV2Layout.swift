@@ -540,6 +540,45 @@ private func layoutBlockSequence(
     return InstantPageV2Layout(contentSize: contentSize, items: items, detailsIndices: detailsIndices, media: context.media, webpage: context.webpage)
 }
 
+// MARK: - Markdown block context stamping helpers
+
+private func stampMarkdownContext(_ items: [InstantPageV2LaidOutItem], kind: InstantPageMarkdownBlockContext.Kind) {
+    for item in items {
+        switch item {
+        case let .text(textItem):
+            if textItem.textItem.markdownContext == nil {
+                textItem.textItem.markdownContext = InstantPageMarkdownBlockContext(kind: kind)
+            }
+        case let .codeBlock(block):
+            if block.textItem.markdownContext == nil {
+                block.textItem.markdownContext = InstantPageMarkdownBlockContext(kind: kind)
+            }
+        default:
+            break
+        }
+    }
+}
+
+/// Marks every text item produced by a blockquote's children as quoted (depth + 1),
+/// preserving each child's own kind (heading/list/paragraph/…).
+private func bumpQuoteDepth(_ items: [InstantPageV2LaidOutItem]) {
+    for item in items {
+        let target: InstantPageTextItem?
+        switch item {
+        case let .text(textItem): target = textItem.textItem
+        case let .codeBlock(block): target = block.textItem
+        default: target = nil
+        }
+        guard let target else { continue }
+        if var ctx = target.markdownContext {
+            ctx.quoteDepth += 1
+            target.markdownContext = ctx
+        } else {
+            target.markdownContext = InstantPageMarkdownBlockContext(kind: .paragraph, quoteDepth: 1)
+        }
+    }
+}
+
 private func layoutBlock(
     _ block: InstantPageBlock,
     boundingWidth: CGFloat,
@@ -555,8 +594,10 @@ private func layoutBlock(
         return layoutBlock(inner, boundingWidth: boundingWidth, horizontalInset: horizontalInset,
                            isCover: true, previousItems: previousItems, isLast: isLast, context: &context)
     case let .title(text):
-        return layoutSimpleText(text, category: .header, boundingWidth: boundingWidth,
-                                horizontalInset: horizontalInset, context: &context)
+        let titleItems = layoutSimpleText(text, category: .header, boundingWidth: boundingWidth,
+                                          horizontalInset: horizontalInset, context: &context)
+        stampMarkdownContext(titleItems, kind: .title)
+        return titleItems
     case let .subtitle(text):
         return layoutSimpleText(text, category: .subheader, boundingWidth: boundingWidth,
                                 horizontalInset: horizontalInset, context: &context)
@@ -1238,6 +1279,7 @@ private func layoutTable(
                         horizontalInset: 0.0,
                         context: &context
                     )
+                    stampMarkdownContext(cellLayout.items, kind: .tableCell(row: i, column: k, isHeader: cell.header))
                     subLayout = cellLayout
                     subLayoutHeight = cellLayout.contentSize.height
                     isEmptyRow = false
@@ -1713,6 +1755,7 @@ private func layoutHeading(
         fitToWidth: context.fitToWidth,
         computeRevealCharacterRects: context.computeRevealCharacterRects
     )
+    stampMarkdownContext(items, kind: .heading(level: max(1, min(6, Int(level)))))
     return items
 }
 
@@ -1870,6 +1913,7 @@ private func layoutCodeBlock(
         computeRevealCharacterRects: context.computeRevealCharacterRects
     )
     guard let textItem = textItem else { return [] }
+    textItem.markdownContext = InstantPageMarkdownBlockContext(kind: .code(language: language))
 
     // Position text within the block's content area.
     // V1 line 342: x=17.0, y=backgroundInset (block-local).
@@ -1977,6 +2021,10 @@ private func layoutBlockQuote(
     )
     result.append(.blockQuoteBar(bar))
 
+    // Caption items (appended above) are also bumped to quoteDepth 1 and will render with a
+    // `>` prefix. The whole-message markdown converter drops blockquote captions entirely, and
+    // markdown-sent quotes carry empty captions, so this is benign.
+    bumpQuoteDepth(result)
     return result
 }
 
@@ -2079,6 +2127,13 @@ private func layoutQuoteText(
         )
         result.append(.blockQuoteBar(bar))
     }
+
+    // Tag this quote's produced text items at quote depth 1 so the markdown
+    // converter renders them with a `> ` prefix. Applies to BOTH block quotes
+    // (single-paragraph fast path) and pull quotes — the whole-message markdown
+    // converter renders both flavors as `> `. Nested quotes are lifted further
+    // by the outer multi-block path's own bumpQuoteDepth(result) call.
+    bumpQuoteDepth(result)
 
     return result
 }
@@ -2200,6 +2255,14 @@ private func layoutList(
             effectiveItem = .text(.plain(" "), num, checked)
         }
 
+        // Derive the markdown marker string and checked state from the original item.
+        let markdownMarker: String
+        switch markerInfo.kind {
+        case let .number(value): markdownMarker = value
+        default: markdownMarker = "-"
+        }
+        let markdownChecked: Bool? = item.checked
+
         switch effectiveItem {
         case let .text(text, _, _):
             // Layout text content.
@@ -2243,6 +2306,7 @@ private func layoutList(
                 kind: markerInfo.kind,
                 color: context.theme.textCategories.paragraph.color
             )))
+            stampMarkdownContext(textLaidOutItems, kind: .listItem(ordered: ordered, marker: markdownMarker, checked: markdownChecked))
             result.append(contentsOf: textLaidOutItems)
             contentHeight += textSize.height
 
@@ -2289,6 +2353,11 @@ private func layoutList(
                     blockMaxY = max(blockMaxY, ti.frame.maxY)
                 }
 
+                // Nil-guard in stampMarkdownContext preserves any richer kind (e.g. .heading)
+                // already stamped by a child block's own layout. So a heading nested inside a
+                // .blocks list item keeps .heading, not .listItem — multi-block list items are
+                // a documented best-effort case for markdown reconstruction.
+                stampMarkdownContext(translatedItems, kind: .listItem(ordered: ordered, marker: markdownMarker, checked: markdownChecked))
                 result.append(contentsOf: translatedItems)
                 contentHeight = blockMaxY
                 previousBlock = subBlock
