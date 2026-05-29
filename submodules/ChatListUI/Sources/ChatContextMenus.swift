@@ -503,14 +503,26 @@ func chatContextMenuItems(context: AccountContext, peerId: EnginePeer.Id, promoI
                                             joinChannelDisposable.set(nil)
                                         }
                                         
+                                        var didJoin = false
                                         joinChannelDisposable.set((createSignal
-                                        |> deliverOnMainQueue).start(next: { _ in
+                                        |> deliverOnMainQueue).start(next: { result in
+                                            switch result {
+                                            case .joined:
+                                                didJoin = true
+                                            case let .webView(webView):
+                                                if let chatListController = chatListController {
+                                                    context.sharedContext.openJoinChatWebView(context: context, parentController: chatListController, updatedPresentationData: nil, webView: webView)
+                                                }
+                                            }
                                         }, error: { _ in
                                             if let chatListController = chatListController {
                                                 let presentationData = context.sharedContext.currentPresentationData.with { $0 }
                                                 chatListController.present(textAlertController(context: context, title: nil, text: presentationData.strings.Login_UnknownError, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
                                             }
                                         }, completed: {
+                                            if !didJoin {
+                                                return
+                                            }
                                             let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
                                                      |> deliverOnMainQueue).startStandalone(next: { peer in
                                                 guard let peer = peer else {

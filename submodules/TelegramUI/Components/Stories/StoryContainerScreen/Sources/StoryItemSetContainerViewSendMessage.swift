@@ -17,7 +17,6 @@ import TextFormat
 import PhoneNumberFormat
 import TelegramIntents
 import LegacyUI
-import WebSearchUI
 import ChatTimerScreen
 import PremiumUI
 import ICloudResources
@@ -1848,6 +1847,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                 let attachmentController = AttachmentController(
                     context: component.context,
                     updatedPresentationData: updatedPresentationData,
+                    style: .glass,
                     chatLocation: .peer(id: peer.id),
                     buttons: buttons,
                     initialButton: initialButton
@@ -1981,7 +1981,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                             let hasLiveLocation = peer.id.namespace != Namespaces.Peer.SecretChat && peer.id != component.context.account.peerId
                             let theme = component.theme
                             let updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>) = (component.context.sharedContext.currentPresentationData.with({ $0 }).withUpdated(theme: theme), component.context.sharedContext.presentationData |> map { $0.withUpdated(theme: theme) })
-                            let controller = LocationPickerController(context: component.context, updatedPresentationData: updatedPresentationData, mode: .share(peer: peer, selfPeer: selfPeer, hasLiveLocation: hasLiveLocation), completion: { [weak self, weak view] location, _, _, _, _ in
+                            let controller = LocationPickerController(context: component.context, style: .glass, updatedPresentationData: updatedPresentationData, mode: .share(peer: peer, selfPeer: selfPeer, hasLiveLocation: hasLiveLocation), completion: { [weak self, weak view] location, _, _, _, _ in
                                 guard let self, let view else {
                                     return
                                 }
@@ -2160,58 +2160,9 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                         }))
                         return true
                     case .gift:
-                        /*let premiumGiftOptions = strongSelf.presentationInterfaceState.premiumGiftOptions
-                        if !premiumGiftOptions.isEmpty {
-                            let controller = PremiumGiftScreen(context: context, peerId: peer.id, options: premiumGiftOptions, source: .attachMenu, pushController: { [weak self] c in
-                                if let strongSelf = self {
-                                    strongSelf.push(c)
-                                }
-                            }, completion: { [weak self] in
-                                if let strongSelf = self {
-                                    strongSelf.hintPlayNextOutgoingGift()
-                                    strongSelf.attachmentController?.dismiss(animated: true)
-                                }
-                            })
-                            completion(controller, controller.mediaPickerContext)
-                            strongSelf.controllerNavigationDisposable.set(nil)
-
-                            let _ = ApplicationSpecificNotice.incrementDismissedPremiumGiftSuggestion(accountManager: context.sharedContext.accountManager, peerId: peer.id).start()
-                        }*/
-                        //TODO:gift controller
                         break
                     case let .app(bot):
                         let _ = bot
-//                        let params = WebAppParameters(source: .attachMenu, peerId: peer.id, botId: bot.peer.id, botName: bot.shortName, botVerified: bot.peer.isVerified, url: nil, queryId: nil, payload: nil, buttonText: nil, keepAliveSignal: nil, forceHasSettings: false, fullSize: true)
-//                        let theme = component.theme
-//                        let updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>) = (component.context.sharedContext.currentPresentationData.with({ $0 }).withUpdated(theme: theme), component.context.sharedContext.presentationData |> map { $0.withUpdated(theme: theme) })
-//                        let controller = WebAppController(context: component.context, updatedPresentationData: updatedPresentationData, params: params, replyToMessageId: nil, threadId: nil)
-//                        controller.openUrl = { [weak self] url, _, _, _ in
-//                            guard let self else {
-//                                return
-//                            }
-//                            let _ = self
-//                            //self?.openUrl(url, concealed: true, forceExternal: true)
-//                        }
-//                        controller.getNavigationController = { [weak view] in
-//                            guard let view, let controller = view.component?.controller() else {
-//                                return nil
-//                            }
-//                            return controller.navigationController as? NavigationController
-//                        }
-//                        controller.completion = { [weak self] in
-//                            guard let self else {
-//                                return
-//                            }
-//                            let _ = self
-//                            /*if let strongSelf = self {
-//                                strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: false, {
-//                                    $0.updatedInterfaceState { $0.withUpdatedReplyMessageSubject(nil) }
-//                                })
-//                                strongSelf.chatDisplayNode.historyNode.scrollToEndOfHistory()
-//                            }*/
-//                        }
-//                        completion(controller, controller.mediaPickerContext)
-//                        self.controllerNavigationDisposable.set(nil)
                     default:
                         break
                     }
@@ -2255,7 +2206,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
             return
         }
         let theme = component.theme
-        let controller = MediaPickerScreenImpl(context: component.context, updatedPresentationData: (component.context.sharedContext.currentPresentationData.with({ $0 }).withUpdated(theme: theme), component.context.sharedContext.presentationData |> map { $0.withUpdated(theme: theme) }), peer: peer, threadTitle: nil, chatLocation: .peer(id: peer.id), bannedSendPhotos: bannedSendPhotos, bannedSendVideos: bannedSendVideos, subject: subject, saveEditedPhotos: saveEditedPhotos)
+        let controller = MediaPickerScreenImpl(context: component.context, updatedPresentationData: (component.context.sharedContext.currentPresentationData.with({ $0 }).withUpdated(theme: theme), component.context.sharedContext.presentationData |> map { $0.withUpdated(theme: theme) }), style: .glass, peer: peer, threadTitle: nil, chatLocation: .peer(id: peer.id), bannedSendPhotos: bannedSendPhotos, bannedSendVideos: bannedSendVideos, subject: subject, saveEditedPhotos: saveEditedPhotos)
         let mediaPickerContext = controller.mediaPickerContext
         controller.openCamera = { [weak self, weak view] cameraView in
             guard let self, let view else {
@@ -2264,29 +2215,6 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
             if let cameraView = cameraView as? TGAttachmentCameraView {
                 self.openCamera(view: view, peer: peer, replyToMessageId: replyToMessageId, replyToStoryId: replyToStoryId, cameraView: cameraView)
             }
-        }
-        controller.presentWebSearch = { [weak self, weak view, weak controller] mediaGroups, activateOnDisplay in
-            guard let self, let view, let controller else {
-                return
-            }
-            self.presentWebSearch(view: view, activateOnDisplay: activateOnDisplay, present: { [weak controller] c, a in
-                controller?.present(c, in: .current)
-                if let webSearchController = c as? WebSearchController {
-                    webSearchController.searchingUpdated = { [weak mediaGroups] searching in
-                        if let mediaGroups = mediaGroups, mediaGroups.isNodeLoaded {
-                            let transition = ContainedViewLayoutTransition.animated(duration: 0.2, curve: .easeInOut)
-                            transition.updateAlpha(node: mediaGroups.displayNode, alpha: searching ? 0.0 : 1.0)
-                            mediaGroups.displayNode.isUserInteractionEnabled = !searching
-                        }
-                    }
-                    webSearchController.present(mediaGroups, in: .current)
-                    webSearchController.dismissed = {
-                        updateMediaPickerContext(mediaPickerContext)
-                    }
-                    controller?.webSearchController = webSearchController
-                    updateMediaPickerContext(webSearchController.mediaPickerContext)
-                }
-            })
         }
         controller.presentSchedulePicker = { [weak self, weak view] media, done in
             guard let self, let view else {
@@ -2368,40 +2296,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                     legacyController.bind(controller: controller)
                     legacyController.deferScreenEdgeGestures = [.top]
 
-                    configureLegacyAssetPicker(controller, context: component.context, peer: peer._asPeer(), chatLocation: .peer(id: peer.id), initialCaption: inputText, hasSchedule: peer.id.namespace != Namespaces.Peer.SecretChat, presentWebSearch: editingMedia ? nil : { [weak view, weak legacyController] in
-                        if let view, let component = view.component {
-                            let theme = component.theme
-                            let updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>) = (component.context.sharedContext.currentPresentationData.with({ $0 }).withUpdated(theme: theme), component.context.sharedContext.presentationData |> map { $0.withUpdated(theme: theme) })
-                            let controller = WebSearchController(context: component.context, updatedPresentationData: updatedPresentationData, peer: peer, chatLocation: .peer(id: peer.id), configuration: searchBotsConfiguration, mode: .media(attachment: false, completion: { [weak view] results, selectionState, editingState, silentPosting, scheduleTime in
-                                if let legacyController = legacyController {
-                                    legacyController.dismiss()
-                                }
-                                guard let view else {
-                                    return
-                                }
-                                legacyEnqueueWebSearchMessages(selectionState, editingState, enqueueChatContextResult: { [weak view] result in
-                                    if let strongSelf = self, let view {
-                                        strongSelf.enqueueChatContextResult(view: view, peer: peer, replyMessageId: replyMessageId, storyId: replyToStoryId, results: results, result: result, hideVia: true, silentPosting: silentPosting, scheduleTime: scheduleTime)
-                                    }
-                                }, enqueueMediaMessages: { [weak view] signals in
-                                    if let strongSelf = self, let view {
-                                        if editingMedia {
-                                            strongSelf.editMessageMediaWithLegacySignals(view: view, signals: signals)
-                                        } else {
-                                            strongSelf.enqueueMediaMessages(view: view, peer: peer, replyToMessageId: replyMessageId, replyToStoryId: replyToStoryId, signals: signals, silentPosting: silentPosting, scheduleTime: scheduleTime)
-                                        }
-                                    }
-                                })
-                            }))
-                            controller.getCaptionPanelView = { [weak view] in
-                                guard let self, let view else {
-                                    return nil
-                                }
-                                return self.getCaptionPanelView(view: view, peer: peer)
-                            }
-                            component.controller()?.push(controller)
-                        }
-                    }, presentSelectionLimitExceeded: { [weak view] in
+                    configureLegacyAssetPicker(controller, context: component.context, peer: peer._asPeer(), chatLocation: .peer(id: peer.id), initialCaption: inputText, hasSchedule: peer.id.namespace != Namespaces.Peer.SecretChat, presentWebSearch: nil, presentSelectionLimitExceeded: { [weak view] in
                         guard let view, let component = view.component else {
                             return
                         }
@@ -2671,44 +2566,7 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
 
         sendMessage(scheduleTime)
     }
-
-    private func presentWebSearch(view: StoryItemSetContainerComponent.View, activateOnDisplay: Bool = true, present: @escaping (ViewController, Any?) -> Void) {
-        guard let component = view.component else {
-            return
-        }
-        let context = component.context
-        let peer = component.slice.effectivePeer
-        let storyId = component.slice.item.storyItem.id
-
-        let theme = component.theme
-        let updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>) = (component.context.sharedContext.currentPresentationData.with({ $0 }).withUpdated(theme: theme), component.context.sharedContext.presentationData |> map { $0.withUpdated(theme: theme) })
-
-        let _ = (context.engine.data.get(TelegramEngine.EngineData.Item.Configuration.SearchBots())
-        |> deliverOnMainQueue).start(next: { [weak self, weak view] configuration in
-            if let self {
-                let controller = WebSearchController(context: context, updatedPresentationData: updatedPresentationData, peer: peer, chatLocation: .peer(id: peer.id), configuration: configuration, mode: .media(attachment: true, completion: { [weak self] results, selectionState, editingState, silentPosting, scheduleTime in
-                    legacyEnqueueWebSearchMessages(selectionState, editingState, enqueueChatContextResult: { [weak self, weak view] result in
-                        if let self, let view {
-                            self.performSendContextResultAction(view: view, results: results, result: result, silentPosting: silentPosting, scheduleTime: scheduleTime)
-                        }
-                    }, enqueueMediaMessages: { [weak self, weak view] signals in
-                        if let self, let view, !signals.isEmpty {
-                            self.enqueueMediaMessages(view: view, peer: peer, replyToMessageId: nil, replyToStoryId: EngineStoryId(peerId: peer.id, id: storyId), signals: signals, silentPosting: silentPosting, scheduleTime: scheduleTime)
-                        }
-                    })
-                }), activateOnDisplay: activateOnDisplay)
-                controller.getCaptionPanelView = { [weak self, weak view] in
-                    if let view {
-                        return self?.getCaptionPanelView(view: view, peer: peer)
-                    } else {
-                        return nil
-                    }
-                }
-                present(controller, ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
-            }
-        })
-    }
-
+    
     private func getCaptionPanelView(view: StoryItemSetContainerComponent.View, peer: EnginePeer, mediaPicker: MediaPickerScreenImpl? = nil) -> TGCaptionPanelView? {
         guard let component = view.component else {
             return nil
@@ -2848,6 +2706,8 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                     return nil
                 }
                 return self.getCaptionPanelView(view: view, peer: peer)
+            }, photoToolbarView: { [context = component.context] backButton, doneButton, solidBackground, hasSendStarsButton in
+                return makeMediaPickerPhotoToolbarView(context: context, backButton: backButton, doneButton: doneButton, solidBackground: solidBackground, hasSendStarsButton: hasSendStarsButton)
             }, dismissedWithResult: { [weak self] in
                 guard let self else {
                     return
@@ -3429,12 +3289,12 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
                     case let .url(url, concealed):
                         if canOpenIn {
                             let presentationData = component.context.sharedContext.currentPresentationData.with { $0 }
-                            let actionSheet = OpenInActionSheetController(context: component.context, item: .url(url: url), openUrl: { url in
+                            let actionSheet = OpenInOptionsScreen(context: component.context, item: .url(url: url), openUrl: { url in
                                 if let navigationController = component.controller()?.navigationController as? NavigationController {
                                     component.context.sharedContext.openExternalUrl(context: component.context, urlContext: .generic, url: url, forceExternal: true, presentationData: presentationData, navigationController: navigationController, dismissInput: {})
                                 }
                             })
-                            component.controller()?.present(actionSheet, in: .window(.root))
+                            component.controller()?.push(actionSheet)
                         } else {
                             openUrl(url, concealed)
                         }
@@ -3825,20 +3685,20 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
             return
         case let .link(_, url):
             let action = {
-                let _ = openUserGeneratedUrl(context: component.context, peerId: component.slice.effectivePeer.id, url: url, concealed: false, skipUrlAuth: false, skipConcealedAlert: false, forceDark: true, present: { [weak controller] c in
+                let _ = component.context.sharedContext.openUserGeneratedUrl(context: component.context, peerId: component.slice.effectivePeer.id, url: url, webpage: nil, concealed: false, forceConcealed: false, skipUrlAuth: false, skipConcealedAlert: false, forceDark: true, present: { [weak controller] c in
                     controller?.present(c, in: .window(.root))
                 }, openResolved: { [weak self, weak view] resolved in
                     guard let self, let view else {
                         return
                     }
                     self.openResolved(view: view, result: resolved, forceExternal: false, concealed: false)
-                }, alertDisplayUpdated: { [weak self, weak view] alertController in
+                }, progress: nil, alertDisplayUpdated: { [weak self, weak view] alertController in
                     guard let self, let view else {
                         return
                     }
                     self.statusController = alertController
                     view.updateIsProgressPaused()
-                })
+                }, concealedAlertOption: nil)
             }
             if immediate {
                 action()
@@ -3852,20 +3712,20 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
         case let .starGift(_, slug):
             useGesturePosition = true
             let action = {
-                let _ = openUserGeneratedUrl(context: component.context, peerId: nil, url: "https://t.me/nft/\(slug)", concealed: false, skipUrlAuth: false, skipConcealedAlert: false, forceDark: true, present: { [weak controller] c in
+                let _ = component.context.sharedContext.openUserGeneratedUrl(context: component.context, peerId: nil, url: "https://t.me/nft/\(slug)", webpage: nil, concealed: false, forceConcealed: false, skipUrlAuth: false, skipConcealedAlert: false, forceDark: true, present: { [weak controller] c in
                     controller?.present(c, in: .window(.root))
                 }, openResolved: { [weak self, weak view] resolved in
                     guard let self, let view else {
                         return
                     }
                     self.openResolved(view: view, result: resolved, forceExternal: false, concealed: false)
-                }, alertDisplayUpdated: { [weak self, weak view] alertController in
+                }, progress: nil, alertDisplayUpdated: { [weak self, weak view] alertController in
                     guard let self, let view else {
                         return
                     }
                     self.statusController = alertController
                     view.updateIsProgressPaused()
-                })
+                }, concealedAlertOption: nil)
             }
             if immediate {
                 action()

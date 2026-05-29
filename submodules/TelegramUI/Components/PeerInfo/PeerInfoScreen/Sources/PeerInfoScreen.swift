@@ -29,7 +29,6 @@ import GalleryUI
 import LegacyUI
 import MapResourceToAvatarSizes
 import LegacyComponents
-import WebSearchUI
 import LocationResources
 import LocationUI
 import Geocoding
@@ -517,9 +516,6 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             },
             openLocation: { [weak self] in
                 self?.openLocation()
-            },
-            editingOpenSetupLocation: { [weak self] in
-                self?.editingOpenSetupLocation()
             },
             openPeerInfo: { [weak self] peer, isMember in
                 self?.openPeerInfo(peer: peer, isMember: isMember)
@@ -1092,7 +1088,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             }
             strongSelf.paneContainerNode.updateSelectedMessageIds(strongSelf.state.selectedMessageIds, animated: true)
         }, sendCurrentMessage: { _, _ in
-        }, sendMessage: { _ in
+        }, sendMessage: { _, _ in
         }, sendSticker: { _, _, _, _, _, _, _, _, _ in
             return false
         }, sendEmoji: { _, _, _ in
@@ -1110,8 +1106,8 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             }
             strongSelf.openUrl(url: url.url, concealed: url.concealed, external: url.external ?? false)
         }, openExternalInstantPage: { _ in
-        }, shareCurrentLocation: {
-        }, shareAccountContact: {
+        }, shareCurrentLocation: { _ in
+        }, shareAccountContact: { _ in
         }, sendBotCommand: { _, _ in
         }, openInstantPage: { [weak self] message, associatedData in
             guard let strongSelf = self, let navigationController = strongSelf.controller?.navigationController as? NavigationController else {
@@ -1166,14 +1162,14 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                         actionSheet?.dismissAnimated()
                         if let strongSelf = self {
                             if canOpenIn {
-                                let actionSheet = OpenInActionSheetController(context: strongSelf.context, updatedPresentationData: strongSelf.controller?.updatedPresentationData, item: .url(url: url), openUrl: { [weak self] url in
+                                let actionSheet = OpenInOptionsScreen(context: strongSelf.context, updatedPresentationData: strongSelf.controller?.updatedPresentationData, item: .url(url: url), openUrl: { [weak self] url in
                                     if let strongSelf = self, let navigationController = strongSelf.controller?.navigationController as? NavigationController {
                                         strongSelf.context.sharedContext.openExternalUrl(context: strongSelf.context, urlContext: .generic, url: url, forceExternal: true, presentationData: strongSelf.presentationData, navigationController: navigationController, dismissInput: {
                                         })
                                     }
                                 })
                                 strongSelf.view.endEditing(true)
-                                strongSelf.controller?.present(actionSheet, in: .window(.root))
+                                strongSelf.controller?.push(actionSheet)
                             } else {
                                 strongSelf.context.sharedContext.applicationBindings.openUrl(url)
                             }
@@ -1226,7 +1222,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         }, displaySwipeToReplyHint: {
         }, dismissReplyMarkupMessage: { _ in
         }, openMessagePollResults: { _, _ in
-        }, openPollCreation: { _ in
+        }, openPollCreation: { _, _ in
         }, openPollMedia: { _, _ in
         }, displayPollSolution: { _, _ in
         }, displayPsa: { _, _ in
@@ -2960,7 +2956,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             self.controller?.push(controller)
             
             openUrlImpl = { [weak self, weak controller] url, concealed, forceUpdate, commit in
-                let _ = openUserGeneratedUrl(context: context, peerId: peerId, url: url, concealed: concealed, present: { [weak self] c in
+                let _ = context.sharedContext.openUserGeneratedUrl(context: context, peerId: peerId, url: url, webpage: nil, concealed: concealed, forceConcealed: false, skipUrlAuth: false, skipConcealedAlert: false, forceDark: false, present: { [weak self] c in
                     self?.controller?.present(c, in: .window(.root))
                 }, openResolved: { result in
                     var navigationController: NavigationController?
@@ -2986,7 +2982,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                     }, dismissInput: {
                         context.sharedContext.mainWindow?.viewController?.view.endEditing(false)
                     }, contentContext: nil, progress: nil, completion: nil)
-                })
+                }, progress: nil, alertDisplayUpdated: nil, concealedAlertOption: nil)
             }
             presentImpl = { [weak controller] c, a in
                 controller?.present(c, in: .window(.root), with: a)
@@ -4299,40 +4295,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         let controller = LocationViewController(context: context, updatedPresentationData: self.controller?.updatedPresentationData, subject: EngineMessage(message), params: controllerParams)
         self.controller?.push(controller)
     }
-    
-    private func editingOpenSetupLocation() {
-        guard let data = self.data, let peer = data.peer else {
-            return
-        }
         
-        let controller = LocationPickerController(context: self.context, updatedPresentationData: self.controller?.updatedPresentationData, mode: .pick, completion: { [weak self] location, _, _, address, _ in
-            guard let strongSelf = self else {
-                return
-            }
-            let addressSignal: Signal<String, NoError>
-            if let address = address {
-                addressSignal = .single(address)
-            } else {
-                addressSignal = reverseGeocodeLocation(latitude: location.latitude, longitude: location.longitude)
-                |> map { placemark in
-                    if let placemark = placemark {
-                        return placemark.fullAddress
-                    } else {
-                        return "\(location.latitude), \(location.longitude)"
-                    }
-                }
-            }
-            
-            let context = strongSelf.context
-            let _ = (addressSignal
-            |> mapToSignal { address -> Signal<Bool, NoError> in
-                return updateChannelGeoLocation(postbox: context.account.postbox, network: context.account.network, channelId: peer.id, coordinate: (location.latitude, location.longitude), address: address)
-            }
-            |> deliverOnMainQueue).startStandalone()
-        })
-        self.controller?.push(controller)
-    }
-    
     private func openPeerInfo(peer: EnginePeer, isMember: Bool) {
         let mode: PeerInfoControllerMode = .generic
         if let infoController = self.context.sharedContext.makePeerInfoController(context: self.context, updatedPresentationData: nil, peer: peer, mode: mode, avatarInitiallyExpanded: false, fromChat: false, requestsContext: nil) {
@@ -5421,7 +5384,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         var contentHeight: CGFloat = 0.0
         
         let sectionInset: CGFloat
-        if layout.size.width >= 375.0 {
+        if layout.size.width >= 320.0 {
             sectionInset = max(16.0, floor((layout.size.width - 674.0) / 2.0))
         } else {
             sectionInset = 0.0
@@ -5827,7 +5790,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             
             if !additive {
                 let sectionInset: CGFloat
-                if layout.size.width >= 375.0 {
+                if layout.size.width >= 320.0 {
                     sectionInset = max(16.0, floor((layout.size.width - 674.0) / 2.0))
                 } else {
                     sectionInset = 0.0
@@ -6176,14 +6139,19 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         self.joinChannelDisposable.set((
             self.context.peerChannelMemberCategoriesContextsManager.join(engine: self.context.engine, peerId: peer.id, hash: nil)
             |> deliverOnMainQueue
-            |> afterCompleted { [weak self] in
-                Queue.mainQueue().async {
-                    if let self {
-                        self.controller?.present(UndoOverlayController(presentationData: presentationData, content: .succeed(text: presentationData.strings.Chat_SimilarChannels_JoinedChannel(peer.compactDisplayTitle).string, timeout: nil, customUndoText: nil), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .window(.root))
-                    }
+        ).startStrict(next: { [weak self] result in
+            guard let self else {
+                return
+            }
+            switch result {
+            case .joined:
+                self.controller?.present(UndoOverlayController(presentationData: presentationData, content: .succeed(text: presentationData.strings.Chat_SimilarChannels_JoinedChannel(peer.compactDisplayTitle).string, timeout: nil, customUndoText: nil), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .window(.root))
+            case let .webView(webView):
+                if let controller = self.controller {
+                    self.context.sharedContext.openJoinChatWebView(context: self.context, parentController: controller, updatedPresentationData: self.controller?.updatedPresentationData, webView: webView)
                 }
             }
-        ).startStrict(error: { [weak self] error in
+        }, error: { [weak self] error in
             guard let self else {
                 return
             }

@@ -660,7 +660,7 @@ public func saveIncomingMediaController(context: AccountContext, scope: SaveInco
         
         switch scope {
         case .peer, .addPeer:
-            rightButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Done), style: .bold, enabled: true, action: {
+            rightButton = ItemListNavigationButton(content: .icon(.done), style: .bold, enabled: true, action: {
                 switch scope {
                 case let .addPeer(_, completion):
                     let configuration = stateValue.with({ $0 }).pendingConfiguration

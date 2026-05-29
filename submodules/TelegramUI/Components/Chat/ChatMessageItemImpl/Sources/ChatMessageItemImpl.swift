@@ -46,6 +46,19 @@ private func mediaMergeableStyle(_ media: EngineRawMedia) -> ChatMessageMerge {
     return .fullyMerged
 }
 
+private func anonymousGroupAdminSignature(message: EngineRawMessage, effectiveAuthor: EngineRawPeer?) -> String? {
+    guard let channel = message.peers[message.id.peerId] as? TelegramChannel, case .group = channel.info else {
+        return nil
+    }
+    guard effectiveAuthor?.id == channel.id else {
+        return nil
+    }
+    guard let signature = message.authorSignatureAttribute?.signature, !signature.isEmpty else {
+        return nil
+    }
+    return signature
+}
+
 private func messagesShouldBeMerged(accountPeerId: EnginePeer.Id, _ lhs: EngineRawMessage, _ rhs: EngineRawMessage) -> ChatMessageMerge {
     var lhsEffectiveAuthor: EngineRawPeer? = lhs.author
     var rhsEffectiveAuthor: EngineRawPeer? = rhs.author
@@ -111,6 +124,14 @@ private func messagesShouldBeMerged(accountPeerId: EnginePeer.Id, _ lhs: EngineR
         sameAuthor = false
     }
     
+    if sameAuthor {
+        let lhsAnonymousAdminSignature = anonymousGroupAdminSignature(message: lhs, effectiveAuthor: lhsEffectiveAuthor)
+        let rhsAnonymousAdminSignature = anonymousGroupAdminSignature(message: rhs, effectiveAuthor: rhsEffectiveAuthor)
+        if lhsAnonymousAdminSignature != rhsAnonymousAdminSignature && (lhsAnonymousAdminSignature != nil || rhsAnonymousAdminSignature != nil) {
+            sameAuthor = false
+        }
+    }
+
     var lhsEffectiveTimestamp = lhs.timestamp
     var rhsEffectiveTimestamp = rhs.timestamp
     

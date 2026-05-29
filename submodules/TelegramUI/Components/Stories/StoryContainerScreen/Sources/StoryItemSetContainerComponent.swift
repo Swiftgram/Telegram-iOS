@@ -4565,7 +4565,7 @@ public final class StoryItemSetContainerComponent: Component {
                             }
                             switch action {
                             case let .url(url, concealed):
-                                let _ = openUserGeneratedUrl(context: component.context, peerId: component.slice.effectivePeer.id, url: url, concealed: concealed, skipUrlAuth: false, skipConcealedAlert: false, forceDark: true, present: { [weak self] c in
+                                let _ = component.context.sharedContext.openUserGeneratedUrl(context: component.context, peerId: component.slice.effectivePeer.id, url: url, webpage: nil, concealed: concealed, forceConcealed: false, skipUrlAuth: false, skipConcealedAlert: false, forceDark: true, present: { [weak self] c in
                                     guard let self, let component = self.component, let controller = component.controller() else {
                                         return
                                     }
@@ -4575,13 +4575,13 @@ public final class StoryItemSetContainerComponent: Component {
                                         return
                                     }
                                     self.sendMessageContext.openResolved(view: self, result: resolved, forceExternal: false, concealed: concealed)
-                                }, alertDisplayUpdated: { [weak self] alertController in
+                                }, progress: nil, alertDisplayUpdated: { [weak self] alertController in
                                     guard let self else {
                                         return
                                     }
                                     self.sendMessageContext.statusController = alertController
                                     self.updateIsProgressPaused()
-                                })
+                                }, concealedAlertOption: nil)
                             case let .textMention(value):
                                 self.sendMessageContext.openPeerMention(view: self, name: value)
                             case let .peerMention(peerId, _):
@@ -4599,7 +4599,7 @@ public final class StoryItemSetContainerComponent: Component {
                                 return
                             }
                             self.sendMessageContext.presentTextEntityActions(view: self, action: action, openUrl: { [weak self] url, concealed in
-                                let _ = openUserGeneratedUrl(context: component.context, peerId: component.slice.effectivePeer.id, url: url, concealed: concealed, skipUrlAuth: false, skipConcealedAlert: false, present: { [weak self] c in
+                                let _ = component.context.sharedContext.openUserGeneratedUrl(context: component.context, peerId: component.slice.effectivePeer.id, url: url, webpage: nil, concealed: concealed, forceConcealed: false, skipUrlAuth: false, skipConcealedAlert: false, forceDark: false, present: { [weak self] c in
                                     guard let self, let component = self.component, let controller = component.controller() else {
                                         return
                                     }
@@ -4609,7 +4609,7 @@ public final class StoryItemSetContainerComponent: Component {
                                         return
                                     }
                                     self.sendMessageContext.openResolved(view: self, result: resolved, forceExternal: false, concealed: concealed)
-                                })
+                                }, progress: nil, alertDisplayUpdated: nil, concealedAlertOption: nil)
                             })
                         },
                         textSelectionAction: { [weak self] text, action in

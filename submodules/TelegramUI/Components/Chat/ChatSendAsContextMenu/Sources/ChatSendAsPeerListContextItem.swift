@@ -152,6 +152,7 @@ private final class ChatSendAsPeerListContextItemNode: ASDisplayNode, ContextMen
         self.scrollNode.view.alwaysBounceVertical = false
         self.scrollNode.view.showsHorizontalScrollIndicator = false
         self.scrollNode.view.scrollIndicatorInsets = UIEdgeInsets(top: 0.0, left: 0.0, bottom: 5.0, right: 0.0)
+        self.scrollNode.view.scrollsToTop = false
     }
 
     func updateLayout(constrainedWidth: CGFloat, constrainedHeight: CGFloat) -> (CGSize, (CGSize, ContainedViewLayoutTransition) -> Void) {

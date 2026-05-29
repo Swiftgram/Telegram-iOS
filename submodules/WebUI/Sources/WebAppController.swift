@@ -79,6 +79,7 @@ public struct WebAppParameters {
     let forceHasSettings: Bool
     let fullSize: Bool
     let isFullscreen: Bool
+    let sameOrigin: Bool
     let appSettings: BotAppSettings?
     
     public init(
@@ -97,6 +98,7 @@ public struct WebAppParameters {
         forceHasSettings: Bool,
         fullSize: Bool,
         isFullscreen: Bool = false,
+        sameOrigin: Bool = false,
         appSettings: BotAppSettings? = nil
     ) {
         self.source = source
@@ -114,6 +116,7 @@ public struct WebAppParameters {
         self.forceHasSettings = forceHasSettings
         self.fullSize = fullSize || isFullscreen
         self.isFullscreen = isFullscreen
+        self.sameOrigin = sameOrigin
         self.appSettings = appSettings
     }
 }
@@ -469,6 +472,10 @@ public final class WebAppController: ViewController, AttachmentContainable {
             super.didLoad()
             
             self.setupWebView()
+            if let pendingExternalUrl = self.controller?.pendingExternalUrl {
+                self.controller?.pendingExternalUrl = nil
+                self.loadExternal(url: pendingExternalUrl)
+            }
             
             guard let webView = self.webView else {
                 return
@@ -516,7 +523,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
             }
             #endif*/
 
-            if !"".isEmpty {
+            if self.controller?.sameOrigin == true {
                 self.webView?.bindTrustedOrigin(from: url)
             } else {
                 self.webView?.setupEventProxySource()
@@ -524,6 +531,13 @@ public final class WebAppController: ViewController, AttachmentContainable {
             self.webView?.load(URLRequest(url: url))
         }
         
+        fileprivate func loadExternal(url: String) {
+            guard let parsedUrl = URL(string: url) else {
+                return
+            }
+            self.load(url: parsedUrl)
+        }
+
         func setupWebView() {
             guard let controller = self.controller else {
                 return
@@ -555,6 +569,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
                         }
                         if let parsedUrl = URL(string: result.url) {
                             strongSelf.queryId = result.queryId
+                            strongSelf.controller?.sameOrigin = result.flags.contains(.sameOrigin)
                             strongSelf.load(url: parsedUrl)
                         }
                     })
@@ -575,6 +590,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
                                     return
                                 }
                                 self.controller?.titleView?.title = WebAppTitle(title: botApp.title, counter: self.presentationData.strings.WebApp_Miniapp, isVerified: controller.botVerified)
+                                self.controller?.sameOrigin = result.flags.contains(.sameOrigin)
                                 self.load(url: parsedUrl)
                             })
                         })
@@ -585,6 +601,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
                                 return
                             }
                             strongSelf.queryId = result.queryId
+                            strongSelf.controller?.sameOrigin = result.flags.contains(.sameOrigin)
                             strongSelf.load(url: parsedUrl)
                                                         
                             if let keepAliveSignal = result.keepAliveSignal {
@@ -1245,8 +1262,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
             case "web_app_open_tg_link":
                 if let json = json, let path = json["path_full"] as? String {
                     let forceRequest = json["force_request"] as? Bool ?? false
-                    controller.openUrl("https://t.me\(path)", false, forceRequest, {
-                    })
+                    controller.openUrl("https://t.me\(path)", false, forceRequest, {})
                 }
             case "web_app_open_invoice":
                 if let json = json, let slug = json["slug"] as? String {
@@ -3552,6 +3568,8 @@ public final class WebAppController: ViewController, AttachmentContainable {
     private let replyToMessageId: EngineMessage.Id?
     private let threadId: Int64?
     public var isFullscreen: Bool
+    private var sameOrigin: Bool
+    private var pendingExternalUrl: String?
     
     private var presentationData: PresentationData
     fileprivate let updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?
@@ -3585,6 +3603,7 @@ public final class WebAppController: ViewController, AttachmentContainable {
         self.replyToMessageId = replyToMessageId
         self.threadId = threadId
         self.isFullscreen = params.isFullscreen
+        self.sameOrigin = params.sameOrigin
         
         self.updatedPresentationData = updatedPresentationData
         
@@ -3605,6 +3624,8 @@ public final class WebAppController: ViewController, AttachmentContainable {
         self.automaticallyControlPresentationContextLayout = false
         
         if case .attachMenu = self.source {
+            
+        } else if self.isVerifyAgeBot {
             
         } else {
             self.navigationItem.leftBarButtonItem = UIBarButtonItem(customDisplayNode: self.cancelButtonNode)
@@ -3683,15 +3704,21 @@ public final class WebAppController: ViewController, AttachmentContainable {
     }
     
     private func updateNavigationButtons() {
+        var showGlassButtons = false
         if case .attachMenu = self.source {
+            showGlassButtons = true
+        } else if self.isVerifyAgeBot {
+            showGlassButtons = true
+        }
+        if showGlassButtons {
             let barButtonSize = CGSize(width: 44.0, height: 44.0)
             let closeComponent: AnyComponentWithIdentity<Empty> = AnyComponentWithIdentity(
                 id: "close",
                 component: AnyComponent(GlassBarButtonComponent(
                     size: barButtonSize,
-                    backgroundColor: self.presentationData.theme.rootController.navigationBar.glassBarButtonBackgroundColor,
+                    backgroundColor: nil,
                     isDark: self.presentationData.theme.overallDarkAppearance,
-                    state: .generic,
+                    state: .glass,
                     component: AnyComponentWithIdentity(id: self.controllerNode.hasBackButton ? "back" : "close", component: AnyComponent(
                         BundleIconComponent(
                             name: self.controllerNode.hasBackButton ? "Navigation/Back" : "Navigation/Close",
@@ -3708,9 +3735,9 @@ public final class WebAppController: ViewController, AttachmentContainable {
                 id: "more",
                 component: AnyComponent(GlassBarButtonComponent(
                     size: barButtonSize,
-                    backgroundColor: self.presentationData.theme.rootController.navigationBar.glassBarButtonBackgroundColor,
+                    backgroundColor: nil,
                     isDark: self.presentationData.theme.overallDarkAppearance,
-                    state: .generic,
+                    state: .glass,
                     component: AnyComponentWithIdentity(id: "more", component: AnyComponent(
                         LottieComponent(
                             content: LottieComponent.AppBundleContent(
@@ -3738,14 +3765,16 @@ public final class WebAppController: ViewController, AttachmentContainable {
                 self.navigationItem.leftBarButtonItem = UIBarButtonItem(customDisplayNode: cancelButtonNode)
             }
             
-            let moreButtonNode: BarComponentHostNode
-            if let current = self.moreBarButtonNode {
-                moreButtonNode = current
-                moreButtonNode.component = moreComponent
-            } else {
-                moreButtonNode = BarComponentHostNode(component: moreComponent, size: barButtonSize)
-                self.moreBarButtonNode = moreButtonNode
-                self.navigationItem.rightBarButtonItem = UIBarButtonItem(customDisplayNode: moreButtonNode)
+            if !self.isVerifyAgeBot {
+                let moreButtonNode: BarComponentHostNode
+                if let current = self.moreBarButtonNode {
+                    moreButtonNode = current
+                    moreButtonNode.component = moreComponent
+                } else {
+                    moreButtonNode = BarComponentHostNode(component: moreComponent, size: barButtonSize)
+                    self.moreBarButtonNode = moreButtonNode
+                    self.navigationItem.rightBarButtonItem = UIBarButtonItem(customDisplayNode: moreButtonNode)
+                }
             }
         }
             
@@ -3754,7 +3783,11 @@ public final class WebAppController: ViewController, AttachmentContainable {
     
     private var isVerifyAgeBot: Bool {
         if let ageBotUsername = self.context.currentAppConfiguration.with({ $0 }).data?["verify_age_bot_username"] as? String {
-            return self.botAddress == ageBotUsername
+            if self.botAddress == ageBotUsername {
+                return true
+            } else if self.botAddress == "mod_bot" {
+                return true
+            }
         }
         return false
     }
@@ -4059,6 +4092,14 @@ public final class WebAppController: ViewController, AttachmentContainable {
         self.updateTabBarAlpha(1.0, .immediate)
     }
     
+    public func loadExternal(url: String) {
+        if self.isNodeLoaded {
+            self.controllerNode.loadExternal(url: url)
+        } else {
+            self.pendingExternalUrl = url
+        }
+    }
+
     public func isContainerPanningUpdated(_ isPanning: Bool) {
         self.controllerNode.isContainerPanningUpdated(isPanning)
     }
@@ -4102,23 +4143,18 @@ public final class WebAppController: ViewController, AttachmentContainable {
     
     public func requestDismiss(completion: @escaping () -> Void) {
         if self.controllerNode.needDismissConfirmation {
-            let actionSheet = ActionSheetController(presentationData: self.presentationData)
-            actionSheet.setItemGroups([
-                ActionSheetItemGroup(items: [
-                    ActionSheetTextItem(title: self.presentationData.strings.WebApp_CloseConfirmation),
-                    ActionSheetButtonItem(title: self.presentationData.strings.WebApp_CloseAnyway, color: .destructive, action: { [weak actionSheet] in
-                        actionSheet?.dismissAnimated()
-                        
+            let alertController = textAlertController(
+                context: self.context,
+                title: nil,
+                text: self.presentationData.strings.WebApp_CloseConfirmation,
+                actions: [
+                    TextAlertAction(type: .genericAction, title: self.presentationData.strings.Common_Cancel, action: {}),
+                    TextAlertAction(type: .destructiveAction, title: self.presentationData.strings.WebApp_CloseAnyway, action: {
                         completion()
                     })
-                ]),
-                ActionSheetItemGroup(items: [
-                    ActionSheetButtonItem(title: self.presentationData.strings.Common_Cancel, color: .accent, font: .bold, action: { [weak actionSheet] in
-                        actionSheet?.dismissAnimated()
-                    })
-                ])
-            ])
-            self.present(actionSheet, in: .window(.root))
+                ]
+            )
+            self.present(alertController, in: .window(.root))
         } else {
             completion()
         }
@@ -4253,7 +4289,8 @@ public func standaloneWebAppController(
     didDismiss: @escaping () -> Void = {},
     getNavigationController: @escaping () -> NavigationController? = { return nil },
     getSourceRect: (() -> CGRect?)? = nil,
-    verifyAgeCompletion: ((Int) -> Void)? = nil
+    verifyAgeCompletion: ((Int) -> Void)? = nil,
+    onControllerCreated: @escaping (WebAppController) -> Void = { _ in }
 ) -> ViewController {
     let controller = AttachmentController(
         context: context,
@@ -4274,6 +4311,7 @@ public func standaloneWebAppController(
         webAppController.getNavigationController = getNavigationController
         webAppController.requestSwitchInline = requestSwitchInline
         webAppController.verifyAgeCompletion = verifyAgeCompletion
+        onControllerCreated(webAppController)
         present(webAppController, webAppController.mediaPickerContext)
         return true
     }

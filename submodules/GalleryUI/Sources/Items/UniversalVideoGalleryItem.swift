@@ -419,6 +419,9 @@ private final class UniversalVideoGalleryItemOverlayNode: GalleryOverlayContentN
             adView.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.25, removeOnCompletion: false)
             adView.layer.animatePosition(from: .zero, to: CGPoint(x: 0.0, y: 64.0), duration: 0.4, timingFunction: kCAMediaTimingFunctionSpring, removeOnCompletion: false, additive: true, completion: { _ in
                 adView.removeFromSuperview()
+                if self.adView.view === adView {
+                    self.adView = ComponentView<Empty>()
+                }
                 Queue.mainQueue().after(0.1) {
                     adView.layer.removeAllAnimations()
                 }
@@ -444,7 +447,7 @@ private final class UniversalVideoGalleryItemOverlayNode: GalleryOverlayContentN
                 return result
             }
         }
-        if let adView = self.adView.view, adView.frame.contains(point) {
+        if let adView = self.adView.view, adView.superview === self.view, !self.isAnimatingOut, adView.frame.contains(point) {
             return super.hitTest(point, with: event)
         }
         return nil
@@ -3892,12 +3895,12 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                                     if !presentationData.theme.overallDarkAppearance {
                                         presentationData = presentationData.withUpdated(theme: defaultDarkColorPresentationTheme)
                                     }
-                                    let actionSheet = OpenInActionSheetController(context: strongSelf.context, forceTheme: presentationData.theme, item: item, openUrl: { [weak self] url in
+                                    let actionSheet = OpenInOptionsScreen(context: strongSelf.context, forceTheme: presentationData.theme, item: item, openUrl: { [weak self] url in
                                         if let strongSelf = self {
                                             strongSelf.context.sharedContext.openExternalUrl(context: strongSelf.context, urlContext: .generic, url: url, forceExternal: true, presentationData: presentationData, navigationController: strongSelf.baseNavigationController(), dismissInput: {})
                                         }
                                     })
-                                    controller.present(actionSheet, in: .window(.root))
+                                    controller.push(actionSheet)
                                 }
                             })))
                             break

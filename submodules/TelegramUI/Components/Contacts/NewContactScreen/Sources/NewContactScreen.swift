@@ -251,7 +251,7 @@ final class NewContactScreenComponent: Component {
             let themeUpdated = self.environment?.theme !== environment.theme
             self.environment = environment
             
-            let theme = environment.theme
+            let theme = environment.theme.withModalBlocksBackground()
             let strings = environment.strings
             
             var initialCountryCode: Int32?
@@ -861,7 +861,7 @@ final class NewContactScreenComponent: Component {
             let edgeEffectHeight: CGFloat = 66.0
             let edgeEffectFrame = CGRect(origin: CGPoint(x: 0.0, y: 0.0), size: CGSize(width: availableSize.width, height: edgeEffectHeight))
             transition.setFrame(view: self.edgeEffectView, frame: edgeEffectFrame)
-            self.edgeEffectView.update(content: environment.theme.list.blocksBackgroundColor, alpha: 1.0, rect: edgeEffectFrame, edge: .top, edgeSize: edgeEffectFrame.height, transition: transition)
+            self.edgeEffectView.update(content: theme.list.blocksBackgroundColor, alpha: 1.0, rect: edgeEffectFrame, edge: .top, edgeSize: edgeEffectFrame.height, transition: transition)
             
             let titleSize = self.title.update(
                 transition: transition,

@@ -30,23 +30,46 @@ public enum UpdateChannelJoinRequestError {
     case generic
 }
 
-func _internal_toggleChannelJoinRequest(postbox: Postbox, network: Network, accountStateManager: AccountStateManager, peerId: PeerId, enabled: Bool, guardBotId: PeerId? = nil) -> Signal<Never, UpdateChannelJoinRequestError> {
+func _internal_toggleChannelJoinRequest(postbox: Postbox, network: Network, accountStateManager: AccountStateManager, peerId: PeerId, enabled: Bool, guardBotId: PeerId?, applyToInvites: Bool, clearGuardBot: Bool) -> Signal<Never, UpdateChannelJoinRequestError> {
+    let updatedGuardBotId: PeerId?
+    let shouldUpdateGuardBotId: Bool
+    if clearGuardBot {
+        updatedGuardBotId = nil
+        shouldUpdateGuardBotId = true
+    } else if let guardBotId {
+        updatedGuardBotId = guardBotId
+        shouldUpdateGuardBotId = true
+    } else {
+        updatedGuardBotId = nil
+        shouldUpdateGuardBotId = false
+    }
+
     return postbox.transaction { transaction -> (Peer?, Api.InputUser?) in
-        let peer = transaction.getPeer(peerId)
-        var guardBot: Api.InputUser?
-        if let guardBotId, let botPeer = transaction.getPeer(guardBotId) {
-            guardBot = apiInputUser(botPeer)
+        let guardBot: Api.InputUser?
+        if clearGuardBot {
+            guardBot = .inputUserEmpty
+        } else if let guardBotId {
+            guardBot = transaction.getPeer(guardBotId).flatMap(apiInputUser)
+        } else {
+            guardBot = nil
         }
-        return (peer, guardBot)
+        return (transaction.getPeer(peerId), guardBot)
     }
     |> castError(UpdateChannelJoinRequestError.self)
-    |> mapToSignal { (peer, guardBot) in
+    |> mapToSignal { result in
+        let (peer, guardBot) = result
         guard let peer = peer, let inputChannel = apiInputChannel(peer) else {
+            return .fail(.generic)
+        }
+        if guardBotId != nil && guardBot == nil {
             return .fail(.generic)
         }
         var flags: Int32 = 0
         if guardBot != nil {
-            flags |= (1 << 0)
+            flags |= 1 << 0
+        }
+        if applyToInvites {
+            flags |= 1 << 1
         }
         return network.request(Api.functions.channels.toggleJoinRequest(flags: flags, channel: inputChannel, enabled: enabled ? .boolTrue : .boolFalse, guardBot: guardBot))
         |> `catch` { _ -> Signal<Api.Updates, UpdateChannelJoinRequestError> in
@@ -54,18 +77,21 @@ func _internal_toggleChannelJoinRequest(postbox: Postbox, network: Network, acco
         }
         |> mapToSignal { updates -> Signal<Never, UpdateChannelJoinRequestError> in
             accountStateManager.addUpdates(updates)
-            return postbox.transaction { transaction in
-                transaction.updatePeerCachedData(peerIds: Set([peerId]), update: { _, current in
-                    if let current = current as? CachedChannelData {
-                        return current.withUpdatedGuardBotId(guardBotId)
-                    } else {
-                        return current
-                    }
-                })
+
+            if shouldUpdateGuardBotId {
+                return postbox.transaction { transaction -> Void in
+                    transaction.updatePeerCachedData(peerIds: Set([peerId]), update: { _, current in
+                        guard let current = current as? CachedChannelData else {
+                            return current
+                        }
+                        return current.withUpdatedGuardBotId(updatedGuardBotId)
+                    })
+                }
+                |> castError(UpdateChannelJoinRequestError.self)
+                |> ignoreValues
             }
-            |> ignoreValues
-            |> castError(UpdateChannelJoinRequestError.self)
+
+            return .complete()
         }
     }
 }
-

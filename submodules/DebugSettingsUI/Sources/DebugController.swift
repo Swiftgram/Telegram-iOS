@@ -1709,7 +1709,7 @@ public func debugController(sharedContext: SharedAccountContext, context: Accoun
         
         var leftNavigationButton: ItemListNavigationButton?
         if modal {
-            leftNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Cancel), style: .regular, enabled: true, action: {
+            leftNavigationButton = ItemListNavigationButton(content: .icon(.close), style: .regular, enabled: true, action: {
                 dismissImpl?()
             })
         }

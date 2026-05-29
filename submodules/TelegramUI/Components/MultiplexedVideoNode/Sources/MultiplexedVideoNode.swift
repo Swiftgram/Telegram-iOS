@@ -316,6 +316,7 @@ public final class MultiplexedVideoNode: ASDisplayNode, ASScrollViewDelegate {
         }
         
         self.scrollNode.view.delegate = self.wrappedScrollViewDelegate
+        self.scrollNode.view.scrollsToTop = false
         
         let recognizer = UITapGestureRecognizer(target: self, action: #selector(self.tapGesture(_:)))
         self.view.addGestureRecognizer(recognizer)

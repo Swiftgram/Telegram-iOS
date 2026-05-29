@@ -21,6 +21,7 @@ public func guessMimeTypeByFileExtension(_ ext: String) -> String {
 
 public func configureLegacyAssetPicker(_ controller: TGMediaAssetsController, context: AccountContext, peer: EngineRawPeer, chatLocation: ChatLocation, captionsEnabled: Bool = true, storeCreatedAssets: Bool = true, showFileTooltip: Bool = false, initialCaption: NSAttributedString, hasSchedule: Bool, presentWebSearch: (() -> Void)?, presentSelectionLimitExceeded: @escaping () -> Void, presentSchedulePicker: @escaping (Bool, @escaping (Int32, Bool) -> Void) -> Void, presentTimerPicker: @escaping (@escaping (Int32) -> Void) -> Void, getCaptionPanelView: @escaping () -> TGCaptionPanelView?) {
     let paintStickersContext = LegacyPaintStickersContext(context: context)
+    paintStickersContext.presentMediaPickerSendActionMenu = makeLegacyMediaPickerSendActionMenuPresenter(context: context)
     paintStickersContext.captionPanelView = {
         return getCaptionPanelView()
     }

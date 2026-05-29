@@ -703,6 +703,7 @@ final class PeerInfoGifPaneNode: ASDisplayNode, PeerInfoPaneNode, ASScrollViewDe
         }
         self.scrollNode.view.scrollsToTop = false
         self.scrollNode.view.delegate = self.wrappedScrollViewDelegate
+        self.scrollNode.view.scrollsToTop = false
         
         self.addSubnode(self.scrollNode)
         self.addSubnode(self.floatingHeaderNode)

@@ -1216,7 +1216,9 @@ public final class EmojiStatusSelectionController: ViewController {
                     component: AnyComponent(EmojiStatusPreviewScreenComponent(
                         theme: self.presentationData.theme,
                         strings: self.presentationData.strings,
+                        dateTimeFormat: self.presentationData.dateTimeFormat,
                         bottomInset: layout.insets(options: []).bottom,
+                        screenCornerRadius: layout.deviceMetrics.screenCornerRadius,
                         item: EmojiStatusComponent(
                             context: self.context,
                             animationCache: self.context.animationCache,

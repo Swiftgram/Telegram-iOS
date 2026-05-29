@@ -2766,9 +2766,9 @@ final class ShareWithPeersScreenComponent: Component {
                 transition: transition,
                 component: AnyComponent(GlassBarButtonComponent(
                     size: CGSize(width: 44.0, height: 44.0),
-                    backgroundColor: environment.theme.rootController.navigationBar.glassBarButtonBackgroundColor,
+                    backgroundColor: nil,
                     isDark: environment.theme.overallDarkAppearance,
-                    state: .generic,
+                    state: .glass,
                     component: AnyComponentWithIdentity(id: "close", component: AnyComponent(
                         BundleIconComponent(
                             name: "Navigation/Close",

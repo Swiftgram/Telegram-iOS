@@ -811,7 +811,7 @@ open class ChatMessageItemView: ListViewItemNode, ChatMessageItemNodeProtocol {
         if let item = self.item {
             switch button.action {
                 case .text:
-                    item.controllerInteraction.sendMessage(button.title)
+                    item.controllerInteraction.sendMessage(button.title, item.message.id)
                 case let .url(url):
                     var concealed = true
                     if url.hasPrefix("tg://") {
@@ -819,9 +819,9 @@ open class ChatMessageItemView: ListViewItemNode, ChatMessageItemNodeProtocol {
                     }
                 item.controllerInteraction.openUrl(ChatControllerInteraction.OpenUrl(url: url, concealed: concealed, progress: progress))
                 case .requestMap:
-                    item.controllerInteraction.shareCurrentLocation()
+                    item.controllerInteraction.shareCurrentLocation(item.message.id)
                 case .requestPhone:
-                    item.controllerInteraction.shareAccountContact()
+                    item.controllerInteraction.shareAccountContact(item.message.id)
                 case .openWebApp:
                     item.controllerInteraction.requestMessageActionCallback(item.message, nil, true, false, progress)
                 case let .callback(requiresPassword, data):
@@ -899,6 +899,10 @@ open class ChatMessageItemView: ListViewItemNode, ChatMessageItemNodeProtocol {
     }
     
     open func getStatusNode() -> ASDisplayNode? {
+        return nil
+    }
+    
+    open func getAuthorNameNode() -> ASDisplayNode? {
         return nil
     }
 

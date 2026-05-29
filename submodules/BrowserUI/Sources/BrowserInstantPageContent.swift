@@ -166,6 +166,7 @@ final class BrowserInstantPageContent: UIView, BrowserContent, UIScrollViewDeleg
         
         self.scrollNode.view.delaysContentTouches = false
         self.scrollNode.view.delegate = self
+        self.scrollNode.view.scrollsToTop = false
         
         if #available(iOSApplicationExtension 11.0, iOS 11.0, *) {
             self.scrollNode.view.contentInsetAdjustmentBehavior = .never
@@ -1532,12 +1533,12 @@ final class BrowserInstantPageContent: UIView, BrowserContent, UIScrollViewDeleg
         }
         
         let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
-        let actionSheet = OpenInActionSheetController(context: self.context, item: .url(url: baseUrl), openUrl: { [weak self] url in
+        let actionSheet = OpenInOptionsScreen(context: self.context, item: .url(url: baseUrl), openUrl: { [weak self] url in
             if let self {
                 self.context.sharedContext.openExternalUrl(context: self.context, urlContext: .generic, url: url, forceExternal: true, presentationData: presentationData, navigationController: nil, dismissInput: {})
             }
         })
-        self.present(actionSheet, nil)
+        self.push(actionSheet)
     }
         
     private func openMedia(_ media: InstantPageMedia) {

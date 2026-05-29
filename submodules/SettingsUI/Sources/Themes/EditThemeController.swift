@@ -496,7 +496,7 @@ public func editThemeController(context: AccountContext, mode: EditThemeControll
     
     let signal = combineLatest(queue: .mainQueue(), context.sharedContext.presentationData, statePromise.get(), previewThemePromise.get(), settingsPromise.get())
     |> map { presentationData, state, previewTheme, currentSettings -> (ItemListControllerState, (ItemListNodeState, Any)) in
-        let leftNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Cancel), style: .regular, enabled: true, action: {
+        let leftNavigationButton = ItemListNavigationButton(content: .icon(.close), style: .regular, enabled: true, action: {
             dismissImpl?()
         })
         
@@ -516,7 +516,7 @@ public func editThemeController(context: AccountContext, mode: EditThemeControll
                 isComplete = !state.title.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty && !state.slug.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty
             }
             
-            rightNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Done), style: .bold, enabled: isComplete, action: {
+            rightNavigationButton = ItemListNavigationButton(content: .icon(.done), style: .bold, enabled: isComplete, action: {
                 if state.title.count > 128 {
                     errorImpl?(.title)
                     return

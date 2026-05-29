@@ -125,9 +125,11 @@ swift_library(
         "//submodules/TelegramUI/Components/ChatList/ChatListSearchFiltersContainerNode",
         "//submodules/TelegramUI/Components/ChatList/ChatListHeaderNoticeComponent",
         "//submodules/TelegramUI/Components/AlertComponent",
+        "//submodules/TelegramUI/Components/AlertComponent/AlertHeaderComponent",
         "//submodules/TelegramUI/Components/AlertComponent/AlertTransferHeaderComponent",
         "//submodules/TelegramUI/Components/AvatarComponent",
         "//submodules/TelegramUI/Components/PeerManagement/OwnershipTransferController",
+        "//submodules/TelegramUI/Components/GlassControls",
     ],
     visibility = [
         "//visibility:public",

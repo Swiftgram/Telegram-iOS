@@ -8,10 +8,9 @@ import TelegramPresentationData
 import PresentationDataUtils
 import ViewControllerComponent
 import AccountContext
-import SolidRoundedButtonComponent
 import MultilineTextComponent
 import BundleIconComponent
-import SolidRoundedButtonComponent
+import ButtonComponent
 import BlurredBackgroundComponent
 import Markdown
 import InAppPurchaseManager
@@ -1015,7 +1014,7 @@ private final class PremiumGiftScreenComponent: CombinedComponent {
         let secondaryTitle = Child(MultilineTextComponent.self)
         let bottomPanel = Child(BlurredBackgroundComponent.self)
         let bottomSeparator = Child(Rectangle.self)
-        let button = Child(SolidRoundedButtonComponent.self)
+        let button = Child(ButtonComponent.self)
         
         return { context in
             let environment = context.environment[EnvironmentType.self].value
@@ -1233,28 +1232,38 @@ private final class PremiumGiftScreenComponent: CombinedComponent {
                     buttonText = environment.strings.Premium_Gift_GiftSubscription(price ?? "—").string
                 }
                 
+                let buttonGradientColors = [
+                    UIColor(rgb: 0x0077ff),
+                    UIColor(rgb: 0x6b93ff),
+                    UIColor(rgb: 0x8878ff),
+                    UIColor(rgb: 0xe46ace)
+                ]
                 let button = button.update(
-                    component: SolidRoundedButtonComponent(
-                        title: buttonText,
-                        theme: SolidRoundedButtonComponent.Theme(
-                            backgroundColor: UIColor(rgb: 0x8878ff),
-                            backgroundColors: [
-                                UIColor(rgb: 0x0077ff),
-                                UIColor(rgb: 0x6b93ff),
-                                UIColor(rgb: 0x8878ff),
-                                UIColor(rgb: 0xe46ace)
-                            ],
-                            foregroundColor: .white
+                    component: ButtonComponent(
+                        background: ButtonComponent.Background(
+                            style: .glass,
+                            color: buttonGradientColors[0],
+                            foreground: .white,
+                            pressedColor: buttonGradientColors[0],
+                            isShimmering: gloss,
+                            gradient: ButtonComponent.Background.Gradient(colors: buttonGradientColors)
                         ),
-                        height: 50.0,
-                        cornerRadius: 11.0,
-                        gloss: gloss,
-                        isLoading: state.inProgress,
+                        content: AnyComponentWithIdentity(
+                            id: AnyHashable(buttonText),
+                            component: AnyComponent(ButtonTextContentComponent(
+                                text: buttonText,
+                                badge: 0,
+                                textColor: .white,
+                                badgeBackground: .white,
+                                badgeForeground: buttonGradientColors[0]
+                            ))
+                        ),
+                        displaysProgress: state.inProgress,
                         action: {
                             state.buy()
                         }
                     ),
-                    availableSize: CGSize(width: context.availableSize.width - sideInset * 2.0 - environment.safeInsets.left - environment.safeInsets.right, height: 50.0),
+                    availableSize: CGSize(width: context.availableSize.width - sideInset * 2.0 - environment.safeInsets.left - environment.safeInsets.right, height: 52.0),
                     transition: context.transition)
                              
                 let bottomPanel = bottomPanel.update(

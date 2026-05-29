@@ -448,7 +448,7 @@ public func groupStickerPackSetupController(context: AccountContext, updatedPres
         if isEmoji {
             leftNavigationButton = nil
         } else {
-            leftNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Cancel), style: .regular, enabled: true, action: {
+            leftNavigationButton = ItemListNavigationButton(content: .icon(.close), style: .regular, enabled: true, action: {
                 dismissImpl?()
             })
         }
@@ -478,7 +478,7 @@ public func groupStickerPackSetupController(context: AccountContext, updatedPres
                         enabled = true
                         info = data.info
                     }
-                    rightNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Done), style: .bold, enabled: enabled, action: {
+                    rightNavigationButton = ItemListNavigationButton(content: .icon(.done), style: .bold, enabled: enabled, action: {
                         if info?.id == currentPackInfo?.id {
                             dismissImpl?()
                         } else {

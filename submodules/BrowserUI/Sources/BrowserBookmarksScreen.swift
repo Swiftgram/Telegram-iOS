@@ -65,7 +65,7 @@ public final class BrowserBookmarksScreen: ViewController {
             }, tapMessage: nil, clickThroughMessage: { _, _ in
             }, toggleMessagesSelection: { _, _ in
             }, sendCurrentMessage: { _, _ in
-            }, sendMessage: { _ in
+            }, sendMessage: { _, _ in
             }, sendSticker: { _, _, _, _, _, _, _, _, _ in
                 return false
             }, sendEmoji: { _, _, _ in
@@ -83,8 +83,8 @@ public final class BrowserBookmarksScreen: ViewController {
                     controller.dismiss()
                 }
             }, openExternalInstantPage: { _ in
-            }, shareCurrentLocation: {
-            }, shareAccountContact: {
+            }, shareCurrentLocation: { _ in
+            }, shareAccountContact: { _ in
             }, sendBotCommand: { _, _ in
             }, openInstantPage: { message, _ in
                 if let openMessageImpl = openMessageImpl {
@@ -134,7 +134,7 @@ public final class BrowserBookmarksScreen: ViewController {
             }, displaySwipeToReplyHint: {
             }, dismissReplyMarkupMessage: { _ in
             }, openMessagePollResults: { _, _ in
-            }, openPollCreation: { _ in
+            }, openPollCreation: { _, _ in
             }, openPollMedia: { _, _ in
             }, displayPollSolution: { _, _ in
             }, displayPsa: { _, _ in
@@ -402,7 +402,7 @@ public final class BrowserBookmarksScreen: ViewController {
         
         self.navigationItem.backBarButtonItem = UIBarButtonItem(title: self.presentationData.strings.Common_Back, style: .plain, target: nil, action: nil)
         
-        self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: self.presentationData.strings.Common_Close, style: .plain, target: self, action: #selector(self.cancelPressed))
+        self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "___close", style: .plain, target: self, action: #selector(self.cancelPressed))
         self.title = self.presentationData.strings.WebBrowser_Bookmarks_Title
         
         self.searchContentNode = NavigationBarSearchContentNode(theme: self.presentationData.theme, placeholder: self.presentationData.strings.Common_Search, activate: { [weak self] in

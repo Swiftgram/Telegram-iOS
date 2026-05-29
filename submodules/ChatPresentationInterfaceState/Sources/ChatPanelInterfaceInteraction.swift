@@ -152,7 +152,6 @@ public final class ChatPanelInterfaceInteraction {
     public let displaySendMessageOptions: (ASDisplayNode, ContextGesture) -> Void
     public let openScheduledMessages: () -> Void
     public let displaySearchResultsTooltip: (ASDisplayNode, CGRect) -> Void
-    public let openPeersNearby: () -> Void
     public let unarchivePeer: () -> Void
     public let scrollToTop: () -> Void
     public let viewReplies: (EngineMessage.Id?, ChatReplyThreadMessage) -> Void
@@ -284,7 +283,6 @@ public final class ChatPanelInterfaceInteraction {
         displaySlowmodeTooltip: @escaping (UIView, CGRect) -> Void,
         displaySendMessageOptions: @escaping (ASDisplayNode, ContextGesture) -> Void,
         openScheduledMessages: @escaping () -> Void,
-        openPeersNearby: @escaping () -> Void,
         displaySearchResultsTooltip: @escaping (ASDisplayNode, CGRect) -> Void,
         unarchivePeer: @escaping () -> Void,
         scrollToTop: @escaping () -> Void,
@@ -416,7 +414,6 @@ public final class ChatPanelInterfaceInteraction {
         self.displaySlowmodeTooltip = displaySlowmodeTooltip
         self.displaySendMessageOptions = displaySendMessageOptions
         self.openScheduledMessages = openScheduledMessages
-        self.openPeersNearby = openPeersNearby
         self.displaySearchResultsTooltip = displaySearchResultsTooltip
         self.unarchivePeer = unarchivePeer
         self.scrollToTop = scrollToTop
@@ -556,7 +553,6 @@ public final class ChatPanelInterfaceInteraction {
         }, displaySlowmodeTooltip: { _, _ in
         }, displaySendMessageOptions: { _, _ in
         }, openScheduledMessages: {
-        }, openPeersNearby: {
         }, displaySearchResultsTooltip: { _, _ in
         }, unarchivePeer: {
         }, scrollToTop: {

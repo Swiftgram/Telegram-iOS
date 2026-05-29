@@ -224,7 +224,7 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
                 context.engine.accountData.addAppLogEvent(type: "search_global_open_message", data: .dictionary(["msg_id": .number(Double(messageId.id))]))
             }
         }, openUrl: { [weak self] url in
-            let _ = openUserGeneratedUrl(context: context, peerId: nil, url: url, concealed: false, present: { c in
+            let _ = context.sharedContext.openUserGeneratedUrl(context: context, peerId: nil, url: url, webpage: nil, concealed: false, forceConcealed: false, skipUrlAuth: false, skipConcealedAlert: false, forceDark: false, present: { c in
                 present(c, nil)
             }, openResolved: { [weak self] resolved in
                 context.sharedContext.openResolvedUrl(resolved, context: context, urlContext: .generic, navigationController: navigationController, forceExternal: false, forceUpdate: false, openPeer: { peerId, navigation in
@@ -240,7 +240,7 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
                 }, dismissInput: {
                     self?.dismissInput()
                 }, contentContext: nil, progress: nil, completion: nil)
-            })
+            }, progress: nil, alertDisplayUpdated: nil, concealedAlertOption: nil)
         }, clearRecentSearch: { [weak self] in
             guard let strongSelf = self else {
                 return

@@ -613,6 +613,11 @@ public func chatListFilterPresetListController(context: AccountContext, mode: Ch
         )
     )
     |> map { presentationData, state, filtersWithCountsValue, preferences, updatedFilterOrderValue, suggestedFilters, peer, allLimits, displayTags -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        var presentationData = presentationData
+
+        let updatedTheme = presentationData.theme.withModalBlocksBackground()
+        presentationData = presentationData.withUpdated(theme: updatedTheme)
+        
         let isPremium = peer?.isPremium ?? false
         let limits = allLimits.0
         let premiumLimits = allLimits.1
@@ -622,13 +627,13 @@ public func chatListFilterPresetListController(context: AccountContext, mode: Ch
         case .default:
             leftNavigationButton = nil
         case .modal:
-            leftNavigationButton = ItemListNavigationButton(content: .text("___close"), style: .regular, enabled: true, action: {
+            leftNavigationButton = ItemListNavigationButton(content: .icon(.close), style: .regular, enabled: true, action: {
                 dismissImpl?()
             })
         }
         let rightNavigationButton: ItemListNavigationButton?
         if state.isEditing {
-            rightNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Done), style: .bold, enabled: true, action: {
+            rightNavigationButton = ItemListNavigationButton(content: .icon(.done), style: .bold, enabled: true, action: {
                 let _ = (updatedFilterOrder.get()
                 |> take(1)
                 |> deliverOnMainQueue).startStandalone(next: { [weak updatedFilterOrder] updatedFilterOrderValue in

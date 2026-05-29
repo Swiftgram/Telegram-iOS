@@ -1837,19 +1837,6 @@ private func finalStateWithUpdatesAndServerTime(accountPeerId: PeerId, postbox: 
                             updatedState.updatePeerChatInclusion(peerId: peer.peerId, groupId: PeerGroupId(rawValue: folderId), changedGroup: true)
                     }
                 }
-            case let .updatePeerLocated(updatePeerLocatedData):
-                var peersNearby: [PeerNearby] = []
-                for peer in updatePeerLocatedData.peers {
-                    switch peer {
-                        case let .peerLocated(peerLocatedData):
-                            let (peer, expires, distance) = (peerLocatedData.peer, peerLocatedData.expires, peerLocatedData.distance)
-                            peersNearby.append(.peer(id: peer.peerId, expires: expires, distance: distance))
-                        case let .peerSelfLocated(peerSelfLocatedData):
-                            let expires = peerSelfLocatedData.expires
-                            peersNearby.append(.selfPeer(expires: expires))
-                    }
-                }
-                updatedState.updatePeersNearby(peersNearby)
             case let .updateNewScheduledMessage(updateNewScheduledMessageData):
                 var peerIsForum = false
                 if let peerId = updateNewScheduledMessageData.message.peerId {
@@ -1979,6 +1966,8 @@ private func finalStateWithUpdatesAndServerTime(accountPeerId: PeerId, postbox: 
                 updatedState.addUpdateAttachMenuBots()
             case let .updateWebViewResultSent(updateWebViewResultSentData):
                 updatedState.addDismissWebView(updateWebViewResultSentData.queryId)
+            case let .updateJoinChatWebViewDecision(updateJoinChatWebViewDecisionData):
+                updatedState.addJoinChatWebViewDecision(JoinChatWebViewDecision(peerId: updateJoinChatWebViewDecisionData.peer.peerId, queryId: updateJoinChatWebViewDecisionData.queryId, result: JoinChatWebViewResult(apiResult: updateJoinChatWebViewDecisionData.result)))
             case .updateConfig:
                 updatedState.reloadConfig()
             case let .updateMessageExtendedMedia(updateMessageExtendedMediaData):
@@ -1996,6 +1985,34 @@ private func finalStateWithUpdatesAndServerTime(accountPeerId: PeerId, postbox: 
                 let (flags, hash, date, device, location) = (updateNewAuthorizationData.flags, updateNewAuthorizationData.hash, updateNewAuthorizationData.date, updateNewAuthorizationData.device, updateNewAuthorizationData.location)
                 let isUnconfirmed = (flags & (1 << 0)) != 0
                 updatedState.updateNewAuthorization(isUnconfirmed: isUnconfirmed, hash: hash, date: date ?? 0, device: device ?? "", location: location ?? "")
+            case let .updateNewBotConnection(updateNewBotConnectionData):
+                let (flags, botId, date, device, location) = (updateNewBotConnectionData.flags, updateNewBotConnectionData.botId, updateNewBotConnectionData.date, updateNewBotConnectionData.device, updateNewBotConnectionData.location)
+                updatedState.updateNewBotConnection(
+                    confirmed: (flags & (1 << 0)) != 0,
+                    botId: PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(botId)),
+                    date: date,
+                    device: device,
+                    location: location
+                )
+            case let .updateWebBrowserSettings(updateWebBrowserSettingsData):
+                updatedState.updateWebBrowserSettings(openExternalBrowser: (updateWebBrowserSettingsData.flags & (1 << 0)) != 0)
+            case let .updateWebBrowserException(updateWebBrowserExceptionData):
+                let openExternalBrowser: Bool?
+                if let value = updateWebBrowserExceptionData.openExternalBrowser {
+                    switch value {
+                    case .boolFalse:
+                        openExternalBrowser = false
+                    case .boolTrue:
+                        openExternalBrowser = true
+                    }
+                } else {
+                    openExternalBrowser = nil
+                }
+                updatedState.updateWebBrowserException(
+                    openExternalBrowser: openExternalBrowser,
+                    delete: (updateWebBrowserExceptionData.flags & (1 << 1)) != 0,
+                    exception: AccountWebBrowserException(apiWebDomainException: updateWebBrowserExceptionData.exception)
+                )
             case let .updatePeerWallpaper(updatePeerWallpaperData):
                 updatedState.updateWallpaper(peerId: updatePeerWallpaperData.peer.peerId, wallpaper: updatePeerWallpaperData.wallpaper.flatMap { TelegramWallpaper(apiWallpaper: $0) })
             case let .updateStarsBalance(updateStarsBalanceData):
@@ -3826,7 +3843,7 @@ private func optimizedOperations(_ operations: [AccountStateMutationOperation]) 
     var currentAddQuickReplyMessages: OptimizeAddMessagesState?
     for operation in operations {
         switch operation {
-        case .DeleteMessages, .DeleteMessagesWithGlobalIds, .EditMessage, .UpdateMessagePoll, .UpdateMessageReactions, .UpdateMedia, .MergeApiChats, .MergeApiUsers, .MergePeerPresences, .UpdatePeer, .ReadInbox, .ReadOutbox, .ReadGroupFeedInbox, .ResetReadState, .ResetIncomingReadState, .UpdatePeerChatUnreadMark, .ResetMessageTagSummary, .UpdateNotificationSettings, .UpdateGlobalNotificationSettings, .UpdateSecretChat, .AddSecretMessages, .ReadSecretOutbox, .AddPeerInputActivity, .AddPeerLiveTypingDraftUpdate, .UpdateCachedPeerData, .UpdatePinnedItemIds, .UpdatePinnedSavedItemIds, .UpdatePinnedTopic, .UpdatePinnedTopicOrder, .ReadMessageContents, .UpdateMessageImpressionCount, .UpdateMessageForwardsCount, .UpdateInstalledStickerPacks, .UpdateRecentGifs, .UpdateChatInputState, .UpdateCall, .AddCallSignalingData, .UpdateLangPack, .UpdateMinAvailableMessage, .UpdateIsContact, .UpdatePeerChatInclusion, .UpdatePeersNearby, .UpdateTheme, .SyncChatListFilters, .UpdateChatListFilter, .UpdateChatListFilterOrder, .UpdateReadThread, .UpdateMessagesPinned, .UpdateGroupCallParticipants, .UpdateGroupCall, .UpdateGroupCallChainBlocks, .UpdateGroupCallMessage, .UpdateGroupCallOpaqueMessage, .UpdateAutoremoveTimeout, .UpdateAttachMenuBots, .UpdateAudioTranscription, .UpdateConfig, .UpdateExtendedMedia, .ResetForumTopic, .UpdateStory, .UpdateReadStories, .UpdateStoryStealthMode, .UpdateStorySentReaction, .UpdateNewAuthorization, .UpdateWallpaper, .UpdateStarsBalance, .UpdateStarsRevenueStatus, .UpdateStarsReactionsDefaultPrivacy, .ReportMessageDelivery, .UpdateMonoForumNoPaidException, .UpdateStarGiftAuctionState, .UpdateStarGiftAuctionMyState, .UpdateEmojiGameInfo:
+        case .DeleteMessages, .DeleteMessagesWithGlobalIds, .EditMessage, .UpdateMessagePoll, .UpdateMessageReactions, .UpdateMedia, .MergeApiChats, .MergeApiUsers, .MergePeerPresences, .UpdatePeer, .ReadInbox, .ReadOutbox, .ReadGroupFeedInbox, .ResetReadState, .ResetIncomingReadState, .UpdatePeerChatUnreadMark, .ResetMessageTagSummary, .UpdateNotificationSettings, .UpdateGlobalNotificationSettings, .UpdateSecretChat, .AddSecretMessages, .ReadSecretOutbox, .AddPeerInputActivity, .AddPeerLiveTypingDraftUpdate, .UpdateCachedPeerData, .UpdatePinnedItemIds, .UpdatePinnedSavedItemIds, .UpdatePinnedTopic, .UpdatePinnedTopicOrder, .ReadMessageContents, .UpdateMessageImpressionCount, .UpdateMessageForwardsCount, .UpdateInstalledStickerPacks, .UpdateRecentGifs, .UpdateChatInputState, .UpdateCall, .AddCallSignalingData, .UpdateLangPack, .UpdateMinAvailableMessage, .UpdateIsContact, .UpdatePeerChatInclusion, .UpdateTheme, .SyncChatListFilters, .UpdateChatListFilter, .UpdateChatListFilterOrder, .UpdateReadThread, .UpdateMessagesPinned, .UpdateGroupCallParticipants, .UpdateGroupCall, .UpdateGroupCallChainBlocks, .UpdateGroupCallMessage, .UpdateGroupCallOpaqueMessage, .UpdateAutoremoveTimeout, .UpdateAttachMenuBots, .UpdateAudioTranscription, .UpdateConfig, .UpdateExtendedMedia, .ResetForumTopic, .UpdateStory, .UpdateReadStories, .UpdateStoryStealthMode, .UpdateStorySentReaction, .UpdateNewAuthorization, .UpdateNewBotConnection, .UpdateWebBrowserSettings, .UpdateWebBrowserException, .UpdateWallpaper, .UpdateStarsBalance, .UpdateStarsRevenueStatus, .UpdateStarsReactionsDefaultPrivacy, .ReportMessageDelivery, .UpdateMonoForumNoPaidException, .UpdateStarGiftAuctionState, .UpdateStarGiftAuctionMyState, .UpdateEmojiGameInfo:
                 if let currentAddMessages = currentAddMessages, !currentAddMessages.messages.isEmpty {
                     result.append(.AddMessages(currentAddMessages.messages, currentAddMessages.location))
                 }
@@ -3945,7 +3962,6 @@ func replayFinalState(
     var updatedGroupCallParticipants: [(Int64, GroupCallParticipantsContext.Update)] = []
     var groupCallMessageUpdates: [GroupCallMessageUpdate] = []
     var storyUpdates: [InternalStoryUpdate] = []
-    var updatedPeersNearby: [PeerNearby]?
     var isContactUpdates: [(PeerId, Bool)] = []
     var stickerPackOperations: [AccountStateUpdateStickerPacksOperation] = []
     var recentlyUsedStickers: [MediaId: (MessageIndex, TelegramMediaFile)] = [:]
@@ -3971,6 +3987,7 @@ func replayFinalState(
     var updatedStarGiftAuctionMyState: [Int64: GiftAuctionContext.State.MyState] = [:]
     var updatedEmojiGameInfo: EmojiGameInfo?
     var recentlyUsedGuestChatBots = Set<PeerId>()
+    var webBrowserSettingsUpdates: [(AccountWebBrowserSettings) -> AccountWebBrowserSettings] = []
     
     var holesFromPreviousStateMessageIds: [MessageId] = []
     var clearHolesFromPreviousStateForChannelMessagesWithPts: [PeerIdAndMessageNamespace: Int32] = [:]
@@ -5232,8 +5249,6 @@ func replayFinalState(
                 }
             case let .UpdateIsContact(peerId, value):
                 isContactUpdates.append((peerId, value))
-            case let .UpdatePeersNearby(peersNearby):
-                updatedPeersNearby = peersNearby
             case let .UpdateTheme(theme):
                 updatedThemes[theme.id] = theme
             case let .UpdateWallpaper(peerId, wallpaper):
@@ -5554,6 +5569,26 @@ func replayFinalState(
                     }
                 } else {
                     transaction.removeOrderedItemListItem(collectionId: Namespaces.OrderedItemList.NewSessionReviews, itemId: id.rawValue)
+                }
+            case let .UpdateNewBotConnection(confirmed, botId, date, device, location):
+                let id = NewBotConnectionReview.Id(botId: botId)
+                if confirmed {
+                    transaction.removeOrderedItemListItem(collectionId: Namespaces.OrderedItemList.NewBotConnectionReviews, itemId: id.rawValue)
+                } else if let entry = CodableEntry(NewBotConnectionReview(
+                    botId: botId,
+                    device: device,
+                    location: location,
+                    timestamp: date
+                )) {
+                    transaction.addOrMoveToFirstPositionOrderedItemListItem(collectionId: Namespaces.OrderedItemList.NewBotConnectionReviews, item: OrderedItemListEntry(id: id.rawValue, contents: entry), removeTailIfCountExceeds: 200)
+                }
+            case let .UpdateWebBrowserSettings(openExternalBrowser):
+                webBrowserSettingsUpdates.append { settings in
+                    settings.withUpdatedOpenExternalBrowser(openExternalBrowser)
+                }
+            case let .UpdateWebBrowserException(openExternalBrowser, delete, exception):
+                webBrowserSettingsUpdates.append { settings in
+                    settings.withAppliedExceptionUpdate(openExternalBrowser: openExternalBrowser, delete: delete, exception: exception)
                 }
             case let .UpdateStarsBalance(peerId, currency, balance):
                 switch currency {
@@ -6033,6 +6068,16 @@ func replayFinalState(
             })
         }.start()
     }
+
+    if !webBrowserSettingsUpdates.isEmpty {
+        transaction.updatePreferencesEntry(key: PreferencesKeys.webBrowserSettings, { current in
+            var settings = current?.get(AccountWebBrowserSettings.self) ?? AccountWebBrowserSettings.defaultSettings
+            for update in webBrowserSettingsUpdates {
+                settings = update(settings)
+            }
+            return PreferencesEntry(settings)
+        })
+    }
     
     if !updatedWallpapers.isEmpty {
         for (peerId, wallpaper) in updatedWallpapers {
@@ -6186,7 +6231,6 @@ func replayFinalState(
         updatedGroupCallParticipants: updatedGroupCallParticipants,
         groupCallMessageUpdates: groupCallMessageUpdates,
         storyUpdates: storyUpdates,
-        updatedPeersNearby: updatedPeersNearby,
         isContactUpdates: isContactUpdates,
         delayNotificatonsUntil: delayNotificatonsUntil,
         updatedIncomingThreadReadStates: updatedIncomingThreadReadStates,

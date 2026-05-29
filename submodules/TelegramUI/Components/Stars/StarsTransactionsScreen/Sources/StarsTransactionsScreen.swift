@@ -633,7 +633,7 @@ final class StarsTransactionsScreenComponent: Component {
                 starTransition.setFrame(view: topBalanceIconView, frame: topBalanceIconFrame)
             }
 
-            contentHeight += 181.0
+            contentHeight += 197.0
             
             let descriptionSize = self.descriptionView.update(
                 transition: .immediate,

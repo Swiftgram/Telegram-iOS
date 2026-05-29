@@ -836,7 +836,7 @@ public final class AttachmentFileSearchContainerNode: SearchDisplayControllerCon
         insets.bottom += 60.0
         
         let inset = max(16.0, floor((layout.size.width - 674.0) / 2.0))
-        if layout.size.width >= 375.0 {
+        if layout.size.width >= 320.0 {
             insets.left += inset
             insets.right += inset
         }

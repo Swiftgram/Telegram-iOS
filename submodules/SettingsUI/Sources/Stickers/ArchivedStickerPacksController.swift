@@ -457,7 +457,7 @@ public func archivedStickerPacksController(context: AccountContext, mode: Archiv
         var toolbarItem: ItemListToolbarItem?
         if let packs = packs, packs.count != 0 {
             if state.editing {
-                rightNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Done), style: .bold, enabled: true, action: {
+                rightNavigationButton = ItemListNavigationButton(content: .icon(.done), style: .bold, enabled: true, action: {
                     updateState {
                         $0.withUpdatedEditing(false)
                     }

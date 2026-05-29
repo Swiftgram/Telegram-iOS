@@ -3517,6 +3517,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
         }, openActiveSessions: {
         }, openBirthdaySetup: {
         }, performActiveSessionAction: { _, _ in
+        }, performBotConnectionReviewAction: { _, _ in
         }, openChatFolderUpdates: {
         }, hideChatFolderUpdates: {
         }, openStories: { [weak self] subject, sourceNode in
@@ -5814,6 +5815,7 @@ public final class ChatListSearchShimmerNode: ASDisplayNode {
             }, present: { _ in }, openForumThread: { _, _ in }, openStorageManagement: {}, openPasswordSetup: {}, openPremiumIntro: {}, openPremiumGift: { _, _ in }, openPremiumManagement: {}, openActiveSessions: {
             }, openBirthdaySetup: {
             }, performActiveSessionAction: { _, _ in
+            }, performBotConnectionReviewAction: { _, _ in
             }, openChatFolderUpdates: {}, hideChatFolderUpdates: {
             }, openStories: { _, _ in
             }, openStarsTopup: { _ in
@@ -6540,10 +6542,10 @@ private final class EmptyResultsButton: Component {
                 transition: transition,
                 component: AnyComponent(ButtonComponent(
                     background: ButtonComponent.Background(
+                        style: .glass,
                         color: component.theme.list.itemCheckColors.fillColor,
                         foreground: component.theme.list.itemCheckColors.foregroundColor,
-                        pressedColor: component.theme.list.itemCheckColors.fillColor.withMultipliedAlpha(0.9),
-                        cornerRadius: 10.0
+                        pressedColor: component.theme.list.itemCheckColors.fillColor.withMultipliedAlpha(0.9)
                     ),
                     content: buttonContent,
                     isEnabled: isEnabled,
@@ -6555,7 +6557,7 @@ private final class EmptyResultsButton: Component {
                     }
                 )),
                 environment: {},
-                containerSize: CGSize(width: availableSize.width, height: 50.0)
+                containerSize: CGSize(width: availableSize.width, height: 52.0)
             )
             if let buttonView = self.button.view {
                 if buttonView.superview == nil {

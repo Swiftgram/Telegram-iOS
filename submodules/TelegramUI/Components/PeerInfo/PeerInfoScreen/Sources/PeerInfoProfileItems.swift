@@ -1332,7 +1332,6 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
                 let ItemRecentActions = 111
                 let ItemLocationHeader = 112
                 let ItemLocation = 113
-                let ItemLocationSetup = 114
                 let ItemDeleteGroup = 115
                 let ItemReactions = 116
                 let ItemTopics = 117
@@ -1356,11 +1355,6 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
                                 interaction.openLocation()
                             }
                         ))
-                        if cachedData.flags.contains(.canChangePeerGeoLocation) {
-                            items[.groupLocation]!.append(PeerInfoScreenActionItem(id: ItemLocationSetup, text: presentationData.strings.Group_Location_ChangeLocation, action: {
-                                interaction.editingOpenSetupLocation()
-                            }))
-                        }
                     }
                     
                     if isCreator || (channel.adminRights != nil && channel.hasPermission(.pinMessages)) {

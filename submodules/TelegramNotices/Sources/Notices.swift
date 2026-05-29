@@ -208,6 +208,7 @@ private enum ApplicationSpecificGlobalNotice: Int32 {
     case copyProtectionTips = 86
     case aiTextProcessingStyleSelectionTips = 87
     case savedMessagesChatListView = 88
+    case guestChatMessageTooltip = 89
     
     var key: EngineDataBuffer {
         let v = EngineDataBuffer(length: 4)
@@ -536,6 +537,10 @@ private struct ApplicationSpecificNoticeKeys {
     
     static func businessBotMessageTooltip() -> EngineNoticeEntryKey {
         return EngineNoticeEntryKey(namespace: noticeNamespace(namespace: globalNamespace), key: ApplicationSpecificGlobalNotice.businessBotMessageTooltip.key)
+    }
+    
+    static func guestChatMessageTooltip() -> EngineNoticeEntryKey {
+        return EngineNoticeEntryKey(namespace: noticeNamespace(namespace: globalNamespace), key: ApplicationSpecificGlobalNotice.guestChatMessageTooltip.key)
     }
     
     static func captionAboveMediaTooltip() -> EngineNoticeEntryKey {
@@ -2258,6 +2263,33 @@ public struct ApplicationSpecificNotice {
 
             if let entry = EngineCodableEntry(ApplicationSpecificCounterNotice(value: currentValue)) {
                 transaction.setNotice(ApplicationSpecificNoticeKeys.businessBotMessageTooltip(), entry)
+            }
+            
+            return Int(previousValue)
+        }
+    }
+    
+    public static func getGuestChatMessageTooltip(accountManager: AccountManager<TelegramAccountManagerTypes>) -> Signal<Int32, NoError> {
+        return accountManager.transaction { transaction -> Int32 in
+            if let value = transaction.getNotice(ApplicationSpecificNoticeKeys.guestChatMessageTooltip())?.get(ApplicationSpecificCounterNotice.self) {
+                return value.value
+            } else {
+                return 0
+            }
+        }
+    }
+    
+    public static func incrementGuestChatMessageTooltip(accountManager: AccountManager<TelegramAccountManagerTypes>, count: Int = 1) -> Signal<Int, NoError> {
+        return accountManager.transaction { transaction -> Int in
+            var currentValue: Int32 = 0
+            if let value = transaction.getNotice(ApplicationSpecificNoticeKeys.guestChatMessageTooltip())?.get(ApplicationSpecificCounterNotice.self) {
+                currentValue = value.value
+            }
+            let previousValue = currentValue
+            currentValue += Int32(count)
+            
+            if let entry = EngineCodableEntry(ApplicationSpecificCounterNotice(value: currentValue)) {
+                transaction.setNotice(ApplicationSpecificNoticeKeys.guestChatMessageTooltip(), entry)
             }
             
             return Int(previousValue)

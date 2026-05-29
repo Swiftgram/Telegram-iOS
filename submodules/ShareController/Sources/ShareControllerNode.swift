@@ -456,6 +456,7 @@ final class ShareControllerNode: ViewControllerTracingNode, ASScrollViewDelegate
         self.wrappingScrollNode.view.alwaysBounceVertical = true
         self.wrappingScrollNode.view.delaysContentTouches = false
         self.wrappingScrollNode.view.canCancelContentTouches = true
+        self.wrappingScrollNode.view.scrollsToTop = false
         
         self.dimNode = ASDisplayNode()
         if self.fromForeignApp {

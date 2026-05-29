@@ -427,7 +427,9 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
                             return false
                         }
                     },
-                    actionPerformed: nil
+                    actionPerformed: { [weak self] actions in
+                        self?.presentStickerPackActionOverlay(actions)
+                    }
                 )
                 strongSelf.interaction.presentController(controller, nil)
             }
@@ -528,6 +530,73 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
         self.installDisposable.dispose()
     }
 
+    private func presentStickerPackActionOverlay(_ actions: [StickerPackScreenActionResult]) {
+        guard let action = actions.first else {
+            return
+        }
+
+        var animateInAsReplacement = false
+        if let navigationController = self.interaction.getNavigationController() {
+            for controller in navigationController.overlayControllers {
+                if let controller = controller as? UndoOverlayController {
+                    controller.dismissWithCommitActionAndReplacementAnimation()
+                    animateInAsReplacement = true
+                }
+            }
+        }
+
+        let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }.withUpdated(theme: self.theme)
+        let controller: UndoOverlayController
+        switch action.action {
+        case .add:
+            self.setPackInstalledState(id: action.info.id, installed: true)
+            controller = UndoOverlayController(
+                presentationData: presentationData,
+                content: .stickersModified(
+                    title: presentationData.strings.StickerPackActionInfo_AddedTitle,
+                    text: presentationData.strings.StickerPackActionInfo_AddedText(action.info.title).string,
+                    undo: false,
+                    info: action.info,
+                    topItem: action.items.first,
+                    context: self.context
+                ),
+                elevatedLayout: false,
+                animateInAsReplacement: animateInAsReplacement,
+                action: { _ in
+                    return true
+                }
+            )
+        case let .remove(positionInList):
+            self.setPackInstalledState(id: action.info.id, installed: false)
+            controller = UndoOverlayController(
+                presentationData: presentationData,
+                content: .stickersModified(
+                    title: presentationData.strings.StickerPackActionInfo_RemovedTitle,
+                    text: presentationData.strings.StickerPackActionInfo_RemovedText(action.info.title).string,
+                    undo: true,
+                    info: action.info,
+                    topItem: action.items.first,
+                    context: self.context
+                ),
+                elevatedLayout: false,
+                animateInAsReplacement: animateInAsReplacement,
+                action: { [weak self] overlayAction in
+                    if case .undo = overlayAction {
+                        let _ = self?.context.engine.stickers.addStickerPackInteractively(info: action.info, items: action.items, positionInList: positionInList).start()
+                        self?.setPackInstalledState(id: action.info.id, installed: true)
+                    }
+                    return true
+                }
+            )
+        }
+
+        if let navigationController = self.interaction.getNavigationController() {
+            navigationController.presentOverlay(controller: controller)
+        } else {
+            self.interaction.presentController(controller, nil)
+        }
+    }
+
     func updateText(_ text: String, languageCode: String?) {
         if self.selectedPack != nil {
             self.clearSelectedPack(applySearchResults: false)
@@ -540,7 +609,7 @@ final class StickerPaneSearchContentNode: ASDisplayNode, PaneSearchContentNode {
 
         let query = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let signal: Signal<(StickerPaneSearchStickerState, FoundStickerSets, Bool, FoundStickerSets?)?, NoError>
-        if query.count >= 2 {
+        if query.isSingleEmoji || query.count >= 2 {
             let context = self.context
             let stickers: Signal<StickerPaneSearchStickerState, NoError>
             if query.isSingleEmoji {

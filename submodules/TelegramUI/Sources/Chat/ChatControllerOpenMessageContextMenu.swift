@@ -168,12 +168,8 @@ extension ChatControllerImpl {
                             allReactionsAreAvailable = false
                         }
                         
-                        let premiumConfiguration = PremiumConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 })
-                        if premiumConfiguration.isPremiumDisabled {
-                            allReactionsAreAvailable = false
-                        }
-                        
                         if allReactionsAreAvailable {
+                            let premiumConfiguration = PremiumConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 })
                             actions.getEmojiContent = { [weak self] animationCache, animationRenderer in
                                 guard let self else {
                                     preconditionFailure()
@@ -188,7 +184,7 @@ extension ChatControllerImpl {
                                     hasTrending: false,
                                     topReactionItems: reactionItems,
                                     areUnicodeEmojiEnabled: false,
-                                    areCustomEmojiEnabled: true,
+                                    areCustomEmojiEnabled: !premiumConfiguration.isPremiumDisabled,
                                     chatPeerId: self.chatLocation.peerId,
                                     selectedItems: selectedReactions.files
                                 )

@@ -664,8 +664,6 @@ public final class ChatTextInputPanelComponent: Component {
                     },
                     openScheduledMessages: {
                     },
-                    openPeersNearby: {
-                    },
                     displaySearchResultsTooltip: { _, _ in
                     },
                     unarchivePeer: {

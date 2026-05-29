@@ -293,6 +293,7 @@ public final class WallpaperPatternPanelNode: ASDisplayNode {
         self.scrollNode.view.showsHorizontalScrollIndicator = false
         self.scrollNode.view.showsVerticalScrollIndicator = false
         self.scrollNode.view.alwaysBounceHorizontal = true
+        self.scrollNode.view.scrollsToTop = false
         
         let sliderView = TGPhotoEditorSliderView()
         sliderView.disableSnapToPositions = true

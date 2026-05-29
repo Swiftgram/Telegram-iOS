@@ -45,6 +45,26 @@ public extension TelegramEngine.EngineData.Item {
     }
     
     enum OrderedLists {
+        public struct NewBotConnectionReviews: TelegramEngineDataItem, PostboxViewDataItem {
+            public typealias Result = [NewBotConnectionReview]
+
+            public init() {
+            }
+
+            var key: PostboxViewKey {
+                return .orderedItemList(id: Namespaces.OrderedItemList.NewBotConnectionReviews)
+            }
+
+            func extract(view: PostboxView) -> Result {
+                guard let view = view as? OrderedItemListView else {
+                    preconditionFailure()
+                }
+                return view.items.compactMap { item in
+                    return item.contents.get(NewBotConnectionReview.self)
+                }
+            }
+        }
+
         public struct ListItems: TelegramEngineDataItem, PostboxViewDataItem {
             public typealias Result = [OrderedItemListEntry]
 

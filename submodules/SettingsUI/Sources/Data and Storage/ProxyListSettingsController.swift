@@ -428,9 +428,13 @@ public func proxySettingsController(accountManager: AccountManager<TelegramAccou
     
     let signal = combineLatest(updatedPresentationData, statePromise.get(), proxySettings.get(), statusesContext.statuses(), network.connectionStatus)
     |> map { presentationData, state, proxySettings, statuses, connectionStatus -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        var presentationData = presentationData
+        let updatedTheme = presentationData.theme.withModalBlocksBackground()
+        presentationData = presentationData.withUpdated(theme: updatedTheme)
+        
         var leftNavigationButton: ItemListNavigationButton?
         if case .modal = mode {
-            leftNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Cancel), style: .regular, enabled: true, action: {
+            leftNavigationButton = ItemListNavigationButton(content: .icon(.close), style: .regular, enabled: true, action: {
                 dismissImpl?()
             })
         }
@@ -439,7 +443,7 @@ public func proxySettingsController(accountManager: AccountManager<TelegramAccou
         if proxySettings.servers.isEmpty {
             rightNavigationButton = nil
         } else if state.editing {
-            rightNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Done), style: .bold, enabled: true, action: {
+            rightNavigationButton = ItemListNavigationButton(content: .icon(.done), style: .bold, enabled: true, action: {
                 updateState { state in
                     var state = state
                     state.editing = false

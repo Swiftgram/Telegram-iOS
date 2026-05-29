@@ -284,6 +284,9 @@ func _internal_requestWebView(postbox: Postbox, network: Network, stateManager: 
                 if (webViewFlags & (1 << 2)) != 0 {
                     resultFlags.insert(.fullScreen)
                 }
+                if (webViewFlags & (1 << 3)) != 0 {
+                    resultFlags.insert(.sameOrigin)
+                }
                 let keepAlive: Signal<Never, KeepWebViewError>?
                 if let queryId {
                     keepAlive = keepWebViewSignal(network: network, stateManager: stateManager, flags: flags, peer: inputPeer, monoforumPeerId: monoforumPeerId, bot: inputBot, queryId: queryId, replyToMessageId: replyToMessageId, threadId: threadId, sendAs: nil)
@@ -719,7 +722,10 @@ func _internal_removeChatManagingBot(account: Account, chatId: EnginePeer.Id) ->
                         excludePeers: excludePeers,
                         exclude: connectedBot.recipients.exclude
                     ),
-                    rights: connectedBot.rights
+                    rights: connectedBot.rights,
+                    device: connectedBot.device,
+                    date: connectedBot.date,
+                    location: connectedBot.location
                 ))
             } else {
                 return current

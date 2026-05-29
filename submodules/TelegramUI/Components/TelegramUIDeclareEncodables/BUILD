@@ -17,7 +17,6 @@ swift_library(
         "//submodules/InstantPageUI",
         "//submodules/AccountContext",
         "//submodules/LocalMediaResources",
-        "//submodules/WebSearchUI",
         "//submodules/InstantPageCache",
         "//submodules/SettingsUI",
         "//submodules/WallpaperResources",

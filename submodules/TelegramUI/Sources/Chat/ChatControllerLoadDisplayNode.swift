@@ -120,7 +120,6 @@ import AudioWaveform
 import PeerNameColorScreen
 import ChatEmptyNode
 import ChatMediaInputStickerGridItem
-import AdsInfoScreen
 import PostSuggestionsSettingsScreen
 import ChatSendStarsScreen
 import ChatSendAsContextMenu
@@ -3075,11 +3074,42 @@ extension ChatControllerImpl {
                 strongSelf.chatDisplayNode.dismissInput()
                 
                 if let peer = peer as? TelegramSecretChat {
-                    let controller = ChatSecretAutoremoveTimerActionSheetController(context: strongSelf.context, currentValue: peer.messageAutoremoveTimeout == nil ? 0 : peer.messageAutoremoveTimeout!, applyValue: { value in
-                        if let strongSelf = self {
+                    let timeoutValues: [Int32] = [
+                        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 30,
+                        1 * 60,
+                        1 * 60 * 60,
+                        24 * 60 * 60,
+                        7 * 24 * 60 * 60
+                    ]
+                    let currentValue = peer.messageAutoremoveTimeout ?? 0
+                    let controller = ChatTimerScreen(
+                        context: strongSelf.context,
+                        configuration: ChatTimerScreen.Configuration(
+                            style: .default,
+                            picker: .fixedValues(
+                                values: timeoutValues,
+                                selectionStrategy: .firstGreaterOrEqual,
+                                formatter: { strings, value in
+                                    if value == 0 {
+                                        return strings.Profile_MessageLifetimeForever
+                                    } else {
+                                        return timeIntervalString(strings: strings, value: value)
+                                    }
+                                }
+                            ),
+                            currentValue: currentValue > 0 ? currentValue : 7,
+                            pickerValueMapping: .rawTimestamp,
+                            primaryActionTitle: { strings, _, _ in
+                                strings.Common_Done
+                            }
+                        ),
+                        completion: { value in
+                            guard let strongSelf = self, let value else {
+                                return
+                            }
                             let _ = strongSelf.context.engine.peers.setChatMessageAutoremoveTimeoutInteractively(peerId: peer.id, timeout: value == 0 ? nil : value).startStandalone()
                         }
-                    })
+                    )
                     strongSelf.present(controller, in: .window(.root))
                 }
             } else {
@@ -3780,7 +3810,7 @@ extension ChatControllerImpl {
                     }
                 }
                 
-                let controller = chatTextLinkEditController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, text: text?.string ?? "", link: link, apply: { [weak self] link in
+                let controller = chatTextLinkEditController(context: strongSelf.context, updatedPresentationData: strongSelf.updatedPresentationData, text: strongSelf.presentationData.strings.TextFormat_AddLinkText(text?.string ?? "").string, link: link, apply: { [weak self] link, _ in
                     if let strongSelf = self, let inputMode = inputMode, let selectionRange = selectionRange {
                         if let link {
                             if !link.isEmpty {
@@ -3908,12 +3938,6 @@ extension ChatControllerImpl {
         }, openScheduledMessages: { [weak self] in
             if let strongSelf = self {
                 strongSelf.openScheduledMessages()
-            }
-        }, openPeersNearby: { [weak self] in
-            if let strongSelf = self {
-                let controller = strongSelf.context.sharedContext.makePeersNearbyController(context: strongSelf.context)
-                controller.navigationPresentation = .master
-                strongSelf.effectiveNavigationController?.pushViewController(controller, animated: true, completion: { })
             }
         }, displaySearchResultsTooltip: { [weak self] node, nodeRect in
             if let strongSelf = self {

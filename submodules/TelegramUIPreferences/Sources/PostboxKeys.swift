@@ -111,8 +111,6 @@ public struct ApplicationSpecificItemCacheCollectionId {
 }
 
 private enum ApplicationSpecificOrderedItemListCollectionIdValues: Int32 {
-    case webSearchRecentQueries = 0
-    case wallpaperSearchRecentQueries = 1
     case localThemes = 3
     case storyDrafts = 4
     case storySources = 5
@@ -122,8 +120,6 @@ private enum ApplicationSpecificOrderedItemListCollectionIdValues: Int32 {
 }
 
 public struct ApplicationSpecificOrderedItemListCollectionId {
-    public static let webSearchRecentQueries = applicationSpecificOrderedItemListCollectionId(ApplicationSpecificOrderedItemListCollectionIdValues.webSearchRecentQueries.rawValue)
-    public static let wallpaperSearchRecentQueries = applicationSpecificOrderedItemListCollectionId(ApplicationSpecificOrderedItemListCollectionIdValues.wallpaperSearchRecentQueries.rawValue)
     public static let settingsSearchRecentItems = applicationSpecificOrderedItemListCollectionId(ApplicationSpecificOrderedItemListCollectionIdValues.settingsSearchRecentItems.rawValue)
     public static let localThemes = applicationSpecificOrderedItemListCollectionId(ApplicationSpecificOrderedItemListCollectionIdValues.localThemes.rawValue)
     public static let storyDrafts = applicationSpecificOrderedItemListCollectionId(ApplicationSpecificOrderedItemListCollectionIdValues.storyDrafts.rawValue)

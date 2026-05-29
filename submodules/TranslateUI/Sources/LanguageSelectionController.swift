@@ -153,7 +153,7 @@ public func languageSelectionController(context: AccountContext, forceTheme: Pre
         if let forceTheme {
             presentationData = presentationData.withUpdated(theme: forceTheme)
         }
-        let controllerState = ItemListControllerState(presentationData: ItemListPresentationData(presentationData), title: .sectionControl([presentationData.strings.Translate_Languages_Original, presentationData.strings.Translate_Languages_Translation], 1), leftNavigationButton: ItemListNavigationButton(content: .none, style: .regular, enabled: false, action: {}), rightNavigationButton: ItemListNavigationButton(content: .text(presentationData.strings.Common_Done), style: .bold, enabled: true, action: {
+        let controllerState = ItemListControllerState(presentationData: ItemListPresentationData(presentationData), title: .sectionControl([presentationData.strings.Translate_Languages_Original, presentationData.strings.Translate_Languages_Translation], 1), leftNavigationButton: ItemListNavigationButton(content: .none, style: .regular, enabled: false, action: {}), rightNavigationButton: ItemListNavigationButton(content: .icon(.done), style: .bold, enabled: true, action: {
             completion(state.fromLanguage, state.toLanguage)
             dismissImpl?()
         }), backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))

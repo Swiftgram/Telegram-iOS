@@ -273,8 +273,8 @@ public final class CachedChannelData: CachedPeerData {
     public let starGiftsCount: Int32?
     public let sendPaidMessageStars: StarsAmount?
     public let mainProfileTab: TelegramProfileTab?
-    public let guardBotId: PeerId?
-
+    public let guardBotId: EnginePeer.Id?
+    
     public let peerIds: Set<PeerId>
     public let messageIds: Set<MessageId>
     public var associatedHistoryMessageId: MessageId? {
@@ -364,7 +364,7 @@ public final class CachedChannelData: CachedPeerData {
         starGiftsCount: Int32?,
         sendPaidMessageStars: StarsAmount?,
         mainProfileTab: TelegramProfileTab?,
-        guardBotId: PeerId?
+        guardBotId: EnginePeer.Id?
     ) {
         self.isNotAccessible = isNotAccessible
         self.flags = flags
@@ -412,19 +412,19 @@ public final class CachedChannelData: CachedPeerData {
         }
 
         if case let .known(linkedDiscussionPeerIdValue) = linkedDiscussionPeerId {
-            if let linkedDiscussionPeerIdValue = linkedDiscussionPeerIdValue {
+            if let linkedDiscussionPeerIdValue {
                 peerIds.insert(linkedDiscussionPeerIdValue)
             }
         }
-
-        if let invitedBy = invitedBy {
+        
+        if let invitedBy {
             peerIds.insert(invitedBy)
         }
-
+        
         if let guardBotId {
             peerIds.insert(guardBotId)
         }
-
+        
         self.peerIds = peerIds
         
         var messageIds = Set<MessageId>()
@@ -586,9 +586,9 @@ public final class CachedChannelData: CachedPeerData {
     public func withUpdatedMainProfileTab(_ mainProfileTab: TelegramProfileTab?) -> CachedChannelData {
         return CachedChannelData(isNotAccessible: self.isNotAccessible, flags: self.flags, about: self.about, participantsSummary: self.participantsSummary, exportedInvitation: self.exportedInvitation, botInfos: self.botInfos, peerStatusSettings: self.peerStatusSettings, pinnedMessageId: self.pinnedMessageId, stickerPack: self.stickerPack, minAvailableMessageId: self.minAvailableMessageId, migrationReference: self.migrationReference, linkedDiscussionPeerId: self.linkedDiscussionPeerId, peerGeoLocation: self.peerGeoLocation, slowModeTimeout: self.slowModeTimeout, slowModeValidUntilTimestamp: self.slowModeValidUntilTimestamp, hasScheduledMessages: self.hasScheduledMessages, statsDatacenterId: self.statsDatacenterId, invitedBy: self.invitedBy, invitedOn: self.invitedOn, photo: self.photo, activeCall: self.activeCall, callJoinPeerId: self.callJoinPeerId, autoremoveTimeout: self.autoremoveTimeout, pendingSuggestions: pendingSuggestions, chatTheme: self.chatTheme, inviteRequestsPending: self.inviteRequestsPending, sendAsPeerId: self.sendAsPeerId, reactionSettings: self.reactionSettings, membersHidden: self.membersHidden, viewForumAsMessages: self.viewForumAsMessages, wallpaper: self.wallpaper, boostsToUnrestrict: self.boostsToUnrestrict, appliedBoosts: self.appliedBoosts, emojiPack: self.emojiPack, verification: self.verification, starGiftsCount: self.starGiftsCount, sendPaidMessageStars: self.sendPaidMessageStars, mainProfileTab: mainProfileTab, guardBotId: self.guardBotId)
     }
-
-    public func withUpdatedGuardBotId(_ guardBotId: PeerId?) -> CachedChannelData {
-        return CachedChannelData(isNotAccessible: self.isNotAccessible, flags: self.flags, about: self.about, participantsSummary: self.participantsSummary, exportedInvitation: self.exportedInvitation, botInfos: self.botInfos, peerStatusSettings: self.peerStatusSettings, pinnedMessageId: self.pinnedMessageId, stickerPack: self.stickerPack, minAvailableMessageId: self.minAvailableMessageId, migrationReference: self.migrationReference, linkedDiscussionPeerId: self.linkedDiscussionPeerId, peerGeoLocation: self.peerGeoLocation, slowModeTimeout: self.slowModeTimeout, slowModeValidUntilTimestamp: self.slowModeValidUntilTimestamp, hasScheduledMessages: self.hasScheduledMessages, statsDatacenterId: self.statsDatacenterId, invitedBy: self.invitedBy, invitedOn: self.invitedOn, photo: self.photo, activeCall: self.activeCall, callJoinPeerId: self.callJoinPeerId, autoremoveTimeout: self.autoremoveTimeout, pendingSuggestions: self.pendingSuggestions, chatTheme: self.chatTheme, inviteRequestsPending: self.inviteRequestsPending, sendAsPeerId: self.sendAsPeerId, reactionSettings: self.reactionSettings, membersHidden: self.membersHidden, viewForumAsMessages: self.viewForumAsMessages, wallpaper: self.wallpaper, boostsToUnrestrict: self.boostsToUnrestrict, appliedBoosts: self.appliedBoosts, emojiPack: self.emojiPack, verification: self.verification, starGiftsCount: self.starGiftsCount, sendPaidMessageStars: self.sendPaidMessageStars, mainProfileTab: self.mainProfileTab, guardBotId: guardBotId)
+    
+    public func withUpdatedGuardBotId(_ guardBotId: EnginePeer.Id?) -> CachedChannelData {
+        return CachedChannelData(isNotAccessible: self.isNotAccessible, flags: self.flags, about: self.about, participantsSummary: self.participantsSummary, exportedInvitation: self.exportedInvitation, botInfos: self.botInfos, peerStatusSettings: self.peerStatusSettings, pinnedMessageId: self.pinnedMessageId, stickerPack: self.stickerPack, minAvailableMessageId: self.minAvailableMessageId, migrationReference: self.migrationReference, linkedDiscussionPeerId: self.linkedDiscussionPeerId, peerGeoLocation: self.peerGeoLocation, slowModeTimeout: self.slowModeTimeout, slowModeValidUntilTimestamp: self.slowModeValidUntilTimestamp, hasScheduledMessages: self.hasScheduledMessages, statsDatacenterId: self.statsDatacenterId, invitedBy: self.invitedBy, invitedOn: self.invitedOn, photo: self.photo, activeCall: self.activeCall, callJoinPeerId: self.callJoinPeerId, autoremoveTimeout: self.autoremoveTimeout, pendingSuggestions: pendingSuggestions, chatTheme: self.chatTheme, inviteRequestsPending: self.inviteRequestsPending, sendAsPeerId: self.sendAsPeerId, reactionSettings: self.reactionSettings, membersHidden: self.membersHidden, viewForumAsMessages: self.viewForumAsMessages, wallpaper: self.wallpaper, boostsToUnrestrict: self.boostsToUnrestrict, appliedBoosts: self.appliedBoosts, emojiPack: self.emojiPack, verification: self.verification, starGiftsCount: self.starGiftsCount, sendPaidMessageStars: self.sendPaidMessageStars, mainProfileTab: self.mainProfileTab, guardBotId: guardBotId)
     }
 
     public init(decoder: PostboxDecoder) {
@@ -601,7 +601,7 @@ public final class CachedChannelData: CachedPeerData {
         var peerIds = Set<PeerId>()
         
         if let legacyValue = decoder.decodeOptionalInt32ForKey("pcs") {
-            self.peerStatusSettings = PeerStatusSettings(flags: PeerStatusSettings.Flags(rawValue: legacyValue), geoDistance: nil, managingBot: nil)
+            self.peerStatusSettings = PeerStatusSettings(flags: PeerStatusSettings.Flags(rawValue: legacyValue), managingBot: nil)
         } else if let peerStatusSettings = decoder.decodeObjectForKey("pss", decoder: { PeerStatusSettings(decoder: $0) }) as? PeerStatusSettings {
             self.peerStatusSettings = peerStatusSettings
         } else {
@@ -733,15 +733,12 @@ public final class CachedChannelData: CachedPeerData {
         self.verification = decoder.decodeCodable(PeerVerification.self, forKey: "vf")
         
         self.mainProfileTab = decoder.decodeCodable(TelegramProfileTab.self, forKey: "mainProfileTab")
-
-        if let guardBotId = decoder.decodeOptionalInt64ForKey("gbid") {
-            let guardBotPeerId = PeerId(guardBotId)
-            self.guardBotId = guardBotPeerId
-            peerIds.insert(guardBotPeerId)
-        } else {
-            self.guardBotId = nil
+                
+        self.guardBotId = decoder.decodeOptionalInt64ForKey("guardBotId").flatMap(EnginePeer.Id.init)
+        if let guardBotId = self.guardBotId {
+            peerIds.insert(guardBotId)
         }
-
+        
         self.peerIds = peerIds
         
         var messageIds = Set<MessageId>()
@@ -949,11 +946,11 @@ public final class CachedChannelData: CachedPeerData {
         } else {
             encoder.encodeNil(forKey: "mainProfileTab")
         }
-
+        
         if let guardBotId = self.guardBotId {
-            encoder.encodeInt64(guardBotId.toInt64(), forKey: "gbid")
+            encoder.encodeInt64(guardBotId.toInt64(), forKey: "guardBotId")
         } else {
-            encoder.encodeNil(forKey: "gbid")
+            encoder.encodeNil(forKey: "guardBotId")
         }
     }
     
@@ -1101,13 +1098,15 @@ public final class CachedChannelData: CachedPeerData {
         if other.verification != self.verification {
             return false
         }
+        
         if other.mainProfileTab != self.mainProfileTab {
             return false
         }
+        
         if other.guardBotId != self.guardBotId {
             return false
         }
-
+             
         return true
     }
 }

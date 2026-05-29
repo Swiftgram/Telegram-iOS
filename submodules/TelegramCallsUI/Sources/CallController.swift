@@ -313,34 +313,34 @@ public final class CallController: ViewController {
             }
         }
         
-        self.controllerNode.callEnded = { [weak self] didPresentRating in
-            if let strongSelf = self, !didPresentRating {
-                let _ = (combineLatest(strongSelf.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.callListSettings]), ApplicationSpecificNotice.getCallsTabTip(accountManager: strongSelf.sharedContext.accountManager))
-                |> map { sharedData, callsTabTip -> Int32 in
-                    var value = false
-                    if let settings = sharedData.entries[ApplicationSpecificSharedDataKeys.callListSettings]?.get(CallListSettings.self) {
-                        value = settings.showTab
-                    }
-                    if value {
-                        return 3
-                    } else {
-                        return callsTabTip
-                    }
-                } |> deliverOnMainQueue).start(next: { [weak self] callsTabTip in
-                    if let strongSelf = self {
-                        if callsTabTip == 2 {
-                            Queue.mainQueue().after(1.0) {
-                                let controller = callSuggestTabController(sharedContext: strongSelf.sharedContext)
-                                strongSelf.present(controller, in: .window(.root))
-                            }
-                        }
-                        if callsTabTip < 3 {
-                            let _ = ApplicationSpecificNotice.incrementCallsTabTips(accountManager: strongSelf.sharedContext.accountManager).start()
-                        }
-                    }
-                })
-            }
-        }
+//        self.controllerNode.callEnded = { [weak self] didPresentRating in
+//            if let strongSelf = self, !didPresentRating {
+//                let _ = (combineLatest(strongSelf.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.callListSettings]), ApplicationSpecificNotice.getCallsTabTip(accountManager: strongSelf.sharedContext.accountManager))
+//                |> map { sharedData, callsTabTip -> Int32 in
+//                    var value = false
+//                    if let settings = sharedData.entries[ApplicationSpecificSharedDataKeys.callListSettings]?.get(CallListSettings.self) {
+//                        value = settings.showTab
+//                    }
+//                    if value {
+//                        return 3
+//                    } else {
+//                        return callsTabTip
+//                    }
+//                } |> deliverOnMainQueue).start(next: { [weak self] callsTabTip in
+//                    if let strongSelf = self {
+//                        if callsTabTip == 2 {
+//                            Queue.mainQueue().after(1.0) {
+//                                let controller = callSuggestTabController(sharedContext: strongSelf.sharedContext)
+//                                strongSelf.present(controller, in: .window(.root))
+//                            }
+//                        }
+//                        if callsTabTip < 3 {
+//                            let _ = ApplicationSpecificNotice.incrementCallsTabTips(accountManager: strongSelf.sharedContext.accountManager).start()
+//                        }
+//                    }
+//                })
+//            }
+//        }
         
         self.controllerNode.willBeDismissedInteractively = { [weak self] in
             guard let self else {

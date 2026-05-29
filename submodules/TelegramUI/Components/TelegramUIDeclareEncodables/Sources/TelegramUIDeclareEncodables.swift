@@ -5,7 +5,6 @@ import TelegramNotices
 import InstantPageUI
 import AccountContext
 import LocalMediaResources
-import WebSearchUI
 import InstantPageCache
 import SettingsUI
 import WallpaperResources

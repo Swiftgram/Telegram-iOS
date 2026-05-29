@@ -166,6 +166,8 @@ private struct CommandChatInputContextPanelEntry: Comparable, Identifiable {
                     },
                     performActiveSessionAction: { _, _ in
                     },
+                    performBotConnectionReviewAction: { _, _ in
+                    },
                     openChatFolderUpdates: {
                     },
                     hideChatFolderUpdates: {

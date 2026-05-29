@@ -106,6 +106,7 @@ public final class ChatListNodeInteraction {
     let openActiveSessions: () -> Void
     let openBirthdaySetup: () -> Void
     let performActiveSessionAction: (NewSessionReview, Bool) -> Void
+    let performBotConnectionReviewAction: (NewBotConnectionReview, Bool) -> Void
     let openChatFolderUpdates: () -> Void
     let hideChatFolderUpdates: () -> Void
     let openStories: (ChatListNode.OpenStoriesSubject, ASDisplayNode?) -> Void
@@ -166,6 +167,7 @@ public final class ChatListNodeInteraction {
         openActiveSessions: @escaping () -> Void,
         openBirthdaySetup: @escaping () -> Void,
         performActiveSessionAction: @escaping (NewSessionReview, Bool) -> Void,
+        performBotConnectionReviewAction: @escaping (NewBotConnectionReview, Bool) -> Void,
         openChatFolderUpdates: @escaping () -> Void,
         hideChatFolderUpdates: @escaping () -> Void,
         openStories: @escaping (ChatListNode.OpenStoriesSubject, ASDisplayNode?) -> Void,
@@ -213,6 +215,7 @@ public final class ChatListNodeInteraction {
         self.openActiveSessions = openActiveSessions
         self.openBirthdaySetup = openBirthdaySetup
         self.performActiveSessionAction = performActiveSessionAction
+        self.performBotConnectionReviewAction = performBotConnectionReviewAction
         self.openChatFolderUpdates = openChatFolderUpdates
         self.hideChatFolderUpdates = hideChatFolderUpdates
         self.openStories = openStories
@@ -1795,6 +1798,17 @@ public final class ChatListNode: ListViewImpl {
                 #else
                 let _ = self.context.engine.privacy.terminateAnotherSession(id: newSessionReview.id).startStandalone()
                 #endif
+            }
+        }, performBotConnectionReviewAction: { [weak self] newBotConnectionReview, isPositive in
+            guard let self else {
+                return
+            }
+            
+            if isPositive {
+                let _ = self.context.engine.accountData.confirmBotConnectionReview(botId: newBotConnectionReview.botId).startStandalone()
+            } else {
+                let _ = removeNewBotConnectionReviews(postbox: self.context.account.postbox, botIds: [newBotConnectionReview.botId]).startStandalone()
+                let _ = self.context.engine.accountData.setAccountConnectedBot(bot: nil).startStandalone()
             }
         }, openChatFolderUpdates: { [weak self] in
             guard let self else {

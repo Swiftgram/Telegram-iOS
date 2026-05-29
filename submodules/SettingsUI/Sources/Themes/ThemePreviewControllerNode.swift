@@ -298,7 +298,8 @@ final class ThemePreviewControllerNode: ASDisplayNode, ASScrollViewDelegate {
                 }
 
                 strongSelf.remoteChatBackgroundNode.asyncLayout()(TransformImageArguments(corners: ImageCorners(), imageSize: displaySize, boundingSize: displaySize, intrinsicInsets: UIEdgeInsets(), custom: patternArguments))()
-                strongSelf.toolbarNode.dark = useDarkButton
+                strongSelf.toolbarNode.dark = false
+                let _ = useDarkButton
             }
         })
     }
@@ -318,6 +319,7 @@ final class ThemePreviewControllerNode: ASDisplayNode, ASScrollViewDelegate {
         self.scrollNode.view.showsHorizontalScrollIndicator = false
         self.scrollNode.view.isPagingEnabled = true
         self.scrollNode.view.delegate = self.wrappedScrollViewDelegate
+        self.scrollNode.view.scrollsToTop = false
         self.pageControlNode.setPage(0.0)
     }
     
@@ -373,6 +375,7 @@ final class ThemePreviewControllerNode: ASDisplayNode, ASScrollViewDelegate {
         }, openForumThread: { _, _ in }, openStorageManagement: {}, openPasswordSetup: {}, openPremiumIntro: {}, openPremiumGift: { _, _ in }, openPremiumManagement: {}, openActiveSessions: {
         }, openBirthdaySetup: {
         }, performActiveSessionAction: { _, _ in
+        }, performBotConnectionReviewAction: { _, _ in
         }, openChatFolderUpdates: {}, hideChatFolderUpdates: {
         }, openStories: { _, _ in
         }, openStarsTopup: { _ in

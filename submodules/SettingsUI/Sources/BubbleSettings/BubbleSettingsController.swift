@@ -133,6 +133,7 @@ private final class BubbleSettingsControllerNode: ASDisplayNode, ASScrollViewDel
         self.scrollNode.view.isPagingEnabled = true
         self.scrollNode.view.delegate = self.wrappedScrollViewDelegate
         self.scrollNode.view.alwaysBounceHorizontal = false
+        self.scrollNode.view.scrollsToTop = false
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {

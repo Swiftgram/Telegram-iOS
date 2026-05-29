@@ -13,6 +13,7 @@ import StickerPackPreviewUI
 import ItemListStickerPackItem
 import ItemListPeerActionItem
 import UndoUI
+import ContextUI
 
 import WebPBinding
 import ReactionImageComponent
@@ -507,6 +508,18 @@ private struct InstalledStickerPacksControllerState: Equatable {
     }
 }
 
+private final class InstalledStickerPacksSuggestOptionsContextReferenceContentSource: ContextReferenceContentSource {
+    private let sourceView: UIView
+
+    init(sourceView: UIView) {
+        self.sourceView = sourceView
+    }
+
+    func transitionInfo() -> ContextControllerReferenceViewInfo? {
+        return ContextControllerReferenceViewInfo(referenceView: self.sourceView, contentAreaInScreenSpace: UIScreen.main.bounds, insets: UIEdgeInsets(top: -4.0, left: 0.0, bottom: -4.0, right: 0.0))
+    }
+}
+
 private func namespaceForMode(_ mode: InstalledStickerPacksControllerMode) -> EngineItemCollectionId.Namespace {
     switch mode {
         case .general, .modal:
@@ -662,9 +675,12 @@ public func installedStickerPacksController(context: AccountContext, mode: Insta
     }
     
     var presentControllerImpl: ((ViewController, ViewControllerPresentationArguments?) -> Void)?
+    var presentInGlobalOverlayImpl: ((ViewController) -> Void)?
     var pushControllerImpl: ((ViewController) -> Void)?
     var navigateToChatControllerImpl: ((EnginePeer.Id) -> Void)?
     var dismissImpl: (() -> Void)?
+    var findSuggestOptionsReferenceNode: (() -> ItemListDisclosureItemNode?)?
+    var currentEmojiStickerSuggestionMode = StickerSettings.defaultSettings.emojiStickerSuggestionMode
     
     let actionsDisposable = DisposableSet()
     
@@ -801,30 +817,41 @@ public func installedStickerPacksController(context: AccountContext, mode: Insta
             updatedPacks(packs)
         }))
     }, openSuggestOptions: {
-        let controller = ActionSheetController(presentationData: presentationData)
-        let dismissAction: () -> Void = { [weak controller] in
-            controller?.dismissAnimated()
-        }
         let options: [(EmojiStickerSuggestionMode, String)] = [
             (.all, presentationData.strings.Stickers_SuggestAll),
             (.installed, presentationData.strings.Stickers_SuggestAdded),
             (.none, presentationData.strings.Stickers_SuggestNone)
         ]
-        var items: [ActionSheetItem] = []
-        items.append(ActionSheetTextItem(title: presentationData.strings.Stickers_SuggestStickers))
+        var items: [ContextMenuItem] = []
         for (option, title) in options {
-            items.append(ActionSheetButtonItem(title: title, color: .accent, action: {
-                dismissAction()
+            items.append(.action(ContextMenuActionItem(text: title, icon: { theme in
+                if currentEmojiStickerSuggestionMode == option {
+                    return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Check"), color: theme.contextMenu.primaryColor)
+                } else {
+                    return UIImage()
+                }
+            }, action: { _, f in
+                f(.default)
                 let _ = updateStickerSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
                     return current.withUpdatedEmojiStickerSuggestionMode(option)
                 }).start()
-            }))
+            })))
         }
-        controller.setItemGroups([
-            ActionSheetItemGroup(items: items),
-            ActionSheetItemGroup(items: [ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, action: { dismissAction() })])
-        ])
-        presentControllerImpl?(controller, ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+
+        guard let sourceNode = findSuggestOptionsReferenceNode?() else {
+            return
+        }
+        let contextController = makeContextController(
+            presentationData: presentationData,
+            source: .reference(InstalledStickerPacksSuggestOptionsContextReferenceContentSource(sourceView: sourceNode.labelNode.view)),
+            items: .single(ContextController.Items(content: .list(items))),
+            gesture: nil
+        )
+        sourceNode.updateHasContextMenu(hasContextMenu: true)
+        contextController.dismissed = { [weak sourceNode] in
+            sourceNode?.updateHasContextMenu(hasContextMenu: false)
+        }
+        presentInGlobalOverlayImpl?(contextController)
     }, toggleSuggestAnimatedEmoji: { value in
         let _ = updateStickerSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
             return current.withUpdatedSuggestAnimatedEmoji(value)
@@ -938,6 +965,7 @@ public func installedStickerPacksController(context: AccountContext, mode: Insta
         if let value = sharedData.entries[ApplicationSpecificSharedDataKeys.stickerSettings]?.get(StickerSettings.self) {
            stickerSettings = value
         }
+        currentEmojiStickerSuggestionMode = stickerSettings.emojiStickerSuggestionMode
         
         var packCount: Int? = nil
         var stickerPacks: [EngineRawItemCollectionInfoEntry] = []
@@ -954,7 +982,7 @@ public func installedStickerPacksController(context: AccountContext, mode: Insta
                 if case .modal = mode {
                     rightNavigationButton = nil
                 } else {
-                    rightNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Done), style: .bold, enabled: true, action: {
+                    rightNavigationButton = ItemListNavigationButton(content: .icon(.done), style: .bold, enabled: true, action: {
                         updateState {
                             $0.withUpdatedEditing(false).withUpdatedSelectedPackIds(nil)
                         }
@@ -1213,6 +1241,9 @@ public func installedStickerPacksController(context: AccountContext, mode: Insta
             controller.present(c, in: .window(.root), with: p)
         }
     }
+    presentInGlobalOverlayImpl = { [weak controller] c in
+        controller?.presentInGlobalOverlay(c, with: nil)
+    }
     presentStickerPackController = { [weak controller] info in
         let _ = (stickerPacks.get()
         |> take(1)
@@ -1297,6 +1328,9 @@ public func installedStickerPacksController(context: AccountContext, mode: Insta
     }
     dismissImpl = { [weak controller] in
         controller?.dismiss()
+    }
+    findSuggestOptionsReferenceNode = { [weak controller] in
+        return controller?.itemNode(forTag: InstalledStickerPacksEntryTag.suggestOptions) as? ItemListDisclosureItemNode
     }
     
     if let focusOnItemTag {

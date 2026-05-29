@@ -211,6 +211,8 @@ final class QuickReplySetupScreenComponent: Component {
                     },
                     performActiveSessionAction: { _, _ in
                     },
+                    performBotConnectionReviewAction: { _, _ in
+                    },
                     openChatFolderUpdates: {
                     },
                     hideChatFolderUpdates: {
@@ -767,20 +769,13 @@ final class QuickReplySetupScreenComponent: Component {
                 titleText = strings.QuickReply_Title
             }
             
-            let closeTitle: String
-            switch component.mode {
-            case .manage:
-                closeTitle = strings.Common_Close
-            case .select:
-                closeTitle = strings.Common_Cancel
-            }
             let headerContent: ChatListHeaderComponent.Content? = ChatListHeaderComponent.Content(
                 title: titleText,
                 navigationBackTitle: nil,
                 titleComponent: nil,
                 chatListTitle: nil,
                 leftButton: isModal ? AnyComponentWithIdentity(id: "close", component: AnyComponent(NavigationButtonComponent(
-                    content: .text(title: closeTitle, isBold: false),
+                    content: .icon(imageName: "Navigation/Close"),
                     pressed: { [weak self] _ in
                         guard let self else {
                             return

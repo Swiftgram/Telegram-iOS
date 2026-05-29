@@ -675,6 +675,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         super.didLoad()
         self.scrollNode.view.delegate = self.wrappedScrollViewDelegate
         self.scrollNode.view.showsVerticalScrollIndicator = false
+        self.scrollNode.view.scrollsToTop = false
         
         let backwardLongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(self.seekBackwardLongPress(_:)))
         backwardLongPressGestureRecognizer.minimumPressDuration = 0.3
@@ -1356,7 +1357,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                         speed: settingsButtonState.speed,
                         quality: settingsButtonState.quality,
                         isOpen: false
-                    ))),
+                    )), insets: .zero),
                     action: { [weak self] in
                         guard let self, let buttonPanelView = self.buttonPanel.view as? GlassControlPanelComponent.View else {
                             return
@@ -1819,12 +1820,12 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                                     if availableOpenInOptions(context: strongSelf.context, item: item).count > 1 {
                                         preferredAction = .custom(action: ShareControllerAction(title: presentationData.strings.Conversation_FileOpenIn, action: { [weak self] in
                                             if let strongSelf = self {
-                                                let openInController = OpenInActionSheetController(context: strongSelf.context, forceTheme: defaultDarkColorPresentationTheme, item: item, additionalAction: nil, openUrl: { [weak self] url in
+                                                let openInController = OpenInOptionsScreen(context: strongSelf.context, forceTheme: defaultDarkColorPresentationTheme, item: item, additionalAction: nil, openUrl: { [weak self] url in
                                                     if let strongSelf = self {
                                                         strongSelf.context.sharedContext.openExternalUrl(context: strongSelf.context, urlContext: .generic, url: url, forceExternal: true, presentationData: presentationData, navigationController: nil, dismissInput: {})
                                                     }
                                                 })
-                                                strongSelf.controllerInteraction?.presentController(openInController, nil)
+                                                strongSelf.controllerInteraction?.pushController(openInController)
                                             }
                                         }))
                                     } else {
@@ -2124,12 +2125,12 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                     if availableOpenInOptions(context: self.context, item: item).count > 1 {
                         preferredAction = .custom(action: ShareControllerAction(title: presentationData.strings.Conversation_FileOpenIn, action: { [weak self] in
                             if let strongSelf = self {
-                                let openInController = OpenInActionSheetController(context: strongSelf.context, forceTheme: forceTheme, item: item, additionalAction: nil, openUrl: { [weak self] url in
+                                let openInController = OpenInOptionsScreen(context: strongSelf.context, forceTheme: forceTheme, item: item, additionalAction: nil, openUrl: { [weak self] url in
                                     if let strongSelf = self {
                                         strongSelf.context.sharedContext.openExternalUrl(context: strongSelf.context, urlContext: .generic, url: url, forceExternal: true, presentationData: presentationData, navigationController: nil, dismissInput: {})
                                     }
                                 })
-                                strongSelf.controllerInteraction?.presentController(openInController, nil)
+                                strongSelf.controllerInteraction?.pushController(openInController)
                             }
                         }))
                     } else {

@@ -447,12 +447,12 @@ public final class PeerChannelMemberCategoriesContextsManager {
         }
     }
     
-    public func join(engine: TelegramEngine, peerId: PeerId, hash: String?) -> Signal<Never, JoinChannelError> {
+    public func join(engine: TelegramEngine, peerId: PeerId, hash: String?) -> Signal<JoinChannelResult, JoinChannelError> {
         return engine.peers.joinChannel(peerId: peerId, hash: hash)
         |> deliverOnMainQueue
         |> beforeNext { [weak self] result in
-            if let strongSelf = self {
-                strongSelf.impl.with { impl in
+            if let self {
+                self.impl.with { impl in
                     for (contextPeerId, context) in impl.contexts {
                         if peerId == contextPeerId {
                             switch result {
@@ -468,7 +468,6 @@ public final class PeerChannelMemberCategoriesContextsManager {
                 }
             }
         }
-        |> ignoreValues
     }
     
     public func addMember(engine: TelegramEngine, peerId: PeerId, memberId: PeerId) -> Signal<Never, AddChannelMemberError> {

@@ -59,7 +59,9 @@ public final class ThemePreviewController: ViewController {
         self.presentationData = context.sharedContext.currentPresentationData.with { $0 }
         self.presentationTheme.set(.single(previewTheme))
         
-        super.init(navigationBarPresentationData: NavigationBarPresentationData(presentationTheme: self.previewTheme, presentationStrings: self.presentationData.strings))
+        super.init(navigationBarPresentationData: NavigationBarPresentationData(presentationTheme: self.previewTheme, presentationStrings: self.presentationData.strings, style: .glass))
+        
+        self._hasGlassStyle = true
         
         self.blocksBackgroundWhenInOverlay = true
         self.acceptsFocusWhenInOverlay = true
@@ -140,13 +142,13 @@ public final class ThemePreviewController: ViewController {
         let titleView = CounterControllerTitleView(theme: self.previewTheme)
         titleView.title = CounterControllerTitle(title: themeName, counter: hasInstallsCount ? " " : "")
         self.navigationItem.titleView = titleView
-        self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: self.presentationData.strings.Common_Cancel, style: .plain, target: self, action: #selector(self.cancelPressed))
+        self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "___close", style: .plain, target: self, action: #selector(self.cancelPressed))
         
         self.statusBar.statusBarStyle = self.previewTheme.rootController.statusBarStyle.style
         self.supportedOrientations = ViewControllerSupportedOrientations(regularSize: .all, compactSize: .portrait)
         
         if !isPreview {
-            self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: generateTintedImage(image: UIImage(bundleImageName: "Chat/Input/Accessory Panels/MessageSelectionForward"), color: self.previewTheme.rootController.navigationBar.accentTextColor), style: .plain, target: self, action: #selector(self.actionPressed))
+            self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: generateTintedImage(image: UIImage(bundleImageName: "Navigation/Share"), color: self.previewTheme.chat.inputPanel.panelControlColor), style: .plain, target: self, action: #selector(self.actionPressed))
         }
         
         self.disposable = (combineLatest(self.theme.get(), self.presentationTheme.get())
@@ -155,7 +157,7 @@ public final class ThemePreviewController: ViewController {
                 let titleView = CounterControllerTitleView(theme: strongSelf.previewTheme)
                 titleView.title = CounterControllerTitle(title: themeName, counter: hasInstallsCount ? strongSelf.presentationData.strings.Theme_UsersCount(max(1, theme.installCount ?? 0)) : "")
                 strongSelf.navigationItem.titleView = titleView
-                strongSelf.navigationBar?.updatePresentationData(NavigationBarPresentationData(presentationTheme: presentationTheme, presentationStrings: strongSelf.presentationData.strings), transition: .immediate)
+                strongSelf.navigationBar?.updatePresentationData(NavigationBarPresentationData(presentationTheme: presentationTheme, presentationStrings: strongSelf.presentationData.strings, style: .glass), transition: .immediate)
             }
         })
         

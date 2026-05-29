@@ -408,7 +408,7 @@ public func deleteAccountOptionsController(context: AccountContext, navigationCo
         activeAccountsAndPeers(context: context)
     )
     |> map { presentationData, accessChallengeData, accountsAndPeers -> (ItemListControllerState, (ItemListNodeState, Any)) in
-        let leftNavigationButton = ItemListNavigationButton(content: .text(presentationData.strings.Common_Cancel), style: .regular, enabled: true, action: {
+        let leftNavigationButton = ItemListNavigationButton(content: .icon(.close), style: .regular, enabled: true, action: {
             dismissImpl?()
         })
 

@@ -1539,6 +1539,7 @@ final class AvatarEditorScreenComponent: Component {
                         videoVolume: nil,
                         additionalVideoPath: nil,
                         additionalVideoIsDual: false,
+                        additionalVideoMirroringChanges: [],
                         additionalVideoPosition: nil,
                         additionalVideoScale: nil,
                         additionalVideoRotation: nil,

@@ -282,6 +282,10 @@ public extension TelegramEngine {
             return _internal_setAccountConnectedBot(account: self.account, bot: bot)
         }
         
+        public func confirmBotConnectionReview(botId: PeerId) -> Signal<Never, NoError> {
+            return _internal_confirmBotConnectionReview(account: self.account, botId: botId)
+        }
+        
         public func updateBusinessIntro(intro: TelegramBusinessIntro?) -> Signal<Never, NoError> {
             return _internal_updateBusinessIntro(account: self.account, intro: intro)
         }
