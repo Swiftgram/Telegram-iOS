@@ -8,6 +8,23 @@ func humanMessage(_ error: Swift.Error) -> String {
     return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
 }
 
+/// Maps a TDLib error from `checkAuthenticationPassword` to one of three
+/// user-facing messages for the 2-step verification screen. Unlike
+/// `humanMessage`, unknown codes collapse to a generic message rather than
+/// passing the raw code through.
+func passwordSubmitErrorMessage(_ error: Swift.Error) -> String {
+    guard let tdErr = error as? TDLibKit.Error else {
+        return "An error occurred"
+    }
+    if tdErr.message == "PASSWORD_HASH_INVALID" {
+        return "Incorrect password"
+    }
+    if let flood = floodWaitMessage(tdErr.message) {
+        return flood
+    }
+    return "An error occurred"
+}
+
 private func humanMessageForTdLibCode(_ code: String) -> String {
     switch code {
     case "PHONE_NUMBER_INVALID":
@@ -21,13 +38,17 @@ private func humanMessageForTdLibCode(_ code: String) -> String {
     case "LASTNAME_INVALID":
         return "That last name doesn't look right."
     default:
-        if code.hasPrefix("FLOOD_WAIT_") {
-            let suffix = code.dropFirst("FLOOD_WAIT_".count)
-            if let seconds = Int(suffix), seconds > 0 {
-                return "Too many attempts. Wait \(seconds)s."
-            }
-            return "Too many attempts. Try again later."
-        }
-        return code
+        return floodWaitMessage(code) ?? code
     }
+}
+
+/// Formats a `FLOOD_WAIT_<seconds>` code into a wait message, or `nil` if the
+/// code is not a flood-wait code.
+private func floodWaitMessage(_ code: String) -> String? {
+    guard code.hasPrefix("FLOOD_WAIT_") else { return nil }
+    let suffix = code.dropFirst("FLOOD_WAIT_".count)
+    if let seconds = Int(suffix), seconds > 0 {
+        return "Too many attempts. Wait \(seconds)s."
+    }
+    return "Too many attempts. Try again later."
 }

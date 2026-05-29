@@ -39,6 +39,7 @@ final class ChatHistoryStore {
     private var files: [Int: File] = [:]
     private var trackedFileIds: Set<Int> = []
     private var openChatSent: Bool = false
+    private var closePending: Bool = false
     private var isLoading: Bool = false
 
     private static let halfLimit: Int = 15
@@ -124,6 +125,48 @@ final class ChatHistoryStore {
         }
     }
 
+    /// History-only initial load with NO side effects (no `openChat`). Safe to run
+    /// before the user has committed to the chat (e.g. pre-warm on tap). Mirrors the
+    /// load half of `start()`; `activate()` performs the `openChat` half separately.
+    func warm() async {
+        guard !isLoading else { return }
+        isLoading = true
+        loadState = .loadingFirstPage
+        lastSendError = nil
+        unseenNewerCount = 0
+        defer { isLoading = false }
+        do {
+            try await loadInitialWindow()
+            loadState = .loaded
+        } catch is CancellationError {
+            return
+        } catch {
+            logger.warning("warm failed chatId=\(self.chatId, privacy: .public) error=\(String(describing: error), privacy: .public)")
+            loadState = .failed(humanMessage(error))
+        }
+    }
+
+    /// Notifies TDLib the chat is being viewed (`openChat`), guarded to run once.
+    /// Called from the view's `.task` once the user actually lands on the chat.
+    /// An `openChat` failure is logged but does NOT blank already-loaded history —
+    /// the worst case is delayed supergroup/channel live updates, not a dead screen.
+    func activate() async {
+        guard !openChatSent, !closePending else { return }
+        do {
+            try await loader.openChat(chatId: chatId)
+            openChatSent = true
+            // If stop() landed while openChat was in flight (the view popped during the
+            // round-trip), honor the close now so the chat doesn't leak open on TDLib.
+            if closePending {
+                try? await loader.closeChat(chatId: chatId)
+                openChatSent = false
+                closePending = false
+            }
+        } catch {
+            logger.warning("openChat chatId=\(self.chatId, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
     /// Anchored initial fill: when `unreadDividerAfterId != nil`, we call
     /// `getChatHistory(fromMessageId: divider, offset: -(halfLimit+1), limit: 2*halfLimit)`
     /// → up to (halfLimit+1) newer + divider + ~(halfLimit-1) older. Otherwise we
@@ -186,7 +229,13 @@ final class ChatHistoryStore {
         viewDrainTask?.cancel()
         viewDrainTask = nil
         pendingViewIds.removeAll()
-        guard openChatSent else { return }
+        guard openChatSent else {
+            // activate() may have openChat in flight (the view popped before it
+            // returned). Mark so activate() closes the chat once openChat completes —
+            // otherwise it leaks open on TDLib.
+            closePending = true
+            return
+        }
         do {
             try await loader.closeChat(chatId: chatId)
         } catch {

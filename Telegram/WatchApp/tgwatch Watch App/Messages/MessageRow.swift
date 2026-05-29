@@ -55,6 +55,9 @@ struct MessageBubble: Equatable, Hashable {
     var senderColorIndex: Int? = nil
     /// True for a sent outgoing message the recipient hasn't read yet (`id > lastReadOutboxMessageId`).
     var isUnreadOutgoing: Bool = false
+    /// True for content with no dedicated bubble — renders the "Unsupported message"
+    /// placeholder. Set from `isUnsupportedContent(msg.content)` in `messageRows`.
+    var isUnsupported: Bool = false
 
     /// The delivery-status indicator to render for this bubble. Outgoing only;
     /// `isUnreadOutgoing` already encodes "sent, unread, not Saved Messages".
@@ -184,7 +187,8 @@ func messageRows(
                 userNames: userNames
             ),
             senderColorIndex: sender?.colorIndex,
-            isUnreadOutgoing: !isSavedMessages && msg.isOutgoing && msg.sendingState == .sent && msg.id > lastReadOutboxMessageId
+            isUnreadOutgoing: !isSavedMessages && msg.isOutgoing && msg.sendingState == .sent && msg.id > lastReadOutboxMessageId,
+            isUnsupported: isUnsupportedContent(msg.content)
         )))
     }
     return rows

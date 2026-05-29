@@ -6,6 +6,7 @@ struct ChatListView: View {
     let store: ChatListStore
 
     @State private var dismissedLastError: String? = nil
+    @State private var opener = ChatOpener()
     /// Bound to the outer chat-list `List`. Re-asserted after every pill tap so the
     /// digital crown stays glued to the chat list, never the pill bar's horizontal
     /// ScrollView (where rotation has no useful effect). watchOS otherwise routes
@@ -24,8 +25,8 @@ struct ChatListView: View {
                     }
                     content(proxy: proxy)
                 }
-                .navigationDestination(for: ChatRow.self) { row in
-                    MessageListView(row: row)
+                .navigationDestination(item: $opener.target) { target in
+                    MessageListView(row: target.row, store: target.store)
                 }
                 .navigationTitle("Chats")
                 .navigationBarTitleDisplayMode(.inline)
@@ -78,13 +79,16 @@ struct ChatListView: View {
                 emptyStateRow(loadState: folderLoadState)
             } else {
                 ForEach(Array(store.chats.enumerated()), id: \.element.id) { idx, row in
-                    NavigationLink(value: row) {
+                    Button {
+                        opener.open(row, makeStore: makeHistoryStore)
+                    } label: {
                         ChatRowView(
                             row: row,
                             onRequestDownload: { store.requestFileDownload(fileId: $0) },
                             onCancelDownload: { store.cancelFileDownload(fileId: $0) }
                         )
                     }
+                    .buttonStyle(.plain)
                     .onAppear { store.ensureChatsLoaded(near: idx) }
                 }
             }
@@ -99,6 +103,23 @@ struct ChatListView: View {
         // between the bar and the pill row. Plain chat rows (no pills) sit at
         // the natural top.
         .padding(.top, store.pills.count > 1 ? -20 : 0)
+    }
+
+    private func makeHistoryStore(for row: ChatRow) -> ChatHistoryStore? {
+        guard let loader = client.makeChatHistoryLoader() else { return nil }
+        return ChatHistoryStore(
+            chatId: row.id,
+            chatType: row.chatType,
+            lastReadInboxMessageId: row.lastReadInboxMessageId,
+            lastReadOutboxMessageId: row.lastReadOutboxMessageId,
+            unreadCount: row.unreadCount,
+            lastMessageId: row.lastMessageId,
+            loader: loader,
+            selfUserId: client.me?.id,
+            userNames: client.userNames,
+            draftText: row.draftText,
+            coalesceUpdates: true
+        )
     }
 
     @ViewBuilder

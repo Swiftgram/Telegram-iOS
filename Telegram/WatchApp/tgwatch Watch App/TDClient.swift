@@ -96,14 +96,38 @@ final class TDClient {
         self.delegate = delegate
     }
 
-    func submitPassword(_ password: String) async {
-        guard let client else { return }
-        lastError = nil
+    /// Submits the cloud password. Returns `nil` on success, or a user-facing
+    /// error message (see `passwordSubmitErrorMessage`) on failure. Does not
+    /// touch the shared `lastError` — the password screen owns its own alert.
+    func submitPassword(_ password: String) async -> String? {
+        guard let client else { return nil }
         do {
             _ = try await client.checkAuthenticationPassword(password: password)
+            return nil
         } catch {
             logger.warning("checkAuthenticationPassword failed: \(error.localizedDescription, privacy: .public)")
-            lastError = humanMessage(error)
+            return passwordSubmitErrorMessage(error)
+        }
+    }
+
+    /// Re-requests QR authentication from the `waitPassword` state, driving
+    /// TDLib back to `waitOtherDeviceConfirmation`. Valid because
+    /// `requestQrCodeAuthentication` is callable from `authorizationStateWaitPassword`
+    /// when no auth query is pending. Returns `nil` on success, or a user-facing
+    /// error message on failure. Does not touch `authState` — the QR screen
+    /// renders via the normal `updateAuthorizationState` path; on failure the
+    /// caller (the password screen) shows the message in its own alert and stays
+    /// put, so we deliberately avoid the `.failed` transition that
+    /// `requestQrCodeAuthenticationIfNeeded()` performs.
+    func returnToQrCode() async -> String? {
+        guard let client else { return nil }
+        logger.notice("returnToQrCode requested by UI")
+        do {
+            _ = try await client.requestQrCodeAuthentication(otherUserIds: [])
+            return nil
+        } catch {
+            logger.warning("returnToQrCode failed: \(error.localizedDescription, privacy: .public)")
+            return humanMessage(error)
         }
     }
 

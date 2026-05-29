@@ -11,7 +11,7 @@ struct MessageListView: View {
     @Environment(TDClient.self) private var client
     let row: ChatRow
 
-    @State private var store: ChatHistoryStore?
+    @State private var store: ChatHistoryStore
     @State private var presentedPhoto: PhotoVisual?
     @State private var presentedVideo: VideoVisual?
     @State private var presentedVideoNote: VideoNoteVisual?
@@ -40,28 +40,23 @@ struct MessageListView: View {
     // next pagination is allowed.
     @State private var canPaginate: Bool = true
 
-    init(row: ChatRow) {
+    init(row: ChatRow, store: ChatHistoryStore) {
         self.row = row
+        self._store = State(initialValue: store)
         // Opens at tail → starts at bottom. Opens at divider → user is NOT at bottom.
         self._isAtBottom = State(initialValue: row.unreadCount == 0)
     }
 
     var body: some View {
-        Group {
-            if let store {
-                content(store: store)
-            } else {
-                LoadingView(label: "Loading…")
-            }
-        }
+        content(store: store)
         .navigationTitle(row.title)
         .accessibilityIdentifier("messageListView")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 AvatarView(
                     avatar: row.avatar,
-                    onRequestDownload: { fileId in store?.requestFileDownload(fileId: fileId) },
-                    onCancelDownload:  { fileId in store?.cancelFileDownload(fileId: fileId) },
+                    onRequestDownload: { fileId in store.requestFileDownload(fileId: fileId) },
+                    onCancelDownload:  { fileId in store.cancelFileDownload(fileId: fileId) },
                     size: 36
                 )
                 .glassEffect(in: Circle())
@@ -71,72 +66,57 @@ struct MessageListView: View {
             PhotoViewerView(photo: photo)
         }
         .sheet(item: $presentedVideo) { video in
-            if let store {
-                VideoPlayerView(video: video).environment(store)
-            }
+            VideoPlayerView(video: video).environment(store)
         }
         .sheet(item: $presentedVideoNote) { note in
-            if let store {
-                VideoNotePlayerView(note: note).environment(store)
-            }
+            VideoNotePlayerView(note: note).environment(store)
         }
         .sheet(item: $presentedPoll) { target in
-            if let store {
-                PollVoteView(
-                    initialPoll: target.poll,
-                    currentPoll: { store.poll(forMessageId: target.id) },
-                    onVote: { await store.setPollAnswer(messageId: target.id, optionIds: $0) }
-                )
-            }
+            PollVoteView(
+                initialPoll: target.poll,
+                currentPoll: { store.poll(forMessageId: target.id) },
+                onVote: { await store.setPollAnswer(messageId: target.id, optionIds: $0) }
+            )
         }
         .sheet(isPresented: $showAttachment) {
-            if let store {
-                AttachmentSheet(
-                    stickerPickerStore: stickerPickerStore,
-                    onSendSticker: { await store.sendSticker($0) },
-                    onSendVoiceNote: { await store.sendVoiceNote($0) },
-                    onPrepareVoice: {
-                        store.voicePlayback.tearDown()
-                        store.audioPlayback.tearDown()
-                    },
-                    onSendLocation: { latitude, longitude in
-                        await store.sendLocation(latitude: latitude, longitude: longitude)
-                    }
-                )
-                .environment(client)
-            }
+            AttachmentSheet(
+                stickerPickerStore: stickerPickerStore,
+                onSendSticker: { await store.sendSticker($0) },
+                onSendVoiceNote: { await store.sendVoiceNote($0) },
+                onPrepareVoice: {
+                    store.voicePlayback.tearDown()
+                    store.audioPlayback.tearDown()
+                },
+                onSendLocation: { latitude, longitude in
+                    await store.sendLocation(latitude: latitude, longitude: longitude)
+                }
+            )
+            .environment(client)
+            // Inject the picker store at the sheet-content root (above
+            // AttachmentSheet's NavigationStack), mirroring `client`. The
+            // store must live above the stack so pushed destinations —
+            // StickerSetDetailView and its StickerCellViews — inherit it;
+            // injecting only inside StickerPickerView (below the stack)
+            // left pushed set-detail views with no store and trapped on
+            // the `@Environment(StickerPickerStore.self)` lookup.
+            .environment(stickerPickerStore)
         }
         .task {
-            guard store == nil, let loader = client.makeChatHistoryLoader() else { return }
-            let s = ChatHistoryStore(
-                chatId: row.id,
-                chatType: row.chatType,
-                lastReadInboxMessageId: row.lastReadInboxMessageId,
-                lastReadOutboxMessageId: row.lastReadOutboxMessageId,
-                unreadCount: row.unreadCount,
-                lastMessageId: row.lastMessageId,
-                loader: loader,
-                selfUserId: client.me?.id,
-                userNames: client.userNames,
-                draftText: row.draftText,
-                coalesceUpdates: true
-            )
-            self.store = s
-            client.setActiveHistory(s)
-            // Build the picker store HERE (in the chat .task), not lazily in the
-            // attachment-tap closure. Creating an @State and flipping a sheet-present
-            // flag in the same closure races: the .sheet evaluates `if let pickerStore`
-            // against a snapshot where the store is still nil → empty body. Having it
-            // non-nil before the tap (like `store` above) avoids that.
+            client.setActiveHistory(store)
+            // Defer openChat to here (the store was warmed without it). Independent
+            // of warm: if the window is still loading, openChat proceeds anyway.
+            await store.activate()
+            // Build the picker store HERE (not lazily in the attachment-tap closure):
+            // creating an @State and flipping a sheet-present flag in the same closure
+            // races the .sheet's `if let pickerStore` against a nil snapshot.
             if stickerPickerStore == nil, let pl = client.makeStickerPickerLoader() {
                 stickerPickerStore = StickerPickerStore(loader: pl)
             }
-            await s.start()
         }
         .onDisappear {
             let s = self.store
             client.setActiveHistory(nil)
-            Task { await s?.stop() }
+            Task { await s.stop() }
         }
     }
 
@@ -270,26 +250,6 @@ struct MessageListView: View {
                             .ignoresSafeArea()
                     }
                     .environment(store)
-                    .task {
-                        // Default branch only appears once `loadState == .loaded`
-                        // (the .loadingFirstPage case above keeps the spinner up).
-                        // .task fires once per view appearance; the guard makes the
-                        // scroll idempotent across re-renders. A short sleep lets
-                        // SwiftUI lay out the freshly-rendered VStack before scrollTo
-                        // resolves the target id — otherwise scrollTo can land before
-                        // the row exists in the rendered tree.
-                        //
-                        // .defaultScrollAnchor(.bottom) on the ScrollView above
-                        // positions the no-divider case at the chat tail BEFORE this
-                        // task fires (so the user never sees the top-flash). We only
-                        // need to override that for the unread-divider case.
-                        guard !didApplyInitialScroll else { return }
-                        didApplyInitialScroll = true
-                        try? await Task.sleep(nanoseconds: 50_000_000)
-                        if let target = store.window.initialScrollTargetId {
-                            proxy.scrollTo(target, anchor: .top)
-                        }
-                    }
                     .onScrollGeometryChange(for: ScrollSnapshot.self) { geometry in
                         ScrollSnapshot(
                             contentOffsetY: geometry.contentOffset.y,
@@ -316,6 +276,28 @@ struct MessageListView: View {
                         // contentSize-stable changes imply user-driven scroll; arm
                         // pagination so it only fires after the user actually moved.
                         userHasScrolled = true
+                    }
+                    .task {
+                        // Initial positioning. This `default` branch only renders once the
+                        // store is `.loaded` (the `.loadingFirstPage` case keeps the spinner
+                        // up), so `store.rows` is fully populated — true for BOTH the fast
+                        // path (warmed before push) and the slow path (warm finished after
+                        // push, swapping this branch in). For the unread case, scroll to the
+                        // divider; the spinner cover (see `content`'s ZStack) hides the brief
+                        // bottom-paint→divider settle so there's no visible jump. We use
+                        // `proxy.scrollTo` rather than `scrollPosition(id:)` because the
+                        // content is a plain (non-lazy) `VStack` — `scrollPosition(id:)` only
+                        // positions reliably inside lazy stacks, and switching to `LazyVStack`
+                        // reintroduces the `defaultScrollAnchor` over-scroll gotcha.
+                        guard !didApplyInitialScroll else { return }
+                        if let target = store.window.initialScrollTargetId {
+                            // Let SwiftUI lay out the rows before resolving the target id.
+                            try? await Task.sleep(nanoseconds: 50_000_000)
+                            proxy.scrollTo(target, anchor: .top)
+                            // One more runloop tick so the scroll offset lands before reveal.
+                            await Task.yield()
+                        }
+                        didApplyInitialScroll = true
                     }
                     .onChange(of: store.rows.first?.id) { oldId, newId in
                         // Scroll preservation across `loadOlder`. When older content is
@@ -382,6 +364,17 @@ struct MessageListView: View {
                         .padding(.bottom, 6)
                         .accessibilityIdentifier("jumpToBottom")
                     }
+                }
+            }
+            // Cover the brief bottom-paint→divider settle (the `.task` above scrolls to
+            // the unread divider ~50ms after this branch appears) so the user never sees
+            // the jump. Only for the unread case — the tail case is already correctly
+            // placed by `.defaultScrollAnchor(.bottom)`, so it reveals immediately.
+            .overlay {
+                if !didApplyInitialScroll, store.window.initialScrollTargetId != nil {
+                    LoadingView(label: "Loading messages…")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color.black.ignoresSafeArea())
                 }
             }
         }

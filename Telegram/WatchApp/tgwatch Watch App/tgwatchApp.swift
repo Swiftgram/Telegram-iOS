@@ -4,6 +4,10 @@ import TDLibKit
 @main
 struct TgwatchApp: App {
     @State private var manager: AccountManager
+    /// True when running inside an XCTest process. Computed once and stored so
+    /// both `init()` and `body` can reference the same value without repeating
+    /// the `NSClassFromString` lookup.
+    private let isUnderXCTest: Bool = NSClassFromString("XCTestCase") != nil
 
     @MainActor
     init() {
@@ -14,7 +18,6 @@ struct TgwatchApp: App {
         // `td_receive` is single-thread-global — see CLAUDE.md gotcha). Hand
         // the test process a no-bootstrap manager; tests never drive the
         // SwiftUI scene, so its `factory` is never invoked.
-        let isUnderXCTest = NSClassFromString("XCTestCase") != nil
         let factory: any TDClientFactory
         if isUnderXCTest {
             factory = NoopTDClientFactory()
@@ -38,8 +41,11 @@ struct TgwatchApp: App {
                     .environment(client)
                     .environment(manager)
                     .id(manager.activeAccountId)
-            } else {
-                AccountsEmptyView()
+            } else if !isUnderXCTest {
+                // Under XCTest the scene is not test-driven; suppress
+                // AccountBootstrapView so its .task doesn't call
+                // ensureAccountExists() → factory.make() via NoopTDClientFactory.
+                AccountBootstrapView()
                     .environment(manager)
             }
         }

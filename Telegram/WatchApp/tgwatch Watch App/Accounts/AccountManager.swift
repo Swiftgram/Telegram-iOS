@@ -72,6 +72,19 @@ final class AccountManager: TDClientLifecycleDelegate {
         }
     }
 
+    /// Ensures at least one account exists by creating and starting a fresh
+    /// **Production** account when the registry is empty and no client is
+    /// active. Idempotent — the guard makes repeat calls safe — and
+    /// synchronous like `bootstrap()` so callers/tests can read post-state
+    /// without awaiting. Drives the no-welcome auto-QR flow: whenever
+    /// `activeClient` is nil, `AccountBootstrapView` calls this to land the
+    /// app on QR login. Persist-failure handling (revert + `lastError`) is
+    /// inherited from `appendAndStart`.
+    func ensureAccountExists() {
+        guard accounts.isEmpty, activeClient == nil else { return }
+        appendAndStart(account: makeNewAccount(useTestDc: false))
+    }
+
     /// Adds a new account, persists, makes it active, and brings up a
     /// fresh `TDClient` against its (empty) database directory. The
     /// previous active account (if any) is **closed**, not logged out —
@@ -194,7 +207,7 @@ final class AccountManager: TDClientLifecycleDelegate {
     /// `TDClient`. On persist failure, reverts in-memory state to match
     /// the (failed) disk write so the user doesn't see a phantom account
     /// that disappears on next launch. The user sees `lastError` in
-    /// `AccountsListView` / `AccountsEmptyView` and can retry.
+    /// `AccountsListView` / `AccountBootstrapView` and can retry.
     private func appendAndStart(account: Account) {
         let previousAccounts = accounts
         let previousActiveId = activeAccountId

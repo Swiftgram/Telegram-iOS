@@ -83,6 +83,11 @@ struct MessageBubbleView: View {
                         replyHeader: bubble.replyHeader,
                         onVote: { onPollTap(bubble.messageId, poll) }
                     )
+                } else if bubble.isUnsupported {
+                    UnsupportedBubbleView(
+                        isOutgoing: bubble.isOutgoing,
+                        replyHeader: bubble.replyHeader
+                    )
                 } else if bubble.replyHeader == nil, let emojiCount = emojiOnlyCount(bubble.body) {
                     Text(bubble.body)
                         .font(.system(size: jumboEmojiSize(for: emojiCount)))
@@ -244,6 +249,19 @@ private let previewSampleBubble = MessageBubble(
             messageId: 11, isOutgoing: true, senderName: nil, body: "😀🎉🥰",
             photo: nil, video: nil, videoNote: nil, voiceNote: nil, audio: nil, document: nil,
             sticker: nil, location: nil, poll: nil, sendingState: .sent, replyHeader: nil
+        ),
+        onPhotoTap: { _ in }, onVideoTap: { _ in }, onVideoNoteTap: { _ in }, onPollTap: { _, _ in }
+    )
+    .bubblePreview()
+}
+
+#Preview("Unsupported message — incoming") {
+    MessageBubbleView(
+        bubble: MessageBubble(
+            messageId: 13, isOutgoing: false, senderName: "Alice", body: "",
+            photo: nil, video: nil, videoNote: nil, voiceNote: nil, audio: nil, document: nil,
+            sticker: nil, location: nil, poll: nil, sendingState: .sent, replyHeader: nil,
+            isUnsupported: true
         ),
         onPhotoTap: { _ in }, onVideoTap: { _ in }, onVideoNoteTap: { _ in }, onPollTap: { _, _ in }
     )

@@ -40,6 +40,18 @@ private func autoDeleteDuration(seconds: Int) -> String {
     return mo == 1 ? "1 month" : "\(mo) months"
 }
 
+/// "{m} m" under 1 km, else whole "{km} km".
+private func distanceLabel(meters: Int) -> String {
+    if meters < 1000 { return "\(meters) m" }
+    return "\(meters / 1000) km"
+}
+
+/// "channel" when the chat is a broadcast channel; "group" otherwise (incl. nil).
+private func groupNoun(_ chatType: ChatType?) -> String {
+    if case .chatTypeSupergroup(let s) = chatType, s.isChannel { return "channel" }
+    return "group"
+}
+
 /// Renders the pinned-snippet phrase used in "{Actor} pinned ...". Returns
 /// "«{snippet}»" for text content (with truncation to 24 characters +
 /// ellipsis), "a {type}" for non-text recognized content, or "a message" for
@@ -105,7 +117,10 @@ private func targetList(_ ids: [Int64], userNames: [Int64: String]) -> String {
 /// Renders the centered-italic line for a service message, or `nil` for content
 /// that should render as a regular bubble. Pure: same inputs always produce the
 /// same output. See `docs/superpowers/specs/2026-05-16-service-messages-design.md`
-/// for the full classification and string set.
+/// for the original classification and string set, and
+/// `docs/superpowers/specs/2026-05-29-extend-service-lines-design.md` for the
+/// extended coverage (theme/background/boost/forum-topic/upgrade/game-score/
+/// content-protection/sharing/web-app/suggest-photo/proximity/giveaway).
 ///
 /// - Parameters:
 ///   - msg: the cached message carrying senderId + content payload.
@@ -224,6 +239,86 @@ func serviceLineText(
             return "Channel created"
         }
         return "Group created"
+
+    case .messageForumTopicCreated(let m):
+        return withActor("created topic «\(m.name)»", actor: actor, includeActor: includeActor)
+
+    case .messageForumTopicEdited(let m):
+        if !m.name.isEmpty {
+            return withActor("changed the topic name to «\(m.name)»", actor: actor, includeActor: includeActor)
+        }
+        if m.editIconCustomEmojiId {
+            return withActor("changed the topic icon", actor: actor, includeActor: includeActor)
+        }
+        return withActor("edited the topic", actor: actor, includeActor: includeActor)
+
+    case .messageForumTopicIsClosedToggled(let m):
+        return withActor(m.isClosed ? "closed the topic" : "reopened the topic",
+                         actor: actor, includeActor: includeActor)
+
+    case .messageForumTopicIsHiddenToggled(let m):
+        return withActor(m.isHidden ? "hid the topic" : "unhid the topic",
+                         actor: actor, includeActor: includeActor)
+
+    case .messageChatSetTheme(let m):
+        guard let theme = m.theme else {
+            return withActor("disabled the chat theme", actor: actor, includeActor: includeActor)
+        }
+        if case .chatThemeEmoji(let e) = theme {
+            return withActor("changed the chat theme to \(e.name)", actor: actor, includeActor: includeActor)
+        }
+        return withActor("changed the chat theme", actor: actor, includeActor: includeActor)
+
+    case .messageChatSetBackground:
+        return withActor("changed the chat background", actor: actor, includeActor: includeActor)
+
+    case .messageChatBoost(let m):
+        let noun = groupNoun(chatType)
+        if m.boostCount == 1 {
+            return withActor("boosted the \(noun)", actor: actor, includeActor: includeActor)
+        }
+        return withActor("boosted the \(noun) \(m.boostCount) times", actor: actor, includeActor: includeActor)
+
+    case .messageChatHasProtectedContentToggled(let m):
+        return withActor(m.newHasProtectedContent ? "enabled content protection" : "disabled content protection",
+                         actor: actor, includeActor: includeActor)
+
+    case .messageChatUpgradeTo, .messageChatUpgradeFrom:
+        // Chat-lifecycle event — actor-less (Telegram convention), ignores includeActor.
+        return "Group upgraded to a supergroup"
+
+    case .messageChatShared:
+        return withActor("shared a chat", actor: actor, includeActor: includeActor)
+
+    case .messageUsersShared(let m):
+        let action = m.users.count == 1 ? "shared a user" : "shared \(m.users.count) users"
+        return withActor(action, actor: actor, includeActor: includeActor)
+
+    case .messageBotWriteAccessAllowed:
+        return withActor("allowed this bot to message you", actor: actor, includeActor: includeActor)
+
+    case .messageWebAppDataSent:
+        return withActor("sent data to the bot", actor: actor, includeActor: includeActor)
+
+    case .messageSuggestProfilePhoto:
+        return withActor("suggested a new profile photo", actor: actor, includeActor: includeActor)
+
+    case .messageGameScore(let m):
+        return withActor("scored \(m.score)", actor: actor, includeActor: includeActor)
+
+    case .messageProximityAlertTriggered(let m):
+        // Actor-less: the line names traveler + watcher, not the message sender.
+        let traveler = serviceActor(senderId: m.travelerId, selfUserId: selfUserId, userNames: userNames)
+        let watcher = serviceActor(senderId: m.watcherId, selfUserId: selfUserId, userNames: userNames)
+        return "\(traveler) is within \(distanceLabel(meters: m.distance)) of \(watcher)"
+
+    case .messageGiveawayCreated(let m):
+        // Actor-less — giveaways are posted by channels.
+        return m.starCount > 0 ? "Stars giveaway started" : "Giveaway started"
+
+    case .messageGiveawayCompleted(let m):
+        let winners = m.winnerCount == 1 ? "1 winner" : "\(m.winnerCount) winners"
+        return "Giveaway ended — \(winners)"
 
     default:
         return nil

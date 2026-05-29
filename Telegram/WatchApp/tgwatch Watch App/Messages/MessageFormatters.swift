@@ -25,6 +25,26 @@ func messageBody(_ content: MessageContent) -> String {
     }
 }
 
+/// True for message content that has no dedicated bubble rendering and should show the
+/// "Unsupported message" placeholder. Uses positive classification so TDLib's closed
+/// `MessageContent` enum's `default` cleanly captures every unhandled type
+/// (animations/GIFs, games, invoices, calls, dice, stories, gifts, expired media, …).
+///
+/// Service-message content is filtered to `.service` rows upstream (see
+/// `serviceLineText`) and never reaches the bubble path, so it is irrelevant here.
+/// `messageContact` is treated as supported — it keeps its existing "Contact" text
+/// fallback in `messageBody`.
+func isUnsupportedContent(_ content: MessageContent) -> Bool {
+    switch content {
+    case .messageText, .messagePhoto, .messageVideo, .messageVideoNote,
+         .messageVoiceNote, .messageAudio, .messageSticker, .messageDocument,
+         .messageLocation, .messageVenue, .messageContact, .messagePoll:
+        return false
+    default:
+        return true
+    }
+}
+
 /// Day separator label between messages from different days.
 /// `Today` / `Yesterday` for the boundary days, weekday name for the last 7 days,
 /// `MMM d` for older or future dates.
