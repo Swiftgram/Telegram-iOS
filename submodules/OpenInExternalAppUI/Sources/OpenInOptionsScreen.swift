@@ -342,6 +342,13 @@ private final class OpenInOptionsSheetContentComponent: Component {
             }
             
             let optionInset: CGFloat = 2.0
+            var optionSpacing: CGFloat = 8.0
+            if component.options.count == 3 {
+                optionSpacing = 32.0
+            } else if component.options.count == 2 {
+                optionSpacing = 64.0
+            }
+            
             let optionSize = CGSize(width: 80.0, height: 112.0)
             let scrollFrame = CGRect(origin: CGPoint(x: 0.0, y: 82.0), size: CGSize(width: availableSize.width, height: optionSize.height))
             transition.setFrame(view: self.scrollView, frame: scrollFrame)
@@ -366,9 +373,9 @@ private final class OpenInOptionsSheetContentComponent: Component {
                 
                 let optionOriginX: CGFloat
                 if component.options.count < 5 {
-                    optionOriginX = floorToScreenPixels(max(0.0, (availableSize.width - optionSize.width * CGFloat(component.options.count)) / 2.0))
+                    optionOriginX = floorToScreenPixels(max(0.0, (availableSize.width - optionSize.width * CGFloat(component.options.count) - optionSpacing * CGFloat(component.options.count - 1)) / 2.0)) + CGFloat(index) * (optionSize.width + optionSpacing)
                 } else {
-                    optionOriginX = optionInset + CGFloat(index) * optionSize.width
+                    optionOriginX = optionInset + CGFloat(index) * (optionSize.width + optionSpacing)
                 }
                 
                 transition.setFrame(view: optionView, frame: CGRect(
@@ -388,7 +395,7 @@ private final class OpenInOptionsSheetContentComponent: Component {
             if component.options.isEmpty {
                 optionsContentWidth = availableSize.width
             } else {
-                optionsContentWidth = optionInset * 2.0 + CGFloat(component.options.count) * optionSize.width
+                optionsContentWidth = optionInset * 2.0 + CGFloat(component.options.count) * (optionSize.width + optionSpacing) - optionSpacing
             }
             self.scrollView.contentSize = CGSize(width: max(availableSize.width, optionsContentWidth), height: optionSize.height)
             

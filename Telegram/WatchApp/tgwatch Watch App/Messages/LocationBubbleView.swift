@@ -5,7 +5,7 @@ import UIKit
 
 /// Renders one location / venue bubble: a rounded static map image
 /// (`MKMapSnapshotter`) with a centered pin, a "LIVE" badge for live
-/// locations, and an inside time footer. The snapshot renders in `.task(id:)`,
+/// locations. The snapshot renders in `.task(id:)`,
 /// keyed by the cache key, so live-location coordinate changes re-render
 /// automatically.
 ///
@@ -17,7 +17,6 @@ import UIKit
 /// Tap builds an `MKMapItem` and hands the coordinate to the system Maps app.
 struct LocationBubbleView: View {
     let location: LocationVisual
-    let time: String
     let isOutgoing: Bool
     let replyHeader: ReplyHeader?
 
@@ -91,7 +90,7 @@ struct LocationBubbleView: View {
         .frame(width: mapWidth, alignment: .leading)
         .background(style.fill)
         .foregroundStyle(style.content)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: BubbleShape.cornerRadius))
     }
 
     @ViewBuilder
@@ -107,9 +106,8 @@ struct LocationBubbleView: View {
     private func mapView(roundedCorners: Bool) -> some View {
         mapImage
             .frame(width: mapWidth, height: mapHeight)
-            .clipShape(RoundedRectangle(cornerRadius: roundedCorners ? 12 : 0))
+            .clipShape(RoundedRectangle(cornerRadius: roundedCorners ? BubbleShape.cornerRadius : 0))
             .overlay { pin }
-            .overlay(alignment: .bottomTrailing) { timeFooter }
             .contentShape(Rectangle())
             .onTapGesture { openInMaps() }
     }
@@ -150,16 +148,6 @@ struct LocationBubbleView: View {
         }
     }
 
-    private var timeFooter: some View {
-        Text(time)
-            .font(.system(size: 8))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 4)
-            .padding(.vertical, 1)
-            .background(Capsule().fill(.black.opacity(0.5)))
-            .padding(4)
-    }
-
     private func openInMaps() {
         let mapItem = MKMapItem(
             location: CLLocation(latitude: location.latitude, longitude: location.longitude),
@@ -178,7 +166,7 @@ struct LocationBubbleView: View {
             title: nil, address: nil, isLive: false, heading: 0, isExpired: false,
             liveUpdatedAt: nil
         ),
-        time: "12:34", isOutgoing: false, replyHeader: nil
+        isOutgoing: false, replyHeader: nil
     )
     .bubblePreview()
 }
@@ -190,7 +178,7 @@ struct LocationBubbleView: View {
             title: "Eiffel Tower", address: "Champ de Mars, 75007 Paris",
             isLive: false, heading: 0, isExpired: false, liveUpdatedAt: nil
         ),
-        time: "12:35", isOutgoing: true, replyHeader: nil
+        isOutgoing: true, replyHeader: nil
     )
     .bubblePreview()
 }
@@ -202,7 +190,7 @@ struct LocationBubbleView: View {
             title: nil, address: nil, isLive: true, heading: 90, isExpired: false,
             liveUpdatedAt: Date().addingTimeInterval(-90)
         ),
-        time: "12:36", isOutgoing: false, replyHeader: nil
+        isOutgoing: false, replyHeader: nil
     )
     .bubblePreview()
 }
@@ -214,7 +202,7 @@ struct LocationBubbleView: View {
             title: nil, address: nil, isLive: true, heading: 0, isExpired: true,
             liveUpdatedAt: Date().addingTimeInterval(-7200)
         ),
-        time: "12:30", isOutgoing: false, replyHeader: nil
+        isOutgoing: false, replyHeader: nil
     )
     .bubblePreview()
 }
@@ -226,7 +214,7 @@ struct LocationBubbleView: View {
             title: nil, address: nil, isLive: false, heading: 0, isExpired: false,
             liveUpdatedAt: nil
         ),
-        time: "12:34", isOutgoing: false,
+        isOutgoing: false,
         replyHeader: ReplyHeader(
             senderName: "Bob",
             snippet: "where are you?",

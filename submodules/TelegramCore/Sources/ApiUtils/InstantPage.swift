@@ -89,30 +89,25 @@ extension InstantPageListItem {
         }
     }
     
-    func apiInputPageOrderedListItem() -> Api.InputPageListOrderedItem {
+    func apiInputPageOrderedListItem() -> Api.PageListOrderedItem {
         switch self {
         case let .text(value, num, checked):
             var flags: Int32 = InstantPageListItem.apiFlags(fromChecked: checked)
 
-            var inputNum: Int32?
-            if let num, let numValue = Int32(num) {
-                inputNum = numValue
+            if num != nil {
                 flags |= (1 << 2)
             }
-
-            return .inputPageListOrderedItemText(Api.InputPageListOrderedItem.Cons_inputPageListOrderedItemText(flags: flags, text: value.apiRichText(), value: inputNum, type: nil))
+            return .pageListOrderedItemText(Api.PageListOrderedItem.Cons_pageListOrderedItemText(flags: flags, num: num, text: value.apiRichText(), value: nil, type: nil))
         case let .blocks(blocks, num, checked):
             var flags: Int32 = InstantPageListItem.apiFlags(fromChecked: checked)
 
-            var inputNum: Int32?
-            if let num, let numValue = Int32(num) {
-                inputNum = numValue
+            if num != nil {
                 flags |= (1 << 2)
             }
 
-            return .inputPageListOrderedItemBlocks(Api.InputPageListOrderedItem.Cons_inputPageListOrderedItemBlocks(flags: flags, blocks: blocks.compactMap { $0.apiInputBlock() }, value: inputNum, type: nil))
+            return .pageListOrderedItemBlocks(Api.PageListOrderedItem.Cons_pageListOrderedItemBlocks(flags: flags, num: num, blocks: blocks.compactMap { $0.apiInputBlock() }, value: nil, type: nil))
         case .unknown:
-            return .inputPageListOrderedItemText(Api.InputPageListOrderedItem.Cons_inputPageListOrderedItemText(flags: 0, text: .textPlain(Api.RichText.Cons_textPlain(text: "")), value: nil, type: nil))
+            return .pageListOrderedItemText(Api.PageListOrderedItem.Cons_pageListOrderedItemText(flags: 0, num: nil, text: .textPlain(Api.RichText.Cons_textPlain(text: "")), value: nil, type: nil))
         }
     }
 }
@@ -251,7 +246,9 @@ extension InstantPageBlock {
                 self = .anchor(name)
             case let .pageBlockBlockquote(pageBlockBlockquoteData):
                 let (text, caption) = (pageBlockBlockquoteData.text, pageBlockBlockquoteData.caption)
-                self = .blockQuote(text: RichText(apiText: text), caption: RichText(apiText: caption))
+                self = .blockQuote(blocks: [.paragraph(RichText(apiText: text))], caption: RichText(apiText: caption))
+            case let .pageBlockBlockquoteBlocks(pageBlockBlockquoteBlocksData):
+                self = .blockQuote(blocks: pageBlockBlockquoteBlocksData.blocks.map { InstantPageBlock(apiBlock: $0) }, caption: RichText(apiText: pageBlockBlockquoteBlocksData.caption))
             case let .pageBlockPullquote(pageBlockPullquoteData):
                 let (text, caption) = (pageBlockPullquoteData.text, pageBlockPullquoteData.caption)
                 self = .pullQuote(text: RichText(apiText: text), caption: RichText(apiText: caption))
@@ -331,7 +328,7 @@ extension InstantPageBlock {
                 self = .heading(text: RichText(apiText: pageBlockHeading6.text), level: 6)
             case let .pageBlockMath(pageBlockMath):
                 self = .formula(latex: pageBlockMath.source)
-            case .inputPageBlockMap, .inputPageBlockOrderedList, .pageBlockThinking:
+            case .inputPageBlockMap, .pageBlockThinking:
                 self = .unsupported
         }
     }
@@ -371,12 +368,18 @@ extension InstantPageBlock {
             return .pageBlockAnchor(Api.PageBlock.Cons_pageBlockAnchor(name: value))
         case let .list(items, ordered):
             if ordered {
-                return .inputPageBlockOrderedList(Api.PageBlock.Cons_inputPageBlockOrderedList(flags: 0, items: items.map { $0.apiInputPageOrderedListItem() }, start: nil, type: nil))
+                return .pageBlockOrderedList(Api.PageBlock.Cons_pageBlockOrderedList(flags: 0, items: items.map { $0.apiInputPageOrderedListItem() }, start: nil, type: nil))
             } else {
                 return .pageBlockList(Api.PageBlock.Cons_pageBlockList(items: items.map { $0.apiInputPageListItem() }))
             }
-        case let .blockQuote(text, caption):
-            return .pageBlockBlockquote(Api.PageBlock.Cons_pageBlockBlockquote(text: text.apiRichText(), caption: caption.apiRichText()))
+        case let .blockQuote(blocks, caption):
+            if blocks.isEmpty {
+                return .pageBlockBlockquote(Api.PageBlock.Cons_pageBlockBlockquote(text: RichText.empty.apiRichText(), caption: caption.apiRichText()))
+            }
+            if blocks.count == 1, case let .paragraph(text) = blocks[0] {
+                return .pageBlockBlockquote(Api.PageBlock.Cons_pageBlockBlockquote(text: text.apiRichText(), caption: caption.apiRichText()))
+            }
+            return .pageBlockBlockquoteBlocks(Api.PageBlock.Cons_pageBlockBlockquoteBlocks(blocks: blocks.compactMap { $0.apiInputBlock() }, caption: caption.apiRichText()))
         case let .pullQuote(text, caption):
             return .pageBlockPullquote(Api.PageBlock.Cons_pageBlockPullquote(text: text.apiRichText(), caption: caption.apiRichText()))
         case let .image(id, caption, url, webpageId):

@@ -16,7 +16,6 @@ struct MessageListView: View {
     @State private var presentedVideo: VideoVisual?
     @State private var presentedVideoNote: VideoNoteVisual?
     @State private var presentedPoll: PollVoteTarget?
-    @State private var showCompose: Bool = false
     @State private var showAttachment: Bool = false
     @State private var stickerPickerStore: StickerPickerStore?
     // True when the user is parked within slop of the bottom edge. Updated only on
@@ -57,6 +56,17 @@ struct MessageListView: View {
         }
         .navigationTitle(row.title)
         .accessibilityIdentifier("messageListView")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                AvatarView(
+                    avatar: row.avatar,
+                    onRequestDownload: { fileId in store?.requestFileDownload(fileId: fileId) },
+                    onCancelDownload:  { fileId in store?.cancelFileDownload(fileId: fileId) },
+                    size: 36
+                )
+                .glassEffect(in: Circle())
+            }
+        }
         .sheet(item: $presentedPhoto) { photo in
             PhotoViewerView(photo: photo)
         }
@@ -76,18 +86,6 @@ struct MessageListView: View {
                     initialPoll: target.poll,
                     currentPoll: { store.poll(forMessageId: target.id) },
                     onVote: { await store.setPollAnswer(messageId: target.id, optionIds: $0) }
-                )
-            }
-        }
-        .sheet(isPresented: $showCompose) {
-            if let store {
-                ComposeSheet(
-                    initialText: store.draftText,
-                    onSend: { text in
-                        await store.sendText(text)
-                        return store.lastSendError == nil
-                    },
-                    onDismissWithDraft: { text in await store.saveDraft(text) }
                 )
             }
         }
@@ -243,7 +241,9 @@ struct MessageListView: View {
                             if row.canSend {
                                 ReplyBar(
                                     onAttachTap: { showAttachment = true },
-                                    onTextTap: { showCompose = true }
+                                    onSend: { snapshot in
+                                        Task { await store.sendText(snapshot) }
+                                    }
                                 )
                                 .id("composeAnchor")
                                 .padding(.top, 8)
@@ -261,6 +261,14 @@ struct MessageListView: View {
                     }
                     .ignoresSafeArea(edges: .bottom)
                     .defaultScrollAnchor(.bottom)
+                    .scrollContentBackground(.hidden)
+                    .background {
+                        Image("ChatBG")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .clipped()
+                            .ignoresSafeArea()
+                    }
                     .environment(store)
                     .task {
                         // Default branch only appears once `loadState == .loaded`

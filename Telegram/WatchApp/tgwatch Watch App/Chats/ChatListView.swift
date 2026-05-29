@@ -13,39 +13,35 @@ struct ChatListView: View {
     @FocusState private var listFocused: Bool
 
     var body: some View {
-        ZStack(alignment: .top) {
-            NavigationStack {
-                ScrollViewReader { proxy in
-                    VStack(spacing: 0) {
-                        if case .failed(let message) = store.loadState(for: store.currentFolder) {
-                            banner(text: message, kind: .retry)
-                        }
-                        if let err = client.lastError, dismissedLastError != err {
-                            banner(text: err, kind: .dismiss)
-                        }
-                        content(proxy: proxy)
+        NavigationStack {
+            ScrollViewReader { proxy in
+                VStack(spacing: 0) {
+                    if case .failed(let message) = store.loadState(for: store.currentFolder) {
+                        banner(text: message, kind: .retry)
                     }
-                    .navigationDestination(for: ChatRow.self) { row in
-                        MessageListView(row: row)
+                    if let err = client.lastError, dismissedLastError != err {
+                        banner(text: err, kind: .dismiss)
                     }
-                    .navigationTitle("")
-                    .navigationBarTitleDisplayMode(.inline)
-                    // Must live INSIDE the NavigationStack so the modifier's
-                    // .navigationDestination(isPresented:) attaches to it.
-                    .accountSwitcherSheet(presentation: .push, logoutAffordance: .allowed)
+                    content(proxy: proxy)
                 }
+                .navigationDestination(for: ChatRow.self) { row in
+                    MessageListView(row: row)
+                }
+                .navigationTitle("Chats")
+                .navigationBarTitleDisplayMode(.inline)
+                // `.toolbar(.visible)` forces the nav-bar container to
+                // materialize on the chat list. Without it, watchOS-26 skips
+                // chrome on a NavigationStack root view, leaving only the
+                // status row (clock top-right). The push to MessageListView
+                // then has to grow that minimal status row into a full glass
+                // nav bar with back chevron + title + trailing avatar, which
+                // glitches mid-reshape. With the bar present here, the push
+                // only has to morph content, not allocate a new glass surface.
+                .toolbar(.visible, for: .navigationBar)
+                // Must live INSIDE the NavigationStack so the modifier's
+                // .navigationDestination(isPresented:) attaches to it.
+                .accountSwitcherSheet(presentation: .push, logoutAffordance: .allowed)
             }
-            // Gradient that fades chat content behind the system clock area,
-            // so rows scrolling up under the clock don't visually collide
-            // with the time readout.
-            LinearGradient(
-                colors: [.black.opacity(0.8), .black.opacity(0)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 48)
-            .allowsHitTesting(false)
-            .ignoresSafeArea(edges: .top)
         }
         .accessibilityIdentifier("chatListView")
     }
@@ -96,18 +92,13 @@ struct ChatListView: View {
         .listStyle(.plain)
         .focused($listFocused)
         .onAppear { listFocused = true }
-        // Hide the empty title bar so the chat list starts directly under the
-        // system clock. Pill bar is the first List row, so it scrolls with content.
-        .toolbar(.hidden, for: .navigationBar)
-        // `.toolbar(.hidden)` hides the bar visuals but watchOS still reserves
-        // ~30pt of layout. With a pill bar present, pull up by 38 (slot + 8)
-        // so the pill row sits ~8pt under the clock — the gradient masks any
-        // overlap, and the negative bottom inset on the pill row tightens the
-        // gap to the first chat row to ~8pt. Without a pill bar the first row
-        // IS a chat row, so we stop at -22 (slot - 8) to leave ~8pt of clear
-        // space below the clock instead of shoving the chat row into the time
-        // readout.
-        .padding(.top, store.pills.count > 1 ? -38 : -22)
+        // Bar is intentionally visible (forced by `.toolbar(.visible, for:
+        // .navigationBar)` on the body chain). When folder pills are present,
+        // pull the pill row up by 24pt to tuck it under the bar's bottom edge
+        // — without that, the natural top-of-list inset leaves an awkward gap
+        // between the bar and the pill row. Plain chat rows (no pills) sit at
+        // the natural top.
+        .padding(.top, store.pills.count > 1 ? -20 : 0)
     }
 
     @ViewBuilder

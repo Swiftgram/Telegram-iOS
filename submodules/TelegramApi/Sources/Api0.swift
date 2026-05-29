@@ -107,6 +107,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[894081801] = { return Api.BotInlineMessage.parse_botInlineMessageMediaInvoice($0) }
     dict[-1970903652] = { return Api.BotInlineMessage.parse_botInlineMessageMediaVenue($0) }
     dict[-2137335386] = { return Api.BotInlineMessage.parse_botInlineMessageMediaWebPage($0) }
+    dict[174161531] = { return Api.BotInlineMessage.parse_botInlineMessageRichMessage($0) }
     dict[-1937807902] = { return Api.BotInlineMessage.parse_botInlineMessageText($0) }
     dict[400266251] = { return Api.BotInlineResult.parse_botInlineMediaResult($0) }
     dict[295067450] = { return Api.BotInlineResult.parse_botInlineResult($0) }
@@ -259,7 +260,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[1815593308] = { return Api.DocumentAttribute.parse_documentAttributeImageSize($0) }
     dict[1662637586] = { return Api.DocumentAttribute.parse_documentAttributeSticker($0) }
     dict[1137015880] = { return Api.DocumentAttribute.parse_documentAttributeVideo($0) }
-    dict[-1743452271] = { return Api.DraftMessage.parse_draftMessage($0) }
+    dict[1627271828] = { return Api.DraftMessage.parse_draftMessage($0) }
     dict[453805082] = { return Api.DraftMessage.parse_draftMessageEmpty($0) }
     dict[-1764723459] = { return Api.EmailVerification.parse_emailVerificationApple($0) }
     dict[-1842457175] = { return Api.EmailVerification.parse_emailVerificationCode($0) }
@@ -339,6 +340,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[-672693723] = { return Api.InputBotInlineMessage.parse_inputBotInlineMessageMediaInvoice($0) }
     dict[1098628881] = { return Api.InputBotInlineMessage.parse_inputBotInlineMessageMediaVenue($0) }
     dict[-1109605104] = { return Api.InputBotInlineMessage.parse_inputBotInlineMessageMediaWebPage($0) }
+    dict[-1271007892] = { return Api.InputBotInlineMessage.parse_inputBotInlineMessageRichMessage($0) }
     dict[1036876423] = { return Api.InputBotInlineMessage.parse_inputBotInlineMessageText($0) }
     dict[-1995686519] = { return Api.InputBotInlineMessageID.parse_inputBotInlineMessageID($0) }
     dict[-1227287081] = { return Api.InputBotInlineMessageID.parse_inputBotInlineMessageID64($0) }
@@ -443,8 +445,6 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[1548122514] = { return Api.InputNotifyPeer.parse_inputNotifyForumTopic($0) }
     dict[-1195615476] = { return Api.InputNotifyPeer.parse_inputNotifyPeer($0) }
     dict[423314455] = { return Api.InputNotifyPeer.parse_inputNotifyUsers($0) }
-    dict[2105227266] = { return Api.InputPageListOrderedItem.parse_inputPageListOrderedItemBlocks($0) }
-    dict[-1682665696] = { return Api.InputPageListOrderedItem.parse_inputPageListOrderedItemText($0) }
     dict[1528613672] = { return Api.InputPasskeyCredential.parse_inputPasskeyCredentialFirebasePNV($0) }
     dict[1009235855] = { return Api.InputPasskeyCredential.parse_inputPasskeyCredentialPublicKey($0) }
     dict[-1021329078] = { return Api.InputPasskeyResponse.parse_inputPasskeyResponseLogin($0) }
@@ -756,11 +756,11 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[1001931436] = { return Api.OutboxReadDate.parse_outboxReadDate($0) }
     dict[-1738178803] = { return Api.Page.parse_page($0) }
     dict[1464557951] = { return Api.PageBlock.parse_inputPageBlockMap($0) }
-    dict[-1186155733] = { return Api.PageBlock.parse_inputPageBlockOrderedList($0) }
     dict[-837994576] = { return Api.PageBlock.parse_pageBlockAnchor($0) }
     dict[-2143067670] = { return Api.PageBlock.parse_pageBlockAudio($0) }
     dict[-1162877472] = { return Api.PageBlock.parse_pageBlockAuthorDate($0) }
     dict[641563686] = { return Api.PageBlock.parse_pageBlockBlockquote($0) }
+    dict[242108356] = { return Api.PageBlock.parse_pageBlockBlockquoteBlocks($0) }
     dict[-283684427] = { return Api.PageBlock.parse_pageBlockChannel($0) }
     dict[1705048653] = { return Api.PageBlock.parse_pageBlockCollage($0) }
     dict[972174080] = { return Api.PageBlock.parse_pageBlockCover($0) }
@@ -780,7 +780,7 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[-454524911] = { return Api.PageBlock.parse_pageBlockList($0) }
     dict[-1538310410] = { return Api.PageBlock.parse_pageBlockMap($0) }
     dict[1493699616] = { return Api.PageBlock.parse_pageBlockMath($0) }
-    dict[-1702174239] = { return Api.PageBlock.parse_pageBlockOrderedList($0) }
+    dict[534181569] = { return Api.PageBlock.parse_pageBlockOrderedList($0) }
     dict[1182402406] = { return Api.PageBlock.parse_pageBlockParagraph($0) }
     dict[391759200] = { return Api.PageBlock.parse_pageBlockPhoto($0) }
     dict[-1066346178] = { return Api.PageBlock.parse_pageBlockPreformatted($0) }
@@ -797,8 +797,8 @@ fileprivate let parsers: [Int32 : (BufferReader) -> Any?] = {
     dict[1869903447] = { return Api.PageCaption.parse_pageCaption($0) }
     dict[1674209194] = { return Api.PageListItem.parse_pageListItemBlocks($0) }
     dict[794323004] = { return Api.PageListItem.parse_pageListItemText($0) }
-    dict[1109995988] = { return Api.PageListOrderedItem.parse_pageListOrderedItemBlocks($0) }
-    dict[-851533770] = { return Api.PageListOrderedItem.parse_pageListOrderedItemText($0) }
+    dict[-1879910928] = { return Api.PageListOrderedItem.parse_pageListOrderedItemBlocks($0) }
+    dict[352522633] = { return Api.PageListOrderedItem.parse_pageListOrderedItemText($0) }
     dict[-1282352120] = { return Api.PageRelatedArticle.parse_pageRelatedArticle($0) }
     dict[878078826] = { return Api.PageTableCell.parse_pageTableCell($0) }
     dict[-524237339] = { return Api.PageTableRow.parse_pageTableRow($0) }
@@ -2041,8 +2041,6 @@ public extension Api {
         case let _1 as Api.InputMessageReadMetric:
             _1.serialize(buffer, boxed)
         case let _1 as Api.InputNotifyPeer:
-            _1.serialize(buffer, boxed)
-        case let _1 as Api.InputPageListOrderedItem:
             _1.serialize(buffer, boxed)
         case let _1 as Api.InputPasskeyCredential:
             _1.serialize(buffer, boxed)

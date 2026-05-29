@@ -70,7 +70,7 @@ public indirect enum InstantPageBlock: PostboxCoding, Equatable {
     case divider
     case anchor(String)
     case list(items: [InstantPageListItem], ordered: Bool)
-    case blockQuote(text: RichText, caption: RichText)
+    case blockQuote(blocks: [InstantPageBlock], caption: RichText)
     case pullQuote(text: RichText, caption: RichText)
     case image(id: MediaId, caption: InstantPageCaption, url: String?, webpageId: MediaId?)
     case video(id: MediaId, caption: InstantPageCaption, autoplay: Bool, loop: Bool)
@@ -121,7 +121,13 @@ public indirect enum InstantPageBlock: PostboxCoding, Equatable {
             case InstantPageBlockType.list.rawValue:
                 self = .list(items: decodeListItems(decoder), ordered: decoder.decodeOptionalInt32ForKey("o") != 0)
             case InstantPageBlockType.blockQuote.rawValue:
-                self = .blockQuote(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText, caption: decoder.decodeObjectForKey("c", decoder: { RichText(decoder: $0) }) as! RichText)
+                let caption = decoder.decodeObjectForKey("c", decoder: { RichText(decoder: $0) }) as! RichText
+                if let legacyText = decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as? RichText {
+                    self = .blockQuote(blocks: [.paragraph(legacyText)], caption: caption)
+                } else {
+                    let blocks: [InstantPageBlock] = decoder.decodeObjectArrayWithDecoderForKey("b")
+                    self = .blockQuote(blocks: blocks, caption: caption)
+                }
             case InstantPageBlockType.pullQuote.rawValue:
                 self = .pullQuote(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText, caption: decoder.decodeObjectForKey("c", decoder: { RichText(decoder: $0) }) as! RichText)
             case InstantPageBlockType.image.rawValue:
@@ -225,9 +231,9 @@ public indirect enum InstantPageBlock: PostboxCoding, Equatable {
                 encoder.encodeInt32(InstantPageBlockType.list.rawValue, forKey: "r")
                 encoder.encodeObjectArray(items, forKey: "ml")
                 encoder.encodeInt32(ordered ? 1 : 0, forKey: "o")
-            case let .blockQuote(text, caption):
+            case let .blockQuote(blocks, caption):
                 encoder.encodeInt32(InstantPageBlockType.blockQuote.rawValue, forKey: "r")
-                encoder.encodeObject(text, forKey: "t")
+                encoder.encodeObjectArray(blocks, forKey: "b")
                 encoder.encodeObject(caption, forKey: "c")
             case let .pullQuote(text, caption):
                 encoder.encodeInt32(InstantPageBlockType.pullQuote.rawValue, forKey: "r")
@@ -445,8 +451,8 @@ public indirect enum InstantPageBlock: PostboxCoding, Equatable {
                 } else {
                     return false
                 }
-            case let .blockQuote(text, caption):
-                if case .blockQuote(text, caption) = rhs {
+            case let .blockQuote(lhsBlocks, lhsCaption):
+                if case let .blockQuote(rhsBlocks, rhsCaption) = rhs, lhsBlocks == rhsBlocks, lhsCaption == rhsCaption {
                     return true
                 } else {
                     return false
@@ -621,7 +627,15 @@ public indirect enum InstantPageBlock: PostboxCoding, Equatable {
             guard let value = flatBuffersObject.value(type: TelegramCore_InstantPageBlock_BlockQuote.self) else {
                 throw FlatBuffersError.missingRequiredField()
             }
-            self = .blockQuote(text: try RichText(flatBuffersObject: value.text), caption: try RichText(flatBuffersObject: value.caption))
+            let caption = try RichText(flatBuffersObject: value.caption)
+            if value.blocksCount > 0 {
+                let blocks = try (0 ..< value.blocksCount).map { try InstantPageBlock(flatBuffersObject: value.blocks(at: $0)!) }
+                self = .blockQuote(blocks: blocks, caption: caption)
+            } else if let legacyText = value.text {
+                self = .blockQuote(blocks: [.paragraph(try RichText(flatBuffersObject: legacyText))], caption: caption)
+            } else {
+                self = .blockQuote(blocks: [], caption: caption)
+            }
         case .instantpageblockPullquote:
             guard let value = flatBuffersObject.value(type: TelegramCore_InstantPageBlock_PullQuote.self) else {
                 throw FlatBuffersError.missingRequiredField()
@@ -796,12 +810,13 @@ public indirect enum InstantPageBlock: PostboxCoding, Equatable {
             TelegramCore_InstantPageBlock_List.addVectorOf(items: itemsOffset, &builder)
             TelegramCore_InstantPageBlock_List.add(ordered: ordered, &builder)
             offset = TelegramCore_InstantPageBlock_List.endInstantPageBlock_List(&builder, start: start)
-        case let .blockQuote(text, caption):
+        case let .blockQuote(blocks, caption):
             valueType = .instantpageblockBlockquote
-            let textOffset = text.encodeToFlatBuffers(builder: &builder)
+            let blocksOffsets = blocks.map { $0.encodeToFlatBuffers(builder: &builder) }
+            let blocksOffset = builder.createVector(ofOffsets: blocksOffsets, len: blocksOffsets.count)
             let captionOffset = caption.encodeToFlatBuffers(builder: &builder)
             let start = TelegramCore_InstantPageBlock_BlockQuote.startInstantPageBlock_BlockQuote(&builder)
-            TelegramCore_InstantPageBlock_BlockQuote.add(text: textOffset, &builder)
+            TelegramCore_InstantPageBlock_BlockQuote.addVectorOf(blocks: blocksOffset, &builder)
             TelegramCore_InstantPageBlock_BlockQuote.add(caption: captionOffset, &builder)
             offset = TelegramCore_InstantPageBlock_BlockQuote.endInstantPageBlock_BlockQuote(&builder, start: start)
         case let .pullQuote(text, caption):

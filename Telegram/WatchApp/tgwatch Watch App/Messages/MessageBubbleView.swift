@@ -24,7 +24,6 @@ struct MessageBubbleView: View {
                         sticker: sticker,
                         senderName: bubble.senderName,
                         senderColorIndex: bubble.senderColorIndex,
-                        time: bubble.time,
                         isOutgoing: bubble.isOutgoing,
                         replyHeader: bubble.replyHeader
                     )
@@ -32,7 +31,6 @@ struct MessageBubbleView: View {
                     PhotoBubbleView(
                         photo: photo,
                         caption: bubble.body,
-                        time: bubble.time,
                         isOutgoing: bubble.isOutgoing,
                         replyHeader: bubble.replyHeader,
                         onTap: onPhotoTap
@@ -41,7 +39,6 @@ struct MessageBubbleView: View {
                     VideoBubbleView(
                         video: video,
                         caption: bubble.body,
-                        time: bubble.time,
                         isOutgoing: bubble.isOutgoing,
                         replyHeader: bubble.replyHeader,
                         onTap: { onVideoTap(video) }
@@ -49,7 +46,6 @@ struct MessageBubbleView: View {
                 } else if let note = bubble.videoNote {
                     VideoNoteBubbleView(
                         note: note,
-                        time: bubble.time,
                         isOutgoing: bubble.isOutgoing,
                         replyHeader: bubble.replyHeader,
                         onTap: { onVideoNoteTap(note) }
@@ -58,38 +54,31 @@ struct MessageBubbleView: View {
                     VoiceNoteBubbleView(
                         note: voice,
                         caption: bubble.body,
-                        time: bubble.time,
                         isOutgoing: bubble.isOutgoing,
-                        replyHeader: bubble.replyHeader,
-                        sendingState: bubble.sendingState
+                        replyHeader: bubble.replyHeader
                     )
                 } else if let audio = bubble.audio {
                     AudioBubbleView(
                         audio: audio,
                         caption: bubble.body,
-                        time: bubble.time,
                         isOutgoing: bubble.isOutgoing,
-                        replyHeader: bubble.replyHeader,
-                        sendingState: bubble.sendingState
+                        replyHeader: bubble.replyHeader
                     )
                 } else if let document = bubble.document {
                     DocumentBubbleView(
                         document: document,
-                        time: bubble.time,
                         isOutgoing: bubble.isOutgoing,
                         replyHeader: bubble.replyHeader
                     )
                 } else if let location = bubble.location {
                     LocationBubbleView(
                         location: location,
-                        time: bubble.time,
                         isOutgoing: bubble.isOutgoing,
                         replyHeader: bubble.replyHeader
                     )
                 } else if let poll = bubble.poll {
                     PollBubbleView(
                         poll: poll,
-                        time: bubble.time,
                         isOutgoing: bubble.isOutgoing,
                         replyHeader: bubble.replyHeader,
                         onVote: { onPollTap(bubble.messageId, poll) }
@@ -101,14 +90,7 @@ struct MessageBubbleView: View {
                     textBubbleContent
                 }
             }
-            .overlay(alignment: .bottomLeading) {
-                if bubble.isUnreadOutgoing {
-                    Circle()
-                        .fill(Color.accentColor)
-                        .frame(width: 7, height: 7)
-                        .offset(x: -11)
-                }
-            }
+            .overlay(alignment: .bottomLeading) { statusIndicator }
             if !bubble.isOutgoing { Spacer(minLength: 16) }
         }
         .accessibilityIdentifier("bubble.\(bubble.messageId)")
@@ -127,42 +109,42 @@ struct MessageBubbleView: View {
             if let header = bubble.replyHeader {
                 ReplyHeaderView(header: header, style: BubbleStyle.resolve(isOutgoing: bubble.isOutgoing))
             }
-            HStack(alignment: .lastTextBaseline, spacing: 4) {
-                Text(bubble.body)
-                    .font(.caption)
-                    .fixedSize(horizontal: false, vertical: true)
-                HStack(spacing: 2) {
-                    Text(bubble.time)
-                        .font(.system(size: 8))
-                        .foregroundStyle(style.secondary)
-                    if bubble.isOutgoing {
-                        sendStateGlyph
-                    }
-                }
-            }
+            Text(bubble.body)
+                .font(.caption)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, 8)
+        .padding(.horizontal, 9)
         .padding(.vertical, 4)
+        .frame(minWidth: BubbleShape.minSize, minHeight: BubbleShape.minSize)
         .background(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: BubbleShape.cornerRadius)
                 .fill(style.fill)
         )
         .foregroundStyle(style.content)
     }
 
+    /// The single outgoing delivery indicator, in the bubble's leading gutter.
+    /// Glyphs sit slightly further left than the dot so they clear the bubble edge.
     @ViewBuilder
-    private var sendStateGlyph: some View {
-        switch bubble.sendingState {
-        case .sent:
+    private var statusIndicator: some View {
+        switch bubble.outgoingStatus {
+        case .none:
             EmptyView()
+        case .unread:
+            Circle()
+                .fill(Color.accentColor)
+                .frame(width: 7, height: 7)
+                .offset(x: -11)
         case .pending:
             Image(systemName: "clock")
                 .font(.system(size: 8))
                 .foregroundStyle(Color.white.opacity(0.7))
+                .offset(x: -13)
         case .failed:
             Image(systemName: "exclamationmark.circle.fill")
                 .font(.system(size: 8))
                 .foregroundStyle(.red)
+                .offset(x: -13)
         }
     }
 }
@@ -171,7 +153,6 @@ struct MessageBubbleView: View {
 private let previewSampleBubble = MessageBubble(
     messageId: 1, isOutgoing: false, senderName: "Alice",
     body: "this is a reply to text",
-    time: "12:34",
     photo: nil, video: nil, videoNote: nil, voiceNote: nil, audio: nil, document: nil, sticker: nil, location: nil, poll: nil,
     sendingState: .sent,
     replyHeader: ReplyHeader(
@@ -197,7 +178,6 @@ private let previewSampleBubble = MessageBubble(
         bubble: MessageBubble(
             messageId: 2, isOutgoing: true, senderName: nil,
             body: "ok",
-            time: "12:35",
             photo: nil, video: nil, videoNote: nil, voiceNote: nil, audio: nil, document: nil, sticker: nil, location: nil, poll: nil,
             sendingState: .sent,
             replyHeader: ReplyHeader(
@@ -219,7 +199,6 @@ private let previewSampleBubble = MessageBubble(
         bubble: MessageBubble(
             messageId: 3, isOutgoing: false, senderName: "Alice",
             body: "colored name above me",
-            time: "12:36",
             photo: nil, video: nil, videoNote: nil, voiceNote: nil, audio: nil, document: nil, sticker: nil, location: nil, poll: nil,
             sendingState: .sent,
             replyHeader: nil,
@@ -236,7 +215,7 @@ private let previewSampleBubble = MessageBubble(
 #Preview("Emoji only — incoming 1") {
     MessageBubbleView(
         bubble: MessageBubble(
-            messageId: 10, isOutgoing: false, senderName: nil, body: "🥰", time: "12:40",
+            messageId: 10, isOutgoing: false, senderName: nil, body: "🥰",
             photo: nil, video: nil, videoNote: nil, voiceNote: nil, audio: nil, document: nil,
             sticker: nil, location: nil, poll: nil, sendingState: .sent, replyHeader: nil
         ),
@@ -250,7 +229,6 @@ private let previewSampleBubble = MessageBubble(
         bubble: MessageBubble(
             messageId: 12, isOutgoing: true, senderName: nil,
             body: "delivered but not yet read",
-            time: "12:42",
             photo: nil, video: nil, videoNote: nil, voiceNote: nil, audio: nil, document: nil,
             sticker: nil, location: nil, poll: nil, sendingState: .sent, replyHeader: nil,
             isUnreadOutgoing: true
@@ -263,7 +241,7 @@ private let previewSampleBubble = MessageBubble(
 #Preview("Emoji only — outgoing 3") {
     MessageBubbleView(
         bubble: MessageBubble(
-            messageId: 11, isOutgoing: true, senderName: nil, body: "😀🎉🥰", time: "12:41",
+            messageId: 11, isOutgoing: true, senderName: nil, body: "😀🎉🥰",
             photo: nil, video: nil, videoNote: nil, voiceNote: nil, audio: nil, document: nil,
             sticker: nil, location: nil, poll: nil, sendingState: .sent, replyHeader: nil
         ),

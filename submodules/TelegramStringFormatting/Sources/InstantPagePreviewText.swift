@@ -123,8 +123,9 @@ extension InstantPageBlock {
                 result.append(item.previewText())
             }
             return result
-        case let .blockQuote(text, caption):
-            return text.previewText() + caption.previewText()
+        case let .blockQuote(blocks, caption):
+            let body = blocks.map { $0.previewText() }.joined(separator: " ")
+            return body + caption.previewText()
         case let .pullQuote(text, caption):
             return text.previewText() + caption.previewText()
         case .image(_, _, _, _):

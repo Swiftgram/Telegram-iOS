@@ -39,8 +39,8 @@ private func markdownString(from block: InstantPageBlock) -> String? {
     case let .preformatted(text, language):
         let language = language ?? ""
         return "```\(language)\n\(markdownInline(from: text))\n```"
-    case let .blockQuote(text, _):
-        return markdownBlockQuote(text)
+    case let .blockQuote(blocks, _):
+        return markdownBlockQuoteBlocks(blocks)
     case let .pullQuote(text, _):
         return markdownBlockQuote(text)
     case let .list(items, ordered):
@@ -67,6 +67,19 @@ private func markdownBlockQuote(_ text: RichText) -> String {
     let body = markdownInline(from: text)
     let lines = body.split(separator: "\n", omittingEmptySubsequences: false)
     return lines.map { "> \($0)" }.joined(separator: "\n")
+}
+
+private func markdownBlockQuoteBlocks(_ blocks: [InstantPageBlock]) -> String {
+    var lines: [String] = []
+    for block in blocks {
+        guard let body = markdownString(from: block) else {
+            continue
+        }
+        for line in body.split(separator: "\n", omittingEmptySubsequences: false) {
+            lines.append("> \(String(line))")
+        }
+    }
+    return lines.joined(separator: "\n")
 }
 
 private func markdownInline(from richText: RichText) -> String {

@@ -30,7 +30,7 @@ struct ReviewVoiceBubble: View {
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
         .frame(maxWidth: 200, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.accentColor))
+        .background(RoundedRectangle(cornerRadius: BubbleShape.cornerRadius).fill(Color.accentColor))
         .foregroundStyle(.white)
         .contentShape(Rectangle())
         .onTapGesture { controller.toggle(note: note) }

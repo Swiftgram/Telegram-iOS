@@ -149,28 +149,36 @@ public extension Api {
     indirect enum PageListOrderedItem: TypeConstructorDescription {
         public class Cons_pageListOrderedItemBlocks: TypeConstructorDescription {
             public var flags: Int32
-            public var num: String
+            public var num: String?
             public var blocks: [Api.PageBlock]
-            public init(flags: Int32, num: String, blocks: [Api.PageBlock]) {
+            public var value: Int32?
+            public var type: String?
+            public init(flags: Int32, num: String?, blocks: [Api.PageBlock], value: Int32?, type: String?) {
                 self.flags = flags
                 self.num = num
                 self.blocks = blocks
+                self.value = value
+                self.type = type
             }
             public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("pageListOrderedItemBlocks", [("flags", ConstructorParameterDescription(self.flags)), ("num", ConstructorParameterDescription(self.num)), ("blocks", ConstructorParameterDescription(self.blocks))])
+                return ("pageListOrderedItemBlocks", [("flags", ConstructorParameterDescription(self.flags)), ("num", ConstructorParameterDescription(self.num)), ("blocks", ConstructorParameterDescription(self.blocks)), ("value", ConstructorParameterDescription(self.value)), ("type", ConstructorParameterDescription(self.type))])
             }
         }
         public class Cons_pageListOrderedItemText: TypeConstructorDescription {
             public var flags: Int32
-            public var num: String
+            public var num: String?
             public var text: Api.RichText
-            public init(flags: Int32, num: String, text: Api.RichText) {
+            public var value: Int32?
+            public var type: String?
+            public init(flags: Int32, num: String?, text: Api.RichText, value: Int32?, type: String?) {
                 self.flags = flags
                 self.num = num
                 self.text = text
+                self.value = value
+                self.type = type
             }
             public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
-                return ("pageListOrderedItemText", [("flags", ConstructorParameterDescription(self.flags)), ("num", ConstructorParameterDescription(self.num)), ("text", ConstructorParameterDescription(self.text))])
+                return ("pageListOrderedItemText", [("flags", ConstructorParameterDescription(self.flags)), ("num", ConstructorParameterDescription(self.num)), ("text", ConstructorParameterDescription(self.text)), ("value", ConstructorParameterDescription(self.value)), ("type", ConstructorParameterDescription(self.type))])
             }
         }
         case pageListOrderedItemBlocks(Cons_pageListOrderedItemBlocks)
@@ -180,23 +188,39 @@ public extension Api {
             switch self {
             case .pageListOrderedItemBlocks(let _data):
                 if boxed {
-                    buffer.appendInt32(1109995988)
+                    buffer.appendInt32(-1879910928)
                 }
                 serializeInt32(_data.flags, buffer: buffer, boxed: false)
-                serializeString(_data.num, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 2) != 0 {
+                    serializeString(_data.num!, buffer: buffer, boxed: false)
+                }
                 buffer.appendInt32(481674261)
                 buffer.appendInt32(Int32(_data.blocks.count))
                 for item in _data.blocks {
                     item.serialize(buffer, true)
                 }
+                if Int(_data.flags) & Int(1 << 3) != 0 {
+                    serializeInt32(_data.value!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 4) != 0 {
+                    serializeString(_data.type!, buffer: buffer, boxed: false)
+                }
                 break
             case .pageListOrderedItemText(let _data):
                 if boxed {
-                    buffer.appendInt32(-851533770)
+                    buffer.appendInt32(352522633)
                 }
                 serializeInt32(_data.flags, buffer: buffer, boxed: false)
-                serializeString(_data.num, buffer: buffer, boxed: false)
+                if Int(_data.flags) & Int(1 << 2) != 0 {
+                    serializeString(_data.num!, buffer: buffer, boxed: false)
+                }
                 _data.text.serialize(buffer, true)
+                if Int(_data.flags) & Int(1 << 3) != 0 {
+                    serializeInt32(_data.value!, buffer: buffer, boxed: false)
+                }
+                if Int(_data.flags) & Int(1 << 4) != 0 {
+                    serializeString(_data.type!, buffer: buffer, boxed: false)
+                }
                 break
             }
         }
@@ -204,9 +228,9 @@ public extension Api {
         public func descriptionFields() -> (String, [(String, ConstructorParameterDescription)]) {
             switch self {
             case .pageListOrderedItemBlocks(let _data):
-                return ("pageListOrderedItemBlocks", [("flags", ConstructorParameterDescription(_data.flags)), ("num", ConstructorParameterDescription(_data.num)), ("blocks", ConstructorParameterDescription(_data.blocks))])
+                return ("pageListOrderedItemBlocks", [("flags", ConstructorParameterDescription(_data.flags)), ("num", ConstructorParameterDescription(_data.num)), ("blocks", ConstructorParameterDescription(_data.blocks)), ("value", ConstructorParameterDescription(_data.value)), ("type", ConstructorParameterDescription(_data.type))])
             case .pageListOrderedItemText(let _data):
-                return ("pageListOrderedItemText", [("flags", ConstructorParameterDescription(_data.flags)), ("num", ConstructorParameterDescription(_data.num)), ("text", ConstructorParameterDescription(_data.text))])
+                return ("pageListOrderedItemText", [("flags", ConstructorParameterDescription(_data.flags)), ("num", ConstructorParameterDescription(_data.num)), ("text", ConstructorParameterDescription(_data.text)), ("value", ConstructorParameterDescription(_data.value)), ("type", ConstructorParameterDescription(_data.type))])
             }
         }
 
@@ -214,16 +238,28 @@ public extension Api {
             var _1: Int32?
             _1 = reader.readInt32()
             var _2: String?
-            _2 = parseString(reader)
+            if Int(_1 ?? 0) & Int(1 << 2) != 0 {
+                _2 = parseString(reader)
+            }
             var _3: [Api.PageBlock]?
             if let _ = reader.readInt32() {
                 _3 = Api.parseVector(reader, elementSignature: 0, elementType: Api.PageBlock.self)
             }
+            var _4: Int32?
+            if Int(_1 ?? 0) & Int(1 << 3) != 0 {
+                _4 = reader.readInt32()
+            }
+            var _5: String?
+            if Int(_1 ?? 0) & Int(1 << 4) != 0 {
+                _5 = parseString(reader)
+            }
             let _c1 = _1 != nil
-            let _c2 = _2 != nil
+            let _c2 = (Int(_1 ?? 0) & Int(1 << 2) == 0) || _2 != nil
             let _c3 = _3 != nil
-            if _c1 && _c2 && _c3 {
-                return Api.PageListOrderedItem.pageListOrderedItemBlocks(Cons_pageListOrderedItemBlocks(flags: _1!, num: _2!, blocks: _3!))
+            let _c4 = (Int(_1 ?? 0) & Int(1 << 3) == 0) || _4 != nil
+            let _c5 = (Int(_1 ?? 0) & Int(1 << 4) == 0) || _5 != nil
+            if _c1 && _c2 && _c3 && _c4 && _c5 {
+                return Api.PageListOrderedItem.pageListOrderedItemBlocks(Cons_pageListOrderedItemBlocks(flags: _1!, num: _2, blocks: _3!, value: _4, type: _5))
             }
             else {
                 return nil
@@ -233,16 +269,28 @@ public extension Api {
             var _1: Int32?
             _1 = reader.readInt32()
             var _2: String?
-            _2 = parseString(reader)
+            if Int(_1 ?? 0) & Int(1 << 2) != 0 {
+                _2 = parseString(reader)
+            }
             var _3: Api.RichText?
             if let signature = reader.readInt32() {
                 _3 = Api.parse(reader, signature: signature) as? Api.RichText
             }
+            var _4: Int32?
+            if Int(_1 ?? 0) & Int(1 << 3) != 0 {
+                _4 = reader.readInt32()
+            }
+            var _5: String?
+            if Int(_1 ?? 0) & Int(1 << 4) != 0 {
+                _5 = parseString(reader)
+            }
             let _c1 = _1 != nil
-            let _c2 = _2 != nil
+            let _c2 = (Int(_1 ?? 0) & Int(1 << 2) == 0) || _2 != nil
             let _c3 = _3 != nil
-            if _c1 && _c2 && _c3 {
-                return Api.PageListOrderedItem.pageListOrderedItemText(Cons_pageListOrderedItemText(flags: _1!, num: _2!, text: _3!))
+            let _c4 = (Int(_1 ?? 0) & Int(1 << 3) == 0) || _4 != nil
+            let _c5 = (Int(_1 ?? 0) & Int(1 << 4) == 0) || _5 != nil
+            if _c1 && _c2 && _c3 && _c4 && _c5 {
+                return Api.PageListOrderedItem.pageListOrderedItemText(Cons_pageListOrderedItemText(flags: _1!, num: _2, text: _3!, value: _4, type: _5))
             }
             else {
                 return nil

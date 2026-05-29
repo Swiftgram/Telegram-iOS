@@ -91,8 +91,9 @@ table InstantPageBlock_List {
 }
 
 table InstantPageBlock_BlockQuote {
-    text:RichText (id: 0, required);
+    text:RichText (id: 0);
     caption:RichText (id: 1, required);
+    blocks:[InstantPageBlock] (id: 2);
 }
 
 table InstantPageBlock_PullQuote {

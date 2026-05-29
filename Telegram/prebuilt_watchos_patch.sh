@@ -2,32 +2,49 @@
 # Patch + sign worker for the apple_prebuilt_watchos_application Bazel rule (action 2 of 2).
 #
 # Takes the unsigned, placeholder-version watch .app archive produced by
-# prebuilt_watchos_compile.sh, rewrites the four per-build Info.plist values
-# (CFBundleShortVersionString, CFBundleVersion, TG_API_ID, TG_API_HASH) — none of
-# which affect the compiled binary — then — if a provisioning profile is supplied —
-# codesigns the app and its nested frameworks with the watchkitapp provisioning
-# profile and a matching identity, and finally zips the .app into the rule's output
-# archive.
+# prebuilt_watchos_compile.sh, rewrites the six per-build Info.plist values
+# (CFBundleShortVersionString, CFBundleVersion, TG_API_ID, TG_API_HASH,
+# CFBundleIdentifier, WKCompanionAppBundleIdentifier) — none of which affect the
+# compiled binary — then — if a provisioning profile is supplied — codesigns the
+# app and its nested frameworks with the watchkitapp provisioning profile and a
+# matching identity, and finally zips the .app into the rule's output archive.
+#
+# Bundle-id rewriting is needed because xcodebuild bakes the snapshot's pbxproj
+# PRODUCT_BUNDLE_IDENTIFIER (ph.telegra.Telegraph.watchkitapp) into the compiled
+# Info.plist, and WKCompanionAppBundleIdentifier is hardcoded in the snapshot's
+# source Info.plist — but the host ios_application's bundle id varies by codesigning
+# configuration (e.g. org.telegram.TelegramInternal for development) and rules_apple
+# requires the child CFBundleIdentifier to start with the host bundle id and
+# WKCompanionAppBundleIdentifier to equal it (bundle_verification_targets in
+# ios_rules.bzl). Doing the rewrite here keeps the expensive xcodebuild action
+# cached across host-bundle-id changes.
 #
 # Splitting this from the compile step lets Bazel cache the (expensive) xcodebuild
-# whenever only the version/build number/api/identity change.
+# whenever only the version/build number/api/identity/bundle-id change.
 #
 # The host ios_application embeds this archive under Watch/ and re-seals the host;
 # it does NOT re-sign the watch app, so the watch signing must happen here.
 #
 # Args:
-#   $1 input_zip      Compiled (unsigned, placeholder-version) .app archive from action 1
-#   $2 output_zip     Path (declared by Bazel) to write the final .app archive to
-#   $3 api_id         TG_API_ID Info.plist value
-#   $4 api_hash       TG_API_HASH Info.plist value
-#   $5 identity       Codesigning identity (SHA1 hash); empty => derived from $6's cert
-#   $6 profile        Path to the watchkitapp .mobileprovision; empty => unsigned build
-#   $7 infoplist_out  Path (declared by Bazel) to copy the patched Info.plist to
-#   $8 versions_json  versions.json (key 'app' => CFBundleShortVersionString)
-#   $9 build_number   CFBundleVersion
+#   $1  input_zip          Compiled (unsigned, placeholder-version) .app archive from action 1
+#   $2  output_zip         Path (declared by Bazel) to write the final .app archive to
+#   $3  api_id             TG_API_ID Info.plist value
+#   $4  api_hash           TG_API_HASH Info.plist value
+#   $5  identity           Codesigning identity (SHA1 hash); empty => derived from $6's cert
+#   $6  profile            Path to the watchkitapp .mobileprovision; empty => unsigned build
+#   $7  infoplist_out      Path (declared by Bazel) to copy the patched Info.plist to
+#   $8  versions_json      versions.json (key 'app' => CFBundleShortVersionString)
+#   $9  build_number       CFBundleVersion
+#   $10 host_bundle_id     WKCompanionAppBundleIdentifier value (host app bundle id)
+#   $11 watch_bundle_id    CFBundleIdentifier value (must be "<host_bundle_id>.watchkitapp")
 set -euo pipefail
 
-IN_ZIP="$1"; OUT_ZIP="$2"; API_ID="$3"; API_HASH="$4"; IDENTITY="${5:-}"; PROFILE="${6:-}"; INFOPLIST_OUT="${7:-}"; VERSIONS_JSON="${8:-}"; BUILD_NUMBER="${9:-1}"
+IN_ZIP="$1"; OUT_ZIP="$2"; API_ID="$3"; API_HASH="$4"; IDENTITY="${5:-}"; PROFILE="${6:-}"; INFOPLIST_OUT="${7:-}"; VERSIONS_JSON="${8:-}"; BUILD_NUMBER="${9:-1}"; HOST_BUNDLE_ID="${10:-}"; WATCH_BUNDLE_ID="${11:-}"
+
+if [ -z "$HOST_BUNDLE_ID" ] || [ -z "$WATCH_BUNDLE_ID" ]; then
+  echo "error: host_bundle_id and watch_bundle_id must both be supplied (got host=$HOST_BUNDLE_ID watch=$WATCH_BUNDLE_ID)" >&2
+  exit 1
+fi
 
 # Match the host app's version (rules_apple requires the embedded watch app's
 # CFBundleShortVersionString/CFBundleVersion to equal the parent's).
@@ -46,15 +63,20 @@ if [ -z "$APP" ]; then
   exit 1
 fi
 
-# Overwrite the placeholder values baked in at compile time. All four keys already
+# Overwrite the placeholder values baked in at compile time. All six keys already
 # exist in the compiled (binary-format) Info.plist, so PlistBuddy Set preserves their
 # (string) type — matching what $(...) substitution produced and what Secrets.swift
-# expects from Bundle.main.object(forInfoDictionaryKey:).
+# expects from Bundle.main.object(forInfoDictionaryKey:). The bundle-id keys track
+# the host's `telegram_bundle_id` (see the file header for why); xcodebuild bakes
+# `ph.telegra.Telegraph.watchkitapp` / `ph.telegra.Telegraph` here from the
+# snapshot's pbxproj/Info.plist regardless of what host the rest of the build uses.
 PLIST="$APP/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $MARKETING_VERSION" "$PLIST"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$PLIST"
 /usr/libexec/PlistBuddy -c "Set :TG_API_ID $API_ID" "$PLIST"
 /usr/libexec/PlistBuddy -c "Set :TG_API_HASH $API_HASH" "$PLIST"
+/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $WATCH_BUNDLE_ID" "$PLIST"
+/usr/libexec/PlistBuddy -c "Set :WKCompanionAppBundleIdentifier $HOST_BUNDLE_ID" "$PLIST"
 
 # Expose the patched watch Info.plist (the host reads it to verify the companion
 # bundle-id linkage and the child version). Codesigning does not alter Info.plist

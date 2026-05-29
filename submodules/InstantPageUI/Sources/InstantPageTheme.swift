@@ -163,16 +163,28 @@ public final class InstantPageTheme {
     }
 
     func headingTextAttributes(level: Int32, link: Bool) -> InstantPageTextAttributes {
-        let clampedLevel = max(Int32(3), min(level, Int32(6)))
-        let subheaderAttributes = self.textCategories.subheader
-        guard clampedLevel > 3 else {
-            return subheaderAttributes.withUnderline(link)
+        let clampedLevel = max(Int32(1), min(level, Int32(6)))
+
+        // H1/H2 reuse the theme's existing big-text categories verbatim, so they
+        // pick up the theme color, line-spacing, and any dynamic-type scaling.
+        switch clampedLevel {
+        case 1:
+            return self.textCategories.header.withUnderline(link)
+        case 2:
+            return self.textCategories.subheader.withUnderline(link)
+        default:
+            break
         }
 
+        // H3–H6: serif at a per-level base size, scaled by the same dynamic-type
+        // multiplier the subheader category uses (subheader.size / 19.0).
+        let subheaderAttributes = self.textCategories.subheader
         let baseSize: CGFloat
         switch clampedLevel {
-        case 4:
+        case 3:
             baseSize = 17.0
+        case 4:
+            baseSize = 16.0
         case 5:
             baseSize = 15.0
         default:

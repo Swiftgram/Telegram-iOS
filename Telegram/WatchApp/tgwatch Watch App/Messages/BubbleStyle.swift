@@ -1,9 +1,8 @@
 import SwiftUI
 
-/// Resolved colors for a message-bubble surface. Incoming bubbles are a fixed light (white)
-/// surface with dark content; outgoing are the accent surface with white content. Colors are
-/// FIXED (non-adaptive) on purpose: watchOS runs this app in permanent dark mode, so `.primary`
-/// would resolve to white and vanish on the white incoming surface.
+/// Resolved colors for a message-bubble surface. Both directions use a dark fixed surface
+/// with white content. Colors are FIXED (non-adaptive) on purpose: watchOS runs this app in
+/// permanent dark mode.
 struct BubbleStyle: Equatable {
     let fill: Color
     let content: Color
@@ -13,15 +12,15 @@ struct BubbleStyle: Equatable {
     let playIcon: Color
 
     static let incoming = BubbleStyle(
-        fill: .white,
-        content: .black,
-        secondary: Color.black.opacity(0.5),
+        fill: Color(red: 40 / 255, green: 40 / 255, blue: 40 / 255),
+        content: .white,
+        secondary: Color.white.opacity(0.7),
         replyBar: .accentColor,
         playFill: .accentColor,
         playIcon: .white
     )
     static let outgoing = BubbleStyle(
-        fill: .accentColor,
+        fill: Color(red: 19 / 255, green: 44 / 255, blue: 73 / 255),
         content: .white,
         secondary: Color.white.opacity(0.7),
         replyBar: Color.white.opacity(0.7),

@@ -2,13 +2,12 @@ import SwiftUI
 import TDLibKit
 
 /// One sticker bubble. No rounded-rect chat-bubble chrome — sticker renders directly
-/// against the chat background, with sender name above (incoming groups only) and time
-/// stamp below. Drives the same visibility-based download flow as PhotoBubbleView.
+/// against the chat background, with sender name above (incoming groups only).
+/// Drives the same visibility-based download flow as PhotoBubbleView.
 struct StickerBubbleView: View {
     let sticker: StickerVisual
     let senderName: String?
     var senderColorIndex: Int? = nil
-    let time: String
     let isOutgoing: Bool
     let replyHeader: ReplyHeader?
 
@@ -47,10 +46,6 @@ struct StickerBubbleView: View {
                 .onScrollVisibilityChange(threshold: 0.01) { visible in
                     handleVisibility(visible)
                 }
-            Text(time)
-                .font(.system(size: 8))
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 4)
         }
     }
 
@@ -76,8 +71,9 @@ struct StickerBubbleView: View {
         .font(.caption)
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
+        .frame(minWidth: BubbleShape.minSize, minHeight: BubbleShape.minSize)
         .background(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: BubbleShape.cornerRadius)
                 .fill(style.fill)
         )
         .foregroundStyle(style.content)
@@ -182,7 +178,7 @@ private func previewSticker(format: StickerFormatKind, withFile: Bool, withThumb
 #Preview("WEBP — downloaded") {
     StickerBubbleView(
         sticker: previewSticker(format: .webp, withFile: true),
-        senderName: nil, time: "12:34", isOutgoing: false, replyHeader: nil
+        senderName: nil, isOutgoing: false, replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -191,7 +187,7 @@ private func previewSticker(format: StickerFormatKind, withFile: Bool, withThumb
 #Preview("WEBP — downloading, thumbnail available") {
     StickerBubbleView(
         sticker: previewSticker(format: .webp, withFile: false, withThumb: true),
-        senderName: nil, time: "12:34", isOutgoing: false, replyHeader: nil
+        senderName: nil, isOutgoing: false, replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -200,7 +196,7 @@ private func previewSticker(format: StickerFormatKind, withFile: Bool, withThumb
 #Preview("WEBP — downloading, no thumbnail") {
     StickerBubbleView(
         sticker: previewSticker(format: .webp, withFile: false),
-        senderName: nil, time: "12:34", isOutgoing: false, replyHeader: nil
+        senderName: nil, isOutgoing: false, replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -209,7 +205,7 @@ private func previewSticker(format: StickerFormatKind, withFile: Bool, withThumb
 #Preview("TGS — downloaded") {
     StickerBubbleView(
         sticker: previewSticker(format: .tgs, withFile: true),
-        senderName: nil, time: "12:34", isOutgoing: false, replyHeader: nil
+        senderName: nil, isOutgoing: false, replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -218,7 +214,7 @@ private func previewSticker(format: StickerFormatKind, withFile: Bool, withThumb
 #Preview("TGS — downloading, thumbnail available") {
     StickerBubbleView(
         sticker: previewSticker(format: .tgs, withFile: false, withThumb: true),
-        senderName: nil, time: "12:34", isOutgoing: false, replyHeader: nil
+        senderName: nil, isOutgoing: false, replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -227,7 +223,7 @@ private func previewSticker(format: StickerFormatKind, withFile: Bool, withThumb
 #Preview("WEBM — unsupported fallback") {
     StickerBubbleView(
         sticker: previewSticker(format: .unsupported, withFile: false),
-        senderName: nil, time: "12:34", isOutgoing: false, replyHeader: nil
+        senderName: nil, isOutgoing: false, replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -236,7 +232,7 @@ private func previewSticker(format: StickerFormatKind, withFile: Bool, withThumb
 #Preview("Group sticker — sender name above") {
     StickerBubbleView(
         sticker: previewSticker(format: .webp, withFile: true),
-        senderName: "Alice", time: "12:34", isOutgoing: false, replyHeader: nil
+        senderName: "Alice", isOutgoing: false, replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -246,7 +242,7 @@ private func previewSticker(format: StickerFormatKind, withFile: Bool, withThumb
     StickerBubbleView(
         sticker: previewSticker(format: .webp, withFile: true),
         senderName: "Alice", senderColorIndex: paletteIndex(for: 200),
-        time: "12:34", isOutgoing: false, replyHeader: nil
+        isOutgoing: false, replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -255,7 +251,7 @@ private func previewSticker(format: StickerFormatKind, withFile: Bool, withThumb
 #Preview("Outgoing sticker") {
     StickerBubbleView(
         sticker: previewSticker(format: .webp, withFile: true),
-        senderName: nil, time: "12:34", isOutgoing: true, replyHeader: nil
+        senderName: nil, isOutgoing: true, replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -275,7 +271,7 @@ private func previewReplyHeader(toText: String = "anchor", isOutgoing: Bool = fa
 #Preview("Sticker WEBP — with reply card above") {
     StickerBubbleView(
         sticker: previewSticker(format: .webp, withFile: true),
-        senderName: nil, time: "12:34", isOutgoing: false,
+        senderName: nil, isOutgoing: false,
         replyHeader: previewReplyHeader(toText: "anchor message")
     )
     .bubblePreview()
@@ -285,7 +281,7 @@ private func previewReplyHeader(toText: String = "anchor", isOutgoing: Bool = fa
 #Preview("Sticker TGS — with reply card above") {
     StickerBubbleView(
         sticker: previewSticker(format: .tgs, withFile: true),
-        senderName: nil, time: "12:34", isOutgoing: false,
+        senderName: nil, isOutgoing: false,
         replyHeader: previewReplyHeader(toText: "look at this clip")
     )
     .bubblePreview()
@@ -295,7 +291,7 @@ private func previewReplyHeader(toText: String = "anchor", isOutgoing: Bool = fa
 #Preview("Sticker outgoing — with reply card above") {
     StickerBubbleView(
         sticker: previewSticker(format: .webp, withFile: true),
-        senderName: nil, time: "12:34", isOutgoing: true,
+        senderName: nil, isOutgoing: true,
         replyHeader: previewReplyHeader(toText: "thanks!", isOutgoing: true)
     )
     .bubblePreview()

@@ -19,6 +19,12 @@ final class PeerNameColorChatPreviewItem: ListViewItem, ItemListItem, ListItemCo
             if lhs.text != rhs.text {
                 return false
             }
+            if lhs.entities != rhs.entities {
+                return false
+            }
+            if lhs.richText != rhs.richText {
+                return false
+            }
             if lhs.media.count != rhs.media.count {
                 return false
             }
@@ -35,6 +41,7 @@ final class PeerNameColorChatPreviewItem: ListViewItem, ItemListItem, ListItemCo
         
         let text: String
         let entities: TextEntitiesMessageAttribute?
+        let richText: RichTextMessageAttribute?
         let media: [EngineRawMedia]
         let replyMarkup: ReplyMarkupMessageAttribute?
         let botAddress: String
@@ -206,6 +213,9 @@ final class PeerNameColorChatPreviewItemNode: ListViewItemNode {
                 var attributes: [EngineMessage.Attribute] = []
                 if let entities = messageItem.entities {
                     attributes.append(entities)
+                }
+                if let richText = messageItem.richText {
+                    attributes.append(richText)
                 }
                 if let replyMarkup = messageItem.replyMarkup {
                     attributes.append(replyMarkup)

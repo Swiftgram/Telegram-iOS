@@ -137,6 +137,7 @@ private final class SheetContent: CombinedComponent {
                         
             var text: String = ""
             var entities: TextEntitiesMessageAttribute?
+            var richText: RichTextMessageAttribute?
             var media: [EngineRawMedia] = []
             var replyMarkup: ReplyMarkupMessageAttribute?
             
@@ -152,8 +153,9 @@ private final class SheetContent: CombinedComponent {
                         media = [image]
                     }
                     replyMarkup = replyMarkupValue
-                case let .text(textValue, entitiesValue, disableUrlPreview, previewParameters, replyMarkupValue):
+                case let .text(textValue, entitiesValue, richTextValue, disableUrlPreview, previewParameters, replyMarkupValue):
                     text = textValue
+                    richText = richTextValue
                     entities = entitiesValue
                     let _ = disableUrlPreview
                     let _ = previewParameters
@@ -181,9 +183,10 @@ private final class SheetContent: CombinedComponent {
                         media = [content]
                     }
                     replyMarkup = replyMarkupValue
-                case let .text(textValue, entitiesValue, disableUrlPreview, previewParameters, replyMarkupValue):
+                case let .text(textValue, entitiesValue, richTextValue, disableUrlPreview, previewParameters, replyMarkupValue):
                     text = textValue
                     entities = entitiesValue
+                    richText = richTextValue
                     let _ = disableUrlPreview
                     let _ = previewParameters
                     replyMarkup = replyMarkupValue
@@ -206,6 +209,7 @@ private final class SheetContent: CombinedComponent {
             let messageItem = PeerNameColorChatPreviewItem.MessageItem(
                 text: text,
                 entities: entities,
+                richText: richText,
                 media: media,
                 replyMarkup: replyMarkup,
                 botAddress: component.botAddress
