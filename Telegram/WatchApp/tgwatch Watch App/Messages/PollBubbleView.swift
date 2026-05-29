@@ -2,12 +2,11 @@ import SwiftUI
 
 /// Renders one poll / quiz bubble inside the standard gray-incoming / accent-outgoing
 /// chrome. Shows the question, option rows (with result bars + percentages once
-/// `resultsVisible`), quiz correct/chosen markers + explanation, a voter-count + time
-/// footer, and a "Vote" button when the poll is still actionable. Tapping Vote calls
+/// `resultsVisible`), quiz correct/chosen markers + explanation, a voter-count footer,
+/// and a "Vote" button when the poll is still actionable. Tapping Vote calls
 /// `onVote`, which opens the dedicated `PollVoteView`.
 struct PollBubbleView: View {
     let poll: PollVisual
-    let time: String
     let isOutgoing: Bool
     let replyHeader: ReplyHeader?
     let onVote: () -> Void
@@ -63,18 +62,14 @@ struct PollBubbleView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.mini)
             }
-            HStack(spacing: 4) {
-                Text(voterCountLabel)
-                Spacer(minLength: 0)
-                Text(time)
-            }
-            .font(.system(size: 9))
-            .foregroundStyle(secondaryColor)
+            Text(voterCountLabel)
+                .font(.system(size: 9))
+                .foregroundStyle(secondaryColor)
         }
         .padding(8)
-        .frame(maxWidth: maxWidth, alignment: .leading)
+        .frame(minWidth: BubbleShape.minSize, maxWidth: maxWidth, minHeight: BubbleShape.minSize, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: BubbleShape.cornerRadius)
                 .fill(style.fill)
         )
         .foregroundStyle(style.content)
@@ -147,7 +142,7 @@ private func previewOption(
             totalVoterCount: 0, hasVoted: false, explanation: nil,
             options: [previewOption("Red", position: 0), previewOption("Green", position: 1), previewOption("Blue", position: 2)]
         ),
-        time: "12:34", isOutgoing: false, replyHeader: nil, onVote: {}
+        isOutgoing: false, replyHeader: nil, onVote: {}
     ).bubblePreview()
 }
 
@@ -160,7 +155,7 @@ private func previewOption(
             options: [previewOption("Red", position: 0, pct: 75, chosen: true),
                       previewOption("Green", position: 1, pct: 25)]
         ),
-        time: "12:35", isOutgoing: true, replyHeader: nil, onVote: {}
+        isOutgoing: true, replyHeader: nil, onVote: {}
     ).bubblePreview()
 }
 
@@ -174,7 +169,7 @@ private func previewOption(
                       previewOption("Paris", position: 1, pct: 60, correct: true),
                       previewOption("Rome", position: 2, pct: 10, correct: false)]
         ),
-        time: "12:36", isOutgoing: false, replyHeader: nil, onVote: {}
+        isOutgoing: false, replyHeader: nil, onVote: {}
     ).bubblePreview()
 }
 
@@ -186,7 +181,7 @@ private func previewOption(
             totalVoterCount: 12, hasVoted: false, explanation: nil,
             options: [previewOption("Sat", position: 0, pct: 58), previewOption("Sun", position: 1, pct: 42)]
         ),
-        time: "09:00", isOutgoing: false, replyHeader: nil, onVote: {}
+        isOutgoing: false, replyHeader: nil, onVote: {}
     ).bubblePreview()
 }
 #endif

@@ -13,10 +13,8 @@ import SwiftUI
 struct AudioBubbleView: View {
     let audio: AudioVisual
     let caption: String
-    let time: String
     let isOutgoing: Bool
     let replyHeader: ReplyHeader?
-    let sendingState: SendingState
 
     @Environment(ChatHistoryStore.self) private var store
     @Environment(\.bubbleMetrics) private var metrics
@@ -73,13 +71,12 @@ struct AudioBubbleView: View {
                     .font(.caption)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            timeRow
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
-        .frame(maxWidth: metrics.bubbleMaxWidth, alignment: .leading)
+        .frame(minWidth: BubbleShape.minSize, maxWidth: metrics.bubbleMaxWidth, minHeight: BubbleShape.minSize, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: BubbleShape.cornerRadius)
                 .fill(style.fill)
         )
         .foregroundStyle(style.content)
@@ -118,28 +115,6 @@ struct AudioBubbleView: View {
         .shadow(radius: audio.albumArt != nil ? 1 : 0)
     }
 
-    // Time + send-state inline at the bottom-right inside the chrome, matching the
-    // text-bubble convention (and VoiceNoteBubbleView).
-    private var timeRow: some View {
-        HStack(spacing: 2) {
-            Spacer(minLength: 0)
-            Text(time)
-                .font(.system(size: 8))
-                .foregroundStyle(style.secondary)
-            if isOutgoing { sendStateGlyph }
-        }
-    }
-
-    @ViewBuilder
-    private var sendStateGlyph: some View {
-        switch sendingState {
-        case .sent:    EmptyView()
-        case .pending: Image(systemName: "clock").font(.system(size: 8))
-            .foregroundStyle(Color.white.opacity(0.7))
-        case .failed:  Image(systemName: "exclamationmark.circle.fill").font(.system(size: 8))
-            .foregroundStyle(.red)
-        }
-    }
 }
 
 #if DEBUG
@@ -186,8 +161,8 @@ private func previewAudio(
 #Preview("Audio — incoming, idle") {
     AudioBubbleView(
         audio: previewAudio(), caption: "",
-        time: "12:34", isOutgoing: false,
-        replyHeader: nil, sendingState: .sent
+        isOutgoing: false,
+        replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -196,8 +171,8 @@ private func previewAudio(
 #Preview("Audio — outgoing, idle") {
     AudioBubbleView(
         audio: previewAudio(id: 2), caption: "",
-        time: "12:35", isOutgoing: true,
-        replyHeader: nil, sendingState: .sent
+        isOutgoing: true,
+        replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -207,8 +182,8 @@ private func previewAudio(
     AudioBubbleView(
         audio: previewAudio(id: 3, title: "A Very Long Track Title That Will Truncate", performer: "Some Long Performer Name"),
         caption: "",
-        time: "12:36", isOutgoing: false,
-        replyHeader: nil, sendingState: .sent
+        isOutgoing: false,
+        replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -218,8 +193,8 @@ private func previewAudio(
     AudioBubbleView(
         audio: previewAudio(id: 4, title: "Untitled", performer: ""),
         caption: "",
-        time: "12:37", isOutgoing: false,
-        replyHeader: nil, sendingState: .sent
+        isOutgoing: false,
+        replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -229,8 +204,8 @@ private func previewAudio(
     AudioBubbleView(
         audio: previewAudio(id: 5),
         caption: "this song goes hard",
-        time: "12:38", isOutgoing: false,
-        replyHeader: nil, sendingState: .sent
+        isOutgoing: false,
+        replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -239,13 +214,12 @@ private func previewAudio(
 #Preview("Audio — incoming with reply") {
     AudioBubbleView(
         audio: previewAudio(id: 6), caption: "",
-        time: "12:39", isOutgoing: false,
+        isOutgoing: false,
         replyHeader: ReplyHeader(
             senderName: "Bob",
             snippet: "anchor message earlier in the chat",
             minithumbnail: nil, isOutgoing: false
-        ),
-        sendingState: .sent
+        )
     )
     .bubblePreview()
     .environment(previewStore())

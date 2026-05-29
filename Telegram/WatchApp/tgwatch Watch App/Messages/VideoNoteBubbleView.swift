@@ -4,8 +4,7 @@ import UIKit
 /// Renders one round-video-note bubble: a chrome-less 150 pt circle with the
 /// preview image (downloaded thumb → blurred minithumbnail → gray placeholder)
 /// behind a centered play overlay and a bottom-inside duration pill. Optional
-/// reply mini-card (`StickerBubbleView` precedent) sits above. Timestamp footer
-/// renders below as plain text on the system background.
+/// reply mini-card (`StickerBubbleView` precedent) sits above.
 ///
 /// Drives viewport-based download of the thumbnail file id (not the playable
 /// video file) via `.onScrollVisibilityChange`. The playable file is downloaded
@@ -14,7 +13,6 @@ import UIKit
 /// Tap is unconditional — the viewer handles the not-yet-downloaded state.
 struct VideoNoteBubbleView: View {
     let note: VideoNoteVisual
-    let time: String
     let isOutgoing: Bool
     let replyHeader: ReplyHeader?
     let onTap: () -> Void
@@ -61,10 +59,6 @@ struct VideoNoteBubbleView: View {
                     store.cancelFileDownload(fileId: id)
                 }
             }
-            Text(time)
-                .font(.system(size: 8))
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 4)
         }
     }
 
@@ -126,7 +120,6 @@ private func videoNotePreviewStore() -> ChatHistoryStore {
             thumbFileId: nil, minithumbnail: nil,
             thumbLocalPath: nil, videoLocalPath: nil
         ),
-        time: "12:34",
         isOutgoing: false,
         replyHeader: nil,
         onTap: {}
@@ -142,7 +135,6 @@ private func videoNotePreviewStore() -> ChatHistoryStore {
             thumbFileId: nil, minithumbnail: nil,
             thumbLocalPath: nil, videoLocalPath: nil
         ),
-        time: "12:36",
         isOutgoing: true,
         replyHeader: nil,
         onTap: {}
@@ -158,7 +150,6 @@ private func videoNotePreviewStore() -> ChatHistoryStore {
             thumbFileId: nil, minithumbnail: nil,
             thumbLocalPath: nil, videoLocalPath: nil
         ),
-        time: "12:34",
         isOutgoing: false,
         replyHeader: ReplyHeader(
             senderName: "Bob",

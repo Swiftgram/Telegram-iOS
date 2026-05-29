@@ -24,8 +24,6 @@ struct MessageBubble: Equatable, Hashable {
     let senderName: String?
     /// Body text — for text bubbles, the message body; for photo / video bubbles, the caption (may be "").
     let body: String
-    /// `HH:mm` of the message date in the user's time zone.
-    let time: String
     /// Photo metadata for `messagePhoto` content; nil for non-photo bubbles.
     let photo: PhotoVisual?
     /// Video metadata for `messageVideo` content; nil for non-video bubbles.
@@ -57,6 +55,27 @@ struct MessageBubble: Equatable, Hashable {
     var senderColorIndex: Int? = nil
     /// True for a sent outgoing message the recipient hasn't read yet (`id > lastReadOutboxMessageId`).
     var isUnreadOutgoing: Bool = false
+
+    /// The delivery-status indicator to render for this bubble. Outgoing only;
+    /// `isUnreadOutgoing` already encodes "sent, unread, not Saved Messages".
+    var outgoingStatus: OutgoingStatus {
+        guard isOutgoing else { return .none }
+        switch sendingState {
+        case .pending: return .pending
+        case .failed:  return .failed
+        case .sent:    return isUnreadOutgoing ? .unread : .none
+        }
+    }
+}
+
+/// Collapses an outgoing message's delivery state into the single indicator the
+/// chat UI shows at the bubble's bottom-leading corner. Incoming messages — and
+/// outgoing messages that are sent and already read — show nothing.
+enum OutgoingStatus: Equatable {
+    case none
+    case pending
+    case failed
+    case unread
 }
 
 struct ServiceLine: Equatable, Hashable {
@@ -106,12 +125,6 @@ func messageRows(
     dayKeyFormatter.timeZone = calendar.timeZone
     dayKeyFormatter.dateFormat = "yyyy-MM-dd"
 
-    let timeFormatter = DateFormatter()
-    timeFormatter.calendar = calendar
-    timeFormatter.timeZone = calendar.timeZone
-    timeFormatter.locale = locale
-    timeFormatter.dateFormat = "HH:mm"
-
     var rows: [MessageRow] = []
     var lastDayKey: String? = nil
     var dividerPlaced = false
@@ -148,7 +161,6 @@ func messageRows(
             isOutgoing: msg.isOutgoing,
             senderName: sender?.name,
             body: messageBody(msg.content),
-            time: timeFormatter.string(from: date),
             photo: photoVisual(for: msg.content, fileLocals: fileLocals),
             video: videoVisual(for: msg.content, fileLocals: fileLocals),
             videoNote: videoNoteVisual(for: msg.content, fileLocals: fileLocals),

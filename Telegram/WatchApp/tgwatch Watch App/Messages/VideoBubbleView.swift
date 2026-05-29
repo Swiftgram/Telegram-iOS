@@ -3,7 +3,7 @@ import UIKit
 
 /// Renders one video bubble: aspect-fit preview thumbnail (downloaded preview, blurred
 /// minithumbnail, or gray placeholder), centered play overlay, top-trailing duration
-/// pill, optional caption below the image, time stamp footer.
+/// pill, optional caption below the image.
 ///
 /// Drives viewport-based download of the *preview* file id (not the full video) via
 /// `.onScrollVisibilityChange` on the store — `.onAppear` would fire for every
@@ -15,7 +15,6 @@ import UIKit
 struct VideoBubbleView: View {
     let video: VideoVisual
     let caption: String
-    let time: String
     let isOutgoing: Bool
     let replyHeader: ReplyHeader?
     let onTap: () -> Void
@@ -46,8 +45,8 @@ struct VideoBubbleView: View {
     }
 
     private var bareVideo: some View {
-        videoContent(clipImage: true, showTimePill: true)
-            .contentShape(RoundedRectangle(cornerRadius: 12))
+        videoContent(clipImage: true)
+            .contentShape(RoundedRectangle(cornerRadius: BubbleShape.cornerRadius))
             .onTapGesture { onTap() }
     }
 
@@ -58,7 +57,7 @@ struct VideoBubbleView: View {
                     .padding(.horizontal, 8)
                     .padding(.top, 6)
             }
-            videoContent(clipImage: false, showTimePill: false)
+            videoContent(clipImage: false)
                 .contentShape(Rectangle())
                 .onTapGesture { onTap() }
             if !caption.isEmpty {
@@ -68,22 +67,17 @@ struct VideoBubbleView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 8)
             }
-            Text(time)
-                .font(.system(size: 8))
-                .foregroundStyle(style.secondary)
-                .padding(.horizontal, 8)
-                .padding(.bottom, 4)
         }
         .frame(width: displaySize.width, alignment: .leading)
         .background(style.fill)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: BubbleShape.cornerRadius))
     }
 
-    private func videoContent(clipImage: Bool, showTimePill: Bool) -> some View {
+    private func videoContent(clipImage: Bool) -> some View {
         ZStack {
             imageView
                 .frame(width: displaySize.width, height: displaySize.height)
-                .clipShape(RoundedRectangle(cornerRadius: clipImage ? 12 : 0))
+                .clipShape(RoundedRectangle(cornerRadius: clipImage ? BubbleShape.cornerRadius : 0))
                 .overlay(alignment: .topTrailing) {
                     Text(formatDuration(video.duration))
                         .font(.system(size: 9))
@@ -93,21 +87,8 @@ struct VideoBubbleView: View {
                         .background(Capsule().fill(.black.opacity(0.5)))
                         .padding(4)
                 }
-                .overlay(alignment: .bottomTrailing) {
-                    if showTimePill { timePill }
-                }
             playOverlay
         }
-    }
-
-    private var timePill: some View {
-        Text(time)
-            .font(.system(size: 8))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 4)
-            .padding(.vertical, 1)
-            .background(Capsule().fill(.black.opacity(0.5)))
-            .padding(4)
     }
 
     @ViewBuilder
@@ -186,7 +167,6 @@ private func videoPreviewStore() -> ChatHistoryStore {
             videoLocalPath: nil
         ),
         caption: "check this clip",
-        time: "12:34",
         isOutgoing: false,
         replyHeader: ReplyHeader(
             senderName: "Bob",
@@ -209,7 +189,6 @@ private func videoPreviewStore() -> ChatHistoryStore {
             videoLocalPath: nil
         ),
         caption: "",
-        time: "12:34",
         isOutgoing: false,
         replyHeader: nil,
         onTap: {}

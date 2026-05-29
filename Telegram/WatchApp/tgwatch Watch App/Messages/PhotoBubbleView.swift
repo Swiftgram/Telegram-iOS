@@ -3,7 +3,7 @@ import UIKit
 
 /// Renders one photo bubble: aspect-fit image (full-resolution when downloaded,
 /// minithumbnail otherwise, gray placeholder if neither), optional caption below the
-/// image, time stamp footer.
+/// image.
 ///
 /// Drives viewport-based download via `.onScrollVisibilityChange` on the store —
 /// `.onAppear` would fire for every off-screen bubble too, because the enclosing
@@ -13,7 +13,6 @@ import UIKit
 struct PhotoBubbleView: View {
     let photo: PhotoVisual
     let caption: String
-    let time: String
     let isOutgoing: Bool
     let replyHeader: ReplyHeader?
     let onTap: (PhotoVisual) -> Void
@@ -45,9 +44,8 @@ struct PhotoBubbleView: View {
     private var bareImage: some View {
         imageView
             .frame(width: displaySize.width, height: displaySize.height)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(alignment: .bottomTrailing) { timePill }
-            .contentShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: BubbleShape.cornerRadius))
+            .contentShape(RoundedRectangle(cornerRadius: BubbleShape.cornerRadius))
             .onTapGesture { if photo.localPath != nil { onTap(photo) } }
     }
 
@@ -69,25 +67,10 @@ struct PhotoBubbleView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 8)
             }
-            Text(time)
-                .font(.system(size: 8))
-                .foregroundStyle(style.secondary)
-                .padding(.horizontal, 8)
-                .padding(.bottom, 4)
         }
         .frame(width: displaySize.width, alignment: .leading)
         .background(style.fill)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-
-    private var timePill: some View {
-        Text(time)
-            .font(.system(size: 8))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 4)
-            .padding(.vertical, 1)
-            .background(Capsule().fill(.black.opacity(0.5)))
-            .padding(4)
+        .clipShape(RoundedRectangle(cornerRadius: BubbleShape.cornerRadius))
     }
 
     @ViewBuilder
@@ -154,7 +137,6 @@ private func photoPreviewStore() -> ChatHistoryStore {
     PhotoBubbleView(
         photo: PhotoVisual(fileId: 0, width: 800, height: 600, minithumbnail: nil, localPath: nil),
         caption: "look at this",
-        time: "12:34",
         isOutgoing: false,
         replyHeader: ReplyHeader(
             senderName: "Bob",
@@ -172,7 +154,6 @@ private func photoPreviewStore() -> ChatHistoryStore {
     PhotoBubbleView(
         photo: PhotoVisual(fileId: 0, width: 800, height: 600, minithumbnail: nil, localPath: nil),
         caption: "",
-        time: "12:34",
         isOutgoing: false,
         replyHeader: nil,
         onTap: { _ in }
@@ -185,7 +166,6 @@ private func photoPreviewStore() -> ChatHistoryStore {
     PhotoBubbleView(
         photo: PhotoVisual(fileId: 0, width: 800, height: 600, minithumbnail: nil, localPath: nil),
         caption: "Benji athlete today!",
-        time: "12:34",
         isOutgoing: false,
         replyHeader: nil,
         onTap: { _ in }

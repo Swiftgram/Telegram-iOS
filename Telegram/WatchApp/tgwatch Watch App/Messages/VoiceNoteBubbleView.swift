@@ -4,7 +4,6 @@ import SwiftUI
 /// outgoing) containing a play/pause glyph + 32-bar waveform + duration
 /// label. Optional reply header sits inside the chrome above the row.
 /// Caption (when non-empty) renders below the waveform inside the chrome.
-/// Time footer renders below the chrome.
 ///
 /// Drives priority-1 viewport download via `.onScrollVisibilityChange`.
 /// Tap goes through `ChatHistoryStore.togglePlayback(_:)`; the store kicks
@@ -13,10 +12,8 @@ import SwiftUI
 struct VoiceNoteBubbleView: View {
     let note: VoiceNoteVisual
     let caption: String
-    let time: String
     let isOutgoing: Bool
     let replyHeader: ReplyHeader?
-    let sendingState: SendingState
 
     @Environment(ChatHistoryStore.self) private var store
     @Environment(\.bubbleMetrics) private var metrics
@@ -58,13 +55,12 @@ struct VoiceNoteBubbleView: View {
                     .font(.caption)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            timeRow
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
-        .frame(maxWidth: metrics.bubbleMaxWidth, alignment: .leading)
+        .frame(minWidth: BubbleShape.minSize, maxWidth: metrics.bubbleMaxWidth, minHeight: BubbleShape.minSize, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: BubbleShape.cornerRadius)
                 .fill(style.fill)
         )
         .foregroundStyle(style.content)
@@ -113,28 +109,6 @@ struct VoiceNoteBubbleView: View {
         .fixedSize(horizontal: true, vertical: false)
     }
 
-    // Time + send-state inline at the bottom-right inside the chrome, matching the
-    // text-bubble convention.
-    private var timeRow: some View {
-        HStack(spacing: 2) {
-            Spacer(minLength: 0)
-            Text(time)
-                .font(.system(size: 8))
-                .foregroundStyle(style.secondary)
-            if isOutgoing { sendStateGlyph }
-        }
-    }
-
-    @ViewBuilder
-    private var sendStateGlyph: some View {
-        switch sendingState {
-        case .sent:    EmptyView()
-        case .pending: Image(systemName: "clock").font(.system(size: 8))
-            .foregroundStyle(Color.white.opacity(0.7))
-        case .failed:  Image(systemName: "exclamationmark.circle.fill").font(.system(size: 8))
-            .foregroundStyle(.red)
-        }
-    }
 }
 
 #if DEBUG
@@ -178,8 +152,8 @@ private func previewVoice(id: Int = 1) -> VoiceNoteVisual {
 #Preview("Voice — incoming, idle") {
     VoiceNoteBubbleView(
         note: previewVoice(), caption: "",
-        time: "12:34", isOutgoing: false,
-        replyHeader: nil, sendingState: .sent
+        isOutgoing: false,
+        replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -188,8 +162,8 @@ private func previewVoice(id: Int = 1) -> VoiceNoteVisual {
 #Preview("Voice — outgoing, idle") {
     VoiceNoteBubbleView(
         note: previewVoice(id: 2), caption: "",
-        time: "12:35", isOutgoing: true,
-        replyHeader: nil, sendingState: .sent
+        isOutgoing: true,
+        replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -198,13 +172,12 @@ private func previewVoice(id: Int = 1) -> VoiceNoteVisual {
 #Preview("Voice — incoming with reply") {
     VoiceNoteBubbleView(
         note: previewVoice(id: 3), caption: "",
-        time: "12:36", isOutgoing: false,
+        isOutgoing: false,
         replyHeader: ReplyHeader(
             senderName: "Bob",
             snippet: "anchor message earlier in the chat",
             minithumbnail: nil, isOutgoing: false
-        ),
-        sendingState: .sent
+        )
     )
     .bubblePreview()
     .environment(previewStore())
@@ -214,8 +187,8 @@ private func previewVoice(id: Int = 1) -> VoiceNoteVisual {
     VoiceNoteBubbleView(
         note: previewVoice(id: 4),
         caption: "Listen to this part carefully",
-        time: "12:37", isOutgoing: false,
-        replyHeader: nil, sendingState: .sent
+        isOutgoing: false,
+        replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())
@@ -227,8 +200,8 @@ private func previewVoice(id: Int = 1) -> VoiceNoteVisual {
             voiceFileId: 5, duration: 5, mimeType: "audio/ogg",
             waveform: Data(), caption: "", localPath: nil
         ),
-        caption: "", time: "12:38", isOutgoing: false,
-        replyHeader: nil, sendingState: .sent
+        caption: "", isOutgoing: false,
+        replyHeader: nil
     )
     .bubblePreview()
     .environment(previewStore())

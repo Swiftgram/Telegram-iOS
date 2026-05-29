@@ -92,6 +92,7 @@
 		C62226963E54795B2808A52C /* MapSnapshotRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFFF41E60C5477C20897CD00 /* MapSnapshotRenderer.swift */; };
 		C6A64A26FC7DC74BDEC91308 /* ChatHistoryLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2C84B842AD08D079BFF08A0 /* ChatHistoryLoader.swift */; };
 		C94BD040D985FC0090CDBF84 /* StickerPickerLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC230FDDDFAA063019744A0E /* StickerPickerLoader.swift */; };
+		CBA3FEDEEA413559F700B6E3 /* BubbleShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD18F48DC98A3857B32BBC6F /* BubbleShape.swift */; };
 		D1082945B5785B08F820FB78 /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93535C2021AB2E7B17F593AA /* LoadingView.swift */; };
 		D1E96E63A3AE93646AD3F532 /* AudioBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C3B71804A398A0100375E86 /* AudioBubbleView.swift */; };
 		D5515C5A9286E0372DBFB7F9 /* QRCodeGenerator in Frameworks */ = {isa = PBXBuildFile; productRef = FD6A04697FEA6C4614973F19 /* QRCodeGenerator */; };
@@ -206,6 +207,7 @@
 		D4AF5A180BB3A37832AC5349 /* VideoNoteBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoNoteBubbleView.swift; sourceTree = "<group>"; };
 		D50662DC1777F2BEE53A0129 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D9CD96277A18D97BD335BBC0 /* StickerSetDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StickerSetDetailView.swift; sourceTree = "<group>"; };
+		DD18F48DC98A3857B32BBC6F /* BubbleShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BubbleShape.swift; sourceTree = "<group>"; };
 		DDCE599C8D50EE8832B4A797 /* ReplyFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplyFormatters.swift; sourceTree = "<group>"; };
 		DF0F4F15CB43635717B31B92 /* PollVoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PollVoteView.swift; sourceTree = "<group>"; };
 		DF393D904BF677AC5721EC7E /* ServiceMessageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceMessageView.swift; sourceTree = "<group>"; };
@@ -335,6 +337,7 @@
 				CBAFC996C8EF743C7C598389 /* AudioVisual.swift */,
 				0F9127473C7DAD18736234B3 /* AVRecordingBackend.swift */,
 				674916153E803CA73D43BE6C /* BubbleMetrics.swift */,
+				DD18F48DC98A3857B32BBC6F /* BubbleShape.swift */,
 				3EEAE6237003C5CDA788E928 /* BubbleStyle.swift */,
 				C2C84B842AD08D079BFF08A0 /* ChatHistoryLoader.swift */,
 				182DA99AD90B93DE2FB37A41 /* ChatHistoryStore.swift */,
@@ -520,6 +523,7 @@
 				5E9A6B94F1B917CB849B3EBC /* AvatarView.swift in Sources */,
 				03074928DC54019BE6106ECD /* AvatarVisual.swift in Sources */,
 				4236CA9B5AA90ACEB17814DC /* BubbleMetrics.swift in Sources */,
+				CBA3FEDEEA413559F700B6E3 /* BubbleShape.swift in Sources */,
 				868426A2768FE7349CD4AAAD /* BubbleStyle.swift in Sources */,
 				4505C5628AF9258938D623D7 /* CachedChat.swift in Sources */,
 				C6A64A26FC7DC74BDEC91308 /* ChatHistoryLoader.swift in Sources */,
