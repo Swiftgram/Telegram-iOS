@@ -165,7 +165,7 @@ public func toggleWebBrowserSettingsException(postbox: Postbox, network: Network
     var apiOpenExternalBrowser: Api.Bool?
     if let openExternalBrowser {
         flags |= (1 << 0)
-        apiOpenExternalBrowser = openExternalBrowser ? .boolFalse : .boolTrue
+        apiOpenExternalBrowser = openExternalBrowser ? .boolTrue : .boolFalse 
     }
     if delete {
         flags |= (1 << 1)
