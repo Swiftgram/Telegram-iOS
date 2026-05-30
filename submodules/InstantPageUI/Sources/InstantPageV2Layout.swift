@@ -320,7 +320,7 @@ public struct InstantPageV2TableItem {
     public let titleSubLayout: InstantPageV2Layout?
     public let titleFrame: CGRect?
     public let contentSize: CGSize           // grid intrinsic size; may exceed frame.width → scroll
-    public let contentInset: CGFloat         // left inset (= page horizontalInset) baked into the scroll content width by the renderer
+    public let contentInset: CGFloat         // page horizontalInset; the renderer shifts the grid right by it and pads the scroll content by it on BOTH sides
     public let cells: [InstantPageV2TableCell]
     public let horizontalLines: [CGRect]
     public let verticalLines: [CGRect]
@@ -1112,10 +1112,14 @@ private func layoutTable(
             var minCellWidth: CGFloat = 1.0
             var maxCellWidth: CGFloat = 1.0
             if let text = cell.text {
-                let attrStr = attributedStringForRichText(text, styleStack: styleStack)
+                // Mirror V1 (`InstantPageTableItem.layoutTableItem`): `attributedStringForRichText`'s
+                // boundingWidth sizes inline attachments to `cellWidthLimit - totalCellPadding`, while
+                // the line-break budget passed to `layoutTextItem` is the full `cellWidthLimit`. (V1
+                // subtracts `totalCellPadding` only on the attribute-string arg, not the layout arg.)
+                let attrStr = attributedStringForRichText(text, styleStack: styleStack, boundingWidth: cellWidthLimit - totalCellPadding)
                 if let shortestItem = layoutTextItem(
                     attrStr,
-                    boundingWidth: cellWidthLimit - totalCellPadding,
+                    boundingWidth: cellWidthLimit,
                     offset: CGPoint(),
                     minimizeWidth: true,
                     fitToWidth: context.fitToWidth,
@@ -1125,7 +1129,7 @@ private func layoutTable(
                 }
                 if let longestItem = layoutTextItem(
                     attrStr,
-                    boundingWidth: cellWidthLimit - totalCellPadding,
+                    boundingWidth: cellWidthLimit,
                     offset: CGPoint(),
                     fitToWidth: context.fitToWidth,
                     computeRevealCharacterRects: context.computeRevealCharacterRects
@@ -1546,7 +1550,7 @@ private func layoutTable(
 
     // The table item frame spans the full visible bubble interior (`boundingWidth`); the scroll
     // viewport equals what is actually visible. contentSize.width is the intrinsic grid width
-    // (may exceed frame.width → horizontal scroll); the renderer adds the left inset on top.
+    // (may exceed frame.width → horizontal scroll); the renderer adds the inset on both sides.
     let tableFrame = CGRect(x: 0.0, y: 0.0,
                             width: boundingWidth,
                             height: totalHeight + (titleFrame?.height ?? 0.0))

@@ -285,10 +285,10 @@ public final class InstantPageV2View: UIView {
         let enableSpoilerAnimations = self.renderContext.map { $0.context.sharedContext.energyUsageSettings.fullTranslucency } ?? true
         for view in self.itemViews {
             if let textView = view as? InstantPageV2TextView {
+                // Both fresh (makeItemView) and reused text views now build their dust through the
+                // single init→update→updateSpoiler path, so we only push the external animation
+                // setting here; its didSet rebuilds the dust if the value actually changed.
                 textView.enableSpoilerAnimations = enableSpoilerAnimations
-                // makeItemView builds fresh text views via init only (no update(item:theme:)), so
-                // build their dust here; updateSpoiler is idempotent (no-op when there are no spoilers).
-                textView.updateSpoiler(animated: false)
             }
         }
         // Force the current reveal state (true OR false) onto every text view every layout, so a
@@ -728,19 +728,19 @@ public final class InstantPageV2View: UIView {
     private func makeItemView(for item: InstantPageV2LaidOutItem, theme: InstantPageTheme) -> InstantPageItemView? {
         switch item {
         case let .text(text):
-            return InstantPageV2TextView(item: text)
+            return InstantPageV2TextView(item: text, theme: theme)
         case let .divider(divider):
-            return InstantPageV2DividerView(item: divider)
+            return InstantPageV2DividerView(item: divider, theme: theme)
         case let .anchor(anchor):
-            return InstantPageV2AnchorView(item: anchor)
+            return InstantPageV2AnchorView(item: anchor, theme: theme)
         case let .listMarker(marker):
-            return InstantPageV2ListMarkerView(item: marker)
+            return InstantPageV2ListMarkerView(item: marker, theme: theme)
         case let .codeBlock(block):
-            return InstantPageV2CodeBlockView(item: block)
+            return InstantPageV2CodeBlockView(item: block, theme: theme)
         case let .blockQuoteBar(bar):
-            return InstantPageV2BlockQuoteBarView(item: bar)
+            return InstantPageV2BlockQuoteBarView(item: bar, theme: theme)
         case let .shape(shape):
-            return InstantPageV2ShapeView(item: shape)
+            return InstantPageV2ShapeView(item: shape, theme: theme)
         case let .mediaPlaceholder(media):
             return InstantPageV2MediaPlaceholderView(item: media, theme: theme)
         case let .details(details):
@@ -776,9 +776,9 @@ public final class InstantPageV2View: UIView {
                 return InstantPageV2MediaPlaceholderView(item: placeholderFallback(for: media), theme: theme)
             }
         case let .formula(formula):
-            return InstantPageV2FormulaView(item: formula)
+            return InstantPageV2FormulaView(item: formula, theme: theme)
         case let .thinking(thinking):
-            return InstantPageV2ThinkingView(item: thinking)
+            return InstantPageV2ThinkingView(item: thinking, theme: theme)
         }
     }
 
@@ -880,33 +880,25 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
     private var revealLineMaskLayers: [SimpleLayer] = []
     private var animatingSnippetLayers: [SnippetLayer] = []
 
-    init(item: InstantPageV2TextItem) {
+    init(item: InstantPageV2TextItem, theme: InstantPageTheme) {
         self.item = item
         self.renderContainer = UIView()
         self.renderView = TextRenderView(item: item)
         super.init(frame: item.frame.insetBy(dx: -v2TextViewClippingInset, dy: -v2TextViewClippingInset))
+        // Structural wiring only (one-time); all frames/content live in update(item:theme:).
         self.backgroundColor = .clear
         self.isOpaque = false
-
-        self.renderContainer.frame = self.bounds
         self.renderContainer.backgroundColor = .clear
         self.renderContainer.isOpaque = false
         self.addSubview(self.renderContainer)
-
-        self.renderView.frame = self.bounds
         self.renderContainer.addSubview(self.renderView)
-
-        self.imageContainerView.frame = self.bounds
         self.imageContainerView.isUserInteractionEnabled = false
         self.addSubview(self.imageContainerView)
-
-        self.emojiContainerView.frame = self.bounds
         self.emojiContainerView.isUserInteractionEnabled = false
         self.addSubview(self.emojiContainerView)
-
-        self.spoilerContainerView.frame = self.bounds
         self.spoilerContainerView.isUserInteractionEnabled = false
         self.addSubview(self.spoilerContainerView)
+        self.update(item: item, theme: theme)
     }
 
     @available(*, unavailable)
@@ -917,11 +909,18 @@ final class InstantPageV2TextView: UIView, InstantPageItemView {
     func update(item: InstantPageV2TextItem, theme: InstantPageTheme) {
         let _ = theme
         self.item = item
+        // Lay every container out from the item's own (clipping-inset-expanded) frame rather than
+        // self.bounds, so the single path is correct regardless of when the parent assigns our
+        // frame — and so a reused text view that changed size (e.g. AI streaming) re-frames its
+        // renderContainer/renderView too, which the old update path skipped.
+        let containerBounds = CGRect(origin: .zero, size: item.frame.insetBy(dx: -v2TextViewClippingInset, dy: -v2TextViewClippingInset).size)
+        self.renderContainer.frame = containerBounds
+        self.renderView.frame = containerBounds
         self.renderView.item = item
         self.renderView.setNeedsDisplay()
-        self.imageContainerView.frame = self.bounds
-        self.emojiContainerView.frame = self.bounds
-        self.spoilerContainerView.frame = self.bounds
+        self.imageContainerView.frame = containerBounds
+        self.emojiContainerView.frame = containerBounds
+        self.spoilerContainerView.frame = containerBounds
         self.renderView.displayContentsUnderSpoilers = self.displayContentsUnderSpoilers
         self.updateSpoiler(animated: false)
     }
@@ -1452,10 +1451,10 @@ final class InstantPageV2DividerView: UIView, InstantPageItemView {
     private(set) var item: InstantPageV2DividerItem
     var itemFrame: CGRect { return self.item.frame }
 
-    init(item: InstantPageV2DividerItem) {
+    init(item: InstantPageV2DividerItem, theme: InstantPageTheme) {
         self.item = item
         super.init(frame: item.frame)
-        self.backgroundColor = item.color
+        self.update(item: item, theme: theme)
     }
 
     @available(*, unavailable)
@@ -1474,10 +1473,11 @@ final class InstantPageV2AnchorView: UIView, InstantPageItemView {
     private(set) var item: InstantPageV2AnchorItem
     var itemFrame: CGRect { return self.item.frame }
 
-    init(item: InstantPageV2AnchorItem) {
+    init(item: InstantPageV2AnchorItem, theme: InstantPageTheme) {
         self.item = item
         super.init(frame: item.frame)
-        self.isHidden = true
+        self.isHidden = true   // structural: zero-height, never renders
+        self.update(item: item, theme: theme)
     }
 
     @available(*, unavailable)
@@ -1495,12 +1495,12 @@ final class InstantPageV2ListMarkerView: UIView, InstantPageItemView {
     private(set) var item: InstantPageV2ListMarkerItem
     var itemFrame: CGRect { return self.item.frame }
 
-    init(item: InstantPageV2ListMarkerItem) {
+    init(item: InstantPageV2ListMarkerItem, theme: InstantPageTheme) {
         self.item = item
         super.init(frame: item.frame)
-        self.backgroundColor = .clear
-        self.isOpaque = false
-        self.rebuildContents()
+        self.backgroundColor = .clear   // structural
+        self.isOpaque = false           // structural
+        self.update(item: item, theme: theme)
     }
 
     @available(*, unavailable)
@@ -1569,11 +1569,10 @@ final class InstantPageV2BlockQuoteBarView: UIView, InstantPageItemView {
     private(set) var item: InstantPageV2BarItem
     var itemFrame: CGRect { return self.item.frame }
 
-    init(item: InstantPageV2BarItem) {
+    init(item: InstantPageV2BarItem, theme: InstantPageTheme) {
         self.item = item
         super.init(frame: item.frame)
-        self.backgroundColor = item.color
-        self.layer.cornerRadius = item.cornerRadius
+        self.update(item: item, theme: theme)
     }
 
     @available(*, unavailable)
@@ -1593,10 +1592,10 @@ final class InstantPageV2ShapeView: UIView, InstantPageItemView {
     private(set) var item: InstantPageV2ShapeItem
     var itemFrame: CGRect { return self.item.frame }
 
-    init(item: InstantPageV2ShapeItem) {
+    init(item: InstantPageV2ShapeItem, theme: InstantPageTheme) {
         self.item = item
         super.init(frame: item.frame)
-        self.applyKind()
+        self.update(item: item, theme: theme)
     }
 
     @available(*, unavailable)
@@ -1629,9 +1628,7 @@ final class InstantPageV2MediaPlaceholderView: UIView, InstantPageItemView {
     init(item: InstantPageV2MediaPlaceholderItem, theme: InstantPageTheme) {
         self.item = item
         super.init(frame: item.frame)
-        self.backgroundColor = theme.imageTintColor?.withAlphaComponent(0.2) ?? UIColor(white: 0.85, alpha: 1.0)
-        self.layer.cornerRadius = item.cornerRadius
-        self.clipsToBounds = item.cornerRadius > 0.0
+        self.update(item: item, theme: theme)
     }
 
     @available(*, unavailable)
@@ -1679,45 +1676,36 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
             frame: item.titleTextItem.frame,
             textItem: item.titleTextItem
         )
-        self.titleTextView = InstantPageV2TextView(item: titleV2Item)
+        self.titleTextView = InstantPageV2TextView(item: titleV2Item, theme: theme)
         self.titleTextView.isUserInteractionEnabled = false
 
         self.chevronView = UIImageView()
         self.chevronView.image = UIImage(bundleImageName: "Item List/ExpandingItemVerticalRegularArrow")?.withRenderingMode(.alwaysTemplate)
-        self.chevronView.tintColor = theme.textCategories.paragraph.color
         self.chevronView.contentMode = .scaleAspectFit
         // Decorative: let taps fall through to titleHitView (which carries the toggle gesture).
         self.chevronView.isUserInteractionEnabled = false
 
         self.separator = UIView()
-        self.separator.backgroundColor = item.separatorColor
         self.separator.isUserInteractionEnabled = false
 
-        self.titleHitView = UIView(frame: item.titleFrame)
+        self.titleHitView = UIView()
         self.titleHitView.backgroundColor = .clear
 
         super.init(frame: item.frame)
-        self.backgroundColor = .clear
-        self.clipsToBounds = true
+        self.backgroundColor = .clear   // structural
+        self.clipsToBounds = true       // structural — the parent's frame-height animation clips the body
 
         self.addSubview(self.titleTextView)
         self.addSubview(self.chevronView)
         self.addSubview(self.separator)
 
-        if item.isExpanded, let innerLayout = item.innerLayout {
-            let body = InstantPageV2View(renderContext: renderContext)
-            body.update(layout: innerLayout, theme: theme, animation: .None)
-            body.frame = CGRect(
-                origin: CGPoint(x: 0.0, y: item.titleFrame.maxY),
-                size: innerLayout.contentSize
-            )
-            self.addSubview(body)
-            self.bodyView = body
-        }
-
         let tap = UITapGestureRecognizer(target: self, action: #selector(self.titleTapped))
         self.insertSubview(self.titleHitView, at: 0)
         self.titleHitView.addGestureRecognizer(tap)
+
+        // All content (title, chevron tint/position, separator, titleHit frame, body) flows through
+        // update — its expanded branch lazily creates the body, so init no longer builds it itself.
+        self.update(item: item, theme: theme, renderContext: renderContext, animation: .None)
     }
 
     @available(*, unavailable)
@@ -1824,25 +1812,23 @@ final class InstantPageV2CodeBlockView: UIView, InstantPageItemView {
     private let backgroundLayer: CALayer
     let textView: InstantPageV2TextView
 
-    init(item: InstantPageV2CodeBlockItem) {
+    init(item: InstantPageV2CodeBlockItem, theme: InstantPageTheme) {
         self.item = item
 
         self.backgroundLayer = CALayer()
-        self.backgroundLayer.backgroundColor = item.backgroundColor.cgColor
-        self.backgroundLayer.cornerRadius = item.cornerRadius
-        self.backgroundLayer.frame = CGRect(origin: .zero, size: item.frame.size)
 
         // item.textItem.frame is already in code-block content-area coords (x=17, y=backgroundInset).
         let innerV2TextItem = InstantPageV2TextItem(
             frame: item.textItem.frame,
             textItem: item.textItem
         )
-        self.textView = InstantPageV2TextView(item: innerV2TextItem)
+        self.textView = InstantPageV2TextView(item: innerV2TextItem, theme: theme)
 
         super.init(frame: item.frame)
-        self.backgroundColor = .clear
-        self.layer.addSublayer(self.backgroundLayer)
-        self.addSubview(self.textView)
+        self.backgroundColor = .clear                 // structural
+        self.layer.addSublayer(self.backgroundLayer)  // structural
+        self.addSubview(self.textView)                // structural
+        self.update(item: item, theme: theme)
     }
 
     @available(*, unavailable)
@@ -1875,17 +1861,17 @@ final class InstantPageV2ThinkingView: UIView, InstantPageItemView {
     private let shimmerView: ShimmeringMaskView
     private let textView: InstantPageV2TextView
 
-    init(item: InstantPageV2ThinkingItem) {
+    init(item: InstantPageV2ThinkingItem, theme: InstantPageTheme) {
         self.item = item
         self.shimmerView = ShimmeringMaskView(peakAlpha: 0.3, duration: 1.0)
         let innerV2TextItem = InstantPageV2TextItem(frame: item.textItem.frame, textItem: item.textItem)
-        self.textView = InstantPageV2TextView(item: innerV2TextItem)
+        self.textView = InstantPageV2TextView(item: innerV2TextItem, theme: theme)
 
         super.init(frame: item.frame)
-        self.backgroundColor = .clear
-        self.addSubview(self.shimmerView)
-        self.shimmerView.contentView.addSubview(self.textView)
-        self.layoutContents()
+        self.backgroundColor = .clear                              // structural
+        self.addSubview(self.shimmerView)                          // structural
+        self.shimmerView.contentView.addSubview(self.textView)     // structural
+        self.update(item: item, theme: theme)
     }
 
     @available(*, unavailable)
@@ -1957,84 +1943,51 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
         super.init(frame: item.frame)
         self.backgroundColor = .clear
 
-        self.scrollView.frame = self.bounds
+        // Structural, one-time scroll-view configuration. Frames / contentSize / indicator
+        // visibility all depend on the item and are (re)applied by update(item:theme:).
         // Scrollable tables clip to the full width with no inset on the clip; the inset lives inside
-        // the scroll content width as a left margin only (see contentSize below).
+        // the scroll content width as a margin on BOTH sides (`contentInset * 2.0`, mirroring V1's
+        // `InstantPageScrollableNode`), so a scrolled-to-the-end table keeps a symmetric trailing
+        // inset instead of jamming its right border flush against the screen edge.
         self.scrollView.clipsToBounds = true
-        self.scrollView.contentSize = CGSize(width: item.contentSize.width + item.contentInset, height: item.contentSize.height)
         self.scrollView.alwaysBounceHorizontal = false
         self.scrollView.alwaysBounceVertical = false
-        self.scrollView.showsHorizontalScrollIndicator = item.contentSize.width + item.contentInset > item.frame.width
         self.scrollView.showsVerticalScrollIndicator = false
         self.scrollView.disablesInteractiveTransitionGestureRecognizer = true
         self.addSubview(self.scrollView)
-
-        // Grid container shifted right by the inset so the borders start at the body-text inset.
-        // Its size stays the bare grid (item.contentSize); grid coords inside remain x=0-relative.
-        self.contentView.frame = CGRect(x: item.contentInset, y: 0.0, width: item.contentSize.width, height: item.contentSize.height)
         self.scrollView.addSubview(self.contentView)
 
-        // Title sub-layout (above the grid, inside the scroll view's content).
-        if let titleLayout = item.titleSubLayout, let titleFrame = item.titleFrame {
+        // Build the (content-less) child structure sized to the construction-time item; update fills
+        // every frame / colour / sub-layout below. Insertion order matches the original interleaved
+        // build so the layer/subview z-order is unchanged (stripes at the bottom, then the title and
+        // cell sub-views, then the inner grid lines). Cell-count changes on later reuse are not
+        // reconciled here (pre-existing limitation) — update's index-guarded loops refresh in place.
+        if item.titleSubLayout != nil {
             let v = InstantPageV2View(renderContext: renderContext)
-            v.update(layout: titleLayout, theme: theme, animation: .None)
-            v.frame = CGRect(x: v2TableCellInsets.left, y: titleFrame.minY + v2TableCellInsets.top,
-                             width: titleLayout.contentSize.width, height: titleLayout.contentSize.height)
             self.contentView.addSubview(v)
             self.titleSubView = v
         }
-
-        // Grid origin: shifted down by title height when present.
-        let gridOffsetY = item.titleFrame?.height ?? 0.0
-        let effectiveBorderWidth = item.bordered ? v2TableBorderWidth : 0.0
-        let gridHeight = item.contentSize.height - gridOffsetY
-
-        // Cell backgrounds and sub-layouts.
         for cell in item.cells {
-            if let bg = cell.backgroundColor {
+            if cell.backgroundColor != nil {
                 let stripe = CALayer()
-                stripe.backgroundColor = bg.cgColor
-                stripe.frame = cell.frame.offsetBy(dx: 0.0, dy: gridOffsetY)
-                // Round the stripe at any grid corner it touches, so a filled corner cell
-                // follows the rounded outer border instead of poking past it.
-                let cornerMask = tableStripeCornerMask(cellFrame: cell.frame, gridWidth: item.contentSize.width, gridHeight: gridHeight, effectiveBorderWidth: effectiveBorderWidth)
-                if cornerMask.isEmpty {
-                    stripe.cornerRadius = 0.0
-                    stripe.maskedCorners = []
-                } else {
-                    stripe.cornerRadius = max(0.0, v2TableCornerRadius - effectiveBorderWidth)
-                    stripe.maskedCorners = cornerMask
-                }
                 self.contentView.layer.insertSublayer(stripe, at: 0)
                 self.stripeLayers.append(stripe)
             }
-            if let subLayout = cell.subLayout {
+            if cell.subLayout != nil {
                 let v = InstantPageV2View(renderContext: renderContext)
-                v.update(layout: subLayout, theme: theme, animation: .None)
-                // The sub-layout items are already offset by cell insets inside the cell frame.
-                v.frame = cell.frame.offsetBy(dx: 0.0, dy: gridOffsetY)
                 self.contentView.addSubview(v)
                 self.cellSubViews.append(v)
             }
         }
-
-        // Rounded outer border. `cornerRadius` rounds the layer's border WITHOUT `masksToBounds`,
-        // so table contents (cell fills, text) stay unclipped — only the border visual is rounded.
-        // Replaces the four straight outer-edge layers the old code appended to `lineLayers`.
-        self.contentView.layer.cornerRadius = v2TableCornerRadius
-        self.contentView.layer.borderColor = item.borderColor.cgColor
-        self.contentView.layer.borderWidth = item.bordered ? v2TableBorderWidth : 0.0
-
-        // Inner grid lines (between cells).
         if item.bordered {
-            for r in item.horizontalLines + item.verticalLines {
+            for _ in item.horizontalLines + item.verticalLines {
                 let line = CALayer()
-                line.backgroundColor = item.borderColor.cgColor
-                line.frame = r.offsetBy(dx: 0.0, dy: gridOffsetY)
                 self.contentView.layer.addSublayer(line)
                 self.lineLayers.append(line)
             }
         }
+
+        self.update(item: item, theme: theme)
     }
 
     @available(*, unavailable)
@@ -2044,8 +1997,8 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
         self.item = item
 
         self.scrollView.frame = CGRect(origin: .zero, size: item.frame.size)
-        self.scrollView.contentSize = CGSize(width: item.contentSize.width + item.contentInset, height: item.contentSize.height)
-        self.scrollView.showsHorizontalScrollIndicator = item.contentSize.width + item.contentInset > item.frame.width
+        self.scrollView.contentSize = CGSize(width: item.contentSize.width + item.contentInset * 2.0, height: item.contentSize.height)
+        self.scrollView.showsHorizontalScrollIndicator = item.contentSize.width + item.contentInset * 2.0 > item.frame.width
         self.contentView.frame = CGRect(x: item.contentInset, y: 0.0, width: item.contentSize.width, height: item.contentSize.height)
 
         // Forward updates to nested V2 sub-layouts (title + each cell). Recursive update
@@ -2093,10 +2046,15 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
             }
         }
 
-        // Inner line layers — refresh color in place. (`lineLayers` now holds only inner grid
+        // Inner line layers — refresh colour AND frame in place. (`lineLayers` holds only inner grid
         // lines; the outer border is the contentView layer's own rounded border, refreshed below.)
-        for line in self.lineLayers {
+        // Frames are set here (not in init) so reuse with a different grid re-positions the lines.
+        let lineRects = item.horizontalLines + item.verticalLines
+        for (i, line) in self.lineLayers.enumerated() {
             line.backgroundColor = item.borderColor.cgColor
+            if i < lineRects.count {
+                line.frame = lineRects[i].offsetBy(dx: 0.0, dy: gridOffsetY)
+            }
         }
 
         // Rounded outer border — refresh radius/color/width (theme or `bordered` flag may change).
@@ -2276,12 +2234,12 @@ final class InstantPageV2FormulaView: UIView, InstantPageItemView {
     private(set) var item: InstantPageV2FormulaItem
     var itemFrame: CGRect { return self.item.frame }
 
-    init(item: InstantPageV2FormulaItem) {
+    init(item: InstantPageV2FormulaItem, theme: InstantPageTheme) {
         self.item = item
         super.init(frame: item.frame)
-        self.backgroundColor = .clear
-        self.isOpaque = false
-        self.buildContents()
+        self.backgroundColor = .clear   // structural
+        self.isOpaque = false           // structural
+        self.update(item: item, theme: theme)
     }
 
     @available(*, unavailable)
@@ -2291,7 +2249,8 @@ final class InstantPageV2FormulaView: UIView, InstantPageItemView {
         let _ = theme
         self.item = item
 
-        // Image content and scroll/non-scroll shape may change with width; rebuild.
+        // Image content and scroll/non-scroll shape may change with width; rebuild. On the first
+        // call (from init) there is nothing to tear down, so this collapses to a plain build.
         for sub in self.subviews { sub.removeFromSuperview() }
         if let sublayers = self.layer.sublayers {
             for layer in sublayers { layer.removeFromSuperlayer() }
