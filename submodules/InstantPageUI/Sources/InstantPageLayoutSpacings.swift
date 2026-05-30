@@ -125,7 +125,9 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
                     default:
                         return 10.0
                     }
-                case .detail, .cell, .list:
+                case .cell:
+                    return 0.0
+                case .detail, .list:
                     return 4.0
                 }
             } else {
@@ -144,8 +146,10 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
                     return 25.0
                 }
             }
-        case .detail, .cell, .list:
+        case .detail, .list:
             return 16.0
+        case .cell:
+            return 0.0
         }
     } else {
         return 0.0
