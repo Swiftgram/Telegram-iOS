@@ -1942,15 +1942,20 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
         self.backgroundColor = .clear
 
         self.scrollView.frame = self.bounds
-        self.scrollView.contentSize = item.contentSize
+        // Scrollable tables clip to the full width with no inset on the clip; the inset lives inside
+        // the scroll content width as a left margin only (see contentSize below).
+        self.scrollView.clipsToBounds = true
+        self.scrollView.contentSize = CGSize(width: item.contentSize.width + item.contentInset, height: item.contentSize.height)
         self.scrollView.alwaysBounceHorizontal = false
         self.scrollView.alwaysBounceVertical = false
-        self.scrollView.showsHorizontalScrollIndicator = item.contentSize.width > item.frame.width
+        self.scrollView.showsHorizontalScrollIndicator = item.contentSize.width + item.contentInset > item.frame.width
         self.scrollView.showsVerticalScrollIndicator = false
         self.scrollView.disablesInteractiveTransitionGestureRecognizer = true
         self.addSubview(self.scrollView)
 
-        self.contentView.frame = CGRect(origin: .zero, size: item.contentSize)
+        // Grid container shifted right by the inset so the borders start at the body-text inset.
+        // Its size stays the bare grid (item.contentSize); grid coords inside remain x=0-relative.
+        self.contentView.frame = CGRect(x: item.contentInset, y: 0.0, width: item.contentSize.width, height: item.contentSize.height)
         self.scrollView.addSubview(self.contentView)
 
         // Title sub-layout (above the grid, inside the scroll view's content).
@@ -2025,9 +2030,9 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
         self.item = item
 
         self.scrollView.frame = CGRect(origin: .zero, size: item.frame.size)
-        self.scrollView.contentSize = item.contentSize
-        self.scrollView.showsHorizontalScrollIndicator = item.contentSize.width > item.frame.width
-        self.contentView.frame = CGRect(origin: .zero, size: item.contentSize)
+        self.scrollView.contentSize = CGSize(width: item.contentSize.width + item.contentInset, height: item.contentSize.height)
+        self.scrollView.showsHorizontalScrollIndicator = item.contentSize.width + item.contentInset > item.frame.width
+        self.contentView.frame = CGRect(x: item.contentInset, y: 0.0, width: item.contentSize.width, height: item.contentSize.height)
 
         // Forward updates to nested V2 sub-layouts (title + each cell). Recursive update
         // propagation. Cell-count or title-presence changes fall back to rebuild via the
@@ -2145,7 +2150,7 @@ private func findTextItem(
             }
         case let .table(table):
             for cell in table.cells {
-                let cellAbs = cell.frame.offsetBy(dx: f.minX, dy: f.minY)
+                let cellAbs = cell.frame.offsetBy(dx: f.minX + table.contentInset, dy: f.minY)
                 if !cellAbs.contains(point) { continue }
                 if let sub = cell.subLayout {
                     if let hit = findTextItem(in: sub, point: point,
@@ -2155,7 +2160,7 @@ private func findTextItem(
                 }
             }
             if let titleLayout = table.titleSubLayout, let titleFrame = table.titleFrame {
-                let titleAbs = titleFrame.offsetBy(dx: f.minX, dy: f.minY)
+                let titleAbs = titleFrame.offsetBy(dx: f.minX + table.contentInset, dy: f.minY)
                 if titleAbs.contains(point) {
                     if let hit = findTextItem(in: titleLayout, point: point,
                                               accumulatedOffset: CGPoint(x: titleAbs.minX, y: titleAbs.minY)) {
@@ -2208,7 +2213,7 @@ private func collectSelectableTextItems(
         case let .table(table):
             if let titleLayout = table.titleSubLayout, let titleFrame = table.titleFrame {
                 let titleOffset = CGPoint(
-                    x: accumulatedOffset.x + table.frame.minX + titleFrame.minX,
+                    x: accumulatedOffset.x + table.frame.minX + table.contentInset + titleFrame.minX,
                     y: accumulatedOffset.y + table.frame.minY + titleFrame.minY
                 )
                 collectSelectableTextItems(in: titleLayout, accumulatedOffset: titleOffset, into: &result)
@@ -2216,7 +2221,7 @@ private func collectSelectableTextItems(
             for cell in table.cells {
                 if let sub = cell.subLayout {
                     let cellOffset = CGPoint(
-                        x: accumulatedOffset.x + table.frame.minX + cell.frame.minX,
+                        x: accumulatedOffset.x + table.frame.minX + table.contentInset + cell.frame.minX,
                         y: accumulatedOffset.y + table.frame.minY + cell.frame.minY
                     )
                     collectSelectableTextItems(in: sub, accumulatedOffset: cellOffset, into: &result)
