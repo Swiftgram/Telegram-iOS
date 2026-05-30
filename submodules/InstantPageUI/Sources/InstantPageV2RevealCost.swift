@@ -14,6 +14,7 @@ extension InstantPageV2RevealCostMap {
     fileprivate enum Entry {
         case text(start: Int, end: Int)
         case nonText(start: Int, end: Int)
+        case thinking(start: Int)
         case details(start: Int, end: Int, body: InstantPageV2RevealCostMap?)
         case codeBlock(start: Int, end: Int)
         case table(start: Int, end: Int, rows: [TableRow], title: InstantPageV2RevealCostMap?)
@@ -167,6 +168,11 @@ private func revealedExtent(entry: InstantPageV2RevealCostMap.Entry, item: Insta
     case let .nonText(start, end):
         let _ = start
         if revealedCount < end { return nil }
+        return item.frame
+    case let .thinking(start):
+        // Revealed (and contributes its full height) once the cursor reaches its index position.
+        // A top thinking block (start == 0) is revealed from the first frame.
+        if revealedCount < start { return nil }
         return item.frame
     case let .codeBlock(start, _):
         if revealedCount <= start { return nil }
@@ -323,6 +329,11 @@ private func computeEntries(items: [InstantPageV2LaidOutItem], cursor: inout Int
                 rows.append(InstantPageV2RevealCostMap.TableRow(startCount: rowStart, cells: cellMaps))
             }
             entries.append(.table(start: start, end: cursor, rows: rows, title: titleMap))
+        case .thinking:
+            // Zero cost: do NOT advance the cursor. This is the linchpin — answer-content cursor
+            // positions are identical whether or not thinking blocks are present, so adding/
+            // removing a thinking block never jumps the answer's reveal position.
+            entries.append(.thinking(start: cursor))
         case .formula, .mediaImage, .mediaVideo, .mediaMap, .mediaCoverImage, .mediaPlaceholder,
              .divider, .listMarker, .blockQuoteBar, .shape, .anchor:
             let start = cursor
@@ -419,6 +430,11 @@ private func applyRevealEntry(view: InstantPageItemView, entry: InstantPageV2Rev
         let visible = revealedCount >= end
         applyVisibility(view: view, visible: visible, animated: animated)
         let _ = start
+    case let .thinking(start):
+        // Whole-block 0.12s alpha fade-in at the index position; inner text is drawn fully
+        // (never char-reveal-masked) — the shimmer is the only ongoing animation.
+        let visible = revealedCount >= start
+        applyVisibility(view: view, visible: visible, animated: animated)
     }
 }
 

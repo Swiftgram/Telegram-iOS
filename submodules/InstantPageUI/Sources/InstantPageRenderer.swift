@@ -14,6 +14,7 @@ import EmojiTextAttachmentView
 import AnimationCache
 import MultiAnimationRenderer
 import InvisibleInkDustNode
+import ShimmeringMask
 
 // MARK: - Stable item identity (for view reuse on re-layouts)
 
@@ -29,6 +30,7 @@ import InvisibleInkDustNode
 public enum InstantPageV2StableItemId: Hashable {
     case media(Int)                          // media.index (4 media cases share this namespace)
     case details(Int)                        // details.index
+    case thinking(Int)                       // thinking-block sequence index (own namespace)
     case positional(InstantPageV2ItemKind, Int)  // (caseTag, items-array position)
 }
 
@@ -48,7 +50,7 @@ public enum InstantPageV2ItemKind: Hashable {
 /// `InstantPageV2View()` constructor usable.
 public final class InstantPageV2RenderContext {
     public let context: AccountContext
-    public let webpage: TelegramMediaWebpage
+    public private(set) var webpage: TelegramMediaWebpage
     public let sourceLocation: InstantPageSourceLocation
     public let imageReference: (TelegramMediaImage) -> ImageMediaReference
     public let fileReference: (TelegramMediaFile) -> FileMediaReference
@@ -77,6 +79,15 @@ public final class InstantPageV2RenderContext {
         self.push = push
         self.openUrl = openUrl
         self.baseNavigationController = baseNavigationController
+    }
+
+    /// Update the content-bearing fields for a later chunk of the SAME message. Enables the
+    /// streaming bubble to reuse one V2View across `stableVersion` bumps instead of rebuilding.
+    /// Only `webpage` changes across chunks; the `imageReference`/`fileReference` closures keep
+    /// their construction-time `MessageReference` snapshot, which is acceptable because the message
+    /// id is stable across chunks (media resolves by id) and streamed AI content carries no media.
+    public func updateContent(webpage: TelegramMediaWebpage) {
+        self.webpage = webpage
     }
 }
 
@@ -212,8 +223,21 @@ public final class InstantPageV2View: UIView {
         var newStableIds: [InstantPageV2StableItemId] = []
         var reusedIds: Set<InstantPageV2StableItemId> = []
 
-        for (position, item) in layout.items.enumerated() {
-            let id = InstantPageV2View.stableId(for: item, atPosition: position)
+        // Two independent position counters so thinking-block churn never renumbers content
+        // blocks' stable ids (requirement: adding/removing a thinking block must not affect other
+        // blocks). Content items are numbered ignoring thinking items; thinking items get their
+        // own .thinking(index) namespace.
+        var contentPosition = 0
+        var thinkingPosition = 0
+        for item in layout.items {
+            let id: InstantPageV2StableItemId
+            if case .thinking = item {
+                id = InstantPageV2View.stableId(for: item, atPosition: thinkingPosition)
+                thinkingPosition += 1
+            } else {
+                id = InstantPageV2View.stableId(for: item, atPosition: contentPosition)
+                contentPosition += 1
+            }
 
             if let existing = oldViewsById[id], let reusedView = self.reuse(existingView: existing, for: item, theme: theme, animation: animation) {
                 let newFrame = InstantPageV2View.actualFrame(forItem: item)   // parent positions child
@@ -630,6 +654,10 @@ public final class InstantPageV2View: UIView {
             guard let v = existingView as? InstantPageV2MediaCoverImageView, let rc = self.renderContext else { return nil }
             v.update(item: media, theme: theme, renderContext: rc)
             return v
+        case let .thinking(thinking):
+            guard let v = existingView as? InstantPageV2ThinkingView else { return nil }
+            v.update(item: thinking, theme: theme)
+            return v
         }
     }
 
@@ -650,6 +678,7 @@ public final class InstantPageV2View: UIView {
         case .table:                   return .positional(.table, position)
         case .anchor:                  return .positional(.anchor, position)
         case .formula:                 return .positional(.formula, position)
+        case .thinking:                return .thinking(position)
         }
     }
 
@@ -748,6 +777,8 @@ public final class InstantPageV2View: UIView {
             }
         case let .formula(formula):
             return InstantPageV2FormulaView(item: formula)
+        case let .thinking(thinking):
+            return InstantPageV2ThinkingView(item: thinking)
         }
     }
 
@@ -1652,11 +1683,7 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
         self.titleTextView.isUserInteractionEnabled = false
 
         self.chevronView = UIImageView()
-        // Single downward chevron; the expanded state is a 180° rotation (animatable) rather than
-        // an instant chevron.up/chevron.down image swap. A template image + tintColor renders the
-        // SF Symbol in the message's primary text color — baking the color into a CALayer's cgImage
-        // contents drops the tint and renders black. (SF Symbol is iOS 13+.)
-        self.chevronView.image = UIImage(systemName: "chevron.down")?.withRenderingMode(.alwaysTemplate)
+        self.chevronView.image = UIImage(bundleImageName: "Item List/ExpandingItemVerticalRegularArrow")?.withRenderingMode(.alwaysTemplate)
         self.chevronView.tintColor = theme.textCategories.paragraph.color
         self.chevronView.contentMode = .scaleAspectFit
         // Decorative: let taps fall through to titleHitView (which carries the toggle gesture).
@@ -1676,24 +1703,6 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
         self.addSubview(self.titleTextView)
         self.addSubview(self.chevronView)
         self.addSubview(self.separator)
-
-        let chevronSize = CGSize(width: 18.0, height: 18.0)
-        // bounds + center (not frame) so the rotation transform pivots around the center and the
-        // frame stays well-defined while a non-identity transform is applied.
-        self.chevronView.bounds = CGRect(origin: .zero, size: chevronSize)
-        self.chevronView.center = CGPoint(
-            x: item.titleFrame.maxX - chevronSize.width / 2.0 - 12.0,
-            y: item.titleFrame.midY
-        )
-        self.chevronView.layer.transform = item.isExpanded ? InstantPageV2DetailsView.expandedChevronTransform : CATransform3DIdentity
-
-        // V1 (InstantPageDetailsNode.swift:138): separator sits at titleHeight - UIScreenPixel.
-        self.separator.frame = CGRect(
-            x: 0.0,
-            y: item.titleFrame.maxY - 0.5,
-            width: item.frame.width,
-            height: 0.5
-        )
 
         if item.isExpanded, let innerLayout = item.innerLayout {
             let body = InstantPageV2View(renderContext: renderContext)
@@ -1727,20 +1736,12 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
         )
         self.titleTextView.update(item: titleV2Item, theme: theme)
 
-        self.chevronView.tintColor = theme.textCategories.paragraph.color
+        self.chevronView.tintColor = theme.secondaryControlColor
         let chevronSize = CGSize(width: 18.0, height: 18.0)
         self.chevronView.bounds = CGRect(origin: .zero, size: chevronSize)
         self.chevronView.center = CGPoint(
-            x: item.titleFrame.maxX - chevronSize.width / 2.0 - 12.0,
-            y: item.titleFrame.midY
-        )
-
-        self.separator.backgroundColor = item.separatorColor
-        self.separator.frame = CGRect(
-            x: 0.0,
-            y: item.titleFrame.maxY - 0.5,
-            width: item.frame.width,
-            height: 0.5
+            x: item.sideInset + chevronSize.width / 2.0,
+            y: item.titleFrame.midY + 1.0
         )
 
         self.titleHitView.frame = item.titleFrame
@@ -1749,6 +1750,7 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
         // view's own frame height (clipsToBounds = true), not by the body itself — see
         // InstantPageV2View.update. The body's internal layout is forwarded `animation` so a
         // *nested* details block inside the body can also animate its own toggle.
+        let blockHeight: CGFloat
         if item.isExpanded {
             if let innerLayout = item.innerLayout {
                 let body: InstantPageV2View
@@ -1767,6 +1769,9 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
                     origin: CGPoint(x: 0.0, y: item.titleFrame.maxY),
                     size: innerLayout.contentSize
                 )
+                blockHeight = body.frame.maxY
+            } else {
+                blockHeight = item.titleFrame.maxY
             }
         } else {
             if let existingBody = self.bodyView {
@@ -1780,7 +1785,16 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
                     self.bodyView = nil
                 }
             }
+            blockHeight = item.titleFrame.maxY
         }
+        
+        self.separator.backgroundColor = item.separatorColor
+        animation.animator.updateFrame(layer: self.separator.layer, frame: CGRect(
+            x: 8.0,
+            y: blockHeight - UIScreenPixel,
+            width: item.frame.width - 8.0 * 2.0,
+            height: UIScreenPixel
+        ), completion: nil)
 
         // Chevron rotation. The body teardown on collapse is NOT tied to this completion — see
         // finalizePendingCollapse(), which the parent calls from the frame-shrink (clip) animation.
@@ -1845,6 +1859,58 @@ final class InstantPageV2CodeBlockView: UIView, InstantPageItemView {
             textItem: item.textItem
         )
         self.textView.update(item: innerV2TextItem, theme: theme)
+    }
+}
+
+// MARK: - Thinking view (dimmed shimmering reasoning block)
+
+/// A top-level thinking block: dimmed text drawn fully, masked by a continuously-running
+/// `ShimmeringMaskView`. Reveal is whole-block alpha (driven from the cost map), NOT char-by-char,
+/// and the block contributes zero reveal cost. Structure mirrors `InstantPageV2CodeBlockView`
+/// (container hosting an inner `InstantPageV2TextView`).
+final class InstantPageV2ThinkingView: UIView, InstantPageItemView {
+    private(set) var item: InstantPageV2ThinkingItem
+    var itemFrame: CGRect { return self.item.frame }
+
+    private let shimmerView: ShimmeringMaskView
+    private let textView: InstantPageV2TextView
+
+    init(item: InstantPageV2ThinkingItem) {
+        self.item = item
+        self.shimmerView = ShimmeringMaskView(peakAlpha: 0.3, duration: 1.0)
+        let innerV2TextItem = InstantPageV2TextItem(frame: item.textItem.frame, textItem: item.textItem)
+        self.textView = InstantPageV2TextView(item: innerV2TextItem)
+
+        super.init(frame: item.frame)
+        self.backgroundColor = .clear
+        self.addSubview(self.shimmerView)
+        self.shimmerView.contentView.addSubview(self.textView)
+        self.layoutContents()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    /// Parent positions children (see CLAUDE.md "View frame ownership"): the shimmer covers the
+    /// whole block; the inner text view sits at its block-local typographic frame (expanded by the
+    /// text view's clipping inset, matching `InstantPageV2TextView.init`).
+    private func layoutContents() {
+        self.shimmerView.frame = CGRect(origin: .zero, size: self.item.frame.size)
+        self.textView.frame = self.item.textItem.frame.insetBy(dx: -v2TextViewClippingInset, dy: -v2TextViewClippingInset)
+        self.shimmerView.update(
+            size: self.item.frame.size,
+            containerWidth: self.item.frame.size.width,
+            offsetX: 0.0,
+            gradientWidth: 200.0,
+            transition: .immediate
+        )
+    }
+
+    func update(item: InstantPageV2ThinkingItem, theme: InstantPageTheme) {
+        self.item = item
+        let innerV2TextItem = InstantPageV2TextItem(frame: item.textItem.frame, textItem: item.textItem)
+        self.textView.update(item: innerV2TextItem, theme: theme)
+        self.layoutContents()
     }
 }
 
