@@ -1049,6 +1049,7 @@ private struct V2TableRow {
 
 let v2TableCellInsets = UIEdgeInsets(top: 14.0, left: 12.0, bottom: 14.0, right: 12.0)
 let v2TableBorderWidth: CGFloat = 1.0
+let v2TableCornerRadius: CGFloat = 10.0
 
 private func layoutTable(
     title: RichText,

@@ -1916,6 +1916,22 @@ final class InstantPageV2ThinkingView: UIView, InstantPageItemView {
 
 // MARK: - Table view
 
+/// The set of grid corners a cell occupies, so a filled corner cell's stripe can be rounded to
+/// follow the table's rounded outer border. `cellFrame` is table-grid-local (pre-`gridOffsetY`).
+private func tableStripeCornerMask(cellFrame: CGRect, gridWidth: CGFloat, gridHeight: CGFloat, effectiveBorderWidth: CGFloat) -> CACornerMask {
+    let edge = effectiveBorderWidth / 2.0 + 0.5
+    let firstCol = cellFrame.minX <= edge
+    let firstRow = cellFrame.minY <= edge
+    let lastCol = cellFrame.maxX >= gridWidth - edge
+    let lastRow = cellFrame.maxY >= gridHeight - edge
+    var mask: CACornerMask = []
+    if firstRow && firstCol { mask.insert(.layerMinXMinYCorner) }
+    if firstRow && lastCol { mask.insert(.layerMaxXMinYCorner) }
+    if lastRow && firstCol { mask.insert(.layerMinXMaxYCorner) }
+    if lastRow && lastCol { mask.insert(.layerMaxXMaxYCorner) }
+    return mask
+}
+
 final class InstantPageV2TableView: UIView, InstantPageItemView {
     private(set) var item: InstantPageV2TableItem
     var itemFrame: CGRect { return self.item.frame }
@@ -1970,6 +1986,8 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
 
         // Grid origin: shifted down by title height when present.
         let gridOffsetY = item.titleFrame?.height ?? 0.0
+        let effectiveBorderWidth = item.bordered ? v2TableBorderWidth : 0.0
+        let gridHeight = item.contentSize.height - gridOffsetY
 
         // Cell backgrounds and sub-layouts.
         for cell in item.cells {
@@ -1977,6 +1995,16 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
                 let stripe = CALayer()
                 stripe.backgroundColor = bg.cgColor
                 stripe.frame = cell.frame.offsetBy(dx: 0.0, dy: gridOffsetY)
+                // Round the stripe at any grid corner it touches, so a filled corner cell
+                // follows the rounded outer border instead of poking past it.
+                let cornerMask = tableStripeCornerMask(cellFrame: cell.frame, gridWidth: item.contentSize.width, gridHeight: gridHeight, effectiveBorderWidth: effectiveBorderWidth)
+                if cornerMask.isEmpty {
+                    stripe.cornerRadius = 0.0
+                    stripe.maskedCorners = []
+                } else {
+                    stripe.cornerRadius = max(0.0, v2TableCornerRadius - effectiveBorderWidth)
+                    stripe.maskedCorners = cornerMask
+                }
                 self.contentView.layer.insertSublayer(stripe, at: 0)
                 self.stripeLayers.append(stripe)
             }
@@ -1990,33 +2018,19 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
             }
         }
 
-        // Border lines.
+        // Rounded outer border. `cornerRadius` rounds the layer's border WITHOUT `masksToBounds`,
+        // so table contents (cell fills, text) stay unclipped — only the border visual is rounded.
+        // Replaces the four straight outer-edge layers the old code appended to `lineLayers`.
+        self.contentView.layer.cornerRadius = v2TableCornerRadius
+        self.contentView.layer.borderColor = item.borderColor.cgColor
+        self.contentView.layer.borderWidth = item.bordered ? v2TableBorderWidth : 0.0
+
+        // Inner grid lines (between cells).
         if item.bordered {
             for r in item.horizontalLines + item.verticalLines {
                 let line = CALayer()
                 line.backgroundColor = item.borderColor.cgColor
                 line.frame = r.offsetBy(dx: 0.0, dy: gridOffsetY)
-                self.contentView.layer.addSublayer(line)
-                self.lineLayers.append(line)
-            }
-            // Outer border rect (four edges).
-            let outerW = v2TableBorderWidth
-            let outerRect = CGRect(
-                x: outerW / 2.0,
-                y: gridOffsetY + outerW / 2.0,
-                width: item.contentSize.width - outerW,
-                height: item.contentSize.height - outerW
-            )
-            let outerEdges: [CGRect] = [
-                CGRect(x: outerRect.minX, y: outerRect.minY, width: outerRect.width, height: outerW),
-                CGRect(x: outerRect.minX, y: outerRect.maxY - outerW, width: outerRect.width, height: outerW),
-                CGRect(x: outerRect.minX, y: outerRect.minY, width: outerW, height: outerRect.height),
-                CGRect(x: outerRect.maxX - outerW, y: outerRect.minY, width: outerW, height: outerRect.height)
-            ]
-            for edge in outerEdges {
-                let line = CALayer()
-                line.backgroundColor = item.borderColor.cgColor
-                line.frame = edge
                 self.contentView.layer.addSublayer(line)
                 self.lineLayers.append(line)
             }
@@ -2058,21 +2072,37 @@ final class InstantPageV2TableView: UIView, InstantPageItemView {
             }
         }
 
-        // Stripe layers (cell backgrounds) — update color + frame in original order.
+        // Stripe layers (cell backgrounds) — update color + frame + corner rounding in original order.
+        let effectiveBorderWidth = item.bordered ? v2TableBorderWidth : 0.0
+        let gridHeight = item.contentSize.height - gridOffsetY
         var stripeIndex = 0
         for cell in item.cells {
             if let bg = cell.backgroundColor, stripeIndex < self.stripeLayers.count {
                 let stripe = self.stripeLayers[stripeIndex]
                 stripe.backgroundColor = bg.cgColor
                 stripe.frame = cell.frame.offsetBy(dx: 0.0, dy: gridOffsetY)
+                let cornerMask = tableStripeCornerMask(cellFrame: cell.frame, gridWidth: item.contentSize.width, gridHeight: gridHeight, effectiveBorderWidth: effectiveBorderWidth)
+                if cornerMask.isEmpty {
+                    stripe.cornerRadius = 0.0
+                    stripe.maskedCorners = []
+                } else {
+                    stripe.cornerRadius = max(0.0, v2TableCornerRadius - effectiveBorderWidth)
+                    stripe.maskedCorners = cornerMask
+                }
                 stripeIndex += 1
             }
         }
 
-        // Line layers (borders) — update color in place; frames recomputed in original order.
+        // Inner line layers — refresh color in place. (`lineLayers` now holds only inner grid
+        // lines; the outer border is the contentView layer's own rounded border, refreshed below.)
         for line in self.lineLayers {
             line.backgroundColor = item.borderColor.cgColor
         }
+
+        // Rounded outer border — refresh radius/color/width (theme or `bordered` flag may change).
+        self.contentView.layer.cornerRadius = v2TableCornerRadius
+        self.contentView.layer.borderColor = item.borderColor.cgColor
+        self.contentView.layer.borderWidth = item.bordered ? v2TableBorderWidth : 0.0
     }
 }
 
