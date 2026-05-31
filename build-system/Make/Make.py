@@ -608,6 +608,53 @@ def generate_project(bazel, arguments):
     call_executable(['open', xcodeproj_path])
 
 
+def resolve_watch_provisioning_profile(arguments, base_path):
+    """Resolve the watchkitapp provisioning profile for an --embedWatchApp build.
+
+    Returns the absolute path of the profile to sign the embedded watch app with, or None
+    to build the watch app UNSIGNED. None is only returned (with a warning) for
+    non-distribution codesigning — a distribution build (appstore/adhoc/enterprise) raises
+    instead, because the host ios_application does NOT re-sign the embedded watch app, so an
+    unsigned Watch/ payload ships as-is and is silently rejected at install time. Failing
+    here turns that silent "won't install" into a build error that names the missing profile.
+    """
+    is_distribution_codesigning = arguments.gitCodesigningType in ('appstore', 'adhoc', 'enterprise')
+
+    explicit_profile = arguments.watchProvisioningProfile
+    if explicit_profile is not None:
+        if not os.path.exists(explicit_profile):
+            raise Exception('--watchProvisioningProfile was set to a path that does not exist: {}'.format(explicit_profile))
+        return explicit_profile
+
+    # Default to the watchkitapp profile that resolve_configuration() just extracted from the
+    # codesigning material (renamed via the bundle-id mapping in BuildConfiguration.py). This
+    # matches the active codesigning type (e.g. appstore) and the host app's identity, so the
+    # embedded watch app is signed correctly without an explicit --watchProvisioningProfile.
+    # The worker derives the signing identity (cert) from this profile when
+    # --watchSigningIdentity is omitted.
+    resolved_watch_profile = os.path.join(base_path, 'build-input/configuration-repository/provisioning/WatchApp.mobileprovision')
+    if os.path.exists(resolved_watch_profile):
+        return resolved_watch_profile
+
+    if is_distribution_codesigning:
+        raise Exception(
+            '--embedWatchApp is set for a distribution build (--gitCodesigningType={ct}), but no watchkitapp '
+            'provisioning profile resolved (looked for {p}).\n'
+            'The {ct} codesigning material does not contain a `.watchkitapp` profile, so the embedded watch app '
+            'would be UNSIGNED — the host app is not re-signed over it, so it ships unsigned and is silently '
+            'rejected when installing on a watch.\n'
+            'Fix: fetch the latest codesigning material so the watchkitapp profile is present — drop '
+            '--gitCodesigningUseCurrent (it skips the fetch), or run '
+            '`git -C build-input/configuration-repository-workdir/encrypted pull` — or create/register the {ct} '
+            'watchkitapp provisioning profile, or pass an explicit --watchProvisioningProfile.'.format(
+                ct=arguments.gitCodesigningType, p=resolved_watch_profile
+            )
+        )
+
+    print('TelegramBuild: warning: --embedWatchApp is set but no watch provisioning profile was found (pass --watchProvisioningProfile, or use codesigning material that includes the watchkitapp profile; looked for {}). The embedded watch app will be UNSIGNED and rejected by the App Store.'.format(resolved_watch_profile))
+    return None
+
+
 def build(bazel, arguments):
     bazel_command_line = BazelCommandLine(
         bazel=bazel,
@@ -636,20 +683,7 @@ def build(bazel, arguments):
         if arguments.configuration in ('debug_arm64', 'release_arm64'):
             if arguments.watchApiId is None or arguments.watchApiHash is None:
                 raise Exception('--embedWatchApp requires --watchApiId and --watchApiHash (the embedded watch app build needs API credentials).')
-            watch_provisioning_profile = arguments.watchProvisioningProfile
-            if watch_provisioning_profile is None:
-                # Default to the watchkitapp profile that resolve_configuration() just
-                # extracted from the codesigning material (renamed via the bundle-id
-                # mapping in BuildConfiguration.py). This matches the active codesigning
-                # type (e.g. appstore) and the host app's identity, so the embedded watch
-                # app is signed correctly without requiring an explicit
-                # --watchProvisioningProfile. The worker derives the signing identity
-                # (cert) from this profile when --watchSigningIdentity is omitted.
-                resolved_watch_profile = os.path.join(os.getcwd(), 'build-input/configuration-repository/provisioning/WatchApp.mobileprovision')
-                if os.path.exists(resolved_watch_profile):
-                    watch_provisioning_profile = resolved_watch_profile
-                else:
-                    print('TelegramBuild: warning: --embedWatchApp is set but no watch provisioning profile was found (pass --watchProvisioningProfile, or use codesigning material that includes the watchkitapp profile; looked for {}). The embedded watch app will be UNSIGNED and rejected by the App Store.'.format(resolved_watch_profile))
+            watch_provisioning_profile = resolve_watch_provisioning_profile(arguments=arguments, base_path=os.getcwd())
             bazel_command_line.set_watch_app(
                 arguments.watchApiId,
                 arguments.watchApiHash,

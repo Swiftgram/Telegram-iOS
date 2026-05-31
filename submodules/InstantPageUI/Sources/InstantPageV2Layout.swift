@@ -85,6 +85,7 @@ public enum InstantPageV2LaidOutItem {
     case mediaMap(InstantPageV2MediaMapItem)
     case mediaCoverImage(InstantPageV2MediaCoverImageItem)
     case formula(InstantPageV2FormulaItem)
+    case thinking(InstantPageV2ThinkingItem)
 
     public var frame: CGRect {
         switch self {
@@ -103,6 +104,7 @@ public enum InstantPageV2LaidOutItem {
         case let .mediaMap(item):          return item.frame
         case let .mediaCoverImage(item):   return item.frame
         case let .formula(item):           return item.frame
+        case let .thinking(item):          return item.frame
         }
     }
 
@@ -126,6 +128,7 @@ public enum InstantPageV2LaidOutItem {
         case var .mediaMap(item):          item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .mediaMap(item)
         case var .mediaCoverImage(item):   item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .mediaCoverImage(item)
         case var .formula(item):          item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .formula(item)
+        case var .thinking(item):         item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .thinking(item)
         }
     }
 }
@@ -141,6 +144,13 @@ public struct InstantPageV2CodeBlockItem {
     public let cornerRadius: CGFloat
     public let textItem: InstantPageTextItem
     public let inset: UIEdgeInsets
+}
+
+public struct InstantPageV2ThinkingItem {
+    public var frame: CGRect
+    /// The dimmed thinking text, laid out in block-local coordinates. Drawn fully (never
+    /// char-reveal-masked); the shimmer + whole-block fade are the only animations.
+    public let textItem: InstantPageTextItem
 }
 
 public struct InstantPageV2DividerItem {
@@ -283,6 +293,7 @@ public struct InstantPageV2MediaPlaceholderItem {
 public struct InstantPageV2DetailsItem {
     public var frame: CGRect
     public let index: Int
+    public let sideInset: CGFloat
     public let titleTextItem: InstantPageTextItem
     public let titleFrame: CGRect            // local to this item's frame
     public let separatorColor: UIColor
@@ -309,6 +320,7 @@ public struct InstantPageV2TableItem {
     public let titleSubLayout: InstantPageV2Layout?
     public let titleFrame: CGRect?
     public let contentSize: CGSize           // grid intrinsic size; may exceed frame.width → scroll
+    public let contentInset: CGFloat         // page horizontalInset; the renderer shifts the grid right by it and pads the scroll content by it on BOTH sides
     public let cells: [InstantPageV2TableCell]
     public let horizontalLines: [CGRect]
     public let verticalLines: [CGRect]
@@ -370,6 +382,7 @@ public func layoutInstantPageV2(
         instantPage.blocks,
         boundingWidth: boundingWidth,
         horizontalInset: horizontalInset,
+        kind: .topLevel,
         context: &context
     )
 }
@@ -481,6 +494,7 @@ private func layoutBlockSequence(
     _ blocks: [InstantPageBlock],
     boundingWidth: CGFloat,
     horizontalInset: CGFloat,
+    kind: BlockSequenceKind,
     context: inout LayoutContext
 ) -> InstantPageV2Layout {
     var items: [InstantPageV2LaidOutItem] = []
@@ -489,11 +503,12 @@ private func layoutBlockSequence(
     var previousBlock: InstantPageBlock?
 
     for (i, block) in blocks.enumerated() {
-        let spacing = spacingBetweenBlocks(upper: previousBlock, lower: block, fitToWidth: context.fitToWidth)
+        let spacing = spacingBetweenBlocks(upper: previousBlock, lower: block, fitToWidth: context.fitToWidth, kind: kind)
         let localItems = layoutBlock(
             block,
             boundingWidth: boundingWidth,
             horizontalInset: horizontalInset,
+            kind: kind,
             isCover: false,
             previousItems: items,
             isLast: i == blocks.count - 1,
@@ -521,7 +536,7 @@ private func layoutBlockSequence(
         }
     }
 
-    let closingSpacing = spacingBetweenBlocks(upper: previousBlock, lower: nil, fitToWidth: context.fitToWidth)
+    let closingSpacing = spacingBetweenBlocks(upper: previousBlock, lower: nil, fitToWidth: context.fitToWidth, kind: kind)
     contentHeight += closingSpacing
 
     var contentSize = CGSize(width: boundingWidth, height: contentHeight)
@@ -583,6 +598,7 @@ private func layoutBlock(
     _ block: InstantPageBlock,
     boundingWidth: CGFloat,
     horizontalInset: CGFloat,
+    kind: BlockSequenceKind,
     isCover: Bool,
     previousItems: [InstantPageV2LaidOutItem],
     isLast: Bool,
@@ -591,7 +607,7 @@ private func layoutBlock(
     let _ = isLast  // reserved for Tasks 7–9
     switch block {
     case let .cover(inner):
-        return layoutBlock(inner, boundingWidth: boundingWidth, horizontalInset: horizontalInset,
+        return layoutBlock(inner, boundingWidth: boundingWidth, horizontalInset: horizontalInset, kind: kind,
                            isCover: true, previousItems: previousItems, isLast: isLast, context: &context)
     case let .title(text):
         let titleItems = layoutSimpleText(text, category: .header, boundingWidth: boundingWidth,
@@ -617,7 +633,7 @@ private func layoutBlock(
         return layoutSimpleText(text, category: .caption, boundingWidth: boundingWidth,
                                 horizontalInset: horizontalInset, context: &context)
     case let .paragraph(text):
-        return layoutParagraph(text, boundingWidth: boundingWidth, horizontalInset: horizontalInset,
+        return layoutParagraph(text, boundingWidth: boundingWidth, horizontalInset: horizontalInset, kind: kind,
                                previousItems: previousItems, context: &context)
     case let .authorDate(author, date):
         return layoutAuthorDate(author: author, date: date, boundingWidth: boundingWidth,
@@ -629,7 +645,7 @@ private func layoutBlock(
 
     case let .list(items, ordered):
         return layoutList(items, ordered: ordered, boundingWidth: boundingWidth,
-                          horizontalInset: horizontalInset, context: &context)
+                          horizontalInset: horizontalInset, kind: kind, context: &context)
 
     case let .preformatted(text, language):
         return layoutCodeBlock(text, language: language, boundingWidth: boundingWidth,
@@ -637,7 +653,7 @@ private func layoutBlock(
 
     case let .blockQuote(blocks, caption):
         return layoutBlockQuote(blocks: blocks, caption: caption,
-                                boundingWidth: boundingWidth, horizontalInset: horizontalInset,
+                                boundingWidth: boundingWidth, horizontalInset: horizontalInset, kind: kind,
                                 isLast: isLast, context: &context)
     case let .pullQuote(text, caption):
         return layoutQuoteText(text: text, caption: caption, isPull: true,
@@ -875,7 +891,7 @@ private func layoutBlock(
     case let .formula(latex):
         return layoutFormulaBlock(latex: latex,
                                   boundingWidth: boundingWidth,
-                                  horizontalInset: horizontalInset,
+                                  horizontalInset: horizontalInset, kind: kind,
                                   context: &context)
 
     case let .details(title, blocks, expanded):
@@ -888,9 +904,9 @@ private func layoutBlock(
                            boundingWidth: boundingWidth, horizontalInset: horizontalInset,
                            context: &context)
 
-    // Block kinds filled in by later tasks:
-    case .thinking:
-        return []
+    case let .thinking(text):
+        return layoutThinking(text, boundingWidth: boundingWidth,
+                              horizontalInset: horizontalInset, context: &context)
     case .unsupported:
         return []
     }
@@ -907,6 +923,7 @@ private func layoutFormulaBlock(
     latex: String,
     boundingWidth: CGFloat,
     horizontalInset: CGFloat,
+    kind: BlockSequenceKind,
     context: inout LayoutContext
 ) -> [InstantPageV2LaidOutItem] {
     // Style stack matches V1's per-block formula (paragraph category, not header).
@@ -926,6 +943,7 @@ private func layoutFormulaBlock(
         return layoutParagraph(.plain(latex),
                                boundingWidth: boundingWidth,
                                horizontalInset: horizontalInset,
+                               kind: kind,
                                previousItems: [],
                                context: &context)
     }
@@ -983,16 +1001,19 @@ private func layoutDetails(
     let (titleTextItem, _, _) = layoutTextItem(
         attributedStringForRichText(title, styleStack: titleStyleStack),
         boundingWidth: boundingWidth - horizontalInset * 2.0 - 32.0,   // reserve right edge for chevron
-        offset: CGPoint(x: horizontalInset, y: 12.0),
+        offset: CGPoint(x: 0.0, y: 0.0),
         fitToWidth: context.fitToWidth,
         computeRevealCharacterRects: context.computeRevealCharacterRects
     )
     guard let titleTextItem = titleTextItem else { return [] }
+    
+    let titleHeight = max(44.0, titleTextItem.frame.height + 26.0)
+    titleTextItem.frame.origin.x = horizontalInset + 23.0
+    titleTextItem.frame.origin.y = floorToScreenPixels((titleHeight - titleTextItem.frame.height) * 0.5)
 
     let isExpanded = context.expandedDetails[index] ?? defaultExpanded
 
     // V1 uses max(44.0, titleSize.height + 26.0); matched here.
-    let titleHeight = max(44.0, titleTextItem.frame.height + 26.0)
     let titleFrame = CGRect(x: 0.0, y: 0.0, width: boundingWidth, height: titleHeight)
 
     var innerLayout: InstantPageV2Layout?
@@ -1002,6 +1023,7 @@ private func layoutDetails(
             blocks,
             boundingWidth: boundingWidth,
             horizontalInset: horizontalInset,
+            kind: .detail,
             context: &context
         )
         innerLayout = layout
@@ -1011,9 +1033,10 @@ private func layoutDetails(
     let item = InstantPageV2DetailsItem(
         frame: CGRect(x: 0.0, y: 0.0, width: boundingWidth, height: totalHeight),
         index: index,
+        sideInset: horizontalInset,
         titleTextItem: titleTextItem,
         titleFrame: titleFrame,
-        separatorColor: context.theme.controlColor.withMultipliedAlpha(0.25),
+        separatorColor: context.theme.separatorColor,
         isExpanded: isExpanded,
         innerLayout: innerLayout,
         defaultExpanded: defaultExpanded
@@ -1028,8 +1051,13 @@ private struct V2TableRow {
     var maxColumnWidths: [Int: CGFloat]
 }
 
-let v2TableCellInsets = UIEdgeInsets(top: 14.0, left: 12.0, bottom: 14.0, right: 12.0)
-let v2TableBorderWidth: CGFloat = 1.0
+let v2TableCellInsets: UIEdgeInsets = {
+    return UIEdgeInsets(top: 15.0, left: 13.0, bottom: 15.0, right: 13.0)
+}()
+let v2TableBorderWidth: CGFloat = {
+    return UIScreenPixel * 2.0
+}()
+let v2TableCornerRadius: CGFloat = 10.0
 
 private func layoutTable(
     title: RichText,
@@ -1046,11 +1074,15 @@ private func layoutTable(
 
     // Style stack shared across all cell text measurements.
     let styleStack = InstantPageTextStyleStack()
-    setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
+    setupStyleStack(styleStack, theme: context.theme, category: .table, link: false)
 
     let borderWidth = bordered ? v2TableBorderWidth : 0.0
+    // Size columns against the inset content width (mirrors V1's `boundingWidth - horizontalInset*2`),
+    // so a fitting table aligns with body text on both sides. The item frame stays full-width (flush)
+    // and the renderer bakes the inset back in as a left margin on the scroll content.
+    let contentBoundingWidth = boundingWidth - horizontalInset * 2.0
     let totalCellPadding = v2TableCellInsets.left + v2TableCellInsets.right
-    let cellWidthLimit = boundingWidth - totalCellPadding
+    let cellWidthLimit = contentBoundingWidth - totalCellPadding
 
     var tableRows: [V2TableRow] = []
     var columnCount: Int = 0
@@ -1080,10 +1112,14 @@ private func layoutTable(
             var minCellWidth: CGFloat = 1.0
             var maxCellWidth: CGFloat = 1.0
             if let text = cell.text {
-                let attrStr = attributedStringForRichText(text, styleStack: styleStack)
+                // Mirror V1 (`InstantPageTableItem.layoutTableItem`): `attributedStringForRichText`'s
+                // boundingWidth sizes inline attachments to `cellWidthLimit - totalCellPadding`, while
+                // the line-break budget passed to `layoutTextItem` is the full `cellWidthLimit`. (V1
+                // subtracts `totalCellPadding` only on the attribute-string arg, not the layout arg.)
+                let attrStr = attributedStringForRichText(text, styleStack: styleStack, boundingWidth: cellWidthLimit - totalCellPadding)
                 if let shortestItem = layoutTextItem(
                     attrStr,
-                    boundingWidth: cellWidthLimit - totalCellPadding,
+                    boundingWidth: cellWidthLimit,
                     offset: CGPoint(),
                     minimizeWidth: true,
                     fitToWidth: context.fitToWidth,
@@ -1093,7 +1129,7 @@ private func layoutTable(
                 }
                 if let longestItem = layoutTextItem(
                     attrStr,
-                    boundingWidth: cellWidthLimit - totalCellPadding,
+                    boundingWidth: cellWidthLimit,
                     offset: CGPoint(),
                     fitToWidth: context.fitToWidth,
                     computeRevealCharacterRects: context.computeRevealCharacterRects
@@ -1135,7 +1171,7 @@ private func layoutTable(
     }
 
     // Aggregate column min/max across all rows.
-    let maxContentWidth = boundingWidth - borderWidth
+    let maxContentWidth = contentBoundingWidth - borderWidth
     var availableWidth = maxContentWidth
     var minColumnWidths: [Int: CGFloat] = [:]
     var maxColumnWidths: [Int: CGFloat] = [:]
@@ -1206,7 +1242,7 @@ private func layoutTable(
             distributedWidth -= growth
             finalColumnWidths[i] = width
         }
-        totalWidth = boundingWidth
+        totalWidth = contentBoundingWidth
     } else {
         totalWidth += borderWidth
     }
@@ -1279,6 +1315,7 @@ private func layoutTable(
                         [.paragraph(cellText)],
                         boundingWidth: cellContentWidth,
                         horizontalInset: 0.0,
+                        kind: .cell,
                         context: &context
                     )
                     stampMarkdownContext(cellLayout.items, kind: .tableCell(row: i, column: k, isHeader: cell.header))
@@ -1503,6 +1540,7 @@ private func layoutTable(
             [.paragraph(title)],
             boundingWidth: totalWidth - v2TableCellInsets.left * 2.0,
             horizontalInset: 0.0,
+            kind: .cell,
             context: &context
         )
         titleSubLayout = titleLayout
@@ -1510,10 +1548,11 @@ private func layoutTable(
         titleFrame = CGRect(x: 0.0, y: 0.0, width: totalWidth, height: titleHeight)
     }
 
-    // The table item frame spans the full boundingWidth slot in the bubble;
-    // contentSize.width is the intrinsic grid width (may exceed frame.width → horizontal scroll).
+    // The table item frame spans the full visible bubble interior (`boundingWidth`); the scroll
+    // viewport equals what is actually visible. contentSize.width is the intrinsic grid width
+    // (may exceed frame.width → horizontal scroll); the renderer adds the inset on both sides.
     let tableFrame = CGRect(x: 0.0, y: 0.0,
-                            width: boundingWidth + horizontalInset * 2.0,
+                            width: boundingWidth,
                             height: totalHeight + (titleFrame?.height ?? 0.0))
     let contentSize = CGSize(
         width: totalWidth,
@@ -1525,6 +1564,7 @@ private func layoutTable(
         titleSubLayout: titleSubLayout,
         titleFrame: titleFrame,
         contentSize: contentSize,
+        contentInset: horizontalInset,
         cells: finalizedCells,
         horizontalLines: horizontalLines,
         verticalLines: verticalLines,
@@ -1765,13 +1805,14 @@ private func layoutParagraph(
     _ text: RichText,
     boundingWidth: CGFloat,
     horizontalInset: CGFloat,
+    kind: BlockSequenceKind,
     previousItems: [InstantPageV2LaidOutItem],
     context: inout LayoutContext
 ) -> [InstantPageV2LaidOutItem] {
     let _ = previousItems
 
     let styleStack = InstantPageTextStyleStack()
-    setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
+    setupStyleStack(styleStack, theme: context.theme, category: kind == .cell ? .table : .paragraph, link: false)
     let attributedString = attributedStringForRichText(text, styleStack: styleStack)
 
     let (_, items, _) = layoutTextItem(
@@ -1944,6 +1985,38 @@ private func layoutCodeBlock(
     ))]
 }
 
+private func layoutThinking(
+    _ text: RichText,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    // Dimmed/secondary base color: the paragraph body color at reduced alpha. RichText keeps
+    // its own bold/italic/link/inline-emoji formatting on top of this base (mirrors the old
+    // hardcoded "Thinking…" header, which used the message theme's dimmed description color).
+    let base = context.theme.textCategories.paragraph
+    let dimmedAttributes = InstantPageTextAttributes(
+        font: base.font,
+        color: base.color.withAlphaComponent(0.55),
+        underline: false
+    )
+    let styleStack = InstantPageTextStyleStack()
+    setupStyleStack(styleStack, theme: context.theme, attributes: dimmedAttributes)
+    let attributedString = attributedStringForRichText(text, styleStack: styleStack)
+
+    let (textItem, _, textSize) = layoutTextItem(
+        attributedString,
+        boundingWidth: boundingWidth - horizontalInset * 2.0,
+        offset: CGPoint(x: horizontalInset, y: 0.0),
+        fitToWidth: context.fitToWidth,
+        computeRevealCharacterRects: context.computeRevealCharacterRects
+    )
+    guard let textItem = textItem else { return [] }
+
+    let blockFrame = CGRect(x: 0.0, y: 0.0, width: boundingWidth, height: textSize.height)
+    return [.thinking(InstantPageV2ThinkingItem(frame: blockFrame, textItem: textItem))]
+}
+
 // MARK: - Block quote / pull quote layout (ported from V1 InstantPageLayout.swift lines 517–586)
 
 private func layoutBlockQuote(
@@ -1951,6 +2024,7 @@ private func layoutBlockQuote(
     caption: RichText,
     boundingWidth: CGFloat,
     horizontalInset: CGFloat,
+    kind: BlockSequenceKind,
     isLast: Bool,
     context: inout LayoutContext
 ) -> [InstantPageV2LaidOutItem] {
@@ -1962,7 +2036,7 @@ private func layoutBlockQuote(
     }
 
     let verticalInset: CGFloat = 4.0
-    let lineInset: CGFloat = 20.0
+    let lineInset: CGFloat = context.fitToWidth ? 12.0 : 20.0
     let barWidth: CGFloat = 3.0
 
     let innerBoundingWidth = boundingWidth - horizontalInset * 2.0 - lineInset
@@ -1981,6 +2055,7 @@ private func layoutBlockQuote(
             child,
             boundingWidth: innerBoundingWidth,
             horizontalInset: innerHorizontalInset,
+            kind: kind,
             isCover: false,
             previousItems: result,
             isLast: i == blocks.count - 1 && isLast,
@@ -2041,7 +2116,7 @@ private func layoutQuoteText(
     // V1 line 518/553: verticalInset = 4.0 for both variants.
     let verticalInset: CGFloat = 4.0
     // V1 line 518: lineInset = 20.0 (blockQuote only; pullQuote uses full width).
-    let lineInset: CGFloat = isPull ? 0.0 : 20.0
+    let lineInset: CGFloat = isPull ? 0.0 : (context.fitToWidth ? 12.0 : 20.0)
 
     var result: [InstantPageV2LaidOutItem] = []
     var contentHeight: CGFloat = verticalInset   // V1 line 520/554: starts at verticalInset
@@ -2147,6 +2222,7 @@ private func layoutList(
     ordered: Bool,
     boundingWidth: CGFloat,
     horizontalInset: CGFloat,
+    kind: BlockSequenceKind,
     context: inout LayoutContext
 ) -> [InstantPageV2LaidOutItem] {
     // Determine marker characteristics.
@@ -2323,13 +2399,14 @@ private func layoutList(
                     subBlock,
                     boundingWidth: boundingWidth - horizontalInset * 2.0 - indexSpacing - maxIndexWidth,
                     horizontalInset: 0.0,
+                    kind: kind,
                     isCover: false,
                     previousItems: result,
                     isLast: j == blocks.count - 1,
                     context: &context
                 )
                 let subLocalMaxY: CGFloat = subItems.map { $0.frame.maxY }.max() ?? 0.0
-                let spacing: CGFloat = (previousBlock != nil && subLocalMaxY > 0.0) ? spacingBetweenBlocks(upper: previousBlock, lower: subBlock, fitToWidth: context.fitToWidth) : 0.0
+                let spacing: CGFloat = (previousBlock != nil && subLocalMaxY > 0.0) ? spacingBetweenBlocks(upper: previousBlock, lower: subBlock, fitToWidth: context.fitToWidth, kind: .list) : 0.0
                 let offsetX = horizontalInset + indexSpacing + maxIndexWidth
                 let offsetY = contentHeight + spacing
                 let translatedItems = subItems.map { $0.offsetBy(CGPoint(x: offsetX, y: offsetY)) }

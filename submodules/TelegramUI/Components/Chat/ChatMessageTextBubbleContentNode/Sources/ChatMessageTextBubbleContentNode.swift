@@ -698,7 +698,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                 ))
                 
                 var streamingTextLayoutAndApply: (layout: InteractiveTextNodeLayout, apply: (InteractiveTextNodeWithEntities.Arguments) -> InteractiveTextNodeWithEntities)?
-                if hasDraft || hadDraft {
+                if !"".isEmpty && (hasDraft || hadDraft) {
                     //TODO:localize
                     streamingTextLayoutAndApply = streamingStatusTextLayout(InteractiveTextNodeLayoutArguments(
                         attributedString: NSAttributedString(string: "Thinking...", font: textFont, textColor: messageTheme.fileDescriptionColor),

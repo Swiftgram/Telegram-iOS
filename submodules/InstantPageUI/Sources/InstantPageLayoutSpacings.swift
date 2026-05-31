@@ -2,19 +2,30 @@ import Foundation
 import UIKit
 import TelegramCore
 
-func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fitToWidth: Bool) -> CGFloat {
+enum BlockSequenceKind {
+    case topLevel
+    case detail
+    case cell
+    case list
+}
+
+func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fitToWidth: Bool, kind: BlockSequenceKind) -> CGFloat {
     if let upper, let lower {
         switch (upper, lower) {
         case (_, .cover), (_, .channelBanner), (.details, .details), (.relatedArticles, _), (_, .anchor):
             return 0.0
         case (.divider, _), (_, .divider):
             if fitToWidth {
-                return 10.0
+                return 20.0
             } else {
                 return 25.0
             }
         case (_, .blockQuote), (.blockQuote, _), (_, .pullQuote), (.pullQuote, _):
-            return 27.0
+            if fitToWidth {
+                return 11.0
+            } else {
+                return 27.0
+            }
         case (.kicker, .title), (.cover, .title):
             return 16.0
         case (_, .title):
@@ -27,12 +38,22 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
             return 34.0
         case (.header, .paragraph), (.subheader, .paragraph), (.heading, .paragraph):
             if fitToWidth {
-                return 10.0
+                return 14.0
             } else {
                 return 25.0
             }
         case (.list, .paragraph):
-            return 31.0
+            if fitToWidth {
+                return 14.0
+            } else {
+                return 31.0
+            }
+        case (.paragraph, .list):
+            if fitToWidth {
+                return 14.0
+            } else {
+                return 31.0
+            }
         case (.preformatted, .paragraph):
             return 19.0
         case (.formula, .paragraph):
@@ -92,24 +113,45 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
         }
     } else if let lower {
         switch lower {
-        case .cover, .channelBanner, .details, .anchor, .table:
+        case .cover, .channelBanner, .details, .anchor:
             return 0.0
         default:
             if fitToWidth {
-                return 10.0
+                switch kind {
+                case .topLevel:
+                    switch lower {
+                    case .heading:
+                        return 13.0
+                    default:
+                        return 10.0
+                    }
+                case .cell:
+                    return 0.0
+                case .detail, .list:
+                    return 4.0
+                }
             } else {
                 return 25.0
             }
+        }
+    } else if let upper {
+        switch kind {
+        case .topLevel:
+            if case .relatedArticles = upper {
+                return 0.0
+            } else {
+                if fitToWidth {
+                    return 5.0
+                } else {
+                    return 25.0
+                }
+            }
+        case .detail, .list:
+            return 16.0
+        case .cell:
+            return 0.0
         }
     } else {
-        if let upper, case .relatedArticles = upper {
-            return 0.0
-        } else {
-            if fitToWidth {
-                return 5.0
-            } else {
-                return 25.0
-            }
-        }
+        return 0.0
     }
 }

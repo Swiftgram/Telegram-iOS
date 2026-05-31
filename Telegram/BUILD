@@ -1746,11 +1746,11 @@ xcode_provisioning_profile(
 
 apple_prebuilt_watchos_application(
     name = "TelegramWatchApp",
-    # The watch app's bundle id must be `<host>.watchkitapp` for the host
-    # ios_application's child-bundle-id prefix check; the rule derives the
-    # companion (host) bundle id from this by stripping `.watchkitapp` and the
-    # patch worker writes both CFBundleIdentifier and WKCompanionAppBundleIdentifier
-    # into the embedded watch app's Info.plist.
+    # Watch bundle id tracks the host config ("<host>.watchkitapp"). The rule passes it
+    # to xcodebuild as PRODUCT_BUNDLE_IDENTIFIER (baked + signed); the watch Info.plist
+    # derives WKCompanionAppBundleIdentifier from it via $(PRODUCT_BUNDLE_IDENTIFIER:base),
+    # so the embedded watch app is correct for any host (ph.telegra.Telegraph,
+    # org.telegram.TelegramInternal, ...) with no post-build plist patching.
     bundle_id = "{telegram_bundle_id}.watchkitapp".format(
         telegram_bundle_id = telegram_bundle_id,
     ),

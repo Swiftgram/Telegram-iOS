@@ -137,11 +137,10 @@ final class InstantPageV2MediaImageView: UIView, InstantPageItemView {
         )
 
         super.init(frame: item.frame)
-        self.backgroundColor = .clear
-        self.layer.cornerRadius = item.cornerRadius
-        self.clipsToBounds = item.cornerRadius > 0.0
-        self.addSubview(self.wrappedNode.view)
-        wrapperRef.view = self
+        self.backgroundColor = .clear            // structural
+        self.addSubview(self.wrappedNode.view)   // structural
+        wrapperRef.view = self                   // structural: back-reference for the openMedia closure
+        self.update(item: item, theme: theme, renderContext: renderContext)
     }
 
     @available(*, unavailable)
@@ -193,11 +192,10 @@ final class InstantPageV2MediaVideoView: UIView, InstantPageItemView {
         )
 
         super.init(frame: item.frame)
-        self.backgroundColor = .clear
-        self.layer.cornerRadius = item.cornerRadius
-        self.clipsToBounds = item.cornerRadius > 0.0
-        self.addSubview(self.wrappedNode.view)
-        wrapperRef.view = self
+        self.backgroundColor = .clear            // structural
+        self.addSubview(self.wrappedNode.view)   // structural
+        wrapperRef.view = self                   // structural: back-reference for the openMedia closure
+        self.update(item: item, theme: theme, renderContext: renderContext)
     }
 
     @available(*, unavailable)
@@ -249,11 +247,10 @@ final class InstantPageV2MediaMapView: UIView, InstantPageItemView {
         )
 
         super.init(frame: item.frame)
-        self.backgroundColor = .clear
-        self.layer.cornerRadius = item.cornerRadius
-        self.clipsToBounds = item.cornerRadius > 0.0
-        self.addSubview(self.wrappedNode.view)
-        wrapperRef.view = self
+        self.backgroundColor = .clear            // structural
+        self.addSubview(self.wrappedNode.view)   // structural
+        wrapperRef.view = self                   // structural: back-reference for the openMedia closure
+        self.update(item: item, theme: theme, renderContext: renderContext)
     }
 
     @available(*, unavailable)
@@ -305,11 +302,10 @@ final class InstantPageV2MediaCoverImageView: UIView, InstantPageItemView {
         )
 
         super.init(frame: item.frame)
-        self.backgroundColor = .clear
-        self.layer.cornerRadius = item.cornerRadius
-        self.clipsToBounds = item.cornerRadius > 0.0
-        self.addSubview(self.wrappedNode.view)
-        wrapperRef.view = self
+        self.backgroundColor = .clear            // structural
+        self.addSubview(self.wrappedNode.view)   // structural
+        wrapperRef.view = self                   // structural: back-reference for the openMedia closure
+        self.update(item: item, theme: theme, renderContext: renderContext)
     }
 
     @available(*, unavailable)

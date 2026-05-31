@@ -15,9 +15,6 @@ import TelegramUIPreferences
 import TextLoadingEffect
 import TextSelectionNode
 import StreamingTextReveal
-import ShimmeringMask
-import InteractiveTextComponent
-import TextNodeWithEntities
 
 public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode {
     public final class ContainerNode: ASDisplayNode {
@@ -49,9 +46,6 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     private var textSelectionAdapter: InstantPageMultiTextAdapter?
     private var textSelectionNode: TextSelectionNode?
 
-    private var streamingStatusTextNode: InteractiveTextNodeWithEntities?
-    private var streamingStatusShimmerView: ShimmeringMaskView?
-
     private var textRevealController: TextRevealController?
     private var textRevealLink: SharedDisplayLinkDriver.Link?
     private var currentRevealCostMap: InstantPageV2RevealCostMap?
@@ -70,10 +64,10 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
 
     // Pushes the current `visibility` sub-rect into `pageView.visibilityRect`, translated into the
-    // page view's coordinate space (the page view sits at `streamingHeaderOffset` inside the bubble).
-    // Re-invoked from the apply closure after `pageView.frame` is set, because that offset shifts
-    // across streamed chunks without a `visibility` change, which would otherwise leave the
-    // animation-gating rect stale.
+    // page view's coordinate space (the page view sits at the top of the bubble; no header offset).
+    // Re-invoked from the apply closure after `pageView.frame` is set, because the pageView's
+    // y-origin and size can change across streamed chunks (content growth) without a `visibility`
+    // change, which would otherwise leave the animation-gating rect stale.
     private func updatePageViewVisibilityRect() {
         guard let pageView = self.pageView else {
             return
@@ -99,14 +93,22 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         self.addSubnode(self.containerNode)
     }
 
-    /// Builds (or reuses) the V2View. The render context is constructor-fixed on V2View, so
-    /// when the bubble is recycled with a different webpage we must rebuild the V2View.
+    /// Builds (or reuses) the V2View. Same-message stableVersion bumps (streamed AI chunks) reuse
+    /// the existing view, updating only the webpage content in place. The view is rebuilt only when
+    /// the bubble is recycled with a different message/webpage (different message id).
     private func ensurePageView(item: ChatMessageBubbleContentItem, webpage: TelegramMediaWebpage) -> InstantPageV2View {
         let key = (id: item.message.id, stableVersion: item.message.stableVersion)
-        if let existing = self.pageView,
-           let current = self.pageViewMessageKey,
-           current.id == key.id,
-           current.stableVersion == key.stableVersion {
+        if let existing = self.pageView, let current = self.pageViewMessageKey, current.id == key.id {
+            if current.stableVersion == key.stableVersion {
+                return existing
+            }
+            // Same message, new chunk: reuse the view. Update only the content-bearing webpage on
+            // the existing render context; the subsequent pageView.update(layout:) call diffs item
+            // views by stable id (content blocks keep their ids, so their views and in-flight
+            // reveal state persist; only added/removed blocks change). This replaces the old
+            // wholesale rebuild and eliminates the per-chunk full-text-then-mask flash.
+            existing.renderContext?.updateContent(webpage: webpage)
+            self.pageViewMessageKey = key
             return existing
         }
         self.pageView?.removeFromSuperview()
@@ -174,7 +176,6 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     
     override public func asyncLayoutContent() -> (_ item: ChatMessageBubbleContentItem, _ layoutConstants: ChatMessageItemLayoutConstants, _ preparePosition: ChatMessageBubblePreparePosition, _ messageSelection: Bool?, _ constrainedSize: CGSize, _ avatarInset: CGFloat) -> (ChatMessageBubbleContentProperties, CGSize?, CGFloat, (CGSize, ChatMessageBubbleContentPosition) -> (CGFloat, (CGFloat) -> (CGSize, (ListViewItemUpdateAnimation, Bool, ListViewItemApply?) -> Void))) {
         let previousItem = self.item
-        let streamingStatusTextLayout = InteractiveTextNodeWithEntities.asyncLayout(self.streamingStatusTextNode)
         let currentPageLayout = self.currentPageLayout
         let currentExpandedDetails = self.currentExpandedDetails
         let statusLayout = ChatMessageDateAndStatusNode.asyncLayout(self.statusNode)
@@ -188,25 +189,6 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
             let contentProperties = ChatMessageBubbleContentProperties(hidesSimpleAuthorHeader: false, headerSpacing: 0.0, hidesBackground: .never, forceFullCorners: false, forceAlignment: .none)
 
             return (contentProperties, nil, CGFloat.greatestFiniteMagnitude, { constrainedSize, position in
-                // topInset matches TextBubble's logic at lines 234-249 — gives the "Thinking…"
-                // header the same vertical alignment as TextBubble's status header does inside
-                // its bubble.
-                var topInset: CGFloat = 0.0
-                if case let .linear(top, _) = position {
-                    switch top {
-                    case .None:
-                        topInset = layoutConstants.text.bubbleInsets.top
-                    case let .Neighbour(_, topType, _):
-                        switch topType {
-                        case .text:
-                            topInset = layoutConstants.text.bubbleInsets.top - 2.0
-                        case .header, .footer, .media, .reactions:
-                            topInset = layoutConstants.text.bubbleInsets.top
-                        }
-                    default:
-                        topInset = layoutConstants.text.bubbleInsets.top
-                    }
-                }
                 let suggestedBoundingWidth: CGFloat = constrainedSize.width
 
                 var boundingSize = CGSize(width: suggestedBoundingWidth, height: 0.0)
@@ -219,7 +201,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                 // self-x 0 (containerNode at 1, pageView at -1 inside it), so the page's text
                 // left edge in the status node's coordinate space is exactly this value. Used as
                 // the status node's left edge + side inset, mirroring TextBubble's bubbleInsets.
-                let pageHorizontalInset: CGFloat = 10.0
+                let pageHorizontalInset: CGFloat = 11.0
 
                 let isDark = item.presentationData.theme.theme.overallDarkAppearance
                 let isIncoming = item.message.effectivelyIncoming(item.context.account.peerId)
@@ -296,8 +278,8 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                 
                 let textCategories = InstantPageTextCategories(
                     kicker: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
-                    header: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 24.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
-                    subheader: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 19.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
+                    header: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 19.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
+                    subheader: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 18.0, lineSpacingFactor: 0.685), color: messageTheme.primaryTextColor),
                     paragraph: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 17.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
                     caption: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
                     credit: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 13.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
@@ -323,7 +305,9 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     tableHeaderColor: isDark || !isIncoming ? messageTheme.accentControlColor.withMultipliedAlpha(0.1) : UIColor(white: 0.0, alpha: 0.05),
                     controlColor: messageTheme.accentControlColor,
                     imageTintColor: nil,
-                    overlayPanelColor: isDark ? UIColor(white: 0.0, alpha: 0.13) : UIColor(white: 1.0, alpha: 0.13)
+                    overlayPanelColor: isDark ? UIColor(white: 0.0, alpha: 0.13) : UIColor(white: 1.0, alpha: 0.13),
+                    separatorColor: isIncoming ? UIColor(white: 0.0, alpha: 0.25): messageTheme.accentControlColor.withMultipliedAlpha(0.25),
+                    secondaryControlColor: messageTheme.secondaryTextColor
                 )
                 
                 var hasDraft = false
@@ -401,70 +385,10 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     boundingSize.height = effectiveSize.height + 2.0
                 }
 
-                let textFont = item.presentationData.messageFont
-                let textInsets = UIEdgeInsets(top: 2.0, left: 2.0, bottom: 5.0, right: 2.0)
-                let streamingTextSpacing: CGFloat = 1.0
-
-                let textConstrainedSize = CGSize(width: suggestedBoundingWidth - 4.0, height: .greatestFiniteMagnitude)
-                var streamingTextLayoutAndApply: (layout: InteractiveTextNodeLayout, apply: (InteractiveTextNodeWithEntities.Arguments) -> InteractiveTextNodeWithEntities)?
-                if hasDraft || hadDraft {
-                    //TODO:localize
-                    streamingTextLayoutAndApply = streamingStatusTextLayout(InteractiveTextNodeLayoutArguments(
-                        attributedString: NSAttributedString(string: "Thinking...", font: textFont, textColor: messageTheme.fileDescriptionColor),
-                        backgroundColor: nil,
-                        maximumNumberOfLines: 1,
-                        truncationType: .end,
-                        constrainedSize: textConstrainedSize,
-                        alignment: .natural,
-                        cutout: nil,
-                        insets: textInsets,
-                        lineColor: messageTheme.accentControlColor,
-                        customTruncationToken: nil,
-                        computeCharacterRects: true
-                    ))
-                }
-
-                // Origin mirrors TextBubble:783 — (bubbleInsets.left - textInsets.left,
-                // topInset - textInsets.top). The negative textInset offsets cancel the
-                // inset that's baked into the InteractiveTextNode layout, so the visible
-                // glyph origin aligns with (bubbleInsets.left, topInset).
-                var streamingTextFrame: CGRect?
-                if let streamingTextLayoutAndApply {
-                    streamingTextFrame = CGRect(
-                        origin: CGPoint(
-                            x: layoutConstants.text.bubbleInsets.left - textInsets.left,
-                            y: topInset - textInsets.top
-                        ),
-                        size: streamingTextLayoutAndApply.layout.size
-                    )
-                }
-                // Offset for the pageView (and status node y-shift) — places the pageView
-                // right below the streaming header's *visible* bottom (= origin.y + height
-                // - inset.bottom, since the layout-baked inset.bottom isn't visible content)
-                // plus a 1pt spacing.
-                let streamingHeaderOffset: CGFloat
-                if let streamingTextFrame {
-                    streamingHeaderOffset = streamingTextFrame.origin.y + streamingTextFrame.height - textInsets.bottom + streamingTextSpacing
-                } else {
-                    streamingHeaderOffset = 0.0
-                }
-
-                if let streamingTextFrame {
-                    // Mirrors TextBubble's suggestedBoundingWidth contribution at lines 886-893:
-                    //   visible_thinking_width + bubbleInsets.left + bubbleInsets.right
-                    // where visible_thinking_width = streamingTextFrame.width - textInsets.left
-                    // - textInsets.right. Adds 2pt for RichData's 1pt-per-side containerNode
-                    // border that TextBubble doesn't have. Without this, an empty-pageLayout
-                    // bubble was sized too narrow to fit the "Thinking…" label.
-                    let visibleThinkingWidth = streamingTextFrame.width - textInsets.left - textInsets.right
-                    let thinkingMinBubbleWidth = visibleThinkingWidth + layoutConstants.text.bubbleInsets.left + layoutConstants.text.bubbleInsets.right + 2.0
-                    boundingSize.width = max(boundingSize.width, thinkingMinBubbleWidth)
-                    // Adds exactly the vertical space the streaming header consumes before the
-                    // pageView starts (= where pageView's frame.origin.y will be set). Keeps
-                    // the bubble's total height consistent with `containerHeight + closingPad + 2`
-                    // computed in the apply closure.
-                    boundingSize.height += streamingHeaderOffset
-                }
+                // The hardcoded "Thinking…" header was removed in favor of server-sent
+                // InstantPageBlock.thinking blocks (rendered inside the pageView). There is no
+                // header strip anymore, so the page content starts at the top of the bubble.
+                let streamingHeaderOffset: CGFloat = 0.0
 
                 if hasDraft {
                     // The bubble's bottom inset is supplied by the `statusBottomEdge + 6.0`
@@ -762,64 +686,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                             self.currentRevealCostMap = nil
                         }
 
-                        // 2. Update the "Thinking…" header.
-                        if let streamingTextFrame, let streamingTextLayoutAndApply {
-                            var statusAnimation = animation
-                            if self.streamingStatusTextNode == nil {
-                                statusAnimation = .None
-                            }
-                            let streamingStatusTextNode = streamingTextLayoutAndApply.apply(InteractiveTextNodeWithEntities.Arguments(
-                                context: item.context,
-                                cache: item.controllerInteraction.presentationContext.animationCache,
-                                renderer: item.controllerInteraction.presentationContext.animationRenderer,
-                                placeholderColor: messageTheme.mediaPlaceholderColor,
-                                attemptSynchronous: false,
-                                textColor: messageTheme.primaryTextColor,
-                                spoilerEffectColor: messageTheme.secondaryTextColor,
-                                applyArguments: InteractiveTextNode.ApplyArguments(
-                                    animation: statusAnimation,
-                                    spoilerTextColor: messageTheme.primaryTextColor,
-                                    spoilerEffectColor: messageTheme.secondaryTextColor,
-                                    areContentAnimationsEnabled: item.context.sharedContext.energyUsageSettings.loopEmoji,
-                                    spoilerExpandRect: nil,
-                                    crossfadeContents: nil
-                                )
-                            ))
-
-                            let streamingStatusShimmerView: ShimmeringMaskView
-                            if let current = self.streamingStatusShimmerView {
-                                streamingStatusShimmerView = current
-                            } else {
-                                streamingStatusShimmerView = ShimmeringMaskView(peakAlpha: 0.3, duration: 1.0)
-                                self.streamingStatusShimmerView = streamingStatusShimmerView
-                                self.containerNode.view.addSubview(streamingStatusShimmerView)
-                            }
-
-                            if streamingStatusTextNode !== self.streamingStatusTextNode {
-                                self.streamingStatusTextNode?.textNode.view.removeFromSuperview()
-                                self.streamingStatusTextNode = streamingStatusTextNode
-                                streamingStatusShimmerView.contentView.addSubview(streamingStatusTextNode.textNode.view)
-                            }
-                            statusAnimation.animator.updatePosition(layer: streamingStatusShimmerView.layer, position: streamingTextFrame.center, completion: nil)
-                            statusAnimation.animator.updateBounds(layer: streamingStatusShimmerView.layer, bounds: CGRect(origin: .zero, size: streamingTextFrame.size), completion: nil)
-                            statusAnimation.animator.updatePosition(layer: streamingStatusTextNode.textNode.layer, position: CGPoint(x: streamingTextFrame.size.width * 0.5, y: streamingTextFrame.size.height * 0.5), completion: nil)
-                            statusAnimation.animator.updateBounds(layer: streamingStatusTextNode.textNode.layer, bounds: CGRect(origin: .zero, size: streamingTextFrame.size), completion: nil)
-                            streamingStatusShimmerView.update(
-                                size: streamingTextFrame.size,
-                                containerWidth: streamingTextFrame.size.width,
-                                offsetX: 0.0,
-                                gradientWidth: 200.0,
-                                transition: .immediate
-                            )
-                        } else if let streamingStatusShimmerView = self.streamingStatusShimmerView {
-                            self.streamingStatusTextNode = nil
-                            self.streamingStatusShimmerView = nil
-                            animation.animator.updateAlpha(layer: streamingStatusShimmerView.layer, alpha: 0.0, completion: { [weak streamingStatusShimmerView] _ in
-                                streamingStatusShimmerView?.removeFromSuperview()
-                            })
-                        }
-
-                        // 3. Drive the reveal controller.
+                        // 2. Drive the reveal controller.
                         let previousAnimateGlyphCount: Int? = (hasDraft || hadDraft) ? (self.textRevealController?.currentGlyphCount ?? 0) : nil
                         if previousAnimateGlyphCount != nil || self.textRevealController != nil || hasDraft || hadDraft {
                             if hasDraft {

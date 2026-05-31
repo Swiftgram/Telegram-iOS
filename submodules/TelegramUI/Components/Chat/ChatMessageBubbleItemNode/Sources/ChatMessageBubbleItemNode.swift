@@ -1654,14 +1654,14 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
         var allowFullWidth = false
         let chatLocationPeerId: PeerId = item.chatLocation.peerId ?? item.content.firstMessage.id.peerId
         
-        var isInlinePage = false
+        /*let isInlinePage = false
         for attribute in item.message.attributes {
             if attribute is RichTextMessageAttribute {
                 allowFullWidth = true
                 isInlinePage = true
                 break
             }
-        }
+        }*/
                 
         do {
             let peerId = chatLocationPeerId
@@ -1931,9 +1931,9 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             needsShareButton = false
         }
         
-        if isInlinePage {
+        /*if isInlinePage {
             needsShareButton = false
-        }
+        }*/
                         
         var tmpWidth: CGFloat
         if allowFullWidth {

@@ -37,6 +37,7 @@ swift_library(
         "//submodules/Tuples:Tuples",
         "//third-party/SwiftMath:SwiftMath",
         "//submodules/ComponentFlow:ComponentFlow",
+        "//submodules/TelegramUI/Components/ShimmeringMask:ShimmeringMask",
     ],
     visibility = [
         "//visibility:public",

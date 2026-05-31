@@ -24,10 +24,7 @@ swift_library(
         "//submodules/TelegramUI/Components/TextLoadingEffect",
         "//submodules/TelegramUIPreferences",
         "//submodules/TextSelectionNode",
-        "//submodules/TelegramUI/Components/ShimmeringMask:ShimmeringMask",
-        "//submodules/TelegramUI/Components/InteractiveTextComponent:InteractiveTextComponent",
         "//submodules/TelegramUI/Components/StreamingTextReveal:StreamingTextReveal",
-        "//submodules/TelegramUI/Components/TextNodeWithEntities:TextNodeWithEntities",
     ],
     visibility = [
         "//visibility:public",

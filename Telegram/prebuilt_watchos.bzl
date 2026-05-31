@@ -1,24 +1,8 @@
 """Embeds the standalone, xcodebuild-built tgwatch watch app into the Bazel iOS build.
 
-`apple_prebuilt_watchos_application` builds the watch app in two actions and exposes
+`apple_prebuilt_watchos_application` runs `xcodebuild` (via prebuilt_watchos_build.sh)
+against an exported tgwatch source tree, optionally codesigns the result, and exposes
 it through the providers that `ios_application(watch_application = ...)` consumes:
-
-  1. PrebuiltWatchosCompile (prebuilt_watchos_compile.sh) — runs `xcodebuild` against
-     the exported tgwatch source tree with PLACEHOLDER version/api values, emitting an
-     unsigned .app archive. Depends only on the source snapshot.
-  2. PrebuiltWatchosPatchSign (prebuilt_watchos_patch.sh) — rewrites the six per-build
-     Info.plist keys (version, build number, api id/hash, watch CFBundleIdentifier,
-     WKCompanionAppBundleIdentifier) on the compiled app, then optionally codesigns
-     it. The watch + companion bundle ids must track the host's `telegram_bundle_id`
-     (rules_apple validates both via the parent ios_application's
-     bundle_verification_targets), so they live in the patch action — not in the
-     xcodebuild snapshot — to keep the compile cached across host-bundle-id changes.
-
-Splitting them lets Bazel cache the (expensive, ~4-min) compile whenever only the
-version/build number/api/identity/bundle-id change — those values never reach the
-compiled binary, only the Info.plist.
-
-The providers exposed:
 
   * AppleBundleInfo      — bundle metadata (the host reads only `.product_type`).
   * AppleEmbeddableInfo  — `watch_bundles` (the zipped .app placed under Watch/).
@@ -48,19 +32,6 @@ def _apple_prebuilt_watchos_application_impl(ctx):
     api_hash = ctx.var.get("watchApiHash", "placeholder")
     identity = ctx.var.get("watchSigningIdentity", "")
 
-    # The watch bundle id is `<host>.watchkitapp`; strip the suffix to recover the
-    # host bundle id, which the patch worker writes to WKCompanionAppBundleIdentifier
-    # (and the watch's own CFBundleIdentifier needs to be the watch bundle id, not the
-    # hardcoded one baked in by xcodebuild from the snapshot's pbxproj). The host
-    # ios_application validates both: child CFBundleIdentifier must start with
-    # `<host>.`, and child WKCompanionAppBundleIdentifier must equal the host's
-    # bundle id (see rules_apple's bundle_verification_targets in ios_rules.bzl).
-    watch_bundle_id = ctx.attr.bundle_id
-    _watchkitapp_suffix = ".watchkitapp"
-    if not watch_bundle_id.endswith(_watchkitapp_suffix):
-        fail("apple_prebuilt_watchos_application bundle_id must end with '.watchkitapp' (got %r)" % watch_bundle_id)
-    host_bundle_id = watch_bundle_id[:-len(_watchkitapp_suffix)]
-
     # The provisioning profile is an external, machine-specific absolute path passed via
     # --define rather than a Bazel label, so the gitignored profile need not be exposed as
     # a target. The local action reads it directly. Empty => unsigned build; when set but
@@ -72,69 +43,25 @@ def _apple_prebuilt_watchos_application_impl(ctx):
     # build version from buildNumber (Make.py always emits --define=buildNumber).
     build_number = ctx.var.get("buildNumber", "1")
     archive = ctx.actions.declare_file(ctx.label.name + ".zip")
-    # Intermediate output of the compile action: the unsigned, placeholder-version .app.
-    # Keyed only on the source snapshot, so version/build/api/identity changes reuse it.
-    compiled_archive = ctx.actions.declare_file(ctx.label.name + "_compiled.zip")
     # The host ios_application reads the watch app's Info.plist (via AppleBundleInfo.infoplist)
     # to verify WKCompanionAppBundleIdentifier against the host bundle id, so expose it as a
     # separate output (resources.bzl bundle_verification crashes on a None infoplist).
     infoplist = ctx.actions.declare_file(ctx.label.name + "_Info.plist")
 
-    # The compile action runs xcodebuild locally (needs the host's Xcode + SwiftPM
-    # network access), but its output — an unsigned, placeholder-version .app — is
-    # portable across machines that share the same Xcode SDK, so it IS shared via the
-    # remote cache: `no-remote-exec` (not `no-remote`) lets Bazel read/write the
-    # `--remote_cache` while still pinning execution local on cache miss. This is the
-    # big win when CI builders share a remote cache — a peer's xcodebuild result is
-    # reused instead of every fresh worker paying the ~4-min build. Caveat: if the
-    # build fleet runs different Xcode major versions, mismatched artifacts could be
-    # served (the action key does not include the Xcode version); align Xcode across
-    # builders, or downgrade to `no-remote-cache` to be safe.
-    compile_exec_requirements = {
-        "no-sandbox": "1",
-        "no-remote-exec": "1",
-        "local": "1",
-        "requires-network": "1",
-    }
-
-    # The patch+sign action cannot share results across machines: its inputs include
-    # the absolute `--watchProvisioningProfile` path and the codesigning identity is
-    # resolved from the local keychain, both machine-specific. Remote-cache lookups
-    # would essentially never hit and uploads would just waste bandwidth, so keep the
-    # umbrella `no-remote` here.
-    patch_exec_requirements = {
+    # Track the in-repo snapshot so the watch build re-runs only when it changes.
+    inputs = [ctx.file._worker, ctx.file.versions_json] + ctx.files.srcs
+    exec_requirements = {
         "no-sandbox": "1",
         "no-remote": "1",
         "local": "1",
         "requires-network": "1",
     }
 
-    # Action 1 — compile. Inputs are ONLY the in-repo snapshot (+ the worker), so this
-    # (expensive) xcodebuild re-runs only when the watch sources change, not when the
-    # version, build number, api id/hash or signing identity change.
     ctx.actions.run(
         executable = "/bin/bash",
         arguments = [
-            ctx.file._compile_worker.path,
+            ctx.file._worker.path,
             source_path,
-            compiled_archive.path,
-        ],
-        inputs = [ctx.file._compile_worker] + ctx.files.srcs,
-        outputs = [compiled_archive],
-        mnemonic = "PrebuiltWatchosCompile",
-        progress_message = "Compiling watch app via xcodebuild",
-        execution_requirements = compile_exec_requirements,
-        use_default_shell_env = True,
-    )
-
-    # Action 2 — patch Info.plist (version/build/api) + optionally sign. Cheap; re-runs
-    # on any of those changes without re-running the compile above. versions.json (the
-    # marketing version) is an input here only, so a version bump skips the compile.
-    ctx.actions.run(
-        executable = "/bin/bash",
-        arguments = [
-            ctx.file._patch_worker.path,
-            compiled_archive.path,
             archive.path,
             api_id,
             api_hash,
@@ -143,14 +70,18 @@ def _apple_prebuilt_watchos_application_impl(ctx):
             infoplist.path,
             ctx.file.versions_json.path,
             build_number,
-            host_bundle_id,
-            watch_bundle_id,
+            # Watch app bundle id ("<host>.watchkitapp"). xcodebuild bakes it as
+            # PRODUCT_BUNDLE_IDENTIFIER so the signed CFBundleIdentifier matches the host
+            # config; the Info.plist derives WKCompanionAppBundleIdentifier from it via
+            # $(PRODUCT_BUNDLE_IDENTIFIER:base). Keeps the build dynamic across hosts with
+            # no post-build plist mutation (xcodebuild bakes, the worker signs once).
+            ctx.attr.bundle_id,
         ],
-        inputs = [ctx.file._patch_worker, compiled_archive, ctx.file.versions_json],
+        inputs = inputs,
         outputs = [archive, infoplist],
-        mnemonic = "PrebuiltWatchosPatchSign",
-        progress_message = "Patching%s watch app Info.plist" % (" + signing" if profile else ""),
-        execution_requirements = patch_exec_requirements,
+        mnemonic = "PrebuiltWatchosBuild",
+        progress_message = "Building%s watch app via xcodebuild" % (" + signing" if profile else ""),
+        execution_requirements = exec_requirements,
         use_default_shell_env = True,
     )
 
@@ -205,12 +136,8 @@ apple_prebuilt_watchos_application = rule(
             default = "//:versions.json",
             doc = "Source of the marketing version (key 'app'), kept in sync with the host app.",
         ),
-        "_compile_worker": attr.label(
-            default = "//Telegram:prebuilt_watchos_compile.sh",
-            allow_single_file = True,
-        ),
-        "_patch_worker": attr.label(
-            default = "//Telegram:prebuilt_watchos_patch.sh",
+        "_worker": attr.label(
+            default = "//Telegram:prebuilt_watchos_build.sh",
             allow_single_file = True,
         ),
     },
