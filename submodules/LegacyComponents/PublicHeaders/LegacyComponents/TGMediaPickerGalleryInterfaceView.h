@@ -56,6 +56,7 @@
 - (void)editorTransitionIn;
 - (void)editorTransitionOut;
 
+- (bool)canBeginEditingCaption;
 - (void)beginEditingCaption;
 - (void)setupGifEditing;
 

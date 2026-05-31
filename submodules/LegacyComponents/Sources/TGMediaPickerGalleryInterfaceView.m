@@ -593,6 +593,10 @@ static TGMediaLivePhotoMode TGMediaPickerGalleryResolvedLivePhotoMode(NSNumber *
     
 }
 
+- (bool)canBeginEditingCaption {
+    return _hasCaptions && _captionMixin != nil && _captionMixin.inputPanel != nil && !_captionMixin.inputPanelView.hidden && !_captionMixin.editing;
+}
+
 - (void)beginEditingCaption {
     [_captionMixin activateInput];
 }

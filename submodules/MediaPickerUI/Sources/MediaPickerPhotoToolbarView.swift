@@ -471,7 +471,7 @@ private final class MediaPickerPhotoToolbarComponent: Component {
             var doneWidth: CGFloat = toolbarButtonSide
             switch component.doneButtonType {
             case TGPhotoEditorDoneButtonSend:
-                doneIconName = "Chat/Input/Text/SendIcon"
+                doneIconName = "Media Editor/Send"
                 doneWidth = 46.0
             case TGPhotoEditorDoneButtonSchedule:
                 doneIconName = "Chat/Input/ScheduleIcon"

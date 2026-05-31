@@ -79,6 +79,7 @@ swift_library(
         "//submodules/TextSelectionNode",
         "//submodules/Pasteboard",
         "//submodules/Speak",
+        "//submodules/TelegramUI/Components/TextProcessingScreen",
         "//submodules/TranslateUI",
         "//submodules/TelegramNotices",
         "//submodules/MediaPlayer:UniversalMediaPlayer",

@@ -1764,8 +1764,7 @@ private final class ChatThemeSheetContentComponent: Component {
                             style: .glass,
                             color: destructiveColor.withMultipliedAlpha(0.1),
                             foreground: destructiveColor,
-                            pressedColor: destructiveColor.withMultipliedAlpha(0.2),
-                            cornerRadius: 22.0
+                            pressedColor: destructiveColor.withMultipliedAlpha(0.2)
                         ),
                         content: AnyComponentWithIdentity(
                             id: AnyHashable("resetWallpaper"),

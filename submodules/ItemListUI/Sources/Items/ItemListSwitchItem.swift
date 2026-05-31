@@ -506,7 +506,11 @@ public class ItemListSwitchItemNode: ListViewItemNode, ItemListItemNode {
                             transition.updateFrame(node: strongSelf.bottomStripeNode, frame: CGRect(origin: CGPoint(x: bottomStripeInset, y: contentSize.height - separatorHeight), size: CGSize(width: layoutSize.width - params.rightInset - bottomStripeInset - separatorRightInset, height: separatorHeight)))
                     }
                     
-                    let titleFrame = CGRect(origin: CGPoint(x: leftInset, y: topInset + 1.0), size: titleLayout.size)
+                    var titleOriginY = floorToScreenPixels((contentSize.height - titleLayout.size.height) / 2.0) + 1.0
+                    if textLayoutAndApply != nil {
+                        titleOriginY = topInset + 1.0
+                    }
+                    let titleFrame = CGRect(origin: CGPoint(x: leftInset, y: titleOriginY), size: titleLayout.size)
                     transition.updatePosition(node: strongSelf.titleNode, position: titleFrame.origin)
                     strongSelf.titleNode.bounds = CGRect(origin: CGPoint(), size: titleFrame.size)
                     

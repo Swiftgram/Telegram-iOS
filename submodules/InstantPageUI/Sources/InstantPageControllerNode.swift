@@ -16,6 +16,8 @@ import LocationUI
 import UndoUI
 import ContextUI
 import TranslateUI
+import TextProcessingScreen
+import Pasteboard
 
 final class InstantPageControllerNode: ASDisplayNode, ASScrollViewDelegate {
     private weak var controller: InstantPageController?
@@ -1528,11 +1530,11 @@ final class InstantPageControllerNode: ASDisplayNode, ASScrollViewDelegate {
                     translationSettings = TranslationSettings.defaultSettings
                 }
                 
+                let presentationData = context.sharedContext.currentPresentationData.with { $0 }
                 var actions: [ContextMenuAction] = [ContextMenuAction(content: .text(title: strings.Conversation_ContextMenuCopy, accessibilityLabel: strings.Conversation_ContextMenuCopy), action: { [weak self] in
                     UIPasteboard.general.string = text
                     
                     if let strongSelf = self {
-                        let presentationData = context.sharedContext.currentPresentationData.with { $0 }
                         strongSelf.present(UndoOverlayController(presentationData: presentationData, content: .copy(text: strings.Conversation_TextCopied), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), nil)
                     }
                 }), ContextMenuAction(content: .text(title: strings.Conversation_ContextMenuShare, accessibilityLabel: strings.Conversation_ContextMenuShare), action: { [weak self] in
@@ -1544,15 +1546,22 @@ final class InstantPageControllerNode: ASDisplayNode, ASScrollViewDelegate {
                 let (canTranslate, language) = canTranslateText(context: context, text: text, showTranslate: translationSettings.showTranslate, showTranslateIfTopical: false, ignoredLanguages: translationSettings.ignoredLanguages)
                 if canTranslate {
                     actions.append(ContextMenuAction(content: .text(title: strings.Conversation_ContextMenuTranslate, accessibilityLabel: strings.Conversation_ContextMenuTranslate), action: { [weak self] in
-                        let controller = TranslateScreen(context: context, text: text, canCopy: true, fromLanguage: language, ignoredLanguages: translationSettings.ignoredLanguages)
-                        controller.pushController = { [weak self] c in
-                            (self?.controller?.navigationController as? NavigationController)?._keepModalDismissProgress = true
-                            self?.controller?.push(c)
+                        Task { @MainActor [weak self] in
+                            guard let self else {
+                                return
+                            }
+                            let controller = await TextProcessingScreen(
+                                context: context,
+                                mode: .translate(fromLanguage: language, applyResult: nil),
+                                inputText: TextWithEntities(text: text, entities: []),
+                                copyResult: { [weak self] text in
+                                    storeMessageTextInPasteboard(text.text, entities: text.entities)
+                                    self?.present(UndoOverlayController(presentationData: presentationData, content: .copy(text: strings.Conversation_TextCopied), elevatedLayout: true, animateInAsReplacement: false, action: { _ in return false }), nil)
+                                },
+                                translateChat: nil
+                            )
+                            self.present(controller, nil)
                         }
-                        controller.presentController = { [weak self] c in
-                            self?.controller?.present(c, in: .window(.root))
-                        }
-                        self?.present(controller, nil)
                     }))
                 }
                 

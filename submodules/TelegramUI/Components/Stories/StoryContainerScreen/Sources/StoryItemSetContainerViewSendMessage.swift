@@ -39,6 +39,8 @@ import ChatScheduleTimeController
 import StoryStealthModeSheetScreen
 import Speak
 import TranslateUI
+import TextProcessingScreen
+import Pasteboard
 import TelegramNotices
 import ObjectiveC
 import LocationUI
@@ -1543,32 +1545,39 @@ final class StoryItemSetContainerSendMessage: @unchecked(Sendable) {
 
             let _ = ApplicationSpecificNotice.incrementTranslationSuggestion(accountManager: component.context.sharedContext.accountManager, timestamp: Int32(Date().timeIntervalSince1970)).start()
 
-            let translateController = TranslateScreen(context: component.context, forceTheme: defaultDarkPresentationTheme, text: text, entities: entities, canCopy: true, fromLanguage: language, ignoredLanguages: translationSettings.ignoredLanguages)
-            translateController.pushController = { [weak view] c in
-                guard let view, let component = view.component else {
+            Task { @MainActor [weak self, weak view] in
+                guard let self, let view, let component = view.component else {
                     return
                 }
-                component.controller()?.push(c)
-            }
-            translateController.presentController = { [weak view] c in
-                guard let view, let component = view.component else {
-                    return
-                }
-                component.controller()?.present(c, in: .window(.root))
-            }
+                let presentationData = component.context.sharedContext.currentPresentationData.with { $0 }
+                let translateController = await TextProcessingScreen(
+                    context: component.context,
+                    theme: defaultDarkPresentationTheme,
+                    mode: .translate(fromLanguage: language, applyResult: nil),
+                    inputText: TextWithEntities(text: text, entities: entities),
+                    copyResult: { [weak view] text in
+                        guard let component = view?.component else {
+                            return
+                        }
+                        storeMessageTextInPasteboard(text.text, entities: text.entities)
+                        component.controller()?.present(UndoOverlayController(presentationData: presentationData, content: .copy(text: presentationData.strings.Conversation_TextCopied), elevatedLayout: true, animateInAsReplacement: false, action: { _ in return false }), in: .window(.root))
+                    },
+                    translateChat: nil
+                )
 
-            self.actionSheet = translateController
-            view.updateIsProgressPaused()
-
-            translateController.wasDismissed = { [weak self, weak view] in
-                guard let self, let view else {
-                    return
-                }
-                self.actionSheet = nil
+                self.actionSheet = translateController
                 view.updateIsProgressPaused()
-            }
 
-            component.controller()?.present(translateController, in: .window(.root))
+                translateController.wasDismissed = { [weak self, weak view] in
+                    guard let self, let view else {
+                        return
+                    }
+                    self.actionSheet = nil
+                    view.updateIsProgressPaused()
+                }
+
+                component.controller()?.present(translateController, in: .window(.root))
+            }
         })
     }
 
