@@ -17,17 +17,9 @@
 #   $4 api_hash     TG_API_HASH build setting
 #   $5 identity     Codesigning identity (SHA1 hash); empty => derived from $6's cert
 #   $6 profile      Path to the watchkitapp .mobileprovision; empty => unsigned build
-#   $7 infoplist    Path (declared by Bazel) to copy the built Info.plist to
-#   $8 versions_json versions.json (key 'app' => CFBundleShortVersionString)
-#   $9 build_number CFBundleVersion
-#   $10 watch_bundle_id  PRODUCT_BUNDLE_IDENTIFIER for xcodebuild (the watch app id,
-#                   "<host>.watchkitapp"); empty => keep the project default. xcodebuild
-#                   bakes it into CFBundleIdentifier (and signs with it); the Info.plist
-#                   derives WKCompanionAppBundleIdentifier from it via
-#                   $(PRODUCT_BUNDLE_IDENTIFIER:base), so no post-build plist patching.
 set -euo pipefail
 
-SRC="$1"; OUT_ZIP="$2"; API_ID="$3"; API_HASH="$4"; IDENTITY="${5:-}"; PROFILE="${6:-}"; INFOPLIST_OUT="${7:-}"; VERSIONS_JSON="${8:-}"; BUILD_NUMBER="${9:-1}"; WATCH_BUNDLE_ID="${10:-}"
+SRC="$1"; OUT_ZIP="$2"; API_ID="$3"; API_HASH="$4"; IDENTITY="${5:-}"; PROFILE="${6:-}"; INFOPLIST_OUT="${7:-}"; VERSIONS_JSON="${8:-}"; BUILD_NUMBER="${9:-1}"
 
 if [ ! -e "$SRC/tgwatch.xcodeproj" ]; then
   echo "error: no tgwatch.xcodeproj at $SRC (re-sync the Telegram/WatchApp snapshot via tgwatch/tools/export-sources.sh)" >&2
@@ -61,7 +53,6 @@ xcodebuild \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
   TG_API_ID="$API_ID" TG_API_HASH="$API_HASH" \
   MARKETING_VERSION="$MARKETING_VERSION" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
-  ${WATCH_BUNDLE_ID:+PRODUCT_BUNDLE_IDENTIFIER="$WATCH_BUNDLE_ID"} \
   build 1>&2
 
 APP="$(find "$DD/Build/Products" -maxdepth 2 -name 'tgwatch Watch App.app' -type d | head -1)"

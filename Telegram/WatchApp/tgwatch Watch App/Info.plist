@@ -38,7 +38,7 @@
 	<key>WKApplication</key>
 	<true/>
 	<key>WKCompanionAppBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER:base)</string>
+	<string>ph.telegra.Telegraph</string>
 	<key>WKRunsIndependentlyOfCompanionApp</key>
 	<true/>
 </dict>
