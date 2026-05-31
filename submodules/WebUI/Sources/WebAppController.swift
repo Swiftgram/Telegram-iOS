@@ -3785,8 +3785,6 @@ public final class WebAppController: ViewController, AttachmentContainable {
         if let ageBotUsername = self.context.currentAppConfiguration.with({ $0 }).data?["verify_age_bot_username"] as? String {
             if self.botAddress == ageBotUsername {
                 return true
-            } else if self.botAddress == "mod_bot" {
-                return true
             }
         }
         return false

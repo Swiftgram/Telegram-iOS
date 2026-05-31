@@ -19,6 +19,7 @@ import UndoUI
 import GlassBarButtonComponent
 import ButtonComponent
 import AdsReportScreen
+import LottieComponent
 
 private let moreTag = GenericComponentViewTag()
 
@@ -135,7 +136,7 @@ private final class SheetContent: CombinedComponent {
             context.add(iconBackground.position(CGPoint(x: context.availableSize.width / 2.0, y: contentSize.height + iconBackground.size.height / 2.0)))
 
             let icon = icon.update(
-                component: BundleIconComponent(name: "Ads/AdsLogo", tintColor: theme.list.itemCheckColors.foregroundColor),
+                component: BundleIconComponent(name: "Ads/AdsLogo", tintColor: .white),
                 availableSize: CGSize(width: 90.0, height: 90.0),
                 transition: .immediate
             )
@@ -523,6 +524,8 @@ private final class AdsInfoSheetComponent: CombinedComponent {
         let sheet = Child(ResizableSheetComponent<(EnvironmentType)>.self)
         let animateOut = StoredActionSlot(Action<Void>.self)
 
+        let moreButtonPlayOnce = ActionSlot<Void>()
+        
         return { context in
             let environment = context.environment[EnvironmentType.self]
             let controller = environment.controller
@@ -569,14 +572,19 @@ private final class AdsInfoSheetComponent: CombinedComponent {
                         component: AnyComponentWithIdentity(
                             id: "more",
                             component: AnyComponent(
-                                BundleIconComponent(
-                                    name: "Chat/Context Menu/More",
-                                    tintColor: theme.chat.inputPanel.panelControlColor
+                                LottieComponent(
+                                    content: LottieComponent.AppBundleContent(
+                                        name: "anim_morewide"
+                                    ),
+                                    color: theme.chat.inputPanel.panelControlColor,
+                                    size: CGSize(width: 34.0, height: 34.0),
+                                    playOnce: moreButtonPlayOnce
                                 )
                             )
                         ),
                         action: { _ in
                             (controller() as? AdsInfoScreen)?.infoPressed()
+                            moreButtonPlayOnce.invoke(Void())
                         },
                         tag: moreTag
                     )

@@ -4328,7 +4328,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                         } else {
                             self.push(await TextProcessingScreen(
                                 context: self.context,
-                                mode: .translate(fromLanguage: language),
+                                mode: .translate(fromLanguage: language, applyResult: nil),
                                 inputText: TextWithEntities(text: text.string, entities: entities ?? []),
                                 copyResult: canCopy ? { [weak self] text in
                                     guard let self else {

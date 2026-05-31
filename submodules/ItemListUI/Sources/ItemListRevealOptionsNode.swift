@@ -112,7 +112,7 @@ private struct ItemListRevealOptionLayoutMetrics {
     }
 
     var slotShapeInset: CGFloat {
-        return floor((self.slotWidth - self.shapeSize.width) / 2.0)
+        return floorToScreenPixels((self.slotWidth - self.shapeSize.width) / 2.0)
     }
 
     static func metrics(for height: CGFloat, hasVisualIcons: Bool) -> ItemListRevealOptionLayoutMetrics {
@@ -120,7 +120,7 @@ private struct ItemListRevealOptionLayoutMetrics {
         let compactShapeSize = CGSize(width: 60.0, height: 32.0)
         let regularContentHeight = regularShapeSize.height + optionTitleSpacing + ceil(titleFont.lineHeight)
         if height < regularContentHeight || !hasVisualIcons {
-            return ItemListRevealOptionLayoutMetrics(shapeSize: compactShapeSize, slotWidth: 70.0, titleWidth: 70.0, iconMaxSide: 20.0, cornerRadius: 16.0, expandedIconInset: 16.0)
+            return ItemListRevealOptionLayoutMetrics(shapeSize: compactShapeSize, slotWidth: 70.0, titleWidth: 70.0, iconMaxSide: 24.0, cornerRadius: 16.0, expandedIconInset: 16.0)
         } else {
             return ItemListRevealOptionLayoutMetrics(shapeSize: regularShapeSize, slotWidth: 60.0, titleWidth: 60.0, iconMaxSide: 40.0, cornerRadius: 25.0, expandedIconInset: 20.0)
         }
@@ -163,7 +163,7 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
     private let contentContainerNode: ASDisplayNode
     private let backgroundNode: ASDisplayNode
     private let highlightNode: ASDisplayNode
-    private let titleNode: ASTextNode
+    private let titleNode: ImmediateTextNode
     private let iconNode: ASImageNode?
     private let animationNode: SimpleAnimationNode?
 
@@ -187,7 +187,7 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
     }
 
     var titleWidthForGroupPillSizing: CGFloat {
-        var titleWidth = self.titleNode.measure(CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)).width
+        var titleWidth = self.titleNode.updateLayout(CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)).width
         if self.displaysTitleInsidePill {
             titleWidth += optionIconlessTitleAdditionalHorizontalPadding
         }
@@ -199,9 +199,11 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
         self.backgroundNode = ASDisplayNode()
         self.highlightNode = ASDisplayNode()
 
-        self.titleNode = ASTextNode()
+        self.titleNode = ImmediateTextNode()
+        self.titleNode.displaysAsynchronously = false
         self.titleNode.maximumNumberOfLines = 1
         self.titleNode.truncationMode = .byTruncatingTail
+        self.titleNode.textAlignment = .center
 
         let displaysTitleInsidePill: Bool
         if case .none = icon {
@@ -361,20 +363,27 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
         let bounds = CGRect(origin: CGPoint(), size: self.bounds.size)
         transition.updateFrame(node: self.contentContainerNode, frame: bounds)
 
-        let titleSize = self.titleNode.measure(CGSize(width: metrics.titleWidth, height: CGFloat.greatestFiniteMagnitude))
+        let titleSize: CGSize
+        if self.titleNode.frame.isEmpty {
+            titleSize = self.titleNode.updateLayout(CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude))
+        } else {
+            titleSize = self.titleNode.cachedLayout?.size ?? CGSize()
+        }
+
         let pillSize = metrics.shapeSize
         let shapeY: CGFloat
         if self.displaysTitleInsidePill {
-            shapeY = floor((bounds.height - pillSize.height) / 2.0)
+            shapeY = floorToScreenPixels((bounds.height - pillSize.height) / 2.0)
         } else {
-            shapeY = floor((bounds.height - metrics.contentHeight) / 2.0)
+            let contentHeight = pillSize.height + optionTitleSpacing + titleSize.height
+            shapeY = floorToScreenPixels((bounds.height - contentHeight) / 2.0)
         }
 
         let shapeFrameX: CGFloat
         if isStretched {
             shapeFrameX = isLeft ? 0.0 : bounds.width - pillSize.width
         } else {
-            shapeFrameX = floor((metrics.slotWidth - pillSize.width) / 2.0)
+            shapeFrameX = floorToScreenPixels((metrics.slotWidth - pillSize.width) / 2.0)
         }
         let shapeFrame = CGRect(origin: CGPoint(x: shapeFrameX, y: shapeY), size: pillSize)
         let backgroundFrame: CGRect
@@ -424,10 +433,11 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
             var imageSize = CGSize(width: animationNode.size.width * self.animationScale, height: animationNode.size.height * self.animationScale)
             let imageMaxSide = max(imageSize.width, imageSize.height)
             if imageMaxSide > metrics.iconMaxSide {
-                let imageScale = metrics.iconMaxSide / imageMaxSide * 1.4
+                let imageScale = metrics.iconMaxSide / imageMaxSide * 1.5
                 imageSize = CGSize(width: floorToScreenPixels(imageSize.width * imageScale), height: floorToScreenPixels(imageSize.height * imageScale))
             }
-            let iconFrame = CGRect(origin: CGPoint(x: floorToScreenPixels(iconCenterX - imageSize.width / 2.0), y: floorToScreenPixels(iconCenterY - imageSize.height / 2.0) + 6.0 + self.animationNodeOffset), size: imageSize)
+            let scaleFraction = imageSize.height / 56.0
+            let iconFrame = CGRect(origin: CGPoint(x: floorToScreenPixels(iconCenterX - imageSize.width / 2.0), y: floorToScreenPixels(iconCenterY - imageSize.height / 2.0) + (6.0 + self.animationNodeOffset) * scaleFraction), size: imageSize)
 
             if isPrimary {
                 didApplyManualIconCenter = true
@@ -493,7 +503,6 @@ private final class ItemListRevealOptionNode: ASDisplayNode {
 
     override func calculateSizeThatFits(_ constrainedSize: CGSize) -> CGSize {
         let metrics = ItemListRevealOptionLayoutMetrics.metrics(for: constrainedSize.height, hasVisualIcons: !self.displaysTitleInsidePill)
-        let _ = self.titleNode.measure(CGSize(width: metrics.titleWidth, height: CGFloat.greatestFiniteMagnitude))
         return CGSize(width: metrics.slotWidth, height: constrainedSize.height)
     }
 }
@@ -510,6 +519,7 @@ public final class ItemListRevealOptionsNode: ASDisplayNode {
     private var optionNodes: [ItemListRevealOptionNode] = []
     private var revealOffset: CGFloat = 0.0
     private var sideInset: CGFloat = 0.0
+    private var currentMetrics: (containerSize: CGSize, metrics: ItemListRevealOptionLayoutMetrics)?
 
     public init(optionSelected: @escaping (ItemListRevealOption) -> Void, tapticAction: @escaping () -> Void) {
         self.optionSelected = optionSelected
@@ -564,20 +574,27 @@ public final class ItemListRevealOptionsNode: ASDisplayNode {
                     self.optionsContainerNode.addSubnode(node)
                 }
             }
+            self.currentMetrics = nil
             self.invalidateCalculatedLayout()
         }
     }
 
-    private func layoutMetrics(for height: CGFloat) -> ItemListRevealOptionLayoutMetrics {
-        let metrics = ItemListRevealOptionLayoutMetrics.metrics(for: height, hasVisualIcons: self.options.contains(where: { $0.icon.hasVisualIcon }))
+    private func layoutMetrics(for containerSize: CGSize) -> ItemListRevealOptionLayoutMetrics {
+        if let currentMetrics = self.currentMetrics, currentMetrics.containerSize == containerSize {
+            return currentMetrics.metrics
+        }
+
+        let metrics = ItemListRevealOptionLayoutMetrics.metrics(for: containerSize.height, hasVisualIcons: self.options.contains(where: { $0.icon.hasVisualIcon }))
         let maxTitleWidth = self.optionNodes.reduce(0.0) { result, node in
             return max(result, node.titleWidthForGroupPillSizing)
         }
-        return metrics.withGroupTitleWidth(maxTitleWidth)
+        let updatedMetrics = metrics.withGroupTitleWidth(maxTitleWidth)
+        self.currentMetrics = (containerSize, updatedMetrics)
+        return updatedMetrics
     }
 
     override public func calculateSizeThatFits(_ constrainedSize: CGSize) -> CGSize {
-        let metrics = self.layoutMetrics(for: constrainedSize.height)
+        let metrics = self.layoutMetrics(for: constrainedSize)
         for node in self.optionNodes {
             let _ = node.measure(constrainedSize)
         }
@@ -595,7 +612,7 @@ public final class ItemListRevealOptionsNode: ASDisplayNode {
         if size.width.isLessThanOrEqualTo(0.0) || self.optionNodes.isEmpty {
             return
         }
-        let metrics = self.layoutMetrics(for: size.height)
+        let metrics = self.layoutMetrics(for: size)
         let revealedDistance = abs(self.revealOffset)
         let boundedRevealedDistance = min(revealedDistance, size.width)
         let overswipeDistance = max(0.0, revealedDistance - size.width)
