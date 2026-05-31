@@ -2004,16 +2004,22 @@ private func layoutThinking(
     setupStyleStack(styleStack, theme: context.theme, attributes: dimmedAttributes)
     let attributedString = attributedStringForRichText(text, styleStack: styleStack)
 
+    // Mirror a normal `.text` item's sizing: lay the text out flush (offset .zero) and put the page
+    // inset onto the BLOCK frame, so the `.thinking` item's frame == a `.text` item's frame
+    // (`(horizontalInset, 0, textWidth, height)`) instead of a full-bleed `(0, 0, boundingWidth, …)`
+    // box. The shimmer (sized to `item.frame.size`) then hugs the text rather than the whole page
+    // width; the rendered text stays at the same place (`horizontalInset`) since the block carries
+    // the inset.
     let (textItem, _, textSize) = layoutTextItem(
         attributedString,
         boundingWidth: boundingWidth - horizontalInset * 2.0,
-        offset: CGPoint(x: horizontalInset, y: 0.0),
+        offset: CGPoint(x: 0.0, y: 0.0),
         fitToWidth: context.fitToWidth,
         computeRevealCharacterRects: context.computeRevealCharacterRects
     )
     guard let textItem = textItem else { return [] }
 
-    let blockFrame = CGRect(x: 0.0, y: 0.0, width: boundingWidth, height: textSize.height)
+    let blockFrame = CGRect(x: horizontalInset, y: 0.0, width: textSize.width, height: textSize.height)
     return [.thinking(InstantPageV2ThinkingItem(frame: blockFrame, textItem: textItem))]
 }
 
