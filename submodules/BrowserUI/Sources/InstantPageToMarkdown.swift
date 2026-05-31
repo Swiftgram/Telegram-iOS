@@ -1,5 +1,6 @@
 import Foundation
 import TelegramCore
+import TextFormat
 
 /// Reconstructs a markdown source string from an `InstantPage`.
 ///
@@ -125,9 +126,11 @@ private func markdownInline(from richText: RichText) -> String {
         return markdownInline(from: text)
     case let .`subscript`(text):
         return markdownInline(from: text)
+    case let .textCustomEmoji(fileId, alt):
+        return "[\(escapeCustomEmojiMarkdownAlt(alt))](\(customEmojiMarkdownURL(fileId: fileId)))"
     default:
-        // .image, .textCustomEmoji, and the entity cases (.textMention,
-        // .textHashtag, …): fall back to plain text.
+        // .image and the entity cases (.textMention, .textHashtag, …):
+        // fall back to plain text.
         return escapeMarkdown(richText.plainText)
     }
 }

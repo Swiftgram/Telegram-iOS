@@ -215,8 +215,8 @@ func chatMessageDisplaySendMessageOptions(selfController: ChatControllerImpl, no
             var richTextPreview: ChatSendMessageContextScreenRichTextPreview?
             if case .customChatContents = selfController.presentationInterfaceState.subject {
             } else if mediaPreview == nil,
-                      let plainText = textInputView.attributedText?.string,
-                      let attribute = richMarkdownAttributeIfNeeded(context: selfController.context, text: plainText) {
+                      let attributedText = textInputView.attributedText,
+                      let attribute = richMarkdownAttributeIfNeeded(context: selfController.context, attributedText: attributedText) {
                 richTextPreview = ChatSendMessageRichTextPreview(context: selfController.context, instantPage: attribute.instantPage)
             }
 

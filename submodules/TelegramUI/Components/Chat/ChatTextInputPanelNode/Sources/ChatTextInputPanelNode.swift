@@ -5301,7 +5301,20 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
                 attributedString = chatInputStateStringFromRTF(data, type: NSAttributedString.DocumentType.rtfd)
             }
         }
-        
+
+        // Rich-message markdown copied to the clipboard is plain text containing
+        // `[<alt>](tg://emoji?id=<fileId>)` emoji markers (no RTF/private type).
+        // Reattach those markers as live custom-emoji attributes so the field
+        // shows the animated emoji (matching the edit-load reconstruction). Only
+        // taken when a marker actually converted, so ordinary text pastes are
+        // unaffected and fall through to default paste.
+        if attributedString == nil, let plainText = pasteboard.string, plainText.contains("tg://emoji?id=") {
+            let reattached = chatInputTextWithReattachedCustomEmoji(plainText)
+            if reattached.string != plainText {
+                attributedString = reattached
+            }
+        }
+
         if let attributedString = attributedString {
             self.interfaceInteraction?.updateTextInputStateAndMode { current, inputMode in
                 if let inputText = current.inputText.mutableCopy() as? NSMutableAttributedString {

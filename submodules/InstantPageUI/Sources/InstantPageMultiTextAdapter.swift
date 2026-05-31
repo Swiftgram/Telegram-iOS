@@ -282,8 +282,13 @@ private func inlineMarkdown(from slice: NSAttributedString) -> String {
     slice.enumerateAttributes(in: fullRange, options: []) { attributes, range, _ in
         let substring = (slice.string as NSString).substring(with: range)
 
-        // Custom emoji: single-space placeholder with no alt available — drop it.
-        if attributes[ChatTextInputAttributes.customEmoji] != nil {
+        // Custom emoji: emit the shared marker carrying the fileId. The display
+        // placeholder may have no real alt (often a single space), so alt is
+        // best-effort; whole-message copy / edit reconstruction have the true alt.
+        if let emojiAttribute = attributes[ChatTextInputAttributes.customEmoji] as? ChatTextInputTextCustomEmojiAttribute {
+            // Non-empty link text required: CommonMark drops `[](url)` on re-parse.
+            let alt = substring.isEmpty ? " " : substring
+            result += "[\(escapeCustomEmojiMarkdownAlt(alt))](\(customEmojiMarkdownURL(fileId: emojiAttribute.fileId)))"
             return
         }
 

@@ -1781,7 +1781,7 @@ extension ChatControllerImpl {
                             
                             let inputText: NSAttributedString
                             if let richTextAttribute = message.attributes.first(where: { $0 is RichTextMessageAttribute }) as? RichTextMessageAttribute {
-                                inputText = NSAttributedString(string: markdownStringFromInstantPage(richTextAttribute.instantPage))
+                                inputText = chatInputTextWithReattachedCustomEmoji(markdownStringFromInstantPage(richTextAttribute.instantPage))
                             } else {
                                 inputText = chatInputStateStringWithAppliedEntities(message.text, entities: entities)
                             }
@@ -2214,14 +2214,13 @@ extension ChatControllerImpl {
                 
                 let text = trimChatInputText(convertMarkdownToAttributes(expandedInputStateAttributedString(editMessage.inputState.inputText)))
 
-                let rawEditText = expandedInputStateAttributedString(editMessage.inputState.inputText).string
                 var isSpecialChatContents = false
                 if case .customChatContents = strongSelf.presentationInterfaceState.subject {
                     isSpecialChatContents = true
                 }
                 var richTextAttribute: RichTextMessageAttribute?
                 if !isSpecialChatContents {
-                    richTextAttribute = richMarkdownAttributeIfNeeded(context: strongSelf.context, text: rawEditText)
+                    richTextAttribute = richMarkdownAttributeIfNeeded(context: strongSelf.context, attributedText: expandedInputStateAttributedString(editMessage.inputState.inputText))
                 }
 
                 let entities = generateTextEntities(text.string, enabledTypes: .all, currentEntities: generateChatInputTextEntities(text))
