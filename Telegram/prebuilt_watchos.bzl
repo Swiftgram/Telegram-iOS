@@ -70,6 +70,12 @@ def _apple_prebuilt_watchos_application_impl(ctx):
             infoplist.path,
             ctx.file.versions_json.path,
             build_number,
+            # Watch app bundle id ("<host>.watchkitapp"). xcodebuild bakes it as
+            # PRODUCT_BUNDLE_IDENTIFIER so the signed CFBundleIdentifier matches the host
+            # config; the Info.plist derives WKCompanionAppBundleIdentifier from it via
+            # $(PRODUCT_BUNDLE_IDENTIFIER:base). Keeps the build dynamic across hosts with
+            # no post-build plist mutation (xcodebuild bakes, the worker signs once).
+            ctx.attr.bundle_id,
         ],
         inputs = inputs,
         outputs = [archive, infoplist],
