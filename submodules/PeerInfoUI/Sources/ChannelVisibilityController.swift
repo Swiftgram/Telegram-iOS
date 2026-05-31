@@ -1179,9 +1179,12 @@ private func channelVisibilityControllerEntries(presentationData: PresentationDa
                 guardBotId = currentGuardBotId
                 approveMembersInfo += " " + presentationData.strings.Group_Setup_ApproveNewMembersManagedBy("[@\(guardBotUsername)](guardbot)").string
             }
-
-            entries.append(.approveMembers(presentationData.theme, approveMembersTitle, approveMembers))
-            entries.append(.approveMembersInfo(presentationData.theme, approveMembersInfo, guardBotId))
+            
+            if !isGroup && selectedType == .publicChannel {
+            } else {
+                entries.append(.approveMembers(presentationData.theme, approveMembersTitle, approveMembers))
+                entries.append(.approveMembersInfo(presentationData.theme, approveMembersInfo, guardBotId))
+            }
             
             entries.append(.forwardingHeader(presentationData.theme, isGroup ? presentationData.strings.Group_Setup_ForwardingGroupTitle.uppercased() : presentationData.strings.Group_Setup_ForwardingChannelTitle.uppercased()))
             entries.append(.forwardingDisabled(presentationData.theme, presentationData.strings.Group_Setup_ForwardingDisabled, !forwardingEnabled))

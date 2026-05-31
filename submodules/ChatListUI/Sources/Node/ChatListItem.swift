@@ -3134,9 +3134,10 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
             default:
                 break
             }
+            let messageTypeIconScale = min(1.0, item.presentationData.fontSize.itemListBaseFontSize / 17.0)
             
             if let currentMessageTypeIcon {
-                textLeftCutout += currentMessageTypeIcon.size.width
+                textLeftCutout += currentMessageTypeIcon.size.width * messageTypeIconScale
                 if !contentImageSpecs.isEmpty {
                     textLeftCutout += forwardedIconSpacing
                 } else {
@@ -3654,6 +3655,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                 textMaxWidth -= 18.0
             }
             
+            let textLineSpacing: CGFloat = min(0.2, item.presentationData.fontSize.itemListBaseFontSize * 0.2 / 17.0)
             let (textLayout, textApply) = textLayout(TextNodeLayoutArguments(
                 attributedString: textAttributedString,
                 backgroundColor: nil,
@@ -3661,7 +3663,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                 truncationType: .end,
                 constrainedSize: CGSize(width: textMaxWidth, height: .greatestFiniteMagnitude),
                 alignment: .natural,
-                lineSpacing: 0.2,
+                lineSpacing: textLineSpacing,
                 cutout: textCutout,
                 insets: UIEdgeInsets(top: 2.0, left: 1.0, bottom: 2.0, right: 1.0)
             ))
@@ -4380,17 +4382,17 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                     strongSelf.statusNode.fontSize = item.presentationData.fontSize.itemListBaseFontSize
                     let _ = strongSelf.statusNode.transitionToState(statusState, animated: animateContent)
                     
-                    let rightAccessoryVerticalOffset: CGFloat = -2.0
+                    let rightAccessoryVerticalOffset: CGFloat = floorToScreenPixels(-4.0 * min(1.0, item.presentationData.fontSize.itemListBaseFontSize / 17.0))
                     var nextBadgeX: CGFloat = contentRect.maxX
                     if let _ = currentBadgeBackgroundImage {
-                        let badgeFrame = CGRect(x: nextBadgeX - badgeLayout.width, y: contentRect.maxY - badgeLayout.height - 2.0 + rightAccessoryVerticalOffset, width: badgeLayout.width, height: badgeLayout.height)
+                        let badgeFrame = CGRect(x: nextBadgeX - badgeLayout.width, y: contentRect.maxY - badgeLayout.height + rightAccessoryVerticalOffset, width: badgeLayout.width, height: badgeLayout.height)
                         
                         transition.updateFrame(node: strongSelf.badgeNode, frame: badgeFrame)
                         nextBadgeX -= badgeLayout.width + 6.0
                     }
                     
                     if currentMentionBadgeImage != nil || currentBadgeBackgroundImage != nil {
-                        let badgeFrame = CGRect(x: nextBadgeX - mentionBadgeLayout.width, y: contentRect.maxY - mentionBadgeLayout.height - 2.0 + rightAccessoryVerticalOffset, width: mentionBadgeLayout.width, height: mentionBadgeLayout.height)
+                        let badgeFrame = CGRect(x: nextBadgeX - mentionBadgeLayout.width, y: contentRect.maxY - mentionBadgeLayout.height + rightAccessoryVerticalOffset, width: mentionBadgeLayout.width, height: mentionBadgeLayout.height)
                         
                         transition.updateFrame(node: strongSelf.mentionBadgeNode, frame: badgeFrame)
                         nextBadgeX -= mentionBadgeLayout.width + 6.0
@@ -4401,7 +4403,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                         strongSelf.pinnedIconNode.isHidden = false
                         
                         let pinnedIconSize = currentPinnedIconImage.size
-                        let pinnedIconFrame = CGRect(x: nextBadgeX - pinnedIconSize.width, y: contentRect.maxY - pinnedIconSize.height - 2.0 + rightAccessoryVerticalOffset, width: pinnedIconSize.width, height: pinnedIconSize.height)
+                        let pinnedIconFrame = CGRect(x: nextBadgeX - pinnedIconSize.width, y: contentRect.maxY - pinnedIconSize.height + rightAccessoryVerticalOffset, width: pinnedIconSize.width, height: pinnedIconSize.height)
                         
                         strongSelf.pinnedIconNode.frame = pinnedIconFrame
                         nextBadgeX -= pinnedIconSize.width + 6.0
@@ -4836,8 +4838,9 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                         if strongSelf.forwardedIconNode.supernode == nil {
                             strongSelf.mainContentContainerNode.addSubnode(strongSelf.forwardedIconNode)
                         }
-                        transition.updateFrame(node: strongSelf.forwardedIconNode, frame: CGRect(origin: messageTypeIconOffset, size: messageTypeIconImage.size))
-                        mediaPreviewOffset.x += messageTypeIconImage.size.width + forwardedIconSpacing
+                        let iconSize = CGSize(width: messageTypeIconImage.size.width * messageTypeIconScale, height: messageTypeIconImage.size.height * messageTypeIconScale)
+                        transition.updateFrame(node: strongSelf.forwardedIconNode, frame: CGRect(origin: messageTypeIconOffset, size: iconSize))
+                        mediaPreviewOffset.x += messageTypeIconImage.size.width * messageTypeIconScale + forwardedIconSpacing
                     } else if strongSelf.forwardedIconNode.supernode != nil {
                         strongSelf.forwardedIconNode.removeFromSupernode()
                     }

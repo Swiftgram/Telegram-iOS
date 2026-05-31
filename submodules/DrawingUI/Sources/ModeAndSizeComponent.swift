@@ -332,9 +332,9 @@ final class ModeComponent: Component {
             if isTablet {
                 spacing = 9.0
             } else {
-                if availableSize.width < 200.0 {
-                    inset = 20.0
-                    spacing = 24.0
+                if availableSize.width < 270.0 {
+                    inset = 16.0
+                    spacing = 20.0
                 } else {
                     spacing = 30.0
                 }

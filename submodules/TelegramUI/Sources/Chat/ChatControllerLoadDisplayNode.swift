@@ -59,6 +59,7 @@ import Markdown
 import TelegramPermissionsUI
 import Speak
 import TranslateUI
+import TextProcessingScreen
 import UniversalMediaPlayer
 import WallpaperBackgroundNode
 import ChatListUI
@@ -4625,27 +4626,56 @@ extension ChatControllerImpl {
                 return
             }
             let (_, language) = canTranslateText(context: context, text: text.string, showTranslate: true, ignoredLanguages: nil)
-            
+
             let entities = generateChatInputTextEntities(text)
-            presentTranslateScreen(
-                context: self.context,
-                text: text.string,
-                entities: entities,
-                canCopy: true,
-                fromLanguage: language,
-                replaceText: { text, entities in
-                    replace(chatInputStateStringWithAppliedEntities(text, entities: entities))
-                },
-                pushController: { [weak self] c in
-                    self?.push(c)
-                },
-                presentController: { [weak self] c in
-                    self?.present(c, in: .window(.root))
-                },
-                display: { [weak self] c in
-                    self?.push(c)
+
+            let translationConfiguration = TranslationConfiguration.with(appConfiguration: self.context.currentAppConfiguration.with { $0 })
+            var useSystemTranslation = false
+            switch translationConfiguration.manual {
+            case .system:
+                if #available(iOS 18.0, *) {
+                    useSystemTranslation = true
                 }
-            )
+            default:
+                break
+            }
+
+            if useSystemTranslation {
+                presentTranslateScreen(
+                    context: self.context,
+                    text: text.string,
+                    entities: entities,
+                    canCopy: true,
+                    fromLanguage: language,
+                    replaceText: { text, entities in
+                        replace(chatInputStateStringWithAppliedEntities(text, entities: entities))
+                    },
+                    pushController: { [weak self] c in
+                        self?.push(c)
+                    },
+                    presentController: { [weak self] c in
+                        self?.present(c, in: .window(.root))
+                    },
+                    display: { [weak self] c in
+                        self?.push(c)
+                    }
+                )
+            } else {
+                Task { @MainActor [weak self] in
+                    guard let self else {
+                        return
+                    }
+                    self.push(await TextProcessingScreen(
+                        context: self.context,
+                        mode: .translate(fromLanguage: language, applyResult: { text in
+                            replace(chatInputStateStringWithAppliedEntities(text.text, entities: text.entities))
+                        }),
+                        inputText: TextWithEntities(text: text.string, entities: entities),
+                        copyResult: nil,
+                        translateChat: nil
+                    ))
+                }
+            }
         }, sendEmoji: { [weak self] text, attribute, immediately in
             guard let self else {
                 return

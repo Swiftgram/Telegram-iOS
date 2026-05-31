@@ -2070,7 +2070,13 @@ private final class DrawingScreenComponent: CombinedComponent {
                 })
                 .opacity(controlsAreVisible ? 1.0 : 0.0)
             )
-
+            
+            let modeConstrainedWidth: CGFloat
+            if component.sourceHint == .storyEditor {
+                modeConstrainedWidth = context.availableSize.width - 66.0 * 2.0
+            } else {
+                modeConstrainedWidth = context.availableSize.width - 76.0 * 2.0
+            }
             let mode = mode.update(
                 component: ModeComponent(
                     isTablet: false,
@@ -2093,7 +2099,7 @@ private final class DrawingScreenComponent: CombinedComponent {
                     },
                     tag: modeTag
                 ),
-                availableSize: CGSize(width: context.availableSize.width - 66.0 * 2.0, height: 44.0),
+                availableSize: CGSize(width: modeConstrainedWidth, height: 44.0),
                 transition: context.transition
             )
             var modePosition = CGPoint(x: context.availableSize.width / 2.0 - (modeRightInset - 57.0) / 2.0, y: context.availableSize.height - environment.safeInsets.bottom - mode.size.height / 2.0 - 9.0)

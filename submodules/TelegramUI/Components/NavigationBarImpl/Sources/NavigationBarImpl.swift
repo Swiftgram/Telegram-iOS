@@ -632,7 +632,7 @@ public final class NavigationBarImpl: ASDisplayNode, NavigationBar {
         }
         
         self.buttonsContainerNode = SparseNode()
-        self.buttonsContainerNode.clipsToBounds = true
+        //self.buttonsContainerNode.clipsToBounds = true
         
         self.backButtonNodeImpl.color = self.presentationData.theme.buttonColor
         self.backButtonNodeImpl.disabledColor = self.presentationData.theme.disabledButtonColor

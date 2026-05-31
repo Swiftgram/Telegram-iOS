@@ -142,6 +142,7 @@ swift_library(
         "//submodules/TelegramUI/Components/Settings/PeerNameColorItem",
         "//submodules/TelegramUI/Components/PlainButtonComponent",
         "//submodules/TelegramUI/Components/TextLoadingEffect",
+        "//submodules/TelegramUI/Components/TextProcessingScreen",
         "//submodules/TelegramUI/Components/Settings/BirthdayPickerScreen",
         "//submodules/TelegramUI/Components/Settings/PeerSelectionScreen",
         "//submodules/TelegramUI/Components/ButtonComponent",

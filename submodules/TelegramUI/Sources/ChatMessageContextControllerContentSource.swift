@@ -87,8 +87,14 @@ final class ChatMessageContextExtractedContentSource: ContextExtractedContentSou
                 return
             }
             if item.content.contains(where: { $0.0.stableId == self.message.stableId }), let contentNode = itemNode.getMessageContextSourceNode(stableId: self.selectAll ? nil : self.message.stableId) {
-                result = ContextControllerTakeViewInfo(containingItem: .node(contentNode), contentAreaInScreenSpace: chatNode.convert(chatNode.frameForVisibleArea(), to: nil), sourceTransitionSurface: chatNode.ensureContextTransitionContainer())
-            
+                let sourceTransitionSurface: UIView?
+                if self.snapshot {
+                    sourceTransitionSurface = nil
+                } else {
+                    sourceTransitionSurface = chatNode.ensureContextTransitionContainer()
+                }
+                result = ContextControllerTakeViewInfo(containingItem: .node(contentNode), contentAreaInScreenSpace: chatNode.convert(chatNode.frameForVisibleArea(), to: nil), sourceTransitionSurface: sourceTransitionSurface)
+                
                 if self.snapshot, let snapshotView = contentNode.contentNode.view.snapshotContentTree(unhide: false, keepPortals: true, keepTransform: true) {
                     contentNode.view.superview?.addSubview(snapshotView)
                     self.snapshotView = snapshotView
@@ -112,7 +118,13 @@ final class ChatMessageContextExtractedContentSource: ContextExtractedContentSou
                 return
             }
             if item.content.contains(where: { $0.0.stableId == self.message.stableId }) {
-                result = ContextControllerPutBackViewInfo(contentAreaInScreenSpace: chatNode.convert(chatNode.frameForVisibleArea(), to: nil), sourceTransitionSurface: chatNode.ensureContextTransitionContainer())
+                let sourceTransitionSurface: UIView?
+                if self.snapshot {
+                    sourceTransitionSurface = nil
+                } else {
+                    sourceTransitionSurface = chatNode.ensureContextTransitionContainer()
+                }
+                result = ContextControllerPutBackViewInfo(contentAreaInScreenSpace: chatNode.convert(chatNode.frameForVisibleArea(), to: nil), sourceTransitionSurface: sourceTransitionSurface)
             }
         }
 

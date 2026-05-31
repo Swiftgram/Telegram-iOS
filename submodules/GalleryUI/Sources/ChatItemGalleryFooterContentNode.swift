@@ -26,6 +26,7 @@ import MultiAnimationRenderer
 import Pasteboard
 import Speak
 import TranslateUI
+import TextProcessingScreen
 import TelegramNotices
 import SolidRoundedButtonNode
 import UrlHandling
@@ -546,34 +547,42 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                     let (_, language) = canTranslateText(context: self.context, text: text.string, showTranslate: translationSettings.showTranslate, showTranslateIfTopical: showTranslateIfTopical, ignoredLanguages: translationSettings.ignoredLanguages)
                     
                     let _ = ApplicationSpecificNotice.incrementTranslationSuggestion(accountManager: self.context.sharedContext.accountManager, timestamp: Int32(Date().timeIntervalSince1970)).start()
-                    
-                    let translateController = TranslateScreen(context: self.context, forceTheme: defaultDarkPresentationTheme, text: text.string, canCopy: true, fromLanguage: language, ignoredLanguages: translationSettings.ignoredLanguages)
-                    translateController.pushController = { [weak self] c in
+
+                    Task { @MainActor [weak self] in
                         guard let self else {
                             return
                         }
-                        self.controllerInteraction?.pushController(c)
+                        let translateController = await TextProcessingScreen(
+                            context: self.context,
+                            theme: defaultDarkPresentationTheme,
+                            mode: .translate(fromLanguage: language, applyResult: nil),
+                            inputText: TextWithEntities(text: text.string, entities: []),
+                            copyResult: { [weak self] text in
+                                guard let self else {
+                                    return
+                                }
+                                storeMessageTextInPasteboard(text.text, entities: text.entities)
+                                let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
+                                let undoController = UndoOverlayController(presentationData: presentationData, content: .copy(text: presentationData.strings.Conversation_TextCopied), elevatedLayout: true, animateInAsReplacement: false, appearance: UndoOverlayController.Appearance(isBlurred: true), action: { _ in true })
+                                self.controllerInteraction?.presentController(undoController, nil)
+                            },
+                            translateChat: nil
+                        )
+
+                        //self.actionSheet = translateController
+                        //view.updateIsProgressPaused()
+
+                        /*translateController.wasDismissed = { [weak self, weak view] in
+                            guard let self, let view else {
+                                return
+                            }
+                            self.actionSheet = nil
+                            view.updateIsProgressPaused()
+                        }*/
+
+                        //component.controller()?.present(translateController, in: .window(.root))
+                        self.controllerInteraction?.presentController(translateController, nil)
                     }
-                    translateController.presentController = { [weak self] c in
-                        guard let self else {
-                            return
-                        }
-                        self.controllerInteraction?.presentController(c, nil)
-                    }
-                    
-                    //self.actionSheet = translateController
-                    //view.updateIsProgressPaused()
-                    
-                    /*translateController.wasDismissed = { [weak self, weak view] in
-                        guard let self, let view else {
-                            return
-                        }
-                        self.actionSheet = nil
-                        view.updateIsProgressPaused()
-                    }*/
-                    
-                    //component.controller()?.present(translateController, in: .window(.root))
-                    self.controllerInteraction?.presentController(translateController, nil)
                 })
             case .quote:
                 break

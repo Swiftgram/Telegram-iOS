@@ -762,3 +762,50 @@ open class LegacyController: ViewController, PresentableController {
         }
     }
 }
+
+extension LegacyController: KeyShortcutResponder {
+    public var keyShortcuts: [KeyShortcut] {
+        guard TGKeyCommandController.keyCommandsSupported(), let legacyController = self.legacyController as? TGViewController else {
+            return []
+        }
+
+        var shortcuts: [KeyShortcut] = []
+        var hasExclusiveResponder = false
+
+        legacyController.enumerateChildViewControllersRecursively { viewController in
+            if hasExclusiveResponder {
+                return
+            }
+
+            guard let viewController = viewController, let responder = viewController as? TGKeyCommandResponder else {
+                return
+            }
+
+            if responder.isExclusive?() == true {
+                hasExclusiveResponder = true
+                shortcuts.removeAll()
+            }
+
+            guard let commands = responder.availableKeyCommands() as? [TGKeyCommand] else {
+                return
+            }
+
+            for command in commands {
+                let title = command.title ?? ""
+                let input = command.input ?? ""
+                let modifiers = command.modifierFlags
+                let shortcut = KeyShortcut(title: title, input: input, modifiers: modifiers, action: { [weak viewController] in
+                    guard let responder = viewController as? TGKeyCommandResponder else {
+                        return
+                    }
+                    let keyCommand = UIKeyCommand(input: input, modifierFlags: modifiers, action: #selector(TGKeyCommandResponder.processKeyCommand(_:)))
+                    responder.processKeyCommand(keyCommand)
+                })
+                shortcuts.removeAll(where: { $0 == shortcut })
+                shortcuts.append(shortcut)
+            }
+        }
+
+        return shortcuts
+    }
+}

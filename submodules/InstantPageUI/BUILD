@@ -32,6 +32,8 @@ swift_library(
         "//submodules/LocationResources:LocationResources",
         "//submodules/UndoUI:UndoUI",
         "//submodules/TranslateUI:TranslateUI",
+        "//submodules/TelegramUI/Components/TextProcessingScreen",
+        "//submodules/Pasteboard",
         "//submodules/Tuples:Tuples",
         "//third-party/SwiftMath:SwiftMath",
         "//submodules/ComponentFlow:ComponentFlow",

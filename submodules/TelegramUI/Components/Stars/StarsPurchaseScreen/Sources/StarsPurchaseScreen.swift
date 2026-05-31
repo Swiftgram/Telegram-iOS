@@ -186,6 +186,7 @@ private final class StarsPurchaseScreenContentComponent: CombinedComponent {
             let component = context.component
             let scrollEnvironment = context.environment[ScrollChildEnvironment.self].value
             let environment = context.environment[ViewControllerComponentContainer.Environment.self].value
+            let controller = environment.controller
             let state = context.state
     
             state.products = component.products
@@ -475,7 +476,10 @@ private final class StarsPurchaseScreenContentComponent: CombinedComponent {
                         }
                     },
                     tapAction: { attributes, _ in
-                        component.context.sharedContext.openExternalUrl(context: component.context, urlContext: .generic, url: strings.Stars_Purchase_Terms_URL, forceExternal: false, presentationData: presentationData, navigationController: nil, dismissInput: {})
+                        guard let controller = controller(), let navigationController = controller.navigationController as? NavigationController else {
+                            return
+                        }
+                        component.context.sharedContext.openExternalUrl(context: component.context, urlContext: .generic, url: strings.Stars_Purchase_Terms_URL, forceExternal: false, presentationData: presentationData, navigationController: navigationController, dismissInput: {})
                     }
                 ),
                 environment: {},
