@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// Local discriminator for outgoing-message lifecycle. Incoming messages are always `.sent`.
 enum SendingState: Equatable, Hashable {
@@ -11,7 +11,7 @@ enum SendingState: Equatable, Hashable {
 extension SendingState {
     init(tdLibState: MessageSendingState?) {
         switch tdLibState {
-        case nil:
+        case nil, .unsupported:
             self = .sent
         case .messageSendingStatePending:
             self = .pending
@@ -43,7 +43,7 @@ struct CachedChat: Equatable {
     var avatarMini: Data? = nil
 }
 
-/// Reduced shape of `TDLibKit.Message` carrying the fields the chat-list preview reads
+/// Reduced shape of `Message` carrying the fields the chat-list preview reads
 /// plus the fields the message-history view needs (id for cache key + sort, date for
 /// timestamps + day separators, editDate captured for a future "edited" indicator).
 struct CachedMessage: Equatable {

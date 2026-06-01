@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// Per-photo visual data the bubble view consumes. The projection produces it from
 /// `MessagePhoto.photo` + the store's latest `files[fileId]` snapshot.

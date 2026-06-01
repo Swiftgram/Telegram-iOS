@@ -1,5 +1,5 @@
 import SwiftUI
-import TDLibKit
+import TDShim
 
 @main
 struct TgwatchApp: App {

@@ -4,7 +4,7 @@ import AVFoundation
 import Combine
 import OSLog
 import UIKit
-import TDLibKit  // for `File?` in handleSnapshot — note this shadows Swift.Error and Foundation.Date; we use neither here
+import TDShim  // for `File?` in handleSnapshot — note this shadows Swift.Error and Foundation.Date; we use neither here
 
 /// Full-screen sheet content for downloading + playing a video.
 ///

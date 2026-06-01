@@ -1,6 +1,6 @@
 import SwiftUI
 #if DEBUG
-import TDLibKit
+import TDShim
 #endif
 
 struct ChatRowView: View {

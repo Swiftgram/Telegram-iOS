@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// Pure value type owning the loaded contiguous range of cached messages for a
 /// single chat. The single home for the gap-prevention invariant: ids in `cache`

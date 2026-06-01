@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// Per-poll data the bubble consumes. Projected from `messagePoll`. Mutually
 /// exclusive with the other `MessageBubble` media fields.

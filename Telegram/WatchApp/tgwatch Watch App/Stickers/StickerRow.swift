@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// Builds a `StickerVisual` for `messageSticker` content. Returns `nil` for any other
 /// content. Looks up the sticker's file id (and its thumbnail file id if present) in

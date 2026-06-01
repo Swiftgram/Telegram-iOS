@@ -27,9 +27,8 @@ settings:
     MARKETING_VERSION: "0.1"
     CURRENT_PROJECT_VERSION: "1"
 packages:
-  TDLibKit:
-    url: https://github.com/Swiftgram/TDLibKit
-    exactVersion: 1.5.2-tdlib-1.8.64-49b3bcbb
+  TDShim:
+    path: Packages/TDShim
   QRCodeGenerator:
     url: https://github.com/fwcd/swift-qrcode-generator
     exactVersion: 2.0.2
@@ -90,8 +89,10 @@ targets:
           DEPLOYMENT_POSTPROCESSING: "YES"
           STRIP_INSTALLED_PRODUCT: "YES"
           STRIP_STYLE: "all"
+          DEAD_CODE_STRIPPING: "YES"
     dependencies:
-      - package: TDLibKit
+      - package: TDShim
+        product: TDShim
       - package: QRCodeGenerator
         product: QRCodeGenerator
       - package: RLottieKit

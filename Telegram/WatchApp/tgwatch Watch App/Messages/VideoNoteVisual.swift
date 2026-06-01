@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// Per-round-note data the bubble + viewer consume. The projection produces it
 /// from `MessageVideoNote` + the store's latest `files[fileId]` snapshots for both

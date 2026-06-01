@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 import OSLog
-import TDLibKit
+import TDShim
 
 enum LoadState: Equatable {
     case notStarted
@@ -354,7 +354,7 @@ final class ChatListStore {
             try await loader.loadChats(chatList: chatList, limit: pageSize)
             logger.info("loadChats key=\(self.describeList(chatList), privacy: .public) ok cacheCount=\(self.chatCache.count, privacy: .public)")
             loadStates[key] = .hasMore
-        } catch let error as TDLibKit.Error where error.code == 404 {
+        } catch let error as TDError where error.code == 404 {
             logger.info("loadChats key=\(self.describeList(chatList), privacy: .public) terminated (404)")
             loadStates[key] = .loaded
         } catch {
@@ -403,6 +403,7 @@ final class ChatListStore {
         case .chatListMain: return "main"
         case .chatListArchive: return "archive"
         case .chatListFolder(let f): return "folder/\(f.chatFolderId)"
+        case .unsupported: return "unsupported"
         }
     }
 }

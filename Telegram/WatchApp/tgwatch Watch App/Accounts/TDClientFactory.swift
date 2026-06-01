@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// Builds a `TDClient` for a given account. Abstracted so `AccountManager`
 /// can be unit-tested with a stub factory that never touches TDLib.

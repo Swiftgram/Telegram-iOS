@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// One sticker as the picker grid + send path need it. Built by
 /// `pickerSticker(from:)` from a TDLibKit `Sticker`. `id` is the sticker body

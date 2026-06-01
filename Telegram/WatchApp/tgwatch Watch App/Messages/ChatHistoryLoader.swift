@@ -1,6 +1,6 @@
 import Foundation
 import OSLog
-import TDLibKit
+import TDShim
 
 /// Single seam between `ChatHistoryStore` and TDLib. Tests inject a fake; production
 /// uses `TDLibChatHistoryLoader`.

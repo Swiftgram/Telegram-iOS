@@ -3,7 +3,7 @@ import UIKit
 import WatchKit
 import RLottieKit
 import WebPKit
-import TDLibKit
+import TDShim
 
 /// One tappable sticker tile. Downloads its render file when visible and decodes
 /// it (WebPKit for webp, UIImage for jpeg/png, rlottie frame-0 for tgs) once the

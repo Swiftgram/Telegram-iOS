@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// Renders the preview line for a chat-list row. Pure: same inputs always produce the same output.
 ///
@@ -50,7 +50,7 @@ func chatPreview(_ chat: CachedChat, userNames: [Int64: String], selfUserId: Int
 /// "Someone" via the messageSenderChat actor branch).
 private func shouldIncludeServiceActor(for chatType: ChatType) -> Bool {
     switch chatType {
-    case .chatTypePrivate, .chatTypeSecret:
+    case .chatTypePrivate, .chatTypeSecret, .unsupported:
         return false
     case .chatTypeBasicGroup, .chatTypeSupergroup:
         return true
