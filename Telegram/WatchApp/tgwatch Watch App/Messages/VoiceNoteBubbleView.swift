@@ -112,23 +112,23 @@ struct VoiceNoteBubbleView: View {
 }
 
 #if DEBUG
-import TDLibKit
+import TDShim
 
 private struct VoiceNotePreviewNoopLoader: ChatHistoryLoader {
     func openChat(chatId: Int64) async throws {}
     func closeChat(chatId: Int64) async throws {}
-    func loadHistory(chatId: Int64, fromMessageId: Int64, offset: Int, limit: Int) async throws -> [TDLibKit.Message] { [] }
-    func downloadFile(fileId: Int, priority: Int) async throws -> TDLibKit.File { throw CancellationError() }
+    func loadHistory(chatId: Int64, fromMessageId: Int64, offset: Int, limit: Int) async throws -> [Message] { [] }
+    func downloadFile(fileId: Int, priority: Int) async throws -> File { throw CancellationError() }
     func cancelDownloadFile(fileId: Int) async throws {}
-    func sendText(chatId: Int64, text: String) async throws -> TDLibKit.Message { throw CancellationError() }
-    func sendVoiceNote(chatId: Int64, fileURL: URL, duration: Int, waveform: Data) async throws -> TDLibKit.Message { throw CancellationError() }
+    func sendText(chatId: Int64, text: String) async throws -> Message { throw CancellationError() }
+    func sendVoiceNote(chatId: Int64, fileURL: URL, duration: Int, waveform: Data) async throws -> Message { throw CancellationError() }
     func setChatDraftMessage(chatId: Int64, draftText: String) async throws {}
     func viewMessages(chatId: Int64, messageIds: [Int64], forceRead: Bool) async throws {}
     func setPollAnswer(chatId: Int64, messageId: Int64, optionIds: [Int]) async throws {}
-    func sendSticker(chatId: Int64, remoteFileId: String, emoji: String, width: Int, height: Int) async throws -> TDLibKit.Message {
+    func sendSticker(chatId: Int64, remoteFileId: String, emoji: String, width: Int, height: Int) async throws -> Message {
         throw CancellationError()
     }
-    func sendLocation(chatId: Int64, latitude: Double, longitude: Double) async throws -> TDLibKit.Message { throw CancellationError() }
+    func sendLocation(chatId: Int64, latitude: Double, longitude: Double) async throws -> Message { throw CancellationError() }
 }
 
 @MainActor

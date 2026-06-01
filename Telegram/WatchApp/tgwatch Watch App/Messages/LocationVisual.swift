@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// Per-location data the bubble consumes. Projected from `messageLocation`
 /// (static or live) and `messageVenue`. Mutually exclusive with the other

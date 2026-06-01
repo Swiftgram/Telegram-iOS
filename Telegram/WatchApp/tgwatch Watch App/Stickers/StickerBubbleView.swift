@@ -1,5 +1,5 @@
 import SwiftUI
-import TDLibKit
+import TDShim
 
 /// One sticker bubble. No rounded-rect chat-bubble chrome — sticker renders directly
 /// against the chat background, with sender name above (incoming groups only).
@@ -133,7 +133,7 @@ private struct NoopChatHistoryLoader: ChatHistoryLoader {
     func sendSticker(chatId: Int64, remoteFileId: String, emoji: String, width: Int, height: Int) async throws -> Message {
         throw CancellationError()
     }
-    func sendLocation(chatId: Int64, latitude: Double, longitude: Double) async throws -> TDLibKit.Message { throw CancellationError() }
+    func sendLocation(chatId: Int64, latitude: Double, longitude: Double) async throws -> Message { throw CancellationError() }
 }
 
 @MainActor

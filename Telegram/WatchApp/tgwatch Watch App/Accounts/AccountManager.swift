@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 import OSLog
-import TDLibKit
+import TDShim
 
 /// App-root orchestrator: owns the account registry and the single live
 /// `TDClient`. Inactive accounts are merely on-disk database dirs.

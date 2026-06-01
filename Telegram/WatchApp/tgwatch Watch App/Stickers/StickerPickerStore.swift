@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 import OSLog
-import TDLibKit
+import TDShim
 
 enum PickerLoadState: Equatable {
     case loading

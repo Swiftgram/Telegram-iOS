@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// Per-video data the bubble + viewer consume. The projection produces it from
 /// `MessageVideo` + the store's latest `files[fileId]` snapshots for both the chosen

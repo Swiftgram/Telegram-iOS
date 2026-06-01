@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// Renders the body text of a message bubble. Mirrors `chatPreview`'s content labels for
 /// non-text content but does not prepend a sender prefix (which is drawn as a separate

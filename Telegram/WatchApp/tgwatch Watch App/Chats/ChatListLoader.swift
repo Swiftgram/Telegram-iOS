@@ -1,4 +1,4 @@
-import TDLibKit
+import TDShim
 
 /// Abstraction over the TDLib requests `ChatListStore` needs, so the store
 /// can be exercised in tests with a no-op or scripted loader.
@@ -6,7 +6,7 @@ protocol ChatListLoader: Sendable {
     /// Asks TDLib to surface up to `limit` more chats from `chatList`. TDLib responds by
     /// emitting `updateNewChat` or `updateChatAddedToList` events for any newly-surfaced
     /// chats. When TDLib has nothing more to surface, this method throws
-    /// `TDLibKit.Error` with `code == 404`.
+    /// `TDError` with `code == 404`.
     func loadChats(chatList: ChatList, limit: Int) async throws
     /// Asks TDLib to download `fileId`. Returns immediately (synchronous=false);
     /// progress + completion stream back via `updateFile`.

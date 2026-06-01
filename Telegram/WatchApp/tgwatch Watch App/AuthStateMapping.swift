@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 func mapAuthState(_ s: AuthorizationState) -> AuthState {
     switch s {
@@ -30,6 +30,8 @@ func mapAuthState(_ s: AuthorizationState) -> AuthState {
         return .failed("Registration is not supported with QR login.")
     case .authorizationStateWaitPremiumPurchase:
         return .failed("Premium-purchase login isn't supported in this build yet.")
+    case .unsupported:
+        return .failed("Unsupported authorization state.")
     }
 }
 
@@ -61,5 +63,6 @@ private func typeDescription(from type: AuthenticationCodeType) -> String {
     case .authenticationCodeTypeFragment: return "Fragment"
     case .authenticationCodeTypeFirebaseAndroid, .authenticationCodeTypeFirebaseIos: return "App push"
     case .authenticationCodeTypeSmsWord, .authenticationCodeTypeSmsPhrase: return "SMS"
+    case .unsupported: return "Code"
     }
 }

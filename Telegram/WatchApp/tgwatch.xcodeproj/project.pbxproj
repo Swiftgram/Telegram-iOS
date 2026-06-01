@@ -111,7 +111,7 @@
 		F7096697A6319D8AE9047C1E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D50662DC1777F2BEE53A0129 /* Assets.xcassets */; };
 		F7D46529A75FEBA7AEE058A8 /* AudioVisual.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBAFC996C8EF743C7C598389 /* AudioVisual.swift */; };
 		F8F834C103DB1A687BFD54B8 /* FolderPill.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C34577A65DD579BCCD1888C /* FolderPill.swift */; };
-		F917BC9D348452D168998A84 /* TDLibKit in Frameworks */ = {isa = PBXBuildFile; productRef = AF89FC7B379A138861B92DC0 /* TDLibKit */; };
+		F917BC9D348452D168998A84 /* TDShim in Frameworks */ = {isa = PBXBuildFile; productRef = 36B07FC482F9E6A9D62DB94F /* TDShim */; };
 		F95C046A6C043344F0955815 /* QrLinkPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA96A6FDE6FBC1F2054E82A /* QrLinkPublisher.swift */; };
 		FB05A240DD234EA077E9B692 /* ChatListKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B0F1DD19A57CC68887E4F98 /* ChatListKey.swift */; };
 		FB3861C5B3036FACA2188A43 /* AudioPlaybackController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DAB96C768DF82BCF185BAE2 /* AudioPlaybackController.swift */; };
@@ -126,6 +126,7 @@
 		0CCDFBD19F9CAA87E938BADC /* ChatListTimestamp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListTimestamp.swift; sourceTree = "<group>"; };
 		0F9127473C7DAD18736234B3 /* AVRecordingBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVRecordingBackend.swift; sourceTree = "<group>"; };
 		1329216EB35DF3FC7636843D /* ReplyHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplyHeaderView.swift; sourceTree = "<group>"; };
+		14088667131D587C886B3143 /* TDShim */ = {isa = PBXFileReference; lastKnownFileType = folder; name = TDShim; path = Packages/TDShim; sourceTree = SOURCE_ROOT; };
 		148D11BBC0B40441DCC8EA0A /* AccountsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsListView.swift; sourceTree = "<group>"; };
 		182DA99AD90B93DE2FB37A41 /* ChatHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatHistoryStore.swift; sourceTree = "<group>"; };
 		1932CC94F39BD57A56E59C08 /* ChatRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatRow.swift; sourceTree = "<group>"; };
@@ -237,7 +238,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F917BC9D348452D168998A84 /* TDLibKit in Frameworks */,
+				F917BC9D348452D168998A84 /* TDShim in Frameworks */,
 				D5515C5A9286E0372DBFB7F9 /* QRCodeGenerator in Frameworks */,
 				2A0FDF9EF2B8BE9F4C46FD4C /* RLottieKit in Frameworks */,
 				87EF3EB5EB8BD10F1F65EDAB /* WebPKit in Frameworks */,
@@ -294,6 +295,7 @@
 			children = (
 				36FCB0CB6A9A867B1E8BD673 /* OpusKit */,
 				60F8F618BC10DFE08DCBC8C7 /* RLottieKit */,
+				14088667131D587C886B3143 /* TDShim */,
 				69A8C5AE84DB92393FD19C0E /* WebPKit */,
 			);
 			path = Packages;
@@ -445,7 +447,7 @@
 			);
 			name = "tgwatch Watch App";
 			packageProductDependencies = (
-				AF89FC7B379A138861B92DC0 /* TDLibKit */,
+				36B07FC482F9E6A9D62DB94F /* TDShim */,
 				FD6A04697FEA6C4614973F19 /* QRCodeGenerator */,
 				5083D73573D84E386C2E3B4C /* RLottieKit */,
 				F573B77B0568E47F98C5A063 /* WebPKit */,
@@ -480,9 +482,9 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				3238C4183C24EDCED74DC210 /* XCRemoteSwiftPackageReference "swift-qrcode-generator" */,
-				F180613E9F850ADE51B7D41D /* XCRemoteSwiftPackageReference "TDLibKit" */,
 				A7CE5619475EAC61ADB3AD3C /* XCLocalSwiftPackageReference "Packages/OpusKit" */,
 				CD4B01D8F7053200FFFBF7EC /* XCLocalSwiftPackageReference "Packages/RLottieKit" */,
+				4CFFE520C87190BF6D6872EC /* XCLocalSwiftPackageReference "Packages/TDShim" */,
 				32CBECA1903E29ECBF55A787 /* XCLocalSwiftPackageReference "Packages/WebPKit" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -817,6 +819,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/WebPKit;
 		};
+		4CFFE520C87190BF6D6872EC /* XCLocalSwiftPackageReference "Packages/TDShim" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/TDShim;
+		};
 		A7CE5619475EAC61ADB3AD3C /* XCLocalSwiftPackageReference "Packages/OpusKit" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/OpusKit;
@@ -836,17 +842,13 @@
 				version = 2.0.2;
 			};
 		};
-		F180613E9F850ADE51B7D41D /* XCRemoteSwiftPackageReference "TDLibKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Swiftgram/TDLibKit";
-			requirement = {
-				kind = exactVersion;
-				version = "1.5.2-tdlib-1.8.64-49b3bcbb";
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		36B07FC482F9E6A9D62DB94F /* TDShim */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TDShim;
+		};
 		4A4F9C233953209CE4C3DB1A /* OpusKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = OpusKit;
@@ -854,11 +856,6 @@
 		5083D73573D84E386C2E3B4C /* RLottieKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = RLottieKit;
-		};
-		AF89FC7B379A138861B92DC0 /* TDLibKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = F180613E9F850ADE51B7D41D /* XCRemoteSwiftPackageReference "TDLibKit" */;
-			productName = TDLibKit;
 		};
 		F573B77B0568E47F98C5A063 /* WebPKit */ = {
 			isa = XCSwiftPackageProductDependency;
