@@ -89,6 +89,7 @@ targets:
           DEPLOYMENT_POSTPROCESSING: "YES"
           STRIP_INSTALLED_PRODUCT: "YES"
           STRIP_STYLE: "all"
+          DEAD_CODE_STRIPPING: "YES"
     dependencies:
       - package: TDShim
         product: TDShim
