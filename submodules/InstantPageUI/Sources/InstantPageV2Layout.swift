@@ -2754,10 +2754,18 @@ func layoutTextItem(
     let fontLineHeight = floor(fontAscent + fontDescent)
     let fontLineSpacing = floor(fontLineHeight * lineSpacingFactor)
     let fontDescentBelowBaseline = max(0.0, -fontDescent)
+    // True font-height line box: shift the whole line stack down by the ascender headroom above
+    // the cap line (A − L) and pad the final height by the descender (D) below the last baseline,
+    // so a single-line item measures exactly A + D. Exact (not pixel-snapped): this is an
+    // intra-item line offset; crispness rides on the item's own pixel-snapped frame origin, and
+    // intra-item line positions may already be fractional (e.g. after a non-integral extraDescent).
+    // Inter-line advance is unchanged. (Named `lineBoxTopInset` to avoid colliding with the
+    // formula-bleed `topInset` local near the end of this function.)
+    let lineBoxTopInset = max(0.0, fontAscent - fontLineHeight)
     let baselineToNextTopSlack = max(0.0, fontLineSpacing - 4.0)
 
     var lastIndex: CFIndex = 0
-    var currentLineOrigin = CGPoint()
+    var currentLineOrigin = CGPoint(x: 0.0, y: lineBoxTopInset)
 
     var hasAnchors = false
     var maxLineWidth: CGFloat = 0.0
@@ -3097,7 +3105,9 @@ func layoutTextItem(
 
     var height: CGFloat = 0.0
     if !lines.isEmpty && !(string.string == "\u{200b}" && hasAnchors) {
-        height = lines.last!.frame.maxY + extraDescent
+        // + fontDescentBelowBaseline: contain the last line's descender below its baseline, so
+        // (with the topInset shift) a single-line item measures exactly A + D = true font height.
+        height = lines.last!.frame.maxY + extraDescent + fontDescentBelowBaseline
     }
 
     var textWidth = boundingWidth
