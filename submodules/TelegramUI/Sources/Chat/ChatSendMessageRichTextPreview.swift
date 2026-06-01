@@ -120,7 +120,7 @@ final class ChatSendMessageRichTextPreview: ChatSendMessageContextScreenRichText
             tableHeaderColor: messageTheme.accentControlColor.withMultipliedAlpha(0.1),
             controlColor: messageTheme.accentControlColor,
             imageTintColor: nil,
-            overlayPanelColor: isDark ? UIColor(white: 0.0, alpha: 0.13) : UIColor(white: 1.0, alpha: 0.13),
+            overlayPanelColor: messageTheme.accentControlColor.withMultipliedAlpha(0.25),
             separatorColor: messageTheme.accentControlColor.withMultipliedAlpha(0.25),
             secondaryControlColor: messageTheme.secondaryTextColor
         )

@@ -303,7 +303,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     controlColor: messageTheme.accentControlColor,
                     imageTintColor: nil,
                     overlayPanelColor: isDark ? UIColor(white: 0.0, alpha: 0.13) : UIColor(white: 1.0, alpha: 0.13),
-                    separatorColor: isIncoming ? UIColor(white: 0.0, alpha: 0.25): messageTheme.accentControlColor.withMultipliedAlpha(0.25),
+                    separatorColor: messageTheme.secondaryTextColor.mixedWith(mainColor.withMultipliedAlpha(0.2), alpha: 0.3),
                     secondaryControlColor: messageTheme.secondaryTextColor.mixedWith(mainColor.withMultipliedAlpha(0.2), alpha: 0.3)
                 )
                 

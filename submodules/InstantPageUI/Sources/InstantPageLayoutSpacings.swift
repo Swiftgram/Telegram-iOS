@@ -16,7 +16,7 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
             return 0.0
         case (.divider, _), (_, .divider):
             if fitToWidth {
-                return 20.0
+                return 21.0
             } else {
                 return 25.0
             }
@@ -82,7 +82,7 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
             return 31.0
         case (.preformatted, _), (_, .preformatted):
             if fitToWidth {
-                return 5.0
+                return 12.0
             } else {
                 return 19.0
             }
@@ -113,11 +113,11 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
                 case .topLevel:
                     switch lower {
                     case .heading:
-                        return 13.0
-                    case .paragraph:
-                        return 0.0
-                    default:
+                        return 6.0
+                    case .table:
                         return 10.0
+                    default:
+                        return 5.0
                     }
                 case .cell:
                     return 0.0
@@ -133,8 +133,8 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
         case .topLevel:
             if case .relatedArticles = upper {
                 return 0.0
-            } else if case .paragraph = upper {
-                return 0.0
+            } else if case .thinking = upper {
+                return 2.0
             } else {
                 if fitToWidth {
                     return 5.0
