@@ -35,10 +35,12 @@ private func setupStyleStack(_ stack: InstantPageTextStyleStack, theme: InstantP
     stack.push(.linkColor(theme.linkColor))
     stack.push(.linkMarkerColor(theme.linkHighlightColor))
     switch attributes.font.style {
-        case .sans:
-            stack.push(.fontSerif(false))
-        case .serif:
-            stack.push(.fontSerif(true))
+    case .sans:
+        stack.push(.fontSerif(false))
+    case .serif:
+        stack.push(.fontSerif(true))
+    case .monospace:
+        stack.push(.fontFixed(true))
     }
     stack.push(.fontSize(attributes.font.size))
     stack.push(.lineSpacingFactor(attributes.font.lineSpacingFactor))
@@ -84,6 +86,16 @@ private func instantPageFont(style: InstantPageTextAttributes, bold: Bool = fals
             return Font.italic(size)
         } else {
             return Font.regular(size)
+        }
+    case .monospace:
+        if bold && italic {
+            return Font.semiboldItalicMonospace(size)
+        } else if bold {
+            return Font.semiboldMonospace(size)
+        } else if italic {
+            return Font.italicMonospace(size)
+        } else {
+            return Font.monospace(size)
         }
     }
 }

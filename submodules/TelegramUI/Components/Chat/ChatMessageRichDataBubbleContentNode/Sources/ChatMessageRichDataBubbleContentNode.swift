@@ -228,9 +228,9 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     nameColors = nil
                 }
                 
+                let codeBlockBackgroundColor: UIColor
                 let codeBlockTitleColor: UIColor
                 let codeBlockAccentColor: UIColor
-                let codeBlockBackgroundColor: UIColor
                 if !isIncoming {
                     mainColor = messageTheme.accentTextColor
                     if let _ = nameColors?.secondary {
@@ -243,12 +243,12 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     if item.presentationData.theme.theme.overallDarkAppearance {
                         codeBlockTitleColor = .white
                         codeBlockAccentColor = UIColor(white: 1.0, alpha: 0.5)
-                        codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.25)
                     } else {
                         codeBlockTitleColor = mainColor
                         codeBlockAccentColor = mainColor
-                        codeBlockBackgroundColor = mainColor.withMultipliedAlpha(0.1)
                     }
+                    
+                    codeBlockBackgroundColor = mainColor.withMultipliedAlpha(0.1)
                 } else {
                     let authorNameColor = nameColors?.main
                     secondaryColor = nameColors?.secondary
@@ -263,11 +263,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     codeBlockTitleColor = mainColor
                     codeBlockAccentColor = mainColor
                     
-                    if item.presentationData.theme.theme.overallDarkAppearance {
-                        codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.65)
-                    } else {
-                        codeBlockBackgroundColor = UIColor(white: 0.0, alpha: 0.05)
-                    }
+                    codeBlockBackgroundColor = mainColor.withMultipliedAlpha(0.1)
                 }
                 
                 let _ = secondaryColor
@@ -284,7 +280,8 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     caption: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
                     credit: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 13.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
                     table: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
-                    article: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 18.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor)
+                    article: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 18.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
+                    codeBlock: InstantPageTextAttributes(font: InstantPageFont(style: .monospace, size: 14.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
                 )
                 let pageTheme = InstantPageTheme(
                     type: isDark ? .dark : .light,
@@ -306,8 +303,8 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     controlColor: messageTheme.accentControlColor,
                     imageTintColor: nil,
                     overlayPanelColor: isDark ? UIColor(white: 0.0, alpha: 0.13) : UIColor(white: 1.0, alpha: 0.13),
-                    separatorColor: isIncoming ? UIColor(white: 0.0, alpha: 0.25): messageTheme.accentControlColor.withMultipliedAlpha(0.25),
-                    secondaryControlColor: messageTheme.secondaryTextColor
+                    separatorColor: messageTheme.secondaryTextColor.mixedWith(mainColor.withMultipliedAlpha(0.2), alpha: 0.3),
+                    secondaryControlColor: messageTheme.secondaryTextColor.mixedWith(mainColor.withMultipliedAlpha(0.2), alpha: 0.3)
                 )
                 
                 var hasDraft = false
@@ -320,6 +317,15 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                 }
 
                 if let attribute = item.message.richText {
+                    #if DEBUG && false
+                    let instantPage = InstantPage(blocks: [.thinking(.concat([
+                        .textCustomEmoji(fileId: 5384559872899555845, alt: "a"),
+                        .plain("Thinking...")
+                    ]))], media: [:], isComplete: true, rtl: false, url: "", views: nil)
+                    #else
+                    let instantPage = attribute.instantPage
+                    #endif
+                    
                     let webpage = TelegramMediaWebpage(webpageId: EngineMedia.Id(namespace: 0, id: 0), content: .Loaded(TelegramMediaWebpageLoadedContent(
                         url: "",
                         displayUrl: "",
@@ -339,7 +345,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                         file: nil,
                         story: nil,
                         attributes: [],
-                        instantPage: attribute.instantPage
+                        instantPage: instantPage
                     )))
                     pageWebpage = webpage
 
@@ -352,9 +358,17 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                        current.messageStableVersion == currentMessageStableVersion {
                         pageLayout = current.layout
                     } else {
+                        #if DEBUG && false
+                        let instantPage = InstantPage(blocks: [.thinking(.concat([
+                            .textCustomEmoji(fileId: 5384559872899555845, alt: "a"),
+                            .plain("Thinking...")
+                        ]))], media: [:], isComplete: true, rtl: false, url: "", views: nil)
+                        #else
+                        let instantPage = attribute.instantPage
+                        #endif
                         pageLayout = layoutInstantPageV2(
                             webpage: webpage,
-                            instantPage: attribute.instantPage,
+                            instantPage: instantPage,
                             userLocation: .other,
                             boundingWidth: suggestedBoundingWidth - 2.0,
                             horizontalInset: pageHorizontalInset,

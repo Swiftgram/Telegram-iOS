@@ -96,7 +96,8 @@ final class ChatSendMessageRichTextPreview: ChatSendMessageContextScreenRichText
             caption: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
             credit: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 13.0, lineSpacingFactor: 1.0), color: messageTheme.secondaryTextColor),
             table: InstantPageTextAttributes(font: InstantPageFont(style: .sans, size: 15.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
-            article: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 18.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor)
+            article: InstantPageTextAttributes(font: InstantPageFont(style: .serif, size: 18.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor),
+            codeBlock: InstantPageTextAttributes(font: InstantPageFont(style: .monospace, size: 14.0, lineSpacingFactor: 1.0), color: messageTheme.primaryTextColor)
         )
         let pageTheme = InstantPageTheme(
             type: isDark ? .dark : .light,
@@ -119,7 +120,7 @@ final class ChatSendMessageRichTextPreview: ChatSendMessageContextScreenRichText
             tableHeaderColor: messageTheme.accentControlColor.withMultipliedAlpha(0.1),
             controlColor: messageTheme.accentControlColor,
             imageTintColor: nil,
-            overlayPanelColor: isDark ? UIColor(white: 0.0, alpha: 0.13) : UIColor(white: 1.0, alpha: 0.13),
+            overlayPanelColor: messageTheme.accentControlColor.withMultipliedAlpha(0.25),
             separatorColor: messageTheme.accentControlColor.withMultipliedAlpha(0.25),
             secondaryControlColor: messageTheme.secondaryTextColor
         )

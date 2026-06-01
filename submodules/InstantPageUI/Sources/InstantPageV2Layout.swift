@@ -440,7 +440,7 @@ public func lastTextLineFrame(in layout: InstantPageV2Layout) -> CGRect? {
 /// Also returns `trailingBottomPadding`: the renderer draws the baseline at the line frame's maxY,
 /// so the visible text of a plain line sits ~5pt below it. A status that *trails on the line* should
 /// anchor at `maxY + trailingBottomPadding` to align with where the text actually renders. The pad
-/// is 0 when the line is taller than its font line height (an inline animated emoji, ~pointSize·24/17,
+/// is 0 when the line is taller than its font line height (a tall inline attachment, e.g. a formula,
 /// already pushes maxY down to the right spot). Callers should NOT apply the pad when the status
 /// wraps onto its own line below the text — there it should sit at the bare maxY.
 public func lastTextLineFrameIfLastItemIsText(in layout: InstantPageV2Layout) -> (frame: CGRect, trailingBottomPadding: CGFloat)? {
@@ -1899,17 +1899,14 @@ private func layoutDivider(
     boundingWidth: CGFloat,
     context: LayoutContext
 ) -> [InstantPageV2LaidOutItem] {
-    // Geometry matches V1 InstantPageLayout.swift lines 361–363:
-    //   lineWidth = floor(boundingWidth / 2.0), x = floor((boundingWidth - lineWidth) / 2.0), h = 1pt.
-    // Color matches V1: theme.textCategories.caption.color.
     let lineWidth = floor(boundingWidth / 2.0)
     let frame = CGRect(
         x: floor((boundingWidth - lineWidth) / 2.0),
         y: 0.0,
         width: lineWidth,
-        height: 1.0
+        height: UIScreenPixel
     )
-    return [.divider(InstantPageV2DividerItem(frame: frame, color: context.theme.textCategories.caption.color))]
+    return [.divider(InstantPageV2DividerItem(frame: frame, color: context.theme.separatorColor))]
 }
 
 // MARK: - Code block layout (ported from V1 InstantPageLayout.swift lines 329–351)
@@ -1921,11 +1918,8 @@ private func layoutCodeBlock(
     horizontalInset: CGFloat,
     context: inout LayoutContext
 ) -> [InstantPageV2LaidOutItem] {
-    // V1 InstantPageLayout.swift line 330: backgroundInset = 14.0 (top + bottom padding).
-    let backgroundInset: CGFloat = 14.0
-    // V1 line 342: text x offset is 17.0 (hardcoded, not backgroundInset).
-    let textXOffset: CGFloat = 17.0
-    // V1 line 348: shape is .rect — no corner radius.
+    let backgroundInset: CGFloat = 15.0
+    let textXOffset: CGFloat = 11.0
     let cornerRadius: CGFloat = 0.0
 
     let attributedString: NSAttributedString
@@ -1940,7 +1934,7 @@ private func layoutCodeBlock(
     } else {
         // V1 lines 335–338: fall back to plain paragraph style when no language.
         let styleStack = InstantPageTextStyleStack()
-        setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
+        setupStyleStack(styleStack, theme: context.theme, category: .codeBlock, link: false)
         attributedString = attributedStringForRichText(text, styleStack: styleStack)
     }
 
@@ -2528,10 +2522,12 @@ private func setupStyleStack(_ stack: InstantPageTextStyleStack, theme: InstantP
     stack.push(.linkColor(theme.linkColor))
     stack.push(.linkMarkerColor(theme.linkHighlightColor))
     switch attributes.font.style {
-        case .sans:
-            stack.push(.fontSerif(false))
-        case .serif:
-            stack.push(.fontSerif(true))
+    case .sans:
+        stack.push(.fontSerif(false))
+    case .serif:
+        stack.push(.fontSerif(true))
+    case .monospace:
+        stack.push(.fontFixed(true))
     }
     stack.push(.fontSize(attributes.font.size))
     stack.push(.lineSpacingFactor(attributes.font.lineSpacingFactor))
@@ -2577,6 +2573,16 @@ private func instantPageFont(style: InstantPageTextAttributes, bold: Bool = fals
             return Font.italic(size)
         } else {
             return Font.regular(size)
+        }
+    case .monospace:
+        if bold && italic {
+            return Font.semiboldItalicMonospace(size)
+        } else if bold {
+            return Font.semiboldMonospace(size)
+        } else if italic {
+            return Font.italicMonospace(size)
+        } else {
+            return Font.monospace(size)
         }
     }
 }
@@ -2745,10 +2751,18 @@ func layoutTextItem(
     let fontLineHeight = floor(fontAscent + fontDescent)
     let fontLineSpacing = floor(fontLineHeight * lineSpacingFactor)
     let fontDescentBelowBaseline = max(0.0, -fontDescent)
+    // True font-height line box: shift the whole line stack down by the ascender headroom above
+    // the cap line (A − L) and pad the final height by the descender (D) below the last baseline,
+    // so a single-line item measures exactly A + D. Exact (not pixel-snapped): this is an
+    // intra-item line offset; crispness rides on the item's own pixel-snapped frame origin, and
+    // intra-item line positions may already be fractional (e.g. after a non-integral extraDescent).
+    // Inter-line advance is unchanged. (Named `lineBoxTopInset` to avoid colliding with the
+    // formula-bleed `topInset` local near the end of this function.)
+    let lineBoxTopInset = max(0.0, fontAscent - fontLineHeight)
     let baselineToNextTopSlack = max(0.0, fontLineSpacing - 4.0)
 
     var lastIndex: CFIndex = 0
-    var currentLineOrigin = CGPoint()
+    var currentLineOrigin = CGPoint(x: 0.0, y: lineBoxTopInset)
 
     var hasAnchors = false
     var maxLineWidth: CGFloat = 0.0
@@ -2831,7 +2845,12 @@ func layoutTextItem(
                         } else if let emoji = attributes[ChatTextInputAttributes.customEmoji] as? ChatTextInputTextCustomEmojiAttribute {
                             let xOffset = CTLineGetOffsetForStringIndex(line, range.location, nil)
                             let font = (attributes[NSAttributedString.Key.font] as? UIFont) ?? UIFont.systemFont(ofSize: 17.0)
-                            let itemSize = font.pointSize * 24.0 / 17.0
+                            // Size the inline emoji to the font's line height (A + D = the true
+                            // line-box height) plus a 4pt bump at the 17pt body font (scaled
+                            // proportionally) so it reads a touch larger than the bare line box.
+                            // The line is NOT inflated (lineAscent stays fontLineHeight). Must match
+                            // the run-delegate width in attributedStringForRichText (InstantPageTextItem.swift).
+                            let itemSize = font.ascender - font.descender + 4.0 * font.pointSize / 17.0
                             pendingEmoji.append(PendingV2EmojiAttachment(xOffset: xOffset, range: range, emoji: emoji, size: itemSize))
                         }
                     }
@@ -2897,7 +2916,7 @@ func layoutTextItem(
             extraDescent = max(0.0, lineDescent - baselineToNextTopSlack)
             // A centered attachment taller than the line bleeds below the baseline; grow the
             // descent so the following line isn't overlapped (mirrors V1's extraDescent handling).
-            // Emoji at the default 24/17 ratio stay within the line slack and contribute nothing.
+            // Emoji sized to the font line height (A + D) fit the line box, so they contribute nothing.
             for imageItem in lineImageItems {
                 extraDescent = max(extraDescent, imageItem.frame.maxY - (baselineY + baselineToNextTopSlack))
             }
@@ -3088,7 +3107,9 @@ func layoutTextItem(
 
     var height: CGFloat = 0.0
     if !lines.isEmpty && !(string.string == "\u{200b}" && hasAnchors) {
-        height = lines.last!.frame.maxY + extraDescent
+        // + fontDescentBelowBaseline: contain the last line's descender below its baseline, so
+        // (with the topInset shift) a single-line item measures exactly A + D = true font height.
+        height = lines.last!.frame.maxY + extraDescent + fontDescentBelowBaseline
     }
 
     var textWidth = boundingWidth
