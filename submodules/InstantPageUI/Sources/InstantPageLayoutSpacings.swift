@@ -54,8 +54,6 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
             } else {
                 return 31.0
             }
-        case (.preformatted, .paragraph):
-            return 19.0
         case (.formula, .paragraph):
             return 19.0
         case (.paragraph, .paragraph):
@@ -64,8 +62,6 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
             } else {
                 return 25.0
             }
-        case (_, .paragraph):
-            return 20.0
         case (.title, .formula), (.authorDate, .formula):
             return 34.0
         case (.header, .formula), (.subheader, .formula), (.heading, .formula):
@@ -76,8 +72,6 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
             }
         case (.list, .formula):
             return 31.0
-        case (.preformatted, .formula):
-            return 19.0
         case (.paragraph, .formula):
             return 19.0
         case (_, .formula):
@@ -86,8 +80,12 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
             return 34.0
         case (.header, .list), (.subheader, .list), (.heading, .list):
             return 31.0
-        case (.preformatted, .list):
-            return 19.0
+        case (.preformatted, _), (_, .preformatted):
+            if fitToWidth {
+                return 0.0
+            } else {
+                return 19.0
+            }
         case (.formula, .list):
             if fitToWidth {
                 return 10.0
@@ -100,12 +98,6 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
             } else {
                 return 25.0
             }
-        case (.paragraph, .preformatted):
-            return 19.0
-        case (.formula, .preformatted):
-            return 19.0
-        case (_, .preformatted):
-            return 20.0
         case (_, .header), (_, .subheader), (_, .heading):
             return 32.0
         default:

@@ -1921,11 +1921,8 @@ private func layoutCodeBlock(
     horizontalInset: CGFloat,
     context: inout LayoutContext
 ) -> [InstantPageV2LaidOutItem] {
-    // V1 InstantPageLayout.swift line 330: backgroundInset = 14.0 (top + bottom padding).
-    let backgroundInset: CGFloat = 14.0
-    // V1 line 342: text x offset is 17.0 (hardcoded, not backgroundInset).
-    let textXOffset: CGFloat = 17.0
-    // V1 line 348: shape is .rect — no corner radius.
+    let backgroundInset: CGFloat = 15.0
+    let textXOffset: CGFloat = 11.0
     let cornerRadius: CGFloat = 0.0
 
     let attributedString: NSAttributedString
@@ -1940,7 +1937,7 @@ private func layoutCodeBlock(
     } else {
         // V1 lines 335–338: fall back to plain paragraph style when no language.
         let styleStack = InstantPageTextStyleStack()
-        setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
+        setupStyleStack(styleStack, theme: context.theme, category: .codeBlock, link: false)
         attributedString = attributedStringForRichText(text, styleStack: styleStack)
     }
 
@@ -2528,10 +2525,12 @@ private func setupStyleStack(_ stack: InstantPageTextStyleStack, theme: InstantP
     stack.push(.linkColor(theme.linkColor))
     stack.push(.linkMarkerColor(theme.linkHighlightColor))
     switch attributes.font.style {
-        case .sans:
-            stack.push(.fontSerif(false))
-        case .serif:
-            stack.push(.fontSerif(true))
+    case .sans:
+        stack.push(.fontSerif(false))
+    case .serif:
+        stack.push(.fontSerif(true))
+    case .monospace:
+        stack.push(.fontFixed(true))
     }
     stack.push(.fontSize(attributes.font.size))
     stack.push(.lineSpacingFactor(attributes.font.lineSpacingFactor))
@@ -2577,6 +2576,16 @@ private func instantPageFont(style: InstantPageTextAttributes, bold: Bool = fals
             return Font.italic(size)
         } else {
             return Font.regular(size)
+        }
+    case .monospace:
+        if bold && italic {
+            return Font.semiboldItalicMonospace(size)
+        } else if bold {
+            return Font.semiboldMonospace(size)
+        } else if italic {
+            return Font.italicMonospace(size)
+        } else {
+            return Font.monospace(size)
         }
     }
 }
