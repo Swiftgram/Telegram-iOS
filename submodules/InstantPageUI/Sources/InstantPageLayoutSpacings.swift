@@ -20,9 +20,15 @@ func spacingBetweenBlocks(upper: InstantPageBlock?, lower: InstantPageBlock?, fi
             } else {
                 return 25.0
             }
-        case (_, .blockQuote), (.blockQuote, _), (_, .pullQuote), (.pullQuote, _):
+        case (_, .blockQuote), (.blockQuote, _):
             if fitToWidth {
                 return 11.0
+            } else {
+                return 27.0
+            }
+        case (_, .pullQuote), (.pullQuote, _):
+            if fitToWidth {
+                return 14.0
             } else {
                 return 27.0
             }

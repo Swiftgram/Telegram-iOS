@@ -2374,8 +2374,8 @@ private func layoutQuoteText(
         let lineWidth = boundingWidth - horizontalInset * 2.0
         let topLine = InstantPageV2ShapeItem(
             frame: CGRect(x: horizontalInset, y: contentHeight, width: lineWidth, height: 1.0),
-            kind: .line(thickness: 1.0),
-            color: context.theme.textCategories.caption.color
+            kind: .line(thickness: UIScreenPixel),
+            color: context.theme.separatorColor
         )
         result.append(.shape(topLine))
         contentHeight += 1.0 + verticalInset   // rule + small gap before body text
