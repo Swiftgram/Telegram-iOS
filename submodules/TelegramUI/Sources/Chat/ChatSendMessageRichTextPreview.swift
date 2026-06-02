@@ -63,7 +63,8 @@ final class ChatSendMessageRichTextPreview: ChatSendMessageContextScreenRichText
             present: { _, _ in },
             push: { _ in },
             openUrl: { _ in },
-            baseNavigationController: { return nil }
+            baseNavigationController: { return nil },
+            message: nil
         )
         self.pageView = InstantPageV2View(renderContext: renderContext)
         self.pageView.isUserInteractionEnabled = false

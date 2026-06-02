@@ -50,6 +50,7 @@ public struct InstantPageV2Layout {
             case let .mediaVideo(m):       result.append(m.media)
             case let .mediaMap(m):         result.append(m.media)
             case let .mediaCoverImage(m):  result.append(m.media)
+            case let .mediaAudio(m):       result.append(m.media)
             case let .slideshow(s):        result.append(contentsOf: s.medias)
             case let .details(d):
                 if let inner = d.innerLayout {
@@ -86,6 +87,7 @@ public enum InstantPageV2LaidOutItem {
     case mediaVideo(InstantPageV2MediaVideoItem)
     case mediaMap(InstantPageV2MediaMapItem)
     case mediaCoverImage(InstantPageV2MediaCoverImageItem)
+    case mediaAudio(InstantPageV2MediaAudioItem)
     case formula(InstantPageV2FormulaItem)
     case thinking(InstantPageV2ThinkingItem)
     case slideshow(InstantPageV2SlideshowItem)
@@ -106,6 +108,7 @@ public enum InstantPageV2LaidOutItem {
         case let .mediaVideo(item):        return item.frame
         case let .mediaMap(item):          return item.frame
         case let .mediaCoverImage(item):   return item.frame
+        case let .mediaAudio(item):        return item.frame
         case let .formula(item):           return item.frame
         case let .thinking(item):          return item.frame
         case let .slideshow(item):         return item.frame
@@ -131,6 +134,7 @@ public enum InstantPageV2LaidOutItem {
         case var .mediaVideo(item):        item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .mediaVideo(item)
         case var .mediaMap(item):          item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .mediaMap(item)
         case var .mediaCoverImage(item):   item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .mediaCoverImage(item)
+        case var .mediaAudio(item):        item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .mediaAudio(item)
         case var .formula(item):          item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .formula(item)
         case var .thinking(item):         item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .thinking(item)
         case var .slideshow(item):        item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .slideshow(item)
@@ -238,6 +242,18 @@ public struct InstantPageV2MediaImageItem {
         self.media = media
         self.webPage = webPage
         self.attributes = attributes
+    }
+}
+
+public struct InstantPageV2MediaAudioItem {
+    public var frame: CGRect
+    public let media: InstantPageMedia
+    public let webPage: TelegramMediaWebpage
+
+    public init(frame: CGRect, media: InstantPageMedia, webPage: TelegramMediaWebpage) {
+        self.frame = frame
+        self.media = media
+        self.webPage = webPage
     }
 }
 
@@ -754,11 +770,34 @@ private func layoutBlock(
             return []
         }
 
-    case let .audio(_, caption):
-        return layoutMediaWithCaption(kind: .audio,
-            naturalSize: CGSize(width: boundingWidth, height: 56.0), caption: caption,
-            isCover: false, cornerRadius: 8.0, flush: false, boundingWidth: boundingWidth,
-            horizontalInset: horizontalInset, context: &context)
+    case let .audio(audioId, caption):
+        guard case let .file(file) = context.media[audioId] else {
+            return []
+        }
+        let mediaIndex = context.mediaIndexCounter
+        context.mediaIndexCounter += 1
+        let instantPageMedia = InstantPageMedia(
+            index: mediaIndex,
+            media: .file(file),
+            url: nil,
+            caption: nil,
+            credit: nil
+        )
+        let audioFrame = CGRect(x: 0.0, y: 0.0, width: boundingWidth, height: 44.0)
+        var result: [InstantPageV2LaidOutItem] = [.mediaAudio(InstantPageV2MediaAudioItem(
+            frame: audioFrame,
+            media: instantPageMedia,
+            webPage: context.webpage
+        ))]
+        let (captionItems, _) = layoutCaptionAndCredit(
+            caption,
+            offset: audioFrame.height,
+            boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset,
+            context: &context
+        )
+        result.append(contentsOf: captionItems)
+        return result
 
     case let .webEmbed(url, _, dimensions, caption, _, _, coverId):
         // V1 (InstantPageLayout.swift:848): if the embed has a URL and a resolvable cover image,
@@ -1683,7 +1722,7 @@ private let instantPageV2MediaEdgeBleed: CGFloat = 4.0
 
 // Computes the laid-out frame for a block-media item.
 //
-// `flush == true` (every block media except audio): the media is edge-to-edge (x = 0, full
+// `flush == true` (every current caller): the media is edge-to-edge (x = 0, full
 // `boundingWidth`) with corner radius forced to 0, relying on the bubble's rounded clipping
 // container to round media that meets the bubble's top/bottom edge. A media item that fills the
 // full width is widened by `instantPageV2MediaEdgeBleed` on the trailing edge (see the constant).
@@ -1692,8 +1731,10 @@ private let instantPageV2MediaEdgeBleed: CGFloat = 4.0
 // (The `cornerRadius` argument is ignored when `flush == true` — flush media is always
 // un-rounded; callers may still pass their legacy radius, it has no effect.)
 //
-// `flush == false` (audio only): legacy behavior — inset by `horizontalInset` on each side with
-// the caller-supplied corner radius.
+// `flush == false`: DEAD as of the V2 audio port — audio was its last caller and now has its
+// own `layoutAudio` arm (in `layoutBlock`), so this branch is currently unreachable (follow-up:
+// drop the `flush` parameter and this branch). Legacy behavior was: inset by `horizontalInset`
+// on each side with the caller-supplied corner radius.
 //
 // Returns the frame, the un-bled scaled content size (the caption is offset by
 // `scaledSize.height`), and the effective corner radius to stamp on the item.

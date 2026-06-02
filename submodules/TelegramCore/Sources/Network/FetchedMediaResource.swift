@@ -901,6 +901,18 @@ func revalidateMediaResourceReference(accountPeerId: PeerId, postbox: Postbox, n
                                 return .single(RevalidatedMediaResource(updatedResource: updatedResource, updatedReference: nil))
                             }
                         }
+                        // Rich-text messages (`RichTextMessageAttribute`) embed their media in the
+                        // attribute's `InstantPage`, not in `message.media` — search there too so a
+                        // stale instant-page audio/image file reference can revalidate.
+                        for attribute in message.attributes {
+                            if let attribute = attribute as? RichTextMessageAttribute {
+                                for (_, pageMedia) in attribute.instantPage.media {
+                                    if let updatedResource = findUpdatedMediaResource(media: pageMedia, previousMedia: previousMedia, resource: resource) {
+                                        return .single(RevalidatedMediaResource(updatedResource: updatedResource, updatedReference: nil))
+                                    }
+                                }
+                            }
+                        }
                         return .fail(.generic)
                     }
                 case let .stickerPack(stickerPack, media):

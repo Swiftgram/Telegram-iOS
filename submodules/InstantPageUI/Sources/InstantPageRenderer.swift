@@ -59,6 +59,11 @@ public final class InstantPageV2RenderContext {
     public let push: (ViewController) -> Void
     public let openUrl: (InstantPageUrlItem) -> Void
     public let baseNavigationController: () -> NavigationController?
+    /// A reference to the message hosting this page, when rendered inside a chat bubble. Used to
+    /// key audio playback per message (`.richMessage(message.id)`) AND to fetch audio files via a
+    /// message reference (so a stale file reference can revalidate); `nil` in the send preview,
+    /// which falls back to the webpage-keyed playlist id + webpage file reference.
+    public let message: MessageReference?
 
     public init(
         context: AccountContext,
@@ -69,7 +74,8 @@ public final class InstantPageV2RenderContext {
         present: @escaping (ViewController, Any?) -> Void,
         push: @escaping (ViewController) -> Void,
         openUrl: @escaping (InstantPageUrlItem) -> Void,
-        baseNavigationController: @escaping () -> NavigationController?
+        baseNavigationController: @escaping () -> NavigationController?,
+        message: MessageReference?
     ) {
         self.context = context
         self.webpage = webpage
@@ -80,6 +86,7 @@ public final class InstantPageV2RenderContext {
         self.push = push
         self.openUrl = openUrl
         self.baseNavigationController = baseNavigationController
+        self.message = message
     }
 
     /// Update the content-bearing fields for a later chunk of the SAME message. Enables the
@@ -676,6 +683,10 @@ public final class InstantPageV2View: UIView {
             guard let v = existingView as? InstantPageV2MediaCoverImageView, let rc = self.renderContext else { return nil }
             v.update(item: media, theme: theme, renderContext: rc)
             return v
+        case let .mediaAudio(media):
+            guard let v = existingView as? InstantPageV2MediaAudioView, let rc = self.renderContext else { return nil }
+            v.update(item: media, theme: theme, renderContext: rc)
+            return v
         case let .thinking(thinking):
             guard let v = existingView as? InstantPageV2ThinkingView else { return nil }
             v.update(item: thinking, theme: theme)
@@ -693,6 +704,7 @@ public final class InstantPageV2View: UIView {
         case let .mediaVideo(m):       return .media(m.media.index)
         case let .mediaMap(m):         return .media(m.media.index)
         case let .mediaCoverImage(m):  return .media(m.media.index)
+        case let .mediaAudio(m):       return .media(m.media.index)
         case let .details(d):          return .details(d.index)
         case .text:                    return .positional(.text, position)
         case .codeBlock:               return .positional(.codeBlock, position)
@@ -793,6 +805,12 @@ public final class InstantPageV2View: UIView {
                 return InstantPageV2MediaCoverImageView(item: media, renderContext: renderContext, theme: theme)
             } else {
                 return InstantPageV2MediaPlaceholderView(item: placeholderFallback(for: media), theme: theme)
+            }
+        case let .mediaAudio(media):
+            if let renderContext = self.renderContext {
+                return InstantPageV2MediaAudioView(item: media, renderContext: renderContext, theme: theme)
+            } else {
+                return InstantPageV2MediaPlaceholderView(item: InstantPageV2MediaPlaceholderItem(frame: media.frame, kind: .audio, cornerRadius: 0.0), theme: theme)
             }
         case let .formula(formula):
             return InstantPageV2FormulaView(item: formula, theme: theme)
