@@ -19,7 +19,7 @@ private final class WrapperRef {
 
 // Hosts a V1 `InstantPageImageNode` inside a V2 UIView wrapper. The caller sizes its own
 // frame from `item.frame` and adds the returned node's view as a subview.
-private func makeMediaWrapper(
+func makeMediaWrapper(
     frame: CGRect,
     media: InstantPageMedia,
     webPage: TelegramMediaWebpage,
@@ -68,14 +68,14 @@ private func findEnclosingV2View(from start: UIView?) -> InstantPageV2View? {
 // its `rootMediaRegistryHost` chain transitively (nested details blocks can leave an inner
 // body's host pointing at an intermediate body — see `trueRegistryRoot`). No-op if the wrapper
 // isn't yet attached to a V2View ancestor.
-private func registerInRootRegistry(wrapper: UIView, mediaIndex: Int) {
+func registerInRootRegistry(wrapper: UIView, mediaIndex: Int) {
     guard let v2 = findEnclosingV2View(from: wrapper.superview) else { return }
     v2.trueRegistryRoot.mediaRegistry[mediaIndex] = Weak(wrapper)
 }
 
 // Routes a tap on `tapped` through `openInstantPageMedia`, sourcing sibling medias from the
 // root V2View's `currentLayout`. No-op if the wrapper isn't currently in a V2View tree.
-private func handleOpenMediaTap(
+func handleOpenMediaTap(
     tapped: InstantPageMedia,
     wrapper: UIView,
     renderContext: InstantPageV2RenderContext
@@ -164,6 +164,14 @@ final class InstantPageV2MediaImageView: UIView, InstantPageItemView {
         let strings = renderContext.context.sharedContext.currentPresentationData.with { $0 }.strings
         self.wrappedNode.update(strings: strings, theme: theme)
     }
+
+    func instantPageTransitionNode(for media: InstantPageMedia) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
+        return self.wrappedNode.transitionNode(media: media)
+    }
+
+    func instantPageUpdateHiddenMedia(_ media: InstantPageMedia?) {
+        self.wrappedNode.updateHiddenMedia(media: media)
+    }
 }
 
 final class InstantPageV2MediaVideoView: UIView, InstantPageItemView {
@@ -218,6 +226,14 @@ final class InstantPageV2MediaVideoView: UIView, InstantPageItemView {
         self.clipsToBounds = item.cornerRadius > 0.0
         let strings = renderContext.context.sharedContext.currentPresentationData.with { $0 }.strings
         self.wrappedNode.update(strings: strings, theme: theme)
+    }
+
+    func instantPageTransitionNode(for media: InstantPageMedia) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
+        return self.wrappedNode.transitionNode(media: media)
+    }
+
+    func instantPageUpdateHiddenMedia(_ media: InstantPageMedia?) {
+        self.wrappedNode.updateHiddenMedia(media: media)
     }
 }
 
@@ -274,6 +290,14 @@ final class InstantPageV2MediaMapView: UIView, InstantPageItemView {
         let strings = renderContext.context.sharedContext.currentPresentationData.with { $0 }.strings
         self.wrappedNode.update(strings: strings, theme: theme)
     }
+
+    func instantPageTransitionNode(for media: InstantPageMedia) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
+        return self.wrappedNode.transitionNode(media: media)
+    }
+
+    func instantPageUpdateHiddenMedia(_ media: InstantPageMedia?) {
+        self.wrappedNode.updateHiddenMedia(media: media)
+    }
 }
 
 final class InstantPageV2MediaCoverImageView: UIView, InstantPageItemView {
@@ -328,5 +352,13 @@ final class InstantPageV2MediaCoverImageView: UIView, InstantPageItemView {
         self.clipsToBounds = item.cornerRadius > 0.0
         let strings = renderContext.context.sharedContext.currentPresentationData.with { $0 }.strings
         self.wrappedNode.update(strings: strings, theme: theme)
+    }
+
+    func instantPageTransitionNode(for media: InstantPageMedia) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? {
+        return self.wrappedNode.transitionNode(media: media)
+    }
+
+    func instantPageUpdateHiddenMedia(_ media: InstantPageMedia?) {
+        self.wrappedNode.updateHiddenMedia(media: media)
     }
 }
