@@ -843,7 +843,21 @@ private func layoutBlock(
             horizontalInset: horizontalInset, context: &context)
 
     case let .map(latitude, longitude, zoom, dimensions, caption):
-        let naturalSize = CGSize(width: CGFloat(dimensions.width), height: CGFloat(dimensions.height))
+        // AI/server-sent `.map` blocks can arrive with zero `dimensions` (the wire `w`/`h` are
+        // required, but the sender may put 0). A zero `naturalSize.height` collapses the media
+        // frame to height 0 (`instantPageV2MediaFrame`'s else branch) — the map takes no space,
+        // the caption slides up into it, and the pin floats over the caption — and a zero-sized
+        // `MapSnapshotMediaResource` makes `MKMapSnapshotter` render nothing. Substitute a sensible
+        // default (a 2:1 map strip) for BOTH the layout size and the snapshot resource. Real web
+        // articles (the V1 renderer) always carry real dimensions, so only the rich-message path
+        // hits this; the fallback is scoped here rather than in V1 or the wire/parse layer.
+        let effectiveDimensions: PixelDimensions
+        if dimensions.width > 0 && dimensions.height > 0 {
+            effectiveDimensions = dimensions
+        } else {
+            effectiveDimensions = PixelDimensions(width: 600, height: 300)
+        }
+        let naturalSize = CGSize(width: CGFloat(effectiveDimensions.width), height: CGFloat(effectiveDimensions.height))
         let map = TelegramMediaMap(
             latitude: latitude,
             longitude: longitude,
@@ -853,7 +867,7 @@ private func layoutBlock(
             liveBroadcastingTimeout: nil,
             liveProximityNotificationRadius: nil
         )
-        let mapAttributes: [InstantPageImageAttribute] = [InstantPageMapAttribute(zoom: zoom, dimensions: dimensions.cgSize)]
+        let mapAttributes: [InstantPageImageAttribute] = [InstantPageMapAttribute(zoom: zoom, dimensions: effectiveDimensions.cgSize)]
         let mediaIndex = context.mediaIndexCounter
         context.mediaIndexCounter += 1
         let instantPageMedia = InstantPageMedia(
