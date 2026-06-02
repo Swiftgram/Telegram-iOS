@@ -145,6 +145,7 @@ private func chatForwardOptions(selfController: ChatControllerImpl, sourceView: 
         var hasOther = false
         var hasNotOwnMessages = false
         var hasPaid = false
+        var hasRichMessages = false
         for message in messages {
             if let author = message.effectiveAuthor {
                 if !uniquePeerIds.contains(author.id) {
@@ -175,9 +176,12 @@ private func chatForwardOptions(selfController: ChatControllerImpl, sourceView: 
             if !isDice {
                 hasOther = true
             }
+            if message.richText != nil {
+                hasRichMessages = true
+            }
         }
         
-        var canHideNames = hasNotOwnMessages && hasOther
+        var canHideNames = hasNotOwnMessages && hasOther && !hasRichMessages
         if case let .peer(peerId) = selfController.chatLocation, peerId.namespace == Namespaces.Peer.SecretChat {
             canHideNames = false
         }
