@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// Per-sticker visual data the bubble view consumes. Built by `stickerVisual(for:fileLocals:)`
 /// from `MessageContent.messageSticker` plus the store's latest `files[fileId]` snapshot.
@@ -26,7 +26,7 @@ struct StickerVisual: Identifiable, Equatable, Hashable {
     let thumbnailFormat: ThumbnailFormatKind?
 }
 
-/// Three-way classification of `TDLibKit.StickerFormat`. We only render `.webp` and `.tgs`
+/// Three-way classification of `StickerFormat`. We only render `.webp` and `.tgs`
 /// fully; `.unsupported` covers `stickerFormatWebm` and any future format.
 enum StickerFormatKind: Equatable, Hashable {
     case webp
@@ -34,7 +34,7 @@ enum StickerFormatKind: Equatable, Hashable {
     case unsupported
 }
 
-/// Classification of `TDLibKit.ThumbnailFormat` for the placeholder render path.
+/// Classification of `ThumbnailFormat` for the placeholder render path.
 /// Only raster formats decode cleanly via `UIImage(contentsOfFile:)` — TGS/WEBM/GIF/MPEG4
 /// thumbnails collapse to `.unsupported` (i.e. treat as no thumbnail).
 enum ThumbnailFormatKind: Equatable, Hashable {
@@ -48,7 +48,7 @@ func stickerFormatKind(_ format: StickerFormat) -> StickerFormatKind {
     switch format {
     case .stickerFormatWebp: return .webp
     case .stickerFormatTgs:  return .tgs
-    case .stickerFormatWebm: return .unsupported
+    case .stickerFormatWebm, .unsupported: return .unsupported
     }
 }
 
@@ -57,7 +57,7 @@ func thumbnailFormatKind(_ format: ThumbnailFormat) -> ThumbnailFormatKind {
     case .thumbnailFormatWebp:  return .webp
     case .thumbnailFormatJpeg:  return .jpeg
     case .thumbnailFormatPng:   return .png
-    case .thumbnailFormatTgs, .thumbnailFormatWebm, .thumbnailFormatGif, .thumbnailFormatMpeg4:
+    case .thumbnailFormatTgs, .thumbnailFormatWebm, .thumbnailFormatGif, .thumbnailFormatMpeg4, .unsupported:
         return .unsupported
     }
 }

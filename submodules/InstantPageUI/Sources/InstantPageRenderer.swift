@@ -307,7 +307,18 @@ public final class InstantPageV2View: UIView {
         var validIds: [InlineStickerItemLayer.Key] = []
 
         for view in self.itemViews {
-            guard let textView = view as? InstantPageV2TextView else { continue }
+            // Top-level `.text` items host their emoji directly. The thinking block hosts emoji on
+            // its shimmer-wrapped inner text view, which the page never sees as a top-level item —
+            // so without this it is skipped and the emoji never get layers (invisible). Nested V2
+            // sub-layouts (details bodies, table cells) instead run their own updateInlineEmoji.
+            let textView: InstantPageV2TextView
+            if let topLevelTextView = view as? InstantPageV2TextView {
+                textView = topLevelTextView
+            } else if let thinkingView = view as? InstantPageV2ThinkingView {
+                textView = thinkingView.textView
+            } else {
+                continue
+            }
             let textItem = textView.item.textItem
             let boundsWidth = textItem.frame.size.width
             for line in textItem.lines {
@@ -390,7 +401,17 @@ public final class InstantPageV2View: UIView {
         var validKeys: Set<InlineImageKey> = []
 
         for view in self.itemViews {
-            guard let textView = view as? InstantPageV2TextView else { continue }
+            // Same nesting as updateInlineEmoji: top-level `.text` items host their inline images
+            // directly; the thinking block hosts them on its shimmer-wrapped inner text view, which
+            // the page never sees as a top-level item. Nested V2 sub-layouts run their own pass.
+            let textView: InstantPageV2TextView
+            if let topLevelTextView = view as? InstantPageV2TextView {
+                textView = topLevelTextView
+            } else if let thinkingView = view as? InstantPageV2ThinkingView {
+                textView = thinkingView.textView
+            } else {
+                continue
+            }
             let textItem = textView.item.textItem
             let boundsWidth = textItem.frame.size.width
             for line in textItem.lines {
@@ -1859,7 +1880,7 @@ final class InstantPageV2ThinkingView: UIView, InstantPageItemView {
     var itemFrame: CGRect { return self.item.frame }
 
     private let shimmerView: ShimmeringMaskView
-    private let textView: InstantPageV2TextView
+    let textView: InstantPageV2TextView   // exposed so the parent V2 view can host its inline emoji
 
     init(item: InstantPageV2ThinkingItem, theme: InstantPageTheme) {
         self.item = item
@@ -1877,15 +1898,22 @@ final class InstantPageV2ThinkingView: UIView, InstantPageItemView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    /// Parent positions children (see CLAUDE.md "View frame ownership"): the shimmer covers the
-    /// whole block; the inner text view sits at its block-local typographic frame (expanded by the
-    /// text view's clipping inset, matching `InstantPageV2TextView.init`).
+    /// Parent positions self at the item frame (the bare line box). The shimmer and its gradient
+    /// mask are sized to the text view's clipping-inset-EXPANDED frame and shifted to
+    /// `(-inset, -inset)`, so the mask doesn't crop the glyph overhang the inset reserves (tall
+    /// ascenders, descenders, the last line's underline) — the symptom of sizing the mask to the
+    /// bare line box. The inner text view fills the shimmer; its `+inset` render translate lands the
+    /// glyphs back at self's origin, so the text position is unchanged. Mirrors how a `.text` view's
+    /// frame is inset-expanded (`actualFrame` / `InstantPageV2TextView.init`).
     private func layoutContents() {
-        self.shimmerView.frame = CGRect(origin: .zero, size: self.item.frame.size)
-        self.textView.frame = self.item.textItem.frame.insetBy(dx: -v2TextViewClippingInset, dy: -v2TextViewClippingInset)
+        let inset = v2TextViewClippingInset
+        let expandedSize = CGSize(width: self.item.frame.size.width + inset * 2.0,
+                                  height: self.item.frame.size.height + inset * 2.0)
+        self.shimmerView.frame = CGRect(x: -inset, y: -inset, width: expandedSize.width, height: expandedSize.height)
+        self.textView.frame = CGRect(origin: .zero, size: expandedSize)
         self.shimmerView.update(
-            size: self.item.frame.size,
-            containerWidth: self.item.frame.size.width,
+            size: expandedSize,
+            containerWidth: expandedSize.width,
             offsetX: 0.0,
             gradientWidth: 200.0,
             transition: .immediate

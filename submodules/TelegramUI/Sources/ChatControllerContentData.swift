@@ -706,8 +706,8 @@ extension ChatControllerImpl {
                 
                 let globalPrivacySettings = context.engine.data.get(TelegramEngine.EngineData.Item.Configuration.GlobalPrivacy())
                 
-                let canStopIncomingStreamingMessage: Signal<Bool, NoError>
-                if let peerId = chatLocation.peerId {
+                let canStopIncomingStreamingMessage: Signal<Bool, NoError> = .single(false)
+                /*if let peerId = chatLocation.peerId {
                     let key = PeerAndThreadId(peerId: peerId, threadId: chatLocation.threadId)
                     canStopIncomingStreamingMessage = context.account.postbox.combinedView(keys: [PostboxViewKey.typingDrafts(key)])
                     |> map { views -> Bool in
@@ -719,7 +719,7 @@ extension ChatControllerImpl {
                     |> distinctUntilChanged
                 } else {
                     canStopIncomingStreamingMessage = .single(false)
-                }
+                }*/
 
                 self.peerDisposable = combineLatest(
                     queue: Queue.mainQueue(),
@@ -1400,8 +1400,8 @@ extension ChatControllerImpl {
                 
                 let globalPrivacySettings = context.engine.data.get(TelegramEngine.EngineData.Item.Configuration.GlobalPrivacy())
                 
-                let canStopIncomingStreamingMessage: Signal<Bool, NoError>
-                if let peerId = chatLocation.peerId {
+                let canStopIncomingStreamingMessage: Signal<Bool, NoError> = .single(false)
+                /*if let peerId = chatLocation.peerId {
                     let key = PeerAndThreadId(peerId: peerId, threadId: chatLocation.threadId)
                     canStopIncomingStreamingMessage = context.account.postbox.combinedView(keys: [PostboxViewKey.typingDrafts(key)])
                     |> map { views -> Bool in
@@ -1413,7 +1413,7 @@ extension ChatControllerImpl {
                     |> distinctUntilChanged
                 } else {
                     canStopIncomingStreamingMessage = .single(false)
-                }
+                }*/
                 
                 self.peerDisposable = (combineLatest(queue: Queue.mainQueue(),
                     peerView,

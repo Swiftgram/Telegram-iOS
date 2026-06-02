@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// Projects a `Message.replyTo` payload into a renderable `ReplyHeader`. Pure. Returns
 /// `nil` when there's no reply. See the spec at
@@ -44,6 +44,9 @@ func replyPreview(
             isOutgoing: isOutgoing,
             senderColorIndex: sender?.colorIndex
         )
+
+    case .unsupported:
+        return nil
     }
 }
 
@@ -98,6 +101,8 @@ private func resolveSenderName(
         case .messageOriginChannel(let o):
             guard !o.authorSignature.isEmpty else { return nil }
             return (o.authorSignature, paletteIndex(for: o.chatId))
+        case .unsupported:
+            return nil
         }
     }
     // Cross-chat: skip cache lookup (we can't trust ids match).

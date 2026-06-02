@@ -1,6 +1,6 @@
 import Foundation
 import Observation
-import TDLibKit
+import TDShim
 
 /// Single source of truth for `[userId: firstName]` resolved from TDLib's
 /// `updateUser` events. Owned by `TDClient`; injected into `ChatListStore`

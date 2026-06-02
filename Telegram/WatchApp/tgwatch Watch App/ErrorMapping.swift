@@ -1,8 +1,8 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 func humanMessage(_ error: Swift.Error) -> String {
-    if let tdErr = error as? TDLibKit.Error {
+    if let tdErr = error as? TDError {
         return humanMessageForTdLibCode(tdErr.message)
     }
     return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
@@ -13,7 +13,7 @@ func humanMessage(_ error: Swift.Error) -> String {
 /// `humanMessage`, unknown codes collapse to a generic message rather than
 /// passing the raw code through.
 func passwordSubmitErrorMessage(_ error: Swift.Error) -> String {
-    guard let tdErr = error as? TDLibKit.Error else {
+    guard let tdErr = error as? TDError else {
         return "An error occurred"
     }
     if tdErr.message == "PASSWORD_HASH_INVALID" {

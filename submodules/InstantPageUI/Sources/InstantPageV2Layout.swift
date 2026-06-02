@@ -440,7 +440,7 @@ public func lastTextLineFrame(in layout: InstantPageV2Layout) -> CGRect? {
 /// Also returns `trailingBottomPadding`: the renderer draws the baseline at the line frame's maxY,
 /// so the visible text of a plain line sits ~5pt below it. A status that *trails on the line* should
 /// anchor at `maxY + trailingBottomPadding` to align with where the text actually renders. The pad
-/// is 0 when the line is taller than its font line height (an inline animated emoji, ~pointSize·24/17,
+/// is 0 when the line is taller than its font line height (a tall inline attachment, e.g. a formula,
 /// already pushes maxY down to the right spot). Callers should NOT apply the pad when the status
 /// wraps onto its own line below the text — there it should sit at the bare maxY.
 public func lastTextLineFrameIfLastItemIsText(in layout: InstantPageV2Layout) -> (frame: CGRect, trailingBottomPadding: CGFloat)? {
@@ -1899,17 +1899,14 @@ private func layoutDivider(
     boundingWidth: CGFloat,
     context: LayoutContext
 ) -> [InstantPageV2LaidOutItem] {
-    // Geometry matches V1 InstantPageLayout.swift lines 361–363:
-    //   lineWidth = floor(boundingWidth / 2.0), x = floor((boundingWidth - lineWidth) / 2.0), h = 1pt.
-    // Color matches V1: theme.textCategories.caption.color.
     let lineWidth = floor(boundingWidth / 2.0)
     let frame = CGRect(
         x: floor((boundingWidth - lineWidth) / 2.0),
         y: 0.0,
         width: lineWidth,
-        height: 1.0
+        height: UIScreenPixel
     )
-    return [.divider(InstantPageV2DividerItem(frame: frame, color: context.theme.textCategories.caption.color))]
+    return [.divider(InstantPageV2DividerItem(frame: frame, color: context.theme.separatorColor))]
 }
 
 // MARK: - Code block layout (ported from V1 InstantPageLayout.swift lines 329–351)
@@ -1921,11 +1918,8 @@ private func layoutCodeBlock(
     horizontalInset: CGFloat,
     context: inout LayoutContext
 ) -> [InstantPageV2LaidOutItem] {
-    // V1 InstantPageLayout.swift line 330: backgroundInset = 14.0 (top + bottom padding).
-    let backgroundInset: CGFloat = 14.0
-    // V1 line 342: text x offset is 17.0 (hardcoded, not backgroundInset).
-    let textXOffset: CGFloat = 17.0
-    // V1 line 348: shape is .rect — no corner radius.
+    let backgroundInset: CGFloat = 15.0
+    let textXOffset: CGFloat = 11.0
     let cornerRadius: CGFloat = 0.0
 
     let attributedString: NSAttributedString
@@ -1940,7 +1934,7 @@ private func layoutCodeBlock(
     } else {
         // V1 lines 335–338: fall back to plain paragraph style when no language.
         let styleStack = InstantPageTextStyleStack()
-        setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
+        setupStyleStack(styleStack, theme: context.theme, category: .codeBlock, link: false)
         attributedString = attributedStringForRichText(text, styleStack: styleStack)
     }
 
@@ -2004,16 +1998,22 @@ private func layoutThinking(
     setupStyleStack(styleStack, theme: context.theme, attributes: dimmedAttributes)
     let attributedString = attributedStringForRichText(text, styleStack: styleStack)
 
+    // Mirror a normal `.text` item's sizing: lay the text out flush (offset .zero) and put the page
+    // inset onto the BLOCK frame, so the `.thinking` item's frame == a `.text` item's frame
+    // (`(horizontalInset, 0, textWidth, height)`) instead of a full-bleed `(0, 0, boundingWidth, …)`
+    // box. The shimmer (sized to `item.frame.size`) then hugs the text rather than the whole page
+    // width; the rendered text stays at the same place (`horizontalInset`) since the block carries
+    // the inset.
     let (textItem, _, textSize) = layoutTextItem(
         attributedString,
         boundingWidth: boundingWidth - horizontalInset * 2.0,
-        offset: CGPoint(x: horizontalInset, y: 0.0),
+        offset: CGPoint(x: 0.0, y: 0.0),
         fitToWidth: context.fitToWidth,
         computeRevealCharacterRects: context.computeRevealCharacterRects
     )
     guard let textItem = textItem else { return [] }
 
-    let blockFrame = CGRect(x: 0.0, y: 0.0, width: boundingWidth, height: textSize.height)
+    let blockFrame = CGRect(x: horizontalInset, y: 0.0, width: textSize.width, height: textSize.height)
     return [.thinking(InstantPageV2ThinkingItem(frame: blockFrame, textItem: textItem))]
 }
 
@@ -2522,10 +2522,12 @@ private func setupStyleStack(_ stack: InstantPageTextStyleStack, theme: InstantP
     stack.push(.linkColor(theme.linkColor))
     stack.push(.linkMarkerColor(theme.linkHighlightColor))
     switch attributes.font.style {
-        case .sans:
-            stack.push(.fontSerif(false))
-        case .serif:
-            stack.push(.fontSerif(true))
+    case .sans:
+        stack.push(.fontSerif(false))
+    case .serif:
+        stack.push(.fontSerif(true))
+    case .monospace:
+        stack.push(.fontFixed(true))
     }
     stack.push(.fontSize(attributes.font.size))
     stack.push(.lineSpacingFactor(attributes.font.lineSpacingFactor))
@@ -2571,6 +2573,16 @@ private func instantPageFont(style: InstantPageTextAttributes, bold: Bool = fals
             return Font.italic(size)
         } else {
             return Font.regular(size)
+        }
+    case .monospace:
+        if bold && italic {
+            return Font.semiboldItalicMonospace(size)
+        } else if bold {
+            return Font.semiboldMonospace(size)
+        } else if italic {
+            return Font.italicMonospace(size)
+        } else {
+            return Font.monospace(size)
         }
     }
 }
@@ -2739,10 +2751,18 @@ func layoutTextItem(
     let fontLineHeight = floor(fontAscent + fontDescent)
     let fontLineSpacing = floor(fontLineHeight * lineSpacingFactor)
     let fontDescentBelowBaseline = max(0.0, -fontDescent)
+    // True font-height line box: shift the whole line stack down by the ascender headroom above
+    // the cap line (A − L) and pad the final height by the descender (D) below the last baseline,
+    // so a single-line item measures exactly A + D. Exact (not pixel-snapped): this is an
+    // intra-item line offset; crispness rides on the item's own pixel-snapped frame origin, and
+    // intra-item line positions may already be fractional (e.g. after a non-integral extraDescent).
+    // Inter-line advance is unchanged. (Named `lineBoxTopInset` to avoid colliding with the
+    // formula-bleed `topInset` local near the end of this function.)
+    let lineBoxTopInset = max(0.0, fontAscent - fontLineHeight)
     let baselineToNextTopSlack = max(0.0, fontLineSpacing - 4.0)
 
     var lastIndex: CFIndex = 0
-    var currentLineOrigin = CGPoint()
+    var currentLineOrigin = CGPoint(x: 0.0, y: lineBoxTopInset)
 
     var hasAnchors = false
     var maxLineWidth: CGFloat = 0.0
@@ -2825,20 +2845,27 @@ func layoutTextItem(
                         } else if let emoji = attributes[ChatTextInputAttributes.customEmoji] as? ChatTextInputTextCustomEmojiAttribute {
                             let xOffset = CTLineGetOffsetForStringIndex(line, range.location, nil)
                             let font = (attributes[NSAttributedString.Key.font] as? UIFont) ?? UIFont.systemFont(ofSize: 17.0)
-                            let itemSize = font.pointSize * 24.0 / 17.0
+                            // Size the inline emoji to the font's line height (A + D = the true
+                            // line-box height) plus a 4pt bump at the 17pt body font (scaled
+                            // proportionally) so it reads a touch larger than the bare line box.
+                            // The line is NOT inflated (lineAscent stays fontLineHeight). Must match
+                            // the run-delegate width in attributedStringForRichText (InstantPageTextItem.swift).
+                            let itemSize = font.ascender - font.descender + 4.0 * font.pointSize / 17.0
                             pendingEmoji.append(PendingV2EmojiAttachment(xOffset: xOffset, range: range, emoji: emoji, size: itemSize))
                         }
                     }
                 }
             }
 
+            // Inline emoji and images do NOT inflate the line: they are centered on the font
+            // line box and allowed to bleed above/below (mirroring V1 `layoutTextItemWithString`
+            // and the chat `InteractiveTextComponent`). Their run delegates already report the
+            // font's own ascent/descent, so CoreText lays the line out at the normal height — the
+            // old `lineAscent = emoji.size` inflation both doubled the line height and (because the
+            // baseline sits at the bottom of the box) shoved the text baseline down. Only formulas,
+            // which carry their own typographic metrics, are allowed to grow the line.
             var lineAscent: CGFloat = fontLineHeight
             var lineDescent: CGFloat = fontDescentBelowBaseline
-            for image in pendingImages {
-                if image.size.height > lineAscent {
-                    lineAscent = image.size.height
-                }
-            }
             for formula in pendingFormulas {
                 let formulaAscent = formula.attachment.rendered.size.height - formula.attachment.rendered.descent
                 if formulaAscent > lineAscent {
@@ -2848,17 +2875,15 @@ func layoutTextItem(
                     lineDescent = formula.attachment.rendered.descent
                 }
             }
-            for emoji in pendingEmoji {
-                if emoji.size > lineAscent {
-                    lineAscent = emoji.size
-                }
-            }
             let baselineY = workingLineOrigin.y + lineAscent
 
             for image in pendingImages {
+                // Center on the font line box (baseline − fontLineHeight/2), matching V1's
+                // `(fontLineHeight - imageHeight) / 2` offset, instead of bottom-aligning on the
+                // baseline. Keeps the text baseline put and lets the image bleed symmetrically.
                 let imageFrame = CGRect(
                     x: workingLineOrigin.x + image.xOffset,
-                    y: baselineY - image.size.height,
+                    y: floorToScreenPixels(baselineY - fontLineHeight / 2.0 - image.size.height / 2.0),
                     width: image.size.width,
                     height: image.size.height
                 )
@@ -2876,9 +2901,12 @@ func layoutTextItem(
                 lineFormulaItems.append(InstantPageTextFormulaRun(frame: formulaFrame, range: formula.range, attachment: attachment))
             }
             for emoji in pendingEmoji {
+                // Center on the font line box (baseline − fontLineHeight/2) so a 24pt emoji on a
+                // ~17pt line bleeds symmetrically rather than forcing the line taller and pushing
+                // the text baseline down. Matches the chat `InteractiveTextComponent` placement.
                 let emojiFrame = CGRect(
                     x: workingLineOrigin.x + emoji.xOffset,
-                    y: baselineY - emoji.size,
+                    y: floorToScreenPixels(baselineY - fontLineHeight / 2.0 - emoji.size / 2.0),
                     width: emoji.size,
                     height: emoji.size
                 )
@@ -2886,6 +2914,15 @@ func layoutTextItem(
             }
 
             extraDescent = max(0.0, lineDescent - baselineToNextTopSlack)
+            // A centered attachment taller than the line bleeds below the baseline; grow the
+            // descent so the following line isn't overlapped (mirrors V1's extraDescent handling).
+            // Emoji sized to the font line height (A + D) fit the line box, so they contribute nothing.
+            for imageItem in lineImageItems {
+                extraDescent = max(extraDescent, imageItem.frame.maxY - (baselineY + baselineToNextTopSlack))
+            }
+            for emojiItem in lineEmojiItems {
+                extraDescent = max(extraDescent, emojiItem.frame.maxY - (baselineY + baselineToNextTopSlack))
+            }
 
             if !minimizeWidth && !hadIndexOffset && lineCharacterCount > 1 && lineWidth > currentMaxWidth + 5.0 {
                 if let imageItem = lineImageItems.last {
@@ -3019,22 +3056,23 @@ func layoutTextItem(
                     let localIndex = emoji.range.location - lineRange.location
                     if localIndex >= 0 && localIndex < rects.count {
                         let x = CTLineGetOffsetForStringIndex(line, emoji.range.location, nil)
-                        // characterRects are baseline-relative (positive-up). The emoji cell sits
-                        // bottom-on-baseline (see frame loop: y = baselineY - emoji.size), so its
-                        // baseline-relative bottom is 0 and maxY = emoji.size — the width feeds the
-                        // reveal cost map; maxY feeds the reveal-mask y conversion in the renderer.
-                        rects[localIndex] = CGRect(x: x, y: 0.0, width: emoji.size, height: emoji.size)
+                        // characterRects are baseline-relative (positive-up). The emoji cell is now
+                        // centered on the font line box (see frame loop), so in baseline-relative
+                        // coords it spans [fontLineHeight/2 − size/2, fontLineHeight/2 + size/2].
+                        // Width feeds the reveal cost map; maxY feeds the reveal-mask y conversion in
+                        // the renderer (lineAscent − maxY), keeping the mask tracking the centered cell.
+                        rects[localIndex] = CGRect(x: x, y: fontLineHeight / 2.0 - emoji.size / 2.0, width: emoji.size, height: emoji.size)
                     }
                 }
                 for image in pendingImages {
                     let localIndex = image.range.location - lineRange.location
                     if localIndex >= 0 && localIndex < rects.count {
                         let x = CTLineGetOffsetForStringIndex(line, image.range.location, nil)
-                        // Image cell sits bottom-on-baseline (frame loop: y = baselineY - image.size.height).
-                        // Baseline-relative cell: y = 0, height = image.size.height. The full width feeds
-                        // the reveal cost map so the streaming cursor is charged the image's width when
-                        // crossing it — same as an emoji cell.
-                        rects[localIndex] = CGRect(x: x, y: 0.0, width: image.size.width, height: image.size.height)
+                        // Image cell is centered on the font line box (see frame loop). Baseline-relative
+                        // cell spans [fontLineHeight/2 − height/2, fontLineHeight/2 + height/2]; the full
+                        // width feeds the reveal cost map so the streaming cursor is charged the image's
+                        // width when crossing it — same as an emoji cell.
+                        rects[localIndex] = CGRect(x: x, y: fontLineHeight / 2.0 - image.size.height / 2.0, width: image.size.width, height: image.size.height)
                     }
                 }
                 lineCharacterRects = rects
@@ -3069,7 +3107,9 @@ func layoutTextItem(
 
     var height: CGFloat = 0.0
     if !lines.isEmpty && !(string.string == "\u{200b}" && hasAnchors) {
-        height = lines.last!.frame.maxY + extraDescent
+        // + fontDescentBelowBaseline: contain the last line's descender below its baseline, so
+        // (with the topInset shift) a single-line item measures exactly A + D = true font height.
+        height = lines.last!.frame.maxY + extraDescent + fontDescentBelowBaseline
     }
 
     var textWidth = boundingWidth

@@ -960,7 +960,11 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
             }
             let attributes = styleStack.textAttributes()
             let font = (attributes[NSAttributedString.Key.font] as? UIFont) ?? UIFont.systemFont(ofSize: 17.0)
-            let itemSize = font.pointSize * 24.0 / 17.0
+            // Size the inline emoji to the font's line height (A + D) plus a 4pt bump at the 17pt
+            // body font (scaled proportionally). Must match the V2 layout's emoji cell size
+            // (InstantPageV2Layout.swift). The run delegate still reports the font's own
+            // ascent/descent (below), so the line height is unchanged — only the emoji width changes.
+            let itemSize = font.ascender - font.descender + 4.0 * font.pointSize / 17.0
             let extentBuffer = UnsafeMutablePointer<RunStruct>.allocate(capacity: 1)
             extentBuffer.initialize(to: RunStruct(ascent: font.ascender, descent: font.descender, width: itemSize))
             var callbacks = CTRunDelegateCallbacks(version: kCTRunDelegateVersion1, dealloc: { pointer in

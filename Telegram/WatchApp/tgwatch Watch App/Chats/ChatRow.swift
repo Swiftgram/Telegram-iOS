@@ -1,4 +1,4 @@
-import TDLibKit
+import TDShim
 
 struct ChatRow: Identifiable, Equatable, Hashable {
     let id: Int64
@@ -95,5 +95,7 @@ private func deriveCanSend(_ chat: CachedChat) -> Bool {
         return true
     case .chatTypeBasicGroup, .chatTypeSupergroup:
         return chat.permissions.canSendBasicMessages
+    case .unsupported:
+        return false
     }
 }

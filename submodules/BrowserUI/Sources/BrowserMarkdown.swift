@@ -3,6 +3,7 @@ import UIKit
 import TelegramCore
 import AccountContext
 import InstantPageUI
+import TextFormat
 
 private let markdownPresentationIntentAttribute = NSAttributedString.Key("NSPresentationIntent")
 private let markdownInlinePresentationIntentAttribute = NSAttributedString.Key("NSInlinePresentationIntent")
@@ -1137,11 +1138,41 @@ private func instantPageNeedsRichLayout(_ blocks: [InstantPageBlock]) -> Bool {
     return blocks.contains { !blockIsEntityExpressible($0) }
 }
 
+// Rewrites each `ChatTextInputAttributes.customEmoji` run in the attributed
+// input as a `[<alt>](tg://emoji?id=<fileId>)` markdown link, leaving all other
+// text (and its markdown syntax) verbatim. With no custom emoji present this
+// returns `attributedText.string` unchanged, so non-emoji messages are
+// unaffected. The marker is intercepted post-parse in markdownInlineContent.
+private func markdownSourceInjectingCustomEmojiMarkers(_ attributedText: NSAttributedString) -> String {
+    let nsString = attributedText.string as NSString
+    var result = ""
+    attributedText.enumerateAttribute(ChatTextInputAttributes.customEmoji, in: NSRange(location: 0, length: attributedText.length), options: []) { value, range, _ in
+        let substring = nsString.substring(with: range)
+        if let attribute = value as? ChatTextInputTextCustomEmojiAttribute {
+            // The link text must be non-empty: CommonMark drops `[](url)` (no
+            // run carries the link attribute), which would silently lose the
+            // emoji. Fall back to a space, matching the reattach helper.
+            let alt = substring.isEmpty ? " " : substring
+            result += "[\(escapeCustomEmojiMarkdownAlt(alt))](\(customEmojiMarkdownURL(fileId: attribute.fileId)))"
+        } else {
+            result += substring
+        }
+    }
+    return result
+}
+
 // Returns a RichTextMessageAttribute IFF the markdown in `text` produces an
 // InstantPage block with no entity equivalent. Returns nil (-> send via the
 // regular entity path) for plain text, pre-iOS-15, oversize markdown, or
 // markdown that maps cleanly onto entities.
-public func richMarkdownAttributeIfNeeded(context: AccountContext, text: String) -> RichTextMessageAttribute? {
+public func richMarkdownAttributeIfNeeded(context: AccountContext, attributedText: NSAttributedString) -> RichTextMessageAttribute? {
+    // Custom emoji are rewritten to `[<alt>](tg://emoji?id=...)` link markers
+    // before classification + parse; the markers are intercepted back into
+    // .textCustomEmoji in markdownInlineContent. A link is entity-expressible,
+    // so an emoji-only message still classifies as not-rich (and falls through
+    // to the entity path, where its untouched attribute makes a .CustomEmoji
+    // entity) — custom emoji alone never forces a rich message.
+    let text = markdownSourceInjectingCustomEmojiMarkers(attributedText)
     guard markdownMightNeedRichLayout(text) else {
         return nil
     }
@@ -1685,6 +1716,13 @@ private func markdownInlineContent(from attributedString: NSAttributedString, co
 
         if let image = context.resolveImage(attributes: attributes) {
             fragments.append(.image(image))
+            return
+        }
+
+        if let linkUrl = markdownLink(attributes: attributes, documentURL: context.documentURL),
+           let fileId = parseCustomEmojiFileId(fromMarkdownURL: linkUrl) {
+            // `text` is the parsed (already-unescaped) link display text = the alt.
+            fragments.append(.richText(.textCustomEmoji(fileId: fileId, alt: text)))
             return
         }
 

@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 import OSLog
-import TDLibKit
+import TDShim
 
 /// Receives lifecycle events from a `TDClient` that need to be reflected in
 /// the wider app (registry updates, account removal). Held weakly by TDClient.

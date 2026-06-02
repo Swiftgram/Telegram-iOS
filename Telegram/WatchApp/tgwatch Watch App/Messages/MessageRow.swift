@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 enum MessageRow: Identifiable, Equatable, Hashable {
     case bubble(MessageBubble)

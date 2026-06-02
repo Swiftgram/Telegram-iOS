@@ -1,5 +1,5 @@
 import Foundation
-import TDLibKit
+import TDShim
 
 /// Seam between `StickerPickerStore` and TDLib. Tests inject a fake; production
 /// uses `TDLibStickerPickerLoader`. Send is intentionally NOT here — it goes
