@@ -225,9 +225,9 @@ private final class BotCheckoutShippingOptionScreenComponent: Component {
             self.component = component
             self.state = state
             
-            let environmentValue = environment[ViewControllerComponentContainer.Environment.self].value
-            let controller = environmentValue.controller
-            let theme = environmentValue.theme.withModalBlocksBackground()
+            let environment = environment[ViewControllerComponentContainer.Environment.self].value
+            let controller = environment.controller
+            let theme = environment.theme.withModalBlocksBackground()
             
             let dismiss: (Bool) -> Void = { [weak self] animated in
                 guard let self, !self.isDismissing else {
@@ -268,7 +268,7 @@ private final class BotCheckoutShippingOptionScreenComponent: Component {
                     )),
                     titleItem: AnyComponent(MultilineTextComponent(
                         text: .plain(NSAttributedString(
-                            string: environmentValue.strings.Checkout_ShippingMethod,
+                            string: environment.strings.Checkout_ShippingMethod,
                             font: Font.semibold(17.0),
                             textColor: theme.list.itemPrimaryTextColor
                         )),
@@ -291,7 +291,6 @@ private final class BotCheckoutShippingOptionScreenComponent: Component {
                             }
                         )
                     ),
-                    //TODO:localize
                     bottomItem: AnyComponent(ButtonComponent(
                         background: ButtonComponent.Background(
                             style: .glass,
@@ -302,7 +301,7 @@ private final class BotCheckoutShippingOptionScreenComponent: Component {
                         content: AnyComponentWithIdentity(
                             id: AnyHashable("proceed"),
                             component: AnyComponent(ButtonTextContentComponent(
-                                text: "Proceed",
+                                text: environment.strings.Checkout_ShippingMethod_Proceed,
                                 badge: 0,
                                 textColor: theme.list.itemCheckColors.foregroundColor,
                                 badgeBackground: theme.list.itemCheckColors.foregroundColor,
@@ -323,16 +322,16 @@ private final class BotCheckoutShippingOptionScreenComponent: Component {
                     animateOut: self.animateOut
                 )),
                 environment: {
-                    environmentValue
+                    environment
                     ResizableSheetComponentEnvironment(
                         theme: theme,
-                        statusBarHeight: environmentValue.statusBarHeight,
-                        safeInsets: environmentValue.safeInsets,
+                        statusBarHeight: environment.statusBarHeight,
+                        safeInsets: environment.safeInsets,
                         inputHeight: 0.0,
-                        metrics: environmentValue.metrics,
-                        deviceMetrics: environmentValue.deviceMetrics,
-                        isDisplaying: environmentValue.isVisible,
-                        isCentered: environmentValue.metrics.widthClass == .regular,
+                        metrics: environment.metrics,
+                        deviceMetrics: environment.deviceMetrics,
+                        isDisplaying: environment.isVisible,
+                        isCentered: environment.metrics.widthClass == .regular,
                         screenSize: availableSize,
                         regularMetricsSize: nil,
                         dismiss: { animated in

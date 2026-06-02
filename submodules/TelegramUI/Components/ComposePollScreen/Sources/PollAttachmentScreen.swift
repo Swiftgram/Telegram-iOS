@@ -23,6 +23,34 @@ public enum PollAttachmentSubject {
     case option
 }
 
+func makePollAttachmentLinkWebpage(link: String) -> TelegramMediaWebpage {
+    let mediaId = Int64.random(in: Int64.min ... Int64.max)
+    return TelegramMediaWebpage(
+        webpageId: EngineMedia.Id(namespace: Namespaces.Media.LocalFile, id: mediaId),
+        content: .Loaded(TelegramMediaWebpageLoadedContent(
+            url: link,
+            displayUrl: link,
+            hash: 0,
+            type: nil,
+            websiteName: nil,
+            title: nil,
+            text: nil,
+            embedUrl: nil,
+            embedType: nil,
+            embedSize: nil,
+            duration: nil,
+            author: nil,
+            isMediaLargeByDefault: nil,
+            imageIsVideoCover: false,
+            image: nil,
+            file: nil,
+            story: nil,
+            attributes: [],
+            instantPage: nil
+        ))
+    )
+}
+
 public func presentPollAttachmentScreen(
     context: AccountContext,
     updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?,
@@ -236,11 +264,11 @@ public func presentPollAttachmentScreen(
         case .link:
             attachmentController?.dismiss(animated: true)
 
-            //TODO:localize
+            let presentationData = updatedPresentationData?.initial ?? context.sharedContext.currentPresentationData.with { $0 }
             let controller = chatTextLinkEditController(
                 context: context,
                 updatedPresentationData: updatedPresentationData,
-                text: "Attach a link to this option.",
+                text: presentationData.strings.CreatePoll_Link_Description,
                 link: nil,
                 preview: true,
                 apply: { link, webpage in
@@ -251,31 +279,7 @@ public func presentPollAttachmentScreen(
                         completion(.standalone(media: webpage))
                         return
                     }
-                    let mediaId = Int64.random(in: Int64.min ... Int64.max)
-                    let webPage = TelegramMediaWebpage(
-                        webpageId: EngineMedia.Id(namespace: Namespaces.Media.LocalFile, id: mediaId),
-                        content: .Loaded(TelegramMediaWebpageLoadedContent(
-                            url: link,
-                            displayUrl: link,
-                            hash: 0,
-                            type: nil,
-                            websiteName: nil,
-                            title: nil,
-                            text: nil,
-                            embedUrl: nil,
-                            embedType: nil,
-                            embedSize: nil,
-                            duration: nil,
-                            author: nil,
-                            isMediaLargeByDefault: nil,
-                            imageIsVideoCover: false,
-                            image: nil,
-                            file: nil,
-                            story: nil,
-                            attributes: [],
-                            instantPage: nil
-                    )))
-                    completion(.standalone(media: webPage))
+                    completion(.standalone(media: makePollAttachmentLinkWebpage(link: link)))
                 }
             )
             present(controller, false)

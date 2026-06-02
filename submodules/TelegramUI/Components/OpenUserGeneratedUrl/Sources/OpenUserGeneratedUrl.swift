@@ -125,9 +125,8 @@ public func openUserGeneratedUrl(
         let disposable = MetaDisposable()
         let checkState = concealedAlertOption.map { _ in AlertCheckComponent.ExternalState() }
 
-        //TODO:localize
         var content: [AnyComponentWithIdentity<AlertComponentEnvironment>] = []
-        content.append(AnyComponentWithIdentity(id: "title", component: AnyComponent(AlertTitleComponent(title: "Open link?"))))
+        content.append(AnyComponentWithIdentity(id: "title", component: AnyComponent(AlertTitleComponent(title: presentationData.strings.OpenLinkConfirmation_Title))))
         content.append(AnyComponentWithIdentity(id: "text", component: AnyComponent(AlertTextComponent(
             content: .plain(displayUrl),
             alignment: .center,
@@ -158,7 +157,7 @@ public func openUserGeneratedUrl(
             content: content,
             actions: [
                 .init(title: presentationData.strings.Common_Cancel),
-                .init(title: "Open", type: .default, action: {
+                .init(title: presentationData.strings.OpenLinkConfirmation_Open, type: .default, action: {
                     if checkState?.value == true {
                         concealedAlertOption?.action()
                     }

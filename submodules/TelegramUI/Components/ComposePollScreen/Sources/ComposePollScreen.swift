@@ -37,6 +37,7 @@ import EdgeEffect
 import LocationUI
 import CountrySelectionUI
 import ShareWithPeersScreen
+import ChatTextLinkEditUI
 
 public final class ComposedPoll {
     public struct Text {
@@ -918,6 +919,11 @@ final class ComposePollScreenComponent: Component {
             
             self.deactivateInput()
             
+            if !replace, case .pollOption = subject, let webpage = self.attachedMedia(for: subject)?.media.media as? TelegramMediaWebpage, let link = webpage.content.url {
+                self.openAttachedLinkMedia(subject: subject, link: link)
+                return
+            }
+
             guard replace || !self.openAttachMediaContextMenu(subject: subject) else {
                 return
             }
@@ -967,6 +973,38 @@ final class ComposePollScreenComponent: Component {
             })
         }
         
+        private func openAttachedLinkMedia(subject: MediaAttachSubject, link: String) {
+            guard let component = self.component else {
+                return
+            }
+
+            let presentationData = component.context.sharedContext.currentPresentationData.with { $0 }
+            let controller = chatTextLinkEditController(
+                context: component.context,
+                updatedPresentationData: (presentationData, .never()),
+                text: presentationData.strings.CreatePoll_Link_Description,
+                link: link,
+                preview: true,
+                apply: { [weak self] link, webpage in
+                    guard let self, let link else {
+                        return
+                    }
+
+                    if link.isEmpty {
+                        self.setAttachedMedia(nil, for: subject)
+                        self.state?.updated(transition: .easeInOut(duration: 0.2))
+                        return
+                    }
+
+                    let attachedMedia = AttachedMedia(media: .standalone(media: webpage ?? makePollAttachmentLinkWebpage(link: link)))
+                    self.setAttachedMedia(attachedMedia, for: subject)
+                    self.uploadAttachedMediaIfNeeded(attachedMedia)
+                    self.state?.updated(transition: .easeInOut(duration: 0.2))
+                }
+            )
+            (self.environment?.controller() as? ComposePollScreen)?.parentController()?.present(controller, in: .window(.root))
+        }
+
         private func uploadAttachedMediaIfNeeded(_ media: AttachedMedia) {
             guard let component = self.component, media.requiresUpload, media.uploadDisposable == nil else {
                 return

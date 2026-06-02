@@ -5900,8 +5900,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             }
             actions.append(.init(title: self.presentationData.strings.Common_Cancel))
             
-            //TODO:localize
-            let title: String = "Delete Chat"
+            let title: String = self.presentationData.strings.ChatList_DeleteChat
             var text: String
             if mainPeer.id == self.context.account.peerId {
                 text = self.presentationData.strings.ChatList_DeleteSavedMessagesConfirmation
@@ -5948,56 +5947,6 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                 ],
                 actions: actions
             )
-            
-            
-//            let actionSheet = ActionSheetController(presentationData: self.presentationData)
-//            var items: [ActionSheetItem] = []
-//            
-//            items.append(DeleteChatPeerActionSheetItem(context: self.context, peer: mainPeer, chatPeer: chatPeer, action: .delete, strings: self.presentationData.strings, nameDisplayOrder: self.presentationData.nameDisplayOrder))
-//            
-//            if joined || mainPeer.isDeleted {
-//                items.append(ActionSheetButtonItem(title: self.presentationData.strings.Common_Delete, color: .destructive, action: { [weak self, weak actionSheet] in
-//                    actionSheet?.dismissAnimated()
-//                    self?.schedulePeerChatRemoval(peer: peer, type: .forEveryone, deleteGloballyIfPossible: deleteGloballyIfPossible, completion: {
-//                        removed()
-//                    })
-//                    completion(true)
-//                }))
-//            } else {
-//                items.append(ActionSheetButtonItem(title: self.presentationData.strings.ChatList_DeleteForCurrentUser, color: .destructive, action: { [weak self, weak actionSheet] in
-//                    actionSheet?.dismissAnimated()
-//                    self?.schedulePeerChatRemoval(peer: peer, type: .forLocalPeer, deleteGloballyIfPossible: deleteGloballyIfPossible, completion: {
-//                        removed()
-//                    })
-//                    completion(true)
-//                }))
-//                items.append(ActionSheetButtonItem(title: self.presentationData.strings.ChatList_DeleteForEveryone(mainPeer.compactDisplayTitle).string, color: .destructive, action: { [weak self, weak actionSheet] in
-//                    actionSheet?.dismissAnimated()
-//                    guard let strongSelf = self else {
-//                        return
-//                    }
-//                    strongSelf.present(textAlertController(context: strongSelf.context, title: strongSelf.presentationData.strings.ChatList_DeleteForEveryoneConfirmationTitle, text: strongSelf.presentationData.strings.ChatList_DeleteForEveryoneConfirmationText, actions: [
-//                        TextAlertAction(type: .genericAction, title: strongSelf.presentationData.strings.Common_Cancel, action: {
-//                            completion(false)
-//                        }),
-//                        TextAlertAction(type: .destructiveAction, title: strongSelf.presentationData.strings.ChatList_DeleteForEveryoneConfirmationAction, action: {
-//                            self?.schedulePeerChatRemoval(peer: peer, type: .forEveryone, deleteGloballyIfPossible: deleteGloballyIfPossible, completion: {
-//                                removed()
-//                            })
-//                            completion(true)
-//                        })
-//                    ], parseMarkdown: true), in: .window(.root))
-//                }))
-//            }
-//            actionSheet.setItemGroups([
-//                ActionSheetItemGroup(items: items),
-//                ActionSheetItemGroup(items: [
-//                    ActionSheetButtonItem(title: self.presentationData.strings.Common_Cancel, color: .accent, font: .bold, action: { [weak actionSheet] in
-//                        actionSheet?.dismissAnimated()
-//                        completion(false)
-//                    })
-//                ])
-//            ])
             self.present(alertScreen, in: .window(.root))
         } else if peer.peerId == self.context.account.peerId {
             self.present(textAlertController(context: self.context, title: self.presentationData.strings.ChatList_DeleteSavedMessagesConfirmationTitle, text: self.presentationData.strings.ChatList_DeleteSavedMessagesConfirmationText, actions: [

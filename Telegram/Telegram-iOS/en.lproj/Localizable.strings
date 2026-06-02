@@ -16342,3 +16342,16 @@ Error: %8$@";
 
 "MediaPicker.SetNewGroupPhoto" = "Set new group photo";
 "MediaPicker.SetNewChannelPhoto" = "Set new channel photo";
+
+"Attachment.Link" = "Link";
+
+"Checkout.PaymentMethod.Proceed" = "Proceed";
+"Checkout.ShippingMethod.Proceed" = "Proceed";
+
+"OpenLinkConfirmation.Title" = "Open link?";
+"OpenLinkConfirmation.Open" = "Open";
+
+"Chat.ContextMenu.OpenInBrowser" = "Open in Browser";
+"Chat.ContextMenu.OpenInApp" = "Open In-App";
+
+"CreatePoll.Link.Description" = "Attach a link to this option.";

@@ -244,8 +244,7 @@ private final class AttachButtonComponent: CombinedComponent {
                 name = strings.Attachment_Audio
                 imageName = "Chat/Attach Menu/Audio"
             case .link:
-                //TODO:localize
-                name = "Link"
+                name = strings.Attachment_Link
                 imageName = "Chat/Attach Menu/Link"
             case let .app(bot):
                 botPeer = bot.peer
@@ -2187,8 +2186,7 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
             case .audio:
                 accessibilityTitle = self.presentationData.strings.Attachment_Audio
             case .link:
-                //TODO:localize
-                accessibilityTitle = "Link"
+                accessibilityTitle = self.presentationData.strings.Attachment_Link
             case let .app(bot):
                 accessibilityTitle = bot.shortName
             case .standalone:

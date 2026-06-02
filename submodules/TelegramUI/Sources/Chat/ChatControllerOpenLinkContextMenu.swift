@@ -250,8 +250,7 @@ extension ChatControllerImpl {
                     }))
 
                     if let openMode {
-                        //TODO:localize
-                        let reverseText = openMode.shouldOpenInApp ? "Open in Browser" : "Open In-App"
+                        let reverseText = openMode.shouldOpenInApp ? self.presentationData.strings.Chat_ContextMenu_OpenInBrowser : self.presentationData.strings.Chat_ContextMenu_OpenInApp
                         items.append(ActionSheetButtonItem(title: reverseText, color: .accent, action: { [weak self, weak actionSheet] in
                             actionSheet?.dismissAnimated()
                             guard let self else {
