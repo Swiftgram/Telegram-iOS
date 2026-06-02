@@ -13,6 +13,15 @@ private enum RevealOptionKey: Int32 {
     case delete
 }
 
+private func webBrowserDomainExceptionPlaceholderLetter(_ title: String) -> String {
+    let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+    if let firstCharacter = trimmedTitle.first {
+        return String(firstCharacter).uppercased()
+    } else {
+        return "#"
+    }
+}
+
 final class WebBrowserDomainExceptionItem: ListViewItem, ItemListItem {
     let presentationData: ItemListPresentationData
     let systemStyle: ItemListSystemStyle
@@ -92,6 +101,8 @@ final class WebBrowserDomainExceptionItemNode: ItemListRevealOptionsItemNode, It
     private let maskNode: ASImageNode
     
     let iconNode: TransformImageNode
+    private let iconPlaceholderNode: ASDisplayNode
+    private let iconPlaceholderTextNode: TextNode
     let titleNode: TextNode
     let labelNode: TextNode
     
@@ -126,6 +137,15 @@ final class WebBrowserDomainExceptionItemNode: ItemListRevealOptionsItemNode, It
         self.iconNode.isLayerBacked = true
         self.iconNode.displaysAsynchronously = false
         
+        self.iconPlaceholderNode = ASDisplayNode()
+        self.iconPlaceholderNode.clipsToBounds = true
+        self.iconPlaceholderNode.cornerRadius = 7.0
+
+        self.iconPlaceholderTextNode = TextNode()
+        self.iconPlaceholderTextNode.isUserInteractionEnabled = false
+        self.iconPlaceholderTextNode.contentMode = .center
+        self.iconPlaceholderTextNode.contentsScale = UIScreen.main.scale
+
         self.titleNode = TextNode()
         self.titleNode.isUserInteractionEnabled = false
         
@@ -136,6 +156,8 @@ final class WebBrowserDomainExceptionItemNode: ItemListRevealOptionsItemNode, It
         
         super.init(layerBacked: false, rotated: false, seeThrough: false)
         
+        self.addSubnode(self.iconPlaceholderNode)
+        self.iconPlaceholderNode.addSubnode(self.iconPlaceholderTextNode)
         self.addSubnode(self.iconNode)
         self.addSubnode(self.titleNode)
         self.addSubnode(self.labelNode)
@@ -150,6 +172,7 @@ final class WebBrowserDomainExceptionItemNode: ItemListRevealOptionsItemNode, It
     func asyncLayout() -> (_ item: WebBrowserDomainExceptionItem, _ params: ListViewItemLayoutParams, _ insets: ItemListNeighbors) -> (ListViewItemNodeLayout, () -> Void) {
         let makeTitleLayout = TextNode.asyncLayout(self.titleNode)
         let makeLabelLayout = TextNode.asyncLayout(self.labelNode)
+        let makeIconPlaceholderTextLayout = TextNode.asyncLayout(self.iconPlaceholderTextNode)
                       
         let currentItem = self.item
         
@@ -163,6 +186,7 @@ final class WebBrowserDomainExceptionItemNode: ItemListRevealOptionsItemNode, It
             let insets: UIEdgeInsets
             let separatorHeight = UIScreenPixel
             let separatorRightInset: CGFloat = item.systemStyle == .glass ? 16.0 : 0.0
+            let iconSize = CGSize(width: 30.0, height: 30.0)
             
             let itemBackgroundColor: UIColor
             let itemSeparatorColor: UIColor
@@ -181,6 +205,10 @@ final class WebBrowserDomainExceptionItemNode: ItemListRevealOptionsItemNode, It
             
             let (labelLayout, labelApply) = makeLabelLayout(TextNodeLayoutArguments(attributedString: NSAttributedString(string: item.label, font: labelFont, textColor: labelColor), backgroundColor: nil, maximumNumberOfLines: 1, truncationType: .end, constrainedSize: CGSize(width: maxTitleWidth, height: CGFloat.greatestFiniteMagnitude), alignment: .natural, cutout: nil, insets: UIEdgeInsets()))
             
+            let iconPlaceholderText = webBrowserDomainExceptionPlaceholderLetter(item.title)
+            let iconPlaceholderFont = Font.with(size: 17.0, design: .round, weight: .semibold)
+            let (iconPlaceholderTextLayout, iconPlaceholderTextApply) = makeIconPlaceholderTextLayout(TextNodeLayoutArguments(attributedString: NSAttributedString(string: iconPlaceholderText, font: iconPlaceholderFont, textColor: item.presentationData.theme.list.itemSecondaryTextColor), backgroundColor: nil, maximumNumberOfLines: 1, truncationType: .end, constrainedSize: iconSize, alignment: .center, cutout: nil, insets: UIEdgeInsets()))
+
             let verticalInset: CGFloat
             switch item.systemStyle {
             case .glass:
@@ -220,12 +248,13 @@ final class WebBrowserDomainExceptionItemNode: ItemListRevealOptionsItemNode, It
                         strongSelf.topStripeNode.backgroundColor = itemSeparatorColor
                         strongSelf.bottomStripeNode.backgroundColor = itemSeparatorColor
                         strongSelf.backgroundNode.backgroundColor = itemBackgroundColor
+                        strongSelf.iconPlaceholderNode.backgroundColor = item.presentationData.theme.list.mediaPlaceholderColor
                     }
                     
-                    let iconSize = CGSize(width: 30.0, height: 30.0)
                     if currentItem?.favicon != item.favicon {
                         strongSelf.currentIconFile = nil
                         strongSelf.iconDisposable.set(nil)
+                        strongSelf.iconNode.reset()
 
                         if let favicon = item.favicon {
                             strongSelf.iconDisposable.set((item.context.engine.stickers.resolveInlineStickers(fileIds: [favicon])
@@ -244,6 +273,8 @@ final class WebBrowserDomainExceptionItemNode: ItemListRevealOptionsItemNode, It
                                     strongSelf.iconNode.setSignal(chatMessageSticker(account: item.context.account, userLocation: .other, file: file, small: false, fetched: true))
                                 }
                                 strongSelf.iconNode.asyncLayout()(TransformImageArguments(corners: ImageCorners(radius: 8.0), imageSize: resolvedImageSize, boundingSize: iconSize, intrinsicInsets: .zero))()
+                                strongSelf.iconPlaceholderNode.isHidden = true
+                                strongSelf.iconNode.isHidden = false
                             }))
                         }
                     }
@@ -251,9 +282,11 @@ final class WebBrowserDomainExceptionItemNode: ItemListRevealOptionsItemNode, It
                     if strongSelf.currentIconFile?.fileId.id == item.favicon, let dimensions = strongSelf.currentIconFile?.dimensions?.cgSize {
                         imageSize = dimensions.aspectFilled(imageSize)
                     }
+                    let hasResolvedIcon = item.favicon != nil && strongSelf.currentIconFile?.fileId.id == item.favicon
                     
                     let _ = titleApply()
                     let _ = labelApply()
+                    let _ = iconPlaceholderTextApply()
                     
                     switch item.style {
                     case .plain:
@@ -324,6 +357,10 @@ final class WebBrowserDomainExceptionItemNode: ItemListRevealOptionsItemNode, It
                     strongSelf.labelNode.frame = labelFrame
                     
                     let iconFrame = CGRect(origin: CGPoint(x: params.leftInset + 16.0 + strongSelf.revealOffset, y: floorToScreenPixels((contentSize.height - iconSize.height) / 2.0)), size: iconSize)
+                    strongSelf.iconPlaceholderNode.frame = iconFrame
+                    strongSelf.iconPlaceholderTextNode.frame = CGRect(origin: CGPoint(x: floorToScreenPixels((iconSize.width - iconPlaceholderTextLayout.size.width) / 2.0) + UIScreenPixel, y: floorToScreenPixels((iconSize.height - iconPlaceholderTextLayout.size.height) / 2.0) + 1.0), size: iconPlaceholderTextLayout.size)
+                    strongSelf.iconPlaceholderNode.isHidden = hasResolvedIcon
+                    strongSelf.iconNode.isHidden = !hasResolvedIcon
                     strongSelf.iconNode.frame = iconFrame
                     
                     strongSelf.iconNode.asyncLayout()(TransformImageArguments(corners: ImageCorners(radius: 7.0), imageSize: imageSize, boundingSize: iconSize, intrinsicInsets: .zero))()
@@ -360,6 +397,10 @@ final class WebBrowserDomainExceptionItemNode: ItemListRevealOptionsItemNode, It
             iconFrame.origin.x = params.leftInset + 16.0 + offset
             transition.updateFrame(node: self.iconNode, frame: iconFrame)
             
+            var iconPlaceholderFrame = self.iconPlaceholderNode.frame
+            iconPlaceholderFrame.origin.x = params.leftInset + 16.0 + offset
+            transition.updateFrame(node: self.iconPlaceholderNode, frame: iconPlaceholderFrame)
+
             var titleFrame = self.titleNode.frame
             titleFrame.origin.x = leftInset + offset
             transition.updateFrame(node: self.titleNode, frame: titleFrame)

@@ -760,7 +760,7 @@ private func channelAdminControllerEntries(presentationData: PresentationData, s
         var canTransfer = false
         var canDismiss = false
         let canEditProcessJoinRequests: Bool
-        if case let .user(user) = admin, user.botInfo?.flags.contains(.isGuardBot) == true {
+        if !isChannel, case let .user(user) = admin, user.botInfo?.flags.contains(.isGuardBot) == true {
             canEditProcessJoinRequests = canEdit && user.id != accountPeerId
         } else {
             canEditProcessJoinRequests = false
