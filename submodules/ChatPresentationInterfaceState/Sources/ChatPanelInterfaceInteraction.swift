@@ -74,7 +74,7 @@ public final class ChatPanelInterfaceInteraction {
     public let setupEditMessage: (EngineMessage.Id?, @escaping (ContainedViewLayoutTransition) -> Void) -> Void
     public let beginMessageSelection: ([EngineMessage.Id], @escaping (ContainedViewLayoutTransition) -> Void) -> Void
     public let cancelMessageSelection: (ContainedViewLayoutTransition) -> Void
-    public let deleteSelectedMessages: () -> Void
+    public let deleteSelectedMessages: (UIView?) -> Void
     public let reportSelectedMessages: () -> Void
     public let reportMessages: ([EngineRawMessage], ContextControllerProtocol?) -> Void
     public let blockMessageAuthor: (EngineRawMessage, ContextControllerProtocol?) -> Void
@@ -206,7 +206,7 @@ public final class ChatPanelInterfaceInteraction {
         setupEditMessage: @escaping (EngineMessage.Id?, @escaping (ContainedViewLayoutTransition) -> Void) -> Void,
         beginMessageSelection: @escaping ([EngineMessage.Id], @escaping (ContainedViewLayoutTransition) -> Void) -> Void,
         cancelMessageSelection: @escaping (ContainedViewLayoutTransition) -> Void,
-        deleteSelectedMessages: @escaping () -> Void,
+        deleteSelectedMessages: @escaping (UIView?) -> Void,
         reportSelectedMessages: @escaping () -> Void,
         reportMessages: @escaping ([EngineRawMessage], ContextControllerProtocol?) -> Void,
         blockMessageAuthor: @escaping (EngineRawMessage, ContextControllerProtocol?) -> Void,
@@ -475,7 +475,7 @@ public final class ChatPanelInterfaceInteraction {
         }, setupEditMessage: { _, _ in
         }, beginMessageSelection: { _, _ in
         }, cancelMessageSelection: { _ in
-        }, deleteSelectedMessages: {
+        }, deleteSelectedMessages: { _ in
         }, reportSelectedMessages: {
         }, reportMessages: { _, _ in
         }, blockMessageAuthor: { _, _ in

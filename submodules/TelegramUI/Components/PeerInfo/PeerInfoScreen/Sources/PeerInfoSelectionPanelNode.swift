@@ -47,7 +47,7 @@ final class PeerInfoSelectionPanelNode: ASDisplayNode {
         }, setupEditMessage: { _, _ in
         }, beginMessageSelection: { _, _ in
         }, cancelMessageSelection: { _ in
-        }, deleteSelectedMessages: {
+        }, deleteSelectedMessages: { _ in
             deleteMessages()
         }, reportSelectedMessages: {
             reportMessages()

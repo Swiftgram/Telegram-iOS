@@ -16355,3 +16355,7 @@ Error: %8$@";
 "Chat.ContextMenu.OpenInApp" = "Open In-App";
 
 "CreatePoll.Link.Description" = "Attach a link to this option.";
+
+"ChatList.ClearSearchHistory.Confirm" = "Clear";
+
+"ChatList.RemoveFolderConfirmationTitle" = "Remove %@?";
