@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import TelegramPresentationData
 import AccountContext
 import TelegramCore
@@ -439,7 +440,7 @@ extension ChatControllerImpl {
         }), in: .current)
     }
     
-    func presentDeleteMessageOptions(messageIds: Set<EngineMessage.Id>, options: ChatAvailableMessageActionOptions, contextController: ContextControllerProtocol?, completion: @escaping (ContextMenuActionResult) -> Void) {
+    func presentDeleteMessageOptions(messageIds: Set<EngineMessage.Id>, options: ChatAvailableMessageActionOptions, contextController: ContextControllerProtocol?, sourceView: UIView? = nil, completion: @escaping (ContextMenuActionResult) -> Void) {
         let _ = (self.context.engine.data.get(
             EngineDataMap(messageIds.map(TelegramEngine.EngineData.Item.Messages.Message.init(id:)))
         )
@@ -564,7 +565,17 @@ extension ChatControllerImpl {
                 isChannel = true
             }
             
+            var contextItems: [ContextMenuItem] = []
+            var canDisplayContextMenu = true
+
             if options.contains(.cancelSending) {
+                contextItems.append(.action(ContextMenuActionItem(text: self.presentationData.strings.Conversation_ContextMenuCancelSending, textColor: .destructive, icon: { _ in nil }, action: { [weak self] _, f in
+                    f(.dismissWithoutContent)
+                    if let strongSelf = self {
+                        strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: true, { $0.updatedInterfaceState { $0.withoutSelectionState() } })
+                        strongSelf.beginDeleteMessagesWithUndo(messageIds: messageIds, type: .forEveryone)
+                    }
+                })))
                 items.append(ActionSheetButtonItem(title: self.presentationData.strings.Conversation_ContextMenuCancelSending, color: .destructive, action: { [weak self, weak actionSheet] in
                     actionSheet?.dismissAnimated()
                     if let strongSelf = self {
@@ -573,9 +584,6 @@ extension ChatControllerImpl {
                     }
                 }))
             }
-            
-            var contextItems: [ContextMenuItem] = []
-            var canDisplayContextMenu = true
             
             var unsendPersonalMessages = false
             if options.contains(.unsendPersonal) {
@@ -705,6 +713,16 @@ extension ChatControllerImpl {
             
             if canDisplayContextMenu, let contextController = contextController {
                 contextController.setItems(.single(ContextController.Items(content: .list(contextItems))), minHeight: nil, animated: true)
+            } else if canDisplayContextMenu, let sourceView = sourceView {
+                let contextController = makeContextController(
+                    presentationData: self.presentationData,
+                    source: .reference(ChatControllerContextReferenceContentSource(controller: self, sourceView: sourceView, insets: .zero, actionsOnTop: true)),
+                    items: .single(ContextController.Items(content: .list(contextItems))),
+                    gesture: nil
+                )
+                self.chatDisplayNode.dismissInput()
+                self.presentInGlobalOverlay(contextController)
+                completion(.default)
             } else {
                 actionSheet.setItemGroups([ActionSheetItemGroup(items: items), ActionSheetItemGroup(items: [
                     ActionSheetButtonItem(title: self.presentationData.strings.Common_Cancel, color: .accent, font: .bold, action: { [weak actionSheet] in

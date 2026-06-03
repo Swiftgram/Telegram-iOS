@@ -407,7 +407,7 @@ public final class ChatTextInputPanelComponent: Component {
                     },
                     cancelMessageSelection: { _ in
                     },
-                    deleteSelectedMessages: {
+                    deleteSelectedMessages: { _ in
                     },
                     reportSelectedMessages: {
                     },

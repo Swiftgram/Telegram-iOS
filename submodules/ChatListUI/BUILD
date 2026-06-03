@@ -30,6 +30,7 @@ swift_library(
         "//submodules/SearchBarNode:SearchBarNode",
         "//submodules/ChatListSearchRecentPeersNode:ChatListSearchRecentPeersNode",
         "//submodules/ChatListSearchItemHeader:ChatListSearchItemHeader",
+        "//submodules/TelegramUI/Components/SectionTitleContextItem",
         "//submodules/TemporaryCachedPeerDataManager:TemporaryCachedPeerDataManager",
         "//submodules/PeerPresenceStatusManager:PeerPresenceStatusManager",
         "//submodules/PeerOnlineMarkerNode:PeerOnlineMarkerNode",

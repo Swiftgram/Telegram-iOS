@@ -5096,11 +5096,11 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                         nextTitleIconOrigin += 7.0
                         let titleBadgeFrame = CGRect(origin: CGPoint(x: nextTitleIconOrigin, y: titleFrame.minY + floor((titleFrame.height - titleBadgeLayout.size.height) * 0.5)), size: titleBadgeLayout.size)
                         nextTitleIconOrigin += titleBadgeLayout.size.width + 4.0
-                        titleBadgeNode.frame = titleBadgeFrame
+                        transition.updateFrame(node: titleBadgeNode, frame: titleBadgeFrame)
                         
                         var titleBadgeBackgroundFrame = titleBadgeFrame.insetBy(dx: -4.0, dy: -2.0)
                         titleBadgeBackgroundFrame.size.height -= 1.0
-                        backgroundView.frame = titleBadgeBackgroundFrame
+                        transition.updateFrame(view: backgroundView, frame: titleBadgeBackgroundFrame)
                         if item.presentationData.theme.overallDarkAppearance {
                             backgroundView.tintColor = theme.titleColor.withMultipliedAlpha(0.1)
                         } else {

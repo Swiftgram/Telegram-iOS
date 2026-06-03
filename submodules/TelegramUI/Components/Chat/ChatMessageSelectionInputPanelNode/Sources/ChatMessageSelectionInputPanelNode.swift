@@ -297,7 +297,7 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
     }
     
     @objc private func deleteButtonPressed() {
-        self.interfaceInteraction?.deleteSelectedMessages()
+        self.interfaceInteraction?.deleteSelectedMessages(self.deleteButton)
     }
     
     @objc private func reportButtonPressed() {

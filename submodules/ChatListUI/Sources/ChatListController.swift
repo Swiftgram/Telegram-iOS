@@ -4487,11 +4487,11 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             guard let self else {
                 return
             }
-            guard let filter = filters.first(where: { $0.id == id }) else {
+            guard let filter = filters.first(where: { $0.id == id }), case let .filter(_, title, _, data) = filter else {
                 return
             }
             
-            if case let .filter(_, title, _, data) = filter, data.isShared {
+            if data.isShared {
                 let _ = (combineLatest(
                     self.context.engine.data.get(
                         EngineDataList(data.includePeers.peers.map(TelegramEngine.EngineData.Item.Peer.Peer.init(id:))),
@@ -4573,24 +4573,14 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                     }
                 })
             } else {
-                let actionSheet = ActionSheetController(presentationData: self.presentationData)
-                
-                actionSheet.setItemGroups([
-                    ActionSheetItemGroup(items: [
-                        ActionSheetTextItem(title: self.presentationData.strings.ChatList_RemoveFolderConfirmation),
-                        ActionSheetButtonItem(title: self.presentationData.strings.ChatList_RemoveFolderAction, color: .destructive, action: { [weak actionSheet] in
-                            actionSheet?.dismissAnimated()
-                            
-                            apply()
-                        })
-                    ]),
-                    ActionSheetItemGroup(items: [
-                        ActionSheetButtonItem(title: self.presentationData.strings.Common_Cancel, color: .accent, font: .bold, action: { [weak actionSheet] in
-                            actionSheet?.dismissAnimated()
-                        })
-                    ])
+                let alertController = textAlertController(context: context, title: self.presentationData.strings.ChatList_RemoveFolderConfirmationTitle(title.text).string, text: self.presentationData.strings.ChatList_RemoveFolderConfirmation, actions: [
+                    TextAlertAction(type: .genericAction, title: self.presentationData.strings.Common_Cancel, action: {
+                    }),
+                    TextAlertAction(type: .destructiveAction, title: self.presentationData.strings.ChatList_RemoveFolderAction, action: {
+                        apply()
+                    })
                 ])
-                self.present(actionSheet, in: .window(.root))
+                self.present(alertController, in: .window(.root))
             }
         })
     }
