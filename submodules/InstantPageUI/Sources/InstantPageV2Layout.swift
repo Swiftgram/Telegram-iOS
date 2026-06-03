@@ -6,6 +6,7 @@ import TelegramPresentationData
 import TelegramUIPreferences
 import TextFormat
 import TelegramStringFormatting
+import MosaicLayout
 
 // MARK: - Public layout data types
 
@@ -49,6 +50,8 @@ public struct InstantPageV2Layout {
             case let .mediaVideo(m):       result.append(m.media)
             case let .mediaMap(m):         result.append(m.media)
             case let .mediaCoverImage(m):  result.append(m.media)
+            case let .mediaAudio(m):       result.append(m.media)
+            case let .slideshow(s):        result.append(contentsOf: s.medias)
             case let .details(d):
                 if let inner = d.innerLayout {
                     collectMedias(in: inner.items, into: &result)
@@ -84,8 +87,10 @@ public enum InstantPageV2LaidOutItem {
     case mediaVideo(InstantPageV2MediaVideoItem)
     case mediaMap(InstantPageV2MediaMapItem)
     case mediaCoverImage(InstantPageV2MediaCoverImageItem)
+    case mediaAudio(InstantPageV2MediaAudioItem)
     case formula(InstantPageV2FormulaItem)
     case thinking(InstantPageV2ThinkingItem)
+    case slideshow(InstantPageV2SlideshowItem)
 
     public var frame: CGRect {
         switch self {
@@ -103,8 +108,10 @@ public enum InstantPageV2LaidOutItem {
         case let .mediaVideo(item):        return item.frame
         case let .mediaMap(item):          return item.frame
         case let .mediaCoverImage(item):   return item.frame
+        case let .mediaAudio(item):        return item.frame
         case let .formula(item):           return item.frame
         case let .thinking(item):          return item.frame
+        case let .slideshow(item):         return item.frame
         }
     }
 
@@ -127,8 +134,10 @@ public enum InstantPageV2LaidOutItem {
         case var .mediaVideo(item):        item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .mediaVideo(item)
         case var .mediaMap(item):          item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .mediaMap(item)
         case var .mediaCoverImage(item):   item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .mediaCoverImage(item)
+        case var .mediaAudio(item):        item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .mediaAudio(item)
         case var .formula(item):          item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .formula(item)
         case var .thinking(item):         item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .thinking(item)
+        case var .slideshow(item):        item.frame = item.frame.offsetBy(dx: delta.x, dy: delta.y); return .slideshow(item)
         }
     }
 }
@@ -236,6 +245,18 @@ public struct InstantPageV2MediaImageItem {
     }
 }
 
+public struct InstantPageV2MediaAudioItem {
+    public var frame: CGRect
+    public let media: InstantPageMedia
+    public let webPage: TelegramMediaWebpage
+
+    public init(frame: CGRect, media: InstantPageMedia, webPage: TelegramMediaWebpage) {
+        self.frame = frame
+        self.media = media
+        self.webPage = webPage
+    }
+}
+
 public struct InstantPageV2MediaVideoItem {
     public var frame: CGRect
     public let cornerRadius: CGFloat
@@ -288,6 +309,18 @@ public struct InstantPageV2MediaPlaceholderItem {
     public var frame: CGRect
     public let kind: InstantPageV2MediaPlaceholderKind
     public let cornerRadius: CGFloat
+}
+
+public struct InstantPageV2SlideshowItem {
+    public var frame: CGRect
+    public let medias: [InstantPageMedia]
+    public let webPage: TelegramMediaWebpage
+
+    public init(frame: CGRect, medias: [InstantPageMedia], webPage: TelegramMediaWebpage) {
+        self.frame = frame
+        self.medias = medias
+        self.webPage = webPage
+    }
 }
 
 public struct InstantPageV2DetailsItem {
@@ -688,6 +721,7 @@ private func layoutBlock(
                 caption: caption,
                 isCover: isCover,
                 cornerRadius: 8.0,
+                flush: true,
                 boundingWidth: boundingWidth,
                 horizontalInset: horizontalInset,
                 context: &context
@@ -727,6 +761,7 @@ private func layoutBlock(
                 caption: caption,
                 isCover: isCover,
                 cornerRadius: 8.0,
+                flush: true,
                 boundingWidth: boundingWidth,
                 horizontalInset: horizontalInset,
                 context: &context
@@ -735,11 +770,34 @@ private func layoutBlock(
             return []
         }
 
-    case let .audio(_, caption):
-        return layoutMediaWithCaption(kind: .audio,
-            naturalSize: CGSize(width: boundingWidth, height: 56.0), caption: caption,
-            isCover: false, cornerRadius: 8.0, boundingWidth: boundingWidth,
-            horizontalInset: horizontalInset, context: &context)
+    case let .audio(audioId, caption):
+        guard case let .file(file) = context.media[audioId] else {
+            return []
+        }
+        let mediaIndex = context.mediaIndexCounter
+        context.mediaIndexCounter += 1
+        let instantPageMedia = InstantPageMedia(
+            index: mediaIndex,
+            media: .file(file),
+            url: nil,
+            caption: nil,
+            credit: nil
+        )
+        let audioFrame = CGRect(x: 0.0, y: 0.0, width: boundingWidth, height: 44.0)
+        var result: [InstantPageV2LaidOutItem] = [.mediaAudio(InstantPageV2MediaAudioItem(
+            frame: audioFrame,
+            media: instantPageMedia,
+            webPage: context.webpage
+        ))]
+        let (captionItems, _) = layoutCaptionAndCredit(
+            caption,
+            offset: audioFrame.height,
+            boundingWidth: boundingWidth,
+            horizontalInset: horizontalInset,
+            context: &context
+        )
+        result.append(contentsOf: captionItems)
+        return result
 
     case let .webEmbed(url, _, dimensions, caption, _, _, coverId):
         // V1 (InstantPageLayout.swift:848): if the embed has a URL and a resolvable cover image,
@@ -800,6 +858,7 @@ private func layoutBlock(
                 caption: caption,
                 isCover: false,
                 cornerRadius: 0.0,
+                flush: true,
                 boundingWidth: boundingWidth,
                 horizontalInset: horizontalInset,
                 context: &context
@@ -809,38 +868,48 @@ private func layoutBlock(
             let h: CGFloat = CGFloat(dimensions?.height ?? 240)
             return layoutMediaWithCaption(kind: .webEmbed,
                 naturalSize: CGSize(width: boundingWidth, height: h), caption: caption,
-                isCover: false, cornerRadius: 0.0, boundingWidth: boundingWidth,
+                isCover: false, cornerRadius: 0.0, flush: true, boundingWidth: boundingWidth,
                 horizontalInset: horizontalInset, context: &context)
         }
 
     case let .postEmbed(_, _, _, _, _, _, caption):
         return layoutMediaWithCaption(kind: .postEmbed,
             naturalSize: CGSize(width: boundingWidth, height: 140.0), caption: caption,
-            isCover: false, cornerRadius: 8.0, boundingWidth: boundingWidth,
+            isCover: false, cornerRadius: 8.0, flush: true, boundingWidth: boundingWidth,
             horizontalInset: horizontalInset, context: &context)
 
-    case let .collage(_, caption):
-        return layoutMediaWithCaption(kind: .collage,
-            naturalSize: CGSize(width: boundingWidth, height: 240.0), caption: caption,
-            isCover: false, cornerRadius: 8.0, boundingWidth: boundingWidth,
-            horizontalInset: horizontalInset, context: &context)
+    case let .collage(items, caption):
+        return layoutCollage(items: items, caption: caption, isCover: isCover,
+                             boundingWidth: boundingWidth, horizontalInset: horizontalInset, context: &context)
 
-    case let .slideshow(_, caption):
-        return layoutMediaWithCaption(kind: .slideshow,
-            naturalSize: CGSize(width: boundingWidth, height: 240.0), caption: caption,
-            isCover: false, cornerRadius: 8.0, boundingWidth: boundingWidth,
-            horizontalInset: horizontalInset, context: &context)
+    case let .slideshow(items, caption):
+        return layoutSlideshow(items: items, caption: caption,
+                               boundingWidth: boundingWidth, horizontalInset: horizontalInset, context: &context)
 
     case let .channelBanner(channel):
         if channel == nil { return [] }
         return layoutMediaWithCaption(kind: .channelBanner,
             naturalSize: CGSize(width: boundingWidth, height: 60.0),
             caption: InstantPageCaption(text: .empty, credit: .empty),
-            isCover: false, cornerRadius: 0.0, boundingWidth: boundingWidth,
+            isCover: false, cornerRadius: 0.0, flush: true, boundingWidth: boundingWidth,
             horizontalInset: horizontalInset, context: &context)
 
     case let .map(latitude, longitude, zoom, dimensions, caption):
-        let naturalSize = CGSize(width: CGFloat(dimensions.width), height: CGFloat(dimensions.height))
+        // AI/server-sent `.map` blocks can arrive with zero `dimensions` (the wire `w`/`h` are
+        // required, but the sender may put 0). A zero `naturalSize.height` collapses the media
+        // frame to height 0 (`instantPageV2MediaFrame`'s else branch) — the map takes no space,
+        // the caption slides up into it, and the pin floats over the caption — and a zero-sized
+        // `MapSnapshotMediaResource` makes `MKMapSnapshotter` render nothing. Substitute a sensible
+        // default (a 2:1 map strip) for BOTH the layout size and the snapshot resource. Real web
+        // articles (the V1 renderer) always carry real dimensions, so only the rich-message path
+        // hits this; the fallback is scoped here rather than in V1 or the wire/parse layer.
+        let effectiveDimensions: PixelDimensions
+        if dimensions.width > 0 && dimensions.height > 0 {
+            effectiveDimensions = dimensions
+        } else {
+            effectiveDimensions = PixelDimensions(width: 600, height: 300)
+        }
+        let naturalSize = CGSize(width: CGFloat(effectiveDimensions.width), height: CGFloat(effectiveDimensions.height))
         let map = TelegramMediaMap(
             latitude: latitude,
             longitude: longitude,
@@ -850,7 +919,7 @@ private func layoutBlock(
             liveBroadcastingTimeout: nil,
             liveProximityNotificationRadius: nil
         )
-        let mapAttributes: [InstantPageImageAttribute] = [InstantPageMapAttribute(zoom: zoom, dimensions: dimensions.cgSize)]
+        let mapAttributes: [InstantPageImageAttribute] = [InstantPageMapAttribute(zoom: zoom, dimensions: effectiveDimensions.cgSize)]
         let mediaIndex = context.mediaIndexCounter
         context.mediaIndexCounter += 1
         let instantPageMedia = InstantPageMedia(
@@ -875,6 +944,7 @@ private func layoutBlock(
             caption: caption,
             isCover: false,
             cornerRadius: 8.0,
+            flush: true,
             boundingWidth: boundingWidth,
             horizontalInset: horizontalInset,
             context: &context
@@ -885,7 +955,7 @@ private func layoutBlock(
         return layoutMediaWithCaption(kind: .relatedArticles,
             naturalSize: CGSize(width: boundingWidth, height: max(h, 80.0)),
             caption: InstantPageCaption(text: .empty, credit: .empty),
-            isCover: false, cornerRadius: 0.0, boundingWidth: boundingWidth,
+            isCover: false, cornerRadius: 0.0, flush: true, boundingWidth: boundingWidth,
             horizontalInset: horizontalInset, context: &context)
 
     case let .formula(latex):
@@ -1644,6 +1714,60 @@ private func layoutCaptionAndCredit(
     return (items, totalHeight)
 }
 
+// How many points a full-width flush media item bleeds past the bubble interior on the
+// trailing edge so the rounded `containerNode` clip (see ChatMessageRichDataBubbleContentNode) rounds
+// the trailing corners with no 1px background sliver. Harmless: the
+// `contentSize.width = min(maxX, boundingWidth)` clamp keeps it from widening the bubble.
+private let instantPageV2MediaEdgeBleed: CGFloat = 4.0
+
+// Computes the laid-out frame for a block-media item.
+//
+// `flush == true` (every current caller): the media is edge-to-edge (x = 0, full
+// `boundingWidth`) with corner radius forced to 0, relying on the bubble's rounded clipping
+// container to round media that meets the bubble's top/bottom edge. A media item that fills the
+// full width is widened by `instantPageV2MediaEdgeBleed` on the trailing edge (see the constant).
+// A media item narrower than the full width (a small image — NOT upscaled, the `min(_, 1.0)`
+// scale cap is kept) stays at its natural size, flush-left at x = 0, with no bleed.
+// (The `cornerRadius` argument is ignored when `flush == true` — flush media is always
+// un-rounded; callers may still pass their legacy radius, it has no effect.)
+//
+// `flush == false`: DEAD as of the V2 audio port — audio was its last caller and now has its
+// own `layoutAudio` arm (in `layoutBlock`), so this branch is currently unreachable (follow-up:
+// drop the `flush` parameter and this branch). Legacy behavior was: inset by `horizontalInset`
+// on each side with the caller-supplied corner radius.
+//
+// Returns the frame, the un-bled scaled content size (the caption is offset by
+// `scaledSize.height`), and the effective corner radius to stamp on the item.
+private func instantPageV2MediaFrame(
+    naturalSize: CGSize,
+    flush: Bool,
+    cornerRadius: CGFloat,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat
+) -> (frame: CGRect, scaledSize: CGSize, cornerRadius: CGFloat) {
+    let availableWidth = flush ? boundingWidth : (boundingWidth - horizontalInset * 2.0)
+    let scaledSize: CGSize
+    if naturalSize.width > 0.0 && naturalSize.height > 0.0 {
+        let scale = min(availableWidth / naturalSize.width, 1.0)
+        scaledSize = CGSize(width: floor(naturalSize.width * scale), height: floor(naturalSize.height * scale))
+    } else {
+        scaledSize = CGSize(width: availableWidth, height: naturalSize.height)
+    }
+
+    if flush {
+        // `floor(x) > x - 1` always, so a full-width item (scaledSize.width == floor(availableWidth))
+        // always trips this; a genuinely smaller image does not. (availableWidth == boundingWidth
+        // in the flush branch, so the bleed below extends past the full bounding width.)
+        let fillsWidth = scaledSize.width >= availableWidth - 1.0
+        let frameWidth = fillsWidth ? boundingWidth + instantPageV2MediaEdgeBleed : scaledSize.width
+        let frame = CGRect(x: 0.0, y: 0.0, width: frameWidth, height: scaledSize.height)
+        return (frame, scaledSize, 0.0)
+    } else {
+        let frame = CGRect(x: horizontalInset, y: 0.0, width: scaledSize.width, height: scaledSize.height)
+        return (frame, scaledSize, cornerRadius)
+    }
+}
+
 /// Variant of `layoutMediaWithCaption` that emits a caller-produced typed media item
 /// instead of a `.mediaPlaceholder`. The frame-fitting logic + caption/credit text item
 /// layout is otherwise identical.
@@ -1653,21 +1777,19 @@ private func layoutTypedMediaWithCaption(
     caption: InstantPageCaption,
     isCover: Bool,
     cornerRadius: CGFloat,
+    flush: Bool,
     boundingWidth: CGFloat,
     horizontalInset: CGFloat,
     context: inout LayoutContext
 ) -> [InstantPageV2LaidOutItem] {
-    let availableWidth = boundingWidth - horizontalInset * 2.0
-    let scaledSize: CGSize
-    if naturalSize.width > 0.0 && naturalSize.height > 0.0 {
-        let scale = min(availableWidth / naturalSize.width, 1.0)
-        scaledSize = CGSize(width: floor(naturalSize.width * scale), height: floor(naturalSize.height * scale))
-    } else {
-        scaledSize = CGSize(width: availableWidth, height: naturalSize.height)
-    }
-
-    let mediaFrame = CGRect(x: horizontalInset, y: 0.0, width: scaledSize.width, height: scaledSize.height)
-    var result: [InstantPageV2LaidOutItem] = [produceItem(mediaFrame, cornerRadius)]
+    let (mediaFrame, scaledSize, effectiveCornerRadius) = instantPageV2MediaFrame(
+        naturalSize: naturalSize,
+        flush: flush,
+        cornerRadius: cornerRadius,
+        boundingWidth: boundingWidth,
+        horizontalInset: horizontalInset
+    )
+    var result: [InstantPageV2LaidOutItem] = [produceItem(mediaFrame, effectiveCornerRadius)]
 
     let (captionItems, captionHeight) = layoutCaptionAndCredit(
         caption,
@@ -1695,36 +1817,154 @@ private func layoutTypedMediaWithCaption(
     return result
 }
 
+/// Lays out an `InstantPageBlock.collage(items:caption:)`. Mirrors V1
+/// (InstantPageLayout.swift:692-727): compute a mosaic over the inner image/video sizes, then emit
+/// one existing typed media item per cell at its mosaic frame, flush (cornerRadius 0) so the bubble's
+/// rounded clip handles the outer corners and the 1pt mosaic spacing handles the interior gaps. A
+/// single caption renders below the whole mosaic. Cells are top-level `.mediaImage`/`.mediaVideo`
+/// items, so gallery / reveal / registry / hidden-media all work with no extra code.
+private func layoutCollage(
+    items innerBlocks: [InstantPageBlock],
+    caption: InstantPageCaption,
+    isCover: Bool,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    // 1. One size per inner block (zero for unresolved — V1 still reserves a mosaic slot).
+    var itemSizes: [CGSize] = []
+    for block in innerBlocks {
+        switch block {
+        case let .image(id, _, _, _):
+            if case let .image(image) = context.media[id], let largest = largestImageRepresentation(image.representations) {
+                itemSizes.append(CGSize(width: CGFloat(largest.dimensions.width), height: CGFloat(largest.dimensions.height)))
+            } else {
+                itemSizes.append(CGSize())
+            }
+        case let .video(id, _, _, _):
+            if case let .file(file) = context.media[id], let dimensions = file.dimensions {
+                itemSizes.append(CGSize(width: CGFloat(dimensions.width), height: CGFloat(dimensions.height)))
+            } else {
+                itemSizes.append(CGSize())
+            }
+        default:
+            itemSizes.append(CGSize())
+        }
+    }
+
+    // 2. Mosaic geometry — the same engine V1 uses.
+    let (mosaic, mosaicSize) = chatMessageBubbleMosaicLayout(maxSize: CGSize(width: boundingWidth, height: boundingWidth), itemSizes: itemSizes)
+
+    // 3. One typed media item per resolvable cell, at its mosaic frame.
+    var result: [InstantPageV2LaidOutItem] = []
+    let webpage = context.webpage
+    for (i, block) in innerBlocks.enumerated() {
+        guard i < mosaic.count else { break }
+        let (cellFrame, position) = mosaic[i]
+        // Right-edge cells bleed 4pt so the bubble's rounded clip leaves no trailing sliver.
+        var frame = cellFrame
+        if position.contains(.right) {
+            frame.size.width += instantPageV2MediaEdgeBleed
+        }
+        switch block {
+        case let .image(id, blockCaption, url, webpageId):
+            guard case let .image(image) = context.media[id] else { continue }
+            let mediaIndex = context.mediaIndexCounter
+            context.mediaIndexCounter += 1
+            let mediaUrl: InstantPageUrlItem? = url.flatMap { InstantPageUrlItem(url: $0, webpageId: webpageId) }
+            let media = InstantPageMedia(index: mediaIndex, media: .image(image), url: mediaUrl, caption: blockCaption.text, credit: blockCaption.credit)
+            result.append(.mediaImage(InstantPageV2MediaImageItem(frame: frame, cornerRadius: 0.0, media: media, webPage: webpage, attributes: [])))
+        case let .video(id, blockCaption, _, _):
+            guard case let .file(file) = context.media[id] else { continue }
+            let mediaIndex = context.mediaIndexCounter
+            context.mediaIndexCounter += 1
+            let media = InstantPageMedia(index: mediaIndex, media: .file(file), url: nil, caption: blockCaption.text, credit: blockCaption.credit)
+            result.append(.mediaVideo(InstantPageV2MediaVideoItem(frame: frame, cornerRadius: 0.0, media: media, webPage: webpage, attributes: [])))
+        default:
+            continue
+        }
+    }
+
+    // 4. Caption below the mosaic.
+    let (captionItems, captionHeight) = layoutCaptionAndCredit(caption, offset: mosaicSize.height, boundingWidth: boundingWidth, horizontalInset: horizontalInset, context: &context)
+    result.append(contentsOf: captionItems)
+
+    // Cover-caption padding parity with layoutTypedMediaWithCaption.
+    if isCover && captionHeight > 0.0 {
+        if let lastIndex = result.lastIndex(where: { if case .text = $0 { return true } else { return false } }) {
+            if case var .text(lastText) = result[lastIndex] {
+                lastText.frame = CGRect(origin: lastText.frame.origin, size: CGSize(width: lastText.frame.width, height: lastText.frame.height + 14.0))
+                result[lastIndex] = .text(lastText)
+            }
+        }
+    }
+
+    return result
+}
+
+/// Lays out an `InstantPageBlock.slideshow(items:caption:)`. Mirrors V1
+/// (InstantPageLayout.swift:809-843): collect the inner image medias, size the block to the tallest
+/// image fitted into the bounding width (cap 1200), emit a single full-width slideshow carousel item,
+/// caption below. Only `.image` inner blocks contribute (matches V1).
+private func layoutSlideshow(
+    items innerBlocks: [InstantPageBlock],
+    caption: InstantPageCaption,
+    boundingWidth: CGFloat,
+    horizontalInset: CGFloat,
+    context: inout LayoutContext
+) -> [InstantPageV2LaidOutItem] {
+    var medias: [InstantPageMedia] = []
+    var height: CGFloat = 0.0
+    for block in innerBlocks {
+        switch block {
+        case let .image(id, blockCaption, url, webpageId):
+            if case let .image(image) = context.media[id], let imageSize = largestImageRepresentation(image.representations)?.dimensions {
+                let mediaIndex = context.mediaIndexCounter
+                context.mediaIndexCounter += 1
+                let filledSize = imageSize.cgSize.fitted(CGSize(width: boundingWidth, height: 1200.0))
+                height = max(height, filledSize.height)
+                let mediaUrl: InstantPageUrlItem? = url.flatMap { InstantPageUrlItem(url: $0, webpageId: webpageId) }
+                medias.append(InstantPageMedia(index: mediaIndex, media: .image(image), url: mediaUrl, caption: blockCaption.text, credit: blockCaption.credit))
+            }
+        default:
+            break
+        }
+    }
+
+    var result: [InstantPageV2LaidOutItem] = []
+    result.append(.slideshow(InstantPageV2SlideshowItem(
+        frame: CGRect(x: 0.0, y: 0.0, width: boundingWidth, height: height),
+        medias: medias,
+        webPage: context.webpage
+    )))
+
+    let (captionItems, _) = layoutCaptionAndCredit(caption, offset: height, boundingWidth: boundingWidth, horizontalInset: horizontalInset, context: &context)
+    result.append(contentsOf: captionItems)
+    return result
+}
+
 private func layoutMediaWithCaption(
     kind: InstantPageV2MediaPlaceholderKind,
     naturalSize: CGSize,
     caption: InstantPageCaption,
     isCover: Bool,
     cornerRadius: CGFloat,
+    flush: Bool,
     boundingWidth: CGFloat,
     horizontalInset: CGFloat,
     context: inout LayoutContext
 ) -> [InstantPageV2LaidOutItem] {
-    // Scale naturalSize to fit within (boundingWidth - horizontalInset*2) × naturalSize.height.
-    let availableWidth = boundingWidth - horizontalInset * 2.0
-    let scaledSize: CGSize
-    if naturalSize.width > 0.0 && naturalSize.height > 0.0 {
-        let scale = min(availableWidth / naturalSize.width, 1.0)
-        scaledSize = CGSize(width: floor(naturalSize.width * scale), height: floor(naturalSize.height * scale))
-    } else {
-        scaledSize = CGSize(width: availableWidth, height: naturalSize.height)
-    }
-
-    let placeholderFrame = CGRect(
-        x: horizontalInset,
-        y: 0.0,
-        width: scaledSize.width,
-        height: scaledSize.height
+    let (placeholderFrame, scaledSize, effectiveCornerRadius) = instantPageV2MediaFrame(
+        naturalSize: naturalSize,
+        flush: flush,
+        cornerRadius: cornerRadius,
+        boundingWidth: boundingWidth,
+        horizontalInset: horizontalInset
     )
     let placeholderItem = InstantPageV2MediaPlaceholderItem(
         frame: placeholderFrame,
         kind: kind,
-        cornerRadius: cornerRadius
+        cornerRadius: effectiveCornerRadius
     )
 
     var result: [InstantPageV2LaidOutItem] = [.mediaPlaceholder(placeholderItem)]
@@ -2134,8 +2374,8 @@ private func layoutQuoteText(
         let lineWidth = boundingWidth - horizontalInset * 2.0
         let topLine = InstantPageV2ShapeItem(
             frame: CGRect(x: horizontalInset, y: contentHeight, width: lineWidth, height: 1.0),
-            kind: .line(thickness: 1.0),
-            color: context.theme.textCategories.caption.color
+            kind: .line(thickness: UIScreenPixel),
+            color: context.theme.separatorColor
         )
         result.append(.shape(topLine))
         contentHeight += 1.0 + verticalInset   // rule + small gap before body text

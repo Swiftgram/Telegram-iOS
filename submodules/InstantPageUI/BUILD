@@ -25,6 +25,7 @@ swift_library(
         "//submodules/TelegramUI/Components/MultiAnimationRenderer:MultiAnimationRenderer",
         "//submodules/GalleryUI:GalleryUI",
         "//submodules/MusicAlbumArtResources:MusicAlbumArtResources",
+        "//submodules/SemanticStatusNode:SemanticStatusNode",
         "//submodules/LiveLocationPositionNode:LiveLocationPositionNode",
         "//submodules/MosaicLayout:MosaicLayout",
         "//submodules/LocationUI:LocationUI",

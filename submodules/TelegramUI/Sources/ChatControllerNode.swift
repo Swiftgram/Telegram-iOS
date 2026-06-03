@@ -4861,7 +4861,7 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                 if case .customChatContents = self.chatPresentationInterfaceState.subject {
                     isSpecialChatContents = true
                 }
-                if !isSpecialChatContents, let attribute = richMarkdownAttributeIfNeeded(context: self.context, attributedText: effectiveInputText) {
+                if !"".isEmpty, !isSpecialChatContents, let attribute = richMarkdownAttributeIfNeeded(context: self.context, attributedText: effectiveInputText) {
                     let attributes: [MessageAttribute] = [attribute]
                     var richBubbleUpEmojiOrStickersets: [ItemCollectionId] = []
                     for (_, packId) in bubbleUpEmojiOrStickersetsById {

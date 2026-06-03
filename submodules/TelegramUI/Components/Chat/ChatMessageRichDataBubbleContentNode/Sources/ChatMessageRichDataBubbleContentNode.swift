@@ -139,7 +139,8 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
             },
             baseNavigationController: { [weak self] in
                 self?.item?.controllerInteraction.navigationController()
-            }
+            },
+            message: messageReference
         )
         let view = InstantPageV2View(renderContext: renderContext)
         self.pageView = view

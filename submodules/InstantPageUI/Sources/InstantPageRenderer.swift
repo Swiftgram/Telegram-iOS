@@ -1,5 +1,6 @@
 import Foundation
 import UIKit
+import AsyncDisplayKit
 import Display
 import CheckNode
 import SwiftSignalKit
@@ -35,7 +36,7 @@ public enum InstantPageV2StableItemId: Hashable {
 }
 
 public enum InstantPageV2ItemKind: Hashable {
-    case text, codeBlock, divider, listMarker, blockQuoteBar, shape, mediaPlaceholder, table, anchor, formula
+    case text, codeBlock, divider, listMarker, blockQuoteBar, shape, mediaPlaceholder, table, anchor, formula, slideshow
 }
 
 // MARK: - Render context
@@ -58,6 +59,11 @@ public final class InstantPageV2RenderContext {
     public let push: (ViewController) -> Void
     public let openUrl: (InstantPageUrlItem) -> Void
     public let baseNavigationController: () -> NavigationController?
+    /// A reference to the message hosting this page, when rendered inside a chat bubble. Used to
+    /// key audio playback per message (`.richMessage(message.id)`) AND to fetch audio files via a
+    /// message reference (so a stale file reference can revalidate); `nil` in the send preview,
+    /// which falls back to the webpage-keyed playlist id + webpage file reference.
+    public let message: MessageReference?
 
     public init(
         context: AccountContext,
@@ -68,7 +74,8 @@ public final class InstantPageV2RenderContext {
         present: @escaping (ViewController, Any?) -> Void,
         push: @escaping (ViewController) -> Void,
         openUrl: @escaping (InstantPageUrlItem) -> Void,
-        baseNavigationController: @escaping () -> NavigationController?
+        baseNavigationController: @escaping () -> NavigationController?,
+        message: MessageReference?
     ) {
         self.context = context
         self.webpage = webpage
@@ -79,6 +86,7 @@ public final class InstantPageV2RenderContext {
         self.push = push
         self.openUrl = openUrl
         self.baseNavigationController = baseNavigationController
+        self.message = message
     }
 
     /// Update the content-bearing fields for a later chunk of the SAME message. Enables the
@@ -675,9 +683,17 @@ public final class InstantPageV2View: UIView {
             guard let v = existingView as? InstantPageV2MediaCoverImageView, let rc = self.renderContext else { return nil }
             v.update(item: media, theme: theme, renderContext: rc)
             return v
+        case let .mediaAudio(media):
+            guard let v = existingView as? InstantPageV2MediaAudioView, let rc = self.renderContext else { return nil }
+            v.update(item: media, theme: theme, renderContext: rc)
+            return v
         case let .thinking(thinking):
             guard let v = existingView as? InstantPageV2ThinkingView else { return nil }
             v.update(item: thinking, theme: theme)
+            return v
+        case let .slideshow(slideshow):
+            guard let v = existingView as? InstantPageV2SlideshowView, let rc = self.renderContext else { return nil }
+            v.update(item: slideshow, theme: theme, renderContext: rc)
             return v
         }
     }
@@ -688,6 +704,7 @@ public final class InstantPageV2View: UIView {
         case let .mediaVideo(m):       return .media(m.media.index)
         case let .mediaMap(m):         return .media(m.media.index)
         case let .mediaCoverImage(m):  return .media(m.media.index)
+        case let .mediaAudio(m):       return .media(m.media.index)
         case let .details(d):          return .details(d.index)
         case .text:                    return .positional(.text, position)
         case .codeBlock:               return .positional(.codeBlock, position)
@@ -700,6 +717,7 @@ public final class InstantPageV2View: UIView {
         case .anchor:                  return .positional(.anchor, position)
         case .formula:                 return .positional(.formula, position)
         case .thinking:                return .thinking(position)
+        case .slideshow:               return .positional(.slideshow, position)
         }
     }
 
@@ -724,13 +742,8 @@ public final class InstantPageV2View: UIView {
         guard let wrapperBox = self.trueRegistryRoot.mediaRegistry[media.index], let wrapper = wrapperBox.value else {
             return nil
         }
-        let imageNode: InstantPageImageNode? =
-            (wrapper as? InstantPageV2MediaImageView)?.wrappedNode
-            ?? (wrapper as? InstantPageV2MediaVideoView)?.wrappedNode
-            ?? (wrapper as? InstantPageV2MediaMapView)?.wrappedNode
-            ?? (wrapper as? InstantPageV2MediaCoverImageView)?.wrappedNode
-        guard let imageNode else { return nil }
-        guard let transitionNode = imageNode.transitionNode(media: media) else { return nil }
+        guard let itemView = wrapper as? InstantPageItemView else { return nil }
+        guard let transitionNode = itemView.instantPageTransitionNode(for: media) else { return nil }
         return GalleryTransitionArguments(transitionNode: transitionNode, addToTransitionSurface: addToTransitionSurface)
     }
 
@@ -739,10 +752,7 @@ public final class InstantPageV2View: UIView {
     func applyHiddenMedia(_ hidden: InstantPageMedia?) {
         for (_, weakBox) in self.trueRegistryRoot.mediaRegistry {
             guard let wrapper = weakBox.value else { continue }
-            if let v = wrapper as? InstantPageV2MediaImageView      { v.wrappedNode.updateHiddenMedia(media: hidden) }
-            if let v = wrapper as? InstantPageV2MediaVideoView      { v.wrappedNode.updateHiddenMedia(media: hidden) }
-            if let v = wrapper as? InstantPageV2MediaMapView        { v.wrappedNode.updateHiddenMedia(media: hidden) }
-            if let v = wrapper as? InstantPageV2MediaCoverImageView { v.wrappedNode.updateHiddenMedia(media: hidden) }
+            (wrapper as? InstantPageItemView)?.instantPageUpdateHiddenMedia(hidden)
         }
     }
 
@@ -796,10 +806,22 @@ public final class InstantPageV2View: UIView {
             } else {
                 return InstantPageV2MediaPlaceholderView(item: placeholderFallback(for: media), theme: theme)
             }
+        case let .mediaAudio(media):
+            if let renderContext = self.renderContext {
+                return InstantPageV2MediaAudioView(item: media, renderContext: renderContext, theme: theme)
+            } else {
+                return InstantPageV2MediaPlaceholderView(item: InstantPageV2MediaPlaceholderItem(frame: media.frame, kind: .audio, cornerRadius: 0.0), theme: theme)
+            }
         case let .formula(formula):
             return InstantPageV2FormulaView(item: formula, theme: theme)
         case let .thinking(thinking):
             return InstantPageV2ThinkingView(item: thinking, theme: theme)
+        case let .slideshow(slideshow):
+            if let renderContext = self.renderContext {
+                return InstantPageV2SlideshowView(item: slideshow, renderContext: renderContext, theme: theme)
+            } else {
+                return InstantPageV2MediaPlaceholderView(item: InstantPageV2MediaPlaceholderItem(frame: slideshow.frame, kind: .slideshow, cornerRadius: 0.0), theme: theme)
+            }
         }
     }
 
@@ -853,10 +875,18 @@ protocol InstantPageItemView: UIView {
     var itemFrame: CGRect { get }
     /// Recursion hook for nested layouts (details body, table cells, table title).
     var subLayoutView: InstantPageV2View? { get }
+    /// Gallery open: the transition source for `media` if this view (or a descendant) shows it.
+    /// Default nil (non-media views). Media views forward to their wrapped `InstantPageImageNode`;
+    /// the slideshow forwards to its matching page.
+    func instantPageTransitionNode(for media: InstantPageMedia) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))?
+    /// Gallery hidden-media tick: hide/show the source for `media`. Default no-op.
+    func instantPageUpdateHiddenMedia(_ media: InstantPageMedia?)
 }
 
 extension InstantPageItemView {
     var subLayoutView: InstantPageV2View? { return nil }
+    func instantPageTransitionNode(for media: InstantPageMedia) -> (ASDisplayNode, CGRect, () -> (UIView?, UIView?))? { return nil }
+    func instantPageUpdateHiddenMedia(_ media: InstantPageMedia?) { }
 }
 
 // MARK: - Text view (port of V1 InstantPageTextItem.drawInTile)

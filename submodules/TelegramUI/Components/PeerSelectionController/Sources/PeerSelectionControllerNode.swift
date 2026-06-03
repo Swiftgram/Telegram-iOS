@@ -453,6 +453,7 @@ final class PeerSelectionControllerNode: ASDisplayNode {
 
                 var hasOther = false
                 var hasNotOwnMessages = false
+                var hasRichMessages = false
                 for message in messages {
                     if let author = message.effectiveAuthor {
                         if !uniquePeerIds.contains(author.id) {
@@ -479,9 +480,12 @@ final class PeerSelectionControllerNode: ASDisplayNode {
                     if !isDice {
                         hasOther = true
                     }
+                    if message.richText != nil {
+                        hasRichMessages = true
+                    }
                 }
 
-                let canHideNames = hasNotOwnMessages && hasOther
+                let canHideNames = hasNotOwnMessages && hasOther && !hasRichMessages
 
                 let hideNames = forwardOptions.hideNames
                 let hideCaptions = forwardOptions.hideCaptions
