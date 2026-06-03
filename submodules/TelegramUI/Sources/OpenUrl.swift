@@ -621,15 +621,6 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                     if let parameter = params["slug"] {
                         convertedUrl = makeTelegramUrl("/m/\(parameter)")
                     }
-                case "hostoverride":
-                    if let override = params["host"] {
-                        let _ = updateNetworkSettingsInteractively(postbox: context.account.postbox, network: context.account.network, { settings in
-                            var settings = settings
-                            settings.backupHostOverride = override
-                            return settings
-                        }).startStandalone()
-                        return
-                    }
                 case "premium_offer":
                     let reference = params["ref"]
                     handleResolvedUrl(.premiumOffer(reference: reference))
