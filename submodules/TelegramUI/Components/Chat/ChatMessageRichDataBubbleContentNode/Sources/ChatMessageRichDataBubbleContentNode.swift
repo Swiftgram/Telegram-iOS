@@ -39,6 +39,10 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                                     messageStableVersion: UInt32,
                                     layout: InstantPageV2Layout)?
     private var currentExpandedDetails: [Int: Bool] = [:]
+    // Intra-message anchor scroll that is waiting on a collapsed <details> to expand + relayout.
+    private var pendingScrollAnchor: String?
+    // Progress guard: the details index expanded on the previous pending pass.
+    private var lastExpandedPendingDetailsIndex: Int?
     private var linkProgressDisposable: Disposable?
     private var linkProgressRects: [CGRect]?
     private var linkHighlightingNode: LinkHighlightingNode?
@@ -675,6 +679,22 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                             if self.displayContentsUnderSpoilers {
                                 pageView.setDisplayContentsUnderSpoilers(true, atLocation: nil, animated: false)
                             }
+                            // Continue an in-flight anchor scroll that is waiting on a <details>
+                            // expansion to re-lay-out. This runs on EVERY apply pass (not only the
+                            // expand-triggered one), but only does anything while a scroll is pending
+                            // — and scrollToAnchor is idempotent: each invocation either resolves and
+                            // scrolls (clearing pending) or expands the next collapsed level, and the
+                            // progress guard guarantees termination. So an unrelated relayout (theme,
+                            // width, reactions) that lands mid-expand simply advances/no-ops the loop.
+                            // Deferred via justDispatch to avoid re-entering layout from this apply.
+                            if let pendingAnchor = self.pendingScrollAnchor {
+                                Queue.mainQueue().justDispatch { [weak self] in
+                                    guard let self, self.pendingScrollAnchor == pendingAnchor else {
+                                        return
+                                    }
+                                    self.scrollToAnchor(pendingAnchor)
+                                }
+                            }
                         } else {
                             self.currentPageLayout = nil
                             self.pageView?.update(
@@ -859,6 +879,16 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         }
 
         let split = self.splitAnchor(urlHit.urlItem.url)
+        if split.base.isEmpty, let anchor = split.anchor {
+            // Don't accept intra-message anchor taps while the message is still streaming.
+            if let item = self.item, item.message.attributes.contains(where: { $0 is TypingDraftMessageAttribute }) {
+                return ChatMessageBubbleContentTapAction(content: .none)
+            }
+            let rects = self.computeHighlightRects(item: urlHit.item, parentOffset: urlHit.parentOffset, localPoint: urlHit.localPoint)
+            return ChatMessageBubbleContentTapAction(content: .custom({ [weak self] in
+                self?.scrollToAnchor(anchor)
+            }), rects: rects)
+        }
         if let webpage = self.currentLoadedWebpage(), webpage.content.url == split.base, let anchor = split.anchor {
             return ChatMessageBubbleContentTapAction(content: .custom({ [weak self] in
                 self?.scrollToAnchor(anchor)
@@ -1187,9 +1217,17 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     }
 
     override public func getAnchorRect(anchor: String) -> CGRect? {
-        // V2 V0: anchor resolution lives in the V2 view (text-item anchors). Not yet wired through.
-        let _ = anchor
-        return nil
+        guard let pageView = self.pageView, let rect = pageView.anchorFrame(name: anchor) else {
+            return nil
+        }
+        // Small top breathing room so the target isn't flush against the content-area top
+        // (cf. V1 InstantPageControllerNode's -10 offset). The chat scroll consumes only the
+        // returned rect's minY (ChatController's scrollToMessageIdWithAnchor → .bottom(anchorY)),
+        // so pulling minY up by the margin is what lands the anchor below the top edge; the rect
+        // is grown to keep maxY stable should a future caller use the full rect (e.g. a highlight).
+        let topMargin: CGFloat = 8.0
+        let adjusted = CGRect(x: rect.minX, y: max(0.0, rect.minY - topMargin), width: rect.width, height: rect.height + topMargin)
+        return self.view.convert(adjusted, from: pageView)
     }
 
     override public func reactionTargetView(value: MessageReaction.Reaction) -> UIView? {
@@ -1227,10 +1265,40 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         guard let item = self.item else {
             return
         }
+        // Empty fragment ("#") is a no-op.
         if anchor.isEmpty {
-            item.controllerInteraction.scrollToMessageId(item.message.index, 0.0)
-        } else {
-            item.controllerInteraction.scrollToMessageIdWithAnchor(item.message.index, anchor)
+            self.clearPendingScroll()
+            return
         }
+        // 1. Anchor is in the currently laid-out content → scroll now.
+        if self.pageView?.anchorFrame(name: anchor) != nil {
+            self.clearPendingScroll()
+            item.controllerInteraction.scrollToMessageIdWithAnchor(item.message.index, anchor)
+            return
+        }
+        // 2. Not laid out — it may be buried in a collapsed <details>. Find the path and expand
+        //    the first collapsed details on it, then retry after the relayout (post-relayout hook).
+        guard let instantPage = item.message.richText?.instantPage,
+              let path = instantPageAnchorPath(in: instantPage, name: anchor),
+              !path.isEmpty,
+              let collapsedIndex = self.pageView?.firstCollapsedDetails(forOrdinalPath: path)
+        else {
+            self.clearPendingScroll()
+            return
+        }
+        // Progress guard: if expanding this same index last pass didn't move us forward, stop.
+        if self.lastExpandedPendingDetailsIndex == collapsedIndex {
+            self.clearPendingScroll()
+            return
+        }
+        self.currentExpandedDetails[collapsedIndex] = true
+        self.pendingScrollAnchor = anchor
+        self.lastExpandedPendingDetailsIndex = collapsedIndex
+        item.controllerInteraction.requestMessageUpdate(item.message.id, false, nil)
+    }
+
+    private func clearPendingScroll() {
+        self.pendingScrollAnchor = nil
+        self.lastExpandedPendingDetailsIndex = nil
     }
 }

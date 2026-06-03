@@ -2159,6 +2159,43 @@ public extension InstantPageV2View {
         }
         return nil
     }
+
+    /// The frame (pageView-space) of the anchor `name` in the *currently laid-out* layout.
+    /// Returns nil if the anchor isn't present — e.g. it's inside a collapsed `<details>`
+    /// (whose inner blocks aren't laid out) or doesn't exist. Mirrors `findTextItem`.
+    func anchorFrame(name: String) -> CGRect? {
+        guard let layout = self.currentLayout else { return nil }
+        return findAnchorFrame(in: layout, name: name, accumulatedOffset: .zero)
+    }
+
+    /// Given a details-sibling-ordinal path (from `instantPageAnchorPath`), walk the live layout
+    /// and return the `currentExpandedDetails` index of the FIRST not-yet-expanded `<details>` on
+    /// the path. Returns nil if every details on the path is already expanded, or the path doesn't
+    /// match the live layout. Reads indices from the laid-out items — never reproduces them.
+    func firstCollapsedDetails(forOrdinalPath path: [Int]) -> Int? {
+        guard let layout = self.currentLayout else { return nil }
+        var currentItems = layout.items
+        for ordinal in path {
+            var seen = 0
+            var found: InstantPageV2DetailsItem?
+            for item in currentItems {
+                if case let .details(details) = item {
+                    if seen == ordinal {
+                        found = details
+                        break
+                    }
+                    seen += 1
+                }
+            }
+            guard let details = found else { return nil }
+            if !details.isExpanded {
+                return details.index
+            }
+            guard let inner = details.innerLayout else { return nil }
+            currentItems = inner.items
+        }
+        return nil
+    }
 }
 
 // MARK: - Private recursion helpers
@@ -2212,6 +2249,78 @@ private func findTextItem(
                                               accumulatedOffset: CGPoint(x: titleAbs.minX, y: titleAbs.minY)) {
                         return hit
                     }
+                }
+            }
+        default:
+            continue
+        }
+    }
+    return nil
+}
+
+private func findAnchorFrame(
+    in layout: InstantPageV2Layout,
+    name: String,
+    accumulatedOffset: CGPoint
+) -> CGRect? {
+    for item in layout.items {
+        let f = item.frame.offsetBy(dx: accumulatedOffset.x, dy: accumulatedOffset.y)
+        switch item {
+        case let .anchor(anchor):
+            if anchor.name == name {
+                return CGRect(x: f.minX, y: f.minY, width: 0.0, height: 0.0)
+            }
+        case let .text(text):
+            if let (lineIndex, _) = text.textItem.anchors[name], lineIndex < text.textItem.lines.count {
+                let line = text.textItem.lines[lineIndex].frame
+                return CGRect(x: f.minX + line.minX, y: f.minY + line.minY, width: line.width, height: line.height)
+            }
+        case let .codeBlock(block):
+            if let (lineIndex, _) = block.textItem.anchors[name], lineIndex < block.textItem.lines.count {
+                let line = block.textItem.lines[lineIndex].frame
+                return CGRect(
+                    x: f.minX + block.textItem.frame.minX + line.minX,
+                    y: f.minY + block.textItem.frame.minY + line.minY,
+                    width: line.width, height: line.height
+                )
+            }
+        case let .thinking(thinking):
+            if let (lineIndex, _) = thinking.textItem.anchors[name], lineIndex < thinking.textItem.lines.count {
+                let line = thinking.textItem.lines[lineIndex].frame
+                return CGRect(
+                    x: f.minX + thinking.textItem.frame.minX + line.minX,
+                    y: f.minY + thinking.textItem.frame.minY + line.minY,
+                    width: line.width, height: line.height
+                )
+            }
+        case let .details(details):
+            if let (lineIndex, _) = details.titleTextItem.anchors[name], lineIndex < details.titleTextItem.lines.count {
+                let line = details.titleTextItem.lines[lineIndex].frame
+                return CGRect(
+                    x: f.minX + details.titleTextItem.frame.minX + line.minX,
+                    y: f.minY + details.titleTextItem.frame.minY + line.minY,
+                    width: line.width, height: line.height
+                )
+            }
+            if let inner = details.innerLayout {
+                let innerOffset = CGPoint(x: f.minX, y: f.minY + details.titleFrame.maxY)
+                if let hit = findAnchorFrame(in: inner, name: name, accumulatedOffset: innerOffset) {
+                    return hit
+                }
+            }
+        case let .table(table):
+            for cell in table.cells {
+                if let sub = cell.subLayout {
+                    let cellOffset = CGPoint(x: f.minX + table.contentInset + cell.frame.minX, y: f.minY + cell.frame.minY)
+                    if let hit = findAnchorFrame(in: sub, name: name, accumulatedOffset: cellOffset) {
+                        return hit
+                    }
+                }
+            }
+            if let titleLayout = table.titleSubLayout, let titleFrame = table.titleFrame {
+                let titleOffset = CGPoint(x: f.minX + table.contentInset + titleFrame.minX, y: f.minY + titleFrame.minY)
+                if let hit = findAnchorFrame(in: titleLayout, name: name, accumulatedOffset: titleOffset) {
+                    return hit
                 }
             }
         default:
