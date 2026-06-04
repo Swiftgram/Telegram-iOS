@@ -337,14 +337,14 @@ private func webBrowserSettingsControllerEntries(context: AccountContext, presen
         index += 1
     }
     
-    entries.append(.browserInfo(presentationData.theme, "Open links inside Telegram instead of your default browser for more privacy."))
+    entries.append(.browserInfo(presentationData.theme, presentationData.strings.WebBrowser_OpenLinksInfo))
     
     entries.append(.clearCookies(presentationData.theme, presentationData.strings.WebBrowser_ClearCookies))
     entries.append(.clearCookiesInfo(presentationData.theme, presentationData.strings.WebBrowser_ClearCookies_Info))
     
     //TODO:localize
     if accountSettings.openExternalBrowser {
-        entries.append(.neverHeader(presentationData.theme, "OPEN IN-APP"))
+        entries.append(.neverHeader(presentationData.theme, presentationData.strings.WebBrowser_Exceptions_OpenInApp))
         entries.append(.neverAdd(presentationData.theme, presentationData.strings.WebBrowser_Exceptions_AddException))
         
         var exceptionIndex: Int32 = 0
@@ -352,13 +352,13 @@ private func webBrowserSettingsControllerEntries(context: AccountContext, presen
             entries.append(.neverException(exceptionIndex, presentationData.theme, exception))
             exceptionIndex += 1
         }
-        entries.append(.neverExceptionsInfo(presentationData.theme, "These sites will still be opened in-app."))
+        entries.append(.neverExceptionsInfo(presentationData.theme, presentationData.strings.WebBrowser_Exceptions_InAppInfo))
         
         if !accountSettings.inAppExceptions.isEmpty {
-            entries.append(.neverExceptionsClear(presentationData.theme, "Delete All Exceptions"))
+            entries.append(.neverExceptionsClear(presentationData.theme, presentationData.strings.WebBrowser_Exceptions_DeleteAll))
         }
     } else {
-        entries.append(.alwaysHeader(presentationData.theme, "DON'T OPEN IN-APP"))
+        entries.append(.alwaysHeader(presentationData.theme, presentationData.strings.WebBrowser_Exceptions_DontOpenInApp))
         entries.append(.alwaysAdd(presentationData.theme, presentationData.strings.WebBrowser_Exceptions_AddException))
         
         var exceptionIndex: Int32 = 0
@@ -369,7 +369,7 @@ private func webBrowserSettingsControllerEntries(context: AccountContext, presen
         entries.append(.alwaysExceptionsInfo(presentationData.theme, presentationData.strings.WebBrowser_Exceptions_Info))
         
         if !accountSettings.externalExceptions.isEmpty {
-            entries.append(.alwaysExceptionsClear(presentationData.theme, "Delete All Exceptions"))
+            entries.append(.alwaysExceptionsClear(presentationData.theme, presentationData.strings.WebBrowser_Exceptions_DeleteAll))
         }
     }
         
