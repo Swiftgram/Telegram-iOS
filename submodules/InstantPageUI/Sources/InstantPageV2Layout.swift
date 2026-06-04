@@ -2966,6 +2966,33 @@ func v2FrameForLine(_ line: InstantPageTextLine, boundingWidth: CGFloat, alignme
     return lineFrame
 }
 
+// Returns the leading-edge x offset (line-origin-relative) for an inline-attachment's string
+// `range`, correct for both LTR and RTL runs. `CTLineGetOffsetForStringIndex` at the start index
+// gives the glyph's LEFT edge in LTR text, but its RIGHT edge in RTL text (increasing string index
+// moves leftward) — so using the start-index offset alone as the left edge shoves an RTL attachment
+// ~one advance too far right. Taking the min of the start- and end-index offsets yields the true
+// leading (left) edge in both directions. Mirrors `Display.TextNode`'s `addEmbeddedItem`, including
+// the directional-boundary secondary-offset handling. For a pure-LTR line this returns exactly the
+// start-index offset (primary == secondary, and start-offset < end-offset), so LTR layout is
+// byte-identical to the previous single-offset behavior.
+private func v2LeadingOffsetForRange(_ line: CTLine, range: NSRange) -> CGFloat {
+    var secondaryStartOffset: CGFloat = 0.0
+    let rawStartOffset = CTLineGetOffsetForStringIndex(line, range.location, &secondaryStartOffset)
+    var startOffset = rawStartOffset
+    if !rawStartOffset.isEqual(to: secondaryStartOffset) {
+        startOffset = secondaryStartOffset
+    }
+
+    var secondaryEndOffset: CGFloat = 0.0
+    let rawEndOffset = CTLineGetOffsetForStringIndex(line, range.location + range.length, &secondaryEndOffset)
+    var endOffset = rawEndOffset
+    if !rawEndOffset.isEqual(to: secondaryEndOffset) {
+        endOffset = secondaryEndOffset
+    }
+
+    return min(startOffset, endOffset)
+}
+
 private func v2LocalAttachmentBoundsForRange(_ range: NSRange, imageItems: [InstantPageTextImageItem], formulaItems: [InstantPageTextFormulaRun]) -> CGRect? {
     var result: CGRect?
 
@@ -3144,14 +3171,14 @@ func layoutTextItem(
                     string.enumerateAttributes(in: runRange, options: []) { attributes, range, _ in
                         if let id = attributes[NSAttributedString.Key.init(rawValue: InstantPageMediaIdAttribute)] as? Int64, let dimensions = attributes[NSAttributedString.Key.init(rawValue: InstantPageMediaDimensionsAttribute)] as? PixelDimensions {
                             let imageSize = dimensions.cgSize.fitted(CGSize(width: boundingWidth, height: boundingWidth))
-                            let xOffset = CTLineGetOffsetForStringIndex(line, CTRunGetStringRange(run).location, nil)
+                            let xOffset = v2LeadingOffsetForRange(line, range: range)
                             pendingImages.append(PendingV2ImageAttachment(xOffset: xOffset, range: range, id: id, size: imageSize))
                         } else if let attachment = attributes[NSAttributedString.Key(rawValue: InstantPageFormulaAttribute)] as? InstantPageMathAttachment {
-                            let xOffset = CTLineGetOffsetForStringIndex(line, range.location, nil)
+                            let xOffset = v2LeadingOffsetForRange(line, range: range)
                             let baselineOffset = (attributes[NSAttributedString.Key.baselineOffset] as? CGFloat) ?? 0.0
                             pendingFormulas.append(PendingV2FormulaAttachment(xOffset: xOffset, range: range, attachment: attachment, baselineOffset: baselineOffset))
                         } else if let emoji = attributes[ChatTextInputAttributes.customEmoji] as? ChatTextInputTextCustomEmojiAttribute {
-                            let xOffset = CTLineGetOffsetForStringIndex(line, range.location, nil)
+                            let xOffset = v2LeadingOffsetForRange(line, range: range)
                             let font = (attributes[NSAttributedString.Key.font] as? UIFont) ?? UIFont.systemFont(ofSize: 17.0)
                             // Size the inline emoji to the font's line height (A + D = the true
                             // line-box height) plus a 4pt bump at the 17pt body font (scaled
@@ -3363,7 +3390,7 @@ func layoutTextItem(
                 for emoji in pendingEmoji {
                     let localIndex = emoji.range.location - lineRange.location
                     if localIndex >= 0 && localIndex < rects.count {
-                        let x = CTLineGetOffsetForStringIndex(line, emoji.range.location, nil)
+                        let x = v2LeadingOffsetForRange(line, range: emoji.range)
                         // characterRects are baseline-relative (positive-up). The emoji cell is now
                         // centered on the font line box (see frame loop), so in baseline-relative
                         // coords it spans [fontLineHeight/2 − size/2, fontLineHeight/2 + size/2].
@@ -3375,7 +3402,7 @@ func layoutTextItem(
                 for image in pendingImages {
                     let localIndex = image.range.location - lineRange.location
                     if localIndex >= 0 && localIndex < rects.count {
-                        let x = CTLineGetOffsetForStringIndex(line, image.range.location, nil)
+                        let x = v2LeadingOffsetForRange(line, range: image.range)
                         // Image cell is centered on the font line box (see frame loop). Baseline-relative
                         // cell spans [fontLineHeight/2 − height/2, fontLineHeight/2 + height/2]; the full
                         // width feeds the reveal cost map so the streaming cursor is charged the image's
