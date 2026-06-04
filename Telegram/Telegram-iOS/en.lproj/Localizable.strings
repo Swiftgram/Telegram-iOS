@@ -16360,3 +16360,12 @@ Error: %8$@";
 "ChatList.ClearSearchHistory.Confirm" = "Clear";
 
 "ChatList.RemoveFolderConfirmationTitle" = "Remove %@?";
+
+"SocksProxySetup.QrCode.TgLink" = "tg:// link";
+"SocksProxySetup.QrCode.TMeLink" = "t.me link";
+
+"WebBrowser.OpenLinksInfo" = "Open links inside Telegram instead of your default browser for more privacy.";
+"WebBrowser.Exceptions.OpenInApp" = "OPEN IN-APP";
+"WebBrowser.Exceptions.DontOpenInApp" = "DON'T OPEN IN-APP";
+"WebBrowser.Exceptions.InAppInfo" = "These sites will still be opened in-app.";
+"WebBrowser.Exceptions.DeleteAll" = "Delete All Exceptions";

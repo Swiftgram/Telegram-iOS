@@ -224,13 +224,12 @@ private final class SheetContent: CombinedComponent {
                     dividerColor: theme.rootController.navigationBar.segmentedDividerColor
                 )
                 
-                //TODO:localize
                 let segmentControl = segmentControl.update(
                     component: SegmentControlComponent(
                         theme: theme,
                         items: [
-                            SegmentControlComponent.Item(id: AnyHashable(false), title: "tg:// link"),
-                            SegmentControlComponent.Item(id: AnyHashable(true), title: "t.me link")
+                            SegmentControlComponent.Item(id: AnyHashable(false), title: strings.SocksProxySetup_QrCode_TgLink),
+                            SegmentControlComponent.Item(id: AnyHashable(true), title: strings.SocksProxySetup_QrCode_TMeLink)
                         ],
                         selectedId: AnyHashable(state.selectedProxyExternalLink),
                         action: { id in

@@ -557,9 +557,7 @@ final class ComposePollScreenComponent: Component {
                 mappedKind = .poll(multipleAnswers: self.effectiveIsMultiAnswer && mappedOptions.count > 1)
             }
             
-            if self.isQuiz && mappedOptions.count < 2 {
-                return .optionsNeeded
-            } else if !self.isQuiz && mappedOptions.count < 1 {
+            if mappedOptions.count < 1 {
                 return .optionsNeeded
             }
             
