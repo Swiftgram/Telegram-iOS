@@ -13,8 +13,9 @@ import LocationUI
 ///   - `.geo(map)` → pushes `LocationViewController` via `push`.
 ///   - `.webpage(webPage)` cover → single-entry `InstantPageGalleryController`.
 ///   - `.file(file)` with `isAnimated` → single-entry gallery in "playing video" mode.
-///   - Default → multi-entry gallery built from `allMedias` (filtered to `.image / .file`),
-///     centered on the tapped media; "playing video" mode is on.
+///   - Default → multi-entry gallery built from `allMedias` (filtered to `.image` and non-audio
+///     `.file` — audio/music siblings are excluded), centered on the tapped media; "playing
+///     video" mode is on.
 ///
 /// Behavior matches V1's `InstantPageControllerNode.openMedia(_:)` bit-for-bit.
 ///
@@ -66,8 +67,13 @@ public func openInstantPageMedia(
         fromPlayingVideo = true
         let filteredMedias = allMedias.filter { item in
             switch item.media {
-            case .image, .file:
+            case .image:
                 return true
+            case let .file(file):
+                // Audio/music files are enrolled in `allMedias()` only so the audio playlist can
+                // gather its siblings (see `handleOpenAudioTap`); they are not visual gallery
+                // content, so keep videos/gifs/documents but exclude music and voice.
+                return !file.isMusic && !file.isVoice
             default:
                 return false
             }
