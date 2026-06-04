@@ -39,6 +39,8 @@ final class InstantPageV2SlideshowView: UIView, InstantPageItemView, UIScrollVie
         self.backgroundColor = theme.panelSecondaryColor   // structural
         self.clipsToBounds = true                          // structural
 
+        self.scrollView.disablesInteractiveTransitionGestureRecognizer = true
+        
         self.scrollView.isPagingEnabled = true
         self.scrollView.showsHorizontalScrollIndicator = false
         self.scrollView.showsVerticalScrollIndicator = false
