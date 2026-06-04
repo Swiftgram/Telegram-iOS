@@ -708,7 +708,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
     var isGiveawayServiceMessage = false
     var diceEmoji: String?
     if messages.count == 1 {
-        for media in messages[0].media {
+        for media in messages[0].effectiveMedia {
             if let file = media as? TelegramMediaFile {
                 if file.isSticker {
                     loadStickerSaveStatus = file.fileId
@@ -1088,7 +1088,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         }
         
         if !hasRateTranscription && message.minAutoremoveOrClearTimeout == nil {
-            for media in message.media {
+            for media in message.effectiveMedia {
                 if let file = media as? TelegramMediaFile, let size = file.size, size < 1 * 1024 * 1024, let duration = file.duration, duration < 60, (["audio/mpeg", "audio/mp3", "audio/mpeg3", "audio/ogg"] as [String]).contains(file.mimeType.lowercased()) {
                     let fileName = file.fileName ?? "Tone"
                     
@@ -1143,7 +1143,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         
         if !isPremium && isDownloading {
             var isLargeFile = false
-            for media in message.media {
+            for media in message.effectiveMedia {
                 if let file = media as? TelegramMediaFile {
                     if let size = file.size, size >= 150 * 1024 * 1024 {
                         isLargeFile = true
@@ -1298,7 +1298,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         }
         var isExpired = false
         var isImage = false
-        for media in message.media {
+        for media in message.effectiveMedia {
             if let _ = media as? TelegramMediaExpiredContent {
                 isExpired = true
             }
@@ -1364,7 +1364,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                                     })
                                 }
                                 if resourceAvailable {
-                                    for media in message.media {
+                                    for media in message.effectiveMedia {
                                         if let image = media as? TelegramMediaImage, let largest = largestImageRepresentation(image.representations) {
                                             let _ = (context.engine.resources.data(resource: EngineMediaResource(largest.resource), incremental: true)
                                             |> take(1)
@@ -1454,7 +1454,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         if resourceAvailable, !message.containsSecretMedia && !isCopyProtected {
             var mediaReference: AnyMediaReference?
             var isVideo = false
-            for media in message.media {
+            for media in message.effectiveMedia {
                 if let image = media as? TelegramMediaImage, let _ = largestImageRepresentation(image.representations) {
                     mediaReference = ImageMediaReference.standalone(media: image).abstract
                     break
@@ -1481,7 +1481,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         }
         
         var downloadableMediaResourceInfos: [String] = []
-        for media in message.media {
+        for media in message.effectiveMedia {
             if let file = media as? TelegramMediaFile {
                 if let info = extractMediaResourceDebugInfo(resource: file.resource) {
                     downloadableMediaResourceInfos.append(info)
@@ -1496,7 +1496,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         }
         
         if !isCopyProtected {
-            for media in message.media {
+            for media in message.effectiveMedia {
                 if let file = media as? TelegramMediaFile {
                     if file.isMusic {
                         actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Conversation_SaveToFiles, icon: { theme in

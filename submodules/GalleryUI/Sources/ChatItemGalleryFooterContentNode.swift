@@ -870,7 +870,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         var canEdit = false
         var isImage = false
         var isVideo = false
-        for media in message.media {
+        for media in message.effectiveMedia {
             if media is TelegramMediaImage {
                 canEdit = true
                 isImage = true

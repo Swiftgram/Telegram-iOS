@@ -117,7 +117,7 @@ private final class VisualMediaItemNode: ASDisplayNode {
                 if case .tap = gesture {
                     if let _ = self.item {
                         var media: EngineRawMedia?
-                        for value in message.media {
+                        for value in message.effectiveMedia {
                             if let image = value as? TelegramMediaImage {
                                 media = image
                                 break
@@ -126,7 +126,7 @@ private final class VisualMediaItemNode: ASDisplayNode {
                                 break
                             }
                         }
-                        
+
                         if let media = media {
                             if let file = media as? TelegramMediaFile {
                                 if isMediaStreamable(message: EngineMessage(message), media: file) {
@@ -150,7 +150,7 @@ private final class VisualMediaItemNode: ASDisplayNode {
         }
         
         var media: EngineRawMedia?
-        for value in message.media {
+        for value in message.effectiveMedia {
             if let image = value as? TelegramMediaImage {
                 media = image
                 break
@@ -159,7 +159,7 @@ private final class VisualMediaItemNode: ASDisplayNode {
                 break
             }
         }
-        
+
         if let resourceStatus = self.resourceStatus, let file = media as? TelegramMediaFile {
             switch resourceStatus {
             case .Fetching:
@@ -186,7 +186,7 @@ private final class VisualMediaItemNode: ASDisplayNode {
         self.theme = theme
         var media: EngineRawMedia?
         if let message = item.message {
-            for value in message.media {
+            for value in message.effectiveMedia {
                 if let image = value as? TelegramMediaImage {
                     media = image
                     break
@@ -413,7 +413,7 @@ private final class VisualMediaItem {
         
         var aspectRatio: CGFloat = 1.0
         var dimensions = CGSize(width: 100.0, height: 100.0)
-        for media in message.media {
+        for media in message.effectiveMedia {
             if let file = media as? TelegramMediaFile {
                 if let dimensionsValue = file.dimensions, dimensions.height > 1 {
                     dimensions = dimensionsValue.cgSize

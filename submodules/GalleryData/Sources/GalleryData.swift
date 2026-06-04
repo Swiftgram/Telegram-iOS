@@ -125,7 +125,7 @@ public func chatMessageGalleryControllerData(
             }
         }
     }
-    for media in message.media {
+    for media in message.effectiveMedia {
         if let poll = media as? TelegramMediaPoll {
             standalone = true
             galleryMedia = poll

@@ -240,7 +240,7 @@ private func findMediaResource(media: Media, previousMedia: Media?, resource: Me
 }
 
 public func findMediaResourceById(message: EngineMessage, resourceId: MediaResourceId) -> TelegramMediaResource? {
-    for media in message.media {
+    for media in message.effectiveMedia {
         if let result = findMediaResourceById(media: media, resourceId: resourceId) {
             return result
         }

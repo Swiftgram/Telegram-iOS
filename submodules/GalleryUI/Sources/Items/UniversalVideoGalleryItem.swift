@@ -1439,7 +1439,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
             if let content = item.content as? NativeVideoContent {
                 isAnimated = content.fileReference.media.isAnimated
                 self.videoFramePreview = MediaPlayerFramePreview(postbox: item.context.account.postbox, userLocation: content.userLocation, userContentType: .video, fileReference: content.fileReference)
-                if case let .message(message, _) = item.contentInfo, let _ = message.media.first(where: { $0 is TelegramMediaImage }) {
+                if case let .message(message, _) = item.contentInfo, let _ = message.effectiveMedia.first(where: { $0 is TelegramMediaImage }) {
                     self.isLivePhoto = true
                     disablePlayerControls = true
                     isAnimated = false
@@ -1635,7 +1635,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                 
                 var file: TelegramMediaFile?
                 var isWebpage = false
-                for m in message.media {
+                for m in message.effectiveMedia {
                     if let m = m as? TelegramMediaFile, m.isVideo {
                         file = m
                         break
@@ -1885,7 +1885,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
             self.zoomableContent = (videoSize, videoNode)
             
             
-            if case let .message(message, _) = item.contentInfo, let content = item.content as? NativeVideoContent, let image = message.media.first(where: { $0 is TelegramMediaImage }), let imageReference = content.fileReference.abstract.withUpdatedMedia(image).concrete(TelegramMediaImage.self) {
+            if case let .message(message, _) = item.contentInfo, let content = item.content as? NativeVideoContent, let image = message.effectiveMedia.first(where: { $0 is TelegramMediaImage }), let imageReference = content.fileReference.abstract.withUpdatedMedia(image).concrete(TelegramMediaImage.self) {
                 let imageNode = TransformImageNode()
                 imageNode.alpha = 1.0
                 imageNode.isUserInteractionEnabled = false
@@ -3134,7 +3134,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
         var hiddenMedia: (MessageId, Media)? = nil
         switch item.contentInfo {
         case let .message(message, _):
-            for media in message.media {
+            for media in message.effectiveMedia {
                 if let media = media as? TelegramMediaImage {
                     hiddenMedia = (message.id, media)
                 } else if let media = media as? TelegramMediaFile, media.isVideo {
@@ -3858,7 +3858,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                     })))
                 }
                 
-                if let (message, _, _) = strongSelf.contentInfo(), let image = message.media.first(where: { $0 is TelegramMediaImage }) as? TelegramMediaImage, !message.isCopyProtected() && !item.peerIsCopyProtected && message.paidContent == nil {
+                if let (message, _, _) = strongSelf.contentInfo(), let image = message.effectiveMedia.first(where: { $0 is TelegramMediaImage }) as? TelegramMediaImage, !message.isCopyProtected() && !item.peerIsCopyProtected && message.paidContent == nil {
                     let context = strongSelf.context
                     var videoReference: AnyMediaReference?
                     if let video = image.video {

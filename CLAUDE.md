@@ -62,7 +62,7 @@ Rare exceptions: top-level view-controller views integrating with the system's f
 
 ## InstantPage V2 & rich-text messages
 
-Typed markdown with structure the regular message-entity set can't represent (headings, lists, tables, formulas, nested blockquotes) is sent as a **rich message** — a `RichTextMessageAttribute` carrying an `InstantPage`, drawn by `ChatMessageRichDataBubbleContentNode` via the **InstantPage V2** renderer (with AI-streaming progressive reveal, inline custom emoji, and entity cases). The detailed architecture and non-obvious invariants — streaming reveal, V2 table/text-box layout, custom-emoji & entity round-trips, task-list checkboxes, nested blockquotes, thinking blocks, and the markdown send / edit / copy / paste paths — live in [`docs/instantpage-richtext.md`](docs/instantpage-richtext.md).
+Typed markdown with structure the regular message-entity set can't represent (headings, lists, tables, formulas, nested blockquotes) is sent as a **rich message** — a `RichTextMessageAttribute` carrying an `InstantPage`, drawn by `ChatMessageRichDataBubbleContentNode` via the **InstantPage V2** renderer (with AI-streaming progressive reveal, inline custom emoji, and entity cases). The detailed architecture and non-obvious invariants — streaming reveal, V2 table/text-box layout, custom-emoji & entity round-trips, task-list checkboxes, nested blockquotes, thinking blocks, the markdown send / edit / copy / paste paths, and surfacing rich-message media through the shared-media/gallery/preview pipelines via `Message.effectiveMedia` — live in [`docs/instantpage-richtext.md`](docs/instantpage-richtext.md).
 
 ## Postbox → TelegramEngine refactor (in progress)
 

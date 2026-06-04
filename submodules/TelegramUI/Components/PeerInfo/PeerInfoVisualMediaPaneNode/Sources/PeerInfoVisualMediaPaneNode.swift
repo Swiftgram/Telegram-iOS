@@ -899,7 +899,7 @@ private final class SparseItemGridBindingImpl: SparseItemGridBinding, ListShimme
                 layer.updateHasSpoiler(hasSpoiler: hasSpoiler)
                 
                 var selectedMedia: Media?
-                for media in message.media {
+                for media in message.effectiveMedia {
                     if let image = media as? TelegramMediaImage {
                         selectedMedia = image
                         break

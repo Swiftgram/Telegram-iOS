@@ -1416,7 +1416,7 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
                             
                             var resourceIds = Set<EngineMediaResource.Id>()
                             for message in messages {
-                                for media in message.media {
+                                for media in message.effectiveMedia {
                                     if let file = media as? TelegramMediaFile {
                                         resourceIds.insert(EngineMediaResource.Id(file.resource.id))
                                     }

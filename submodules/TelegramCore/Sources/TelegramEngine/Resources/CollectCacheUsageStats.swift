@@ -736,7 +736,7 @@ func _internal_collectCacheUsageStats(account: Account, peerId: PeerId? = nil, a
                                         continue
                                     }
                                     if let message = transaction.getMessage(MessageId(peerId: PeerId(reference.peerId), namespace: MessageId.Namespace(reference.messageNamespace), id: reference.messageId)) {
-                                        for mediaItem in message.media {
+                                        for mediaItem in message.effectiveMedia {
                                             guard let mediaId = mediaItem.id else {
                                                 continue
                                             }

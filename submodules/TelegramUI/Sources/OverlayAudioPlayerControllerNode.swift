@@ -1366,7 +1366,7 @@ final class OverlayAudioPlayerControllerNode: ViewControllerTracingNode, ASGestu
     }
     
     private func openMessageContextMenu(message: EngineRawMessage, node: ASDisplayNode, frame: CGRect, recognizer: TapLongTapOrDoubleTapGestureRecognizer? = nil, gesture: ContextGesture? = nil, location: CGPoint? = nil) {
-        guard let node = node as? ContextExtractedContentContainingNode, let peer = message.peers[message.id.peerId].flatMap({ PeerReference($0) }), let file = message.media.first(where: { $0 is TelegramMediaFile}) as? TelegramMediaFile else {
+        guard let node = node as? ContextExtractedContentContainingNode, let peer = message.peers[message.id.peerId].flatMap({ PeerReference($0) }), let file = message.effectiveMedia.first(where: { $0 is TelegramMediaFile}) as? TelegramMediaFile else {
             return
         }
         let context = self.context

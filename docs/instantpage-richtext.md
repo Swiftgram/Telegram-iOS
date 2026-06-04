@@ -426,3 +426,44 @@ A server-sent rich message can arrive **partial** when the content is long: the 
 - **`showMoreExpanded` is part of BOTH layout caches.** It is in the `currentPageLayout` cache key **and** the `pageView` content key (`pageViewMessageKey`). This is required because the cached-expand path (full page already on the attribute) performs **no postbox write**, so `stableVersion` does not bump — without the key, the cached partial layout/content would shadow the expand.
 - **Tap (`activateShowMore`):** if `fullInstantPage` is already cached → set expanded + `requestMessageUpdate` immediately (no network, no shimmer); otherwise shimmer the link and fetch, expanding only once the full page lands. Guards against a second in-flight request and against re-expanding.
 - **Expand grows the bubble downward in screen space** (top fixed) via `info?.setInvertOffsetDirection()` on the `ListViewItemApply` in the apply closure, fired only on the `appliedShowMoreExpanded → showMoreExpanded` transition (never on first apply). Same mechanism as `ChatMessageInteractiveFileNode`'s audio-transcription expand and the text/fact-check bubbles; the ListView clamps it to what fits.
+
+## Rich-message media in the gallery / shared-media / preview pipelines (`Message.effectiveMedia`)
+
+A rich message's media (images / videos / audio / documents) lives in `attribute.instantPage.media`, **not** in `message.media` (which is empty — rich messages are sent with `text: ""` and no media reference). To make that media participate in the *same* shared-media-index, gallery, file-list, playback, download, and save/copy pipelines that normal `message.media` flows through, there is one shared accessor and a set of opt-in call-site swaps.
+
+### The accessor
+
+`Message.effectiveMedia: [Media]` (+ a delegating `EngineMessage.effectiveMedia`) in `submodules/TelegramCore/Sources/Utils/MessageUtils.swift`:
+
+```swift
+var effectiveMedia: [Media] {
+    if !self.media.isEmpty { return self.media }     // normal message: identical to message.media
+    if let richText = self.richText { return richText.instantPage.allMedia() }  // rich: the instant-page media
+    return self.media
+}
+```
+
+`Message.richText` (same file) is already a typed `RichTextMessageAttribute?`; `InstantPage.allMedia()` (`SyncCore_InstantPage.swift`) recursively gathers media from the page's blocks (audio/collage/cover/details/image/list/slideshow/video) via its `[MediaId: Media]` dict. **For a normal message `effectiveMedia == message.media`**, so swapping a `message.media` read for `message.effectiveMedia` is behavior-preserving for non-rich content and only adds the rich media where the site should consider it. **Scope is first-media** for now (call sites keep their `.first` / iterate-and-break logic; the helper returns all media but callers stop at the first match — the `//TODO:rewrite to take all media` markers remain).
+
+### Where things live
+
+| Layer | What |
+|---|---|
+| **Discovery / index** | `tagsForStoreMessage` (`StoreMessage_Telegram.swift`) indexes rich media into `MessageTags` (photo/video/gif/voice/file). **This is the linchpin**: it makes rich messages *appear* in every tag-queried surface (shared-media tabs, search, downloads) — which is exactly why each rendering-side site below then needs `effectiveMedia`, or it renders the surfaced message blank. |
+| **Extraction helper** | `Message.effectiveMedia` (above). |
+| **Shared-media grids / rows** | `PeerInfoVisualMediaPaneNode`, `PeerInfoGifPaneNode`, `ListMessageItem` (row-type selection) + `ListMessageFileItemNode` (file/music/voice row), `ChatListSearchMediaNode` (search media grid). |
+| **Gallery open + items** | `GalleryController` (`tagsForMessage` + `mediaForMessage` — the duplicated `message.media`/`message.richText` blocks were collapsed into one `effectiveMedia` loop), `GalleryData.chatMessageGalleryControllerData`, `SecretMediaPreviewController` (its own local `mediaForMessage`), and the gallery item nodes `ChatDocumentGalleryItem` / `ChatExternalFileGalleryItem` / `ChatAnimationGalleryItem` (these re-derive from `message.media` in `node()`, so a rich doc/animation rendered **blank** without the swap) + `UniversalVideoGalleryItem` secondary affordances + `ChatItemGalleryFooterContentNode`. |
+| **Playback** | `PeerMessagesMediaPlaylist.extractFileMedia` (the peer music/voice playlist), `OverlayAudioPlayerControllerNode` (audio context menu). |
+| **Resolution / downloads / cleanup** | `FetchedMediaResource.findMediaResourceById(message:)`, `SyncCore_RecentDownloadItem`, `StoreDownloadedMedia`, `DeleteMessages.addMessageMediaResourceIdsToRemove(message:)` (rich media was **leaking on delete**), `CollectCacheUsageStats`, `ChatHistoryListNode` (download manager), `ChatListSearch{ListPaneNode,ContainerNode}`. |
+| **Actions** | `ChatInterfaceStateContextMenus` (Save-to-Camera-Roll, copy-image, save-audio/music-to-files, debug/premium), `ChatControllerNode` (post-suggestion media ref), `ChatControllerLoadDisplayNode` (edit send-validation), `ShareController.saveToCameraRoll`. |
+
+### Non-obvious invariants
+
+- **The tag-index change is what creates the work.** `tagsForStoreMessage` surfacing rich messages into tag-queried lists, *without* the rendering-side `effectiveMedia` swaps, produces visible **blank cells / blank rows / wrong row types**. Index and render must move together.
+- **The rich message's own in-chat bubble + in-bubble gallery do NOT read `message.media`** — a rich message renders via `ChatMessageRichDataBubbleContentNode` (InstantPage V2), in-bubble image/video tap opens `InstantPageGalleryController` (reads the instant page directly), and in-bubble audio uses `InstantPageV2AudioContentNode`. So the text-bubble / interactive-file / interactive-media nodes' `message.media` reads are **never reached by a rich message** and are deliberately left alone.
+- **Do NOT route the FORWARD path through `effectiveMedia`** (`ChatControllerNode` `forwardedMessages` ~556/560/568). The `RichTextMessageAttribute` already travels with a forward, so the forwarded copy reconstructs from the attribute; injecting the instant-page media as top-level `message.media` there would **double-render** (rich bubble + a separate media attachment). That `message.media` processing is caption-hiding / poll-stripping only, both irrelevant to rich — left as `message.media`.
+- **Rich messages are edited as reconstructed MARKDOWN, not via the media-caption edit path.** So `ChatControllerLoadDisplayNode`'s edit caption-max-length / original-media-reference reads (~1241/1775/4463) stay on `message.media` — they belong to the `.media` edit state a rich message never enters. (The send-*validation* `.contains` at ~2273 IS swapped, so an edit that leaves only media isn't wrongly rejected.)
+- **`RichTextMessageAttribute.associatedMediaIds` stays `[]` — intentionally.** `MessageHistoryTable` resolves `associatedMediaIds` via `getMedia(id)` in the postbox **media table**, but rich-message media is embedded inside the attribute blob, not the table — so returning the keys would be a no-op without also inserting the media into the table. The embedded-blob approach is self-contained.
+- **`fullInstantPage` is not indexed** (the server doesn't index it either, and it's fetched on demand after store-time). The first media lives in the partial `instantPage` anyway.
+- **Only switch the loop SOURCE, never the per-type branches.** Many swapped loops still contain `TelegramMediaPoll`/`TelegramMediaPaidContent`/`TelegramMediaWebpage` branches that rich messages never match — that's fine and intentional; only the `for … in <msg>.media` source changes.
+- **Build-only completeness gate.** Every swap is type-identical (`[Media]` → `[Media]`), so the only compile risk is a receiver that is neither `Message` nor `EngineMessage`; the full Bazel build is the gate (no per-module build / unit tests). Deferred, NOT done: chat-list/reply/pinned/notification/forward thumbnail **previews** and the "Photo"/"Video" media-kind **labels** (`messageContentKind`/`ChatListItemStrings`) — those are preview surfaces, not blank-cell breakage — and **multi-media** (first-media-only is the current scope).

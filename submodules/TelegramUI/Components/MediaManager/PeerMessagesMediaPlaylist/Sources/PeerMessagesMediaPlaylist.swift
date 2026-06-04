@@ -34,7 +34,7 @@ struct MessageMediaPlaylistItemStableId: Hashable {
 
 private func extractFileMedia(_ message: EngineRawMessage) -> TelegramMediaFile? {
     var file: TelegramMediaFile?
-    for media in message.media {
+    for media in message.effectiveMedia {
         if let media = media as? TelegramMediaFile {
             file = media
             break

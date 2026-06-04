@@ -29,7 +29,7 @@ class ChatExternalFileGalleryItem: GalleryItem {
     func node(synchronous: Bool) -> GalleryItemNode {
         let node = ChatExternalFileGalleryItemNode(context: self.context, presentationData: self.presentationData)
         
-        for media in self.message.media {
+        for media in self.message.effectiveMedia {
             if let file = media as? TelegramMediaFile {
                 node.setFile(context: context, fileReference: .message(message: MessageReference(self.message), media: file))
                 break

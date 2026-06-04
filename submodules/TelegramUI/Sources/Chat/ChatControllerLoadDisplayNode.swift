@@ -2270,7 +2270,7 @@ extension ChatControllerImpl {
                 
                 if text.length == 0 {
                     if strongSelf.presentationInterfaceState.editMessageState?.mediaReference != nil {
-                    } else if message.media.contains(where: { media in
+                    } else if message.effectiveMedia.contains(where: { media in
                         switch media {
                         case _ as TelegramMediaImage, _ as TelegramMediaFile, _ as TelegramMediaMap:
                             return true

@@ -118,7 +118,7 @@ private final class VisualMediaItemNode: ASDisplayNode {
                 if case .tap = gesture {
                     if let (item, _, _, _) = self.item {
                         var media: EngineRawMedia?
-                        for value in item.message.media {
+                        for value in item.message.effectiveMedia {
                             if let image = value as? TelegramMediaImage {
                                 media = image
                                 break
@@ -151,7 +151,7 @@ private final class VisualMediaItemNode: ASDisplayNode {
         }
 
         var media: EngineRawMedia?
-        for value in message.media {
+        for value in message.effectiveMedia {
             if let image = value as? TelegramMediaImage {
                 media = image
                 break
@@ -183,7 +183,7 @@ private final class VisualMediaItemNode: ASDisplayNode {
         }
         self.theme = theme
         var media: EngineRawMedia?
-        for value in item.message.media {
+        for value in item.message.effectiveMedia {
             if let image = value as? TelegramMediaImage {
                 media = image
                 break
@@ -425,7 +425,7 @@ private final class VisualMediaItem {
         
         var aspectRatio: CGFloat = 1.0
         var dimensions = CGSize(width: 100.0, height: 100.0)
-        for media in message.media {
+        for media in message.effectiveMedia {
             if let file = media as? TelegramMediaFile {
                 if let dimensionsValue = file.dimensions, dimensions.height > 1 {
                     dimensions = dimensionsValue.cgSize

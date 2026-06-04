@@ -2106,7 +2106,7 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                 let queryTokens = stringIndexTokens(query ?? "", transliteration: .combined)
                 
                 func messageMatchesTokens(message: EngineMessage, tokens: [ValueBoxKey]) -> Bool {
-                    for media in message.media {
+                    for media in message.effectiveMedia {
                         if let file = media as? TelegramMediaFile {
                             if let fileName = file.fileName {
                                 if matchStringIndexTokens(stringIndexTokens(fileName, transliteration: .none), with: tokens) {

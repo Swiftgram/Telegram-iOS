@@ -682,7 +682,7 @@ public final class ListMessageFileItemNode: ListMessageNode {
             
             var selectedMedia: EngineRawMedia?
             if let message = message {
-                var effectiveMessageMedia = message.media
+                var effectiveMessageMedia = message.effectiveMedia
                 for media in message.media {
                     if let storyMedia = media as? TelegramMediaStory {
                         if let story = message.associatedStories[storyMedia.storyId], !story.data.isEmpty, case let .item(storyItem) = story.get(Stories.StoredItem.self), let media = selectStoryMedia(item: storyItem, preferredHighQuality: item.interaction.preferredStoryHighQuality) {

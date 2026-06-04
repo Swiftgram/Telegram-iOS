@@ -2962,7 +2962,7 @@ public final class ChatHistoryListNodeImpl: ListViewImpl, ChatHistoryNode, ChatH
                             }
                         }
                         
-                        for media in message.media {
+                        for media in message.effectiveMedia {
                             if let _ = media as? TelegramMediaUnsupported {
                                 contentRequiredValidation = true
                             } else if message.flags.contains(.Incoming), let media = media as? TelegramMediaMap, let liveBroadcastingTimeout = media.liveBroadcastingTimeout {
