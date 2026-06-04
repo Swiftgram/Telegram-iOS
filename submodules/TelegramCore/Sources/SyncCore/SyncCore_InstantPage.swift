@@ -1652,6 +1652,80 @@ public final class InstantPage: PostboxCoding, Equatable {
     }
 }
 
+private extension InstantPageBlock {
+    func allMedia(mediaDict: [MediaId: Media]) -> [Media] {
+        switch self {
+        case let .audio(id, _):
+            if let file = mediaDict[id] {
+                return [file]
+            } else {
+                return []
+            }
+        case let .collage(items, _):
+            var result: [Media] = []
+            for item in items {
+                result.append(contentsOf: item.allMedia(mediaDict: mediaDict))
+            }
+            return result
+        case let .cover(block):
+            return block.allMedia(mediaDict: mediaDict)
+        case let .details(_, blocks, _):
+            var result: [Media] = []
+            for item in blocks {
+                result.append(contentsOf: item.allMedia(mediaDict: mediaDict))
+            }
+            return result
+        case let .image(id, _, _, _):
+            if let image = mediaDict[id] {
+                return [image]
+            } else {
+                return []
+            }
+        case let .list(items, _):
+            for item in items {
+                switch item {
+                case let .blocks(blocks, _, _):
+                    var result: [Media] = []
+                    for block in blocks {
+                        result.append(contentsOf: block.allMedia(mediaDict: mediaDict))
+                    }
+                    return result
+                case .text, .unknown:
+                    break
+                }
+            }
+            return []
+        case let .slideshow(items, _):
+            var result: [Media] = []
+            for item in items {
+                result.append(contentsOf: item.allMedia(mediaDict: mediaDict))
+            }
+            return result
+        case let .video(id, _, _, _):
+            if let video = mediaDict[id] {
+                return [video]
+            } else {
+                return []
+            }
+        default:
+            return []
+        }
+    }
+}
+
+public extension InstantPage {
+    func allMedia() -> [Media] {
+        if self.media.isEmpty {
+            return []
+        }
+        var result: [Media] = []
+        for block in self.blocks {
+            result.append(contentsOf: block.allMedia(mediaDict: self.media))
+        }
+        return result
+    }
+}
+
 public extension InstantPage {
     struct Accessor: Equatable {
         let _wrappedInstantPage: InstantPage?

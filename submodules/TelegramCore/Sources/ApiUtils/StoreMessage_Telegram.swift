@@ -7,6 +7,7 @@ public func tagsForStoreMessage(incoming: Bool, attributes: [MessageAttribute], 
     var isSecret = false
     var isUnconsumedPersonalMention = false
     var hasUnseenReactions = false
+    var richText: RichTextMessageAttribute?
     for attribute in attributes {
         if let timerAttribute = attribute as? AutoclearTimeoutMessageAttribute {
             if timerAttribute.timeout > 0 && (timerAttribute.timeout <= 60 || timerAttribute.timeout == viewOnceTimeout) {
@@ -22,6 +23,8 @@ public func tagsForStoreMessage(incoming: Bool, attributes: [MessageAttribute], 
             }
         } else if let attribute = attribute as? ReactionsMessageAttribute, attribute.hasUnseen {
             hasUnseenReactions = true
+        } else if let attribute = attribute as? RichTextMessageAttribute {
+            richText = attribute
         }
     }
     
@@ -132,6 +135,63 @@ public func tagsForStoreMessage(incoming: Bool, attributes: [MessageAttribute], 
     
     if hasUnseenPollVotes {
         tags.insert(.unseenPollVote)
+    }
+    
+    if let attribute = richText {
+        //TODO:rewrite to take all media
+        for media in attribute.instantPage.allMedia() {
+            switch media {
+            case _ as TelegramMediaImage:
+                tags.insert(.photo)
+                tags.insert(.photoOrVideo)
+            case let file as TelegramMediaFile:
+                var refinedTag: MessageTags? = .file
+                var isAnimated = false
+                inner: for attribute in file.attributes {
+                    switch attribute {
+                        case let .Video(_, _, flags, _, _, _):
+                            if flags.contains(.instantRoundVideo) {
+                                refinedTag = .voiceOrInstantVideo
+                            } else {
+                                if !isSecret {
+                                    refinedTag = [.photoOrVideo, .video]
+                                } else {
+                                    refinedTag = nil
+                                }
+                            }
+                        case let .Audio(isVoice, _, _, _, _):
+                            if isVoice {
+                                refinedTag = .voiceOrInstantVideo
+                            } else {
+                                if file.isInstantVideo {
+                                    refinedTag = .voiceOrInstantVideo
+                                } else {
+                                    refinedTag = .music
+                                }
+                            }
+                            break inner
+                        case .Sticker:
+                            refinedTag = nil
+                            break inner
+                        case .Animated:
+                            isAnimated = true
+                        default:
+                            break
+                    }
+                }
+                if isAnimated {
+                    refinedTag = .gif
+                }
+                if file.isAnimatedSticker {
+                    refinedTag = nil
+                }
+                if let refinedTag {
+                    tags.insert(refinedTag)
+                }
+            default:
+                break
+            }
+        }
     }
     
     return (tags, globalTags)
