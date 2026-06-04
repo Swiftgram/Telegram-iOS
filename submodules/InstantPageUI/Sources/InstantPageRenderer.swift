@@ -1803,6 +1803,13 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
                     self.addSubview(body)
                     self.bodyView = body
                 }
+                // Forward taps on details NESTED inside this body up to the same toggle handler this
+                // view uses: makeItemView wired our onTitleTapped to the owning InstantPageV2View's
+                // detailsTapped, so chaining through onTitleTapped reaches the bubble's toggle handler.
+                // Without this, a nested details' tap hits the body view's nil detailsTapped and is dropped.
+                body.detailsTapped = { [weak self] index in
+                    self?.onTitleTapped?(index)
+                }
                 body.update(layout: innerLayout, theme: theme, animation: animation)
                 body.frame = CGRect(
                     origin: CGPoint(x: 0.0, y: item.titleFrame.maxY),

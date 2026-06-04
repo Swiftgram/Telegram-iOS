@@ -164,12 +164,23 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
 
     private func defaultExpanded(forDetailsIndex index: Int) -> Bool {
         guard let layout = self.currentPageLayout?.layout else { return false }
-        for item in layout.items {
-            if case let .details(d) = item, d.index == index {
-                return d.defaultExpanded
+        func search(_ items: [InstantPageV2LaidOutItem]) -> Bool? {
+            for item in items {
+                if case let .details(d) = item {
+                    if d.index == index {
+                        return d.defaultExpanded
+                    }
+                    // Recurse into an expanded parent's body so NESTED details indices resolve too;
+                    // the flat top-level scan missed them, leaving the toggle's "current state"
+                    // computation wrong for a nested details whose model default is expanded.
+                    if let inner = d.innerLayout, let found = search(inner.items) {
+                        return found
+                    }
+                }
             }
+            return nil
         }
-        return false
+        return search(layout.items) ?? false
     }
 
     required public init?(coder aDecoder: NSCoder) {
