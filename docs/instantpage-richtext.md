@@ -396,3 +396,32 @@ Tapping a fragment-only link (`[Jump](#section)`) inside a rich-data bubble scro
 - **A fragment-only URL (`#…`, empty base) is always intercepted** — never opened as an external URL. If it resolves → scroll; if not (missing or empty anchor) → no-op (press-highlight only). A real URL carrying a fragment (`https://x.com/p#s`, non-empty base) keeps the unchanged external-URL handling.
 - **The expansion loop terminates** via a progress guard (`lastExpandedPendingDetailsIndex == collapsedIndex` → give up): each relayout pass either resolves+scrolls (clearing pending) or advances to a strictly deeper collapsed `<details>`.
 - **No `activate:` on the anchor tap action** (unlike external-URL taps): anchor scrolling is local and instant, so the link-loading shimmer (`makeActivate`) would falsely imply network activity. The press-highlight `rects` are still passed.
+
+## "Show more" for partial rich messages (on-demand full page)
+
+A server-sent rich message can arrive **partial** when the content is long: the `RichMessage` `isPartial` flag maps to `instantPage.isComplete == false`. The bubble then renders the partial page plus an inline **"Show more"** link; tapping it fetches the full page (once) and expands the bubble in place.
+
+### Data model
+
+- `RichTextMessageAttribute` (`SyncCore_RichTextMessageAttribute.swift`) carries the partial `instantPage` **and** an optional `fullInstantPage: InstantPage?` (nil until fetched). The partial page is **never replaced** — the full page is stored alongside it (encoded/decoded; both in `==`).
+- `engine.messages.requestFullRichText(id:)` (`TelegramEngineMessages.swift`) requests `messages.getRichMessage`, then `transaction.updateMessage(id,…)` sets the existing attribute's `fullInstantPage` to the fetched complete page (keeping `instantPage`), and returns the updated attribute. It yields `.single(nil)` for non-Cloud ids and on network failure (no postbox change).
+- The seed-config merge (`SyncCore_StandaloneAccountTransaction.swift`) preserves a previously-fetched `fullInstantPage` if a later server update for the same message arrives without one (same partial `instantPage`).
+
+### Where things live
+
+| File | Responsibility |
+|---|---|
+| `…/TelegramCore/Sources/SyncCore/SyncCore_RichTextMessageAttribute.swift` | The `fullInstantPage` field (init / encode / decode / `==`). |
+| `…/TelegramCore/Sources/TelegramEngine/Messages/TelegramEngineMessages.swift` | `requestFullRichText(id:)` — fetch + `updateMessage` to fill `fullInstantPage`. |
+| `…/TelegramCore/Sources/SyncCore/SyncCore_StandaloneAccountTransaction.swift` | Seed-config merge preserving a fetched `fullInstantPage` across later updates. |
+| `…/Chat/ChatMessageRichDataBubbleContentNode/…` | The "Show more" link (layout, tap via `tapActionAtPoint` `.custom` + `updateTouchesAtPoint` highlight, `TextLoadingEffectView` shimmer), the node-local expand state, the effective-page selection, and the downward-expand. |
+| `Telegram/Telegram-iOS/en.lproj/Localizable.strings` | `Chat.RichText.ShowMore` = "Show more" (→ `strings.Chat_RichText_ShowMore`). |
+
+### Non-obvious invariants
+
+- **Expand state is node-local and per-message, NOT derived from the attribute.** `showMoreExpanded: (messageId, value)?` is snapshotted at layout time and resolved against the current `item.message.id`, so **every fresh display of a message starts collapsed (partial)** even when its attribute already carries a cached `fullInstantPage`; only an in-place tap expands, and that expansion survives same-message relayouts. Resolving against the message id makes any *other* message collapse automatically (no stale-snapshot bug, no manual reset).
+- **The bubble renders `(showMoreExpanded ? attribute.fullInstantPage : nil) ?? attribute.instantPage`** — the full page only while expanded — in both the webpage build and `layoutInstantPageV2`. `scrollToAnchor` resolves anchors against the same effective page.
+- **The link shows only when `!showMoreExpanded` AND `!attribute.instantPage.isComplete`** (plus the original gates: not streaming via `TypingDraftMessageAttribute`, `id.namespace == .Cloud` since `requestFullRichText` is a no-op otherwise, and not a preview / `.messageOptions` context). The date/status trails the link's line by substituting the link frame for the last-text-line frame (see the status-node section).
+- **`showMoreExpanded` is part of BOTH layout caches.** It is in the `currentPageLayout` cache key **and** the `pageView` content key (`pageViewMessageKey`). This is required because the cached-expand path (full page already on the attribute) performs **no postbox write**, so `stableVersion` does not bump — without the key, the cached partial layout/content would shadow the expand.
+- **Tap (`activateShowMore`):** if `fullInstantPage` is already cached → set expanded + `requestMessageUpdate` immediately (no network, no shimmer); otherwise shimmer the link and fetch, expanding only once the full page lands. Guards against a second in-flight request and against re-expanding.
+- **Expand grows the bubble downward in screen space** (top fixed) via `info?.setInvertOffsetDirection()` on the `ListViewItemApply` in the apply closure, fired only on the `appliedShowMoreExpanded → showMoreExpanded` transition (never on first apply). Same mechanism as `ChatMessageInteractiveFileNode`'s audio-transcription expand and the text/fact-check bubbles; the ListView clamps it to what fits.

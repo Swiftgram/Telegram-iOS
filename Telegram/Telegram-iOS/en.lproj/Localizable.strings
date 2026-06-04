@@ -8297,6 +8297,7 @@ Sorry for the inconvenience.";
 "Chat.EmptyTopicPlaceholder.Text" = "Send the first message to\nstart this topic.";
 
 "Chat.Message.TopicAuthorBadge" = "Topic Author";
+"Chat.RichText.ShowMore" = "Show more";
 
 "Chat.PanelRestartTopic" = "Restart Topic";
 "Chat.PanelTopicClosedText" = "The topic is closed by admin";

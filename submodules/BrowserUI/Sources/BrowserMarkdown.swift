@@ -1020,7 +1020,7 @@ public func inputRichTextAttributeFromText(context: AccountContext, text: String
     guard let webpage = markdownWebpage(context: context, file: nil, data: data), case let .Loaded(content) = webpage.content, let instantPage = content.instantPage else {
         return nil
     }
-    return RichTextMessageAttribute(instantPage: instantPage._parse())
+    return RichTextMessageAttribute(instantPage: instantPage._parse(), fullInstantPage: nil)
 }
 
 // MARK: - Markdown classification (entity-expressible vs. rich layout)

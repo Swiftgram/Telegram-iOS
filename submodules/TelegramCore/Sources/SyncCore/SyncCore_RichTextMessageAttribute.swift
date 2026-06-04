@@ -4,6 +4,7 @@ import TelegramApi
 
 public class RichTextMessageAttribute: MessageAttribute, Equatable {
     public let instantPage: InstantPage
+    public var fullInstantPage: InstantPage?
     
     public var associatedPeerIds: [PeerId] {
         return []
@@ -13,20 +14,27 @@ public class RichTextMessageAttribute: MessageAttribute, Equatable {
         return []
     }
     
-    public init(instantPage: InstantPage) {
+    public init(instantPage: InstantPage, fullInstantPage: InstantPage?) {
         self.instantPage = instantPage
+        self.fullInstantPage = fullInstantPage
     }
     
     required public init(decoder: PostboxDecoder) {
         self.instantPage = decoder.decodeObjectForKey("instantPage", decoder: { InstantPage(decoder: $0) }) as! InstantPage
+        self.fullInstantPage = decoder.decodeObjectForKey("fullInstantPage", decoder: { InstantPage(decoder: $0) }) as? InstantPage
     }
     
     public func encode(_ encoder: PostboxEncoder) {
         encoder.encodeObject(self.instantPage, forKey: "instantPage")
+        if let fullInstantPage = self.fullInstantPage {
+            encoder.encodeObject(fullInstantPage, forKey: "fullInstantPage")
+        } else {
+            encoder.encodeNil(forKey: "fullInstantPage")
+        }
     }
     
     public static func ==(lhs: RichTextMessageAttribute, rhs: RichTextMessageAttribute) -> Bool {
-        return lhs.instantPage == rhs.instantPage
+        return lhs.instantPage == rhs.instantPage && lhs.fullInstantPage == rhs.fullInstantPage
     }
 }
 
@@ -48,7 +56,7 @@ extension RichTextMessageAttribute {
             let isRtl = (richMessage.flags & (1 << 0)) != 0
             let isPartial = (richMessage.flags & (1 << 1)) != 0
             let instantPage = InstantPage(blocks: richMessage.blocks.map({ InstantPageBlock(apiBlock: $0) }), media: media, isComplete: !isPartial, rtl: isRtl, url: "", views: nil)
-            self.init(instantPage: instantPage)
+            self.init(instantPage: instantPage, fullInstantPage: nil)
         }
     }
 

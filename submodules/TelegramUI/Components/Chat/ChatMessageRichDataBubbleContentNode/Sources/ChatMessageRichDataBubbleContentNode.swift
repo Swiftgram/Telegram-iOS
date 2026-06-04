@@ -29,7 +29,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     // The synthesized webpage uses a sentinel id (namespace 0, id 0) shared across all richText
     // messages, so we key cache invalidation on the message itself. When the bubble is recycled
     // with a different message we must discard pageView (render context is constructor-fixed).
-    private var pageViewMessageKey: (id: EngineMessage.Id, stableVersion: UInt32)?
+    private var pageViewMessageKey: (id: EngineMessage.Id, stableVersion: UInt32, showMoreExpanded: Bool)?
     // messageStableVersion is in the cache key because the synthesized instantPage content
     // mutates between streamed AI message chunks (each chunk bumps stableVersion); without
     // this, the cached layout would shadow newly-arrived content during streaming.
@@ -37,6 +37,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                                     presentationThemeIdentity: ObjectIdentifier,
                                     expandedDetails: [Int: Bool],
                                     messageStableVersion: UInt32,
+                                    showMoreExpanded: Bool,
                                     layout: InstantPageV2Layout)?
     private var currentExpandedDetails: [Int: Bool] = [:]
     // Intra-message anchor scroll that is waiting on a collapsed <details> to expand + relayout.
@@ -59,6 +60,22 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     private var lastAppliedRevealedCount: Int = 0
     private var displayContentsUnderSpoilers: Bool = false
     private var relativeDateTimer: (timer: SwiftSignalKit.Timer, period: Int32)?
+
+    // "Show more" affordance for partial rich messages (instantPage.isComplete == false).
+    // Managed inline, mirroring the statusNode pattern: a bubble-owned TextNode below the page
+    // content, with a TextLoadingEffectView shimmer while the full-text request is in flight.
+    private var showMoreTextNode: TextNode?
+    private var showMoreLoadingView: TextLoadingEffectView?
+    private var requestFullRichTextDisposable: Disposable?
+    private var requestFullRichTextMessageId: EngineMessage.Id?
+    // Transient per-message expand state. The full page is shown only after the user taps "Show
+    // more"; tagging it with the message id means any other message starts collapsed (partial)
+    // every time, even if its attribute already carries a cached fullInstantPage.
+    private var showMoreExpanded: (messageId: EngineMessage.Id, value: Bool)?
+    // The expand state actually applied on the previous layout pass, used to detect the
+    // collapse→expand transition so the bubble can grow downward in screen space (see the
+    // setInvertOffsetDirection call in the apply closure). nil until the first apply.
+    private var appliedShowMoreExpanded: Bool?
 
     override public var visibility: ListViewItemNodeVisibility {
         didSet {
@@ -101,10 +118,10 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     /// Builds (or reuses) the V2View. Same-message stableVersion bumps (streamed AI chunks) reuse
     /// the existing view, updating only the webpage content in place. The view is rebuilt only when
     /// the bubble is recycled with a different message/webpage (different message id).
-    private func ensurePageView(item: ChatMessageBubbleContentItem, webpage: TelegramMediaWebpage) -> InstantPageV2View {
-        let key = (id: item.message.id, stableVersion: item.message.stableVersion)
+    private func ensurePageView(item: ChatMessageBubbleContentItem, webpage: TelegramMediaWebpage, showMoreExpanded: Bool) -> InstantPageV2View {
+        let key = (id: item.message.id, stableVersion: item.message.stableVersion, showMoreExpanded: showMoreExpanded)
         if let existing = self.pageView, let current = self.pageViewMessageKey, current.id == key.id {
-            if current.stableVersion == key.stableVersion {
+            if current.stableVersion == key.stableVersion && current.showMoreExpanded == key.showMoreExpanded {
                 return existing
             }
             // Same message, new chunk: reuse the view. Update only the content-bearing webpage on
@@ -190,13 +207,16 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     deinit {
         self.linkProgressDisposable?.dispose()
         self.relativeDateTimer?.timer.invalidate()
+        self.requestFullRichTextDisposable?.dispose()
     }
     
     override public func asyncLayoutContent() -> (_ item: ChatMessageBubbleContentItem, _ layoutConstants: ChatMessageItemLayoutConstants, _ preparePosition: ChatMessageBubblePreparePosition, _ messageSelection: Bool?, _ constrainedSize: CGSize, _ avatarInset: CGFloat) -> (ChatMessageBubbleContentProperties, CGSize?, CGFloat, (CGSize, ChatMessageBubbleContentPosition) -> (CGFloat, (CGFloat) -> (CGSize, (ListViewItemUpdateAnimation, Bool, ListViewItemApply?) -> Void))) {
         let previousItem = self.item
         let currentPageLayout = self.currentPageLayout
         let currentExpandedDetails = self.currentExpandedDetails
+        let showMoreExpandedState = self.showMoreExpanded
         let statusLayout = ChatMessageDateAndStatusNode.asyncLayout(self.statusNode)
+        let showMoreTextLayout = TextNode.asyncLayout(self.showMoreTextNode)
         // Captured at main-thread, top of asyncLayoutContent. Mirrors TextBubble's
         // `currentMaxGlyphCount` (TextBubble:313). The bubble's bounding size is sized
         // to this revealed prefix during streaming, so it grows with the reveal rather
@@ -334,6 +354,9 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                     hadDraft = true
                 }
 
+                // Resolve the node-local expand state for THIS message (collapsed for any other).
+                let showMoreExpanded = (showMoreExpandedState?.messageId == item.message.id) ? (showMoreExpandedState?.value ?? false) : false
+
                 if let attribute = item.message.richText {
                     #if DEBUG && false
                     let instantPage = InstantPage(blocks: [.thinking(.concat([
@@ -341,9 +364,10 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                         .plain("Thinking...")
                     ]))], media: [:], isComplete: true, rtl: false, url: "", views: nil)
                     #else
-                    let instantPage = attribute.instantPage
+                    // Show the full page only while expanded (after a "Show more" tap); otherwise the partial.
+                    let instantPage = (showMoreExpanded ? attribute.fullInstantPage : nil) ?? attribute.instantPage
                     #endif
-                    
+
                     let webpage = TelegramMediaWebpage(webpageId: EngineMedia.Id(namespace: 0, id: 0), content: .Loaded(TelegramMediaWebpageLoadedContent(
                         url: "",
                         displayUrl: "",
@@ -373,6 +397,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                        current.boundingWidth == suggestedBoundingWidth,
                        current.presentationThemeIdentity == presentationThemeIdentity,
                        current.expandedDetails == currentExpandedDetails,
+                       current.showMoreExpanded == showMoreExpanded,
                        current.messageStableVersion == currentMessageStableVersion,
                        current.layout.formattedDateUpdatePeriod == nil {
                         // Reuse the cached layout only when it has no relative `textDate`. A relative
@@ -389,7 +414,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                             .plain("Thinking...")
                         ]))], media: [:], isComplete: true, rtl: false, url: "", views: nil)
                         #else
-                        let instantPage = attribute.instantPage
+                        let instantPage = (showMoreExpanded ? attribute.fullInstantPage : nil) ?? attribute.instantPage
                         #endif
                         pageLayout = layoutInstantPageV2(
                             webpage: webpage,
@@ -526,11 +551,54 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                 // item is itself a text item; otherwise (table/image/etc. last) the status falls
                 // through to the contentSize.height anchor and sits below all content.
                 let lastTextLine = pageLayout.flatMap(InstantPageUI.lastTextLineFrameIfLastItemIsText(in:))
-                let lastTextLineFrame: CGRect? = lastTextLine?.frame
+                var lastTextLineFrame: CGRect? = lastTextLine?.frame
                 // Baseline → visible-text-bottom compensation. Applied whether the date trails on
                 // the last line or wraps onto its own line below it (0 for attachment-inflated lines,
                 // whose maxY already sits at the visible bottom).
-                let lastTextLineTrailingPadding: CGFloat = lastTextLine?.trailingBottomPadding ?? 0.0
+                var lastTextLineTrailingPadding: CGFloat = lastTextLine?.trailingBottomPadding ?? 0.0
+
+                // "Show more" affordance for partial rich messages: laid out as a bubble-owned text
+                // node below the page content. Shown only when the page is incomplete AND the user
+                // has not expanded it yet (showMoreExpanded == false), the message is not streaming,
+                // it is a Cloud message (requestFullRichText is a no-op otherwise), and we are not in
+                // a preview / messageOptions context. When present, the date trails the link's line
+                // by substituting its frame for the last-text-line frame the status machinery consumes.
+                var showMore = false
+                if let attribute = item.message.richText,
+                   !showMoreExpanded,
+                   !attribute.instantPage.isComplete,
+                   !hasDraft,
+                   item.message.id.namespace == Namespaces.Message.Cloud,
+                   !item.presentationData.isPreview {
+                    if let subject = item.associatedData.subject, case .messageOptions = subject {
+                        showMore = false
+                    } else {
+                        showMore = true
+                    }
+                }
+
+                var showMoreLayoutResult: (TextNodeLayout, () -> TextNode)?
+                var showMoreFramePageLocal: CGRect?
+                if showMore, let pageLayout {
+                    let title = item.presentationData.strings.Chat_RichText_ShowMore
+                    let attributedTitle = NSAttributedString(string: title, font: Font.regular(17.0), textColor: messageTheme.linkTextColor)
+                    // The link only fits within the existing bubble width (it does not widen the
+                    // bubble the way the status node does); the short fixed string never needs more,
+                    // and `.end` truncation is a safe fallback for a pathologically narrow bubble.
+                    let constrainedWidth = max(1.0, boundingSize.width - pageHorizontalInset * 2.0)
+                    let layout = showMoreTextLayout(TextNodeLayoutArguments(attributedString: attributedTitle, maximumNumberOfLines: 1, truncationType: .end, constrainedSize: CGSize(width: constrainedWidth, height: 100.0)))
+                    let showMoreTopSpacing: CGFloat = 2.0
+                    let frame = CGRect(origin: CGPoint(x: pageHorizontalInset, y: pageLayout.contentSize.height + showMoreTopSpacing), size: layout.0.size)
+                    showMoreLayoutResult = layout
+                    showMoreFramePageLocal = frame
+                    // Date trails the link line (or wraps below it if it doesn't fit) — reuse the
+                    // status machinery by substituting the link frame for the last-text-line frame.
+                    lastTextLineFrame = frame
+                    lastTextLineTrailingPadding = 0.0
+                    // Ensure the bubble contains the link even when the status node is hidden. The 1.0
+                    // is the content top rim; 6.0 the bottom breathing room used elsewhere in this file.
+                    boundingSize.height = max(boundingSize.height, 1.0 + frame.maxY + 6.0)
+                }
 
                 var statusSuggestedWidthAndContinue: (CGFloat, (CGFloat) -> (CGSize, (ListViewItemUpdateAnimation) -> ChatMessageDateAndStatusNode))?
                 if let statusType = statusType {
@@ -612,11 +680,31 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                         boundingSize.height = max(boundingSize.height, statusBottomEdge + 6.0)
                     }
 
-                    return (boundingSize, { animation, _, _ in
+                    return (boundingSize, { animation, _, info in
                         guard let self else {
                             return
                         }
                         self.item = item
+
+                        // If the bubble was recycled onto a different message while a full-text
+                        // request was in flight, cancel it so this message never shows another's
+                        // shimmer.
+                        if let pendingId = self.requestFullRichTextMessageId, pendingId != item.message.id {
+                            self.requestFullRichTextDisposable?.dispose()
+                            self.requestFullRichTextDisposable = nil
+                            self.requestFullRichTextMessageId = nil
+                            self.updateShowMoreLoading(false)
+                        }
+
+                        // On the collapse→expand transition (tapping "Show more"), grow the bubble
+                        // downward in screen space (inverted list offset direction) instead of pushing
+                        // earlier messages up — matching the audio-transcription expand. The ListView
+                        // clamps this to what fits, so "if possible" is handled for us. Only fires on a
+                        // change, and never on the first apply (appliedShowMoreExpanded is nil).
+                        if let appliedShowMoreExpanded = self.appliedShowMoreExpanded, appliedShowMoreExpanded != showMoreExpanded {
+                            info?.setInvertOffsetDirection()
+                        }
+                        self.appliedShowMoreExpanded = showMoreExpanded
 
                         animation.animator.updateFrame(layer: self.containerNode.layer, frame: CGRect(origin: CGPoint(x: 1.0, y: 1.0), size: CGSize(width: boundingWidth - 2.0, height: boundingSize.height)), completion: nil)
                         self.containerNode.cornerRadius = layoutConstants.image.defaultCornerRadius
@@ -687,9 +775,10 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                                 ObjectIdentifier(item.presentationData.theme.theme),
                                 self.currentExpandedDetails,
                                 item.message.stableVersion,
+                                showMoreExpanded,
                                 pageLayout
                             )
-                            let pageView = self.ensurePageView(item: item, webpage: pageWebpage)
+                            let pageView = self.ensurePageView(item: item, webpage: pageWebpage, showMoreExpanded: showMoreExpanded)
                             pageView.update(layout: pageLayout, theme: pageTheme, animation: animation)
                             pageView.frame = CGRect(
                                 origin: CGPoint(x: -1.0, y: streamingHeaderOffset),
@@ -723,6 +812,30 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                                 animation: animation
                             )
                             self.pageViewMessageKey = nil
+                        }
+
+                        // "Show more" link node.
+                        if let showMoreLayoutResult, let showMoreFramePageLocal {
+                            let showMoreTextNode = showMoreLayoutResult.1()
+                            if self.showMoreTextNode !== showMoreTextNode {
+                                self.showMoreTextNode?.removeFromSupernode()
+                                self.showMoreTextNode = showMoreTextNode
+                                showMoreTextNode.isUserInteractionEnabled = false
+                                self.addSubnode(showMoreTextNode)
+                            }
+                            // Self-coords: the 1.0 mirrors statusFrameY's container offset; the page
+                            // content sits 1pt below the content-node top.
+                            showMoreTextNode.frame = CGRect(origin: CGPoint(x: pageHorizontalInset, y: 1.0 + showMoreFramePageLocal.minY), size: showMoreFramePageLocal.size)
+                            // Keep the shimmer alive across intervening relayouts while loading.
+                            if self.requestFullRichTextDisposable != nil, self.requestFullRichTextMessageId == item.message.id {
+                                self.updateShowMoreLoading(true)
+                            }
+                        } else {
+                            if let showMoreTextNode = self.showMoreTextNode {
+                                self.showMoreTextNode = nil
+                                showMoreTextNode.removeFromSupernode()
+                            }
+                            self.updateShowMoreLoading(false)
                         }
 
                         if let formattedDateUpdatePeriod = pageLayout?.formattedDateUpdatePeriod {
@@ -898,6 +1011,15 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
             if let item = self.item, let subject = item.associatedData.subject, case .messageOptions = subject {
                 return ChatMessageBubbleContentTapAction(content: .none)
             }
+        }
+
+        if case .tap = gesture, let showMoreTextNode = self.showMoreTextNode, showMoreTextNode.frame.contains(point) {
+            // Highlight rect in containerNode-local coords (the highlight overlay lives inside
+            // containerNode, which sits at self (1, 1); the text node is on self).
+            let rects = [showMoreTextNode.frame.offsetBy(dx: -1.0, dy: -1.0)]
+            return ChatMessageBubbleContentTapAction(content: .custom({ [weak self] in
+                self?.activateShowMore()
+            }), rects: rects)
         }
 
         if case .tap = gesture, !self.displayContentsUnderSpoilers, let entityHit = self.entityForTapLocation(point), entityHit.attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.Spoiler)] != nil {
@@ -1113,7 +1235,9 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
 
         var rects: [CGRect]?
         if let point {
-            if let urlHit = self.urlForTapLocation(point) {
+            if let showMoreTextNode = self.showMoreTextNode, showMoreTextNode.frame.contains(point) {
+                rects = [showMoreTextNode.frame.offsetBy(dx: -1.0, dy: -1.0)]
+            } else if let urlHit = self.urlForTapLocation(point) {
                 rects = self.computeHighlightRects(item: urlHit.item, parentOffset: urlHit.parentOffset, localPoint: urlHit.localPoint)
             } else if let entityHit = self.entityForTapLocation(point), self.entityTapContent(entityHit.attributes) != nil {
                 rects = self.computeHighlightRects(item: entityHit.item, parentOffset: entityHit.parentOffset, localPoint: entityHit.localPoint)
@@ -1321,7 +1445,8 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
         }
         // 2. Not laid out — it may be buried in a collapsed <details>. Find the path and expand
         //    the first collapsed details on it, then retry after the relayout (post-relayout hook).
-        guard let instantPage = item.message.richText?.instantPage,
+        let anchorExpanded = (self.showMoreExpanded?.messageId == item.message.id) ? (self.showMoreExpanded?.value ?? false) : false
+        guard let instantPage = item.message.richText.map({ (anchorExpanded ? $0.fullInstantPage : nil) ?? $0.instantPage }),
               let path = instantPageAnchorPath(in: instantPage, name: anchor),
               !path.isEmpty,
               let collapsedIndex = self.pageView?.firstCollapsedDetails(forOrdinalPath: path)
@@ -1343,5 +1468,87 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     private func clearPendingScroll() {
         self.pendingScrollAnchor = nil
         self.lastExpandedPendingDetailsIndex = nil
+    }
+
+    // Fired by the "Show more" tap action. Expands this bubble to the full page: if the attribute
+    // already carries a cached fullInstantPage, expands immediately; otherwise fetches it (which
+    // persists it onto the message) while shimmering the link, then expands. Guards against a
+    // second request while one is in flight, and against re-expanding an already-expanded bubble.
+    private func activateShowMore() {
+        guard let item = self.item, let attribute = item.message.richText else {
+            return
+        }
+        let messageId = item.message.id
+        if let state = self.showMoreExpanded, state.messageId == messageId, state.value {
+            return
+        }
+        // Full page already cached on the attribute — expand immediately, no network, no shimmer.
+        if attribute.fullInstantPage != nil {
+            self.showMoreExpanded = (messageId, true)
+            item.controllerInteraction.requestMessageUpdate(messageId, false, nil)
+            return
+        }
+        // Otherwise fetch it; keep the link visible and shimmering until it arrives.
+        if self.requestFullRichTextDisposable != nil {
+            return
+        }
+        self.requestFullRichTextMessageId = messageId
+        self.updateShowMoreLoading(true)
+        self.requestFullRichTextDisposable = (item.context.engine.messages.requestFullRichText(id: messageId)
+        |> deliverOnMainQueue).startStrict(next: { [weak self] result in
+            guard let self else {
+                return
+            }
+            if result?.fullInstantPage != nil {
+                self.showMoreExpanded = (messageId, true)
+            }
+            self.finishShowMore()
+            if let item = self.item, item.message.id == messageId {
+                item.controllerInteraction.requestMessageUpdate(messageId, false, nil)
+            }
+        }, completed: { [weak self] in
+            self?.finishShowMore()
+        })
+    }
+
+    // Clears the in-flight request state and stops the shimmer. Invoked from both the request's
+    // `next` and `completed` handlers (the signal emits one value then completes); idempotent.
+    private func finishShowMore() {
+        self.requestFullRichTextDisposable?.dispose()
+        self.requestFullRichTextDisposable = nil
+        self.requestFullRichTextMessageId = nil
+        self.updateShowMoreLoading(false)
+    }
+
+    // Shows/hides the shimmer over the "Show more" text node. The TextLoadingEffectView masks
+    // itself with the text node's own range rects, so it is placed at the text node's frame in
+    // self-coordinates (same parent). Removing the text node also removes the shimmer.
+    private func updateShowMoreLoading(_ loading: Bool) {
+        guard let item = self.item, let showMoreTextNode = self.showMoreTextNode else {
+            if let loadingView = self.showMoreLoadingView {
+                self.showMoreLoadingView = nil
+                loadingView.removeFromSuperview()
+            }
+            return
+        }
+        if loading {
+            let loadingView: TextLoadingEffectView
+            if let current = self.showMoreLoadingView {
+                loadingView = current
+            } else {
+                loadingView = TextLoadingEffectView(frame: CGRect())
+                self.showMoreLoadingView = loadingView
+                self.view.addSubview(loadingView)
+            }
+            loadingView.frame = showMoreTextNode.frame
+            let color = item.message.effectivelyIncoming(item.context.account.peerId)
+                ? item.presentationData.theme.theme.chat.message.incoming.linkTextColor
+                : item.presentationData.theme.theme.chat.message.outgoing.linkTextColor
+            let title = item.presentationData.strings.Chat_RichText_ShowMore
+            loadingView.update(color: color, textNode: showMoreTextNode, range: NSRange(location: 0, length: (title as NSString).length))
+        } else if let loadingView = self.showMoreLoadingView {
+            self.showMoreLoadingView = nil
+            loadingView.removeFromSuperview()
+        }
     }
 }

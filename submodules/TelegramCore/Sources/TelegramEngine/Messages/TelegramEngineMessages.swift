@@ -1915,9 +1915,23 @@ public extension TelegramEngine {
                             peerIsForum = true
                         }
                         updatePeers(transaction: transaction, accountPeerId: account.peerId, peers: AccumulatedPeers(chats: chats, users: users))
-                        let _ = transaction.addMessages(messages.compactMap { message -> StoreMessage? in
-                            return StoreMessage(apiMessage: message, accountPeerId: account.peerId, peerIsForum: peerIsForum)
-                        }, location: .Random)
+                        
+                        if let apiMessage = messages.first, let storeMessage = StoreMessage(apiMessage: apiMessage, accountPeerId: account.peerId, peerIsForum: peerIsForum) {
+                            transaction.updateMessage(id, update: { currentMessage in
+                                var storeForwardInfo: StoreMessageForwardInfo?
+                                if let forwardInfo = currentMessage.forwardInfo {
+                                    storeForwardInfo = StoreMessageForwardInfo(authorId: forwardInfo.author?.id, sourceId: forwardInfo.source?.id, sourceMessageId: forwardInfo.sourceMessageId, date: forwardInfo.date, authorSignature: forwardInfo.authorSignature, psaType: forwardInfo.psaType, flags: forwardInfo.flags)
+                                }
+                                var updatedAttributes = currentMessage.attributes
+                                if let updatedRichAttribute = storeMessage.attributes.first(where: { $0 is RichTextMessageAttribute }) as? RichTextMessageAttribute {
+                                    if let index = updatedAttributes.firstIndex(where: { $0 is RichTextMessageAttribute }), let previous = updatedAttributes[index] as? RichTextMessageAttribute {
+                                        updatedAttributes[index] = RichTextMessageAttribute(instantPage: previous.instantPage, fullInstantPage: updatedRichAttribute.instantPage)
+                                    }
+                                }
+                                
+                                return .update(StoreMessage(id: currentMessage.id, customStableId: nil, globallyUniqueId: currentMessage.globallyUniqueId, groupingKey: currentMessage.groupingKey, threadId: currentMessage.threadId, timestamp: currentMessage.timestamp, flags: StoreMessageFlags(currentMessage.flags), tags: currentMessage.tags, globalTags: currentMessage.globalTags, localTags: currentMessage.localTags, forwardInfo: storeForwardInfo, authorId: currentMessage.author?.id, text: currentMessage.text, attributes: updatedAttributes, media: currentMessage.media))
+                            })
+                        }
                         
                         return transaction.getMessage(id)?.attributes.first(where: { $0 is RichTextMessageAttribute }) as? RichTextMessageAttribute
                     }

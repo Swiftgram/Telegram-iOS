@@ -162,20 +162,11 @@ public let telegramPostboxSeedConfiguration: SeedConfiguration = {
                     updated.append(previousDerivedData)
                 }
             }
-            if let previousRichText, previousRichText.instantPage.isComplete {
+            if let previousRichText, previousRichText.fullInstantPage != nil {
                 for i in 0 ..< updated.count {
                     if let attribute = updated[i] as? RichTextMessageAttribute {
-                        if !attribute.instantPage.isComplete {
-                            var prefixEquals = true
-                            if attribute.instantPage.blocks.count <= previousRichText.instantPage.blocks.count {
-                                inner: for j in 0 ..< attribute.instantPage.blocks.count {
-                                    if attribute.instantPage.blocks[j] != attribute.instantPage.blocks[j] {
-                                        prefixEquals = false
-                                        break inner
-                                    }
-                                }
-                            }
-                            if prefixEquals {
+                        if attribute.fullInstantPage == nil {
+                            if attribute.instantPage == previousRichText.instantPage {
                                 updated[i] = previousRichText
                             }
                         }
