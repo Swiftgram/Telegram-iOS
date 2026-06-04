@@ -70,9 +70,8 @@ extension RichText {
         case let .textCashtag(textCashtagData):
             self = .textCashtag(text: RichText(apiText: textCashtagData.text))
         case let .textDate(value):
-            let _ = value
-            //TODO:localize
-            self = .plain("")
+            let format: MessageTextEntityType.DateTimeFormat? = value.flags == 0 ? nil : MessageTextEntityType.DateTimeFormat(rawValue: value.flags)
+            self = .textDate(text: RichText(apiText: value.text), date: value.date, format: format)
         case let .textHashtag(textHashtagData):
             self = .textHashtag(text: RichText(apiText: textHashtagData.text))
         case let .textMention(textMentionData):
@@ -142,6 +141,8 @@ extension RichText {
             return .textMentionName(Api.RichText.Cons_textMentionName(text: text.apiRichText(), userId: peerId))
         case let .textSpoiler(text):
             return .textSpoiler(Api.RichText.Cons_textSpoiler(text: text.apiRichText()))
+        case let .textDate(text, date, format):
+            return .textDate(Api.RichText.Cons_textDate(flags: format?.rawValue ?? 0, text: text.apiRichText(), date: date))
         }
     }
 }

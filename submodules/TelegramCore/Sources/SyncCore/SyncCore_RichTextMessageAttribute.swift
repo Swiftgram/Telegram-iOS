@@ -6,34 +6,10 @@ public class RichTextMessageAttribute: MessageAttribute, Equatable {
     public let instantPage: InstantPage
     
     public var associatedPeerIds: [PeerId] {
-        /*var result: [PeerId] = []
-        for entity in entities {
-            switch entity.type {
-                case let .TextMention(peerId):
-                    result.append(peerId)
-                default:
-                    break
-            }
-        }
-        return result*/
         return []
     }
     
     public var associatedMediaIds: [MediaId] {
-        /*var result: [MediaId] = []
-        for entity in self.entities {
-            switch entity.type {
-            case let .CustomEmoji(_, fileId):
-                result.append(MediaId(namespace: Namespaces.Media.CloudFile, id: fileId))
-            default:
-                break
-            }
-        }
-        if result.isEmpty {
-            return result
-        } else {
-            return Array(Set(result))
-        }*/
         return []
     }
     

@@ -1779,7 +1779,7 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
         let chevronSize = CGSize(width: 18.0, height: 18.0)
         self.chevronView.bounds = CGRect(origin: .zero, size: chevronSize)
         self.chevronView.center = CGPoint(
-            x: item.sideInset + chevronSize.width / 2.0,
+            x: item.rtl ? (item.frame.width - item.sideInset - chevronSize.width / 2.0) : (item.sideInset + chevronSize.width / 2.0),
             y: item.titleFrame.midY + 1.0
         )
 
@@ -1802,6 +1802,13 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
                     body = InstantPageV2View(renderContext: renderContext)
                     self.addSubview(body)
                     self.bodyView = body
+                }
+                // Forward taps on details NESTED inside this body up to the same toggle handler this
+                // view uses: makeItemView wired our onTitleTapped to the owning InstantPageV2View's
+                // detailsTapped, so chaining through onTitleTapped reaches the bubble's toggle handler.
+                // Without this, a nested details' tap hits the body view's nil detailsTapped and is dropped.
+                body.detailsTapped = { [weak self] index in
+                    self?.onTitleTapped?(index)
                 }
                 body.update(layout: innerLayout, theme: theme, animation: animation)
                 body.frame = CGRect(

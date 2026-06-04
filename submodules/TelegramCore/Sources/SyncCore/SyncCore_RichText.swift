@@ -31,6 +31,7 @@ private enum RichTextTypes: Int32 {
     case textMention = 25
     case textMentionName = 26
     case textSpoiler = 27
+    case textDate = 28
 }
 
 public indirect enum RichText: PostboxCoding, Equatable {
@@ -62,6 +63,7 @@ public indirect enum RichText: PostboxCoding, Equatable {
     case textMention(text: RichText)
     case textMentionName(text: RichText, peerId: Int64)
     case textSpoiler(text: RichText)
+    case textDate(text: RichText, date: Int32, format: MessageTextEntityType.DateTimeFormat?)
 
     public init(decoder: PostboxDecoder) {
         switch decoder.decodeInt32ForKey("r", orElse: 0) {
@@ -127,6 +129,8 @@ public indirect enum RichText: PostboxCoding, Equatable {
                 self = .textMentionName(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText, peerId: decoder.decodeInt64ForKey("mn.p", orElse: 0))
             case RichTextTypes.textSpoiler.rawValue:
                 self = .textSpoiler(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText)
+            case RichTextTypes.textDate.rawValue:
+                self = .textDate(text: decoder.decodeObjectForKey("t", decoder: { RichText(decoder: $0) }) as! RichText, date: decoder.decodeInt32ForKey("dt", orElse: 0), format: decoder.decodeOptionalInt32ForKey("df").flatMap { MessageTextEntityType.DateTimeFormat(rawValue: $0) })
             default:
                 self = .empty
         }
@@ -233,9 +237,18 @@ public indirect enum RichText: PostboxCoding, Equatable {
             case let .textSpoiler(text):
                 encoder.encodeInt32(RichTextTypes.textSpoiler.rawValue, forKey: "r")
                 encoder.encodeObject(text, forKey: "t")
+            case let .textDate(text, date, format):
+                encoder.encodeInt32(RichTextTypes.textDate.rawValue, forKey: "r")
+                encoder.encodeObject(text, forKey: "t")
+                encoder.encodeInt32(date, forKey: "dt")
+                if let format {
+                    encoder.encodeInt32(format.rawValue, forKey: "df")
+                } else {
+                    encoder.encodeNil(forKey: "df")
+                }
         }
     }
-    
+
     public static func ==(lhs: RichText, rhs: RichText) -> Bool {
         switch lhs {
             case .empty:
@@ -366,6 +379,8 @@ public indirect enum RichText: PostboxCoding, Equatable {
                 if case let .textMentionName(rhsText, rhsPeerId) = rhs, lhsText == rhsText, lhsPeerId == rhsPeerId { return true } else { return false }
             case let .textSpoiler(text):
                 if case .textSpoiler(text) = rhs { return true } else { return false }
+            case let .textDate(lhsText, lhsDate, lhsFormat):
+                if case let .textDate(rhsText, rhsDate, rhsFormat) = rhs, lhsText == rhsText, lhsDate == rhsDate, lhsFormat == rhsFormat { return true } else { return false }
         }
     }
 }
@@ -432,6 +447,8 @@ public extension RichText {
             case let .textMentionName(text, _):
                 return text.plainText
             case let .textSpoiler(text):
+                return text.plainText
+            case let .textDate(text, _, _):
                 return text.plainText
         }
     }
@@ -580,6 +597,12 @@ extension RichText {
                 throw FlatBuffersError.missingRequiredField()
             }
             self = .textSpoiler(text: try RichText(flatBuffersObject: value.text))
+        case .richtextDate:
+            guard let value = flatBuffersObject.value(type: TelegramCore_RichText_Date.self) else {
+                throw FlatBuffersError.missingRequiredField()
+            }
+            let formatValue = value.format
+            self = .textDate(text: try RichText(flatBuffersObject: value.text), date: value.date, format: formatValue == -1 ? nil : MessageTextEntityType.DateTimeFormat(rawValue: formatValue))
         case .none_:
             self = .empty
         }
@@ -770,6 +793,14 @@ extension RichText {
             let start = TelegramCore_RichText_Spoiler.startRichText_Spoiler(&builder)
             TelegramCore_RichText_Spoiler.add(text: textOffset, &builder)
             offset = TelegramCore_RichText_Spoiler.endRichText_Spoiler(&builder, start: start)
+        case let .textDate(text, date, format):
+            valueType = .richtextDate
+            let textOffset = text.encodeToFlatBuffers(builder: &builder)
+            let start = TelegramCore_RichText_Date.startRichText_Date(&builder)
+            TelegramCore_RichText_Date.add(text: textOffset, &builder)
+            TelegramCore_RichText_Date.add(date: date, &builder)
+            TelegramCore_RichText_Date.add(format: format?.rawValue ?? -1, &builder)
+            offset = TelegramCore_RichText_Date.endRichText_Date(&builder, start: start)
         }
 
         return TelegramCore_RichText.createRichText(&builder, valueType: valueType, valueOffset: offset)

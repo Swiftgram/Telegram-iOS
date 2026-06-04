@@ -474,7 +474,8 @@ public final class InstantPageTextItem: InstantPageItem {
                 TelegramTextAttributes.PeerTextMention,
                 TelegramTextAttributes.BotCommand,
                 TelegramTextAttributes.Hashtag,
-                TelegramTextAttributes.BankCard
+                TelegramTextAttributes.BankCard,
+                TelegramTextAttributes.Date
             ]
             for key in interactiveKeys {
                 let attrKey = NSAttributedString.Key(rawValue: key)
@@ -727,7 +728,7 @@ final class InstantPageScrollableTextItem: InstantPageScrollableItem {
     }
 }
 
-func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextStyleStack, url: InstantPageUrlItem? = nil, boundingWidth: CGFloat? = nil) -> NSAttributedString {
+func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextStyleStack, url: InstantPageUrlItem? = nil, boundingWidth: CGFloat? = nil, formatDate: ((Int32, MessageTextEntityType.DateTimeFormat) -> String)? = nil) -> NSAttributedString {
     switch text {
         case .empty:
             return NSAttributedString(string: "", attributes: styleStack.textAttributes())
@@ -739,67 +740,67 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
             return NSAttributedString(string: string, attributes: attributes)
         case let .bold(text):
             styleStack.push(.bold)
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             return result
         case let .italic(text):
             styleStack.push(.italic)
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             return result
         case let .underline(text):
             styleStack.push(.underline)
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             return result
         case let .strikethrough(text):
             styleStack.push(.strikethrough)
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             return result
         case let .fixed(text):
             styleStack.push(.fontFixed(true))
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             return result
         case let .url(text, url, webpageId):
             styleStack.push(.link(webpageId != nil))
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: url, webpageId: webpageId))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: url, webpageId: webpageId), formatDate: formatDate)
             styleStack.pop()
             return result
         case let .email(text, email):
             styleStack.push(.bold)
             styleStack.push(.underline)
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: "mailto:\(email)", webpageId: nil))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: "mailto:\(email)", webpageId: nil), formatDate: formatDate)
             styleStack.pop()
             styleStack.pop()
             return result
         case let .concat(texts):
             let string = NSMutableAttributedString()
             for text in texts {
-                let substring = attributedStringForRichText(text, styleStack: styleStack, url: url, boundingWidth: boundingWidth)
+                let substring = attributedStringForRichText(text, styleStack: styleStack, url: url, boundingWidth: boundingWidth, formatDate: formatDate)
                 string.append(substring)
             }
             return string
         case let .subscript(text):
             styleStack.push(.subscript)
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             return result
         case let .superscript(text):
             styleStack.push(.superscript)
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             return result
         case let .marked(text):
             styleStack.push(.marker)
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             return result
         case let .phone(text, phone):
             styleStack.push(.bold)
             styleStack.push(.underline)
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: "tel:\(phone)", webpageId: nil))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: "tel:\(phone)", webpageId: nil), formatDate: formatDate)
             styleStack.pop()
             styleStack.pop()
             return result
@@ -829,7 +830,7 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
             })
             let delegate = CTRunDelegateCreate(&callbacks, extentBuffer)
             let attrDictionaryDelegate = [(kCTRunDelegateAttributeName as NSAttributedString.Key): (delegate as Any), NSAttributedString.Key(rawValue: InstantPageMediaIdAttribute): id.id, NSAttributedString.Key(rawValue: InstantPageMediaDimensionsAttribute): dimensions]
-            let mutableAttributedString = attributedStringForRichText(.plain(" "), styleStack: styleStack, url: url).mutableCopy() as! NSMutableAttributedString
+            let mutableAttributedString = attributedStringForRichText(.plain(" "), styleStack: styleStack, url: url, formatDate: formatDate).mutableCopy() as! NSMutableAttributedString
             mutableAttributedString.addAttributes(attrDictionaryDelegate, range: NSMakeRange(0, mutableAttributedString.length))
             return mutableAttributedString
         case let .formula(latex):
@@ -864,7 +865,7 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
                 return data.pointee.width
             })
             let delegate = CTRunDelegateCreate(&callbacks, extentBuffer)
-            let mutableAttributedString = attributedStringForRichText(.plain(" "), styleStack: styleStack, url: url).mutableCopy() as! NSMutableAttributedString
+            let mutableAttributedString = attributedStringForRichText(.plain(" "), styleStack: styleStack, url: url, formatDate: formatDate).mutableCopy() as! NSMutableAttributedString
             mutableAttributedString.addAttributes([
                 kCTRunDelegateAttributeName as NSAttributedString.Key: delegate as Any,
                 NSAttributedString.Key(rawValue: InstantPageFormulaAttribute): attachment
@@ -877,29 +878,29 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
                 empty = true
                 text = .plain("\u{200b}")
             }
-            let anchorText = !empty ? attributedStringForRichText(text, styleStack: styleStack, url: url) : nil
+            let anchorText = !empty ? attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate) : nil
             styleStack.push(.anchor(name, anchorText, empty))
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             return result
         case let .textAutoUrl(text):
             styleStack.push(.link(false))
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: text.plainText, webpageId: nil))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: text.plainText, webpageId: nil), formatDate: formatDate)
             styleStack.pop()
             return result
         case let .textAutoEmail(text):
             styleStack.push(.link(false))
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: "mailto:\(text.plainText)", webpageId: nil))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: "mailto:\(text.plainText)", webpageId: nil), formatDate: formatDate)
             styleStack.pop()
             return result
         case let .textAutoPhone(text):
             styleStack.push(.link(false))
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: "tel:\(text.plainText)", webpageId: nil))
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: InstantPageUrlItem(url: "tel:\(text.plainText)", webpageId: nil), formatDate: formatDate)
             styleStack.pop()
             return result
         case let .textMention(text):
             styleStack.push(.link(false))
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             let mutable = result.mutableCopy() as! NSMutableAttributedString
             if mutable.length != 0 {
@@ -908,7 +909,7 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
             return mutable
         case let .textMentionName(text, peerId):
             styleStack.push(.link(false))
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             let mutable = result.mutableCopy() as! NSMutableAttributedString
             if mutable.length != 0 {
@@ -918,7 +919,7 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
             return mutable
         case let .textHashtag(text):
             styleStack.push(.link(false))
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             let mutable = result.mutableCopy() as! NSMutableAttributedString
             if mutable.length != 0 {
@@ -927,7 +928,7 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
             return mutable
         case let .textCashtag(text):
             styleStack.push(.link(false))
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             let mutable = result.mutableCopy() as! NSMutableAttributedString
             if mutable.length != 0 {
@@ -936,7 +937,7 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
             return mutable
         case let .textBotCommand(text):
             styleStack.push(.link(false))
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             let mutable = result.mutableCopy() as! NSMutableAttributedString
             if mutable.length != 0 {
@@ -945,7 +946,7 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
             return mutable
         case let .textBankCard(text):
             styleStack.push(.link(false))
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             styleStack.pop()
             let mutable = result.mutableCopy() as! NSMutableAttributedString
             if mutable.length != 0 {
@@ -981,19 +982,31 @@ func attributedStringForRichText(_ text: RichText, styleStack: InstantPageTextSt
             })
             let delegate = CTRunDelegateCreate(&callbacks, extentBuffer)
             let emojiAttribute = ChatTextInputTextCustomEmojiAttribute(interactivelySelectedFromPackId: nil, fileId: fileId, file: nil)
-            let mutableAttributedString = attributedStringForRichText(.plain(" "), styleStack: styleStack, url: url).mutableCopy() as! NSMutableAttributedString
+            let mutableAttributedString = attributedStringForRichText(.plain(" "), styleStack: styleStack, url: url, formatDate: formatDate).mutableCopy() as! NSMutableAttributedString
             mutableAttributedString.addAttributes([
                 kCTRunDelegateAttributeName as NSAttributedString.Key: delegate as Any,
                 ChatTextInputAttributes.customEmoji: emojiAttribute
             ], range: NSMakeRange(0, mutableAttributedString.length))
             return mutableAttributedString
         case let .textSpoiler(text):
-            let result = attributedStringForRichText(text, styleStack: styleStack, url: url)
+            let result = attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
             let mutable = result.mutableCopy() as! NSMutableAttributedString
             if mutable.length != 0 {
                 mutable.addAttribute(NSAttributedString.Key(rawValue: TelegramTextAttributes.Spoiler), value: true, range: NSRange(location: 0, length: mutable.length))
             }
             return mutable
+        case let .textDate(text, date, format):
+            if let format, let formatDate {
+                let formatted = formatDate(date, format)
+                let result = attributedStringForRichText(.plain(formatted), styleStack: styleStack, url: url, formatDate: formatDate)
+                let mutable = result.mutableCopy() as! NSMutableAttributedString
+                if mutable.length != 0 {
+                    mutable.addAttribute(NSAttributedString.Key(rawValue: TelegramTextAttributes.Date), value: date, range: NSRange(location: 0, length: mutable.length))
+                }
+                return mutable
+            } else {
+                return attributedStringForRichText(text, styleStack: styleStack, url: url, formatDate: formatDate)
+            }
     }
 }
 

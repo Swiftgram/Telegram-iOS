@@ -58,6 +58,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     // to request a full bubble re-layout (so the bubble grows with the reveal).
     private var lastAppliedRevealedCount: Int = 0
     private var displayContentsUnderSpoilers: Bool = false
+    private var relativeDateTimer: (timer: SwiftSignalKit.Timer, period: Int32)?
 
     override public var visibility: ListViewItemNodeVisibility {
         didSet {
@@ -163,12 +164,23 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
 
     private func defaultExpanded(forDetailsIndex index: Int) -> Bool {
         guard let layout = self.currentPageLayout?.layout else { return false }
-        for item in layout.items {
-            if case let .details(d) = item, d.index == index {
-                return d.defaultExpanded
+        func search(_ items: [InstantPageV2LaidOutItem]) -> Bool? {
+            for item in items {
+                if case let .details(d) = item {
+                    if d.index == index {
+                        return d.defaultExpanded
+                    }
+                    // Recurse into an expanded parent's body so NESTED details indices resolve too;
+                    // the flat top-level scan missed them, leaving the toggle's "current state"
+                    // computation wrong for a nested details whose model default is expanded.
+                    if let inner = d.innerLayout, let found = search(inner.items) {
+                        return found
+                    }
+                }
             }
+            return nil
         }
-        return false
+        return search(layout.items) ?? false
     }
 
     required public init?(coder aDecoder: NSCoder) {
@@ -177,6 +189,7 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
     
     deinit {
         self.linkProgressDisposable?.dispose()
+        self.relativeDateTimer?.timer.invalidate()
     }
     
     override public func asyncLayoutContent() -> (_ item: ChatMessageBubbleContentItem, _ layoutConstants: ChatMessageItemLayoutConstants, _ preparePosition: ChatMessageBubblePreparePosition, _ messageSelection: Bool?, _ constrainedSize: CGSize, _ avatarInset: CGFloat) -> (ChatMessageBubbleContentProperties, CGSize?, CGFloat, (CGSize, ChatMessageBubbleContentPosition) -> (CGFloat, (CGFloat) -> (CGSize, (ListViewItemUpdateAnimation, Bool, ListViewItemApply?) -> Void))) {
@@ -360,7 +373,14 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                        current.boundingWidth == suggestedBoundingWidth,
                        current.presentationThemeIdentity == presentationThemeIdentity,
                        current.expandedDetails == currentExpandedDetails,
-                       current.messageStableVersion == currentMessageStableVersion {
+                       current.messageStableVersion == currentMessageStableVersion,
+                       current.layout.formattedDateUpdatePeriod == nil {
+                        // Reuse the cached layout only when it has no relative `textDate`. A relative
+                        // date's formatted string ("N minutes ago") is baked into the laid-out text at
+                        // layout time, and none of the cache-key inputs change as wall-clock advances —
+                        // so reusing it would freeze the date and defeat the refresh timer (which fires
+                        // `requestFullUpdate` precisely to re-run `layoutInstantPageV2` → `formatDate`).
+                        // Forcing a recompute for relative-date pages keeps the timer's tick visible.
                         pageLayout = current.layout
                     } else {
                         #if DEBUG && false
@@ -705,6 +725,26 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
                             self.pageViewMessageKey = nil
                         }
 
+                        if let formattedDateUpdatePeriod = pageLayout?.formattedDateUpdatePeriod {
+                            // Recreate the timer only when the period changes — unlike the TextBubble
+                            // reference (ChatMessageTextBubbleContentNode), which rebuilds it every apply.
+                            // The timer fires `requestFullUpdate`, which relays out and re-enters here; at
+                            // a steady period this guard is false, so the running timer keeps its schedule
+                            // instead of being reallocated (no per-apply churn, no firing-phase reset, no
+                            // self-trigger loop). Do not "simplify" this to match the reference.
+                            if self.relativeDateTimer?.period != formattedDateUpdatePeriod {
+                                self.relativeDateTimer?.timer.invalidate()
+                                let timer = SwiftSignalKit.Timer(timeout: Double(formattedDateUpdatePeriod), repeat: true, completion: { [weak self] in
+                                    self?.requestFullUpdate?(ControlledTransition(duration: 0.15, curve: .easeInOut, interactive: false))
+                                }, queue: Queue.mainQueue())
+                                self.relativeDateTimer = (timer, formattedDateUpdatePeriod)
+                                timer.start()
+                            }
+                        } else if let (timer, _) = self.relativeDateTimer {
+                            self.relativeDateTimer = nil
+                            timer.invalidate()
+                        }
+
                         // === Streaming state apply ===
 
                         // 1. Compute / cache the cost map.
@@ -965,6 +1005,9 @@ public class ChatMessageRichDataBubbleContentNode: ChatMessageBubbleContentNode 
             return .hashtag(hashtag.peerName, hashtag.hashtag)
         } else if let bankCard = attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.BankCard)] as? String {
             return .bankCard(bankCard)
+        } else if let date = attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.Date)] as? Int32 {
+            // The displayed string is unused downstream (ChatMessageBubbleItemNode matches `.date(date, _)`).
+            return .date(date, "")
         }
         return nil
     }

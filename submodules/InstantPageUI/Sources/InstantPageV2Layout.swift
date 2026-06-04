@@ -26,6 +26,11 @@ public struct InstantPageV2Layout {
     /// but no fetch signal can be bound (image view simply isn't created).
     public let webpage: TelegramMediaWebpage?
 
+    /// Set by `layoutInstantPageV2` when the page contains at least one `.relative` `textDate`.
+    /// The minimum refresh period (seconds, >=10) across all relative dates; the rich-data bubble
+    /// schedules a timer on it to keep "N minutes ago" fresh. nil => no relative date => no timer.
+    public var formattedDateUpdatePeriod: Int32? = nil
+
     public init(contentSize: CGSize, items: [InstantPageV2LaidOutItem], detailsIndices: [Int], media: [EngineMedia.Id: EngineMedia] = [:], webpage: TelegramMediaWebpage? = nil) {
         self.contentSize = contentSize
         self.items = items
@@ -333,6 +338,7 @@ public struct InstantPageV2DetailsItem {
     public let isExpanded: Bool
     public let innerLayout: InstantPageV2Layout?
     public let defaultExpanded: Bool         // from the InstantPageBlock model
+    public let rtl: Bool                      // mirror chevron + title onto the trailing edge
 }
 
 public enum InstantPageV2TableVerticalAlignment {
@@ -395,10 +401,23 @@ public func layoutInstantPageV2(
         media[id] = .file(video)
     }
 
+    let dateAccumulator = DateUpdateAccumulator()
+    let formatDate: (Int32, MessageTextEntityType.DateTimeFormat) -> String = { timestamp, format in
+        if case .relative = format {
+            let now = Int32(CFAbsoluteTimeGetCurrent() + NSTimeIntervalSince1970)
+            let age = abs(now - timestamp)
+            // Cap the fastest bucket at 10s (the message-entity reference uses 1s for <120s).
+            let period: Int32 = age < 120 ? 10 : (age <= 60 * 60 ? 60 : 30 * 60)
+            dateAccumulator.period = dateAccumulator.period.map { min($0, period) } ?? period
+        }
+        return stringForEntityFormattedDate(timestamp: timestamp, format: format, strings: strings, dateTimeFormat: dateTimeFormat)
+    }
+
     var context = LayoutContext(
         theme: theme,
         strings: strings,
         dateTimeFormat: dateTimeFormat,
+        formatDate: formatDate,
         userLocation: userLocation,
         webpage: webpage,
         media: media,
@@ -406,18 +425,21 @@ public func layoutInstantPageV2(
         rtl: instantPage.rtl,
         fitToWidth: fitToWidth,
         computeRevealCharacterRects: computeRevealCharacterRects,
+        pageHorizontalInset: horizontalInset,
         mediaIndexCounter: 0,
         detailsIndexCounter: 0,
         expandedDetails: expandedDetails
     )
 
-    return layoutBlockSequence(
+    var result = layoutBlockSequence(
         instantPage.blocks,
         boundingWidth: boundingWidth,
         horizontalInset: horizontalInset,
         kind: .topLevel,
         context: &context
     )
+    result.formattedDateUpdatePeriod = dateAccumulator.period
+    return result
 }
 
 /// Used by `ChatMessageRichDataBubbleContentNode` to anchor the date/checks status node at the
@@ -503,10 +525,15 @@ public func lastTextLineFrameIfLastItemIsText(in layout: InstantPageV2Layout) ->
 
 // MARK: - Layout context
 
+private final class DateUpdateAccumulator {
+    var period: Int32?
+}
+
 private struct LayoutContext {
     let theme: InstantPageTheme
     let strings: PresentationStrings
     let dateTimeFormat: PresentationDateTimeFormat
+    let formatDate: (Int32, MessageTextEntityType.DateTimeFormat) -> String
     let userLocation: MediaResourceUserLocation
     let webpage: TelegramMediaWebpage
     let media: [EngineMedia.Id: EngineMedia]
@@ -514,6 +541,7 @@ private struct LayoutContext {
     let rtl: Bool
     let fitToWidth: Bool
     let computeRevealCharacterRects: Bool
+    let pageHorizontalInset: CGFloat
 
     var mediaIndexCounter: Int = 0
     var detailsIndexCounter: Int = 0
@@ -1069,7 +1097,7 @@ private func layoutDetails(
     let titleStyleStack = InstantPageTextStyleStack()
     setupStyleStack(titleStyleStack, theme: context.theme, category: .paragraph, link: false)
     let (titleTextItem, _, _) = layoutTextItem(
-        attributedStringForRichText(title, styleStack: titleStyleStack),
+        attributedStringForRichText(title, styleStack: titleStyleStack, formatDate: context.formatDate),
         boundingWidth: boundingWidth - horizontalInset * 2.0 - 32.0,   // reserve right edge for chevron
         offset: CGPoint(x: 0.0, y: 0.0),
         fitToWidth: context.fitToWidth,
@@ -1078,7 +1106,9 @@ private func layoutDetails(
     guard let titleTextItem = titleTextItem else { return [] }
     
     let titleHeight = max(44.0, titleTextItem.frame.height + 26.0)
-    titleTextItem.frame.origin.x = horizontalInset + 23.0
+    titleTextItem.frame.origin.x = context.rtl
+        ? (boundingWidth - horizontalInset - 23.0 - titleTextItem.frame.width)
+        : (horizontalInset + 23.0)
     titleTextItem.frame.origin.y = floorToScreenPixels((titleHeight - titleTextItem.frame.height) * 0.5)
 
     let isExpanded = context.expandedDetails[index] ?? defaultExpanded
@@ -1109,7 +1139,8 @@ private func layoutDetails(
         separatorColor: context.theme.separatorColor,
         isExpanded: isExpanded,
         innerLayout: innerLayout,
-        defaultExpanded: defaultExpanded
+        defaultExpanded: defaultExpanded,
+        rtl: context.rtl
     )
     return [.details(item)]
 }
@@ -1186,7 +1217,7 @@ private func layoutTable(
                 // boundingWidth sizes inline attachments to `cellWidthLimit - totalCellPadding`, while
                 // the line-break budget passed to `layoutTextItem` is the full `cellWidthLimit`. (V1
                 // subtracts `totalCellPadding` only on the attribute-string arg, not the layout arg.)
-                let attrStr = attributedStringForRichText(text, styleStack: styleStack, boundingWidth: cellWidthLimit - totalCellPadding)
+                let attrStr = attributedStringForRichText(text, styleStack: styleStack, boundingWidth: cellWidthLimit - totalCellPadding, formatDate: context.formatDate)
                 if let shortestItem = layoutTextItem(
                     attrStr,
                     boundingWidth: cellWidthLimit,
@@ -1672,7 +1703,7 @@ private func layoutCaptionAndCredit(
         y += 14.0
         let styleStack = InstantPageTextStyleStack()
         setupStyleStack(styleStack, theme: context.theme, category: .caption, link: false)
-        let attributedString = attributedStringForRichText(caption.text, styleStack: styleStack)
+        let attributedString = attributedStringForRichText(caption.text, styleStack: styleStack, formatDate: context.formatDate)
         let (textItem, captionItems, captionSize) = layoutTextItem(
             attributedString,
             boundingWidth: boundingWidth - horizontalInset * 2.0,
@@ -1698,7 +1729,7 @@ private func layoutCaptionAndCredit(
         }
         let styleStack = InstantPageTextStyleStack()
         setupStyleStack(styleStack, theme: context.theme, category: .credit, link: false)
-        let attributedString = attributedStringForRichText(caption.credit, styleStack: styleStack)
+        let attributedString = attributedStringForRichText(caption.credit, styleStack: styleStack, formatDate: context.formatDate)
         let (_, creditItems, creditSize) = layoutTextItem(
             attributedString,
             boundingWidth: boundingWidth - horizontalInset * 2.0,
@@ -2009,10 +2040,11 @@ private func layoutSimpleText(
 ) -> [InstantPageV2LaidOutItem] {
     let styleStack = InstantPageTextStyleStack()
     setupStyleStack(styleStack, theme: context.theme, category: category, link: false)
-    let attributedString = attributedStringForRichText(text, styleStack: styleStack)
+    let attributedString = attributedStringForRichText(text, styleStack: styleStack, formatDate: context.formatDate)
     let (_, items, _) = layoutTextItem(
         attributedString,
         boundingWidth: boundingWidth - horizontalInset * 2.0,
+        alignment: context.rtl ? .right : .natural,
         offset: CGPoint(x: horizontalInset, y: 0.0),
         fitToWidth: context.fitToWidth,
         computeRevealCharacterRects: context.computeRevealCharacterRects
@@ -2029,10 +2061,11 @@ private func layoutHeading(
 ) -> [InstantPageV2LaidOutItem] {
     let styleStack = InstantPageTextStyleStack()
     setupStyleStack(styleStack, theme: context.theme, attributes: context.theme.headingTextAttributes(level: level, link: false))
-    let attributedString = attributedStringForRichText(text, styleStack: styleStack)
+    let attributedString = attributedStringForRichText(text, styleStack: styleStack, formatDate: context.formatDate)
     let (_, items, _) = layoutTextItem(
         attributedString,
         boundingWidth: boundingWidth - horizontalInset * 2.0,
+        alignment: context.rtl ? .right : .natural,
         offset: CGPoint(x: horizontalInset, y: 0.0),
         fitToWidth: context.fitToWidth,
         computeRevealCharacterRects: context.computeRevealCharacterRects
@@ -2053,11 +2086,12 @@ private func layoutParagraph(
 
     let styleStack = InstantPageTextStyleStack()
     setupStyleStack(styleStack, theme: context.theme, category: kind == .cell ? .table : .paragraph, link: false)
-    let attributedString = attributedStringForRichText(text, styleStack: styleStack)
+    let attributedString = attributedStringForRichText(text, styleStack: styleStack, formatDate: context.formatDate)
 
     let (_, items, _) = layoutTextItem(
         attributedString,
         boundingWidth: boundingWidth - horizontalInset * 2.0,
+        alignment: context.rtl ? .right : .natural,
         offset: CGPoint(x: horizontalInset, y: 0.0),
         fitToWidth: context.fitToWidth,
         computeRevealCharacterRects: context.computeRevealCharacterRects
@@ -2125,7 +2159,7 @@ private func layoutAuthorDate(
     let alignment: NSTextAlignment = (context.rtl || previousItemHasRTL) ? .right : .natural
 
     let (_, items, _) = layoutTextItem(
-        attributedStringForRichText(resolvedText, styleStack: styleStack),
+        attributedStringForRichText(resolvedText, styleStack: styleStack, formatDate: context.formatDate),
         boundingWidth: boundingWidth - horizontalInset * 2.0,
         alignment: alignment,
         offset: CGPoint(x: horizontalInset, y: 0.0),
@@ -2160,7 +2194,6 @@ private func layoutCodeBlock(
 ) -> [InstantPageV2LaidOutItem] {
     let backgroundInset: CGFloat = 15.0
     let textXOffset: CGFloat = 11.0
-    let cornerRadius: CGFloat = 0.0
 
     let attributedString: NSAttributedString
     if let language, !language.isEmpty {
@@ -2175,7 +2208,7 @@ private func layoutCodeBlock(
         // V1 lines 335–338: fall back to plain paragraph style when no language.
         let styleStack = InstantPageTextStyleStack()
         setupStyleStack(styleStack, theme: context.theme, category: .codeBlock, link: false)
-        attributedString = attributedStringForRichText(text, styleStack: styleStack)
+        attributedString = attributedStringForRichText(text, styleStack: styleStack, formatDate: context.formatDate)
     }
 
     // V1 line 341: text bounding width excludes horizontalInset×2 and backgroundInset×2.
@@ -2201,12 +2234,19 @@ private func layoutCodeBlock(
         height: textItem.frame.height
     )
 
-    // V1 line 348: block spans full boundingWidth (x=0), height = contentSize.height + backgroundInset*2.
+    // Top-level (and <details>) code blocks span the full boundingWidth flush (x=0), matching V1
+    // (line 348). Inside a blockquote the child inset is raised above the page inset (by
+    // lineInset), so honor it here — otherwise the full-width background bleeds out under the
+    // quote bar instead of insetting to the quote's content gutter like the quote's text does.
     let blockHeight = textSize.height + backgroundInset * 2.0
+    let isNestedInQuote = horizontalInset > context.pageHorizontalInset
+    // Inset (quote-nested) code blocks get an 8pt rounded background; flush (top-level / details)
+    // ones stay square — the bubble's own rounded clip handles their edges.
+    let cornerRadius: CGFloat = isNestedInQuote ? 8.0 : 0.0
     let blockFrame = CGRect(
-        x: 0.0,
+        x: isNestedInQuote ? horizontalInset : 0.0,
         y: 0.0,
-        width: boundingWidth,
+        width: isNestedInQuote ? (boundingWidth - horizontalInset * 2.0) : boundingWidth,
         height: blockHeight
     )
 
@@ -2236,7 +2276,7 @@ private func layoutThinking(
     )
     let styleStack = InstantPageTextStyleStack()
     setupStyleStack(styleStack, theme: context.theme, attributes: dimmedAttributes)
-    let attributedString = attributedStringForRichText(text, styleStack: styleStack)
+    let attributedString = attributedStringForRichText(text, styleStack: styleStack, formatDate: context.formatDate)
 
     // Mirror a normal `.text` item's sizing: lay the text out flush (offset .zero) and put the page
     // inset onto the BLOCK frame, so the `.thinking` item's frame == a `.text` item's frame
@@ -2281,6 +2321,10 @@ private func layoutBlockQuote(
 
     let innerBoundingWidth = boundingWidth - horizontalInset * 2.0 - lineInset
     let innerHorizontalInset = horizontalInset + lineInset
+    // RTL: rigid-translate the child band so its gutter (lineInset) lands on the trailing edge,
+    // faithfully mirroring the existing (intentionally preserved) LTR band. Width is preserved,
+    // so a single x-delta moves the whole band correctly.
+    let bandOffsetX: CGFloat = context.rtl ? (2.0 * horizontalInset + lineInset) : 0.0
 
     var result: [InstantPageV2LaidOutItem] = []
     var contentHeight: CGFloat = verticalInset
@@ -2302,7 +2346,7 @@ private func layoutBlockQuote(
             context: &context
         )
         let dy = contentHeight + spacing
-        let offsetItems = childItems.map { $0.offsetBy(CGPoint(x: 0.0, y: dy)) }
+        let offsetItems = childItems.map { $0.offsetBy(CGPoint(x: bandOffsetX, y: dy)) }
         let childMaxY = offsetItems.map { $0.frame.maxY }.max() ?? dy
         contentHeight = max(contentHeight, childMaxY)
         result.append(contentsOf: offsetItems)
@@ -2315,12 +2359,15 @@ private func layoutBlockQuote(
         contentHeight += 14.0
         let captionStyleStack = InstantPageTextStyleStack()
         setupStyleStack(captionStyleStack, theme: context.theme, category: .caption, link: false)
-        let attributedCaption = attributedStringForRichText(caption, styleStack: captionStyleStack)
+        let attributedCaption = attributedStringForRichText(caption, styleStack: captionStyleStack, formatDate: context.formatDate)
         let (_, captionItems, captionSize) = layoutTextItem(
             attributedCaption,
             boundingWidth: innerBoundingWidth,
-            alignment: .natural,
-            offset: CGPoint(x: innerHorizontalInset, y: contentHeight),
+            alignment: context.rtl ? .right : .natural,
+            // The caption is single-inset (band [H+lineInset, B-H]), unlike the double-inset
+            // child band, so it needs its own RTL mirror delta of -lineInset (→ [H, B-H-lineInset],
+            // tucked under the trailing bar) — NOT the children's bandOffsetX.
+            offset: CGPoint(x: innerHorizontalInset + (context.rtl ? -lineInset : 0.0), y: contentHeight),
             fitToWidth: context.fitToWidth,
             computeRevealCharacterRects: context.computeRevealCharacterRects
         )
@@ -2332,7 +2379,7 @@ private func layoutBlockQuote(
 
     // Vertical bar on the leading edge (matches the blockQuote branch of layoutQuoteText).
     let bar = InstantPageV2BarItem(
-        frame: CGRect(x: horizontalInset, y: 0.0, width: barWidth, height: contentHeight),
+        frame: CGRect(x: instantPageV2LeadingEdgeX(boundingWidth: boundingWidth, horizontalInset: horizontalInset, elementWidth: barWidth, rtl: context.rtl), y: 0.0, width: barWidth, height: contentHeight),
         color: context.theme.textCategories.paragraph.color,
         cornerRadius: barWidth / 2.0
     )
@@ -2383,10 +2430,10 @@ private func layoutQuoteText(
 
     // Body text (V1 line 528 / 562).
     let textBoundingWidth = boundingWidth - horizontalInset * 2.0 - lineInset
-    let textX: CGFloat = horizontalInset + lineInset
-    let textAlignment: NSTextAlignment = isPull ? .center : .natural
+    let textX: CGFloat = instantPageV2ContentColumnX(horizontalInset: horizontalInset, gutter: lineInset, rtl: context.rtl)
+    let textAlignment: NSTextAlignment = isPull ? .center : (context.rtl ? .right : .natural)
 
-    let attributedBody = attributedStringForRichText(text, styleStack: styleStack)
+    let attributedBody = attributedStringForRichText(text, styleStack: styleStack, formatDate: context.formatDate)
     let (_, bodyItems, bodySize) = layoutTextItem(
         attributedBody,
         boundingWidth: textBoundingWidth,
@@ -2407,7 +2454,7 @@ private func layoutQuoteText(
         let captionStyleStack = InstantPageTextStyleStack()
         setupStyleStack(captionStyleStack, theme: context.theme, category: .caption, link: false)
 
-        let attributedCaption = attributedStringForRichText(caption, styleStack: captionStyleStack)
+        let attributedCaption = attributedStringForRichText(caption, styleStack: captionStyleStack, formatDate: context.formatDate)
         let (_, captionItems, captionSize) = layoutTextItem(
             attributedCaption,
             boundingWidth: textBoundingWidth,
@@ -2438,7 +2485,7 @@ private func layoutQuoteText(
         // V1 shape: .roundLine (rounded caps) → cornerRadius = barWidth / 2 = 1.5.
         let barWidth: CGFloat = 3.0   // V1 line 547
         let bar = InstantPageV2BarItem(
-            frame: CGRect(x: horizontalInset, y: 0.0, width: barWidth, height: contentHeight),
+            frame: CGRect(x: instantPageV2LeadingEdgeX(boundingWidth: boundingWidth, horizontalInset: horizontalInset, elementWidth: barWidth, rtl: context.rtl), y: 0.0, width: barWidth, height: contentHeight),
             color: context.theme.textCategories.paragraph.color,   // V1 line 547
             cornerRadius: barWidth / 2.0   // V1 .roundLine ≈ half-width rounded caps
         )
@@ -2522,7 +2569,7 @@ private func layoutList(
             // Measure using a UILabel to get the expected label width.
             let styleStack = InstantPageTextStyleStack()
             setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
-            let attrStr = attributedStringForRichText(.plain(value), styleStack: styleStack)
+            let attrStr = attributedStringForRichText(.plain(value), styleStack: styleStack, formatDate: context.formatDate)
             let (textItem, _, _) = layoutTextItem(
                 attrStr,
                 boundingWidth: boundingWidth - horizontalInset * 2.0,
@@ -2586,12 +2633,13 @@ private func layoutList(
             // Layout text content.
             let styleStack = InstantPageTextStyleStack()
             setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
-            let attrStr = attributedStringForRichText(text, styleStack: styleStack)
-            let textX = horizontalInset + indexSpacing + maxIndexWidth
+            let attrStr = attributedStringForRichText(text, styleStack: styleStack, formatDate: context.formatDate)
+            let textX = instantPageV2ContentColumnX(horizontalInset: horizontalInset, gutter: indexSpacing + maxIndexWidth, rtl: context.rtl)
             let textWidth = boundingWidth - horizontalInset * 2.0 - indexSpacing - maxIndexWidth
             let (textItem, textLaidOutItems, textSize) = layoutTextItem(
                 attrStr,
                 boundingWidth: textWidth,
+                alignment: context.rtl ? .right : .natural,
                 offset: CGPoint(x: textX, y: contentHeight),
                 fitToWidth: context.fitToWidth,
                 computeRevealCharacterRects: context.computeRevealCharacterRects
@@ -2647,7 +2695,7 @@ private func layoutList(
                 )
                 let subLocalMaxY: CGFloat = subItems.map { $0.frame.maxY }.max() ?? 0.0
                 let spacing: CGFloat = (previousBlock != nil && subLocalMaxY > 0.0) ? spacingBetweenBlocks(upper: previousBlock, lower: subBlock, fitToWidth: context.fitToWidth, kind: .list) : 0.0
-                let offsetX = horizontalInset + indexSpacing + maxIndexWidth
+                let offsetX = instantPageV2ContentColumnX(horizontalInset: horizontalInset, gutter: indexSpacing + maxIndexWidth, rtl: context.rtl)
                 let offsetY = contentHeight + spacing
                 let translatedItems = subItems.map { $0.offsetBy(CGPoint(x: offsetX, y: offsetY)) }
 
@@ -2752,6 +2800,26 @@ private func markerFrameFor(
         x = horizontalInset + maxIndexWidth - size.width
     }
     return CGRect(x: x, y: floorToScreenPixels(lineMidY - size.height / 2.0), width: size.width, height: size.height)
+}
+
+/// Leading/trailing geometry helpers — the single source of truth for "which side is the
+/// block gutter on", gated on the page's explicit `rtl` flag. The `rtl == false` branch returns
+/// the pre-existing literal so non-RTL pages are byte-identical.
+
+/// X origin of a block's content column, given a leading gutter of width `gutter`
+/// (the marker column, or the quote bar+inset band). Column width is unchanged either way.
+///   LTR: content sits after the gutter        → horizontalInset + gutter
+///   RTL: content sits at the inset; the gutter is mirrored onto the trailing edge → horizontalInset
+func instantPageV2ContentColumnX(horizontalInset: CGFloat, gutter: CGFloat, rtl: Bool) -> CGFloat {
+    return rtl ? horizontalInset : horizontalInset + gutter
+}
+
+/// X origin of a leading-edge element of width `elementWidth` (e.g. the quote bar), hugging the
+/// trailing edge of the gutter band in RTL.
+///   LTR: horizontalInset
+///   RTL: boundingWidth - horizontalInset - elementWidth
+func instantPageV2LeadingEdgeX(boundingWidth: CGFloat, horizontalInset: CGFloat, elementWidth: CGFloat, rtl: Bool) -> CGFloat {
+    return rtl ? (boundingWidth - horizontalInset - elementWidth) : horizontalInset
 }
 
 // MARK: - Style helpers (ported from V1 InstantPageLayout.swift lines 32–88)
@@ -3353,7 +3421,13 @@ func layoutTextItem(
     }
 
     var textWidth = boundingWidth
-    if fitToWidth {
+    // Shrinking the box to content width anchors it at the leading `offset.x`, which makes any
+    // non-leading display-time alignment a no-op (the block stays pinned to the leading edge and
+    // only redistributes internally). Only `.natural` is leading-anchored; `.right` (RTL text)
+    // and `.center` (pull quotes) must keep the full bounding width so `v2FrameForLine` lands
+    // each line at the true trailing / centered position. `.right`/`.center` reach here only via
+    // RTL text and pull quotes respectively, so plain LTR `.natural` body text is unaffected.
+    if fitToWidth && alignment == .natural {
         textWidth = maxLineWidth
     }
     if (!imageItems.isEmpty || hasFormulaItems) && maxLineWidth > boundingWidth + 10.0 {

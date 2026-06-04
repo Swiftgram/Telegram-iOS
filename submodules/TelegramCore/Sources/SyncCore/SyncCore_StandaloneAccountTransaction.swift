@@ -129,8 +129,15 @@ public let telegramPostboxSeedConfiguration: SeedConfiguration = {
                     break
                 }
             }
+            var previousRichText: RichTextMessageAttribute?
+            for attribute in previous {
+                if let attribute = attribute as? RichTextMessageAttribute {
+                    previousRichText = attribute
+                    break
+                }
+            }
             
-            if let audioTranscription = audioTranscription {
+            if let audioTranscription {
                 var found = false
                 for i in 0 ..< updated.count {
                     if let attribute = updated[i] as? AudioTranscriptionMessageAttribute {
@@ -153,6 +160,27 @@ public let telegramPostboxSeedConfiguration: SeedConfiguration = {
                 }
                 if !found {
                     updated.append(previousDerivedData)
+                }
+            }
+            if let previousRichText, previousRichText.instantPage.isComplete {
+                for i in 0 ..< updated.count {
+                    if let attribute = updated[i] as? RichTextMessageAttribute {
+                        if !attribute.instantPage.isComplete {
+                            var prefixEquals = true
+                            if attribute.instantPage.blocks.count <= previousRichText.instantPage.blocks.count {
+                                inner: for j in 0 ..< attribute.instantPage.blocks.count {
+                                    if attribute.instantPage.blocks[j] != attribute.instantPage.blocks[j] {
+                                        prefixEquals = false
+                                        break inner
+                                    }
+                                }
+                            }
+                            if prefixEquals {
+                                updated[i] = previousRichText
+                            }
+                        }
+                        break
+                    }
                 }
             }
         },
