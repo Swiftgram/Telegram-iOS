@@ -425,6 +425,7 @@ public func layoutInstantPageV2(
         rtl: instantPage.rtl,
         fitToWidth: fitToWidth,
         computeRevealCharacterRects: computeRevealCharacterRects,
+        pageHorizontalInset: horizontalInset,
         mediaIndexCounter: 0,
         detailsIndexCounter: 0,
         expandedDetails: expandedDetails
@@ -540,6 +541,7 @@ private struct LayoutContext {
     let rtl: Bool
     let fitToWidth: Bool
     let computeRevealCharacterRects: Bool
+    let pageHorizontalInset: CGFloat
 
     var mediaIndexCounter: Int = 0
     var detailsIndexCounter: Int = 0
@@ -2192,7 +2194,6 @@ private func layoutCodeBlock(
 ) -> [InstantPageV2LaidOutItem] {
     let backgroundInset: CGFloat = 15.0
     let textXOffset: CGFloat = 11.0
-    let cornerRadius: CGFloat = 0.0
 
     let attributedString: NSAttributedString
     if let language, !language.isEmpty {
@@ -2233,12 +2234,19 @@ private func layoutCodeBlock(
         height: textItem.frame.height
     )
 
-    // V1 line 348: block spans full boundingWidth (x=0), height = contentSize.height + backgroundInset*2.
+    // Top-level (and <details>) code blocks span the full boundingWidth flush (x=0), matching V1
+    // (line 348). Inside a blockquote the child inset is raised above the page inset (by
+    // lineInset), so honor it here — otherwise the full-width background bleeds out under the
+    // quote bar instead of insetting to the quote's content gutter like the quote's text does.
     let blockHeight = textSize.height + backgroundInset * 2.0
+    let isNestedInQuote = horizontalInset > context.pageHorizontalInset
+    // Inset (quote-nested) code blocks get an 8pt rounded background; flush (top-level / details)
+    // ones stay square — the bubble's own rounded clip handles their edges.
+    let cornerRadius: CGFloat = isNestedInQuote ? 8.0 : 0.0
     let blockFrame = CGRect(
-        x: 0.0,
+        x: isNestedInQuote ? horizontalInset : 0.0,
         y: 0.0,
-        width: boundingWidth,
+        width: isNestedInQuote ? (boundingWidth - horizontalInset * 2.0) : boundingWidth,
         height: blockHeight
     )
 
