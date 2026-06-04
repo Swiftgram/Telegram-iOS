@@ -26,6 +26,11 @@ public struct InstantPageV2Layout {
     /// but no fetch signal can be bound (image view simply isn't created).
     public let webpage: TelegramMediaWebpage?
 
+    /// Set by `layoutInstantPageV2` when the page contains at least one `.relative` `textDate`.
+    /// The minimum refresh period (seconds, >=10) across all relative dates; the rich-data bubble
+    /// schedules a timer on it to keep "N minutes ago" fresh. nil => no relative date => no timer.
+    public var formattedDateUpdatePeriod: Int32? = nil
+
     public init(contentSize: CGSize, items: [InstantPageV2LaidOutItem], detailsIndices: [Int], media: [EngineMedia.Id: EngineMedia] = [:], webpage: TelegramMediaWebpage? = nil) {
         self.contentSize = contentSize
         self.items = items
@@ -395,10 +400,23 @@ public func layoutInstantPageV2(
         media[id] = .file(video)
     }
 
+    let dateAccumulator = DateUpdateAccumulator()
+    let formatDate: (Int32, MessageTextEntityType.DateTimeFormat) -> String = { timestamp, format in
+        if case .relative = format {
+            let now = Int32(CFAbsoluteTimeGetCurrent() + NSTimeIntervalSince1970)
+            let age = abs(now - timestamp)
+            // Cap the fastest bucket at 10s (the message-entity reference uses 1s for <120s).
+            let period: Int32 = age < 120 ? 10 : (age <= 60 * 60 ? 60 : 30 * 60)
+            dateAccumulator.period = dateAccumulator.period.map { min($0, period) } ?? period
+        }
+        return stringForEntityFormattedDate(timestamp: timestamp, format: format, strings: strings, dateTimeFormat: dateTimeFormat)
+    }
+
     var context = LayoutContext(
         theme: theme,
         strings: strings,
         dateTimeFormat: dateTimeFormat,
+        formatDate: formatDate,
         userLocation: userLocation,
         webpage: webpage,
         media: media,
@@ -411,13 +429,15 @@ public func layoutInstantPageV2(
         expandedDetails: expandedDetails
     )
 
-    return layoutBlockSequence(
+    var result = layoutBlockSequence(
         instantPage.blocks,
         boundingWidth: boundingWidth,
         horizontalInset: horizontalInset,
         kind: .topLevel,
         context: &context
     )
+    result.formattedDateUpdatePeriod = dateAccumulator.period
+    return result
 }
 
 /// Used by `ChatMessageRichDataBubbleContentNode` to anchor the date/checks status node at the
@@ -503,10 +523,15 @@ public func lastTextLineFrameIfLastItemIsText(in layout: InstantPageV2Layout) ->
 
 // MARK: - Layout context
 
+private final class DateUpdateAccumulator {
+    var period: Int32?
+}
+
 private struct LayoutContext {
     let theme: InstantPageTheme
     let strings: PresentationStrings
     let dateTimeFormat: PresentationDateTimeFormat
+    let formatDate: (Int32, MessageTextEntityType.DateTimeFormat) -> String
     let userLocation: MediaResourceUserLocation
     let webpage: TelegramMediaWebpage
     let media: [EngineMedia.Id: EngineMedia]
@@ -1069,7 +1094,7 @@ private func layoutDetails(
     let titleStyleStack = InstantPageTextStyleStack()
     setupStyleStack(titleStyleStack, theme: context.theme, category: .paragraph, link: false)
     let (titleTextItem, _, _) = layoutTextItem(
-        attributedStringForRichText(title, styleStack: titleStyleStack),
+        attributedStringForRichText(title, styleStack: titleStyleStack, formatDate: context.formatDate),
         boundingWidth: boundingWidth - horizontalInset * 2.0 - 32.0,   // reserve right edge for chevron
         offset: CGPoint(x: 0.0, y: 0.0),
         fitToWidth: context.fitToWidth,
@@ -1186,7 +1211,7 @@ private func layoutTable(
                 // boundingWidth sizes inline attachments to `cellWidthLimit - totalCellPadding`, while
                 // the line-break budget passed to `layoutTextItem` is the full `cellWidthLimit`. (V1
                 // subtracts `totalCellPadding` only on the attribute-string arg, not the layout arg.)
-                let attrStr = attributedStringForRichText(text, styleStack: styleStack, boundingWidth: cellWidthLimit - totalCellPadding)
+                let attrStr = attributedStringForRichText(text, styleStack: styleStack, boundingWidth: cellWidthLimit - totalCellPadding, formatDate: context.formatDate)
                 if let shortestItem = layoutTextItem(
                     attrStr,
                     boundingWidth: cellWidthLimit,
@@ -1672,7 +1697,7 @@ private func layoutCaptionAndCredit(
         y += 14.0
         let styleStack = InstantPageTextStyleStack()
         setupStyleStack(styleStack, theme: context.theme, category: .caption, link: false)
-        let attributedString = attributedStringForRichText(caption.text, styleStack: styleStack)
+        let attributedString = attributedStringForRichText(caption.text, styleStack: styleStack, formatDate: context.formatDate)
         let (textItem, captionItems, captionSize) = layoutTextItem(
             attributedString,
             boundingWidth: boundingWidth - horizontalInset * 2.0,
@@ -1698,7 +1723,7 @@ private func layoutCaptionAndCredit(
         }
         let styleStack = InstantPageTextStyleStack()
         setupStyleStack(styleStack, theme: context.theme, category: .credit, link: false)
-        let attributedString = attributedStringForRichText(caption.credit, styleStack: styleStack)
+        let attributedString = attributedStringForRichText(caption.credit, styleStack: styleStack, formatDate: context.formatDate)
         let (_, creditItems, creditSize) = layoutTextItem(
             attributedString,
             boundingWidth: boundingWidth - horizontalInset * 2.0,
@@ -2009,7 +2034,7 @@ private func layoutSimpleText(
 ) -> [InstantPageV2LaidOutItem] {
     let styleStack = InstantPageTextStyleStack()
     setupStyleStack(styleStack, theme: context.theme, category: category, link: false)
-    let attributedString = attributedStringForRichText(text, styleStack: styleStack)
+    let attributedString = attributedStringForRichText(text, styleStack: styleStack, formatDate: context.formatDate)
     let (_, items, _) = layoutTextItem(
         attributedString,
         boundingWidth: boundingWidth - horizontalInset * 2.0,
@@ -2029,7 +2054,7 @@ private func layoutHeading(
 ) -> [InstantPageV2LaidOutItem] {
     let styleStack = InstantPageTextStyleStack()
     setupStyleStack(styleStack, theme: context.theme, attributes: context.theme.headingTextAttributes(level: level, link: false))
-    let attributedString = attributedStringForRichText(text, styleStack: styleStack)
+    let attributedString = attributedStringForRichText(text, styleStack: styleStack, formatDate: context.formatDate)
     let (_, items, _) = layoutTextItem(
         attributedString,
         boundingWidth: boundingWidth - horizontalInset * 2.0,
@@ -2053,7 +2078,7 @@ private func layoutParagraph(
 
     let styleStack = InstantPageTextStyleStack()
     setupStyleStack(styleStack, theme: context.theme, category: kind == .cell ? .table : .paragraph, link: false)
-    let attributedString = attributedStringForRichText(text, styleStack: styleStack)
+    let attributedString = attributedStringForRichText(text, styleStack: styleStack, formatDate: context.formatDate)
 
     let (_, items, _) = layoutTextItem(
         attributedString,
@@ -2125,7 +2150,7 @@ private func layoutAuthorDate(
     let alignment: NSTextAlignment = (context.rtl || previousItemHasRTL) ? .right : .natural
 
     let (_, items, _) = layoutTextItem(
-        attributedStringForRichText(resolvedText, styleStack: styleStack),
+        attributedStringForRichText(resolvedText, styleStack: styleStack, formatDate: context.formatDate),
         boundingWidth: boundingWidth - horizontalInset * 2.0,
         alignment: alignment,
         offset: CGPoint(x: horizontalInset, y: 0.0),
@@ -2175,7 +2200,7 @@ private func layoutCodeBlock(
         // V1 lines 335–338: fall back to plain paragraph style when no language.
         let styleStack = InstantPageTextStyleStack()
         setupStyleStack(styleStack, theme: context.theme, category: .codeBlock, link: false)
-        attributedString = attributedStringForRichText(text, styleStack: styleStack)
+        attributedString = attributedStringForRichText(text, styleStack: styleStack, formatDate: context.formatDate)
     }
 
     // V1 line 341: text bounding width excludes horizontalInset×2 and backgroundInset×2.
@@ -2236,7 +2261,7 @@ private func layoutThinking(
     )
     let styleStack = InstantPageTextStyleStack()
     setupStyleStack(styleStack, theme: context.theme, attributes: dimmedAttributes)
-    let attributedString = attributedStringForRichText(text, styleStack: styleStack)
+    let attributedString = attributedStringForRichText(text, styleStack: styleStack, formatDate: context.formatDate)
 
     // Mirror a normal `.text` item's sizing: lay the text out flush (offset .zero) and put the page
     // inset onto the BLOCK frame, so the `.thinking` item's frame == a `.text` item's frame
@@ -2315,7 +2340,7 @@ private func layoutBlockQuote(
         contentHeight += 14.0
         let captionStyleStack = InstantPageTextStyleStack()
         setupStyleStack(captionStyleStack, theme: context.theme, category: .caption, link: false)
-        let attributedCaption = attributedStringForRichText(caption, styleStack: captionStyleStack)
+        let attributedCaption = attributedStringForRichText(caption, styleStack: captionStyleStack, formatDate: context.formatDate)
         let (_, captionItems, captionSize) = layoutTextItem(
             attributedCaption,
             boundingWidth: innerBoundingWidth,
@@ -2386,7 +2411,7 @@ private func layoutQuoteText(
     let textX: CGFloat = horizontalInset + lineInset
     let textAlignment: NSTextAlignment = isPull ? .center : .natural
 
-    let attributedBody = attributedStringForRichText(text, styleStack: styleStack)
+    let attributedBody = attributedStringForRichText(text, styleStack: styleStack, formatDate: context.formatDate)
     let (_, bodyItems, bodySize) = layoutTextItem(
         attributedBody,
         boundingWidth: textBoundingWidth,
@@ -2407,7 +2432,7 @@ private func layoutQuoteText(
         let captionStyleStack = InstantPageTextStyleStack()
         setupStyleStack(captionStyleStack, theme: context.theme, category: .caption, link: false)
 
-        let attributedCaption = attributedStringForRichText(caption, styleStack: captionStyleStack)
+        let attributedCaption = attributedStringForRichText(caption, styleStack: captionStyleStack, formatDate: context.formatDate)
         let (_, captionItems, captionSize) = layoutTextItem(
             attributedCaption,
             boundingWidth: textBoundingWidth,
@@ -2522,7 +2547,7 @@ private func layoutList(
             // Measure using a UILabel to get the expected label width.
             let styleStack = InstantPageTextStyleStack()
             setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
-            let attrStr = attributedStringForRichText(.plain(value), styleStack: styleStack)
+            let attrStr = attributedStringForRichText(.plain(value), styleStack: styleStack, formatDate: context.formatDate)
             let (textItem, _, _) = layoutTextItem(
                 attrStr,
                 boundingWidth: boundingWidth - horizontalInset * 2.0,
@@ -2586,7 +2611,7 @@ private func layoutList(
             // Layout text content.
             let styleStack = InstantPageTextStyleStack()
             setupStyleStack(styleStack, theme: context.theme, category: .paragraph, link: false)
-            let attrStr = attributedStringForRichText(text, styleStack: styleStack)
+            let attrStr = attributedStringForRichText(text, styleStack: styleStack, formatDate: context.formatDate)
             let textX = horizontalInset + indexSpacing + maxIndexWidth
             let textWidth = boundingWidth - horizontalInset * 2.0 - indexSpacing - maxIndexWidth
             let (textItem, textLaidOutItems, textSize) = layoutTextItem(

@@ -1091,6 +1091,8 @@ private func richTextIsEntityExpressible(_ text: RichText) -> Bool {
         return richTextIsEntityExpressible(inner)
     case .textMentionName(let inner, _):
         return richTextIsEntityExpressible(inner)
+    case .textDate:
+        return false
     }
 }
 
@@ -2153,7 +2155,7 @@ private func markdownDroppingPrefixLength(_ length: Int, from text: RichText) ->
         return dropped == .empty ? .empty : .anchor(text: dropped, name: name)
     case .textCustomEmoji:
         return text
-    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName, .textSpoiler:
+    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName, .textSpoiler, .textDate:
         return text
     }
 }
@@ -2186,7 +2188,7 @@ private func markdownHasDisplayableContent(_ richText: RichText) -> Bool {
         return !latex.isEmpty
     case .textCustomEmoji:
         return true
-    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName, .textSpoiler:
+    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName, .textSpoiler, .textDate:
         return true
     }
 }
@@ -2219,7 +2221,7 @@ private func markdownIsWhitespaceOnly(_ richText: RichText) -> Bool {
         return latex.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     case .textCustomEmoji:
         return false
-    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName, .textSpoiler:
+    case .textAutoEmail, .textAutoPhone, .textAutoUrl, .textBankCard, .textBotCommand, .textCashtag, .textHashtag, .textMention, .textMentionName, .textSpoiler, .textDate:
         return false
     }
 }

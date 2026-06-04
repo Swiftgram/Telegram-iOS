@@ -31,7 +31,8 @@ union RichText_Value {
     RichText_Hashtag,
     RichText_Mention,
     RichText_MentionName,
-    RichText_Spoiler
+    RichText_Spoiler,
+    RichText_Date
 }
 
 table RichText {
@@ -154,4 +155,10 @@ table RichText_MentionName {
 
 table RichText_Spoiler {
     text:RichText (id: 0, required);
+}
+
+table RichText_Date {
+    text:RichText (id: 0, required);
+    date:int (id: 1);
+    format:int = -1 (id: 2);
 }
