@@ -7808,6 +7808,22 @@ public extension Api.functions.messages {
     }
 }
 public extension Api.functions.messages {
+    static func getRichMessage(peer: Api.InputPeer, id: Int32) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.messages.Messages>) {
+        let buffer = Buffer()
+        buffer.appendInt32(1343580623)
+        peer.serialize(buffer, true)
+        serializeInt32(id, buffer: buffer, boxed: false)
+        return (FunctionDescription(name: "messages.getRichMessage", parameters: [("peer", ConstructorParameterDescription(peer)), ("id", ConstructorParameterDescription(id))]), buffer, DeserializeFunctionResponse { (buffer: Buffer) -> Api.messages.Messages? in
+            let reader = BufferReader(buffer)
+            var result: Api.messages.Messages?
+            if let signature = reader.readInt32() {
+                result = Api.parse(reader, signature: signature) as? Api.messages.Messages
+            }
+            return result
+        })
+    }
+}
+public extension Api.functions.messages {
     static func getSavedDialogs(flags: Int32, parentPeer: Api.InputPeer?, offsetDate: Int32, offsetId: Int32, offsetPeer: Api.InputPeer, limit: Int32, hash: Int64) -> (FunctionDescription, Buffer, DeserializeFunctionResponse<Api.messages.SavedDialogs>) {
         let buffer = Buffer()
         buffer.appendInt32(512883865)

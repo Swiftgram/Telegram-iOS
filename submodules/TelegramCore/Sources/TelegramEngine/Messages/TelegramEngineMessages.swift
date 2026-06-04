@@ -1866,6 +1866,64 @@ public extension TelegramEngine {
                 }
             }
         }
+        
+        public func requestFullRichText(id: EngineMessage.Id) -> Signal<RichTextMessageAttribute?, NoError> {
+            let account = self.account
+            return self.account.postbox.transaction { transaction -> Api.InputPeer? in
+                return transaction.getPeer(id.peerId).flatMap(apiInputPeer)
+            }
+            |> mapToSignal { inputPeer -> Signal<RichTextMessageAttribute?, NoError> in
+                guard let inputPeer else {
+                    return .single(nil)
+                }
+                if id.namespace != Namespaces.Message.Cloud {
+                    return .single(nil)
+                }
+                return account.network.request(Api.functions.messages.getRichMessage(peer: inputPeer, id: id.id))
+                |> map(Optional.init)
+                |> `catch` { _ -> Signal<Api.messages.Messages?, NoError> in
+                    return .single(nil)
+                }
+                |> mapToSignal { result -> Signal<RichTextMessageAttribute?, NoError> in
+                    guard let result else {
+                        return .single(nil)
+                    }
+                    
+                    let messages: [Api.Message]
+                    let users: [Api.User]
+                    let chats: [Api.Chat]
+                    switch result {
+                    case let .channelMessages(channelMessages):
+                        messages = channelMessages.messages
+                        users = channelMessages.users
+                        chats = channelMessages.chats
+                    case let .messages(messagesValue):
+                        messages = messagesValue.messages
+                        users = messagesValue.users
+                        chats = messagesValue.chats
+                    case .messagesNotModified:
+                        return .single(nil)
+                    case let .messagesSlice(messagesSlice):
+                        messages = messagesSlice.messages
+                        users = messagesSlice.users
+                        chats = messagesSlice.chats
+                    }
+                    
+                    return account.postbox.transaction { transaction -> RichTextMessageAttribute? in
+                        var peerIsForum = false
+                        if let peer = transaction.getPeer(id.peerId), peer.isForum {
+                            peerIsForum = true
+                        }
+                        updatePeers(transaction: transaction, accountPeerId: account.peerId, peers: AccumulatedPeers(chats: chats, users: users))
+                        let _ = transaction.addMessages(messages.compactMap { message -> StoreMessage? in
+                            return StoreMessage(apiMessage: message, accountPeerId: account.peerId, peerIsForum: peerIsForum)
+                        }, location: .Random)
+                        
+                        return transaction.getMessage(id)?.attributes.first(where: { $0 is RichTextMessageAttribute }) as? RichTextMessageAttribute
+                    }
+                }
+            }
+        }
     }
 }
 
