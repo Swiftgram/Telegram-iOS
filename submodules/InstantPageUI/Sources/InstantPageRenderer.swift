@@ -1779,7 +1779,7 @@ final class InstantPageV2DetailsView: UIView, InstantPageItemView {
         let chevronSize = CGSize(width: 18.0, height: 18.0)
         self.chevronView.bounds = CGRect(origin: .zero, size: chevronSize)
         self.chevronView.center = CGPoint(
-            x: item.sideInset + chevronSize.width / 2.0,
+            x: item.rtl ? (item.frame.width - item.sideInset - chevronSize.width / 2.0) : (item.sideInset + chevronSize.width / 2.0),
             y: item.titleFrame.midY + 1.0
         )
 
