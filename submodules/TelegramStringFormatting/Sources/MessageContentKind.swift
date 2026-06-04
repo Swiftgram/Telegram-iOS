@@ -314,7 +314,7 @@ public func messageContentKind(contentSettings: ContentSettings, message: Engine
     }
     for attribute in message.attributes {
         if let attribute = attribute as? RichTextMessageAttribute {
-            return .text(NSAttributedString(string: attribute.instantPage.previewText()))
+            return .text(NSAttributedString(string: attribute.instantPage.previewText(strings: strings)))
         }
     }
     return .text(messageTextWithAttributes(message: message))

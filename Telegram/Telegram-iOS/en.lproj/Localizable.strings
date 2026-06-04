@@ -16369,3 +16369,7 @@ Error: %8$@";
 "WebBrowser.Exceptions.DontOpenInApp" = "DON'T OPEN IN-APP";
 "WebBrowser.Exceptions.InAppInfo" = "These sites will still be opened in-app.";
 "WebBrowser.Exceptions.DeleteAll" = "Delete All Exceptions";
+
+"RichTextPreview.Formula" = "[formula]";
+"RichTextPreview.Table" = "[table]";
+"RichTextPreview.Music" = "Music";
