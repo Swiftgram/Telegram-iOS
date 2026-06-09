@@ -288,14 +288,6 @@ filegroup(
     visibility = ["//visibility:public",],
 )
 
-# MARK: Swiftgram
-filegroup(
-    name = "WatchAppStringResources",
-    srcs = glob([
-        "Telegram-iOS/*.lproj/Localizable.strings",
-    ], exclude = ["Telegram-iOS/*.lproj/**/.*"]) + ["//Swiftgram/SGStrings:SGLocalizableStrings"],
-)
-
 filegroup(
     name = "AppIntentVocabularyResources",
     srcs = glob([
@@ -660,83 +652,6 @@ plist_fragment(
     <string>Swiftgram</string>
     """
 )
-
-# MARK: Swiftgram
-plist_fragment(
-    name = "WatchAppCompanionInfoPlist",
-    extension = "plist",
-    template =
-    """
-    <key>WKCompanionAppBundleIdentifier</key>
-    <string>{telegram_bundle_id}</string>
-    """.format(
-        telegram_bundle_id = telegram_bundle_id,
-    )
-)
-
-plist_fragment(
-    name = "WatchAppInfoPlist",
-    extension = "plist",
-    template =
-    """
-    <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
-    <key>CFBundleIdentifier</key>
-    <string>{telegram_bundle_id}.watchkitapp</string>
-    <key>CFBundleName</key>
-    <string>Swiftgram</string>
-    <key>UISupportedInterfaceOrientations</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationPortraitUpsideDown</string>
-    </array>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>WKApplication</key>
-    <true/>
-    <key>WKCompanionAppBundleIdentifier</key>
-    <string>{telegram_bundle_id}</string>
-    <key>PrincipalClass</key>
-    <string>TGExtensionDelegate</string>
-    """.format(
-        telegram_bundle_id = telegram_bundle_id,
-    )
-)
-
-watchos_application(
-    name = "TelegramWatchApp",
-    bundle_id = "{telegram_bundle_id}.watchkitapp".format(
-        telegram_bundle_id = telegram_bundle_id,
-    ),
-    bundle_name = "SwiftgramWatch",
-    infoplists = [
-        ":WatchAppInfoPlist",
-        ":VersionInfoPlist",
-        ":BuildNumberInfoPlist",
-        ":AppNameInfoPlist",
-        ":WatchAppCompanionInfoPlist",
-    ],
-    minimum_os_version = minimum_watchos_version,
-    provisioning_profile = select({
-        ":disableProvisioningProfilesSetting": None,
-        "//conditions:default": ":Telegram_xcode_profile" if telegram_use_xcode_managed_codesigning else "@build_configuration//provisioning:WatchApp.mobileprovision",
-    }),
-    resources = [
-        ":TelegramWatchAppResources",
-        ":TelegramWatchAppAssets",
-        ":TelegramWatchExtensionResources",
-    ],
-    storyboards = [
-        ":TelegramWatchAppInterface",
-    ],
-    strings = [
-        ":WatchAppStringResources",
-    ],
-    deps = [
-        ":TelegramWatchLib",
-    ],
-)
-#
 
 plist_fragment(
     name = "MtProtoKitInfoPlist",
