@@ -722,7 +722,7 @@ def build(bazel, arguments):
             sys.exit(1)
         shutil.copyfile(ipa_paths[0], artifacts_path + '/Swiftgram.ipa')
 
-        dsym_paths = glob.glob('bazel-bin/Telegram/*.dSYM') + glob.glob('bazel-out/watchos_arm64_32-opt-watchos-arm64_32-min7.0-applebin_watchos-ST-*/bin/Telegram/TelegramWatchApp_dsyms/*.dSYM') + glob.glob('bazel-out/watchos_armv7k-opt-watchos-armv7k-min7.0-applebin_watchos-ST-*/bin/Telegram/TelegramWatchApp_dsyms/*.dSYM') 
+        dsym_paths = glob.glob('bazel-bin/Telegram/*.dSYM') + glob.glob('bazel-out/watchos_arm64_32-opt-watchos-arm64_32-min7.0-applebin_watchos-ST-*/bin/Telegram/SwiftgramWatchApp_dsyms/*.dSYM') + glob.glob('bazel-out/watchos_armv7k-opt-watchos-armv7k-min7.0-applebin_watchos-ST-*/bin/Telegram/SwiftgramWatchApp_dsyms/*.dSYM') 
         for dsym_path in dsym_paths:
             file_name = os.path.basename(dsym_path)
             shutil.copytree(dsym_path, artifacts_path + '/DSYMs/{}'.format(file_name))
