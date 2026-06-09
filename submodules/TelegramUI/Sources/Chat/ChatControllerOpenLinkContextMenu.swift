@@ -167,21 +167,30 @@ extension ChatControllerImpl {
 
                             let settings = sharedData.entries[ApplicationSpecificSharedDataKeys.webBrowserSettings]?.get(WebBrowserSettings.self) ?? WebBrowserSettings.defaultSettings
                             var defaultWebBrowser = settings.defaultWebBrowser
-                            if defaultWebBrowser == nil || defaultWebBrowser == "inApp" || defaultWebBrowser == "inAppSafari" {
+                            if defaultWebBrowser == nil || defaultWebBrowser == "inAppSafari" {
                                 defaultWebBrowser = "safari"
                             }
 
                             let targetUrl = chatLinkContextMenuCanonicalUrl(from: url)?.absoluteString ?? url
-                            let openInOptions = availableOpenInOptions(context: self.context, item: .url(url: targetUrl))
-                            if let option = openInOptions.first(where: { $0.identifier == defaultWebBrowser }) {
-                                if case let .openUrl(openInUrl) = option.action() {
-                                    self.context.sharedContext.applicationBindings.openUrl(openInUrl)
+                            // MARK: Swiftgram
+                            if settings.defaultWebBrowser == "inApp", let parsedUrl = URL(string: targetUrl) {
+                                let controller = SFSafariViewController(url: parsedUrl)
+                                controller.preferredBarTintColor = self.presentationData.theme.rootController.navigationBar.opaqueBackgroundColor
+                                controller.preferredControlTintColor = self.presentationData.theme.rootController.navigationBar.accentTextColor
+                                self.view.window?.rootViewController?.present(controller, animated: true)
+                            } else {
+                                let openInOptions = availableOpenInOptions(context: self.context, item: .url(url: targetUrl))
+                                if let option = openInOptions.first(where: { $0.identifier == defaultWebBrowser }) {
+                                    if case let .openUrl(openInUrl) = option.action() {
+                                        self.context.sharedContext.applicationBindings.openUrl(openInUrl)
+                                    } else {
+                                        self.context.sharedContext.applicationBindings.openUrl(targetUrl)
+                                    }
                                 } else {
                                     self.context.sharedContext.applicationBindings.openUrl(targetUrl)
                                 }
-                            } else {
-                                self.context.sharedContext.applicationBindings.openUrl(targetUrl)
                             }
+                            //
                         })
                     } else {
                         self.openResolved(result: result, sourceMessageId: nil, forceExternal: true, concealed: false)

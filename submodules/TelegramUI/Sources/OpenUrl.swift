@@ -308,20 +308,39 @@ private func handleInternetUrl(
                     let controller = BrowserScreen(context: context, subject: .webPage(url: parsedUrl.absoluteString))
                     navigationController?.pushViewController(controller)
                 } else {
-                    let openInOptions = availableOpenInOptions(context: context, item: .url(url: originalUrl))
-                    var defaultWebBrowser = localSettings.defaultWebBrowser
-                    if defaultWebBrowser == nil || defaultWebBrowser == "inApp" || defaultWebBrowser == "inAppSafari" {
-                        defaultWebBrowser = "safari"
-                    }
-                    if let option = openInOptions.first(where: { $0.identifier == defaultWebBrowser }) {
-                        if case let .openUrl(openInUrl) = option.action() {
-                            context.sharedContext.applicationBindings.openUrl(openInUrl)
+                    // MARK: Swiftgram
+                    if localSettings.defaultWebBrowser == "inApp" {
+                        if let window = navigationController?.view.window {
+                            let controller = SFSafariViewControllerPlusDidFinish(url: parsedUrl)
+                            controller.preferredBarTintColor = presentationData.theme.rootController.navigationBar.opaqueBackgroundColor
+                            controller.preferredControlTintColor = presentationData.theme.rootController.navigationBar.accentTextColor
+                            if parsedUrl.host?.lowercased() == SG_API_WEBAPP_URL_PARSED.host?.lowercased() {
+                                controller.onDidFinish = {
+                                    SGLogger.shared.log("SafariController", "Closed webapp")
+                                    updateSGWebSettingsInteractivelly(context: context)
+                                }
+                            }
+                            window.rootViewController?.present(controller, animated: true)
                         } else {
                             context.sharedContext.applicationBindings.openUrl(originalUrl)
                         }
                     } else {
-                        context.sharedContext.applicationBindings.openUrl(originalUrl)
+                        let openInOptions = availableOpenInOptions(context: context, item: .url(url: originalUrl))
+                        var defaultWebBrowser = localSettings.defaultWebBrowser
+                        if defaultWebBrowser == nil || defaultWebBrowser == "inAppSafari" {
+                            defaultWebBrowser = "safari"
+                        }
+                        if let option = openInOptions.first(where: { $0.identifier == defaultWebBrowser }) {
+                            if case let .openUrl(openInUrl) = option.action() {
+                                context.sharedContext.applicationBindings.openUrl(openInUrl)
+                            } else {
+                                context.sharedContext.applicationBindings.openUrl(originalUrl)
+                            }
+                        } else {
+                            context.sharedContext.applicationBindings.openUrl(originalUrl)
+                        }
                     }
+                    //
                 // TODO(swiftgram): merge properly
                 // } else {
                 //     var isExceptedDomain = false
