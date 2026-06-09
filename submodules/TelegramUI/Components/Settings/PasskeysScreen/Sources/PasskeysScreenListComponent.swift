@@ -1,3 +1,4 @@
+import SGStrings
 import Foundation
 import UIKit
 import Display
@@ -283,7 +284,7 @@ final class PasskeysScreenListComponent: Component {
                     title: AnyComponent(VStack([
                         AnyComponentWithIdentity(id: AnyHashable(0), component: AnyComponent(MultilineTextComponent(
                             text: .plain(NSAttributedString(
-                                string: component.strings.Passkeys_AddPasskey,
+                                string: "Common.OpenTelegram".i18n(component.strings.baseLanguageCode),
                                 font: Font.regular(17.0),
                                 textColor: component.theme.list.itemAccentColor
                             )),

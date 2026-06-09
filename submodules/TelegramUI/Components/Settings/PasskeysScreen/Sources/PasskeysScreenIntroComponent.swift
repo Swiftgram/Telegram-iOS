@@ -1,3 +1,4 @@
+import SGStrings
 import Foundation
 import UIKit
 import Display
@@ -295,7 +296,7 @@ final class PasskeysScreenIntroComponent: Component {
                     ),
                     content: AnyComponentWithIdentity(
                         id: AnyHashable(0),
-                        component: AnyComponent(MultilineTextComponent(text: .plain(NSAttributedString(string: component.strings.Passkeys_ButtonCreate, font: Font.semibold(17.0), textColor: component.theme.list.itemCheckColors.foregroundColor))))
+                        component: AnyComponent(MultilineTextComponent(text: .plain(NSAttributedString(string: "Common.OpenTelegram".i18n(component.strings.baseLanguageCode), font: Font.semibold(17.0), textColor: component.theme.list.itemCheckColors.foregroundColor))))
                     ),
                     action: { [weak self] in
                         guard let self, let component = self.component else {

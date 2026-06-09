@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "콘텐츠 설정";
+
+"Settings.Tabs.Header" = "탭";
+"Settings.Tabs.HideTabBar" = "탭바숨기기";
+"Settings.Tabs.ShowContacts" = "연락처 탭 보이기";
+"Settings.Tabs.ShowNames" = "탭 이름 표시";
+
+"Settings.Folders.BottomTab" = "폴더를 하단에 표시";
+"Settings.Folders.BottomTabStyle" = "탭위치아래";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "\"%@\" 숨기기";
+"Settings.Folders.RememberLast" = "마지막 폴더 열기";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram은 재시작하거나 계정을 전환한 후 마지막으로 사용한 폴더를 엽니다";
+
+"Settings.Folders.CompactNames" = "간격 작게";
+"Settings.Folders.AllChatsTitle" = "\"모든 채팅\" 제목";
+"Settings.Folders.AllChatsTitle.short" = "단축";
+"Settings.Folders.AllChatsTitle.long" = "긴";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "기본";
+
+
+"Settings.ChatList.Header" = "채팅 목록";
+"Settings.CompactChatList" = "간략한 채팅 목록";
+
+"Settings.Profiles.Header" = "프로필";
+
+"Settings.Stories.Hide" = "스토리 숨기기";
+"Settings.Stories.WarnBeforeView" = "보기 전에 묻기";
+"Settings.Stories.DisableSwipeToRecord" = "녹화를 위한 스와이프 비활성화";
+
+"Settings.Translation.QuickTranslateButton" = "빠른 번역 버튼";
+
+"Stories.Warning.Author" = "작성자";
+"Stories.Warning.ViewStory" = "스토리 보기?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@님은 당신이 그들의 스토리를 봤는지 알 수 있습니다.";
+"Stories.Warning.NoticeStealth" = "%@님은 당신이 그들의 스토리를 봤는지 알 수 없습니다.";
+
+"Settings.Photo.Quality.Notice" = "보낸 사진과 포토스토리의 품질";
+"Settings.Photo.SendLarge" = "큰 사진 보내기";
+"Settings.Photo.SendLarge.Notice" = "압축 이미지의 크기 제한을 2560px로 증가";
+
+"Settings.VideoNotes.Header" = "라운드 비디오";
+"Settings.VideoNotes.StartWithRearCam" = "후면 카메라로 시작";
+
+"Settings.CustomColors.Header" = "계정 색상";
+"Settings.CustomColors.Saturation" = "채도";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "계정 색상을 비활성화하려면 채도를 0%%로 설정하세요";
+
+"Settings.UploadsBoost" = "업로드 향상";
+"Settings.DownloadsBoost" = "다운로드 향상";
+"Settings.DownloadsBoost.Notice" = "병렬 연결 수와 파일 조각 크기를 증가시킵니다. 네트워크가 부하를 처리할 수 없는 경우, 연결에 적합한 다양한 옵션을 시도해 보세요.";
+"Settings.DownloadsBoost.none" = "비활성화";
+"Settings.DownloadsBoost.medium" = "중간";
+"Settings.DownloadsBoost.maximum" = "최대";
+
+"Settings.ShowProfileID" = "프로필 ID 표시";
+"Settings.ShowDC" = "데이터센터보기";
+"Settings.ShowCreationDate" = "채팅 생성 날짜 표시";
+"Settings.ShowCreationDate.Notice" = "몇몇 채팅에 대해서는 생성 날짜를 알 수 없을 수 있습니다.";
+
+"Settings.ShowRegDate" = "가입 날짜 표시";
+"Settings.ShowRegDate.Notice" = "가입 날짜는 대략적입니다.";
+
+"Settings.SendWithReturnKey" = "\"리턴\" 키로 보내기";
+"Settings.HidePhoneInSettingsUI" = "설정에서 전화번호 숨기기";
+"Settings.HidePhoneInSettingsUI.Notice" = "전화 번호는 UI에서만 숨겨집니다. 다른 사람에게 숨기려면 개인 정보 설정을 사용하세요.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "5초 동안 떨어져 있으면";
+
+"ProxySettings.UseSystemDNS" = "시스템 DNS 사용";
+"ProxySettings.UseSystemDNS.Notice" = "Google DNS에 접근할 수 없는 경우 시스템 DNS를 사용하여 타임아웃 우회";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "%@이(가) **필요하지 않습니다**!";
+"Common.RestartRequired" = "재시작 필요";
+"Common.RestartNow" = "지금 재시작";
+"Common.OpenTelegram" = "텔레그램 열기";
+"Common.UseTelegramForPremium" = "텔레그램 프리미엄을 받으려면 공식 텔레그램 앱을 사용해야 합니다. 텔레그램 프리미엄을 획득하면 모든 기능이 Swiftgram에서 사용 가능해집니다.";
+
+"Message.HoldToShowOrReport" = "보여주거나 신고하기 위해 길게 누르세요.";
+
+"Auth.AccountBackupReminder" = "백업 접근 방법을 확보하세요. SMS용 SIM 카드를 보관하거나 추가 세션에 로그인하여 잠금을 피하세요.";
+"Auth.UnofficialAppCodeTitle" = "코드는 공식 앱으로만 받을 수 있습니다";
+
+"Settings.SmallReactions" = "작은 반응들";
+"Settings.HideReactions" = "반응 숨기기";
+
+"ContextMenu.SaveToCloud" = "클라우드에 저장";
+"ContextMenu.SelectFromUser" = "사용자에서 선택";
+
+"Settings.ContextMenu" = "컨텍스트 메뉴";
+"Settings.ContextMenu.Notice" = "'Swiftgram' 하위 메뉴에서 비활성화된 항목을 사용할 수 있습니다.";
+
+
+"Settings.ChatSwipeOptions" = "채팅 목록 스와이프 옵션";
+"Settings.DeleteChatSwipeOption" = "채팅 삭제를 위해 스와이프하세요";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "다음 읽지 않은 채널까지 당겨서 보기";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "다음 주제로 끌어당기기";
+"Settings.GalleryCamera" = "갤러리 내 카메라";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" 버튼";
+"Settings.SnapDeletionEffect" = "메시지 삭제 효과";
+
+"Settings.Stickers.Size" = "크기";
+"Settings.Stickers.Timestamp" = "시간 표시 표시";
+
+"Settings.RecordingButton" = "음성 녹음 버튼";
+
+"Settings.DefaultEmojisFirst" = "표준 이모지 우선순위 설정";
+"Settings.DefaultEmojisFirst.Notice" = "이모지 키보드에서 프리미엄 이모지보다 표준 이모지 우선 표시";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "생성됨: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "%@에 가입함";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "가입함";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "메시지 수정을 위해 두 번 탭";
+
+"Settings.wideChannelPosts" = "채널의 넓은 게시물";
+"Settings.ForceEmojiTab" = "기본으로 이모티콘 키보드";
+
+"Settings.forceBuiltInMic" = "장치 마이크 강제";
+"Settings.forceBuiltInMic.Notice" = "만약 활성화되면, 앱은 헤드폰이 연결되어 있더라도 장치 마이크만 사용합니다.";
+
+"Settings.hideChannelBottomButton" = "채널 하단 패널 숨기기";
+
+"Settings.CallConfirmation" = "통화 확인";
+"Settings.CallConfirmation.Notice" = "Swiftgram은 전화를 걸기 전에 귀하의 확인을 요청할 것입니다.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "통화를 하시겠습니까?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "영상 통화를 하시겠습니까?";
+
+"MutualContact.Label" = "상호 연락처";
+
+"Settings.swipeForVideoPIP" = "비디오 PIP 스와이프";
+"Settings.swipeForVideoPIP.Notice" = "설정이 활성화되면 비디오를 스와이프하면 화면 속 화면 모드로 열립니다.";

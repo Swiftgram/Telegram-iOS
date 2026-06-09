@@ -195,6 +195,9 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
     }
     
     public let openMessage: (EngineRawMessage, OpenMessageParams) -> Bool
+    // MARK: Swiftgram
+    public let sgStartMessageEdit: (Message) -> Void
+    public let sgGetChatPredictedLang: () -> String?
     public let openPeer: (EnginePeer, ChatControllerInteractionNavigateToPeer, MessageReference?, OpenPeerSource) -> Void
     public let openPeerMention: (String, Promise<Bool>?) -> Void
     public let openMessageContextMenu: (EngineRawMessage, Bool, ASDisplayNode, CGRect, UIGestureRecognizer?, CGPoint?) -> Void
@@ -375,6 +378,8 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
     
     public init(
         openMessage: @escaping (EngineRawMessage, OpenMessageParams) -> Bool,
+        sgGetChatPredictedLang: @escaping () -> String? = { return nil },
+        sgStartMessageEdit: @escaping (Message) -> Void = { _ in },
         openPeer: @escaping (EnginePeer, ChatControllerInteractionNavigateToPeer, MessageReference?, OpenPeerSource) -> Void,
         openPeerMention: @escaping (String, Promise<Bool>?) -> Void,
         openMessageContextMenu: @escaping (EngineRawMessage, Bool, ASDisplayNode, CGRect, UIGestureRecognizer?, CGPoint?) -> Void,
@@ -507,6 +512,8 @@ public final class ChatControllerInteraction: ChatControllerInteractionProtocol 
         presentationContext: ChatPresentationContext
     ) {
         self.openMessage = openMessage
+        self.sgGetChatPredictedLang = sgGetChatPredictedLang
+        self.sgStartMessageEdit = sgStartMessageEdit
         self.openPeer = openPeer
         self.openPeerMention = openPeerMention
         self.openMessageContextMenu = openMessageContextMenu

@@ -59,6 +59,7 @@ public protocol ChatSendMessageContextScreenRichTextPreview: AnyObject {
 final class ChatSendMessageContextScreenComponent: Component {
     typealias EnvironmentType = ViewControllerComponentContainer.Environment
     
+    let sgTranslationContext: (outgoingMessageTranslateToLang: String?, translate: (() -> Void)?, changeTranslationLanguage: (() -> ())?)
     let initialData: ChatSendMessageContextScreen.InitialData
     let context: AccountContext
     let updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?
@@ -79,8 +80,9 @@ final class ChatSendMessageContextScreenComponent: Component {
     let availableMessageEffects: AvailableMessageEffects?
     let isPremium: Bool
     let richTextPreview: ChatSendMessageContextScreenRichTextPreview?
-
+    // MARK: Swiftgram
     init(
+        sgTranslationContext: (outgoingMessageTranslateToLang: String?, translate: (() -> Void)?, changeTranslationLanguage: (() -> ())?) = (outgoingMessageTranslateToLang: nil, translate: nil, changeTranslationLanguage: nil),
         initialData: ChatSendMessageContextScreen.InitialData,
         context: AccountContext,
         updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?,
@@ -102,6 +104,7 @@ final class ChatSendMessageContextScreenComponent: Component {
         isPremium: Bool,
         richTextPreview: ChatSendMessageContextScreenRichTextPreview? = nil
     ) {
+        self.sgTranslationContext = sgTranslationContext
         self.initialData = initialData
         self.context = context
         self.updatedPresentationData = updatedPresentationData
@@ -653,6 +656,78 @@ final class ChatSendMessageContextScreenComponent: Component {
                         self.environment?.controller()?.dismiss()
                     }
                 )))
+            }
+            
+            // MARK: Swiftgram
+            if !isSecret {
+                if let outgoingMessageTranslateToLang = component.sgTranslationContext.outgoingMessageTranslateToLang {
+                    var languageCode = presentationData.strings.baseLanguageCode
+                    let rawSuffix = "-raw"
+                    if languageCode.hasSuffix(rawSuffix) {
+                        languageCode = String(languageCode.dropLast(rawSuffix.count))
+                    }
+                   
+                    // Assuming, user want to send message in the same language the chat is
+                    let toLang = outgoingMessageTranslateToLang
+                    let key = "Translation.Language.\(toLang)"
+                    let translateTitle: String
+                    if let string = presentationData.strings.primaryComponent.dict[key] {
+                        translateTitle = presentationData.strings.Conversation_Translation_TranslateTo(string).string
+                    } else {
+                        let languageLocale = Locale(identifier: languageCode)
+                        let toLanguage = languageLocale.localizedString(forLanguageCode: toLang) ?? ""
+                        translateTitle = presentationData.strings.Conversation_Translation_TranslateToOther(toLanguage).string
+                    }
+                    
+                    items.append(.action(ContextMenuActionItem(
+                        id: AnyHashable("sgTranslate"),
+                        text: translateTitle,
+                        icon: { theme in
+                            return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Translate"), color: theme.contextMenu.primaryColor)
+                        }, action: { [weak self] _, _ in
+                            guard let self, let component = self.component else {
+                                return
+                            }
+                            self.animateOutToEmpty = true
+                            
+                            component.sgTranslationContext.translate?()
+                            self.environment?.controller()?.dismiss()
+                        }
+                    )))
+                   
+                    items.append(.action(ContextMenuActionItem(
+                        id: AnyHashable("sgChangeTranslateLang"),
+                        text: presentationData.strings.Translate_ChangeLanguage,
+                        icon: { theme in
+                            return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Caption"), color: theme.contextMenu.primaryColor)
+                        }, action: { [weak self] _, _ in
+                            guard let self, let component = self.component else {
+                                return
+                            }
+                            self.animateOutToEmpty = true
+                            
+                            self.environment?.controller()?.dismiss()
+                            component.sgTranslationContext.changeTranslationLanguage?()
+                        }
+                    )))
+                   
+                } else {
+                    items.append(.action(ContextMenuActionItem(
+                        id: AnyHashable("sgChangeTranslateLang"),
+                        text: presentationData.strings.Conversation_Translation_TranslateToOther("...").string,
+                        icon: { theme in
+                            return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Caption"), color: theme.contextMenu.primaryColor)
+                        }, action: { [weak self] _, _ in
+                            guard let self, let component = self.component else {
+                                return
+                            }
+                            self.animateOutToEmpty = true
+                            
+                            self.environment?.controller()?.dismiss()
+                            component.sgTranslationContext.changeTranslationLanguage?()
+                        }
+                    )))
+                }
             }
             
             if case .separator = items.last {
@@ -1477,6 +1552,7 @@ public class ChatSendMessageContextScreen: ViewControllerComponentContainer, Cha
     }
     
     public init(
+        sgTranslationContext: (outgoingMessageTranslateToLang: String?, translate: (() -> Void)?, changeTranslationLanguage: (() -> ())?) = (outgoingMessageTranslateToLang: nil, translate: nil, changeTranslationLanguage: nil),
         initialData: InitialData,
         context: AccountContext,
         updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?,
@@ -1503,6 +1579,7 @@ public class ChatSendMessageContextScreen: ViewControllerComponentContainer, Cha
         super.init(
             context: context,
             component: ChatSendMessageContextScreenComponent(
+                sgTranslationContext: sgTranslationContext,
                 initialData: initialData,
                 context: context,
                 updatedPresentationData: updatedPresentationData,

@@ -111,6 +111,12 @@ NSString *const TGConversationFooterIdentifier = @"TGConversationFooter";
         self.voicePressed();
 }
 
+- (IBAction)replyWithoutPresetButtonPressedAction
+{
+    if (self.replyWithoutPresetPressed != nil)
+        self.replyWithoutPresetPressed();
+}
+
 - (IBAction)bottomButtonPressedAction
 {
     bool isSendMessage = _options & TGConversationFooterOptionsSendMessage;

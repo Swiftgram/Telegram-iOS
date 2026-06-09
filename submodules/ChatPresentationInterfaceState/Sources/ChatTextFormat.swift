@@ -3,15 +3,15 @@ import TextFormat
 import TelegramCore
 import AccountContext
 
-public func chatTextInputAddFormattingAttribute(_ state: ChatTextInputState, attribute: NSAttributedString.Key, value: Any?) -> ChatTextInputState {
+public func chatTextInputAddFormattingAttribute(forceRemoveAll: Bool = false, _ state: ChatTextInputState, attribute: NSAttributedString.Key, value: Any?) -> ChatTextInputState {
     if !state.selectionRange.isEmpty {
         let nsRange = NSRange(location: state.selectionRange.lowerBound, length: state.selectionRange.count)
         var addAttribute = true
         var attributesToRemove: [NSAttributedString.Key] = []
         state.inputText.enumerateAttributes(in: nsRange, options: .longestEffectiveRangeNotRequired) { attributes, range, _ in
             for (key, _) in attributes {
-                if key == attribute {
-                    if nsRange == range {
+                if key == attribute || forceRemoveAll {
+                    if nsRange == range || forceRemoveAll {
                         addAttribute = false
                         attributesToRemove.append(key)
                     }

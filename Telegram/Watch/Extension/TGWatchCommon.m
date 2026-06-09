@@ -130,7 +130,7 @@ void TGResetLocalization()
     TGLocalizedStaticVersion++;
 }
 
-NSString *TGLocalized(NSString *s)
+NSString *TGLocalizedInternal(NSString *s)
 {
     static NSString *untranslatedString = nil;
     
@@ -197,4 +197,10 @@ NSString *TGLocalized(NSString *s)
     }
     
     return s;
+}
+
+// MARK: Swiftgram
+NSString *TGLocalized(NSString *s) {
+    NSString *result = TGLocalizedInternal(s);
+    return [result stringByReplacingOccurrencesOfString:@"Telegram" withString:@"Swiftgram"];
 }

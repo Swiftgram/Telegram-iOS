@@ -1,3 +1,12 @@
+import SGLogging
+import SGAPIWebSettings
+import SGConfig
+import SGSettingsUI
+import SGDebugUI
+import SFSafariViewControllerPlus
+import UndoUI
+//
+import ContactListUI
 import Foundation
 import Display
 import TelegramCore
@@ -313,6 +322,39 @@ private func handleInternetUrl(
                     } else {
                         context.sharedContext.applicationBindings.openUrl(originalUrl)
                     }
+                // TODO(swiftgram): merge properly
+                // } else {
+                //     var isExceptedDomain = false
+                //     let host = ".\((parsedUrl.host ?? "").lowercased())"
+                //     for exception in settings.exceptions {
+                //         if host.hasSuffix(".\(exception.domain)") {
+                //             isExceptedDomain = true
+                //             break
+                //         }
+                //     }
+                //     if settings.defaultWebBrowser == "inApp" { isExceptedDomain = false } // MARK: Swiftgram
+
+                //     if (settings.defaultWebBrowser == nil && !isExceptedDomain) || isTonSite {
+                //         let controller = BrowserScreen(context: context, subject: .webPage(url: parsedUrl.absoluteString))
+                //         navigationController?.pushViewController(controller)
+                //     } else {
+                //         if let window = navigationController?.view.window, !isExceptedDomain {
+                //             let controller = SFSafariViewControllerPlusDidFinish(url: parsedUrl) // MARK: Swiftgram
+                //             controller.preferredBarTintColor = presentationData.theme.rootController.navigationBar.opaqueBackgroundColor
+                //             controller.preferredControlTintColor = presentationData.theme.rootController.navigationBar.accentTextColor
+                //             // MARK: Swiftgram
+                //             if parsedUrl.host?.lowercased() == SG_API_WEBAPP_URL_PARSED.host?.lowercased() {
+                //                 controller.onDidFinish = {
+                //                     SGLogger.shared.log("SafariController", "Closed webapp")
+                //                     updateSGWebSettingsInteractivelly(context: context)
+                //                 }
+                //             }
+                //             //
+                //             window.rootViewController?.present(controller, animated: true)
+                //         } else {
+                //             context.sharedContext.applicationBindings.openUrl(parsedUrl.absoluteString)
+                //         }
+                //     }
                 }
             })
         }
@@ -859,6 +901,71 @@ func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, ur
                 switch host {
                 case "stars":
                     handleResolvedUrl(.stars)
+                case "sg":
+                    if let path = parsedUrl.pathComponents.last {
+                        switch path {
+                            case "debug":
+                                if let debugController = context.sharedContext.makeDebugSettingsController(context: context) {
+                                    navigationController?.pushViewController(debugController)
+                                    return
+                                }
+                            case "sgdebug", "sg_debug":
+                                navigationController?.pushViewController(sgDebugController(context: context))
+                                return
+                            case "settings":
+                                navigationController?.pushViewController(sgSettingsController(context: context))
+                                return
+                            case "ios_settings":
+                                context.sharedContext.applicationBindings.openSettings()
+                                return
+                            case "contacts":
+                                if let lastViewController = navigationController?.viewControllers.last as? ViewController {
+                                    lastViewController.present(ContactsController(context: context), in: .window(.root), with: ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+                                }
+                                return
+                            case "pro", "premium", "buy":
+                                if context.sharedContext.immediateSGStatus.status > 1 {
+                                    navigationController?.pushViewController(context.sharedContext.makeSGProController(context: context))
+                                } else {
+                                    if let lastViewController = navigationController?.viewControllers.last as? ViewController {
+                                        if let payWallController = context.sharedContext.makeSGPayWallController(context: context) {
+                                            lastViewController.present(payWallController, in: .window(.root), with: ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+                                        } else {
+                                            lastViewController.present(context.sharedContext.makeSGUpdateIOSController(), animated: true)
+                                        }
+                                    }
+                                }
+                            case "restart":
+                                let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                                let lang = presentationData.strings.baseLanguageCode
+                                context.sharedContext.presentGlobalController(
+                                    UndoOverlayController(
+                                        presentationData: presentationData,
+                                        content: .info(title: nil,
+                                            text: "Common.RestartRequired".i18n(lang),
+                                            timeout: nil,
+                                            customUndoText: "Common.RestartNow".i18n(lang)
+                                        ),
+                                        elevatedLayout: false,
+                                        action: { action in if action == .undo { exit(0) }; return true }
+                                    ),
+                                    nil
+                                )
+                            case "restore_purchases", "pro_restore", "validate", "restore":
+                                let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                                let lang = presentationData.strings.baseLanguageCode
+                                context.sharedContext.presentGlobalController(UndoOverlayController(
+                                        presentationData: presentationData,
+                                        content: .info(title: nil, text: "PayWall.Button.Restoring".i18n(lang), timeout: nil, customUndoText: nil),
+                                        elevatedLayout: false,
+                                        action: { _ in return false }
+                                    ),
+                                nil)
+                                context.sharedContext.SGIAP?.restorePurchases {}
+                            default:
+                                break
+                        }
+                    }
                 case "ton":
                     handleResolvedUrl(.ton)
                 case "importstickers":

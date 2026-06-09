@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "Подешавања садржаја";
+
+"Settings.Tabs.Header" = "ТАБОВИ";
+"Settings.Tabs.HideTabBar" = "Сакриј Таб бар";
+"Settings.Tabs.ShowContacts" = "Прикажи таб Контакти";
+"Settings.Tabs.ShowNames" = "Прикажи имена табова";
+
+"Settings.Folders.BottomTab" = "Фасцикле у дну";
+"Settings.Folders.BottomTabStyle" = "Стил фасцикли у дну";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Телеграм";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "Сакриј \"%@\"";
+"Settings.Folders.RememberLast" = "Отвори последњу фасциклу";
+"Settings.Folders.RememberLast.Notice" = "Свифтграм ће отворити последње коришћену фасциклу када поново покренете апликацију или измените налоге.";
+
+"Settings.Folders.CompactNames" = "Мањи размак";
+"Settings.Folders.AllChatsTitle" = "Наслов \"Сви Четови\"";
+"Settings.Folders.AllChatsTitle.short" = "Кратко";
+"Settings.Folders.AllChatsTitle.long" = "Дуго";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Подразумевано";
+
+
+"Settings.ChatList.Header" = "ЛИСТА ЧЕТОВА";
+"Settings.CompactChatList" = "Компактна листа чета";
+
+"Settings.Profiles.Header" = "ПРОФИЛИ";
+
+"Settings.Stories.Hide" = "Сакриј приче";
+"Settings.Stories.WarnBeforeView" = "Питај пре прегледања";
+"Settings.Stories.DisableSwipeToRecord" = "Онемогући превлачење за снимање";
+
+"Settings.Translation.QuickTranslateButton" = "Дугме за брзо превођење";
+
+"Stories.Warning.Author" = "Аутор";
+"Stories.Warning.ViewStory" = "Погледај причу?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ ЋЕ ВИДЕТИ да сте видели њихову причу.";
+"Stories.Warning.NoticeStealth" = "%@ неће моћи видети да сте видели њихову причу.";
+
+"Settings.Photo.Quality.Notice" = "Квалитет постављених фотографија и приказа.";
+"Settings.Photo.SendLarge" = "Пошаљи велике фотографије";
+"Settings.Photo.SendLarge.Notice" = "Повећај лимит величине за компресоване слике на 2560пкс.";
+
+"Settings.VideoNotes.Header" = "КРУГ ВИДЕО";
+"Settings.VideoNotes.StartWithRearCam" = "Почни са задњом камером";
+
+"Settings.CustomColors.Header" = "БОЈЕ НАЛОГА";
+"Settings.CustomColors.Saturation" = "ЗАСИЋЕЊЕ";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Поставите на 0%% да онемогућите боје налога.";
+
+"Settings.UploadsBoost" = "Појачај поставке поставки";
+"Settings.DownloadsBoost" = "Преузми појачање";
+"Settings.DownloadsBoost.Notice" = "Увећава број паралелних веза и величину делова фајлова. Уколико ваша мрежа не може да поднесе оптерећење, испробајте различите опције које одговарају вашој вези.";
+"Settings.DownloadsBoost.none" = "Онемогућено";
+"Settings.DownloadsBoost.medium" = "Средње";
+"Settings.DownloadsBoost.maximum" = "Максимално";
+
+"Settings.ShowProfileID" = "Прикажи идентификациони број профила";
+"Settings.ShowDC" = "Прикажи центар података";
+"Settings.ShowCreationDate" = "Прикажи датум креирања чата";
+"Settings.ShowCreationDate.Notice" = "Можда није познат датум креирања за неке разговоре.";
+
+"Settings.ShowRegDate" = "Прикажи датум регистрације";
+"Settings.ShowRegDate.Notice" = "Датум регистрације је приближан.";
+
+"Settings.SendWithReturnKey" = "Пошаљи са 'повратак' тастером";
+"Settings.HidePhoneInSettingsUI" = "Сакриј телефон у поставкама";
+"Settings.HidePhoneInSettingsUI.Notice" = "Ово само ће скрити ваш број телефона из интерфејса поставки. Да бисте га скрили од других, идите на Приватност и безбедност.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "Ако је одсутан 5 секунди";
+
+"ProxySettings.UseSystemDNS" = "Користи системски DNS";
+"ProxySettings.UseSystemDNS.Notice" = "Користи системски DNS да заобиђеш временски лимит ако немаш приступ Google DNS-у";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "Не треба вам **%@**!";
+"Common.RestartRequired" = "Потребно поновно покретање";
+"Common.RestartNow" = "Поново покрени сада";
+"Common.OpenTelegram" = "Отвори Телеграм";
+"Common.UseTelegramForPremium" = "Обратите пажњу да бисте добили Телеграм Премијум, морате користити официјалну Телеграм апликацију. Након што стечете Телеграм Премијум, све његове функције ће бити доступне у Свифтграму.";
+
+"Message.HoldToShowOrReport" = "Држи да би показао или пријавио.";
+
+"Auth.AccountBackupReminder" = "Обезбеди да имаш методу приступа за резерву. Задржи СИМ за СМС или додатну сесију пријављену да избегнеш блокирање.";
+"Auth.UnofficialAppCodeTitle" = "Код можете добити само са званичном апликацијом";
+
+"Settings.SmallReactions" = "Мале реакције";
+"Settings.HideReactions" = "Сакриј реакције";
+
+"ContextMenu.SaveToCloud" = "Сачувај у облак";
+"ContextMenu.SelectFromUser" = "Изабери од аутора";
+
+"Settings.ContextMenu" = "КОНТЕКСТ МЕНИ";
+"Settings.ContextMenu.Notice" = "Онемогућени уноси ће бити доступни у 'Swiftgram' подменују.";
+
+
+"Settings.ChatSwipeOptions" = "Опције превлачења списка разговора";
+"Settings.DeleteChatSwipeOption" = "Превучите за брисање чет";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Повуци на следећи непрочитан канал";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Повуци на следећу тему";
+"Settings.GalleryCamera" = "Камера у галерији";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" Дугме";
+"Settings.SnapDeletionEffect" = "Ефекти брисања поруке";
+
+"Settings.Stickers.Size" = "ВЕЛИЧИНА";
+"Settings.Stickers.Timestamp" = "Прикажи временски линку";
+
+"Settings.RecordingButton" = "Дугме за гласовно снимање";
+
+"Settings.DefaultEmojisFirst" = "Приоритизовати стандардне емотиконе";
+"Settings.DefaultEmojisFirst.Notice" = "Прикажи стандардне емотиконе пре премијумских на тастатури емотикона";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "креирано: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "Придружен: %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Регистрован";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Двоструки додир за уређивање поруке";
+
+"Settings.wideChannelPosts" = "Широки постови у каналима";
+"Settings.ForceEmojiTab" = "Емоџи тастатура по подразумеваној подешавања";
+
+"Settings.forceBuiltInMic" = "Наметни микрофон уређаја";
+"Settings.forceBuiltInMic.Notice" = "Ако је омогућено, апликација ће користити само микрофон уређаја чак и ако су прикључене слушалице.";
+
+"Settings.hideChannelBottomButton" = "Сакриј донји панел канала";
+
+"Settings.CallConfirmation" = "Потврда позива";
+"Settings.CallConfirmation.Notice" = "Swiftgram ће затражити вашу потврду пре него што направи позив.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Направити позив?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Направити видео позив?";
+
+"MutualContact.Label" = "заједнички контакт";
+
+"Settings.swipeForVideoPIP" = "Видео PIP са свлачење";
+"Settings.swipeForVideoPIP.Notice" = "Ако је омогућено, померање видеа ће га отворити у режиму слике у слици.";

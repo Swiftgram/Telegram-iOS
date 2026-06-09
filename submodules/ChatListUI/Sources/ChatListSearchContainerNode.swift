@@ -1,4 +1,5 @@
 import Foundation
+import SGSimpleSettings
 import UIKit
 import AsyncDisplayKit
 import Display
@@ -854,6 +855,9 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
             filtersInsets.bottom += 48.0
         }
         
+        // TODO(swiftgram): too high if used from top bar
+        if !SGSimpleSettings.shared.showTabNames { filtersInsets.bottom += 16.0 }
+
         transition.updateFrame(node: self.filterContainerNode, frame: CGRect(origin: CGPoint(x: layout.safeInsets.left + filtersInsets.left, y: layout.size.height - filtersInsets.bottom - 40.0), size: CGSize(width: layout.size.width - (layout.safeInsets.left + filtersInsets.left) * 2.0, height: 40.0)))
         self.updateFilterContainerNode(layout: layout, transition: transition)
         

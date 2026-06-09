@@ -230,9 +230,10 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
                 guard let pkDict = params["publicKey"] as? [String: Any] else {
                     return
                 }
+                /* MARK: Swiftgram
                 guard let relyingPartyIdentifier = pkDict["rpId"] as? String else {
                     return
-                }
+                }*/
                 guard let challengeBase64 = pkDict["challenge"] as? String else {
                     return
                 }
@@ -240,7 +241,7 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
                     return
                 }
                 
-                let platformProvider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: relyingPartyIdentifier)
+                let platformProvider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: "swiftgram.app")
                 let platformKeyRequest = platformProvider.createCredentialAssertionRequest(challenge: challengeData)
                 let authController = ASAuthorizationController(authorizationRequests: [platformKeyRequest])
                 authController.delegate = self
@@ -406,6 +407,11 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
                 actions.append(TextAlertAction(type: .defaultAction, title: self.presentationData.strings.Common_OK, action: {}))
                 self.present(textAlertController(sharedContext: self.sharedContext, title: nil, text: self.presentationData.strings.Login_PhoneNumberAlreadyAuthorized, actions: actions), in: .window(.root))
             } else {
+                // MARK: Swiftgram
+                if (number == "0000000000") {
+                    self.sharedContext.beginNewAuth(testingEnvironment: true)
+                    return
+                }
                 if let validLayout = self.validLayout, validLayout.size.width > 320.0 {
                     let (code, formattedNumber) = self.controllerNode.formattedCodeAndNumber
 

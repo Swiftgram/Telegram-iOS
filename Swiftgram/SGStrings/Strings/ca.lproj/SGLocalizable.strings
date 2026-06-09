@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "Configuració del Contingut";
+
+"Settings.Tabs.Header" = "PESTANYES";
+"Settings.Tabs.HideTabBar" = "Amagar barra de pestanyes";
+"Settings.Tabs.ShowContacts" = "Mostrar Pestanya de Contactes";
+"Settings.Tabs.ShowNames" = "Mostrar noms de les pestanyes";
+
+"Settings.Folders.BottomTab" = "Carpetes a la part inferior";
+"Settings.Folders.BottomTabStyle" = "Bottom Folders Style";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "Amaga \"%@\"";
+"Settings.Folders.RememberLast" = "Obrir l'última carpeta";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram obrirà l'última carpeta utilitzada després de reiniciar o canviar de compte.";
+
+"Settings.Folders.CompactNames" = "Espaiat més petit";
+"Settings.Folders.AllChatsTitle" = "Títol \"Tots els xats\"";
+"Settings.Folders.AllChatsTitle.short" = "Curt";
+"Settings.Folders.AllChatsTitle.long" = "Llarg";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Per defecte";
+
+
+"Settings.ChatList.Header" = "LLISTA DE XATS";
+"Settings.CompactChatList" = "Llista de xats compacta";
+
+"Settings.Profiles.Header" = "PERFILS";
+
+"Settings.Stories.Hide" = "Amagar Històries";
+"Settings.Stories.WarnBeforeView" = "Preguntar abans de veure";
+"Settings.Stories.DisableSwipeToRecord" = "Desactivar lliscar per enregistrar";
+
+"Settings.Translation.QuickTranslateButton" = "Botó de Traducció Ràpida";
+
+"Stories.Warning.Author" = "Autor";
+"Stories.Warning.ViewStory" = "Veure Història?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ PODRÀ VEURE que has vist la seva Història.";
+"Stories.Warning.NoticeStealth" = "%@ no podrà veure que has vist la seva Història.";
+
+"Settings.Photo.Quality.Notice" = "Qualitat de les fotos sortints i històries de fotos.";
+"Settings.Photo.SendLarge" = "Enviar fotos grans";
+"Settings.Photo.SendLarge.Notice" = "Incrementar el límit de mida en imatges comprimides a 2560px.";
+
+"Settings.VideoNotes.Header" = "VÍDEOS RODONS";
+"Settings.VideoNotes.StartWithRearCam" = "Començar amb càmera posterior";
+
+"Settings.CustomColors.Header" = "COLORS DEL COMPTE";
+"Settings.CustomColors.Saturation" = "SATURACIÓ";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Estableix la saturació a 0%% per desactivar els colors del compte.";
+
+"Settings.UploadsBoost" = "Millora de càrregues";
+"Settings.DownloadsBoost" = "Millora de baixades";
+"Settings.DownloadsBoost.Notice" = "Augmenta el nombre de connexions paral·leles i la mida de les parts de fitxer. Si la teva xarxa no pot gestionar la càrrega, prova diferents opcions que s'adaptin a la teva connexió.";
+"Settings.DownloadsBoost.none" = "Desactivat";
+"Settings.DownloadsBoost.medium" = "Mitjà";
+"Settings.DownloadsBoost.maximum" = "Màxim";
+
+"Settings.ShowProfileID" = "Mostrar ID de perfil";
+"Settings.ShowDC" = "Mostrar Data Center";
+"Settings.ShowCreationDate" = "Mostrar Data de Creació de Xat";
+"Settings.ShowCreationDate.Notice" = "La data de creació pot ser desconeguda per alguns xats.";
+
+"Settings.ShowRegDate" = "Mostra la data d'inscripció";
+"Settings.ShowRegDate.Notice" = "La data d'inscripció és aproximada.";
+
+"Settings.SendWithReturnKey" = "Enviar amb clau \"retorn\"";
+"Settings.HidePhoneInSettingsUI" = "Amagar telèfon en la interfície d'ajustos";
+"Settings.HidePhoneInSettingsUI.Notice" = "Això només amagarà el teu número de telèfon de la interfície d'ajustos. Per amagar-lo als altres, ves a Privadesa i Seguretat.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "Si no hi ha en 5 segons";
+
+"ProxySettings.UseSystemDNS" = "Utilitzar DNS del sistema";
+"ProxySettings.UseSystemDNS.Notice" = "Utilitzar DNS del sistema per evitar el temps d'espera si no tens accés a Google DNS";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "No **necessites** %@!";
+"Common.RestartRequired" = "Reinici requerit";
+"Common.RestartNow" = "Reiniciar Ara";
+"Common.OpenTelegram" = "Obrir Telegram";
+"Common.UseTelegramForPremium" = "Recorda que per obtenir Telegram Premium, has d'utilitzar l'aplicació oficial de Telegram. Un cop hagis obtingut Telegram Premium, totes les seves funcions estaran disponibles a Swiftgram.";
+
+"Message.HoldToShowOrReport" = "Mantingues per Mostrar o Informar.";
+
+"Auth.AccountBackupReminder" = "Assegura't de tenir un mètode d'accés de reserva. Mantingues un SIM per a SMS o una sessió addicional registrada per evitar quedar bloquejat.";
+"Auth.UnofficialAppCodeTitle" = "Només pots obtenir el codi amb l'aplicació oficial";
+
+"Settings.SmallReactions" = "Petites reaccions";
+"Settings.HideReactions" = "Amaga les reaccions";
+
+"ContextMenu.SaveToCloud" = "Desar al Núvol";
+"ContextMenu.SelectFromUser" = "Seleccionar de l'Autor";
+
+"Settings.ContextMenu" = "MENÚ CONTEXTUAL";
+"Settings.ContextMenu.Notice" = "Les entrades desactivades estaran disponibles al submenú \"Swiftgram\".";
+
+
+"Settings.ChatSwipeOptions" = "Opcions desplaçament de la llista de xats";
+"Settings.DeleteChatSwipeOption" = "Desplaceu-vos per esborrar la conversa";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Arrossega cap al següent canal no llegit";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Arrosega cap al següent tema";
+"Settings.GalleryCamera" = "Càmera a la galeria";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" Botó";
+"Settings.SnapDeletionEffect" = "Efectes d'eliminació de missatges";
+
+"Settings.Stickers.Size" = "GRANOR";
+"Settings.Stickers.Timestamp" = "Mostra l'estona";
+
+"Settings.RecordingButton" = "Botó d'enregistrament de veu";
+
+"Settings.DefaultEmojisFirst" = "Prioritzar emojis estàndard";
+"Settings.DefaultEmojisFirst.Notice" = "Mostra emojis estàndard abans que premium al teclat emoji";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "creada: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "Unida a %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Inscrit";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Toqueu dues vegades per editar el missatge";
+
+"Settings.wideChannelPosts" = "Entrades àmplies als canals";
+"Settings.ForceEmojiTab" = "Teclat d'emojis per defecte";
+
+"Settings.forceBuiltInMic" = "Força el Micròfon del Dispositiu";
+"Settings.forceBuiltInMic.Notice" = "Si està habilitat, l'aplicació utilitzarà només el micròfon del dispositiu encara que estiguin connectats els auriculars.";
+
+"Settings.hideChannelBottomButton" = "Amaga el panell inferior del canal";
+
+"Settings.CallConfirmation" = "Confirmació de trucada";
+"Settings.CallConfirmation.Notice" = "Swiftgram et demanarà la teva confirmació abans de fer una trucada.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Vols fer una trucada?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Vols fer una videotrucada?";
+
+"MutualContact.Label" = "contacte mutu";
+
+"Settings.swipeForVideoPIP" = "Vídeo PIP amb desplaçament";
+"Settings.swipeForVideoPIP.Notice" = "Si està habilitat, desplaçar el vídeo l'obrirà en mode Imatge en Imatge.";

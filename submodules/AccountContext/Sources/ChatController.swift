@@ -30,6 +30,8 @@ public final class ChatMessageItemAssociatedData: Equatable {
         }
     }
     
+    public let translateToLanguageSG: String?
+    public let translationSettings: TranslationSettings?
     public let automaticDownloadPeerType: MediaAutoDownloadPeerType
     public let automaticDownloadPeerId: EnginePeer.Id?
     public let automaticDownloadNetworkType: MediaAutoDownloadNetworkType
@@ -70,6 +72,8 @@ public final class ChatMessageItemAssociatedData: Equatable {
     public let invitedOn: Int32?
     
     public init(
+        translateToLanguageSG: String? = nil,
+        translationSettings: TranslationSettings? = nil,
         automaticDownloadPeerType: MediaAutoDownloadPeerType,
         automaticDownloadPeerId: EnginePeer.Id?,
         automaticDownloadNetworkType: MediaAutoDownloadNetworkType,
@@ -109,6 +113,8 @@ public final class ChatMessageItemAssociatedData: Equatable {
         isParticipant: Bool = false,
         invitedOn: Int32? = nil
     ) {
+        self.translateToLanguageSG = translateToLanguageSG
+        self.translationSettings = translationSettings
         self.automaticDownloadPeerType = automaticDownloadPeerType
         self.automaticDownloadPeerId = automaticDownloadPeerId
         self.automaticDownloadNetworkType = automaticDownloadNetworkType
@@ -151,6 +157,12 @@ public final class ChatMessageItemAssociatedData: Equatable {
     
     public static func == (lhs: ChatMessageItemAssociatedData, rhs: ChatMessageItemAssociatedData) -> Bool {
         if lhs.automaticDownloadPeerType != rhs.automaticDownloadPeerType {
+            return false
+        }
+        if lhs.translateToLanguageSG != rhs.translateToLanguageSG {
+            return false
+        }
+        if lhs.translationSettings != rhs.translationSettings {
             return false
         }
         if lhs.automaticDownloadPeerId != rhs.automaticDownloadPeerId {
@@ -1027,6 +1039,7 @@ public protocol PeerInfoScreen: ViewController {
     func activateEdit()
     func openEmojiStatusSetup()
     func openBirthdaySetup()
+    func tabBarItemContextActionRawUIView(sourceView: UIView, gesture: ContextGesture?)
     func toggleStorySelection(ids: [Int32], isSelected: Bool)
     func togglePaneIsReordering(isReordering: Bool)
     func cancelItemSelection()
@@ -1089,6 +1102,7 @@ public enum ChatControllerAnimateInnerChatSwitchDirection {
 }
 
 public protocol ChatController: ViewController {
+    var overlayTitle: String? { get }
     var chatLocation: ChatLocation { get }
     var canReadHistory: ValuePromise<Bool> { get }
     var parentController: ViewController? { get set }

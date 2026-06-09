@@ -322,6 +322,10 @@ public enum PresentationResourceKey: Int32 {
     case chatFreeExpandButtonIcon
     case chatFreeCollapseButtonIcon
     
+    // MARK: Swiftgram
+    case chatTranslateButtonIcon
+    case chatUndoTranslateButtonIcon
+    
     case chatKeyboardActionButtonMessageIcon
     case chatKeyboardActionButtonLinkIcon
     case chatKeyboardActionButtonShareIcon

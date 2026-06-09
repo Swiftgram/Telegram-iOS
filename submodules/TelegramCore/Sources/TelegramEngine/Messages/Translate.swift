@@ -1,3 +1,6 @@
+import SGGTranslate
+import SGTranslationLangFix
+
 import Foundation
 import Postbox
 import SwiftSignalKit
@@ -36,7 +39,7 @@ func _internal_translate(network: Network, text: String, toLang: String, entitie
         apiText = [.textWithEntities(.init(text: text, entities: apiEntitiesFromMessageTextEntities(entities, associatedPeers: SimpleDictionary())))]
     }
 
-    return network.request(Api.functions.messages.translateText(flags: flags, peer: peer, id: messageId.flatMap { [$0] }, text: apiText, toLang: toLang, tone: tone.rawValue))
+    return network.request(Api.functions.messages.translateText(flags: flags, peer: peer, id: messageId.flatMap { [$0] }, text: apiText, toLang: sgTranslationLangFix(toLang), tone: tone.rawValue))
     |> mapError { error -> TranslationError in
         if error.errorDescription.hasPrefix("FLOOD_WAIT") {
             return .limitExceeded
@@ -85,7 +88,7 @@ func _internal_composeMessageWithAI(account: Account, text: String, entities: [M
     if emojify {
         flags |= (1 << 3)
     }
-    
+
     let apiText: Api.TextWithEntities = .textWithEntities(.init(text: text, entities: apiEntitiesFromMessageTextEntities(entities, associatedPeers: SimpleDictionary())))
 
     return account.network.request(Api.functions.messages.composeMessageWithAI(flags: flags, text: apiText, translateToLang: translateToLang, tone: changeTone))
@@ -261,7 +264,7 @@ private func _internal_translateMessagesByPeerId(account: Account, peerId: Engin
                     }
                 }
             } else {
-                msgs = account.network.request(Api.functions.messages.translateText(flags: flags, peer: inputPeer, id: id, text: nil, toLang: toLang, tone: tone != .neutral ? tone.rawValue : nil))
+                msgs = account.network.request(Api.functions.messages.translateText(flags: flags, peer: inputPeer, id: id, text: nil, toLang: sgTranslationLangFix(toLang), tone: tone != .neutral ? tone.rawValue : nil))
                 |> map(Optional.init)
                 |> mapError { error -> TranslationError in
                     if error.errorDescription.hasPrefix("FLOOD_WAIT") {
@@ -358,6 +361,42 @@ private func _internal_translateMessagesByPeerId(account: Account, peerId: Engin
             |> castError(TranslationError.self)
         }
     }
+}
+
+func _internal_translateMessagesViaText(account: Account, messagesDict: [EngineMessage.Id: String], fromLang: String?, toLang: String, enableLocalIfPossible: Bool, generateEntitiesFunction: @escaping (String) -> [MessageTextEntity]) -> Signal<Never, TranslationError> {
+    var listOfSignals: [Signal<Void, TranslationError>] = []
+    for (messageId, text) in messagesDict {
+        listOfSignals.append(
+            //                _internal_translate(network: account.network, text: text, toLang: toLang)
+            //                |> mapToSignal { result -> Signal<Void, TranslationError> in
+            //                guard let translatedText = result else {
+            //                    return .complete()
+            //                }
+            gtranslate(text, toLang)
+            |> mapError { _ -> TranslationError in
+                return .generic
+            }
+            |> mapToSignal { translatedText -> Signal<Void, TranslationError> in
+//                guard case let .result(translatedText) = result else {
+//                    return .complete()
+//                }
+                return account.postbox.transaction { transaction in
+                    transaction.updateMessage(messageId, update: { currentMessage in
+                        let updatedAttribute: TranslationMessageAttribute = TranslationMessageAttribute(text: translatedText, entities: generateEntitiesFunction(translatedText), toLang: toLang)
+                        let storeForwardInfo = currentMessage.forwardInfo.flatMap(StoreMessageForwardInfo.init)
+                        var attributes = currentMessage.attributes.filter { !($0 is TranslationMessageAttribute) }
+
+                        attributes.append(updatedAttribute)
+
+                        return .update(StoreMessage(id: currentMessage.id, customStableId: nil, globallyUniqueId: currentMessage.globallyUniqueId, groupingKey: currentMessage.groupingKey, threadId: currentMessage.threadId, timestamp: currentMessage.timestamp, flags: StoreMessageFlags(currentMessage.flags), tags: currentMessage.tags, globalTags: currentMessage.globalTags, localTags: currentMessage.localTags, forwardInfo: storeForwardInfo, authorId: currentMessage.author?.id, text: currentMessage.text, attributes: attributes, media: currentMessage.media))
+                    })
+                }
+                |> castError(TranslationError.self)
+//                |> castError(TranslateFetchError.self)
+            }
+        )
+    }
+    return combineLatest(listOfSignals) |> ignoreValues
 }
 
 func _internal_togglePeerMessagesTranslationHidden(account: Account, peerId: EnginePeer.Id, hidden: Bool) -> Signal<Never, NoError> {

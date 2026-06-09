@@ -11,7 +11,7 @@
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary;
 - (NSDictionary *)dictionary;
 
-- (TGBridgeContext *)updatedWithAuthorized:(bool)authorized peerId:(int32_t)peerId;
+- (TGBridgeContext *)updatedWithAuthorized:(bool)authorized peerId:(int64_t)peerId;
 - (TGBridgeContext *)updatedWithPreheatData:(NSDictionary *)data;
 - (TGBridgeContext *)updatedWithMicAccessAllowed:(bool)allowed;
 

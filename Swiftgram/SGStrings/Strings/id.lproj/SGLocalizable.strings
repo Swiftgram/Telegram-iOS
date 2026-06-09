@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "Pengaturan Konten";
+
+"Settings.Tabs.Header" = "TABS";
+"Settings.Tabs.HideTabBar" = "Sembunyikan Tab bar";
+"Settings.Tabs.ShowContacts" = "Tampilkan Tab Kontak";
+"Settings.Tabs.ShowNames" = "Tampilkan Nama Tab";
+
+"Settings.Folders.BottomTab" = "Folder di bawah";
+"Settings.Folders.BottomTabStyle" = "Gaya folder bawah";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "Sembunyikan \"%@\"";
+"Settings.Folders.RememberLast" = "Buka folder terakhir";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram akan membuka folder yang terakhir digunakan setelah restart atau pergantian akun";
+
+"Settings.Folders.CompactNames" = "Pemisahan yang Lebih Kecil";
+"Settings.Folders.AllChatsTitle" = "Judul \"Semua Obrolan\"";
+"Settings.Folders.AllChatsTitle.short" = "Pendek";
+"Settings.Folders.AllChatsTitle.long" = "Panjang";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Default";
+
+
+"Settings.ChatList.Header" = "DAFTAR OBROLAN";
+"Settings.CompactChatList" = "Daftar Obrolan Kompak";
+
+"Settings.Profiles.Header" = "PROFIL";
+
+"Settings.Stories.Hide" = "Sembunyikan Cerita";
+"Settings.Stories.WarnBeforeView" = "Tanyakan sebelum melihat";
+"Settings.Stories.DisableSwipeToRecord" = "Nonaktifkan geser untuk merekam";
+
+"Settings.Translation.QuickTranslateButton" = "Bottone di traduzione rapida";
+
+"Stories.Warning.Author" = "Penulis";
+"Stories.Warning.ViewStory" = "Lihat Cerita?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ AKAN TAHU bahwa Anda telah melihat Cerita mereka.";
+"Stories.Warning.NoticeStealth" = "%@ tidak akan tahu bahwa Anda telah melihat Cerita mereka.";
+
+"Settings.Photo.Quality.Notice" = "Kualitas foto keluar dan cerita foto";
+"Settings.Photo.SendLarge" = "Kirim foto berukuran besar";
+"Settings.Photo.SendLarge.Notice" = "Tingkatkan batas sisi pada gambar terkompresi menjadi 2560px";
+
+"Settings.VideoNotes.Header" = "VIDEO BULAT";
+"Settings.VideoNotes.StartWithRearCam" = "Mulai dengan kamera belakang";
+
+"Settings.CustomColors.Header" = "WARNA AKUN";
+"Settings.CustomColors.Saturation" = "SATURASI";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Setel saturasi menjadi 0%% untuk menonaktifkan warna akun";
+
+"Settings.UploadsBoost" = "Peningkatan Unggahan";
+"Settings.DownloadsBoost" = "Peningkatan Unduhan";
+"Settings.DownloadsBoost.Notice" = "Meningkatkan jumlah koneksi paralel dan ukuran potongan file. Jika jaringan Anda tidak dapat menangani bebannya, coba berbagai opsi yang sesuai dengan sambungan Anda.";
+"Settings.DownloadsBoost.none" = "Nonaktif";
+"Settings.DownloadsBoost.medium" = "Sedang";
+"Settings.DownloadsBoost.maximum" = "Maksimal";
+
+"Settings.ShowProfileID" = "Tampilkan ID Profil";
+"Settings.ShowDC" = "Tampilkan Pusat Data";
+"Settings.ShowCreationDate" = "Tampilkan Tanggal Pembuatan Obrolan";
+"Settings.ShowCreationDate.Notice" = "Tanggal pembuatan mungkin tidak diketahui untuk beberapa obrolan.";
+
+"Settings.ShowRegDate" = "Tampilkan Tanggal Pendaftaran";
+"Settings.ShowRegDate.Notice" = "Tanggal pendaftaran adalah perkiraan.";
+
+"Settings.SendWithReturnKey" = "Kirim dengan kunci \"kembali\"";
+"Settings.HidePhoneInSettingsUI" = "Sembunyikan nomor telepon di pengaturan";
+"Settings.HidePhoneInSettingsUI.Notice" = "Nomor Anda akan disembunyikan hanya di UI Pengaturan. Kunjungi Pengaturan Privasi untuk menyembunyikannya dari orang lain.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "Jika menjauh selama 5 detik";
+
+"ProxySettings.UseSystemDNS" = "Gunakan DNS sistem";
+"ProxySettings.UseSystemDNS.Notice" = "Gunakan DNS sistem untuk menghindari timeout jika Anda tidak memiliki akses ke Google DNS";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "Anda **tidak memerlukan** %@!";
+"Common.RestartRequired" = "Diperlukan restart";
+"Common.RestartNow" = "Restart Sekarang";
+"Common.OpenTelegram" = "Buka Telegram";
+"Common.UseTelegramForPremium" = "Harap dicatat bahwa untuk mendapatkan Telegram Premium, Anda harus menggunakan aplikasi Telegram resmi. Setelah Anda mendapatkan Telegram Premium, semua fiturnya akan tersedia di Swiftgram.";
+
+"Message.HoldToShowOrReport" = "Tahan untuk Menampilkan atau Melaporkan.";
+
+"Auth.AccountBackupReminder" = "Pastikan Anda memiliki metode akses cadangan. Simpan SIM untuk SMS atau sesi tambahan yang masuk untuk menghindari terkunci.";
+"Auth.UnofficialAppCodeTitle" = "Anda hanya dapat mendapatkan kode dengan aplikasi resmi";
+
+"Settings.SmallReactions" = "Reaksi kecil";
+"Settings.HideReactions" = "Sembunyikan Reaksi";
+
+"ContextMenu.SaveToCloud" = "Simpan ke Cloud";
+"ContextMenu.SelectFromUser" = "Pilih dari Penulis";
+
+"Settings.ContextMenu" = "MENU KONTEKS";
+"Settings.ContextMenu.Notice" = "Entri yang dinonaktifkan akan tersedia di sub-menu \"Swiftgram\".";
+
+
+"Settings.ChatSwipeOptions" = "Opsi gesek daftar obrolan";
+"Settings.DeleteChatSwipeOption" = "Geser untuk Menghapus Obrolan";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Tarik untuk obrolan berikutnya";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Tarik ke Topik Berikutnya";
+"Settings.GalleryCamera" = "Kamera di galeri";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "Tombol \"%@\"";
+"Settings.SnapDeletionEffect" = "Efek penghapusan pesan";
+
+"Settings.Stickers.Size" = "UKURAN";
+"Settings.Stickers.Timestamp" = "Tampilkan Timestamp";
+
+"Settings.RecordingButton" = "Tombol Perekaman Suara";
+
+"Settings.DefaultEmojisFirst" = "Berikan prioritas pada emoji standar";
+"Settings.DefaultEmojisFirst.Notice" = "Tampilkan emoji standar sebelum emoji premium di papan tombol emoji";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "dibuat: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "Bergabung %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Terdaftar";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Ketuk dua kali untuk mengedit pesan";
+
+"Settings.wideChannelPosts" = "Pos Luas di Saluran";
+"Settings.ForceEmojiTab" = "Papan emoji secara default";
+
+"Settings.forceBuiltInMic" = "Paksa Mikrofon Perangkat";
+"Settings.forceBuiltInMic.Notice" = "Jika diaktifkan, aplikasi akan menggunakan hanya mikrofon perangkat bahkan jika headphone terhubung.";
+
+"Settings.hideChannelBottomButton" = "Sembunyikan Panel Bawah Saluran";
+
+"Settings.CallConfirmation" = "Konfirmasi Panggilan";
+"Settings.CallConfirmation.Notice" = "Swiftgram akan meminta konfirmasi Anda sebelum melakukan panggilan.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Buat Panggilan?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Buat Panggilan Video?";
+
+"MutualContact.Label" = "kontak mutual";
+
+"Settings.swipeForVideoPIP" = "Video PIP dengan Geser";
+"Settings.swipeForVideoPIP.Notice" = "Jika diaktifkan, menggeser video akan membukanya dalam mode Gambar-dalam-Gambar.";

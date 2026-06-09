@@ -9,7 +9,7 @@
 
 @interface TGColor : NSObject
 
-+ (UIColor *)colorForUserId:(int32_t)userId myUserId:(int32_t)myUserId;
++ (UIColor *)colorForUserId:(int64_t)userId myUserId:(int64_t)myUserId;
 + (UIColor *)colorForGroupId:(int64_t)groupId;
 
 + (UIColor *)accentColor;

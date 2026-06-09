@@ -940,6 +940,16 @@ public func dataAndStorageController(context: AccountContext, focusOnItemTag: Da
     |> map { presentationData, state, dataAndStorageData, sharedData, contentSettingsConfiguration, mediaAutoSaveSettings, usageSignal, autosaveExceptionPeers -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let mediaSettings = sharedData.entries[ApplicationSpecificSharedDataKeys.mediaDisplaySettings]?.get(MediaDisplaySettings.self) ?? MediaDisplaySettings.defaultSettings
         
+        let options = availableOpenInOptions(context: context, item: .url(url: "https://telegram.org"))
+        let defaultWebBrowser: String
+        if let option = options.first(where: { $0.identifier == webBrowserSettings.defaultWebBrowser }) {
+            defaultWebBrowser = option.title
+        } else if webBrowserSettings.defaultWebBrowser == "inApp" {
+            defaultWebBrowser = presentationData.strings.WebBrowser_InAppSafari
+        } else {
+            defaultWebBrowser = presentationData.strings.WebBrowser_Telegram.replacingOccurrences(of: "Telegram", with: "Swiftgram")
+        }
+        
         let previousSensitiveContent = sensitiveContent.swap(contentSettingsConfiguration?.sensitiveContentEnabled)
         var animateChanges = false
         if previousSensitiveContent != contentSettingsConfiguration?.sensitiveContentEnabled {

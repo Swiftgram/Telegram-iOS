@@ -108,6 +108,9 @@ private func chatLinkContextMenuOpenMode(context: AccountContext, url: String) -
     }
 }
 
+// MARK: Swiftgram
+import ShareController
+
 extension ChatControllerImpl {
     private func presentOpenLinkConfirmation(_ url: String, target: ChatLinkReverseOpenTarget) {
         var exceptionAdded = false
@@ -291,7 +294,23 @@ extension ChatControllerImpl {
                     }
                     self.present(UndoOverlayController(presentationData: self.presentationData, content: content, elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .current)
                 }))
-                if canAddToReadingList {
+                // MARK: Swiftgram
+            items.append(ActionSheetButtonItem(title: self.presentationData.strings.Conversation_ContextMenuForward, color: .accent, action: { [weak actionSheet, weak self] in
+                actionSheet?.dismissAnimated()
+                guard let self else {
+                    return
+                }
+                self.present(ShareController(context: self.context, subject: .url(url), immediateExternalShareOverridingSGBehaviour: false), in: .window(.root))
+            }))
+            items.append(ActionSheetButtonItem(title: self.presentationData.strings.Conversation_ContextMenuShare, color: .accent, action: { [weak actionSheet, weak self] in
+                actionSheet?.dismissAnimated()
+                guard let self else {
+                    return
+                }
+                self.present(ShareController(context: self.context, subject: .url(url), immediateExternalShareOverridingSGBehaviour: true), in: .current)
+            }))
+            //
+            if canAddToReadingList {
                     items.append(ActionSheetButtonItem(title: self.presentationData.strings.Conversation_AddToReadingList, color: .accent, action: { [weak actionSheet] in
                         actionSheet?.dismissAnimated()
                         if let link = URL(string: url) {
@@ -395,7 +414,31 @@ extension ChatControllerImpl {
                 }))
             )
 
-            if canAddToReadingList {
+            // MARK: Swiftgram
+        items.append(
+            .action(ContextMenuActionItem(text: self.presentationData.strings.Conversation_ContextMenuForward, icon: { theme in return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Forward"), color: theme.contextMenu.primaryColor) }, action: { [weak self]  _, f in
+                f(.default)
+
+                guard let self else {
+                    return
+                }
+
+                self.present(ShareController(context: self.context, subject: .url(url), immediateExternalShareOverridingSGBehaviour: false), in: .window(.root))
+            }))
+        )
+        items.append(
+            .action(ContextMenuActionItem(text: self.presentationData.strings.Conversation_ContextMenuShare, icon: { theme in return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Share"), color: theme.contextMenu.primaryColor) }, action: { [weak self]  _, f in
+                f(.default)
+
+                guard let self else {
+                    return
+                }
+
+                self.present(ShareController(context: self.context, subject: .url(url), immediateExternalShareOverridingSGBehaviour: true), in: .current)
+            }))
+        )
+        //
+        if canAddToReadingList {
                 items.append(
                     .action(ContextMenuActionItem(text: self.presentationData.strings.Conversation_AddToReadingList, icon: { theme in return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/ReadingList"), color: theme.contextMenu.primaryColor) }, action: { _, f in
                         f(.default)

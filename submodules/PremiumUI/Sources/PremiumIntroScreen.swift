@@ -1,3 +1,4 @@
+import SGStrings
 import Foundation
 import Foundation
 import UIKit
@@ -2229,7 +2230,7 @@ private final class PremiumIntroScreenContentComponent: CombinedComponent {
                             }
 
                             let isPremium = state?.isPremium == true
-                            let buttonText: String
+                            var buttonText: String = "" // MARK: Swiftgram
                             if isPremium {
                                 buttonText = strings.Common_OK
                             } else {
@@ -2240,6 +2241,8 @@ private final class PremiumIntroScreenContentComponent: CombinedComponent {
                                 } else {
                                     buttonText = strings.Premium_SubscribeFor(state?.price ?? "–").string
                                 }
+                                // MARK: Swiftgram
+                                buttonText = i18n("Common.OpenTelegram", strings.baseLanguageCode)
                             }
                             
                             var dismissImpl: (() -> Void)?
@@ -3197,7 +3200,14 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
             }
             
             let presentationData = self.screenContext.presentationData
+
+            // MARK: Swiftgram
+            if let context = self.screenContext.context {
+                let alertController = textAlertController(context: context, title: i18n("Common.OpenTelegram", presentationData.strings.baseLanguageCode), text: i18n("Common.UseTelegramForPremium", presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})])
+                self.present(alertController)
+            }
             
+            /*
             if case let .gift(_, _, _, giftCode) = self.source, let giftCode, giftCode.usedDate == nil {
                 guard let context = self.screenContext.context else {
                     return
@@ -3388,7 +3398,7 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
                     self.updateInProgress(false)
                     self.updated(transition: .immediate)
                 }
-            }
+            }*/
         }
         
         func updateIsFocused(_ isFocused: Bool) {
@@ -3791,7 +3801,7 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
             }
             
             if !buttonIsHidden {
-                let buttonTitle: String
+                var buttonTitle: String = "" // MARK: Swiftgram
                 var buttonSubtitle: String?
                 if case let .auth(price, days) = context.component.source {
                     buttonTitle = environment.strings.Premium_Week_SignUp(price).string
@@ -3806,13 +3816,8 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
                 } else if isUnusedGift {
                     buttonTitle = environment.strings.Premium_Gift_ApplyLink
                 } else if state.isPremium == true && state.canUpgrade {
-                    if state.isAnnual {
-                        buttonTitle = environment.strings.Premium_UpgradeForAnnual(state.price ?? "—").string
-                    } else if state.isBiannual {
-                        buttonTitle = environment.strings.Premium_UpgradeForBiannual(state.price ?? "—").string
-                    } else {
-                        buttonTitle = environment.strings.Premium_UpgradeFor(state.price ?? "—").string
-                    }
+                    // MARK: Swiftgram
+                    buttonTitle = i18n("Common.OpenTelegram", environment.strings.baseLanguageCode)
                 } else {
                     if state.isAnnual {
                         buttonTitle = environment.strings.Premium_SubscribeForAnnual(state.price ?? "—").string
@@ -3821,6 +3826,8 @@ private final class PremiumIntroScreenComponent: CombinedComponent {
                     } else {
                         buttonTitle = environment.strings.Premium_SubscribeFor(state.price ?? "–").string
                     }
+                    // MARK: Swiftgram
+                    buttonTitle = i18n("Common.OpenTelegram", environment.strings.baseLanguageCode)
                 }
                 
                 let controller = environment.controller
