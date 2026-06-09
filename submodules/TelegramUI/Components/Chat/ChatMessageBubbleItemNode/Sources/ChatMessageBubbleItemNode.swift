@@ -5443,7 +5443,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             // MARK: Swiftgram
             if let quickTranslateButtonNode = strongSelf.quickTranslateButtonNode {
                 let currentBackgroundFrame = strongSelf.backgroundNode.frame
-                let buttonSize = quickTranslateButtonNode.update(hasTranslation: false /*item.message.attributes.first(where: { $0 is QuickTranslationMessageAttribute }) as? QuickTranslationMessageAttribute != nil*/, presentationData: item.presentationData, controllerInteraction: item.controllerInteraction, chatLocation: item.chatLocation, subject: item.associatedData.subject, message: item.message, account: item.context.account, disableComments: disablesComments)
+                let buttonSize = quickTranslateButtonNode.update(hasTranslation: false /*item.message.attributes.first(where: { $0 is QuickTranslationMessageAttribute }) as? QuickTranslationMessageAttribute != nil*/, presentationData: item.presentationData, controllerInteraction: item.controllerInteraction, chatLocation: item.chatLocation, subject: item.associatedData.subject, message: EngineMessage(item.message), accountPeerId: item.context.account.peerId, disableComments: disablesComments)
                 
                 var buttonFrame = CGRect(origin: CGPoint(x: !incoming ? currentBackgroundFrame.minX - buttonSize.width : currentBackgroundFrame.maxX + 8.0, y: currentBackgroundFrame.maxY - buttonSize.width - 1.0), size: buttonSize)
 
@@ -5524,7 +5524,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
 
             // MARK: Swiftgram
             if let quickTranslateButtonNode = strongSelf.quickTranslateButtonNode {
-                let buttonSize = quickTranslateButtonNode.update(hasTranslation: false /*item.message.attributes.first(where: { $0 is QuickTranslationMessageAttribute }) as? QuickTranslationMessageAttribute != nil*/, presentationData: item.presentationData, controllerInteraction: item.controllerInteraction, chatLocation: item.chatLocation, subject: item.associatedData.subject, message: item.message, account: item.context.account, disableComments: disablesComments)
+                let buttonSize = quickTranslateButtonNode.update(hasTranslation: false /*item.message.attributes.first(where: { $0 is QuickTranslationMessageAttribute }) as? QuickTranslationMessageAttribute != nil*/, presentationData: item.presentationData, controllerInteraction: item.controllerInteraction, chatLocation: item.chatLocation, subject: item.associatedData.subject, message: EngineMessage(item.message), accountPeerId: item.context.account.peerId, disableComments: disablesComments)
                 
                 var buttonFrame = CGRect(origin: CGPoint(x: !incoming ? backgroundFrame.minX - buttonSize.width - 8.0 : backgroundFrame.maxX + 8.0, y: backgroundFrame.maxY - buttonSize.width - 1.0), size: buttonSize)
                 if let shareButtonOffset = shareButtonOffset {
@@ -5698,9 +5698,8 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                 } else if case .tap = gesture {
                     item.controllerInteraction.clickThroughMessage(self.view, location)
                 } else if case .doubleTap = gesture {
-                    if canAddMessageReactions(message: item.message) {
+                    if canAddMessageReactions(message: EngineMessage(item.message)) {
                         item.controllerInteraction.updateMessageReaction(item.message, .default, false, nil)
-                    }
                     }
                 }
             }

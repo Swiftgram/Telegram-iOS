@@ -4,6 +4,7 @@ import PeerInfoUI
 import Foundation
 import UIKit
 import TelegramCore
+import Postbox
 import AsyncDisplayKit
 import Display
 import UIKit

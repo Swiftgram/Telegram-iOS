@@ -224,7 +224,7 @@ public func sgIqtpQuery(engine: TelegramEngine, query: String, incompleteResults
             }
             
             var t: String?
-            if case let .text(text, _, _, _, _) = firstResult.message {
+            if case let .text(text, _, _, _, _, _) = firstResult.message {
                 t = text
             }
 
