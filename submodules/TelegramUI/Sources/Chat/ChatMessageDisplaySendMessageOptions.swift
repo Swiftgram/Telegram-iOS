@@ -107,7 +107,27 @@ func chatMessageDisplaySendMessageOptions(selfController: ChatControllerImpl, no
                     })
                 })
             }
-        }, changeTranslationLanguage: nil)
+        }, changeTranslationLanguage: { [weak selfController] in
+            guard let selfController else {
+                return
+            }
+            let controller = sgOutgoingTranslationLanguageSelectionController(context: selfController.context, selectedLanguage: outgoingMessageTranslateToLang, completion: { [weak selfController] toLang in
+                guard let selfController, let peerId = selfController.chatLocation.peerId else {
+                    return
+                }
+                var langCode = toLang
+                if langCode == "nb" {
+                    langCode = "no"
+                } else if langCode == "pt-br" {
+                    langCode = "pt"
+                }
+                SGSimpleSettings.shared.outgoingLanguageTranslation[SGSimpleSettings.makeOutgoingLanguageTranslationKey(accountId: selfController.context.account.peerId.id._internalGetInt64Value(), peerId: peerId.id._internalGetInt64Value())] = langCode
+                Queue.mainQueue().after(0.35) {
+                    chatMessageDisplaySendMessageOptions(selfController: selfController, node: node, gesture: gesture)
+                }
+            })
+            selfController.push(controller)
+        })
         
         if let editMessage = selfController.presentationInterfaceState.interfaceState.editMessage {
             if editMessages.isEmpty {
