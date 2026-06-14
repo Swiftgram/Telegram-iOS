@@ -13,7 +13,8 @@ struct ChatRowView: View {
             AvatarView(
                 avatar: row.avatar,
                 onRequestDownload: onRequestDownload,
-                onCancelDownload: onCancelDownload
+                onCancelDownload: onCancelDownload,
+                size: 28 // MARK: Swiftgram
             )
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
