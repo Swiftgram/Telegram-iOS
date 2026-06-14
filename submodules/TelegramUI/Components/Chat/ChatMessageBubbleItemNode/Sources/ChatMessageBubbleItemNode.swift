@@ -5682,25 +5682,30 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                     case let .optionalAction(f):
                         f()
                     case let .openContextMenu(openContextMenu):
-                        switch (sgDoubleTapMessageAction(incoming: openContextMenu.tapMessage.effectivelyIncoming(item.context.account.peerId), message: openContextMenu.tapMessage)) {
-                        case SGSimpleSettings.MessageDoubleTapAction.none.rawValue:
-                            break
-                        case SGSimpleSettings.MessageDoubleTapAction.edit.rawValue:
+                        // MARK: Swiftgram
+                        sgHandleDoubleTapMessageAction(incoming: openContextMenu.tapMessage.effectivelyIncoming(item.context.account.peerId), message: openContextMenu.tapMessage, editAction: {
                             item.controllerInteraction.sgStartMessageEdit(openContextMenu.tapMessage)
-                        default:
-                        if canAddMessageReactions(message: EngineMessage(openContextMenu.tapMessage)) {
-                            item.controllerInteraction.updateMessageReaction(openContextMenu.tapMessage, .default, false, nil)
-                        } else {
-                            item.controllerInteraction.openMessageContextMenu(openContextMenu.tapMessage, openContextMenu.selectAll, self, openContextMenu.subFrame, nil, nil)
-                        }
-                        }
+                        }, defaultAction: {
+                            if canAddMessageReactions(message: EngineMessage(openContextMenu.tapMessage)) {
+                                item.controllerInteraction.updateMessageReaction(openContextMenu.tapMessage, .default, false, nil)
+                            } else {
+                                item.controllerInteraction.openMessageContextMenu(openContextMenu.tapMessage, openContextMenu.selectAll, self, openContextMenu.subFrame, nil, nil)
+                            }
+                        })
+                        //
                     }
                 } else if case .tap = gesture {
                     item.controllerInteraction.clickThroughMessage(self.view, location)
                 } else if case .doubleTap = gesture {
-                    if canAddMessageReactions(message: EngineMessage(item.message)) {
-                        item.controllerInteraction.updateMessageReaction(item.message, .default, false, nil)
-                    }
+                    // MARK: Swiftgram
+                    sgHandleDoubleTapMessageAction(incoming: item.message.effectivelyIncoming(item.context.account.peerId), message: item.message, editAction: {
+                        item.controllerInteraction.sgStartMessageEdit(item.message)
+                    }, defaultAction: {
+                        if canAddMessageReactions(message: EngineMessage(item.message)) {
+                            item.controllerInteraction.updateMessageReaction(item.message, .default, false, nil)
+                        }
+                    })
+                    //
                 }
             }
         default:

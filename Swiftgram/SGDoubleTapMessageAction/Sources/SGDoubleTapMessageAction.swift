@@ -11,3 +11,14 @@ func sgDoubleTapMessageAction(incoming: Bool, message: Message) -> String {
         return SGSimpleSettings.shared.messageDoubleTapActionOutgoing
     }
 }
+
+func sgHandleDoubleTapMessageAction(incoming: Bool, message: Message, editAction: () -> Void, defaultAction: () -> Void) {
+    switch sgDoubleTapMessageAction(incoming: incoming, message: message) {
+    case SGSimpleSettings.MessageDoubleTapAction.none.rawValue:
+        break
+    case SGSimpleSettings.MessageDoubleTapAction.edit.rawValue:
+        editAction()
+    default:
+        defaultAction()
+    }
+}
