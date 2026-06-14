@@ -32,7 +32,8 @@ sgsrcs = [
     "//Swiftgram/SGShowMessageJson:SGShowMessageJson",
     "//Swiftgram/ChatControllerImplExtension:ChatControllerImplExtension",
     "//Swiftgram/SGSharedAccountContextMigration:SGSharedAccountContextMigration",
-    "//Swiftgram/SGOutgoingTranslationLanguageSelection:SGOutgoingTranslationLanguageSelection"
+    "//Swiftgram/SGOutgoingTranslationLanguageSelection:SGOutgoingTranslationLanguageSelection",
+    "//Swiftgram/SGSafariControllerUrlOpening:SGSafariControllerUrlOpening"
 ]
 
 filegroup(
