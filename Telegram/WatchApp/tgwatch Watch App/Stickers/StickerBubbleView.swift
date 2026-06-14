@@ -10,6 +10,11 @@ struct StickerBubbleView: View {
     var senderColorIndex: Int? = nil
     let isOutgoing: Bool
     let replyHeader: ReplyHeader?
+    // MARK: Swiftgram
+    var senderAvatar: AvatarVisual? = nil
+    var onAvatarRequestDownload: (Int) -> Void = { _ in }
+    var onAvatarCancelDownload: (Int) -> Void = { _ in }
+    //
 
     @Environment(ChatHistoryStore.self) private var store
     @Environment(\.bubbleMetrics) private var metrics
@@ -20,10 +25,16 @@ struct StickerBubbleView: View {
     var body: some View {
         VStack(alignment: isOutgoing ? .trailing : .leading, spacing: 2) {
             if let name = senderName, !isOutgoing {
-                Text(name)
-                    .font(.caption2)
-                    .foregroundStyle(senderColorIndex.map { avatarPalette[$0] } ?? .secondary)
+                // MARK: Swiftgram
+                SenderNameLabelView(
+                    name: name,
+                    avatar: senderAvatar,
+                    colorIndex: senderColorIndex,
+                    onRequestDownload: onAvatarRequestDownload,
+                    onCancelDownload: onAvatarCancelDownload
+                )
                     .padding(.horizontal, 4)
+                //
             }
             if let header = replyHeader {
                 // Force incoming styling inside the gray card regardless of host outgoing —

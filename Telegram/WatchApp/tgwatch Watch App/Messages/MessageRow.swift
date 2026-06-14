@@ -53,6 +53,10 @@ struct MessageBubble: Equatable, Hashable {
     /// Palette index for the sender-name label (incoming groups only); nil = uncolored.
     /// Set together with `senderName` — both nil for outgoing / private / non-user senders.
     var senderColorIndex: Int? = nil
+    // MARK: Swiftgram
+    /// Tiny sender avatar for incoming bubbles in groups; nil otherwise.
+    var senderAvatar: AvatarVisual? = nil
+    //
     /// True for a sent outgoing message the recipient hasn't read yet (`id > lastReadOutboxMessageId`).
     var isUnreadOutgoing: Bool = false
     /// True for content with no dedicated bubble — renders the "Unsupported message"
@@ -110,7 +114,10 @@ func messageRows(
     locale: Locale = .current,
     selfUserId: Int64? = nil,
     unreadDividerAfterId: Int64? = nil,
-    lastReadOutboxMessageId: Int64 = 0
+    lastReadOutboxMessageId: Int64 = 0,
+    // MARK: Swiftgram
+    userAvatars: [Int64: AvatarVisual] = [:]
+    //
 ) -> [MessageRow] {
     let sorted = messages.sorted { $0.id < $1.id }
     let cacheById: [Int64: CachedMessage] = Dictionary(uniqueKeysWithValues: sorted.map { ($0.id, $0) })
@@ -158,7 +165,7 @@ func messageRows(
             rows.append(.service(.init(messageId: msg.id, text: svc)))
             continue
         }
-        let sender = senderLabel(for: msg, chatType: chatType, userNames: userNames)
+        let sender = senderLabel(for: msg, chatType: chatType, userNames: userNames, userAvatars: userAvatars, fileLocals: fileLocals)
         rows.append(.bubble(.init(
             messageId: msg.id,
             isOutgoing: msg.isOutgoing,
@@ -187,6 +194,7 @@ func messageRows(
                 userNames: userNames
             ),
             senderColorIndex: sender?.colorIndex,
+            senderAvatar: sender?.avatar,
             isUnreadOutgoing: !isSavedMessages && msg.isOutgoing && msg.sendingState == .sent && msg.id > lastReadOutboxMessageId,
             isUnsupported: isUnsupportedContent(msg.content)
         )))
@@ -364,15 +372,34 @@ func documentVisual(for content: MessageContent, fileLocals: [Int: File]) -> Doc
 private func senderLabel(
     for msg: CachedMessage,
     chatType: ChatType,
-    userNames: [Int64: String]
-) -> (name: String, colorIndex: Int)? {
+    userNames: [Int64: String],
+    userAvatars: [Int64: AvatarVisual],
+    fileLocals: [Int: File]
+) -> (name: String, colorIndex: Int, avatar: AvatarVisual)? {
     if msg.isOutgoing { return nil }
     switch chatType {
     case .chatTypeBasicGroup, .chatTypeSupergroup:
         if case .messageSenderUser(let u) = msg.senderId,
            let name = userNames[u.userId],
            !name.isEmpty {
-            return (name, paletteIndex(for: u.userId))
+            let colorIndex = paletteIndex(for: u.userId)
+            // MARK: Swiftgram
+            var avatar = userAvatars[u.userId] ?? AvatarVisual(
+                kind: .normal,
+                initials: avatarInitials(from: name),
+                colorIndex: colorIndex,
+                photoFileId: nil,
+                photoLocalPath: nil,
+                mini: nil
+            )
+            if let fileId = avatar.photoFileId,
+               let file = fileLocals[fileId],
+               file.local.isDownloadingCompleted,
+               !file.local.path.isEmpty {
+                avatar.photoLocalPath = file.local.path
+            }
+            return (name, colorIndex, avatar)
+            //
         }
         return nil
     default:
