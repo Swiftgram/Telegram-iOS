@@ -1,9 +1,17 @@
+import SGAppGroupIdentifier
+import SGLogging
 import UIKit
 import Foundation
-import SGLogging
 
 private let dbResetKey = "sg_db_reset"
 private let dbHardResetKey = "sg_db_hard_reset"
+
+private func sgDefaultDataPath() -> String? {
+    guard let appGroupUrl = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: sgAppGroupIdentifier()) else {
+        return nil
+    }
+    return (appGroupUrl.path as NSString).appendingPathComponent("telegram-data")
+}
 
 public func sgDBResetIfNeeded(databasePath: String, present: ((UIViewController) -> ())?) {
     guard UserDefaults.standard.bool(forKey: dbResetKey) else {
@@ -11,7 +19,7 @@ public func sgDBResetIfNeeded(databasePath: String, present: ((UIViewController)
     }
     NSLog("[SG.DBReset] Resetting DB with system settings")
     let alert = UIAlertController(
-        title: "Metadata Reset.\nPlease wait...",
+        title: "Metadata Reset.\nDO NOT CLOSE THE APP\nPlease wait...",
         message: nil,
         preferredStyle: .alert
     )
@@ -47,7 +55,23 @@ public func sgDBResetIfNeeded(databasePath: String, present: ((UIViewController)
 //    semaphore.wait()
 }
 
-public func sgHardReset(dataPath: String, present: ((UIViewController) -> ())?) {
+@discardableResult
+public func sgHardReset(dataPath: String? = nil, present: ((UIViewController) -> ())?, beforePresent: (() -> ())? = nil) -> Bool {
+    guard UserDefaults.standard.bool(forKey: dbHardResetKey) else {
+        return false
+    }
+    UserDefaults.standard.set(false, forKey: dbHardResetKey)
+    beforePresent?()
+    guard let dataPath = dataPath ?? sgDefaultDataPath() else {
+        NSLog("[SG.DBReset] ERROR. Reset All failed: Error 2")
+        let failAlert = UIAlertController(
+            title: "ERROR. Reset All failed",
+            message: "Error 2",
+            preferredStyle: .alert
+        )
+        present?(failAlert)
+        return true
+    }
     let startAlert = UIAlertController(
         title: "ATTENTION",
         message: "Confirm RESET ALL?",
@@ -70,7 +94,7 @@ public func sgHardReset(dataPath: String, present: ((UIViewController) -> ())?) 
         ensureAlert.addAction(UIAlertAction(title: "RESET NOW", style: .destructive) { _ in
             NSLog("[SG.DBReset] Reset All with system settings")
             let alert = UIAlertController(
-                title: "Reset All.\nPlease wait...",
+                title: "Reset All.\nDO NOT CLOSE THE APP\nPlease wait...",
                 message: nil,
                 preferredStyle: .alert
             )
@@ -80,6 +104,14 @@ public func sgHardReset(dataPath: String, present: ((UIViewController) -> ())?) 
             
             do {
                 let fileManager = FileManager.default
+                for metadataItem in ["db", "guard_db", "media", "spotlight"] {
+                    let metadataItemPath = (dataPath as NSString).appendingPathComponent("accounts-metadata/\(metadataItem)")
+                    if fileManager.fileExists(atPath: metadataItemPath) {
+                        NSLog("[SG.DBReset] Trying to delete accounts-metadata/\(metadataItem)")
+                        try fileManager.removeItem(atPath: metadataItemPath)
+                        NSLog("[SG.DBReset] OK. Deleted accounts-metadata/\(metadataItem)")
+                    }
+                }
                 let contents = try fileManager.contentsOfDirectory(atPath: dataPath)
 
                 // Filter directories that match our criteria
@@ -88,7 +120,7 @@ public func sgHardReset(dataPath: String, present: ((UIViewController) -> ())?) 
                     
                     var isDirectory: ObjCBool = false
                     if fileManager.fileExists(atPath: fullPath, isDirectory: &isDirectory), isDirectory.boolValue {
-                        if filename.hasPrefix("account-") || filename == "accounts-metadata" {
+                        if filename.hasPrefix("account-") {
                             return fullPath
                         }
                     }
@@ -158,5 +190,5 @@ public func sgHardReset(dataPath: String, present: ((UIViewController) -> ())?) 
     })
              
     present?(startAlert)
-    UserDefaults.standard.set(false, forKey: dbHardResetKey)
+    return true
 }
