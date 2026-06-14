@@ -392,7 +392,7 @@ final class PasscodeEntryControllerNode: ASDisplayNode {
                 }
             }
         }
-        self.titleNode.setAttributedText(NSAttributedString(string: self.strings.EnterPasscode_EnterPasscode, font: titleFont, textColor: .white), animation: .none)
+        self.titleNode.setAttributedText(NSAttributedString(string: self.strings.EnterPasscode_EnterPasscode.replacingOccurrences(of: "Telegram", with: "Swiftgram") /* MARK: Swiftgram */, font: titleFont, textColor: .white), animation: .none)
     }
     
     func animateIn(iconFrame: CGRect, completion: @escaping () -> Void = {}) {
@@ -459,7 +459,7 @@ final class PasscodeEntryControllerNode: ASDisplayNode {
             self.biometricButtonNode.layer.animateScale(from: 0.0001, to: 1.0, duration: 0.25, delay: biometricDelay, timingFunction: CAMediaTimingFunctionName.easeOut.rawValue)
             
             Queue.mainQueue().after(1.5, {
-                self.titleNode.setAttributedText(NSAttributedString(string: self.strings.EnterPasscode_EnterPasscode, font: titleFont, textColor: .white), animation: .crossFade)
+                self.titleNode.setAttributedText(NSAttributedString(string: self.strings.EnterPasscode_EnterPasscode.replacingOccurrences(of: "Telegram", with: "Swiftgram") /* MARK: Swiftgram */, font: titleFont, textColor: .white), animation: .crossFade)
                 if let validLayout = self.validLayout {
                     self.containerLayoutUpdated(validLayout, navigationBarHeight: 0.0, transition: .animated(duration: 0.5, curve: .easeInOut))
                 }
