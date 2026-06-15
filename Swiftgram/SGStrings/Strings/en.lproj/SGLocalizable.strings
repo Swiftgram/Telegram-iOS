@@ -136,6 +136,7 @@
 /* "Send Message As..." button */
 "Settings.SendAsButton" = "\"%@\" Button";
 "Settings.SnapDeletionEffect" = "Message Deletion Effects";
+"Settings.DisableAIButton" = "Disable AI Button";
 
 "Settings.Stickers.Size" = "SIZE";
 "Settings.Stickers.Timestamp" = "Show Timestamp";

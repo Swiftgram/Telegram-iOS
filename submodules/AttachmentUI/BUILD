@@ -47,6 +47,7 @@ swift_library(
         "//submodules/TelegramUI/Components/LiquidLens",
         "//submodules/TelegramUI/Components/TabSelectionRecognizer",
         "//submodules/TelegramBaseController",
+        "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
     ],
     visibility = [
         "//visibility:public",
