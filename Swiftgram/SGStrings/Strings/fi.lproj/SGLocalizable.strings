@@ -228,3 +228,8 @@
 "Paywall.Error.Title" = "Virhe";
 "PayWall.ValidationError" = "Vahvistusvirhe";
 "PayWall.ValidationError.TryAgain" = "Ostovahvistuksessa tapahtui jokin virhe. Ei hätää! Yritä palauttaa ostot hieman myöhemmin.";
+
+"Settings.BusinessBotPanelPlacement" = "Yritysbottipaneeli";
+"Settings.BusinessBotPanelPlacement.telegram" = "Kiinnitettyjen sijaan";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Kiinnitettyjen alla";
+"Settings.BusinessBotPanelPlacement.hidden" = "Piilotettu";

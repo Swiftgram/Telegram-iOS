@@ -1,5 +1,6 @@
 import Foundation
 import UIKit
+import Display
 import TelegramCore
 import AccountContext
 import ChatPresentationInterfaceState
@@ -7,6 +8,44 @@ import ChatControllerInteraction
 import ComponentFlow
 import ChatSideTopicsPanel
 import LegacyChatHeaderPanelComponent
+import SGSimpleSettings
+
+// MARK: Swiftgram
+private final class ChatStackedTitlePanelNode: ChatTitleAccessoryPanelNode {
+    let topPanel: ChatTitleAccessoryPanelNode
+    let bottomPanel: ChatTitleAccessoryPanelNode
+
+    init(topPanel: ChatTitleAccessoryPanelNode, bottomPanel: ChatTitleAccessoryPanelNode) {
+        self.topPanel = topPanel
+        self.bottomPanel = bottomPanel
+
+        super.init()
+
+        self.addSubnode(self.topPanel)
+        self.addSubnode(self.bottomPanel)
+    }
+
+    override var interfaceInteraction: ChatPanelInterfaceInteraction? {
+        didSet {
+            self.topPanel.interfaceInteraction = self.interfaceInteraction
+            self.bottomPanel.interfaceInteraction = self.interfaceInteraction
+        }
+    }
+
+    override func updateLayout(width: CGFloat, leftInset: CGFloat, rightInset: CGFloat, transition: ContainedViewLayoutTransition, interfaceState: ChatPresentationInterfaceState) -> LayoutResult {
+        let topResult = self.topPanel.updateLayout(width: width, leftInset: leftInset, rightInset: rightInset, transition: transition, interfaceState: interfaceState)
+        transition.updateFrame(node: self.topPanel, frame: CGRect(origin: CGPoint(), size: CGSize(width: width, height: topResult.backgroundHeight)))
+
+        let bottomResult = self.bottomPanel.updateLayout(width: width, leftInset: leftInset, rightInset: rightInset, transition: transition, interfaceState: interfaceState)
+        transition.updateFrame(node: self.bottomPanel, frame: CGRect(origin: CGPoint(x: 0.0, y: topResult.backgroundHeight), size: CGSize(width: width, height: bottomResult.backgroundHeight)))
+
+        return LayoutResult(
+            backgroundHeight: topResult.backgroundHeight + bottomResult.backgroundHeight,
+            insetHeight: topResult.insetHeight + bottomResult.insetHeight,
+            hitTestSlop: max(topResult.hitTestSlop, bottomResult.hitTestSlop)
+        )
+    }
+}
 
 func titlePanelForChatPresentationInterfaceState(_ chatPresentationInterfaceState: ChatPresentationInterfaceState, context: AccountContext, currentPanel: ChatTitleAccessoryPanelNode?, controllerInteraction: ChatControllerInteraction?, interfaceInteraction: ChatPanelInterfaceInteraction?, force: Bool) -> ChatTitleAccessoryPanelNode? {
     if !force, case .standard(.embedded) = chatPresentationInterfaceState.mode {
@@ -182,7 +221,31 @@ func titlePanelForChatPresentationInterfaceState(_ chatPresentationInterfaceStat
                 return panel
             }
         } else if !chatPresentationInterfaceState.peerIsBlocked && !inhibitTitlePanelDisplay, let contactStatus = chatPresentationInterfaceState.contactStatus, contactStatus.managingBot != nil {
-            if let currentPanel = currentPanel as? ChatManagingBotTitlePanelNode {
+            // MARK: Swiftgram
+            let businessBotPanelPlacement = SGSimpleSettings.BusinessBotTitlePanelPlacement(rawValue: SGSimpleSettings.shared.businessBotTitlePanelPlacement) ?? .swiftgram
+            if businessBotPanelPlacement == .hidden {
+            } else if businessBotPanelPlacement == .swiftgram, selectedContext == .pinnedMessage {
+                if let currentPanel = currentPanel as? ChatStackedTitlePanelNode {
+                    currentPanel.interfaceInteraction = interfaceInteraction
+                    return currentPanel
+                } else {
+                    let pinnedPanel: ChatPinnedMessageTitlePanelNode
+                    if let currentPanel = currentPanel as? ChatPinnedMessageTitlePanelNode {
+                        pinnedPanel = currentPanel
+                    } else {
+                        pinnedPanel = ChatPinnedMessageTitlePanelNode(context: context, animationCache: controllerInteraction?.presentationContext.animationCache, animationRenderer: controllerInteraction?.presentationContext.animationRenderer)
+                    }
+                    let managingBotPanel: ChatManagingBotTitlePanelNode
+                    if let currentPanel = currentPanel as? ChatManagingBotTitlePanelNode {
+                        managingBotPanel = currentPanel
+                    } else {
+                        managingBotPanel = ChatManagingBotTitlePanelNode(context: context)
+                    }
+                    let panel = ChatStackedTitlePanelNode(topPanel: pinnedPanel, bottomPanel: managingBotPanel)
+                    panel.interfaceInteraction = interfaceInteraction
+                    return panel
+                }
+            } else if let currentPanel = currentPanel as? ChatManagingBotTitlePanelNode {
                 return currentPanel
             } else {
                 let panel = ChatManagingBotTitlePanelNode(context: context)

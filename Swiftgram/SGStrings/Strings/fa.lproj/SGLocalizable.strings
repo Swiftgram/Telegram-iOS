@@ -7,3 +7,8 @@
 "Settings.ShowProfileID" = "نمایش ایدی پروفایل";
 "Settings.Translation.QuickTranslateButton" = "دکمه ترجمه سریع";
 "ContextMenu.SaveToCloud" = "ذخیره در فضای ابری";
+
+"Settings.BusinessBotPanelPlacement" = "پنل ربات تجاری";
+"Settings.BusinessBotPanelPlacement.telegram" = "به‌جای سنجاق‌شده‌ها";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "زیر سنجاق‌شده‌ها";
+"Settings.BusinessBotPanelPlacement.hidden" = "پنهان";

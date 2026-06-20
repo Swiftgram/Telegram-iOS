@@ -1,2 +1,7 @@
 "Settings.Tabs.Header" = "පටිති";
 "ContextMenu.SaveToCloud" = "මේඝයට සුරකින්න";
+
+"Settings.BusinessBotPanelPlacement" = "ව්‍යාපාර බොට් පැනලය";
+"Settings.BusinessBotPanelPlacement.telegram" = "ඇලවූව වෙනුවට";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "ඇලවූවට පහළින්";
+"Settings.BusinessBotPanelPlacement.hidden" = "සඟවා ඇත";

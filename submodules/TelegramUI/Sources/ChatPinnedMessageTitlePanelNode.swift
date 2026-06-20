@@ -403,7 +403,7 @@ final class ChatPinnedMessageTitlePanelNode: ChatTitleAccessoryPanelNode {
             }
         }
         
-        let rightInset: CGFloat = 18.0 + rightInset
+        let rightInset: CGFloat = 14.0 + rightInset // MARK: Swiftgram
         
         var tapButtonRightInset: CGFloat = rightInset
         
@@ -608,7 +608,7 @@ final class ChatPinnedMessageTitlePanelNode: ChatTitleAccessoryPanelNode {
         let previousMediaReference = self.previousMediaReference
         let context = self.context
         
-        let contentLeftInset: CGFloat = leftInset + 18.0
+        let contentLeftInset: CGFloat = leftInset + 14.0 // MARK: Swiftgram
         var textLineInset: CGFloat = 10.0
         var rightInset: CGFloat = 14.0 + rightInset
         

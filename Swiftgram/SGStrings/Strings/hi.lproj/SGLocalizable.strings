@@ -150,3 +150,8 @@
 
 "Settings.swipeForVideoPIP" = "वीडियो PIP स्वाइप के साथ";
 "Settings.swipeForVideoPIP.Notice" = "यदि सक्षम है, तो वीडियो को स्वाइप करने से यह चित्र-इन-चित्र मोड में खोला जाएगा।";
+
+"Settings.BusinessBotPanelPlacement" = "बिज़नेस बॉट पैनल";
+"Settings.BusinessBotPanelPlacement.telegram" = "पिन किए गए की जगह";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "पिन किए गए के नीचे";
+"Settings.BusinessBotPanelPlacement.hidden" = "छिपा हुआ";

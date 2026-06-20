@@ -163,6 +163,11 @@
 
 "Settings.showChannelBottomButton" = "Channel Bottom Panel";
 
+"Settings.BusinessBotPanelPlacement" = "Business bot panel";
+"Settings.BusinessBotPanelPlacement.telegram" = "Instead of pinned";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Below pinned";
+"Settings.BusinessBotPanelPlacement.hidden" = "Hidden";
+
 "Settings.secondsInMessages" = "Seconds in Messages";
 
 "Settings.CallConfirmation" = "Call Confirmation";

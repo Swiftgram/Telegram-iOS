@@ -150,3 +150,8 @@
 
 "Settings.swipeForVideoPIP" = "וידאו PIP עם החלקה";
 "Settings.swipeForVideoPIP.Notice" = "אם מופעל, החלקת הווידאו תפתח אותו במצב תמונה בתוך תמונה.";
+
+"Settings.BusinessBotPanelPlacement" = "לוח בוט עסקי";
+"Settings.BusinessBotPanelPlacement.telegram" = "במקום נעוצים";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "מתחת לנעוצים";
+"Settings.BusinessBotPanelPlacement.hidden" = "מוסתר";

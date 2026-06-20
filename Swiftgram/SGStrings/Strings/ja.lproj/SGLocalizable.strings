@@ -244,3 +244,8 @@
 "PayWall.ValidationError" = "検証エラー";
 "PayWall.ValidationError.TryAgain" = "購入の検証中に問題が発生しました。心配しないでください！後で購入を復元してみてください。";
 "PayWall.ValidationError.Expired" = "サブスクリプションの有効期限が切れました。Pro機能へのアクセスを取り戻すには、再度サブスクリプションを登録してください。";
+
+"Settings.BusinessBotPanelPlacement" = "ビジネスボットパネル";
+"Settings.BusinessBotPanelPlacement.telegram" = "固定の代わり";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "固定の下";
+"Settings.BusinessBotPanelPlacement.hidden" = "非表示";

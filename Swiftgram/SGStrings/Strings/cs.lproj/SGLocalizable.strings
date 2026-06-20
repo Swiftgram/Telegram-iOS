@@ -150,3 +150,8 @@
 
 "Settings.swipeForVideoPIP" = "Video PIP s přetahováním";
 "Settings.swipeForVideoPIP.Notice" = "Pokud je povoleno, poslání videa jej otevře v režimu Obraz v obraze.";
+
+"Settings.BusinessBotPanelPlacement" = "Panel firemního bota";
+"Settings.BusinessBotPanelPlacement.telegram" = "Místo připnutých";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Pod připnutými";
+"Settings.BusinessBotPanelPlacement.hidden" = "Skryté";

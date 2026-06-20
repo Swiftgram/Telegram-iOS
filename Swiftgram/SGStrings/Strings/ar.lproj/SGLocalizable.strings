@@ -150,3 +150,8 @@
 
 "Settings.swipeForVideoPIP" = "فيديو PIP مع السحب";
 "Settings.swipeForVideoPIP.Notice" = "إذا تم تمكينه، سيفتح سحب الفيديو في وضع الصورة في الصورة.";
+
+"Settings.BusinessBotPanelPlacement" = "لوحة بوت الأعمال";
+"Settings.BusinessBotPanelPlacement.telegram" = "بدلاً من المثبتة";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "أسفل المثبتة";
+"Settings.BusinessBotPanelPlacement.hidden" = "مخفية";

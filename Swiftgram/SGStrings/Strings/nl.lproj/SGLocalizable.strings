@@ -150,3 +150,8 @@
 
 "Settings.swipeForVideoPIP" = "Video PIP met veeg";
 "Settings.swipeForVideoPIP.Notice" = "Als ingeschakeld, opent het swipen van video het in de modus Beeld-in-Beeld.";
+
+"Settings.BusinessBotPanelPlacement" = "Zakelijke botbalk";
+"Settings.BusinessBotPanelPlacement.telegram" = "In plaats van vastgezet";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Onder vastgezet";
+"Settings.BusinessBotPanelPlacement.hidden" = "Verborgen";

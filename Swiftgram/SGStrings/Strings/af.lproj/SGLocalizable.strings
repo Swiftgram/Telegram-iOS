@@ -150,3 +150,8 @@
 
 "Settings.swipeForVideoPIP" = "Video PIP met Veeg";
 "Settings.swipeForVideoPIP.Notice" = "As geaktiveer, sal die veeg van die video dit in Prent-in-Prent modus oopmaak.";
+
+"Settings.BusinessBotPanelPlacement" = "Besigheidsbot-paneel";
+"Settings.BusinessBotPanelPlacement.telegram" = "In plaas van vasgespeld";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Onder vasgespeld";
+"Settings.BusinessBotPanelPlacement.hidden" = "Versteek";
