@@ -1624,6 +1624,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     })
                 }
             })))
+            if !SGSimpleSettings.shared.contextShowEdit { sgActions.append(actions.removeLast()) }
         }
         
         if let message = messages.first, message.id.namespace == Namespaces.Message.Cloud, let channel = message.peers[message.id.peerId] as? TelegramChannel, channel.isMonoForum {
@@ -2299,7 +2300,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         }
 
         // MARK: Swiftgram
-        if !sgActions.isEmpty {
+        if SGSimpleSettings.shared.showSwiftgramSubMenu && !sgActions.isEmpty {
             if !actions.isEmpty {
                 if let sgActionsIndex = sgActionsIndex {
                     actions.insert(.separator, at: sgActionsIndex)
@@ -2544,7 +2545,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                 }
                 
                 if message.id.namespace == Namespaces.Message.QuickReplyCloud {
-                    if data.canEdit {
+                    if data.canEdit && SGSimpleSettings.shared.contextShowEdit {
                         actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Conversation_MessageDialogEdit, icon: { theme in
                             return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Edit"), color: theme.actionSheet.primaryTextColor)
                         }, action: { c, f in

@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Максимално";
 
 "Settings.ShowProfileID" = "Прикажи идентификациони број профила";
+"Settings.ShowSwiftgramSubMenu" = "Подмени „Swiftgram“";
 "Settings.ShowDC" = "Прикажи центар података";
 "Settings.ShowCreationDate" = "Прикажи датум креирања чата";
 "Settings.ShowCreationDate.Notice" = "Можда није познат датум креирања за неке разговоре.";

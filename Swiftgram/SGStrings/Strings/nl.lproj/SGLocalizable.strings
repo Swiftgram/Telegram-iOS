@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Maximaal";
 
 "Settings.ShowProfileID" = "Toon profiel ID";
+"Settings.ShowSwiftgramSubMenu" = "Submenu \"Swiftgram\"";
 "Settings.ShowDC" = "Toon datacentrum";
 "Settings.ShowCreationDate" = "Toon Chat Aanmaakdatum";
 "Settings.ShowCreationDate.Notice" = "De aanmaakdatum kan onbekend zijn voor sommige chatten.";
