@@ -178,6 +178,7 @@
 
 "Settings.swipeForVideoPIP" = "Video PIP with Swipe";
 "Settings.swipeForVideoPIP.Notice" = "If enabled, swiping video will open it in Picture-in-Picture mode.";
+"Settings.videoControlsInFooter" = "Video controls in footer";
 
 "SessionBackup.Title" = "Accounts Backup";
 "SessionBackup.Sessions.Title" = "Sessions";

@@ -265,6 +265,7 @@
 
 "AppBadge.Title" = "Emblema do Aplicativo";
 "AppBadge.Notice" = "Personalizar Emblema do Aplicativo Exibido nas capturas de tela";
+"Settings.videoControlsInFooter" = "Controles de vídeo no rodapé";
 
 "Settings.NY.Header" = "EFEITOS DE FERIADO";
 "Settings.NY.Style" = "Estilo";

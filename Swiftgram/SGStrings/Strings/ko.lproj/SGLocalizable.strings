@@ -150,3 +150,4 @@
 
 "Settings.swipeForVideoPIP" = "비디오 PIP 스와이프";
 "Settings.swipeForVideoPIP.Notice" = "설정이 활성화되면 비디오를 스와이프하면 화면 속 화면 모드로 열립니다.";
+"Settings.videoControlsInFooter" = "바닥글의 비디오 컨트롤";
