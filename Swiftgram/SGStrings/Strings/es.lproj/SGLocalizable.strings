@@ -150,3 +150,8 @@
 
 "Settings.swipeForVideoPIP" = "Video PIP con deslizamiento";
 "Settings.swipeForVideoPIP.Notice" = "Si está habilitado, deslizar el video lo abrirá en modo imagen en imagen.";
+
+"Settings.BusinessBotPanelPlacement" = "Panel del bot empresarial";
+"Settings.BusinessBotPanelPlacement.telegram" = "En lugar de fijados";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Debajo de fijados";
+"Settings.BusinessBotPanelPlacement.hidden" = "Oculto";

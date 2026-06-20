@@ -150,3 +150,8 @@
 
 "Settings.swipeForVideoPIP" = "Βίντεο PIP με Swipe";
 "Settings.swipeForVideoPIP.Notice" = "Αν είναι ενεργοποιημένο, το σ swipe video θα το ανοίξει σε λειτουργία Εικόνα μέσα στην Εικόνα.";
+
+"Settings.BusinessBotPanelPlacement" = "Πλαίσιο business bot";
+"Settings.BusinessBotPanelPlacement.telegram" = "Αντί καρφιτσωμένων";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Κάτω από καρφιτσωμένα";
+"Settings.BusinessBotPanelPlacement.hidden" = "Κρυφό";

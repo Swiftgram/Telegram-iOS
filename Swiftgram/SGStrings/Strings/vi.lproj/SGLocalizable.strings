@@ -150,3 +150,8 @@
 
 "Settings.swipeForVideoPIP" = "Video PIP với Vuốt";
 "Settings.swipeForVideoPIP.Notice" = "Nếu được kích hoạt, việc vuốt video sẽ mở nó ở chế độ Hình trong hình.";
+
+"Settings.BusinessBotPanelPlacement" = "Bảng bot doanh nghiệp";
+"Settings.BusinessBotPanelPlacement.telegram" = "Thay mục đã ghim";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Dưới mục đã ghim";
+"Settings.BusinessBotPanelPlacement.hidden" = "Ẩn";

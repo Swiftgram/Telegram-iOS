@@ -158,6 +158,11 @@
 
 "Settings.showChannelBottomButton" = "Нижняя панель канала";
 
+"Settings.BusinessBotPanelPlacement" = "Плашка бизнес-бота";
+"Settings.BusinessBotPanelPlacement.telegram" = "Вместо закреплённых";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Под закреплёнными";
+"Settings.BusinessBotPanelPlacement.hidden" = "Скрыта";
+
 "Settings.secondsInMessages" = "Секунды в Сообщениях";
 
 "Settings.CallConfirmation" = "Подтверждение вызова";

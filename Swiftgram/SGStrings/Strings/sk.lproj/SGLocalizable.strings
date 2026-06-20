@@ -2,3 +2,8 @@
 "Settings.Tabs.ShowContacts" = "Zobraziť kontakty";
 "Settings.Tabs.ShowNames" = "Zobraziť názvy záložiek";
 "ContextMenu.SaveToCloud" = "Uložiť na Cloud";
+
+"Settings.BusinessBotPanelPlacement" = "Panel firemného bota";
+"Settings.BusinessBotPanelPlacement.telegram" = "Namiesto pripnutých";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Pod pripnutými";
+"Settings.BusinessBotPanelPlacement.hidden" = "Skryté";

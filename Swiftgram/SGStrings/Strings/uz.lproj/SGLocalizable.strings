@@ -150,3 +150,8 @@
 
 "Settings.swipeForVideoPIP" = "Video PIP bilan Surish";
 "Settings.swipeForVideoPIP.Notice" = "Agar yoqilgan bo'lsa, videoni surish uni Tasvir ichida Tasvir rejimida ochadi.";
+
+"Settings.BusinessBotPanelPlacement" = "Biznes bot paneli";
+"Settings.BusinessBotPanelPlacement.telegram" = "Mahkamlangan o'rniga";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Mahkamlangan ostida";
+"Settings.BusinessBotPanelPlacement.hidden" = "Yashirin";

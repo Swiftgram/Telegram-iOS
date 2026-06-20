@@ -150,3 +150,8 @@
 
 "Settings.swipeForVideoPIP" = "Video PIP cu gestul de glisare";
 "Settings.swipeForVideoPIP.Notice" = "Dacă este activat, glisarea video va deschide în modul imagine în imagine.";
+
+"Settings.BusinessBotPanelPlacement" = "Panou bot business";
+"Settings.BusinessBotPanelPlacement.telegram" = "În locul celor fixate";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Sub cele fixate";
+"Settings.BusinessBotPanelPlacement.hidden" = "Ascuns";

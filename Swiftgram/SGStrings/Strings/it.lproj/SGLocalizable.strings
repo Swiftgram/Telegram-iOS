@@ -150,3 +150,8 @@
 
 "Settings.swipeForVideoPIP" = "Video PIP con scorrimento";
 "Settings.swipeForVideoPIP.Notice" = "Se abilitato, scorrendo il video si aprirà in modalità Picture-in-Picture.";
+
+"Settings.BusinessBotPanelPlacement" = "Pannello bot business";
+"Settings.BusinessBotPanelPlacement.telegram" = "Al posto dei fissati";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Sotto i fissati";
+"Settings.BusinessBotPanelPlacement.hidden" = "Nascosto";

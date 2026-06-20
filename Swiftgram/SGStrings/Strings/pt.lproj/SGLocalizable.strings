@@ -272,3 +272,8 @@
 "Settings.NY.Style.snow" = "Neve";
 "Settings.NY.Style.lightning" = "Raio";
 "Settings.NY.Notice" = "Disponível por tempo limitado!";
+
+"Settings.BusinessBotPanelPlacement" = "Painel do bot empresarial";
+"Settings.BusinessBotPanelPlacement.telegram" = "No lugar dos fixados";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Abaixo dos fixados";
+"Settings.BusinessBotPanelPlacement.hidden" = "Oculto";

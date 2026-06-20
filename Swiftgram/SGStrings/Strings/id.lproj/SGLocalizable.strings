@@ -150,3 +150,8 @@
 
 "Settings.swipeForVideoPIP" = "Video PIP dengan Geser";
 "Settings.swipeForVideoPIP.Notice" = "Jika diaktifkan, menggeser video akan membukanya dalam mode Gambar-dalam-Gambar.";
+
+"Settings.BusinessBotPanelPlacement" = "Panel bot bisnis";
+"Settings.BusinessBotPanelPlacement.telegram" = "Alih-alih tersemat";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "Di bawah tersemat";
+"Settings.BusinessBotPanelPlacement.hidden" = "Tersembunyi";

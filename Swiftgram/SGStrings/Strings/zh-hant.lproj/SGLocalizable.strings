@@ -247,3 +247,8 @@
 "PayWall.ValidationError" = "驗證錯誤";
 "PayWall.ValidationError.TryAgain" = "在購買驗證過程中出錯。別擔心！稍後再試恢復購買。";
 "PayWall.ValidationError.Expired" = "您的訂閱已過期。請重新訂閱以恢復訪問 Pro 功能。";
+
+"Settings.BusinessBotPanelPlacement" = "商務機器人面板";
+"Settings.BusinessBotPanelPlacement.telegram" = "取代置頂";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "置頂下方";
+"Settings.BusinessBotPanelPlacement.hidden" = "隱藏";

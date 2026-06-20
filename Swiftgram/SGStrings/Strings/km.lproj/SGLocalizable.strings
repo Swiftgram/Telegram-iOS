@@ -6,3 +6,8 @@
 "Settings.HidePhoneInSettingsUI" = "លាក់លេខទូរសព្ទក្នុងការកំណត់";
 "Settings.Folders.BottomTab" = "ថតឯបាត";
 "ContextMenu.SaveToCloud" = "រក្សាទុកទៅពពក";
+
+"Settings.BusinessBotPanelPlacement" = "ផ្ទាំងបូតអាជីវកម្ម";
+"Settings.BusinessBotPanelPlacement.telegram" = "ជំនួសសារខ្ទាស់";
+"Settings.BusinessBotPanelPlacement.swiftgram" = "ក្រោមសារខ្ទាស់";
+"Settings.BusinessBotPanelPlacement.hidden" = "បានលាក់";
