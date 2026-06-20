@@ -116,6 +116,7 @@ private enum SGOneFromManySetting: String {
 //    case allChatsFolderPositionOverride
     case translationBackend
     case transcriptionBackend
+    case businessBotTitlePanelPlacement
 }
 
 private enum SGSliderSetting: String {
@@ -308,6 +309,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .other, settingName: .swipeForVideoPIP, value: SGSimpleSettings.shared.videoPIPSwipeDirection == SGSimpleSettings.VideoPIPSwipeDirection.up.rawValue, text: i18n("Settings.swipeForVideoPIP", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.swipeForVideoPIP.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hideChannelBottomButton, value: !SGSimpleSettings.shared.hideChannelBottomButton, text: i18n("Settings.showChannelBottomButton", lang), enabled: true))
+    entries.append(.oneFromManySelector(id: id.count, section: .other, settingName: .businessBotTitlePanelPlacement, text: i18n("Settings.BusinessBotPanelPlacement", lang), value: i18n("Settings.BusinessBotPanelPlacement.\(SGSimpleSettings.shared.businessBotTitlePanelPlacement)", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .wideChannelPosts, value: SGSimpleSettings.shared.wideChannelPosts, text: i18n("Settings.wideChannelPosts", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .secondsInMessages, value: SGSimpleSettings.shared.secondsInMessages, text: i18n("Settings.secondsInMessages", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .messageDoubleTapActionOutgoingEdit, value: SGSimpleSettings.shared.messageDoubleTapActionOutgoing == SGSimpleSettings.MessageDoubleTapAction.edit.rawValue, text: i18n("Settings.messageDoubleTapActionOutgoingEdit", lang), enabled: true))
@@ -656,6 +658,18 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
                         }
                     }
                     items.append(ActionSheetButtonItem(title: i18n("Settings.Transcription.Backend.\(value.rawValue)", presentationData.strings.baseLanguageCode), color: .accent, action: { [weak actionSheet] in
+                        actionSheet?.dismissAnimated()
+                        setAction(value.rawValue)
+                    }))
+                }
+            case .businessBotTitlePanelPlacement:
+                let setAction: (String) -> Void = { value in
+                    SGSimpleSettings.shared.businessBotTitlePanelPlacement = value
+                    simplePromise.set(true)
+                }
+
+                for value in SGSimpleSettings.BusinessBotTitlePanelPlacement.allCases {
+                    items.append(ActionSheetButtonItem(title: i18n("Settings.BusinessBotPanelPlacement.\(value.rawValue)", presentationData.strings.baseLanguageCode), color: .accent, action: { [weak actionSheet] in
                         actionSheet?.dismissAnimated()
                         setAction(value.rawValue)
                     }))
