@@ -6,3 +6,6 @@
 "Settings.HidePhoneInSettingsUI" = "លាក់លេខទូរសព្ទក្នុងការកំណត់";
 "Settings.Folders.BottomTab" = "ថតឯបាត";
 "ContextMenu.SaveToCloud" = "រក្សាទុកទៅពពក";
+"Settings.MessageSelection.Header" = "ការជ្រើសរើសសារ";
+"Settings.Selection.SaveToCloudButton" = "ប៊ូតុងរក្សាទុកទៅពពក";
+"Settings.Selection.HideSenderNamesButton" = "ប៊ូតុងលាក់ឈ្មោះអ្នកផ្ញើ";

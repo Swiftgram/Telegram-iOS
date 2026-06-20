@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "Opslaan in de Cloud";
 "ContextMenu.SelectFromUser" = "Selecteer van Auteur";
+"Settings.MessageSelection.Header" = "BERICHTSELECTIE";
+"Settings.Selection.SaveToCloudButton" = "Knop Opslaan in de cloud";
+"Settings.Selection.HideSenderNamesButton" = "Knop Namen van afzenders verbergen";
 
 "Settings.ContextMenu" = "CONTEXTMENU";
 "Settings.ContextMenu.Notice" = "Uitgeschakelde items zijn beschikbaar in het 'Swiftgram'-submenu.";
