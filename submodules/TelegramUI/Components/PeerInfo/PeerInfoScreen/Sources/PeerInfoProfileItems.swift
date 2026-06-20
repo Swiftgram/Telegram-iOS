@@ -89,6 +89,9 @@ func infoItems(
     let birthdayContextAction: (ASDisplayNode, ContextGesture?, CGPoint?) -> Void = { node, gesture, _ in
         interaction.openBirthdayContextMenu(node, gesture)
     }
+    let openSgContextMenu: (ASDisplayNode, ContextGesture?, SGContextMenuAction) -> Void = { node, gesture, action in
+        interaction.openSgContextMenu(node, gesture, action)
+    }
     
     if case let .user(user) = data.peer {
         let ItemCallList = 1000
@@ -586,9 +589,7 @@ func infoItems(
                     icon: .qrCode,
                     action: { _, progress in
                         interaction.openUsername(linkText, true, progress)
-                    }, longTapAction: { sourceNode in
-                        interaction.openPeerInfoContextMenu(.link(customLink: linkText), sourceNode, nil)
-                    }, linkItemAction: { type, item, _, _, progress in
+                    }, longTapAction: nil, linkItemAction: { type, item, _, _, progress in
                         if case .tap = type {
                             if case let .mention(username) = item {
                                 interaction.openUsername(String(username.suffix(from: username.index(username.startIndex, offsetBy: 1))), false, progress)
@@ -596,6 +597,8 @@ func infoItems(
                         }
                     }, iconAction: {
                         interaction.openQrCode()
+                    }, contextAction: { sourceNode, gesture, _ in
+                        openSgContextMenu(sourceNode, gesture, .copyLink(text: linkText))
                     }, requestLayout: { animated in
                         interaction.requestLayout(animated)
                     }
@@ -639,20 +642,20 @@ func infoItems(
                         icon: .qrCode,
                         action: { _, progress in
                             interaction.openUsername(mainUsername, true, progress)
-                        }, longTapAction: { sourceNode in
-                            interaction.openPeerInfoContextMenu(.link(customLink: nil), sourceNode, nil)
-                        }, linkItemAction: { type, item, sourceNode, sourceRect, progress in
+                        }, longTapAction: nil, linkItemAction: { type, item, sourceNode, _, progress in
                             if case .tap = type {
                                 if case let .mention(username) = item {
                                     interaction.openUsername(String(username.suffix(from: username.index(username.startIndex, offsetBy: 1))), false, progress)
                                 }
                             } else if case .longTap = type {
                                 if case let .mention(username) = item {
-                                    interaction.openPeerInfoContextMenu(.link(customLink: username), sourceNode, sourceRect)
+                                    openSgContextMenu(sourceNode, nil, .copyLink(text: username))
                                 }
                             }
                         }, iconAction: {
                             interaction.openQrCode()
+                        }, contextAction: { sourceNode, gesture, _ in
+                            openSgContextMenu(sourceNode, gesture, .copyLink(text: "https://t.me/\(mainUsername)"))
                         }, requestLayout: { animated in
                             interaction.requestLayout(animated)
                         }
@@ -906,8 +909,10 @@ func infoItems(
     
     // MARK: Swiftgram
     if showProfileId {
-        items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: "id: \(idText)", text: "", textColor: .primary, action: nil, longTapAction: { sourceNode in
-            interaction.openPeerInfoContextMenu(.copy(idText), sourceNode, nil)
+        items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, context: context, label: i18n("Chat.ID", presentationData.strings.baseLanguageCode), text: idText, textColor: .primary, action: { node, _ in
+            openSgContextMenu(node, nil, .copy(text: idText, copyKey: "Chat.ID.Copy", copiedKey: "Chat.ID.Copied"))
+        }, longTapAction: nil, contextAction: { node, gesture, _ in
+            openSgContextMenu(node, gesture, .copy(text: idText, copyKey: "Chat.ID.Copy", copiedKey: "Chat.ID.Copied"))
         }, requestLayout: { _ in
             interaction.requestLayout(false)
         }))
@@ -968,8 +973,10 @@ func infoItems(
         }
 
         if !dcText.isEmpty || !dcLabel.isEmpty {
-            items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: dcLabel, text: dcText, textColor: .primary, action: nil, longTapAction: { sourceNode in
-                interaction.openPeerInfoContextMenu(.aboutDC, sourceNode, nil)
+            items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, context: context, label: dcLabel, text: dcText, textColor: .primary, action: { node, _ in
+                openSgContextMenu(node, nil, .openURL(url: "https://core.telegram.org/api/datacenter"))
+            }, longTapAction: nil, contextAction: { node, gesture, _ in
+                openSgContextMenu(node, gesture, .openURL(url: "https://core.telegram.org/api/datacenter"))
             }, requestLayout: { _ in
                 interaction.requestLayout(false)
             }))
@@ -980,8 +987,10 @@ func infoItems(
     if SGSimpleSettings.shared.showCreationDate {
         if let channelCreationTimestamp = data.channelCreationTimestamp {
             let creationDateString = stringForDate(timestamp: channelCreationTimestamp, strings: presentationData.strings)
-            items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: i18n("Chat.Created", presentationData.strings.baseLanguageCode, creationDateString), text: "", action: nil, longTapAction: { sourceNode in
-                interaction.openPeerInfoContextMenu(.copy(creationDateString), sourceNode, nil)
+            items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, context: context, label: i18n("Chat.Created.Label", presentationData.strings.baseLanguageCode), text: creationDateString, textColor: .primary, action: { node, _ in
+                openSgContextMenu(node, nil, .copy(text: creationDateString, copyKey: "Chat.Created.Copy", copiedKey: "Chat.Created.Copied"))
+            }, longTapAction: nil, contextAction: { node, gesture, _ in
+                openSgContextMenu(node, gesture, .copy(text: creationDateString, copyKey: "Chat.Created.Copy", copiedKey: "Chat.Created.Copied"))
             }, requestLayout: { _ in
                 interaction.requestLayout(false)
             }))
@@ -991,8 +1000,10 @@ func infoItems(
     
     if let invitedAt = nearestChatParticipant.1 {
         let joinedDateString = stringForDate(timestamp: invitedAt, strings: presentationData.strings)
-        items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: i18n("Chat.JoinedDateTitle", presentationData.strings.baseLanguageCode, nearestChatParticipant.0 ?? "chat") , text: joinedDateString, action: nil, longTapAction: { sourceNode in
-            interaction.openPeerInfoContextMenu(.copy(joinedDateString), sourceNode, nil)
+        items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, context: context, label: i18n("Chat.JoinedDateTitle", presentationData.strings.baseLanguageCode, nearestChatParticipant.0 ?? "chat"), text: joinedDateString, textColor: .primary, action: { node, _ in
+            openSgContextMenu(node, nil, .copy(text: joinedDateString, copyKey: "Chat.JoinedDate.Copy", copiedKey: "Chat.JoinedDate.Copied"))
+        }, longTapAction: nil, contextAction: { node, gesture, _ in
+            openSgContextMenu(node, gesture, .copy(text: joinedDateString, copyKey: "Chat.JoinedDate.Copy", copiedKey: "Chat.JoinedDate.Copied"))
         }, requestLayout: { _ in
             interaction.requestLayout(false)
         }))
@@ -1021,8 +1032,10 @@ func infoItems(
             }
         }
         if !regDateString.isEmpty {
-            items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: i18n("Chat.RegDate", presentationData.strings.baseLanguageCode), text: regDateString, action: nil, longTapAction: { sourceNode in
-                interaction.openPeerInfoContextMenu(.copy(regDateString), sourceNode, nil)
+            items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, context: context, label: i18n("Chat.RegDate", presentationData.strings.baseLanguageCode), text: regDateString, textColor: .primary, action: { node, _ in
+                openSgContextMenu(node, nil, .copy(text: regDateString, copyKey: "Chat.RegDate.Copy", copiedKey: "Chat.RegDate.Copied"))
+            }, longTapAction: nil, contextAction: { node, gesture, _ in
+                openSgContextMenu(node, gesture, .copy(text: regDateString, copyKey: "Chat.RegDate.Copy", copiedKey: "Chat.RegDate.Copied"))
             }, requestLayout: { _ in
                 interaction.requestLayout(false)
             }))
