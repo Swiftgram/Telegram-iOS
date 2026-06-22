@@ -2469,8 +2469,10 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             effectiveActionButtonsSize.width += 6.0 + liveMicrophoneButtonSize.width
         }
         
+        let textFieldActionControlsWidth: CGFloat = mergeRightSlot ? 0.0 : sendActionButtonsSize.width // MARK: Swiftgram
+        let textFieldMeasurementWidthOffset = textInputBackgroundWidthOffset - (mergeRightSlot ? 40.0 + 6.0 : 0.0) // MARK: Swiftgram
         let baseWidth = width - leftInset - leftMenuInset - rightInset - rightSlowModeInset
-        let (accessoryButtonsWidth, textFieldHeight, isTextFieldOverflow) = self.calculateTextFieldMetrics(width: baseWidth + textInputBackgroundWidthOffset, sendActionControlsWidth: sendActionButtonsSize.width, maxHeight: maxHeight, metrics: metrics, bottomInset: bottomInset, interfaceState: interfaceState) // MARK: Swiftgram
+        let (accessoryButtonsWidth, textFieldHeight, isTextFieldOverflow) = self.calculateTextFieldMetrics(width: baseWidth + textFieldMeasurementWidthOffset, sendActionControlsWidth: textFieldActionControlsWidth, maxHeight: maxHeight, metrics: metrics, bottomInset: bottomInset, interfaceState: interfaceState) // MARK: Swiftgram
         var panelHeight = self.panelHeight(textFieldHeight: textFieldHeight, metrics: metrics, bottomInset: bottomInset)
         if displayBotStartButton {
             panelHeight += 27.0
@@ -2888,7 +2890,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
 
         var textInputViewRealInsets = UIEdgeInsets()
         if let presentationInterfaceState = self.presentationInterfaceState {
-            textInputViewRealInsets = calculateTextFieldRealInsets(presentationInterfaceState: presentationInterfaceState, accessoryButtonsWidth: accessoryButtonsWidth, actionControlsWidth: effectiveActionButtonsSize.width)
+            textInputViewRealInsets = calculateTextFieldRealInsets(presentationInterfaceState: presentationInterfaceState, accessoryButtonsWidth: accessoryButtonsWidth, actionControlsWidth: mergeRightSlot ? 0.0 : effectiveActionButtonsSize.width) // MARK: Swiftgram
         }
         
         var contentHeight: CGFloat = 0.0
@@ -3062,6 +3064,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             
         if let textInputNode = self.textInputNode {
             textInputNode.textContainerInset = textInputViewRealInsets
+            textInputNode.textView.scrollIndicatorInsets = UIEdgeInsets(top: 9.0, left: 0.0, bottom: 9.0, right: mergeRightSlot ? -(actualTextInputViewInternalInsets.right + 2.0) : -13.0) // MARK: Swiftgram
             textInputNode.frame = actualTextFieldFrame
             textInputNode.updateLayout(size: textFieldFrame.size)
             self.updateInputField(textInputFrame: textFieldFrame, transition: ComponentTransition(transition))
@@ -4840,8 +4843,10 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             leftInset += compactBottomSideInset
             rightInset += compactBottomSideInset
             
-            let baseWidth = width - leftInset - self.leftMenuInset - rightInset - self.rightSlowModeInset + self.currentTextInputBackgroundWidthOffset - additionalSideInsets.right
-            let (_, textFieldHeight, _) = self.calculateTextFieldMetrics(width: baseWidth, sendActionControlsWidth: self.sendActionButtons.bounds.width, maxHeight: maxHeight, metrics: metrics, bottomInset: bottomInset, interfaceState: interfaceState)
+            let hasMergedRightSlot = !self.currentTextInputViewInternalInsetsOffset.right.isZero // MARK: Swiftgram
+            let textFieldMeasurementWidthOffset = self.currentTextInputBackgroundWidthOffset - (hasMergedRightSlot ? 40.0 + 6.0 : 0.0) // MARK: Swiftgram
+            let baseWidth = width - leftInset - self.leftMenuInset - rightInset - self.rightSlowModeInset + textFieldMeasurementWidthOffset - additionalSideInsets.right
+            let (_, textFieldHeight, _) = self.calculateTextFieldMetrics(width: baseWidth, sendActionControlsWidth: hasMergedRightSlot ? 0.0 : self.sendActionButtons.bounds.width, maxHeight: maxHeight, metrics: metrics, bottomInset: bottomInset, interfaceState: interfaceState) // MARK: Swiftgram
             let panelHeight = self.panelHeight(textFieldHeight: textFieldHeight, metrics: metrics, bottomInset: bottomInset)
             if !self.bounds.size.height.isEqual(to: panelHeight) {
                 self.updateHeight(animated)
