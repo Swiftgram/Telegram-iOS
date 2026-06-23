@@ -310,6 +310,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
     private var rightSlowModeInset: CGFloat = 0.0
     private var currentTextInputBackgroundWidthOffset: CGFloat = 0.0
     // MARK: Swiftgram
+    private var currentTextInputBackgroundLeftOffset: CGFloat = 0.0
     private var currentTextInputViewInternalInsetsOffset = UIEdgeInsets()
     
     private var enableBounceAnimations: Bool = false
@@ -3180,6 +3181,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         }
         
         self.currentTextInputBackgroundWidthOffset = textInputBackgroundWidthOffset
+        self.currentTextInputBackgroundLeftOffset = textInputBackgroundLeftOffset // MARK: Swiftgram
         
         let textPlaceholderSize: CGSize
         let textPlaceholderMaxWidth: CGFloat = max(1.0, nextButtonTopRight.x - 12.0)
@@ -5864,7 +5866,22 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         }
 
         let backgroundView = UIImageView()
-        backgroundView.frame = self.textInputBackgroundNode.view.convert(self.textInputBackgroundNode.bounds, to: self.view)
+        let backgroundFrame = self.textInputBackgroundNode.view.convert(self.textInputBackgroundNode.bounds, to: self.view)
+        backgroundView.frame = backgroundFrame
+        var sourceRect = self.view.convert(self.bounds, to: nil)
+
+        // MARK: Swiftgram
+        let transitionBackgroundLeftOffset = max(0.0, min(self.currentTextInputBackgroundLeftOffset, backgroundFrame.width))
+        if !transitionBackgroundLeftOffset.isZero {
+            let transitionBackgroundFrame = CGRect(
+                x: backgroundFrame.minX + transitionBackgroundLeftOffset,
+                y: backgroundFrame.minY,
+                width: backgroundFrame.width - transitionBackgroundLeftOffset,
+                height: backgroundFrame.height
+            )
+            backgroundView.frame = CGRect(origin: CGPoint(), size: transitionBackgroundFrame.size)
+            sourceRect = self.view.convert(transitionBackgroundFrame, to: nil)
+        }
 
         let caretColor = textInputNode.textView.tintColor
         textInputNode.textView.tintColor = .clear
@@ -5876,15 +5893,19 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
 
         textInputNode.textView.tintColor = caretColor
 
-        if let textInputNodeSuperview = textInputNode.view.superview {
-            let _ = textInputNodeSuperview
-            contentView.frame = textInputNode.frame.offsetBy(dx: 0.0, dy: self.textInputNodeClippingContainer.frame.minY)
+        if textInputNode.view.superview != nil {
+            var contentFrame = textInputNode.frame.offsetBy(dx: 0.0, dy: self.textInputNodeClippingContainer.frame.minY)
+            // MARK: Swiftgram
+            if !transitionBackgroundLeftOffset.isZero {
+                contentFrame.origin.x -= max(0.0, min(self.currentTextInputViewInternalInsetsOffset.left, contentFrame.minX))
+            }
+            contentView.frame = contentFrame
         }
 
         return (
             backgroundView: backgroundView,
             contentView: contentView,
-            sourceRect: self.view.convert(self.bounds, to: nil),
+            sourceRect: sourceRect,
             scrollOffset: textInputNode.textView.contentOffset.y
         )
     }
