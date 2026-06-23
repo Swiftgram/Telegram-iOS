@@ -136,6 +136,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "雙擊以編輯訊息";
 
 "Settings.wideChannelPosts" = "在頻道中以更寬的樣式顯示訊息";
+"Settings.wideGlassTextField" = "寬玻璃文字欄";
 "Settings.ForceEmojiTab" = "預設表情符號鍵盤";
 
 "Settings.forceBuiltInMic" = "強制使用裝置麥克風";
