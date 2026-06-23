@@ -987,7 +987,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         self.requestLayout(transition: .immediate)
     }
     
-    func tabContextGesture(id: Int32?, sourceNode: ContextExtractedContentContainingNode?, sourceView: ContextExtractedContentContainingView?, gesture: ContextGesture?, keepInPlace: Bool, isDisabled: Bool) {
+    func tabContextGesture(id: Int32?, sourceNode: ContextExtractedContentContainingNode?, sourceView: ContextExtractedContentContainingView?, gesture: ContextGesture?, keepInPlace: Bool, isDisabled: Bool, sourceActionsPosition: ContextControllerReferenceViewInfo.ActionsPosition = .bottom, sourceKeepInPlace: Bool = true) {
         let context = self.context
         let filterPeersAreMuted: Signal<(areMuted: Bool, peerIds: [EnginePeer.Id])?, NoError> = self.context.engine.peers.currentChatListFilters()
         |> take(1)
@@ -1331,7 +1331,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                 let controller = makeContextController(presentationData: self.presentationData, source: .extracted(ChatListHeaderBarContextExtractedContentSource(controller: self, sourceNode: sourceNode, sourceView: sourceView, keepInPlace: keepInPlace)), items: .single(ContextController.Items(content: .list(items))), recognizer: nil, gesture: gesture)
                 self.context.sharedContext.mainWindow?.presentInGlobalOverlay(controller)
             } else if let sourceView {
-                let controller = makeContextController(presentationData: self.presentationData, source: .reference(ChatListHeaderBarContextReferenceContentSource(controller: self, sourceView: sourceView)), items: .single(ContextController.Items(content: .list(items))), recognizer: nil, gesture: gesture)
+                let controller = makeContextController(presentationData: self.presentationData, source: .reference(ChatListHeaderBarContextReferenceContentSource(controller: self, sourceView: sourceView, actionsPosition: sourceActionsPosition, keepInPlace: sourceKeepInPlace)), items: .single(ContextController.Items(content: .list(items))), recognizer: nil, gesture: gesture) // MARK: Swiftgram
                 self.context.sharedContext.mainWindow?.presentInGlobalOverlay(controller)
             }
         })
@@ -6679,22 +6679,25 @@ private final class ChatListTabBarContextReferenceContentSource: ContextReferenc
 }
 
 private final class ChatListHeaderBarContextReferenceContentSource: ContextReferenceContentSource {
-    let keepInPlace: Bool = true
+    let keepInPlace: Bool
     let actionsHorizontalAlignment: ContextActionsHorizontalAlignment = .center
     
     private let controller: ChatListController
     private let sourceView: ContextExtractedContentContainingView
+    private let actionsPosition: ContextControllerReferenceViewInfo.ActionsPosition
     
-    init(controller: ChatListController, sourceView: ContextExtractedContentContainingView) {
+    init(controller: ChatListController, sourceView: ContextExtractedContentContainingView, actionsPosition: ContextControllerReferenceViewInfo.ActionsPosition = .bottom, keepInPlace: Bool = true) {
         self.controller = controller
         self.sourceView = sourceView
+        self.actionsPosition = actionsPosition
+        self.keepInPlace = keepInPlace
     }
     
     func transitionInfo() -> ContextControllerReferenceViewInfo? {
         return ContextControllerReferenceViewInfo(
             referenceView: self.sourceView.contentView,
             contentAreaInScreenSpace: UIScreen.main.bounds,
-            actionsPosition: .bottom
+            actionsPosition: self.actionsPosition
         )
     }
 }
