@@ -1632,7 +1632,7 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
                                     }
                                 }
                                 
-                                self.controller?.tabContextGesture(id: mappedId, sourceNode: nil, sourceView: sourceView, gesture: gesture, keepInPlace: false, isDisabled: isDisabled)
+                                self.controller?.tabContextGesture(id: mappedId, sourceNode: nil, sourceView: sourceView, gesture: gesture, keepInPlace: false, isDisabled: isDisabled, sourceActionsPosition: tabContainerData.1 ? .top : .bottom, sourceKeepInPlace: !tabContainerData.1) // MARK: Swiftgram
                             },
                             deleteAction: (!isEditing || isMainTab) ? nil : { [weak self] in
                                 guard let self else {
