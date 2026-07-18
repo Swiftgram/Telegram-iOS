@@ -754,13 +754,17 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
         
         var displayAdPeer: PeerId?
         var tag: MessageTags?
+
         if !isChatPreview {
             switch subject {
             case let .tag(tagValue):
                 tag = tagValue
             case .none, .message:
-                if case let .peer(peerId) = chatLocation {
-                    displayAdPeer = peerId
+                // MARK: Swiftgram
+                if !SGSimpleSettings.shared.hideSponsoredMessages {
+                    if case let .peer(peerId) = chatLocation {
+                        displayAdPeer = peerId
+                    }
                 }
             default:
                 break

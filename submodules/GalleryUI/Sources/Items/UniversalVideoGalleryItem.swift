@@ -249,7 +249,12 @@ private final class UniversalVideoGalleryItemOverlayNode: GalleryOverlayContentN
             return
         }
         self.message = message
-        
+
+        // MARK: Swiftgram
+        if SGSimpleSettings.shared.hideSponsoredMessages {
+            return
+        }
+
         let adContext = context.engine.messages.adMessages(peerId: message.id.peerId, messageId: message.id)
         self.adContext = adContext
         self.adDisposable.set((adContext.state

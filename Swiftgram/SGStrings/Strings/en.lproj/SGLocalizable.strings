@@ -117,6 +117,7 @@
 
 "Settings.SmallReactions" = "Small Reactions";
 "Settings.HideReactions" = "Hide Reactions";
+"Settings.HideSponsoredMessages" = "Hide Sponsored Messages";
 
 "ContextMenu.SaveToCloud" = "Save to Cloud";
 "ContextMenu.SelectFromUser" = "Select from Author";
