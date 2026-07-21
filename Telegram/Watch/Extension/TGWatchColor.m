@@ -36,14 +36,14 @@
     return colors;
 }
 
-+ (UIColor *)colorForUserId:(int32_t)userId myUserId:(int32_t)myUserId
++ (UIColor *)colorForUserId:(int64_t)userId myUserId:(int64_t)myUserId
 {
     return [self placeholderColors][abs(userId) % 7];
 }
 
 + (UIColor *)colorForGroupId:(int64_t)groupId
 {
-    int32_t peerId = 0;
+    int64_t peerId = 0;
     if (TGPeerIdIsGroup(groupId)) {
         peerId = TGGroupIdFromPeerId(groupId);
     } else if (TGPeerIdIsChannel(groupId)) {

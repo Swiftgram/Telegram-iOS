@@ -26,6 +26,7 @@
 #                   derives WKCompanionAppBundleIdentifier from it via
 #                   $(PRODUCT_BUNDLE_IDENTIFIER:base), so no post-build plist patching.
 set -euo pipefail
+export COPYFILE_DISABLE=1
 
 SRC="$1"; OUT_ZIP="$2"; API_ID="$3"; API_HASH="$4"; IDENTITY="${5:-}"; PROFILE="${6:-}"; INFOPLIST_OUT="${7:-}"; VERSIONS_JSON="${8:-}"; BUILD_NUMBER="${9:-1}"; WATCH_BUNDLE_ID="${10:-}"
 
@@ -75,6 +76,9 @@ fi
 if [ -n "$INFOPLIST_OUT" ]; then
   cp "$APP/Info.plist" "$INFOPLIST_OUT"
 fi
+
+# App Store validation rejects AppleDouble/resource-fork metadata inside signed bundles.
+/usr/bin/find "$APP" \( -name '._*' -o -name '.DS_Store' \) -delete
 
 if [ -n "$IDENTITY" ] && [ -z "$PROFILE" ]; then
   echo "error: a signing identity was given but no provisioning profile (set --watchProvisioningProfile=<abs path>)" >&2
@@ -134,4 +138,4 @@ fi
 # (that would resolve $OUT_ZIP against the DerivedData dir). --keepParent makes the
 # archive root the .app itself even when $APP is an absolute path.
 rm -f "$OUT_ZIP"
-/usr/bin/ditto -c -k --keepParent "$APP" "$OUT_ZIP"
+/usr/bin/ditto -c -k --norsrc --keepParent "$APP" "$OUT_ZIP"

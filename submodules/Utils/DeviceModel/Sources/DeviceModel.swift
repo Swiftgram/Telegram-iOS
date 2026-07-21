@@ -410,6 +410,10 @@ public enum DeviceModel: CaseIterable, Equatable {
     }
     
     private init() {
+        // MARK: Swiftgram
+        #if targetEnvironment(simulator)
+        let modelCode = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"]
+        #else
         var systemInfo = utsname()
         uname(&systemInfo)
         let modelCode = withUnsafePointer(to: &systemInfo.machine) {
@@ -417,6 +421,7 @@ public enum DeviceModel: CaseIterable, Equatable {
                 ptr in String.init(validatingUTF8: ptr)
             }
         }
+        #endif
         var result: DeviceModel?
         if let modelCode {
             for model in DeviceModel.allCases {

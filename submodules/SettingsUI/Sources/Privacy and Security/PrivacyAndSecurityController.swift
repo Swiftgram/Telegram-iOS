@@ -1623,13 +1623,17 @@ public func privacyAndSecurityController(
         let defaultWebBrowser: String
         if accountWebBrowserSettings.openExternalBrowser {
             var defaultExternalBrowser = localWebBrowserSettings.defaultWebBrowser
-            if defaultExternalBrowser == nil || defaultExternalBrowser == "inApp" || defaultExternalBrowser == "inAppSafari" {
-                defaultExternalBrowser = "safari"
-            }
-            if let option = options.first(where: { $0.identifier == defaultExternalBrowser }) {
-                defaultWebBrowser = option.title
+            if defaultExternalBrowser == "inApp" {
+                defaultWebBrowser = presentationData.strings.WebBrowser_InAppSafari
             } else {
-                defaultWebBrowser = "Safari"
+                if defaultExternalBrowser == nil || defaultExternalBrowser == "inAppSafari" {
+                    defaultExternalBrowser = "safari"
+                }
+                if let option = options.first(where: { $0.identifier == defaultExternalBrowser }) {
+                    defaultWebBrowser = option.title
+                } else {
+                    defaultWebBrowser = "Safari"
+                }
             }
         } else {
             defaultWebBrowser = presentationData.strings.WebBrowser_Telegram

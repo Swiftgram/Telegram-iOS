@@ -78,6 +78,7 @@
 @property (nonatomic, strong, readonly) MTApiEnvironment * _Nonnull apiEnvironment;
 @property (nonatomic, readonly) bool isTestingEnvironment;
 @property (nonatomic, readonly) bool useTempAuthKeys;
+@property (nonatomic, readonly) bool forceLocalDNS;
 @property (nonatomic) int32_t tempKeyExpiration;
 
 @property (nonatomic, copy) id<MTTcpConnectionInterface> _Nonnull (^ _Nullable makeTcpConnectionInterface)(id<MTTcpConnectionInterfaceDelegate> _Nonnull delegate, dispatch_queue_t _Nonnull delegateQueue);
@@ -91,7 +92,7 @@
 
 + (void)copyAuthInfoFrom:(id<MTKeychain> _Nonnull)keychain toTempKeychain:(id<MTKeychain> _Nonnull)tempKeychain;
 
-- (instancetype _Nonnull)initWithSerialization:(id<MTSerialization> _Nonnull)serialization encryptionProvider:(id<EncryptionProvider> _Nonnull)encryptionProvider apiEnvironment:(MTApiEnvironment * _Nonnull)apiEnvironment isTestingEnvironment:(bool)isTestingEnvironment useTempAuthKeys:(bool)useTempAuthKeys;
+- (instancetype _Nonnull)initWithSerialization:(id<MTSerialization> _Nonnull)serialization encryptionProvider:(id<EncryptionProvider> _Nonnull)encryptionProvider apiEnvironment:(MTApiEnvironment * _Nonnull)apiEnvironment isTestingEnvironment:(bool)isTestingEnvironment useTempAuthKeys:(bool)useTempAuthKeys forceLocalDNS:(bool)forceLocalDNS;
 
 - (void)performBatchUpdates:(void (^ _Nonnull)())block;
 

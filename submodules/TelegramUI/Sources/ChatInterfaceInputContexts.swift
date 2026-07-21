@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import TelegramCore
@@ -265,7 +266,7 @@ func inputTextPanelStateForChatPresentationInterfaceState(_ chatPresentationInte
                     }
                 } else {
                     stickersAreEmoji = stickersAreEmoji || hasForward
-                    if stickersEnabled {
+                    if stickersEnabled, !SGSimpleSettings.shared.forceEmojiTab {
                         accessoryItems.append(.input(isEnabled: true, inputMode: stickersAreEmoji ? .emoji : .stickers))
                     } else {
                         accessoryItems.append(.input(isEnabled: true, inputMode: .emoji))

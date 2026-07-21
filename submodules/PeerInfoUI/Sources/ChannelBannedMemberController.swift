@@ -785,11 +785,11 @@ public func channelBannedMemberController(context: AccountContext, updatedPresen
                 updatedPresentationData: updatedPresentationData,
                 configuration: ChatTimerScreen.Configuration(
                     style: .default,
-                    picker: .date,
+                    picker: .dateTime, // MARK: Swiftgram
                     currentValue: Int32(Date().timeIntervalSince1970),
                     minimumDate: Date(),
                     maximumDate: Date(timeIntervalSince1970: Double(Int32.max - 1)),
-                    pickerValueMapping: .roundDateToDaysUTC,
+                    pickerValueMapping: .rawTimestamp, // MARK: Swiftgram
                     primaryActionTitle: { strings, _, _ in
                         strings.Wallpaper_Set
                     }

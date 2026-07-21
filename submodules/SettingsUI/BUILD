@@ -1,15 +1,25 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+sgdeps = [
+    "//submodules/BuildConfig:BuildConfig",
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+    "//Swiftgram/SGStrings:SGStrings"
+]
+
+sgsrc = [
+    "//Swiftgram/SGRecentSessionApiId:SGRecentSessionApiId",
+]
+
 swift_library(
     name = "SettingsUI",
     module_name = "SettingsUI",
-    srcs = glob([
+    srcs = sgsrc + glob([
 		"Sources/**/*.swift",
     ]),
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgdeps + [
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/AsyncDisplayKit:AsyncDisplayKit",
         "//submodules/Display:Display",

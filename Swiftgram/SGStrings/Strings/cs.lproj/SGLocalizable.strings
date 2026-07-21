@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "Nastavení obsahu";
+
+"Settings.Tabs.Header" = "ZÁLOŽKY";
+"Settings.Tabs.HideTabBar" = "Skrýt záložku";
+"Settings.Tabs.ShowContacts" = "Zobrazit záložku kontaktů";
+"Settings.Tabs.ShowNames" = "Zobrazit názvy záložek";
+
+"Settings.Folders.BottomTab" = "Složky dole";
+"Settings.Folders.BottomTabStyle" = "Styl dolní složky";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "Skrýt \"%@\"";
+"Settings.Folders.RememberLast" = "Otevřít poslední složku";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram otevře poslední použitou složku po restartu nebo přepnutí účtu.";
+
+"Settings.Folders.CompactNames" = "Menší vzdálenost";
+"Settings.Folders.AllChatsTitle" = "Název \"Všechny chaty\"";
+"Settings.Folders.AllChatsTitle.short" = "Krátký";
+"Settings.Folders.AllChatsTitle.long" = "Dlouhá";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Výchozí";
+
+
+"Settings.ChatList.Header" = "CHAT SEZNAM";
+"Settings.CompactChatList" = "Kompaktní seznam chatu";
+
+"Settings.Profiles.Header" = "PROFILES";
+
+"Settings.Stories.Hide" = "Skrýt příběhy";
+"Settings.Stories.WarnBeforeView" = "Upozornit před zobrazením";
+"Settings.Stories.DisableSwipeToRecord" = "Zakázat přejetí prstem pro nahrávání";
+
+"Settings.Translation.QuickTranslateButton" = "Tlačítko pro rychlý překlad";
+
+"Stories.Warning.Author" = "Autor";
+"Stories.Warning.ViewStory" = "Zobrazit příběh?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ BUDE VIDĚT, že jste si prohlédl jejich příběh.";
+"Stories.Warning.NoticeStealth" = "%@ bude moci vidět, že jste si prohlédl jejich příběh.";
+
+"Settings.Photo.Quality.Notice" = "Kvalita odchozích fotografií a foto-příběhů.";
+"Settings.Photo.SendLarge" = "Poslat velké fotografie";
+"Settings.Photo.SendLarge.Notice" = "Zvýšit limit velikosti komprimovaných obrázků na 2560px.";
+
+"Settings.VideoNotes.Header" = "KRUHOVÁ VIDEA";
+"Settings.VideoNotes.StartWithRearCam" = "Začít s zadní kamerou";
+
+"Settings.CustomColors.Header" = "BARVY ÚČTU";
+"Settings.CustomColors.Saturation" = "SYTOST";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Nastavit sytost na 0%% pro vypnutí barev účtu.";
+
+"Settings.UploadsBoost" = "Zrychlení nahrávání";
+"Settings.DownloadsBoost" = "Zrychlení stahování";
+"Settings.DownloadsBoost.Notice" = "Zvyšuje počet paralelních připojení a velikost částí souboru. Pokud vaše síť nezvládá zátěž, vyzkoušejte různé možnosti, které vyhovují vašemu připojení.";
+"Settings.DownloadsBoost.none" = "Vypnuto";
+"Settings.DownloadsBoost.medium" = "Střední";
+"Settings.DownloadsBoost.maximum" = "Maximální";
+
+"Settings.ShowProfileID" = "Zobrazit ID profilu";
+"Settings.ShowDC" = "Zobrazit Data Center";
+"Settings.ShowCreationDate" = "Zobrazit datum vytvoření chatu";
+"Settings.ShowCreationDate.Notice" = "Datum vytvoření chatu může být neznámé pro některé chaty.";
+
+"Settings.ShowRegDate" = "Zobrazit datum registrace";
+"Settings.ShowRegDate.Notice" = "Datum registrace je přibližné.";
+
+"Settings.SendWithReturnKey" = "Poslat klávesou \"enter\"";
+"Settings.HidePhoneInSettingsUI" = "Skrýt telefon v nastavení";
+"Settings.HidePhoneInSettingsUI.Notice" = "Toto skryje vaše telefonní číslo pouze v nastavení rozhraní. Chcete-li je skryt před ostatními, přejděte na Soukromí a bezpečnost.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "Zamknout za 5 sekund";
+
+"ProxySettings.UseSystemDNS" = "Použít systémové DNS";
+"ProxySettings.UseSystemDNS.Notice" = "Použít systémové DNS k obejití časového limitu, pokud nemáte přístup k Google DNS";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "Nepotřebujete **%@**!";
+"Common.RestartRequired" = "Vyžadován restart";
+"Common.RestartNow" = "Restartovat nyní";
+"Common.OpenTelegram" = "Otevřít Telegram";
+"Common.UseTelegramForPremium" = "Vezměte prosím na vědomí, že abyste získali Premium, musíte použít oficiální aplikaci Telegram . Jakmile získáte Telegram Premium, všechny jeho funkce budou k dispozici ve Swiftgramu.";
+
+"Message.HoldToShowOrReport" = "Podržte pro zobrazení nebo nahlášení.";
+
+"Auth.AccountBackupReminder" = "Ujistěte se, že máte záložní přístupovou metodu. Uchovávejte SIM pro SMS nebo další přihlášenou relaci, abyste předešli zamčení.";
+"Auth.UnofficialAppCodeTitle" = "Kód můžete získat pouze s oficiální aplikací";
+
+"Settings.SmallReactions" = "Malé reakce";
+"Settings.HideReactions" = "Skrýt reakce";
+
+"ContextMenu.SaveToCloud" = "Uložit do cloudu";
+"ContextMenu.SelectFromUser" = "Vybrat od autora";
+
+"Settings.ContextMenu" = "KONTEXTOVÉ MENU";
+"Settings.ContextMenu.Notice" = "Zakázané položky budou dostupné v podmenu \"Swiftgram\".";
+
+
+"Settings.ChatSwipeOptions" = "Možnosti potáhnutí v seznamu chatu";
+"Settings.DeleteChatSwipeOption" = "Přejeďte pro smazání chatu";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Táhnout na další nepřečtený kanál";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Přetáhněte na další téma";
+"Settings.GalleryCamera" = "Fotoaparát v galerii";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "Tlačítko \"%@\"";
+"Settings.SnapDeletionEffect" = "Účinky odstranění zpráv";
+
+"Settings.Stickers.Size" = "VELIKOST";
+"Settings.Stickers.Timestamp" = "Zobrazit časové razítko";
+
+"Settings.RecordingButton" = "Tlačítko nahrávání hlasu";
+
+"Settings.DefaultEmojisFirst" = "Upřednostněte standardní emoji";
+"Settings.DefaultEmojisFirst.Notice" = "Zobrazit standardní emoji před prémiovými na klávesnici s emoji";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "vytvořeno: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "Připojeno k %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Registrováno";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Dvojitým klepnutím upravte zprávu";
+
+"Settings.wideChannelPosts" = "Široké příspěvky ve skupinách";
+"Settings.ForceEmojiTab" = "Emoji klávesnice ve výchozím nastavení";
+
+"Settings.forceBuiltInMic" = "Vynutit vestavěný mikrofon zařízení";
+"Settings.forceBuiltInMic.Notice" = "Pokud je povoleno, aplikace použije pouze mikrofon zařízení, i když jsou připojeny sluchátka.";
+
+"Settings.hideChannelBottomButton" = "Skrýt panel dolního kanálu";
+
+"Settings.CallConfirmation" = "Potvrzení hovoru";
+"Settings.CallConfirmation.Notice" = "Swiftgram požádá o vaši potvrzení před uskutečněním hovoru.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Uskutečnit hovor?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Uskutečnit video hovor?";
+
+"MutualContact.Label" = "vzájemný kontakt";
+
+"Settings.swipeForVideoPIP" = "Video PIP s přetahováním";
+"Settings.swipeForVideoPIP.Notice" = "Pokud je povoleno, poslání videa jej otevře v režimu Obraz v obraze.";

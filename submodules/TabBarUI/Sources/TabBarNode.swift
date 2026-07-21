@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -720,6 +721,11 @@ class TabBarNode: ASDisplayNode, ASGestureRecognizerDelegate {
                 node.contextImageNode.frame = CGRect(origin: CGPoint(), size: nodeFrame.size)
                 node.contextTextImageNode.frame = CGRect(origin: CGPoint(), size: nodeFrame.size)
                                 
+
+                node.imageNode.frame = CGRect(origin: CGPoint(x: 0.0, y: 6.0), size: nodeFrame.size)
+                node.textImageNode.frame = CGRect(origin: CGPoint(), size: CGSize())
+                
+                
                 let scaleFactor: CGFloat = horizontal ? 0.8 : 1.0
                 node.animationContainerNode.subnodeTransform = CATransform3DMakeScale(scaleFactor, scaleFactor, 1.0)
                 let animationOffset: CGPoint = self.tabBarItems[i].item.animationOffset

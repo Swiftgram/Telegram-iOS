@@ -11,7 +11,7 @@
 # with project.yml. Do NOT add the container target or SnapshotPreviews here.
 name: tgwatch
 options:
-  bundleIdPrefix: ph.telegra   # ph.telegra.Telegraph.watchkitapp, child of the main Telegram app id
+  bundleIdPrefix: app.swiftgram   # ph.telegra.Telegraph.watchkitapp, child of the main Telegram app id
   developmentLanguage: en
   deploymentTarget:
     watchOS: "26.0"
@@ -51,12 +51,12 @@ targets:
     info:
       path: tgwatch Watch App/Info.plist
       properties:
-        CFBundleDisplayName: Telegram
-        CFBundleIconName: AppIcon
+        CFBundleDisplayName: Swiftgram
+        CFBundleIconName: Swiftgram
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         WKApplication: true
-        WKCompanionAppBundleIdentifier: ph.telegra.Telegraph
+        WKCompanionAppBundleIdentifier: app.swiftgram.ios
         # Intentional: keeps the watch app independently installable on the watch
         # while still shipping inside the Telegram IPA. Do not change to false.
         WKRunsIndependentlyOfCompanionApp: true
@@ -68,8 +68,8 @@ targets:
         NSLocationWhenInUseUsageDescription: Share your current location in chats.
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: ph.telegra.Telegraph.watchkitapp
-        DEVELOPMENT_TEAM: C67CF9S4VU
+        PRODUCT_BUNDLE_IDENTIFIER: app.swiftgram.ios.watchkitapp
+        DEVELOPMENT_TEAM: XQN86NH3QN
         TARGETED_DEVICE_FAMILY: "4"
         GENERATE_INFOPLIST_FILE: "NO"
         LD_RUNPATH_SEARCH_PATHS: $(inherited) @executable_path/Frameworks

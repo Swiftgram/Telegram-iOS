@@ -57,6 +57,47 @@ struct AvatarView: View {
     }
 }
 
+// MARK: Swiftgram
+struct SenderNameLabelView: View {
+    let name: String
+    var avatar: AvatarVisual? = nil
+    var colorIndex: Int? = nil
+    var onRequestDownload: (Int) -> Void = { _ in }
+    var onCancelDownload: (Int) -> Void = { _ in }
+
+    private let avatarSize: CGFloat = 12
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 3) {
+            if let avatar {
+                AvatarView(
+                    avatar: avatar,
+                    onRequestDownload: onRequestDownload,
+                    onCancelDownload: onCancelDownload,
+                    size: avatarSize
+                )
+            } else {
+                ZStack {
+                    Circle().fill(color)
+                    Text(String(avatarInitials(from: name).prefix(1)))
+                        .font(.system(size: avatarSize * 0.5, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+                .frame(width: avatarSize, height: avatarSize)
+            }
+
+            Text(name)
+                .font(.caption2)
+                .foregroundStyle(color)
+        }
+    }
+
+    private var color: Color {
+        avatarPalette[colorIndex ?? paletteIndex(forName: name)]
+    }
+}
+//
+
 #if DEBUG
 #Preview("Avatar — initials") {
     AvatarView(avatar: AvatarVisual(kind: .normal, initials: "JS", colorIndex: 0, photoFileId: nil, photoLocalPath: nil, mini: nil))

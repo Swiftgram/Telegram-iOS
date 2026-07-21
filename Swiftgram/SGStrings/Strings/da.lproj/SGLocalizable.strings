@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "Indholdindstillinger";
+
+"Settings.Tabs.Header" = "Tabs";
+"Settings.Tabs.HideTabBar" = "Skjul Tabbjælke";
+"Settings.Tabs.ShowContacts" = "Kontakte Tab anzeigen";
+"Settings.Tabs.ShowNames" = "Tabnamen anzeigen";
+
+"Settings.Folders.BottomTab" = "Ordner - unten";
+"Settings.Folders.BottomTabStyle" = "Bundmapper Stil";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "Skjul \"%@\"";
+"Settings.Folders.RememberLast" = "Åbn sidste mappe";
+"Settings.Folders.RememberLast.Notice" = "Swiftgram vil åbne den sidst brugte mappe efter genstart eller konto skift.";
+
+"Settings.Folders.CompactNames" = "Mindre afstand";
+"Settings.Folders.AllChatsTitle" = "\"Alle Chats\" titel";
+"Settings.Folders.AllChatsTitle.short" = "Kort";
+"Settings.Folders.AllChatsTitle.long" = "Lang";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Standard";
+
+
+"Settings.ChatList.Header" = "CHAT LISTE";
+"Settings.CompactChatList" = "Kompakt Chatliste";
+
+"Settings.Profiles.Header" = "PROFILES";
+
+"Settings.Stories.Hide" = "Skjul Historier";
+"Settings.Stories.WarnBeforeView" = "Spørg før visning";
+"Settings.Stories.DisableSwipeToRecord" = "Deaktiver swipe for at optage";
+
+"Settings.Translation.QuickTranslateButton" = "Schnellübersetzen-Schaltfläche";
+
+"Stories.Warning.Author" = "Forfatter";
+"Stories.Warning.ViewStory" = "Se Historie?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ VIL KUNNE SE at du har set deres Historie.";
+"Stories.Warning.NoticeStealth" = "%@ Vil ikke kunne se, at du har set deres Historie.";
+
+"Settings.Photo.Quality.Notice" = "Kvalitet af udgående fotos og foto-historier.";
+"Settings.Photo.SendLarge" = "Send store fotos";
+"Settings.Photo.SendLarge.Notice" = "Forøg sidestørrelsesgrænsen på komprimerede billeder til 2560px.";
+
+"Settings.VideoNotes.Header" = "RUNDE VIDEOS";
+"Settings.VideoNotes.StartWithRearCam" = "Starte mit umgedrehter Kamera";
+
+"Settings.CustomColors.Header" = "KONTOFARVER";
+"Settings.CustomColors.Saturation" = "MÆTNING";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Indstil mætning til 0%% for at deaktivere konto farver.";
+
+"Settings.UploadsBoost" = "Upload Boost";
+"Settings.DownloadsBoost" = "Download Boost";
+"Settings.DownloadsBoost.Notice" = "Øger antallet af parallelle forbindelser og størrelsen på filstykker. Hvis dit netværk ikke kan håndtere belastningen, kan du prøve forskellige muligheder, der passer til din forbindelse.";
+"Settings.DownloadsBoost.none" = "Deaktiveret";
+"Settings.DownloadsBoost.medium" = "Mellem";
+"Settings.DownloadsBoost.maximum" = "Maksimum";
+
+"Settings.ShowProfileID" = "Profil-ID anzeigen";
+"Settings.ShowDC" = "Vis Datacenter";
+"Settings.ShowCreationDate" = "Vis Chattens Oprettelsesdato";
+"Settings.ShowCreationDate.Notice" = "Oprettelsesdatoen kan være ukendt for nogle chats.";
+
+"Settings.ShowRegDate" = "Vis Registreringsdato";
+"Settings.ShowRegDate.Notice" = "Registreringsdatoen er omtrentlig.";
+
+"Settings.SendWithReturnKey" = "Send med \"return\" tasten";
+"Settings.HidePhoneInSettingsUI" = "Telefon in den Einstellungen ausblenden";
+"Settings.HidePhoneInSettingsUI.Notice" = "Deine Nummer wird nur in der Benutzeroberfläche versteckt. Um sie vor anderen zu verbergen, verwende bitte die Privatsphäre-Einstellungen.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "Hvis væk i 5 sekunder";
+
+"ProxySettings.UseSystemDNS" = "Brug system DNS";
+"ProxySettings.UseSystemDNS.Notice" = "Brug system DNS for at omgå timeout hvis du ikke har adgang til Google DNS";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "Du **behøver ikke** %@!";
+"Common.RestartRequired" = "Genstart krævet";
+"Common.RestartNow" = "Genstart Nu";
+"Common.OpenTelegram" = "Åben Telegram";
+"Common.UseTelegramForPremium" = "Bemærk venligst, at for at få Telegram Premium skal du bruge den officielle Telegram app. Når du har fået Telegram Premium, vil alle dens funktioner blive tilgængelige i Swiftgram.";
+
+"Message.HoldToShowOrReport" = "Hold for at Vise eller Rapportere.";
+
+"Auth.AccountBackupReminder" = "Sørg for, at du har en backup adgangsmetode. Behold et SIM til SMS eller en ekstra session logget ind for at undgå at blive låst ude.";
+"Auth.UnofficialAppCodeTitle" = "Du kan kun få koden med den officielle app";
+
+"Settings.SmallReactions" = "Små reaktioner";
+"Settings.HideReactions" = "Skjul Reaktioner";
+
+"ContextMenu.SaveToCloud" = "In Cloud speichern";
+"ContextMenu.SelectFromUser" = "Vælg fra Forfatter";
+
+"Settings.ContextMenu" = "KONTEKSTMENU";
+"Settings.ContextMenu.Notice" = "Deaktiverede indgange vil være tilgængelige i \"Swiftgram\" undermenuen.";
+
+
+"Settings.ChatSwipeOptions" = "Chat List Swipe Options";
+"Settings.DeleteChatSwipeOption" = "Svejp for at slette chat";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Træk til Næste U’læst Kanal";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Træk for at gå til næste emne";
+"Settings.GalleryCamera" = "Kamera i Galleri";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\"%@\" Knap";
+"Settings.SnapDeletionEffect" = "Besked Sletnings Effekter";
+
+"Settings.Stickers.Size" = "STØRRELSE";
+"Settings.Stickers.Timestamp" = "Vis tidsstempel";
+
+"Settings.RecordingButton" = "Lydoptageknap";
+
+"Settings.DefaultEmojisFirst" = "Prioriter standard emojis";
+"Settings.DefaultEmojisFirst.Notice" = "Vis standard emojis før premium i emoji-tastaturet";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "oprettet: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "Tilmeldt %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Registreret";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Dobbelt tryk for at redigere besked";
+
+"Settings.wideChannelPosts" = "Brede indlæg i kanaler";
+"Settings.ForceEmojiTab" = "Emoji-tastatur som standard";
+
+"Settings.forceBuiltInMic" = "Tving enhedsmikrofon";
+"Settings.forceBuiltInMic.Notice" = "Hvis aktiveret, vil appen kun bruge enhedens mikrofon, selvom hovedtelefoner er tilsluttet.";
+
+"Settings.hideChannelBottomButton" = "Skjul Kanal Bund Panel";
+
+"Settings.CallConfirmation" = "Opkaldsbekræftelse";
+"Settings.CallConfirmation.Notice" = "Swiftgram vil bede om din bekræftelse, før der foretages et opkald.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Foretage et opkald?";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Foretage et videoopkald?";
+
+"MutualContact.Label" = "fælles kontakt";
+
+"Settings.swipeForVideoPIP" = "Video PIP med Swipe";
+"Settings.swipeForVideoPIP.Notice" = "Hvis aktiveret, vil sletning af video åbne den i billede-i-billede-tilstand.";

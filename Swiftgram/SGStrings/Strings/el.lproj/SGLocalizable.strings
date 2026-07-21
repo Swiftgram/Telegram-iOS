@@ -1,0 +1,152 @@
+"Settings.ContentSettings" = "Ρυθμίσεις Περιεχομένου";
+
+"Settings.Tabs.Header" = "TABS";
+"Settings.Tabs.HideTabBar" = "Απόκρυψη γραμμής καρτελών";
+"Settings.Tabs.ShowContacts" = "Εμφάνιση Καρτέλας Επαφών";
+"Settings.Tabs.ShowNames" = "Show Tab Names";
+
+"Settings.Folders.BottomTab" = "Φάκελοι στο κάτω μέρος";
+"Settings.Folders.BottomTabStyle" = "Ύφος Κάτω Φακέλων";
+
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.ios" = "iOS";
+/* Do not translate */
+"Settings.Folders.BottomTabStyle.telegram" = "Telegram";
+/* Example: Hide "All Chats" */
+"Settings.Folders.AllChatsHidden" = "Απόκρυψη \"%@\"";
+"Settings.Folders.RememberLast" = "Άνοιγμα Τελευταίου Φακέλου";
+"Settings.Folders.RememberLast.Notice" = "Το Swiftgram θα ανοίξει τον τελευταίο φάκελο όταν επανεκκινήσετε την εφαρμογή ή αλλάξετε λογαριασμούς.";
+
+"Settings.Folders.CompactNames" = "Μικρότερη απόσταση";
+"Settings.Folders.AllChatsTitle" = "\"Όλες οι συνομιλίες\" τίτλος";
+"Settings.Folders.AllChatsTitle.short" = "Σύντομο";
+"Settings.Folders.AllChatsTitle.long" = "Εκτενές";
+/* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
+"Settings.Folders.AllChatsTitle.none" = "Προεπιλογή";
+
+
+"Settings.ChatList.Header" = "ΚΑΤΑΛΟΓΟΣ ΤΥΠΟΥ";
+"Settings.CompactChatList" = "Συμπαγής Λίστα Συνομιλίας";
+
+"Settings.Profiles.Header" = "PROFILES";
+
+"Settings.Stories.Hide" = "Απόκρυψη Ιστοριών";
+"Settings.Stories.WarnBeforeView" = "Ερώτηση Πριν Την Προβολή";
+"Settings.Stories.DisableSwipeToRecord" = "Απενεργοποίηση ολίσθησης για εγγραφή";
+
+"Settings.Translation.QuickTranslateButton" = "Γρήγορη μετάφραση κουμπί";
+
+"Stories.Warning.Author" = "Συγγραφέας";
+"Stories.Warning.ViewStory" = "Προβολή Ιστορίας?";
+/* Author will be able to see that you viewed their Story */
+"Stories.Warning.Notice" = "%@ ΘΑ ΠΡΕΠΕΙ ΝΑ ΒΛΕΠΕ ότι έχετε δει την Ιστορία τους.";
+"Stories.Warning.NoticeStealth" = "%@ δεν θα είναι σε θέση να δείτε ότι έχετε δει την Ιστορία τους.";
+
+"Settings.Photo.Quality.Notice" = "Ποιότητα των ανεβασμένων φωτογραφιών και ιστοριών.";
+"Settings.Photo.SendLarge" = "Αποστολή Μεγάλων Φωτογραφιών";
+"Settings.Photo.SendLarge.Notice" = "Αυξήστε το πλευρικό όριο στις συμπιεσμένες εικόνες στα 2560px.";
+
+"Settings.VideoNotes.Header" = "ΤΡΟΠΟΣ ΒΙΝΤΕΟ";
+"Settings.VideoNotes.StartWithRearCam" = "Έναρξη με πίσω κάμερα";
+
+"Settings.CustomColors.Header" = "ΧΡΩΜΑΤΑ ΛΟΓΑΡΙΑΣΜΟΥ";
+"Settings.CustomColors.Saturation" = "ΑΣΦΑΛΙΣΗ";
+/* Make sure to escape Percentage sign % */
+"Settings.CustomColors.Saturation.Notice" = "Ορίστε σε 0%% για να απενεργοποιήσετε τα χρώματα του λογαριασμού.";
+
+"Settings.UploadsBoost" = "Ενίσχυση Αποστολής";
+"Settings.DownloadsBoost" = "Ενίσχυση Λήψης";
+"Settings.DownloadsBoost.Notice" = "Αυξάνει τον αριθμό των παράλληλων συνδέσεων και το μέγεθος των κομματιών αρχείου. Σε περίπτωση που το δίκτυό σας δεν μπορεί να διαχειριστεί το φορτίο, δοκιμάστε διαφορετικές επιλογές που ταιριάζουν στη σύνδεσή σας.";
+"Settings.DownloadsBoost.none" = "Απενεργοποιημένο";
+"Settings.DownloadsBoost.medium" = "Μεσαίο";
+"Settings.DownloadsBoost.maximum" = "Μέγιστο";
+
+"Settings.ShowProfileID" = "Εμφάνιση Αναγνωριστικού Προφίλ";
+"Settings.ShowDC" = "Εμφάνιση Κέντρου Δεδομένων";
+"Settings.ShowCreationDate" = "Εμφάνιση Ημερομηνίας Δημιουργίας Συνομιλίας";
+"Settings.ShowCreationDate.Notice" = "Η ημερομηνία δημιουργίας μπορεί να είναι άγνωστη για μερικές συνομιλίες.";
+
+"Settings.ShowRegDate" = "Εμφάνιση Ημερομηνίας Εγγραφής";
+"Settings.ShowRegDate.Notice" = "Η ημερομηνία εγγραφής είναι κατά προσέγγιση.";
+
+"Settings.SendWithReturnKey" = "Αποστολή με κλειδί \"επιστροφή\"";
+"Settings.HidePhoneInSettingsUI" = "Απόκρυψη τηλεφώνου στις ρυθμίσεις";
+"Settings.HidePhoneInSettingsUI.Notice" = "Αυτό θα κρύψει μόνο τον αριθμό τηλεφώνου σας από τη διεπαφή ρυθμίσεων. Για να τον αποκρύψετε από άλλους, μεταβείτε στο Privacy and Security.";
+
+"PasscodeSettings.AutoLock.InFiveSeconds" = "Εάν είναι μακριά για 5 δευτερόλεπτα";
+
+"ProxySettings.UseSystemDNS" = "Χρήση συστήματος DNS";
+"ProxySettings.UseSystemDNS.Notice" = "Χρησιμοποιήστε το σύστημα DNS για να παρακάμψετε το χρονικό όριο αν δεν έχετε πρόσβαση στο Google DNS";
+
+/* Preserve markdown asterisks! Example: You **don't** need Telegram Premium! */
+"Common.NoTelegramPremiumNeeded" = "Du **brauchst kein** %@!";
+"Common.RestartRequired" = "Απαιτείται επανεκκίνηση";
+"Common.RestartNow" = "Επανεκκίνηση Τώρα";
+"Common.OpenTelegram" = "Άνοιγμα Telegram";
+"Common.UseTelegramForPremium" = "Παρακαλώ σημειώστε ότι για να πάρετε Telegram Premium, θα πρέπει να χρησιμοποιήσετε την επίσημη εφαρμογή Telegram. Μόλις λάβετε Telegram Premium, όλα τα χαρακτηριστικά του θα είναι διαθέσιμα στο Swiftgram.";
+
+"Message.HoldToShowOrReport" = "Κρατήστε για προβολή ή αναφορά.";
+
+"Auth.AccountBackupReminder" = "Βεβαιωθείτε ότι έχετε μια μέθοδο πρόσβασης αντιγράφων ασφαλείας. Κρατήστε μια SIM για SMS ή μια πρόσθετη συνεδρία συνδεδεμένη για να αποφύγετε να κλειδωθεί.";
+"Auth.UnofficialAppCodeTitle" = "Μπορείτε να πάρετε τον κωδικό μόνο με επίσημη εφαρμογή";
+
+"Settings.SmallReactions" = "Μικρές Αντιδράσεις";
+"Settings.HideReactions" = "Απόκρυψη Αντιδράσεων";
+
+"ContextMenu.SaveToCloud" = "Αποθήκευση στο σύννεφο";
+"ContextMenu.SelectFromUser" = "Επιλέξτε από τον Συγγραφέα";
+
+"Settings.ContextMenu" = "KONTEXTMENÜ";
+"Settings.ContextMenu.Notice" = "Deaktivierte Einträge sind im 'Swiftgram'-Untermenü verfügbar.";
+
+
+"Settings.ChatSwipeOptions" = "Επιλογές Συρσίματος Λίστας Συνομιλίας";
+"Settings.DeleteChatSwipeOption" = "Σύρετε για Διαγραφή Συνομιλίας";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextChannelSameLocationSwipeProgress */
+"Settings.PullToNextChannel" = "Τραβήξτε στο επόμενο μη αναγνωσμένο κανάλι";
+/* Re-word like this string on offical app https://translations.telegram.org/en/ios/groups_and_channels/Chat.NextUnreadTopicSwipeProgress */
+"Settings.PullToNextTopic" = "Τραβήξτε για το Επόμενο Θέμα";
+"Settings.GalleryCamera" = "Κάμερα στη Γκαλερί";
+/* "Send Message As..." button */
+"Settings.SendAsButton" = "\" Κουμπί%@\"";
+"Settings.SnapDeletionEffect" = "Εφέ Διαγραφής Μηνύματος";
+
+"Settings.Stickers.Size" = "ΜΕΓΕΘΟΣ";
+"Settings.Stickers.Timestamp" = "Εμφάνιση Χρονοσήμανσης";
+
+"Settings.RecordingButton" = "Πλήκτρο Ηχογράφησης Φωνής";
+
+"Settings.DefaultEmojisFirst" = "Δώστε προτεραιότητα στα τυπικά emojis";
+"Settings.DefaultEmojisFirst.Notice" = "Εμφανίστε τυπικά emojis πριν από premium στο πληκτρολόγιο emojis";
+
+/* Date when chat was created. "created: 24 May 2016" */
+"Chat.Created" = "δημιουργήθηκε: %@";
+
+/* Date when user joined the chat. "Joined Swiftgram Chat" */
+"Chat.JoinedDateTitle" = "Εντάχθηκε στο %@";
+/* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
+"Chat.RegDate" = "Εγγεγραμμένος";
+
+"Settings.messageDoubleTapActionOutgoingEdit" = "Διπλό Πάτημα για Επεξεργασία Μηνύματος";
+
+"Settings.wideChannelPosts" = "Πλατείες αναρτήσεις στα κανάλια";
+"Settings.ForceEmojiTab" = "Πληκτρολόγιο Emoji από προεπιλογή";
+
+"Settings.forceBuiltInMic" = "Εξαναγκασμός Μικροφώνου Συσκευής";
+"Settings.forceBuiltInMic.Notice" = "Εάν ενεργοποιηθεί, η εφαρμογή θα χρησιμοποιεί μόνο το μικρόφωνο της συσκευής ακόμα και αν είναι συνδεδεμένα ακουστικά.";
+
+"Settings.hideChannelBottomButton" = "Απόκρυψη Καναλιού Κάτω Πάνελ";
+
+"Settings.CallConfirmation" = "Επιβεβαίωση Κλήσης";
+"Settings.CallConfirmation.Notice" = "Η Swiftgram θα ζητήσει την επιβεβαίωσή σας πριν πραγματοποιήσει μια κλήση.";
+
+/* Confirmation before making a Call */
+"CallConfirmation.Audio.Title" = "Να κάνω μια Κλήση;";
+
+/* Confirmation before making a Video Call */
+"CallConfirmation.Video.Title" = "Να κάνω μια Βιντεοκλήση;";
+
+"MutualContact.Label" = "αμοιβαία επαφή";
+
+"Settings.swipeForVideoPIP" = "Βίντεο PIP με Swipe";
+"Settings.swipeForVideoPIP.Notice" = "Αν είναι ενεργοποιημένο, το σ swipe video θα το ανοίξει σε λειτουργία Εικόνα μέσα στην Εικόνα.";
