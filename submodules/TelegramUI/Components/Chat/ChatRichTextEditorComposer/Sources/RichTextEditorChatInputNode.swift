@@ -760,6 +760,12 @@ public final class RichTextEditorChatInputNode: ASDisplayNode, ChatRichTextInput
     public func resetInitialPrimaryLanguage() { self.editorView.resetInputPrimaryLanguage() }
     public var keyboardAppearance: UIKeyboardAppearance = .default
     public var autocorrectionType: UITextAutocorrectionType = .default
+    // MARK: Swiftgram
+    public var returnKeyType: UIReturnKeyType {
+        get { self.editorView.composerReturnKeyType }
+        set { self.editorView.composerReturnKeyType = newValue }
+    }
+    //
     public var inputTintColor: UIColor?
     public func didChangeInputTintColor() { }
     public var inputCaretColor: UIColor = .clear

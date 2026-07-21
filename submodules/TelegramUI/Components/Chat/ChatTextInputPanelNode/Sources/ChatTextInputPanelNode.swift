@@ -1302,7 +1302,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         self.textInputNodeClippingContainer.addSubnode(richTextInputNode.asNode)
         richTextInputNode.inputView.disablesInteractiveTransitionGestureRecognizer = true
         richTextInputNode.inputIsUserInteractionEnabled = !self.sendingTextDisabled
-        richTextInputNode.textView.returnKeyType = self.sendWithReturnKey ? .send : .default // MARK: Swiftgram
+        richTextInputNode.returnKeyType = self.sendWithReturnKey ? .send : .default // MARK: Swiftgram
         self.richTextInputNode = richTextInputNode
         richTextInputNode.emojiViewProvider = { [weak self] emoji in
             return self?.emojiViewProvider?(emoji)

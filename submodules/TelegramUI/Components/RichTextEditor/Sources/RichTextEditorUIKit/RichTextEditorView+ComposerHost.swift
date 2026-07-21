@@ -89,6 +89,14 @@ public extension RichTextEditorView {
     /// Re-arm the pre-selection so the next focus re-applies `initialInputPrimaryLanguage`.
     func resetInputPrimaryLanguage() { self.canvas.resetInitialPrimaryLanguage() }
 
+    // MARK: Swiftgram
+    /// The return-key appearance exposed by the canvas's `UITextInputTraits` conformance.
+    var composerReturnKeyType: UIReturnKeyType {
+        get { self.canvas.returnKeyType }
+        set { self.canvas.returnKeyType = newValue }
+    }
+    //
+
     /// First selection rect for a chat-flat range, in this view's coordinate space (scroll-adjusted via
     /// the view tree). The host converts further to its own `self.view` space. nil when the range covers
     /// no glyphs (the host then shows no emoji-suggestion popover).

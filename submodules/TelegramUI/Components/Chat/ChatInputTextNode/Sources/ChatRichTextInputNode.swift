@@ -195,6 +195,11 @@ public protocol ChatRichTextInputNode: AnyObject {
     /// Whether predictive text / autocorrection is enabled.
     var autocorrectionType: UITextAutocorrectionType { get set }
 
+    // MARK: Swiftgram
+    /// The system keyboard's return-key appearance.
+    var returnKeyType: UIReturnKeyType { get set }
+    //
+
     /// The editor's tint (caret + selection) color. `input`-prefixed because the impl is an
     /// `ASDisplayNode` whose own `tintColor` targets the wrapper, not the composed editor.
     var inputTintColor: UIColor? { get set }
@@ -801,6 +806,13 @@ final class ChatRichTextInputNodeImpl: ASDisplayNode, ChatRichTextInputNode {
         get { return self.textInputNodeImpl.textView.autocorrectionType }
         set { self.textInputNodeImpl.textView.autocorrectionType = newValue }
     }
+
+    // MARK: Swiftgram
+    var returnKeyType: UIReturnKeyType {
+        get { return self.textInputNodeImpl.textView.returnKeyType }
+        set { self.textInputNodeImpl.textView.returnKeyType = newValue }
+    }
+    //
 
     var inputTintColor: UIColor? {
         get { return self.textInputNodeImpl.tintColor }

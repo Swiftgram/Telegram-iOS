@@ -55,6 +55,7 @@ final class DocumentCanvasView: UIView {
     let root = BlockStack()
     var boxes: [CanvasBlock] { get { root.boxes } set { root.boxes = newValue } }
     var mapper: AttributedStringMapper
+    var returnKeyType: UIReturnKeyType = .default // MARK: Swiftgram
     /// The whole-document writing-direction override (the model side of `applyWritingDirectionOverride`).
     /// Mirrored into `Document.layoutDirection` by the façade getter; render-only auto-detection is separate.
     var layoutDirectionModel: DocumentLayoutDirection = .auto
