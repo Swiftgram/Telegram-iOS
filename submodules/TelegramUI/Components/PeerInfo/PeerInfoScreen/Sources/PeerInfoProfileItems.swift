@@ -172,22 +172,6 @@ func infoItems(
             ))
         }
         
-        if let linkedCommunityData = data.linkedCommunityData {
-            items[.community]!.append(PeerInfoScreenCommunityItem(
-                id: ItemCommunity,
-                context: context,
-                community: linkedCommunityData.peer,
-                chatCount: linkedCommunityData.cachedData?.linkedPeers.count,
-                action: {
-                    guard let controller = interaction.getController() else {
-                        return
-                    }
-                    let communityController = context.sharedContext.makeCommunityViewScreen(context: context, communityId: linkedCommunityData.peer.id, mode: .sheet)
-                    controller.push(communityController)
-                }
-            ))
-        }
-        
         if let phone = user.phone, !(SGSimpleSettings.shared.hidePhoneInSettings && isMyProfile) {
             let formattedPhone = formatPhoneNumber(context: context, number: phone)
             let label: String
