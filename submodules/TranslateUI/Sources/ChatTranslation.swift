@@ -179,6 +179,7 @@ public func translateMessageIds(context: AccountContext, messageIds: [EngineMess
                     if !messageIdsSet.contains(messageId) {
                         messageIdsToTranslate.append(messageId)
                         messageIdsSet.insert(messageId)
+                        messageDictToTranslate[messageId] = message.text
                     }
                 } else if let _ = message.richText {
                     if !messageIdsSet.contains(messageId) {
