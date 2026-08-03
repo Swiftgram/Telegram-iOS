@@ -25,7 +25,7 @@ extension PeerInfoScreenNode {
                 return
             }
             
-            if strongSelf.isMyProfile {
+            if strongSelf.isMyProfile || strongSelf.isSettings { // MARK: Swiftgram
                 navigationController.pushViewController(c)
             } else {
                 var updatedControllers = navigationController.viewControllers
@@ -85,7 +85,7 @@ extension PeerInfoScreenNode {
                     return
                 }
                 if let controller = self.controller, let navigationController = controller.navigationController as? NavigationController {
-                    self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(peer)))
+                    self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(peer), keepStack: .always)) // MARK: Swiftgram
                 }
             })
         case .recentCalls:
@@ -386,7 +386,7 @@ extension PeerInfoScreenNode {
         |> deliverOnMainQueue).startStrict(next: { [weak controller] peer in
             controller?.dismiss()
             if let peer = peer, let navigationController = navigationController {
-                context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: context, chatLocation: .peer(peer)))
+                context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: context, chatLocation: .peer(peer), keepStack: .always)) // MARK: Swiftgram
             }
         }))
     }
