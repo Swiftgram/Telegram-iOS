@@ -410,11 +410,11 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                     strongSelf.chatListDisplayNode.effectiveContainerNode.currentItemNode.scrollToPosition(.top(adjustForTempInset: false))
                 case let .known(offset):
                     // MARK: Swiftgram
-                    let sgAllChatsHiddden = SGSimpleSettings.shared.allChatsHidden
                     var mainContainerNode_availableFilters = strongSelf.chatListDisplayNode.mainContainerNode.availableFilters
-                    if sgAllChatsHiddden {
+                    if SGSimpleSettings.shared.allChatsHidden {
                         mainContainerNode_availableFilters.removeAll { $0 == .all }
                     }
+                    //
                     let isFirstFilter = strongSelf.chatListDisplayNode.effectiveContainerNode.currentItemNode.chatListFilter == mainContainerNode_availableFilters.first?.filter
                     
                     if offset <= ChatListNavigationBar.searchScrollHeight + 1.0 && strongSelf.chatListDisplayNode.inlineStackContainerNode != nil {
@@ -422,9 +422,10 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                     } else if offset <= ChatListNavigationBar.searchScrollHeight + 1.0 && !isFirstFilter {
                         // MARK: Swiftgram
                         var effectiveContainerNode_availableFilters = strongSelf.chatListDisplayNode.mainContainerNode.availableFilters
-                        if sgAllChatsHiddden {
+                        if SGSimpleSettings.shared.allChatsHidden {
                             effectiveContainerNode_availableFilters.removeAll { $0 == .all }
                         }
+                        //
                         let firstFilter = effectiveContainerNode_availableFilters.first ?? .all
                         let targetTab: ChatListFilterTabEntryId
                         switch firstFilter {
