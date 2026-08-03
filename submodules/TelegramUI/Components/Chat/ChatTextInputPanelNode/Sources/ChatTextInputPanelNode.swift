@@ -361,9 +361,6 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
     
     private let hapticFeedback = HapticFeedback()
     
-    // MARK: Swiftgram
-    private var sendWithReturnKey: Bool
-    private var sendWithReturnKeyDisposable: Disposable?
 //    private var toolbarHostingController: UIViewController? //Any? //  UIHostingController<ChatToolbarView>?
     private var toolbarNode: ASDisplayNode?
     
@@ -720,12 +717,6 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         self.presentationContext = presentationContext
         
         self.textInputViewInternalInsets = UIEdgeInsets(top: 5.0, left: 12.0, bottom: 4.0, right: 11.0)
-
-
-        // MARK: Swiftgram
-        self.sendWithReturnKey = SGSimpleSettings.shared.sendWithReturnKey // MARK: Swiftgram
-        //
-
         var hasSpoilers = true
         var hasQuotes = true
         if presentationInterfaceState.chatLocation.peerId?.namespace == Namespaces.Peer.SecretChat {
@@ -1149,7 +1140,6 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
     
     deinit {
         self.statusDisposable.dispose()
-        self.sendWithReturnKeyDisposable?.dispose()
         self.tooltipController?.dismiss()
         self.currentEmojiSuggestion?.disposable.dispose()
     }
@@ -1302,7 +1292,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         self.textInputNodeClippingContainer.addSubnode(richTextInputNode.asNode)
         richTextInputNode.inputView.disablesInteractiveTransitionGestureRecognizer = true
         richTextInputNode.inputIsUserInteractionEnabled = !self.sendingTextDisabled
-        richTextInputNode.returnKeyType = self.sendWithReturnKey ? .send : .default // MARK: Swiftgram
+        richTextInputNode.returnKeyType = SGSimpleSettings.shared.sendWithReturnKey ? .send : .default // MARK: Swiftgram
         self.richTextInputNode = richTextInputNode
         richTextInputNode.emojiViewProvider = { [weak self] emoji in
             return self?.emojiViewProvider?(emoji)
@@ -5408,10 +5398,11 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         self.updateActivity()
         
         // MARK: Swiftgram
-        if self.sendWithReturnKey && text == "\n" {
+        if SGSimpleSettings.shared.sendWithReturnKey && text == "\n" {
             self.sendButtonPressed()
             return false
         }
+        //
         
         var cleanText = text
         let removeSequences: [String] = ["\u{202d}", "\u{202c}"]
@@ -6053,7 +6044,7 @@ extension ChatTextInputPanelNode {
                 strongSelf.interfaceInteraction?.sgSetNewLine()
             },
             // TODO(swiftgram): Binding
-            showNewLine: .constant(true), //.constant(self.sendWithReturnKey)
+            showNewLine: .constant(true),
             onClearFormatting: { [weak self] in
                 guard let strongSelf = self else { return }
                 strongSelf.interfaceInteraction?.updateTextInputStateAndMode { current, inputMode in
