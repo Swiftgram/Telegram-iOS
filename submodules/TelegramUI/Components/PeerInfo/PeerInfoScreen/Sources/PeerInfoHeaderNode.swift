@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -86,7 +87,6 @@ final class PeerInfoHeaderNode: ASDisplayNode {
     private var context: AccountContext
     private let isPremiumDisabled: Bool
 
-    private var hidePhoneInSettings: Bool
     private weak var controller: PeerInfoScreenImpl?
     private var presentationData: PresentationData?
     private var state: PeerInfoState?
@@ -208,9 +208,8 @@ final class PeerInfoHeaderNode: ASDisplayNode {
     private var currentStarRating: TelegramStarRating?
     private var currentPendingStarRating: TelegramStarPendingRating?
     
-    init(hidePhoneInSettings: Bool, context: AccountContext, controller: PeerInfoScreenImpl, avatarInitiallyExpanded: Bool, isOpenedFromChat: Bool, isMediaOnly: Bool, isSettings: Bool, isMyProfile: Bool, forumTopicThreadId: Int64?, chatLocation: ChatLocation) {
+    init(context: AccountContext, controller: PeerInfoScreenImpl, avatarInitiallyExpanded: Bool, isOpenedFromChat: Bool, isMediaOnly: Bool, isSettings: Bool, isMyProfile: Bool, forumTopicThreadId: Int64?, chatLocation: ChatLocation) {
         self.context = context
-        self.hidePhoneInSettings = hidePhoneInSettings
         self.controller = controller
         self.isAvatarExpanded = avatarInitiallyExpanded
         self.isOpenedFromChat = isOpenedFromChat
@@ -1226,7 +1225,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             }
             // MARK: Swiftgram
             if title.isEmpty {
-                if case let .user(user) = peer, let phone = user.phone, !self.hidePhoneInSettings {
+                if case let .user(user) = peer, let phone = user.phone, !SGSimpleSettings.shared.hidePhoneInSettings {
                     title = formatPhoneNumber(context: self.context, number: phone)
                 } else if let addressName = peer.addressName {
                     title = "@\(addressName)"
@@ -1234,6 +1233,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                     title = "_"
                 }
             }
+            //
 
             titleStringText = title
             titleAttributes = MultiScaleTextState.Attributes(font: Font.medium(28.0), color: .white)
@@ -1242,7 +1242,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             if self.isSettings, case let .user(user) = peer {
                 // MARK: Swiftgram
                 var formattedPhone = formatPhoneNumber(context: self.context, number: user.phone ?? "")
-                if !formattedPhone.isEmpty && self.hidePhoneInSettings {
+                if !formattedPhone.isEmpty && SGSimpleSettings.shared.hidePhoneInSettings {
                     formattedPhone = ""
                 }
 
@@ -1260,6 +1260,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                 smallSubtitleAttributes = MultiScaleTextState.Attributes(font: Font.regular(16.0), color: .white, shadowColor: titleShadowColor)
                 
                 usernameString = ("", MultiScaleTextState.Attributes(font: Font.regular(16.0), color: .white))
+                //
             } else if self.isMyProfile {
                 let subtitleColor: UIColor
                 subtitleColor = .white

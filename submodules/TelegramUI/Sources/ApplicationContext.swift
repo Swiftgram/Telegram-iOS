@@ -1,5 +1,3 @@
-// MARK: Swiftgram
-import SGSimpleSettings
 import Foundation
 import UIKit
 import Intents
@@ -254,7 +252,7 @@ final class AuthorizedApplicationContext {
         }
         
         if self.rootController.rootTabController == nil {
-            self.rootController.addRootControllers(hidePhoneInSettings: SGSimpleSettings.shared.hidePhoneInSettings, showContactsTab: self.showContactsTab, showCallsTab: self.showCallsTab)
+            self.rootController.addRootControllers(showContactsTab: self.showContactsTab, showCallsTab: self.showCallsTab) // MARK: Swiftgram
         }
         if let tabsController = self.rootController.viewControllers.first as? TabBarController, !tabsController.controllers.isEmpty, tabsController.selectedIndex >= 0 {
             let controller = tabsController.controllers[tabsController.selectedIndex]
