@@ -1,2 +1,12 @@
 "Settings.Tabs.Header" = "පටිති";
 "ContextMenu.SaveToCloud" = "මේඝයට සුරකින්න";
+"Chat.Created.Label" = "සාදන ලදි";
+"Chat.Created.Copy" = "නිර්මාණ දිනය පිටපත් කරන්න";
+"Chat.Created.Copied" = "නිර්මාණ දිනය පසුරුපුවරුවට පිටපත් කරන ලදී.";
+"Chat.JoinedDate.Copy" = "එකතු වූ දිනය පිටපත් කරන්න";
+"Chat.JoinedDate.Copied" = "එකතු වූ දිනය පසුරුපුවරුවට පිටපත් කරන ලදී.";
+"Chat.RegDate.Copy" = "ලියාපදිංචි වූ දිනය පිටපත් කරන්න";
+"Chat.RegDate.Copied" = "ලියාපදිංචි වූ දිනය පසුරුපුවරුවට පිටපත් කරන ලදී.";
+"Chat.ID" = "ID";
+"Chat.ID.Copy" = "ID පිටපත් කරන්න";
+"Chat.ID.Copied" = "ID පසුරුපුවරුවට පිටපත් කරන ලදී.";

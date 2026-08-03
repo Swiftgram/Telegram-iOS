@@ -8,3 +8,13 @@
 "Settings.Translation.QuickTranslateButton" = "دوگمەی وەرگێڕانی خێرا";
 "Settings.Folders.BottomTab" = "بوخچەکان لە خوارەوە";
 "ContextMenu.SaveToCloud" = "هەڵگرتن لە کڵاود";
+"Chat.Created.Label" = "دروستکراو";
+"Chat.Created.Copy" = "کۆپی کردنی بەرواری دروستکردن";
+"Chat.Created.Copied" = "بەرواری دروستکردن بۆ کلیپبۆرد کۆپی کرا.";
+"Chat.JoinedDate.Copy" = "کۆپی کردنی بەرواری بەشداری";
+"Chat.JoinedDate.Copied" = "بەرواری بەشداری بۆ کلیپبۆرد کۆپی کرا.";
+"Chat.RegDate.Copy" = "کۆپی کردنی بەرواری تۆماربوون";
+"Chat.RegDate.Copied" = "بەرواری تۆماربوون بۆ کلیپبۆرد کۆپی کرا.";
+"Chat.ID" = "ID";
+"Chat.ID.Copy" = "کۆپی کردنی ID";
+"Chat.ID.Copied" = "ID بۆ کلیپبۆرد کۆپی کرا.";

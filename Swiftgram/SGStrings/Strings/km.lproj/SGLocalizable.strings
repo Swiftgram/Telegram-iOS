@@ -6,3 +6,13 @@
 "Settings.HidePhoneInSettingsUI" = "លាក់លេខទូរសព្ទក្នុងការកំណត់";
 "Settings.Folders.BottomTab" = "ថតឯបាត";
 "ContextMenu.SaveToCloud" = "រក្សាទុកទៅពពក";
+"Chat.Created.Label" = "បានបង្កើត";
+"Chat.Created.Copy" = "ចម្លងកាលបរិច្ឆេទបង្កើត";
+"Chat.Created.Copied" = "បានចម្លងកាលបរិច្ឆេទបង្កើតទៅក្តារតម្បៀតខ្ទាស់។";
+"Chat.JoinedDate.Copy" = "ចម្លងកាលបរិច្ឆេទចូលរួម";
+"Chat.JoinedDate.Copied" = "បានចម្លងកាលបរិច្ឆេទចូលរួមទៅក្តារតម្បៀតខ្ទាស់។";
+"Chat.RegDate.Copy" = "ចម្លងកាលបរិច្ឆេទចុះឈ្មោះ";
+"Chat.RegDate.Copied" = "បានចម្លងកាលបរិច្ឆេទចុះឈ្មោះទៅក្តារតម្បៀតខ្ទាស់។";
+"Chat.ID" = "ID";
+"Chat.ID.Copy" = "ចម្លង ID";
+"Chat.ID.Copied" = "បានចម្លង ID ទៅក្តារតម្បៀតខ្ទាស់។";
