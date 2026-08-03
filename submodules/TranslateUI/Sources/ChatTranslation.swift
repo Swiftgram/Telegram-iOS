@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import TextFormat
 import Foundation
 import NaturalLanguage
@@ -149,6 +150,9 @@ public func updateChatTranslationStateInteractively(engine: TelegramEngine, peer
 private let languageRecognizer = NLLanguageRecognizer()
 
 public func translateMessageIds(context: AccountContext, messageIds: [EngineMessage.Id], fromLang: String?, toLang: String, viaText: Bool = false, forQuickTranslate: Bool = false) -> Signal<Never, NoError> {
+    // MARK: Swiftgram
+    let sgEffectiveViaText = viaText || !context.isPremium || SGSimpleSettings.shared.translationBackendEnum == .gtranslate
+    //
     return context.account.postbox.transaction { transaction -> Signal<Never, NoError> in
         var messageDictToTranslate: [EngineMessage.Id: String] = [:]
         var messageIdsToTranslate: [EngineMessage.Id] = []
@@ -194,7 +198,7 @@ public func translateMessageIds(context: AccountContext, messageIds: [EngineMess
                         messageDictToTranslate[messageId] = message.text
                     }
                 // TODO(swiftgram): Translate polls
-                } else if let _ = message.media.first(where: { $0 is TelegramMediaPoll }), !viaText {
+                } else if let _ = message.media.first(where: { $0 is TelegramMediaPoll }), !sgEffectiveViaText {
                     if !messageIdsSet.contains(messageId) {
                         messageIdsToTranslate.append(messageId)
                         messageIdsSet.insert(messageId)
@@ -223,7 +227,7 @@ public func translateMessageIds(context: AccountContext, messageIds: [EngineMess
         default:
             break
         }
-        if viaText {
+        if sgEffectiveViaText {
         return context.engine.messages.translateMessagesViaText(messagesDict: messageDictToTranslate, fromLang: fromLang, toLang: toLang, generateEntitiesFunction: { text in
             generateTextEntities(text, enabledTypes: .all)
         }, enableLocalIfPossible: enableLocalIfPossible) //context.sharedContext.immediateExperimentalUISettings.enableLocalTranslation)

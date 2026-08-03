@@ -1002,7 +1002,7 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
         }
         self.translationProcessingManager.process = { [weak self, weak context] messageIds in
             if let context, let translationLang = self?.translationLang {
-                let _ = translateMessageIds(context: context, messageIds: Array(messageIds.map(\.messageId)), fromLang: translationLang.fromLang, toLang: translationLang.toLang, viaText: !context.isPremium || SGSimpleSettings.shared.translationBackend == SGSimpleSettings.TranslationBackend.gtranslate.rawValue).startStandalone()
+                let _ = translateMessageIds(context: context, messageIds: Array(messageIds.map(\.messageId)), fromLang: translationLang.fromLang, toLang: translationLang.toLang).startStandalone()
             }
         }
         self.factCheckProcessingManager.process = { [weak context] messageIds in
