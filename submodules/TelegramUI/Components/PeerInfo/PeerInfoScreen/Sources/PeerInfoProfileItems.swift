@@ -43,7 +43,7 @@ enum InfoSection: Int, CaseIterable {
 }
 
 func infoItems(
-    nearestChatParticipant: (String?, Int32?), showProfileId: Bool, data: PeerInfoScreenData?,
+    nearestChatParticipant: (String?, Int32?), data: PeerInfoScreenData?,
     context: AccountContext,
     presentationData: PresentationData,
     interaction: PeerInfoInteraction,
@@ -936,7 +936,7 @@ func infoItems(
     }
     
     // MARK: Swiftgram
-    if showProfileId {
+    if SGSimpleSettings.shared.showProfileId {
         items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: "id: \(idText)", text: "", textColor: .primary, action: nil, longTapAction: { sourceNode in
             interaction.openPeerInfoContextMenu(.copy(idText), sourceNode, nil)
         }, requestLayout: { _ in
@@ -1066,6 +1066,7 @@ func infoItems(
         }))
         sgItemId += 1
     }
+    //
     
     
     var result: [(AnyHashable, [PeerInfoScreenItem])] = []

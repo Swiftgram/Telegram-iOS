@@ -1,3 +1,6 @@
+// MARK: Swiftgram
+import SGSimpleSettings
+//
 import Foundation
 import UIKit
 import Display
@@ -29,7 +32,7 @@ enum SettingsSection: Int, CaseIterable {
     case support
 }
 
-func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: AccountContext, presentationData: PresentationData, interaction: PeerInfoInteraction, isExpanded: Bool) -> [(AnyHashable, [PeerInfoScreenItem])] {
+func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentationData: PresentationData, interaction: PeerInfoInteraction, isExpanded: Bool) -> [(AnyHashable, [PeerInfoScreenItem])] {
     guard let data = data else {
         return []
     }
@@ -82,7 +85,7 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
     }
     
     // MARK: Swiftgram
-    if showProfileId {
+    if SGSimpleSettings.shared.showProfileId {
         var idText = ""
         
         if let peer = data.peer {
@@ -102,6 +105,7 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
             )
         )
     }
+    //
     
     if let settings = data.globalSettings {
         if settings.premiumGracePeriod {
