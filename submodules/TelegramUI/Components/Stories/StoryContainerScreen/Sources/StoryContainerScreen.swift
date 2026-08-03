@@ -429,10 +429,11 @@ private final class StoryContainerScreenComponent: Component {
         
         private var pendingNavigationToItemId: EngineStoryId?
         
+        // MARK: Swiftgram
         private let storiesWarning = ComponentView<Empty>()
-        private var requestedDisplayStoriesWarning: Bool = SGSimpleSettings.shared.warnOnStoriesOpen // MARK: Swiftgram
         private var displayStoriesWarningDisposable: Disposable?
         private var isDisplayingStoriesWarning: Bool = false
+        //
         
         private let interactionGuide = ComponentView<Empty>()
         private var isDisplayingInteractionGuide: Bool = false
@@ -1336,8 +1337,7 @@ private final class StoryContainerScreenComponent: Component {
                 })
                 
                 // MARK: Swiftgram
-                self.requestedDisplayStoriesWarning = SGSimpleSettings.shared.warnOnStoriesOpen
-                if self.requestedDisplayStoriesWarning {
+                if SGSimpleSettings.shared.warnOnStoriesOpen {
                     self.isDisplayingStoriesWarning = true
                     if update {
                         self.state?.updated(transition: .immediate)
@@ -1403,11 +1403,13 @@ private final class StoryContainerScreenComponent: Component {
                         if case .file = slice.item.storyItem.media {
                             isVideo = true
                         }
+                        // MARK: Swiftgram
                         // TODO(swiftgram): Show warning on each new peerId story
-                        /* if self.requestedDisplayStoriesWarning, let previousSlice = stateValue?.previousSlice, previousSlice.peer.id != slice.peer.id {
-                            self.isDisplayingStoriesWarning = self.requestedDisplayStoriesWarning
+                        /* if SGSimpleSettings.shared.warnOnStoriesOpen, let previousSlice = stateValue?.previousSlice, previousSlice.peer.id != slice.peer.id {
+                            self.isDisplayingStoriesWarning = SGSimpleSettings.shared.warnOnStoriesOpen
                             update = false
                         }*/
+                        //
                     }
                     self.focusedItem.set(focusedItemId)
                     self.contentWantsVolumeButtonMonitoring.set(isVideo)
