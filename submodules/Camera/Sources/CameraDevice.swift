@@ -4,6 +4,10 @@ import SwiftSignalKit
 import TelegramCore
 
 private let defaultFPS: Double = 30.0
+// MARK: Swiftgram
+private let roundVideoWideDisplayZoom: CGFloat = 1.0
+private let roundVideoMinimumUltraWideDisplayZoom: CGFloat = 0.5
+private let roundVideoNeutralRampRate: CGFloat = 8.0
 
 final class CameraDevice {
     var position: Camera.Position = .back
@@ -29,11 +33,15 @@ final class CameraDevice {
     
     public private(set) var audioDevice: AVCaptureDevice? = nil
         
-    func configure(for session: CameraSession, position: Camera.Position, dual: Bool, switchAudio: Bool) {
+    func configure(for session: CameraSession, position: Camera.Position, dual: Bool, switchAudio: Bool, preferVirtualBackCamera: Bool = false) { // MARK: Swiftgram
         self.position = position
         
         var selectedDevice: AVCaptureDevice?
-        if #available(iOS 13.0, *), position != .front && !dual {
+        // MARK: Swiftgram
+        if #available(iOS 13.0, *), position != .front && preferVirtualBackCamera {
+            selectedDevice = dual ? CameraDevice.roundVideoVirtualBackCameraForMultiCam() : CameraDevice.roundVideoVirtualBackCamera()
+        }
+        if #available(iOS 13.0, *), selectedDevice == nil && position != .front && !dual { // MARK: Swiftgram
             if let device = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: position) {
                 selectedDevice = device
             } else if let device = AVCaptureDevice.default(.builtInDualCamera, for: .video, position: position) {
@@ -62,6 +70,89 @@ final class CameraDevice {
         }
     }
     
+    // MARK: Swiftgram
+    @available(iOS 13.0, *)
+    private static func roundVideoVirtualBackCameraForMultiCam() -> AVCaptureDevice? {
+        guard let frontDevice = self.frontMultiCamCamera() else {
+            return nil
+        }
+        return self.roundVideoVirtualBackCamera { backDevice in
+            return self.supportsMultiCamSession(backDevice: backDevice, frontDevice: frontDevice)
+        }
+    }
+
+    @available(iOS 13.0, *)
+    private static func roundVideoVirtualBackCamera() -> AVCaptureDevice? {
+        return self.roundVideoVirtualBackCamera(isSupported: { _ in true })
+    }
+
+    @available(iOS 13.0, *)
+    private static func roundVideoVirtualBackCamera(isSupported: (AVCaptureDevice) -> Bool) -> AVCaptureDevice? {
+        let candidates: [AVCaptureDevice.DeviceType] = [
+            .builtInTripleCamera,
+            .builtInDualWideCamera
+        ]
+        for deviceType in candidates {
+            guard let backDevice = AVCaptureDevice.default(deviceType, for: .video, position: .back) else {
+                continue
+            }
+            if self.isUltraWideVirtualBackCamera(backDevice) && self.supportsMinimumRoundVideoFormat(backDevice) && isSupported(backDevice) {
+                return backDevice
+            }
+        }
+        return nil
+    }
+
+    @available(iOS 13.0, *)
+    private static func frontMultiCamCamera() -> AVCaptureDevice? {
+        return AVCaptureDevice.DiscoverySession(
+            deviceTypes: [.builtInWideAngleCamera, .builtInTrueDepthCamera],
+            mediaType: .video,
+            position: .front
+        ).devices.first
+    }
+
+    @available(iOS 13.0, *)
+    private static func supportsMultiCamSession(backDevice: AVCaptureDevice, frontDevice: AVCaptureDevice) -> Bool {
+        guard AVCaptureMultiCamSession.isMultiCamSupported, let backInput = try? AVCaptureDeviceInput(device: backDevice), let frontInput = try? AVCaptureDeviceInput(device: frontDevice) else {
+            return false
+        }
+        let session = AVCaptureMultiCamSession()
+        session.sessionPreset = .inputPriority
+        guard session.canAddInput(backInput) else {
+            return false
+        }
+        session.addInputWithNoConnections(backInput)
+        return session.canAddInput(frontInput)
+    }
+
+    private static func supportsMinimumRoundVideoFormat(_ device: AVCaptureDevice) -> Bool {
+        for format in device.formats {
+            if format.mediaType != .video || format.value(forKey: "isPhotoFormat") as? Bool == true {
+                continue
+            }
+            let dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+            if dimensions.width < 1920 || dimensions.height < 1080 {
+                continue
+            }
+            let subtype = CMFormatDescriptionGetMediaSubType(format.formatDescription)
+            if subtype != kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange {
+                continue
+            }
+            if format.videoSupportedFrameRateRanges.contains(where: { $0.minFrameRate <= 30.0 && $0.maxFrameRate >= 30.0 }) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private static func isUltraWideVirtualBackCamera(_ device: AVCaptureDevice) -> Bool {
+        if #available(iOS 13.0, *) {
+            return device.position == .back && device.isVirtualDevice && !device.virtualDeviceSwitchOverVideoZoomFactors.isEmpty && device.constituentDevices.contains(where: { $0.deviceType == .builtInUltraWideCamera })
+        }
+        return false
+    }
+
     func configureDeviceFormat(maxDimensions: CMVideoDimensions, maxFramerate: Double) {
         guard let device = self.videoDevice else {
             return
@@ -151,6 +242,11 @@ final class CameraDevice {
             if let targetFPS = device.actualFPS(maxFramerate) {
                 device.activeVideoMinFrameDuration = targetFPS.duration
                 device.activeVideoMaxFrameDuration = targetFPS.duration
+            }
+
+            // MARK: Swiftgram
+            if #available(iOS 15.0, *), CameraDevice.isUltraWideVirtualBackCamera(device), device.activePrimaryConstituentDeviceSwitchingBehavior != .unsupported {
+                device.setPrimaryConstituentDeviceSwitchingBehavior(.auto, restrictedSwitchingBehaviorConditions: [])
             }
             
             if device.isLowLightBoostSupported {
@@ -320,6 +416,32 @@ final class CameraDevice {
         }
     }
     
+    // MARK: Swiftgram
+    func setRoundVideoTransientDisplayZoom(_ displayZoom: CGFloat) {
+        guard let device = self.videoDevice else {
+            return
+        }
+        self.transaction(device) { device in
+            let targetDisplayZoom: CGFloat
+            if displayZoom < roundVideoWideDisplayZoom {
+                if self.canUseUltraWideDisplayZoom(for: device) {
+                    targetDisplayZoom = max(self.minimumDisplayZoom(for: device), displayZoom)
+                } else {
+                    targetDisplayZoom = 1.0
+                }
+            } else {
+                targetDisplayZoom = max(1.0, displayZoom)
+            }
+            let target = self.videoZoomFactor(forDisplayZoom: targetDisplayZoom, device: device)
+            let clampedTarget = self.clampedZoomFactor(target, for: device)
+            if targetDisplayZoom == 1.0 && device.videoZoomFactor < device.neutralZoomFactor {
+                device.ramp(toVideoZoomFactor: clampedTarget, withRate: Float(roundVideoNeutralRampRate))
+            } else {
+                device.videoZoomFactor = clampedTarget
+            }
+        }
+    }
+
     func rampZoom(_ zoomLevel: CGFloat, rate: CGFloat) {
         guard let device = self.videoDevice else {
             return
@@ -330,6 +452,17 @@ final class CameraDevice {
         }
     }
     
+    // MARK: Swiftgram
+    func rampZoomToNeutral(rate: CGFloat) {
+        guard let device = self.videoDevice else {
+            return
+        }
+        self.transaction(device) { device in
+            let target = self.clampedZoomFactor(device.neutralZoomFactor, for: device)
+            device.ramp(toVideoZoomFactor: target, withRate: Float(rate))
+        }
+    }
+
     func resetZoom(neutral: Bool = true) {
         guard let device = self.videoDevice else {
             return
@@ -344,5 +477,38 @@ final class CameraDevice {
         let minimum = max(1.0, device.minAvailableVideoZoomFactor)
         let maximum = max(minimum, device.maxAvailableVideoZoomFactor)
         return min(maximum, max(minimum, value))
+    }
+
+    // MARK: Swiftgram
+    private func minimumDisplayZoom(for device: AVCaptureDevice) -> CGFloat {
+        return max(roundVideoMinimumUltraWideDisplayZoom, self.displayZoomFactor(forVideoZoomFactor: self.clampedZoomFactor(device.minAvailableVideoZoomFactor, for: device), device: device))
+    }
+
+    private func canUseUltraWideDisplayZoom(for device: AVCaptureDevice) -> Bool {
+        guard CameraDevice.isUltraWideVirtualBackCamera(device) else {
+            return false
+        }
+        return self.clampedZoomFactor(self.videoZoomFactor(forDisplayZoom: roundVideoMinimumUltraWideDisplayZoom, device: device), for: device) < device.neutralZoomFactor
+    }
+
+    private func displayZoomFactor(forVideoZoomFactor videoZoomFactor: CGFloat, device: AVCaptureDevice) -> CGFloat {
+        if #available(iOS 18.0, *) {
+            let multiplier = device.displayVideoZoomFactorMultiplier
+            if multiplier > 0.0 {
+                return videoZoomFactor * multiplier
+            }
+        }
+        let neutralZoomFactor = max(device.neutralZoomFactor, 1.0)
+        return videoZoomFactor / neutralZoomFactor
+    }
+
+    private func videoZoomFactor(forDisplayZoom displayZoom: CGFloat, device: AVCaptureDevice) -> CGFloat {
+        if #available(iOS 18.0, *) {
+            let multiplier = device.displayVideoZoomFactorMultiplier
+            if multiplier > 0.0 {
+                return displayZoom / multiplier
+            }
+        }
+        return displayZoom * max(device.neutralZoomFactor, 1.0)
     }
 }

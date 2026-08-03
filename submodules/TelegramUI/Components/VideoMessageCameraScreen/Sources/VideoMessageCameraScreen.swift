@@ -1119,10 +1119,10 @@ public class VideoMessageCameraScreen: ViewController {
             switch gestureRecognizer.state {
             case .changed:
                 let scale = gestureRecognizer.scale
-                camera.setZoomDelta(scale)
+                camera.setRoundVideoTransientZoomDelta(scale) // MARK: Swiftgram
                 gestureRecognizer.scale = 1.0
             case .ended, .cancelled:
-                camera.rampZoom(1.0, rate: 8.0)
+                camera.resetRoundVideoTransientZoom(rate: 8.0) // MARK: Swiftgram
             default:
                 break
             }

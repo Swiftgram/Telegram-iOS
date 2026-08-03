@@ -60,14 +60,14 @@ final class CameraDeviceContext {
         self.output = CameraOutput(exclusive: exclusive, ciContext: ciContext, colorSpace: colorSpace, use32BGRA: isRoundVideo)
     }
     
-    func configure(position: Camera.Position, previewView: CameraSimplePreviewView?, audio: Bool, photo: Bool, metadata: Bool, preferWide: Bool = false, preferLowerFramerate: Bool = false, switchAudio: Bool = true) {
+    func configure(position: Camera.Position, previewView: CameraSimplePreviewView?, audio: Bool, photo: Bool, metadata: Bool, preferWide: Bool = false, preferLowerFramerate: Bool = false, switchAudio: Bool = true, preferVirtualBackCamera: Bool = false) { // MARK: Swiftgram
         guard let session = self.session else {
             return
         }
         
         self.previewView = previewView
                 
-        self.device.configure(for: session, position: position, dual: !self.exclusive || self.additional, switchAudio: switchAudio)
+        self.device.configure(for: session, position: position, dual: !self.exclusive || self.additional, switchAudio: switchAudio, preferVirtualBackCamera: preferVirtualBackCamera) // MARK: Swiftgram
         self.device.configureDeviceFormat(maxDimensions: self.maxDimensions(additional: self.additional, preferWide: preferWide), maxFramerate: self.preferredMaxFrameRate(useLower: preferLowerFramerate))
         self.input.configure(for: session, device: self.device, audio: audio && switchAudio)
         self.output.configure(for: session, device: self.device, input: self.input, previewView: previewView, audio: audio && switchAudio, photo: photo, metadata: metadata)
@@ -193,6 +193,9 @@ private final class CameraContext {
     }
         
     private var isSessionRunning = false
+    // MARK: Swiftgram
+    private var roundVideoTransientDisplayZoom: CGFloat = 1.0
+
     func startCapture() {
         guard !self.session.session.isRunning else {
             return
@@ -260,6 +263,9 @@ private final class CameraContext {
             }
             self.positionValue = targetPosition
             self._positionPromise.set(targetPosition)
+            // MARK: Swiftgram
+            self.roundVideoTransientDisplayZoom = 1.0
+            self.mainDeviceContext?.device.resetZoom()
             
             mainDeviceContext.output.markPositionChange(position: targetPosition)
         } else {
@@ -276,12 +282,13 @@ private final class CameraContext {
                 }
                 self.positionValue = targetPosition
                 self._positionPromise.set(targetPosition)
+                self.roundVideoTransientDisplayZoom = 1.0 // MARK: Swiftgram
                 self.modeChange = .position
                 
                 let preferWide = self.initialConfiguration.preferWide || isRoundVideo
                 let preferLowerFramerate = self.initialConfiguration.preferLowerFramerate || isRoundVideo
                 
-                mainDeviceContext.configure(position: targetPosition, previewView: self.simplePreviewView, audio: self.initialConfiguration.audio, photo: self.initialConfiguration.photo, metadata: self.initialConfiguration.metadata, preferWide: preferWide, preferLowerFramerate: preferLowerFramerate, switchAudio: !isRoundVideo)
+                mainDeviceContext.configure(position: targetPosition, previewView: self.simplePreviewView, audio: self.initialConfiguration.audio, photo: self.initialConfiguration.photo, metadata: self.initialConfiguration.metadata, preferWide: preferWide, preferLowerFramerate: preferLowerFramerate, switchAudio: !isRoundVideo, preferVirtualBackCamera: isRoundVideo) // MARK: Swiftgram
                 if isRoundVideo {
                     mainDeviceContext.output.markPositionChange(position: targetPosition)
                 }
@@ -300,12 +307,13 @@ private final class CameraContext {
             
             self._positionPromise.set(position)
             self.positionValue = position
+            self.roundVideoTransientDisplayZoom = 1.0 // MARK: Swiftgram
             self.modeChange = .position
             
             let preferWide = self.initialConfiguration.preferWide || (self.positionValue == .front && self.initialConfiguration.isRoundVideo)
             let preferLowerFramerate = self.initialConfiguration.preferLowerFramerate || self.initialConfiguration.isRoundVideo
             
-            self.mainDeviceContext?.configure(position: position, previewView: self.simplePreviewView, audio: self.initialConfiguration.audio, photo: self.initialConfiguration.photo, metadata: self.initialConfiguration.metadata, preferWide: preferWide, preferLowerFramerate: preferLowerFramerate)
+            self.mainDeviceContext?.configure(position: position, previewView: self.simplePreviewView, audio: self.initialConfiguration.audio, photo: self.initialConfiguration.photo, metadata: self.initialConfiguration.metadata, preferWide: preferWide, preferLowerFramerate: preferLowerFramerate, preferVirtualBackCamera: self.initialConfiguration.isRoundVideo) // MARK: Swiftgram
                         
             self.queue.after(0.5) {
                 self.modeChange = .none
@@ -332,7 +340,7 @@ private final class CameraContext {
             self.configure {
                 self.mainDeviceContext?.invalidate()
                 self.mainDeviceContext = CameraDeviceContext(session: self.session, exclusive: false, additional: false, ciContext: self.ciContext, colorSpace: self.colorSpace, isRoundVideo: self.initialConfiguration.isRoundVideo)
-                self.mainDeviceContext?.configure(position: .back, previewView: self.simplePreviewView, audio: self.initialConfiguration.audio, photo: self.initialConfiguration.photo, metadata: self.initialConfiguration.metadata)
+                self.mainDeviceContext?.configure(position: .back, previewView: self.simplePreviewView, audio: self.initialConfiguration.audio, photo: self.initialConfiguration.photo, metadata: self.initialConfiguration.metadata, preferVirtualBackCamera: self.initialConfiguration.isRoundVideo) // MARK: Swiftgram
             
                 self.additionalDeviceContext = CameraDeviceContext(session: self.session, exclusive: false, additional: true, ciContext: self.ciContext, colorSpace: self.colorSpace, isRoundVideo: self.initialConfiguration.isRoundVideo)
                 self.additionalDeviceContext?.configure(position: .front, previewView: self.secondaryPreviewView, audio: false, photo: true, metadata: false)
@@ -383,7 +391,7 @@ private final class CameraContext {
                 let preferLowerFramerate = self.initialConfiguration.preferLowerFramerate || self.initialConfiguration.isRoundVideo
                 
                 self.mainDeviceContext = CameraDeviceContext(session: self.session, exclusive: true, additional: false, ciContext: self.ciContext, colorSpace: self.colorSpace, isRoundVideo: self.initialConfiguration.isRoundVideo)
-                self.mainDeviceContext?.configure(position: self.positionValue, previewView: self.simplePreviewView, audio: self.initialConfiguration.audio, photo: self.initialConfiguration.photo, metadata: self.initialConfiguration.metadata, preferWide: preferWide, preferLowerFramerate: preferLowerFramerate)
+                self.mainDeviceContext?.configure(position: self.positionValue, previewView: self.simplePreviewView, audio: self.initialConfiguration.audio, photo: self.initialConfiguration.photo, metadata: self.initialConfiguration.metadata, preferWide: preferWide, preferLowerFramerate: preferLowerFramerate, preferVirtualBackCamera: self.initialConfiguration.isRoundVideo) // MARK: Swiftgram
             }
             self.mainDeviceContext?.output.processSampleBuffer = { [weak self] sampleBuffer, pixelBuffer, connection in
                 guard let self, let mainDeviceContext = self.mainDeviceContext else {
@@ -536,6 +544,24 @@ private final class CameraContext {
         }
     }
     
+    // MARK: Swiftgram
+    func setRoundVideoTransientZoomDelta(_ zoomDelta: CGFloat) {
+        if self.initialConfiguration.isRoundVideo {
+            if self.positionValue == .front {
+                if let additionalDeviceContext = self.additionalDeviceContext {
+                    additionalDeviceContext.device.setZoomDelta(zoomDelta)
+                } else {
+                    self.mainDeviceContext?.device.setZoomDelta(zoomDelta)
+                }
+            } else {
+                self.roundVideoTransientDisplayZoom = max(0.5, min(10.0, self.roundVideoTransientDisplayZoom * zoomDelta))
+                self.mainDeviceContext?.device.setRoundVideoTransientDisplayZoom(self.roundVideoTransientDisplayZoom)
+            }
+        } else {
+            self.mainDeviceContext?.device.setZoomDelta(zoomDelta)
+        }
+    }
+
     func rampZoom(_ zoomLevel: CGFloat, rate: CGFloat) {
         if self.initialConfiguration.isRoundVideo {
             if self.positionValue == .front {
@@ -548,6 +574,29 @@ private final class CameraContext {
         }
     }
     
+    // MARK: Swiftgram
+    func rampZoomToNeutral(rate: CGFloat) {
+        if self.initialConfiguration.isRoundVideo {
+            if self.positionValue == .front {
+                if let additionalDeviceContext = self.additionalDeviceContext {
+                    additionalDeviceContext.device.rampZoomToNeutral(rate: rate)
+                } else {
+                    self.mainDeviceContext?.device.rampZoomToNeutral(rate: rate)
+                }
+            } else {
+                self.mainDeviceContext?.device.rampZoomToNeutral(rate: rate)
+            }
+        } else {
+            self.mainDeviceContext?.device.rampZoomToNeutral(rate: rate)
+        }
+    }
+
+    // MARK: Swiftgram
+    func resetRoundVideoTransientZoom(rate: CGFloat) {
+        self.roundVideoTransientDisplayZoom = 1.0
+        self.rampZoomToNeutral(rate: rate)
+    }
+
     func takePhoto() -> Signal<PhotoCaptureResult, NoError> {
         guard let mainDeviceContext = self.mainDeviceContext else {
             return .complete()
@@ -973,6 +1022,15 @@ public final class Camera {
         }
     }
     
+    // MARK: Swiftgram
+    public func setRoundVideoTransientZoomDelta(_ zoomDelta: CGFloat) {
+        self.queue.async {
+            if let context = self.contextRef?.takeUnretainedValue() {
+                context.setRoundVideoTransientZoomDelta(zoomDelta)
+            }
+        }
+    }
+
     public func rampZoom(_ zoomLevel: CGFloat, rate: CGFloat) {
         self.queue.async {
             if let context = self.contextRef?.takeUnretainedValue() {
@@ -981,6 +1039,15 @@ public final class Camera {
         }
     }
     
+    // MARK: Swiftgram
+    public func resetRoundVideoTransientZoom(rate: CGFloat) {
+        self.queue.async {
+            if let context = self.contextRef?.takeUnretainedValue() {
+                context.resetRoundVideoTransientZoom(rate: rate)
+            }
+        }
+    }
+
     public func setTorchActive(_ active: Bool) {
         self.queue.async {
             if let context = self.contextRef?.takeUnretainedValue() {
