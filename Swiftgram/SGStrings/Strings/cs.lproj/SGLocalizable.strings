@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Maximální";
 
 "Settings.ShowProfileID" = "Zobrazit ID profilu";
+"Settings.ShowSwiftgramSubMenu" = "Podnabídka „Swiftgram“";
 "Settings.ShowDC" = "Zobrazit Data Center";
 "Settings.ShowCreationDate" = "Zobrazit datum vytvoření chatu";
 "Settings.ShowCreationDate.Notice" = "Datum vytvoření chatu může být neznámé pro některé chaty.";

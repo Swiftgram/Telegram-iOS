@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Tối đa";
 
 "Settings.ShowProfileID" = "Hiện ID hồ sơ";
+"Settings.ShowSwiftgramSubMenu" = "Menu con \"Swiftgram\"";
 "Settings.ShowDC" = "Hiển thị Trung tâm Dữ liệu";
 "Settings.ShowCreationDate" = "Hiển thị Ngày Tạo Chat";
 "Settings.ShowCreationDate.Notice" = "Ngày tạo có thể không biết được đối với một số cuộc trò chuyện.";

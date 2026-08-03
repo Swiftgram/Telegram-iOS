@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Màxim";
 
 "Settings.ShowProfileID" = "Mostrar ID de perfil";
+"Settings.ShowSwiftgramSubMenu" = "Submenú \"Swiftgram\"";
 "Settings.ShowDC" = "Mostrar Data Center";
 "Settings.ShowCreationDate" = "Mostrar Data de Creació de Xat";
 "Settings.ShowCreationDate.Notice" = "La data de creació pot ser desconeguda per alguns xats.";

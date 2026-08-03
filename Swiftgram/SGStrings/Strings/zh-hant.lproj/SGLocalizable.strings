@@ -66,6 +66,7 @@
 "Settings.DownloadsBoost.maximum" = "最大";
 
 "Settings.ShowProfileID" = "顯示用戶 UID";
+"Settings.ShowSwiftgramSubMenu" = "\"Swiftgram\" 子選單";
 "Settings.ShowDC" = "顯示資料中心 (DC)";
 "Settings.ShowCreationDate" = "顯示對話建立日期";
 "Settings.ShowCreationDate.Notice" = "某些對話可能會缺少建立日期";

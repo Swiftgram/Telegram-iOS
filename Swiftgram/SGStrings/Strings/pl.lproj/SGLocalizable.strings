@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "Maksymalne";
 
 "Settings.ShowProfileID" = "Pokaż ID";
+"Settings.ShowSwiftgramSubMenu" = "Podmenu „Swiftgram”";
 "Settings.ShowDC" = "Pokaż centrum danych";
 "Settings.ShowCreationDate" = "Pokaż datę utworzenia czatu";
 "Settings.ShowCreationDate.Notice" = "Dla niektórych czatów data utworzenia może być nieznana.";

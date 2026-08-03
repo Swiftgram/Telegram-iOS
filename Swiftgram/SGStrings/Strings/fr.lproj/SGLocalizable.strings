@@ -61,6 +61,7 @@
 "Settings.DownloadsBoost.maximum" = "Maximum";
 
 "Settings.ShowProfileID" = "Afficher l'identifiant du profil";
+"Settings.ShowSwiftgramSubMenu" = "Sous-menu « Swiftgram »";
 "Settings.ShowDC" = "Afficher le centre de données";
 "Settings.ShowCreationDate" = "Afficher la date de création du chat";
 "Settings.ShowCreationDate.Notice" = "La date de création peut être inconnue pour certains chats.";
