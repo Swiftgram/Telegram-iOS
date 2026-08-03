@@ -507,8 +507,7 @@ func initializedNetwork(accountId: AccountRecordId, arguments: NetworkInitializa
             }
             
             let useTempAuthKeys: Bool = true
-            let forceLocalDNS: Bool = SGSimpleSettings.shared.localDNSForProxyHost
-            let context = MTContext(serialization: serialization, encryptionProvider: arguments.encryptionProvider, apiEnvironment: apiEnvironment, isTestingEnvironment: testingEnvironment, useTempAuthKeys: useTempAuthKeys, forceLocalDNS: forceLocalDNS)
+            let context = MTContext(serialization: serialization, encryptionProvider: arguments.encryptionProvider, apiEnvironment: apiEnvironment, isTestingEnvironment: testingEnvironment, useTempAuthKeys: useTempAuthKeys, forceLocalDNS: SGSimpleSettings.shared.localDNSForProxyHost) // MARK: Swiftgram
             
             if let networkSettings = networkSettings {
                 let useNetworkFramework: Bool
