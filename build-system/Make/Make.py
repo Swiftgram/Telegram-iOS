@@ -47,6 +47,9 @@ class BazelCommandLine:
         self.enable_sandbox = False
         self.disable_provisioning_profiles = False
         self.profile_swift = False
+        # MARK: Swiftgram
+        self.bazel_profile = None
+        #
         self.embed_watch_app = False
         self.watch_api_id = None
         self.watch_api_hash = None
@@ -140,6 +143,11 @@ class BazelCommandLine:
 
     def set_profile_swift(self, value):
         self.profile_swift = value
+
+    # MARK: Swiftgram
+    def set_bazel_profile(self, path):
+        self.bazel_profile = path
+    #
 
     def set_configuration(self, configuration):
         if configuration == 'debug_arm64':
@@ -292,6 +300,11 @@ class BazelCommandLine:
             combined_arguments += ['--keep_going']
         if self.show_actions:
             combined_arguments += ['--subcommands']
+
+        # MARK: Swiftgram
+        if self.bazel_profile is not None:
+            combined_arguments += ['--profile={}'.format(self.bazel_profile)]
+        #
 
         if self.enable_sandbox:
             combined_arguments += ['--spawn_strategy=sandboxed']
@@ -700,6 +713,11 @@ def build(bazel, arguments):
     # MARK: Swiftgram
     if arguments.disableProvisioningProfiles:
         bazel_command_line.set_disable_provisioning_profiles()
+    if arguments.bazelProfile is not None:
+        bazel_profile_path = os.path.abspath(arguments.bazelProfile)
+        os.makedirs(os.path.dirname(bazel_profile_path), exist_ok=True)
+        bazel_command_line.set_bazel_profile(bazel_profile_path)
+    #
     bazel_command_line.set_profile_swift(arguments.profileSwift)
 
     bazel_command_line.set_split_swiftmodules(arguments.enableParallelSwiftmoduleGeneration)
@@ -1066,6 +1084,13 @@ if __name__ == '__main__':
         default=False,
         help='Build without provisioning profiles.',
     )
+    buildParser.add_argument(
+        '--bazelProfile',
+        required=False,
+        help='Write a Bazel execution profile to this path.',
+        metavar='path',
+    )
+    #
     buildParser.add_argument(
         '--profileSwift',
         action='store_true',
