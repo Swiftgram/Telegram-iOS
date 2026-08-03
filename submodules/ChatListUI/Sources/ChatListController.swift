@@ -4840,7 +4840,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         completion?()
         
         self.updateTabBarSearchState(ViewController.TabBarSearchState(isActive: false), transition: transition)
-        (self.parent as? TabBarController)?.updateIsTabBarHidden(SGSimpleSettings.shared.hideTabBar ? true : false, transition: transition)
+        (self.parent as? TabBarController)?.updateIsTabBarHidden(SGSimpleSettings.shared.hideTabBar, transition: transition) // MARK: Swiftgram
         
         self.isSearchActive = false
         if let navigationController = self.navigationController as? NavigationController {
