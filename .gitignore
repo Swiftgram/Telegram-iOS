@@ -89,3 +89,4 @@ xcode-files
 **/node_modules/
 tools/sim-watcher/dist/
 .mcp.json
+*.log
