@@ -74,7 +74,9 @@ public class SGSimpleSettings {
             { let _ = self.hideRecordingButton },
             { let _ = self.inputToolbar },
             { let _ = self.dismissedSGSuggestions },
-            { let _ = self.customAppBadge }
+            { let _ = self.customAppBadge },
+            { let _ = self.selectionShowSaveToCloudButton },
+            { let _ = self.selectionShowHideForwardNameButton },
         ]
 
         tasks.forEach { task in
@@ -117,7 +119,9 @@ public class SGSimpleSettings {
         case contextShowSaveToCloud
         case contextShowRestrict
         // case contextShowBan
+        case selectionShowSaveToCloudButton
         case contextShowHideForwardName
+        case selectionShowHideForwardNameButton
         case contextShowReport
         case contextShowReply
         case contextShowPin
@@ -275,7 +279,9 @@ public class SGSimpleSettings {
         Keys.contextShowSaveToCloud.rawValue: true,
         Keys.contextShowRestrict.rawValue: true,
         // Keys.contextShowBan.rawValue: true,
+        Keys.selectionShowSaveToCloudButton.rawValue: true,
         Keys.contextShowHideForwardName.rawValue: true,
+        Keys.selectionShowHideForwardNameButton.rawValue: true,
         Keys.contextShowReport.rawValue: true,
         Keys.contextShowReply.rawValue: true,
         Keys.contextShowPin.rawValue: true,
@@ -422,8 +428,14 @@ public class SGSimpleSettings {
     @UserDefault(key: Keys.contextShowSaveToCloud.rawValue)
     public var contextShowSaveToCloud: Bool
 
+    @UserDefault(key: Keys.selectionShowSaveToCloudButton.rawValue)
+    public var selectionShowSaveToCloudButton: Bool
+
     @UserDefault(key: Keys.contextShowHideForwardName.rawValue)
     public var contextShowHideForwardName: Bool
+
+    @UserDefault(key: Keys.selectionShowHideForwardNameButton.rawValue)
+    public var selectionShowHideForwardNameButton: Bool
 
     @UserDefault(key: Keys.contextShowReport.rawValue)
     public var contextShowReport: Bool

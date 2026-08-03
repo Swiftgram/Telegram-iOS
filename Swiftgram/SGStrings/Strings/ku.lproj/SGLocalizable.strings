@@ -8,3 +8,6 @@
 "Settings.Translation.QuickTranslateButton" = "دوگمەی وەرگێڕانی خێرا";
 "Settings.Folders.BottomTab" = "بوخچەکان لە خوارەوە";
 "ContextMenu.SaveToCloud" = "هەڵگرتن لە کڵاود";
+"Settings.MessageSelection.Header" = "هەڵبژاردنی پەیامەکان";
+"Settings.Selection.SaveToCloudButton" = "دوگمەی هەڵگرتن لە کڵاود";
+"Settings.Selection.HideSenderNamesButton" = "دوگمەی شاردنەوەی ناوی نێرەرەکان";

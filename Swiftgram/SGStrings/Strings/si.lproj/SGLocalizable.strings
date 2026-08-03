@@ -1,2 +1,5 @@
 "Settings.Tabs.Header" = "පටිති";
 "ContextMenu.SaveToCloud" = "මේඝයට සුරකින්න";
+"Settings.MessageSelection.Header" = "පණිවිඩ තේරීම";
+"Settings.Selection.SaveToCloudButton" = "මේඝයට සුරකින්න බොත්තම";
+"Settings.Selection.HideSenderNamesButton" = "යවන්නන්ගේ නම් සඟවන්න බොත්තම";
