@@ -90,7 +90,10 @@ public class UnauthorizedAccount {
     }
     
     public let shouldBeServiceTaskMaster = Promise<AccountServiceTaskMasterMode>()
-    
+
+    // MARK: Swiftgram
+    private let proxyDisposable = MetaDisposable()
+
     init(accountManager: AccountManager<TelegramAccountManagerTypes>, networkArguments: NetworkInitializationArguments, id: AccountRecordId, rootPath: String, basePath: String, testingEnvironment: Bool, postbox: Postbox, network: Network, shouldKeepAutoConnection: Bool = true) {
         self.networkArguments = networkArguments
         self.id = id
@@ -208,8 +211,42 @@ public class UnauthorizedAccount {
             }
             network.context.beginExplicitBackupAddressDiscovery()
         })
-        
+
+        // MARK: Swiftgram
+        self.proxyDisposable.set((accountManager.sharedData(keys: [SharedDataKeys.proxySettings])
+        |> map { sharedData -> ProxyServerSettings? in
+            if let settings = sharedData.entries[SharedDataKeys.proxySettings]?.get(ProxySettings.self) {
+                return settings.effectiveActiveServer
+            } else {
+                return nil
+            }
+        }
+        |> distinctUntilChanged).start(next: { activeServer in
+            let updated = activeServer.flatMap { activeServer -> MTSocksProxySettings? in
+                return activeServer.mtProxySettings
+            }
+            network.context.updateApiEnvironment { environment in
+                let current = environment?.socksProxySettings
+                let updateNetwork: Bool
+                if let current = current, let updated = updated {
+                    updateNetwork = !current.isEqual(updated)
+                } else {
+                    updateNetwork = (current != nil) != (updated != nil)
+                }
+                if updateNetwork {
+                    network.dropConnectionStatus()
+                    return environment?.withUpdatedSocksProxySettings(updated)
+                } else {
+                    return nil
+                }
+            }
+        }))
+
         self.stateManager.reset()
+    }
+
+    deinit {
+        self.proxyDisposable.dispose()
     }
     
     public func changedMasterDatacenterId(accountManager: AccountManager<TelegramAccountManagerTypes>, masterDatacenterId: Int32) -> Signal<UnauthorizedAccount, NoError> {
