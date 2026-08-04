@@ -54,6 +54,7 @@ private enum SGBoolSetting: String {
     case foldersAtBottom
     case startTelescopeWithRearCam
     case hideStories
+    case hideAvatarStoryRing
     case uploadSpeedBoost
     case showProfileId
     case warnOnStoriesOpen
@@ -206,6 +207,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     
     entries.append(.header(id: id.count, section: .stories, text: strings.AutoDownloadSettings_Stories.uppercased(), badge: nil))
     entries.append(.toggle(id: id.count, section: .stories, settingName: .hideStories, value: SGSimpleSettings.shared.hideStories, text: i18n("Settings.Stories.Hide", lang), enabled: true))
+    entries.append(.toggle(id: id.count, section: .stories, settingName: .hideAvatarStoryRing, value: SGSimpleSettings.shared.hideAvatarStoryRing, text: i18n("Settings.Stories.HideAvatarStoryRing", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .stories, settingName: .disableSwipeToRecordStory, value: SGSimpleSettings.shared.disableSwipeToRecordStory, text: i18n("Settings.Stories.DisableSwipeToRecord", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .stories, settingName: .warnOnStoriesOpen, value: SGSimpleSettings.shared.warnOnStoriesOpen, text: i18n("Settings.Stories.WarnBeforeView", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .stories, settingName: .showRepostToStory, value: SGSimpleSettings.shared.showRepostToStoryV2, text: strings.Share_RepostToStory.replacingOccurrences(of: "\n", with: " "), enabled: true))
@@ -400,6 +402,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.startTelescopeWithRearCam = value
         case .hideStories:
             SGSimpleSettings.shared.hideStories = value
+        case .hideAvatarStoryRing:
+            SGSimpleSettings.shared.hideAvatarStoryRing = value
         case .showProfileId:
             SGSimpleSettings.shared.showProfileId = value
         case .warnOnStoriesOpen:

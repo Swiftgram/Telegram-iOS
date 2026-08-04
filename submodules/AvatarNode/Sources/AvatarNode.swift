@@ -14,6 +14,7 @@ import Accelerate
 import ComponentFlow
 import AvatarStoryIndicatorComponent
 import DirectMediaImageCache
+import SGSimpleSettings
 
 private let deletedIcon = UIImage(bundleImageName: "Avatar/DeletedIcon")?.precomposed()
 private let phoneIcon = generateTintedImage(image: UIImage(bundleImageName: "Avatar/PhoneIcon"), color: .white)
@@ -1183,6 +1184,10 @@ public final class AvatarNode: ASDisplayNode {
     }
     
     public private(set) var storyStats: StoryStats?
+    // MARK: Swiftgram
+    private var rawStoryStats: StoryStats?
+    private var hideAvatarStoryRingDisposable: MetaDisposable?
+    //
     
     public var font: UIFont {
         get {
@@ -1235,12 +1240,15 @@ public final class AvatarNode: ASDisplayNode {
             }
             self.updateStoryIndicator(transition: .immediate)
         }
-        
+
         self.addSubnode(self.contentNode)
     }
-    
+
     deinit {
         self.cancelLoading()
+        // MARK: Swiftgram
+        self.hideAvatarStoryRingDisposable?.dispose()
+        //
     }
     
     override public var frame: CGRect {
@@ -1374,13 +1382,38 @@ public final class AvatarNode: ASDisplayNode {
     }
     
     public func setStoryStats(storyStats: StoryStats?, presentationParams: StoryPresentationParams, transition: ComponentTransition) {
-        if self.storyStats != storyStats || self.storyPresentationParams != presentationParams {
-            self.storyStats = storyStats
+        self.applyStoryStats(storyStats: storyStats, presentationParams: presentationParams, transition: transition)
+    }
+
+    // MARK: Swiftgram
+    private func applyStoryStats(storyStats: StoryStats?, presentationParams: StoryPresentationParams?, transition: ComponentTransition) {
+        self.rawStoryStats = storyStats
+        if storyStats != nil {
+            if self.hideAvatarStoryRingDisposable == nil {
+                let disposable = MetaDisposable()
+                self.hideAvatarStoryRingDisposable = disposable
+                disposable.set((sgSimpleSettingsBoolSignal(.hideAvatarStoryRing, defaultValue: false)
+                |> deliverOnMainQueue).startStrict(next: { [weak self] _ in
+                    guard let self else {
+                        return
+                    }
+                    self.applyStoryStats(storyStats: self.rawStoryStats, presentationParams: self.storyPresentationParams, transition: .immediate)
+                }))
+            }
+        } else {
+            self.hideAvatarStoryRingDisposable?.dispose()
+            self.hideAvatarStoryRingDisposable = nil
+        }
+
+        let filteredStoryStats = SGSimpleSettings.shared.hideAvatarStoryRing ? nil : storyStats
+        if self.storyStats != filteredStoryStats || self.storyPresentationParams != presentationParams {
+            self.storyStats = filteredStoryStats
             self.storyPresentationParams = presentationParams
-            
+
             self.updateStoryIndicator(transition: transition)
         }
     }
+    //
     
     public struct Colors: Equatable {
         public var unseenColors: [UIColor]

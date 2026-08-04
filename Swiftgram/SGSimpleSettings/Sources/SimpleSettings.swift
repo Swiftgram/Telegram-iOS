@@ -173,6 +173,7 @@ public class SGSimpleSettings {
         case wideTabBar
         case tabBarSearchEnabled
         case hideStories
+        case hideAvatarStoryRing
         case warnOnStoriesOpen
         case showProfileId
         case sendWithReturnKey
@@ -326,6 +327,7 @@ public class SGSimpleSettings {
         Keys.wideTabBar.rawValue: false,
         Keys.tabBarSearchEnabled.rawValue: true,
         Keys.hideStories.rawValue: false,
+        Keys.hideAvatarStoryRing.rawValue: false,
         Keys.warnOnStoriesOpen.rawValue: false,
         Keys.showProfileId.rawValue: true,
         Keys.sendWithReturnKey.rawValue: false
@@ -382,6 +384,9 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.hideStories.rawValue)
     public var hideStories: Bool
+
+    @UserDefault(key: Keys.hideAvatarStoryRing.rawValue)
+    public var hideAvatarStoryRing: Bool
 
     @UserDefault(key: Keys.warnOnStoriesOpen.rawValue)
     public var warnOnStoriesOpen: Bool

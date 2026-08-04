@@ -39,6 +39,7 @@
 "Settings.Profiles.Header" = "PROFILES";
 
 "Settings.Stories.Hide" = "Hide Stories";
+"Settings.Stories.HideAvatarStoryRing" = "Hide Avatar Story Ring";
 "Settings.Stories.WarnBeforeView" = "Ask Before Viewing";
 "Settings.Stories.DisableSwipeToRecord" = "Disable Swipe to Record";
 

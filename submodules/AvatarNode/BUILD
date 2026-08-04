@@ -1,11 +1,15 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+sgsrcs = [
+    "//Swiftgram/SGChatListSimpleSettingsSignal:SGChatListSimpleSettingsSignal",
+]
+
 swift_library(
     name = "AvatarNode",
     module_name = "AvatarNode",
     srcs = glob([
         "Sources/**/*.swift",
-    ]),
+    ]) + sgsrcs,
     copts = [
         "-warnings-as-errors",
     ],
@@ -24,6 +28,7 @@ swift_library(
         "//submodules/ComponentFlow",
         "//submodules/TelegramUI/Components/Stories/AvatarStoryIndicatorComponent",
         "//submodules/DirectMediaImageCache",
+        "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
     ],
     visibility = [
         "//visibility:public",
