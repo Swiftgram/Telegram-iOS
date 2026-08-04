@@ -47,13 +47,6 @@ private func transcribeAudio(path: String, locale: String) -> Signal<Transcripti
                             speechRecognizerValue.defaultTaskHint = .dictation
                             sharedRecognizers[locale] = speechRecognizerValue
                             speechRecognizer = speechRecognizerValue
-                            
-                            if locale == "en-US" {
-                                speechRecognizer.supportsOnDeviceRecognition = true
-                            } else {
-                                speechRecognizer.supportsOnDeviceRecognition = false
-                            }
-                            speechRecognizer.supportsOnDeviceRecognition = true
                         }
                         speechRecognizer.defaultTaskHint = .dictation
                         
@@ -64,6 +57,8 @@ private func transcribeAudio(path: String, locale: String) -> Signal<Transcripti
                         if #available(iOS 16.0, *) {
                             request.addsPunctuation = true
                         }
+                        // MARK: Swiftgram
+                        // Reads actual on-device recognition capability for this locale directly.
                         request.requiresOnDeviceRecognition = speechRecognizer.supportsOnDeviceRecognition
                         request.shouldReportPartialResults = false
                         

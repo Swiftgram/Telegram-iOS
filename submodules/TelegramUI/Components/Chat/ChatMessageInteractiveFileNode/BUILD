@@ -1,7 +1,8 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
 sgdeps = [
-    "//Swiftgram/SGSimpleSettings:SGSimpleSettings" 
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+    "//Swiftgram/SGLocalTranscription:SGLocalTranscription",
 ]
 
 
@@ -36,8 +37,6 @@ swift_library(
         "//submodules/TelegramUI/Components/AudioTranscriptionButtonComponent",
         "//submodules/TelegramUI/Components/AudioWaveformComponent",
         "//submodules/ShimmerEffect",
-        "//submodules/Media/ConvertOpusToAAC",
-        "//submodules/Media/LocalAudioTranscription",
         "//submodules/TextSelectionNode",
         "//submodules/TelegramUI/Components/AudioTranscriptionPendingIndicatorComponent",
         "//submodules/UndoUI",

@@ -21,8 +21,7 @@ import ComponentFlow
 import AudioTranscriptionButtonComponent
 import AudioWaveformComponent
 import ShimmerEffect
-import ConvertOpusToAAC
-import LocalAudioTranscription
+import SGLocalTranscription
 import TextSelectionNode
 import AudioTranscriptionPendingIndicatorComponent
 import UndoUI
@@ -423,40 +422,11 @@ public final class ChatMessageInteractiveFileNode: ASDisplayNode {
                 
                 if context.sharedContext.immediateExperimentalUISettings.localTranscription || !arguments.associatedData.isPremium || SGSimpleSettings.shared.transcriptionBackend == SGSimpleSettings.TranscriptionBackend.apple.rawValue {
                     let appLocale = presentationData.strings.baseLanguageCode
-                    
-                    let signal: Signal<LocallyTranscribedAudio?, NoError> = context.engine.data.get(TelegramEngine.EngineData.Item.Messages.Message(id: message.id))
-                    |> mapToSignal { message -> Signal<String?, NoError> in
-                        guard let message = message else {
-                            return .single(nil)
-                        }
-                        guard let file = message.media.first(where: { $0 is TelegramMediaFile }) as? TelegramMediaFile else {
-                            return .single(nil)
-                        }
-                        return context.engine.resources.data(id: EngineMediaResource.Id(file.resource.id))
-                        |> take(1)
-                        |> mapToSignal { data -> Signal<String?, NoError> in
-                            if !data.isComplete {
-                                return .single(nil)
-                            }
-                            return .single(data.path)
-                        }
-                    }
-                    |> mapToSignal { result -> Signal<String?, NoError> in
-                        guard let result = result else {
-                            return .single(nil)
-                        }
-                        return convertOpusToAAC(sourcePath: result, allocateTempFile: {
-                            return EngineTempBox.shared.tempFile(fileName: "audio.m4a").path
-                        })
-                    }
-                    |> mapToSignal { result -> Signal<LocallyTranscribedAudio?, NoError> in
-                        guard let result = result else {
-                            return .single(nil)
-                        }
-                        
-                        return transcribeAudio(path: result, appLocale: arguments.controllerInteraction.sgGetChatPredictedLang() ?? appLocale)
-                    }
-                    
+                    // MARK: Swiftgram
+                    // Extracted to SGLocalTranscription so video circle transcription
+                    // can reuse it instead of duplicating the whole signal chain.
+                    let signal = sgLocallyTranscribeAudioMessage(context: context, messageId: message.id, appLocale: arguments.controllerInteraction.sgGetChatPredictedLang() ?? appLocale)
+
                     self.transcribeDisposable = (signal
                     |> deliverOnMainQueue).startStrict(next: { [weak self] result in
                         guard let strongSelf = self, let arguments = strongSelf.arguments else {

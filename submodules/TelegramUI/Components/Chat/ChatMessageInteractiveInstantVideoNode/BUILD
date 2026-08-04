@@ -1,5 +1,10 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+sgdeps = [
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+    "//Swiftgram/SGLocalTranscription:SGLocalTranscription",
+]
+
 swift_library(
     name = "ChatMessageInteractiveInstantVideoNode",
     module_name = "ChatMessageInteractiveInstantVideoNode",
@@ -10,7 +15,7 @@ swift_library(
         "-warnings-as-errors",
         #"-Xfrontend", "-debug-time-function-bodies"
     ],
-    deps = [
+    deps = sgdeps + [
         "//submodules/AsyncDisplayKit",
         "//submodules/Display",
         "//submodules/SSignalKit/SwiftSignalKit",
