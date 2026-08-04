@@ -781,8 +781,30 @@ struct ctr_state {
     }
 }
 
+// MARK: Swiftgram
+// Upstream extends read timeouts indefinitely (-1.0) here. That's fine once regular
+// API requests are flowing, since MTRequestMessageService's request-level watchdog can
+// force a transport reset if one stalls. But this only covers the explicit SOCKS5
+// pre-auth handshake reads below - nothing else. A stalled proxy that accepts
+// the TCP connection but never answers those hangs forever with zero protection.
+// Bound only that handshake phase here, everything past it stays unbounded like upstream.
 - (NSTimeInterval)socket:(GCDAsyncSocket *)sock shouldTimeoutReadWithTag:(long)tag elapsed:(NSTimeInterval)elapsed bytesDone:(NSUInteger)length {
-    return -1.0;
+    switch (tag) {
+        case MTTcpSocksLogin:
+        case MTTcpSocksRequest:
+        case MTTcpSocksReceiveBindAddr4:
+        case MTTcpSocksReceiveBindAddr6:
+        case MTTcpSocksReceiveBindAddrDomainNameLength:
+        case MTTcpSocksReceiveBindAddrDomainName:
+        case MTTcpSocksReceiveBindAddrPort:
+        case MTTcpSocksReceiveAuthResponse:
+        case MTTcpSocksReceiveHelloResponse:
+        case MTTcpSocksReceiveHelloResponse1:
+        case MTTcpSocksReceiveHelloResponse2:
+            return 0.0;
+        default:
+            return -1.0;
+    }
 }
 
 @end
@@ -1109,7 +1131,7 @@ struct ctr_state {
                             memcpy(((uint8_t *)helloData.mutableBytes) + 11, cHMAC, CC_SHA256_DIGEST_LENGTH);
 
                             [strongSelf->_socket writeData:helloData];
-                            [strongSelf->_socket readDataToLength:5 withTimeout:-1 tag:MTTcpSocksReceiveHelloResponse];
+                            [strongSelf->_socket readDataToLength:5 withTimeout:15.0 tag:MTTcpSocksReceiveHelloResponse];
                         } else {
                             strongSelf->_readyToSendData = true;
                             [strongSelf sendDataIfNeeded];
@@ -1130,7 +1152,7 @@ struct ctr_state {
                             req.Methods[1] = 0x02;
                         }
                         [strongSelf->_socket writeData:[NSData dataWithBytes:&req length:2 + req.NumberOfMethods]];
-                        [strongSelf->_socket readDataToLength:sizeof(struct socks5_ident_resp) withTimeout:-1 tag:MTTcpSocksLogin];
+                        [strongSelf->_socket readDataToLength:sizeof(struct socks5_ident_resp) withTimeout:15.0 tag:MTTcpSocksLogin];
                     }
                 }];
             } file:__FILE_NAME__ line:__LINE__]];
@@ -1479,7 +1501,7 @@ struct ctr_state {
     [reqData appendBytes:&port length:2];
     
     [_socket writeData:reqData];
-    [_socket readDataToLength:4 withTimeout:-1 tag:MTTcpSocksRequest];
+    [_socket readDataToLength:4 withTimeout:15.0 tag:MTTcpSocksRequest];
 }
 
 - (void)connectionInterfaceDidReadData:(NSData *)rawData withTag:(long)tag networkType:(int32_t)networkType
@@ -1535,7 +1557,7 @@ struct ctr_state {
             [reqData appendData:passwordData];
             
             [_socket writeData:reqData];
-            [_socket readDataToLength:2 withTimeout:-1 tag:MTTcpSocksReceiveAuthResponse];
+            [_socket readDataToLength:2 withTimeout:15.0 tag:MTTcpSocksReceiveAuthResponse];
         } else {
             [self requestSocksConnection];
         }
@@ -1562,15 +1584,15 @@ struct ctr_state {
         
         switch (resp.AddrType) {
             case 1: {
-                [_socket readDataToLength:sizeof(struct in_addr) withTimeout:-1 tag:MTTcpSocksReceiveBindAddr4];
+                [_socket readDataToLength:sizeof(struct in_addr) withTimeout:15.0 tag:MTTcpSocksReceiveBindAddr4];
                 break;
             }
             case 3: {
-                [_socket readDataToLength:1 withTimeout:-1 tag:MTTcpSocksReceiveBindAddrDomainNameLength];
+                [_socket readDataToLength:1 withTimeout:15.0 tag:MTTcpSocksReceiveBindAddrDomainNameLength];
                 break;
             }
             case 4: {
-                [_socket readDataToLength:sizeof(struct in6_addr) withTimeout:-1 tag:MTTcpSocksReceiveBindAddr6];
+                [_socket readDataToLength:sizeof(struct in6_addr) withTimeout:15.0 tag:MTTcpSocksReceiveBindAddr6];
                 break;
             }
             default: {
@@ -1595,11 +1617,11 @@ struct ctr_state {
         uint8_t length = 0;
         [rawData getBytes:&length length:1];
         
-        [_socket readDataToLength:(int)length withTimeout:-1 tag:MTTcpSocksReceiveBindAddrDomainName];
+        [_socket readDataToLength:(int)length withTimeout:15.0 tag:MTTcpSocksReceiveBindAddrDomainName];
         
         return;
     } else if (tag == MTTcpSocksReceiveBindAddrDomainName || tag == MTTcpSocksReceiveBindAddr4 || tag == MTTcpSocksReceiveBindAddr6) {
-        [_socket readDataToLength:2 withTimeout:-1 tag:MTTcpSocksReceiveBindAddrPort];
+        [_socket readDataToLength:2 withTimeout:15.0 tag:MTTcpSocksReceiveBindAddrPort];
         
         return;
     } else if (tag == MTTcpSocksReceiveBindAddrPort) {
@@ -1668,7 +1690,7 @@ struct ctr_state {
         
         _currentHelloResponse = [NSData dataWithData:rawData];
         
-        [_socket readDataToLength:((int)nextLength) + 9 + 2 withTimeout:-1 tag:MTTcpSocksReceiveHelloResponse1];
+        [_socket readDataToLength:((int)nextLength) + 9 + 2 withTimeout:15.0 tag:MTTcpSocksReceiveHelloResponse1];
         
         return;
     } else if (tag == MTTcpSocksReceiveHelloResponse1) {
@@ -1698,7 +1720,7 @@ struct ctr_state {
         [currentHelloResponse appendData:rawData];
         _currentHelloResponse = currentHelloResponse;
         
-        [_socket readDataToLength:((int)nextLength) withTimeout:-1 tag:MTTcpSocksReceiveHelloResponse2];
+        [_socket readDataToLength:((int)nextLength) withTimeout:15.0 tag:MTTcpSocksReceiveHelloResponse2];
         return;
     } else if (tag == MTTcpSocksReceiveHelloResponse2) {
         NSMutableData *currentHelloResponse = [[NSMutableData alloc] init];
