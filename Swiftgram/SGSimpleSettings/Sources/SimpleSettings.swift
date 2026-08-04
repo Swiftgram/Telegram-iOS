@@ -131,6 +131,7 @@ public class SGSimpleSettings {
         case disableGalleryCamera
         case disableGalleryCameraPreview
         case disableSendAsButton
+        case disableAIChatButton
         case disableSnapDeletionEffect
         case stickerSize
         case stickerTimestamp
@@ -289,6 +290,7 @@ public class SGSimpleSettings {
         Keys.disableGalleryCamera.rawValue: false,
         Keys.disableGalleryCameraPreview.rawValue: false,
         Keys.disableSendAsButton.rawValue: false,
+        Keys.disableAIChatButton.rawValue: false,
         Keys.disableSnapDeletionEffect.rawValue: false,
         Keys.stickerSize.rawValue: 100,
         Keys.stickerTimestamp.rawValue: true,
@@ -463,6 +465,9 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.disableSendAsButton.rawValue)
     public var disableSendAsButton: Bool
+
+    @UserDefault(key: Keys.disableAIChatButton.rawValue)
+    public var disableAIChatButton: Bool
 
     @UserDefault(key: Keys.disableSnapDeletionEffect.rawValue)
     public var disableSnapDeletionEffect: Bool

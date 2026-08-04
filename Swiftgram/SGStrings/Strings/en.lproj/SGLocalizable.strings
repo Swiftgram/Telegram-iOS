@@ -135,6 +135,7 @@
 "Settings.GalleryCameraPreview" = "Camera Preview in Gallery";
 /* "Send Message As..." button */
 "Settings.SendAsButton" = "\"%@\" Button";
+"Settings.AIChatButton" = "AI Rewrite Button";
 "Settings.SnapDeletionEffect" = "Message Deletion Effects";
 
 "Settings.Stickers.Size" = "SIZE";
