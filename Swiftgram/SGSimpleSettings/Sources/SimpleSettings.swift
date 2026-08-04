@@ -146,6 +146,7 @@ public class SGSimpleSettings {
         case allChatsTitleLengthOverride
 //        case allChatsFolderPositionOverride
         case allChatsHidden
+        case hiddenChatListFilterIds
         case defaultEmojisFirst
         case messageDoubleTapActionOutgoing
         case wideChannelPosts
@@ -304,6 +305,7 @@ public class SGSimpleSettings {
         Keys.allChatsTitleLengthOverride.rawValue: AllChatsTitleLengthOverride.none.rawValue,
 //        Keys.allChatsFolderPositionOverride.rawValue: AllChatsFolderPositionOverride.none.rawValue
         Keys.allChatsHidden.rawValue: false,
+        Keys.hiddenChatListFilterIds.rawValue: [],
         Keys.defaultEmojisFirst.rawValue: false,
         Keys.messageDoubleTapActionOutgoing.rawValue: MessageDoubleTapAction.default.rawValue,
         Keys.wideChannelPosts.rawValue: false,
@@ -509,6 +511,19 @@ public class SGSimpleSettings {
 //    public var allChatsFolderPositionOverride: String
     @UserDefault(key: Keys.allChatsHidden.rawValue)
     public var allChatsHidden: Bool
+
+    // Stored as stringified Int32 filter ids (UserDefault wrapper has no Array<Int32> case)
+    @UserDefault(key: Keys.hiddenChatListFilterIds.rawValue)
+    public var hiddenChatListFilterIdsRaw: [String]
+
+    public var hiddenChatListFilterIds: Set<Int32> {
+        get {
+            return Set(self.hiddenChatListFilterIdsRaw.compactMap { Int32($0) })
+        }
+        set {
+            self.hiddenChatListFilterIdsRaw = newValue.map { String($0) }
+        }
+    }
 
     @UserDefault(key: Keys.defaultEmojisFirst.rawValue)
     public var defaultEmojisFirst: Bool

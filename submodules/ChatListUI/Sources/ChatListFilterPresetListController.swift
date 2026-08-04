@@ -13,25 +13,29 @@ import ChatListFilterSettingsHeaderItem
 import PremiumUI
 import UndoUI
 import ChatFolderLinkPreviewScreen
+import SGSimpleSettings
+import SGStrings
 
 private final class ChatListFilterPresetListControllerArguments {
     let context: AccountContext
-    
+
     let addSuggestedPressed: (ChatFolderTitle, ChatListFilterData) -> Void
     let openPreset: (ChatListFilter) -> Void
     let addNew: () -> Void
     let setItemWithRevealedOptions: (Int32?, Int32?) -> Void
     let removePreset: (Int32) -> Void
+    let toggleHiddenPreset: (Int32) -> Void
     let updateDisplayTags: (Bool) -> Void
     let updateDisplayTagsLocked: () -> Void
-    
-    init(context: AccountContext, addSuggestedPressed: @escaping (ChatFolderTitle, ChatListFilterData) -> Void, openPreset: @escaping (ChatListFilter) -> Void, addNew: @escaping () -> Void, setItemWithRevealedOptions: @escaping (Int32?, Int32?) -> Void, removePreset: @escaping (Int32) -> Void, updateDisplayTags: @escaping (Bool) -> Void, updateDisplayTagsLocked: @escaping () -> Void) {
+
+    init(context: AccountContext, addSuggestedPressed: @escaping (ChatFolderTitle, ChatListFilterData) -> Void, openPreset: @escaping (ChatListFilter) -> Void, addNew: @escaping () -> Void, setItemWithRevealedOptions: @escaping (Int32?, Int32?) -> Void, removePreset: @escaping (Int32) -> Void, toggleHiddenPreset: @escaping (Int32) -> Void, updateDisplayTags: @escaping (Bool) -> Void, updateDisplayTagsLocked: @escaping () -> Void) {
         self.context = context
         self.addSuggestedPressed = addSuggestedPressed
         self.openPreset = openPreset
         self.addNew = addNew
         self.setItemWithRevealedOptions = setItemWithRevealedOptions
         self.removePreset = removePreset
+        self.toggleHiddenPreset = toggleHiddenPreset
         self.updateDisplayTags = updateDisplayTags
         self.updateDisplayTagsLocked = updateDisplayTagsLocked
     }
@@ -98,7 +102,7 @@ private enum ChatListFilterPresetListEntry: ItemListNodeEntry {
     case suggestedPreset(index: PresetIndex, title: ChatFolderTitle, label: String, preset: ChatListFilterData)
     case suggestedAddCustom(String)
     case listHeader(String)
-    case preset(index: PresetIndex, title: ChatFolderTitle, label: String, preset: ChatListFilter, canBeReordered: Bool, canBeDeleted: Bool, isEditing: Bool, isAllChats: Bool, isDisabled: Bool, displayTags: Bool)
+    case preset(index: PresetIndex, title: ChatFolderTitle, label: String, preset: ChatListFilter, canBeReordered: Bool, canBeDeleted: Bool, isEditing: Bool, isAllChats: Bool, isDisabled: Bool, isHidden: Bool, displayTags: Bool)
     case addItem(text: String, isEditing: Bool)
     case listFooter(String)
     case displayTags(Bool?)
@@ -125,7 +129,7 @@ private enum ChatListFilterPresetListEntry: ItemListNodeEntry {
             return 100
         case .addItem:
             return 101
-        case let .preset(index, _, _, _, _, _, _, _, _, _):
+        case let .preset(index, _, _, _, _, _, _, _, _, _, _):
             return 102 + index.value
         case .listFooter:
             return 1001
@@ -154,7 +158,7 @@ private enum ChatListFilterPresetListEntry: ItemListNodeEntry {
             return .suggestedAddCustom
         case .listHeader:
             return .listHeader
-        case let .preset(_, _, _, preset, _, _, _, _, _, _):
+        case let .preset(_, _, _, preset, _, _, _, _, _, _, _):
             return .preset(preset.id)
         case .addItem:
             return .addItem
@@ -188,7 +192,7 @@ private enum ChatListFilterPresetListEntry: ItemListNodeEntry {
             })
         case let .listHeader(text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, multiline: true, sectionId: self.section)
-        case let .preset(_, title, label, preset, canBeReordered, canBeDeleted, isEditing, isAllChats, isDisabled, displayTags):
+        case let .preset(_, title, label, preset, canBeReordered, canBeDeleted, isEditing, isAllChats, isDisabled, isHidden, displayTags):
             var resolvedColor: UIColor?
             if displayTags, case let .filter(_, _, _, data) = preset {
                 let tagColor = data.color
@@ -196,8 +200,8 @@ private enum ChatListFilterPresetListEntry: ItemListNodeEntry {
                     resolvedColor = arguments.context.peerNameColors.getChatFolderTag(tagColor, dark: presentationData.theme.overallDarkAppearance).main
                 }
             }
-            
-            return ChatListFilterPresetListItem(context: arguments.context, presentationData: presentationData, systemStyle: .glass, preset: preset, title: title, label: label, tagColor: resolvedColor, editing: ChatListFilterPresetListItemEditing(editable: true, editing: isEditing, revealed: false), canBeReordered: canBeReordered, canBeDeleted: canBeDeleted, isAllChats: isAllChats, isDisabled: isDisabled, sectionId: self.section, action: {
+
+            return ChatListFilterPresetListItem(context: arguments.context, presentationData: presentationData, systemStyle: .glass, preset: preset, title: title, label: label, tagColor: resolvedColor, editing: ChatListFilterPresetListItemEditing(editable: true, editing: isEditing, revealed: false), canBeReordered: canBeReordered, canBeDeleted: canBeDeleted, isAllChats: isAllChats, isDisabled: isDisabled, isHidden: isHidden, sectionId: self.section, action: {
                 if isDisabled {
                     arguments.addNew()
                 } else {
@@ -207,6 +211,8 @@ private enum ChatListFilterPresetListEntry: ItemListNodeEntry {
                 arguments.setItemWithRevealedOptions(lhs, rhs)
             }, remove: {
                 arguments.removePreset(preset.id)
+            }, toggleHidden: {
+                arguments.toggleHiddenPreset(preset.id)
             })
         case let .addItem(text, isEditing):
             return ItemListPeerActionItem(presentationData: presentationData, systemStyle: .glass, icon: nil, title: text, sectionId: self.section, height: .generic, editing: isEditing, action: {
@@ -233,6 +239,8 @@ private enum ChatListFilterPresetListEntry: ItemListNodeEntry {
 private struct ChatListFilterPresetListControllerState: Equatable {
     var isEditing: Bool = false
     var revealedPreset: Int32? = nil
+    // MARK: Swiftgram
+    var sgHiddenFilterIdsRevision: Int = 0
 }
 
 private func filtersWithAppliedOrder(filters: [(ChatListFilter, Int)], order: [Int32]?) -> [(ChatListFilter, Int)] {
@@ -286,13 +294,18 @@ private func chatListFilterPresetListControllerEntries(presentationData: Present
     
     if !filters.isEmpty || suggestedFilters.isEmpty {
         var folderCount = 0
+        // MARK: Swiftgram
+        let sgHiddenFilterIds = SGSimpleSettings.shared.hiddenChatListFilterIds
         for (filter, chatCount) in filtersWithAppliedOrder(filters: filters, order: updatedFilterOrder) {
             if case .allChats = filter {
-                entries.append(.preset(index: PresetIndex(value: entries.count), title: ChatFolderTitle(text: "", entities: [], enableAnimations: true), label: "", preset: filter, canBeReordered: filters.count > 1, canBeDeleted: false, isEditing: state.isEditing, isAllChats: true, isDisabled: false, displayTags: effectiveDisplayTags == true))
+                entries.append(.preset(index: PresetIndex(value: entries.count), title: ChatFolderTitle(text: "", entities: [], enableAnimations: true), label: "", preset: filter, canBeReordered: filters.count > 1, canBeDeleted: false, isEditing: state.isEditing, isAllChats: true, isDisabled: false, isHidden: false, displayTags: effectiveDisplayTags == true))
             }
-            if case let .filter(_, title, _, _) = filter {
+            if case let .filter(id, title, _, _) = filter {
                 folderCount += 1
-                entries.append(.preset(index: PresetIndex(value: entries.count), title: title, label: chatCount == 0 ? "" : "\(chatCount)", preset: filter, canBeReordered: filters.count > 1, canBeDeleted: true, isEditing: state.isEditing, isAllChats: false, isDisabled: !isPremium && folderCount > limits.maxFoldersCount, displayTags: effectiveDisplayTags == true))
+                // MARK: Swiftgram
+                let isHidden = sgHiddenFilterIds.contains(id)
+                let label = isHidden ? "Settings.Folders.Hidden".i18n(presentationData.strings.baseLanguageCode) : (chatCount == 0 ? "" : "\(chatCount)")
+                entries.append(.preset(index: PresetIndex(value: entries.count), title: title, label: label, preset: filter, canBeReordered: filters.count > 1, canBeDeleted: true, isEditing: state.isEditing, isAllChats: false, isDisabled: !isPremium && folderCount > limits.maxFoldersCount, isHidden: isHidden, displayTags: effectiveDisplayTags == true))
             }
         }
         
@@ -556,6 +569,20 @@ public func chatListFilterPresetListController(context: AccountContext, mode: Ch
                 presentControllerImpl?(alertController)
             }
         })
+    }, toggleHiddenPreset: { id in
+        // MARK: Swiftgram
+        var hiddenIds = SGSimpleSettings.shared.hiddenChatListFilterIds
+        if hiddenIds.contains(id) {
+            hiddenIds.remove(id)
+        } else {
+            hiddenIds.insert(id)
+        }
+        SGSimpleSettings.shared.hiddenChatListFilterIds = hiddenIds
+        updateState { state in
+            var state = state
+            state.sgHiddenFilterIdsRevision += 1
+            return state
+        }
     }, updateDisplayTags: { value in
         context.engine.peers.updateChatListFiltersDisplayTags(isEnabled: value)
     }, updateDisplayTagsLocked: {
@@ -717,7 +744,7 @@ public func chatListFilterPresetListController(context: AccountContext, mode: Ch
     }
     controller.setReorderEntry({ (fromIndex: Int, toIndex: Int, entries: [ChatListFilterPresetListEntry]) -> Signal<Bool, NoError> in
         let fromEntry = entries[fromIndex]
-        guard case let .preset(_, _, _, fromPreset, _, _, _, _, _, _) = fromEntry else {
+        guard case let .preset(_, _, _, fromPreset, _, _, _, _, _, _, _) = fromEntry else {
             return .single(false)
         }
         var referenceFilter: ChatListFilter?
@@ -725,7 +752,7 @@ public func chatListFilterPresetListController(context: AccountContext, mode: Ch
         var afterAll = false
         if toIndex < entries.count {
             switch entries[toIndex] {
-            case let .preset(_, _, _, preset, _, _, _, _, _, _):
+            case let .preset(_, _, _, preset, _, _, _, _, _, _, _):
                 referenceFilter = preset
             default:
                 if entries[toIndex] < fromEntry {

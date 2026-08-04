@@ -9,6 +9,7 @@ import ItemListUI
 import TelegramUIPreferences
 import AccountContext
 import TextNodeWithEntities
+import SGStrings
 
 struct ChatListFilterPresetListItemEditing: Equatable {
     let editable: Bool
@@ -29,10 +30,12 @@ final class ChatListFilterPresetListItem: ListViewItem, ItemListItem, ItemListRe
     let canBeDeleted: Bool
     let isAllChats: Bool
     let isDisabled: Bool
+    let isHidden: Bool
     let sectionId: ItemListSectionId
     let action: () -> Void
     let setItemWithRevealedOptions: (Int32?, Int32?) -> Void
     let remove: () -> Void
+    let toggleHidden: () -> Void
 
     var hasActiveRevealOptions: Bool {
         return self.editing.revealed
@@ -51,10 +54,12 @@ final class ChatListFilterPresetListItem: ListViewItem, ItemListItem, ItemListRe
         canBeDeleted: Bool,
         isAllChats: Bool,
         isDisabled: Bool,
+        isHidden: Bool,
         sectionId: ItemListSectionId,
         action: @escaping () -> Void,
         setItemWithRevealedOptions: @escaping (Int32?, Int32?) -> Void,
-        remove: @escaping () -> Void
+        remove: @escaping () -> Void,
+        toggleHidden: @escaping () -> Void
     ) {
         self.context = context
         self.presentationData = presentationData
@@ -68,10 +73,12 @@ final class ChatListFilterPresetListItem: ListViewItem, ItemListItem, ItemListRe
         self.canBeDeleted = canBeDeleted
         self.isAllChats = isAllChats
         self.isDisabled = isDisabled
+        self.isHidden = isHidden
         self.sectionId = sectionId
         self.action = action
         self.setItemWithRevealedOptions = setItemWithRevealedOptions
         self.remove = remove
+        self.toggleHidden = toggleHidden
     }
     
     func nodeConfiguredForParams(async: @escaping (@escaping () -> Void) -> Void, params: ListViewItemLayoutParams, synchronousLoads: Bool, previousItem: ListViewItem?, nextItem: ListViewItem?, completion: @escaping (ListViewItemNode, @escaping () -> (Signal<Void, NoError>?, (ListViewItemApply) -> Void)) -> Void) {
@@ -245,11 +252,13 @@ final class ChatListFilterPresetListItemNode: ItemListRevealOptionsItemNode {
                 updatedSharedIconImage = generateTintedImage(image: UIImage(bundleImageName: "Chat List/SharedFolderListIcon"), color: item.presentationData.theme.list.disclosureArrowColor)
             }
             
-            let peerRevealOptions: [ItemListRevealOption]
+            // MARK: Swiftgram
+            var peerRevealOptions: [ItemListRevealOption] = []
+            if item.editing.editable && !item.isAllChats {
+                peerRevealOptions.append(ItemListRevealOption(key: 1, title: item.isHidden ? "Settings.Folders.Show".i18n(item.presentationData.strings.baseLanguageCode) : "Settings.Folders.Hide".i18n(item.presentationData.strings.baseLanguageCode), icon: .none, color: item.presentationData.theme.list.itemDisclosureActions.neutral1.fillColor, iconColor: item.presentationData.theme.list.itemDisclosureActions.neutral1.foregroundColor, textColor: item.presentationData.theme.list.itemSecondaryTextColor))
+            }
             if item.editing.editable && item.canBeDeleted {
-                peerRevealOptions = [ItemListRevealOption(key: 0, title: item.presentationData.strings.Common_Delete, icon: .none, color: item.presentationData.theme.list.itemDisclosureActions.destructive.fillColor, iconColor: item.presentationData.theme.list.itemDisclosureActions.destructive.foregroundColor, textColor: item.presentationData.theme.list.itemSecondaryTextColor)]
-            } else {
-                peerRevealOptions = []
+                peerRevealOptions.append(ItemListRevealOption(key: 0, title: item.presentationData.strings.Common_Delete, icon: .none, color: item.presentationData.theme.list.itemDisclosureActions.destructive.fillColor, iconColor: item.presentationData.theme.list.itemDisclosureActions.destructive.foregroundColor, textColor: item.presentationData.theme.list.itemSecondaryTextColor))
             }
             
             let titleAttributedString = NSMutableAttributedString()
@@ -604,9 +613,14 @@ final class ChatListFilterPresetListItemNode: ItemListRevealOptionsItemNode {
     override func revealOptionSelected(_ option: ItemListRevealOption, animated: Bool) {
         self.setRevealOptionsOpened(false, animated: true)
         self.revealOptionsInteractivelyClosed()
-        
+
          if let item = self.item {
-            item.remove()
+            // MARK: Swiftgram
+            if option.key == 1 {
+                item.toggleHidden()
+            } else {
+                item.remove()
+            }
         }
     }
     

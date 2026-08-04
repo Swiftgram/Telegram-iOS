@@ -3,7 +3,8 @@ load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 sgdeps = [
     "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
     "//Swiftgram/SGAPIWebSettings:SGAPIWebSettings",
-    "//Swiftgram/SGAPIToken:SGAPIToken"
+    "//Swiftgram/SGAPIToken:SGAPIToken",
+    "//Swiftgram/SGStrings:SGStrings"
 ]
 sgsrcs = [
     "//Swiftgram/SGChatListSimpleSettingsSignal:SGChatListSimpleSettingsSignal",

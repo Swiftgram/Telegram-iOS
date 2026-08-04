@@ -26,6 +26,9 @@
 "Settings.Folders.AllChatsTitle.long" = "Long";
 /* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
 "Settings.Folders.AllChatsTitle.none" = "Default";
+"Settings.Folders.Hide" = "Hide";
+"Settings.Folders.Show" = "Show";
+"Settings.Folders.Hidden" = "Hidden";
 
 
 "Settings.ChatList.Header" = "CHAT LIST";
@@ -118,6 +121,9 @@
 "Settings.SmallReactions" = "Small Reactions";
 "Settings.HideReactions" = "Hide Reactions";
 
+"ContextMenu.HideFolder" = "Hide Folder";
+"ContextMenu.ShowFolder" = "Show Folder";
+"ContextMenu.HiddenFolders" = "Hidden Folders";
 "ContextMenu.SaveToCloud" = "Save to Cloud";
 "ContextMenu.SelectFromUser" = "Select from Author";
 

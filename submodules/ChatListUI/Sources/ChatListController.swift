@@ -1,5 +1,6 @@
 // MARK: Swiftgram
 import SGSimpleSettings
+import SGStrings
 
 import Foundation
 import UIKit
@@ -132,7 +133,11 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
     
     private var badgeDisposable: Disposable?
     private var badgeIconDisposable: Disposable?
-    
+
+    // MARK: Swiftgram
+    private var sgFoldersTabAtBottom: Bool = false
+    private var sgCurrentFilterId: Int32 = -2
+
     private var didAppear = false
     private var dismissSearchOnDisappear = false
     public var onDidAppear: (() -> Void)?
@@ -410,21 +415,14 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                     strongSelf.chatListDisplayNode.effectiveContainerNode.currentItemNode.scrollToPosition(.top(adjustForTempInset: false))
                 case let .known(offset):
                     // MARK: Swiftgram
-                    let sgAllChatsHiddden = SGSimpleSettings.shared.allChatsHidden
-                    var mainContainerNode_availableFilters = strongSelf.chatListDisplayNode.mainContainerNode.availableFilters
-                    if sgAllChatsHiddden {
-                        mainContainerNode_availableFilters.removeAll { $0 == .all }
-                    }
+                    let mainContainerNode_availableFilters = sgVisibleFilters(strongSelf.chatListDisplayNode.mainContainerNode.availableFilters)
                     let isFirstFilter = strongSelf.chatListDisplayNode.effectiveContainerNode.currentItemNode.chatListFilter == mainContainerNode_availableFilters.first?.filter
-                    
+
                     if offset <= ChatListNavigationBar.searchScrollHeight + 1.0 && strongSelf.chatListDisplayNode.inlineStackContainerNode != nil {
                         strongSelf.setInlineChatList(location: nil)
                     } else if offset <= ChatListNavigationBar.searchScrollHeight + 1.0 && !isFirstFilter {
                         // MARK: Swiftgram
-                        var effectiveContainerNode_availableFilters = strongSelf.chatListDisplayNode.mainContainerNode.availableFilters
-                        if sgAllChatsHiddden {
-                            effectiveContainerNode_availableFilters.removeAll { $0 == .all }
-                        }
+                        let effectiveContainerNode_availableFilters = sgVisibleFilters(strongSelf.chatListDisplayNode.mainContainerNode.availableFilters)
                         let firstFilter = effectiveContainerNode_availableFilters.first ?? .all
                         let targetTab: ChatListFilterTabEntryId
                         switch firstFilter {
@@ -775,6 +773,13 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                     let accountId = "\(strongSelf.context.account.peerId.id._internalGetInt64Value())"
                     if SGSimpleSettings.shared.lastAccountFolders[accountId] != switchingToFilterId {
                         SGSimpleSettings.shared.lastAccountFolders[accountId] = switchingToFilterId
+                    }
+                    // MARK: Swiftgram
+                    let previousFilterId = strongSelf.sgCurrentFilterId
+                    strongSelf.sgCurrentFilterId = switchingToFilterId
+                    let sgHiddenFilterIds = SGSimpleSettings.shared.hiddenChatListFilterIds
+                    if sgHiddenFilterIds.contains(previousFilterId) || sgHiddenFilterIds.contains(switchingToFilterId) {
+                        strongSelf.reloadFilters()
                     }
                 }
 
@@ -1284,6 +1289,35 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                         }
                     }
                     
+                    // MARK: Swiftgram
+                    let sgIsHidden = SGSimpleSettings.shared.hiddenChatListFilterIds.contains(id)
+                    items.append(.action(ContextMenuActionItem(text: i18n(sgIsHidden ? "ContextMenu.ShowFolder" : "ContextMenu.HideFolder", self.presentationData.strings.baseLanguageCode), textColor: .primary, icon: { theme in
+                        return generateTintedImage(image: UIImage(bundleImageName: sgIsHidden ? "Peer Info/ShowIcon" : "Chat/Context Menu/Eye"), color: theme.contextMenu.primaryColor)
+                    }, action: { [weak self] c, f in
+                        c?.dismiss(completion: {
+                            guard let self else {
+                                return
+                            }
+                            var hiddenIds = SGSimpleSettings.shared.hiddenChatListFilterIds
+                            if sgIsHidden {
+                                hiddenIds.remove(id)
+                            } else {
+                                hiddenIds.insert(id)
+                            }
+                            SGSimpleSettings.shared.hiddenChatListFilterIds = hiddenIds
+                            if !sgIsHidden && self.sgCurrentFilterId == id {
+                                let target = sgVisibleFilters(self.chatListDisplayNode.mainContainerNode.availableFilters).first
+                                switch target {
+                                case .some(.all), .none:
+                                    self.selectTab(id: .all)
+                                case let .some(.filter(filter)):
+                                    self.selectTab(id: .filter(filter.id))
+                                }
+                            }
+                            self.reloadFilters()
+                        })
+                    })))
+
                     items.append(.action(ContextMenuActionItem(text: self.presentationData.strings.ChatList_RemoveFolder, textColor: .destructive, icon: { theme in
                         return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Delete"), color: theme.contextMenu.destructiveColor)
                     }, action: { [weak self] c, f in
@@ -1341,7 +1375,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
     
     override public func loadDisplayNode() {
         self.displayNode = ChatListControllerNode(context: self.context, location: self.location, previewing: self.previewing, controlsHistoryPreload: self.controlsHistoryPreload, presentationData: self.presentationData, animationCache: self.animationCache, animationRenderer: self.animationRenderer, controller: self)
-        
+
         self.chatListDisplayNode.navigationBar = self.navigationBar
         
         self.chatListDisplayNode.requestDeactivateSearch = { [weak self] in
@@ -3187,7 +3221,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         self.validLayout = layout
         
         self.updateLayout(layout: layout, transition: transition)
-        
+
         if layout.inVoiceOver != wasInVoiceOver {
             self.chatListDisplayNode.scrollToTop()
         }
@@ -4046,23 +4080,30 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         }
         |> distinctUntilChanged
         
+        // MARK: Swiftgram
+        let hiddenFilterIdsSignal = sgHiddenChatListFilterIdsSignal()
+
         self.filterDisposable.set((combineLatest(queue: .mainQueue(),
             displayTabsAtBottomSignal,
             filterItems,
             self.context.account.postbox.peerView(id: self.context.account.peerId),
-            self.context.engine.data.get(TelegramEngine.EngineData.Item.Configuration.UserLimits(isPremium: false))
+            self.context.engine.data.get(TelegramEngine.EngineData.Item.Configuration.UserLimits(isPremium: false)),
+            hiddenFilterIdsSignal
         )
-        |> deliverOnMainQueue).startStrict(next: { [weak self] displayTabsAtBottom, countAndFilterItems, peerView, limits in
+        |> deliverOnMainQueue).startStrict(next: { [weak self] displayTabsAtBottom, countAndFilterItems, peerView, limits, sgHiddenFilterIds in
             guard let strongSelf = self else {
                 return
             }
             
             let isPremium = peerView.peers[peerView.peerId]?.isPremium
             strongSelf.isPremium = isPremium ?? false
-            
+
+            // MARK: Swiftgram
+            strongSelf.sgFoldersTabAtBottom = displayTabsAtBottom
+
             let (_, items) = countAndFilterItems
             var filterItems: [ChatListFilterTabEntry] = []
-            
+
             for (filter, unreadCount, hasUnmutedUnread) in items {
                 switch filter {
                     case .allChats:
@@ -4072,6 +4113,10 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                             filterItems.append(.all(unreadCount: 0))
                         }
                     case let .filter(id, title, _, _):
+                        // MARK: Swiftgram
+                        if sgHiddenFilterIds.contains(id) && strongSelf.sgCurrentFilterId != id {
+                            continue
+                        }
                         filterItems.append(.filter(id: id, text: title, unread: ChatListFilterTabEntryUnreadCount(value: unreadCount, hasUnmuted: hasUnmutedUnread)))
                 }
             }
@@ -4103,8 +4148,8 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                 resetCurrentEntry = true
                 if let tabContainerData = strongSelf.tabContainerData {
                     var found = false
-                    if let index = tabContainerData.0.firstIndex(where: { $0.id == selectedEntryId }) {
-                        for i in (0 ..< index - 1).reversed() {
+                    if let index = tabContainerData.0.firstIndex(where: { $0.id == selectedEntryId }), index > 0 {
+                        for i in (0 ..< index).reversed() {
                             if resolvedItems.contains(where: { $0.id == tabContainerData.0[i].id }) {
                                 selectedEntryId = tabContainerData.0[i].id
                                 found = true
@@ -4113,10 +4158,11 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                         }
                     }
                     if !found {
-                        selectedEntryId = .all
+                        selectedEntryId = resolvedItems.first?.id ?? .all
                     }
                 } else {
-                    selectedEntryId = .all
+                    // MARK: Swiftgram
+                    selectedEntryId = resolvedItems.first?.id ?? .all
                 }
             }
             let filtersLimit = isPremium == false ? limits.maxFoldersCount : nil
@@ -4141,9 +4187,13 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             }
             strongSelf.chatListDisplayNode.mainContainerNode.updateAvailableFilters(availableFilters, limit: filtersLimit)
             
+            // MARK: Swiftgram
+            var didSwitchDirectly = false
+
             if isPremium == nil && items.isEmpty {
                 strongSelf.mainReady.set(strongSelf.chatListDisplayNode.mainContainerNode.currentItemNode.ready)
             } else if !strongSelf.initializedFilters {
+                didSwitchDirectly = true
                 if selectedEntryId != strongSelf.chatListDisplayNode.mainContainerNode.currentItemFilter {
                     strongSelf.chatListDisplayNode.mainContainerNode.switchToFilter(id: selectedEntryId, animated: false, completion: { [weak self] in
                         if let strongSelf = self {
@@ -4170,7 +4220,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                 firstUpdate?()
             }
             
-            if resetCurrentEntry {
+            if resetCurrentEntry && !didSwitchDirectly {
                 strongSelf.selectTab(id: selectedEntryId, switchToChatsIfNeeded: false)
             }
         }))
@@ -4225,7 +4275,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             }
         })
     }
-    
+
     private func readAllInFilter(id: Int32) {
         for filter in self.chatListDisplayNode.mainContainerNode.availableFilters {
             if case let .filter(filter) = filter, case let .filter(filterId, _, _, data) = filter, filterId == id {
@@ -6355,106 +6405,134 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             
             let (accountPeer, limits, _) = result
             let isPremium = accountPeer?.isPremium ?? false
-            
+
             let _ = strongSelf.context.engine.peers.markChatListFeaturedFiltersAsSeen().startStandalone()
             let (_, filterItems) = filterItemsAndTotalCount
-            
-            var items: [ContextMenuItem] = []
-            items.append(.action(ContextMenuActionItem(text: presetList.isEmpty ? strongSelf.presentationData.strings.ChatList_AddFolder : strongSelf.presentationData.strings.ChatList_EditFolders, icon: { theme in
-                return generateTintedImage(image: UIImage(bundleImageName: presetList.isEmpty ? "Chat/Context Menu/Add" : "Chat/Context Menu/ItemList"), color: theme.contextMenu.primaryColor)
-            }, action: { c, f in
-                c?.dismiss(completion: {
-                    guard let strongSelf = self else {
-                        return
-                    }
-                    strongSelf.openFilterSettings()
-                })
-            })))
-            
-            if strongSelf.chatListDisplayNode.effectiveContainerNode.currentItemNode.chatListFilter != nil {
-                items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.ChatList_FolderAllChats, icon: { theme in
-                    return nil
-                }, action: { c, f in
-                    f(.dismissWithoutContent)
-                    guard let strongSelf = self else {
-                        return
-                    }
-                    strongSelf.selectTab(id: .all)
-                })))
-            }
-            
-            if !presetList.isEmpty {
-                if presetList.count > 1 {
-                    items.append(.separator)
+
+            // MARK: Swiftgram
+            let sgHiddenIds = SGSimpleSettings.shared.hiddenChatListFilterIds
+            let showingHiddenPromise = ValuePromise<Bool>(false, ignoreRepeated: true)
+
+            let itemsSignal: Signal<ContextController.Items, NoError> = showingHiddenPromise.get()
+            |> map { showingHidden -> ContextController.Items in
+                var items: [ContextMenuItem] = []
+
+                // MARK: Swiftgram
+                if showingHidden {
+                    return ContextController.Items(content: .list(sgHiddenFoldersDrillDownItems(presetList: presetList, sgHiddenIds: sgHiddenIds, filterItems: filterItems, backTitle: strongSelf.presentationData.strings.Common_Back, onBack: {
+                        showingHiddenPromise.set(false)
+                    }, onSelect: { id in
+                        guard let strongSelf = self else {
+                            return
+                        }
+                        strongSelf.selectTab(id: .filter(id))
+                    })))
                 }
-                var filterCount = 0
-                for case let .filter(id, title, _, data) in presetList {
-                    let filterType = chatListFilterType(data)
-                    var badge: ContextMenuActionBadge?
-                    var isDisabled = false
-                    if !isPremium && filterCount >= limits.maxFoldersCount {
-                        isDisabled = true
-                    }
-                    
-                    for item in filterItems {
-                        if item.0.id == id && item.1 != 0 {
-                            badge = ContextMenuActionBadge(value: "\(item.1)", color: item.2 ? .accent : .inactive)
+
+                items.append(.action(ContextMenuActionItem(text: presetList.isEmpty ? strongSelf.presentationData.strings.ChatList_AddFolder : strongSelf.presentationData.strings.ChatList_EditFolders, icon: { theme in
+                    return generateTintedImage(image: UIImage(bundleImageName: presetList.isEmpty ? "Chat/Context Menu/Add" : "Chat/Context Menu/ItemList"), color: theme.contextMenu.primaryColor)
+                }, action: { c, f in
+                    c?.dismiss(completion: {
+                        guard let strongSelf = self else {
+                            return
                         }
-                    }
-                    items.append(.action(ContextMenuActionItem(text: title.text, entities: title.entities, enableEntityAnimations: title.enableAnimations, badge: badge, icon: { theme in
-                        let imageName: String
-                        if isDisabled {
-                            imageName = "Chat/Context Menu/Lock"
-                        } else {
-                            switch filterType {
-                            case .generic:
-                                imageName = "Chat/Context Menu/List"
-                            case .unmuted:
-                                imageName = "Chat/Context Menu/Unmute"
-                            case .unread:
-                                imageName = "Chat/Context Menu/MarkAsUnread"
-                            case .channels:
-                                imageName = "Chat/Context Menu/Channels"
-                            case .groups:
-                                imageName = "Chat/Context Menu/Groups"
-                            case .bots:
-                                imageName = "Chat/Context Menu/Bots"
-                            case .contacts:
-                                imageName = "Chat/Context Menu/User"
-                            case .nonContacts:
-                                imageName = "Chat/Context Menu/UnknownUser"
-                            }
-                        }
-                        return generateTintedImage(image: UIImage(bundleImageName: imageName), color: theme.contextMenu.primaryColor)
-                    }, action: { _, f in
+                        strongSelf.openFilterSettings()
+                    })
+                })))
+
+                if strongSelf.chatListDisplayNode.effectiveContainerNode.currentItemNode.chatListFilter != nil {
+                    items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.ChatList_FolderAllChats, icon: { theme in
+                        // MARK: Swiftgram
+                        return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Chats"), color: theme.contextMenu.primaryColor)
+                    }, action: { c, f in
                         f(.dismissWithoutContent)
                         guard let strongSelf = self else {
                             return
                         }
-                        if isDisabled {
-                            let context = strongSelf.context
-                            var replaceImpl: ((ViewController) -> Void)?
-                            let controller = PremiumLimitScreen(context: context, subject: .folders, count: strongSelf.foldersCount, action: {
-                                let controller = PremiumIntroScreen(context: context, source: .folders)
-                                replaceImpl?(controller)
-                                return true
-                            })
-                            replaceImpl = { [weak controller] c in
-                                controller?.replace(with: c)
-                            }
-                            if let navigationController = strongSelf.context.sharedContext.mainWindow?.viewController as? NavigationController {
-                                navigationController.pushViewController(controller)
-                            }
-                        } else {
-                            strongSelf.selectTab(id: .filter(id))
-                        }
+                        strongSelf.selectTab(id: .all)
                     })))
-                    
-                    filterCount += 1
                 }
+
+                // MARK: Swiftgram
+                if let summaryItem = sgHiddenFoldersSummaryItem(presetList: presetList, sgHiddenIds: sgHiddenIds, filterItems: filterItems, baseLanguageCode: strongSelf.presentationData.strings.baseLanguageCode, onTap: {
+                    showingHiddenPromise.set(true)
+                }) {
+                    items.append(summaryItem)
+                }
+
+                if !presetList.isEmpty {
+                    if presetList.count > 1 {
+                        items.append(.separator)
+                    }
+                    var filterCount = 0
+                    for case let .filter(id, title, _, data) in presetList {
+                        // MARK: Swiftgram
+                        if sgHiddenIds.contains(id) {
+                            continue
+                        }
+                        let filterType = chatListFilterType(data)
+                        var isDisabled = false
+                        if !isPremium && filterCount >= limits.maxFoldersCount {
+                            isDisabled = true
+                        }
+
+                        items.append(.action(ContextMenuActionItem(text: title.text, entities: title.entities, enableEntityAnimations: title.enableAnimations, badge: sgFilterBadge(for: id, filterItems: filterItems), icon: { theme in
+                            let imageName: String
+                            if isDisabled {
+                                imageName = "Chat/Context Menu/Lock"
+                            } else {
+                                switch filterType {
+                                case .generic:
+                                    imageName = "Chat/Context Menu/List"
+                                case .unmuted:
+                                    imageName = "Chat/Context Menu/Unmute"
+                                case .unread:
+                                    imageName = "Chat/Context Menu/MarkAsUnread"
+                                case .channels:
+                                    imageName = "Chat/Context Menu/Channels"
+                                case .groups:
+                                    imageName = "Chat/Context Menu/Groups"
+                                case .bots:
+                                    imageName = "Chat/Context Menu/Bots"
+                                case .contacts:
+                                    imageName = "Chat/Context Menu/User"
+                                case .nonContacts:
+                                    imageName = "Chat/Context Menu/UnknownUser"
+                                }
+                            }
+                            return generateTintedImage(image: UIImage(bundleImageName: imageName), color: theme.contextMenu.primaryColor)
+                        }, action: { _, f in
+                            f(.dismissWithoutContent)
+                            guard let strongSelf = self else {
+                                return
+                            }
+                            if isDisabled {
+                                let context = strongSelf.context
+                                var replaceImpl: ((ViewController) -> Void)?
+                                let controller = PremiumLimitScreen(context: context, subject: .folders, count: strongSelf.foldersCount, action: {
+                                    let controller = PremiumIntroScreen(context: context, source: .folders)
+                                    replaceImpl?(controller)
+                                    return true
+                                })
+                                replaceImpl = { [weak controller] c in
+                                    controller?.replace(with: c)
+                                }
+                                if let navigationController = strongSelf.context.sharedContext.mainWindow?.viewController as? NavigationController {
+                                    navigationController.pushViewController(controller)
+                                }
+                            } else {
+                                strongSelf.selectTab(id: .filter(id))
+                            }
+                        })))
+
+                        filterCount += 1
+                    }
+                }
+
+                return ContextController.Items(content: .list(items))
             }
-            
-            let controller = makeContextController(context: strongSelf.context, presentationData: strongSelf.presentationData, source: .reference(ChatListTabBarContextReferenceContentSource(controller: strongSelf, sourceView: sourceView)), items: .single(ContextController.Items(content: .list(items))), recognizer: nil, gesture: gesture)
+
+            let controller = makeContextController(context: strongSelf.context, presentationData: strongSelf.presentationData, source: .reference(ChatListTabBarContextReferenceContentSource(controller: strongSelf, sourceView: sourceView)), items: itemsSignal, recognizer: nil, gesture: gesture)
             strongSelf.context.sharedContext.mainWindow?.presentInGlobalOverlay(controller)
         })
     }

@@ -1524,7 +1524,9 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         var navigationHeaderPanels: AnyComponent<Empty>?
         var tabs: AnyComponent<Empty>? // MARK: Swiftgram
         if self.controller?.tabContainerData != nil || !panels.isEmpty {
-            if let tabContainerData = self.controller?.tabContainerData, tabContainerData.0.count > 1 {
+            // MARK: Swiftgram
+            let sgSomeFiltersHidden = SGSimpleSettings.shared.allChatsHidden || !SGSimpleSettings.shared.hiddenChatListFilterIds.isEmpty
+            if let tabContainerData = self.controller?.tabContainerData, tabContainerData.0.count > 1 || (tabContainerData.0.count == 1 && sgSomeFiltersHidden) {
                 let folderFilterIndex: (ChatListFilterTabEntryId, [ChatListFilterTabEntry]) -> Int? = { id, entries in
                     var index = 0
                     for entry in entries {
