@@ -13,6 +13,9 @@ import PhoneNumberFormat
 import DebugSettingsUI
 import MessageUI
 import AuthenticationServices
+import QrCodeUI
+import GlassBarButtonComponent
+import SGQrLogin
 
 public final class AuthorizationSequencePhoneEntryController: ViewController, MFMailComposeViewControllerDelegate, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     private var controllerNode: AuthorizationSequencePhoneEntryControllerNode {
@@ -34,6 +37,8 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
     private let back: () -> Void
     
     private var currentData: (Int32, String?, String)?
+    // MARK: Swiftgram
+    private var qrButtonNode: BarComponentHostNode?
         
     var codeNode: ASDisplayNode {
         return self.controllerNode.codeNode
@@ -93,7 +98,18 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
         if !otherAccountPhoneNumbers.1.isEmpty {
             self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "___close", style: .plain, target: self, action: #selector(self.cancelPressed))
         }
-        
+
+        // MARK: Swiftgram
+        // Escape hatch for when phone-code delivery is unusable.
+        // Safe to set once: updateNavigationItems() only touches rightBarButtonItem below 360pt width.
+        if account != nil {
+            let qrButtonNode = sgQrLoginBarButtonNode(theme: presentationData.theme, action: { [weak self] _ in
+                self?.qrLoginPressed()
+            })
+            self.qrButtonNode = qrButtonNode
+            self.navigationItem.rightBarButtonItem = UIBarButtonItem(customDisplayNode: qrButtonNode)
+        }
+
         if let countriesConfiguration {
             AuthorizationSequenceCountrySelectionController.setupCountryCodes(countries: countriesConfiguration.countries, codesByPrefix: countriesConfiguration.countriesByPrefix)
         }
@@ -109,6 +125,12 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
     
     @objc private func cancelPressed() {
         self.back()
+    }
+
+    // MARK: Swiftgram
+    @objc private func qrLoginPressed() {
+        self.view.endEditing(true)
+        self.controllerNode.beginQrLogin()
     }
     
     func updateNavigationItems() {
@@ -163,7 +185,31 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
             }
             self.loadAndPresentPasskey(force: true)
         }
-        
+        // MARK: Swiftgram
+        self.controllerNode.presentQrCode = { [weak self] urlString -> QrCodeScreen? in
+            guard let self else {
+                return nil
+            }
+            let screen = QrCodeScreen(sharedContext: self.sharedContext, updatedPresentationData: (self.presentationData, .single(self.presentationData)), subject: .loginToken(url: urlString))
+            screen.didDismiss = { [weak self] in
+                self?.controllerNode.qrLoginDismissed()
+            }
+            self.push(screen)
+            return screen
+        }
+        self.controllerNode.qrLoginError = { [weak self] error in
+            guard let self else {
+                return
+            }
+            let text: String
+            switch error {
+            case .limitExceeded:
+                text = self.presentationData.strings.Login_CodeFloodError
+            case .authKeyUnregistered, .authTokenExpired, .generic:
+                text = self.presentationData.strings.Login_UnknownError
+            }
+            self.present(textAlertController(sharedContext: self.sharedContext, title: nil, text: text, actions: [TextAlertAction(type: .defaultAction, title: self.presentationData.strings.Common_OK, action: {})]), in: .window(.root))
+        }
         if let (code, name, number) = self.currentData {
             self.controllerNode.codeAndNumber = (code, name, number)
         }

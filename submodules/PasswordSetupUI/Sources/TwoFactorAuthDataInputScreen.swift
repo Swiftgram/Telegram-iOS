@@ -443,7 +443,7 @@ public final class TwoFactorDataInputScreen: ViewController {
                             text = presentationData.strings.LoginPassword_FloodError
                         case .invalidPassword:
                             text = nil
-                        case .generic:
+                        case .generic, .authKeyUnregistered:
                             text = presentationData.strings.Login_UnknownError
                     }
                     if let text = text {

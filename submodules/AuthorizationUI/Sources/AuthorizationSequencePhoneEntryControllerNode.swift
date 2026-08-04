@@ -6,7 +6,6 @@ import TelegramCore
 import TelegramPresentationData
 import PhoneInputNode
 import CountrySelectionUI
-import QrCode
 import SwiftSignalKit
 import AccountContext
 import AnimatedStickerNode
@@ -15,6 +14,8 @@ import SolidRoundedButtonNode
 import AuthorizationUtils
 import ManagedAnimationNode
 import Markdown
+import SGQrLogin
+import QrCodeUI
 
 private final class PhoneAndCountryNode: ASDisplayNode {
     let strings: PresentationStrings
@@ -320,11 +321,17 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
     private let contactSyncNode: ContactSyncNode
     private let proceedNode: SolidRoundedButtonNode
     
-    private var qrNode: ASImageNode?
     private let exportTokenDisposable = MetaDisposable()
     private let tokenEventsDisposable = MetaDisposable()
     var accountUpdated: ((UnauthorizedAccount) -> Void)?
-    
+    // MARK: Swiftgram
+    var presentQrCode: ((String) -> QrCodeScreen?)?
+    var qrLoginError: ((ExportAuthTransferTokenError) -> Void)?
+    private weak var presentedQrCodeScreen: QrCodeScreen?
+    private let qrRefreshTimerDisposable = MetaDisposable()
+    private let qrErrorRetryDisposable = MetaDisposable()
+    private var qrErrorRetryAttempt: Int = 0
+
     var retryPasskey: (() -> Void)?
     
     private let debugAction: () -> Void
@@ -480,13 +487,6 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
             }
         }
         
-        if let account = account {
-            self.tokenEventsDisposable.set((account.updateLoginTokenEvents
-            |> deliverOnMainQueue).startStrict(next: { [weak self] _ in
-                self?.refreshQrToken()
-            }))
-        }
-        
         self.proceedNode.pressed = { [weak self] in
             self?.checkPhone?()
         }
@@ -500,15 +500,13 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
     deinit {
         self.exportTokenDisposable.dispose()
         self.tokenEventsDisposable.dispose()
+        self.qrRefreshTimerDisposable.dispose()
     }
     
     override func didLoad() {
         super.didLoad()
         
         self.titleNode.view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.debugTap(_:))))
-        #if DEBUG && false
-        self.noticeNode.view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.debugQrTap(_:))))
-        #endif
     }
     
     private var animationSnapshotView: UIView?
@@ -700,65 +698,63 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
         }
     }
     
-    @objc private func debugQrTap(_ recognizer: UITapGestureRecognizer) {
-        if self.qrNode == nil {
-            let qrNode = ASImageNode()
-            qrNode.frame = CGRect(origin: CGPoint(x: 16.0, y: 64.0 + 16.0), size: CGSize(width: 200.0, height: 200.0))
-            self.qrNode = qrNode
-            self.addSubnode(qrNode)
-            
-            self.refreshQrToken()
-        }
+    // MARK: Swiftgram
+    func beginQrLogin() {
+        self.refreshQrToken()
     }
-    
+
+    // MARK: Swiftgram
+    func qrLoginDismissed() {
+        self.stopQrLoop()
+        self.presentedQrCodeScreen = nil
+    }
+
+    // MARK: Swiftgram
+    private func stopQrLoop() {
+        self.exportTokenDisposable.set(nil)
+        self.qrRefreshTimerDisposable.set(nil)
+        self.tokenEventsDisposable.set(nil)
+        self.qrErrorRetryDisposable.set(nil)
+        self.qrErrorRetryAttempt = 0
+    }
+
     private func refreshQrToken() {
         guard let account = self.account else {
             return
         }
         let sharedContext = self.sharedContext
-        let tokenSignal = sharedContext.activeAccountContexts
-        |> castError(ExportAuthTransferTokenError.self)
-        |> take(1)
-        |> mapToSignal { activeAccountsAndInfo -> Signal<ExportAuthTransferTokenResult, ExportAuthTransferTokenError> in
-            let (_, activeAccounts, _) = activeAccountsAndInfo
-            let activeProductionUserIds = activeAccounts.map({ $0.1.account }).filter({ !$0.testingEnvironment }).map({ $0.peerId.id })
-            let activeTestingUserIds = activeAccounts.map({ $0.1.account }).filter({ $0.testingEnvironment }).map({ $0.peerId.id })
-            
-            let allProductionUserIds = activeProductionUserIds
-            let allTestingUserIds = activeTestingUserIds
-            
-            return TelegramEngineUnauthorized(account: account).auth.exportAuthTransferToken(accountManager: sharedContext.accountManager, otherAccountUserIds: account.testingEnvironment ? allTestingUserIds : allProductionUserIds, syncContacts: true)
-        }
-        
-        self.exportTokenDisposable.set((tokenSignal
+        // MARK: Swiftgram
+        self.exportTokenDisposable.set((sgExportQrLoginToken(account: account, sharedContext: sharedContext)
         |> deliverOnMainQueue).startStrict(next: { [weak self] result in
             guard let strongSelf = self else {
                 return
             }
+            strongSelf.qrErrorRetryAttempt = 0
             switch result {
             case let .displayToken(token):
                 var tokenString = token.value.base64EncodedString()
-                //print("export token \(tokenString)")
                 tokenString = tokenString.replacingOccurrences(of: "+", with: "-")
                 tokenString = tokenString.replacingOccurrences(of: "/", with: "_")
                 let urlString = "tg://login?token=\(tokenString)"
-                let _ = (qrCode(string: urlString, color: .black, backgroundColor: .white, icon: .none)
-                |> deliverOnMainQueue).startStandalone(next: { _, generate in
-                    guard let strongSelf = self else {
-                        return
-                    }
-                    
-                    let context = generate(TransformImageArguments(corners: ImageCorners(), imageSize: CGSize(width: 200.0, height: 200.0), boundingSize: CGSize(width: 200.0, height: 200.0), intrinsicInsets: UIEdgeInsets()))
-                    if let image = context?.generateImage() {
-                        strongSelf.qrNode?.image = image
-                    }
-                })
-                
+
+                // MARK: Swiftgram
+                if let presentedQrCodeScreen = strongSelf.presentedQrCodeScreen {
+                    presentedQrCodeScreen.updateSubject(.loginToken(url: urlString))
+                } else {
+                    strongSelf.presentedQrCodeScreen = strongSelf.presentQrCode?(urlString) ?? nil
+                }
+
+                // MARK: Swiftgram
+                strongSelf.tokenEventsDisposable.set((account.updateLoginTokenEvents
+                |> deliverOnMainQueue).startStrict(next: { [weak strongSelf] _ in
+                    strongSelf?.refreshQrToken()
+                }))
+
                 let timestamp = Int32(Date().timeIntervalSince1970)
                 let timeout = max(5, token.validUntil - timestamp)
-                strongSelf.exportTokenDisposable.set((Signal<Never, NoError>.complete()
-                |> delay(Double(timeout), queue: .mainQueue())).startStrict(completed: {
-                    guard let strongSelf = self else {
+                strongSelf.qrRefreshTimerDisposable.set((Signal<Never, NoError>.complete()
+                |> delay(Double(timeout), queue: .mainQueue())).startStrict(completed: { [weak strongSelf] in
+                    guard let strongSelf, strongSelf.presentedQrCodeScreen != nil else {
                         return
                     }
                     strongSelf.refreshQrToken()
@@ -772,9 +768,42 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
                     self?.refreshQrToken()
                 }))
                 strongSelf.refreshQrToken()
-            case .loggedIn, .passwordRequested:
-                strongSelf.exportTokenDisposable.set(nil)
+            case .loggedIn:
+                strongSelf.stopQrLoop()
+            case let .passwordRequested(account):
+                // MARK: Swiftgram
+                strongSelf.stopQrLoop()
+                strongSelf.account = account
+                strongSelf.accountUpdated?(account)
             }
+        }, error: { [weak self] error in
+            guard let strongSelf = self else {
+                return
+            }
+
+            // MARK: Swiftgram
+            switch error {
+            case .authKeyUnregistered, .authTokenExpired:
+                if strongSelf.presentedQrCodeScreen != nil {
+                    let attempt = strongSelf.qrErrorRetryAttempt
+                    strongSelf.qrErrorRetryAttempt += 1
+                    let currentDelay = min(6.0, 1.5 + Double(attempt) * 1.0)
+                    strongSelf.qrErrorRetryDisposable.set((Signal<Never, NoError>.complete()
+                    |> delay(currentDelay, queue: .mainQueue())).startStrict(completed: { [weak strongSelf] in
+                        strongSelf?.refreshQrToken()
+                    }))
+                    return
+                }
+                strongSelf.stopQrLoop()
+                return
+            case .generic, .limitExceeded:
+                break
+            }
+
+            strongSelf.stopQrLoop()
+            strongSelf.presentedQrCodeScreen?.dismissAnimated()
+            strongSelf.presentedQrCodeScreen = nil
+            strongSelf.qrLoginError?(error)
         }))
     }
 }

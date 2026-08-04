@@ -11,6 +11,9 @@ public struct AuthTransferExportedToken {
 public enum ExportAuthTransferTokenError {
     case generic
     case limitExceeded
+    // MARK: Swiftgram
+    case authKeyUnregistered
+    case authTokenExpired
 }
 
 public enum ExportAuthTransferTokenResult {
@@ -44,6 +47,10 @@ func _internal_exportAuthTransferToken(accountManager: AccountManager<TelegramAc
                     |> castError(ExportAuthTransferTokenError.self)
                 }
             }
+        } else if error.errorDescription == "AUTH_KEY_UNREGISTERED" {
+            return .fail(.authKeyUnregistered)
+        } else if error.errorDescription.hasPrefix("FLOOD_WAIT") {
+            return .fail(.limitExceeded)
         } else {
             return .fail(.generic)
         }
@@ -85,6 +92,12 @@ func _internal_exportAuthTransferToken(accountManager: AccountManager<TelegramAc
                                 |> castError(ExportAuthTransferTokenError.self)
                             }
                         }
+                    } else if error.errorDescription == "AUTH_KEY_UNREGISTERED" {
+                        return .fail(.authKeyUnregistered)
+                    } else if error.errorDescription == "AUTH_TOKEN_EXPIRED" {
+                        return .fail(.authTokenExpired)
+                    } else if error.errorDescription.hasPrefix("FLOOD_WAIT") {
+                        return .fail(.limitExceeded)
                     } else {
                         return .fail(.generic)
                     }

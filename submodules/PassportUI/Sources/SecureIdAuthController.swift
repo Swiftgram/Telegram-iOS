@@ -483,7 +483,7 @@ public final class SecureIdAuthController: ViewController, StandalonePresentable
                                 errorText = strongSelf.presentationData.strings.LoginPassword_InvalidPasswordError
                             case .limitExceeded:
                                 errorText = strongSelf.presentationData.strings.LoginPassword_FloodError
-                            case .generic:
+                            case .generic, .authKeyUnregistered:
                                 errorText = strongSelf.presentationData.strings.Login_UnknownError
                         }
                     case .generic:

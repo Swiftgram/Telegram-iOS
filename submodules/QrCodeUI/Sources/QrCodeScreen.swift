@@ -70,6 +70,10 @@ private final class SheetContent: CombinedComponent {
         if lhs.sharedContext !== rhs.sharedContext {
             return false
         }
+        // MARK: Swiftgram
+        if lhs.subject != rhs.subject {
+            return false
+        }
         return true
     }
     
@@ -181,6 +185,9 @@ private final class SheetContent: CombinedComponent {
             case .proxy:
                 titleString = ""
                 textString = strings.SocksProxySetup_ShareQRCodeInfo
+            case .loginToken:
+                titleString = strings.AuthSessions_AddDeviceIntro_Title
+                textString = strings.AuthSessions_AddDevice_UrlLoginHint
             default:
                 titleString = ""
                 textString = ""
@@ -313,33 +320,35 @@ private final class SheetContent: CombinedComponent {
             contentSize.height += 23.0
                                                 
             let buttonInsets = ContainerViewLayout.concentricInsets(bottomInset: environment.safeInsets.bottom, innerDiameter: 52.0, sideInset: 30.0)
-            let button = button.update(
-                component: ButtonComponent(
-                    background: ButtonComponent.Background(
-                        style: .glass,
-                        color: theme.list.itemCheckColors.fillColor,
-                        foreground: theme.list.itemCheckColors.foregroundColor,
-                        pressedColor: theme.list.itemCheckColors.fillColor.withMultipliedAlpha(0.9)
-                    ),
-                    content: AnyComponentWithIdentity(
-                        id: AnyHashable(0),
-                        component: AnyComponent(MultilineTextComponent(text: .plain(NSMutableAttributedString(string: strings.InviteLink_QRCode_Share, font: Font.semibold(17.0), textColor: theme.list.itemCheckColors.foregroundColor, paragraphAlignment: .center))))
-                    ),
-                    isEnabled: true,
-                    displaysProgress: false,
-                    action: { [weak controller] in
-                        if let view = controller?.view {
-                            shareQrCode(sharedContext: component.sharedContext, subject: effectiveSubject, asImage: true, view: view)
+            if component.subject.showsShareButton {
+                let button = button.update(
+                    component: ButtonComponent(
+                        background: ButtonComponent.Background(
+                            style: .glass,
+                            color: theme.list.itemCheckColors.fillColor,
+                            foreground: theme.list.itemCheckColors.foregroundColor,
+                            pressedColor: theme.list.itemCheckColors.fillColor.withMultipliedAlpha(0.9)
+                        ),
+                        content: AnyComponentWithIdentity(
+                            id: AnyHashable(0),
+                            component: AnyComponent(MultilineTextComponent(text: .plain(NSMutableAttributedString(string: strings.InviteLink_QRCode_Share, font: Font.semibold(17.0), textColor: theme.list.itemCheckColors.foregroundColor, paragraphAlignment: .center))))
+                        ),
+                        isEnabled: true,
+                        displaysProgress: false,
+                        action: { [weak controller] in
+                            if let view = controller?.view {
+                                shareQrCode(sharedContext: component.sharedContext, subject: effectiveSubject, asImage: true, view: view)
+                            }
                         }
-                    }
-                ),
-                availableSize: CGSize(width: context.availableSize.width - buttonInsets.left - buttonInsets.right, height: 52.0),
-                transition: .immediate
-            )
-            context.add(button
-                .position(CGPoint(x: context.availableSize.width / 2.0, y: contentSize.height + button.size.height / 2.0))
-            )
-            contentSize.height += button.size.height
+                    ),
+                    availableSize: CGSize(width: context.availableSize.width - buttonInsets.left - buttonInsets.right, height: 52.0),
+                    transition: .immediate
+                )
+                context.add(button
+                    .position(CGPoint(x: context.availableSize.width / 2.0, y: contentSize.height + button.size.height / 2.0))
+                )
+                contentSize.height += button.size.height
+            }
 
             if case .proxy = component.subject {
                 contentSize.height += 8.0
@@ -397,6 +406,10 @@ private final class QrCodeSheetComponent: CombinedComponent {
     
     static func ==(lhs: QrCodeSheetComponent, rhs: QrCodeSheetComponent) -> Bool {
         if lhs.sharedContext !== rhs.sharedContext {
+            return false
+        }
+        // MARK: Swiftgram
+        if lhs.subject != rhs.subject {
             return false
         }
         return true
@@ -479,7 +492,9 @@ public final class QrCodeScreen: ViewControllerComponentContainer {
         case invite(invite: ExportedInvitation, type: SubjectType)
         case chatFolder(slug: String)
         case proxy(server: ProxyServerSettings, externalLink: Bool)
-        
+        // MARK: Swiftgram
+        case loginToken(url: String)
+
         var link: String {
             switch self {
             case let .peer(peer):
@@ -510,31 +525,48 @@ public final class QrCodeScreen: ViewControllerComponentContainer {
                     }
                 }
                 return link
+            // MARK: Swiftgram
+            case let .loginToken(url):
+                return url
             }
         }
-        
+
         var ecl: String {
             switch self {
-            case .peer, .invite, .chatFolder, .proxy:
+            case .peer, .invite, .chatFolder, .proxy, .loginToken:
                 return "Q"
             }
         }
 
         var icon: QrCodeIcon {
             switch self {
-            case .peer, .invite, .chatFolder:
+            case .peer, .invite, .chatFolder, .loginToken:
                 return .custom(UIImage(bundleImageName: "Chat/Links/QrLogo"))
             case .proxy:
                 return .proxy
             }
         }
+
+        // MARK: Swiftgram
+        var showsShareButton: Bool {
+            switch self {
+            case .loginToken:
+                return false
+            case .peer, .invite, .chatFolder, .proxy:
+                return true
+            }
+        }
     }
         
+    // MARK: Swiftgram
+    private let sgSharedContext: SharedAccountContext
+
     public init(
         context: AccountContext,
         updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil,
         subject: QrCodeScreen.Subject
     ) {
+        self.sgSharedContext = context.sharedContext
         super.init(
             context: context,
             component: QrCodeSheetComponent(
@@ -546,15 +578,16 @@ public final class QrCodeScreen: ViewControllerComponentContainer {
             theme: .default,
             updatedPresentationData: updatedPresentationData
         )
-        
+
         self.navigationPresentation = .flatModal
     }
-    
+
     public init(
         sharedContext: SharedAccountContext,
         updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>),
         subject: QrCodeScreen.Subject
-    ) {        
+    ) {
+        self.sgSharedContext = sharedContext
         super.init(
             component: QrCodeSheetComponent(
                 sharedContext: sharedContext,
@@ -578,6 +611,26 @@ public final class QrCodeScreen: ViewControllerComponentContainer {
         if let view = self.node.hostView.findTaggedView(tag: SheetComponent<ViewControllerComponentContainer.Environment>.View.Tag()) as? SheetComponent<ViewControllerComponentContainer.Environment>.View {
             view.dismissAnimated()
         }
+    }
+
+    // MARK: Swiftgram
+    // Refreshes the displayed code in place (e.g. a new .loginToken url after the previous one
+    // expired) instead of pushing a second sheet on top of this one.
+    public func updateSubject(_ subject: QrCodeScreen.Subject) {
+        self.updateComponent(component: AnyComponent(QrCodeSheetComponent(
+            sharedContext: self.sgSharedContext,
+            subject: subject
+        )), transition: .easeInOut(duration: 0.2))
+    }
+
+    // MARK: Swiftgram
+    public var didDismiss: (() -> Void)?
+    public override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if let navigationController = self.navigationController, navigationController.viewControllers.contains(where: { $0 === self }) {
+            return
+        }
+        self.didDismiss?()
     }
 }
 

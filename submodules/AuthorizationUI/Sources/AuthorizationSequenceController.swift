@@ -25,6 +25,7 @@ import AlertUI
 import InAppPurchaseManager
 import ObjectiveC
 import AVFoundation
+import SGQrLogin
 
 private var ObjCKey_Delegate: Int?
 
@@ -943,12 +944,15 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
             controller.loginWithPassword = { [weak self, weak controller] password in
                 if let strongSelf = self {
                     controller?.inProgress = true
-                    
-                    strongSelf.actionDisposable.set((authorizeWithPassword(accountManager: strongSelf.sharedContext.accountManager, account: strongSelf.account, password: password, syncContacts: syncContacts) |> deliverOnMainQueue).startStrict(error: { error in
+
+                    // MARK: Swiftgram
+                    strongSelf.actionDisposable.set((sgAuthorizeWithPasswordRetryingQrLogin(sharedContext: strongSelf.sharedContext, account: strongSelf.account, password: password, syncContacts: syncContacts, accountUpdated: { [weak strongSelf] updatedAccount in
+                        strongSelf?.account = updatedAccount
+                    }) |> deliverOnMainQueue).startStrict(error: { error in
                         Queue.mainQueue().async {
                             if let strongSelf = self, let controller = controller {
                                 controller.inProgress = false
-                                
+
                                 let text: String
                                 switch error {
                                     case .limitExceeded:
@@ -957,9 +961,26 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                                         text = strongSelf.presentationData.strings.LoginPassword_InvalidPasswordError
                                     case .generic:
                                         text = strongSelf.presentationData.strings.Login_UnknownError
+                                    // MARK: Swiftgram
+                                    case .authKeyUnregistered:
+                                        text = i18n("Auth.LoginRetryNotice", strongSelf.presentationData.strings.baseLanguageCode)
                                 }
-                                
-                                controller.present(textAlertController(sharedContext: strongSelf.sharedContext, title: nil, text: text, actions: [TextAlertAction(type: .defaultAction, title: strongSelf.presentationData.strings.Common_OK, action: {})]), in: .window(.root))
+
+                                // MARK: Swiftgram
+                                let okAction: () -> Void
+                                if case .authKeyUnregistered = error {
+                                    okAction = {
+                                        guard let strongSelf = self else {
+                                            return
+                                        }
+                                        let countryCode = AuthorizationSequenceCountrySelectionController.defaultCountryCode()
+                                        let _ = strongSelf.engine.auth.setState(state: UnauthorizedAccountState(isTestingEnvironment: strongSelf.account.testingEnvironment, masterDatacenterId: strongSelf.account.masterDatacenterId, contents: .phoneEntry(countryCode: countryCode, number: ""))).startStandalone()
+                                    }
+                                } else {
+                                    okAction = {}
+                                }
+
+                                controller.present(textAlertController(sharedContext: strongSelf.sharedContext, title: nil, text: text, actions: [TextAlertAction(type: .defaultAction, title: strongSelf.presentationData.strings.Common_OK, action: okAction)]), in: .window(.root))
                                 controller.passwordIsInvalid()
                             }
                         }
@@ -1326,6 +1347,10 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                     if !self.otherAccountPhoneNumbers.1.isEmpty {
                         controllers.append(self.splashController())
                     }
+                    // MARK: Swiftgram
+                    // Push underneath so there's a previousItem for the back arrow,
+                    // otherwise password entry is a dead end when QR login lands here directly.
+                    controllers.append(self.phoneEntryController(countryCode: AuthorizationSequenceCountrySelectionController.defaultCountryCode(), number: "", splashController: nil))
                     controllers.append(self.passwordEntryController(hint: hint, suggestReset: suggestReset, syncContacts: syncContacts))
                     self.setViewControllers(controllers, animated: !self.viewControllers.isEmpty)
                 case let .passwordRecovery(_, _, _, emailPattern, syncContacts):

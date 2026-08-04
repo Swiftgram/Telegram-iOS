@@ -474,10 +474,10 @@ public func twoStepVerificationUnlockSettingsController(context: AccountContext,
                         text = presentationData.strings.LoginPassword_FloodError
                     case .invalidPassword:
                         text = presentationData.strings.LoginPassword_InvalidPasswordError
-                    case .generic:
+                    case .generic, .authKeyUnregistered:
                         text = presentationData.strings.Login_UnknownError
                 }
-                
+
                 presentControllerImpl?(textAlertController(context: context, title: nil, text: text, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
             }))
         }

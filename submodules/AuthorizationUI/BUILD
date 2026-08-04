@@ -1,7 +1,8 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
 sgdeps = [
-    "//Swiftgram/SGStrings:SGStrings"
+    "//Swiftgram/SGStrings:SGStrings",
+    "//Swiftgram/SGQrLogin:SGQrLogin",
 ]
 
 swift_library(
@@ -35,7 +36,7 @@ swift_library(
         "//submodules/SolidRoundedButtonNode:SolidRoundedButtonNode",
         "//submodules/ImageCompression:ImageCompression",
         "//submodules/RMIntro:RMIntro",
-        "//submodules/QrCode:QrCode",
+        "//submodules/QrCodeUI:QrCodeUI",
         "//submodules/PhoneInputNode:PhoneInputNode",
         "//submodules/CodeInputView:CodeInputView",
         "//submodules/DebugSettingsUI:DebugSettingsUI",

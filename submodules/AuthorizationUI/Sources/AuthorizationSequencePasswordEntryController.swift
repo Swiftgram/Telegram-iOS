@@ -61,6 +61,14 @@ final class AuthorizationSequencePasswordEntryController: ViewController {
         self.navigationBar?.backPressed = {
             back()
         }
+
+        // MARK: Swiftgram
+        self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "___close", style: .plain, target: self, action: #selector(self.sgBackPressed))
+    }
+
+    // MARK: Swiftgram
+    @objc private func sgBackPressed() {
+        self.navigationBar?.backPressed()
     }
     
     required init(coder aDecoder: NSCoder) {

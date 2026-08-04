@@ -1142,6 +1142,8 @@ public func beginSignUp(account: UnauthorizedAccount, data: AuthorizationSignUpD
 public enum AuthorizationPasswordVerificationError {
     case limitExceeded
     case invalidPassword
+    // MARK: Swiftgram
+    case authKeyUnregistered
     case generic
 }
 
@@ -1152,6 +1154,8 @@ public func authorizeWithPassword(accountManager: AccountManager<TelegramAccount
             return .fail(.limitExceeded)
         } else if error.errorDescription == "PASSWORD_HASH_INVALID" {
             return .fail(.invalidPassword)
+        } else if error.errorDescription == "AUTH_KEY_UNREGISTERED" {
+            return .fail(.authKeyUnregistered)
         } else {
             return .fail(.generic)
         }
