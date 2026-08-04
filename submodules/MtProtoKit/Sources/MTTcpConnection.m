@@ -1438,15 +1438,37 @@ struct ctr_state {
 
 - (void)requestSocksConnection {
     struct socks5_req req;
-    
+
     req.Version = 5;
     req.Cmd = 1;
     req.Reserved = 0;
-    req.AddrType = 1;
-    
+
+    // MARK: Swiftgram
+    // Upstream hardcoded AddrType=1 and ignored inet_aton's return value, so IPv6 DC
+    // addresses got sent as ATYP=1 with garbage (uninitialized) bytes. Detect IPv4/IPv6
+    // properly, same as -start does for _socksIp/_mtpIp. Domain name (ATYP=3) fallback
+    // per SOCKS5 spec (RFC 1928 part 4), for non-IP-literal addresses,
+    // bounds-checked against the 256-byte Domain buffer.
     struct in_addr ip4;
-    inet_aton(_scheme.address.ip.UTF8String, &ip4);
-    req.DestAddr.IPv4 = ip4;
+    struct in6_addr ip6;
+    NSString *destAddress = _scheme.address.ip;
+    if (inet_aton(destAddress.UTF8String, &ip4) != 0) {
+        req.AddrType = 1;
+        req.DestAddr.IPv4 = ip4;
+    } else if (inet_pton(AF_INET6, destAddress.UTF8String, &ip6) != 0) {
+        req.AddrType = 4;
+        req.DestAddr.IPv6 = ip6;
+    } else if (destAddress.length <= 255 && [destAddress getCString:req.DestAddr.Domain maxLength:sizeof(req.DestAddr.Domain) encoding:NSASCIIStringEncoding]) {
+        req.AddrType = 3;
+        req.DestAddr.DomainLen = (unsigned char)destAddress.length;
+    } else {
+        if (MTLogEnabled()) {
+            MTLog(@"***** %s: could not parse destination address %@", __PRETTY_FUNCTION__, destAddress);
+        }
+        [self closeAndNotifyWithError:true];
+        return;
+    }
+
     req.DestPort = _scheme.address.port;
     
     NSMutableData *reqData = [[NSMutableData alloc] init];
