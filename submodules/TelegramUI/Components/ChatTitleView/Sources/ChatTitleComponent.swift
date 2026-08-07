@@ -3,6 +3,7 @@ import UIKit
 import Display
 import ComponentFlow
 import TelegramPresentationData
+import SGSimpleSettings
 import AccountContext
 import TelegramUIPreferences
 import TelegramCore
@@ -447,9 +448,9 @@ public final class ChatTitleComponent: Component {
                                 titleCredibilityIcon = .fake
                             } else if peer.isScam {
                                 titleCredibilityIcon = .scam
-                            } else if !hidePeerStatus, let emojiStatus = peer.emojiStatus {
+                            } else if !hidePeerStatus, let emojiStatus = peer.emojiStatus, !SGSimpleSettings.shared.hidePremiumBadge {
                                 titleStatusIcon = .emojiStatus(emojiStatus)
-                            } else if peer.isPremium && !premiumConfiguration.isPremiumDisabled {
+                            } else if peer.isPremium && !premiumConfiguration.isPremiumDisabled && !SGSimpleSettings.shared.hidePremiumBadge {
                                 titleCredibilityIcon = .premium
                             }
                             

@@ -27,6 +27,7 @@ swift_library(
         "//submodules/TelegramUI/Components/EmojiTextAttachmentView:EmojiTextAttachmentView",
         "//submodules/TelegramUI/Components/EmojiStatusComponent:EmojiStatusComponent",
         "//submodules/TextFormat:TextFormat",
+        "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
     ],
     visibility = [
         "//visibility:public",

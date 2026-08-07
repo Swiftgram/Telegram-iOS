@@ -4,6 +4,7 @@ import AsyncDisplayKit
 import Display
 import SwiftSignalKit
 import TelegramCore
+import SGSimpleSettings
 import TelegramPresentationData
 import ItemListUI
 import PresentationDataUtils
@@ -539,7 +540,7 @@ class CallListCallItemNode: ItemListRevealOptionsItemNode {
                     currentCredibilityIconImage = PresentationResourcesChatList.fakeIcon(item.presentationData.theme, strings: item.presentationData.strings, type: .regular)
                 } else if peer.isVerified {
                     currentCredibilityIconImage = PresentationResourcesChatList.verifiedIcon(item.presentationData.theme)
-                } else if peer.isPremium && !premiumConfiguration.isPremiumDisabled {
+                } else if peer.isPremium && !premiumConfiguration.isPremiumDisabled && !SGSimpleSettings.shared.hidePremiumBadge {
                     currentCredibilityIconImage = PresentationResourcesChatList.premiumIcon(item.presentationData.theme)
                 }
             }

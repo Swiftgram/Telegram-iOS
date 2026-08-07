@@ -3,6 +3,7 @@ import UIKit
 import AsyncDisplayKit
 import Display
 import TelegramCore
+import SGSimpleSettings
 import SwiftSignalKit
 import LegacyComponents
 import TelegramPresentationData
@@ -308,9 +309,9 @@ public final class ChatTitleView: UIView, NavigationBarTitleView {
                                         titleCredibilityIcon = .fake
                                     } else if peer.isScam {
                                         titleCredibilityIcon = .scam
-                                    } else if !hidePeerStatus, let emojiStatus = peer.emojiStatus {
+                                    } else if !hidePeerStatus, let emojiStatus = peer.emojiStatus, !SGSimpleSettings.shared.hidePremiumBadge {
                                         titleStatusIcon = .emojiStatus(emojiStatus)
-                                    } else if peer.isPremium && !premiumConfiguration.isPremiumDisabled {
+                                    } else if peer.isPremium && !premiumConfiguration.isPremiumDisabled && !SGSimpleSettings.shared.hidePremiumBadge {
                                         titleCredibilityIcon = .premium
                                     }
                                     

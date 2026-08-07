@@ -5,6 +5,7 @@ import Display
 import AsyncDisplayKit
 import ComponentFlow
 import SwiftSignalKit
+import SGSimpleSettings
 import AccountContext
 import TelegramCore
 import MultilineTextComponent
@@ -871,14 +872,14 @@ public final class PeerListItemComponent: Component {
                     statusIcon = .text(color: component.theme.chat.message.incoming.scamColor, string: component.strings.Message_ScamAccount.uppercased())
                 } else if peer.isFake {
                     statusIcon = .text(color: component.theme.chat.message.incoming.scamColor, string: component.strings.Message_FakeAccount.uppercased())
-                } else if let emojiStatus = peer.emojiStatus {
+                } else if let emojiStatus = peer.emojiStatus, !SGSimpleSettings.shared.hidePremiumBadge {
                     statusIcon = .animation(content: .customEmoji(fileId: emojiStatus.fileId), size: CGSize(width: 20.0, height: 20.0), placeholderColor: component.theme.list.mediaPlaceholderColor, themeColor: component.theme.list.itemAccentColor, loopMode: .count(0))
                     if let color = emojiStatus.color {
                         particleColor = UIColor(rgb: UInt32(bitPattern: color))
                     }
                 } else if peer.isVerified {
                     statusIcon = .verified(fillColor: component.theme.list.itemCheckColors.fillColor, foregroundColor: component.theme.list.itemCheckColors.foregroundColor, sizeType: .compact)
-                } else if peer.isPremium {
+                } else if peer.isPremium && !SGSimpleSettings.shared.hidePremiumBadge {
                     statusIcon = .premium(color: component.theme.list.itemAccentColor)
                 }
             }

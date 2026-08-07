@@ -33,6 +33,7 @@ swift_library(
         "//submodules/PhotoResources",
         "//submodules/TelegramUI/Components/ListSectionComponent",
         "//submodules/TelegramUI/Components/ListItemSwipeOptionContainer",
+        "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
     ],
     visibility = [
         "//visibility:public",

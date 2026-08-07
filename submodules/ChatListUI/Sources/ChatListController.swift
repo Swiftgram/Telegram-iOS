@@ -6912,9 +6912,9 @@ private final class ChatListLocationContext {
                 guard case let .user(user) = peer else {
                     return nil
                 }
-                if let emojiStatus = user.emojiStatus {
+                if let emojiStatus = user.emojiStatus, !SGSimpleSettings.shared.hidePremiumBadge {
                     return .emoji(emojiStatus)
-                } else if user.isPremium {
+                } else if user.isPremium && !SGSimpleSettings.shared.hidePremiumBadge {
                     return .premium
                 } else {
                     return nil

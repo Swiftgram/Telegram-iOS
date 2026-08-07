@@ -141,6 +141,7 @@
 "Settings.Stickers.Timestamp" = "Show Timestamp";
 
 "Settings.RecordingButton" = "Voice Recording Button";
+"Settings.PremiumBadge" = "Premium Badge";
 
 "Settings.DefaultEmojisFirst" = "Standard emojis first";
 "Settings.DefaultEmojisFirst.Notice" = "Show standard emojis before premium in emoji keyboard";

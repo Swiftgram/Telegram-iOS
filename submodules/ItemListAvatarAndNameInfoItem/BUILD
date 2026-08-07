@@ -25,6 +25,7 @@ swift_library(
         "//submodules/PhoneNumberFormat:PhoneNumberFormat",
         "//submodules/AccountContext:AccountContext",
         "//submodules/TelegramUI/Components/ListItemComponentAdaptor",
+        "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
     ],
     visibility = [
         "//visibility:public",

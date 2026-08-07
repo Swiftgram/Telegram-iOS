@@ -6,6 +6,7 @@ import SwiftSignalKit
 import TelegramCore
 import TelegramPresentationData
 import TelegramUIPreferences
+import SGSimpleSettings
 import ItemListUI
 import PresentationDataUtils
 import AccountContext
@@ -311,13 +312,13 @@ final class PeerNameColorProfilePreviewItemNode: ListViewItemNode {
                         credibilityIcon = .fake
                     } else if peer.isScam {
                         credibilityIcon = .scam
-                    } else if case let .user(user) = peer, let emojiStatus = user.emojiStatus {
+                    } else if case let .user(user) = peer, let emojiStatus = user.emojiStatus, !SGSimpleSettings.shared.hidePremiumBadge {
                         credibilityIcon = .emojiStatus(emojiStatus)
-                    } else if case let .channel(channel) = peer, let emojiStatus = channel.emojiStatus {
+                    } else if case let .channel(channel) = peer, let emojiStatus = channel.emojiStatus, !SGSimpleSettings.shared.hidePremiumBadge {
                         credibilityIcon = .emojiStatus(emojiStatus)
                     } else if peer.isVerified {
                         credibilityIcon = .verified
-                    } else if peer.isPremium && !premiumConfiguration.isPremiumDisabled {
+                    } else if peer.isPremium && !premiumConfiguration.isPremiumDisabled && !SGSimpleSettings.shared.hidePremiumBadge {
                         credibilityIcon = .premium
                     } else {
                         credibilityIcon = .none

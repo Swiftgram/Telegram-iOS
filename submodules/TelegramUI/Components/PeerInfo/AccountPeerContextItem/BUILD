@@ -21,6 +21,7 @@ swift_library(
         "//submodules/AvatarNode",
         "//submodules/ContextUI",
         "//submodules/AccountContext",
+        "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
     ],
     visibility = [
         "//visibility:public",

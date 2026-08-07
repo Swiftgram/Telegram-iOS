@@ -28,6 +28,7 @@ import MultiAnimationRenderer
 import ComponentDisplayAdapters
 import ChatTitleView
 import AppBundle
+import SGSimpleSettings
 import AvatarVideoNode
 import PeerInfoVisualMediaPaneNode
 import AvatarStoryIndicatorComponent
@@ -605,9 +606,9 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                 credibilityIcon = .fake
             } else if peer.isScam {
                 credibilityIcon = .scam
-            } else if let emojiStatus = peer.emojiStatus {
+            } else if let emojiStatus = peer.emojiStatus, !SGSimpleSettings.shared.hidePremiumBadge {
                 statusIcon = .emojiStatus(emojiStatus)
-            } else if peer.isPremium && !premiumConfiguration.isPremiumDisabled && (peer.id != self.context.account.peerId || self.isSettings || self.isMyProfile) {
+            } else if peer.isPremium && !premiumConfiguration.isPremiumDisabled && !SGSimpleSettings.shared.hidePremiumBadge && (peer.id != self.context.account.peerId || self.isSettings || self.isMyProfile) {
                 credibilityIcon = .premium
             } else {
                 credibilityIcon = .none

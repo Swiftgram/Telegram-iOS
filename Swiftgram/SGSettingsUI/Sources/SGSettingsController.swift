@@ -85,6 +85,7 @@ private enum SGBoolSetting: String {
     case disableSnapDeletionEffect
     case stickerTimestamp
     case hideRecordingButton
+    case hidePremiumBadge
     case hideTabBar
     case showDC
     case showCreationDate
@@ -312,6 +313,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .other, settingName: .secondsInMessages, value: SGSimpleSettings.shared.secondsInMessages, text: i18n("Settings.secondsInMessages", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .messageDoubleTapActionOutgoingEdit, value: SGSimpleSettings.shared.messageDoubleTapActionOutgoing == SGSimpleSettings.MessageDoubleTapAction.edit.rawValue, text: i18n("Settings.messageDoubleTapActionOutgoingEdit", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hideRecordingButton, value: !SGSimpleSettings.shared.hideRecordingButton, text: i18n("Settings.RecordingButton", lang), enabled: true))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .hidePremiumBadge, value: !SGSimpleSettings.shared.hidePremiumBadge, text: i18n("Settings.PremiumBadge", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableSnapDeletionEffect, value: !SGSimpleSettings.shared.disableSnapDeletionEffect, text: i18n("Settings.SnapDeletionEffect", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableSendAsButton, value: !SGSimpleSettings.shared.disableSendAsButton, text: i18n("Settings.SendAsButton", lang, strings.Conversation_SendMesageAs), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableGalleryCamera, value: !SGSimpleSettings.shared.disableGalleryCamera, text: i18n("Settings.GalleryCamera", lang), enabled: true))
@@ -466,6 +468,9 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.contextShowJson = value
         case .hideRecordingButton:
             SGSimpleSettings.shared.hideRecordingButton = !value
+        case .hidePremiumBadge:
+            SGSimpleSettings.shared.hidePremiumBadge = !value
+            askForRestart?()
         case .hideTabBar:
             SGSimpleSettings.shared.hideTabBar = value
             simplePromise.set(true) // Trigger update for 'enabled' field of other toggles

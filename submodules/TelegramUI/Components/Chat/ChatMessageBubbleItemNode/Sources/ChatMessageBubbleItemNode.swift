@@ -2537,18 +2537,18 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                 authorNameColor = color
 
                 if case let .peer(peerId) = item.chatLocation, let authorPeerId = item.message.author?.id, authorPeerId == peerId {
-                    if effectiveAuthor is TelegramChannel, let emojiStatus = effectiveAuthor.emojiStatus {
+                    if effectiveAuthor is TelegramChannel, let emojiStatus = effectiveAuthor.emojiStatus, !SGSimpleSettings.shared.hidePremiumBadge {
                         currentCredibilityIcon = (.animation(content: .customEmoji(fileId: emojiStatus.fileId), size: CGSize(width: 20.0, height: 20.0), placeholderColor: incoming ? item.presentationData.theme.theme.chat.message.incoming.mediaPlaceholderColor : item.presentationData.theme.theme.chat.message.outgoing.mediaPlaceholderColor, themeColor: color.withMultipliedAlpha(0.4), loopMode: .count(2)), nil)
                     }
                 } else if effectiveAuthor.isScam {
                     currentCredibilityIcon = (.text(color: incoming ? item.presentationData.theme.theme.chat.message.incoming.scamColor : item.presentationData.theme.theme.chat.message.outgoing.scamColor, string: item.presentationData.strings.Message_ScamAccount.uppercased()), nil)
                 } else if effectiveAuthor.isFake {
                     currentCredibilityIcon = (.text(color: incoming ? item.presentationData.theme.theme.chat.message.incoming.scamColor : item.presentationData.theme.theme.chat.message.outgoing.scamColor, string: item.presentationData.strings.Message_FakeAccount.uppercased()), nil)
-                } else if let emojiStatus = effectiveAuthor.emojiStatus {
+                } else if let emojiStatus = effectiveAuthor.emojiStatus, !SGSimpleSettings.shared.hidePremiumBadge {
                     currentCredibilityIcon = (.animation(content: .customEmoji(fileId: emojiStatus.fileId), size: CGSize(width: 20.0, height: 20.0), placeholderColor: incoming ? item.presentationData.theme.theme.chat.message.incoming.mediaPlaceholderColor : item.presentationData.theme.theme.chat.message.outgoing.mediaPlaceholderColor, themeColor: color.withMultipliedAlpha(0.4), loopMode: .count(2)), emojiStatus.color.flatMap { UIColor(rgb: UInt32(bitPattern: $0)) })
                 } else if effectiveAuthor.isVerified {
                     currentCredibilityIcon = (.verified(fillColor: item.presentationData.theme.theme.list.itemCheckColors.fillColor, foregroundColor: item.presentationData.theme.theme.list.itemCheckColors.foregroundColor, sizeType: .compact), nil)
-                } else if effectiveAuthor.isPremium {
+                } else if effectiveAuthor.isPremium && !SGSimpleSettings.shared.hidePremiumBadge {
                     currentCredibilityIcon = (.premium(color: color.withMultipliedAlpha(0.4)), nil)
                 }
             }

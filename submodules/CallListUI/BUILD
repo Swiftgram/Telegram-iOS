@@ -37,6 +37,7 @@ swift_library(
         "//submodules/TelegramUI/Components/EdgeEffect",
         "//submodules/ComponentFlow",
         "//submodules/Components/ComponentDisplayAdapters",
+        "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
     ],
     visibility = [
         "//visibility:public",

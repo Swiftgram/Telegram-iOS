@@ -135,6 +135,7 @@ public class SGSimpleSettings {
         case stickerSize
         case stickerTimestamp
         case hideRecordingButton
+        case hidePremiumBadge
         case hideTabBar
         case showDC
         case showCreationDate
@@ -293,6 +294,7 @@ public class SGSimpleSettings {
         Keys.stickerSize.rawValue: 100,
         Keys.stickerTimestamp.rawValue: true,
         Keys.hideRecordingButton.rawValue: false,
+        Keys.hidePremiumBadge.rawValue: false,
         Keys.hideTabBar.rawValue: false,
         Keys.showDC.rawValue: false,
         Keys.showCreationDate.rawValue: true,
@@ -475,6 +477,9 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.hideRecordingButton.rawValue)
     public var hideRecordingButton: Bool
+
+    @UserDefault(key: Keys.hidePremiumBadge.rawValue)
+    public var hidePremiumBadge: Bool
     
     @UserDefault(key: Keys.hideTabBar.rawValue)
     public var hideTabBar: Bool

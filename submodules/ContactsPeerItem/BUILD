@@ -34,6 +34,7 @@ swift_library(
         "//submodules/MoreButtonNode",
         "//submodules/TextFormat",
         "//submodules/TelegramUI/Components/TextNodeWithEntities",
+        "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
     ],
     visibility = [
         "//visibility:public",
