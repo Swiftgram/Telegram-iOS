@@ -1,6 +1,3 @@
-// MARK: Swiftgram
-import SGSimpleSettings
-//
 import Foundation
 import UIKit
 import Display
@@ -22,8 +19,10 @@ enum SettingsSection: Int, CaseIterable {
     case accounts
     case myProfile
     case proxy
+    // MARK: Swiftgram
     case swiftgram
     case swiftgramPro
+    //
     case apps
     case shortcuts
     case advanced
@@ -84,28 +83,7 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
         }))
     }
     
-    // MARK: Swiftgram
-    if SGSimpleSettings.shared.showProfileId {
-        var idText = ""
-        
-        if let peer = data.peer {
-            idText = String(peer.id.id._internalGetInt64Value())
-        }
-        
-        items[.edit]!.append(
-            PeerInfoScreenActionItem(
-                id: 100,
-                text: "ID: \(idText)",
-                color: .accent,
-                action: {
-                    UIPasteboard.general.string = idText
-                    
-                    interaction.notifyTextCopied()
-                }
-            )
-        )
-    }
-    //
+    items[.edit]!.append(contentsOf: sgPeerInfoSettingsProfileIdItems(data: data, interaction: interaction)) // MARK: Swiftgram
     
     if let settings = data.globalSettings {
         if settings.premiumGracePeriod {
@@ -178,6 +156,7 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
         items[.accounts]!.append(PeerInfoScreenActionItem(id: 1000, text: presentationData.strings.Settings_AddAccount, icon: PresentationResourcesItemList.plusIconImage(presentationData.theme), action: {
             interaction.openSettings(.addAccount)
         }))
+        //
         
         items[.myProfile]!.append(PeerInfoScreenDisclosureItem(id: 0, text: presentationData.strings.Settings_MyProfile, icon: PresentationResourcesSettings.myProfile, action: {
             interaction.openSettings(.profile)
@@ -201,38 +180,10 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
         }
     }
     
-    // let locale = presentationData.strings.baseLanguageCode
     // MARK: Swiftgram
-    let hasNewSGFeatures = {
-        return false
-    }
-    let swiftgramLabel: PeerInfoScreenDisclosureItem.Label
-    if hasNewSGFeatures() {
-        swiftgramLabel = .titleBadge(presentationData.strings.Settings_New, presentationData.theme.list.itemAccentColor)
-    } else {
-        swiftgramLabel = .none
-    }
-
-    let hasNewSGProFeatures = {
-        return false
-    }
-    let swiftgramProLabel: PeerInfoScreenDisclosureItem.Label
-    if hasNewSGProFeatures() {
-        swiftgramProLabel = .titleBadge(presentationData.strings.Settings_New, presentationData.theme.list.itemAccentColor)
-    } else {
-        swiftgramProLabel = .none
-    }
-    
-    
     let sgWebSettings = context.currentAppConfiguration.with({ $0 }).sgWebSettings
-    if sgWebSettings.global.paymentsEnabled || context.sharedContext.immediateSGStatus.status > 1 {
-        items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 0, label: swiftgramProLabel, text: "Swiftgram Pro", icon: PresentationResourcesSettings.swiftgramPro, action: {
-            interaction.openSettings(.swiftgramPro)
-        }))
-    }
-    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 1, label: swiftgramLabel, text: "Swiftgram", icon: PresentationResourcesSettings.swiftgram, action: {
-        interaction.openSettings(.swiftgram)
-    }))
+    items[.swiftgram]!.append(contentsOf: sgPeerInfoSettingsItems(context: context, paymentsEnabled: sgWebSettings.global.paymentsEnabled, presentationData: presentationData, interaction: interaction))
+    //
 
     var appIndex = 1000
     if let settings = data.globalSettings {

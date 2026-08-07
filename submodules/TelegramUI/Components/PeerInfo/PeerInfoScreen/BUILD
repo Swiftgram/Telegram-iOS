@@ -9,6 +9,11 @@ sgdeps = [
     "//Swiftgram/SGRegDateScheme:SGRegDateScheme",
     "//Swiftgram/SGDebugUI:SGDebugUI",
 ]
+# MARK: Swiftgram
+sgsrcs = [
+    "//Swiftgram/SGPeerInfoRows:SGPeerInfoRows",
+]
+#
 
 
 swift_library(
@@ -16,7 +21,7 @@ swift_library(
     module_name = "PeerInfoScreen",
     srcs = glob([
         "Sources/**/*.swift",
-    ]),
+    ]) + sgsrcs, # MARK: Swiftgram
     copts = [
         "-warnings-as-errors",
     ],
