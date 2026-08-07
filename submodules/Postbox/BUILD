@@ -1,9 +1,15 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+# MARK: Swiftgram
+sgsrc = [
+    "//Swiftgram/SGPostboxLocalPeerSearch:SGPostboxLocalPeerSearch"
+]
+#
+
 swift_library(
     name = "Postbox",
     module_name = "Postbox",
-    srcs = glob([
+    srcs = sgsrc + glob([ # MARK: Swiftgram
         "Sources/**/*.swift",
     ]),
     copts = [
