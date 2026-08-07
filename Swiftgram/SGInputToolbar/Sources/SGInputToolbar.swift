@@ -3,51 +3,34 @@ import Foundation
 
 
 // MARK: Swiftgram
+public enum SGInputToolbarAction {
+    case quote
+    case spoiler
+    case bold
+    case italic
+    case date
+    case monospace
+    case link
+    case underline
+    case strikethrough
+    case code
+    case newLine
+    case clearFormatting
+}
+
 public struct ChatToolbarView: View {
-    var onQuote: () -> Void
-    var onSpoiler: () -> Void
-    var onBold: () -> Void
-    var onItalic: () -> Void
-    var onDate: (() -> Void)?
-    var onMonospace: () -> Void
-    var onLink: () -> Void
-    var onStrikethrough: () -> Void
-    var onUnderline: () -> Void
-    var onCode: () -> Void
-    
-    var onNewLine: () -> Void
+    var onAction: (SGInputToolbarAction) -> Void
+    var showsDateAction: Bool
     @Binding private var showNewLine: Bool
     
-    var onClearFormatting: () -> Void
-    
     public init(
-        onQuote: @escaping () -> Void,
-        onSpoiler: @escaping () -> Void,
-        onBold: @escaping () -> Void,
-        onItalic: @escaping () -> Void,
-        onDate: (() -> Void)? = nil,
-        onMonospace: @escaping () -> Void,
-        onLink: @escaping () -> Void,
-        onStrikethrough: @escaping () -> Void,
-        onUnderline: @escaping () -> Void,
-        onCode: @escaping () -> Void,
-        onNewLine: @escaping () -> Void,
+        showsDateAction: Bool = false,
         showNewLine: Binding<Bool>,
-        onClearFormatting: @escaping () -> Void
+        onAction: @escaping (SGInputToolbarAction) -> Void
     ) {
-        self.onQuote = onQuote
-        self.onSpoiler = onSpoiler
-        self.onBold = onBold
-        self.onItalic = onItalic
-        self.onDate = onDate
-        self.onMonospace = onMonospace
-        self.onLink = onLink
-        self.onStrikethrough = onStrikethrough
-        self.onUnderline = onUnderline
-        self.onCode = onCode
-        self.onNewLine = onNewLine
+        self.onAction = onAction
+        self.showsDateAction = showsDateAction
         self._showNewLine = showNewLine
-        self.onClearFormatting = onClearFormatting
     }
     
     public func setShowNewLine(_ value: Bool) {
@@ -58,49 +41,49 @@ public struct ChatToolbarView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
                 if showNewLine {
-                    Button(action: onNewLine) {
+                    Button(action: { self.onAction(.newLine) }) {
                         Image(systemName: "return")
                     }
                     .buttonStyle(ToolbarButtonStyle())
                 }
-                Button(action: onClearFormatting) {
+                Button(action: { self.onAction(.clearFormatting) }) {
                     Image(systemName: "pencil.slash")
                 }
                 .buttonStyle(ToolbarButtonStyle())
                 Spacer()
                 // Quote Button
-                Button(action: onQuote) {
+                Button(action: { self.onAction(.quote) }) {
                     Image(systemName: "text.quote")
                 }
                 .buttonStyle(ToolbarButtonStyle())
                 
                 // Spoiler Button
-                Button(action: onSpoiler) {
+                Button(action: { self.onAction(.spoiler) }) {
                     Image(systemName: "eye.slash")
                 }
                 .buttonStyle(ToolbarButtonStyle())
                 
                 // Bold Button
-                Button(action: onBold) {
+                Button(action: { self.onAction(.bold) }) {
                     Image(systemName: "bold")
                 }
                 .buttonStyle(ToolbarButtonStyle())
                 
                 // Italic Button
-                Button(action: onItalic) {
+                Button(action: { self.onAction(.italic) }) {
                     Image(systemName: "italic")
                 }
                 .buttonStyle(ToolbarButtonStyle())
 
-                if let onDate {
-                    Button(action: onDate) {
+                if showsDateAction {
+                    Button(action: { self.onAction(.date) }) {
                         Image(systemName: "calendar")
                     }
                     .buttonStyle(ToolbarButtonStyle())
                 }
                 
                 // Monospace Button
-                Button(action: onMonospace) {
+                Button(action: { self.onAction(.monospace) }) {
                     if #available(iOS 16.4, *) {
                         Text("M").monospaced()
                     } else {
@@ -110,27 +93,27 @@ public struct ChatToolbarView: View {
                 .buttonStyle(ToolbarButtonStyle())
                 
                 // Link Button
-                Button(action: onLink) {
+                Button(action: { self.onAction(.link) }) {
                     Image(systemName: "link")
                 }
                 .buttonStyle(ToolbarButtonStyle())
                 
                 // Underline Button
-                Button(action: onUnderline) {
+                Button(action: { self.onAction(.underline) }) {
                     Image(systemName: "underline")
                 }
                 .buttonStyle(ToolbarButtonStyle())
                 
                 
                 // Strikethrough Button
-                Button(action: onStrikethrough) {
+                Button(action: { self.onAction(.strikethrough) }) {
                     Image(systemName: "strikethrough")
                 }
                 .buttonStyle(ToolbarButtonStyle())
                 
                 
                 // Code Button
-                Button(action: onCode) {
+                Button(action: { self.onAction(.code) }) {
                     Image(systemName: "chevron.left.forwardslash.chevron.right")
                 }
                 .buttonStyle(ToolbarButtonStyle())

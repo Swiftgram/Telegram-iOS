@@ -1,5 +1,4 @@
-// MARK: Swiftgram
-import SGInputToolbar
+import SGInputToolbar // MARK: Swiftgram
 import SwiftUI
 import SGSimpleSettings
 
@@ -327,9 +326,8 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
 
     private let hapticFeedback = HapticFeedback()
     
-    // MARK: Swiftgram
     //    private var toolbarHostingController: UIViewController? //Any? //  UIHostingController<ChatToolbarView>?
-    private var toolbarNode: ASDisplayNode?
+    private var toolbarNode: ASDisplayNode? // MARK: Swiftgram
 
     public var inputTextState: ChatTextInputState {
         if let textInputNode = self.textInputNode {
@@ -618,8 +616,7 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
         )
         self.inputMediaInteraction?.forceTheme = presentationInterfaceState.theme
         
-        // MARK: Swiftgram
-        self.initToolbarIfNeeded(context: context)
+        self.initToolbarIfNeeded(context: context) // MARK: Swiftgram
     }
 
     public var sendPressed: ((NSAttributedString?) -> Void)?
@@ -2429,66 +2426,47 @@ extension AttachmentTextInputPanelNode {
         guard context.sharedContext.immediateSGStatus.status > 1 else { return }
         guard self.toolbarNode == nil else { return }
         let toolbarView = ChatToolbarView(
-            onQuote: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesQuote(strongSelf)
-            },
-            onSpoiler: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesSpoiler(strongSelf)
-            },
-            onBold: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesBold(strongSelf)
-            },
-            onItalic: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesItalic(strongSelf)
-            },
-            onDate: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.interfaceInteraction?.openDateEditing()
-            },
-            onMonospace: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesMonospace(strongSelf)
-            },
-            onLink: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesLink(self!)
-            },
-            onStrikethrough: { [weak self]
-                in guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesStrikethrough(strongSelf)
-            },
-            onUnderline: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesUnderline(strongSelf)
-            },
-            onCode: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesCodeBlock(strongSelf)
-            },
-            onNewLine: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSetNewLine()
-            },
-            // TODO(swiftgram): Binding
+            showsDateAction: true,
             showNewLine: .constant(true), //.constant(self.sendWithReturnKey)
-            onClearFormatting: { [weak self] in
+            onAction: { [weak self] action in
                 guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.updateTextInputStateAndMode { current, inputMode in
-                    return (chatTextInputAddFormattingAttribute(forceRemoveAll: true, current, attribute: ChatTextInputAttributes.allAttributes[0], value: nil), inputMode)
+                switch action {
+                case .quote:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesQuote(strongSelf)
+                case .spoiler:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesSpoiler(strongSelf)
+                case .bold:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesBold(strongSelf)
+                case .italic:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesItalic(strongSelf)
+                case .date:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.interfaceInteraction?.openDateEditing()
+                case .monospace:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesMonospace(strongSelf)
+                case .link:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesLink(strongSelf)
+                case .underline:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesUnderline(strongSelf)
+                case .strikethrough:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesStrikethrough(strongSelf)
+                case .code:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesCodeBlock(strongSelf)
+                case .newLine:
+                    strongSelf.interfaceInteraction?.sgSetNewLine()
+                case .clearFormatting:
+                    strongSelf.interfaceInteraction?.updateTextInputStateAndMode { current, inputMode in
+                        return (chatTextInputAddFormattingAttribute(forceRemoveAll: true, current, attribute: ChatTextInputAttributes.allAttributes[0], value: nil), inputMode)
+                    }
                 }
             }
         )
@@ -2520,3 +2498,4 @@ extension AttachmentTextInputPanelNode {
         return toolbarHeight + toolbarSpacing
     }
 }
+//

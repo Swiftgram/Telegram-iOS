@@ -1,7 +1,6 @@
-// MARK: Swiftgram
 import class SwiftUI.UIHostingController
 import SGSimpleSettings
-import SGInputToolbar
+import SGInputToolbar // MARK: Swiftgram
 
 import Foundation
 import UIKit
@@ -614,8 +613,7 @@ public final class MessageInputPanelComponent: Component {
         private let counter = ComponentView<Empty>()
         private var header: ComponentView<Empty>?
         
-        // MARK: Swiftgram
-        private var toolbarView: UIView?
+        private var toolbarView: UIView? // MARK: Swiftgram
         
         private var disabledPlaceholder: ComponentView<Empty>?
         private var textClippingView = UIView()
@@ -722,8 +720,7 @@ public final class MessageInputPanelComponent: Component {
                 }
             )
             
-            // MARK: Swiftgram
-            self.initToolbarIfNeeded(context: context)
+            self.initToolbarIfNeeded(context: context) // MARK: Swiftgram
         }
         
         required init?(coder: NSCoder) {
@@ -937,6 +934,7 @@ public final class MessageInputPanelComponent: Component {
             if result == nil, let toolbarView = self.toolbarView, let toolbarResult = toolbarView.hitTest(self.convert(point, to: toolbarView), with: event) {
                 return toolbarResult
             }
+            //
              
             return result
         }
@@ -3082,8 +3080,7 @@ public final class MessageInputPanelComponent: Component {
                 }
             }
             
-            // MARK: Swiftgram
-            size = self.layoutToolbar(transition: transition, layoutFromTop: layoutFromTop, size: size, availableSize: availableSize, defaultInsets: defaultInsets, textFieldSize: textFieldSize, previousComponent: previousComponent)
+            size = self.layoutToolbar(transition: transition, layoutFromTop: layoutFromTop, size: size, availableSize: availableSize, defaultInsets: defaultInsets, textFieldSize: textFieldSize, previousComponent: previousComponent) // MARK: Swiftgram
             
             return size
         }
@@ -3139,60 +3136,19 @@ final class ViewForOverlayContent: UIView {
     }
 }
 
-
+// MARK: Swiftgram
 extension MessageInputPanelComponent.View {
     func initToolbarIfNeeded(context: AccountContext) {
         guard #available(iOS 13.0, *) else { return }
         guard SGSimpleSettings.shared.inputToolbar else { return }
         guard context.sharedContext.immediateSGStatus.status > 1 else { return }
         guard self.toolbarView == nil else { return }
-        let notificationName = Notification.Name("sgToolbarAction")
         let toolbar = ChatToolbarView(
-            onQuote: { [weak self] in
-                guard let _ = self else { return }
-                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "quote"])
-            },
-            onSpoiler: { [weak self] in
-                guard let _ = self else { return }
-                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "spoiler"])
-            },
-            onBold: { [weak self] in
-                guard let _ = self else { return }
-                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "bold"])
-            },
-            onItalic: { [weak self] in
-                guard let _ = self else { return }
-                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "italic"])
-            },
-            onMonospace: { [weak self] in
-                guard let _ = self else { return }
-                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "monospace"])
-            },
-            onLink: { [weak self] in
-                guard let _ = self else { return }
-                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "link"])
-            },
-            onStrikethrough: { [weak self]
-                in guard let _ = self else { return }
-                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "strikethrough"])
-            },
-            onUnderline: { [weak self] in
-                guard let _ = self else { return }
-                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "underline"])
-            },
-            onCode: { [weak self] in
-                guard let _ = self else { return }
-                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "code"])
-            },
-            onNewLine: { [weak self] in
-                guard let _ = self else { return }
-                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "newline"])
-            },
             // TODO(swiftgram): Binding
             showNewLine: .constant(true), //.constant(self.sendWithReturnKey)
-            onClearFormatting: { [weak self] in
-                guard let _ = self else { return }
-                NotificationCenter.default.post(name: notificationName, object: nil, userInfo: ["action": "clearFormatting"])
+            onAction: { [weak self] action in
+                guard let self, let textFieldView = self.textField.view as? TextFieldComponent.View else { return }
+                textFieldView.sgToolbarAction(action)
             }
         ).colorScheme(.dark)
 
@@ -3244,3 +3200,4 @@ extension MessageInputPanelComponent.View {
         return size
     }
 }
+//

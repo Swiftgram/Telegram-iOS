@@ -1,8 +1,7 @@
-// MARK: Swiftgram
 import TelegramUIPreferences
 import SGSimpleSettings
 import SwiftUI
-import SGInputToolbar
+import SGInputToolbar // MARK: Swiftgram
 
 import Foundation
 import UniformTypeIdentifiers
@@ -874,9 +873,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             self.alwaysUseNativeInput = true
         }
 
-                // MARK: Swiftgram
-        self.initToolbarIfNeeded(context: context)
-        //
+        self.initToolbarIfNeeded(context: context) // MARK: Swiftgram
 
         self.sendAsAvatarContainerNode.activated = { [weak self] gesture, _ in
             guard let strongSelf = self else {
@@ -944,6 +941,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(self.attachmentButtonLongPressed(_:)))
         longPressGesture.minimumPressDuration = 1.0
         self.attachmentButton.addGestureRecognizer(longPressGesture)
+        //
   
         self.sendActionButtons.sendButtonLongPressed = { [weak self] node, gesture in
             self?.interfaceInteraction?.displaySendMessageOptions(node, gesture)
@@ -2471,9 +2469,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         if buttonTitleUpdated && !transition.isAnimated {
             transition = .animated(duration: 0.3, curve: .easeInOut)
         }
-        // MARK: Swiftgram
-        let originalLeftInset = leftInset
-        //
+        let originalLeftInset = leftInset // MARK: Swiftgram
         
         let textInputBackgroundWidthOffset: CGFloat = 0.0
         var attachmentButtonX: CGFloat = hideOffset.x + leftInset + leftMenuInset + 8.0
@@ -3918,6 +3914,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         // MARK: Swiftgram
         var toolbarOffset: CGFloat = 0.0
         toolbarOffset = layoutToolbar(transition: transition, panelHeight: contentHeight, width: width, leftInset: originalLeftInset, rightInset: rightInset, displayBotStartButton: displayBotStartButton)
+        //
         
         return contentHeight + toolbarOffset
     }
@@ -5684,6 +5681,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
     @objc func attachmentButtonLongPressed(_ gesture: UILongPressGestureRecognizer) {
         guard gesture.state == .began else { return }
     }
+    //
     
     @objc func searchLayoutClearButtonPressed() {
         if let interfaceInteraction = self.interfaceInteraction {
@@ -5989,66 +5987,47 @@ extension ChatTextInputPanelNode {
         guard context.sharedContext.immediateSGStatus.status > 1 else { return }
         guard self.toolbarNode == nil else { return }
         let toolbarView = ChatToolbarView(
-            onQuote: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesQuote(strongSelf)
-            },
-            onSpoiler: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesSpoiler(strongSelf)
-            },
-            onBold: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesBold(strongSelf)
-            },
-            onItalic: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesItalic(strongSelf)
-            },
-            onDate: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesDate(strongSelf)
-            },
-            onMonospace: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesMonospace(strongSelf)
-            },
-            onLink: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesLink(strongSelf)
-            },
-            onStrikethrough: { [weak self]
-                in guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesStrikethrough(strongSelf)
-            },
-            onUnderline: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesUnderline(strongSelf)
-            },
-            onCode: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
-                strongSelf.formatAttributesCodeBlock(strongSelf)
-            },
-            onNewLine: { [weak self] in
-                guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.sgSetNewLine()
-            },
-            // TODO(swiftgram): Binding
+            showsDateAction: true,
             showNewLine: .constant(true),
-            onClearFormatting: { [weak self] in
+            onAction: { [weak self] action in
                 guard let strongSelf = self else { return }
-                strongSelf.interfaceInteraction?.updateTextInputStateAndMode { current, inputMode in
-                    return (chatTextInputAddFormattingAttribute(forceRemoveAll: true, current, attribute: ChatTextInputAttributes.allAttributes[0], value: nil), inputMode)
+                switch action {
+                case .quote:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesQuote(strongSelf)
+                case .spoiler:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesSpoiler(strongSelf)
+                case .bold:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesBold(strongSelf)
+                case .italic:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesItalic(strongSelf)
+                case .date:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesDate(strongSelf)
+                case .monospace:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesMonospace(strongSelf)
+                case .link:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesLink(strongSelf)
+                case .underline:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesUnderline(strongSelf)
+                case .strikethrough:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesStrikethrough(strongSelf)
+                case .code:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesCodeBlock(strongSelf)
+                case .newLine:
+                    strongSelf.interfaceInteraction?.sgSetNewLine()
+                case .clearFormatting:
+                    strongSelf.interfaceInteraction?.updateTextInputStateAndMode { current, inputMode in
+                        return (chatTextInputAddFormattingAttribute(forceRemoveAll: true, current, attribute: ChatTextInputAttributes.allAttributes[0], value: nil), inputMode)
+                    }
                 }
             }
         )
@@ -6094,3 +6073,4 @@ extension ChatTextInputPanelNode {
         return toolbarHeight + toolbarSpacing
     }
 }
+//

@@ -1,3 +1,7 @@
+// MARK: Swiftgram
+import SGInputToolbar
+//
+
 import Foundation
 import UIKit
 import Display
@@ -359,9 +363,6 @@ public final class TextFieldComponent: Component {
         public var inputTextView: UITextView {
             return self.textView
         }
-        // MARK: Swiftgram
-        var sgToolbarActionObserver: NSObjectProtocol? = nil
-        
         private var component: TextFieldComponent?
         private weak var state: EmptyComponentState?
         private var isUpdating: Bool = false
@@ -442,20 +443,6 @@ public final class TextFieldComponent: Component {
                 }
             }
             
-            // MARK: Swiftgram
-            self.sgToolbarActionObserver = NotificationCenter.default.addObserver(forName: Notification.Name("sgToolbarAction"), object: nil, queue: .main, using: { [weak self] notification in
-                    guard let self = self else { return }
-                    if let action = notification.userInfo?["action"] as? String {
-                        self.sgToolbarAction(action)
-                    }
-            })
-        }
-        
-        // MARK: Swiftgram
-        deinit {
-            if let sgToolbarActionObserver = self.sgToolbarActionObserver {
-                NotificationCenter.default.removeObserver(sgToolbarActionObserver)
-            }
         }
         
         required init?(coder: NSCoder) {
@@ -1917,45 +1904,47 @@ extension TextFieldComponent.InputState {
 
 extension TextFieldComponent.View {
     
-    func sgToolbarAction(_ action: String) {
+    // MARK: Swiftgram
+    public func sgToolbarAction(_ action: SGInputToolbarAction) {
         switch action {
-            case "quote":
+            case .quote:
                 self.sgSelectLastWordIfIdle()
                 self.toggleAttribute(key: ChatTextInputAttributes.block, value: ChatTextInputTextQuoteAttribute(kind: .quote, isCollapsed: false))
-            case "spoiler":
+            case .spoiler:
                 self.sgSelectLastWordIfIdle()
                 self.toggleAttribute(key: ChatTextInputAttributes.spoiler)
-            case "bold":
+            case .bold:
                 self.sgSelectLastWordIfIdle()
                 self.toggleAttribute(key: ChatTextInputAttributes.bold)
-            case "italic":
+            case .italic:
                 self.sgSelectLastWordIfIdle()
                 self.toggleAttribute(key: ChatTextInputAttributes.italic)
-            case "monospace":
+            case .date:
+                break
+            case .monospace:
                 self.sgSelectLastWordIfIdle()
                 self.toggleAttribute(key: ChatTextInputAttributes.monospace)
-            case "link":
+            case .link:
                 self.sgSelectLastWordIfIdle()
                 self.openLinkEditing()
-            case "strikethrough":
-                self.sgSelectLastWordIfIdle()
-                self.toggleAttribute(key: ChatTextInputAttributes.strikethrough)
-            case "underline":
+            case .underline:
                 self.sgSelectLastWordIfIdle()
                 self.toggleAttribute(key: ChatTextInputAttributes.underline)
-            case "code":
+            case .strikethrough:
+                self.sgSelectLastWordIfIdle()
+                self.toggleAttribute(key: ChatTextInputAttributes.strikethrough)
+            case .code:
                 self.sgSelectLastWordIfIdle()
                 self.toggleAttribute(key: ChatTextInputAttributes.block, value: ChatTextInputTextQuoteAttribute(kind: .code(language: nil), isCollapsed: false))
-            case "newline":
+            case .newLine:
                 self.sgSetNewLine()
-            case "clearFormatting":
+            case .clearFormatting:
                 self.updateInputState { current in
                     return current.clearFormattingAttributes()
                 }
-            default:
-                assert(false, "Unhandled action \(action)")
         }
     }
+    //
     
     func sgSelectLastWordIfIdle() {
         self.updateInputState { current in
