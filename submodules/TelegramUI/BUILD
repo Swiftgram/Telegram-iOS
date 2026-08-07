@@ -33,7 +33,8 @@ sgsrcs = [
     "//Swiftgram/ChatControllerImplExtension:ChatControllerImplExtension",
     "//Swiftgram/SGSharedAccountContextMigration:SGSharedAccountContextMigration",
     "//Swiftgram/SGOutgoingTranslationLanguageSelection:SGOutgoingTranslationLanguageSelection",
-    "//Swiftgram/SGSafariControllerUrlOpening:SGSafariControllerUrlOpening"
+    "//Swiftgram/SGSafariControllerUrlOpening:SGSafariControllerUrlOpening",
+    "//Swiftgram/SGTelegramUIExtensions:SGTelegramUIExtensions", # MARK: Swiftgram
 ]
 
 filegroup(

@@ -1,5 +1,4 @@
-import SGStrings
-import SGSimpleSettings
+import SGSimpleSettings // MARK: Swiftgram
 import PeerInfoUI
 import Foundation
 import UIKit
@@ -512,16 +511,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
     if case .standard(.embedded) = chatPresentationInterfaceState.mode {
         isEmbeddedMode = true
     }
-    // MARK: Swiftgram
-    var canReveal = false
-    if !chatPresentationInterfaceState.copyProtectionEnabled {
-        outer: for message in messages {
-            if message.canRevealContent(contentSettings: context.currentContentSettings.with { $0 }) {
-                canReveal = true
-                break outer
-            }
-        }
-    }
+    let canReveal = sgCanRevealContent(messages: messages, context: context, copyProtectionEnabled: chatPresentationInterfaceState.copyProtectionEnabled) // MARK: Swiftgram
 
     if case let .customChatContents(customChatContents) = chatPresentationInterfaceState.subject, case .hashTagSearch = customChatContents.kind {
         isEmbeddedMode = true
@@ -1239,7 +1229,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     })
                 })
             })))
-            if !SGSimpleSettings.shared.contextShowReply { sgActions.append(actions.removeLast()) }
+            if !SGSimpleSettings.shared.contextShowReply { sgActions.append(actions.removeLast()) } // MARK: Swiftgram
         }
         
         if data.messageActions.options.contains(.sendScheduledNow) {
@@ -1522,7 +1512,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     })
                     f(.default)
                 })))
-                if !SGSimpleSettings.shared.contextShowSaveMedia { sgActions.append(actions.removeLast()) }
+                if !SGSimpleSettings.shared.contextShowSaveMedia { sgActions.append(actions.removeLast()) } // MARK: Swiftgram
             }
         }
         
@@ -1568,17 +1558,14 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             })))
         }
         
-        let showJsonAction: ContextMenuItem = .action(ContextMenuActionItem(text: "JSON", icon: { theme in
-            return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Settings"), color: theme.actionSheet.primaryTextColor)
-        }, action: { _, f in
-            showMessageJson(controllerInteraction: controllerInteraction, chatPresentationInterfaceState: chatPresentationInterfaceState, message: message, context: context)
-            f(.default)
-        }))
+        // MARK: Swiftgram
+        let showJsonAction = sgMakeContextMenuAction(.json(controllerInteraction: controllerInteraction, context: context), chatPresentationInterfaceState: chatPresentationInterfaceState, message: message)
         if SGSimpleSettings.shared.contextShowJson {
             actions.append(showJsonAction)
         } else {
             sgActions.append(showJsonAction)
         }
+        //
         
         var threadId: Int64?
         var threadMessageCount: Int = 0
@@ -1618,7 +1605,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     controllerInteraction.openMessageReplies(messages[0].id, true, true)
                 })
             })))
-            if !SGSimpleSettings.shared.contextShowMessageReplies { sgActions.append(actions.removeLast()) }
+            if !SGSimpleSettings.shared.contextShowMessageReplies { sgActions.append(actions.removeLast()) } // MARK: Swiftgram
         }
         
         let isMigrated: Bool
@@ -1769,7 +1756,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     interfaceInteraction.pinMessage(messages[0].id, c)
                 })))
             }
-            if !SGSimpleSettings.shared.contextShowPin { sgActions.append(actions.removeLast()) }
+            if !SGSimpleSettings.shared.contextShowPin { sgActions.append(actions.removeLast()) } // MARK: Swiftgram
         }
         
         if let activePoll, messages[0].forwardInfo == nil {
@@ -1962,29 +1949,23 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     f(.dismissWithoutContent)
                 })))
                 if message.id.peerId != context.account.peerId {
-                    let action: ContextMenuItem = .action(ContextMenuActionItem(text: i18n("ContextMenu.SaveToCloud", chatPresentationInterfaceState.strings.baseLanguageCode), icon: { theme in
-                        return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Fave"), color: theme.actionSheet.primaryTextColor)
-                    }, action: { _, f in
-                        interfaceInteraction.forwardMessages(selectAll || isImage ? messages : [message], "forwardMessagesToCloud")
-                        f(.dismissWithoutContent)
-                    }))
+                    // MARK: Swiftgram
+                    let action = sgMakeContextMenuAction(.saveToCloud(interfaceInteraction: interfaceInteraction, selectAll: selectAll, isImage: isImage, messages: messages), chatPresentationInterfaceState: chatPresentationInterfaceState, message: message)
                     if SGSimpleSettings.shared.contextShowSaveToCloud {
                         actions.append(action)
                     } else {
                         sgActions.append(action)
                     }
+                    //
                 }
-                let action: ContextMenuItem = .action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.NotificationSettings_Stories_CompactHideName, icon: { theme in
-                    return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Forward"), color: theme.actionSheet.primaryTextColor)
-                }, action: { _, f in
-                    interfaceInteraction.forwardMessages(selectAll || isImage ? messages : [message], "forwardMessagesWithNoNames")
-                    f(.dismissWithoutContent)
-                }))
+                // MARK: Swiftgram
+                let action = sgMakeContextMenuAction(.hideForwardName(interfaceInteraction: interfaceInteraction, selectAll: selectAll, isImage: isImage, messages: messages), chatPresentationInterfaceState: chatPresentationInterfaceState, message: message)
                 if SGSimpleSettings.shared.contextShowHideForwardName {
                     actions.append(action)
                 } else {
                     sgActions.append(action)
                 }
+                //
             }
         }
         
@@ -2003,7 +1984,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             }, action: { controller, f in
                 interfaceInteraction.reportMessages(messages, controller)
             })))
-            if !SGSimpleSettings.shared.contextShowReport { sgActions.append(actions.removeLast()) }
+            if !SGSimpleSettings.shared.contextShowReport { sgActions.append(actions.removeLast()) } // MARK: Swiftgram
         } else if message.id.peerId.isReplies {
             actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Conversation_ContextMenuBlock, textColor: .destructive, icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Restrict"), color: theme.actionSheet.destructiveActionTextColor)
@@ -2050,11 +2031,13 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                             }), forKey: user.id)
                         f(.dismissWithoutContent)
                     }))
+                    // MARK: Swiftgram
                     if SGSimpleSettings.shared.contextShowRestrict {
                         actions.append(action)
                     } else {
                         sgActions.append(action)
                     }
+                    //
                 }
             }
         }
@@ -2216,70 +2199,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             sgActionsIndex = actions.count
             var didAddSeparator = false
             // MARK: Swiftgram
-            if let authorId = message.author?.id {
-                let action: ContextMenuItem = .action(ContextMenuActionItem(text: i18n("ContextMenu.SelectFromUser", chatPresentationInterfaceState.strings.baseLanguageCode), icon: { theme in
-                    return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/SelectAll"), color: theme.actionSheet.primaryTextColor)
-                }, action: { _, f in
-                    let progressSignal = Signal<Never, NoError> { subscriber in
-                        let overlayController = OverlayStatusController(theme: chatPresentationInterfaceState.theme, type: .loading(cancelled: nil))
-                        controllerInteraction.presentGlobalOverlayController(overlayController, nil)
-                        return ActionDisposable { [weak overlayController] in
-                            Queue.mainQueue().async() {
-                                overlayController?.dismiss()
-                            }
-                        }
-                    }
-                    |> runOn(Queue.mainQueue())
-                    |> delay(0.2, queue: Queue.mainQueue())
-                    let progressDisposable = progressSignal.start()
-                    let _ = (context.account.postbox.transaction { transaction -> [MessageId] in
-                        let limit = 500
-                        var result: [MessageId] = []
-                        
-                        let needThreadIdFilter: Bool
-                        let searchThreadId: Int64?
-                        switch chatPresentationInterfaceState.chatLocation {
-                            case let .replyThread(replyThreadMessage):
-                                needThreadIdFilter = true
-                                searchThreadId = replyThreadMessage.threadId
-                            default:
-                                needThreadIdFilter = false
-                                searchThreadId = nil
-                        }
-                        transaction.withAllMessages(peerId: message.id.peerId, reversed: true, { searchMessage in
-                            if result.count >= limit {
-                                return false
-                            }
-                            if searchMessage.author?.id == authorId {
-                                // Only messages from current opened thread
-                                // print("searchMessage.threadId:\(String(describing: searchMessage.threadId)) threadId:\(String(describing: threadId)) message.threadId:\(String(describing:message.threadId)) needThreadIdFilter:\(needThreadIdFilter) searchThreadId:\(String(describing:searchThreadId))")
-                                if needThreadIdFilter && searchMessage.threadId != searchThreadId {
-                                    return true
-                                }
-                                // No service messages
-                                if searchMessage.media.contains(where: { $0 is TelegramMediaAction }) {
-                                    return true
-                                }
-                                result.append(searchMessage.id)
-                            }
-                            return true
-                        })
-                        return result
-                    }
-                    |> deliverOnMainQueue)
-                    .start(next: { ids in
-                        interfaceInteraction.beginMessageSelection(ids, { transition in
-                            f(.custom(transition))
-                        })
-                        Queue.mainQueue().async {
-                            progressDisposable.dispose()
-                        }
-                    }, completed: {
-                        Queue.mainQueue().async {
-                            progressDisposable.dispose()
-                        }
-                    })
-                }))
+            if let action = sgMakeSelectFromUserContextMenuAction(context: context, chatPresentationInterfaceState: chatPresentationInterfaceState, controllerInteraction: controllerInteraction, interfaceInteraction: interfaceInteraction, message: message) {
                 if SGSimpleSettings.shared.contextShowSelectFromUser {
                     if !actions.isEmpty && !didAddSeparator {
                         didAddSeparator = true
@@ -2290,6 +2210,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     sgActions.append(action)
                 }
             }
+            //
             
             if !selectAll || messages.count == 1 {
                 if !actions.isEmpty && !didAddSeparator {
@@ -2337,39 +2258,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             canViewStats = canViewReadStats(message: message, participantCount: infoSummaryData.participantCount, isMessageRead: isMessageRead, isPremium: isPremium, appConfig: appConfig)
         }
 
-        // MARK: Swiftgram
-        if !sgActions.isEmpty {
-            if !actions.isEmpty {
-                if let sgActionsIndex = sgActionsIndex {
-                    actions.insert(.separator, at: sgActionsIndex)
-                } else {
-                    actions.append(.separator)
-                }
-            }
-            
-            var popSGItems: (() -> Void)? = nil
-            sgActions.insert(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Common_Back, icon: { theme in
-                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Back"), color: theme.actionSheet.primaryTextColor)
-            }, iconPosition: .left, action: { _, _ in
-                popSGItems?()
-            })), at: 0)
-            sgActions.insert(.separator, at: 1)
-            
-            let swiftgramSubMenu: ContextMenuItem = .action(ContextMenuActionItem(text: "Swiftgram", icon: { theme in
-                return generateTintedImage(image: UIImage(bundleImageName: "SwiftgramContextMenu"), color: theme.actionSheet.primaryTextColor)
-            }, action: { c, f in
-                popSGItems = { [weak c] in
-                    c?.popItems()
-                }
-                c?.pushItems(items: .single(ContextController.Items(content: .list(sgActions))))
-            }))
-            
-            if let sgActionsIndex = sgActionsIndex {
-                actions.insert(swiftgramSubMenu, at: sgActionsIndex + 1)
-            } else {
-                actions.append(swiftgramSubMenu)
-            }
-        }
+        sgInsertContextMenu(actions: &actions, sgActions: &sgActions, index: sgActionsIndex, chatPresentationInterfaceState: chatPresentationInterfaceState) // MARK: Swiftgram
         
         var reactionCount = 0
         for reaction in mergedMessageReactionsAndPeers(accountPeerId: context.account.peerId, accountPeer: nil, message: message).reactions {
