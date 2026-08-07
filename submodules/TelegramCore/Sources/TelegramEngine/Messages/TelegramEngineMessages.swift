@@ -1,4 +1,3 @@
-import SGGTranslate
 import SGSimpleSettings
 import Foundation
 import SwiftSignalKit
@@ -89,7 +88,7 @@ public struct TelegramMessageReadMetric {
 
 public extension TelegramEngine {
     final class Messages {
-        private let account: Account
+        public let account: Account // MARK: Swiftgram
 
         init(account: Account) {
             self.account = account
@@ -679,10 +678,10 @@ public extension TelegramEngine {
                 }
                 |> castError(TranslationError.self)
                 |> mapToSignal { inputPeer in
-                    return sgWrappedTranslateSingle(text: text, toLang: toLang, default: _internal_translate(network: self.account.network, text: text, toLang: toLang, entities: entities, tone: tone, peer: inputPeer, messageId: messageId.id))
+                    return sgWrappedTranslateSingle(text: text, toLang: toLang, default: _internal_translate(network: self.account.network, text: text, toLang: toLang, entities: entities, tone: tone, peer: inputPeer, messageId: messageId.id)) // MARK: Swiftgram
                 }
             } else {
-                return sgWrappedTranslateSingle(text: text, toLang: toLang, default: _internal_translate(network: self.account.network, text: text, toLang: toLang, entities: entities, tone: tone))
+                return sgWrappedTranslateSingle(text: text, toLang: toLang, default: _internal_translate(network: self.account.network, text: text, toLang: toLang, entities: entities, tone: tone)) // MARK: Swiftgram
             }
         }
         
@@ -719,7 +718,7 @@ public extension TelegramEngine {
         }
 
         public func translate(texts: [(String, [MessageTextEntity])], toLang: String, tone: TranslationTone = .neutral) -> Signal<[(String, [MessageTextEntity])], TranslationError> {
-            return sgWrappedTranslateMultiple(texts: texts,toLang: toLang, default: _internal_translateTexts(network: self.account.network, texts: texts, toLang: toLang, tone: tone))
+            return sgWrappedTranslateMultiple(texts: texts, toLang: toLang, default: _internal_translateTexts(network: self.account.network, texts: texts, toLang: toLang, tone: tone)) // MARK: Swiftgram
         }
 
         public func translateRichMessage(messageId: EngineMessage.Id, toLang: String, tone: TranslationTone = .neutral) -> Signal<InstantPage?, TranslationError> {
@@ -743,11 +742,6 @@ public extension TelegramEngine {
             return _internal_translateMessages(account: self.account, messageIds: messageIds, fromLang: fromLang, toLang: toLang, enableLocalIfPossible: enableLocalIfPossible, tone: tone)
         }
 
-        // MARK: Swiftgram
-        public func translateMessagesViaText(messagesDict: [EngineMessage.Id: String], fromLang: String?, toLang: String, generateEntitiesFunction: @escaping (String) -> [MessageTextEntity], enableLocalIfPossible: Bool) -> Signal<Never, TranslationError> {
-            return _internal_translateMessagesViaText(account: self.account, messagesDict: messagesDict, fromLang: fromLang, toLang: toLang, enableLocalIfPossible: enableLocalIfPossible, generateEntitiesFunction: generateEntitiesFunction)
-        }
-        
         public func togglePeerMessagesTranslationHidden(peerId: EnginePeer.Id, hidden: Bool) -> Signal<Never, NoError> {
             return _internal_togglePeerMessagesTranslationHidden(account: self.account, peerId: peerId, hidden: hidden)
         }
@@ -2029,67 +2023,4 @@ func _internal_monoforumPerformSuggestedPostAction(account: Account, id: EngineM
             return .complete()
         }
     }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// MARK: Swiftgram
-private func sgWrappedTranslateSingle(
-    text: String,
-    toLang: String,
-    `default`: Signal<(String, [MessageTextEntity])?, TranslationError>
-) -> Signal<(String, [MessageTextEntity])?, TranslationError> {
-    if SGSimpleSettings.shared.translationBackend == SGSimpleSettings.TranslationBackend.gtranslate.rawValue {
-        return gtranslate(text, toLang)
-            |> map { ($0, []) }
-            |> mapError { _ in .generic }
-    }
-
-    return `default`
-        |> `catch` { originalError in
-            gtranslate(text, toLang)
-                |> map { ($0, []) }
-                |> mapError { _ in originalError }
-        }
-}
-
-private func sgWrappedTranslateMultiple(
-    texts: [(String, [MessageTextEntity])],
-    toLang: String,
-    `default`: Signal<[(String, [MessageTextEntity])], TranslationError>
-) -> Signal<[(String, [MessageTextEntity])], TranslationError> {
-    if SGSimpleSettings.shared.translationBackend == SGSimpleSettings.TranslationBackend.gtranslate.rawValue {
-        let translatedSignals: [Signal<(String, [MessageTextEntity]), TranslationError>] = texts.map { (text, _) in
-            gtranslate(text, toLang)
-                |> map { ($0, []) }
-                |> mapError { _ in .generic }
-        }
-        return combineLatest(translatedSignals)
-    }
-
-    return `default`
-        |> `catch` { originalError in
-            let translatedSignals: [Signal<(String, [MessageTextEntity]), TranslationError>] = texts.map { (text, _) in
-                gtranslate(text, toLang)
-                    |> map { ($0, []) }
-                    |> mapError { _ in originalError }
-            }
-            return combineLatest(translatedSignals)
-        }
 }
