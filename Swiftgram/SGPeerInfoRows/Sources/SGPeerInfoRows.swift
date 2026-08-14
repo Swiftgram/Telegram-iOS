@@ -8,7 +8,7 @@ import TelegramPresentationData
 import TelegramCore
 import TelegramStringFormatting
 
-func sgPeerInfoProfileItems(nearestChatParticipant: (String?, Int32?), data: PeerInfoScreenData, context: AccountContext, presentationData: PresentationData, interaction: PeerInfoInteraction) -> [PeerInfoScreenItem] {
+func sgPeerInfoProfileItems(nearestChatParticipant: (String?, Int32?), data: PeerInfoScreenData, context: AccountContext, presentationData: PresentationData, interaction: PeerInfoInteraction, isMyProfile: Bool) -> [PeerInfoScreenItem] {
     var items: [PeerInfoScreenItem] = []
     var itemId = 0
     var idText = ""
@@ -124,7 +124,7 @@ func sgPeerInfoProfileItems(nearestChatParticipant: (String?, Int32?), data: Pee
             itemId += 1
         }
     }
-    if isMutualContact {
+    if isMutualContact && !isMyProfile {
         items.append(PeerInfoScreenLabeledValueItem(id: itemId, label: i18n("MutualContact.Label", presentationData.strings.baseLanguageCode), text: "", action: nil, longTapAction: { _ in }, requestLayout: { _ in
             interaction.requestLayout(false)
         }))

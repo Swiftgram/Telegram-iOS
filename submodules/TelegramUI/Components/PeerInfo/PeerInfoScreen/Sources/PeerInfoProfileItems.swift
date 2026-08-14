@@ -916,7 +916,7 @@ func infoItems(
         }
     }
     
-    items[.swiftgram]!.append(contentsOf: sgPeerInfoProfileItems(nearestChatParticipant: nearestChatParticipant, data: data, context: context, presentationData: presentationData, interaction: interaction)) // MARK: Swiftgram
+    items[.swiftgram]!.append(contentsOf: sgPeerInfoProfileItems(nearestChatParticipant: nearestChatParticipant, data: data, context: context, presentationData: presentationData, interaction: interaction, isMyProfile: isMyProfile)) // MARK: Swiftgram
     
     
     var result: [(AnyHashable, [PeerInfoScreenItem])] = []
