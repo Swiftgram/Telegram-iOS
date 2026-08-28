@@ -19,7 +19,7 @@
 
 "Settings.Folders.CompactNames" = "より小さい間隔";
 "Settings.Folders.AllChatsTitle" = "「すべてのチャット」タイトル";
-"Settings.Folders.AllChatsTitle.short" = "Short";
+"Settings.Folders.AllChatsTitle.short" = "短い順";
 "Settings.Folders.AllChatsTitle.long" = "長い順";
 /* Default behaviour for All Chats Folder Title. "All Chats" title: Default */
 "Settings.Folders.AllChatsTitle.none" = "デフォルト";
