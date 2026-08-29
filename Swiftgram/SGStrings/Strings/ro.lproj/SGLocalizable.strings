@@ -130,6 +130,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Apăsați de două ori pentru a edita mesajul";
 
 "Settings.wideChannelPosts" = "Postări late în canale";
+"Settings.wideGlassTextField" = "Câmp text lat din sticlă";
 "Settings.ForceEmojiTab" = "Tastatură emoji implicită";
 
 "Settings.forceBuiltInMic" = "Forțează Microfon Dispozitiv";

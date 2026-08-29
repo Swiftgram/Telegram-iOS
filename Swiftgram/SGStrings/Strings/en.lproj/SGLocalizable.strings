@@ -156,6 +156,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Double-tap to edit message";
 
 "Settings.wideChannelPosts" = "Wide posts in channels";
+"Settings.wideGlassTextField" = "Wide glass text field";
 "Settings.ForceEmojiTab" = "Emoji tab first";
 
 "Settings.forceBuiltInMic" = "Force Device Microphone";

@@ -130,6 +130,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "اضغط مزدوجًا لتحرير الرسالة";
 
 "Settings.wideChannelPosts" = "المشاركات الواسعة في القنوات";
+"Settings.wideGlassTextField" = "حقل نص زجاجي واسع";
 "Settings.ForceEmojiTab" = "لوحة مفاتيح الرموز التعبيرية افتراضيًا";
 
 "Settings.forceBuiltInMic" = "قوة ميكروفون الجهاز";

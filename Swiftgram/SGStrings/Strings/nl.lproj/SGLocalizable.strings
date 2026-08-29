@@ -130,6 +130,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Dubbelklik om bericht te bewerken";
 
 "Settings.wideChannelPosts" = "Brede berichten in kanalen";
+"Settings.wideGlassTextField" = "Breed glazen tekstveld";
 "Settings.ForceEmojiTab" = "Emoji-toetsenbord standaard";
 
 "Settings.forceBuiltInMic" = "Forceer Apparaatmicrofoon";
