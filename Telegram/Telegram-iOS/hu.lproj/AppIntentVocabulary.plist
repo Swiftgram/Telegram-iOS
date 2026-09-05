@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IntentPhrases</key>
+	<array>
+		<dict>
+			<key>IntentName</key>
+			<string>INSendMessageIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Küldj Annának egy Swiftgram-üzenetet, hogy 10 perc múlva ott leszek</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INStartAudioCallIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Hívd fel Annát a Swiftgramon</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchForMessagesIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Mutasd a Swiftgram-üzeneteimet</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSetMessageAttributeIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Jelöld olvasottként a Swiftgram-üzeneteimet</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchCallHistoryIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Mutasd a nem fogadott Swiftgram-hívásaimat</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

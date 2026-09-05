@@ -12,6 +12,38 @@
 				<string>앨리스에게 나 15분 안에 도착한다고 Swiftgram 메시지 보내줘</string>
 			</array>
 		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INStartAudioCallIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Swiftgram으로 앨리스에게 전화해줘</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchForMessagesIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Swiftgram 메시지 보여줘</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSetMessageAttributeIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Swiftgram 메시지를 읽음으로 표시해줘</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchCallHistoryIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Swiftgram 부재중 전화 보여줘</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

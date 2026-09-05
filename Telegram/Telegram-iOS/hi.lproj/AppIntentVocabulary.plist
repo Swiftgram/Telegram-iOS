@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IntentPhrases</key>
+	<array>
+		<dict>
+			<key>IntentName</key>
+			<string>INSendMessageIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>आर्यन को Swiftgram पर संदेश भेजो कि मैं 10 मिनट में पहुँच जाऊँगा</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INStartAudioCallIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>आर्यन को Swiftgram पर कॉल करो</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchForMessagesIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>मेरे Swiftgram संदेश दिखाओ</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSetMessageAttributeIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>मेरे Swiftgram संदेशों को पढ़ा हुआ चिह्नित करो</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchCallHistoryIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>मेरी Swiftgram छूटी हुई कॉल दिखाओ</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

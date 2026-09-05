@@ -12,6 +12,38 @@
 				<string>أرسل رسالة لخالد عبر تيليجرام (Swiftgram) وأخبره أن هديته وصلت إلى المنزل</string>
 			</array>
 		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INStartAudioCallIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>اتصل بخالد عبر Swiftgram</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchForMessagesIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>اعرض رسائلي في Swiftgram</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSetMessageAttributeIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>ضع علامة مقروء على رسائلي في Swiftgram</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchCallHistoryIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>اعرض مكالماتي الفائتة في Swiftgram</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

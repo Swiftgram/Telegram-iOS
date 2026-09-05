@@ -12,6 +12,38 @@
 				<string>Send a Swiftgram message to Alex saying I&apos;ll be there in 10 minutes</string>
 			</array>
 		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INStartAudioCallIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Truca a l'Alex per Swiftgram</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchForMessagesIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Mostra els meus missatges de Swiftgram</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSetMessageAttributeIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Marca els meus missatges de Swiftgram com a llegits</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchCallHistoryIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Mostra les meves trucades perdudes de Swiftgram</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

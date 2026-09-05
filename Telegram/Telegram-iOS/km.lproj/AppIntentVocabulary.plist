@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IntentPhrases</key>
+	<array>
+		<dict>
+			<key>IntentName</key>
+			<string>INSendMessageIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>ផ្ញើសារ Swiftgram ទៅសុភា ថាខ្ញុំនឹងទៅដល់ក្នុងរយៈពេល ១០ នាទី</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INStartAudioCallIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>ហៅទូរស័ព្ទទៅសុភាតាម Swiftgram</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchForMessagesIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>បង្ហាញសាររបស់ខ្ញុំក្នុង Swiftgram</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSetMessageAttributeIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>សម្គាល់សាររបស់ខ្ញុំក្នុង Swiftgram ថាបានអាន</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchCallHistoryIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>បង្ហាញការហៅដែលខកខានរបស់ខ្ញុំក្នុង Swiftgram</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

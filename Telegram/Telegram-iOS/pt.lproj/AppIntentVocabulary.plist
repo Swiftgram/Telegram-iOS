@@ -12,6 +12,38 @@
 				<string>Enviar uma mensagem no Swiftgram para a Alice dizendo que eu chegarei lá em 15 minutos</string>
 			</array>
 		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INStartAudioCallIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Ligar para a Alice no Swiftgram</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchForMessagesIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Mostrar as minhas mensagens no Swiftgram</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSetMessageAttributeIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Marcar as minhas mensagens no Swiftgram como lidas</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchCallHistoryIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Mostrar as minhas chamadas perdidas no Swiftgram</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

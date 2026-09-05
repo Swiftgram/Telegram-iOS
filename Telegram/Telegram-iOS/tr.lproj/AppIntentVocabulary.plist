@@ -12,6 +12,38 @@
 				<string>Send a Swiftgram message to Alex saying I&apos;ll be there in 10 minutes</string>
 			</array>
 		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INStartAudioCallIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Swiftgram'dan Ali'yi ara</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchForMessagesIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Swiftgram mesajlarımı göster</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSetMessageAttributeIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Swiftgram mesajlarımı okundu olarak işaretle</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchCallHistoryIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Swiftgram'daki cevapsız aramalarımı göster</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

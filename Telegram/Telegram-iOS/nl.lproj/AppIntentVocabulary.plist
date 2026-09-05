@@ -12,6 +12,38 @@
 				<string>Stuur een Swiftgram-bericht naar Maartje met ik ben er over 15 minuten.</string>
 			</array>
 		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INStartAudioCallIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Bel Maartje via Swiftgram</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchForMessagesIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Toon mijn Swiftgram-berichten</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSetMessageAttributeIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Markeer mijn Swiftgram-berichten als gelezen</string>
+			</array>
+		</dict>
+		<dict>
+			<key>IntentName</key>
+			<string>INSearchCallHistoryIntent</string>
+			<key>IntentExamples</key>
+			<array>
+				<string>Toon mijn gemiste Swiftgram-oproepen</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>
