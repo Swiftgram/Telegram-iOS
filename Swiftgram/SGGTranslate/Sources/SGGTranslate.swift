@@ -17,6 +17,9 @@ public func getTranslateUrl(_ message: String, _ toLang: String) -> String {
 }
 
 private func prepareResultString(_ str: String) -> String {
+    if str.contains("Error 500 (Server Error)!!1 500. That's an error.") {
+        return ""
+    }
     return str
 }
 
