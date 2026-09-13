@@ -1112,6 +1112,16 @@ public final class ChatInputTextView: ChatInputTextViewImpl, UITextViewDelegate,
         if #available(iOS 18.0, *) {
             self.supportsAdaptiveImageGlyph = false
         }
+
+        if #available(iOS 17.0, *) {
+            // The system inline predictive text inserts an uncommitted (marked) suggestion into the
+            // text view. Sending a message while such a suggestion is pending corrupts it - e.g.
+            // "r u going" is sent as "r u goingoingg to" (TelegramMessenger/Telegram-iOS#1543).
+            // The unmarkText()-based drop that runs before send (applyKeyboardAutocorrection /
+            // dropAutocorrectioniOS16) does not prevent it, so opt this input out of inline
+            // predictions, which is the recommended approach for editors that manage their own text.
+            self.inlinePredictionType = .no
+        }
         
         self.displayInternal.updateDisplayElements = { [weak self] in
             self?.updateTextElements()
