@@ -453,7 +453,10 @@ final class TextProcessingLanguageSelectionComponent: Component {
                 if languageCode.hasSuffix(rawSuffix) {
                     languageCode = String(languageCode.dropLast(rawSuffix.count))
                 }
-                
+                // mainItems is keyed by bare language codes, so an unnormalized "zh-hans" matches no
+                // entry and the interface language is never pinned to the top of the list.
+                languageCode = normalizeTranslationLanguage(languageCode)
+
                 if !topIds.contains(languageCode), let item = self.mainItems.first(where: { $0.languageCode == languageCode }) {
                     self.mainItems.insert(TextProcessingLanguageSelectionComponent.Language(
                         id: "top-" + item.id,

@@ -362,6 +362,11 @@ final class TextProcessingTranslateContentComponent: Component {
                     if baseLang.hasSuffix(rawSuffix) {
                         baseLang = String(baseLang.dropLast(rawSuffix.count))
                     }
+                    // Dropping "-raw" alone leaves a script/region subtag behind, so the Chinese packs
+                    // yield "zh-hans" / "zh-hant", which are not in supportedTranslationLanguages and
+                    // are rejected as a target language. Normalize it the same way the source language
+                    // is normalized above.
+                    baseLang = normalizeTranslationLanguage(baseLang)
                     var toLanguage = baseLang
                     
                     let fromLanguage = component.externalState.sourceLanguage ?? ""
