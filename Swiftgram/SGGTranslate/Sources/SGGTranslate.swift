@@ -13,7 +13,7 @@ public func getTranslateUrl(_ message: String, _ toLang: String) -> String {
     let sanitizedMessage: String = message
     var queryCharSet: CharacterSet = .urlQueryAllowed
     queryCharSet.remove(charactersIn: "+&")
-    return "https://translate.google.com/m?hl=en&tl=\(toLang)&sl=auto&q=\(sanitizedMessage.addingPercentEncoding(withAllowedCharacters: queryCharSet) ?? "")"
+    return "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=\(toLang)&dt=t&q=\(sanitizedMessage.addingPercentEncoding(withAllowedCharacters: queryCharSet) ?? "")"
 }
 
 private func prepareResultString(_ str: String) -> String {
@@ -21,6 +21,20 @@ private func prepareResultString(_ str: String) -> String {
 }
 
 public func parseTranslateResponse(_ data: String) -> String {
+    if let jsonData = data.data(using: .utf8),
+       let json = try? JSONSerialization.jsonObject(with: jsonData) as? [Any],
+       let translationBlocks = json.first as? [Any] {
+        let result = translationBlocks.compactMap { block -> String? in
+            guard let values = block as? [Any], let text = values.first as? String else {
+                return nil
+            }
+            return text
+        }.joined()
+        if !result.isEmpty {
+            return prepareResultString(result)
+        }
+    }
+
     do {
         let document: Document = try SwiftSoup.parse(data)
         if let resultContainer: Element = try document.select("div.result-container").first() {

@@ -148,6 +148,7 @@ public func effectiveIgnoredTranslationLanguages(context: AccountContext, ignore
     if baseLang.hasSuffix(rawSuffix) {
         baseLang = String(baseLang.dropLast(rawSuffix.count))
     }
+    baseLang = normalizeTranslationLanguage(baseLang)
     
     var dontTranslateLanguages = Set<String>()
     if let ignoredLanguages = ignoredLanguages {
