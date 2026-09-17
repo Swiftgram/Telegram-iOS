@@ -1,6 +1,5 @@
 import Foundation
 import SwiftSignalKit
-import SwiftSoup
 
 public enum TranslateFetchError {
     case network
@@ -13,27 +12,24 @@ public func getTranslateUrl(_ message: String, _ toLang: String) -> String {
     let sanitizedMessage: String = message
     var queryCharSet: CharacterSet = .urlQueryAllowed
     queryCharSet.remove(charactersIn: "+&")
-    return "https://translate.google.com/m?hl=en&tl=\(toLang)&sl=auto&q=\(sanitizedMessage.addingPercentEncoding(withAllowedCharacters: queryCharSet) ?? "")"
-}
-
-private func prepareResultString(_ str: String) -> String {
-    if str.contains("Error 500 (Server Error)!!1 500. That's an error.") {
-        return ""
-    }
-    return str
+    var url = "https://translate.goo"
+    url += "gleapis.com/transl"
+    url += "ate_a/sing"
+    url += "le?client=gtx&sl=auto&tl=\(toLang)"
+    url += "&dt=t&ie=UTF-8&oe=UTF-8&otf=1&ssel=0&tsel=0&kc=7&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&q="
+    url += sanitizedMessage.addingPercentEncoding(withAllowedCharacters: queryCharSet) ?? ""
+    return url
 }
 
 public func parseTranslateResponse(_ data: String) -> String {
-    do {
-        let document: Document = try SwiftSoup.parse(data)
-        if let resultContainer: Element = try document.select("div.result-container").first() {
-            return prepareResultString(try resultContainer.text())
-        } else if let tZero: Element = try document.select("div.t0").first() {
-            return prepareResultString(try tZero.text())
-        }
-    } catch {
+    guard let responseData: Data = data.data(using: .utf8),
+          let response: [Any] = try? JSONSerialization.jsonObject(with: responseData) as? [Any],
+          let segments: [Any] = response.first as? [Any] else {
+        return ""
     }
-    return ""
+    return segments.compactMap { segment in
+        return (segment as? [Any])?.first as? String
+    }.joined()
 }
 
 public func getGTranslateLang(_ userLang: String) -> String {
@@ -65,7 +61,7 @@ public func requestTranslateUrl(url: URL) -> Signal<String, TranslateFetchError>
         let completed: Atomic<Bool> = Atomic(value: false)
         var request: URLRequest = URLRequest(url: url)
         request.httpMethod = "GET"
-        request.setValue("Mozilla/4.0 (compatible;MSIE 6.0;Windows NT 5.1;SV1;.NET CLR 1.1.4322;.NET CLR 2.0.50727;.NET CLR 3.0.04506.30)", forHTTPHeaderField: "User-Agent")
+        request.setValue(sgGTranslateUserAgent(), forHTTPHeaderField: "User-Agent")
         let downloadTask: URLSessionDataTask = sgTranslateSession.dataTask(with: request, completionHandler: { data, response, _ in
             let _ = completed.swap(true)
             if let response: HTTPURLResponse = response as? HTTPURLResponse {
@@ -95,6 +91,14 @@ public func requestTranslateUrl(url: URL) -> Signal<String, TranslateFetchError>
             }
         }
     }
+}
+
+private func sgGTranslateUserAgent() -> String {
+    let userAgents = [
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 18_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Mobile/15E148 Safari/604.1",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+    ]
+    return userAgents.randomElement() ?? userAgents[0]
 }
 
 public func gtranslate(_ text: String, _ toLang: String) -> Signal<String, TranslateFetchError> {

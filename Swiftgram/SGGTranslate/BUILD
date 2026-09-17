@@ -11,7 +11,6 @@ swift_library(
     ],
     deps = [
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
-        "//Swiftgram/SwiftSoup:SwiftSoup",
     ],
     visibility = [
         "//visibility:public",
