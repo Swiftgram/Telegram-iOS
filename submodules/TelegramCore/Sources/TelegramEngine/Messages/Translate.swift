@@ -226,7 +226,9 @@ func _internal_translateMessages(account: Account, messageIds: [EngineMessage.Id
 }
 
 public protocol ExperimentalInternalTranslationService: AnyObject {
-    func translate(texts: [AnyHashable: String], fromLang: String, toLang: String) -> Signal<[AnyHashable: String]?, NoError>
+    // MARK: Swiftgram
+    func translate(texts: [AnyHashable: String], fromLang: String?, toLang: String) -> Signal<[AnyHashable: String]?, NoError>
+    //
 }
 
 public var engineExperimentalInternalTranslationService: ExperimentalInternalTranslationService?
@@ -345,7 +347,9 @@ private func _internal_translateMessagesByPeerId(account: Account, peerId: Engin
         if id.isEmpty {
             msgs = .single(nil)
         } else {
-            if enableLocalIfPossible, let engineExperimentalInternalTranslationService, let fromLang {
+            // MARK: Swiftgram
+            if enableLocalIfPossible, let engineExperimentalInternalTranslationService {
+            //
                 msgs = account.postbox.transaction { transaction -> [MessageId: String] in
                     var texts: [MessageId: String] = [:]
                     for messageId in plainMessageIds {
@@ -361,22 +365,21 @@ private func _internal_translateMessagesByPeerId(account: Account, peerId: Engin
                     for (id, text) in messageTexts {
                         mappedTexts[AnyHashable(id)] = text
                     }
-                    return engineExperimentalInternalTranslationService.translate(texts: mappedTexts, fromLang: fromLang, toLang: toLang)
+                    return engineExperimentalInternalTranslationService.translate(texts: mappedTexts, fromLang: fromLang, toLang: toLang) // MARK: Swiftgram
                     |> castError(TranslationError.self)
                     |> mapToSignal { resultTexts -> Signal<Api.messages.TranslatedText?, TranslationError> in
-                        guard let resultTexts else {
+                        // MARK: Swiftgram
+                        guard let resultTexts, resultTexts.count == messageTexts.count else {
                             return .fail(.generic)
                         }
                         var result: [Api.TextWithEntities] = []
                         for messageId in plainMessageIds {
-                            if let text = resultTexts[AnyHashable(messageId)] {
-                                result.append(.textWithEntities(.init(text: text, entities: [])))
-                            } else if let text = messageTexts[messageId] {
-                                result.append(.textWithEntities(.init(text: text, entities: [])))
-                            } else {
-                                result.append(.textWithEntities(.init(text: "", entities: [])))
+                            guard let text = resultTexts[AnyHashable(messageId)], !text.isEmpty else {
+                                return .fail(.generic)
                             }
+                            result.append(.textWithEntities(.init(text: text, entities: [])))
                         }
+                        //
                         return .single(.translateResult(.init(result: result)))
                     }
                 }
