@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
 import Display
@@ -278,14 +279,16 @@ private struct TranslationViewImpl: View {
             }
             
             if let firstTaskLanguagePair {
-                if let configuration = self.configuration, configuration.source?.languageCode?.identifier == firstTaskLanguagePair.0, configuration.target?.languageCode?.identifier == firstTaskLanguagePair.1 {
+                // MARK: Swiftgram
+                if let configuration = self.configuration, (configuration.source?.languageCode?.identifier ?? "") == firstTaskLanguagePair.0, configuration.target?.languageCode?.identifier == firstTaskLanguagePair.1 {
                     self.configuration?.invalidate()
                 } else {
                     self.configuration = .init(
-                        source: Locale.Language(identifier: firstTaskLanguagePair.0),
+                        source: firstTaskLanguagePair.0.isEmpty ? nil : Locale.Language(identifier: firstTaskLanguagePair.0),
                         target: Locale.Language(identifier: firstTaskLanguagePair.1)
                     )
                 }
+                //
             }
         }
         .translationTask(self.configuration, action: { session in
@@ -322,7 +325,11 @@ private struct TranslationViewImpl: View {
                 
                 task.completion(resultMap)
             } catch let e {
-                print("Translation error: \(e)")
+                // MARK: Swiftgram
+                #if DEBUG
+                print("[SGTranslate][\(SGSimpleSettings.TranslationBackend.system.rawValue)] error translating \(task.texts.values.reduce(0) { $0 + $1.count }) chars\(task.fromLang.isEmpty ? "" : " from '\(task.fromLang)'") to '\(task.toLang)', error: \(e)")
+                #endif
+                //
                 task.completion(nil)
             }
             
@@ -335,14 +342,16 @@ private struct TranslationViewImpl: View {
             }
             
             if let firstTaskLanguagePair {
-                if let configuration = self.configuration, configuration.source?.languageCode?.identifier == firstTaskLanguagePair.0, configuration.target?.languageCode?.identifier == firstTaskLanguagePair.1 {
+                // MARK: Swiftgram
+                if let configuration = self.configuration, (configuration.source?.languageCode?.identifier ?? "") == firstTaskLanguagePair.0, configuration.target?.languageCode?.identifier == firstTaskLanguagePair.1 {
                     self.configuration?.invalidate()
                 } else {
                     self.configuration = .init(
-                        source: Locale.Language(identifier: firstTaskLanguagePair.0),
+                        source: firstTaskLanguagePair.0.isEmpty ? nil : Locale.Language(identifier: firstTaskLanguagePair.0),
                         target: Locale.Language(identifier: firstTaskLanguagePair.1)
                     )
                 }
+                //
             }
         })
     }

@@ -226,9 +226,7 @@ func _internal_translateMessages(account: Account, messageIds: [EngineMessage.Id
 }
 
 public protocol ExperimentalInternalTranslationService: AnyObject {
-    // MARK: Swiftgram
-    func translate(texts: [AnyHashable: String], fromLang: String?, toLang: String) -> Signal<[AnyHashable: String]?, NoError>
-    //
+    func translate(texts: [AnyHashable: String], fromLang: String, toLang: String) -> Signal<[AnyHashable: String]?, NoError>
 }
 
 public var engineExperimentalInternalTranslationService: ExperimentalInternalTranslationService?
@@ -365,7 +363,7 @@ private func _internal_translateMessagesByPeerId(account: Account, peerId: Engin
                     for (id, text) in messageTexts {
                         mappedTexts[AnyHashable(id)] = text
                     }
-                    return engineExperimentalInternalTranslationService.translate(texts: mappedTexts, fromLang: fromLang, toLang: toLang) // MARK: Swiftgram
+                    return engineExperimentalInternalTranslationService.translate(texts: mappedTexts, fromLang: fromLang ?? "", toLang: toLang) // MARK: Swiftgram
                     |> castError(TranslationError.self)
                     |> mapToSignal { resultTexts -> Signal<Api.messages.TranslatedText?, TranslationError> in
                         // MARK: Swiftgram

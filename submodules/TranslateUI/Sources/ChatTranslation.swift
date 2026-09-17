@@ -151,7 +151,11 @@ private let languageRecognizer = NLLanguageRecognizer()
 
 public func translateMessageIds(context: AccountContext, messageIds: [EngineMessage.Id], fromLang: String?, toLang: String, viaText: Bool = false, forQuickTranslate: Bool = false) -> Signal<Never, NoError> {
     // MARK: Swiftgram
-    let sgEffectiveViaText = viaText || !context.isPremium || SGSimpleSettings.shared.translationBackendEnum == .gtranslate
+    let sgBackend = SGSimpleSettings.shared.translationBackendEnum
+    var sgUseMessageIds = true
+    if viaText || !context.isPremium || sgBackend != .default {
+        sgUseMessageIds = false
+    }
     //
     return context.account.postbox.transaction { transaction -> Signal<Never, NoError> in
         var messageDictToTranslate: [EngineMessage.Id: String] = [:]
@@ -185,31 +189,24 @@ public func translateMessageIds(context: AccountContext, messageIds: [EngineMess
                         messageIdsSet.insert(messageId)
                         messageDictToTranslate[messageId] = message.text
                     }
-                } else if let _ = message.richText {
+                } else if sgUseMessageIds, let _ = message.richText {
                     if !messageIdsSet.contains(messageId) {
                         messageIdsToTranslate.append(messageId)
                         messageIdsSet.insert(messageId)
-                        messageDictToTranslate[messageId] = message.text
-                    }
-                } else if let _ = message.richText {
-                    if !messageIdsSet.contains(messageId) {
-                        messageIdsToTranslate.append(messageId)
-                        messageIdsSet.insert(messageId)
-                        messageDictToTranslate[messageId] = message.text
                     }
                 // TODO(swiftgram): Translate polls
-                } else if let _ = message.media.first(where: { $0 is TelegramMediaPoll }), !sgEffectiveViaText {
+                } else if let _ = message.media.first(where: { $0 is TelegramMediaPoll }), sgUseMessageIds {
                     if !messageIdsSet.contains(messageId) {
                         messageIdsToTranslate.append(messageId)
                         messageIdsSet.insert(messageId)
                     }
-                } else if let audioTranscription = message.attributes.first(where: { $0 is AudioTranscriptionMessageAttribute }) as? AudioTranscriptionMessageAttribute, !audioTranscription.text.isEmpty && !audioTranscription.isPending {
+                } else if sgUseMessageIds, let audioTranscription = message.attributes.first(where: { $0 is AudioTranscriptionMessageAttribute }) as? AudioTranscriptionMessageAttribute, !audioTranscription.text.isEmpty && !audioTranscription.isPending {
                     if !messageIdsSet.contains(messageId) {
                         messageIdsToTranslate.append(messageId)
                         messageIdsSet.insert(messageId)
                     }
                 }
-            } else {
+            } else if sgUseMessageIds {
                 if !messageIdsSet.contains(messageId) {
                     messageIdsToTranslate.append(messageId)
                     messageIdsSet.insert(messageId)
@@ -227,7 +224,15 @@ public func translateMessageIds(context: AccountContext, messageIds: [EngineMess
         default:
             break
         }
-        if sgEffectiveViaText {
+        // MARK: Swiftgram
+        #if DEBUG
+        let sgInputLength = messageDictToTranslate.values.reduce(0) { $0 + $1.count }
+        print("[SGTranslate][\(sgUseMessageIds ? "Telegram" : sgBackend.rawValue)] translating \(sgInputLength) chars\(fromLang.flatMap { " from '\($0)'" } ?? "") to '\(toLang)'")
+        #endif
+        if !sgUseMessageIds {
+            guard !messageDictToTranslate.isEmpty else {
+                return .complete()
+            }
         return context.engine.messages.translateMessagesViaText(messagesDict: messageDictToTranslate, fromLang: fromLang, toLang: toLang, generateEntitiesFunction: { text in
             generateTextEntities(text, enabledTypes: .all)
         }, enableLocalIfPossible: enableLocalIfPossible) //context.sharedContext.immediateExperimentalUISettings.enableLocalTranslation)
@@ -237,10 +242,23 @@ public func translateMessageIds(context: AccountContext, messageIds: [EngineMess
         } else {
         if forQuickTranslate && messageIdsToTranslate.isEmpty { return .complete() } // Otherwise Telegram's API will return .never()
         return context.engine.messages.translateMessages(messageIds: messageIdsToTranslate, fromLang: fromLang, toLang: toLang, enableLocalIfPossible: enableLocalIfPossible)
-        |> `catch` { _ -> Signal<Never, NoError> in
-            return translateMessageIds(context: context, messageIds: messageIdsToTranslate, fromLang: fromLang, toLang: toLang, viaText: true, forQuickTranslate: forQuickTranslate)
+        |> `catch` { error -> Signal<Never, NoError> in
+            #if DEBUG
+            print("[SGTranslate][\(sgBackend.rawValue)] error translating \(sgInputLength) chars\(fromLang.flatMap { " from '\($0)'" } ?? "") to '\(toLang)', error: \(error)")
+            print("[SGTranslate][\(SGSimpleSettings.TranslationBackend.gtranslate.rawValue)] attempting GTranslate fallback for \(sgInputLength) chars\(fromLang.flatMap { " from '\($0)'" } ?? "") to '\(toLang)'")
+            #endif
+            guard !messageDictToTranslate.isEmpty else {
+                return .complete()
+            }
+            return context.engine.messages.translateMessagesViaText(messagesDict: messageDictToTranslate, fromLang: fromLang, toLang: toLang, generateEntitiesFunction: { text in
+                generateTextEntities(text, enabledTypes: .all)
+            }, enableLocalIfPossible: false, forceGTranslate: true)
+            |> `catch` { _ -> Signal<Never, NoError> in
+                return .complete()
+            }
         }
         }
+        //
     } |> switchToLatest
 }
 
