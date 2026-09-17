@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
 import Postbox
@@ -4715,6 +4716,18 @@ extension ChatControllerImpl {
             default:
                 break
             }
+            // MARK: Swiftgram
+            switch SGSimpleSettings.shared.translationBackendEnum {
+            case .system:
+                if #available(iOS 18.0, *) {
+                    useSystemTranslation = true
+                }
+            case .gtranslate:
+                useSystemTranslation = false
+            case .default:
+                break
+            }
+            //
 
             if useSystemTranslation {
                 presentTranslateScreen(
