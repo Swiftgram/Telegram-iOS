@@ -1,4 +1,5 @@
 import SGGTranslate
+import SGLogging
 import SGSimpleSettings
 import SGTranslationLangFix
 
@@ -40,9 +41,10 @@ public class QuickTranslationMessageAttribute: MessageAttribute, Equatable {
 }
 
 func sgTranslationDebugLog(_ message: @autoclosure () -> String) {
-    #if DEBUG
-    print(message())
-    #endif
+    guard SGSimpleSettings.shared.translatorLogsEnabled else {
+        return
+    }
+    SGLogger.shared.log("Translate", message())
 }
 
 func sgTranslationDebugLanguages(fromLang: String?, toLang: String) -> String {
@@ -53,15 +55,15 @@ func sgTranslationDebugLanguages(fromLang: String?, toLang: String) -> String {
 }
 
 func sgTranslationDebugSuccess(backend: SGSimpleSettings.TranslationBackend, inputLength: Int, outputLength: Int, fromLang: String?, toLang: String) {
-    sgTranslationDebugLog("[SGTranslate][\(backend.rawValue)] translated \(inputLength) chars\(sgTranslationDebugLanguages(fromLang: fromLang, toLang: toLang)) \(outputLength) chars")
+    sgTranslationDebugLog("[\(backend.rawValue)] translated \(inputLength) chars\(sgTranslationDebugLanguages(fromLang: fromLang, toLang: toLang)) \(outputLength) chars")
 }
 
 func sgTranslationDebugError(backend: SGSimpleSettings.TranslationBackend, inputLength: Int, fromLang: String?, toLang: String, error: Any) {
-    sgTranslationDebugLog("[SGTranslate][\(backend.rawValue)] error translating \(inputLength) chars\(sgTranslationDebugLanguages(fromLang: fromLang, toLang: toLang)), error: \(error)")
+    sgTranslationDebugLog("[\(backend.rawValue)] error translating \(inputLength) chars\(sgTranslationDebugLanguages(fromLang: fromLang, toLang: toLang)), error: \(error)")
 }
 
 func sgTranslationDebugFallback(backend: SGSimpleSettings.TranslationBackend, inputLength: Int, fromLang: String?, toLang: String) {
-    sgTranslationDebugLog("[SGTranslate][\(backend.rawValue)] attempting GTranslate fallback for \(inputLength) chars\(sgTranslationDebugLanguages(fromLang: fromLang, toLang: toLang))")
+    sgTranslationDebugLog("[\(backend.rawValue)] attempting GTranslate fallback for \(inputLength) chars\(sgTranslationDebugLanguages(fromLang: fromLang, toLang: toLang))")
 }
 
 func sgGTranslate(text: String, fromLang: String? = nil, toLang: String) -> Signal<(String, [MessageTextEntity])?, TranslationError> {

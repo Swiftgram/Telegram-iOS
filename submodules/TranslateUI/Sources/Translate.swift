@@ -1,4 +1,5 @@
 import SGSimpleSettings // MARK: Swiftgram
+import SGLogging // MARK: Swiftgram
 import Foundation
 import UIKit
 import Display
@@ -326,9 +327,9 @@ private struct TranslationViewImpl: View {
                 task.completion(resultMap)
             } catch let e {
                 // MARK: Swiftgram
-                #if DEBUG
-                print("[SGTranslate][\(SGSimpleSettings.TranslationBackend.system.rawValue)] error translating \(task.texts.values.reduce(0) { $0 + $1.count }) chars\(task.fromLang.isEmpty ? "" : " from '\(task.fromLang)'") to '\(task.toLang)', error: \(e)")
-                #endif
+                if SGSimpleSettings.shared.translatorLogsEnabled {
+                    SGLogger.shared.log("Translate", "[\(SGSimpleSettings.TranslationBackend.system.rawValue)] error translating \(task.texts.values.reduce(0) { $0 + $1.count }) chars\(task.fromLang.isEmpty ? "" : " from '\(task.fromLang)'") to '\(task.toLang)', error: \(e)")
+                }
                 //
                 task.completion(nil)
             }

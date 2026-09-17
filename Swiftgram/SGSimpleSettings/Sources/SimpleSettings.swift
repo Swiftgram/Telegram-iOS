@@ -167,6 +167,7 @@ public class SGSimpleSettings {
         case duckyAppIconAvailable
         case transcriptionBackend
         case translationBackend
+        case translatorLogsExpiration
         case customAppBadge
         case canUseNY
         case nyStyle
@@ -320,6 +321,7 @@ public class SGSimpleSettings {
         Keys.duckyAppIconAvailable.rawValue: true,
         Keys.transcriptionBackend.rawValue: TranscriptionBackend.default.rawValue,
         Keys.translationBackend.rawValue: TranslationBackend.default.rawValue,
+        Keys.translatorLogsExpiration.rawValue: 0.0,
         Keys.customAppBadge.rawValue: "",
         Keys.canUseNY.rawValue: false,
         Keys.nyStyle.rawValue: NYStyle.default.rawValue,
@@ -577,6 +579,23 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.translationBackend.rawValue)
     public var translationBackend: String
+
+    @UserDefault(key: Keys.translatorLogsExpiration.rawValue)
+    private var translatorLogsExpiration: Double
+
+    public var translatorLogsEnabled: Bool {
+        if self.translatorLogsExpiration > Date().timeIntervalSince1970 {
+            return true
+        }
+        if self.translatorLogsExpiration != 0.0 {
+            self.translatorLogsExpiration = 0.0
+        }
+        return false
+    }
+
+    public func setTranslatorLogsEnabled(_ enabled: Bool) {
+        self.translatorLogsExpiration = enabled ? Date().addingTimeInterval(24.0 * 60.0 * 60.0).timeIntervalSince1970 : 0.0
+    }
 
     @UserDefault(key: Keys.customAppBadge.rawValue)
     public var customAppBadge: String

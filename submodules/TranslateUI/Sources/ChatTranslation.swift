@@ -1,4 +1,5 @@
 import SGSimpleSettings // MARK: Swiftgram
+import SGLogging // MARK: Swiftgram
 import TextFormat
 import Foundation
 import NaturalLanguage
@@ -225,10 +226,12 @@ public func translateMessageIds(context: AccountContext, messageIds: [EngineMess
             break
         }
         // MARK: Swiftgram
-        #if DEBUG
         let sgInputLength = messageDictToTranslate.values.reduce(0) { $0 + $1.count }
-        print("[SGTranslate][\(sgUseMessageIds ? "Telegram" : sgBackend.rawValue)] translating \(sgInputLength) chars\(fromLang.flatMap { " from '\($0)'" } ?? "") to '\(toLang)'")
-        #endif
+        // MARK: Swiftgram
+        if SGSimpleSettings.shared.translatorLogsEnabled {
+            SGLogger.shared.log("Translate", "[\(sgUseMessageIds ? "Telegram" : sgBackend.rawValue)] translating \(sgInputLength) chars\(fromLang.flatMap { " from '\($0)'" } ?? "") to '\(toLang)'")
+        }
+        //
         if !sgUseMessageIds {
             guard !messageDictToTranslate.isEmpty else {
                 return .complete()
@@ -243,10 +246,12 @@ public func translateMessageIds(context: AccountContext, messageIds: [EngineMess
         if forQuickTranslate && messageIdsToTranslate.isEmpty { return .complete() } // Otherwise Telegram's API will return .never()
         return context.engine.messages.translateMessages(messageIds: messageIdsToTranslate, fromLang: fromLang, toLang: toLang, enableLocalIfPossible: enableLocalIfPossible)
         |> `catch` { error -> Signal<Never, NoError> in
-            #if DEBUG
-            print("[SGTranslate][\(sgBackend.rawValue)] error translating \(sgInputLength) chars\(fromLang.flatMap { " from '\($0)'" } ?? "") to '\(toLang)', error: \(error)")
-            print("[SGTranslate][\(SGSimpleSettings.TranslationBackend.gtranslate.rawValue)] attempting GTranslate fallback for \(sgInputLength) chars\(fromLang.flatMap { " from '\($0)'" } ?? "") to '\(toLang)'")
-            #endif
+            // MARK: Swiftgram
+            if SGSimpleSettings.shared.translatorLogsEnabled {
+                SGLogger.shared.log("Translate", "[\(sgBackend.rawValue)] error translating \(sgInputLength) chars\(fromLang.flatMap { " from '\($0)'" } ?? "") to '\(toLang)', error: \(error)")
+                SGLogger.shared.log("Translate", "[\(SGSimpleSettings.TranslationBackend.gtranslate.rawValue)] attempting GTranslate fallback for \(sgInputLength) chars\(fromLang.flatMap { " from '\($0)'" } ?? "") to '\(toLang)'")
+            }
+            //
             guard !messageDictToTranslate.isEmpty else {
                 return .complete()
             }
