@@ -163,17 +163,6 @@ public func effectiveIgnoredTranslationLanguages(context: AccountContext, ignore
     return dontTranslateLanguages
 }
 
-public func normalizeTranslationLanguage(_ code: String) -> String {
-    var code = code
-    if code.contains("-") {
-        code = code.components(separatedBy: "-").first ?? code
-    }
-    if code == "nb" {
-        code = "no"
-    }
-    return code
-}
-
 public func canTranslateChats(context: AccountContext) -> Bool {
     let translationConfiguration = TranslationConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 })
     var chatTranslationAvailable = true

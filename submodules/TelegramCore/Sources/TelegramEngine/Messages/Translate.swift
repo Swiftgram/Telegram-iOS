@@ -29,6 +29,19 @@ public enum TranslationTone: String {
     case formal
 }
 
+// MARK: Swiftgram
+public func normalizeTranslationLanguage(_ code: String) -> String {
+    var code = code
+    if code.contains("-") {
+        code = code.components(separatedBy: "-").first ?? code
+    }
+    if code == "nb" {
+        code = "no"
+    }
+    return code
+}
+//
+
 func _internal_translate(network: Network, text: String, toLang: String, entities: [MessageTextEntity] = [], tone: TranslationTone = .neutral, peer: Api.InputPeer? = nil, messageId: Int32? = nil) -> Signal<(String, [MessageTextEntity])?, TranslationError> {
     var flags: Int32 = 0
 
@@ -45,7 +58,7 @@ func _internal_translate(network: Network, text: String, toLang: String, entitie
         apiText = [.textWithEntities(.init(text: text, entities: apiEntitiesFromMessageTextEntities(entities, associatedPeers: SimpleDictionary())))]
     }
 
-    return network.request(Api.functions.messages.translateText(flags: flags, peer: peer, id: messageId.flatMap { [$0] }, text: apiText, toLang: sgTranslationTargetLanguage(toLang), tone: tone.rawValue)) // MARK: Swiftgram
+    return network.request(Api.functions.messages.translateText(flags: flags, peer: peer, id: messageId.flatMap { [$0] }, text: apiText, toLang: normalizeTranslationLanguage(toLang), tone: tone.rawValue)) // MARK: Swiftgram
     |> mapError { error -> TranslationError in
         if error.errorDescription.hasPrefix("FLOOD_WAIT") {
             return .limitExceeded
@@ -382,7 +395,7 @@ private func _internal_translateMessagesByPeerId(account: Account, peerId: Engin
                     }
                 }
             } else {
-                msgs = account.network.request(Api.functions.messages.translateText(flags: flags, peer: inputPeer, id: id, text: nil, toLang: sgTranslationTargetLanguage(toLang), tone: tone != .neutral ? tone.rawValue : nil)) // MARK: Swiftgram
+                msgs = account.network.request(Api.functions.messages.translateText(flags: flags, peer: inputPeer, id: id, text: nil, toLang: normalizeTranslationLanguage(toLang), tone: tone != .neutral ? tone.rawValue : nil)) // MARK: Swiftgram
                 |> map(Optional.init)
                 |> mapError { error -> TranslationError in
                     if error.errorDescription.hasPrefix("FLOOD_WAIT") {

@@ -1,7 +1,6 @@
 import SGGTranslate
 import SGLogging
 import SGSimpleSettings
-import SGTranslationLangFix
 
 import Postbox
 import SwiftSignalKit
@@ -115,10 +114,6 @@ func sgWrappedTranslateSingle(text: String, toLang: String, `default`: Signal<(S
             return sgGTranslate(text: text, toLang: toLang)
         }
     }
-}
-
-func sgTranslationTargetLanguage(_ language: String) -> String {
-    return sgTranslationLangFix(language)
 }
 
 func sgGTranslate(texts: [(String, [MessageTextEntity])], toLang: String) -> Signal<[(String, [MessageTextEntity])], TranslationError> {
