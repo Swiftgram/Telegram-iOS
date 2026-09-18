@@ -199,7 +199,7 @@
 "SessionBackup.Notice" = "Sessions are encrypted and stored in the device Keychain. Sessions never leave your device.\n\nIMPORTANT: To restore sessions on a new device or after an OS reset, you MUST enable encrypted backups, otherwise Keychain won't be transfered.\n\nNOTE: Sessions may still be revoked by Telegram or from another device.";
 
 "AuthorizationError.Notice" = "Telegram logged out current session.";
-"AuthorizationError.PossibleReasons" = "We don't know the reason, but it may happen due to frequent IP/VPN change or session Terminated from another device.";
+"AuthorizationError.PossibleReasons" = "Telegram does not provide the reason, but it may happen due to frequent IP/VPN change or session termination from another device.";
 
 "MessageFilter.Title" = "Message Filter";
 "MessageFilter.SubTitle" = "Remove distractions and reduce visibility of messages containing keywords below.\nKeywords are case-sensitive.";
