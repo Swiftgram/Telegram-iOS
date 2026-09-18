@@ -1,3 +1,5 @@
+import SGStrings
+
 import Foundation
 import UIKit
 import Intents
@@ -765,7 +767,10 @@ final class AuthorizedApplicationContext {
                     } else {
                         actions = [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]
                     }
-                    let controller = textAlertController(context: strongSelf.context, title: nil, text: text, actions: actions)
+                    // MARK: Swiftgram
+                    let sgText = isDropAuth ? "AuthorizationError.Notice".i18n(presentationData.strings.baseLanguageCode) + "\n\n\(text)\n\n" + "AuthorizationError.PossibleReasons".i18n(presentationData.strings.baseLanguageCode) : text
+                    let controller = textAlertController(context: strongSelf.context, title: nil, text: sgText, actions: actions)
+                    //
                     (strongSelf.rootController.viewControllers.last as? ViewController)?.present(controller, in: .window(.root))
                 }
             }
