@@ -768,7 +768,7 @@ final class AuthorizedApplicationContext {
                         actions = [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]
                     }
                     // MARK: Swiftgram
-                    let sgText = isDropAuth ? "AuthorizationError.Notice".i18n(presentationData.strings.baseLanguageCode) + "\n\n\(text)\n\n" + "AuthorizationError.PossibleReasons".i18n(presentationData.strings.baseLanguageCode) : text
+                    let sgText = isDropAuth ? "AuthorizationError.Notice".i18n(presentationData.strings.baseLanguageCode) + "\n" + "AuthorizationError.PossibleReasons".i18n(presentationData.strings.baseLanguageCode) + "\n\n\(text)"  : text
                     let controller = textAlertController(context: strongSelf.context, title: nil, text: sgText, actions: actions)
                     //
                     (strongSelf.rootController.viewControllers.last as? ViewController)?.present(controller, in: .window(.root))
