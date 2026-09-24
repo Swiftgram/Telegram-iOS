@@ -764,6 +764,13 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                     tabsView.updateTabSwitchFraction(fraction: fraction, isDragging: strongSelf.chatListDisplayNode.mainContainerNode.isSwitchingCurrentItemFilterByDragging, transition: ComponentTransition(transition))
                 }
                 // MARK: Swiftgram
+                if strongSelf.tabContainerData?.1 == true {
+                    if let headerPanelsView = strongSelf.chatListDisplayNode.sgFoldersView.view as? HeaderPanelContainerComponent.View {
+                        if let tabsView = headerPanelsView.tabs as? HorizontalTabsComponent.View {
+                            tabsView.updateTabSwitchFraction(fraction: fraction, isDragging: strongSelf.chatListDisplayNode.mainContainerNode.isSwitchingCurrentItemFilterByDragging, transition: ComponentTransition(transition))
+                        }
+                    }
+                }
                 let switchingToFilterId: Int32
                 switch (filter) {
                     case let .filter(filterId):
