@@ -128,6 +128,7 @@ private final class ShareControllerAccountContextExtension: ShareControllerAccou
 
 public struct ShareRootControllerInitializationData {
     public let appBundleId: String
+    public let appSpecificUrlScheme: String // MARK: Swiftgram
     public let appBuildType: TelegramAppBuildType
     public let appGroupPath: String
     public let apiId: Int32
@@ -139,8 +140,9 @@ public struct ShareRootControllerInitializationData {
     public let useBetaFeatures: Bool
     public let makeTempContext: (AccountManager<TelegramAccountManagerTypes>, AppLockContext, TelegramApplicationBindings, InitialPresentationDataAndSettings, NetworkInitializationArguments) -> Signal<AccountContext, NoError>
     
-    public init(appBundleId: String, appBuildType: TelegramAppBuildType, appGroupPath: String, apiId: Int32, apiHash: String, languagesCategory: String, encryptionParameters: (Data, Data), appVersion: String, bundleData: Data?, useBetaFeatures: Bool, makeTempContext: @escaping (AccountManager<TelegramAccountManagerTypes>, AppLockContext, TelegramApplicationBindings, InitialPresentationDataAndSettings, NetworkInitializationArguments) -> Signal<AccountContext, NoError>) {
+    public init(appBundleId: String, appSpecificUrlScheme: String, appBuildType: TelegramAppBuildType, appGroupPath: String, apiId: Int32, apiHash: String, languagesCategory: String, encryptionParameters: (Data, Data), appVersion: String, bundleData: Data?, useBetaFeatures: Bool, makeTempContext: @escaping (AccountManager<TelegramAccountManagerTypes>, AppLockContext, TelegramApplicationBindings, InitialPresentationDataAndSettings, NetworkInitializationArguments) -> Signal<AccountContext, NoError>) { // MARK: Swiftgram
         self.appBundleId = appBundleId
+        self.appSpecificUrlScheme = appSpecificUrlScheme // MARK: Swiftgram
         self.appBuildType = appBuildType
         self.appGroupPath = appGroupPath
         self.apiId = apiId
@@ -260,7 +262,7 @@ public class ShareRootControllerImpl {
             
             setupSharedLogger(rootPath: rootPath, path: logsPath)
             
-            let applicationBindings = TelegramApplicationBindings(isMainApp: false, appBundleId: self.initializationData.appBundleId, appBuildType: self.initializationData.appBuildType, containerPath: self.initializationData.appGroupPath, appSpecificScheme: "tg", openUrl: { [weak self] url in
+            let applicationBindings = TelegramApplicationBindings(isMainApp: false, appBundleId: self.initializationData.appBundleId, appBuildType: self.initializationData.appBuildType, containerPath: self.initializationData.appGroupPath, appSpecificScheme: self.initializationData.appSpecificUrlScheme, openUrl: { [weak self] url in // MARK: Swiftgram
                 self?.openUrl(url)
             }, openUniversalUrl: { _, completion in
                 completion.completion(false)
@@ -683,7 +685,7 @@ public class ShareRootControllerImpl {
                                     }
                                     
                                     dispatchGroup.notify(queue: .main) {
-                                        self.openUrl("tg://shareStory?session=\(sessionId)")
+                                        self.openUrl("\(self.initializationData.appSpecificUrlScheme)://shareStory?session=\(sessionId)") // MARK: Swiftgram
                                     }
                                 }
                             }
