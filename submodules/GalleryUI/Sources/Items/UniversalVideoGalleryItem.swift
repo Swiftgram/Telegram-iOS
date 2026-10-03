@@ -3723,9 +3723,11 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                     hasVideoControlItems = true
                     items.append(.action(ContextMenuActionItem(text: isLandscape ? "Collapse" : "Fullscreen", textColor: .primary, icon: { theme in
                         generateTintedImage(image: UIImage(bundleImageName: isLandscape ? "Chat/Context Menu/Collapse" : "Chat/Context Menu/Expand"), color: theme.contextMenu.primaryColor)
-                    }, action: { [weak self] _, f in
-                        f(.default)
-                        self?.footerContentNode.fullscreenButtonPressed()
+                    }, action: { [weak self] c, _ in
+                        // The context menu locks the current orientation until it is removed from the window.
+                        c?.dismiss(result: .default, completion: {
+                            self?.footerContentNode.fullscreenButtonPressed()
+                        })
                     })))
                 }
 
