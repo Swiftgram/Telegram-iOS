@@ -285,6 +285,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                         self.statusButtonNode.isHidden = true
                         self.statusNode.isHidden = true
                 }
+                self.requestLayout?(.animated(duration: 0.2, curve: .easeInOut)) // MARK: Swiftgram
             }
         }
     }
@@ -1333,6 +1334,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         var leftControlItems: [GlassControlGroupComponent.Item] = []
         var rightControlItems: [GlassControlGroupComponent.Item] = []
         var centerControlItems: [GlassControlGroupComponent.Item] = []
+        let sgVideoControlsInFooter = sgVideoControlsInFooterEnabled // MARK: Swiftgram
         
         if let buttonsState = self.buttonsState {
             if buttonsState.displayActionButton {
@@ -1347,7 +1349,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                     }
                 ))
             }
-            if buttonsState.displayPictureInPictureButton {
+            if !sgVideoControlsInFooter && buttonsState.displayPictureInPictureButton { // MARK: Swiftgram
                 centerControlItems.append(GlassControlGroupComponent.Item(
                     id: AnyHashable("pip"),
                     content: .icon("Media Gallery/PictureInPictureButton"),
@@ -1359,7 +1361,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                     }
                 ))
             }
-            if let settingsButtonState = buttonsState.settingsButtonState {
+            if !sgVideoControlsInFooter, let settingsButtonState = buttonsState.settingsButtonState { // MARK: Swiftgram
                 centerControlItems.append(GlassControlGroupComponent.Item(
                     id: AnyHashable("settings"),
                     content: .customIcon(id: AnyHashable("settings"), component: AnyComponent(SettingsNavigationIconComponent(
@@ -1415,7 +1417,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                     }
                 ))
             }
-            if buttonsState.displayFullscreenButton && !metrics.isTablet {
+            if !sgVideoControlsInFooter && buttonsState.displayFullscreenButton && !metrics.isTablet { // MARK: Swiftgram
                 centerControlItems.append(GlassControlGroupComponent.Item(
                     id: AnyHashable("fullscreen"),
                     content: .icon(isLandscape ? "Chat/Context Menu/Collapse" : "Chat/Context Menu/Expand"),
@@ -1445,7 +1447,18 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
             rightControlItems = centerControlItems
             centerControlItems = []
         }
-        
+
+        // MARK: Swiftgram
+        if !self.playbackControlButton.isHidden || self.hasSeekControls {
+            centerControlItems.append(contentsOf: sgVideoControlsInFooterItems(
+                isPlaying: !self.currentIsPaused,
+                displaySeekControls: self.hasSeekControls,
+                togglePlayback: { [weak self] in self?.playbackControlPressed() },
+                seek: { [weak self] isForward in isForward ? self?.forwardButtonPressed() : self?.backwardButtonPressed() }
+            ))
+        }
+        //
+
         let buttonPanelSize = self.buttonPanel.update(
             transition: ComponentTransition(transition),
             component: AnyComponent(GlassControlPanelComponent(
@@ -2320,6 +2333,13 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
             })
         }
     }
+
+
+    // MARK: Swiftgram
+    var sgDisplayFullscreenButtonInItems: Bool {
+        return self.buttonsState?.displayFullscreenButton == true
+    }
+    //
 }
 
 private enum PlayPauseIconNodeState: Equatable {

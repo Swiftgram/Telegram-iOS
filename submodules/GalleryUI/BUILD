@@ -1,5 +1,11 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+# MARK: Swiftgram
+sgsrcs = [
+    "//Swiftgram/SGGalleryUIExtensions:SGGalleryUIExtensions",
+]
+#
+
 sgdeps = [
     "//Swiftgram/SGSimpleSettings:SGSimpleSettings"
 ]
@@ -7,7 +13,7 @@ sgdeps = [
 swift_library(
     name = "GalleryUI",
     module_name = "GalleryUI",
-    srcs = glob([
+    srcs = sgsrcs + glob([ # MARK: Swiftgram
 		"Sources/**/*.swift",
     ]),
     copts = [

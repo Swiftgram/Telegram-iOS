@@ -1278,6 +1278,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
         if !self.controlsVisibility() || hideControls {
             playbackControlsIsVisible = false
         }
+        playbackControlsIsVisible = playbackControlsIsVisible && !sgVideoControlsInFooterEnabled // MARK: Swiftgram
         
         let playbackControlsSize = self.playbackControls.update(
             transition: ComponentTransition(transition),
@@ -3690,7 +3691,26 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                     }
                 }
             } else {
+                // MARK: Swiftgram
+                let sgVideoControlItems = sgVideoControlsInFooterMenuItems(
+                    displayPictureInPicture: strongSelf.hasPictureInPicture,
+                    displaySettings: strongSelf.settingsButtonState != nil,
+                    displayFullscreen: strongSelf.footerContentNode.sgDisplayFullscreenButtonInItems,
+                    isLandscape: strongSelf.bounds.width > strongSelf.bounds.height,
+                    pictureInPicture: { [weak self] in self?.pictureInPictureButtonPressed() },
+                    openSettings: { [weak self] in
+                        guard let self else { return }
+                        self.openMoreMenu(sourceView: self.moreBarButton.referenceNode.view, gesture: nil, adMessage: nil, isSettings: true, actionsOnTop: false)
+                    },
+                    toggleFullscreen: { [weak self] in self?.footerContentNode.fullscreenButtonPressed() }
+                )
+                items.append(contentsOf: sgVideoControlItems)
+                //
+
                 if let (message, maybeFile, _) = strongSelf.contentInfo(), let file = maybeFile, !message.isCopyProtected() && !item.peerIsCopyProtected && message.paidContent == nil {
+                    if !sgVideoControlItems.isEmpty { // MARK: Swiftgram
+                        items.append(.separator)
+                    }
                     items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.Gallery_MenuSaveToGallery, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Download"), color: theme.actionSheet.primaryTextColor) }, action: { [weak self] c, _ in
                         guard let self else {
                             c?.dismiss(result: .default, completion: nil)
