@@ -5,6 +5,7 @@ sgdeps = [
 ]
 
 sgsrc = [
+    "//Swiftgram/SGChatListSimpleSettingsSignal:SGSimpleSettingsBoolSignal", # MARK: Swiftgram
     "//Swiftgram/SGTabBarHeightModifier:SGTabBarHeightModifier"
 ]
 

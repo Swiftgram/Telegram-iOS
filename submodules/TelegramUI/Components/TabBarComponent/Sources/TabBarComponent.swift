@@ -672,7 +672,7 @@ public final class TabBarComponent: Component {
                     widthReducer = 1.0
                 }
                 availableSize.width = availableSize.width / widthReducer
-                if !SGSimpleSettings.shared.tabBarSearchEnabled {
+                if component.search == nil { // MARK: Swiftgram
                     availableSize.width -= 48.0
                     availableSize.width -= innerInset * 2.0
                 }

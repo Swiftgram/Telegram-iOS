@@ -1,4 +1,7 @@
-import SGSimpleSettings // MARK: Swiftgram
+// MARK: Swiftgram
+import SGSimpleSettings
+import SwiftSignalKit
+//
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -70,6 +73,10 @@ final class TabBarControllerNode: ASDisplayNode {
 
     private weak var currentController: ViewController?
     
+    // MARK: Swiftgram
+    private var sgSearchEnabled: Bool = SGSimpleSettings.shared.tabBarSearchEnabled
+    private let sgSearchEnabledDisposable = MetaDisposable()
+    //
     private var layoutResult: LayoutResult?
     private var isUpdateRequested: Bool = false
     private var isChangingSelectedIndex: Bool = false
@@ -143,7 +150,26 @@ final class TabBarControllerNode: ASDisplayNode {
         
         //self.addSubnode(self.tabBarNode)
         //self.addSubnode(self.disabledOverlayNode)
+        // MARK: Swiftgram
+        self.sgSearchEnabledDisposable.set((sgSimpleSettingsBoolSignal(.tabBarSearchEnabled, defaultValue: true)
+        |> deliverOnMainQueue).start(next: { [weak self] enabled in
+            guard let self, self.sgSearchEnabled != enabled else {
+                return
+            }
+            self.sgSearchEnabled = enabled
+            if !enabled, self.currentController?.tabBarSearchState?.isActive == true {
+                self.deactivateSearch()
+            }
+            self.requestUpdate()
+        }))
+        //
     }
+
+    // MARK: Swiftgram
+    deinit {
+        self.sgSearchEnabledDisposable.dispose()
+    }
+    //
     
     override func didLoad() {
         super.didLoad()
@@ -267,7 +293,7 @@ final class TabBarControllerNode: ASDisplayNode {
                     )
                 },
                 // MARK: Swiftgram
-                search: !SGSimpleSettings.shared.tabBarSearchEnabled ? nil : TabBarComponent.Search(
+                search: (!self.sgSearchEnabled && self.currentController?.tabBarSearchState?.isActive != true) ? nil : TabBarComponent.Search(
                     isActive: self.currentController?.tabBarSearchState?.isActive ?? false,
                     activate: { [weak self] in
                         guard let self else {
