@@ -139,7 +139,8 @@ final class PeerInfoHeaderNode: ASDisplayNode {
     let titleExpandedStatusIconView: ComponentHostView<Empty>
     var titleExpandedStatusIconSize: CGSize?
     
-    var subtitleRating: ComponentView<Empty>?
+    var titleRating: ComponentView<Empty>?
+    var titleExpandedRating: ComponentView<Empty>?
     
     let subtitleNodeContainer: ASDisplayNode
     let subtitleNodeRawContainer: ASDisplayNode
@@ -1372,6 +1373,123 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             usernameString = ("", MultiScaleTextState.Attributes(font: Font.regular(16.0), color: .white))
         }
         
+        var titleRatingSize: CGSize?
+        var titleExpandedRatingSize: CGSize?
+
+        if let cachedData = cachedData as? CachedUserData, let starRating = cachedData.starRating {
+            self.currentStarRating = starRating
+            self.currentPendingStarRating = cachedData.pendingStarRating
+        } else {
+            self.currentStarRating = nil
+            self.currentPendingStarRating = nil
+        }
+
+        #if DEBUG && false
+        if "".isEmpty {
+            let starRating: TelegramStarRating
+
+            if self.context.account.peerId.id._internalGetInt64Value() == 654152421 {
+                starRating = TelegramStarRating(level: -1, currentLevelStars: -1, stars: -100, nextLevelStars: 0)
+            } else {
+                starRating = TelegramStarRating(level: 2, currentLevelStars: 1000, stars: 2000, nextLevelStars: 3000)
+            }
+            self.currentStarRating = starRating
+
+            if let _ = starRating.nextLevelStars {
+                //self.currentPendingStarRating = TelegramStarPendingRating(rating: TelegramStarRating(level: starRating.level, currentLevelStars: starRating.currentLevelStars, stars: starRating.stars + 234, nextLevelStars: starRating.nextLevelStars), timestamp: Int32(Date().timeIntervalSince1970) + 60 * 60 * 24 * 3)
+                self.currentPendingStarRating = TelegramStarPendingRating(rating: TelegramStarRating(level: starRating.level + 2, currentLevelStars: starRating.nextLevelStars!, stars: max(500, starRating.nextLevelStars! + starRating.nextLevelStars! / 2 - starRating.nextLevelStars! / 4), nextLevelStars: max(1000, starRating.nextLevelStars! * 2)), timestamp: Int32(Date().timeIntervalSince1970) + 60 * 60 * 24 * 3)
+            }
+        }
+        #endif
+
+        if let starRating = self.currentStarRating {
+            let action: () -> Void = { [weak self] in
+                guard let self, let peer = self.peer, let currentStarRating = self.currentStarRating else {
+                    return
+                }
+                self.controller?.push(ProfileLevelInfoScreen(
+                    context: self.context,
+                    peer: peer,
+                    starRating: currentStarRating,
+                    pendingStarRating: self.currentPendingStarRating,
+                    customTheme: self.presentationData?.theme
+                ))
+            }
+            let component: AnyComponent<Empty> = AnyComponent(PeerInfoRatingComponent(
+                backgroundColor: ratingBackgroundColor,
+                borderColor: ratingBorderColor,
+                foregroundColor: ratingForegroundColor,
+                level: Int(starRating.level),
+                action: action,
+                debugLevel: self.context.sharedContext.immediateExperimentalUISettings.debugRatingLayout
+            ))
+            let ratingContainerSize = CGSize(width: width - 12.0 * 2.0, height: 100.0)
+
+            let titleRating: ComponentView<Empty>
+            let titleRatingTransition: ComponentTransition
+            if let current = self.titleRating {
+                titleRating = current
+                titleRatingTransition = ComponentTransition(transition)
+            } else {
+                titleRating = ComponentView()
+                titleRatingTransition = .immediate
+                self.titleRating = titleRating
+            }
+            titleRatingSize = titleRating.update(
+                transition: titleRatingTransition,
+                component: component,
+                environment: {},
+                containerSize: ratingContainerSize
+            )
+            if let titleRatingView = titleRating.view, titleRatingView.superview == nil {
+                self.titleNode.stateNode(forKey: TitleNodeStateRegular)?.view.addSubview(titleRatingView)
+            }
+
+            let titleExpandedRating: ComponentView<Empty>
+            let titleExpandedRatingTransition: ComponentTransition
+            if let current = self.titleExpandedRating {
+                titleExpandedRating = current
+                titleExpandedRatingTransition = ComponentTransition(transition)
+            } else {
+                titleExpandedRating = ComponentView()
+                titleExpandedRatingTransition = .immediate
+                self.titleExpandedRating = titleExpandedRating
+            }
+            titleExpandedRatingSize = titleExpandedRating.update(
+                transition: titleExpandedRatingTransition,
+                component: component,
+                environment: {},
+                containerSize: ratingContainerSize
+            )
+            if let titleExpandedRatingView = titleExpandedRating.view, titleExpandedRatingView.superview == nil {
+                self.titleNode.stateNode(forKey: TitleNodeStateExpanded)?.view.addSubview(titleExpandedRatingView)
+            }
+        } else {
+            if let titleRating = self.titleRating {
+                self.titleRating = nil
+                titleRating.view?.removeFromSuperview()
+            }
+            if let titleExpandedRating = self.titleExpandedRating {
+                self.titleExpandedRating = nil
+                titleExpandedRating.view?.removeFromSuperview()
+            }
+        }
+
+        var titleIconWidth: CGFloat = 0.0
+        var titleExpandedIconWidth: CGFloat = 0.0
+        if let statusIconSize = self.statusIconSize, let titleExpandedStatusIconSize = self.titleExpandedStatusIconSize, statusIconSize.width > 0.0 {
+            titleIconWidth += 4.0 + statusIconSize.width
+            titleExpandedIconWidth += 4.0 + titleExpandedStatusIconSize.width
+        }
+        if let credibilityIconSize = self.credibilityIconSize, let titleExpandedCredibilityIconSize = self.titleExpandedCredibilityIconSize, credibilityIconSize.width > 0.0 {
+            titleIconWidth += 4.0 + credibilityIconSize.width
+            titleExpandedIconWidth += 4.0 + titleExpandedCredibilityIconSize.width
+        }
+        if let verifiedIconSize = self.verifiedIconSize, let titleExpandedVerifiedIconSize = self.titleExpandedVerifiedIconSize, verifiedIconSize.width > 0.0 {
+            titleIconWidth += 4.0 + verifiedIconSize.width
+            titleExpandedIconWidth += 4.0 + titleExpandedVerifiedIconSize.width
+        }
+
         let textSideInset: CGFloat = 36.0
         let expandedAvatarHeight: CGFloat = expandedAvatarListSize.height
         
@@ -1379,10 +1497,15 @@ final class PeerInfoHeaderNode: ASDisplayNode {
         if self.navigationButtonContainer.rightButtonNodes.count > 1 {
             titleConstrainedSize.width -= 60.0
         }
+        let reservedIconWidth: CGFloat = (isPremium || isVerified || isFake) ? 20.0 : 0.0
+        var titleRegularConstrainedSize = titleConstrainedSize
+        titleRegularConstrainedSize.width = max(0.0, titleRegularConstrainedSize.width - max(0.0, titleIconWidth - reservedIconWidth) - (titleRatingSize.map { 4.0 + $0.width } ?? 0.0))
+        var titleExpandedConstrainedSize = titleConstrainedSize
+        titleExpandedConstrainedSize.width = max(0.0, titleExpandedConstrainedSize.width - max(0.0, titleExpandedIconWidth - reservedIconWidth) - (titleExpandedRatingSize.map { 4.0 + $0.width } ?? 0.0))
         
         let titleNodeLayout = self.titleNode.updateLayout(text: titleStringText, states: [
-            TitleNodeStateRegular: MultiScaleTextState(attributes: titleAttributes, constrainedSize: titleConstrainedSize),
-            TitleNodeStateExpanded: MultiScaleTextState(attributes: smallTitleAttributes, constrainedSize: titleConstrainedSize)
+            TitleNodeStateRegular: MultiScaleTextState(attributes: titleAttributes, constrainedSize: titleRegularConstrainedSize),
+            TitleNodeStateExpanded: MultiScaleTextState(attributes: smallTitleAttributes, constrainedSize: titleExpandedConstrainedSize)
         ], mainState: TitleNodeStateRegular)
         
         let subtitleStates: [AnyHashable: MultiScaleTextState] = [
@@ -1623,6 +1746,20 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             }
         }
         
+        if let titleRatingView = self.titleRating?.view, let titleExpandedRatingView = self.titleExpandedRating?.view, let titleRatingSize, let titleExpandedRatingSize {
+            let spacing: CGFloat = 4.0
+            titleHorizontalOffset -= (titleRatingSize.width + spacing) / 2.0
+
+            var collapsedTransitionOffset: CGFloat = 0.0
+            if let navigationTransition = self.navigationTransition {
+                collapsedTransitionOffset = -10.0 * navigationTransition.fraction
+            }
+            let leftOffset = nextIconX + spacing + collapsedTransitionOffset
+            let leftExpandedOffset = nextExpandedIconX + spacing
+            transition.updateFrame(view: titleRatingView, frame: CGRect(origin: CGPoint(x: leftOffset, y: floor((titleSize.height - titleRatingSize.height) / 2.0)), size: titleRatingSize))
+            transition.updateFrame(view: titleExpandedRatingView, frame: CGRect(origin: CGPoint(x: leftExpandedOffset, y: floor((titleExpandedSize.height - titleExpandedRatingSize.height) / 2.0) + 1.0), size: titleExpandedRatingSize))
+        }
+
         var titleFrame: CGRect
         var subtitleFrame: CGRect
         let usernameFrame: CGRect
@@ -1662,9 +1799,6 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             titleCollapseFraction = max(0.0, min(1.0, contentOffset / titleCollapseOffset))
             
             subtitleFrame = CGRect(origin: CGPoint(x: 16.0 - subtitleButtonHorizontalOffset * (1.0 - titleCollapseFraction), y: minTitleFrame.maxY + 2.0), size: subtitleSize)
-            if self.subtitleRating != nil {
-                subtitleFrame.origin.x += 22.0
-            }
             usernameFrame = CGRect(origin: CGPoint(x: width - usernameSize.width - 16.0, y: minTitleFrame.midY - usernameSize.height / 2.0), size: usernameSize)
         } else {
             titleFrame = CGRect(origin: CGPoint(x: floorToScreenPixels((width - titleSize.width) / 2.0), y: avatarFrame.maxY + 9.0 + (subtitleSize.height.isZero ? 11.0 : 0.0)), size: titleSize)
@@ -2039,81 +2173,6 @@ final class PeerInfoHeaderNode: ASDisplayNode {
         let apparentHeight = (1.0 - transitionFraction) * backgroundHeight + transitionFraction * transitionSourceHeight
         let apparentBackgroundHeight = (1.0 - transitionFraction) * backgroundHeight + transitionFraction * transitionSourceHeight
         
-        var subtitleRatingSize: CGSize?
-        
-        if let cachedData = cachedData as? CachedUserData, let starRating = cachedData.starRating {
-            self.currentStarRating = starRating
-            self.currentPendingStarRating = cachedData.pendingStarRating
-        } else {
-            self.currentStarRating = nil
-            self.currentPendingStarRating = nil
-        }
-        
-        #if DEBUG && false
-        if "".isEmpty {
-            let starRating: TelegramStarRating
-            
-            if self.context.account.peerId.id._internalGetInt64Value() == 654152421 {
-                starRating = TelegramStarRating(level: -1, currentLevelStars: -1, stars: -100, nextLevelStars: 0)
-            } else {
-                starRating = TelegramStarRating(level: 2, currentLevelStars: 1000, stars: 2000, nextLevelStars: 3000)
-            }
-            self.currentStarRating = starRating
-            
-            if let _ = starRating.nextLevelStars {
-                //self.currentPendingStarRating = TelegramStarPendingRating(rating: TelegramStarRating(level: starRating.level, currentLevelStars: starRating.currentLevelStars, stars: starRating.stars + 234, nextLevelStars: starRating.nextLevelStars), timestamp: Int32(Date().timeIntervalSince1970) + 60 * 60 * 24 * 3)
-                self.currentPendingStarRating = TelegramStarPendingRating(rating: TelegramStarRating(level: starRating.level + 2, currentLevelStars: starRating.nextLevelStars!, stars: max(500, starRating.nextLevelStars! + starRating.nextLevelStars! / 2 - starRating.nextLevelStars! / 4), nextLevelStars: max(1000, starRating.nextLevelStars! * 2)), timestamp: Int32(Date().timeIntervalSince1970) + 60 * 60 * 24 * 3)
-            }
-        }
-        #endif
-        
-        if let starRating = self.currentStarRating {
-            let subtitleRating: ComponentView<Empty>
-            var subtitleRatingTransition = ComponentTransition(transition)
-            if let current = self.subtitleRating {
-                subtitleRating = current
-            } else {
-                subtitleRatingTransition = .immediate
-                subtitleRating = ComponentView()
-                self.subtitleRating = subtitleRating
-            }
-            
-            subtitleRatingSize = subtitleRating.update(
-                transition: subtitleRatingTransition,
-                component: AnyComponent(PeerInfoRatingComponent(
-                    backgroundColor: ratingBackgroundColor,
-                    borderColor: ratingBorderColor,
-                    foregroundColor: ratingForegroundColor,
-                    level: Int(starRating.level),
-                    action: { [weak self] in
-                        guard let self, let peer = self.peer, let currentStarRating = self.currentStarRating else {
-                            return
-                        }
-                        self.controller?.push(ProfileLevelInfoScreen(
-                            context: self.context,
-                            peer: peer,
-                            starRating: currentStarRating,
-                            pendingStarRating: self.currentPendingStarRating,
-                            customTheme: self.presentationData?.theme
-                        ))
-                    },
-                    debugLevel: self.context.sharedContext.immediateExperimentalUISettings.debugRatingLayout
-                )),
-                environment: {},
-                containerSize: CGSize(width: width - 12.0 * 2.0, height: 100.0)
-            )
-            if let subtitleRatingView = subtitleRating.view {
-                if subtitleRatingView.superview == nil {
-                    self.subtitleNodeContainer.view.addSubview(subtitleRatingView)
-                }
-            }
-        } else {
-            if let subtitleRating = self.subtitleRating {
-                self.subtitleRating = nil
-                subtitleRating.view?.removeFromSuperview()
-            }
-        }
-        
         if !titleSize.width.isZero && !titleSize.height.isZero {
             if self.navigationTransition != nil {
                 var neutralTitleScale: CGFloat = 1.0
@@ -2156,12 +2215,6 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                     transition.updateAlpha(layer: subtitleBadgeView.layer, alpha: (1.0 - transitionFraction))
                 }
                 
-                if let subtitleRatingView = self.subtitleRating?.view, let subtitleRatingSize {
-                    let subtitleBadgeFrame: CGRect
-                    subtitleBadgeFrame = CGRect(origin: CGPoint(x: (-subtitleSize.width) * 0.5 - subtitleRatingSize.width + 1.0, y: subtitleOffset + floor((-subtitleRatingSize.height) * 0.5)), size: subtitleRatingSize)
-                    transition.updateFrameAdditive(view: subtitleRatingView, frame: subtitleBadgeFrame)
-                    transition.updateAlpha(layer: subtitleRatingView.layer, alpha: subtitleAlpha * (1.0 - transitionFraction))
-                }
             } else {
                 let titleScale: CGFloat
                 let subtitleScale: CGFloat
@@ -2214,17 +2267,6 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                     transition.updateAlpha(layer: subtitleBadgeView.layer, alpha: (1.0 - transitionFraction) * subtitleBadgeFraction)
                 }
                 
-                if let subtitleRatingView = self.subtitleRating?.view, let subtitleRatingSize {
-                    let subtitleBadgeFrame = CGRect(origin: CGPoint(x: (-subtitleSize.width) * 0.5 - subtitleRatingSize.width + 1.0, y: floor((-subtitleRatingSize.height) * 0.5)), size: subtitleRatingSize)
-                    
-                    if subtitleRatingView.frame.isEmpty {
-                        subtitleRatingView.frame = subtitleBadgeFrame
-                        subtitleRatingView.alpha = subtitleAlpha
-                    } else {
-                        transition.updateFrameAdditive(view: subtitleRatingView, frame: subtitleBadgeFrame)
-                        transition.updateAlpha(layer: subtitleRatingView.layer, alpha: subtitleAlpha)
-                    }
-                }
             }
         }
         
@@ -2828,6 +2870,13 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             default:
                 break
             }
+            if self.isAvatarExpanded {
+                if let titleExpandedRatingView = self.titleExpandedRating?.view, let result = titleExpandedRatingView.hitTest(self.view.convert(point, to: titleExpandedRatingView), with: event) {
+                    return result
+                }
+            } else if let titleRatingView = self.titleRating?.view, let result = titleRatingView.hitTest(self.view.convert(point, to: titleRatingView), with: event) {
+                return result
+            }
         }
         
         if let subtitleBackgroundButton = self.subtitleBackgroundButton, subtitleBackgroundButton.view.convert(subtitleBackgroundButton.bounds, to: self.view).contains(point) {
@@ -2837,10 +2886,6 @@ final class PeerInfoHeaderNode: ASDisplayNode {
         }
         
         if let subtitleBadgeView = self.subtitleBadgeView, let result = subtitleBadgeView.hitTest(self.view.convert(point, to: subtitleBadgeView), with: event) {
-            return result
-        }
-        
-        if let subtitleRatingView = self.subtitleRating?.view, let result = subtitleRatingView.hitTest(self.view.convert(point, to: subtitleRatingView), with: event) {
             return result
         }
         
