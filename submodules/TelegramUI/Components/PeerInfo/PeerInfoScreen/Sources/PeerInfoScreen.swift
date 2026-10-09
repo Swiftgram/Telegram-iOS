@@ -5514,7 +5514,8 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             
             contentHeight += headerHeight
             if !((self.isSettings || self.isMyProfile) && self.state.isEditing) {
-                contentHeight += sectionSpacing + 12.0
+                let hasCompactSettingsHeader = self.isSettings && !self.headerNode.isAvatarExpanded && !self.headerNode.hasVisibleSubtitle
+                contentHeight += hasCompactSettingsHeader ? sectionSpacing * 0.5 : sectionSpacing + 12.0
             }
               
             var isFirst = true

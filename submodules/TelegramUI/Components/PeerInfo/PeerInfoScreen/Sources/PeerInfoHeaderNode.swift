@@ -208,6 +208,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
     
     private var currentStarRating: TelegramStarRating?
     private var currentPendingStarRating: TelegramStarPendingRating?
+    private(set) var hasVisibleSubtitle: Bool = true
     
     init(hidePhoneInSettings: Bool, context: AccountContext, controller: PeerInfoScreenImpl, avatarInitiallyExpanded: Bool, isOpenedFromChat: Bool, isMediaOnly: Bool, isSettings: Bool, isMyProfile: Bool, forumTopicThreadId: Int64?, chatLocation: ChatLocation) {
         self.context = context
@@ -1372,6 +1373,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             
             usernameString = ("", MultiScaleTextState.Attributes(font: Font.regular(16.0), color: .white))
         }
+        self.hasVisibleSubtitle = !subtitleStringText.isEmpty
         
         var titleRatingSize: CGSize?
         var titleExpandedRatingSize: CGSize?
@@ -2509,6 +2511,8 @@ final class PeerInfoHeaderNode: ASDisplayNode {
         let resolvedRegularHeight: CGFloat
         if self.isAvatarExpanded {
             resolvedRegularHeight = expandedAvatarListSize.height
+        } else if self.isSettings && !self.hasVisibleSubtitle {
+            resolvedRegularHeight = titleFrame.maxY + bottomInset
         } else {
             resolvedRegularHeight = panelWithAvatarHeight + navigationHeight + bottomInset
         }
