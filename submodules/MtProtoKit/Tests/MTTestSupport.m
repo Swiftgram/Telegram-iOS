@@ -58,7 +58,7 @@ MTContext *MTTestMakeContext(bool useTempAuthKeys) {
 }
 
 MTContext *MTTestMakeContextWithEncryptionProvider(bool useTempAuthKeys, id<EncryptionProvider> encryptionProvider) {
-    return [[MTContext alloc] initWithSerialization:[[MTTestSerialization alloc] init] encryptionProvider:encryptionProvider apiEnvironment:[[MTApiEnvironment alloc] init] isTestingEnvironment:true useTempAuthKeys:useTempAuthKeys];
+    return [[MTContext alloc] initWithSerialization:[[MTTestSerialization alloc] init] encryptionProvider:encryptionProvider apiEnvironment:[[MTApiEnvironment alloc] init] isTestingEnvironment:true useTempAuthKeys:useTempAuthKeys forceLocalDNS:false]; // MARK: Swiftgram
 }
 
 MTDatacenterAuthInfo *MTTestMakeAuthInfo(void) {

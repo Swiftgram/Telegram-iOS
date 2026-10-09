@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "AppIcon.png",
+      "filename" : "Swiftgram.png",
       "idiom" : "universal",
       "platform" : "watchos",
       "size" : "1024x1024"

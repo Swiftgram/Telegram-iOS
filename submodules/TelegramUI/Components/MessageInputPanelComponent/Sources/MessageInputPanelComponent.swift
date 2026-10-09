@@ -1,3 +1,7 @@
+import class SwiftUI.UIHostingController
+import SGSimpleSettings
+import SGInputToolbar // MARK: Swiftgram
+
 import Foundation
 import LottieSettings
 import UIKit
@@ -628,6 +632,8 @@ public final class MessageInputPanelComponent: Component {
         private let counter = ComponentView<Empty>()
         private var header: ComponentView<Empty>?
         
+        private var toolbarView: UIView? // MARK: Swiftgram
+        
         private var disabledPlaceholder: ComponentView<Empty>?
         private var textClippingView = UIView()
         private let textField = ComponentView<Empty>()
@@ -685,7 +691,7 @@ public final class MessageInputPanelComponent: Component {
             return (self.likeButton.view as? MessageInputActionButtonComponent.View)?.likeIconView
         }
         
-        override init(frame: CGRect) {
+        init(context: AccountContext, frame: CGRect) {
             self.fieldBackgroundView = BlurredBackgroundView(color: nil, enableBlur: true)
             self.fieldBackgroundTint = UIView()
             self.fieldBackgroundTint.backgroundColor = UIColor(white: 1.0, alpha: 0.1)
@@ -732,6 +738,8 @@ public final class MessageInputPanelComponent: Component {
                     self.state?.updated()
                 }
             )
+            
+            self.initToolbarIfNeeded(context: context) // MARK: Swiftgram
         }
         
         required init?(coder: NSCoder) {
@@ -940,6 +948,12 @@ public final class MessageInputPanelComponent: Component {
             if result == nil, let contextQueryResultPanel = self.contextQueryResultPanel?.view, let panelResult = contextQueryResultPanel.hitTest(self.convert(point, to: contextQueryResultPanel), with: event), panelResult !== contextQueryResultPanel {
                 return panelResult
             }
+            
+            // MARK: Swiftgram
+            if result == nil, let toolbarView = self.toolbarView, let toolbarResult = toolbarView.hitTest(self.convert(point, to: toolbarView), with: event) {
+                return toolbarResult
+            }
+            //
              
             return result
         }
@@ -3112,12 +3126,14 @@ public final class MessageInputPanelComponent: Component {
                 }
             }
             
+            size = self.layoutToolbar(transition: transition, layoutFromTop: layoutFromTop, size: size, availableSize: availableSize, defaultInsets: defaultInsets, textFieldSize: textFieldSize, previousComponent: previousComponent) // MARK: Swiftgram
+            
             return size
         }
     }
     
     public func makeView() -> View {
-        return View(frame: CGRect())
+        return View(context: self.context, frame: CGRect())
     }
     
     public func update(view: View, availableSize: CGSize, state: EmptyComponentState, environment: Environment<Empty>, transition: ComponentTransition) -> CGSize {
@@ -3165,3 +3181,69 @@ final class ViewForOverlayContent: UIView {
         return nil
     }
 }
+
+// MARK: Swiftgram
+extension MessageInputPanelComponent.View {
+    func initToolbarIfNeeded(context: AccountContext) {
+        guard #available(iOS 13.0, *) else { return }
+        guard SGSimpleSettings.shared.inputToolbar else { return }
+        guard context.sharedContext.immediateSGStatus.status > 1 else { return }
+        guard self.toolbarView == nil else { return }
+        let toolbar = ChatToolbarView(
+            // TODO(swiftgram): Binding
+            showNewLine: .constant(true), //.constant(self.sendWithReturnKey)
+            onAction: { [weak self] action in
+                guard let self, let textFieldView = self.textField.view as? TextFieldComponent.View else { return }
+                textFieldView.sgToolbarAction(action)
+            }
+        ).colorScheme(.dark)
+
+        let toolbarHostingController = UIHostingController(rootView: toolbar)
+        toolbarHostingController.view.backgroundColor = .clear
+        let toolbarView = toolbarHostingController.view
+        self.toolbarView = toolbarView
+        // assigning toolbarHostingController bugs responsivness and overrides layout
+        // self.toolbarHostingController = toolbarHostingController
+        
+        // Disable "Swipe to go back" gesture when touching scrollview
+        self.interactiveTransitionGestureRecognizerTest = { [weak self] point in
+            if let self, let _ = self.toolbarView?.hitTest(point, with: nil) {
+                return false
+            }
+            return true
+        }
+        if let toolbarView = self.toolbarView {
+            self.addSubview(toolbarView)
+        }
+    }
+    
+    func layoutToolbar(transition: ComponentTransition, layoutFromTop: Bool, size: CGSize, availableSize: CGSize, defaultInsets: UIEdgeInsets, textFieldSize: CGSize, previousComponent: MessageInputPanelComponent?) -> CGSize {
+        // TODO(swiftgram): Do not show if locked formatting
+        var transition = transition
+        if let previousComponent = previousComponent {
+            let previousLayoutFromTop = previousComponent.attachmentButtonMode == .captionDown
+            if previousLayoutFromTop != layoutFromTop {
+                // attachmentButtonMode changed
+                transition = .immediate
+            }
+        }
+        var size = size
+        if let toolbarView = self.toolbarView {
+            let toolbarHeight: CGFloat = 44.0
+            let toolbarSpacing: CGFloat = 1.0
+            let toolbarSize = CGSize(width: availableSize.width, height: toolbarHeight)
+            let hasFirstResponder = self.hasFirstResponder()
+            transition.setAlpha(view: toolbarView, alpha: hasFirstResponder ? 1.0 : 0.0)
+            if layoutFromTop {
+                transition.setFrame(view: toolbarView, frame: CGRect(origin: CGPoint(x: .zero, y: availableSize.height + toolbarSpacing), size: toolbarSize))
+            } else {
+                transition.setFrame(view: toolbarView, frame: CGRect(origin: CGPoint(x: .zero, y: textFieldSize.height + defaultInsets.top + toolbarSpacing), size: toolbarSize))
+                if hasFirstResponder {
+                    size.height += toolbarHeight + toolbarSpacing
+                }
+            }
+        }
+        return size
+    }
+}
+//

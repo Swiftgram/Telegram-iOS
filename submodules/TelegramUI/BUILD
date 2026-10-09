@@ -5,6 +5,37 @@ load(
     "telegram_bundle_id",
 )
 
+sgdeps = [
+    "//Swiftgram/SGSettingsUI:SGSettingsUI",
+    "//Swiftgram/SGConfig:SGConfig",
+    "//Swiftgram/SGAPIWebSettings:SGAPIWebSettings",
+    "//Swiftgram/SGAppGroupIdentifier:SGAppGroupIdentifier",
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+    "//Swiftgram/SFSafariViewControllerPlus:SFSafariViewControllerPlus",
+    "//Swiftgram/SGLogging:SGLogging",
+    "//Swiftgram/SGStrings:SGStrings",
+    "//Swiftgram/SGActionRequestHandlerSanitizer:SGActionRequestHandlerSanitizer",
+    "//Swiftgram/Wrap:Wrap",
+    "//Swiftgram/SGDeviceToken:SGDeviceToken",
+    "//Swiftgram/SGDebugUI:SGDebugUI",
+    "//Swiftgram/SGInputToolbar:SGInputToolbar",
+    "//Swiftgram/SGIAP:SGIAP",
+    "//Swiftgram/SGPayWall:SGPayWall",
+    "//Swiftgram/SGProUI:SGProUI",
+    "//Swiftgram/SGKeychainBackupManager:SGKeychainBackupManager",
+    "//Swiftgram/SGGHSettings:SGGHSettings",
+    # "//Swiftgram/SGContentAnalysis:SGContentAnalysis"
+]
+
+sgsrcs = [
+    "//Swiftgram/SGDBReset:SGDBReset",
+    "//Swiftgram/SGShowMessageJson:SGShowMessageJson",
+    "//Swiftgram/ChatControllerImplExtension:ChatControllerImplExtension",
+    "//Swiftgram/SGSharedAccountContextMigration:SGSharedAccountContextMigration",
+    "//Swiftgram/SGOutgoingTranslationLanguageSelection:SGOutgoingTranslationLanguageSelection",
+    "//Swiftgram/SGSafariControllerUrlOpening:SGSafariControllerUrlOpening",
+    "//Swiftgram/SGTelegramUIExtensions:SGTelegramUIExtensions", # MARK: Swiftgram
+]
 
 filegroup(
     name = "TelegramUIResources",
@@ -59,11 +90,11 @@ swift_library(
     module_name = "TelegramUI",
     srcs = glob([
         "Sources/**/*.swift",
-    ]),
+    ]) + sgsrcs,
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgdeps + [
         "//third-party/recaptcha:RecaptchaEnterprise",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/SSignalKit/SSignalKit:SSignalKit",

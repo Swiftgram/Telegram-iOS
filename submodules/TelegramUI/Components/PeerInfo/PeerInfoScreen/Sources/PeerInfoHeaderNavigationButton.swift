@@ -123,7 +123,7 @@ private final class MoreIconNode: ManagedAnimationNode {
 final class PeerInfoHeaderNavigationButton: HighlightTrackingButtonNode {
     let containerNode: ContextControllerSourceNode
     let contextSourceNode: ContextReferenceContentNode
-    private let textNode: ImmediateTextNode
+    public let textNode: ImmediateTextNode
     private let iconNode: ASImageNode
     private var animationNode: MoreIconNode?
     

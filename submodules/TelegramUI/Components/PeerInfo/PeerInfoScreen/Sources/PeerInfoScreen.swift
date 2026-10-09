@@ -1,3 +1,10 @@
+// MARK: Swiftgram
+import SGDebugUI
+import SGSimpleSettings
+import SGSettingsUI
+import SGStrings
+import CountrySelectionUI
+//
 import Foundation
 import UIKit
 import Display
@@ -146,6 +153,10 @@ enum PeerInfoMemberAction {
 }
 
 enum PeerInfoContextSubject {
+    // MARK: Swiftgram
+    case copy(String)
+    case aboutDC
+    //
     case bio
     case phone(String)
     case link(customLink: String?)
@@ -155,6 +166,10 @@ enum PeerInfoContextSubject {
 }
 
 enum PeerInfoSettingsSection {
+    // MARK: Swiftgram
+    case swiftgram
+    case swiftgramPro
+    //
     case avatar
     case edit
     case proxy
@@ -269,6 +284,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
     let enqueueMediaMessageDisposable = MetaDisposable()
     
     private(set) var validLayout: (ContainerViewLayout, CGFloat)?
+    private(set) var nearestChatParticipant: (String?, Int32?) = (nil, nil) // MARK: Swiftgram
     private(set) var data: PeerInfoScreenData?
     
     var state = PeerInfoState(
@@ -427,6 +443,12 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         self.paneContainerNode.parentController = controller
         
         self._interaction = PeerInfoInteraction(
+            // MARK: Swiftgram
+            notifyTextCopied: { [weak self] in
+                let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                self?.controller?.present(UndoOverlayController(presentationData: presentationData, content: .copy(text: presentationData.strings.Conversation_TextCopied), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .current)
+            },
+            //
             openUsername: { [weak self] value, isMainUsername, progress in
                 self?.openUsername(value: value, isMainUsername: isMainUsername, progress: progress)
             },
@@ -1988,7 +2010,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
                     UIView.transition(with: strongSelf.view, duration: 0.3, options: [.transitionCrossDissolve], animations: {
                     }, completion: nil)
                 }
-                (strongSelf.controller?.parent as? TabBarController)?.updateIsTabBarHidden(false, transition: .animated(duration: 0.3, curve: .linear))
+                (strongSelf.controller?.parent as? TabBarController)?.updateIsTabBarHidden(SGSimpleSettings.shared.hideTabBar, transition: .animated(duration: 0.3, curve: .linear)) // MARK: Swiftgram
             case .select:
                 strongSelf.state = strongSelf.state.withSelectedMessageIds(Set())
                 if let (layout, navigationHeight) = strongSelf.validLayout {
@@ -2434,13 +2456,26 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         } else {
             reactionSourceMessage = .single(nil)
         }
+        
+        // MARK: Swiftgram
+        let nearestChatParticipantSignal = .single((nil, nil)) |> then(self.fetchNearestChatParticipant()) |> distinctUntilChanged { lhs, rhs in
+            if lhs.0 != rhs.0 {
+                return false
+            }
+            if lhs.1 != rhs.1 {
+                return false
+            }
+            return true
+        }
+        //
 
         self.dataDisposable = combineLatest(
             queue: Queue.mainQueue(),
+            nearestChatParticipantSignal, // MARK: Swiftgram
             screenData,
             self.forceIsContactPromise.get(),
             reactionSourceMessage
-        ).startStrict(next: { [weak self] data, forceIsContact, reactionSourceMessage in
+        ).startStrict(next: { [weak self] nearestChatParticipant, data, forceIsContact, reactionSourceMessage in // MARK: Swiftgram
             guard let strongSelf = self else {
                 return
             }
@@ -2459,6 +2494,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             }
             strongSelf.canDeleteReaction = canDeleteReaction
 
+            strongSelf.nearestChatParticipant = nearestChatParticipant // MARK: Swiftgram
             if data.isContact && forceIsContact {
                 strongSelf.forceIsContactPromise.set(false)
             } else {
@@ -4230,7 +4266,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         }
     }
         
-    private func openParticipantsSection(section: PeerInfoParticipantsSection) {
+    public func openParticipantsSection(section: PeerInfoParticipantsSection) { // MARK: Swiftgram
         guard let data = self.data, let peer = data.peer else {
             return
         }
@@ -5138,7 +5174,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         controller.dismissAllTooltips()
         
         if self.isSettings {
-            (self.controller?.parent as? TabBarController)?.updateIsTabBarHidden(false, transition: .animated(duration: 0.4, curve: .spring))
+            (self.controller?.parent as? TabBarController)?.updateIsTabBarHidden(SGSimpleSettings.shared.hideTabBar, transition: .animated(duration: 0.4, curve: .spring)) // MARK: Swiftgram
         }
         
         let transition: ContainedViewLayoutTransition = .animated(duration: 0.35, curve: .easeInOut)
@@ -5438,7 +5474,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             insets.left += sectionInset
             insets.right += sectionInset
             
-            let items = self.isSettings ? settingsItems(data: self.data, context: self.context, presentationData: self.presentationData, interaction: self.interaction, isExpanded: self.headerNode.isAvatarExpanded) : infoItems(data: self.data, context: self.context, presentationData: self.presentationData, interaction: self.interaction, reactionSourceMessageId: self.reactionSourceMessageId, canDeleteReaction: self.canDeleteReaction, callMessages: self.callMessages, chatLocation: self.chatLocation, isOpenedFromChat: self.isOpenedFromChat, isMyProfile: self.isMyProfile)
+            let items = self.isSettings ? settingsItems(data: self.data, context: self.context, presentationData: self.presentationData, interaction: self.interaction, isExpanded: self.headerNode.isAvatarExpanded) : infoItems(nearestChatParticipant: self.nearestChatParticipant, data: self.data, context: self.context, presentationData: self.presentationData, interaction: self.interaction, reactionSourceMessageId: self.reactionSourceMessageId, canDeleteReaction: self.canDeleteReaction, callMessages: self.callMessages, chatLocation: self.chatLocation, isOpenedFromChat: self.isOpenedFromChat, isMyProfile: self.isMyProfile) // MARK: Swiftgram
             
             contentHeight += headerHeight
             if !((self.isSettings || self.isMyProfile) && self.state.isEditing) {
@@ -5883,6 +5919,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             } else {
                 if self.isSettings {
                     leftNavigationButtons.append(PeerInfoHeaderNavigationButtonSpec(key: .qrCode, isForExpandedView: false))
+                    if SGSimpleSettings.shared.hideTabBar { leftNavigationButtons.append(PeerInfoHeaderNavigationButtonSpec(key: .back, isForExpandedView: false)) } // MARK: Swiftgram
                     rightNavigationButtons.append(PeerInfoHeaderNavigationButtonSpec(key: .search, isForExpandedView: false))
                     rightNavigationButtons.append(PeerInfoHeaderNavigationButtonSpec(key: .edit, isForExpandedView: false))
                 } else if self.isMyProfile {
@@ -7142,6 +7179,22 @@ public final class PeerInfoScreenImpl: ViewController, PeerInfoScreen, KeyShortc
         let strings = self.presentationData.strings
         
         var items: [ContextMenuItem] = []
+
+        // MARK: Swiftgram
+        #if DEBUG
+        items.append(.action(ContextMenuActionItem(text: "Swiftgram Debug", icon: { theme in
+            return generateTintedImage(image: nil, color: theme.contextMenu.primaryColor)
+        }, action: { [weak self] _, f in
+            guard let self = self else {
+                return
+            }
+            self.push(sgDebugController(context: self.context))
+
+            f(.dismissWithoutContent)
+        })))
+        #endif
+        //
+
         items.append(.action(ContextMenuActionItem(text: strings.Settings_AddAccount, icon: { theme in
             return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Add"), color: theme.contextMenu.primaryColor)
         }, action: { [weak self] _, f in
@@ -7524,3 +7577,94 @@ struct ClearPeerHistory {
         }
     }
 }
+
+
+
+
+
+// MARK: Swiftgram
+extension PeerInfoScreenImpl {
+
+    public func tabBarItemContextActionRawUIView(sourceView: UIView, gesture: ContextGesture?) {
+        guard let (maybePrimary, other) = self.accountsAndPeersValue, let primary = maybePrimary else {
+            return
+        }
+        
+        let strings = self.presentationData.strings
+        
+        var items: [ContextMenuItem] = []
+
+        // MARK: Swiftgram
+        #if DEBUG
+        items.append(.action(ContextMenuActionItem(text: "Swiftgram Debug", icon: { theme in
+            return generateTintedImage(image: nil, color: theme.contextMenu.primaryColor)
+        }, action: { [weak self] _, f in
+            guard let self = self else {
+                return
+            }
+            self.push(sgDebugController(context: self.context))
+            
+            f(.dismissWithoutContent)
+        })))
+        #endif
+        //
+
+        items.append(.action(ContextMenuActionItem(text: strings.Settings_AddAccount, icon: { theme in
+            return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Add"), color: theme.contextMenu.primaryColor)
+        }, action: { [weak self] _, f in
+            guard let strongSelf = self else {
+                return
+            }
+            strongSelf.controllerNode.openSettings(section: .addAccount)
+            f(.dismissWithoutContent)
+        })))
+        
+        
+        items.append(.custom(AccountPeerContextItem(context: self.context, account: self.context.account, peer: primary.1, action: { _, f in
+            f(.default)
+        }), true))
+        
+        if !other.isEmpty {
+            items.append(.separator)
+        }
+        
+        for account in other {
+            let id = account.0.account.id
+            items.append(.custom(AccountPeerContextItem(context: self.context, account: account.0.account, peer: account.1, action: { [weak self] _, f in
+                guard let strongSelf = self else {
+                    return
+                }
+                strongSelf.controllerNode.switchToAccount(id: id)
+                f(.dismissWithoutContent)
+            }), true))
+        }
+        
+        let controller = makeContextController(presentationData: presentationData, source: .reference(HeaderContextReferenceContentSource(controller: self, sourceView: sourceView)), items: .single(ContextController.Items(content: .list(items))), gesture: gesture)
+        self.context.sharedContext.mainWindow?.presentInGlobalOverlay(controller)
+    }
+}
+
+extension PeerInfoScreenNode {
+    
+    public func fetchNearestChatParticipant() -> Signal<(String?, Int32?), NoError> {
+        guard let navigationController = self.controller?.navigationController as? NavigationController else {
+            return .single((nil, nil))
+        }
+        
+        for controller in navigationController.viewControllers.reversed() {
+            if let chatController = controller as? ChatController, let chatPeerId = chatController.chatLocation.peerId, [Namespaces.Peer.CloudGroup, Namespaces.Peer.CloudChannel].contains(chatPeerId.namespace) {
+                return self.context.engine.peers.fetchChannelParticipant(peerId: chatPeerId, participantId: self.peerId)
+                |> mapToSignal { participant -> Signal<(String?, Int32?), NoError> in
+                    if let participant = participant, case let .member(_, invitedAt, _, _, _, _) = participant {
+                        return .single((chatController.overlayTitle, invitedAt))
+                    } else {
+                        return .single((nil, nil))
+                    }
+                }
+
+            }
+        }
+        return .single((nil, nil))
+    }
+}
+//

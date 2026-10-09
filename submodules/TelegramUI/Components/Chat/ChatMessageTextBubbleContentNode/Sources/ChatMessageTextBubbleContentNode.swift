@@ -1283,7 +1283,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         return super.hitTest(point, with: event)
     }
     
-    private func updateIsTranslating(_ isTranslating: Bool, showTextAsPlaceholder: Bool) {
+    public func updateIsTranslating(_ isTranslating: Bool, showTextAsPlaceholder: Bool) {
         guard let item = self.item else {
             return
         }

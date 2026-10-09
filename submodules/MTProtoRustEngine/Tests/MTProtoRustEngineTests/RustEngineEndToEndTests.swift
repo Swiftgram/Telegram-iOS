@@ -304,7 +304,7 @@ final class RustEngineEndToEndTests: XCTestCase {
         apiEnvironment.layer = NSNumber(value: Int(serialization.currentLayer()))
         apiEnvironment.disableUpdates = false
         apiEnvironment = apiEnvironment.withUpdatedLangPackCode("en")
-        let context = MTContext(serialization: serialization, encryptionProvider: UnusedEncryptionProvider(), apiEnvironment: apiEnvironment, isTestingEnvironment: false, useTempAuthKeys: useTempAuthKeys)
+        let context = MTContext(serialization: serialization, encryptionProvider: UnusedEncryptionProvider(), apiEnvironment: apiEnvironment, isTestingEnvironment: false, useTempAuthKeys: useTempAuthKeys, forceLocalDNS: false) // MARK: Swiftgram
         context.keychain = InMemoryKeychain()
         return context
     }

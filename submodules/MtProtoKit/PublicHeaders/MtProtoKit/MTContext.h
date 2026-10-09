@@ -94,6 +94,7 @@
 @property (nonatomic, strong, readonly) MTApiEnvironment * _Nonnull apiEnvironment;
 @property (nonatomic, readonly) bool isTestingEnvironment;
 @property (nonatomic, readonly) bool useTempAuthKeys;
+@property (nonatomic, readonly) bool forceLocalDNS;
 @property (nonatomic) int32_t tempKeyExpiration;
 // Replaces bound temporary keys this process uses before they expire. Off by default; app extensions keep it off.
 @property (nonatomic) bool refreshesTemporaryKeys;
@@ -109,7 +110,7 @@
 
 + (void)copyAuthInfoFrom:(id<MTKeychain> _Nonnull)keychain toTempKeychain:(id<MTKeychain> _Nonnull)tempKeychain;
 
-- (instancetype _Nonnull)initWithSerialization:(id<MTSerialization> _Nonnull)serialization encryptionProvider:(id<EncryptionProvider> _Nonnull)encryptionProvider apiEnvironment:(MTApiEnvironment * _Nonnull)apiEnvironment isTestingEnvironment:(bool)isTestingEnvironment useTempAuthKeys:(bool)useTempAuthKeys;
+- (instancetype _Nonnull)initWithSerialization:(id<MTSerialization> _Nonnull)serialization encryptionProvider:(id<EncryptionProvider> _Nonnull)encryptionProvider apiEnvironment:(MTApiEnvironment * _Nonnull)apiEnvironment isTestingEnvironment:(bool)isTestingEnvironment useTempAuthKeys:(bool)useTempAuthKeys forceLocalDNS:(bool)forceLocalDNS;
 
 - (void)performBatchUpdates:(void (^ _Nonnull)())block;
 

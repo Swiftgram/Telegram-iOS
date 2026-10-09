@@ -1,15 +1,33 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+# MARK: Swiftgram
+sgdeps = [
+    "//Swiftgram/SGSettingsUI:SGSettingsUI",
+    "//Swiftgram/SGStrings:SGStrings",
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+
+    "//Swiftgram/SGRegDate:SGRegDate",
+    "//Swiftgram/SGRegDateScheme:SGRegDateScheme",
+    "//Swiftgram/SGDebugUI:SGDebugUI",
+]
+#
+# MARK: Swiftgram
+sgsrcs = [
+    "//Swiftgram/SGPeerInfoRows:SGPeerInfoRows",
+]
+#
+
+
 swift_library(
     name = "PeerInfoScreen",
     module_name = "PeerInfoScreen",
     srcs = glob([
         "Sources/**/*.swift",
-    ]),
+    ]) + sgsrcs, # MARK: Swiftgram
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgdeps + [ # MARK: Swiftgram
         "//submodules/UrlWhitelist",
         "//submodules/AccountContext",
         "//submodules/LottieSettings:LottieSettings",

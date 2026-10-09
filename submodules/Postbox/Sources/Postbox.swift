@@ -152,8 +152,8 @@ public final class Transaction {
         self.postbox?.deleteMessagesInRange(peerId: peerId, namespace: namespace, minId: minId, maxId: maxId, forEachMedia: forEachMedia)
     }
     
-    public func withAllMessages(peerId: PeerId, namespace: MessageId.Namespace? = nil, _ f: (Message) -> Bool) {
-        self.postbox?.withAllMessages(peerId: peerId, namespace: namespace, f)
+    public func withAllMessages(peerId: PeerId, namespace: MessageId.Namespace? = nil, reversed: Bool = false, _ f: (Message) -> Bool) {
+        self.postbox?.withAllMessages(peerId: peerId, namespace: namespace, reversed: reversed, f)
     }
     
     public func clearHistory(_ peerId: PeerId, threadId: Int64?, minTimestamp: Int32?, maxTimestamp: Int32?, namespaces: MessageIdNamespaces, forEachMedia: ((Media) -> Void)?) {
@@ -2313,8 +2313,10 @@ final class PostboxImpl {
         self.messageHistoryTable.removeMessagesInRange(peerId: peerId, namespace: namespace, minId: minId, maxId: maxId, operationsByPeerId: &self.currentOperationsByPeerId, updatedMedia: &self.currentUpdatedMedia, unsentMessageOperations: &currentUnsentOperations, updatedPeerReadStateOperations: &self.currentUpdatedSynchronizeReadStateOperations, globalTagsOperations: &self.currentGlobalTagsOperations, pendingActionsOperations: &self.currentPendingMessageActionsOperations, updatedMessageActionsSummaries: &self.currentUpdatedMessageActionsSummaries, updatedMessageTagSummaries: &self.currentUpdatedMessageTagSummaries, invalidateMessageTagSummaries: &self.currentInvalidateMessageTagSummaries, localTagsOperations: &self.currentLocalTagsOperations, timestampBasedMessageAttributesOperations: &self.currentTimestampBasedMessageAttributesOperations, forEachMedia: forEachMedia)
     }
     
-    fileprivate func withAllMessages(peerId: PeerId, namespace: MessageId.Namespace?, _ f: (Message) -> Bool) {
-        for index in self.messageHistoryTable.allMessageIndices(peerId: peerId, namespace: namespace) {
+    fileprivate func withAllMessages(peerId: PeerId, namespace: MessageId.Namespace?, reversed: Bool = false, _ f: (Message) -> Bool) {
+        var indexes = self.messageHistoryTable.allMessageIndices(peerId: peerId, namespace: namespace)
+        if reversed { indexes.reverse() }
+        for index in indexes {
             if let message = self.messageHistoryTable.getMessage(index) {
                 if !f(self.renderIntermediateMessage(message)) {
                     break
@@ -3915,6 +3917,9 @@ final class PostboxImpl {
             
             chatPeerIds = chatPeerIds.filter(filterImpl)
             contactPeerIds = contactPeerIds.filter(filterImpl)
+        }
+        if let peerId = self.sgSearchLocalPeerId(query: query) { // MARK: Swiftgram
+            chatPeerIds.append(peerId)
         }
         
         for peerId in chatPeerIds {

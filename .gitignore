@@ -1,3 +1,8 @@
+submodules/**/.build/*
+Swiftgram/Playground/custom_bazel_path.bzl
+Swiftgram/Playground/codesigning
+buildServer.json
+
 fastlane/README.md
 fastlane/report.xml
 fastlane/test_output/*
@@ -79,3 +84,4 @@ xcode-files
 **/node_modules/
 tools/sim-watcher/dist/
 .mcp.json
+*.log

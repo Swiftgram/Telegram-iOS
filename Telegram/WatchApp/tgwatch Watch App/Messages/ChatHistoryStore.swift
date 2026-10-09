@@ -548,7 +548,12 @@ final class ChatHistoryStore {
         case .updateDeleteMessages(let upd) where upd.chatId == chatId && upd.isPermanent:
             window.applyDelete(ids: upd.messageIds)
             scheduleReproject()
-        case .updateUser:
+        case .updateUser(let upd):
+            // MARK: Swiftgram
+            if let photo = upd.user.profilePhoto {
+                primeFile(photo.small)
+            }
+            //
             // UserNamesStore (owned by TDClient) absorbed the update before
             // it reached us. Just repaint with the new cache snapshot.
             scheduleReproject()
@@ -645,7 +650,10 @@ final class ChatHistoryStore {
             calendar: Calendar.current,
             selfUserId: selfUserId,
             unreadDividerAfterId: window.unreadDividerAfterId,
-            lastReadOutboxMessageId: lastReadOutboxMessageId
+            lastReadOutboxMessageId: lastReadOutboxMessageId,
+            // MARK: Swiftgram
+            userAvatars: userNames.avatars
+            //
         )
         // If a voice playback is awaiting its file, advance it now that the
         // projection has the freshest `localPath`.

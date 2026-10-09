@@ -1,3 +1,5 @@
+import SGSimpleSettings // MARK: Swiftgram
+
 import Foundation
 import WebProxyTransport
 import Postbox
@@ -528,7 +530,7 @@ func initializedNetwork(accountId: AccountRecordId, arguments: NetworkInitializa
             
             let useTempAuthKeys: Bool = true
             
-            let context = MTContext(serialization: serialization, encryptionProvider: arguments.encryptionProvider, apiEnvironment: apiEnvironment, isTestingEnvironment: testingEnvironment, useTempAuthKeys: useTempAuthKeys)
+            let context = MTContext(serialization: serialization, encryptionProvider: arguments.encryptionProvider, apiEnvironment: apiEnvironment, isTestingEnvironment: testingEnvironment, useTempAuthKeys: useTempAuthKeys, forceLocalDNS: SGSimpleSettings.shared.localDNSForProxyHost) // MARK: Swiftgram
             context.refreshesTemporaryKeys = !supplementary
             
             if let networkSettings = networkSettings {

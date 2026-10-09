@@ -1,3 +1,7 @@
+import SGInputToolbar // MARK: Swiftgram
+import SwiftUI
+import SGSimpleSettings
+
 import Foundation
 import UIKit
 import Display
@@ -322,6 +326,9 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
     private var strings: PresentationStrings?
 
     private let hapticFeedback = HapticFeedback()
+    
+    //    private var toolbarHostingController: UIViewController? //Any? //  UIHostingController<ChatToolbarView>?
+    private var toolbarNode: ASDisplayNode? // MARK: Swiftgram
 
     public var inputTextState: ChatTextInputState {
         if let textInputNode = self.textInputNode {
@@ -611,6 +618,8 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
             }
         )
         self.inputMediaInteraction?.forceTheme = presentationInterfaceState.theme
+        
+        self.initToolbarIfNeeded(context: context) // MARK: Swiftgram
     }
 
     public var sendPressed: ((NSAttributedString?) -> Void)?
@@ -783,6 +792,7 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
 
         textInputNode.textView.accessibilityHint = self.textPlaceholderNode.attributedText?.string
         self.applyCurrentInputMode(reload: false)
+        self.initToolbarIfNeeded(context: self.context)
     }
 
     private func textFieldMaxHeight(_ maxHeight: CGFloat, metrics: LayoutMetrics) -> CGFloat {
@@ -1287,7 +1297,7 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
         self.currentHeight = totalHeight
         return totalHeight
     }
-
+    
     private func updateFieldAndButtonsLayout(inputHasText: Bool, panelHeight: CGFloat, panelOriginY: CGFloat, textInputFrame: CGRect, transition: ContainedViewLayoutTransition) -> CGFloat {
         guard let layout = self.validLayout else {
             return 0.0
@@ -2409,3 +2419,86 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
         return nil
     }
 }
+
+// MARK: Swiftgram
+extension AttachmentTextInputPanelNode {
+    
+    func initToolbarIfNeeded(context: AccountContext) {
+        guard #available(iOS 13.0, *) else { return }
+        guard SGSimpleSettings.shared.inputToolbar else { return }
+        guard context.sharedContext.immediateSGStatus.status > 1 else { return }
+        guard self.toolbarNode == nil else { return }
+        let toolbarView = ChatToolbarView(
+            showsDateAction: true,
+            showNewLine: .constant(true), //.constant(self.sendWithReturnKey)
+            onAction: { [weak self] action in
+                guard let strongSelf = self else { return }
+                switch action {
+                case .quote:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesQuote(strongSelf)
+                case .spoiler:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesSpoiler(strongSelf)
+                case .bold:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesBold(strongSelf)
+                case .italic:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesItalic(strongSelf)
+                case .date:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.interfaceInteraction?.openDateEditing()
+                case .monospace:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesMonospace(strongSelf)
+                case .link:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesLink(strongSelf)
+                case .underline:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesUnderline(strongSelf)
+                case .strikethrough:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesStrikethrough(strongSelf)
+                case .code:
+                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
+                    strongSelf.formatAttributesCodeBlock(strongSelf)
+                case .newLine:
+                    strongSelf.interfaceInteraction?.sgSetNewLine()
+                case .clearFormatting:
+                    strongSelf.interfaceInteraction?.updateTextInputStateAndMode { current, inputMode in
+                        return (chatTextInputAddFormattingAttribute(forceRemoveAll: true, current, attribute: ChatTextInputAttributes.allAttributes[0], value: nil), inputMode)
+                    }
+                }
+            }
+        )
+        let toolbarHostingController = UIHostingController(rootView: toolbarView)
+        toolbarHostingController.view.backgroundColor = .clear
+        let toolbarNode = ASDisplayNode { toolbarHostingController.view }
+        self.toolbarNode = toolbarNode
+        // assigning toolbarHostingController bugs responsivness and overrides layout
+        // self.toolbarHostingController = toolbarHostingController
+        
+        // Disable "Swipe to go back" gesture when touching scrollview
+        self.view.interactiveTransitionGestureRecognizerTest = { [weak self] point in
+            if let self, let _ = self.toolbarNode?.view.hitTest(point, with: nil) {
+                return false
+            }
+            return true
+        }
+        self.addSubnode(toolbarNode)
+    }
+    
+    func layoutToolbar(transition: ContainedViewLayoutTransition, panelHeight: CGFloat, width: CGFloat, leftInset: CGFloat, rightInset: CGFloat) -> CGFloat {
+        var toolbarHeight: CGFloat = 0.0
+        var toolbarSpacing: CGFloat = 0.0
+        if let toolbarNode = self.toolbarNode {
+            toolbarHeight = 44.0
+            toolbarSpacing = 1.0
+            transition.updateFrame(node: toolbarNode, frame: CGRect(origin: CGPoint(x: leftInset, y: panelHeight + toolbarSpacing), size: CGSize(width: width - rightInset - leftInset, height: toolbarHeight)))
+        }
+        return toolbarHeight + toolbarSpacing
+    }
+}
+//

@@ -1,4 +1,5 @@
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+new_git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository") # MARK: Swiftgram
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
@@ -201,6 +202,15 @@ local_path_override(
 apple_cc_configure = use_extension("@build_bazel_apple_support//crosstool:setup.bzl", "apple_cc_configure_extension")
 use_repo(apple_cc_configure, "local_config_apple_cc", "local_config_apple_cc_toolchains")
 register_toolchains("@local_config_apple_cc_toolchains//:all")
+
+# MARK: Swiftgram
+new_git_repository(
+    name = "flex_sdk",
+    remote = "https://github.com/FLEXTool/FLEX.git",
+    commit = "2bfba6715eff664ef84a02e8eb0ad9b5a609c684",
+    build_file = "@//Swiftgram/FLEX:FLEX.BUILD"
+)
+#
 
 http_file(
     name = "cmake_tar_gz",

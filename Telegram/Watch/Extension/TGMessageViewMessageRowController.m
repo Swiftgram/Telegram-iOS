@@ -234,7 +234,7 @@ NSString *const TGMessageViewMessageRowIdentifier = @"TGMessageViewMessageRow";
                 else
                 {
                     self.avatarInitialsLabel.hidden = false;
-                    self.avatarGroup.backgroundColor = [TGColor colorForUserId:(int32_t)user.identifier myUserId:context.userId];
+                    self.avatarGroup.backgroundColor = [TGColor colorForUserId:(int64_t)user.identifier myUserId:context.userId];
                     self.avatarInitialsLabel.text = [TGStringUtils initialsForFirstName:user.firstName lastName:user.lastName single:true];
                     
                     [self.avatarGroup setBackgroundImageSignal:nil isVisible:self.isVisible];
@@ -280,7 +280,7 @@ NSString *const TGMessageViewMessageRowIdentifier = @"TGMessageViewMessageRow";
         if (TGPeerIdIsChannel(forwardAttachment.peerId))
             forwardPeer = additionalPeers[@(forwardAttachment.peerId)];
         else
-            forwardPeer = [[TGBridgeUserCache instance] userWithId:(int32_t)forwardAttachment.peerId];
+            forwardPeer = [[TGBridgeUserCache instance] userWithId:(int64_t)forwardAttachment.peerId];
     }
     
     [TGMessageViewModel updateForwardHeaderGroup:self.forwardHeaderButton titleLabel:self.forwardTitleLabel fromLabel:self.forwardFromLabel forwardAttachment:forwardAttachment forwardPeer:forwardPeer textColor:[UIColor whiteColor]];

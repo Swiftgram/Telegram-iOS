@@ -157,12 +157,12 @@ NSString *const TGBridgeMessagesArrayKey = @"messages";
         return self.identifier == message.identifier;
 }
 
-+ (instancetype)temporaryNewMessageForText:(NSString *)text userId:(int32_t)userId
++ (instancetype)temporaryNewMessageForText:(NSString *)text userId:(int64_t)userId
 {
     return [self temporaryNewMessageForText:text userId:userId replyToMessage:nil];
 }
 
-+ (instancetype)temporaryNewMessageForText:(NSString *)text userId:(int32_t)userId replyToMessage:(TGBridgeMessage *)replyToMessage
++ (instancetype)temporaryNewMessageForText:(NSString *)text userId:(int64_t)userId replyToMessage:(TGBridgeMessage *)replyToMessage
 {
     int64_t randomId = 0;
     arc4random_buf(&randomId, 8);
@@ -192,17 +192,17 @@ NSString *const TGBridgeMessagesArrayKey = @"messages";
     return message;
 }
 
-+ (instancetype)temporaryNewMessageForSticker:(TGBridgeDocumentMediaAttachment *)sticker userId:(int32_t)userId
++ (instancetype)temporaryNewMessageForSticker:(TGBridgeDocumentMediaAttachment *)sticker userId:(int64_t)userId
 {
     return [self _temporaryNewMessageForMediaAttachment:sticker userId:userId];
 }
 
-+ (instancetype)temporaryNewMessageForLocation:(TGBridgeLocationMediaAttachment *)location userId:(int32_t)userId
++ (instancetype)temporaryNewMessageForLocation:(TGBridgeLocationMediaAttachment *)location userId:(int64_t)userId
 {
     return [self _temporaryNewMessageForMediaAttachment:location userId:userId];
 }
 
-+ (instancetype)temporaryNewMessageForAudioWithDuration:(int32_t)duration userId:(int32_t)userId localAudioId:(int64_t)localAudioId
++ (instancetype)temporaryNewMessageForAudioWithDuration:(int32_t)duration userId:(int64_t)userId localAudioId:(int64_t)localAudioId
 {
     TGBridgeDocumentMediaAttachment *document = [[TGBridgeDocumentMediaAttachment alloc] init];
     document.isAudio = true;
@@ -213,7 +213,7 @@ NSString *const TGBridgeMessagesArrayKey = @"messages";
     return [self _temporaryNewMessageForMediaAttachment:document userId:userId];
 }
 
-+ (instancetype)_temporaryNewMessageForMediaAttachment:(TGBridgeMediaAttachment *)attachment userId:(int32_t)userId
++ (instancetype)_temporaryNewMessageForMediaAttachment:(TGBridgeMediaAttachment *)attachment userId:(int64_t)userId
 {
     int64_t randomId = 0;
     arc4random_buf(&randomId, 8);

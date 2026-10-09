@@ -133,7 +133,7 @@ final class WebAppWebView: WKWebView {
         return UIEdgeInsets(top: self.customInsets.top, left: self.customInsets.left, bottom: self.customInsets.bottom, right: self.customInsets.right)
     }
     
-    init(account: Account) {
+    init(userScripts: [WKUserScript] = [], account: Account) {
         let configuration = WKWebViewConfiguration()
                 
         if #available(iOS 17.0, *) {
@@ -172,6 +172,10 @@ final class WebAppWebView: WKWebView {
         
         let videoScript = WKUserScript(source: videoSource, injectionTime: .atDocumentStart, forMainFrameOnly: false)
         contentController.addUserScript(videoScript)
+        
+        for userScript in userScripts {
+            contentController.addUserScript(userScript)
+        }
         
         configuration.userContentController = contentController
         

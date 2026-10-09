@@ -47,6 +47,9 @@ class BazelCommandLine:
         self.enable_sandbox = False
         self.disable_provisioning_profiles = False
         self.profile_swift = False
+        # MARK: Swiftgram
+        self.bazel_profile = None
+        #
         self.embed_watch_app = False
         self.watch_api_id = None
         self.watch_api_hash = None
@@ -143,6 +146,11 @@ class BazelCommandLine:
 
     def set_profile_swift(self, value):
         self.profile_swift = value
+
+    # MARK: Swiftgram
+    def set_bazel_profile(self, path):
+        self.bazel_profile = path
+    #
 
     def set_configuration(self, configuration):
         if configuration == 'debug_arm64':
@@ -289,12 +297,17 @@ class BazelCommandLine:
         if self.custom_target is not None:
             combined_arguments += [self.custom_target]
         else:
-            combined_arguments += ['Telegram/Telegram']
+            combined_arguments += ['Telegram/Swiftgram']
 
         if self.continue_on_error:
             combined_arguments += ['--keep_going']
         if self.show_actions:
             combined_arguments += ['--subcommands']
+
+        # MARK: Swiftgram
+        if self.bazel_profile is not None:
+            combined_arguments += ['--profile={}'.format(self.bazel_profile)]
+        #
 
         if self.enable_sandbox:
             combined_arguments += ['--spawn_strategy=sandboxed']
@@ -686,6 +699,14 @@ def build(bazel, arguments):
     bazel_command_line.set_continue_on_error(arguments.continueOnError)
     bazel_command_line.set_show_actions(arguments.showActions)
     bazel_command_line.set_enable_sandbox(arguments.sandbox)
+    # MARK: Swiftgram
+    if arguments.disableProvisioningProfiles:
+        bazel_command_line.set_disable_provisioning_profiles()
+    if arguments.bazelProfile is not None:
+        bazel_profile_path = os.path.abspath(arguments.bazelProfile)
+        os.makedirs(os.path.dirname(bazel_profile_path), exist_ok=True)
+        bazel_command_line.set_bazel_profile(bazel_profile_path)
+    #
     bazel_command_line.set_profile_swift(arguments.profileSwift)
 
     bazel_command_line.set_split_swiftmodules(arguments.enableParallelSwiftmoduleGeneration)
@@ -694,24 +715,24 @@ def build(bazel, arguments):
 
     if arguments.outputBuildArtifactsPath is not None:
         artifacts_path = os.path.abspath(arguments.outputBuildArtifactsPath)
-        if os.path.exists(artifacts_path + '/Telegram.ipa'):
-            os.remove(artifacts_path + '/Telegram.ipa')
+        if os.path.exists(artifacts_path + '/Swiftgram.ipa'):
+            os.remove(artifacts_path + '/Swiftgram.ipa')
         if os.path.exists(artifacts_path + '/DSYMs'):
             shutil.rmtree(artifacts_path + '/DSYMs')
         os.makedirs(artifacts_path, exist_ok=True)
         os.makedirs(artifacts_path + '/DSYMs', exist_ok=True)
 
         built_ipa_path_prefix = 'bazel-bin/Telegram'
-        ipa_paths = glob.glob('{}/Telegram.ipa'.format(built_ipa_path_prefix))
+        ipa_paths = glob.glob('{}/Swiftgram.ipa'.format(built_ipa_path_prefix))
         if len(ipa_paths) == 0:
-            print(f'Could not find the IPA at {built_ipa_path_prefix}/Telegram.ipa')
+            print(f'Could not find the IPA at {built_ipa_path_prefix}/Swiftgram.ipa')
             sys.exit(1)
         elif len(ipa_paths) > 1:
             print('Multiple matching IPA files found: {}'.format(ipa_paths))
             sys.exit(1)
-        shutil.copyfile(ipa_paths[0], artifacts_path + '/Telegram.ipa')
+        shutil.copyfile(ipa_paths[0], artifacts_path + '/Swiftgram.ipa')
 
-        dsym_paths = glob.glob('bazel-bin/Telegram/*.dSYM')
+        dsym_paths = glob.glob('bazel-bin/Telegram/*.dSYM') + glob.glob('bazel-out/watchos_arm64_32-opt-watchos-arm64_32-min7.0-applebin_watchos-ST-*/bin/Telegram/SwiftgramWatchApp_dsyms/*.dSYM') + glob.glob('bazel-out/watchos_armv7k-opt-watchos-armv7k-min7.0-applebin_watchos-ST-*/bin/Telegram/SwiftgramWatchApp_dsyms/*.dSYM') 
         for dsym_path in dsym_paths:
             file_name = os.path.basename(dsym_path)
             shutil.copytree(dsym_path, artifacts_path + '/DSYMs/{}'.format(file_name))
@@ -719,7 +740,7 @@ def build(bazel, arguments):
         os.chdir(artifacts_path)
         run_executable_with_output('zip', arguments=[
             '-r',
-            'Telegram.DSYMs.zip',
+            'Swiftgram.DSYMs.zip',
             './DSYMs'
         ], check_result=True)
         os.chdir(previous_directory)
@@ -1045,6 +1066,20 @@ if __name__ == '__main__':
         help='Generate .swiftmodule files in parallel to building modules, can speed up compilation on multi-core '
              'systems. '
     )
+    # MARK: Swiftgram
+    buildParser.add_argument(
+        '--disableProvisioningProfiles',
+        action='store_true',
+        default=False,
+        help='Build without provisioning profiles.',
+    )
+    buildParser.add_argument(
+        '--bazelProfile',
+        required=False,
+        help='Write a Bazel execution profile to this path.',
+        metavar='path',
+    )
+    #
     buildParser.add_argument(
         '--profileSwift',
         action='store_true',

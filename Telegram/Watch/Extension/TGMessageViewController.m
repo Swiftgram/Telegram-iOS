@@ -158,7 +158,7 @@ NSString *const TGMessageViewControllerIdentifier = @"TGMessageViewController";
     }
     else
     {
-        TGBridgeUser *user = [[TGBridgeUserCache instance] userWithId:(int32_t)_context.message.fromUid];
+        TGBridgeUser *user = [[TGBridgeUserCache instance] userWithId:(int64_t)_context.message.fromUid];
         [controller updateWithUser:user context:_context.context];
     }
 }
@@ -173,7 +173,7 @@ NSString *const TGMessageViewControllerIdentifier = @"TGMessageViewController";
     }
     else
     {
-        TGUserInfoControllerContext *context = [[TGUserInfoControllerContext alloc] initWithUserId:(int32_t)_context.message.fromUid];
+        TGUserInfoControllerContext *context = [[TGUserInfoControllerContext alloc] initWithUserId:(int64_t)_context.message.fromUid];
         [self pushControllerWithClass:[TGUserInfoController class] context:context];
     }
 }
@@ -222,6 +222,22 @@ NSString *const TGMessageViewControllerIdentifier = @"TGMessageViewController";
             }]];
         }];
     };
+    // MARK: Swiftgram
+    controller.replyWithoutPresetPressed = ^
+    {
+        __strong TGMessageViewController *strongSelf = weakSelf;
+        if (strongSelf == nil)
+            return;
+        
+        [TGInputController presentInputControllerWithEmojisForInterfaceController:strongSelf completion:^(NSString *text)
+        {
+            [strongSelf->_sendMessageDisposable setDisposable:[[TGBridgeSendMessageSignals sendMessageWithPeerId:strongSelf->_context.peerId text:text replyToMid:strongSelf->_context.message.identifier] startWithNext:^(TGBridgeMessage *message)
+            {
+                
+            }]];
+        }];
+    };
+    //
     controller.viewPressed = ^
     {
         __strong TGMessageViewController *strongSelf = weakSelf;
@@ -280,7 +296,7 @@ NSString *const TGMessageViewControllerIdentifier = @"TGMessageViewController";
                 if (TGPeerIdIsChannel(peerId))
                     context = [[TGUserInfoControllerContext alloc] initWithChannel:_context.additionalPeers[@(peerId)]];
                 else
-                    context = [[TGUserInfoControllerContext alloc] initWithUserId:(int32_t)peerId];
+                    context = [[TGUserInfoControllerContext alloc] initWithUserId:(int64_t)peerId];
                 
                 [strongSelf pushControllerWithClass:[TGUserInfoController class] context:context];
             }

@@ -13,6 +13,7 @@ swift_library(
         "//submodules/Camera:CameraBundle",
     ],
     deps = [
+        "//Swiftgram/SGSimpleSettings:SGSimpleSettings", # MARK: Swiftgram
         "//submodules/Camera",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/Display:Display",

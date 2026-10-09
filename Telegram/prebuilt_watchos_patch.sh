@@ -31,6 +31,7 @@
 #   $6 versions_json versions.json (key 'app' => CFBundleShortVersionString)
 #   $7 build_number  CFBundleVersion
 set -euo pipefail
+export COPYFILE_DISABLE=1
 
 IN_ZIP="$1"; OUT_ZIP="$2"; IDENTITY="${3:-}"; PROFILE="${4:-}"; INFOPLIST_OUT="${5:-}"; VERSIONS_JSON="${6:-}"; BUILD_NUMBER="${7:-1}"
 
@@ -68,6 +69,9 @@ PLIST="$APP/Info.plist"
 if [ -n "$INFOPLIST_OUT" ]; then
   cp "$PLIST" "$INFOPLIST_OUT"
 fi
+
+# App Store validation rejects AppleDouble/resource-fork metadata inside signed bundles.
+/usr/bin/find "$APP" \( -name '._*' -o -name '.DS_Store' \) -delete
 
 if [ -n "$IDENTITY" ] && [ -z "$PROFILE" ]; then
   echo "error: a signing identity was given but no provisioning profile (set --watchProvisioningProfile=<abs path>)" >&2
@@ -127,4 +131,4 @@ fi
 # (that would resolve $OUT_ZIP against the temp dir). --keepParent makes the archive
 # root the .app itself even when $APP is an absolute path.
 rm -f "$OUT_ZIP"
-/usr/bin/ditto -c -k --keepParent "$APP" "$OUT_ZIP"
+/usr/bin/ditto -c -k --norsrc --keepParent "$APP" "$OUT_ZIP"

@@ -1,3 +1,6 @@
+import UndoUI
+//
+import ContactListUI
 import Foundation
 import Display
 import TelegramCore
@@ -293,20 +296,26 @@ private func handleInternetUrl(
                     let controller = BrowserScreen(context: context, subject: .webPage(url: parsedUrl.absoluteString))
                     navigationController?.pushViewController(controller)
                 } else {
-                    let openInOptions = availableOpenInOptions(context: context, item: .url(url: originalUrl))
-                    var defaultWebBrowser = localSettings.defaultWebBrowser
-                    if defaultWebBrowser == nil || defaultWebBrowser == "inApp" || defaultWebBrowser == "inAppSafari" {
-                        defaultWebBrowser = "safari"
-                    }
-                    if let option = openInOptions.first(where: { $0.identifier == defaultWebBrowser }) {
-                        if case let .openUrl(openInUrl) = option.action() {
-                            context.sharedContext.applicationBindings.openUrl(openInUrl)
+                    // MARK: Swiftgram
+                    if localSettings.defaultWebBrowser == "inApp" {
+                        sgOpenUrlWithSafariController(parsedUrl: parsedUrl, originalUrl: originalUrl, context: context, presentationData: presentationData, navigationController: navigationController)
+                    } else {
+                        let openInOptions = availableOpenInOptions(context: context, item: .url(url: originalUrl))
+                        var defaultWebBrowser = localSettings.defaultWebBrowser
+                        if defaultWebBrowser == nil || defaultWebBrowser == "inAppSafari" {
+                            defaultWebBrowser = "safari"
+                        }
+                        if let option = openInOptions.first(where: { $0.identifier == defaultWebBrowser }) {
+                            if case let .openUrl(openInUrl) = option.action() {
+                                context.sharedContext.applicationBindings.openUrl(openInUrl)
+                            } else {
+                                context.sharedContext.applicationBindings.openUrl(originalUrl)
+                            }
                         } else {
                             context.sharedContext.applicationBindings.openUrl(originalUrl)
                         }
-                    } else {
-                        context.sharedContext.applicationBindings.openUrl(originalUrl)
                     }
+                    //
                 }
             })
         }
@@ -890,6 +899,12 @@ private func openCheckedExternalUrl(context: AccountContext, urlContext: OpenURL
                 switch host {
                 case "stars":
                     handleResolvedUrl(.stars)
+                case "sg":
+                    // MARK: Swiftgram
+                    if sgHandleInternalUrlRoute(context: context, parsedUrl: parsedUrl, navigationController: navigationController) {
+                        return
+                    }
+                    //
                 case "ton":
                     handleResolvedUrl(.ton)
                 case "importstickers":

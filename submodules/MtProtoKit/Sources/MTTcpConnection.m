@@ -862,6 +862,8 @@ struct ctr_state {
     NSMutableArray<MTTcpSendData *> *_pendingDataQueue;
     NSMutableData *_receivedDataBuffer;
     MTTcpReceiveData *_pendingReceiveData;
+    
+    bool _forceLocalDNS;
 }
 
 @property (nonatomic) int64_t packetHeadDecodeToken;
@@ -954,6 +956,8 @@ struct ctr_state {
         
         _pendingDataQueue = [[NSMutableArray alloc] init];
         _receivedDataBuffer = [[NSMutableData alloc] init];
+        
+        _forceLocalDNS = context.forceLocalDNS;
     }
     return self;
 }
@@ -1065,7 +1069,7 @@ struct ctr_state {
                 
                 if (isHostname) {
                     int32_t port = _socksPort;
-                    resolveSignal = [[MTDNS resolveHostnameUniversal:_socksIp port:port] map:^id(NSString *resolvedIp) {
+                    resolveSignal = [( _forceLocalDNS ? [MTDNS resolveHostnameNative:_socksIp port:port] : [MTDNS resolveHostnameUniversal:_socksIp port:port]) map:^id(NSString *resolvedIp) {
                         return [[MTTcpConnectionData alloc] initWithIp:resolvedIp port:port isSocks:true];
                     }];
                 } else {
@@ -1083,7 +1087,7 @@ struct ctr_state {
                 
                 if (isHostname) {
                     int32_t port = _mtpPort;
-                    resolveSignal = [[MTDNS resolveHostnameUniversal:_mtpIp port:port] map:^id(NSString *resolvedIp) {
+                    resolveSignal = [( _forceLocalDNS ? [MTDNS resolveHostnameNative:_mtpIp port:port] : [MTDNS resolveHostnameUniversal:_mtpIp port:port]) map:^id(NSString *resolvedIp) {
                         return [[MTTcpConnectionData alloc] initWithIp:resolvedIp port:port isSocks:false];
                     }];
                 } else {

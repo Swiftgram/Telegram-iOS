@@ -13,6 +13,7 @@
 @synthesize cropMirrored = _cropMirrored;
 @synthesize paintingData = _paintingData;
 @synthesize sendAsGif = _sendAsGif;
+@synthesize sendAsTelescope = _sendAsTelescope;
 @synthesize toolValues = _toolValues;
 
 + (instancetype)editorValuesWithOriginalSize:(CGSize)originalSize cropRectangle:(PGRectangle *)cropRectangle cropOrientation:(UIImageOrientation)cropOrientation cropSize:(CGSize)cropSize enhanceDocument:(bool)enhanceDocument paintingData:(TGPaintingData *)paintingData
@@ -29,7 +30,7 @@
 }
 
 
-+ (instancetype)editorValuesWithOriginalSize:(CGSize)originalSize cropRect:(CGRect)cropRect cropRotation:(CGFloat)cropRotation cropOrientation:(UIImageOrientation)cropOrientation cropLockedAspectRatio:(CGFloat)cropLockedAspectRatio cropMirrored:(bool)cropMirrored toolValues:(NSDictionary *)toolValues paintingData:(TGPaintingData *)paintingData sendAsGif:(bool)sendAsGif
++ (instancetype)editorValuesWithOriginalSize:(CGSize)originalSize cropRect:(CGRect)cropRect cropRotation:(CGFloat)cropRotation cropOrientation:(UIImageOrientation)cropOrientation cropLockedAspectRatio:(CGFloat)cropLockedAspectRatio cropMirrored:(bool)cropMirrored toolValues:(NSDictionary *)toolValues paintingData:(TGPaintingData *)paintingData sendAsGif:(bool)sendAsGif sendAsTelescope:(bool)sendAsTelescope
 {
     PGPhotoEditorValues *values = [[PGPhotoEditorValues alloc] init];
     values->_originalSize = originalSize;
@@ -41,6 +42,7 @@
     values->_toolValues = toolValues;
     values->_paintingData = paintingData;
     values->_sendAsGif = sendAsGif;
+    values->_sendAsTelescope = sendAsTelescope;
     return values;
 }
 
