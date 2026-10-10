@@ -30,8 +30,8 @@ final class SGVideoSeekIconComponent: Component {
 
         func update(component: SGVideoSeekIconComponent, availableSize: CGSize, transition: ComponentTransition) -> CGSize {
             if self.component?.systemName != component.systemName || self.component?.tintColor != component.tintColor || self.component?.pointSize != component.pointSize {
-                // Ultralight stroke to visually match the adjacent controls.
-                let configuration = UIImage.SymbolConfiguration(pointSize: component.pointSize, weight: .ultraLight)
+                // Regular stroke to visually match the adjacent controls.
+                let configuration = UIImage.SymbolConfiguration(pointSize: component.pointSize, weight: .regular)
                 self.image = UIImage(systemName: component.systemName, withConfiguration: configuration)?.withRenderingMode(.alwaysTemplate)
                 self.tintColor = component.tintColor
             }
