@@ -617,6 +617,7 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
             && !recognizer.currentAllowedDirections.intersection(.right).isEmpty
             && self.controller?.isStoryPostingAvailable == true
             && !(self.context.sharedContext.callManager?.hasActiveCall ?? false)
+            && !SGSimpleSettings.shared.disableSwipeToRecordStory // MARK: Swiftgram
         let hasLiveStream = canOpenStoryCamera && self.controller?.chatListHeaderView()?.storyPeerListView()?.isLiveStreaming == true
         
         switch recognizer.state {
@@ -675,7 +676,7 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
                     return bandingStart + (1.0 - (1.0 / ((bandedOffset * coefficient / range) + 1.0))) * range
                 }
                 
-                if canOpenStoryCamera && !SGSimpleSettings.shared.disableSwipeToRecordStory { // MARK: Swiftgram
+                if canOpenStoryCamera {
                     if hasLiveStream {
                         if translation.x >= 30.0 {
                             self.panRecognizer?.cancel()
