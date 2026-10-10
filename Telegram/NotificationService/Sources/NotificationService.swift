@@ -31,6 +31,7 @@ private let PINNED_MESSAGE_ACTION: String = groupUserDefaults?.string(forKey: "p
 private let PINNED_MESSAGE_ACTION_EXCEPTIONS: [String: String] = (groupUserDefaults?.dictionary(forKey: "pinnedMessageNotificationsExceptions") as? [String: String]) ?? [:]
 private let MENTION_AND_REPLY_ACTION: String = groupUserDefaults?.string(forKey: "mentionsAndRepliesNotifications") ?? "default"
 private let MENTION_AND_REPLY_ACTION_EXCEPTIONS: [String: String] = (groupUserDefaults?.dictionary(forKey: "mentionsAndRepliesNotificationsExceptions") as? [String: String]) ?? [:]
+private let HIDE_ACCOUNT_IN_NOTIFICATIONS: Bool = groupUserDefaults?.bool(forKey: "hideAccountInNotifications") ?? false
 //
 
 private let queue = Queue()
@@ -1036,7 +1037,7 @@ private final class NotificationServiceHandler {
                 // extension runs out of time, already names the account. Only with several
                 // accounts: every transaction here takes the database write lock the app may hold.
                 let recipientAccountName: Signal<String?, NoError>
-                if notificationsNameRecipientAccount(records: records.records) {
+                if notificationsNameRecipientAccount(records: records.records) && !HIDE_ACCOUNT_IN_NOTIFICATIONS { // MARK: Swiftgram
                     recipientAccountName = stateManager.postbox.transaction { transaction -> String? in
                         return notificationRecipientAccountName(accountPeer: transaction.getPeer(accountPeerId))
                     }

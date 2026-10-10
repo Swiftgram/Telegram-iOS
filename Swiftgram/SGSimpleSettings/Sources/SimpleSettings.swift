@@ -178,6 +178,7 @@ public class SGSimpleSettings {
         case showProfileId
         case sendWithReturnKey
         case videoControlsInFooter
+        case hideAccountInNotifications
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -341,6 +342,7 @@ public class SGSimpleSettings {
         Keys.mentionsAndRepliesNotifications.rawValue: MentionsAndRepliesNotificationsSettings.default.rawValue,
         Keys.status.rawValue: 1,
         Keys.showRepostToStoryV2.rawValue: true,
+        Keys.hideAccountInNotifications.rawValue: false,
     ]
     
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
@@ -616,6 +618,9 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.videoControlsInFooter.rawValue)
     public var videoControlsInFooter: Bool
+
+    @UserDefault(key: Keys.hideAccountInNotifications.rawValue, userDefaults: UserDefaults(suiteName: APP_GROUP_IDENTIFIER) ?? .standard)
+    public var hideAccountInNotifications: Bool
 }
 
 extension SGSimpleSettings {

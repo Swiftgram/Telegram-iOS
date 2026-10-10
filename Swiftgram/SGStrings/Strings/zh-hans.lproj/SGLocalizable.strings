@@ -248,3 +248,4 @@
 "PayWall.ValidationError.TryAgain" = "购买验证过程中出现问题。不用担心！稍后再试恢复购买。";
 "PayWall.ValidationError.Expired" = "您的订阅已过期。再次订阅以重新获得专业版功能。";
 "Settings.videoControlsInFooter" = "底部视频控件";
+"Settings.HideAccountInNotifications" = "在通知中隐藏账号";

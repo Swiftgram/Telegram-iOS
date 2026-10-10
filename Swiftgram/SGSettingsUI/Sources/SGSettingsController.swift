@@ -107,6 +107,7 @@ private enum SGBoolSetting: String {
     case nyStyleLightning
     case tabBarSearchEnabled
     case videoControlsInFooter
+    case hideAccountInNotifications
 }
 
 private enum SGOneFromManySetting: String {
@@ -330,6 +331,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.DefaultEmojisFirst.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hidePhoneInSettings, value: SGSimpleSettings.shared.hidePhoneInSettings, text: i18n("Settings.HidePhoneInSettingsUI", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.HidePhoneInSettingsUI.Notice", lang)))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .hideAccountInNotifications, value: SGSimpleSettings.shared.hideAccountInNotifications, text: i18n("Settings.HideAccountInNotifications", lang), enabled: true))
     
     return filterSGItemListUIEntrires(entries: entries, by: state.searchQuery)
 }
@@ -525,6 +527,9 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             simplePromise.set(true) // Trigger update for 'enabled' field of other toggles
         case .videoControlsInFooter:
             SGSimpleSettings.shared.videoControlsInFooter = value
+        case .hideAccountInNotifications:
+            SGSimpleSettings.shared.hideAccountInNotifications = value
+            SGSimpleSettings.shared.synchronizeShared()
         }
     }, updateSliderValue: { setting, value in
         switch (setting) {
