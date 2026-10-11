@@ -1638,7 +1638,7 @@ public func privacyAndSecurityController(
                 }
             }
         } else {
-            defaultWebBrowser = presentationData.strings.WebBrowser_Telegram
+            defaultWebBrowser = presentationData.strings.WebBrowser_Telegram.replacingOccurrences(of: "Telegram", with: "Swiftgram") /* MARK: Swiftgram */
         }
         
         let listState = ItemListNodeState(presentationData: ItemListPresentationData(presentationData), entries: privacyAndSecurityControllerEntries(presentationData: presentationData, state: state, privacySettings: privacySettings, accessChallengeData: accessChallengeData.data, blockedPeerCount: blockedPeersState.totalCount, activeWebsitesCount: activeWebsitesState.sessions.count, hasTwoStepAuth: twoStepAuth.0, twoStepAuthData: twoStepAuth.1, hasPasskeys: passkeys.0, displayPasskeys: displayPasskeys, canAutoarchive: canAutoarchive, isPremiumDisabled: isPremiumDisabled, isPremium: isPremium, loginEmail: loginEmail, accountPeer: accountPeer, defaultWebBrowser: defaultWebBrowser, appConfiguration: appConfiguration), style: .blocks, ensureVisibleItemTag: focusOnItemTag, animateChanges: false)
