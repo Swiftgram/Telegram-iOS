@@ -48,6 +48,7 @@ private enum SGDebugToggles: String {
     case legacyNotificationsFix
     case inputToolbar
     case translatorLogs
+    case quickAttach
 }
 
 
@@ -71,6 +72,7 @@ private func SGDebugControllerEntries(presentationData: PresentationData) -> [SG
     entries.append(.action(id: id.count, section: .base, actionType: .clearOutgoingTranslationLanguageCache, text: "Clear Outgoing Translation cache", kind: .generic))
     entries.append(.toggle(id: id.count, section: .base, settingName: .translatorLogs, value: SGSimpleSettings.shared.translatorLogsEnabled, text: "Translator logs", enabled: true))
     entries.append(.toggle(id: id.count, section: .base, settingName: .forceImmediateShareSheet, value: SGSimpleSettings.shared.forceSystemSharing, text: "Force System Share Sheet", enabled: true))
+    entries.append(.toggle(id: id.count, section: .base, settingName: .quickAttach, value: SGSimpleSettings.shared.quickAttach, text: "Quick Media Attachment (long-tap 📎)", enabled: true))
     
     entries.append(.action(id: id.count, section: .base, actionType: .restorePurchases, text: "PayWall.RestorePurchases".i18n(presentationData.strings.baseLanguageCode), kind: .generic))
     #if DEBUG
@@ -101,6 +103,8 @@ public func sgDebugController(context: AccountContext) -> ViewController {
                 SGSimpleSettings.shared.synchronizeShared()
             case .inputToolbar:
                 SGSimpleSettings.shared.inputToolbar = value
+            case .quickAttach:
+                SGSimpleSettings.shared.quickAttach = value
             case .translatorLogs:
                 SGSimpleSettings.shared.setTranslatorLogsEnabled(value)
                 if value {

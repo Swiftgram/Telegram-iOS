@@ -551,6 +551,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     
     var walletTransferAnimation: ChatWalletTransferAnimation?
     weak var attachmentController: AttachmentController?
+    var quickAttachOpensPreview = false // MARK: Swiftgram
     
     weak var currentImportMessageTooltip: UndoOverlayController?
     

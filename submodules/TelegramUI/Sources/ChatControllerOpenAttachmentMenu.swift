@@ -1,4 +1,5 @@
 import Foundation
+import SGSimpleSettings // MARK: Swiftgram
 import UIKit
 import Display
 import SwiftSignalKit
@@ -52,6 +53,164 @@ extension ChatControllerImpl {
         case bot(id: EnginePeer.Id, payload: String?, justInstalled: Bool)
         case gift
     }
+
+    // MARK: Swiftgram quick attach
+    /// Runs library assets through the picker's own export pipeline, so strip picks become the same
+    /// media items the attachment sheet produces.
+    func quickAttachMessages(for assets: [PHAsset]) -> Signal<[EnqueueMessage], NoError> {
+        let context = self.context
+        let settings = context.sharedContext.accountManager.transaction { transaction -> GeneratedMediaStoreSettings in
+            let entry = transaction.getSharedData(ApplicationSpecificSharedDataKeys.generatedMediaStoreSettings)?.get(GeneratedMediaStoreSettings.self)
+            return entry ?? GeneratedMediaStoreSettings.defaultSettings
+        }
+        return settings
+        |> mapToSignal { settings -> Signal<[EnqueueMessage], NoError> in
+            let mediaAssets = assets.compactMap(TGMediaAsset.init(phAsset:))
+            guard !mediaAssets.isEmpty, let selectionContext = TGMediaSelectionContext(groupingAllowed: false, selectionLimit: Int32(mediaAssets.count)) else {
+                return .single([])
+            }
+            for mediaAsset in mediaAssets {
+                selectionContext.setItem(mediaAsset, selected: true)
+            }
+            let editingContext = TGMediaEditingContext()
+            if UserDefaults.standard.bool(forKey: "TG_photoHighQuality_v0") {
+                editingContext.setHighQualityPhoto(true)
+            }
+            guard let signals = TGMediaAssetsController.resultSignals(
+                for: selectionContext,
+                editingContext: editingContext,
+                intent: TGMediaAssetsControllerSendMediaIntent,
+                currentItem: nil,
+                storeAssets: true,
+                convertToJpeg: false,
+                descriptionGenerator: legacyAssetPickerItemGenerator(),
+                saveEditedPhotos: settings.storeEditedPhotos
+            ) else {
+                return .single([])
+            }
+            return legacyAssetPickerEnqueueMessages(context: context, account: context.account, signals: signals)
+            |> map { $0.map(\.message) }
+            |> `catch` { _ -> Signal<[EnqueueMessage], NoError> in
+                return .single([])
+            }
+        }
+    }
+
+    /// Sends the composer's attachments as albums of up to 10, the input text as the first caption.
+    func sendQuickAttachMedia(_ items: [(media: Media, hasSpoiler: Bool)]) {
+        guard !items.isEmpty else {
+            return
+        }
+        let inputText = self.presentationInterfaceState.interfaceState.effectiveInputState.inputText
+        var messages: [EnqueueMessage] = []
+        for chunkStart in stride(from: 0, to: items.count, by: 10) {
+            let chunk = items[chunkStart ..< min(chunkStart + 10, items.count)]
+            let groupingKey: Int64? = chunk.count > 1 ? Int64.random(in: 1 ... Int64.max) : nil
+            for item in chunk {
+                var text = ""
+                var attributes: [MessageAttribute] = []
+                if messages.isEmpty, !inputText.string.isEmpty {
+                    text = inputText.string
+                    let entities = generateChatInputTextEntities(inputText)
+                    if !entities.isEmpty {
+                        attributes.append(TextEntitiesMessageAttribute(entities: entities))
+                    }
+                }
+                if item.hasSpoiler {
+                    attributes.append(MediaSpoilerMessageAttribute())
+                }
+                messages.append(.message(text: text, attributes: attributes, inlineStickers: [:], mediaReference: .standalone(media: item.media), threadId: nil, replyToMessageId: nil, replyToStoryId: nil, localGroupingKey: groupingKey, correlationId: nil, bubbleUpEmojiOrStickersets: []))
+            }
+        }
+        if !inputText.string.isEmpty {
+            self.clearInputText()
+        }
+        self.sendMessages(self.transformEnqueueMessages(messages), media: true)
+    }
+
+    /// Opens the attachment sheet straight on the "selected" grid: the message preview for whatever
+    /// the composer holds.
+    func presentQuickAttachPreview() {
+        self.quickAttachOpensPreview = true
+        self.presentAttachmentMenu(subject: .default)
+    }
+
+    /// The picker's chevron: the composer becomes exactly the picker's selection, in its order.
+    /// Items that were already in the composer are kept; anything new is exported first.
+    private func collapseQuickAttach(from controller: MediaPickerScreenImpl) {
+        // The sheet's caption is the message text; the composer picks it up.
+        var caption: NSAttributedString?
+        if let signal = controller.editingContext?.forcedCaption() {
+            signal.start(next: { value in
+                caption = value as? NSAttributedString
+            })?.dispose()
+        }
+        if let caption, !caption.string.isEmpty {
+            self.updateChatPresentationInterfaceState(animated: true, interactive: true, { state in
+                return state.updatedInterfaceState { interfaceState in
+                    return interfaceState.withUpdatedEffectiveInputState(ChatTextInputState(inputText: caption))
+                }
+            })
+        }
+
+        let existing = Set(self.chatDisplayNode.quickAttachItems.map(\.identifier))
+        var kept: [String] = []
+        var spoilers: [String: Bool] = [:]
+        var added: [TGMediaSelectableItem] = []
+        for item in controller.selectedItems {
+            let keptIdentifier: String?
+            if let preview = item as? SGQuickAttachPreviewItem {
+                keptIdentifier = preview.identifier
+            } else if let identifier = item.uniqueIdentifier, existing.contains(identifier) {
+                keptIdentifier = identifier
+            } else {
+                keptIdentifier = nil
+            }
+            if let keptIdentifier {
+                kept.append(keptIdentifier)
+                if let editable = item as? (NSObject & TGMediaEditableItem), let editingContext = controller.editingContext {
+                    spoilers[keptIdentifier] = editingContext.spoiler(for: editable)
+                }
+            } else {
+                added.append(item)
+            }
+        }
+        self.chatDisplayNode.setQuickAttachOrder(kept, spoilers: spoilers)
+        if !added.isEmpty, let selectionContext = TGMediaSelectionContext(groupingAllowed: false, selectionLimit: Int32(added.count)) {
+            for item in added {
+                selectionContext.setItem(item, selected: true)
+            }
+            if let signals = TGMediaAssetsController.resultSignals(
+                for: selectionContext,
+                editingContext: controller.editingContext ?? TGMediaEditingContext(),
+                intent: TGMediaAssetsControllerSendMediaIntent,
+                currentItem: nil,
+                storeAssets: true,
+                convertToJpeg: false,
+                descriptionGenerator: legacyAssetPickerItemGenerator(),
+                saveEditedPhotos: false
+            ) {
+                self.chatDisplayNode.appendQuickAttachExport(signals: signals)
+            }
+        }
+        self.attachmentController?.dismiss(animated: true)
+    }
+
+    func presentQuickAttachPreparationError() {
+        self.present(
+            textAlertController(
+                context: self.context,
+                updatedPresentationData: self.updatedPresentationData,
+                title: nil,
+                text: self.presentationData.strings.Login_UnknownError,
+                actions: [
+                    TextAlertAction(type: .defaultAction, title: self.presentationData.strings.Common_OK, action: {})
+                ]
+            ),
+            in: .window(.root)
+        )
+    }
+    //
 
     func presentAttachmentMenu(subject: AttachMenuSubject) {
         Task { @MainActor [weak self] in
@@ -486,6 +645,7 @@ extension ChatControllerImpl {
                 attachmentController.didDismiss = { [weak self] in
                     self?.attachmentController = nil
                     self?.canReadHistory.set(true)
+                    self?.chatDisplayNode.textInputPanelNode?.setQuickAttachPreviewPlaybackSuspended(false) // MARK: Swiftgram
                 }
                 attachmentController.getSourceRect = { [weak self] in
                     if let strongSelf = self {
@@ -1245,6 +1405,11 @@ extension ChatControllerImpl {
                     attachmentController.navigationPresentation = .flatModal
                     strongSelf.push(attachmentController)
                     strongSelf.attachmentController = attachmentController
+                    // MARK: Swiftgram quick attach
+                    // The composer sits behind the sheet: its video tiles are invisible but keep
+                    // decoding, which shows up as stutter while the grid scrolls.
+                    strongSelf.chatDisplayNode.textInputPanelNode?.setQuickAttachPreviewPlaybackSuspended(true)
+                    //
                     
                     if case let .bot(botId, _, botJustInstalled) = subject, botJustInstalled {
                         if let button = allButtons.first(where: { button in
@@ -1524,11 +1689,36 @@ extension ChatControllerImpl {
         if let cachedData = self.contentData?.state.peerView?.cachedData as? CachedChannelData, cachedData.flags.contains(.paidMediaAllowed) {
             paidMediaAllowed = true
         }
+        // MARK: Swiftgram quick attach
+        // The sheet opens with the composer's attachments already selected, so its count and its
+        // preview grid describe the message as it stands.
+        var selectionContext: TGMediaSelectionContext?
+        var preselectedSpoilers: [NSObject & TGMediaEditableItem] = []
+        if SGSimpleSettings.shared.quickAttach {
+            let items = self.chatDisplayNode.quickAttachItems
+            selectionContext = TGMediaSelectionContext(groupingAllowed: false, selectionLimit: 100)
+            for item in items {
+                let selectable: NSObject & TGMediaSelectableItem & TGMediaEditableItem
+                if let asset = PHAsset.fetchAssets(withLocalIdentifiers: [item.identifier], options: nil).firstObject, let mediaAsset = TGMediaAsset(phAsset: asset) {
+                    selectable = mediaAsset
+                } else {
+                    selectable = SGQuickAttachPreviewItem(identifier: item.identifier, media: item.media, image: item.image)
+                }
+                selectionContext?.setItem(selectable, selected: true)
+                if item.hasSpoiler {
+                    preselectedSpoilers.append(selectable)
+                }
+            }
+            selectionContext?.selectionLimitExceeded = {
+                HapticFeedback().error()
+            }
+        }
+        //
         let controller = MediaPickerScreenImpl(
             context: self.context,
             updatedPresentationData: self.updatedPresentationData,
             style: .glass,
-            warpContentsOnEdges: false,
+            warpContentsOnEdges: SGSimpleSettings.shared.quickAttach, // MARK: Swiftgram
             peer: (self.presentationInterfaceState.renderedPeer?.peer).flatMap(EnginePeer.init),
             threadTitle: self.contentData?.state.threadInfo?.title,
             chatLocation: self.chatLocation,
@@ -1541,11 +1731,39 @@ extension ChatControllerImpl {
             paidMediaAllowed: paidMediaAllowed,
             subject: subject,
             sendPaidMessageStars: self.presentationInterfaceState.sendPaidMessageStars?.value,
+            selectionContext: selectionContext, // MARK: Swiftgram
             saveEditedPhotos: saveEditedPhotos,
             mainButtonState: mainButton?.state,
             mainButtonHidesOnSelection: mainButton != nil,
             mainButtonAction: mainButton?.action
         )
+        // MARK: Swiftgram quick attach
+        if SGSimpleSettings.shared.quickAttach {
+            for item in preselectedSpoilers {
+                controller.editingContext?.setSpoiler(true, for: item)
+            }
+            controller.collapseToComposer = { [weak self, weak controller] in
+                guard let self, let controller else {
+                    return
+                }
+                self.collapseQuickAttach(from: controller)
+            }
+            controller.sendFromComposer = { [weak self, weak controller] in
+                guard let self, let controller else {
+                    return
+                }
+                self.collapseQuickAttach(from: controller)
+                self.chatDisplayNode.sendQuickAttachWhenReady(controller: self)
+            }
+            if self.quickAttachOpensPreview {
+                self.quickAttachOpensPreview = false
+                controller.composerPreviewMessages = { [weak self] in
+                    return self?.chatDisplayNode.quickAttachPreviewMessages() ?? []
+                }
+                controller.showSelectedMedia()
+            }
+        }
+        //
         controller.openBoost = { [weak self, weak controller] in
             if let self {
                 controller?.dismiss()
@@ -1953,7 +2171,7 @@ extension ChatControllerImpl {
 
     /// `isEditingMessage` comes from the attachment menu that hosts the camera: a capture then replaces
     /// the edited message's media instead of sending a new message.
-    func openCamera(cameraView: TGAttachmentCameraView? = nil, isEditingMessage: Bool = false) {
+    func openCamera(cameraView: TGAttachmentCameraView? = nil, isEditingMessage: Bool = false, dismissedWithResult: @escaping () -> Void = {}, finishedTransitionOut: @escaping () -> Void = {}) { // MARK: Swiftgram
         let _ = (self.context.sharedContext.accountManager.transaction { transaction -> GeneratedMediaStoreSettings in
             let entry = transaction.getSharedData(ApplicationSpecificSharedDataKeys.generatedMediaStoreSettings)?.get(GeneratedMediaStoreSettings.self)
             return entry ?? GeneratedMediaStoreSettings.defaultSettings
@@ -2051,9 +2269,10 @@ extension ChatControllerImpl {
                 return makeMediaPickerPhotoToolbarView(context: context, backButton: backButton, doneButton: doneButton, solidBackground: solidBackground, hasSendStarsButton: hasSendStarsButton)
             }, dismissedWithResult: { [weak self] in
                 self?.attachmentController?.dismiss(animated: false, completion: nil)
+                dismissedWithResult() // MARK: Swiftgram
             }, finishedTransitionIn: { [weak self] in
                 self?.attachmentController?.scrollToTop?()
-            })
+            }, finishedTransitionOut: finishedTransitionOut) // MARK: Swiftgram
         })
     }
 

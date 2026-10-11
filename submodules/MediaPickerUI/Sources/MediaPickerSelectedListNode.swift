@@ -13,6 +13,9 @@ import MosaicLayout
 import WallpaperBackgroundNode
 import AccountContext
 import ChatMessageBackground
+// MARK: Swiftgram
+import TextFormat
+//
 import ChatSendMessageActionUI
 import ComponentFlow
 import ComponentDisplayAdapters
@@ -946,6 +949,13 @@ final class MediaPickerSelectedListNode: ASDisplayNode, ASScrollViewDelegate, AS
     }
     
     private var messageNodes: [ListViewItemNode]?
+    // MARK: Swiftgram
+    /// The post as it will be sent: when the composer hands over the finished messages, they are drawn
+    /// as one chat bubble in place of the grid; otherwise only the caption text is drawn under the grid.
+    var previewMessages: (() -> [(identifier: String, message: Message)])?
+    private var rawSelectedItems: [TGMediaSelectableItem] = []
+    private var captionNode: ListViewItemNode?
+    //
     private func updateItems(transition: ContainedViewLayoutTransition) {
         guard let (size, insets, items, grouped, theme, wallpaper, bubbleCorners) = self.validLayout else {
             return
@@ -1060,6 +1070,51 @@ final class MediaPickerSelectedListNode: ASDisplayNode, ASScrollViewDelegate, AS
             let headerItems: [ListViewItem] = [previewItem, dragItem]
             
             let params = ListViewItemLayoutParams(width: size.width, leftInset: insets.left, rightInset: insets.right, availableHeight: size.height)
+            
+            // MARK: Swiftgram
+            // Only the composer preview draws the message as a bubble; the stock grid keeps its own
+            // layout and never shows the caption here.
+            if self.previewMessages != nil {
+                var caption: NSAttributedString?
+                self.interaction?.editingState.forcedCaption().start(next: { value in
+                    caption = value as? NSAttributedString
+                })?.dispose()
+                // Spoilers come from the sheet's editing state, so "Hide With Spoiler" shows up right away.
+                var bubbleMessages: [Message] = (self.previewMessages?() ?? []).map { identifier, message in
+                    var attributes = message.attributes.filter { !($0 is MediaSpoilerMessageAttribute) }
+                    if let item = self.rawSelectedItems.first(where: { $0.uniqueIdentifier == identifier }) as? TGMediaEditableItem, let editingState = self.interaction?.editingState, editingState.spoiler(for: item) {
+                        attributes.append(MediaSpoilerMessageAttribute())
+                    }
+                    return message.withUpdatedAttributes(attributes)
+                }
+                if bubbleMessages.isEmpty, let caption, !caption.string.isEmpty {
+                    bubbleMessages = [Message(stableId: 0, stableVersion: 0, id: MessageId(peerId: peerId, namespace: 0, id: 0), globallyUniqueId: nil, groupingKey: nil, groupInfo: nil, threadId: nil, timestamp: 0, flags: [], tags: [], globalTags: [], localTags: [], customTags: [], forwardInfo: nil, author: peers[peerId], text: caption.string, attributes: [TextEntitiesMessageAttribute(entities: generateChatInputTextEntities(caption))], media: [], peers: peers, associatedMessages: SimpleDictionary(), associatedMessageIds: [], associatedMedia: [:], associatedThreadInfo: nil, associatedStories: [:])]
+                }
+                if !bubbleMessages.isEmpty {
+                    let captionItem = self.context.sharedContext.makeChatMessagePreviewItem(context: context, messages: bubbleMessages, theme: theme, strings: presentationData.strings, wallpaper: wallpaper, fontSize: presentationData.chatFontSize, chatBubbleCorners: bubbleCorners, dateTimeFormat: presentationData.dateTimeFormat, nameOrder: presentationData.nameDisplayOrder, forcedResourceStatus: nil, tapMessage: nil, clickThroughMessage: nil, backgroundNode: self.wallpaperBackgroundNode, availableReactions: nil, accountPeer: nil, isCentered: false, isPreview: false, isStandalone: false, rank: nil, rankRole: nil, isGiftMessageComposerPreview: false)
+                    if let captionNode = self.captionNode {
+                        captionItem.updateNode(async: { $0() }, node: { captionNode }, params: params, neighbors: .none, animation: .None, completion: { layout, apply in
+                            captionNode.contentSize = layout.contentSize
+                            captionNode.insets = layout.insets
+                            captionNode.frame = CGRect(origin: captionNode.frame.origin, size: CGSize(width: size.width, height: layout.size.height))
+                            apply(ListViewItemApply())
+                        })
+                    } else {
+                        captionItem.nodeConfiguredForParams(async: { $0() }, params: params, synchronousLoads: false, neighbors: .none, completion: { node, apply in
+                            apply().1(ListViewItemApply())
+                            node.subnodeTransform = CATransform3DMakeRotation(CGFloat.pi, 0.0, 0.0, 1.0)
+                            node.isUserInteractionEnabled = false
+                            node.visibility = .visible(1.0, CGRect(origin: CGPoint(), size: CGSize(width: 10000.0, height: 10000.0)))   // spoiler dust animates only while visible
+                            self.scrollNode.addSubnode(node)
+                            self.captionNode = node
+                        })
+                    }
+                } else if let captionNode = self.captionNode {
+                    captionNode.removeFromSupernode()
+                    self.captionNode = nil
+                }
+            }
+            //
             if let messageNodes = self.messageNodes {
                 for i in 0 ..< headerItems.count {
                     let itemNode = messageNodes[i]
@@ -1101,7 +1156,11 @@ final class MediaPickerSelectedListNode: ASDisplayNode, ASScrollViewDelegate, AS
         }
         
         if let previewNode = self.messageNodes?.first {
-            transition.updateFrame(node: previewNode, frame: CGRect(origin: CGPoint(x: 0.0, y: insets.top + 28.0), size: previewNode.frame.size))
+            // MARK: Swiftgram
+            // In the composer preview the pill sits right under the bar (its own list inset taken out).
+            let pillY = self.previewMessages != nil ? insets.top - previewNode.insets.top : insets.top + 28.0
+            transition.updateFrame(node: previewNode, frame: CGRect(origin: CGPoint(x: 0.0, y: pillY), size: previewNode.frame.size))
+            //
             
             var previewNodeFrame = previewNode.frame
             previewNodeFrame.origin.y = size.height - previewNodeFrame.origin.y - previewNodeFrame.size.height
@@ -1211,6 +1270,24 @@ final class MediaPickerSelectedListNode: ASDisplayNode, ASScrollViewDelegate, AS
             groupIndex += 1
         }
         
+        // MARK: Swiftgram
+        if let captionNode = self.captionNode {
+            var bubbleY = insets.top + contentHeight + spacing
+            if self.previewMessages != nil, let previewNode = self.messageNodes?.first {
+                // The whole post stands in for the grid: 8pt of visible gap under the "Message Preview"
+                // pill. Both items carry their own vertical padding (list insets plus the bubble's
+                // internal top spacing), measured at ~5pt on screen — taken out here.
+                bubbleY = previewNode.frame.maxY - previewNode.insets.bottom + 8.0 - captionNode.insets.top - 5.0
+                contentHeight = bubbleY - insets.top - spacing
+            }
+            transition.updateFrame(node: captionNode, frame: CGRect(origin: CGPoint(x: 0.0, y: bubbleY), size: captionNode.frame.size))
+            var captionNodeFrame = captionNode.frame
+            captionNodeFrame.origin.y = size.height - captionNodeFrame.origin.y - captionNodeFrame.size.height
+            captionNode.updateFrame(captionNodeFrame, within: size, updateFrame: false)
+            contentHeight += spacing + captionNode.frame.height
+        }
+        //
+        
         if let dragNode = self.messageNodes?.last {
             transition.updateAlpha(node: dragNode, alpha: items.count > 1 ? 1.0 : 0.0)
             transition.updateFrame(node: dragNode, frame: CGRect(origin: CGPoint(x: 0.0, y: insets.top + contentHeight + 9.0), size: dragNode.frame.size))
@@ -1311,7 +1388,11 @@ final class MediaPickerSelectedListNode: ASDisplayNode, ASScrollViewDelegate, AS
         return self.contentSize
     }
     
-    func updateLayout(size: CGSize, insets: UIEdgeInsets, items: [TGMediaSelectableItem], grouped: Bool, theme: PresentationTheme, wallpaper: TelegramWallpaper, bubbleCorners: PresentationChatBubbleCorners, transition: ContainedViewLayoutTransition) {
+    // MARK: Swiftgram
+    func updateLayout(size: CGSize, insets: UIEdgeInsets, items rawItems: [TGMediaSelectableItem], grouped: Bool, theme: PresentationTheme, wallpaper: TelegramWallpaper, bubbleCorners: PresentationChatBubbleCorners, transition: ContainedViewLayoutTransition) {
+        self.rawSelectedItems = rawItems
+        let items = self.previewMessages == nil ? rawItems : []
+        //
         let previous = self.validLayout
         self.validLayout = (size, insets, items, grouped, theme, wallpaper, bubbleCorners)
         

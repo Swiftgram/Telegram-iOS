@@ -38,6 +38,7 @@ swift_library(
         "//submodules/PresentationDataUtils:PresentationDataUtils",
         "//submodules/WallpaperBackgroundNode:WallpaperBackgroundNode",
         "//submodules/ChatMessageBackground:ChatMessageBackground",
+        "//submodules/TextFormat:TextFormat",
         "//submodules/SparseItemGrid:SparseItemGrid",
         "//submodules/UndoUI:UndoUI",
         "//submodules/MoreButtonNode:MoreButtonNode",

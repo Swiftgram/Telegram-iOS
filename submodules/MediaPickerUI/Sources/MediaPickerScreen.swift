@@ -5,6 +5,8 @@ import UIKit
 import Display
 import AsyncDisplayKit
 import TelegramCore
+import Postbox // MARK: Swiftgram
+import SolidRoundedButtonNode // MARK: Swiftgram
 import SwiftSignalKit
 import AccountContext
 import TelegramPresentationData
@@ -251,6 +253,29 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
     
     fileprivate var interaction: MediaPickerInteraction?
     
+    // MARK: Swiftgram quick attach
+    /// Quick attach: the header chevron hands the selection to the composer instead of sending.
+    public var collapseToComposer: (() -> Void)?
+    private let quickAttachMorePlayOnce = ActionSlot<Void>()
+    private var quickAttachHadSelection = false
+    /// Quick attach: the sheet mirrors the composer, so its send button sends the composer's message.
+    /// (The picker's own export pipeline cannot handle the composer's mirrored items.)
+    public var sendFromComposer: (() -> Void)?
+    
+    public var selectedItems: [TGMediaSelectableItem] {
+        return self.interaction?.selectionState?.selectedItems() as? [TGMediaSelectableItem] ?? []
+    }
+    
+    public var editingContext: TGMediaEditingContext? {
+        return self.interaction?.editingState
+    }
+    
+    /// Jumps to the "selected" grid: how the selection lays out as a message.
+    public func showSelectedMedia() {
+        self.controllerNode.updateDisplayMode(.selected, animated: false)
+    }
+    //
+    
     private let peer: EnginePeer?
     private let isScheduledMessages: Bool
     private let isActionButtonDone: Bool
@@ -298,7 +323,20 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
         return nil
     }
     public var updateTabBarAlpha: (CGFloat, ContainedViewLayoutTransition) -> Void  = { _, _ in }
-    public var updateTabBarVisibility: (Bool, ContainedViewLayoutTransition) -> Void = { _, _ in }
+    // MARK: Swiftgram quick attach
+    public var updateTabBarVisibility: (Bool, ContainedViewLayoutTransition) -> Void = { _, _ in } {
+        didSet {
+            // The attachment container wires its hooks right after `showSelectedMedia()`: the composer
+            // preview always opens at full height.
+            if self.collapseToComposer != nil, self.isNodeLoaded, case .selected = self.controllerNode.currentDisplayMode {
+                self.requestAttachmentMenuExpansion()
+            }
+        }
+    }
+    /// Opened from the composer: the message(s) exactly as they will be sent, drawn instead of the
+    /// selected grid. `nil` keeps the stock grid.
+    public var composerPreviewMessages: (() -> [(identifier: String, message: Message)])?
+    //
     public var cancelPanGesture: () -> Void = { }
     public var isContainerPanning: () -> Bool = { return false }
     public var isContainerExpanded: () -> Bool = { return false }
@@ -372,6 +410,10 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
         private var isFastScrolling = false
         
         private var selectionNode: MediaPickerSelectedListNode?
+        // MARK: Swiftgram quick attach
+        /// The composer preview's pinned Send: the composer's bot Start button, same params.
+        private var composerSendButton: SolidRoundedButtonNode?
+        //
         
         private var nextStableId: Int = 1
         private var currentEntries: [MediaPickerGridEntry] = []
@@ -432,7 +474,18 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
         
             self.gridContainerNode = ASDisplayNode()
             self.gridContentNode = ASDisplayNode()
-            self.warpView = controller.warpContentsOnEdges ? WarpView(frame: CGRect()) : nil
+            // MARK: Swiftgram quick attach
+            if controller.warpContentsOnEdges {
+                // Tuned for a full-width photo grid: half perspective, no fade over the glass sheet.
+                let warpView = WarpView(frame: CGRect())
+                warpView.fadesBottomEdge = false
+                warpView.perspectiveStrength = 0.5
+                warpView.allowsEdgeAntialiasing = true
+                self.warpView = warpView
+            } else {
+                self.warpView = nil
+            }
+            //
             self.gridNode = GridNode()
             self.scrollingArea = SparseItemGridScrollingArea()
             
@@ -1267,6 +1320,7 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                 selectionNode.layer.allowsGroupOpacity = true
                 selectionNode.isUserInteractionEnabled = false
                 selectionNode.interaction = self.controller?.interaction
+                selectionNode.previewMessages = controller.composerPreviewMessages // MARK: Swiftgram
                 selectionNode.getTransitionView = { [weak self] identifier in
                     if let strongSelf = self {
                         var node: MediaPickerGridItemNode?
@@ -1510,6 +1564,13 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
             guard let controller = self.controller, !controller.completed else {
                 return
             }
+            // MARK: Swiftgram quick attach
+            if let sendFromComposer = controller.sendFromComposer {
+                sendFromComposer()
+                completion()
+                return
+            }
+            //
             controller.dismissAllTooltips()
             
             var parameters = parameters
@@ -1742,6 +1803,14 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
             guard let controller = self.controller else {
                 return
             }
+            // MARK: Swiftgram quick attach
+            if controller.collapseToComposer != nil {
+                // Opened from the composer, the selected grid is a read-only post preview: no caption
+                // panel. Re-applied on every layout because the attachment container wires the closure
+                // only after `showSelectedMedia()` ran; the setter is idempotent.
+                controller.updateTabBarVisibility(self.currentDisplayMode != .selected, .immediate)
+            }
+            //
             let firstTime = self.validLayout == nil
             self.validLayout = (layout, navigationBarHeight)
             
@@ -1868,7 +1937,7 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
             transition.updateFrame(node: self.gridContentNode, frame: innerBounds)
             if let warpView = self.warpView {
                 transition.updateFrame(view: warpView, frame: innerBounds)
-                warpView.update(size: bounds.size, topInset: 0.0, bottomInset: layout.additionalInsets.bottom, warpHeight: 50.0, transition: ComponentTransition(transition))
+                warpView.update(size: bounds.size, topInset: 0.0, bottomInset: layout.additionalInsets.bottom, warpHeight: 100.0, transition: ComponentTransition(transition)) // MARK: Swiftgram
             }
             transition.updateFrame(node: self.gridNode, frame: innerBounds)
             self.scrollingArea.frame = innerBounds
@@ -1927,8 +1996,31 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                 }
                 
                 let selectedItems = controller.interaction?.selectionState?.selectedItems() as? [TGMediaSelectableItem] ?? []
+                // MARK: Swiftgram quick attach
+                var selectionInsets = cleanGridInsets
+                if controller.collapseToComposer != nil, self.currentDisplayMode == .selected {
+                    let sendButton: SolidRoundedButtonNode
+                    if let current = self.composerSendButton {
+                        sendButton = current
+                    } else {
+                        sendButton = SolidRoundedButtonNode(title: self.presentationData.strings.MediaPicker_Send, theme: SolidRoundedButtonTheme(theme: self.presentationData.theme), glass: true, glassInset: true, height: 50.0, cornerRadius: 50.0 * 0.5, isShimmering: false)
+                        sendButton.pressed = { [weak controller] in
+                            controller?.sendFromComposer?()
+                        }
+                        self.composerSendButton = sendButton
+                        self.containerNode.addSubnode(sendButton)
+                    }
+                    let buttonWidth = bounds.width - layout.safeInsets.left - layout.safeInsets.right - 32.0
+                    let buttonHeight = sendButton.updateLayout(width: buttonWidth, transition: selectionTransition)
+                    selectionTransition.updateFrame(node: sendButton, frame: CGRect(x: layout.safeInsets.left + 16.0, y: bounds.height - cleanGridInsets.bottom - 16.0 - buttonHeight, width: buttonWidth, height: buttonHeight))
+                    selectionInsets.bottom += buttonHeight + 32.0
+                } else if let sendButton = self.composerSendButton {
+                    self.composerSendButton = nil
+                    sendButton.removeFromSupernode()
+                }
+                //
                 let updateSelectionNode = {
-                    selectionNode.updateLayout(size: bounds.size, insets: cleanGridInsets, items: selectedItems, grouped: self.controller?.groupedValue ?? true, theme: self.presentationData.theme, wallpaper: self.presentationData.chatWallpaper, bubbleCorners: self.presentationData.chatBubbleCorners, transition: selectionTransition)
+                    selectionNode.updateLayout(size: bounds.size, insets: selectionInsets, items: selectedItems, grouped: self.controller?.groupedValue ?? true, theme: self.presentationData.theme, wallpaper: self.presentationData.chatWallpaper, bubbleCorners: self.presentationData.chatBubbleCorners, transition: selectionTransition)
                 }
                 
                 if selectedItems.count < 1 && self.currentDisplayMode == .selected {
@@ -2669,6 +2761,14 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
         guard let layout = self.validLayout else {
             return
         }
+        // MARK: Swiftgram quick attach
+        let usesSwappedControls: Bool
+        if self.collapseToComposer != nil, case .glass = self.style, case .assets(_, .default) = self.subject, !self.hasSelectButton {
+            usesSwappedControls = true
+        } else {
+            usesSwappedControls = false
+        }
+        //
     
         var moreIsVisible = false
         var isBack = false
@@ -2696,15 +2796,22 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
             }
             
             self.titleView.updateTitle(title: title, subtitle: self.titleView.subtitle, isEnabled: titleIsEnabled, animated: true)
-            self.cancelButtonNode.setState(isEnabled ? .cancel : .back, animated: true)
-            isBack = !isEnabled
+            // MARK: Swiftgram quick attach
+            // Quick attach opens the preview straight from the composer: there is no grid behind
+            // it to go back to, so the left control keeps its selection menu and the chevron on the
+            // right hands the selection back.
+            let isBackState = !isEnabled && self.collapseToComposer == nil
+            self.cancelButtonNode.setState(isBackState ? .back : .cancel, animated: true)
+            isBack = isBackState
+            //
             
             let selectedSize = self.selectedButtonNode.update(count: count)
             
             let navigationHeight = navigationLayout(layout: layout).navigationFrame.height
-            self.selectedButtonNode.frame = CGRect(origin: CGPoint(x: 16.0 + 44.0 + 12.0, y: self._hasGlassStyle ? 16.0 : floorToScreenPixels((navigationHeight - selectedSize.height) / 2.0) + 1.0), size: selectedSize)
+            let selectedButtonX = usesSwappedControls ? layout.size.width - layout.safeInsets.right - 16.0 - selectedSize.width : 16.0 + 44.0 + 12.0 // MARK: Swiftgram
+            self.selectedButtonNode.frame = CGRect(origin: CGPoint(x: selectedButtonX, y: self._hasGlassStyle ? 16.0 : floorToScreenPixels((navigationHeight - selectedSize.height) / 2.0) + 1.0), size: selectedSize)
             
-            let isSelectionButtonVisible = count > 0 && self.controllerNode.currentDisplayMode == .all
+            let isSelectionButtonVisible = count > 0 && self.controllerNode.currentDisplayMode == .all && !usesSwappedControls // MARK: Swiftgram
             transition.updateAlpha(node: self.selectedButtonNode, alpha: isSelectionButtonVisible ? 1.0 : 0.0)
             transition.updateTransformScale(node: self.selectedButtonNode, scale: isSelectionButtonVisible ? 1.0 : 0.01)
             
@@ -2716,7 +2823,7 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
             moreIsVisible = count > 0
         }
         
-        let useGlassButtons = (isBack || !self.controllerNode.scrolledToTop) && !self.controllerNode.isSwitchingAssetGroup
+        let useGlassButtons = (isBack || (self.collapseToComposer != nil && self.controllerNode.currentDisplayMode == .selected) || !self.controllerNode.scrolledToTop) && !self.controllerNode.isSwitchingAssetGroup // MARK: Swiftgram
         
         let barButtonSideInset: CGFloat = 16.0
     
@@ -2743,7 +2850,7 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
         transition.updateAlpha(layer: self.controllerNode.topEdgeEffectView.layer, alpha: self.controllerNode.scrolledExactlyToTop && self.controllerNode.currentDisplayMode == .all ? 0.0 : 1.0)
         self.controllerNode.topEdgeEffectView.update(content: topEdgeColor, blur: true, alpha: 0.8, rect: topEdgeEffectFrame, edge: .top, edgeSize: topEdgeEffectFrame.height, transition: ComponentTransition(transition))
         
-        let leftControlItems: [GlassControlGroupComponent.Item] = [
+        var leftControlItems: [GlassControlGroupComponent.Item] = [ // MARK: Swiftgram
             GlassControlGroupComponent.Item(
                 id: AnyHashable(isBack ? "back" : "close"),
                 content: .icon(isBack ? "Navigation/Back" : "Navigation/Close"),
@@ -2776,7 +2883,7 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                         guard let self else {
                             return
                         }
-                        if let controlsView = self.buttons?.view as? GlassControlPanelComponent.View, let rightItemView = controlsView.rightItemView, let sourceView = rightItemView.itemView(id: AnyHashable("more")) {
+                        if let controlsView = self.buttons?.view as? GlassControlPanelComponent.View, let sourceView = controlsView.leftItemView?.itemView(id: AnyHashable("more")) ?? controlsView.rightItemView?.itemView(id: AnyHashable("more")) { // MARK: Swiftgram
                             self.searchOrMorePressed(view: sourceView, gesture: nil)
                         }
                     }
@@ -2834,6 +2941,76 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
             }
         }
         
+        // MARK: Swiftgram quick attach
+        // With nothing selected the right group is empty, so the left slot keeps the close button;
+        // once something is selected the "more" item moves into it and the group's own
+        // alpha+blur item transition morphs one icon into the other.
+        if usesSwappedControls && !isBack {
+            // Left: the close cross rotates into a chevron once something is selected (the chevron
+            // hands the selection back to the composer). Right: the dots arrive with their wave.
+            rightControlItems.removeAll(where: { $0.id == AnyHashable("more") })
+            let hasSelection = count > 0
+            let playMore = self.quickAttachMorePlayOnce
+            leftControlItems = [GlassControlGroupComponent.Item(
+                id: AnyHashable("closeOrCollapse"),
+                content: .customIcon(
+                    id: AnyHashable("closeOrCollapse"),
+                    component: AnyComponent(RotatingIconSwapComponent(
+                        firstIcon: "Navigation/Close",
+                        secondAnimation: nil,
+                        secondIcon: "Navigation/TitleExpand",
+                        showsSecond: hasSelection,
+                        color: self.presentationData.theme.chat.inputPanel.panelControlColor,
+                        playSecond: ActionSlot<Void>()
+                    )),
+                    insets: UIEdgeInsets()
+                ),
+                action: { [weak self] in
+                    guard let self else {
+                        return
+                    }
+                    if hasSelection {
+                        self.collapseToComposer?()
+                    } else {
+                        self.cancelPressed()
+                    }
+                }
+            )]
+            rightControlItems.removeAll()
+            if hasSelection {
+                if !self.quickAttachHadSelection {
+                    Queue.mainQueue().justDispatch {
+                        playMore.invoke(Void())
+                    }
+                }
+                rightControlItems.append(GlassControlGroupComponent.Item(
+                    id: AnyHashable("more"),
+                    content: .customIcon(
+                        id: AnyHashable("more"),
+                        component: AnyComponent(LottieComponent(
+                            content: LottieComponent.AppBundleContent(name: "anim_morewide"),
+                            color: self.presentationData.theme.chat.inputPanel.panelControlColor,
+                            size: CGSize(width: 32.0, height: 32.0),
+                            playOnce: playMore,
+                            lottieSettings: .noAccountFallback
+                        )),
+                        insets: UIEdgeInsets()
+                    ),
+                    action: { [weak self] in
+                        guard let self else {
+                            return
+                        }
+                        playMore.invoke(Void())
+                        if let controlsView = self.buttons?.view as? GlassControlPanelComponent.View, let sourceView = controlsView.rightItemView?.itemView(id: AnyHashable("more")) {
+                            self.searchOrMorePressed(view: sourceView, gesture: nil)
+                        }
+                    }
+                ))
+            }
+            self.quickAttachHadSelection = hasSelection
+        }
+        //
+        
         if let buttons = self.buttons {
             if buttons.view == nil {
                 buttonTransition = .immediate
@@ -2842,7 +3019,7 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                 transition: buttonTransition,
                 component: AnyComponent(GlassControlPanelComponent(
                     theme: self.presentationData.theme,
-                    leftItem: GlassControlPanelComponent.Item(
+                    leftItem: leftControlItems.isEmpty ? nil : GlassControlPanelComponent.Item( // MARK: Swiftgram
                         items: leftControlItems,
                         background: .panel
                     ),
@@ -2928,6 +3105,15 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
     }
     
     public func requestDismiss(completion: @escaping () -> Void) {        
+        // MARK: Swiftgram quick attach
+        if let collapseToComposer = self.collapseToComposer {
+            // Quick attach: swiping the sheet away or tapping outside keeps the selection, exactly
+            // like the chevron. Nothing to confirm, nothing gets cancelled.
+            collapseToComposer()
+            completion()
+            return
+        }
+        //
         if let selectionState = self.interaction?.selectionState, selectionState.count() > 0 {
             self.isDismissing = true
             
@@ -2959,6 +3145,12 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
     }
     
     public func shouldDismissImmediately() -> Bool {
+        // MARK: Swiftgram quick attach
+        if self.collapseToComposer != nil {
+            // Always route through requestDismiss so an emptied selection empties the composer too.
+            return false
+        }
+        //
         if let selectionState = self.interaction?.selectionState, selectionState.count() > 0 {
             return false
         } else {
@@ -3256,6 +3448,10 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                                         editingContext.setSpoiler(hasGeneric, for: item)
                                     }
                                 }
+                                // The composer preview bubble reads spoilers at layout time. // MARK: Swiftgram
+                                if self.collapseToComposer != nil, let layout = self.validLayout {
+                                    self.containerLayoutUpdated(layout, transition: .immediate)
+                                }
                             })))
                         }
                         if isPaidAvailable {
@@ -3326,7 +3522,15 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
         self.controllerNode.containerLayoutUpdated(layout, navigationBarHeight: navigationLayout(layout: layout).navigationFrame.maxY, transition: transition)
 
         let navigationHeight = navigationLayout(layout: layout).navigationFrame.height
-        self.selectedButtonNode.frame = CGRect(origin: CGPoint(x: 16.0 + 44.0 + 12.0, y: self._hasGlassStyle ? 16.0 : floorToScreenPixels((navigationHeight - self.selectedButtonNode.frame.height) / 2.0) + 1.0), size: self.selectedButtonNode.frame.size)
+        // MARK: Swiftgram quick attach
+        let selectedButtonX: CGFloat
+        if self.collapseToComposer != nil, case .glass = self.style, case .assets(_, .default) = self.subject, !self.hasSelectButton {
+            selectedButtonX = layout.size.width - layout.safeInsets.right - 16.0 - self.selectedButtonNode.frame.width
+        } else {
+            selectedButtonX = 16.0 + 44.0 + 12.0
+        }
+        //
+        self.selectedButtonNode.frame = CGRect(origin: CGPoint(x: selectedButtonX, y: self._hasGlassStyle ? 16.0 : floorToScreenPixels((navigationHeight - self.selectedButtonNode.frame.height) / 2.0) + 1.0), size: self.selectedButtonNode.frame.size)
     }
     
     public func dismissAnimated() {
@@ -3346,6 +3550,13 @@ final class MediaPickerContext: AttachmentMediaPickerContext {
             return .single(0)
         } else {
             return Signal { [weak self] subscriber in
+                // MARK: Swiftgram quick attach
+                // Quick attach hands the sheet a ready-made selection, so the first change event
+                // may never come; without a value now the panel counts 0 and draws its tabs.
+                if self?.controller?.collapseToComposer != nil {
+                    subscriber.putNext(Int(self?.controller?.interaction?.selectionState?.count() ?? 0))
+                }
+                //
                 let disposable = self?.controller?.interaction?.selectionState?.selectionChangedSignal().start(next: { [weak self] value in
                     subscriber.putNext(Int(self?.controller?.interaction?.selectionState?.count() ?? 0))
                 }, error: { _ in }, completed: { })
@@ -4353,5 +4564,142 @@ private class SelectedButtonNode: ASDisplayNode {
         self.button.frame = CGRect(origin: .zero, size: size)
 
         return size
+    }
+}
+
+// MARK: Swiftgram quick attach
+/// Two icons in one slot that trade places with the composer paperclip's rotate-and-scale spring
+/// (ChatTextInputPanelNode.setQuickAttachActive). The second side is a Lottie so it can animate in.
+private final class RotatingIconSwapComponent: Component {
+    let firstIcon: String
+    let secondAnimation: String?
+    let secondIcon: String?
+    let showsSecond: Bool
+    let color: UIColor
+    let playSecond: ActionSlot<Void>
+
+    init(firstIcon: String, secondAnimation: String?, secondIcon: String? = nil, showsSecond: Bool, color: UIColor, playSecond: ActionSlot<Void>) {
+        self.firstIcon = firstIcon
+        self.secondAnimation = secondAnimation
+        self.secondIcon = secondIcon
+        self.showsSecond = showsSecond
+        self.color = color
+        self.playSecond = playSecond
+    }
+
+    static func ==(lhs: RotatingIconSwapComponent, rhs: RotatingIconSwapComponent) -> Bool {
+        if lhs.firstIcon != rhs.firstIcon {
+            return false
+        }
+        if lhs.secondAnimation != rhs.secondAnimation {
+            return false
+        }
+        if lhs.secondIcon != rhs.secondIcon {
+            return false
+        }
+        if lhs.showsSecond != rhs.showsSecond {
+            return false
+        }
+        if lhs.color != rhs.color {
+            return false
+        }
+        if lhs.playSecond !== rhs.playSecond {
+            return false
+        }
+        return true
+    }
+
+    final class View: UIView {
+        private let firstView = UIImageView()
+        private let second = ComponentView<Empty>()
+
+        private var component: RotatingIconSwapComponent?
+
+        override init(frame: CGRect) {
+            super.init(frame: frame)
+
+            self.isUserInteractionEnabled = false
+            self.addSubview(self.firstView)
+        }
+
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+
+        func update(component: RotatingIconSwapComponent, availableSize: CGSize, transition: ComponentTransition) -> CGSize {
+            let previousComponent = self.component
+            self.component = component
+
+            let size = CGSize(width: 32.0, height: 32.0)
+
+            if previousComponent?.firstIcon != component.firstIcon {
+                self.firstView.image = UIImage(bundleImageName: component.firstIcon)?.withRenderingMode(.alwaysTemplate)
+            }
+            self.firstView.tintColor = component.color
+            self.firstView.bounds = CGRect(origin: CGPoint(), size: self.firstView.image?.size ?? size)
+            self.firstView.center = CGPoint(x: size.width * 0.5, y: size.height * 0.5)
+
+            let secondComponent: AnyComponent<Empty>
+            if let secondIcon = component.secondIcon {
+                secondComponent = AnyComponent(BundleIconComponent(name: secondIcon, tintColor: component.color))
+            } else {
+                secondComponent = AnyComponent(LottieComponent(
+                    content: LottieComponent.AppBundleContent(name: component.secondAnimation ?? ""),
+                    color: component.color,
+                    size: size,
+                    playOnce: component.playSecond,
+                    lottieSettings: .noAccountFallback
+                ))
+            }
+            let secondSize = self.second.update(
+                transition: .immediate,
+                component: secondComponent,
+                environment: {},
+                containerSize: size
+            )
+            guard let secondView = self.second.view else {
+                return size
+            }
+            if secondView.superview == nil {
+                secondView.isUserInteractionEnabled = false
+                self.addSubview(secondView)
+            }
+            secondView.bounds = CGRect(origin: CGPoint(), size: secondSize)
+            secondView.center = CGPoint(x: size.width * 0.5, y: size.height * 0.5)
+
+            if previousComponent?.showsSecond != component.showsSecond {
+                let showsSecond = component.showsSecond
+                let firstView = self.firstView
+                let apply: () -> Void = {
+                    firstView.alpha = showsSecond ? 0.0 : 1.0
+                    firstView.transform = showsSecond ? CGAffineTransform(rotationAngle: .pi * 0.5).scaledBy(x: 0.5, y: 0.5) : .identity
+                    secondView.alpha = showsSecond ? 1.0 : 0.0
+                    secondView.transform = showsSecond ? .identity : CGAffineTransform(rotationAngle: -.pi * 0.5).scaledBy(x: 0.5, y: 0.5)
+                }
+
+                self.firstView.layer.removeAllAnimations()
+                secondView.layer.removeAllAnimations()
+                // The glass group hands its content a non-animated transition; the swap animates on its
+                // own whenever the state flips after the first layout.
+                if previousComponent != nil {
+                    UIView.animate(withDuration: 0.3, delay: 0.0, usingSpringWithDamping: 0.82, initialSpringVelocity: 0.0, options: [.beginFromCurrentState, .allowUserInteraction], animations: apply)
+                    if showsSecond {
+                        component.playSecond.invoke(Void())
+                    }
+                } else {
+                    apply()
+                }
+            }
+
+            return size
+        }
+    }
+
+    func makeView() -> View {
+        return View(frame: CGRect())
+    }
+
+    func update(view: View, availableSize: CGSize, state: EmptyComponentState, environment: Environment<Empty>, transition: ComponentTransition) -> CGSize {
+        return view.update(component: self, availableSize: availableSize, transition: transition)
     }
 }

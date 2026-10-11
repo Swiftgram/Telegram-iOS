@@ -21,6 +21,13 @@ open class ContextControllerSourceNode: ContextReferenceContentNode {
             self.contextGesture?.beginDelay = self.beginDelay
         }
     }
+    // MARK: Swiftgram
+    public var activationDuration: Double = 0.2 {
+        didSet {
+            self.contextGesture?.activationDuration = self.activationDuration
+        }
+    }
+    //
     public var animateScale: Bool = true
     
     public var activated: ((ContextGesture, CGPoint) -> Void)?
@@ -48,6 +55,7 @@ open class ContextControllerSourceNode: ContextReferenceContentNode {
         self.view.addGestureRecognizer(contextGesture)
         
         contextGesture.beginDelay = self.beginDelay
+        contextGesture.activationDuration = self.activationDuration // MARK: Swiftgram
         contextGesture.isEnabled = self.isGestureEnabled
         
         contextGesture.shouldBegin = { [weak self] point in
@@ -167,6 +175,13 @@ open class ContextControllerSourceView: UIView {
             self.contextGesture?.beginDelay = self.beginDelay
         }
     }
+    // MARK: Swiftgram
+    public var activationDuration: Double = 0.2 {
+        didSet {
+            self.contextGesture?.activationDuration = self.activationDuration
+        }
+    }
+    //
     public var animateScale: Bool = true
     
     public var activated: ((ContextGesture, CGPoint) -> Void)?
@@ -190,6 +205,7 @@ open class ContextControllerSourceView: UIView {
         self.addGestureRecognizer(contextGesture)
         
         contextGesture.beginDelay = self.beginDelay
+        contextGesture.activationDuration = self.activationDuration // MARK: Swiftgram
         contextGesture.isEnabled = self.isGestureEnabled
         
         contextGesture.shouldBegin = { [weak self] point in

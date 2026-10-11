@@ -75,6 +75,10 @@ public final class ContextGesture: UIGestureRecognizer, UIGestureRecognizerDeleg
     private let internalDelegate = InternalGestureRecognizerDelegate()
     
     public var beginDelay: Double = 0.12
+    // MARK: Swiftgram
+    /// Length of the squeeze that runs after `beginDelay` before `activated` fires.
+    public var activationDuration: Double = 0.2
+    //
     public var activateOnTap: Bool = false
     private var currentProgress: CGFloat = 0.0
     private var delayTimer: Timer?
@@ -140,7 +144,7 @@ public final class ContextGesture: UIGestureRecognizer, UIGestureRecognizerDeleg
                 }
                 strongSelf.isValidated = true
                 if strongSelf.animator == nil {
-                    strongSelf.animator = DisplayLinkAnimator(duration: 0.2, from: 0.0, to: 1.0, update: { value in
+                    strongSelf.animator = DisplayLinkAnimator(duration: strongSelf.activationDuration, from: 0.0, to: 1.0, update: { value in // MARK: Swiftgram
                         guard let strongSelf = self else {
                             return
                         }
