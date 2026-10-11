@@ -1,3 +1,5 @@
+import SGStrings
+
 import Foundation
 import UIKit
 import Display
@@ -26,6 +28,20 @@ public func ChangePhoneNumberController(context: AccountContext) -> ViewControll
         dismissImpl?()
     })
     controller.loginWithNumber = { [weak controller] phoneNumber, _ in
+        // MARK: Swiftgram
+        if ({ return true }()) {
+            controller?.present(standardTextAlertController(theme: AlertControllerTheme(presentationData: presentationData), title: nil, text: i18n("Auth.UnofficialAppCodeTitle", presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: i18n("Common.OpenTelegram", presentationData.strings.baseLanguageCode), action: {
+                if let telegramUrl = URL(string: "telegram://settings/edit/change-number") {
+                    UIApplication.shared.open(telegramUrl, options: [:], completionHandler: { success in
+                        if !success, let downloadUrl = URL(string: "https://get.telegram.org/") {
+                            UIApplication.shared.open(downloadUrl, options: [:], completionHandler: nil)
+                        }
+                    })
+                }
+            })]), in: .window(.root))
+            return
+        }
+        
         controller?.inProgress = true
         
         let authorizationPushConfiguration = context.sharedContext.authorizationPushConfiguration
