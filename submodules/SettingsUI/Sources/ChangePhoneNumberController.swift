@@ -17,6 +17,21 @@ import CoreTelephony
 import MessageUI
 import AuthorizationUI
 
+// MARK: Swiftgram
+private func sgChangePhoneNumberAlertController(context: AccountContext) -> AlertController {
+    let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+    return standardTextAlertController(theme: AlertControllerTheme(presentationData: presentationData), title: nil, text: i18n("Auth.UnofficialAppCodeTitle", presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: i18n("Common.OpenTelegram", presentationData.strings.baseLanguageCode), action: {
+        if let telegramUrl = URL(string: "telegram://settings/edit/change-number") {
+            UIApplication.shared.open(telegramUrl, options: [:], completionHandler: { success in
+                if !success, let downloadUrl = URL(string: "https://get.telegram.org/") {
+                    UIApplication.shared.open(downloadUrl, options: [:], completionHandler: nil)
+                }
+            })
+        }
+    })])
+}
+//
+
 public func ChangePhoneNumberController(context: AccountContext) -> ViewController {
     var dismissImpl: (() -> Void)?
     let presentationData = context.sharedContext.currentPresentationData.with { $0 }
@@ -27,18 +42,14 @@ public func ChangePhoneNumberController(context: AccountContext) -> ViewControll
     let controller = AuthorizationSequencePhoneEntryController(sharedContext: context.sharedContext, account: nil, countriesConfiguration: context.currentCountriesConfiguration.with { $0 }, apiId: 0, apiHash: "", isTestingEnvironment: false, otherAccountPhoneNumbers: (nil, []), network: context.account.network, presentationData: presentationData, openUrl: { _ in }, back: {
         dismissImpl?()
     })
+    // MARK: Swiftgram
+    Queue.mainQueue().justDispatch {
+        context.sharedContext.presentGlobalController(sgChangePhoneNumberAlertController(context: context), nil)
+    }
+    //
     controller.loginWithNumber = { [weak controller] phoneNumber, _ in
         // MARK: Swiftgram
         if ({ return true }()) {
-            controller?.present(standardTextAlertController(theme: AlertControllerTheme(presentationData: presentationData), title: nil, text: i18n("Auth.UnofficialAppCodeTitle", presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: i18n("Common.OpenTelegram", presentationData.strings.baseLanguageCode), action: {
-                if let telegramUrl = URL(string: "telegram://settings/edit/change-number") {
-                    UIApplication.shared.open(telegramUrl, options: [:], completionHandler: { success in
-                        if !success, let downloadUrl = URL(string: "https://get.telegram.org/") {
-                            UIApplication.shared.open(downloadUrl, options: [:], completionHandler: nil)
-                        }
-                    })
-                }
-            })]), in: .window(.root))
             return
         }
         
