@@ -32,6 +32,7 @@ import TelegramNotices
 import SolidRoundedButtonNode
 import UrlHandling
 import GlassControls
+import VideoPlaybackControlsComponent // MARK: Swiftgram
 import ComponentFlow
 import ComponentDisplayAdapters
 import EdgeEffect
@@ -154,6 +155,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
     private var buttonNode: SolidRoundedButtonNode?
     private var buttonIconNode: ASImageNode?
     private let buttonPanel = ComponentView<Empty>()
+    private let playbackButtonPanel = ComponentView<Empty>() // MARK: Swiftgram
     
     private var textSelectionNode: TextSelectionNode?
     
@@ -1450,13 +1452,23 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         }
 
         // MARK: Swiftgram
-        if !self.playbackControlButton.isHidden || self.hasSeekControls {
-            centerControlItems.append(contentsOf: sgVideoControlsInFooterItems(
-                isPlaying: !self.currentIsPaused,
-                displaySeekControls: self.hasSeekControls,
-                togglePlayback: { [weak self] in self?.playbackControlPressed() },
-                seek: { [weak self] isForward in isForward ? self?.forwardButtonPressed() : self?.backwardButtonPressed() }
-            ))
+        let sgPlaybackControlsVisible = sgVideoControlsInFooterEnabled && (!self.playbackControlButton.isHidden || self.hasSeekControls)
+        var sgPlaybackPanelSize = CGSize()
+        if sgPlaybackControlsVisible {
+            sgPlaybackPanelSize = self.playbackButtonPanel.update(
+                transition: ComponentTransition(transition),
+                component: AnyComponent(VideoPlaybackControlsComponent(
+                    layoutParams: .init(sideButtonSize: 44.0, centerButtonSize: 44.0, spacing: 12.0),
+                    isVisible: true,
+                    isPlaying: !self.currentIsPaused,
+                    displaySeekControls: self.hasSeekControls,
+                    togglePlayback: { [weak self] in self?.playbackControlPressed() },
+                    seek: { [weak self] isForward in isForward ? self?.forwardButtonPressed() : self?.backwardButtonPressed() },
+                    isFooter: true
+                )),
+                environment: {},
+                containerSize: CGSize(width: size.width - buttonPanelInsets.left - buttonPanelInsets.right, height: 44.0)
+            )
         }
         //
 
@@ -1488,6 +1500,17 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
             }
             ComponentTransition(transition).setFrame(view: buttonPanelView, frame: buttonPanelFrame)
         }
+        
+        // MARK: Swiftgram
+        if sgPlaybackControlsVisible, let buttonPanelView = self.buttonPanel.view as? GlassControlPanelComponent.View, let sgPlaybackPanelView = self.playbackButtonPanel.view {
+            if sgPlaybackPanelView.superview !== buttonPanelView.sgGlassContentView {
+                buttonPanelView.sgGlassContentView.addSubview(sgPlaybackPanelView)
+            }
+            ComponentTransition(transition).setFrame(view: sgPlaybackPanelView, frame: CGRect(origin: CGPoint(x: floor((buttonPanelSize.width - sgPlaybackPanelSize.width) * 0.5), y: 0.0), size: sgPlaybackPanelSize))
+        } else if let sgPlaybackPanelView = self.playbackButtonPanel.view {
+            sgPlaybackPanelView.removeFromSuperview()
+        }
+        //
 
         if let image = self.backwardButton.backgroundIconNode.image {
             self.backwardButton.frame = CGRect(origin: CGPoint(x: floor((width - image.size.width) / 2.0) - 66.0, y: panelHeight - buttonPanelInsets.bottom - 44.0 + floorToScreenPixels((44.0 - image.size.height) * 0.5)), size: image.size)
@@ -1558,6 +1581,9 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         if let buttonPanelView = self.buttonPanel.view {
             buttonPanelView.alpha = 1.0
         }
+        if let sgPlaybackButtonPanelView = self.playbackButtonPanel.view { // MARK: Swiftgram
+            sgPlaybackButtonPanelView.alpha = 1.0
+        }
         
         self.backwardButton.alpha = self.hasSeekControls ? 1.0 : 0.0
         self.forwardButton.alpha = self.hasSeekControls ? 1.0 : 0.0
@@ -1586,6 +1612,9 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         
         if let buttonPanelView = self.buttonPanel.view {
             buttonPanelView.alpha = 0.0
+        }
+        if let sgPlaybackButtonPanelView = self.playbackButtonPanel.view { // MARK: Swiftgram
+            sgPlaybackButtonPanelView.alpha = 0.0
         }
         
         self.backwardButton.alpha = 0.0

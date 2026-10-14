@@ -1,62 +1,11 @@
 import SGSimpleSettings
-import ComponentFlow
 import ContextUI
 import Display
-import GlassControls
 import SwiftSignalKit
 import UIKit
 
 var sgVideoControlsInFooterEnabled: Bool {
     return SGSimpleSettings.shared.videoControlsInFooter
-}
-
-func sgVideoControlsInFooterItems(
-    isPlaying: Bool,
-    displaySeekControls: Bool,
-    togglePlayback: @escaping () -> Void,
-    seek: @escaping (Bool) -> Void
-) -> [GlassControlGroupComponent.Item] {
-    guard sgVideoControlsInFooterEnabled else {
-        return []
-    }
-
-    var items: [GlassControlGroupComponent.Item] = []
-    if displaySeekControls {
-        items.append(GlassControlGroupComponent.Item(
-            id: AnyHashable("sgSeekBackward"),
-            content: .customIcon(
-                id: AnyHashable("sgSeekBackwardIcon"),
-                component: AnyComponent(SGVideoSeekIconComponent(systemName: "gobackward.15")),
-                insets: .zero
-            ),
-            action: {
-                seek(false)
-            }
-        ))
-    }
-    items.append(GlassControlGroupComponent.Item(
-        id: AnyHashable("sgPlayback"),
-        content: .customIcon(
-            id: AnyHashable("sgPlaybackIcon"),
-            component: AnyComponent(SGPlayPauseIconComponent(isPlaying: isPlaying)),
-            insets: .zero
-        ),
-        action: togglePlayback
-    ))
-    if displaySeekControls {
-        items.append(GlassControlGroupComponent.Item(
-            id: AnyHashable("sgSeekForward"),
-            content: .customIcon(
-                id: AnyHashable("sgSeekForwardIcon"),
-                component: AnyComponent(SGVideoSeekIconComponent(systemName: "goforward.15")),
-                insets: .zero
-            ),
-            action: {
-                seek(true)
-            }
-        ))
-    }
-    return items
 }
 
 func sgVideoControlsInFooterMenuItems(
