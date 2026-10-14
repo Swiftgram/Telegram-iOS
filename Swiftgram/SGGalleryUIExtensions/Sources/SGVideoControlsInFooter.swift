@@ -36,7 +36,11 @@ func sgVideoControlsInFooterItems(
     }
     items.append(GlassControlGroupComponent.Item(
         id: AnyHashable("sgPlayback"),
-        content: .icon(isPlaying ? "Media Gallery/PictureInPicturePause" : "Media Gallery/PlayButton"),
+        content: .customIcon(
+            id: AnyHashable("sgPlaybackIcon"),
+            component: AnyComponent(SGPlayPauseIconComponent(isPlaying: isPlaying)),
+            insets: .zero
+        ),
         action: togglePlayback
     ))
     if displaySeekControls {
