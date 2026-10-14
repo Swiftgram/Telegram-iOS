@@ -26,12 +26,24 @@ import UniformTypeIdentifiers
 
 // MARK: Swiftgram
 private let groupUserDefaults: UserDefaults? = UserDefaults(suiteName: sgAppGroupIdentifier())
-private let LEGACY_NOTIFICATIONS_FIX: Bool = groupUserDefaults?.bool(forKey: "legacyNotificationsFix") ?? false
-private let PINNED_MESSAGE_ACTION: String = groupUserDefaults?.string(forKey: "pinnedMessageNotifications") ?? "default"
-private let PINNED_MESSAGE_ACTION_EXCEPTIONS: [String: String] = (groupUserDefaults?.dictionary(forKey: "pinnedMessageNotificationsExceptions") as? [String: String]) ?? [:]
-private let MENTION_AND_REPLY_ACTION: String = groupUserDefaults?.string(forKey: "mentionsAndRepliesNotifications") ?? "default"
-private let MENTION_AND_REPLY_ACTION_EXCEPTIONS: [String: String] = (groupUserDefaults?.dictionary(forKey: "mentionsAndRepliesNotificationsExceptions") as? [String: String]) ?? [:]
-private let HIDE_ACCOUNT_IN_NOTIFICATIONS: Bool = groupUserDefaults?.bool(forKey: "hideAccountInNotifications") ?? false
+private var sgLegacyNotificationsFix: Bool {
+    return groupUserDefaults?.bool(forKey: "legacyNotificationsFix") ?? false
+}
+private var sgPinnedMessageAction: String {
+    return groupUserDefaults?.string(forKey: "pinnedMessageNotifications") ?? "default"
+}
+private var sgPinnedMessageActionExceptions: [String: String] {
+    return (groupUserDefaults?.dictionary(forKey: "pinnedMessageNotificationsExceptions") as? [String: String]) ?? [:]
+}
+private var sgMentionAndReplyAction: String {
+    return groupUserDefaults?.string(forKey: "mentionsAndRepliesNotifications") ?? "default"
+}
+private var sgMentionAndReplyActionExceptions: [String: String] {
+    return (groupUserDefaults?.dictionary(forKey: "mentionsAndRepliesNotificationsExceptions") as? [String: String]) ?? [:]
+}
+private var sgHideAccountInNotifications: Bool {
+    return groupUserDefaults?.bool(forKey: "hideAccountInNotifications") ?? false
+}
 //
 
 private let queue = Queue()
@@ -650,9 +662,9 @@ private struct NotificationContent: CustomStringConvertible {
         //Logger.shared.log("NotificationService", "Generating final content: \(self.description)")
         // MARK: Swiftgram
         #if DEBUG
-        print("body:\(content.body) silent:\(self.silent) isMentionOrReply:\(self.isMentionOrReply) MENTION_AND_REPLY_ACTION:\(MENTION_AND_REPLY_ACTION) isPinned:\(self.isPinned) PINNED_MESSAGE_ACTION:\(PINNED_MESSAGE_ACTION)" +  " forceIsEmpty:\(self.forceIsEmpty) forceIsSilent:\(self.forceIsSilent)")
+        print("body:\(content.body) silent:\(self.silent) isMentionOrReply:\(self.isMentionOrReply) sgMentionAndReplyAction:\(sgMentionAndReplyAction) isPinned:\(self.isPinned) sgPinnedMessageAction:\(sgPinnedMessageAction)" +  " forceIsEmpty:\(self.forceIsEmpty) forceIsSilent:\(self.forceIsSilent)")
         #endif
-        if self.forceIsEmpty && !LEGACY_NOTIFICATIONS_FIX {
+        if self.forceIsEmpty && !sgLegacyNotificationsFix {
             return UNNotificationContent()
         }
         //
@@ -765,7 +777,7 @@ private struct NotificationContent: CustomStringConvertible {
         }
         
         // MARK: Swiftgram
-        if (self.isEmpty || self.forceIsEmpty) && LEGACY_NOTIFICATIONS_FIX {
+        if (self.isEmpty || self.forceIsEmpty) && sgLegacyNotificationsFix {
             content.title = " "
             content.threadIdentifier = "empty-notification"
             if #available(iOSApplicationExtension 15.0, iOS 15.0, *) {
@@ -1037,7 +1049,7 @@ private final class NotificationServiceHandler {
                 // extension runs out of time, already names the account. Only with several
                 // accounts: every transaction here takes the database write lock the app may hold.
                 let recipientAccountName: Signal<String?, NoError>
-                if notificationsNameRecipientAccount(records: records.records) && !HIDE_ACCOUNT_IN_NOTIFICATIONS { // MARK: Swiftgram
+                if notificationsNameRecipientAccount(records: records.records) && !sgHideAccountInNotifications { // MARK: Swiftgram
                     recipientAccountName = stateManager.postbox.transaction { transaction -> String? in
                         return notificationRecipientAccountName(accountPeer: transaction.getPeer(accountPeerId))
                     }
@@ -2776,7 +2788,7 @@ final class NotificationService: UNNotificationServiceExtension {
     
     // MARK: Swiftgram
     func removeEmptyNotificationsOnce() {
-        if !LEGACY_NOTIFICATIONS_FIX {
+        if !sgLegacyNotificationsFix {
             return
         }
         var emptyNotifications: [String] = []
@@ -2796,7 +2808,7 @@ final class NotificationService: UNNotificationServiceExtension {
     }
     
     func removeEmptyNotifications() {
-        if !LEGACY_NOTIFICATIONS_FIX {
+        if !sgLegacyNotificationsFix {
             return
         }
         self.notificationRemovalTries += 1
@@ -3333,8 +3345,8 @@ extension NotificationContent {
     var forceIsEmpty: Bool {
         if self.sgStatus.status > 1 && !self.isEmpty {
             if self.isPinned {
-                var desiredAction = PINNED_MESSAGE_ACTION
-                if let chatId = chatId, let exceptionAction = PINNED_MESSAGE_ACTION_EXCEPTIONS["\(chatId)"] {
+                var desiredAction = sgPinnedMessageAction
+                if let chatId = chatId, let exceptionAction = sgPinnedMessageActionExceptions["\(chatId)"] {
                     desiredAction = exceptionAction
                 }
                 if desiredAction == "disabled" {
@@ -3342,8 +3354,8 @@ extension NotificationContent {
                 }
             }
             if self.isMentionOrReply {
-                var desiredAction = MENTION_AND_REPLY_ACTION
-                if let chatId = chatId, let exceptionAction = MENTION_AND_REPLY_ACTION_EXCEPTIONS["\(chatId)"] {
+                var desiredAction = sgMentionAndReplyAction
+                if let chatId = chatId, let exceptionAction = sgMentionAndReplyActionExceptions["\(chatId)"] {
                     desiredAction = exceptionAction
                 }
                 if desiredAction == "disabled" {
@@ -3356,8 +3368,8 @@ extension NotificationContent {
     var forceIsSilent: Bool {
         if self.sgStatus.status > 1 && !self.silent {
             if self.isPinned {
-                var desiredAction = PINNED_MESSAGE_ACTION
-                if let chatId = chatId, let exceptionAction = PINNED_MESSAGE_ACTION_EXCEPTIONS["\(chatId)"] {
+                var desiredAction = sgPinnedMessageAction
+                if let chatId = chatId, let exceptionAction = sgPinnedMessageActionExceptions["\(chatId)"] {
                     desiredAction = exceptionAction
                 }
                 if desiredAction == "silenced" {
@@ -3365,8 +3377,8 @@ extension NotificationContent {
                 }
             }
             if self.isMentionOrReply {
-                var desiredAction = MENTION_AND_REPLY_ACTION
-                if let chatId = chatId, let exceptionAction = MENTION_AND_REPLY_ACTION_EXCEPTIONS["\(chatId)"] {
+                var desiredAction = sgMentionAndReplyAction
+                if let chatId = chatId, let exceptionAction = sgMentionAndReplyActionExceptions["\(chatId)"] {
                     desiredAction = exceptionAction
                 }
                 if desiredAction == "silenced" {
