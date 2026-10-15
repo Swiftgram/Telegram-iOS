@@ -1203,6 +1203,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     })
                 })
             })))
+            if !SGSimpleSettings.shared.contextShowReply { sgActions.append(actions.removeLast()) } // MARK: Swiftgram
         }
         
         if data.messageActions.options.contains(.sendGift), !message.id.peerId.isTelegramNotifications {
@@ -1245,7 +1246,6 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                 f(.dismissWithoutContent)
                 (interfaceInteraction.chatController() as? ChatControllerImpl)?.openResolved(result: .sendGrams(transfer: WalletSendRequest(recipient: .peer(peer), amountNanograms: nil)), sourceMessageId: message.id)
             })))
-            if !SGSimpleSettings.shared.contextShowReply { sgActions.append(actions.removeLast()) } // MARK: Swiftgram
         }
         
         if data.messageActions.options.contains(.sendScheduledNow) {
