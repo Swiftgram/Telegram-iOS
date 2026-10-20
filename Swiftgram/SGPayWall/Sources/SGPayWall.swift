@@ -12,32 +12,9 @@ import SwiftSignalKit
 import TelegramUIPreferences
 
 
-
 public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacementController: ViewController, presentationData: PresentationData? = nil, SGIAPManager: SGIAPManager, openUrl: @escaping (String, Bool) -> Void /* url, forceExternal */, paymentsEnabled: Bool, canBuyInBeta: Bool, openAppStorePage: @escaping () -> Void, proSupportUrl: String?) -> ViewController {
-    //    let theme = presentationData?.theme ?? (UITraitCollection.current.userInterfaceStyle == .dark ? defaultDarkColorPresentationTheme : defaultPresentationTheme)
-    let theme = defaultDarkColorPresentationTheme
-    let strings = presentationData?.strings ?? defaultPresentationStrings
-    
-    let legacyController = LegacySwiftUIController(
-        presentation: .modal(animateIn: true),
-        theme: theme,
-        strings: strings
-    )
-    //    legacyController.displayNavigationBar = false
-    legacyController.statusBar.statusBarStyle = .White
-    legacyController.attemptNavigation = { _ in return false }
-    legacyController.view.disablesInteractiveTransitionGestureRecognizer = true
-    
-    let swiftUIView = SGSwiftUIView<SGPayWallView>(
-        legacyController: legacyController,
-        content: {
-            SGPayWallView(wrapperController: legacyController, replacementController: replacementController, SGIAP: SGIAPManager, statusSignal: statusSignal, openUrl: openUrl, openAppStorePage: openAppStorePage, paymentsEnabled: paymentsEnabled, canBuyInBeta: canBuyInBeta, proSupportUrl: proSupportUrl)
-        }
-    )
-    let controller = UIHostingController(rootView: swiftUIView, ignoreSafeArea: true)
-    legacyController.bind(controller: controller)
-    
-    return legacyController
+    // Swiftgram Pro paywall is disabled in this fork. Continue to the original destination.
+    return replacementController
 }
 
 private let innerShadowWidth: CGFloat = 15.0
