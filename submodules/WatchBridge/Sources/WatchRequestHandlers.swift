@@ -44,7 +44,7 @@ final class WatchChatListHandler: WatchRequestHandler {
                     if let context = context {
                         return context.account.viewTracker.tailChatListView(groupId: .root, count: limit)
                         |> map { chatListView, _ -> (EngineChatList, PresentationData) in
-                            return (EngineChatList(chatListView, accountPeerId: context.account.peerId), context.sharedContext.currentPresentationData.with { $0 })
+                            return (EngineChatList(chatListView, accountPeerId: context.account.peerId, sgIncludeAvailableItemsAfterHoles: true), context.sharedContext.currentPresentationData.with { $0 })
                         }
                     } else {
                         return .complete()
