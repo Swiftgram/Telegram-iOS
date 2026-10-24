@@ -688,7 +688,10 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             })
         ])])
         presentControllerImpl?(actionSheet, ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
-    }, openDisclosureLink: { link in
+    }, openDisclosureLink: { [weak context] link in
+        guard let context else {
+            return
+        }
         switch (link) {
             case .languageSettings:
                 pushControllerImpl?(context.sharedContext.makeLocalizationListController(context: context))
