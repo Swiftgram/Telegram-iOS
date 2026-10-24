@@ -1624,16 +1624,20 @@ public func privacyAndSecurityController(
         let defaultWebBrowser: String
         if accountWebBrowserSettings.openExternalBrowser {
             var defaultExternalBrowser = localWebBrowserSettings.defaultWebBrowser
-            if defaultExternalBrowser == nil || defaultExternalBrowser == "inApp" || defaultExternalBrowser == "inAppSafari" {
-                defaultExternalBrowser = "safari"
-            }
-            if let option = options.first(where: { $0.identifier == defaultExternalBrowser }) {
-                defaultWebBrowser = option.title
+            if defaultExternalBrowser == "inApp" {
+                defaultWebBrowser = presentationData.strings.WebBrowser_InAppSafari
             } else {
-                defaultWebBrowser = "Safari"
+                if defaultExternalBrowser == nil || defaultExternalBrowser == "inAppSafari" {
+                    defaultExternalBrowser = "safari"
+                }
+                if let option = options.first(where: { $0.identifier == defaultExternalBrowser }) {
+                    defaultWebBrowser = option.title
+                } else {
+                    defaultWebBrowser = "Safari"
+                }
             }
         } else {
-            defaultWebBrowser = presentationData.strings.WebBrowser_Telegram
+            defaultWebBrowser = presentationData.strings.WebBrowser_Telegram.replacingOccurrences(of: "Telegram", with: "Swiftgram") /* MARK: Swiftgram */
         }
         
         let listState = ItemListNodeState(presentationData: ItemListPresentationData(presentationData), entries: privacyAndSecurityControllerEntries(presentationData: presentationData, state: state, privacySettings: privacySettings, accessChallengeData: accessChallengeData.data, blockedPeerCount: blockedPeersState.totalCount, activeWebsitesCount: activeWebsitesState.sessions.count, hasTwoStepAuth: twoStepAuth.0, twoStepAuthData: twoStepAuth.1, hasPasskeys: passkeys.0, displayPasskeys: displayPasskeys, canAutoarchive: canAutoarchive, isPremiumDisabled: isPremiumDisabled, isPremium: isPremium, loginEmail: loginEmail, accountPeer: accountPeer, defaultWebBrowser: defaultWebBrowser, appConfiguration: appConfiguration), style: .blocks, ensureVisibleItemTag: focusOnItemTag, animateChanges: false)

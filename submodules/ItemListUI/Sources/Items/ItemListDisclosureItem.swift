@@ -63,6 +63,8 @@ public class ItemListDisclosureItem: ListViewItem, ItemListItem, ListItemCompone
     let label: String
     let attributedLabel: NSAttributedString?
     let labelStyle: ItemListDisclosureLabelStyle
+    let sgLabelMaximumNumberOfLines: Int
+    let centerLabelAlignment: Bool
     let additionalDetailLabel: String?
     let additionalDetailLabelColor: ItemListDisclosureItemDetailLabelColor
     public let sectionId: ItemListSectionId
@@ -90,7 +92,7 @@ public class ItemListDisclosureItem: ListViewItem, ItemListItem, ListItemCompone
         label: String,
         attributedLabel: NSAttributedString? = nil,
         labelStyle: ItemListDisclosureLabelStyle = .text,
-        additionalDetailLabel: String? = nil,
+        sgLabelMaximumNumberOfLines: Int = 1, centerLabelAlignment: Bool = false, additionalDetailLabel: String? = nil,
         additionalDetailLabelColor: ItemListDisclosureItemDetailLabelColor = .generic,
         sectionId: ItemListSectionId,
         style: ItemListStyle,
@@ -114,8 +116,10 @@ public class ItemListDisclosureItem: ListViewItem, ItemListItem, ListItemCompone
         self.titleBadge = titleBadge
         self.enabled = enabled
         self.labelStyle = labelStyle
+        self.sgLabelMaximumNumberOfLines = sgLabelMaximumNumberOfLines
         self.label = label
         self.attributedLabel = attributedLabel
+        self.centerLabelAlignment = centerLabelAlignment
         self.additionalDetailLabel = additionalDetailLabel
         self.additionalDetailLabelColor = additionalDetailLabelColor
         self.sectionId = sectionId
@@ -491,12 +495,15 @@ public class ItemListDisclosureItemNode: ListViewItemNode, ItemListItemNode {
                 labelBadgeColor = item.presentationData.theme.list.itemSecondaryTextColor
                 labelFont = defaultLabelFont
             }
-            var multilineLabel = false
+            // MARK: Swiftgram
+            let labelMaximumNumberOfLines: Int
             if case .multilineDetailText = item.labelStyle {
-                multilineLabel = true
+                labelMaximumNumberOfLines = 0
+            } else {
+                labelMaximumNumberOfLines = max(1, item.sgLabelMaximumNumberOfLines)
             }
-            
-            let (labelLayout, labelApply) = makeLabelLayout(TextNodeLayoutArguments(attributedString: item.attributedLabel ?? NSAttributedString(string: item.label, font: labelFont, textColor: labelBadgeColor), backgroundColor: nil, maximumNumberOfLines: multilineLabel ? 0 : 1, truncationType: .end, constrainedSize: CGSize(width: labelConstrain, height: CGFloat.greatestFiniteMagnitude), alignment: .natural, cutout: nil, insets: UIEdgeInsets()))
+            //
+            let (labelLayout, labelApply) = makeLabelLayout(TextNodeLayoutArguments(attributedString: item.attributedLabel ?? NSAttributedString(string: item.label, font: labelFont, textColor: labelBadgeColor), backgroundColor: nil, maximumNumberOfLines: labelMaximumNumberOfLines, truncationType: .end, constrainedSize: CGSize(width: labelConstrain, height: CGFloat.greatestFiniteMagnitude), alignment: .natural, cutout: nil, insets: UIEdgeInsets()))
             
             var additionalDetailLabelInfo: (TextNodeLayout, () -> TextNode)?
             if let additionalDetailLabel = item.additionalDetailLabel {
@@ -550,7 +557,9 @@ public class ItemListDisclosureItemNode: ListViewItemNode, ItemListItemNode {
             case .detailText, .multilineDetailText:
                 height = verticalInset * 2.0 + titleLayout.size.height + titleSpacing + labelLayout.size.height
             default:
-                height = verticalInset * 2.0 + titleLayout.size.height
+                // MARK: Swiftgram
+                height = verticalInset * 2.0 + max(titleLayout.size.height, labelLayout.size.height)
+                //
             }
             if let additionalDetailLabelInfo = additionalDetailLabelInfo {
                 height += titleSpacing + additionalDetailLabelInfo.0.size.height
@@ -753,7 +762,7 @@ public class ItemListDisclosureItemNode: ListViewItemNode, ItemListItemNode {
                     if case .semitransparentBadge = item.labelStyle {
                         badgeWidth += 2.0
                     }
-                    let badgeFrame = CGRect(origin: CGPoint(x: params.width - rightInset - badgeWidth, y: floor((contentSize.height - badgeDiameter) / 2.0)), size: CGSize(width: badgeWidth, height: badgeDiameter))
+                    let badgeFrame = CGRect(origin: CGPoint(x: item.centerLabelAlignment ? floor((params.width - badgeWidth) / 2.0) : params.width - rightInset - badgeWidth, y: floor((contentSize.height - badgeDiameter) / 2.0)), size: CGSize(width: badgeWidth, height: badgeDiameter))
                     strongSelf.labelBadgeNode.frame = badgeFrame
                     
                     let labelFrame: CGRect
@@ -761,7 +770,7 @@ public class ItemListDisclosureItemNode: ListViewItemNode, ItemListItemNode {
                     case .badge:
                         labelFrame = CGRect(origin: CGPoint(x: params.width - rightInset - badgeWidth + (badgeWidth - labelLayout.size.width) / 2.0, y: badgeFrame.minY + 1.0), size: labelLayout.size)
                     case .semitransparentBadge:
-                        labelFrame = CGRect(origin: CGPoint(x: params.width - rightInset - badgeWidth + (badgeWidth - labelLayout.size.width) / 2.0, y: badgeFrame.minY + 1.0 - UIScreenPixel + floorToScreenPixels((badgeDiameter - labelLayout.size.height) / 2.0)), size: labelLayout.size)
+                        labelFrame = CGRect(origin: CGPoint(x: item.centerLabelAlignment ? floor((params.width - badgeWidth + (badgeWidth - labelLayout.size.width)) / 2.0) : params.width - rightInset - badgeWidth + (badgeWidth - labelLayout.size.width) / 2.0, y: badgeFrame.minY + 1.0 - UIScreenPixel + floorToScreenPixels((badgeDiameter - labelLayout.size.height) / 2.0)), size: labelLayout.size)
                     case .detailText, .multilineDetailText:
                         labelFrame = CGRect(origin: CGPoint(x: leftInset, y: titleFrame.maxY + titleSpacing), size: labelLayout.size)
                     default:

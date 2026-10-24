@@ -30,7 +30,7 @@ private enum ChatLinkReverseOpenTarget {
     func title(strings: PresentationStrings) -> String {
         switch self {
         case .inApp:
-            return strings.WebBrowser_Exception_OpenInApp
+            return strings.WebBrowser_Exception_OpenInApp.replacingOccurrences(of: "Telegram", with: "Swiftgram") /* MARK: Swiftgram */
         case .externalBrowser:
             return strings.WebBrowser_Exception_OpenInBrowser
         }
@@ -109,6 +109,9 @@ private func chatLinkContextMenuOpenMode(context: AccountContext, url: String) -
     }
 }
 
+// MARK: Swiftgram
+import ShareController
+
 extension ChatControllerImpl {
     private func presentOpenLinkConfirmation(_ url: String, target: ChatLinkReverseOpenTarget) {
         var exceptionAdded = false
@@ -165,7 +168,7 @@ extension ChatControllerImpl {
 
                             let settings = sharedData.entries[ApplicationSpecificSharedDataKeys.webBrowserSettings]?.get(WebBrowserSettings.self) ?? WebBrowserSettings.defaultSettings
                             var defaultWebBrowser = settings.defaultWebBrowser
-                            if defaultWebBrowser == nil || defaultWebBrowser == "inApp" || defaultWebBrowser == "inAppSafari" {
+                            if defaultWebBrowser == nil || defaultWebBrowser == "inApp" /* MARK: Swiftgram */ || defaultWebBrowser == "inAppSafari" {
                                 defaultWebBrowser = "safari"
                             }
 
@@ -251,7 +254,7 @@ extension ChatControllerImpl {
                     }))
 
                     if let openMode {
-                        let reverseText = openMode.shouldOpenInApp ? self.presentationData.strings.Chat_ContextMenu_OpenInBrowser : self.presentationData.strings.Chat_ContextMenu_OpenInApp
+                        let reverseText = openMode.shouldOpenInApp ? self.presentationData.strings.Chat_ContextMenu_OpenInBrowser : self.presentationData.strings.Chat_ContextMenu_OpenInApp.replacingOccurrences(of: "Telegram", with: "Swiftgram") /* MARK: Swiftgram */
                         items.append(ActionSheetButtonItem(title: reverseText, color: .accent, action: { [weak self, weak actionSheet] in
                             actionSheet?.dismissAnimated()
                             guard let self else {
@@ -292,7 +295,23 @@ extension ChatControllerImpl {
                     }
                     self.present(UndoOverlayController(presentationData: self.presentationData, content: content, elevatedLayout: false, animateInAsReplacement: false, action: { _ in return false }), in: .current)
                 }))
-                if canAddToReadingList {
+                // MARK: Swiftgram
+            items.append(ActionSheetButtonItem(title: self.presentationData.strings.Conversation_ContextMenuForward, color: .accent, action: { [weak actionSheet, weak self] in
+                actionSheet?.dismissAnimated()
+                guard let self else {
+                    return
+                }
+                self.present(ShareController(context: self.context, subject: .url(url), immediateExternalShareOverridingSGBehaviour: false), in: .window(.root))
+            }))
+            items.append(ActionSheetButtonItem(title: self.presentationData.strings.Conversation_ContextMenuShare, color: .accent, action: { [weak actionSheet, weak self] in
+                actionSheet?.dismissAnimated()
+                guard let self else {
+                    return
+                }
+                self.present(ShareController(context: self.context, subject: .url(url), immediateExternalShareOverridingSGBehaviour: true), in: .current)
+            }))
+            //
+            if canAddToReadingList {
                     items.append(ActionSheetButtonItem(title: self.presentationData.strings.Conversation_AddToReadingList, color: .accent, action: { [weak actionSheet] in
                         actionSheet?.dismissAnimated()
                         if let link = URL(string: url) {
@@ -365,7 +384,7 @@ extension ChatControllerImpl {
             )
 
             if let openMode {
-                let reverseText = openMode.shouldOpenInApp ? self.presentationData.strings.Chat_ContextMenu_OpenInBrowser : self.presentationData.strings.Chat_ContextMenu_OpenInApp
+                let reverseText = openMode.shouldOpenInApp ? self.presentationData.strings.Chat_ContextMenu_OpenInBrowser : self.presentationData.strings.Chat_ContextMenu_OpenInApp.replacingOccurrences(of: "Telegram", with: "Swiftgram") /* MARK: Swiftgram */
                 items.append(
                     .action(ContextMenuActionItem(text: reverseText, icon: { theme in return generateTintedImage(image: openMode.shouldOpenInApp ? UIImage(bundleImageName: "Chat/Context Menu/Globe") : UIImage(bundleImageName: "Chat/Context Menu/Browser"), color: theme.contextMenu.primaryColor) }, action: { [weak self] _, f in
                         f(.default)
@@ -396,7 +415,31 @@ extension ChatControllerImpl {
                 }))
             )
 
-            if canAddToReadingList {
+            // MARK: Swiftgram
+        items.append(
+            .action(ContextMenuActionItem(text: self.presentationData.strings.Conversation_ContextMenuForward, icon: { theme in return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Forward"), color: theme.contextMenu.primaryColor) }, action: { [weak self]  _, f in
+                f(.default)
+
+                guard let self else {
+                    return
+                }
+
+                self.present(ShareController(context: self.context, subject: .url(url), immediateExternalShareOverridingSGBehaviour: false), in: .window(.root))
+            }))
+        )
+        items.append(
+            .action(ContextMenuActionItem(text: self.presentationData.strings.Conversation_ContextMenuShare, icon: { theme in return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Share"), color: theme.contextMenu.primaryColor) }, action: { [weak self]  _, f in
+                f(.default)
+
+                guard let self else {
+                    return
+                }
+
+                self.present(ShareController(context: self.context, subject: .url(url), immediateExternalShareOverridingSGBehaviour: true), in: .current)
+            }))
+        )
+        //
+        if canAddToReadingList {
                 items.append(
                     .action(ContextMenuActionItem(text: self.presentationData.strings.Conversation_AddToReadingList, icon: { theme in return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/ReadingList"), color: theme.contextMenu.primaryColor) }, action: { _, f in
                         f(.default)

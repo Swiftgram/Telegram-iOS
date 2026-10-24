@@ -551,6 +551,7 @@
         self.trimStartValue = videoAdjustments.trimStartValue;
         self.trimEndValue = videoAdjustments.trimEndValue;
         self.sendAsGif = videoAdjustments.sendAsGif;
+        self.sendAsTelescope = videoAdjustments.sendAsTelescope;
         self.preset = videoAdjustments.preset;
     }
     
@@ -581,13 +582,13 @@
     
     if (!_forVideo)
     {
-        return [PGPhotoEditorValues editorValuesWithOriginalSize:self.originalSize cropRect:self.cropRect cropRotation:self.cropRotation cropOrientation:self.cropOrientation cropLockedAspectRatio:self.cropLockedAspectRatio cropMirrored:self.cropMirrored toolValues:toolValues paintingData:paintingData sendAsGif:self.sendAsGif];
+        return [PGPhotoEditorValues editorValuesWithOriginalSize:self.originalSize cropRect:self.cropRect cropRotation:self.cropRotation cropOrientation:self.cropOrientation cropLockedAspectRatio:self.cropLockedAspectRatio cropMirrored:self.cropMirrored toolValues:toolValues paintingData:paintingData sendAsGif:self.sendAsGif sendAsTelescope:self.sendAsTelescope];
     }
     else
     {
         TGVideoEditAdjustments *initialAdjustments = (TGVideoEditAdjustments *)_initialAdjustments;
         
-        return [TGVideoEditAdjustments editAdjustmentsWithOriginalSize:self.originalSize cropRect:self.cropRect cropOrientation:self.cropOrientation cropRotation:self.cropRotation cropLockedAspectRatio:self.cropLockedAspectRatio cropMirrored:self.cropMirrored trimStartValue:initialAdjustments.trimStartValue trimEndValue:initialAdjustments.trimEndValue toolValues:toolValues paintingData:paintingData sendAsGif:self.sendAsGif preset:self.preset];
+        return [TGVideoEditAdjustments editAdjustmentsWithOriginalSize:self.originalSize cropRect:self.cropRect cropOrientation:self.cropOrientation cropRotation:self.cropRotation cropLockedAspectRatio:self.cropLockedAspectRatio cropMirrored:self.cropMirrored trimStartValue:initialAdjustments.trimStartValue trimEndValue:initialAdjustments.trimEndValue toolValues:toolValues paintingData:paintingData sendAsGif:self.sendAsGif sendAsTelescope:self.sendAsTelescope preset:self.preset];
     }
 }
 

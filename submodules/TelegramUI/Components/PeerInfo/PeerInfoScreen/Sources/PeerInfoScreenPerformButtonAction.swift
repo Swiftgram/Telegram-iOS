@@ -997,7 +997,33 @@ extension PeerInfoScreenNode {
                                 }
                             })
                         })))
+                    // MARK: Swiftgram
+                    } else {
+                        items.append(.action(ContextMenuActionItem(text: presentationData.strings.Group_Info_AdminLog, icon: { theme in
+                            generateTintedImage(image: UIImage(bundleImageName: "Peer Info/RefProgram/IntroListEye"), color: theme.contextMenu.primaryColor)
+                        }, action: { [weak self] c, f in
+                            f(.dismissWithoutContent)
+                            self?.openRecentActions()
+                        })))
                     }
+                    if case .group = channel.info {
+                        items.append(.action(ContextMenuActionItem(text: presentationData.strings.GroupInfo_Administrators, icon: { theme in
+                            generateTintedImage(image: UIImage(bundleImageName: "Chat List/ProxyShieldIcon"), color: theme.contextMenu.primaryColor)
+                        }, action: { [weak self] c, f in
+                            f(.dismissWithoutContent)
+                            self?.openParticipantsSection(section: .admins)
+                        })))
+                    }
+                    // MARK: Swiftgram
+                    items.append(.action(ContextMenuActionItem(text: presentationData.strings.Channel_AdminLogFilter_EventsPinned, icon: { theme in
+                        generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/PinnedList"), color: theme.contextMenu.primaryColor)
+                    }, action: { [weak self] c, f in
+                        f(.dismissWithoutContent)
+                        if let strongSelf = self {
+                            NotificationCenter.default.post(name: NSNotification.Name("SGShowHiddenPinnedMessages"), object: strongSelf.chatLocation.peerId)
+                            strongSelf.openChatForTranslation()
+                        }
+                    })))
                     
                     if canSetupAutoremoveTimeout {
                         let strings = strongSelf.presentationData.strings

@@ -535,6 +535,12 @@ private final class OpenInAppView: UIControl {
                 if let image = UIImage(bundleImageName: "Open In/Safari") {
                     self.iconView.setSignal(openInAppIcon(engine: context.engine, appIcon: .image(image: image)))
                 }
+            // MARK: Swiftgram
+            case .system:
+                if let image = renderSettingsIcon(name: "Chat/Context Menu/Globe", backgroundColors: [UIColor(rgb: 0x8E8E93)]) {
+                    self.iconView.setSignal(openInAppIcon(engine: context.engine, appIcon: .image(image: image), withChrome: false))
+                }
+            //
             case .maps:
                 if let image = UIImage(bundleImageName: "Open In/Maps") {
                     self.iconView.setSignal(openInAppIcon(engine: context.engine, appIcon: .image(image: image)))

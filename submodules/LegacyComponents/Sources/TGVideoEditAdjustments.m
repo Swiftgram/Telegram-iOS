@@ -14,6 +14,7 @@
 
 const NSTimeInterval TGVideoEditMinimumTrimmableDuration = 1.5;
 const NSTimeInterval TGVideoEditMaximumGifDuration = 30.5;
+const NSTimeInterval TGVideoEditMaximumTelescopeDuration = 60;
 
 @implementation TGVideoEditAdjustments
 
@@ -25,6 +26,7 @@ const NSTimeInterval TGVideoEditMaximumGifDuration = 30.5;
 @synthesize cropMirrored = _cropMirrored;
 @synthesize paintingData = _paintingData;
 @synthesize sendAsGif = _sendAsGif;
+@synthesize sendAsTelescope = _sendAsTelescope;
 @synthesize toolValues = _toolValues;
 
 + (instancetype)editAdjustmentsWithOriginalSize:(CGSize)originalSize
@@ -38,6 +40,7 @@ const NSTimeInterval TGVideoEditMaximumGifDuration = 30.5;
                                      toolValues:(NSDictionary *)toolValues
                                    paintingData:(TGPaintingData *)paintingData
                                       sendAsGif:(bool)sendAsGif
+                                sendAsTelescope:(bool)sendAsTelescope
                                          preset:(TGMediaVideoConversionPreset)preset
 {
     TGVideoEditAdjustments *adjustments = [[[self class] alloc] init];
@@ -52,6 +55,7 @@ const NSTimeInterval TGVideoEditMaximumGifDuration = 30.5;
     adjustments->_toolValues = toolValues;
     adjustments->_paintingData = paintingData;
     adjustments->_sendAsGif = sendAsGif;
+    adjustments->_sendAsTelescope = sendAsTelescope;
     adjustments->_preset = preset;
     
     if (trimStartValue > trimEndValue)
@@ -86,6 +90,8 @@ const NSTimeInterval TGVideoEditMaximumGifDuration = 30.5;
     }
     if (dictionary[@"sendAsGif"])
         adjustments->_sendAsGif = [dictionary[@"sendAsGif"] boolValue];
+    if (dictionary[@"sendAsTelescope"])
+        adjustments->_sendAsTelescope = [dictionary[@"sendAsTelescope"] boolValue];
     if (dictionary[@"bounce"])
         adjustments->_bounce = [dictionary[@"bounce"] boolValue];
     if (dictionary[@"preset"])
@@ -124,6 +130,8 @@ const NSTimeInterval TGVideoEditMaximumGifDuration = 30.5;
     adjustments->_preset = preset;
     if (preset == TGMediaVideoConversionPresetAnimation)
         adjustments->_sendAsGif = true;
+    if (preset == TGMediaVideoConversionPresetVideoMessage || preset == TGMediaVideoConversionPresetVideoMessageHD)
+        adjustments->_sendAsTelescope = true;
     
     return adjustments;
 }
@@ -157,6 +165,7 @@ const NSTimeInterval TGVideoEditMaximumGifDuration = 30.5;
     adjustments->_cropMirrored = values.cropMirrored;
     adjustments->_paintingData = [values.paintingData dataForAnimation];
     adjustments->_sendAsGif = sendAsGif;
+    adjustments->_sendAsTelescope = values.sendAsTelescope;
     adjustments->_preset = preset;
     adjustments->_bounce = bounce;
     adjustments->_toolValues = [values toolValues];
@@ -178,6 +187,7 @@ const NSTimeInterval TGVideoEditMaximumGifDuration = 30.5;
     adjustments->_cropMirrored = values.cropMirrored;
     adjustments->_paintingData = [values.paintingData dataForAnimation];
     adjustments->_sendAsGif = true;
+    adjustments->_sendAsTelescope = values.sendAsTelescope;
     adjustments->_preset = preset;
     adjustments->_documentId = documentId;
     adjustments->_colors = colors;
@@ -199,6 +209,7 @@ const NSTimeInterval TGVideoEditMaximumGifDuration = 30.5;
     adjustments->_cropMirrored = values.cropMirrored;
     adjustments->_paintingData = [values.paintingData dataForAnimation];
     adjustments->_sendAsGif = true;
+    adjustments->_sendAsTelescope = values.sendAsTelescope;
     adjustments->_preset = preset;
     adjustments->_stickerPackId = stickerPackId;
     adjustments->_stickerPackAccessHash = stickerPackAccessHash;
@@ -224,6 +235,7 @@ const NSTimeInterval TGVideoEditMaximumGifDuration = 30.5;
     adjustments->_toolValues = _toolValues;
     adjustments->_videoStartValue = _videoStartValue;
     adjustments->_sendAsGif = preset == TGMediaVideoConversionPresetAnimation ? true : _sendAsGif;
+    adjustments->_sendAsTelescope = (preset == TGMediaVideoConversionPresetVideoMessage || preset == TGMediaVideoConversionPresetVideoMessageHD) ? true : _sendAsTelescope;
     
     if (maxDuration > DBL_EPSILON)
     {
@@ -254,6 +266,7 @@ const NSTimeInterval TGVideoEditMaximumGifDuration = 30.5;
     adjustments->_trimEndValue = trimEndValue;
     adjustments->_paintingData = _paintingData;
     adjustments->_sendAsGif = _sendAsGif;
+    adjustments->_sendAsTelescope = _sendAsTelescope;
     adjustments->_preset = preset;
     adjustments->_toolValues = _toolValues;
     adjustments->_videoStartValue = videoStartValue;
@@ -304,6 +317,7 @@ const NSTimeInterval TGVideoEditMaximumGifDuration = 30.5;
     }
     
     dict[@"sendAsGif"] = @(self.sendAsGif);
+    dict[@"sendAsTelescope"] = @(self.sendAsTelescope);
     dict[@"bounce"] = @(self.bounce);
     
     if (self.preset != TGMediaVideoConversionPresetCompressedDefault)
@@ -436,7 +450,7 @@ const NSTimeInterval TGVideoEditMaximumGifDuration = 30.5;
 
 - (bool)isDefaultValuesForGif
 {
-    return ![self cropAppliedForAvatar:false] && ![self toolsApplied] && ![self hasPainting];
+    return ![self cropAppliedForAvatar:false] && ![self toolsApplied] && ![self hasPainting] && !_sendAsTelescope;
 }
 
 - (bool)isCropEqualWith:(id<TGMediaEditAdjustments>)adjusments
@@ -487,6 +501,9 @@ const NSTimeInterval TGVideoEditMaximumGifDuration = 30.5;
         return false;
     
     if (self.sendAsGif != adjustments.sendAsGif)
+        return false;
+
+    if (self.sendAsTelescope != adjustments.sendAsTelescope)
         return false;
     
     return true;

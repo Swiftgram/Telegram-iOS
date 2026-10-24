@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import SwiftSignalKit
 import Postbox
@@ -89,7 +90,7 @@ public extension TelegramEngine {
     final class Messages {
         // Module-internal rather than private: the MediaPreupload facade lives in its own file and
         // needs the account's network/postbox/preupload manager.
-        let account: Account
+        public let account: Account // MARK: Swiftgram
 
         init(account: Account) {
             self.account = account
@@ -146,6 +147,15 @@ public extension TelegramEngine {
 
         public func searchMessages(location: SearchMessagesLocation, query: String, state: SearchMessagesState?, centerId: MessageId? = nil, limit: Int32 = 100) -> Signal<(SearchMessagesResult, SearchMessagesState), NoError> {
             return _internal_searchMessages(account: self.account, location: location, query: query, state: state, centerId: centerId, limit: limit)
+            // MARK: Swiftgram
+            // TODO(swiftgram): Try to fallback on error when searching. RX is hard...
+            |> mapToSignal { result -> Signal<(SearchMessagesResult, SearchMessagesState), NoError> in
+                if (result.0.totalCount > 0) {
+                    return .single(result)
+                }
+                return _internal_searchMessages(account: self.account, location: location, query: query, state: state, centerId: centerId, limit: limit, forceLocal: true)
+            }
+            //
         }
         
         public func getSearchMessageCount(location: SearchMessagesLocation, query: String) -> Signal<Int?, NoError> {
@@ -495,9 +505,11 @@ public extension TelegramEngine {
             return _internal_updateStarsReactionPrivacy(account: self.account, messageId: id, privacy: privacy)
         }
 
-        public func requestChatContextResults(botId: PeerId, peerId: PeerId, query: String, location: Signal<(Double, Double)?, NoError> = .single(nil), offset: String, incompleteResults: Bool = false, staleCachedResults: Bool = false) -> Signal<RequestChatContextResultsResult?, RequestChatContextResultsError> {
-            return _internal_requestChatContextResults(account: self.account, botId: botId, peerId: peerId, query: query, location: location, offset: offset, incompleteResults: incompleteResults, staleCachedResults: staleCachedResults)
+        // MARK: Swiftgram
+        public func requestChatContextResults(IQTP: Bool = false, botId: PeerId, peerId: PeerId, query: String, location: Signal<(Double, Double)?, NoError> = .single(nil), offset: String, incompleteResults: Bool = false, staleCachedResults: Bool = false) -> Signal<RequestChatContextResultsResult?, RequestChatContextResultsError> {
+            return _internal_requestChatContextResults(IQTP: IQTP, account: self.account, botId: botId, peerId: peerId, query: query, location: location, offset: offset, incompleteResults: incompleteResults, staleCachedResults: staleCachedResults)
         }
+        //
 
         public func removeRecentlyUsedHashtag(string: String) -> Signal<Void, NoError> {
             return _internal_removeRecentlyUsedHashtag(postbox: self.account.postbox, string: string)
@@ -732,10 +744,10 @@ public extension TelegramEngine {
                 }
                 |> castError(TranslationError.self)
                 |> mapToSignal { inputPeer in
-                    return _internal_translate(network: self.account.network, text: text, toLang: toLang, entities: entities, tone: tone, peer: inputPeer, messageId: messageId.id)
+                    return sgWrappedTranslateSingle(text: text, toLang: toLang, default: _internal_translate(network: self.account.network, text: text, toLang: toLang, entities: entities, tone: tone, peer: inputPeer, messageId: messageId.id)) // MARK: Swiftgram
                 }
             } else {
-                return _internal_translate(network: self.account.network, text: text, toLang: toLang, entities: entities, tone: tone)
+                return sgWrappedTranslateSingle(text: text, toLang: toLang, default: _internal_translate(network: self.account.network, text: text, toLang: toLang, entities: entities, tone: tone)) // MARK: Swiftgram
             }
         }
         
@@ -772,7 +784,7 @@ public extension TelegramEngine {
         }
 
         public func translate(texts: [(String, [MessageTextEntity])], toLang: String, tone: TranslationTone = .neutral) -> Signal<[(String, [MessageTextEntity])], TranslationError> {
-            return _internal_translateTexts(network: self.account.network, texts: texts, toLang: toLang, tone: tone)
+            return sgWrappedTranslateMultiple(texts: texts, toLang: toLang, default: _internal_translateTexts(network: self.account.network, texts: texts, toLang: toLang, tone: tone)) // MARK: Swiftgram
         }
 
         public func translateRichMessage(messageId: EngineMessage.Id, toLang: String, tone: TranslationTone = .neutral) -> Signal<InstantPage?, TranslationError> {
@@ -1684,6 +1696,11 @@ public extension TelegramEngine {
         }
         
         public func markStoryAsSeen(peerId: EnginePeer.Id, id: Int32, asPinned: Bool) -> Signal<Never, NoError> {
+            // MARK: Swiftgram
+            if SGSimpleSettings.shared.isStealthModeEnabled {
+                return .never()
+            }
+            //
             return _internal_markStoryAsSeen(account: self.account, peerId: peerId, id: id, asPinned: asPinned)
         }
         

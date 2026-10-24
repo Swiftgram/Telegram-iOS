@@ -2,16 +2,25 @@ load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load("@build_bazel_rules_apple//apple/testing/default_runner:ios_test_runner.bzl", "ios_test_runner")
 
+sgsrc = [
+    "//Swiftgram/SGAppBadgeOffset:SGAppBadgeOffset"
+]
+
+sgdeps = [
+    "//submodules/Utils/DeviceModel",
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+]
+
 swift_library(
     name = "Display",
     module_name = "Display",
-    srcs = glob([
+    srcs = sgsrc + glob([
         "Source/**/*.swift",
     ]),
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgdeps + [
     	"//submodules/ObjCRuntimeUtils:ObjCRuntimeUtils",
     	"//submodules/UIKitRuntimeUtils:UIKitRuntimeUtils",
         "//submodules/AppBundle:AppBundle",

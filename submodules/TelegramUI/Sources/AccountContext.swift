@@ -1,3 +1,8 @@
+// MARK: Swiftgram
+import SGStrings
+import SGSimpleSettings
+//
+
 import PasscodeCore
 import PasscodeUI
 import LocalAuthentication
@@ -1012,6 +1017,7 @@ public final class AccountContextImpl: AccountContext {
     }
     
     public func requestCall(peerId: EnginePeer.Id, isVideo: Bool, completion: @escaping () -> Void) {
+        let makeCall = { // MARK: Swiftgram
         guard let callResult = self.sharedContext.callManager?.requestCall(context: self, peerId: peerId, isVideo: isVideo, endCurrentIfAny: false) else {
             return
         }
@@ -1079,6 +1085,20 @@ public final class AccountContextImpl: AccountContext {
         } else {
             completion()
         }
+        // MARK: Swiftgram
+        }
+        if SGSimpleSettings.shared.confirmCalls {
+            let presentationData = self.sharedContext.currentPresentationData.with { $0 }
+            self.sharedContext.mainWindow?.present(textAlertController(context: self, title: nil, text: isVideo ? i18n("CallConfirmation.Video.Title", presentationData.strings.baseLanguageCode) : i18n("CallConfirmation.Audio.Title", presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .genericAction, title: presentationData.strings.Common_No, action: {}), TextAlertAction(type: .destructiveAction, title: presentationData.strings.Common_Yes, action: { [weak self] in
+                guard let _ = self else {
+                    return
+                }
+                makeCall()
+            })]), on: .root)
+        } else {
+            makeCall()
+        }
+        //
     }
     
     public func getAppConfigValue(_ key: String) -> Any? {

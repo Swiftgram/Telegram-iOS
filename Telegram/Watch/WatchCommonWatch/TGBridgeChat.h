@@ -5,7 +5,7 @@
 
 @property (nonatomic) int64_t identifier;
 @property (nonatomic) NSTimeInterval date;
-@property (nonatomic) int32_t fromUid;
+@property (nonatomic) int64_t fromUid;
 @property (nonatomic, strong) NSString *text;
 
 @property (nonatomic, strong) NSArray *media;

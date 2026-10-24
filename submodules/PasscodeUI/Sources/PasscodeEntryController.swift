@@ -418,7 +418,7 @@ public final class PasscodeEntryController: ViewController {
         let biometricAuthentication = self.appLockContext.beginBiometricAuthentication()
         self.biometricAuthenticationDisposable.set(biometricAuthentication)
         
-        self.biometricsDisposable.set((LocalAuth.auth(reason: self.presentationData.strings.EnterPasscode_TouchId) |> deliverOnMainQueue).start(next: { [weak self] result, evaluatedPolicyDomainState in
+        self.biometricsDisposable.set((LocalAuth.auth(reason: self.presentationData.strings.EnterPasscode_TouchId.replacingOccurrences(of: "Telegram", with: "Swiftgram") /* MARK: Swiftgram */) |> deliverOnMainQueue).start(next: { [weak self] result, evaluatedPolicyDomainState in
             biometricAuthentication.dispose()
             guard let strongSelf = self, strongSelf.authenticationLifecycle.acceptsResult(generation: generation) else {
                 return

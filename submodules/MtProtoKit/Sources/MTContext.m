@@ -255,7 +255,7 @@ static NSTimeInterval MTRetryDelayForFailureCount(NSUInteger failureCount) {
     return self;
 }
 
-- (instancetype)initWithSerialization:(id<MTSerialization>)serialization encryptionProvider:(id<EncryptionProvider>)encryptionProvider apiEnvironment:(MTApiEnvironment *)apiEnvironment isTestingEnvironment:(bool)isTestingEnvironment useTempAuthKeys:(bool)useTempAuthKeys
+- (instancetype)initWithSerialization:(id<MTSerialization>)serialization encryptionProvider:(id<EncryptionProvider>)encryptionProvider apiEnvironment:(MTApiEnvironment *)apiEnvironment isTestingEnvironment:(bool)isTestingEnvironment useTempAuthKeys:(bool)useTempAuthKeys forceLocalDNS:(bool)forceLocalDNS
 {
     NSAssert(serialization != nil, @"serialization should not be nil");
     NSAssert(apiEnvironment != nil, @"apiEnvironment should not be nil");
@@ -271,6 +271,7 @@ static NSTimeInterval MTRetryDelayForFailureCount(NSUInteger failureCount) {
         _apiEnvironment = apiEnvironment;
         _isTestingEnvironment = isTestingEnvironment;
         _useTempAuthKeys = useTempAuthKeys;
+        _forceLocalDNS = forceLocalDNS;
         
         _tempKeyExpiration = 24 * 60 * 60;
         

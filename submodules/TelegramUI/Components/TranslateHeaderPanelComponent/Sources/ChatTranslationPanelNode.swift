@@ -179,13 +179,14 @@ final class ChatTranslationPanelNode: ASDisplayNode {
         let closeButtonSize = self.closeButton.measure(CGSize(width: 100.0, height: 100.0))
         self.closeButton.frame = CGRect(origin: CGPoint(x: width - contentRightInset - closeButtonSize.width, y: floorToScreenPixels((panelHeight - closeButtonSize.height) / 2.0)), size: closeButtonSize)
         
-        if info.isPremium {
+        // MARK: Swiftgram
+        // if info.isPremium {
             self.moreButton.isHidden = false
             self.closeButton.isHidden = true
-        } else {
+        /* } else {
             self.moreButton.isHidden = true
             self.closeButton.isHidden = false
-        }
+        }*/
         
         let buttonPadding: CGFloat = 10.0
         let buttonSpacing: CGFloat = 10.0
@@ -237,7 +238,7 @@ final class ChatTranslationPanelNode: ASDisplayNode {
             translationAvailable = true
         }
         
-        if translationAvailable {
+        if translationAvailable || true {
             self.toggle()
         } else if !info.isActive {
             if !isPremium {

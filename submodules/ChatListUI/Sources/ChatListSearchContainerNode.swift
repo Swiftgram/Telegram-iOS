@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import LottieSettings
 import UIKit
@@ -830,6 +831,8 @@ public final class ChatListSearchContainerNode: SearchDisplayControllerContentNo
         if self.stateValue.selectedMessageIds != nil {
             filtersInsets.bottom += 48.0
         }
+        // TODO(swiftgram): too high if used from top bar
+        if !SGSimpleSettings.shared.showTabNames { filtersInsets.bottom += 16.0 } // MARK: Swiftgram
         let height: CGFloat = 40.0
         let minY = layout.size.height - filtersInsets.bottom - height
         let sideInsets = layout.sideInsets(forBandFrom: minY, to: minY + height)

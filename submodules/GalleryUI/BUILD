@@ -1,15 +1,25 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+# MARK: Swiftgram
+sgsrcs = [
+    "//Swiftgram/SGGalleryUIExtensions:SGGalleryUIExtensions",
+]
+
+sgdeps = [
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings"
+]
+#
+
 swift_library(
     name = "GalleryUI",
     module_name = "GalleryUI",
-    srcs = glob([
+    srcs = sgsrcs + glob([ # MARK: Swiftgram
 		"Sources/**/*.swift",
     ]),
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgdeps + [ # MARK: Swiftgram
         "//submodules/UrlWhitelist",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/LottieSettings:LottieSettings",

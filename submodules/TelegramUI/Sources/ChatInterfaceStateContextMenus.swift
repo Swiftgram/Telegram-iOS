@@ -1,3 +1,5 @@
+import SGSimpleSettings // MARK: Swiftgram
+import PeerInfoUI
 import Foundation
 import UIKit
 import TelegramCore
@@ -463,7 +465,7 @@ private func ephemeralReplacementContextMenuItems(chatPresentationInterfaceState
                 actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Conversation_ContextMenuForward, icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Forward"), color: theme.actionSheet.primaryTextColor)
                 }, action: { _, f in
-                    interfaceInteraction.forwardMessages([replacementMessage])
+                    interfaceInteraction.forwardMessages([replacementMessage], nil) // MARK: Swiftgram
                     f(.dismissWithoutContent)
                 })))
             }
@@ -508,6 +510,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
     if case .standard(.embedded) = chatPresentationInterfaceState.mode {
         isEmbeddedMode = true
     }
+    let canReveal = sgCanRevealContent(messages: messages, context: context, copyProtectionEnabled: chatPresentationInterfaceState.copyProtectionEnabled) // MARK: Swiftgram
 
     if case let .customChatContents(customChatContents) = chatPresentationInterfaceState.subject, case .hashTagSearch = customChatContents.kind {
         isEmbeddedMode = true
@@ -663,7 +666,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                             messageEntities = attribute.entities
                         }
                         if let attribute = attribute as? RestrictedContentMessageAttribute {
-                            restrictedText = attribute.platformText(platform: "ios", contentSettings: context.currentContentSettings.with { $0 }) ?? ""
+                            restrictedText = attribute.platformText(platform: "ios", contentSettings: context.currentContentSettings.with { $0 }, chatId: message.author?.id.id._internalGetInt64Value()) ?? ""
                         }
                     }
                     
@@ -990,6 +993,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                 })
             })))
         }
+        var sgActions: [ContextMenuItem] = []
 
         var isPinnedMessages = false
         if case .pinnedMessages = chatPresentationInterfaceState.subject {
@@ -1198,6 +1202,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     })
                 })
             })))
+            if !SGSimpleSettings.shared.contextShowReply { sgActions.append(actions.removeLast()) } // MARK: Swiftgram
         }
         
         if data.messageActions.options.contains(.sendGift), !message.id.peerId.isTelegramNotifications {
@@ -1378,7 +1383,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                                             messageEntities = attribute.entities
                                         }
                                         if let attribute = attribute as? RestrictedContentMessageAttribute {
-                                            restrictedText = attribute.platformText(platform: "ios", contentSettings: context.currentContentSettings.with { $0 }) ?? ""
+                                            restrictedText = attribute.platformText(platform: "ios", contentSettings: context.currentContentSettings.with { $0 }, chatId: message.author?.id.id._internalGetInt64Value()) ?? ""
                                         }
                                         if let attribute = attribute as? AudioTranscriptionMessageAttribute {
                                             messageText = attribute.text
@@ -1529,6 +1534,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     })
                     f(.default)
                 })))
+                if !SGSimpleSettings.shared.contextShowSaveMedia { sgActions.append(actions.removeLast()) } // MARK: Swiftgram
             }
         }
         
@@ -1574,6 +1580,15 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             })))
         }
         
+        // MARK: Swiftgram
+        let showJsonAction = sgMakeContextMenuAction(.json(controllerInteraction: controllerInteraction, context: context), chatPresentationInterfaceState: chatPresentationInterfaceState, message: message)
+        if SGSimpleSettings.shared.contextShowJson {
+            actions.append(showJsonAction)
+        } else {
+            sgActions.append(showJsonAction)
+        }
+        //
+        
         var threadId: Int64?
         var threadMessageCount: Int = 0
         if case .peer = chatPresentationInterfaceState.chatLocation, let channel = chatPresentationInterfaceState.renderedPeer?.peer as? TelegramChannel, case .group = channel.info {
@@ -1612,6 +1627,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     controllerInteraction.openMessageReplies(messages[0].id, true, true)
                 })
             })))
+            if !SGSimpleSettings.shared.contextShowMessageReplies { sgActions.append(actions.removeLast()) } // MARK: Swiftgram
         }
         
         let isMigrated: Bool
@@ -1762,6 +1778,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     interfaceInteraction.pinMessage(messages[0].id, c)
                 })))
             }
+            if !SGSimpleSettings.shared.contextShowPin { sgActions.append(actions.removeLast()) } // MARK: Swiftgram
         }
         
         if let activePoll, messages[0].forwardInfo == nil {
@@ -1950,18 +1967,46 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                 actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Conversation_ContextMenuForward, icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Forward"), color: theme.actionSheet.primaryTextColor)
                 }, action: { _, f in
-                    interfaceInteraction.forwardMessages(selectAll || isImage ? messages : [message])
+                    interfaceInteraction.forwardMessages(selectAll || isImage ? messages : [message], nil)
                     f(.dismissWithoutContent)
                 })))
+                if message.id.peerId != context.account.peerId {
+                    // MARK: Swiftgram
+                    let action = sgMakeContextMenuAction(.saveToCloud(interfaceInteraction: interfaceInteraction, selectAll: selectAll, isImage: isImage, messages: messages), chatPresentationInterfaceState: chatPresentationInterfaceState, message: message)
+                    if SGSimpleSettings.shared.contextShowSaveToCloud {
+                        actions.append(action)
+                    } else {
+                        sgActions.append(action)
+                    }
+                    //
+                }
+                // MARK: Swiftgram
+                let action = sgMakeContextMenuAction(.hideForwardName(interfaceInteraction: interfaceInteraction, selectAll: selectAll, isImage: isImage, messages: messages), chatPresentationInterfaceState: chatPresentationInterfaceState, message: message)
+                if SGSimpleSettings.shared.contextShowHideForwardName {
+                    actions.append(action)
+                } else {
+                    sgActions.append(action)
+                }
+                //
             }
         }
         
-        if data.messageActions.options.contains(.report) {
+        if canReveal {
+            actions.insert(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Username_ActivateAlertShow, icon: { theme in
+                return generateTintedImage(image: UIImage(bundleImageName: "Premium/Stories/Views" /*"Chat/Context Menu/Eye"*/ ), color: theme.actionSheet.primaryTextColor)
+            }, action: { _, f in
+                interfaceInteraction.forwardMessages(selectAll || isImage ? messages : [message], "forwardMessagesToCloudWithNoNamesAndOpen")
+                f(.dismissWithoutContent)
+            })), at: 0)
+        }
+        
+        if data.messageActions.options.contains(.report) || context.account.testingEnvironment {
             actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Conversation_ContextMenuReport, icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Report"), color: theme.actionSheet.primaryTextColor)
             }, action: { controller, f in
                 interfaceInteraction.reportMessages(messages, controller)
             })))
+            if !SGSimpleSettings.shared.contextShowReport { sgActions.append(actions.removeLast()) } // MARK: Swiftgram
         } else if message.id.peerId.isReplies {
             actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Conversation_ContextMenuBlock, textColor: .destructive, icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Restrict"), color: theme.actionSheet.destructiveActionTextColor)
@@ -1969,6 +2014,56 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                 interfaceInteraction.blockMessageAuthor(message, controller)
             })))
         }
+        
+        if let peer = chatPresentationInterfaceState.renderedPeer?.peer ?? message.peers[message.id.peerId] {
+            let hasRestrictPermission: Bool
+            if let channel = peer as? TelegramChannel {
+                hasRestrictPermission = channel.hasPermission(.banMembers)
+            } else if let group = peer as? TelegramGroup {
+                switch group.role {
+                case .creator:
+                    hasRestrictPermission = true
+                case let .admin(adminRights, _):
+                    hasRestrictPermission = adminRights.rights.contains(.canBanUsers)
+                case .member:
+                    hasRestrictPermission = false
+                }
+            } else {
+                hasRestrictPermission = false
+            }
+            
+            if let user = message.author as? TelegramUser {
+                if (user.id != context.account.peerId) && hasRestrictPermission {
+                    let banDisposables = DisposableDict<EnginePeer.Id>() // MARK: Swiftgram
+                    // TODO(swiftgram): Check is user an admin?
+                    let action: ContextMenuItem = .action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.Conversation_ContextMenuBan, icon: { theme in
+                        return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Restrict"), color: theme.actionSheet.primaryTextColor)
+                    }, action: { _, f in
+                        let participantSignal: Signal<ChannelParticipant?, NoError>
+                        if peer is TelegramChannel {
+                            participantSignal = context.engine.peers.fetchChannelParticipant(peerId: peer.id, participantId: user.id)
+                        } else if peer is TelegramGroup {
+                            participantSignal = .single(.member(id: user.id, invitedAt: 0, adminInfo: nil, banInfo: nil, rank: nil, subscriptionUntilDate: nil))
+                        } else {
+                            participantSignal = .single(nil)
+                        }
+                        banDisposables.set((participantSignal
+                            |> deliverOnMainQueue).start(next: { participant in
+                        controllerInteraction.presentController(channelBannedMemberController(context: context, peerId: peer.id, memberId: message.author!.id, initialParticipant: participant, updated: { _ in }, upgradedToSupergroup: { _, f in f() }), ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+                            }), forKey: user.id)
+                        f(.dismissWithoutContent)
+                    }))
+                    // MARK: Swiftgram
+                    if SGSimpleSettings.shared.contextShowRestrict {
+                        actions.append(action)
+                    } else {
+                        sgActions.append(action)
+                    }
+                    //
+                }
+            }
+        }
+        
         
         var clearCacheAsDelete = false
         var hasViewStats = false
@@ -2121,9 +2216,24 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                 return nil
             }, action: noAction)))
         }
-
+        var sgActionsIndex: Int? = nil
         if !isPinnedMessages, !isReplyThreadHead, data.canSelect {
+            sgActionsIndex = actions.count
             var didAddSeparator = false
+            // MARK: Swiftgram
+            if let action = sgMakeSelectFromUserContextMenuAction(context: context, chatPresentationInterfaceState: chatPresentationInterfaceState, controllerInteraction: controllerInteraction, interfaceInteraction: interfaceInteraction, message: message) {
+                if SGSimpleSettings.shared.contextShowSelectFromUser {
+                    if !actions.isEmpty && !didAddSeparator {
+                        didAddSeparator = true
+                        actions.append(.separator)
+                    }
+                    actions.append(action)
+                } else {
+                    sgActions.append(action)
+                }
+            }
+            //
+            
             if !selectAll || messages.count == 1 {
                 if !actions.isEmpty && !didAddSeparator {
                     didAddSeparator = true
@@ -2169,6 +2279,8 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         } else if let messageReadStatsAreHidden = infoSummaryData.messageReadStatsAreHidden, !messageReadStatsAreHidden {
             canViewStats = canViewReadStats(message: message, participantCount: infoSummaryData.participantCount, isMessageRead: isMessageRead, isPremium: isPremium, appConfig: appConfig)
         }
+
+        sgInsertContextMenu(actions: &actions, sgActions: &sgActions, index: sgActionsIndex, chatPresentationInterfaceState: chatPresentationInterfaceState) // MARK: Swiftgram
         
         var reactionCount = 0
         for reaction in mergedMessageReactionsAndPeers(accountPeerId: context.account.peerId, accountPeer: nil, message: message).reactions {
@@ -2369,7 +2481,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                                 messageEntities = attribute.entities
                             }
                             if let attribute = attribute as? RestrictedContentMessageAttribute {
-                                restrictedText = attribute.platformText(platform: "ios", contentSettings: context.currentContentSettings.with { $0 }) ?? ""
+                                restrictedText = attribute.platformText(platform: "ios", contentSettings: context.currentContentSettings.with { $0 }, chatId: message.author?.id.id._internalGetInt64Value()) ?? ""
                             }
                         }
                         
