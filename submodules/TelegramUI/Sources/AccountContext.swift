@@ -1017,7 +1017,12 @@ public final class AccountContextImpl: AccountContext {
     }
     
     public func requestCall(peerId: EnginePeer.Id, isVideo: Bool, completion: @escaping () -> Void) {
-        let makeCall = { // MARK: Swiftgram
+        // MARK: Swiftgram
+        let makeCall = { [weak self] in
+        guard let self else {
+            return
+        }
+        //
         guard let callResult = self.sharedContext.callManager?.requestCall(context: self, peerId: peerId, isVideo: isVideo, endCurrentIfAny: false) else {
             return
         }
