@@ -55,7 +55,8 @@ public final class ChatMessageWebpageBubbleContentNode: ChatMessageBubbleContent
                         return
                     } else {
                         if content.embedUrl == nil && (content.title != nil || content.text != nil) && content.story == nil {
-                            var shouldOpenUrl = true
+                            // MARK: Swiftgram
+                            var shouldOpenUrl = false
                             if let file = content.file {
                                 if file.isVideo {
                                     shouldOpenUrl = false

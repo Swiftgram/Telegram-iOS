@@ -11,6 +11,10 @@ struct MessageRowView: View {
     var onEnterTopEdge: (() -> Void)? = nil
     var onEnterBottomEdge: (() -> Void)? = nil
     var onIncomingBubbleVisible: ((Int64) -> Void)? = nil
+    // MARK: Swiftgram
+    var onAvatarRequestDownload: (Int) -> Void = { _ in }
+    var onAvatarCancelDownload: (Int) -> Void = { _ in }
+    //
 
     var body: some View {
         rowBody
@@ -25,7 +29,17 @@ struct MessageRowView: View {
     private var rowBody: some View {
         switch row {
         case .bubble(let b):
-            MessageBubbleView(bubble: b, onPhotoTap: onPhotoTap, onVideoTap: onVideoTap, onVideoNoteTap: onVideoNoteTap, onPollTap: onPollTap)
+            MessageBubbleView(
+                bubble: b,
+                onPhotoTap: onPhotoTap,
+                onVideoTap: onVideoTap,
+                onVideoNoteTap: onVideoNoteTap,
+                onPollTap: onPollTap,
+                // MARK: Swiftgram
+                onAvatarRequestDownload: onAvatarRequestDownload,
+                onAvatarCancelDownload: onAvatarCancelDownload
+                //
+            )
                 .onScrollVisibilityChange(threshold: 0.5) { visible in
                     guard visible, !b.isOutgoing else { return }
                     onIncomingBubbleVisible?(b.messageId)

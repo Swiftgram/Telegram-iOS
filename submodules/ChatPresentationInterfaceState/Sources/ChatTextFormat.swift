@@ -3,7 +3,12 @@ import TextFormat
 import TelegramCore
 import AccountContext
 
-public func chatTextInputAddFormattingAttribute(_ state: ChatTextInputState, attribute: NSAttributedString.Key, value: Any?) -> ChatTextInputState {
+public func chatTextInputAddFormattingAttribute(forceRemoveAll: Bool = false, _ state: ChatTextInputState, attribute: NSAttributedString.Key, value: Any?) -> ChatTextInputState { // MARK: Swiftgram
+    // MARK: Swiftgram
+    if forceRemoveAll {
+        return chatTextInputClearFormattingAttributes(state)
+    }
+    //
     if !state.selectionRange.isEmpty {
         let nsRange = NSRange(location: state.selectionRange.lowerBound, length: state.selectionRange.count)
         // Toggle: remove the attribute when it already covers the WHOLE selection, add it otherwise.

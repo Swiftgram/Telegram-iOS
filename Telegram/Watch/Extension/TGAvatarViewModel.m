@@ -56,7 +56,7 @@
          {
              self.label.hidden = false;
              self.label.text = [TGStringUtils initialsForFirstName:_currentUser.firstName lastName:_currentUser.lastName single:true];
-             self.group.backgroundColor = [TGColor colorForUserId:(int32_t)user.identifier myUserId:context.userId];
+             self.group.backgroundColor = [TGColor colorForUserId:(int64_t)user.identifier myUserId:context.userId];
          }
     }
 }

@@ -28,6 +28,7 @@ public final class VideoPlaybackControlsComponent: Component {
     let displaySeekControls: Bool
     let togglePlayback: () -> Void
     let seek: (Bool) -> Void
+    let isFooter: Bool // MARK: Swiftgram
     
     public init(
         layoutParams: LayoutParams,
@@ -35,7 +36,8 @@ public final class VideoPlaybackControlsComponent: Component {
         isPlaying: Bool,
         displaySeekControls: Bool,
         togglePlayback: @escaping () -> Void,
-        seek: @escaping (Bool) -> Void
+        seek: @escaping (Bool) -> Void,
+        isFooter: Bool = false // MARK: Swiftgram
     ) {
         self.layoutParams = layoutParams
         self.isVisible = isVisible
@@ -43,6 +45,7 @@ public final class VideoPlaybackControlsComponent: Component {
         self.displaySeekControls = displaySeekControls
         self.togglePlayback = togglePlayback
         self.seek = seek
+        self.isFooter = isFooter // MARK: Swiftgram
     }
     
     public static func ==(lhs: VideoPlaybackControlsComponent, rhs: VideoPlaybackControlsComponent) -> Bool {
@@ -58,6 +61,9 @@ public final class VideoPlaybackControlsComponent: Component {
         if lhs.displaySeekControls != rhs.displaySeekControls {
             return false
         }
+        if lhs.isFooter != rhs.isFooter { // MARK: Swiftgram
+            return false
+        }
         return true
     }
     
@@ -69,12 +75,15 @@ public final class VideoPlaybackControlsComponent: Component {
         private let rightIconView: PlaybackIconView
         private let centerButtonBackgroundView: GlassBackgroundView
         private var centerButtonIconNode: PlayPauseIconNode?
+        private let groupBackgroundView: GlassBackgroundView // MARK: Swiftgram
+        private var videoControlsInFooterBackground = false // MARK: Swiftgram
         
         private var component: VideoPlaybackControlsComponent?
         private weak var state: EmptyComponentState?
         
         public override init(frame: CGRect) {
             self.backgroundContainer = GlassBackgroundContainerView()
+            self.groupBackgroundView = GlassBackgroundView() // MARK: Swiftgram
             
             self.leftButtonBackgroundView = GlassBackgroundView()
             self.leftIconView = PlaybackIconView(isForward: false)
@@ -90,6 +99,7 @@ public final class VideoPlaybackControlsComponent: Component {
             
             super.init(frame: frame)
             
+            self.addSubview(self.groupBackgroundView) // MARK: Swiftgram
             self.addSubview(self.backgroundContainer)
             
             self.backgroundContainer.contentView.addSubview(self.leftButtonBackgroundView)
@@ -153,46 +163,60 @@ public final class VideoPlaybackControlsComponent: Component {
             
             self.isUserInteractionEnabled = component.isVisible
             
-            let containerInset: CGFloat = 32.0
+            // MARK: Swiftgram
+            let isFooter = component.isFooter
+            var containerInset: CGFloat = 32.0
+            if isFooter {
+                containerInset = 0.0
+            }
+            self.updateControlsHost(isFooter: isFooter)
+            //
             
-            let size = CGSize(width: component.layoutParams.sideButtonSize * 2.0 + component.layoutParams.centerButtonSize + component.layoutParams.spacing * 2.0, height: component.layoutParams.centerButtonSize)
+            let size = CGSize(width: component.displaySeekControls ? (component.layoutParams.sideButtonSize * 2.0 + component.layoutParams.centerButtonSize + component.layoutParams.spacing * 2.0) : component.layoutParams.centerButtonSize, height: component.layoutParams.centerButtonSize) /* MARK: Swiftgram */
             
             let leftButtonFrame = CGRect(origin: CGPoint(x: 0.0, y: floorToScreenPixels((size.height - component.layoutParams.sideButtonSize) * 0.5)), size: CGSize(width: component.layoutParams.sideButtonSize, height: component.layoutParams.sideButtonSize)).offsetBy(dx: containerInset, dy: containerInset)
-            let centerButtonFrame = CGRect(origin: CGPoint(x: component.layoutParams.sideButtonSize + component.layoutParams.spacing, y: floorToScreenPixels((size.height - component.layoutParams.centerButtonSize) * 0.5)), size: CGSize(width: component.layoutParams.centerButtonSize, height: component.layoutParams.centerButtonSize)).offsetBy(dx: containerInset, dy: containerInset)
+            let centerButtonFrame = CGRect(origin: CGPoint(x: component.displaySeekControls ? (component.layoutParams.sideButtonSize + component.layoutParams.spacing) : 0.0 /* MARK: Swiftgram */, y: floorToScreenPixels((size.height - component.layoutParams.centerButtonSize) * 0.5)), size: CGSize(width: component.layoutParams.centerButtonSize, height: component.layoutParams.centerButtonSize)).offsetBy(dx: containerInset, dy: containerInset)
             let rightButtonFrame = CGRect(origin: CGPoint(x: size.width - component.layoutParams.sideButtonSize, y: floorToScreenPixels((size.height - component.layoutParams.sideButtonSize) * 0.5)), size: CGSize(width: component.layoutParams.sideButtonSize, height: component.layoutParams.sideButtonSize)).offsetBy(dx: containerInset, dy: containerInset)
             
-            if isVisibleChanged && !transition.animation.isImmediate {
+            if !isFooter && isVisibleChanged && !transition.animation.isImmediate { // MARK: Swiftgram
                 self.backgroundContainer.isHidden = true
                 self.backgroundContainer.isHidden = false
             }
+            self.backgroundContainer.isHidden = isFooter // MARK: Swiftgram
             
             transition.setFrame(view: self.backgroundContainer, frame: CGRect(origin: CGPoint(), size: size).insetBy(dx: -containerInset, dy: -containerInset))
             self.backgroundContainer.update(size: CGSize(width: size.width + containerInset * 2.0, height: size.height + containerInset * 2.0), isDark: true, transition: transition)
             
             let areSideButtonsVisible = component.isVisible && component.displaySeekControls
-            let buttonsTintColor: GlassBackgroundView.TintColor = .init(kind: .custom(style: .clear, color: UIColor(white: 0.0, alpha: 0.2)))
+            // MARK: Swiftgram
+            let buttonsTintColor: GlassBackgroundView.TintColor = isFooter
+                ? .init(kind: .panel)
+                : .init(kind: .custom(style: .clear, color: UIColor(white: 0.0, alpha: 0.2)))
+            transition.setFrame(view: self.groupBackgroundView, frame: CGRect(origin: CGPoint(), size: size))
+            self.groupBackgroundView.update(size: size, cornerRadius: size.height * 0.5, isDark: true, tintColor: buttonsTintColor, isInteractive: isFooter, isVisible: component.isVisible && isFooter, transition: transition)
+            //
             
             transition.setFrame(view: self.leftButtonBackgroundView, frame: leftButtonFrame)
-            self.leftButtonBackgroundView.update(size: leftButtonFrame.size, cornerRadius: leftButtonFrame.height * 0.5, isDark: true, tintColor: buttonsTintColor, isInteractive: true, isVisible: areSideButtonsVisible, transition: transition)
+            self.leftButtonBackgroundView.update(size: leftButtonFrame.size, cornerRadius: leftButtonFrame.height * 0.5, isDark: true, tintColor: buttonsTintColor, isInteractive: true, isVisible: isFooter ? false : areSideButtonsVisible, transition: transition) /* MARK: Swiftgram */
             transition.setFrame(view: self.leftIconView, frame: CGRect(origin: CGPoint(), size: leftButtonFrame.size))
-            self.leftIconView.update(size: leftButtonFrame.size)
+            self.leftIconView.update(size: leftButtonFrame.size, isFooter: isFooter) /* MARK: Swiftgram */
             transition.setAlpha(view: self.leftIconView, alpha: areSideButtonsVisible ? 1.0 : 0.0)
             transition.setBlur(layer: self.leftIconView.layer, radius: areSideButtonsVisible ? 0.0 : 10.0)
             self.leftButtonBackgroundView.isUserInteractionEnabled = areSideButtonsVisible
             
             transition.setFrame(view: self.rightButtonBackgroundView, frame: rightButtonFrame)
-            self.rightButtonBackgroundView.update(size: rightButtonFrame.size, cornerRadius: rightButtonFrame.height * 0.5, isDark: true, tintColor: buttonsTintColor, isInteractive: true, isVisible: areSideButtonsVisible, transition: transition)
+            self.rightButtonBackgroundView.update(size: rightButtonFrame.size, cornerRadius: rightButtonFrame.height * 0.5, isDark: true, tintColor: buttonsTintColor, isInteractive: true, isVisible: isFooter ? false : areSideButtonsVisible, transition: transition) /* MARK: Swiftgram */
             transition.setFrame(view: self.rightIconView, frame: CGRect(origin: CGPoint(), size: rightButtonFrame.size))
-            self.rightIconView.update(size: rightButtonFrame.size)
+            self.rightIconView.update(size: rightButtonFrame.size, isFooter: isFooter) /* MARK: Swiftgram */
             transition.setAlpha(view: self.rightIconView, alpha: areSideButtonsVisible ? 1.0 : 0.0)
             transition.setBlur(layer: self.rightIconView.layer, radius: areSideButtonsVisible ? 0.0 : 10.0)
             self.rightButtonBackgroundView.isUserInteractionEnabled = areSideButtonsVisible
             
             transition.setFrame(view: self.centerButtonBackgroundView, frame: centerButtonFrame)
-            self.centerButtonBackgroundView.update(size: centerButtonFrame.size, cornerRadius: centerButtonFrame.height * 0.5, isDark: true, tintColor: buttonsTintColor, isInteractive: true, isVisible: component.isVisible, transition: transition)
+            self.centerButtonBackgroundView.update(size: centerButtonFrame.size, cornerRadius: centerButtonFrame.height * 0.5, isDark: true, tintColor: buttonsTintColor, isInteractive: true, isVisible: isFooter ? false : component.isVisible, transition: transition) /* MARK: Swiftgram */
             
             let centerButtonIconNode: PlayPauseIconNode
-            let centerIconFactor: CGFloat = 0.9
+            let centerIconFactor: CGFloat = isFooter ? 0.84 : 0.9 /* MARK: Swiftgram */
             let centerButtonIconSize = CGSize(width: centerButtonFrame.width * centerIconFactor, height: centerButtonFrame.height * centerIconFactor)
             if let current = self.centerButtonIconNode, current.size == centerButtonIconSize {
                 centerButtonIconNode = current
@@ -207,13 +231,29 @@ public final class VideoPlaybackControlsComponent: Component {
                 self.centerButtonBackgroundView.contentView.addSubview(centerButtonIconNode.view)
                 centerButtonIconNode.enqueueState(component.isPlaying ? .pause : .play, animated: false)
             }
-            transition.setFrame(view: centerButtonIconNode.view, frame: centerButtonIconSize.centered(in: CGRect(origin: CGPoint(), size: centerButtonFrame.size)).offsetBy(dx: component.isPlaying ? 0.0 : 5.0, dy: 0.0))
+            transition.setFrame(view: centerButtonIconNode.view, frame: centerButtonIconSize.centered(in: CGRect(origin: CGPoint(), size: centerButtonFrame.size)).offsetBy(dx: isFooter ? (component.isPlaying ? 0.0 : 2.0) : (component.isPlaying ? 0.0 : 5.0), dy: 0.0)) /* MARK: Swiftgram */
             centerButtonIconNode.enqueueState(component.isPlaying ? .pause : .play, animated: !transition.animation.isImmediate && component.isVisible && !isVisibleChanged)
             transition.setAlpha(view: centerButtonIconNode.view, alpha: component.isVisible ? 1.0 : 0.0)
             transition.setBlur(layer: centerButtonIconNode.layer, radius: component.isVisible ? 0.0 : 10.0)
             
             return size
         }
+        
+        // MARK: Swiftgram
+        private func updateControlsHost(isFooter: Bool) {
+            if self.videoControlsInFooterBackground == isFooter {
+                return
+            }
+            self.videoControlsInFooterBackground = isFooter
+            
+            let targetView = isFooter ? self.groupBackgroundView.contentView : self.backgroundContainer.contentView
+            targetView.addSubview(self.leftButtonBackgroundView)
+            targetView.addSubview(self.rightButtonBackgroundView)
+            targetView.addSubview(self.centerButtonBackgroundView)
+            
+            self.backgroundContainer.isUserInteractionEnabled = !isFooter
+        }
+        //
     }
     
     public func makeView() -> View {
@@ -323,16 +363,16 @@ private final class PlaybackIconView: HighlightTrackingButton {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func update(size: CGSize) {
+    func update(size: CGSize, isFooter: Bool = false) { // MARK: Swiftgram
         if let image = self.backgroundIconView.image {
-            let factor: CGFloat = 1.4
+            let factor: CGFloat = isFooter ? 1.12 : 1.4 // MARK: Swiftgram
             self.backgroundIconView.frame = CGSize(width: floor(image.size.width * factor), height: floor(image.size.height * factor)).centered(in: CGRect(origin: CGPoint(), size: size))
         }
         
         let textSize = self.text.update(
             transition: .immediate,
             component: AnyComponent(MultilineTextComponent(
-                text: .plain(NSAttributedString(string: "15", font: Font.with(size: 16.0, design: .round, weight: .semibold, traits: []), textColor: .white))
+                text: .plain(NSAttributedString(string: "15", font: Font.with(size: isFooter ? 11.0 : 16.0, design: .round, weight: .semibold, traits: []), textColor: .white)) // MARK: Swiftgram
             )),
             environment: {},
             containerSize: size

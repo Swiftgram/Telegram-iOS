@@ -8,14 +8,14 @@
 
 @property (nonatomic, strong) TGBridgeContext *context;
 @property (nonatomic, readonly) TGBridgeUser *user;
-@property (nonatomic, readonly) int32_t userId;
+@property (nonatomic, readonly) int64_t userId;
 
 @property (nonatomic, readonly) TGBridgeChat *channel;
 
 @property (nonatomic, assign) bool disallowCompose;
 
 - (instancetype)initWithUser:(TGBridgeUser *)user;
-- (instancetype)initWithUserId:(int32_t)userId;
+- (instancetype)initWithUserId:(int64_t)userId;
 
 - (instancetype)initWithChannel:(TGBridgeChat *)channel;
 

@@ -50,7 +50,7 @@
         
         if (message.cid < 0 && !TGPeerIdIsChannel(message.cid) && !message.outgoing)
         {
-            _authorNameModel = [[TGNeoLabelViewModel alloc] initWithText:[users[@(message.fromUid)] displayName] font:[UIFont systemFontOfSize:14] color:[TGColor colorForUserId:(int32_t)message.fromUid myUserId:context.userId] attributes:nil];
+            _authorNameModel = [[TGNeoLabelViewModel alloc] initWithText:[users[@(message.fromUid)] displayName] font:[UIFont systemFontOfSize:14] color:[TGColor colorForUserId:(int64_t)message.fromUid myUserId:context.userId] attributes:nil];
             [self addSubmodel:_authorNameModel];
         }
     }

@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import LottieSettings
 import UIKit
@@ -762,8 +763,10 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                 }
             }
             
-            if useLegacyCamera {
-                let enableAnimations = self.controller?.context.sharedContext.energyUsageSettings.fullTranslucency ?? true
+            // MARK: Swiftgram
+            if useLegacyCamera && !SGSimpleSettings.shared.disableGalleryCamera {
+                let enableAnimations = self.controller?.context.sharedContext.energyUsageSettings.fullTranslucency ?? true && !SGSimpleSettings.shared.disableGalleryCameraPreview
+            //
   
                 let cameraView = TGAttachmentCameraView(forSelfPortrait: false, videoModeByDefault: controller.bannedSendPhotos != nil && controller.bannedSendVideos == nil)!
                 cameraView.clipsToBounds = true
@@ -786,7 +789,7 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                 
                 self.gridNode.scrollView.addSubview(cameraView)
                 self.gridNode.addSubnode(self.cameraActivateAreaNode)
-            } else if useModernCamera, !LegacyCameraImpl.shared.isIpad {
+            } else if useModernCamera, !LegacyCameraImpl.shared.isIpad, !SGSimpleSettings.shared.disableGalleryCamera { // MARK: Swiftgram
                 #if !targetEnvironment(simulator)
                 let cameraImpl = LegacyCameraImpl.shared
                 var cameraPosition: Camera.Position = .back
@@ -952,14 +955,22 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
             let isCameraActive = !self.isSuspended && !self.hasGallery && self.isCameraPreviewVisible
             if let cameraView = self.cameraView {
                 if isCameraActive {
-                    cameraView.resumePreview()
+                    // MARK: Swiftgram
+                    if !SGSimpleSettings.shared.disableGalleryCameraPreview {
+                        cameraView.resumePreview()
+                    }
+                    //
                 } else {
                     cameraView.pausePreview()
                 }
             } else if let camera = self.modernCamera, let cameraView = self.modernCameraView {
                 if isCameraActive {
-                    cameraView.isEnabled = true
-                    camera.startCapture()
+                    // MARK: Swiftgram
+                    if !SGSimpleSettings.shared.disableGalleryCameraPreview {
+                        cameraView.isEnabled = true
+                        camera.startCapture()
+                    }
+                    //
                 } else {
                     cameraView.isEnabled = false
                     camera.stopCapture()

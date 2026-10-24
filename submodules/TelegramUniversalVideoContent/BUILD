@@ -8,6 +8,10 @@ load("//build-system/bazel-utils:plist_fragment.bzl",
     "plist_fragment",
 )
 
+sgsrc = [
+    "//Swiftgram/SGExternalVideoPlayer:SGExternalVideoPlayer",
+]
+
 filegroup(
     name = "HlsBundleContents",
     srcs = glob([
@@ -43,7 +47,7 @@ apple_resource_bundle(
 swift_library(
     name = "TelegramUniversalVideoContent",
     module_name = "TelegramUniversalVideoContent",
-    srcs = glob([
+    srcs = sgsrc + glob([
         "Sources/**/*.swift",
     ]),
     copts = [

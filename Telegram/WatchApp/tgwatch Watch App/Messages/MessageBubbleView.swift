@@ -6,6 +6,10 @@ struct MessageBubbleView: View {
     let onVideoTap: (VideoVisual) -> Void
     let onVideoNoteTap: (VideoNoteVisual) -> Void
     let onPollTap: (Int64, PollVisual) -> Void
+    // MARK: Swiftgram
+    var onAvatarRequestDownload: (Int) -> Void = { _ in }
+    var onAvatarCancelDownload: (Int) -> Void = { _ in }
+    //
 
     private var style: BubbleStyle { .resolve(isOutgoing: bubble.isOutgoing) }
 
@@ -14,10 +18,16 @@ struct MessageBubbleView: View {
             if bubble.isOutgoing { Spacer(minLength: 16) }
             VStack(alignment: bubble.isOutgoing ? .trailing : .leading, spacing: 1) {
                 if let name = bubble.senderName, !bubble.isOutgoing, bubble.sticker == nil {
-                    Text(name)
-                        .font(.caption2)
-                        .foregroundStyle(bubble.senderColorIndex.map { avatarPalette[$0] } ?? .secondary)
+                    // MARK: Swiftgram
+                    SenderNameLabelView(
+                        name: name,
+                        avatar: bubble.senderAvatar,
+                        colorIndex: bubble.senderColorIndex,
+                        onRequestDownload: onAvatarRequestDownload,
+                        onCancelDownload: onAvatarCancelDownload
+                    )
                         .padding(.leading, 8)
+                    //
                 }
                 if let sticker = bubble.sticker {
                     StickerBubbleView(
@@ -25,7 +35,12 @@ struct MessageBubbleView: View {
                         senderName: bubble.senderName,
                         senderColorIndex: bubble.senderColorIndex,
                         isOutgoing: bubble.isOutgoing,
-                        replyHeader: bubble.replyHeader
+                        replyHeader: bubble.replyHeader,
+                        // MARK: Swiftgram
+                        senderAvatar: bubble.senderAvatar,
+                        onAvatarRequestDownload: onAvatarRequestDownload,
+                        onAvatarCancelDownload: onAvatarCancelDownload
+                        //
                     )
                 } else if let photo = bubble.photo {
                     PhotoBubbleView(

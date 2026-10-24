@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import LottieSettings
 import UIKit
@@ -951,6 +952,7 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
             var isSticker = false
             var maxDimensions = layoutConstants.image.maxDimensions
             var maxHeight = layoutConstants.image.maxDimensions.height
+            var imageOriginalMaxDimensions: CGSize? // MARK: Swiftgram
             var isStory = false
             var isGift = false
             
@@ -973,6 +975,20 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
                 }
             } else if let image = media as? TelegramMediaImage, let dimensions = largestImageRepresentation(image.representations)?.dimensions {
                 unboundSize = CGSize(width: max(10.0, floor(dimensions.cgSize.width * 0.5)), height: max(10.0, floor(dimensions.cgSize.height * 0.5)))
+                // MARK: Swiftgram
+                if let channel = message.peers[message.id.peerId] as? TelegramChannel, case .broadcast = channel.info, SGSimpleSettings.shared.wideChannelPosts {
+                    imageOriginalMaxDimensions = maxDimensions
+                    switch sizeCalculation {
+                    case let .constrained(constrainedSize):
+                        maxDimensions.width = constrainedSize.width
+                    case .unconstrained:
+                        maxDimensions.width = unboundSize.width
+                    }
+                    if message.text.isEmpty {
+                        maxDimensions.width = max(layoutConstants.image.maxDimensions.width, unboundSize.aspectFitted(CGSize(width: maxDimensions.width, height: layoutConstants.image.minDimensions.height)).width)
+                    }
+                }
+                //
             } else if let file = media as? TelegramMediaFile, file.isDisplayablePass {
                 unboundSize = chatMessagePassImageSize
             } else if let file = media as? TelegramMediaFile, var dimensions = file.dimensions {
@@ -1202,6 +1218,11 @@ public final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTr
                                 }
                                 
                                 boundingSize = CGSize(width: boundingWidth, height: filledSize.height).cropped(CGSize(width: CGFloat.greatestFiniteMagnitude, height: maxHeight))
+                                // MARK: Swiftgram
+                                if let imageOriginalMaxDimensions = imageOriginalMaxDimensions {
+                                    boundingSize.height = min(boundingSize.height, nativeSize.aspectFitted(imageOriginalMaxDimensions).height)
+                                }
+                                //
                                 boundingSize.height = max(boundingSize.height, layoutConstants.image.minDimensions.height)
                                 boundingSize.width = max(boundingSize.width, layoutConstants.image.minDimensions.width)
                                 switch contentMode {

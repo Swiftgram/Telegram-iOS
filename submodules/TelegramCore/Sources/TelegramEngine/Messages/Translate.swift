@@ -29,6 +29,19 @@ public enum TranslationTone: String {
     case formal
 }
 
+// MARK: Swiftgram
+public func normalizeTranslationLanguage(_ code: String) -> String {
+    var code = code
+    if code.contains("-") {
+        code = code.components(separatedBy: "-").first ?? code
+    }
+    if code == "nb" {
+        code = "no"
+    }
+    return code
+}
+//
+
 func _internal_translate(network: Network, text: String, toLang: String, entities: [MessageTextEntity] = [], tone: TranslationTone = .neutral, peer: Api.InputPeer? = nil, messageId: Int32? = nil) -> Signal<(String, [MessageTextEntity])?, TranslationError> {
     var flags: Int32 = 0
 
@@ -45,7 +58,7 @@ func _internal_translate(network: Network, text: String, toLang: String, entitie
         apiText = [.textWithEntities(.init(text: text, entities: apiEntitiesFromMessageTextEntities(entities, associatedPeers: SimpleDictionary())))]
     }
 
-    return network.request(Api.functions.messages.translateText(flags: flags, peer: peer, id: messageId.flatMap { [$0] }, text: apiText, toLang: toLang, tone: tone.rawValue))
+    return network.request(Api.functions.messages.translateText(flags: flags, peer: peer, id: messageId.flatMap { [$0] }, text: apiText, toLang: normalizeTranslationLanguage(toLang), tone: tone.rawValue)) // MARK: Swiftgram
     |> mapError { error -> TranslationError in
         if error.errorDescription.hasPrefix("FLOOD_WAIT") {
             return .limitExceeded
@@ -94,7 +107,7 @@ func _internal_composeMessageWithAI(account: Account, text: String, entities: [M
     if emojify {
         flags |= (1 << 3)
     }
-    
+
     let apiText: Api.TextWithEntities = .textWithEntities(.init(text: text, entities: apiEntitiesFromMessageTextEntities(entities, associatedPeers: SimpleDictionary())))
 
     return account.network.request(Api.functions.messages.composeMessageWithAI(flags: flags, text: apiText, translateToLang: translateToLang, tone: changeTone))
@@ -345,7 +358,9 @@ private func _internal_translateMessagesByPeerId(account: Account, peerId: Engin
         if id.isEmpty {
             msgs = .single(nil)
         } else {
-            if enableLocalIfPossible, let engineExperimentalInternalTranslationService, let fromLang {
+            // MARK: Swiftgram
+            if enableLocalIfPossible, let engineExperimentalInternalTranslationService {
+            //
                 msgs = account.postbox.transaction { transaction -> [MessageId: String] in
                     var texts: [MessageId: String] = [:]
                     for messageId in plainMessageIds {
@@ -361,27 +376,26 @@ private func _internal_translateMessagesByPeerId(account: Account, peerId: Engin
                     for (id, text) in messageTexts {
                         mappedTexts[AnyHashable(id)] = text
                     }
-                    return engineExperimentalInternalTranslationService.translate(texts: mappedTexts, fromLang: fromLang, toLang: toLang)
+                    return engineExperimentalInternalTranslationService.translate(texts: mappedTexts, fromLang: fromLang ?? "", toLang: toLang) // MARK: Swiftgram
                     |> castError(TranslationError.self)
                     |> mapToSignal { resultTexts -> Signal<Api.messages.TranslatedText?, TranslationError> in
-                        guard let resultTexts else {
+                        // MARK: Swiftgram
+                        guard let resultTexts, resultTexts.count == messageTexts.count else {
                             return .fail(.generic)
                         }
                         var result: [Api.TextWithEntities] = []
                         for messageId in plainMessageIds {
-                            if let text = resultTexts[AnyHashable(messageId)] {
-                                result.append(.textWithEntities(.init(text: text, entities: [])))
-                            } else if let text = messageTexts[messageId] {
-                                result.append(.textWithEntities(.init(text: text, entities: [])))
-                            } else {
-                                result.append(.textWithEntities(.init(text: "", entities: [])))
+                            guard let text = resultTexts[AnyHashable(messageId)], !text.isEmpty else {
+                                return .fail(.generic)
                             }
+                            result.append(.textWithEntities(.init(text: text, entities: [])))
                         }
+                        //
                         return .single(.translateResult(.init(result: result)))
                     }
                 }
             } else {
-                msgs = account.network.request(Api.functions.messages.translateText(flags: flags, peer: inputPeer, id: id, text: nil, toLang: toLang, tone: tone != .neutral ? tone.rawValue : nil))
+                msgs = account.network.request(Api.functions.messages.translateText(flags: flags, peer: inputPeer, id: id, text: nil, toLang: normalizeTranslationLanguage(toLang), tone: tone != .neutral ? tone.rawValue : nil)) // MARK: Swiftgram
                 |> map(Optional.init)
                 |> mapError { error -> TranslationError in
                     if error.errorDescription.hasPrefix("FLOOD_WAIT") {

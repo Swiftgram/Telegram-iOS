@@ -154,6 +154,11 @@ public protocol RichTextEditor: UIView {
     var initialInputPrimaryLanguage: String? { get set }
     func resetInputPrimaryLanguage()
 
+    // MARK: Swiftgram
+    /// The return-key appearance on the editor's actual text-input responder.
+    var composerReturnKeyType: UIReturnKeyType { get set }
+    //
+
     // MARK: The full-page article editor's surface
     //
     // Everything below is called by `RichTextAttachmentScreen` and NOT by the chat composer. The

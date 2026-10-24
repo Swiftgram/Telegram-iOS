@@ -42,6 +42,10 @@ apple_resource_bundle(
     ],
 )
 
+sgdeps = [
+    "//Swiftgram/SGAppGroupIdentifier:SGAppGroupIdentifier"
+]
+
 swift_library(
     name = "TelegramCallsUI",
     module_name = "TelegramCallsUI",
@@ -54,7 +58,7 @@ swift_library(
     data = [
         ":TelegramCallsUIBundle",
     ],
-    deps = [
+    deps = sgdeps + [
         "//submodules/SSignalKit/SSignalKit",
         "//submodules/LottieSettings:LottieSettings",
         "//submodules/Postbox:Postbox",

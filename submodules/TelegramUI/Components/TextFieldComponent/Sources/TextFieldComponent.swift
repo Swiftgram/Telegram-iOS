@@ -1,3 +1,7 @@
+// MARK: Swiftgram
+import SGInputToolbar
+//
+
 import Foundation
 import UIKit
 import Display
@@ -360,7 +364,6 @@ public final class TextFieldComponent: Component {
         public var inputTextView: UITextView {
             return self.textView
         }
-        
         private var component: TextFieldComponent?
         private weak var state: EmptyComponentState?
         private var isUpdating: Bool = false
@@ -440,6 +443,7 @@ public final class TextFieldComponent: Component {
                     )
                 }
             }
+            
         }
         
         required init?(coder: NSCoder) {
@@ -1914,6 +1918,139 @@ extension TextFieldComponent.InputState {
             return TextFieldComponent.InputState(inputText: result, selectionRange: selectionRange)
         } else {
             return self
+        }
+    }
+}
+
+
+extension TextFieldComponent.View {
+    
+    // MARK: Swiftgram
+    public func sgToolbarAction(_ action: SGInputToolbarAction) {
+        switch action {
+            case .quote:
+                self.sgSelectLastWordIfIdle()
+                self.toggleAttribute(key: ChatTextInputAttributes.block, value: ChatTextInputTextQuoteAttribute(kind: .quote, isCollapsed: false))
+            case .spoiler:
+                self.sgSelectLastWordIfIdle()
+                self.toggleAttribute(key: ChatTextInputAttributes.spoiler)
+            case .bold:
+                self.sgSelectLastWordIfIdle()
+                self.toggleAttribute(key: ChatTextInputAttributes.bold)
+            case .italic:
+                self.sgSelectLastWordIfIdle()
+                self.toggleAttribute(key: ChatTextInputAttributes.italic)
+            case .date:
+                break
+            case .monospace:
+                self.sgSelectLastWordIfIdle()
+                self.toggleAttribute(key: ChatTextInputAttributes.monospace)
+            case .link:
+                self.sgSelectLastWordIfIdle()
+                self.openLinkEditing()
+            case .underline:
+                self.sgSelectLastWordIfIdle()
+                self.toggleAttribute(key: ChatTextInputAttributes.underline)
+            case .strikethrough:
+                self.sgSelectLastWordIfIdle()
+                self.toggleAttribute(key: ChatTextInputAttributes.strikethrough)
+            case .code:
+                self.sgSelectLastWordIfIdle()
+                self.toggleAttribute(key: ChatTextInputAttributes.block, value: ChatTextInputTextQuoteAttribute(kind: .code(language: nil), isCollapsed: false))
+            case .newLine:
+                self.sgSetNewLine()
+            case .clearFormatting:
+                self.updateInputState { current in
+                    return current.clearFormattingAttributes()
+                }
+        }
+    }
+    //
+    
+    func sgSelectLastWordIfIdle() {
+        self.updateInputState { current in
+            // No changes to current selection
+            if !current.selectionRange.isEmpty {
+                return current
+            }
+            
+            let inputText = (current.inputText.mutableCopy() as? NSMutableAttributedString) ?? NSMutableAttributedString()
+            
+            // If text is empty or cursor is at the start, return current state
+            guard inputText.length > 0, current.selectionRange.lowerBound > 0 else {
+                return current
+            }
+            
+            let plainText = inputText.string
+            let nsString = plainText as NSString
+            
+            // Create character set for word boundaries
+            let wordBoundaries = CharacterSet.whitespacesAndNewlines
+            
+            // Start from cursor position instead of end of text
+            var endIndex = current.selectionRange.lowerBound - 1
+            
+            // Find last non-whitespace character before cursor
+            while endIndex >= 0 &&
+                  (nsString.substring(with: NSRange(location: endIndex, length: 1)) as NSString)
+                    .rangeOfCharacter(from: wordBoundaries).location != NSNotFound {
+                endIndex -= 1
+            }
+            
+            // If we only had whitespace before cursor, return current state
+            guard endIndex >= 0 else {
+                return current
+            }
+            
+            // Find start of the current word by looking backwards for whitespace
+            var startIndex = endIndex
+            while startIndex > 0 {
+                let char = nsString.substring(with: NSRange(location: startIndex - 1, length: 1))
+                if (char as NSString).rangeOfCharacter(from: wordBoundaries).location != NSNotFound {
+                    break
+                }
+                startIndex -= 1
+            }
+            
+            // Create range for the word at cursor
+            let wordLength = endIndex - startIndex + 1
+            let wordRange = NSRange(location: startIndex, length: wordLength)
+            
+            // Create new selection range
+            let newSelectionRange = wordRange.location ..< (wordRange.location + wordLength)
+            
+            return TextFieldComponent.InputState(inputText: inputText, selectionRange: newSelectionRange)
+        }
+    }
+    
+    func sgSetNewLine() {
+        self.updateInputState { current in
+            let inputText = (current.inputText.mutableCopy() as? NSMutableAttributedString) ?? NSMutableAttributedString()
+            
+            // Check if there's selected text
+            let hasSelection = current.selectionRange.count > 0
+            
+            if hasSelection {
+                // Move selected text to new line
+                let selectedText = inputText.attributedSubstring(from: NSRange(current.selectionRange))
+                let newLineAttr = NSAttributedString(string: "\n")
+                
+                // Insert newline and selected text
+                inputText.replaceCharacters(in: NSRange(current.selectionRange), with: newLineAttr)
+                inputText.insert(selectedText, at: current.selectionRange.lowerBound + 1)
+                
+                // Update selection range to end of moved text
+                let newPosition = current.selectionRange.lowerBound + 1 + selectedText.length
+                return TextFieldComponent.InputState(inputText: inputText, selectionRange: newPosition ..< newPosition)
+            } else {
+                // Simple newline insertion at current position
+                let attributedString = NSAttributedString(string: "\n")
+                inputText.replaceCharacters(in: NSRange(current.selectionRange), with: attributedString)
+                
+                // Update cursor position
+                let newPosition = current.selectionRange.lowerBound + attributedString.length
+                return TextFieldComponent.InputState(inputText: inputText, selectionRange: newPosition ..< newPosition)
+            }
         }
     }
 }

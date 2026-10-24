@@ -267,7 +267,7 @@ public final class InAppPurchaseManager: NSObject {
                 
         super.init()
         
-        SKPaymentQueue.default().add(self)
+        // SKPaymentQueue.default().add(self) // MARK: Swiftgram
         self.requestProducts()
     }
     
@@ -275,7 +275,7 @@ public final class InAppPurchaseManager: NSObject {
         self.productRequestTimeoutTimer?.invalidate()
         self.productRequestRetryTimer?.invalidate()
         self.productRequest?.cancel()
-        SKPaymentQueue.default().remove(self)
+        // SKPaymentQueue.default().remove(self) // MARK: Swiftgram
     }
     
     var canMakePayments: Bool {
@@ -283,6 +283,7 @@ public final class InAppPurchaseManager: NSObject {
     }
     
     private func requestProducts() {
+        if ({ return true }()) { return } // MARK: Swiftgram
         Queue.mainQueue().async { [weak self] in
             guard let self, self.products.isEmpty, self.productRequest == nil, self.productRequestRetryTimer == nil else {
                 return
@@ -517,7 +518,7 @@ public final class InAppPurchaseManager: NSObject {
                             payment.applicationUsername = accountPeerId
                             payment.quantity = Int(quantity)
                             Logger.shared.log("InAppPurchaseManager", "Buying: account \(accountPeerId), product \(productIdentifier), price \(product.price)")
-                            SKPaymentQueue.default().add(payment)
+                            // SKPaymentQueue.default().add(payment) // MARK: Swiftgram
                         }
                     }))
                 }

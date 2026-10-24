@@ -118,9 +118,13 @@ public final class PeerInfoNavigationItems {
             // A pill of its own beside the "…": a pane without search (Media) keeps the "…" pill as it is, and only
             // the search pill comes and goes.
             item.requiresOwnSection = true
-        case .back, .select, .editPhoto, .editVideo, .more, .search, .sort:
-            // Back is the bar's own; the others are produced by no set (more/search/sort map to the slot above).
+        // MARK: Swiftgram
+        case .back:
+            item = UIBarButtonItem(backButtonAppearanceWithTitle: "", target: nil, action: nil)
+        case .select, .editPhoto, .editVideo, .more, .search, .sort:
+            // These are produced by no set (more/search/sort map to the slot above).
             return nil
+        //
         }
         if itemKey != .moreSearchSort {
             item.setCustomAction({ [weak self] in

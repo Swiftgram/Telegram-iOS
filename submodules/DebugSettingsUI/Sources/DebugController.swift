@@ -1,3 +1,10 @@
+// MARK: Swiftgram
+import SGLogging
+import SGLoggingComposer
+import SGSimpleSettings
+import SGDebugUI
+//
+
 import Foundation
 import UIKit
 import Display
@@ -156,6 +163,7 @@ private enum DebugLogDestination {
 private enum DebugLogAction {
     case sendLogs
     case sendOneLog
+    case sgSendLogs // MARK: Swiftgram
     case sendShareLogs
     case sendGroupCallLogs
     case sendNotificationLogs
@@ -167,6 +175,7 @@ private enum DebugLogAction {
         switch self {
         case .sendLogs: return "Logs"
         case .sendOneLog: return "Latest Logs"
+        case .sgSendLogs: return "Swiftgram Logs" // MARK: Swiftgram
         case .sendShareLogs: return "Share Logs"
         case .sendGroupCallLogs: return "Group Call Logs"
         case .sendNotificationLogs: return "Notification Logs"
@@ -182,7 +191,7 @@ private enum DebugLogAction {
             return .secondLineWithValue("Up to 40 MB")
         case .sendOneLog:
             return .secondLineWithValue("Up to 4 MB")
-        case .sendCriticalLogs, .sendAllLogs, .sendStorageStats:
+        case .sendCriticalLogs, .sendAllLogs, .sendStorageStats, .sgSendLogs: // MARK: Swiftgram
             return .singleLine
         }
     }
@@ -255,8 +264,13 @@ private enum DebugLogAction {
                 }
 
             })
-        case .sendOneLog:
-            let _ = (Logger.shared.collectLogs()
+        // MARK: Swiftgram
+        case .sendOneLog, .sgSendLogs:
+            let logCollectionSignal = self == .sgSendLogs ? SGLogger.shared.collectLogs() : Logger.shared.collectLogs()
+            let fileName = self == .sgSendLogs ? "Log-iOS-Swiftgram.txt" : "Log-iOS-Short.txt"
+            let appName = self == .sgSendLogs ? "Swiftgram" : "Telegram"
+            //
+            let _ = (logCollectionSignal // MARK: Swiftgram
                 |> deliverOnMainQueue).start(next: { logs in
 
                     if destination == .telegram, let context = arguments.context, context.sharedContext.applicationBindings.isMainApp {
@@ -296,7 +310,7 @@ private enum DebugLogAction {
                                 let fileResource = LocalFileMediaResource(fileId: id, size: Int64(logData.count), isSecretRelated: false)
                                 context.engine.resources.storeResourceData(id: EngineMediaResource.Id(fileResource.id), data: logData)
 
-                                let file = TelegramMediaFile(fileId: EngineMedia.Id(namespace: Namespaces.Media.LocalFile, id: id), partialReference: nil, resource: fileResource, previewRepresentations: [], videoThumbnails: [], immediateThumbnailData: nil, mimeType: "application/text", size: Int64(logData.count), attributes: [.FileName(fileName: "Log-iOS-Short.txt")], alternativeRepresentations: [])
+                                let file = TelegramMediaFile(fileId: EngineMedia.Id(namespace: Namespaces.Media.LocalFile, id: id), partialReference: nil, resource: fileResource, previewRepresentations: [], videoThumbnails: [], immediateThumbnailData: nil, mimeType: "application/text", size: Int64(logData.count), attributes: [.FileName(fileName: fileName /* MARK: Swiftgram */)], alternativeRepresentations: [])
                                 let message: EnqueueMessage = .message(text: "", attributes: [], inlineStickers: [:], mediaReference: .standalone(media: file), threadId: nil, replyToMessageId: nil, replyToStoryId: nil, localGroupingKey: nil, correlationId: nil, bubbleUpEmojiOrStickersets: [])
 
                                 let _ = enqueueMessages(account: context.account, peerId: peerId, messages: [message]).start()
@@ -308,7 +322,7 @@ private enum DebugLogAction {
                     if destination == .email {
                         let composeController = MFMailComposeViewController()
                         composeController.mailComposeDelegate = arguments.mailComposeDelegate
-                        composeController.setSubject("Telegram Logs")
+                        composeController.setSubject("\(appName) Logs") // MARK: Swiftgram
                         for (name, path) in logs {
                             if let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: .mappedIfSafe) {
                                 composeController.addAttachmentData(data, mimeType: "application/text", fileName: name)
@@ -676,6 +690,7 @@ private enum DebugLogAction {
 }
 
 private enum DebugControllerSection: Int32 {
+    case swiftgram // MARK: Swiftgram
     case appInfo
     case logs
     case accounts
@@ -690,6 +705,10 @@ private enum DebugControllerSection: Int32 {
 }
 
 private enum DebugControllerEntry: ItemListNodeEntry {
+    // MARK: Swiftgram
+    case SGDebug(PresentationTheme)
+    case sendSGLogs(PresentationTheme)
+    //
     case testStickerImport(PresentationTheme)
     case logsHeader(PresentationTheme)
     case logsInfo(PresentationTheme)
@@ -770,6 +789,10 @@ private enum DebugControllerEntry: ItemListNodeEntry {
 
     var section: ItemListSectionId {
         switch self {
+        // MARK: Swiftgram
+        case .sendSGLogs, .SGDebug:
+            return DebugControllerSection.swiftgram.rawValue
+        //
         case .testStickerImport:
             return DebugControllerSection.sticker.rawValue
         case .logsHeader, .logsInfo, .sendLogs:
@@ -805,6 +828,12 @@ private enum DebugControllerEntry: ItemListNodeEntry {
 
     var stableId: Int {
         switch self {
+        // MARK: Swiftgram
+        case .SGDebug:
+            return -110
+        case .sendSGLogs:
+            return -100
+        //
         case .testStickerImport:
             return 0
         case .logsHeader:
@@ -997,6 +1026,37 @@ private enum DebugControllerEntry: ItemListNodeEntry {
     func item(presentationData: ItemListPresentationData, arguments: Any) -> ListViewItem {
         let arguments = arguments as! DebugControllerArguments
         switch self {
+        // MARK: Swiftgram
+        case .SGDebug:
+            return ItemListDisclosureItem(presentationData: presentationData, title: "Swiftgram Debug", label: "", sectionId: self.section, style: .blocks, action: {
+                guard let context = arguments.context else {
+                    return
+                }
+                arguments.pushController(sgDebugController(context: context))
+            })
+        case .sendSGLogs:
+            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: "Send Swiftgram Logs", label: "", sectionId: self.section, style: .blocks, action: {
+                let presentationData = arguments.sharedContext.currentPresentationData.with { $0 }
+                let actionSheet = ActionSheetController(presentationData: presentationData)
+                var items: [ActionSheetButtonItem] = []
+                if let context = arguments.context, context.sharedContext.applicationBindings.isMainApp {
+                    items.append(ActionSheetButtonItem(title: "Via Telegram", color: .accent, action: { [weak actionSheet] in
+                        actionSheet?.dismissAnimated()
+                        DebugLogAction.sgSendLogs.perform(arguments: arguments, destination: .telegram)
+                    }))
+                }
+                items.append(ActionSheetButtonItem(title: "Via Email", color: .accent, action: { [weak actionSheet] in
+                    actionSheet?.dismissAnimated()
+                    DebugLogAction.sgSendLogs.perform(arguments: arguments, destination: .email)
+                }))
+                actionSheet.setItemGroups([ActionSheetItemGroup(items: items), ActionSheetItemGroup(items: [
+                    ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, color: .accent, font: .bold, action: { [weak actionSheet] in
+                        actionSheet?.dismissAnimated()
+                    })
+                ])])
+                arguments.presentController(actionSheet, nil)
+            })
+        //
         case .testStickerImport:
             return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Simulate Stickers Import", kind: .generic, alignment: .natural, sectionId: self.section, style: .blocks, action: {
                 guard let context = arguments.context else {
@@ -1870,6 +1930,10 @@ private func debugControllerEntries(context: AccountContext?, sharedContext: Sha
 
     let isMainApp = sharedContext.applicationBindings.isMainApp
     
+    // MARK: Swiftgram
+    entries.append(.SGDebug(presentationData.theme))
+    entries.append(.sendSGLogs(presentationData.theme))
+    //
     entries.append(.logsHeader(presentationData.theme))
     entries.append(.sendLogs(presentationData.theme))
     if isMainApp {
@@ -1910,7 +1974,7 @@ private func debugControllerEntries(context: AccountContext?, sharedContext: Sha
     entries.append(.experimentsHeader(presentationData.theme))
     if isMainApp {
         entries.append(.keepChatNavigationStack(presentationData.theme, experimentalSettings.keepChatNavigationStack))
-        #if DEBUG
+        #if true // MARK: Swiftgram
         entries.append(.skipReadHistory(presentationData.theme, experimentalSettings.skipReadHistory))
         #endif
         entries.append(.alwaysDisplayTyping(experimentalSettings.alwaysDisplayTyping))
@@ -2098,7 +2162,7 @@ public func debugController(sharedContext: SharedAccountContext, context: Accoun
               let sourceNode = controller.itemNode(forTag: DebugControllerItemTag.sendLogs) as? ItemListActionItemNode else {
             return
         }
-        var options: [DebugLogAction] = [.sendLogs, .sendShareLogs]
+        var options: [DebugLogAction] = [.sendLogs, .sendOneLog /* MARK: Swiftgram */, .sendShareLogs]
         if arguments.context != nil {
             options.append(.sendGroupCallLogs)
         }

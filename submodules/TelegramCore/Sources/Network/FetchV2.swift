@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import Postbox
 import SwiftSignalKit
@@ -461,13 +462,15 @@ private final class FetchImpl {
             
             self.fastDownloads = network.engineKind == .rust
             if isStory {
-                self.defaultPartSize = 512 * 1024
+                self.defaultPartSize = getSGDownloadPartSize(512 * 1024, fileSize: self.size) // MARK: Swiftgram
             } else {
-                self.defaultPartSize = 128 * 1024
+                self.defaultPartSize = getSGDownloadPartSize(128 * 1024, fileSize: self.size) // MARK: Swiftgram
             }
             self.cdnPartSize = 128 * 1024
-            self.masterPendingParts = self.fastDownloads ? fastDownloadMasterPendingParts : 6
-            self.cdnPendingParts = self.fastDownloads ? fastDownloadCdnPendingParts : 6
+            // MARK: Swiftgram
+            self.masterPendingParts = self.fastDownloads ? fastDownloadMasterPendingParts : getSGMaxPendingParts(6)
+            self.cdnPendingParts = self.fastDownloads ? fastDownloadCdnPendingParts : getSGMaxPendingParts(6)
+            //
             
             // The resource id tells concurrent downloads apart; an Api value prints only its constructor name.
             self.loggingIdentifier = resource.id.stringRepresentation

@@ -129,6 +129,12 @@ public final class GlassControlPanelComponent: Component {
         public var rightItemView: GlassControlGroupComponent.View? {
             return self.rightItemComponent?.view as? GlassControlGroupComponent.View
         }
+        
+        // MARK: Swiftgram
+        public var sgGlassContentView: UIView {
+            return self.glassContainerView.contentView
+        }
+        //
 
         override public init(frame: CGRect) {
             self.glassContainerView = GlassBackgroundContainerView()
