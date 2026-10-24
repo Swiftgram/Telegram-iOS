@@ -67,20 +67,6 @@ public final class WarpView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // MARK: Swiftgram
-    /// The emoji keyboard fades the last 6pt of the bend into its own opaque background. Over a glass
-    /// sheet that fade shows whatever is behind the sheet, so the picker turns it off: the bend ends
-    /// at the screen edge, where no fade is needed.
-    public var fadesBottomEdge: Bool = true
-    /// Perspective strength, 1 = the emoji keyboard's. The foreshortening pulls the far rows in
-    /// horizontally, so on a full-width photo grid the grid's vertical gaps bow into arcs at the
-    /// bottom; a lower value keeps the depth cue with proportionally smaller arcs, 0 is orthographic.
-    public var perspectiveStrength: CGFloat = 1.0
-    /// The emoji keyboard renders without edge antialiasing (the UIKit default). The picker's bend is
-    /// fully visible over the glass sheet, so it turns it on to smooth the slice edges.
-    public var allowsEdgeAntialiasing: Bool = false
-    //
-    
     public func update(size: CGSize, topInset: CGFloat, bottomInset: CGFloat = 0.0, warpHeight: CGFloat, transition: ComponentTransition) {
         transition.setFrame(view: self.contentView, frame: CGRect(origin: CGPoint(), size: size))
         
@@ -105,26 +91,15 @@ public final class WarpView: UIView {
             
             var transform: CATransform3D
             transform = CATransform3DIdentity
-            transform.m34 = self.perspectiveStrength / (240.0 * warpHeight / 50.0) // MARK: Swiftgram
+            transform.m34 = 1.0 / 240.0
             
             transform = CATransform3DTranslate(transform, 0.0, prevPt.x * allItemsHeight, (1.0 - prevPt.y) * allItemsHeight)
             transform = CATransform3DRotate(transform, angle, 1.0, 0.0, 0.0)
             
             let positionY = visibleHeight - allItemsHeight + 4.0 + CGFloat(i) * itemLength
             let rect = CGRect(origin: CGPoint(x: 0.0, y: positionY), size: CGSize(width: size.width, height: itemLength))
-            // MARK: Swiftgram
-            // Without the fade every row of the bend is visible: slices overlap by 3pt so the seams
-            // between them do not show the background (the steep last slices project a 3pt overlap to
-            // well under 1pt), and the whole bend sits 2pt lower so its last slices cover the frame's
-            // bottom rows (the top rows it leaves are under the flat content).
-            let partHeight = itemLength + (self.fadesBottomEdge ? 0.0 : 3.0)
-            // Perspective projects the arc short of the mask height; the offset makes up for it (in
-            // proportion to the strength; the orthographic arc spans exactly the mask height from 0).
-            let partOffsetY: CGFloat = (self.fadesBottomEdge ? 4.0 : 6.0) * self.perspectiveStrength
-            transition.setPosition(view: self.warpViews[i], position: CGPoint(x: rect.midX, y: partOffsetY))
-            transition.setBounds(view: self.warpViews[i], bounds: CGRect(origin: CGPoint(), size: CGSize(width: size.width, height: partHeight)))
-            self.warpViews[i].layer.allowsEdgeAntialiasing = self.allowsEdgeAntialiasing
-            //
+            transition.setPosition(view: self.warpViews[i], position: CGPoint(x: rect.midX, y: 4.0))
+            transition.setBounds(view: self.warpViews[i], bounds: CGRect(origin: CGPoint(), size: CGSize(width: size.width, height: itemLength)))
             transition.setTransform(view: self.warpViews[i], transform: transform)
             self.warpViews[i].update(containerSize: size, rect: rect, transition: transition)
         }
@@ -143,7 +118,7 @@ public final class WarpView: UIView {
         for i in 0 ..< numStops {
             let step = CGFloat(i) / CGFloat(numStops - 1)
             locations.append(step as NSNumber)
-            colors.append(UIColor.black.withAlphaComponent(self.fadesBottomEdge ? 1.0 - step * step : 1.0).cgColor) // MARK: Swiftgram
+            colors.append(UIColor.black.withAlphaComponent(1.0 - step * step).cgColor)
         }
         
         let gradientHeight: CGFloat = 6.0

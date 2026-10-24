@@ -179,7 +179,6 @@ public class SGSimpleSettings {
         case sendWithReturnKey
         case videoControlsInFooter
         case hideAccountInNotifications
-        case quickAttach
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -335,7 +334,6 @@ public class SGSimpleSettings {
         Keys.showProfileId.rawValue: true,
         Keys.sendWithReturnKey.rawValue: false,
         Keys.videoControlsInFooter.rawValue: false,
-        Keys.quickAttach.rawValue: false,
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -623,9 +621,6 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.hideAccountInNotifications.rawValue, userDefaults: UserDefaults(suiteName: APP_GROUP_IDENTIFIER) ?? .standard)
     public var hideAccountInNotifications: Bool
-
-    @UserDefault(key: Keys.quickAttach.rawValue)
-    public var quickAttach: Bool
 }
 
 extension SGSimpleSettings {
