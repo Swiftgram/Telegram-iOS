@@ -6,7 +6,7 @@ import MtProtoKit
 import Postbox
 import Security
 import SwiftSignalKit
-import TelegramApi
+internal import TelegramApi
 
 
 public struct SGIQTPResponse {
