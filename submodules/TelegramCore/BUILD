@@ -2,16 +2,34 @@ load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load("@build_bazel_rules_apple//apple/testing/default_runner:ios_test_runner.bzl", "ios_test_runner")
 
+sgdeps = [
+    "//Swiftgram/SGGTranslate:SGGTranslate",
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+    "//Swiftgram/SGWebSettingsScheme:SGWebSettingsScheme",
+    "//Swiftgram/SGGHSettingsScheme:SGGHSettingsScheme",
+    "//Swiftgram/SGConfig:SGConfig",
+    "//Swiftgram/SGLogging:SGLogging",
+]
+
+sgsrc = [
+    "//Swiftgram/SGIQTP:SGIQTP",
+    # MARK: Swiftgram
+    "//Swiftgram/SGServerSuggestions:SGServerSuggestions",
+    "//Swiftgram/SGTranslate:SGTranslate",
+    "//Swiftgram/SGLocalizationInfoExtension:SGLocalizationInfoExtension",
+    #
+]
+
 swift_library(
     name = "TelegramCore",
     module_name = "TelegramCore",
-    srcs = glob([
+    srcs = sgsrc + glob([
         "Sources/**/*.swift",
     ]),
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgdeps + [
         "//submodules/TelegramApi:TelegramApi",
         "//submodules/MtProtoKit:MtProtoKit",
         "//submodules/MediaPreuploadRegistry:MediaPreuploadRegistry",

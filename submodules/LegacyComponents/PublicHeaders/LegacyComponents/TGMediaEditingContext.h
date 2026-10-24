@@ -37,6 +37,7 @@ typedef NS_ENUM(NSUInteger, TGMediaLivePhotoMode)
 @property (nonatomic, readonly) CGFloat cropLockedAspectRatio;
 @property (nonatomic, readonly) bool cropMirrored;
 @property (nonatomic, readonly) bool sendAsGif;
+@property (nonatomic, readonly) bool sendAsTelescope;
 @property (nonatomic, readonly) TGPaintingData *paintingData;
 @property (nonatomic, readonly) NSDictionary *toolValues;
 

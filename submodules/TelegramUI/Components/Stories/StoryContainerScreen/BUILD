@@ -1,5 +1,12 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+# MARK: Swiftgram
+sgdeps = [
+    "//Swiftgram/SGStrings:SGStrings",
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings"
+]
+#
+
 swift_library(
     name = "StoryContainerScreen",
     module_name = "StoryContainerScreen",
@@ -9,7 +16,7 @@ swift_library(
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgdeps + [ # MARK: Swiftgram
         "//submodules/UrlWhitelist",
         "//submodules/Display",
         "//submodules/LottieSettings:LottieSettings",

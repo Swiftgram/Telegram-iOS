@@ -1,3 +1,4 @@
+import SGStrings
 import Foundation
 import LottieSettings
 import UIKit

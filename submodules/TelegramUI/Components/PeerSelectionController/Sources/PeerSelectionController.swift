@@ -13,6 +13,7 @@ import ChatListFilterTabContainerNode
 
 public final class PeerSelectionControllerImpl: ViewController, PeerSelectionController {
     private let context: AccountContext
+    private let forceHideNames: Bool
     
     private var presentationData: PresentationData
     private var presentationDataDisposable: Disposable?
@@ -98,6 +99,7 @@ public final class PeerSelectionControllerImpl: ViewController, PeerSelectionCon
     
     public init(_ params: PeerSelectionControllerParams) {
         self.context = params.context
+        self.forceHideNames = params.forceHideNames
         self.filter = params.filter
         self.forumPeerId = params.forumPeerId
         self.hasFilters = params.hasFilters
@@ -264,7 +266,7 @@ public final class PeerSelectionControllerImpl: ViewController, PeerSelectionCon
         self.navigationItem.backBarButtonItem = UIBarButtonItem(title: self.presentationData.strings.Common_Back, style: .plain, target: nil, action: nil)
         self.peerSelectionNode.updatePresentationData(self.presentationData)
     }
-
+    
     private func openPeerForSelection(_ peer: EnginePeer, threadId: Int64?) {
         guard let peerSelected = self.peerSelected else {
             return
@@ -355,6 +357,7 @@ public final class PeerSelectionControllerImpl: ViewController, PeerSelectionCon
         
         self.displayNode = PeerSelectionControllerNode(
             context: self.context,
+            forceHideNames: self.forceHideNames, // MARK: Swiftgram
             controller: self,
             presentationData: self.presentationData,
             filter: nodeFilter,

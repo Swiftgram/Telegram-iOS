@@ -556,12 +556,6 @@ public enum DeviceMetrics: CaseIterable, Equatable {
     }
     
     public var showAppBadge: Bool {
-        // The minis are left out as they were while they matched the iPhone X by screen size.
-        switch self {
-        case .iPhoneX, .iPhone12Mini, .iPhone13Mini:
-            return false
-        default:
-            return self.hasTopNotch
-        }
+        return self.sgShowAppBadge // MARK: Swiftgram
     }
 }

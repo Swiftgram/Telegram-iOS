@@ -23,6 +23,15 @@ extension UIPasteboard: EnginePasteboard {}
 @available(iOS 18.4, *)
 public final class RichTextEngineEditorView: UIView {
     internal let engine: TGIDObservingBlockTextView
+
+    // MARK: Swiftgram
+    /// Forward keyboard appearance to the engine, which owns text input and its traits.
+    public var composerReturnKeyType: UIReturnKeyType {
+        get { self.engine.returnKeyType }
+        set { self.engine.returnKeyType = newValue }
+    }
+    //
+
     /// `var`, not `let`: a theme change rebuilds the mapper (the theme IS a mapper input — it
     /// supplies `primaryText`, so it decides the colour the engine renders text in), and the bridge
     /// owns the mapper. See `theme` in `+ComposerHost.swift`.

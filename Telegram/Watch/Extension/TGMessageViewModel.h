@@ -10,7 +10,7 @@
 
 @interface TGMessageViewModel : NSObject
 
-+ (void)updateAuthorLabel:(WKInterfaceLabel *)authorLabel isOutgoing:(bool)isOutgoing isGroup:(bool)isGroup user:(TGBridgeUser *)user ownUserId:(int32_t)ownUserId;
++ (void)updateAuthorLabel:(WKInterfaceLabel *)authorLabel isOutgoing:(bool)isOutgoing isGroup:(bool)isGroup user:(TGBridgeUser *)user ownUserId:(int64_t)ownUserId;
 
 + (void)updateMediaGroup:(WKInterfaceGroup *)mediaGroup activityIndicator:(WKInterfaceImage *)activityIndicator attachment:(TGBridgeMediaAttachment *)mediaAttachment message:(TGBridgeMessage *)message notification:(bool)notification currentPhoto:(int64_t *)currentPhoto standalone:(bool)standalone margin:(CGFloat)margin imageSize:(CGSize *)imageSize isVisible:(bool (^)(void))isVisible completion:(void (^)(void))completion;
 

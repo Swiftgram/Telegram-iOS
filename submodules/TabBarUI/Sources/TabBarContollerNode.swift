@@ -1,3 +1,7 @@
+// MARK: Swiftgram
+import SGSimpleSettings
+import SwiftSignalKit
+//
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -74,6 +78,10 @@ final class TabBarControllerNode: ASDisplayNode {
 
     private weak var currentController: ViewController?
     
+    // MARK: Swiftgram
+    private var sgSearchEnabled: Bool = SGSimpleSettings.shared.tabBarSearchEnabled
+    private let sgSearchEnabledDisposable = MetaDisposable()
+    //
     private var layoutResult: LayoutResult?
     /// What the last layout pass applied to the bar; its placement is nil while the bar is horizontal.
     private var appliedPlacement: TabBarAppliedPlacement?
@@ -149,7 +157,26 @@ final class TabBarControllerNode: ASDisplayNode {
         
         //self.addSubnode(self.tabBarNode)
         //self.addSubnode(self.disabledOverlayNode)
+        // MARK: Swiftgram
+        self.sgSearchEnabledDisposable.set((sgSimpleSettingsBoolSignal(.tabBarSearchEnabled, defaultValue: true)
+        |> deliverOnMainQueue).start(next: { [weak self] enabled in
+            guard let self, self.sgSearchEnabled != enabled else {
+                return
+            }
+            self.sgSearchEnabled = enabled
+            if !enabled, self.currentController?.tabBarSearchState?.isActive == true {
+                self.deactivateSearch()
+            }
+            self.requestUpdate()
+        }))
+        //
     }
+
+    // MARK: Swiftgram
+    deinit {
+        self.sgSearchEnabledDisposable.dispose()
+    }
+    //
     
     override func didLoad() {
         super.didLoad()
@@ -175,7 +202,7 @@ final class TabBarControllerNode: ASDisplayNode {
         transition.updateAlpha(node: self.disabledOverlayNode, alpha: value ? 0.0 : 1.0)
     }
     
-    var tabBarHidden = false {
+    var tabBarHidden = SGSimpleSettings.shared.hideTabBar { // MARK: Swiftgram
         didSet {
             if self.tabBarHidden != oldValue {
                 self.requestUpdate()
@@ -301,23 +328,23 @@ final class TabBarControllerNode: ASDisplayNode {
                         }
                     )
                 },
-                search: sidePlacement != nil ? nil : self.currentController?.tabBarSearchState.flatMap { tabBarSearchState in
-                    return TabBarComponent.Search(
-                        isActive: tabBarSearchState.isActive,
-                        activate: { [weak self] in
-                            guard let self else {
-                                return
-                            }
-                            self.activateSearch()
-                        },
-                        deactivate: { [weak self] in
-                            guard let self else {
-                                return
-                            }
-                            self.deactivateSearch()
+                // MARK: Swiftgram
+                search: (sidePlacement != nil || (!self.sgSearchEnabled && self.currentController?.tabBarSearchState?.isActive != true)) ? nil : TabBarComponent.Search(
+                    isActive: self.currentController?.tabBarSearchState?.isActive ?? false,
+                    activate: { [weak self] in
+                        guard let self else {
+                            return
                         }
-                    )
-                },
+                        self.activateSearch()
+                    },
+                    deactivate: { [weak self] in
+                        guard let self else {
+                            return
+                        }
+                        self.deactivateSearch()
+                    }
+                ),
+                //
                 selectedId: selectedId,
                 outerInsets: UIEdgeInsets(top: 0.0, left: sideInset, bottom: tabBarBottomInset, right: sideInset),
                 axis: sidePlacement == nil ? .horizontal : .vertical,

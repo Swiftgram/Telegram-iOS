@@ -2,6 +2,7 @@ load("@rules_cc//cc:objc_library.bzl", "objc_library")
 
 load(
     "@build_configuration//:variables.bzl",
+    "sg_config",
     "telegram_api_id",
     "telegram_api_hash",
     "telegram_app_center_id",
@@ -22,6 +23,7 @@ objc_library(
     ]),
     copts = [
         "-Werror",
+        "-DAPP_SG_CONFIG=\\\"{}\\\"".format(sg_config.replace('"', '\\\\\\"')),
         "-DAPP_CONFIG_API_ID={}".format(telegram_api_id),
         "-DAPP_CONFIG_API_HASH=\\\"{}\\\"".format(telegram_api_hash),
         "-DAPP_CONFIG_APP_CENTER_ID=\\\"{}\\\"".format(telegram_app_center_id),

@@ -219,7 +219,11 @@ struct MessageListView: View {
                                     onIncomingBubbleVisible: { id in
                                         guard id > store.unreadDividerAfterIdSnapshot else { return }
                                         store.markVisible(messageId: id)
-                                    }
+                                    },
+                                    // MARK: Swiftgram
+                                    onAvatarRequestDownload: { fileId in store.requestFileDownload(fileId: fileId) },
+                                    onAvatarCancelDownload: { fileId in store.cancelFileDownload(fileId: fileId) }
+                                    //
                                 )
                                 .id(messageRow.id)
                             }

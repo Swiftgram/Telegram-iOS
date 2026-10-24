@@ -635,7 +635,7 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "tgwatch Watch App/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = ph.telegra.Telegraph.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = app.swiftgram.ios.watchkitapp;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
@@ -657,7 +657,7 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "tgwatch Watch App/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = ph.telegra.Telegraph.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = app.swiftgram.ios.watchkitapp;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				STRIP_INSTALLED_PRODUCT = YES;

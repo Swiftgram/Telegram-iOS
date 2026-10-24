@@ -115,7 +115,7 @@
     return missedUserIds;
 }
 
-- (TGBridgeBotInfo *)botInfoForUserId:(int32_t)userId
+- (TGBridgeBotInfo *)botInfoForUserId:(int64_t)userId
 {
     __block TGBridgeBotInfo *botInfo = nil;
     
@@ -147,7 +147,7 @@
     return botInfo;
 }
 
-- (void)storeBotInfo:(TGBridgeBotInfo *)botInfo forUserId:(int32_t)userId
+- (void)storeBotInfo:(TGBridgeBotInfo *)botInfo forUserId:(int64_t)userId
 {
     OSSpinLockLock(&_botInfoByUidLock);
     _botInfoByUid[@(userId)] = botInfo;

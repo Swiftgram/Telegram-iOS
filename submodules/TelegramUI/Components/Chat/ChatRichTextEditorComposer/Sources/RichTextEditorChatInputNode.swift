@@ -1059,6 +1059,12 @@ public final class RichTextEditorChatInputNode: ASDisplayNode, ChatRichTextInput
     public func resetInitialPrimaryLanguage() { self.editorView.resetInputPrimaryLanguage() }
     public var keyboardAppearance: UIKeyboardAppearance = .default
     public var autocorrectionType: UITextAutocorrectionType = .default
+    // MARK: Swiftgram
+    public var returnKeyType: UIReturnKeyType {
+        get { self.editorView.composerReturnKeyType }
+        set { self.editorView.composerReturnKeyType = newValue }
+    }
+    //
     /// The theme accent the panel passes (`theme.list.itemAccentColor`), applied the way the legacy node
     /// applies it: as this node's own `tintColor`, which the editor view and the engine text view inside it
     /// inherit. UIKit draws the caret, the selection highlight and the handles with the text view's

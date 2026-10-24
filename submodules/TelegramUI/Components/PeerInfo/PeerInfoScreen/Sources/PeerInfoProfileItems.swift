@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
 import Display
@@ -18,7 +19,7 @@ import PeerNameColorItem
 import BoostLevelIconComponent
 
 private let enabledPublicBioEntities: EnabledEntityTypes = [.allUrl, .mention, .hashtag]
-private let enabledPrivateBioEntities: EnabledEntityTypes = [.internalUrl, .mention, .hashtag]
+private let enabledPrivateBioEntities: EnabledEntityTypes = [.allUrl, .mention, .hashtag] // MARK: Swiftgram
 
 private func peerVerificationDescriptionEntities(_ verification: PeerVerification) -> [MessageTextEntity] {
     var result = verification.descriptionEntities
@@ -41,6 +42,9 @@ private func peerVerificationDescriptionEntities(_ verification: PeerVerificatio
 enum InfoSection: Int, CaseIterable {
     case unofficial
     case community
+    // MARK: Swiftgram
+    case swiftgram
+    //
     case groupLocation
     case calls
     case personalChannel
@@ -55,7 +59,7 @@ enum InfoSection: Int, CaseIterable {
 }
 
 func infoItems(
-    data: PeerInfoScreenData?,
+    nearestChatParticipant: (String?, Int32?), data: PeerInfoScreenData?,
     context: AccountContext,
     presentationData: PresentationData,
     interaction: PeerInfoInteraction,
@@ -71,7 +75,7 @@ func infoItems(
     }
     
     var currentPeerInfoSection: InfoSection = .peerInfo
-        
+
     var items: [InfoSection: [PeerInfoScreenItem]] = [:]
     for section in InfoSection.allCases {
         items[section] = []
@@ -132,7 +136,6 @@ func infoItems(
         if let cachedUserData = data.cachedData as? CachedUserData, cachedUserData.flags.contains(.unofficialSecurityRisk) {
             items[.unofficial]!.append(PeerInfoScreenInfoItem(id: 0, title: "", text: .plain(presentationData.strings.PeerInfo_UnofficialSecurityRisk(EnginePeer(user).compactDisplayTitle).string), style: .compact, linkAction: nil))
         }
-        
         if !callMessages.isEmpty {
             items[.calls]!.append(PeerInfoScreenCallListItem(id: ItemCallList, messages: callMessages))
         }
@@ -173,7 +176,7 @@ func infoItems(
             ))
         }
         
-        if let phone = user.phone {
+        if let phone = user.phone, !(SGSimpleSettings.shared.hidePhoneInSettings && isMyProfile) {
             let formattedPhone = formatPhoneNumber(context: context, number: phone)
             let label: String
             if formattedPhone.hasPrefix("+888 ") {
@@ -551,6 +554,8 @@ func infoItems(
             }
         }
     } else if case let .channel(channel) = data.peer {
+        let ItemSGRecentActions = 20 // MARK: Swiftgram
+        
         let ItemUsername = 1
         let ItemUsernameInfo = 2
         let ItemAbout = 3
@@ -722,7 +727,7 @@ func infoItems(
 
                 if case .broadcast = channel.info {
                     var canEditMembers = false
-                    if channel.hasPermission(.banMembers) {
+                    if channel.adminRights != nil || channel.flags.contains(.isCreator) { // MARK: Swiftgram
                         canEditMembers = true
                     }
                     if canEditMembers {
@@ -804,6 +809,14 @@ func infoItems(
                     items[section]!.append(PeerInfoScreenDisclosureItem(id: ItemEdit, label: .none, text: settingsTitle, icon: PresentationResourcesSettings.settings, action: {
                         interaction.openEditing()
                     }))
+     
+                    // MARK: Swiftgram
+                    if channel.hasPermission(.banMembers) || channel.flags.contains(.isCreator) {
+                        items[section]!.append(PeerInfoScreenDisclosureItem(id: ItemSGRecentActions, label: .none, text: presentationData.strings.Group_Info_AdminLog, icon: PresentationResourcesSettings.recentActions, action: {
+                            interaction.openRecentActions()
+                        }))
+                    }
+                    //
                 }
                 
                 if channel.hasPermission(.manageDirect), let personalChannel = data.personalChannel {
@@ -899,6 +912,9 @@ func infoItems(
             }))
         }
     }
+    
+    items[.swiftgram]!.append(contentsOf: sgPeerInfoProfileItems(nearestChatParticipant: nearestChatParticipant, data: data, context: context, presentationData: presentationData, interaction: interaction, isMyProfile: isMyProfile)) // MARK: Swiftgram
+    
     
     var result: [(AnyHashable, [PeerInfoScreenItem])] = []
     for section in InfoSection.allCases {
@@ -1302,7 +1318,7 @@ func editingItems(data: PeerInfoScreenData?, boostStatus: ChannelBoostStatus?, s
                 }
                 
                 var canEditMembers = false
-                if channel.hasPermission(.banMembers) && (channel.adminRights != nil || channel.flags.contains(.isCreator)) {
+                if /*channel.hasPermission(.banMembers) &&*/ (channel.adminRights != nil || channel.flags.contains(.isCreator)) { // MARK: Swiftgram
                     canEditMembers = true
                 }
                 if canEditMembers {
