@@ -130,6 +130,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Doppeltippen, um Nachricht zu bearbeiten";
 
 "Settings.wideChannelPosts" = "Breite Beiträge in Kanälen";
+"Settings.wideGlassTextField" = "Breites Glas-Textfeld";
 "Settings.ForceEmojiTab" = "Emoji-Tastatur standardmäßig";
 
 "Settings.forceBuiltInMic" = "Erzwinge Geräte-Mikrofon";

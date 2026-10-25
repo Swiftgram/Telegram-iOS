@@ -130,6 +130,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Двоструки додир за уређивање поруке";
 
 "Settings.wideChannelPosts" = "Широки постови у каналима";
+"Settings.wideGlassTextField" = "Широко стаклено поље за текст";
 "Settings.ForceEmojiTab" = "Емоџи тастатура по подразумеваној подешавања";
 
 "Settings.forceBuiltInMic" = "Наметни микрофон уређаја";

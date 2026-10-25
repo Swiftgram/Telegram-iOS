@@ -130,6 +130,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "메시지 수정을 위해 두 번 탭";
 
 "Settings.wideChannelPosts" = "채널의 넓은 게시물";
+"Settings.wideGlassTextField" = "넓은 유리 텍스트 필드";
 "Settings.ForceEmojiTab" = "기본으로 이모티콘 키보드";
 
 "Settings.forceBuiltInMic" = "장치 마이크 강제";
