@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "OKRĄGŁE WIDEO";
 "Settings.VideoNotes.StartWithRearCam" = "Uruchom z tylną kamerą";
+"Settings.VideoNotes.ResetZoom" = "Zawsze resetuj powiększenie";
 
 "Settings.CustomColors.Header" = "KOLORY KONTA";
 "Settings.CustomColors.Saturation" = "NASYCENIE";

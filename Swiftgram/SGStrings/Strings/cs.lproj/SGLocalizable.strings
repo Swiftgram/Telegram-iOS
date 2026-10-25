@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "KRUHOVÁ VIDEA";
 "Settings.VideoNotes.StartWithRearCam" = "Začít s zadní kamerou";
+"Settings.VideoNotes.ResetZoom" = "Vždy obnovit přiblížení";
 
 "Settings.CustomColors.Header" = "BARVY ÚČTU";
 "Settings.CustomColors.Saturation" = "SYTOST";

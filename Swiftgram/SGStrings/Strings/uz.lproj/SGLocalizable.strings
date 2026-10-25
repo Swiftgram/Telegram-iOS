@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "Aylana video";
 "Settings.VideoNotes.StartWithRearCam" = "Orqa kamerada boshlash";
+"Settings.VideoNotes.ResetZoom" = "Zumni har doim tiklash";
 
 "Settings.CustomColors.Header" = "Hisob ranglari";
 "Settings.CustomColors.Saturation" = "SATURATSIYA";

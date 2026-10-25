@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "गोल वीडियो";
 "Settings.VideoNotes.StartWithRearCam" = "रियर कैमरा के साथ शुरू करें";
+"Settings.VideoNotes.ResetZoom" = "ज़ूम हमेशा रीसेट करें";
 
 "Settings.CustomColors.Header" = "खाता रंग";
 "Settings.CustomColors.Saturation" = "संतृप्ति";

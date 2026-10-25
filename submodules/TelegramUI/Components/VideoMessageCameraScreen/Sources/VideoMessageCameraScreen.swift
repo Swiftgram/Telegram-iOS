@@ -1170,7 +1170,7 @@ public class VideoMessageCameraScreen: ViewController {
             case .ended:
                 let pinchStartTimestamp = self.pinchStartTimestamp
                 self.pinchStartTimestamp = nil
-                if let pinchStartTimestamp, CACurrentMediaTime() - pinchStartTimestamp <= 0.5 {
+                if let pinchStartTimestamp, CACurrentMediaTime() - pinchStartTimestamp <= 0.5, !SGSimpleSettings.shared.videoNotesResetZoom /* MARK: Swiftgram */ {
                     return
                 }
                 self.camera?.rampZoom(1.0, rate: 8.0)

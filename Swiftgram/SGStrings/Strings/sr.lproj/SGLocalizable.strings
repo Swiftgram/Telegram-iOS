@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "КРУГ ВИДЕО";
 "Settings.VideoNotes.StartWithRearCam" = "Почни са задњом камером";
+"Settings.VideoNotes.ResetZoom" = "Увек ресетуј зум";
 
 "Settings.CustomColors.Header" = "БОЈЕ НАЛОГА";
 "Settings.CustomColors.Saturation" = "ЗАСИЋЕЊЕ";

@@ -52,6 +52,7 @@ private enum SGBoolSetting: String {
     case wideTabBar
     case foldersAtBottom
     case startTelescopeWithRearCam
+    case videoNotesResetZoom
     case hideStories
     case uploadSpeedBoost
     case showProfileId
@@ -259,6 +260,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     
     entries.append(.header(id: id.count, section: .videoNotes, text: i18n("Settings.VideoNotes.Header", lang), badge: nil))
     entries.append(.toggle(id: id.count, section: .videoNotes, settingName: .startTelescopeWithRearCam, value: SGSimpleSettings.shared.startTelescopeWithRearCam, text: i18n("Settings.VideoNotes.StartWithRearCam", lang), enabled: true))
+    entries.append(.toggle(id: id.count, section: .videoNotes, settingName: .videoNotesResetZoom, value: SGSimpleSettings.shared.videoNotesResetZoom, text: i18n("Settings.VideoNotes.ResetZoom", lang), enabled: true))
     
     entries.append(.header(id: id.count, section: .contextMenu, text: i18n("Settings.ContextMenu", lang), badge: nil))
     entries.append(.notice(id: id.count, section: .contextMenu, text: i18n("Settings.ContextMenu.Notice", lang)))
@@ -401,6 +403,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             ).start()
         case .startTelescopeWithRearCam:
             SGSimpleSettings.shared.startTelescopeWithRearCam = value
+        case .videoNotesResetZoom:
+            SGSimpleSettings.shared.videoNotesResetZoom = value
         case .hideStories:
             SGSimpleSettings.shared.hideStories = value
         case .showProfileId:

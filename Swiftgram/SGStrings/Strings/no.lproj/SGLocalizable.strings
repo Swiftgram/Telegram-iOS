@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "RUNDE VIDEOER";
 "Settings.VideoNotes.StartWithRearCam" = "Start med bakkamera";
+"Settings.VideoNotes.ResetZoom" = "Tilbakestill alltid zoom";
 
 "Settings.CustomColors.Header" = "KONTOFARGER";
 "Settings.CustomColors.Saturation" = "METNING";

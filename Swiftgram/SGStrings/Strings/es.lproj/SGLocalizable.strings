@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "VIDEOS REDONDOS";
 "Settings.VideoNotes.StartWithRearCam" = "Comenzar con la cámara trasera";
+"Settings.VideoNotes.ResetZoom" = "Restablecer siempre el zoom";
 
 "Settings.CustomColors.Header" = "COLORES DE LA CUENTA";
 "Settings.CustomColors.Saturation" = "SATURACIÓN";
