@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "In Cloud speichern";
 "ContextMenu.SelectFromUser" = "Vælg fra Forfatter";
+"Settings.MessageSelection.Header" = "VALG AF BESKEDER";
+"Settings.Selection.SaveToCloudButton" = "Knap til at gemme i skyen";
+"Settings.Selection.HideSenderNamesButton" = "Knap til at skjule afsendernavne";
 
 "Settings.ContextMenu" = "KONTEKSTMENU";
 "Settings.ContextMenu.Notice" = "Deaktiverede indgange vil være tilgængelige i \"Swiftgram\" undermenuen.";

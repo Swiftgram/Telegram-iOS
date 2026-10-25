@@ -3,3 +3,6 @@
 "Settings.Tabs.ShowNames" = "Zobraziť názvy záložiek";
 "ContextMenu.SaveToCloud" = "Uložiť na Cloud";
 "Settings.videoControlsInFooter" = "Ovládanie videa dole";
+"Settings.MessageSelection.Header" = "VÝBER SPRÁV";
+"Settings.Selection.SaveToCloudButton" = "Tlačidlo Uložiť na Cloud";
+"Settings.Selection.HideSenderNamesButton" = "Tlačidlo Skryť mená odosielateľov";
