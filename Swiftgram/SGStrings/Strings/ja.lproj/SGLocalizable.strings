@@ -123,12 +123,21 @@
 "Settings.DefaultEmojisFirst.Notice" = "絵文字キーボードでプレミアムより前に標準エモジを表示";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "作成済み: %@";
+"Chat.Created.Label" = "作成済み";
+"Chat.Created.Copy" = "作成日をコピー";
+"Chat.Created.Copied" = "作成日をクリップボードにコピーしました。";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
 "Chat.JoinedDateTitle" = "%@ に参加しました";
+"Chat.JoinedDate.Copy" = "参加日をコピー";
+"Chat.JoinedDate.Copied" = "参加日をクリップボードにコピーしました。";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
 "Chat.RegDate" = "登録済み";
+"Chat.RegDate.Copy" = "登録日をコピー";
+"Chat.RegDate.Copied" = "登録日をクリップボードにコピーしました。";
+"Chat.ID" = "ID";
+"Chat.ID.Copy" = "IDをコピー";
+"Chat.ID.Copied" = "IDをクリップボードにコピーしました。";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "メッセージを編集するにはタップをダブルタップ";
 

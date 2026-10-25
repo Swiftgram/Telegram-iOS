@@ -120,12 +120,21 @@
 "Settings.DefaultEmojisFirst.Notice" = "Mutassa az alap emojisokat az emoji billentyűzet előtt a prémiumok helyett";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "létrehozva: %@";
+"Chat.Created.Label" = "Létrehozva";
+"Chat.Created.Copy" = "Létrehozás dátumának másolása";
+"Chat.Created.Copied" = "A létrehozás dátuma a vágólapra lett másolva.";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
 "Chat.JoinedDateTitle" = "Csatlakozott %@";
+"Chat.JoinedDate.Copy" = "Csatlakozás dátumának másolása";
+"Chat.JoinedDate.Copied" = "A csatlakozás dátuma a vágólapra lett másolva.";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
 "Chat.RegDate" = "Regisztrált";
+"Chat.RegDate.Copy" = "Regisztráció dátumának másolása";
+"Chat.RegDate.Copied" = "A regisztráció dátuma a vágólapra lett másolva.";
+"Chat.ID" = "Azonosító";
+"Chat.ID.Copy" = "Azonosító másolása";
+"Chat.ID.Copied" = "Azonosító a vágólapra másolva.";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Dupla koppintás a üzenet szerkesztéséhez";
 

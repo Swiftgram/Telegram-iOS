@@ -122,12 +122,21 @@
 "Settings.DefaultEmojisFirst.Notice" = "Näytä vakiotunnukset ennen premium-tunnuksia tunnusnäppäimistössä";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "created: %@";
+"Chat.Created.Label" = "Created";
+"Chat.Created.Copy" = "Kopioi luontipäivä";
+"Chat.Created.Copied" = "Luontipäivä kopioitu leikepöydälle.";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
 "Chat.JoinedDateTitle" = "Joined %@";
+"Chat.JoinedDate.Copy" = "Kopioi liittymispäivä";
+"Chat.JoinedDate.Copied" = "Liittymispäivä kopioitu leikepöydälle.";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
 "Chat.RegDate" = "Rekisteröity";
+"Chat.RegDate.Copy" = "Kopioi rekisteröitymispäivä";
+"Chat.RegDate.Copied" = "Rekisteröitymispäivä kopioitu leikepöydälle.";
+"Chat.ID" = "ID";
+"Chat.ID.Copy" = "Kopioi ID";
+"Chat.ID.Copied" = "ID kopioitu leikepöydälle.";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Paina kahdesti muokataksesi viestiä";
 

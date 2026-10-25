@@ -24,8 +24,10 @@ func sgPeerInfoProfileItems(nearestChatParticipant: (String?, Int32?), data: Pee
     }
 
     if SGSimpleSettings.shared.showProfileId {
-        items.append(PeerInfoScreenLabeledValueItem(id: itemId, label: "id: \(idText)", text: "", textColor: .primary, action: nil, longTapAction: { sourceNode in
-            interaction.openPeerInfoContextMenu(.copy(idText), sourceNode, nil)
+        items.append(PeerInfoScreenLabeledValueItem(id: itemId, context: context, label: i18n("Chat.ID", presentationData.strings.baseLanguageCode), text: idText, textColor: .primary, action: { node, _ in
+            interaction.openSgContextMenu(node, nil, .copy(text: idText, copyKey: "Chat.ID.Copy", copiedKey: "Chat.ID.Copied"))
+        }, longTapAction: nil, contextAction: { node, gesture, _ in
+            interaction.openSgContextMenu(node, gesture, .copy(text: idText, copyKey: "Chat.ID.Copy", copiedKey: "Chat.ID.Copied"))
         }, requestLayout: { _ in
             interaction.requestLayout(false)
         }))
@@ -65,8 +67,10 @@ func sgPeerInfoProfileItems(nearestChatParticipant: (String?, Int32?), data: Pee
         }
 
         if !dcText.isEmpty || !dcLabel.isEmpty {
-            items.append(PeerInfoScreenLabeledValueItem(id: itemId, label: dcLabel, text: dcText, textColor: .primary, action: nil, longTapAction: { sourceNode in
-                interaction.openPeerInfoContextMenu(.aboutDC, sourceNode, nil)
+            items.append(PeerInfoScreenLabeledValueItem(id: itemId, context: context, label: dcLabel, text: dcText, textColor: .primary, action: { node, _ in
+                interaction.openSgContextMenu(node, nil, .openURL(url: "https://core.telegram.org/api/datacenter"))
+            }, longTapAction: nil, contextAction: { node, gesture, _ in
+                interaction.openSgContextMenu(node, gesture, .openURL(url: "https://core.telegram.org/api/datacenter"))
             }, requestLayout: { _ in
                 interaction.requestLayout(false)
             }))
@@ -76,8 +80,10 @@ func sgPeerInfoProfileItems(nearestChatParticipant: (String?, Int32?), data: Pee
 
     if SGSimpleSettings.shared.showCreationDate, let channelCreationTimestamp = data.channelCreationTimestamp {
         let creationDateString = stringForDate(timestamp: channelCreationTimestamp, strings: presentationData.strings)
-        items.append(PeerInfoScreenLabeledValueItem(id: itemId, label: i18n("Chat.Created", presentationData.strings.baseLanguageCode, creationDateString), text: "", action: nil, longTapAction: { sourceNode in
-            interaction.openPeerInfoContextMenu(.copy(creationDateString), sourceNode, nil)
+        items.append(PeerInfoScreenLabeledValueItem(id: itemId, context: context, label: i18n("Chat.Created.Label", presentationData.strings.baseLanguageCode), text: creationDateString, textColor: .primary, action: { node, _ in
+            interaction.openSgContextMenu(node, nil, .copy(text: creationDateString, copyKey: "Chat.Created.Copy", copiedKey: "Chat.Created.Copied"))
+        }, longTapAction: nil, contextAction: { node, gesture, _ in
+            interaction.openSgContextMenu(node, gesture, .copy(text: creationDateString, copyKey: "Chat.Created.Copy", copiedKey: "Chat.Created.Copied"))
         }, requestLayout: { _ in
             interaction.requestLayout(false)
         }))
@@ -86,8 +92,10 @@ func sgPeerInfoProfileItems(nearestChatParticipant: (String?, Int32?), data: Pee
 
     if let invitedAt = nearestChatParticipant.1 {
         let joinedDateString = stringForDate(timestamp: invitedAt, strings: presentationData.strings)
-        items.append(PeerInfoScreenLabeledValueItem(id: itemId, label: i18n("Chat.JoinedDateTitle", presentationData.strings.baseLanguageCode, nearestChatParticipant.0 ?? "chat"), text: joinedDateString, action: nil, longTapAction: { sourceNode in
-            interaction.openPeerInfoContextMenu(.copy(joinedDateString), sourceNode, nil)
+        items.append(PeerInfoScreenLabeledValueItem(id: itemId, context: context, label: i18n("Chat.JoinedDateTitle", presentationData.strings.baseLanguageCode, nearestChatParticipant.0 ?? "chat"), text: joinedDateString, textColor: .primary, action: { node, _ in
+            interaction.openSgContextMenu(node, nil, .copy(text: joinedDateString, copyKey: "Chat.JoinedDate.Copy", copiedKey: "Chat.JoinedDate.Copied"))
+        }, longTapAction: nil, contextAction: { node, gesture, _ in
+            interaction.openSgContextMenu(node, gesture, .copy(text: joinedDateString, copyKey: "Chat.JoinedDate.Copy", copiedKey: "Chat.JoinedDate.Copied"))
         }, requestLayout: { _ in
             interaction.requestLayout(false)
         }))
@@ -116,8 +124,10 @@ func sgPeerInfoProfileItems(nearestChatParticipant: (String?, Int32?), data: Pee
             }
         }
         if !regDateString.isEmpty {
-            items.append(PeerInfoScreenLabeledValueItem(id: itemId, label: i18n("Chat.RegDate", presentationData.strings.baseLanguageCode), text: regDateString, action: nil, longTapAction: { sourceNode in
-                interaction.openPeerInfoContextMenu(.copy(regDateString), sourceNode, nil)
+            items.append(PeerInfoScreenLabeledValueItem(id: itemId, context: context, label: i18n("Chat.RegDate", presentationData.strings.baseLanguageCode), text: regDateString, textColor: .primary, action: { node, _ in
+                interaction.openSgContextMenu(node, nil, .copy(text: regDateString, copyKey: "Chat.RegDate.Copy", copiedKey: "Chat.RegDate.Copied"))
+            }, longTapAction: nil, contextAction: { node, gesture, _ in
+                interaction.openSgContextMenu(node, gesture, .copy(text: regDateString, copyKey: "Chat.RegDate.Copy", copiedKey: "Chat.RegDate.Copied"))
             }, requestLayout: { _ in
                 interaction.requestLayout(false)
             }))
