@@ -989,6 +989,8 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                         transition = .immediate
                     } else if let overrideUpdateTextInputHeightTransition = strongSelf.overrideUpdateTextInputHeightTransition {
                         transition = overrideUpdateTextInputHeightTransition
+                    } else if let textInputPanelNode = strongSelf.textInputPanelNode, textInputPanelNode.isExpandedInputStateChangePending { // MARK: Swiftgram
+                        transition = .animated(duration: 0.4, curve: .spring)
                     } else {
                         transition = .animated(duration: 0.1, curve: .easeInOut)
                     }

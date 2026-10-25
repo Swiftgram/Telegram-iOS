@@ -170,6 +170,11 @@ func inputTextPanelStateForChatPresentationInterfaceState(_ chatPresentationInte
                 if controller.isUpdatingChatLocationThread {
                     isTextEmpty = true
                 }
+                // MARK: Swiftgram
+                // Spaces and line breaks alone aren't sent, so the full-width field keeps its empty-state buttons for them.
+                if !isTextEmpty, SGSimpleSettings.shared.wideGlassTextField, SGSimpleSettings.shared.wideGlassTextFieldMultiline, chatPresentationInterfaceState.interfaceState.composeInputState.inputText.string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    isTextEmpty = true
+                }
                 let hasForward = chatPresentationInterfaceState.interfaceState.forwardMessageIds != nil
                   
                 var extendedSearchLayout = false

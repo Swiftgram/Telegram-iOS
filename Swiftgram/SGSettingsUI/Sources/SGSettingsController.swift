@@ -96,6 +96,7 @@ private enum SGBoolSetting: String {
     case messageDoubleTapActionOutgoingEdit
     case wideChannelPosts
     case wideGlassTextField
+    case wideGlassTextFieldMultiline
     case forceEmojiTab
     case forceBuiltInMic
     case secondsInMessages
@@ -313,6 +314,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .other, settingName: .hideChannelBottomButton, value: !SGSimpleSettings.shared.hideChannelBottomButton, text: i18n("Settings.showChannelBottomButton", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .wideChannelPosts, value: SGSimpleSettings.shared.wideChannelPosts, text: i18n("Settings.wideChannelPosts", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .wideGlassTextField, value: SGSimpleSettings.shared.wideGlassTextField, text: i18n("Settings.wideGlassTextField", lang), enabled: true))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .wideGlassTextFieldMultiline, value: SGSimpleSettings.shared.wideGlassTextFieldMultiline, text: i18n("Settings.wideGlassTextFieldMultiline", lang), enabled: SGSimpleSettings.shared.wideGlassTextField))
     entries.append(.toggle(id: id.count, section: .other, settingName: .secondsInMessages, value: SGSimpleSettings.shared.secondsInMessages, text: i18n("Settings.secondsInMessages", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .messageDoubleTapActionOutgoingEdit, value: SGSimpleSettings.shared.messageDoubleTapActionOutgoing == SGSimpleSettings.MessageDoubleTapAction.edit.rawValue, text: i18n("Settings.messageDoubleTapActionOutgoingEdit", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hideRecordingButton, value: !SGSimpleSettings.shared.hideRecordingButton, text: i18n("Settings.RecordingButton", lang), enabled: true))
@@ -501,6 +503,9 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.wideChannelPosts = value
         case .wideGlassTextField:
             SGSimpleSettings.shared.wideGlassTextField = value
+            simplePromise.set(true) // Trigger update for 'enabled' field of other toggles
+        case .wideGlassTextFieldMultiline:
+            SGSimpleSettings.shared.wideGlassTextFieldMultiline = value
         case .forceEmojiTab:
             SGSimpleSettings.shared.forceEmojiTab = value
         case .forceBuiltInMic:
