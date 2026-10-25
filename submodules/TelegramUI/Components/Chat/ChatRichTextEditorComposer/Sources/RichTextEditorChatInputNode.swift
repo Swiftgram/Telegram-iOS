@@ -80,6 +80,12 @@ public final class RichTextEditorChatInputNode: ASDisplayNode, ChatRichTextInput
     /// `chatInputTextNode(shouldChangeTextIn:)` delegate, which this engine never calls; this is its replacement.
     public var onTypingActivity: (() -> Void)?
 
+    // MARK: Swiftgram
+    /// Panel-set hook consulted before a typed line break is inserted; `false` drops it. The legacy backend
+    /// offers the same keystroke to `chatInputTextNode(shouldChangeTextIn:)`, which this engine never calls.
+    public var onShouldInsertLineBreak: (() -> Bool)?
+    //
+
     /// fileId → the file-bearing custom-emoji attribute, harvested from each `attributedText` /
     /// `setInputContent` push. The editor hosts inline emoji by their `EmojiRef` fileId STRING only
     /// (`document(from:)` / `document(fromChatInputContent:)` drop the `TelegramMediaFile`), but the host
@@ -303,6 +309,17 @@ public final class RichTextEditorChatInputNode: ASDisplayNode, ChatRichTextInput
         self.editorView.onHardwareReturn = { [weak self] modifierFlags in
             return self?.storedDelegate?.chatInputTextNodeShouldReturn(modifierFlags: modifierFlags) ?? true
         }
+        // MARK: Swiftgram
+        self.editorView.onShouldInsertLineBreak = { [weak self] in
+            return self?.onShouldInsertLineBreak?() ?? true
+        }
+        // Backspace in an empty field changes nothing, so the change callback never reports it: the legacy
+        // backend's `backspaceWhileEmpty`, reported from the keystroke itself.
+        self.editorView.onWillDeleteBackward = { [weak self] in
+            guard let self, self.inputContentIsEmpty else { return }
+            self.storedDelegate?.chatInputTextNodeBackspaceWhileEmpty()
+        }
+        //
 
         // The caret's own signal, answered by re-applying the field's CURRENT geometry with the
         // reveal attached. `.immediate` on purpose: when the panel is growing the field it is already

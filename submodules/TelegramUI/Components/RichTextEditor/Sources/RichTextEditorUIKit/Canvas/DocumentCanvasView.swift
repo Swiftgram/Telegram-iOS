@@ -226,6 +226,12 @@ class DocumentCanvasView: UIView {
     /// (e.g. sent the message) and the editor does nothing. The SOFTWARE keyboard's Return never triggers a
     /// keyCommand, so it always inserts a newline (there's a separate send button) — matching the legacy input.
     final var onHardwareReturn: ((UIKeyModifierFlags) -> Bool)?
+    // MARK: Swiftgram
+    /// See `RichTextEditorView.onShouldInsertLineBreak`.
+    final var onShouldInsertLineBreak: (() -> Bool)?
+    /// See `RichTextEditorView.onWillDeleteBackward`.
+    final var onWillDeleteBackward: (() -> Void)?
+    //
 
     /// Interior content margins — interactable padding around the document, ADDED to the built-in
     /// `pageMargin`. Unlike the host's scroll insets (covered by chrome/keyboard, content scrolls under),

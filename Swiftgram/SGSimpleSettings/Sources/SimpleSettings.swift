@@ -154,6 +154,7 @@ public class SGSimpleSettings {
         case messageDoubleTapActionOutgoing
         case wideChannelPosts
         case wideGlassTextField
+        case wideGlassTextFieldMultiline
         case forceEmojiTab
         case forceBuiltInMic
         case secondsInMessages
@@ -317,6 +318,7 @@ public class SGSimpleSettings {
         Keys.messageDoubleTapActionOutgoing.rawValue: MessageDoubleTapAction.default.rawValue,
         Keys.wideChannelPosts.rawValue: false,
         Keys.wideGlassTextField.rawValue: false,
+        Keys.wideGlassTextFieldMultiline.rawValue: false,
         Keys.forceEmojiTab.rawValue: false,
         Keys.hideChannelBottomButton.rawValue: false,
         Keys.secondsInMessages.rawValue: false,
@@ -547,6 +549,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.wideGlassTextField.rawValue)
     public var wideGlassTextField: Bool
+
+    @UserDefault(key: Keys.wideGlassTextFieldMultiline.rawValue)
+    public var wideGlassTextFieldMultiline: Bool
 
     @UserDefault(key: Keys.forceEmojiTab.rawValue)
     public var forceEmojiTab: Bool
