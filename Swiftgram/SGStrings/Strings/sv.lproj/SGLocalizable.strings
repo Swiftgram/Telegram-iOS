@@ -136,6 +136,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Dubbeltryck för att redigera meddelandet";
 
 "Settings.wideChannelPosts" = "Bredda inlägg i kanaler";
+"Settings.wideGlassTextField" = "Brett glastextfält";
 "Settings.ForceEmojiTab" = "Emoji-tangentbord som standard";
 
 "Settings.forceBuiltInMic" = "Tvinga enhetsmikrofonen";
