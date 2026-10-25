@@ -40,10 +40,16 @@ apple_resource_bundle(
     ],
 )
 
+# MARK: Swiftgram
+sgsrcs = [
+    "//Swiftgram/SGCameraNeoExtensions:SGCameraNeoExtensions",
+]
+#
+
 swift_library(
     name = "CameraNeo",
     module_name = "CameraNeo",
-    srcs = glob([
+    srcs = sgsrcs + glob([ # MARK: Swiftgram
         "Sources/**/*.swift",
     ]),
     copts = [
