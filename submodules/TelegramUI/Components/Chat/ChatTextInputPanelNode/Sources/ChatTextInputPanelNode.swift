@@ -850,6 +850,13 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         // Below iOS 18.4 the engine editor cannot be built (`RichTextEditorChatInputNode` checks the
         // same availability), so the flag must change nothing there — not even force the composer
         // native, which is what setting the two flags below without the check did.
+        // MARK: Swiftgram
+        // Debug Settings ▸ "Input V2": the native editor from the start, on its legacy canvas. "Input V3" below wins.
+        if context.sharedContext.immediateExperimentalUISettings.useNativeTextInput {
+            self.enableRichTextInput = true
+            self.alwaysUseNativeInput = true
+        }
+        //
         if context.sharedContext.immediateExperimentalUISettings.useInputDecEngine, #available(iOS 18.4, *) {
             // Rich input must be on for the composer to build a rich node at all; the engine editor
             // is a choice WITHIN that, not an alternative to it.
