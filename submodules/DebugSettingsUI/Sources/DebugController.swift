@@ -753,6 +753,7 @@ private enum DebugControllerEntry: ItemListNodeEntry {
     case debugRipple(Bool)
     case inputDecTextBackend(Bool)
     case inputDecEngineEditor(Bool)
+    case nativeTextInput(Bool) // MARK: Swiftgram
     case coreListChatBackend(Bool)
     case coreListScrollTrace(Bool)
     case springSendAnimation(Bool)
@@ -824,6 +825,8 @@ private enum DebugControllerEntry: ItemListNodeEntry {
         case .crash, .resetBiometricsData, .photoPreview, .knockoutWallpaper, .compressedEmojiCache, .storiesJpegExperiment, .checkSerializedData, .enableQuickReactionSwitch, .experimentalCompatibility, .enableDebugDataDisplay, .fakeGlass, .forceClearGlass, .debugRipple, .inputDecEngineEditor, .coreListChatBackend, .coreListScrollTrace, .respectSystemMicrophone, .useModernVideoMessagePipeline, .videoMessageCameraMode, .browserExperiment, .allForumsHaveTabs, .enableReactionOverrides, .disableReloginTokens, .liveStreamV2, .experimentalCallMute, .groupCallReferenceEngine, .playerV2, .devRequests, .enableUpdates, .pwa, .enableLocalTranslation, .testPasscodeMigration:
             return DebugControllerSection.experiments.rawValue
         case .inputDecTextBackend, .springSendAnimation, .fakeWalletTransfers, .chatMediaEditorLegacy, .insertWidgetConformanceSet, .insertWidgetGames, .mediaGridLegacy, .sharedMediaGridLegacy, .storyLegacyVideoWriter, .chatLegacyVideoWriter, .chatSideListLegacy, .runWidgetStressKit, .showWidgetWalletWindow:
+            return DebugControllerSection.experiments.rawValue
+        case .nativeTextInput: // MARK: Swiftgram
             return DebugControllerSection.experiments.rawValue
         case .logTranslationRecognition, .resetTranslationStates:
             return DebugControllerSection.translation.rawValue
@@ -1010,6 +1013,8 @@ private enum DebugControllerEntry: ItemListNodeEntry {
             return production ? 85 : 84
         case .showWidgetWalletWindow:
             return 86
+        case .nativeTextInput: // MARK: Swiftgram
+            return 87
         case .disableVideoAspectScaling:
             return 104
         case .enableNetworkFramework:
@@ -1052,6 +1057,7 @@ private enum DebugControllerEntry: ItemListNodeEntry {
         case .restorePurchases: return 12
         case .removeDownloadedModels: return 13
         case .resetWebViewCache: return 14
+        case .nativeTextInput: return DebugControllerEntry.inputDecEngineEditor(false).stableId // MARK: Swiftgram (right under Input V3)
         default: return self.stableId
         }
     }
@@ -1060,6 +1066,11 @@ private enum DebugControllerEntry: ItemListNodeEntry {
         if lhs.section != rhs.section {
             return lhs.section < rhs.section
         }
+        // MARK: Swiftgram
+        if lhs.sortIndex == rhs.sortIndex {
+            return lhs.stableId < rhs.stableId
+        }
+        //
         return lhs.sortIndex < rhs.sortIndex
     }
 
@@ -1515,6 +1526,18 @@ private enum DebugControllerEntry: ItemListNodeEntry {
                     })
                 }).start()
             })
+        // MARK: Swiftgram
+        case let .nativeTextInput(value):
+            return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: "Input V2", value: value, sectionId: self.section, style: .blocks, updated: { value in
+                let _ = arguments.sharedContext.accountManager.transaction ({ transaction in
+                    transaction.updateSharedData(ApplicationSpecificSharedDataKeys.experimentalUISettings, { settings in
+                        var settings = settings?.get(ExperimentalUISettings.self) ?? ExperimentalUISettings.defaultSettings
+                        settings.useNativeTextInput = value
+                        return EnginePreferencesEntry(settings)
+                    })
+                }).start()
+            })
+        //
         case let .inputDecTextBackend(value):
             return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: "Text Field v2: InputDec backend", value: value, sectionId: self.section, style: .blocks, updated: { value in
                 let _ = arguments.sharedContext.accountManager.transaction ({ transaction in
@@ -2223,6 +2246,7 @@ private func debugControllerEntries(context: AccountContext?, sharedContext: Sha
         entries.append(.forceClearGlass(experimentalSettings.forceClearGlass))
         entries.append(.debugRipple(experimentalSettings.debugRipple))
         entries.append(.inputDecEngineEditor(experimentalSettings.useInputDecEngine))
+        entries.append(.nativeTextInput(experimentalSettings.useNativeTextInput)) // MARK: Swiftgram
         #if DEBUG
         entries.append(.browserExperiment(experimentalSettings.browserExperiment))
         #else

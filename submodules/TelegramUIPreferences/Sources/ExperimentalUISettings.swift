@@ -83,6 +83,7 @@ public struct ExperimentalUISettings: Codable, Equatable {
     public var forceClearGlass: Bool
     public var debugRipple: Bool
     public var useInputDecEngine: Bool
+    public var useNativeTextInput: Bool // MARK: Swiftgram
     public var coreListChatBackend: Bool
     public var coreListScrollTrace: Bool
     public var chatMediaEditorLegacy: Bool
@@ -151,6 +152,7 @@ public struct ExperimentalUISettings: Codable, Equatable {
             forceClearGlass: false,
             debugRipple: false,
             useInputDecEngine: false,
+            useNativeTextInput: false, // MARK: Swiftgram
             coreListChatBackend: false,
             coreListScrollTrace: false,
             chatMediaEditorLegacy: false,
@@ -217,6 +219,7 @@ public struct ExperimentalUISettings: Codable, Equatable {
         forceClearGlass: Bool,
         debugRipple: Bool,
         useInputDecEngine: Bool,
+        useNativeTextInput: Bool, // MARK: Swiftgram
         coreListChatBackend: Bool,
         coreListScrollTrace: Bool,
         chatMediaEditorLegacy: Bool,
@@ -281,6 +284,7 @@ public struct ExperimentalUISettings: Codable, Equatable {
         self.forceClearGlass = forceClearGlass
         self.debugRipple = debugRipple
         self.useInputDecEngine = useInputDecEngine
+        self.useNativeTextInput = useNativeTextInput // MARK: Swiftgram
         self.coreListChatBackend = coreListChatBackend
         self.coreListScrollTrace = coreListScrollTrace
         self.chatMediaEditorLegacy = chatMediaEditorLegacy
@@ -351,6 +355,7 @@ public struct ExperimentalUISettings: Codable, Equatable {
         // `?? false` like its neighbours: an existing settings blob predates this key, and a
         // decode failure here would reset every other experimental flag the user has set.
         self.useInputDecEngine = try container.decodeIfPresent(Bool.self, forKey: "useInputDecEngine") ?? false
+        self.useNativeTextInput = try container.decodeIfPresent(Bool.self, forKey: "useNativeTextInput") ?? false // MARK: Swiftgram
         self.coreListChatBackend = try container.decodeIfPresent(Bool.self, forKey: "coreListChatBackend") ?? false
         self.coreListScrollTrace = try container.decodeIfPresent(Bool.self, forKey: "coreListScrollTrace") ?? false
         self.chatMediaEditorLegacy = try container.decodeIfPresent(Bool.self, forKey: "chatMediaEditorLegacy") ?? false
@@ -419,6 +424,7 @@ public struct ExperimentalUISettings: Codable, Equatable {
         try container.encodeIfPresent(self.forceClearGlass, forKey: "forceClearGlass")
         try container.encodeIfPresent(self.debugRipple, forKey: "debugRipple")
         try container.encodeIfPresent(self.useInputDecEngine, forKey: "useInputDecEngine")
+        try container.encodeIfPresent(self.useNativeTextInput, forKey: "useNativeTextInput") // MARK: Swiftgram
         try container.encodeIfPresent(self.coreListChatBackend, forKey: "coreListChatBackend")
         try container.encodeIfPresent(self.coreListScrollTrace, forKey: "coreListScrollTrace")
         try container.encodeIfPresent(self.chatMediaEditorLegacy, forKey: "chatMediaEditorLegacy")
