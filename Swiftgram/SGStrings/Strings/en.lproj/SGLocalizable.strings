@@ -157,6 +157,7 @@
 
 "Settings.wideChannelPosts" = "Wide posts in channels";
 "Settings.wideGlassTextField" = "Wide glass text field";
+"Settings.wideGlassTextFieldMultiline" = "Full-width multiline text";
 "Settings.ForceEmojiTab" = "Emoji tab first";
 
 "Settings.forceBuiltInMic" = "Force Device Microphone";

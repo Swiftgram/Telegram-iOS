@@ -534,6 +534,7 @@ extension DocumentCanvasView: UIKeyInput {
     /// `default:` early return. A bracket added at the backend would double every one of them
     /// (measured: six recorded events became ten for the sibling `replace` witness).
     func legacyInsertText(_ text: String) {
+        if text == "\n", let onShouldInsertLineBreak, !onShouldInsertLineBreak() { return } // MARK: Swiftgram
         imageObjectDeletePending = nil   // a non-delete edit cancels a pending structural-media delete
         // A committing keystroke while composing: replace the WHOLE marked range with `text`, then
         // finalize the composition as one undo step. (The system delivers a confirming char this way.)
@@ -796,6 +797,7 @@ extension DocumentCanvasView: UIKeyInput {
     /// `// already wraps itself in editing { }` on the `unwrapBlockQuoteLevel()` line. Exclude trailing
     /// comments, not just comment-only lines.
     func legacyDeleteBackward() {
+        onWillDeleteBackward?() // MARK: Swiftgram
         if markedRange != nil { commitMarkedText() }   // delete acts on committed text, not the composition
         guard !boxes.isEmpty else { return }
         // A tap-selected media block's Backspace: iOS represents the deletion by OVERRIDING the selection
