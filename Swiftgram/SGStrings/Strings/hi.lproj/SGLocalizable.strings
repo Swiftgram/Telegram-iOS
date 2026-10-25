@@ -62,6 +62,7 @@
 "Settings.DownloadsBoost.maximum" = "अधिकतम";
 
 "Settings.ShowProfileID" = "प्रोफ़ाइल ID दिखाएं";
+"Settings.ShowSwiftgramSubMenu" = "\"Swiftgram\" उप-मेनू";
 "Settings.ShowDC" = "डेटा सेंटर दिखाएं";
 "Settings.ShowCreationDate" = "चैट निर्माण तिथि दिखाएं";
 "Settings.ShowCreationDate.Notice" = "कुछ चैट के लिए निर्माण तिथि अज्ञात हो सकती है।";
