@@ -66,6 +66,7 @@
 
 "Settings.VideoNotes.Header" = "КРУГЛЫЕ ВИДЕО";
 "Settings.VideoNotes.StartWithRearCam" = "На заднюю камеру";
+"Settings.VideoNotes.ResetZoom" = "Всегда сбрасывать зум";
 
 "Settings.CustomColors.Header" = "ПЕРСОНАЛЬНЫЕ ЦВЕТА";
 "Settings.CustomColors.Saturation" = "НАСЫЩЕННОСТЬ";

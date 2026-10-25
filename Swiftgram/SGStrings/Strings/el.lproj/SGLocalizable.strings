@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "ΤΡΟΠΟΣ ΒΙΝΤΕΟ";
 "Settings.VideoNotes.StartWithRearCam" = "Έναρξη με πίσω κάμερα";
+"Settings.VideoNotes.ResetZoom" = "Πάντα επαναφορά ζουμ";
 
 "Settings.CustomColors.Header" = "ΧΡΩΜΑΤΑ ΛΟΓΑΡΙΑΣΜΟΥ";
 "Settings.CustomColors.Saturation" = "ΑΣΦΑΛΙΣΗ";

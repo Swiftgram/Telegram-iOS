@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "KEREK VIDEÓK";
 "Settings.VideoNotes.StartWithRearCam" = "Kezdje a hátsó kamerával";
+"Settings.VideoNotes.ResetZoom" = "Nagyítás visszaállítása mindig";
 
 "Settings.CustomColors.Header" = "FIÓK SZÍNEI";
 "Settings.CustomColors.Saturation" = "TELÍTETTSÉG";
