@@ -99,6 +99,7 @@ private enum SGBoolSetting: String {
     case forceBuiltInMic
     case secondsInMessages
     case hideChannelBottomButton
+    case hideBusinessBotTitlePanel
     case confirmCalls
     case swipeForVideoPIP
     case enableVoipTcp
@@ -310,6 +311,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .other, settingName: .swipeForVideoPIP, value: SGSimpleSettings.shared.videoPIPSwipeDirection == SGSimpleSettings.VideoPIPSwipeDirection.up.rawValue, text: i18n("Settings.swipeForVideoPIP", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.swipeForVideoPIP.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hideChannelBottomButton, value: !SGSimpleSettings.shared.hideChannelBottomButton, text: i18n("Settings.showChannelBottomButton", lang), enabled: true))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .hideBusinessBotTitlePanel, value: SGSimpleSettings.shared.hideBusinessBotTitlePanel, text: i18n("Settings.HideBusinessBotPanel", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .wideChannelPosts, value: SGSimpleSettings.shared.wideChannelPosts, text: i18n("Settings.wideChannelPosts", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .secondsInMessages, value: SGSimpleSettings.shared.secondsInMessages, text: i18n("Settings.secondsInMessages", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .messageDoubleTapActionOutgoingEdit, value: SGSimpleSettings.shared.messageDoubleTapActionOutgoing == SGSimpleSettings.MessageDoubleTapAction.edit.rawValue, text: i18n("Settings.messageDoubleTapActionOutgoingEdit", lang), enabled: true))
@@ -503,6 +505,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.forceBuiltInMic = value
         case .hideChannelBottomButton:
             SGSimpleSettings.shared.hideChannelBottomButton = !value
+        case .hideBusinessBotTitlePanel:
+            SGSimpleSettings.shared.hideBusinessBotTitlePanel = value
         case .secondsInMessages:
             SGSimpleSettings.shared.secondsInMessages = value
         case .confirmCalls:

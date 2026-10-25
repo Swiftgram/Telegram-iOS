@@ -151,3 +151,4 @@
 "Settings.swipeForVideoPIP" = "فيديو PIP مع السحب";
 "Settings.swipeForVideoPIP.Notice" = "إذا تم تمكينه، سيفتح سحب الفيديو في وضع الصورة في الصورة.";
 "Settings.videoControlsInFooter" = "أزرار الفيديو بالأسفل";
+"Settings.HideBusinessBotPanel" = "إخفاء لوحة بوت الأعمال";

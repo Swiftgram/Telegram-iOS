@@ -151,3 +151,4 @@
 "Settings.swipeForVideoPIP" = "Video PIP cu gestul de glisare";
 "Settings.swipeForVideoPIP.Notice" = "Dacă este activat, glisarea video va deschide în modul imagine în imagine.";
 "Settings.videoControlsInFooter" = "Controale video jos";
+"Settings.HideBusinessBotPanel" = "Ascunde panoul botului business";
