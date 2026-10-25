@@ -277,3 +277,4 @@
 "Settings.NY.Notice" = "Доступны только на ограниченное время!";
 "Settings.videoControlsInFooter" = "Кнопки видео снизу";
 "Settings.HideAccountInNotifications" = "Скрыть аккаунт в уведомлениях";
+"Settings.HideBusinessBotPanel" = "Скрыть плашку бизнес-бота";

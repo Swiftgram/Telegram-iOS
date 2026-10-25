@@ -153,6 +153,7 @@ public class SGSimpleSettings {
         case forceBuiltInMic
         case secondsInMessages
         case hideChannelBottomButton
+        case hideBusinessBotTitlePanel
         case forceSystemSharing
         case confirmCalls
         case videoPIPSwipeDirection
@@ -312,6 +313,7 @@ public class SGSimpleSettings {
         Keys.wideChannelPosts.rawValue: false,
         Keys.forceEmojiTab.rawValue: false,
         Keys.hideChannelBottomButton.rawValue: false,
+        Keys.hideBusinessBotTitlePanel.rawValue: false,
         Keys.secondsInMessages.rawValue: false,
         Keys.forceSystemSharing.rawValue: false,
         Keys.confirmCalls.rawValue: true,
@@ -536,6 +538,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.hideChannelBottomButton.rawValue)
     public var hideChannelBottomButton: Bool
+
+    @UserDefault(key: Keys.hideBusinessBotTitlePanel.rawValue)
+    public var hideBusinessBotTitlePanel: Bool
 
     @UserDefault(key: Keys.forceSystemSharing.rawValue)
     public var forceSystemSharing: Bool
