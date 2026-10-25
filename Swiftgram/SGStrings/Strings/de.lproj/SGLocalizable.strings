@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "RUNDE VIDEOS";
 "Settings.VideoNotes.StartWithRearCam" = "Starte mit umgedrehter Kamera";
+"Settings.VideoNotes.ResetZoom" = "Zoom immer zurücksetzen";
 
 "Settings.CustomColors.Header" = "ACCOUNT FARBEN";
 "Settings.CustomColors.Saturation" = "SÄTTIGUNG";

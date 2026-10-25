@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "VIDEO TRÒN";
 "Settings.VideoNotes.StartWithRearCam" = "Bắt đầu với camera sau";
+"Settings.VideoNotes.ResetZoom" = "Luôn đặt lại thu phóng";
 
 "Settings.CustomColors.Header" = "MÀU TÀI KHOẢN";
 "Settings.CustomColors.Saturation" = "ĐỘ BÃO HÒA";

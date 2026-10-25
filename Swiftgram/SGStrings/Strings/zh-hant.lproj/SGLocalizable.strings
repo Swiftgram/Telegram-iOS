@@ -52,6 +52,7 @@
 
 "Settings.VideoNotes.Header" = "圓形影片";
 "Settings.VideoNotes.StartWithRearCam" = "預設使用後置鏡頭";
+"Settings.VideoNotes.ResetZoom" = "始終重設縮放";
 
 "Settings.CustomColors.Header" = "帳號顏色";
 "Settings.CustomColors.Saturation" = "飽和度";

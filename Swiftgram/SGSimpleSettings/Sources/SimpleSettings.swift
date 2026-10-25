@@ -75,6 +75,7 @@ public class SGSimpleSettings {
             { let _ = self.disableSendAsButton },
             { let _ = self.disableSnapDeletionEffect },
             { let _ = self.startTelescopeWithRearCam },
+            { let _ = self.videoNotesResetZoom },
             { let _ = self.hideRecordingButton },
             { let _ = self.inputToolbar },
             { let _ = self.dismissedSGSuggestions },
@@ -100,6 +101,7 @@ public class SGSimpleSettings {
         case hidePhoneInSettings
         case showTabNames
         case startTelescopeWithRearCam
+        case videoNotesResetZoom
         case accountColorsSaturation
         case uploadSpeedBoost
         case downloadSpeedBoost
@@ -263,6 +265,7 @@ public class SGSimpleSettings {
         Keys.hidePhoneInSettings.rawValue: true,
         Keys.showTabNames.rawValue: true,
         Keys.startTelescopeWithRearCam.rawValue: false,
+        Keys.videoNotesResetZoom.rawValue: false,
         Keys.accountColorsSaturation.rawValue: 100,
         Keys.uploadSpeedBoost.rawValue: false,
         Keys.downloadSpeedBoost.rawValue: DownloadSpeedBoostValues.none.rawValue,
@@ -359,6 +362,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.startTelescopeWithRearCam.rawValue)
     public var startTelescopeWithRearCam: Bool
+
+    @UserDefault(key: Keys.videoNotesResetZoom.rawValue)
+    public var videoNotesResetZoom: Bool
     
     @UserDefault(key: Keys.accountColorsSaturation.rawValue)
     public var accountColorsSaturation: Int32

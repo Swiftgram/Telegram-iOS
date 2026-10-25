@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "VIDEO ROTUND";
 "Settings.VideoNotes.StartWithRearCam" = "Începe cu camera posterioară";
+"Settings.VideoNotes.ResetZoom" = "Resetează mereu zoomul";
 
 "Settings.CustomColors.Header" = "COLORTURI DE CONT";
 "Settings.CustomColors.Saturation" = "SATURARE";
