@@ -18,6 +18,43 @@ import AvatarVideoNode
 import AvatarStoryIndicatorComponent
 import ComponentDisplayAdapters
 import GlassBackgroundComponent
+import UIKit.UIGestureRecognizerSubclass // MARK: Swiftgram
+
+// MARK: Swiftgram
+// Records where a touch on the avatar ends and never recognizes: the bar button that hosts the avatar handles the
+// press, and an ASDisplayNode that overrides touchesEnded would swallow the touch (its base implementation is empty).
+private final class BusinessBotTouchObserver: UIGestureRecognizer {
+    var touchEnded: ((CGPoint) -> Void)?
+
+    override init(target: Any?, action: Selector?) {
+        super.init(target: target, action: action)
+        self.cancelsTouchesInView = false
+        self.delaysTouchesBegan = false
+        self.delaysTouchesEnded = false
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent) {
+        super.touchesEnded(touches, with: event)
+        if let touch = touches.first, let view = self.view {
+            self.touchEnded?(touch.location(in: view))
+        }
+        self.state = .failed
+    }
+
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent) {
+        super.touchesCancelled(touches, with: event)
+        self.state = .failed
+    }
+
+    override func canPrevent(_ preventedGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return false
+    }
+
+    override func canBePrevented(by preventingGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return false
+    }
+}
+//
 
 private let normalFont = avatarPlaceholderFont(size: 16.0)
 private let smallFont = avatarPlaceholderFont(size: 12.0)
@@ -27,6 +64,10 @@ public final class ChatAvatarNavigationNode: ASDisplayNode {
     
     private let containerNode: ContextControllerSourceNode
     public var avatarNode: AvatarNode
+    // MARK: Swiftgram
+    private var businessBotAvatarNode: AvatarNode?
+    private var businessBotPeer: EnginePeer?
+    private var businessBotLastTouchEnd: (location: CGPoint, timestamp: Double)?
     private var avatarVideoNode: AvatarVideoNode?
     
     public private(set) var avatarStoryView: ComponentView<Empty>?
@@ -60,10 +101,12 @@ public final class ChatAvatarNavigationNode: ASDisplayNode {
             }
         }
     }
+    public var businessBotAction: ((EnginePeer) -> Void)? // MARK: Swiftgram
         
     override public init() {
         self.containerNode = ContextControllerSourceNode()
         self.containerNode.isGestureEnabled = false
+        self.containerNode.animateScale = false // MARK: Swiftgram
         self.avatarNode = AvatarNode(font: normalFont)
         self.statusView = ComponentView()
         
@@ -90,6 +133,13 @@ public final class ChatAvatarNavigationNode: ASDisplayNode {
     override public func didLoad() {
         super.didLoad()
         self.view.isOpaque = false
+        // MARK: Swiftgram
+        let businessBotTouchObserver = BusinessBotTouchObserver(target: nil, action: nil)
+        businessBotTouchObserver.touchEnded = { [weak self] location in
+            self?.businessBotLastTouchEnd = (location, CACurrentMediaTime())
+        }
+        self.view.addGestureRecognizer(businessBotTouchObserver)
+        //
     }
     
     public func setStatus(context: AccountContext, content: EmojiStatusComponent.Content) {
@@ -116,6 +166,56 @@ public final class ChatAvatarNavigationNode: ASDisplayNode {
         
         self.avatarNode.isHidden = true
         self.communityAvatarBadgeBackgroundView?.isHidden = true
+        self.setBusinessBotIndicator(context: context, theme: nil, peer: nil) // MARK: Swiftgram
+    }
+
+    // MARK: Swiftgram
+    public func setBusinessBotIndicator(context: AccountContext, theme: PresentationTheme?, peer: EnginePeer?) {
+        guard let peer, let theme else {
+            self.businessBotPeer = nil
+            if let businessBotAvatarNode = self.businessBotAvatarNode {
+                self.businessBotAvatarNode = nil
+                businessBotAvatarNode.removeFromSupernode()
+            }
+            return
+        }
+        self.businessBotPeer = peer
+
+        let avatarNode: AvatarNode
+        if let current = self.businessBotAvatarNode {
+            avatarNode = current
+        } else {
+            avatarNode = AvatarNode(font: avatarPlaceholderFont(size: 8.0))
+            avatarNode.isUserInteractionEnabled = false
+            self.businessBotAvatarNode = avatarNode
+            self.containerNode.addSubnode(avatarNode)
+        }
+
+        let avatarSize = CGSize(width: 18.0, height: 18.0)
+        let avatarFrame = CGRect(origin: CGPoint(x: self.containerNode.bounds.width - avatarSize.width, y: self.containerNode.bounds.height - avatarSize.height), size: avatarSize)
+
+        avatarNode.frame = avatarFrame
+        avatarNode.view.layer.cornerRadius = avatarSize.width / 2.0
+        avatarNode.view.layer.borderWidth = 1.0
+        avatarNode.view.layer.borderColor = theme.rootController.navigationBar.opaqueBackgroundColor.cgColor
+        avatarNode.updateSize(size: avatarSize)
+        avatarNode.setPeer(context: context, theme: theme, peer: peer, displayDimensions: avatarSize)
+
+        self.containerNode.view.bringSubviewToFront(avatarNode.view)
+    }
+
+    // The navigation bar button takes every press on this node, so the badge cannot have a gesture of its own: the
+    // button's action asks whether the press ended on the badge and opens the bot then. The hit circle is the badge
+    // with 4 pt of slop; the avatar's center stays outside it.
+    public func takeBusinessBotTap() -> EnginePeer? {
+        let lastTouchEnd = self.businessBotLastTouchEnd
+        self.businessBotLastTouchEnd = nil
+        guard let businessBotPeer = self.businessBotPeer, let businessBotAvatarNode = self.businessBotAvatarNode, let lastTouchEnd, CACurrentMediaTime() - lastTouchEnd.timestamp < 1.0 else {
+            return nil
+        }
+        let badgeFrame = businessBotAvatarNode.view.convert(businessBotAvatarNode.bounds, to: self.view)
+        let distance = hypot(lastTouchEnd.location.x - badgeFrame.midX, lastTouchEnd.location.y - badgeFrame.midY)
+        return distance <= badgeFrame.width / 2.0 + 4.0 ? businessBotPeer : nil
     }
     
     public func setPeer(
@@ -128,7 +228,8 @@ public final class ChatAvatarNavigationNode: ASDisplayNode {
         clipStyle: AvatarNodeClipStyle = .round,
         synchronousLoad: Bool = false,
         displayDimensions: CGSize = CGSize(width: 60.0, height: 60.0),
-        storeUnrounded: Bool = false
+        storeUnrounded: Bool = false,
+        businessBotPeer: EnginePeer? = nil // MARK: Swiftgram
     ) {
         self.context = context
         
@@ -223,6 +324,7 @@ public final class ChatAvatarNavigationNode: ASDisplayNode {
         if let communityAvatarBadgeBackgroundView = self.communityAvatarBadgeBackgroundView, !communityAvatarBadgeBackgroundView.isHidden {
             self.containerNode.view.bringSubviewToFront(communityAvatarBadgeBackgroundView)
         }
+        self.setBusinessBotIndicator(context: context, theme: theme, peer: businessBotPeer) // MARK: Swiftgram
         
         if let peer = peer, peer.isPremium {
             self.cachedDataDisposable.set((context.account.postbox.peerView(id: peer.id)

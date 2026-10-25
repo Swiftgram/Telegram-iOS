@@ -136,3 +136,4 @@
 
 "Settings.hideChannelBottomButton" = "Masquer le panneau inférieur du canal";
 "Settings.videoControlsInFooter" = "Commandes vidéo en bas";
+"Settings.HideBusinessBotPanel" = "Masquer le panneau du bot pro";

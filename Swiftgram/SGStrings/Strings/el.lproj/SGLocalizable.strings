@@ -151,3 +151,4 @@
 "Settings.swipeForVideoPIP" = "Βίντεο PIP με Swipe";
 "Settings.swipeForVideoPIP.Notice" = "Αν είναι ενεργοποιημένο, το σ swipe video θα το ανοίξει σε λειτουργία Εικόνα μέσα στην Εικόνα.";
 "Settings.videoControlsInFooter" = "Χειριστήρια βίντεο στο κάτω μέρος";
+"Settings.HideBusinessBotPanel" = "Απόκρυψη πλαισίου business bot";

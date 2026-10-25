@@ -7,6 +7,7 @@ import ChatControllerInteraction
 import ComponentFlow
 import ChatSideTopicsPanel
 import LegacyChatHeaderPanelComponent
+import SGSimpleSettings // MARK: Swiftgram
 
 func titlePanelForChatPresentationInterfaceState(_ chatPresentationInterfaceState: ChatPresentationInterfaceState, context: AccountContext, currentPanel: ChatTitleAccessoryPanelNode?, controllerInteraction: ChatControllerInteraction?, interfaceInteraction: ChatPanelInterfaceInteraction?, force: Bool) -> ChatTitleAccessoryPanelNode? {
     if !force, case .standard(.embedded) = chatPresentationInterfaceState.mode {
@@ -249,6 +250,9 @@ func titlePanelForChatPresentationInterfaceState(_ chatPresentationInterfaceStat
 /// displaces the report bar without showing it.
 func managingBotTitlePanelForChatPresentationInterfaceState(_ chatPresentationInterfaceState: ChatPresentationInterfaceState, context: AccountContext, displayedTitlePanel: ChatTitleAccessoryPanelNode?, currentPanel: ChatManagingBotTitlePanelNode?, interfaceInteraction: ChatPanelInterfaceInteraction?) -> ChatManagingBotTitlePanelNode? {
     guard let contactStatus = chatPresentationInterfaceState.contactStatus, contactStatus.managingBot != nil else {
+        return nil
+    }
+    if SGSimpleSettings.shared.hideBusinessBotTitlePanel { // MARK: Swiftgram
         return nil
     }
     if chatPresentationInterfaceState.peerIsBlocked {

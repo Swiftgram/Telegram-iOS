@@ -15,6 +15,7 @@ import BundleIconComponent
 import ContextUI
 import SwiftSignalKit
 import LegacyChatHeaderPanelComponent
+import SGSimpleSettings // MARK: Swiftgram
 
 private final class ChatManagingBotTitlePanelComponent: Component {
     let context: AccountContext
@@ -293,6 +294,17 @@ final class ChatManagingBotTitlePanelNode: ChatTitleAccessoryPanelNode {
         let strings = self.context.sharedContext.currentPresentationData.with { $0 }.strings
         
         var items: [ContextMenuItem] = []
+
+        // MARK: Swiftgram
+        items.append(.action(ContextMenuActionItem(text: strings.SponsoredMessageMenu_Hide, icon: { theme in
+            return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Eye"), color: theme.contextMenu.primaryColor)
+        }, action: { [weak self] _, a in
+            a(.default)
+
+            SGSimpleSettings.shared.hideBusinessBotTitlePanel = true
+            (self?.interfaceInteraction?.chatController() as? ChatControllerImpl)?.updateBusinessBotAvatarIndicator()
+            self?.interfaceInteraction?.requestLayout(.animated(duration: 0.2, curve: .easeInOut))
+        })))
         
         items.append(.action(ContextMenuActionItem(text: strings.Chat_BusinessBotPanel_Menu_RemoveBot, textColor: .destructive, icon: { theme in
             return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Clear"), color: theme.contextMenu.destructiveColor)

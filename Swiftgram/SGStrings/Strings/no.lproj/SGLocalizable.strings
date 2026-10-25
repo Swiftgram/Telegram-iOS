@@ -151,3 +151,4 @@
 "Settings.swipeForVideoPIP" = "Video PIP med sveip";
 "Settings.swipeForVideoPIP.Notice" = "Hvis aktivert, vil sveipingen av video åpne den i bilde-i-bilde-modus.";
 "Settings.videoControlsInFooter" = "Videokontroller nederst";
+"Settings.HideBusinessBotPanel" = "Skjul bedriftsbotpanel";

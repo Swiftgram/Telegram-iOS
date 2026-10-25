@@ -6463,6 +6463,13 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 }
                 strongSelf.presentInGlobalOverlay(contextController)
             }
+            // MARK: Swiftgram
+            avatarNode.businessBotAction = { [weak self] peer in
+                guard let strongSelf = self, let navigationController = strongSelf.navigationController as? NavigationController else {
+                    return
+                }
+                strongSelf.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: strongSelf.context, chatLocation: .peer(peer), keepStack: .always, purposefulAction: {}, peekData: nil))
+            }
             
             chatInfoButtonItem = UIBarButtonItem(customDisplayNode: avatarNode)!
             self.avatarNode = avatarNode
@@ -8672,6 +8679,8 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         if let button = self.rightNavigationButton {
             if case .standard(.previewing) = self.mode {
                 self.navigationButtonAction(button.action)
+            } else if case .openChatInfo = button.action, let businessBotPeer = self.avatarNode?.takeBusinessBotTap() { // MARK: Swiftgram
+                self.avatarNode?.businessBotAction?(businessBotPeer) // MARK: Swiftgram
             } else if case let .peer(peerId) = self.chatLocation, case .openChatInfo(expandAvatar: true, _) = button.action, let storyStats = self.contentData?.state.storyStats, storyStats.unseenCount != 0, let avatarNode = self.avatarNode {
                 self.openStories(peerId: peerId, avatarHeaderNode: nil, avatarNode: avatarNode.avatarNode)
             } else {
