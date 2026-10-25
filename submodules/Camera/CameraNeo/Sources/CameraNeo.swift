@@ -49,6 +49,10 @@ final class CameraNeo: NSObject, CameraProtocol {
     private let audioOutputIdentity = Atomic<ObjectIdentifier?>(value: nil)
 
     private var singleFramesEnabled = true
+    // MARK: Swiftgram
+    private var sgAllowsVirtualBackDevice = true
+    private var sgUsesVirtualBackDevice = false
+    //
     private var singleMediaPosition: Camera.Position
     private var recordingOrientation: AVCaptureVideoOrientation = .portrait
 
@@ -488,7 +492,7 @@ final class CameraNeo: NSObject, CameraProtocol {
 
     func setZoomLevel(_ zoomLevel: CGFloat) {
         self.updateZoom { device in
-            return 1.0 + zoomLevel
+            return sgNeutralZoomFactor(device) + zoomLevel // MARK: Swiftgram
         }
     }
 
@@ -504,7 +508,7 @@ final class CameraNeo: NSObject, CameraProtocol {
                 return
             }
             self.withLockedDevice(device) { device in
-                device.ramp(toVideoZoomFactor: self.clampedZoom(zoomLevel, device: device), withRate: Float(rate))
+                device.ramp(toVideoZoomFactor: self.clampedZoom(zoomLevel * sgNeutralZoomFactor(device), device: device), withRate: Float(rate)) // MARK: Swiftgram
             }
         }
     }
@@ -598,6 +602,15 @@ final class CameraNeo: NSObject, CameraProtocol {
             videoConfigured = self.configureSupportedMultiCamCosts()
         }
         self.logCaptureState(reason: "configured")
+        // MARK: Swiftgram
+        if !videoConfigured && self.sgUsesVirtualBackDevice && (self.useMultiCam || self.positionValue.with({ $0 }) == .back) {
+            self.sgAllowsVirtualBackDevice = false
+            self.sgUsesVirtualBackDevice = false
+            self.tearDownSession()
+            self.configureSession()
+            return
+        }
+        //
 
         self.isConfigured = videoConfigured && audioConfigured
         let initializationStatus: CaptureInitializationStatus
@@ -685,10 +698,23 @@ final class CameraNeo: NSObject, CameraProtocol {
         }
 
         multiCamSession.addInputWithNoConnections(backInput)
+        // MARK: Swiftgram
+        // The checks above ran on an empty session; with a virtual back camera added, the rest may no longer fit,
+        // and adding it anyway raises an exception. Failing here falls back to the wide-angle camera.
+        guard multiCamSession.canAddInput(frontInput) else {
+            return false
+        }
+        //
         multiCamSession.addInputWithNoConnections(frontInput)
         self.configureFrameRate(roundVideoCaptureFrameRate, device: backDevice, input: backInput)
         self.configureFrameRate(roundVideoCaptureFrameRate, device: frontDevice, input: frontInput)
+        guard multiCamSession.canAddOutput(backOutput) else { // MARK: Swiftgram
+            return false
+        }
         multiCamSession.addOutputWithNoConnections(backOutput)
+        guard multiCamSession.canAddOutput(frontOutput) else { // MARK: Swiftgram
+            return false
+        }
         multiCamSession.addOutputWithNoConnections(frontOutput)
 
         guard self.connectVideo(
@@ -808,6 +834,15 @@ final class CameraNeo: NSObject, CameraProtocol {
     }
 
     private func makeVideoDevice(position: Camera.Position) -> AVCaptureDevice? {
+        // MARK: Swiftgram
+        if position == .back {
+            self.sgUsesVirtualBackDevice = false
+            if self.configuration.isRoundVideo && self.sgAllowsVirtualBackDevice, let device = sgRoundVideoVirtualBackDevice(requiresMultiCam: self.useMultiCam, mode: self.roundVideoMode) {
+                self.sgUsesVirtualBackDevice = true
+                return device
+            }
+        }
+        //
         if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position) {
             return device
         }
@@ -830,6 +865,7 @@ final class CameraNeo: NSObject, CameraProtocol {
             try device.lockForConfiguration()
             defer { device.unlockForConfiguration() }
             device.activeFormat = format
+            sgConfigureRoundVideoVirtualDevice(device) // MARK: Swiftgram
             if device.isLowLightBoostSupported {
                 device.automaticallyEnablesLowLightBoostWhenAvailable = true
             }
@@ -948,7 +984,14 @@ final class CameraNeo: NSObject, CameraProtocol {
             self.session.removeInput(singleVideoInput)
         }
         self.singleVideoInput = nil
-        let configured = self.configureSingleCameraVideo(position: position, addOutput: false)
+        var configured = self.configureSingleCameraVideo(position: position, addOutput: false) // MARK: Swiftgram
+        // MARK: Swiftgram
+        if !configured && position == .back && self.sgUsesVirtualBackDevice {
+            self.sgAllowsVirtualBackDevice = false
+            self.sgUsesVirtualBackDevice = false
+            configured = self.configureSingleCameraVideo(position: position, addOutput: false)
+        }
+        //
         self.session.commitConfiguration()
         self.configureVideoStabilization()
         self.logCaptureState(reason: "camera switched")
