@@ -5457,12 +5457,16 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                             replyPanel = inputPanelNode.accessoryPanelView
                             
                             usedCorrelationId = correlationId
-                            let source: ChatMessageTransitionNodeImpl.Source = .textInput(textInput: ChatMessageTransitionNodeImpl.Source.TextInput(
+                            // MARK: Swiftgram
+                            let sgTextInput = ChatMessageTransitionNodeImpl.Source.TextInput(
                                 backgroundView: textInput.backgroundView,
                                 contentView: textInput.contentView,
                                 sourceRect: textInput.sourceRect,
                                 scrollOffset: textInput.scrollOffset
-                            ), replyPanel: replyPanel)
+                            )
+                            sgTextInput.sgControlsRowHeight = textInput.sgControlsRowHeight
+                            //
+                            let source: ChatMessageTransitionNodeImpl.Source = .textInput(textInput: sgTextInput, replyPanel: replyPanel) // MARK: Swiftgram
                             self.messageTransitionNode.add(correlationId: correlationId, source: source, initiated: {
                             })
                         }

@@ -6410,7 +6410,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         return nil
     }
 
-    public func makeSnapshotForTransition() -> (backgroundView: UIView, contentView: UIView, sourceRect: CGRect, scrollOffset: CGFloat)? {
+    public func makeSnapshotForTransition() -> (backgroundView: UIView, contentView: UIView, sourceRect: CGRect, scrollOffset: CGFloat, /* MARK: Swiftgram */ sgControlsRowHeight: CGFloat)? {
         guard let richTextInputNode = self.richTextInputNode else {
             return nil
         }
@@ -6424,6 +6424,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         // Expanded multiline text already spans the field from its left edge; only the controls row is cut off.
         let transitionBackgroundLeftOffset = self.currentExpandedInputRowHeight.isZero ? max(0.0, min(self.currentTextInputBackgroundLeftOffset, backgroundFrame.width)) : 0.0
         let transitionBackgroundBottomOffset = max(0.0, min(self.currentExpandedInputRowHeight, backgroundFrame.height))
+        var sgTransitionBackgroundOrigin: CGPoint?
         if !transitionBackgroundLeftOffset.isZero || !transitionBackgroundBottomOffset.isZero {
             let transitionBackgroundFrame = CGRect(
                 x: backgroundFrame.minX + transitionBackgroundLeftOffset,
@@ -6433,6 +6434,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             )
             backgroundView.frame = CGRect(origin: CGPoint(), size: transitionBackgroundFrame.size)
             sourceRect = self.view.convert(transitionBackgroundFrame, to: nil)
+            sgTransitionBackgroundOrigin = transitionBackgroundFrame.origin
         }
 
         let caretColor = richTextInputNode.inputCaretColor
@@ -6448,8 +6450,10 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         if richTextInputNode.inputView.superview != nil {
             var contentFrame = richTextInputNode.textFieldFrame.offsetBy(dx: 0.0, dy: self.textInputNodeClippingContainer.frame.minY)
             // MARK: Swiftgram
-            if !transitionBackgroundLeftOffset.isZero {
-                contentFrame.origin.x -= max(0.0, min(self.currentTextInputViewInternalInsetsOffset.left, contentFrame.minX))
+            // The text is placed against the trimmed background, which no longer starts where the field does: put it
+            // exactly where it is on screen.
+            if let sgTransitionBackgroundOrigin {
+                contentFrame = richTextInputNode.inputView.convert(richTextInputNode.inputView.bounds, to: self.view).offsetBy(dx: -sgTransitionBackgroundOrigin.x, dy: -sgTransitionBackgroundOrigin.y)
             }
             contentView.frame = contentFrame
         }
@@ -6458,7 +6462,8 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             backgroundView: backgroundView,
             contentView: contentView,
             sourceRect: sourceRect,
-            scrollOffset: richTextInputNode.inputContentOffset.y
+            scrollOffset: richTextInputNode.inputContentOffset.y,
+            sgControlsRowHeight: transitionBackgroundBottomOffset // MARK: Swiftgram
         )
     }
     
