@@ -208,6 +208,13 @@ open class TabBarControllerImpl: ViewController, TabBarController {
                         updatedLayout.intrinsicInsets.bottom = tabBarHeight
                     }
                     
+                    // MARK: Swiftgram
+                    // The glass tab bar is taller than the 49pt above. Tapping the open tab keeps the inset containerLayoutUpdated gave it, or the bottom folders drop onto the tab bar.
+                    if strongSelf.controllers[index] === strongSelf.currentController, !strongSelf.tabBarControllerNode.tabBarHidden, let bottomInset = strongSelf.tabBarControllerNode.containerLayoutUpdated(validLayout, toolbar: strongSelf.currentController?.toolbar, transition: .immediate) {
+                        updatedLayout.intrinsicInsets.bottom = bottomInset
+                    }
+                    //
+
                     strongSelf.controllers[index].containerLayoutUpdated(updatedLayout, transition: .immediate)
                 }
                 let startTime = CFAbsoluteTimeGetCurrent()
