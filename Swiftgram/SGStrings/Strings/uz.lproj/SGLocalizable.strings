@@ -151,3 +151,4 @@
 "Settings.swipeForVideoPIP" = "Video PIP bilan Surish";
 "Settings.swipeForVideoPIP.Notice" = "Agar yoqilgan bo'lsa, videoni surish uni Tasvir ichida Tasvir rejimida ochadi.";
 "Settings.videoControlsInFooter" = "Pastda video boshqaruvlari";
+"Settings.classicChatScrollAnimation" = "Klassik chat aylantirish animatsiyasi";

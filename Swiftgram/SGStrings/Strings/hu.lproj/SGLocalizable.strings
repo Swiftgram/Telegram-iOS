@@ -151,3 +151,4 @@
 "Settings.swipeForVideoPIP" = "Videó PIP a húzással";
 "Settings.swipeForVideoPIP.Notice" = "Ha engedélyezve van, a videó húzása képet-képben üzemmódban nyitja meg.";
 "Settings.videoControlsInFooter" = "Videóvezérlők lent";
+"Settings.classicChatScrollAnimation" = "Klasszikus görgetési animáció a csevegésben";

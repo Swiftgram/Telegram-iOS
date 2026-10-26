@@ -151,3 +151,4 @@
 "Settings.swipeForVideoPIP" = "Video PIP s přetahováním";
 "Settings.swipeForVideoPIP.Notice" = "Pokud je povoleno, poslání videa jej otevře v režimu Obraz v obraze.";
 "Settings.videoControlsInFooter" = "Ovládání videa dole";
+"Settings.classicChatScrollAnimation" = "Klasická animace posouvání chatu";
