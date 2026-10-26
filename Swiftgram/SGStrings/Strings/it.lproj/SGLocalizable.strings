@@ -151,3 +151,4 @@
 "Settings.swipeForVideoPIP" = "Video PIP con scorrimento";
 "Settings.swipeForVideoPIP.Notice" = "Se abilitato, scorrendo il video si aprirà in modalità Picture-in-Picture.";
 "Settings.videoControlsInFooter" = "Controlli video in basso";
+"Settings.classicChatScrollAnimation" = "Animazione di scorrimento classica della chat";

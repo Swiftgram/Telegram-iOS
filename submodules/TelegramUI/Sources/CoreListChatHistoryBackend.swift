@@ -1,3 +1,4 @@
+import SGSimpleSettings
 import UIKit
 import AsyncDisplayKit
 import SwiftSignalKit
@@ -1045,6 +1046,13 @@ final class CoreListChatHistoryBackend: ASDisplayNode, ChatHistoryListViewBacken
                 // `coreListSmoothDecelerationDefaultDuration`).
                 transition = duration.map { .uiKitSmoothDeceleration(duration: $0) }
                     ?? .uiKitSmoothDeceleration()
+                // MARK: Swiftgram
+                // Before 13.0 the chat ran on ListViewImpl, whose `.Default` is the 0.3s `.slide` bezier, or ease-in-out for a given duration.
+                if SGSimpleSettings.shared.classicChatScrollAnimation {
+                    transition = duration.map { .easeInOut(duration: $0) }
+                        ?? .init(animation: .curve(duration: 0.3, curve: .custom(0.33, 0.52, 0.25, 0.99)))
+                }
+                //
             case let .Custom(duration, x1, y1, x2, y2):
                 transition = .init(animation: .curve(duration: duration,
                                                      curve: .custom(x1, y1, x2, y2)))

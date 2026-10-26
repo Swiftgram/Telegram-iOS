@@ -95,6 +95,7 @@ private enum SGBoolSetting: String {
     case defaultEmojisFirst
     case messageDoubleTapActionOutgoingEdit
     case wideChannelPosts
+    case classicChatScrollAnimation
     case forceEmojiTab
     case forceBuiltInMic
     case secondsInMessages
@@ -311,6 +312,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.swipeForVideoPIP.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hideChannelBottomButton, value: !SGSimpleSettings.shared.hideChannelBottomButton, text: i18n("Settings.showChannelBottomButton", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .wideChannelPosts, value: SGSimpleSettings.shared.wideChannelPosts, text: i18n("Settings.wideChannelPosts", lang), enabled: true))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .classicChatScrollAnimation, value: SGSimpleSettings.shared.classicChatScrollAnimation, text: i18n("Settings.classicChatScrollAnimation", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .secondsInMessages, value: SGSimpleSettings.shared.secondsInMessages, text: i18n("Settings.secondsInMessages", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .messageDoubleTapActionOutgoingEdit, value: SGSimpleSettings.shared.messageDoubleTapActionOutgoing == SGSimpleSettings.MessageDoubleTapAction.edit.rawValue, text: i18n("Settings.messageDoubleTapActionOutgoingEdit", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hideRecordingButton, value: !SGSimpleSettings.shared.hideRecordingButton, text: i18n("Settings.RecordingButton", lang), enabled: true))
@@ -497,6 +499,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.messageDoubleTapActionOutgoing = value ? SGSimpleSettings.MessageDoubleTapAction.edit.rawValue : SGSimpleSettings.MessageDoubleTapAction.default.rawValue
         case .wideChannelPosts:
             SGSimpleSettings.shared.wideChannelPosts = value
+        case .classicChatScrollAnimation:
+            SGSimpleSettings.shared.classicChatScrollAnimation = value
         case .forceEmojiTab:
             SGSimpleSettings.shared.forceEmojiTab = value
         case .forceBuiltInMic:
