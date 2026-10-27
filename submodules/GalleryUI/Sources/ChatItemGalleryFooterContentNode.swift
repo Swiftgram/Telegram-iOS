@@ -1374,7 +1374,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                     }
                 ))
             }
-            if !sgVideoControlsInFooter, let settingsButtonState = buttonsState.settingsButtonState { // MARK: Swiftgram
+            if !sgVideoControlsInFooter || !buttonsState.displayDeleteButton, let settingsButtonState = buttonsState.settingsButtonState { // MARK: Swiftgram
                 centerControlItems.append(GlassControlGroupComponent.Item(
                     id: AnyHashable("settings"),
                     content: .customIcon(id: AnyHashable("settings"), component: AnyComponent(SettingsNavigationIconComponent(
@@ -2379,6 +2379,11 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
     // MARK: Swiftgram
     var sgDisplayFullscreenButtonInItems: Bool {
         return self.buttonsState?.displayFullscreenButton == true
+    }
+
+    /// With the video controls in the footer, Settings stays in the footer's right slot when there is no Delete there.
+    var sgDisplaySettingsButtonInItems: Bool {
+        return self.buttonsState?.displayDeleteButton != false
     }
     //
 }
