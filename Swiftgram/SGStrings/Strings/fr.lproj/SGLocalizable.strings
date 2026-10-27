@@ -136,3 +136,5 @@
 
 "Settings.hideChannelBottomButton" = "Masquer le panneau inférieur du canal";
 "Settings.videoControlsInFooter" = "Commandes vidéo en bas";
+"Settings.SaveMediaInOrder" = "Enregistrer dans l'ordre du message";
+"Settings.SaveMediaInOrder.Notice" = "Les photos et vidéos enregistrées s'ajoutent à la fin de la pellicule, dans l'ordre du message.";

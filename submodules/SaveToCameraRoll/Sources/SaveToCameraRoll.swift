@@ -165,7 +165,7 @@ public func saveToCameraRoll(context: AccountContext, userLocation: MediaResourc
                             guard success else { return }
 
                             PHPhotoLibrary.shared().performChanges({
-                                let request = PHAssetCreationRequest.forAsset()
+                                let request = PHAssetCreationRequest.forAsset().sgDatedNow() // MARK: Swiftgram
 
                                 request.addResource(with: .photo, data: jpegWithID, options: nil)
                                 request.addResource(with: .pairedVideo, fileURL: outputVideoURL, options: nil)
@@ -179,11 +179,11 @@ public func saveToCameraRoll(context: AccountContext, userLocation: MediaResourc
                         PHPhotoLibrary.shared().performChanges({
                             if isImage {
                                 if let imageData = try? Data(contentsOf: URL(fileURLWithPath: mainData.path)) {
-                                    PHAssetCreationRequest.forAsset().addResource(with: .photo, data: imageData, options: nil)
+                                    PHAssetCreationRequest.forAsset().sgDatedNow().addResource(with: .photo, data: imageData, options: nil) // MARK: Swiftgram
                                 }
                             } else {
                                 if let _ = try? FileManager.default.copyItem(atPath: mainData.path, toPath: tempVideoPath) {
-                                    PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: URL(fileURLWithPath: tempVideoPath))
+                                    PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: URL(fileURLWithPath: tempVideoPath))?.sgDatedNow() // MARK: Swiftgram
                                 }
                             }
                         }, completionHandler: { _, error in

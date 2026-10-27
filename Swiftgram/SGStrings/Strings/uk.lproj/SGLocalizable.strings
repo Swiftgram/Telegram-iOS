@@ -244,3 +244,5 @@
 "PayWall.ValidationError.TryAgain" = "Щось пішло не так під час перевірки покупки. Не хвилюйтеся! Спробуйте відновити покупки трохи пізніше.";
 "PayWall.ValidationError.Expired" = "Ваша підписка застаріла. Підпишіться, щоб відновити доступ до Pro-можливостей.";
 "Settings.videoControlsInFooter" = "Кнопки відео внизу";
+"Settings.SaveMediaInOrder" = "Зберігати медіа за порядком";
+"Settings.SaveMediaInOrder.Notice" = "Збережені фото й відео потрапляють у кінець фотоплівки в тому порядку, в якому вони в повідомленні.";

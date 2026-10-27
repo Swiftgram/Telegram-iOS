@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Video PIP cu gestul de glisare";
 "Settings.swipeForVideoPIP.Notice" = "Dacă este activat, glisarea video va deschide în modul imagine în imagine.";
 "Settings.videoControlsInFooter" = "Controale video jos";
+"Settings.SaveMediaInOrder" = "Salvează media în ordinea mesajului";
+"Settings.SaveMediaInOrder.Notice" = "Fotografiile și videoclipurile salvate ajung la finalul galeriei, în ordinea din mesaj.";

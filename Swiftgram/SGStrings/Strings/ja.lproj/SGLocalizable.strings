@@ -245,3 +245,5 @@
 "PayWall.ValidationError.TryAgain" = "購入の検証中に問題が発生しました。心配しないでください！後で購入を復元してみてください。";
 "PayWall.ValidationError.Expired" = "サブスクリプションの有効期限が切れました。Pro機能へのアクセスを取り戻すには、再度サブスクリプションを登録してください。";
 "Settings.videoControlsInFooter" = "下部の動画コントロール";
+"Settings.SaveMediaInOrder" = "メッセージの順に保存";
+"Settings.SaveMediaInOrder.Notice" = "保存した写真とビデオは、メッセージ内の順番でカメラロールの最後に追加されます。";

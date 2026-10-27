@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Vídeo PIP amb desplaçament";
 "Settings.swipeForVideoPIP.Notice" = "Si està habilitat, desplaçar el vídeo l'obrirà en mode Imatge en Imatge.";
 "Settings.videoControlsInFooter" = "Controls de vídeo a baix";
+"Settings.SaveMediaInOrder" = "Desa el contingut en l'ordre del missatge";
+"Settings.SaveMediaInOrder.Notice" = "Les fotos i els vídeos desats van al final del carret, en l'ordre del missatge.";

@@ -1,3 +1,5 @@
 "Settings.Tabs.Header" = "පටිති";
 "ContextMenu.SaveToCloud" = "මේඝයට සුරකින්න";
 "Settings.videoControlsInFooter" = "පහළ වීඩියෝ පාලක";
+"Settings.SaveMediaInOrder" = "පණිවිඩයේ අනුපිළිවෙලට මාධ්‍ය සුරකින්න";
+"Settings.SaveMediaInOrder.Notice" = "සුරකින ලද ඡායාරූප සහ වීඩියෝ පණිවිඩයේ අනුපිළිවෙලට කැමරා රෝලයේ අවසානයට එක් වේ.";

@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Видео PIP са свлачење";
 "Settings.swipeForVideoPIP.Notice" = "Ако је омогућено, померање видеа ће га отворити у режиму слике у слици.";
 "Settings.videoControlsInFooter" = "Контроле видеа на дну";
+"Settings.SaveMediaInOrder" = "Чувај медије редоследом из поруке";
+"Settings.SaveMediaInOrder.Notice" = "Сачуване фотографије и видео снимци иду на крај галерије, редоследом из поруке.";
