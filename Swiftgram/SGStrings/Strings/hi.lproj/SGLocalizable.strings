@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "वीडियो PIP स्वाइप के साथ";
 "Settings.swipeForVideoPIP.Notice" = "यदि सक्षम है, तो वीडियो को स्वाइप करने से यह चित्र-इन-चित्र मोड में खोला जाएगा।";
 "Settings.videoControlsInFooter" = "नीचे वीडियो नियंत्रण";
+"Settings.SaveMediaInOrder" = "मीडिया संदेश के क्रम में सहेजें";
+"Settings.SaveMediaInOrder.Notice" = "सहेजी गई फ़ोटो और वीडियो संदेश के क्रम में कैमरा रोल के अंत में जुड़ते हैं।";

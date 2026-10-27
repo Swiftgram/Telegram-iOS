@@ -249,3 +249,5 @@
 "PayWall.ValidationError.Expired" = "您的订阅已过期。再次订阅以重新获得专业版功能。";
 "Settings.videoControlsInFooter" = "底部视频控件";
 "Settings.HideAccountInNotifications" = "在通知中隐藏账号";
+"Settings.SaveMediaInOrder" = "按消息顺序保存媒体";
+"Settings.SaveMediaInOrder.Notice" = "保存的照片和视频会按消息中的顺序添加到相机胶卷末尾。";

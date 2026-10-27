@@ -54,6 +54,7 @@ private enum SGBoolSetting: String {
     case startTelescopeWithRearCam
     case hideStories
     case uploadSpeedBoost
+    case saveMediaInOrder
     case showProfileId
     case warnOnStoriesOpen
     case sendWithReturnKey
@@ -321,6 +322,8 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableScrollToNextChannel, value: !SGSimpleSettings.shared.disableScrollToNextChannel, text: i18n("Settings.PullToNextChannel", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableScrollToNextTopic, value: !SGSimpleSettings.shared.disableScrollToNextTopic, text: i18n("Settings.PullToNextTopic", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hideReactions, value: SGSimpleSettings.shared.hideReactions, text: i18n("Settings.HideReactions", lang), enabled: true))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .saveMediaInOrder, value: SGSimpleSettings.shared.saveMediaInOrder, text: i18n("Settings.SaveMediaInOrder", lang), enabled: true))
+    entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.SaveMediaInOrder.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .uploadSpeedBoost, value: SGSimpleSettings.shared.uploadSpeedBoost, text: i18n("Settings.UploadsBoost", lang), enabled: true))
     entries.append(.oneFromManySelector(id: id.count, section: .other, settingName: .downloadSpeedBoost, text: i18n("Settings.DownloadsBoost", lang), value: i18n("Settings.DownloadsBoost.\(SGSimpleSettings.shared.downloadSpeedBoost)", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.DownloadsBoost.Notice", lang)))
@@ -421,6 +424,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.quickTranslateButton = value
         case .uploadSpeedBoost:
             SGSimpleSettings.shared.uploadSpeedBoost = value
+        case .saveMediaInOrder:
+            SGSimpleSettings.shared.saveMediaInOrder = value
         case .hideReactions:
             SGSimpleSettings.shared.hideReactions = value
         case .showRepostToStory:

@@ -9,3 +9,5 @@
 "Settings.Folders.BottomTab" = "بوخچەکان لە خوارەوە";
 "ContextMenu.SaveToCloud" = "هەڵگرتن لە کڵاود";
 "Settings.videoControlsInFooter" = "کۆنترۆڵی ڤیدیۆ لە خوارەوە";
+"Settings.SaveMediaInOrder" = "پاشەکەوتکردنی میدیا بە ڕیزبەندی نامە";
+"Settings.SaveMediaInOrder.Notice" = "وێنە و ڤیدیۆ پاشەکەوتکراوەکان بە ڕیزبەندی ناو نامەکە دەچنە کۆتایی گەلەری کامێرا.";

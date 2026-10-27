@@ -7,3 +7,5 @@
 "Settings.Folders.BottomTab" = "ថតឯបាត";
 "ContextMenu.SaveToCloud" = "រក្សាទុកទៅពពក";
 "Settings.videoControlsInFooter" = "ប៊ូតុងវីដេអូខាងក្រោម";
+"Settings.SaveMediaInOrder" = "រក្សាទុកមេឌៀតាមលំដាប់សារ";
+"Settings.SaveMediaInOrder.Notice" = "រូបថត និងវីដេអូដែលបានរក្សាទុក នឹងទៅនៅចុងអាល់ប៊ុមកាមេរ៉ា តាមលំដាប់ក្នុងសារ។";

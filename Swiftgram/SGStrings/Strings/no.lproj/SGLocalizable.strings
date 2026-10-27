@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Video PIP med sveip";
 "Settings.swipeForVideoPIP.Notice" = "Hvis aktivert, vil sveipingen av video åpne den i bilde-i-bilde-modus.";
 "Settings.videoControlsInFooter" = "Videokontroller nederst";
+"Settings.SaveMediaInOrder" = "Lagre medier i meldingens rekkefølge";
+"Settings.SaveMediaInOrder.Notice" = "Lagrede bilder og videoer havner sist i kamerarullen, i rekkefølgen fra meldingen.";

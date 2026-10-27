@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Video PIP dengan Geser";
 "Settings.swipeForVideoPIP.Notice" = "Jika diaktifkan, menggeser video akan membukanya dalam mode Gambar-dalam-Gambar.";
 "Settings.videoControlsInFooter" = "Kontrol video di bawah";
+"Settings.SaveMediaInOrder" = "Simpan Media Sesuai Urutan Pesan";
+"Settings.SaveMediaInOrder.Notice" = "Foto dan video yang disimpan masuk ke akhir rol kamera, sesuai urutan di pesan.";

@@ -229,3 +229,5 @@
 "PayWall.ValidationError" = "Vahvistusvirhe";
 "PayWall.ValidationError.TryAgain" = "Ostovahvistuksessa tapahtui jokin virhe. Ei hätää! Yritä palauttaa ostot hieman myöhemmin.";
 "Settings.videoControlsInFooter" = "Videon säätimet alhaalla";
+"Settings.SaveMediaInOrder" = "Tallenna media viestin järjestyksessä";
+"Settings.SaveMediaInOrder.Notice" = "Tallennetut kuvat ja videot menevät kamerarullan loppuun viestin järjestyksessä.";

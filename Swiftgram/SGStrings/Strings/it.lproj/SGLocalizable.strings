@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Video PIP con scorrimento";
 "Settings.swipeForVideoPIP.Notice" = "Se abilitato, scorrendo il video si aprirà in modalità Picture-in-Picture.";
 "Settings.videoControlsInFooter" = "Controlli video in basso";
+"Settings.SaveMediaInOrder" = "Salva i media nell'ordine del messaggio";
+"Settings.SaveMediaInOrder.Notice" = "Foto e video salvati finiscono in fondo al rullino, nell'ordine del messaggio.";

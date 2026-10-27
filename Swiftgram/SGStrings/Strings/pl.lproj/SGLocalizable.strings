@@ -244,3 +244,5 @@
 "PayWall.ValidationError.TryAgain" = "Coś poszło nie tak podczas weryfikacji zakupu. Nie martw się! Spróbuj przywrócić zakupy trochę później.";
 "PayWall.ValidationError.Expired" = "Twoja subskrypcja wygasła. Subskrybuj ponownie, aby odzyskać dostęp do funkcji Pro.";
 "Settings.videoControlsInFooter" = "Sterowanie wideo na dole";
+"Settings.SaveMediaInOrder" = "Zapisuj multimedia w kolejności wiadomości";
+"Settings.SaveMediaInOrder.Notice" = "Zapisane zdjęcia i filmy trafiają na koniec rolki aparatu w kolejności z wiadomości.";
