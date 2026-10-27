@@ -3698,7 +3698,7 @@ final class UniversalVideoGalleryItemNode: ZoomableContentGalleryItemNode {
                 // MARK: Swiftgram
                 let sgVideoControlItems = sgVideoControlsInFooterMenuItems(
                     displayPictureInPicture: strongSelf.hasPictureInPicture,
-                    displaySettings: strongSelf.settingsButtonState != nil,
+                    displaySettings: strongSelf.settingsButtonState != nil && strongSelf.footerContentNode.sgDisplaySettingsButtonInItems,
                     displayFullscreen: strongSelf.footerContentNode.sgDisplayFullscreenButtonInItems,
                     isLandscape: strongSelf.bounds.width > strongSelf.bounds.height,
                     pictureInPicture: { [weak self] in self?.pictureInPictureButtonPressed() },
