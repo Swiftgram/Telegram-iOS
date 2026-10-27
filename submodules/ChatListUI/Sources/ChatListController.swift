@@ -370,7 +370,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                     
                     self.primaryContext?.rightButton = NavigationBarComponent.Button(id: "compose",
                         content: .icon(imageName: "Chat List/ComposeIcon"),
-                        tint: .accent,
+                        tint: SGSimpleSettings.shared.hideTabBar ? .generic : .accent, // MARK: Swiftgram
                         action: { [weak self] _ in
                             self?.composePressed()
                         }
@@ -7413,7 +7413,7 @@ private final class ChatListLocationContext {
                 } else {
                     self.rightButton = NavigationBarComponent.Button(id: "compose",
                         content: .icon(imageName: "Chat List/ComposeIcon"),
-                        tint: .accent,
+                        tint: SGSimpleSettings.shared.hideTabBar ? .generic : .accent, // MARK: Swiftgram
                         action: { [weak self] _ in
                             self?.parentController?.composePressed()
                         }
