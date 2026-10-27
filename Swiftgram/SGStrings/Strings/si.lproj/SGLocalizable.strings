@@ -10,3 +10,5 @@
 "Chat.ID" = "id";
 "Chat.ID.Copy" = "ID පිටපත් කරන්න";
 "Chat.ID.Copied" = "ID පිටපත් කරන ලදී";
+"Settings.SaveMediaInOrder" = "පණිවිඩයේ අනුපිළිවෙලට මාධ්‍ය සුරකින්න";
+"Settings.SaveMediaInOrder.Notice" = "සුරකින ලද ඡායාරූප සහ වීඩියෝ පණිවිඩයේ අනුපිළිවෙලට කැමරා රෝලයේ අවසානයට එක් වේ.";

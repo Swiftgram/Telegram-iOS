@@ -18,3 +18,5 @@
 "Chat.ID" = "id";
 "Chat.ID.Copy" = "کۆپی کردنی ID";
 "Chat.ID.Copied" = "ID کۆپی کرا";
+"Settings.SaveMediaInOrder" = "پاشەکەوتکردنی میدیا بە ڕیزبەندی نامە";
+"Settings.SaveMediaInOrder.Notice" = "وێنە و ڤیدیۆ پاشەکەوتکراوەکان بە ڕیزبەندی ناو نامەکە دەچنە کۆتایی گەلەری کامێرا.";

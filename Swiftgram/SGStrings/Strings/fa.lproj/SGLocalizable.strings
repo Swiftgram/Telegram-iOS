@@ -17,3 +17,5 @@
 "Chat.ID" = "شناسه";
 "Chat.ID.Copy" = "کپی شناسه";
 "Chat.ID.Copied" = "شناسه کپی شد";
+"Settings.SaveMediaInOrder" = "ذخیره رسانه به ترتیب پیام";
+"Settings.SaveMediaInOrder.Notice" = "عکس‌ها و ویدیوهای ذخیره‌شده به ترتیب پیام به انتهای گالری اضافه می‌شوند.";

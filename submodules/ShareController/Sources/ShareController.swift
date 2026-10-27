@@ -2407,7 +2407,16 @@ public final class ShareController: ViewController {
         }
         let context = accountContext.context
         
-        let signals: [Signal<Float, NoError>] = messages.compactMap { message -> Signal<Float, NoError>? in
+        // MARK: Swiftgram
+        let sgOrderedSignals = sgOrderedCameraRollSaves(context: context, items: messages.compactMap { message -> (MediaResourceUserLocation, AnyMediaReference)? in
+            if let media = message.effectiveMedia.first {
+                return (.peer(message.id.peerId), .message(message: MessageReference(message), media: media))
+            } else {
+                return nil
+            }
+        })
+        //
+        let signals: [Signal<Float, NoError>] = sgOrderedSignals ?? messages.compactMap { message -> Signal<Float, NoError>? in // MARK: Swiftgram
             if let media = message.effectiveMedia.first {
                 return SaveToCameraRoll.saveToCameraRoll(context: context, userLocation: .peer(message.id.peerId), mediaReference: .message(message: MessageReference(message), media: media))
             } else {
