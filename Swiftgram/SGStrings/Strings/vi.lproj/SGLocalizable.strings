@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Video PIP với Vuốt";
 "Settings.swipeForVideoPIP.Notice" = "Nếu được kích hoạt, việc vuốt video sẽ mở nó ở chế độ Hình trong hình.";
 "Settings.videoControlsInFooter" = "Điều khiển video ở dưới";
+"Settings.SaveMediaInOrder" = "Lưu phương tiện theo thứ tự tin nhắn";
+"Settings.SaveMediaInOrder.Notice" = "Ảnh và video đã lưu được thêm vào cuối thư viện ảnh, theo thứ tự trong tin nhắn.";

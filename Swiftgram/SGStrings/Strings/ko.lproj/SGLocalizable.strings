@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "비디오 PIP 스와이프";
 "Settings.swipeForVideoPIP.Notice" = "설정이 활성화되면 비디오를 스와이프하면 화면 속 화면 모드로 열립니다.";
 "Settings.videoControlsInFooter" = "하단 동영상 컨트롤";
+"Settings.SaveMediaInOrder" = "메시지 순서대로 저장";
+"Settings.SaveMediaInOrder.Notice" = "저장한 사진과 동영상이 메시지 순서대로 카메라 롤 끝에 추가됩니다.";
