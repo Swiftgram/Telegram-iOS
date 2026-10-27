@@ -7468,6 +7468,7 @@ private final class ChatListLocationContext {
                 if SGSimpleSettings.shared.hideTabBar {
                     self.settingsButton = NavigationBarComponent.Button(id: "settings",
                         content: .more,
+                        requiresOwnSection: true, // Its own capsule; New Message and Stories share the next one.
                         action: { [weak self] _ in
                             self?.parentController?.settingsPressed()
                         },
