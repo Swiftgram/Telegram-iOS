@@ -7483,7 +7483,8 @@ private final class ChatListLocationContext {
                             }
                             if let rootController = self.context.sharedContext.mainWindow?.viewController as? TelegramRootControllerInterface {
                                 if let accountSettingsController = rootController.accountSettingsController {
-                                    accountSettingsController.tabBarItemContextActionRawUIView(sourceView: sourceView, gesture: gesture)
+                                    // The menu morphs out of the button's capsule, as a navigation bar menu does.
+                                    accountSettingsController.tabBarItemContextActionRawUIView(sourceView: self.parentController?.chatListHeaderView()?.navigationButtonContextContainer(sourceView: sourceView) ?? sourceView, gesture: gesture)
                                 }
                             }
                         }
