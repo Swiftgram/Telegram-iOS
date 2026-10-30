@@ -22,6 +22,10 @@ public protocol TabBarController: ViewController {
     /// The vertical tab bar's frame in a side strip (iPhone Duo) for `layout`, whether or not the bar
     /// is hidden; nil for the horizontal bar.
     func verticalTabBarFrame(for layout: ContainerViewLayout) -> CGRect?
+    // MARK: Swiftgram
+    /// Whether the bar is hidden, by a screen (`updateIsTabBarHidden`) or by the setting.
+    var isTabBarHidden: Bool { get }
+    //
     
     func updateIsTabBarEnabled(_ value: Bool, transition: ContainedViewLayoutTransition)
     func updateIsTabBarHidden(_ value: Bool, transition: ContainedViewLayoutTransition)

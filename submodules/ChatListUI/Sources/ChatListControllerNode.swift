@@ -1914,6 +1914,16 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         let sgComponentTransition = ComponentTransition(transition)
         let sgDisplayTabsAtBottom = self.controller?.tabContainerData?.1 ?? false
         let sgShouldDisplayBottomFolders = sgDisplayTabsAtBottom && self.isSearchDisplayControllerActive == nil
+        // iPhone Duo: beside a shown vertical tab bar the folders keep to the band; without it they span the strip and
+        // keep clear only of a corner block at the bottom.
+        var sgFoldersSideInsets: (left: CGFloat, right: CGFloat) = (0.0, 0.0)
+        if layout.statusBarIsInCorner {
+            if let tabBarController = self.controller?.parent as? TabBarController, !tabBarController.isTabBarHidden, tabBarController.verticalTabBarFrame(for: layout) != nil {
+                sgFoldersSideInsets = (layout.safeInsets.left, layout.safeInsets.right)
+            } else {
+                sgFoldersSideInsets = layout.bottomEdgeSideInsets()
+            }
+        }
         let sgFoldersSize = self.sgFoldersView.update(
             transition: sgComponentTransition,
             component: AnyComponent(HeaderPanelContainerComponent(
@@ -1922,7 +1932,7 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
                 panels: []
             )),
             environment: {},
-            containerSize: layout.size
+            containerSize: CGSize(width: layout.size.width - sgFoldersSideInsets.left - sgFoldersSideInsets.right, height: layout.size.height)
         )
         //
         
@@ -2130,7 +2140,7 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
 //                }
                 //
                 // TODO(swiftgram):
-                sgComponentTransition.setFrame(view: sgFoldersView, frame: CGRect(origin: CGPoint(x: 0.0, y: layout.size.height - bottomInset - sgFoldersSize.height - 16.0), size: sgFoldersSize))
+                sgComponentTransition.setFrame(view: sgFoldersView, frame: CGRect(origin: CGPoint(x: sgFoldersSideInsets.left, y: layout.size.height - bottomInset - sgFoldersSize.height - 16.0), size: sgFoldersSize))
             } else {
                 sgFoldersView.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false, completion: { [weak sgFoldersView] completed in
                     if completed {
