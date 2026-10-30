@@ -154,6 +154,12 @@ open class TabBarControllerImpl: ViewController, TabBarController {
         return self.tabBarControllerNode.sidePlacement(for: layout)?.frame
     }
     
+    // MARK: Swiftgram
+    public var isTabBarHidden: Bool {
+        return self.tabBarControllerNode.tabBarHidden
+    }
+    //
+    
     public func updateIsTabBarEnabled(_ value: Bool, transition: ContainedViewLayoutTransition) {
         self.tabBarControllerNode.updateIsTabBarEnabled(value, transition: transition)
     }
