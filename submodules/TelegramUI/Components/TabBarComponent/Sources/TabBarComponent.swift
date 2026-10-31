@@ -489,6 +489,12 @@ public final class TabBarComponent: Component {
     /// items share the available width (`tabBarItemsLayout`), as where iOS would switch to its wide bar.
     public let usesSystemLayout: Bool
 
+    // MARK: Swiftgram
+    // Taken when the component is built, so a change of either setting makes it differ from the previous one.
+    fileprivate let sgShowTabNames = SGSimpleSettings.shared.showTabNames
+    fileprivate let sgWideTabBar = SGSimpleSettings.shared.wideTabBar
+    //
+    
     public init(
         theme: PresentationTheme,
         tintSelectedItem: Bool = true,
@@ -519,6 +525,11 @@ public final class TabBarComponent: Component {
         if lhs.theme !== rhs.theme {
             return false
         }
+        // MARK: Swiftgram
+        if lhs.sgShowTabNames != rhs.sgShowTabNames || lhs.sgWideTabBar != rhs.sgWideTabBar {
+            return false
+        }
+        //
         if lhs.tintSelectedItem != rhs.tintSelectedItem {
             return false
         }
@@ -898,6 +909,13 @@ public final class TabBarComponent: Component {
             //
 
             let previousComponent = self.component
+            // MARK: Swiftgram
+            // The tapped tab has landed, so a further change comes from outside the bar (Settings' back button
+            // while the bar is hidden) and has to show.
+            if let previousComponent, previousComponent.selectedId != component.selectedId, self.overrideSelectedItemId == previousComponent.selectedId {
+                self.overrideSelectedItemId = nil
+            }
+            //
             // A new axis or mode is applied without animation, so the capsule does not morph through
             // intermediate shapes.
             var transition = transition

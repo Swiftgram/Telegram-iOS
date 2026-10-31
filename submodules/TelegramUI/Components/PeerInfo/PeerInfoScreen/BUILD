@@ -14,6 +14,7 @@ sgdeps = [
 # MARK: Swiftgram
 sgsrcs = [
     "//Swiftgram/SGPeerInfoRows:SGPeerInfoRows",
+    "//Swiftgram/SGChatListSimpleSettingsSignal:SGSimpleSettingsBoolSignal",
 ]
 #
 
