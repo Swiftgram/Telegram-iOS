@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
 import Display
@@ -215,8 +216,13 @@ public enum MediaQualityPreset: Int32 {
         switch self {
         case .compressedVeryLow, .compressedLow:
             return 32 * 2
-        case .compressedMedium, .compressedHigh, .compressedVeryHigh, .videoMessage:
+        case .compressedMedium, .compressedHigh, .compressedVeryHigh: // MARK: Swiftgram
             return 64 * 5
+        // MARK: Swiftgram
+        // Telegram's 320 kbps gave a trimmed round video five times the audio bitrate of an untrimmed one.
+        case .videoMessage:
+            return SGSimpleSettings.shared.roundVideoProfile.audioBitrate / 1000
+        //
         default:
             return 0
         }
@@ -224,7 +230,7 @@ public enum MediaQualityPreset: Int32 {
     
     var audioChannelsCount: Int {
         switch self {
-        case .compressedVeryLow, .compressedLow:
+        case .compressedVeryLow, .compressedLow, .videoMessage: // MARK: Swiftgram
             return 1
         default:
             return 2
@@ -1922,12 +1928,16 @@ func targetSize(cropSize: CGSize, rotateSideward: Bool = false) -> CGSize {
 }
 
 private struct VideoMessageExportSettings {
-    static let maximumDimension: CGFloat = 480.0
+    // MARK: Swiftgram
+    static var maximumDimension: CGFloat {
+        return CGFloat(SGSimpleSettings.shared.roundVideoProfile.outputSide)
+    }
+    //
 
     let dimensions: CGSize
     let bitrateKbps: Int
 
-    init(sourceSize: CGSize, cropSize: CGSize, rotateSideward: Bool) {
+    init(sourceSize: CGSize, cropSize: CGSize, rotateSideward: Bool, /* MARK: Swiftgram */ duration: Double) {
         // A quality ceiling must never enlarge a legacy recording or a smaller crop.
         let scale = min(
             1.0,
@@ -1939,7 +1949,7 @@ private struct VideoMessageExportSettings {
             cropSize: CGSize(width: cropSize.width * scale, height: cropSize.height * scale),
             rotateSideward: rotateSideward
         )
-        self.bitrateKbps = max(self.dimensions.width, self.dimensions.height) <= 400.0 ? 1000 : 1200
+        self.bitrateKbps = max(self.dimensions.width, self.dimensions.height) <= 400.0 ? 1000 : SGSimpleSettings.shared.roundVideoProfile.videoBitrate(fittingDuration: duration) / 1000 // MARK: Swiftgram
     }
 }
 
@@ -1994,7 +2004,7 @@ public func recommendedVideoExportConfiguration(values: MediaEditorValues, durat
         let rotateSideward = values.cropOrientation?.isSideward ?? false
         let resultSize: CGSize
         if qualityPreset == .videoMessage {
-            let settings = VideoMessageExportSettings(sourceSize: sourceSize, cropSize: cropSize, rotateSideward: rotateSideward)
+            let settings = VideoMessageExportSettings(sourceSize: sourceSize, cropSize: cropSize, rotateSideward: rotateSideward, /* MARK: Swiftgram */ duration: values.videoTrimRange.flatMap { $0.upperBound - $0.lowerBound } ?? duration)
             resultSize = settings.dimensions
             videoBitrate = settings.bitrateKbps
         } else {

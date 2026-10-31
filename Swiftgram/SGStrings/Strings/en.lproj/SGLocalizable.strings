@@ -72,6 +72,10 @@
 "Settings.VideoNotes.Header" = "ROUND VIDEOS";
 "Settings.VideoNotes.StartWithRearCam" = "Start with Rear Camera";
 "Settings.VideoNotes.ResetZoom" = "Always Reset Zoom";
+"Settings.VideoNotes.60FPS" = "Record at 60 FPS";
+"Settings.VideoNotes.MaximumQuality" = "Maximum Quality (640p)";
+"Settings.VideoNotes.Quality.Notice" = "Higher quality makes files larger: they take longer to send and may not download automatically for recipients. Telegram keeps a round video round up to 12 MB, so a longer recording is compressed to fit before sending, and quality drops with length. At 60 FPS the front camera has a narrower view, and switching cameras while recording leaves a short gap.";
+"Settings.VideoNotes.TapToFocus" = "Focus on Tap";
 
 "Settings.CustomColors.Header" = "ACCOUNT COLORS";
 "Settings.CustomColors.Saturation" = "SATURATION";
