@@ -105,6 +105,7 @@ private enum SGBoolSetting: String {
     case nyStyleSnow
     case nyStyleLightning
     case tabBarSearchEnabled
+    case parallelDownloads
     case videoControlsInFooter
     case hideAccountInNotifications
 }
@@ -324,6 +325,8 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .other, settingName: .uploadSpeedBoost, value: SGSimpleSettings.shared.uploadSpeedBoost, text: i18n("Settings.UploadsBoost", lang), enabled: true))
     entries.append(.oneFromManySelector(id: id.count, section: .other, settingName: .downloadSpeedBoost, text: i18n("Settings.DownloadsBoost", lang), value: i18n("Settings.DownloadsBoost.\(SGSimpleSettings.shared.downloadSpeedBoost)", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.DownloadsBoost.Notice", lang)))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .parallelDownloads, value: SGSimpleSettings.shared.parallelDownloads, text: i18n("Settings.ParallelDownloads", lang), enabled: true))
+    entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.ParallelDownloads.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .sendWithReturnKey, value: SGSimpleSettings.shared.sendWithReturnKey, text: i18n("Settings.SendWithReturnKey", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .forceEmojiTab, value: SGSimpleSettings.shared.forceEmojiTab, text: i18n("Settings.ForceEmojiTab", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .defaultEmojisFirst, value: SGSimpleSettings.shared.defaultEmojisFirst, text: i18n("Settings.DefaultEmojisFirst", lang), enabled: true))
@@ -387,6 +390,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             ).start()
         case .tabBarSearchEnabled:
             SGSimpleSettings.shared.tabBarSearchEnabled = value
+        case .parallelDownloads:
+            SGSimpleSettings.shared.parallelDownloads = value
         case .wideTabBar:
             SGSimpleSettings.shared.wideTabBar = value
             askForRestart?()

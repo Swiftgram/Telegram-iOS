@@ -277,3 +277,5 @@
 "Settings.NY.Notice" = "Доступны только на ограниченное время!";
 "Settings.videoControlsInFooter" = "Кнопки видео снизу";
 "Settings.HideAccountInNotifications" = "Скрыть аккаунт в уведомлениях";
+"Settings.ParallelDownloads" = "Параллельные загрузки";
+"Settings.ParallelDownloads.Notice" = "Скачивает несколько файлов одновременно, как Telegram для Android: до 5 файлов до 20 МБ и 2 больших на дата-центр. Скорость делится между ними, поэтому один большой файл скачается дольше.";
