@@ -61,7 +61,7 @@ public enum InteractiveTransitionGestureRecognizerEdgeWidth {
 }
 
 public class InteractiveTransitionGestureRecognizer: UIPanGestureRecognizer {
-    private let edgeWidth: InteractiveTransitionGestureRecognizerEdgeWidth
+    public var edgeWidth: InteractiveTransitionGestureRecognizerEdgeWidth // MARK: Swiftgram
     private let allowedDirections: (CGPoint) -> InteractiveTransitionGestureRecognizerDirections
     
     private var validatedGesture = false

@@ -32,6 +32,12 @@ import ChatListFilterTabContainerNode
 import GlassControls
 import SideColumnLayout
 
+// MARK: Swiftgram
+private func sgChatListPanEdgeWidth() -> InteractiveTransitionGestureRecognizerEdgeWidth {
+    return SGSimpleSettings.shared.disableChatSwipeOptions ? .widthMultiplier(factor: 1.0 / 6.0, min: 0.0, max: 0.0) : .widthMultiplier(factor: 1.0 / 6.0, min: 22.0, max: 80.0)
+}
+//
+
 public enum ChatListContainerNodeFilter: Equatable {
     case all
     case filter(ChatListFilter)
@@ -575,7 +581,7 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
             } else {
                 return [.rightEdge]
             }
-        }, edgeWidth: SGSimpleSettings.shared.disableChatSwipeOptions ? .widthMultiplier(factor: 1.0 / 6.0, min: 0.0, max: 0.0) : .widthMultiplier(factor: 1.0 / 6.0, min: 22.0, max: 80.0)) // MARK: Swiftgram
+        }, edgeWidth: sgChatListPanEdgeWidth()) // MARK: Swiftgram
         panRecognizer.delegate = self.wrappedGestureRecognizerDelegate
         panRecognizer.delaysTouchesBegan = false
         panRecognizer.cancelsTouchesInView = true
@@ -837,6 +843,15 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
         }
     }
     
+    // MARK: Swiftgram
+    func sgApplySettings() {
+        self.panRecognizer?.edgeWidth = sgChatListPanEdgeWidth()
+        for (_, itemNode) in self.itemNodes {
+            itemNode.sgApplySettings()
+        }
+    }
+    //
+
     func playArchiveAnimation() {
         if let itemNode = self.itemNodes[self.selectedId] {
             itemNode.listNode.forEachVisibleItemNode { node in
@@ -1451,6 +1466,13 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         self.searchDisplayController?.updatePresentationData(presentationData)
     }
     
+    // MARK: Swiftgram
+    func sgApplySettings() {
+        self.mainContainerNode.sgApplySettings()
+        self.inlineStackContainerNode?.sgApplySettings()
+    }
+    //
+
     private func updateNavigationBar(layout: ContainerViewLayout, deferScrollApplication: Bool, transition: ComponentTransition) -> (tabs: AnyComponent<Empty>?, navigationHeight: CGFloat, storiesInset: CGFloat) { // MARK: Swiftgram
         let headerContent = self.controller?.updateHeaderContent()
         
