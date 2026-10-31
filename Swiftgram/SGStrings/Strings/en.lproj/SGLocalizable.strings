@@ -282,3 +282,6 @@
 "Settings.NY.Style.lightning" = "Lightning";
 "Settings.NY.Notice" = "Available for a limited time only!";
 "Settings.HideAccountInNotifications" = "Hide Account in Notifications";
+"Settings.AIButton" = "AI Button";
+"Settings.RichTextEditor" = "Rich Text Editor";
+"Settings.AIButton.Notice" = "AI Button: the AI editor button in the message field, captions and the rich text editor. Rich Text Editor: the expand button in the message field and the attachment menu item.";

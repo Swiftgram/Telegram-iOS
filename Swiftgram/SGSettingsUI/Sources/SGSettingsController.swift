@@ -105,6 +105,8 @@ private enum SGBoolSetting: String {
     case nyStyleSnow
     case nyStyleLightning
     case tabBarSearchEnabled
+    case hideAIButton
+    case hideRichTextEditor
     case videoControlsInFooter
     case hideAccountInNotifications
 }
@@ -314,6 +316,9 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .other, settingName: .secondsInMessages, value: SGSimpleSettings.shared.secondsInMessages, text: i18n("Settings.secondsInMessages", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .messageDoubleTapActionOutgoingEdit, value: SGSimpleSettings.shared.messageDoubleTapActionOutgoing == SGSimpleSettings.MessageDoubleTapAction.edit.rawValue, text: i18n("Settings.messageDoubleTapActionOutgoingEdit", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .hideRecordingButton, value: !SGSimpleSettings.shared.hideRecordingButton, text: i18n("Settings.RecordingButton", lang), enabled: true))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .hideAIButton, value: !SGSimpleSettings.shared.hideAIButton, text: i18n("Settings.AIButton", lang), enabled: true))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .hideRichTextEditor, value: !SGSimpleSettings.shared.hideRichTextEditor, text: i18n("Settings.RichTextEditor", lang), enabled: true))
+    entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.AIButton.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableSnapDeletionEffect, value: !SGSimpleSettings.shared.disableSnapDeletionEffect, text: i18n("Settings.SnapDeletionEffect", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableSendAsButton, value: !SGSimpleSettings.shared.disableSendAsButton, text: i18n("Settings.SendAsButton", lang, strings.Conversation_SendMesageAs), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .disableGalleryCamera, value: !SGSimpleSettings.shared.disableGalleryCamera, text: i18n("Settings.GalleryCamera", lang), enabled: true))
@@ -387,6 +392,10 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             ).start()
         case .tabBarSearchEnabled:
             SGSimpleSettings.shared.tabBarSearchEnabled = value
+        case .hideAIButton:
+            SGSimpleSettings.shared.hideAIButton = !value
+        case .hideRichTextEditor:
+            SGSimpleSettings.shared.hideRichTextEditor = !value
         case .wideTabBar:
             SGSimpleSettings.shared.wideTabBar = value
             askForRestart?()
