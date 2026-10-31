@@ -44,6 +44,10 @@ apple_resource_bundle(
 sgsrcs = [
     "//Swiftgram/SGCameraNeoExtensions:SGCameraNeoExtensions",
 ]
+
+sgdeps = [
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+]
 #
 
 swift_library(
@@ -58,7 +62,7 @@ swift_library(
     data = [
         ":CameraNeoBundle",
     ],
-    deps = [
+    deps = sgdeps + [ # MARK: Swiftgram
         "//submodules/AppBundle",
         "//submodules/Camera",
         "//submodules/GZip",

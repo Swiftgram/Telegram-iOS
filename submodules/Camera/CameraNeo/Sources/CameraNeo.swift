@@ -867,7 +867,7 @@ final class CameraNeo: NSObject, CameraProtocol {
             device.activeFormat = format
             sgConfigureRoundVideoVirtualDevice(device) // MARK: Swiftgram
             if device.isLowLightBoostSupported {
-                device.automaticallyEnablesLowLightBoostWhenAvailable = true
+                device.automaticallyEnablesLowLightBoostWhenAvailable = roundVideoCaptureFrameRate <= 30.0 // MARK: Swiftgram
             }
             if device.isExposureModeSupported(.continuousAutoExposure) {
                 device.exposureMode = .continuousAutoExposure
