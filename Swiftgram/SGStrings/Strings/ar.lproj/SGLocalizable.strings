@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "فيديوهات مستديرة";
 "Settings.VideoNotes.StartWithRearCam" = "البدء بالكاميرا الخلفية";
+"Settings.VideoNotes.ResetZoom" = "إعادة ضبط التكبير دائمًا";
 
 "Settings.CustomColors.Header" = "ألوان الحساب";
 "Settings.CustomColors.Saturation" = "مستوى التشبع";

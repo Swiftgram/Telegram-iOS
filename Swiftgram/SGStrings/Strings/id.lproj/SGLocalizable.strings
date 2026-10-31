@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "VIDEO BULAT";
 "Settings.VideoNotes.StartWithRearCam" = "Mulai dengan kamera belakang";
+"Settings.VideoNotes.ResetZoom" = "Selalu atur ulang zoom";
 
 "Settings.CustomColors.Header" = "WARNA AKUN";
 "Settings.CustomColors.Saturation" = "SATURASI";

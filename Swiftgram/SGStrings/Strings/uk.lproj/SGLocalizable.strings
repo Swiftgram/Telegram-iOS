@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "КРУГЛІ ВІДЕО";
 "Settings.VideoNotes.StartWithRearCam" = "Починати запис з задньої камери";
+"Settings.VideoNotes.ResetZoom" = "Завжди скидати масштаб";
 
 "Settings.CustomColors.Header" = "КОЛЬОРИ АККАУНТУ";
 "Settings.CustomColors.Saturation" = "НАСИЧЕНІСТЬ";

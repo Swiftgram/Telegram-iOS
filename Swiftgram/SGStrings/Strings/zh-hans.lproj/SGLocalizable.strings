@@ -52,6 +52,7 @@
 
 "Settings.VideoNotes.Header" = "圆形视频";
 "Settings.VideoNotes.StartWithRearCam" = "默认使用后置相机";
+"Settings.VideoNotes.ResetZoom" = "始终重置缩放";
 
 "Settings.CustomColors.Header" = "账户颜色";
 "Settings.CustomColors.Saturation" = "饱和度";

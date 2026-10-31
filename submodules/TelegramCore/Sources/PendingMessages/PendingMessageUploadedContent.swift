@@ -1328,7 +1328,19 @@ private func uploadedMediaFileContent(network: Network, postbox: Postbox, auxili
                     break
             }
         }
-        
+
+        // MARK: Swiftgram
+        // The server keeps a round video round only in small parts: through messages.uploadMedia, 11 MB in big parts
+        // came back as a plain video and 12.5 MB in small parts stayed round. A finished file above 10 MB would pick
+        // big parts by itself, and 16 KB parts would make it slow.
+        var sgIsRoundVideo = false
+        for attribute in file.attributes {
+            if case let .Video(_, _, flags, _, _, _) = attribute, flags.contains(.instantRoundVideo) {
+                sgIsRoundVideo = true
+            }
+        }
+        //
+
         let fileReference: AnyMediaReference
         if let partialReference = file.partialReference {
             fileReference = partialReference.mediaReference(file)
@@ -1337,7 +1349,7 @@ private func uploadedMediaFileContent(network: Network, postbox: Postbox, auxili
         }
         let upload: Signal<MultipartUploadResult?, PendingMessageUploadError> = .single(nil)
         |> then(
-            messageMediaPreuploadManager.upload(network: network, postbox: postbox, source: .resource(fileReference.resourceReference(file.resource)), encrypt: peerId.namespace == Namespaces.Peer.SecretChat, tag: TelegramMediaResourceFetchTag(statsCategory: statsCategoryForFileWithAttributes(file.attributes), userContentType: nil), hintFileSize: hintSize, hintFileIsLarge: hintFileIsLarge, forceNoBigParts: forceNoBigParts)
+            messageMediaPreuploadManager.upload(network: network, postbox: postbox, source: .resource(fileReference.resourceReference(file.resource)), encrypt: peerId.namespace == Namespaces.Peer.SecretChat, tag: TelegramMediaResourceFetchTag(statsCategory: statsCategoryForFileWithAttributes(file.attributes), userContentType: nil), hintFileSize: hintSize, hintFileIsLarge: hintFileIsLarge, forceNoBigParts: forceNoBigParts || sgIsRoundVideo, useLargerParts: sgIsRoundVideo && peerId.namespace != Namespaces.Peer.SecretChat) // MARK: Swiftgram
             |> mapError { _ -> PendingMessageUploadError in return .generic }
             |> map(Optional.init)
         )

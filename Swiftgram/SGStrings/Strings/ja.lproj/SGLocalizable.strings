@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "丸いビデオ";
 "Settings.VideoNotes.StartWithRearCam" = "リアカメラで開始";
+"Settings.VideoNotes.ResetZoom" = "常にズームをリセット";
 
 "Settings.CustomColors.Header" = "アカウントの色";
 "Settings.CustomColors.Saturation" = "彩度";

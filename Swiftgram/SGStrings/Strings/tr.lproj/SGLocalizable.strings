@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "YUVARLAK VİDEOLAR";
 "Settings.VideoNotes.StartWithRearCam" = "Arka kamerayla başlat";
+"Settings.VideoNotes.ResetZoom" = "Yakınlaştırmayı her zaman sıfırla";
 
 "Settings.CustomColors.Header" = "HESAP RENKLERİ";
 "Settings.CustomColors.Saturation" = "DOYUM";

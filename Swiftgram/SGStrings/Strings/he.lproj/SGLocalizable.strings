@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "וידאו מעוגלים";
 "Settings.VideoNotes.StartWithRearCam" = "התחל עם מצלמה אחורית";
+"Settings.VideoNotes.ResetZoom" = "תמיד לאפס את הזום";
 
 "Settings.CustomColors.Header" = "צבעי חשבון";
 "Settings.CustomColors.Saturation" = "רווי";

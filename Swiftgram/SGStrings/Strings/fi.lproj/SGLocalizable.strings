@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "PYÖREÄT VIDEOT";
 "Settings.VideoNotes.StartWithRearCam" = "Aloita takakameralla";
+"Settings.VideoNotes.ResetZoom" = "Palauta zoomaus aina";
 
 "Settings.CustomColors.Header" = "TILIN VÄRIT";
 "Settings.CustomColors.Saturation" = "KYLLÄISYYS";

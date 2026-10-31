@@ -71,6 +71,7 @@ public class SGSimpleSettings {
             { let _ = self.disableSendAsButton },
             { let _ = self.disableSnapDeletionEffect },
             { let _ = self.startTelescopeWithRearCam },
+            { let _ = self.videoNotesResetZoom },
             { let _ = self.hideRecordingButton },
             { let _ = self.inputToolbar },
             { let _ = self.dismissedSGSuggestions },
@@ -96,6 +97,10 @@ public class SGSimpleSettings {
         case hidePhoneInSettings
         case showTabNames
         case startTelescopeWithRearCam
+        case videoNotesResetZoom
+        case videoNotes60Fps
+        case videoNotesMaximumQuality
+        case videoNotesTapToFocus
         case accountColorsSaturation
         case uploadSpeedBoost
         case downloadSpeedBoost
@@ -248,6 +253,27 @@ public class SGSimpleSettings {
         case disabled
     }
 
+    public struct RoundVideoProfile: Equatable {
+        /// `round_video_encoding.max_size` in the app config, and the server enforces it: through `messages.uploadMedia`
+        /// 12 500 000 bytes stayed a round video and 12 700 000 came back as a plain one.
+        public static let maximumFileSize = 12_582_912
+
+        public var frameRate: Double
+        public var outputSide: Int
+        public var videoBitrate: Int
+        public var audioBitrate: Int
+
+        /// The video bitrate that keeps a file of this duration under the limit, leaving 5% for the container
+        /// and the encoder's overshoot.
+        public func videoBitrate(fittingDuration duration: Double) -> Int {
+            guard duration > 0.0 else {
+                return self.videoBitrate
+            }
+            let fittedTotalBitrate = Double(RoundVideoProfile.maximumFileSize) * 0.95 * 8.0 / duration
+            return min(self.videoBitrate, max(100_000, Int(fittedTotalBitrate) - self.audioBitrate))
+        }
+    }
+
     public enum NYStyle: String, CaseIterable {
         case `default`
         case snow
@@ -258,6 +284,10 @@ public class SGSimpleSettings {
         Keys.hidePhoneInSettings.rawValue: true,
         Keys.showTabNames.rawValue: true,
         Keys.startTelescopeWithRearCam.rawValue: false,
+        Keys.videoNotesResetZoom.rawValue: false,
+        Keys.videoNotes60Fps.rawValue: false,
+        Keys.videoNotesMaximumQuality.rawValue: false,
+        Keys.videoNotesTapToFocus.rawValue: false,
         Keys.accountColorsSaturation.rawValue: 100,
         Keys.uploadSpeedBoost.rawValue: false,
         Keys.downloadSpeedBoost.rawValue: DownloadSpeedBoostValues.none.rawValue,
@@ -353,7 +383,19 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.startTelescopeWithRearCam.rawValue)
     public var startTelescopeWithRearCam: Bool
+
+    @UserDefault(key: Keys.videoNotesResetZoom.rawValue)
+    public var videoNotesResetZoom: Bool
     
+    @UserDefault(key: Keys.videoNotes60Fps.rawValue)
+    public var videoNotes60Fps: Bool
+
+    @UserDefault(key: Keys.videoNotesMaximumQuality.rawValue)
+    public var videoNotesMaximumQuality: Bool
+
+    @UserDefault(key: Keys.videoNotesTapToFocus.rawValue)
+    public var videoNotesTapToFocus: Bool
+
     @UserDefault(key: Keys.accountColorsSaturation.rawValue)
     public var accountColorsSaturation: Int32
     
@@ -644,6 +686,18 @@ extension SGSimpleSettings {
 }
 
 extension SGSimpleSettings {
+    public var roundVideoProfile: RoundVideoProfile {
+        let frameRate: Double = videoNotes60Fps ? 60.0 : 30.0
+        // Twice the frames need less than twice the bits: neighbouring frames differ less at 60 FPS.
+        if videoNotesMaximumQuality {
+            // A recording that outgrows the server's limit at this rate is compressed to fit it when sent.
+            return RoundVideoProfile(frameRate: frameRate, outputSide: 640, videoBitrate: videoNotes60Fps ? 7_500_000 : 5_000_000, audioBitrate: 128_000)
+        } else {
+            // A full minute at these rates fits the server's limit, so the file can upload while it records.
+            return RoundVideoProfile(frameRate: frameRate, outputSide: 480, videoBitrate: videoNotes60Fps ? 1_500_000 : 1_200_000, audioBitrate: 64_000)
+        }
+    }
+
     public var isNYEnabled: Bool {
         return canUseNY && NYStyle(rawValue: nyStyle) != .default
     }
