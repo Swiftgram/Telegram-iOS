@@ -3241,7 +3241,11 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         }
         
         if let _ = interfaceState.interfaceState.mediaDraftState {
-            let mediaPreviewPanelFrame = CGRect(origin: CGPoint(x: 0.0, y: contentHeight), size: CGSize(width: textInputWidth - effectiveActionButtonsSize.width - 8.0, height: 40.0))
+            // MARK: Swiftgram
+            // A merged left slot puts the delete button inside the field, where the preview must not cover it.
+            let sgMediaPreviewPanelLeftOffset: CGFloat = mergeLeftSlot ? 40.0 : 0.0
+            //
+            let mediaPreviewPanelFrame = CGRect(origin: CGPoint(x: sgMediaPreviewPanelLeftOffset, y: contentHeight), size: CGSize(width: textInputWidth - effectiveActionButtonsSize.width - 8.0 - sgMediaPreviewPanelLeftOffset, height: 40.0)) // MARK: Swiftgram
             var mediaPreviewPanelTransition = transition
             
             let mediaPreviewPanelNode: ChatRecordingPreviewInputPanelNodeImpl
