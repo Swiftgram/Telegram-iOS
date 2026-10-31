@@ -432,9 +432,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                     //
                     let isFirstFilter = strongSelf.chatListDisplayNode.effectiveContainerNode.currentItemNode.chatListFilter == mainContainerNode_availableFilters.first?.filter // MARK: Swiftgram
                     
-                    if offset <= ChatListNavigationBar.searchScrollHeight + 1.0 && strongSelf.chatListDisplayNode.inlineStackContainerNode != nil {
+                    if offset <= sgChatListSearchScrollHeight(location: strongSelf.location) + 1.0 && strongSelf.chatListDisplayNode.inlineStackContainerNode != nil { // MARK: Swiftgram
                         strongSelf.setInlineChatList(location: nil)
-                    } else if offset <= ChatListNavigationBar.searchScrollHeight + 1.0 && !isFirstFilter {
+                    } else if offset <= sgChatListSearchScrollHeight(location: strongSelf.location) + 1.0 && !isFirstFilter { // MARK: Swiftgram
                         // MARK: Swiftgram
                         var effectiveContainerNode_availableFilters = strongSelf.chatListDisplayNode.mainContainerNode.availableFilters
                         if SGSimpleSettings.shared.allChatsHidden {
@@ -4837,6 +4837,10 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                     self.setDisplayNavigationBar(false, transition: transition)
                     // MARK: Swiftgram
                     if searchContentNode == nil {
+                        // With both search bars hidden a link can still open search, and its field lives in the tab bar.
+                        if SGSimpleSettings.shared.hideTabBar, let tabBarController = self.parent as? TabBarController, let layout = self.validLayout, tabBarController.verticalTabBarFrame(for: layout) == nil {
+                            tabBarController.updateIsTabBarHidden(false, transition: .immediate)
+                        }
                         self.updateTabBarSearchState(ViewController.TabBarSearchState(isActive: true), transition: transition)
                         
                         if let searchBarNode = self.currentTabBarSearchNode?() as? SearchBarNode {

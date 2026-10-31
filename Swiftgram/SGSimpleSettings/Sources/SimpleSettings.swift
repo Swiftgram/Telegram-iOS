@@ -173,6 +173,7 @@ public class SGSimpleSettings {
         case nyStyle
         case wideTabBar
         case tabBarSearchEnabled
+        case hideChatListSearchBar
         case hideStories
         case warnOnStoriesOpen
         case showProfileId
@@ -329,6 +330,7 @@ public class SGSimpleSettings {
         Keys.nyStyle.rawValue: NYStyle.default.rawValue,
         Keys.wideTabBar.rawValue: false,
         Keys.tabBarSearchEnabled.rawValue: true,
+        Keys.hideChatListSearchBar.rawValue: false,
         Keys.hideStories.rawValue: false,
         Keys.warnOnStoriesOpen.rawValue: false,
         Keys.showProfileId.rawValue: true,
@@ -615,6 +617,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.tabBarSearchEnabled.rawValue)
     public var tabBarSearchEnabled: Bool
+
+    @UserDefault(key: Keys.hideChatListSearchBar.rawValue)
+    public var hideChatListSearchBar: Bool
 
     @UserDefault(key: Keys.videoControlsInFooter.rawValue)
     public var videoControlsInFooter: Bool
