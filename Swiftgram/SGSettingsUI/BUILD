@@ -35,6 +35,8 @@ swift_library(
         "//submodules/AppBundle:AppBundle",
         "//submodules/TelegramUI/Components/Settings/PeerNameColorScreen",
         "//submodules/UndoUI:UndoUI",
+        "//submodules/ItemListPeerItem:ItemListPeerItem",
+        "//submodules/AccountUtils:AccountUtils",
     ],
     visibility = [
         "//visibility:public",
