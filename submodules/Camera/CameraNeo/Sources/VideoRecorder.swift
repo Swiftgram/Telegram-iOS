@@ -621,11 +621,16 @@ final class VideoRecorder {
         }
         assetWriter.shouldOptimizeForNetworkUse = false
 
-        let compressionProperties: [String: Any] = [
-            AVVideoAverageBitRateKey: 1_200_000,
+        var compressionProperties: [String: Any] = [ // MARK: Swiftgram
+            AVVideoAverageBitRateKey: sgRoundVideoProfile.videoBitrate, // MARK: Swiftgram
             AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
             AVVideoH264EntropyModeKey: AVVideoH264EntropyModeCABAC
         ]
+        // MARK: Swiftgram
+        if sgRoundVideoProfile.frameRate > 30.0 {
+            compressionProperties[AVVideoExpectedSourceFrameRateKey] = Int(sgRoundVideoProfile.frameRate)
+        }
+        //
         let videoSettings: [String: Any] = [
             AVVideoCodecKey: AVVideoCodecType.h264,
             AVVideoWidthKey: RoundVideoFrameProcessor.outputWidth,
@@ -673,7 +678,7 @@ final class VideoRecorder {
 
         var audioSettings: [String: Any] = [
             AVFormatIDKey: kAudioFormatMPEG4AAC,
-            AVEncoderBitRateKey: 64_000
+            AVEncoderBitRateKey: sgRoundVideoProfile.audioBitrate // MARK: Swiftgram
         ]
         if let streamDescription = CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription) {
             audioSettings[AVSampleRateKey] = streamDescription.pointee.mSampleRate
@@ -685,6 +690,12 @@ final class VideoRecorder {
             audioSettings[AVChannelLayoutKey] = Data(bytes: channelLayout, count: channelLayoutSize)
         }
 
+        // MARK: Swiftgram
+        // The allowed AAC bitrates depend on the microphone's format.
+        if !assetWriter.canApply(outputSettings: audioSettings, forMediaType: .audio) {
+            audioSettings[AVEncoderBitRateKey] = 64_000
+        }
+        //
         guard assetWriter.canApply(outputSettings: audioSettings, forMediaType: .audio) else {
             self.fail(.audioInitializationError)
             return

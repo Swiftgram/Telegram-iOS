@@ -222,8 +222,14 @@ private final class RoundVideoLanczosScaler {
 }
 
 final class RoundVideoFrameProcessor {
-    static let outputWidth = 480
-    static let outputHeight = 480
+    // MARK: Swiftgram
+    static var outputWidth: Int {
+        return sgRoundVideoProfile.outputSide
+    }
+    static var outputHeight: Int {
+        return sgRoundVideoProfile.outputSide
+    }
+    //
 
     private let device: MTLDevice
     private let mediaQueue: DispatchQueue
@@ -300,7 +306,7 @@ final class RoundVideoFrameProcessor {
         self.textureCache = textureCache
         self.outputPool = outputPool
         self.outputPoolAuxiliaryAttributes = [
-            kCVPixelBufferPoolAllocationThresholdKey as String: 6
+            kCVPixelBufferPoolAllocationThresholdKey as String: sgRoundVideoProfile.frameRate > 30.0 ? 12 : 6 // MARK: Swiftgram
         ] as CFDictionary
 
         var preallocatedBuffers: [CVPixelBuffer] = []
