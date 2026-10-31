@@ -814,6 +814,14 @@ public final class SharedAccountContextImpl: SharedAccountContext {
                         self.managedAccountDisposables.set(nil, forKey: id)
                     }
                 }
+                // MARK: Swiftgram
+                for index in 0 ..< self.activeAccountsValue!.accounts.count {
+                    if let sortIndex = records[self.activeAccountsValue!.accounts[index].0]?.sortIndex, self.activeAccountsValue!.accounts[index].2 != sortIndex {
+                        self.activeAccountsValue!.accounts[index].2 = sortIndex
+                        hadUpdates = true
+                    }
+                }
+                //
                 var primary: AccountContext?
                 if let primaryId = primaryId {
                     if let index = self.activeAccountsValue?.accounts.firstIndex(where: { $0.0 == primaryId }) {
@@ -1710,7 +1718,13 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         self.registeredNotificationTokensDisposable.set((combineLatest(
             queue: .mainQueue(),
             settings,
-            self.activeAccountContexts,
+            // MARK: Swiftgram
+            // A new account order changes nothing here, and each pass sends two registerDevice requests per account.
+            self.activeAccountContexts
+            |> distinctUntilChanged(isEqual: { lhs, rhs in
+                return lhs.primary === rhs.primary && lhs.currentAuth === rhs.currentAuth && Set(lhs.accounts.map({ $0.0 })) == Set(rhs.accounts.map({ $0.0 }))
+            }),
+            //
             updatedApsToken
         )
         |> mapToSignal { settings, activeAccountsAndInfo, apsNotificationToken -> Signal<(Bool, Data?), NoError> in
