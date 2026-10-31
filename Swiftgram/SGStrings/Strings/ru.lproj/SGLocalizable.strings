@@ -277,3 +277,5 @@
 "Settings.NY.Notice" = "Доступны только на ограниченное время!";
 "Settings.videoControlsInFooter" = "Кнопки видео снизу";
 "Settings.HideAccountInNotifications" = "Скрыть аккаунт в уведомлениях";
+"Settings.AccountOrder" = "Порядок аккаунтов";
+"Settings.AccountOrder.Notice" = "Перетащите аккаунты, чтобы изменить порядок. Он применяется в Настройках и в меню аккаунтов, где текущий аккаунт остаётся первым.";
