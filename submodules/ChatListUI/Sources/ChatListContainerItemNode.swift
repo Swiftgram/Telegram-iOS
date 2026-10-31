@@ -78,7 +78,7 @@ final class ChatListContainerItemNode: ASDisplayNode {
         self.listNode = ChatListNode(context: context, location: location, chatListFilter: filter, previewing: previewing, fillPreloadItems: controlsHistoryPreload, mode: chatListMode, theme: presentationData.theme, fontSize: presentationData.listsFontSize, strings: presentationData.strings, dateTimeFormat: presentationData.dateTimeFormat, nameSortOrder: presentationData.nameSortOrder, nameDisplayOrder: presentationData.nameDisplayOrder, animationCache: animationCache, animationRenderer: animationRenderer, /* MARK: Swiftgram */ getNavigationController: { [weak controller] in return controller?.navigationController as? NavigationController }, /* MARK: Swiftgram */ disableAnimations: true, isInlineMode: isInlineMode, isSideList: isInlineMode && (controller?.isSideList ?? false), autoSetReady: autoSetReady, isMainTab: isMainTab)
         
         if let controller, case .chatList(groupId: .root) = controller.location {
-            self.listNode.scrollHeightTopInset = ChatListNavigationBar.searchScrollHeight + ChatListNavigationBar.storiesScrollHeight
+            self.listNode.scrollHeightTopInset = sgChatListSearchScrollHeight(location: controller.location) + ChatListNavigationBar.storiesScrollHeight // MARK: Swiftgram
         }
         if isInlineMode && (controller?.isSideList ?? false) {
             // The chat side list scrolls only as far as its rows reach: a short list does not pad itself out so its
