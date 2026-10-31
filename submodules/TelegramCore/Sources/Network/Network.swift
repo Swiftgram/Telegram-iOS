@@ -752,6 +752,7 @@ func initializedNetwork(accountId: AccountRecordId, arguments: NetworkInitializa
             }
             
             let network = Network(queue: queue, datacenterId: datacenterId, context: context, engine: engine, switchingEngine: switchingEngine, engineFactory: arguments.networkEngineFactory, rustEngineDisabled: rustEngineDisabled, rustEngineWaitsForWebProxy: rustEngineWaitsForWebProxy, mainSession: mainSession, mainSessionDelegate: mainSessionDelegate, telemetry: telemetry, _connectionStatus: connectionStatus, basePath: basePath, appDataDisposable: appDataDisposable, encryptionProvider: arguments.encryptionProvider, useRequestTimeoutTimers: useRequestTimeoutTimers, useBetaFeatures: arguments.useBetaFeatures, useExperimentalFeatures: useExperimentalFeatures, baseTcpConnectionInterfaceFactory: baseTcpConnectionInterfaceFactory, isAppExtension: isAppExtension, initialWebProxyActive: initialActiveServer?.isWebProxy == true)
+            network.sgServerDisabledExperimentalDownload = appConfiguration.data?["ios_killswitch_disable_downloadv2"] != nil // MARK: Swiftgram
             
             if let data = appConfiguration.data, let notifyInterval = data["upload_premium_speedup_notify_period"] as? Double {
                 network.updateNetworkSpeedLimitedEventNotifyInterval(value: notifyInterval)
@@ -933,8 +934,16 @@ public final class Network: NSObject {
     /// macOS, Rust with live switching: the local health check (`NetworkLivenessMonitor`).
     private var livenessMonitor: NetworkLivenessMonitor?
     public let useBetaFeatures: Bool
-    public let useExperimentalFeatures: Bool
-    
+    public private(set) var useExperimentalFeatures: Bool // MARK: Swiftgram
+    // MARK: Swiftgram
+    fileprivate var sgServerDisabledExperimentalDownload = false
+
+    /// Read for every new fetch, so a change of the setting reaches the next download without a restart.
+    func sgUpdateExperimentalDownload(_ value: Bool) {
+        self.useExperimentalFeatures = value && !self.sgServerDisabledExperimentalDownload
+    }
+    //
+
     private let appDataDisposable: Disposable
     
     private var _multiplexedRequestManager: MultiplexedRequestManager?

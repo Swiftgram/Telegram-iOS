@@ -288,6 +288,8 @@ public final class HorizontalTabsComponent: Component {
     public let isEditing: Bool
     public let layout: Layout
     public let liftWhileSwitching: Bool
+    // Taken when the component is built, so a change of the setting makes it differ from the previous one.
+    fileprivate let sgCompactFolderNames = SGSimpleSettings.shared.compactFolderNames // MARK: Swiftgram
     
     public init(
         context: AccountContext?,
@@ -326,6 +328,11 @@ public final class HorizontalTabsComponent: Component {
         if lhs.liftWhileSwitching != rhs.liftWhileSwitching {
             return false
         }
+        // MARK: Swiftgram
+        if lhs.sgCompactFolderNames != rhs.sgCompactFolderNames {
+            return false
+        }
+        //
         return true
     }
     
@@ -1033,6 +1040,7 @@ private final class ItemComponent: Component {
     let tab: HorizontalTabsComponent.Tab
     let isSelected: Bool
     let editing: Editing?
+    let sgCompactFolderNames = SGSimpleSettings.shared.compactFolderNames // MARK: Swiftgram
     
     init(context: AccountContext?, theme: PresentationTheme, tab: HorizontalTabsComponent.Tab, isSelected: Bool, editing: Editing?) {
         self.context = context
@@ -1055,6 +1063,11 @@ private final class ItemComponent: Component {
         if lhs.editing != rhs.editing {
             return false
         }
+        // MARK: Swiftgram
+        if lhs.sgCompactFolderNames != rhs.sgCompactFolderNames {
+            return false
+        }
+        //
         return true
     }
     

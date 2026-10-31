@@ -169,6 +169,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
     
     private let stateDisposable = MetaDisposable()
     private let filterDisposable = MetaDisposable()
+    private let sgSettingsDisposable = MetaDisposable() // MARK: Swiftgram
     private let featuredFiltersDisposable = MetaDisposable()
     private var processedFeaturedFilters = false
     
@@ -806,6 +807,13 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             self.reloadFilters()
         }
         
+        // MARK: Swiftgram
+        self.sgSettingsDisposable.set((sgSimpleSettingsChangesSignal([.allChatsHidden, .chatListLines, .compactChatList, .compactFolderNames, .disableChatSwipeOptions, .disableDeleteChatSwipeOption])
+        |> deliverOnMainQueue).startStrict(next: { [weak self] in
+            self?.sgApplySettings()
+        }))
+        //
+
         self.storiesPostingAvailabilityDisposable = (self.context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: PreferencesKeys.appConfiguration))
         |> map { view -> AppConfiguration in
             let appConfiguration: AppConfiguration = view?.get(AppConfiguration.self) ?? AppConfiguration.defaultValue
@@ -851,6 +859,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         self.presentationDataDisposable?.dispose()
         self.stateDisposable.dispose()
         self.filterDisposable.dispose()
+        self.sgSettingsDisposable.dispose() // MARK: Swiftgram
         self.featuredFiltersDisposable.dispose()
         self.activeDownloadsDisposable?.dispose()
         self.selectAddMemberDisposable.dispose()
@@ -4087,6 +4096,22 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
     }
     
     private var initializedFilters = false
+    // MARK: Swiftgram
+    private func sgApplySettings() {
+        guard self.isNodeLoaded else {
+            return
+        }
+        self.chatListDisplayNode.sgApplySettings()
+        if case .chatList(.root) = self.location {
+            // The folder list reads allChatsHidden when its signal delivers, so it has to be subscribed again.
+            self.reloadFilters()
+        }
+        if let layout = self.validLayout {
+            self.containerLayoutUpdated(layout, transition: .immediate)
+        }
+    }
+    //
+
     private func reloadFilters(firstUpdate: (() -> Void)? = nil) {
         let filterItems = chatListFilterItems(context: self.context)
         var notifiedFirstUpdate = false
@@ -4159,7 +4184,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                 resetCurrentEntry = true
                 if let tabContainerData = strongSelf.tabContainerData {
                     var found = false
-                    if let index = tabContainerData.0.firstIndex(where: { $0.id == selectedEntryId }) {
+                    if let index = tabContainerData.0.firstIndex(where: { $0.id == selectedEntryId }), index > 0 /* MARK: Swiftgram */ {
                         for i in (0 ..< index - 1).reversed() {
                             if resolvedItems.contains(where: { $0.id == tabContainerData.0[i].id }) {
                                 selectedEntryId = tabContainerData.0[i].id
@@ -4169,7 +4194,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                         }
                     }
                     if !found {
-                        selectedEntryId = .all
+                        selectedEntryId = SGSimpleSettings.shared.allChatsHidden ? firstItemEntryId : .all // MARK: Swiftgram
                     }
                 } else {
                     selectedEntryId = .all
@@ -7009,7 +7034,11 @@ private final class ChatListLocationContext {
         })
         
         // MARK: Swiftgram
-        let hideStoriesSignal = sgSimpleSettingsBoolSignal(.hideStories, defaultValue: false)
+        // A hidden Tab bar moves Settings into this header, so that setting rebuilds the header too.
+        let hideStoriesSignal = combineLatest(sgSimpleSettingsBoolSignal(.hideStories, defaultValue: false), sgSimpleSettingsBoolSignal(.hideTabBar, defaultValue: false))
+        |> map { hideStories, _ -> Bool in
+            return hideStories
+        }
         //
         
         let passcode = context.sharedContext.accountManager.accessChallengeData()
