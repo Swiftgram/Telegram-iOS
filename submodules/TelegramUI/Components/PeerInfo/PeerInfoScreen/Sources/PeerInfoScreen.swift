@@ -282,6 +282,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
     }
     var hiddenMediaDisposable: Disposable?
     let hiddenAvatarRepresentationDisposable = MetaDisposable()
+    let sgSettingsDisposable = MetaDisposable() // MARK: Swiftgram
     
     var autoTranslateDisposable: Disposable?
     
@@ -520,6 +521,18 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         
         super.init()
         
+        // MARK: Swiftgram
+        if isSettings || isMyProfile {
+            self.sgSettingsDisposable.set((sgSimpleSettingsChangesSignal([.hidePhoneInSettings, .hideTabBar])
+            |> deliverOnMainQueue).startStrict(next: { [weak self] in
+                guard let self, let (layout, navigationHeight) = self.validLayout else {
+                    return
+                }
+                self.containerLayoutUpdated(layout: layout, navigationHeight: navigationHeight, transition: .immediate, additive: false)
+            }))
+        }
+        //
+
         self.paneContainerNode.parentController = controller
         
         self._interaction = PeerInfoInteraction(
@@ -1702,6 +1715,13 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             }
             switch key {
             case .back:
+                // MARK: Swiftgram
+                // Settings stays the current tab when the Tab bar is hidden from inside it, so there is nothing to pop.
+                if strongSelf.isSettings, let tabBarController = strongSelf.controller?.parent as? TabBarController, let chatsIndex = tabBarController.controllers.firstIndex(where: { $0 is ChatListController }) {
+                    tabBarController.selectedIndex = chatsIndex
+                    break
+                }
+                //
                 strongSelf.controller?.dismiss()
             case .edit:
                 if case let .replyThread(message) = strongSelf.chatLocation {
@@ -2724,6 +2744,7 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
     
     deinit {
         self.dataDisposable?.dispose()
+        self.sgSettingsDisposable.dispose() // MARK: Swiftgram
         self.walletStickersPreloadDisposable.dispose()
         self.hiddenMediaDisposable?.dispose()
         self.activeActionDisposable.dispose()
@@ -6164,7 +6185,9 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
             navigationFlags.isOwnStories = self.data?.peer?.id == self.context.account.peerId
             // MARK: Swiftgram
             var navigationSets = peerInfoNavigationButtonSets(navigationFlags)
-            if self.isSettings && !self.state.isEditing && SGSimpleSettings.shared.hideTabBar {
+            // Pushed over the chat list while the Tab bar was hidden, Settings still has to go back after the bar returns.
+            let sgIsPushed = (self.controller?.navigationController as? NavigationController)?.viewControllers.contains(where: { $0 === self.controller }) ?? false
+            if self.isSettings && !self.state.isEditing && (SGSimpleSettings.shared.hideTabBar || sgIsPushed) {
                 // The bar has one leading item. Keep QR accessible beside the trailing items.
                 navigationSets.normal.left = [.back]
                 navigationSets.normal.right.insert(.qrCode, at: 0)

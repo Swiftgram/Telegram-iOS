@@ -340,8 +340,7 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
     var pushControllerImpl: ((ViewController) -> Void)?
 //    var getRootControllerImpl: (() -> UIViewController?)?
 //    var getNavigationControllerImpl: (() -> NavigationController?)?
-    var askForRestart: (() -> Void)?
-    
+
     let initialState = SGSettingsControllerState()
     let statePromise = ValuePromise(initialState, ignoreRepeated: true)
     let stateValue = Atomic(value: initialState)
@@ -369,10 +368,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
         switch setting {
         case .hidePhoneInSettings:
             SGSimpleSettings.shared.hidePhoneInSettings = value
-            askForRestart?()
         case .showTabNames:
             SGSimpleSettings.shared.showTabNames = value
-            askForRestart?()
         case .showContactsTab:
             let _ = (
                 updateCallListSettingsInteractively(
@@ -389,7 +386,6 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.tabBarSearchEnabled = value
         case .wideTabBar:
             SGSimpleSettings.shared.wideTabBar = value
-            askForRestart?()
         case .foldersAtBottom:
             let _ = (
                 updateExperimentalUISettingsInteractively(accountManager: context.sharedContext.accountManager, { settings in
@@ -440,10 +436,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
         case .disableChatSwipeOptions:
             SGSimpleSettings.shared.disableChatSwipeOptions = !value
             simplePromise.set(true) // Trigger update for 'enabled' field of other toggles
-            askForRestart?()
         case .disableDeleteChatSwipeOption:
             SGSimpleSettings.shared.disableDeleteChatSwipeOption = !value
-            askForRestart?()
         case .disableGalleryCamera:
             SGSimpleSettings.shared.disableGalleryCamera = !value
             simplePromise.set(true)
@@ -472,7 +466,6 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
         case .hideTabBar:
             SGSimpleSettings.shared.hideTabBar = value
             simplePromise.set(true) // Trigger update for 'enabled' field of other toggles
-            askForRestart?()
         case .showDC:
             SGSimpleSettings.shared.showDC = value
         case .showCreationDate:
@@ -481,16 +474,12 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.showRegDate = value
         case .compactChatList:
             SGSimpleSettings.shared.compactChatList = value
-            askForRestart?()
         case .compactMessagePreview:
             SGSimpleSettings.shared.chatListLines = value ? SGSimpleSettings.ChatListLines.one.rawValue : SGSimpleSettings.ChatListLines.three.rawValue
-            askForRestart?()
         case .compactFolderNames:
             SGSimpleSettings.shared.compactFolderNames = value
-            askForRestart?()
         case .allChatsHidden:
             SGSimpleSettings.shared.allChatsHidden = value
-            askForRestart?()
         case .defaultEmojisFirst:
             SGSimpleSettings.shared.defaultEmojisFirst = value
         case .messageDoubleTapActionOutgoingEdit:
@@ -574,11 +563,7 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
                         var settings = settings
                         settings.useExperimentalDownload = enableDownloadX
                         return settings
-                    }).start(completed: {
-                        Queue.mainQueue().async {
-                            askForRestart?()
-                        }
-                    })
+                    }).start()
                 }
 
                 for value in SGSimpleSettings.DownloadSpeedBoostValues.allCases {
@@ -762,25 +747,6 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
 //    getNavigationControllerImpl = { [weak controller] in
 //        return controller?.navigationController as? NavigationController
 //    }
-    askForRestart = { [weak context] in
-        guard let context = context else {
-            return
-        }
-        let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-        presentControllerImpl?(
-            UndoOverlayController(
-                presentationData: presentationData, 
-                content: .info(title: nil, // i18n("Common.RestartRequired", presentationData.strings.baseLanguageCode),
-                    text: i18n("Common.RestartRequired", presentationData.strings.baseLanguageCode),
-                    timeout: nil,
-                    customUndoText: i18n("Common.RestartNow", presentationData.strings.baseLanguageCode) //presentationData.strings.Common_Yes
-                ),
-                elevatedLayout: false,
-                action: { action in if action == .undo { exit(0) }; return true }
-            ),
-            nil
-        )
-    }
     return controller
 
 }

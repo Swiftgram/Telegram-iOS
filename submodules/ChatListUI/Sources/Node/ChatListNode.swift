@@ -3363,6 +3363,18 @@ public final class ChatListNode: ListViewImpl {
         }
     }
     
+    // MARK: Swiftgram
+    /// Lays the rows out again after a setting they read changed: entries compare presentation data by identity.
+    public func sgReloadItems() {
+        self.updateState { state in
+            var state = state
+            let data = state.presentationData
+            state.presentationData = ChatListPresentationData(theme: data.theme, fontSize: data.fontSize, strings: data.strings, dateTimeFormat: data.dateTimeFormat, nameSortOrder: data.nameSortOrder, nameDisplayOrder: data.nameDisplayOrder, disableAnimations: data.disableAnimations)
+            return state
+        }
+    }
+    //
+
     public func updateState(_ f: (ChatListNodeState) -> ChatListNodeState) {
         let state = f(self.currentState)
         if state != self.currentState {
