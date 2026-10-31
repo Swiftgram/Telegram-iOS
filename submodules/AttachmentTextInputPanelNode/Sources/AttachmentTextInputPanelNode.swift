@@ -1368,7 +1368,7 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
         transition.updateFrame(layer: self.textInputBackgroundNode.layer, frame: CGRect(x: leftInset + textFieldInsets.left, y: panelOriginY + textFieldInsets.top, width: baseWidth - textFieldInsets.left - textFieldInsets.right + composeButtonsOffset - textBackgroundInset, height: panelHeight - textFieldInsets.top - textFieldInsets.bottom))
         transition.updateFrame(layer: self.textInputBackgroundImageNode.layer, frame: CGRect(x: 0.0, y: 0.0, width: baseWidth - textFieldInsets.left - textFieldInsets.right + composeButtonsOffset - textBackgroundInset, height: panelHeight - textFieldInsets.top - textFieldInsets.bottom))
 
-        if self.isAIEnabled {
+        if self.isAIEnabled, !SGSimpleSettings.shared.hideAIButton { // MARK: Swiftgram
             let aiButton: (button: HighlightTrackingButton, icon: UIImageView)
             if let current = self.aiButton {
                 aiButton = current

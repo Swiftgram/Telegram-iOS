@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
 import Display
@@ -2297,6 +2298,11 @@ final class RichTextAttachmentScreenComponent: Component {
                 containerSize: CGSize(width: 44.0, height: 44.0)
             )
             
+            // MARK: Swiftgram
+            // The action bar takes the AI button's place.
+            let sgActionBarLeadingOffset: CGFloat = SGSimpleSettings.shared.hideAIButton ? -(aiButtonSize.width + actionBarSpacing) : 0.0
+            //
+            
             var isSendEnabled = true
             let content = chatInputContent(fromDocument: self.currentDocument, media: self.currentMedia, emojiFiles: self.currentEmojiFiles)
             if content.isEmptyWhitespaceTrimmed {
@@ -2337,7 +2343,7 @@ final class RichTextAttachmentScreenComponent: Component {
                     actions: barActions
                 )),
                 environment: {},
-                containerSize: CGSize(width: availableSize.width - sideInset * 2.0 - bottomRowInsets.left - bottomRowInsets.right - actionBarSpacing * 2.0 - aiButtonSize.width - sendButtonSize.width, height: 44.0)
+                containerSize: CGSize(width: availableSize.width - sideInset * 2.0 - bottomRowInsets.left - bottomRowInsets.right - actionBarSpacing * 2.0 - aiButtonSize.width - sendButtonSize.width - sgActionBarLeadingOffset /* MARK: Swiftgram */, height: 44.0)
             )
             
             var bottomInset = max(environment.inputHeight, emojiPanelHeight, environment.safeInsets.bottom)
@@ -2347,6 +2353,7 @@ final class RichTextAttachmentScreenComponent: Component {
                 if aiButtonView.superview == nil {
                     self.addSubview(aiButtonView)
                 }
+                aiButtonView.isHidden = SGSimpleSettings.shared.hideAIButton // MARK: Swiftgram
                 transition.setFrame(view: aiButtonView, frame: aiButtonFrame)
             }
             
@@ -2365,7 +2372,7 @@ final class RichTextAttachmentScreenComponent: Component {
             transition.setPosition(view: self.sendButtonExtractedContainer.contentView, position: CGPoint(x: sendButtonFrame.width * 0.5, y: sendButtonFrame.height * 0.5))
             transition.setBounds(view: self.sendButtonExtractedContainer.contentView, bounds: CGRect(origin: CGPoint(), size: sendButtonFrame.size))
             
-            let actionBarFrame = CGRect(origin: CGPoint(x: sideInset + bottomRowInsets.left + aiButtonSize.width + actionBarSpacing, y: availableSize.height - bottomInset - 6.0 - actionBarSize.height), size: actionBarSize)
+            let actionBarFrame = CGRect(origin: CGPoint(x: sideInset + bottomRowInsets.left + aiButtonSize.width + actionBarSpacing + sgActionBarLeadingOffset /* MARK: Swiftgram */, y: availableSize.height - bottomInset - 6.0 - actionBarSize.height), size: actionBarSize)
             if let actionBarView = self.actionBar.view {
                 if actionBarView.superview == nil {
                     self.addSubview(actionBarView)

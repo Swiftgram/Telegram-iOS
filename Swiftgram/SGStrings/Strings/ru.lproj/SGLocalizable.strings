@@ -277,3 +277,6 @@
 "Settings.NY.Notice" = "Доступны только на ограниченное время!";
 "Settings.videoControlsInFooter" = "Кнопки видео снизу";
 "Settings.HideAccountInNotifications" = "Скрыть аккаунт в уведомлениях";
+"Settings.AIButton" = "Кнопка AI";
+"Settings.RichTextEditor" = "Редактор форматирования";
+"Settings.AIButton.Notice" = "Кнопка AI: вход в AI-редактор в поле сообщения, подписях и редакторе форматирования. Редактор форматирования: кнопка развернуть в поле сообщения и пункт в меню вложений.";

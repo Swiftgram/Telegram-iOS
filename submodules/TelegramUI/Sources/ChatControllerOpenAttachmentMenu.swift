@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
 import Display
@@ -422,7 +423,11 @@ extension ChatControllerImpl {
                         }
                         return false
                     }) ?? buttons.endIndex
-                    buttons.insert(.richText, at: firstBotIndex)
+                    // MARK: Swiftgram
+                    if !SGSimpleSettings.shared.hideRichTextEditor {
+                        buttons.insert(.richText, at: firstBotIndex)
+                    }
+                    //
                 }
                 
                 guard let initialButton = initialButton else {
