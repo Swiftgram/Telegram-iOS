@@ -130,6 +130,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Toqueu dues vegades per editar el missatge";
 
 "Settings.wideChannelPosts" = "Entrades àmplies als canals";
+"Settings.wideGlassTextField" = "Camp de text de vidre ampli";
 "Settings.ForceEmojiTab" = "Teclat d'emojis per defecte";
 
 "Settings.forceBuiltInMic" = "Força el Micròfon del Dispositiu";

@@ -508,6 +508,7 @@ public final class RichTextEngineEditorView: UIView {
             self?.resolveAtomStopBeforeComposition(at: Int(caret))
         }
         engine.tgid_deleteBackwardHandler = { [weak self] in
+            self?.onWillDeleteBackward?() // MARK: Swiftgram
             guard let self, self.consumeBackspaceAtACollapsedCaret() else { return false }
             // The keystroke was the host's: UIKit's own deletion never runs, so no
             // `textInputDidChange:` will end the edit.

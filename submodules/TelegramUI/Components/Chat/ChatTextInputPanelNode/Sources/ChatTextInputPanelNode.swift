@@ -278,6 +278,19 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
     private var leftMenuInset: CGFloat = 0.0
     private var rightSlowModeInset: CGFloat = 0.0
     private var currentTextInputBackgroundWidthOffset: CGFloat = 0.0
+    // MARK: Swiftgram
+    private var currentTextInputBackgroundLeftOffset: CGFloat = 0.0
+    private var currentTextInputViewInternalInsetsOffset = UIEdgeInsets()
+    // MARK: Swiftgram
+    // Height of the bottom controls row when multiline text moves above the buttons (0 when compact).
+    private var measuredExpandedInputRowHeight: CGFloat = 0.0
+    private var currentExpandedInputRowHeight: CGFloat = 0.0
+    // Return on an empty field switches to the multiline layout without inserting a line break; backspace switches back.
+    private var isEmptyMultilineInput = false
+    public var isExpandedInputStateChangePending: Bool {
+        return self.measuredExpandedInputRowHeight != self.currentExpandedInputRowHeight
+    }
+    //
     
     private var enableBounceAnimations: Bool = false
     // Rich-input configuration from the server flag `ios_rich_input_mode` (Double): 0 / absent (default) is the
@@ -478,6 +491,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         if self.ignoreInputStateUpdates {
             return
         }
+        self.isEmptyMultilineInput = false // MARK: Swiftgram
         
         self.ignoreChatInputTextNodeDidUpdateText = true
         defer {
@@ -836,6 +850,13 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         // Below iOS 18.4 the engine editor cannot be built (`RichTextEditorChatInputNode` checks the
         // same availability), so the flag must change nothing there — not even force the composer
         // native, which is what setting the two flags below without the check did.
+        // MARK: Swiftgram
+        // Debug Settings ▸ "Input V2": the native editor from the start, on its legacy canvas. "Input V3" below wins.
+        if context.sharedContext.immediateExperimentalUISettings.useNativeTextInput {
+            self.enableRichTextInput = true
+            self.alwaysUseNativeInput = true
+        }
+        //
         if context.sharedContext.immediateExperimentalUISettings.useInputDecEngine, #available(iOS 18.4, *) {
             // Rich input must be on for the composer to build a rich node at all; the engine editor
             // is a choice WITHIN that, not an alternative to it.
@@ -1269,6 +1290,11 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         // `chatInputTextNode(shouldChangeTextIn:)`; the native editor never calls that delegate, so it fires
         // this hook instead (and gates out caret moves / programmatic content sets — see the node).
         richTextInputNode.onTypingActivity = { [weak self] in self?.updateActivity() }
+        // MARK: Swiftgram
+        (richTextInputNode as? RichTextEditorChatInputNode)?.onShouldInsertLineBreak = { [weak self] in
+            return self?.sgShouldInsertLineBreak(deferringSend: true) ?? true
+        }
+        //
         richTextInputNode.inputHitTestSlop = UIEdgeInsets(top: -5.0, left: -12.0, bottom: -5.0, right: -5.0)
         richTextInputNode.keyboardAppearance = keyboardAppearance
         richTextInputNode.inputTintColor = tintColor
@@ -1464,9 +1490,13 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         if hasSendAsButton {
             actualTextInputViewInternalInsets.left += 31.0
         }
+        // MARK: Swiftgram
+        actualTextInputViewInternalInsets.left += self.currentTextInputViewInternalInsetsOffset.left
+        actualTextInputViewInternalInsets.right += self.currentTextInputViewInternalInsetsOffset.right
         
         var textFieldHeight: CGFloat
         var isOverflow = false
+        var expandedInputRowHeight: CGFloat = 0.0 // MARK: Swiftgram
         if let richTextInputNode = self.richTextInputNode {
             let maxTextWidth = width - textFieldInsets.left - textFieldInsets.right - actualTextInputViewInternalInsets.left - actualTextInputViewInternalInsets.right
             let measuredHeight = richTextInputNode.textHeightForWidth(maxTextWidth, rightInset: textInputViewRealInsets.right)
@@ -1480,9 +1510,20 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             textFieldHeight = max(textFieldMinHeight, unboundTextFieldHeight)
             isOverflow = textFieldHeight > updatedMaxHeight
             textFieldHeight = min(textFieldHeight, updatedMaxHeight)
+            
+            // MARK: Swiftgram
+            // Text that wraps between the merged buttons moves above them and takes the full field width.
+            if SGSimpleSettings.shared.wideGlassTextFieldMultiline, !self.currentTextInputViewInternalInsetsOffset.right.isZero, interfaceState.interfaceState.mediaDraftState == nil, ceil(measuredHeight) > textFieldMinHeight + 10.0 || self.isEmptyMultilineInput {
+                expandedInputRowHeight = 36.0
+                let expandedTextWidth = maxTextWidth + actualTextInputViewInternalInsets.left - self.textInputViewInternalInsets.left + actualTextInputViewInternalInsets.right - self.sgExpandedTextViewRightInset
+                let expandedTextFieldHeight = max(textFieldMinHeight, ceil(richTextInputNode.textHeightForWidth(expandedTextWidth, rightInset: 0.0))) + expandedInputRowHeight
+                isOverflow = expandedTextFieldHeight > updatedMaxHeight
+                textFieldHeight = min(expandedTextFieldHeight, updatedMaxHeight)
+            }
         } else {
             textFieldHeight = textFieldMinHeight
         }
+        self.measuredExpandedInputRowHeight = expandedInputRowHeight // MARK: Swiftgram
         
         return (accessoryButtonsWidth, textFieldHeight, isOverflow)
     }
@@ -1827,7 +1868,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             }
         }
         
-        let inputHasText = !isRecording && !(self.richTextInputNode?.inputContentIsEmpty ?? true)
+        let inputHasText = !isRecording && !(self.richTextInputNode?.inputContentIsEmpty ?? true) && !self.sgInputIsBlank // MARK: Swiftgram
         
         var hasMenuButton = false
         var menuButtonExpanded = false
@@ -2482,7 +2523,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         }
         let originalLeftInset = leftInset // MARK: Swiftgram
         
-        let textInputBackgroundWidthOffset: CGFloat = 0.0
+        var textInputBackgroundWidthOffset: CGFloat = 0.0
         var attachmentButtonX: CGFloat = hideOffset.x + leftInset + leftMenuInset + 8.0
         
         var leftButtonsWidth: CGFloat = 40.0 + 6.0
@@ -2530,6 +2571,58 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             attachmentButtonX = -8.0 - leftButtonsWidth
         }
         
+        var textInputBackgroundLeftOffset: CGFloat = 0.0
+        var textInputViewInternalInsetsOffset = UIEdgeInsets()
+        var mergeLeftSlot = false
+        var mergeRightSlot = false
+        // MARK: Swiftgram
+        if SGSimpleSettings.shared.wideGlassTextField {
+            if !displayMediaButton || mediaRecordingState != nil {
+            } else if let customLeftAction = self.customLeftAction {
+                switch customLeftAction {
+                case .empty, .toggleExpanded(false, _, _):
+                    break
+                default:
+                    mergeLeftSlot = true
+                }
+            } else {
+                mergeLeftSlot = true
+            }
+
+            var mediaInputIsActive = false
+            if case .media = interfaceState.inputMode {
+                mediaInputIsActive = true
+            }
+            
+            var keepSendButtonEnabled = self.keepSendButtonEnabled
+            if case let .customChatContents(customChatContents) = interfaceState.subject {
+                switch customChatContents.kind {
+                case .businessLinkSetup:
+                    keepSendButtonEnabled = true
+                default:
+                    break
+                }
+            }
+            if hasMediaDraft || hasForward {
+                keepSendButtonEnabled = true
+            }
+            
+            let sendButtonConsumesRightSlot = inputHasText || hasMediaDraft || hasForward || isEditingMedia || (keepSendButtonEnabled && !mediaInputIsActive && !hasSlowmodeButton)
+            let hasStandardRightSlot = self.customRightAction == nil && self.customSecondaryRightAction == nil && !hasSlowmodeButton && !self.extendedSearchLayout
+            mergeRightSlot = hasStandardRightSlot && mediaRecordingState == nil && (!SGSimpleSettings.shared.hideRecordingButton || mediaInputIsActive || sendButtonConsumesRightSlot)
+
+            if mergeLeftSlot {
+                textInputBackgroundWidthOffset += 40.0 + 6.0
+                textInputBackgroundLeftOffset = 40.0 + 6.0
+                textInputViewInternalInsetsOffset.left += 30.0
+            }
+            if mergeRightSlot {
+                textInputBackgroundWidthOffset += 40.0 + 6.0
+                textInputViewInternalInsetsOffset.right += 32.0
+            }
+        }
+        self.currentTextInputViewInternalInsetsOffset = textInputViewInternalInsetsOffset
+        
         self.mediaActionButtons.micButton.updateMode(mode: interfaceState.interfaceState.mediaRecordingMode, animated: transition.isAnimated)
         
         // The layout below reserves the send slot and scales the send button in on exactly this condition.
@@ -2559,8 +2652,8 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             //   (its send container is alpha 0). It is a fixed 40pt circle like the attachment button; the
             //   two were only ever equal to `minimalHeight` while the field was pinned to 17pt, and sizing
             //   the mic from the field stretched it into a pill at every other step.
-            sendActionButtonsSize = self.sendActionButtons.updateLayout(size: CGSize(width: 40.0, height: minimalHeight), isMediaInputExpanded: isMediaInputExpanded, showTitle: showTitle, currentMessageEffectId: presentationInterfaceState.interfaceState.sendMessageEffect, transition: transition, interfaceState: presentationInterfaceState)
-            mediaActionButtonsSize = self.mediaActionButtons.updateLayout(size: CGSize(width: 40.0, height: 40.0), isMediaInputExpanded: isMediaInputExpanded, showTitle: false, currentMessageEffectId: presentationInterfaceState.interfaceState.sendMessageEffect, transition: transition, interfaceState: presentationInterfaceState)
+            sendActionButtonsSize = self.sendActionButtons.updateLayout(size: CGSize(width: 40.0, height: minimalHeight), isMediaInputExpanded: isMediaInputExpanded, showTitle: showTitle, currentMessageEffectId: presentationInterfaceState.interfaceState.sendMessageEffect, transition: transition, interfaceState: presentationInterfaceState, mergeBackgroundIntoInputField: mergeRightSlot) // MARK: Swiftgram
+            mediaActionButtonsSize = self.mediaActionButtons.updateLayout(size: CGSize(width: 40.0, height: 40.0), isMediaInputExpanded: isMediaInputExpanded, showTitle: false, currentMessageEffectId: presentationInterfaceState.interfaceState.sendMessageEffect, transition: transition, interfaceState: presentationInterfaceState, mergeBackgroundIntoInputField: mergeRightSlot) // MARK: Swiftgram
         }
         
         var starReactionButtonSize: CGSize?
@@ -2632,8 +2725,19 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             effectiveActionButtonsSize.width += 6.0 + liveMicrophoneButtonSize.width
         }
         
+        let textFieldActionControlsWidth: CGFloat = mergeRightSlot ? 0.0 : sendActionButtonsSize.width // MARK: Swiftgram
+        let textFieldMeasurementWidthOffset = textInputBackgroundWidthOffset - (mergeRightSlot ? 40.0 + 6.0 : 0.0) // MARK: Swiftgram
         let baseWidth = width - leftInset - leftMenuInset - rightInset - rightSlowModeInset
-        let (accessoryButtonsWidth, textFieldHeight, isTextFieldOverflow) = self.calculateTextFieldMetrics(width: baseWidth, sendActionControlsWidth: sendActionButtonsSize.width, maxHeight: maxHeight, metrics: metrics, bottomInset: bottomInset, interfaceState: interfaceState)
+        let (accessoryButtonsWidth, textFieldHeight, isTextFieldOverflow) = self.calculateTextFieldMetrics(width: baseWidth + textFieldMeasurementWidthOffset, sendActionControlsWidth: textFieldActionControlsWidth, maxHeight: maxHeight, metrics: metrics, bottomInset: bottomInset, interfaceState: interfaceState) // MARK: Swiftgram
+        // MARK: Swiftgram
+        let expandedInputRowHeight = self.measuredExpandedInputRowHeight
+        let expandedInputStateUpdated = expandedInputRowHeight != self.currentExpandedInputRowHeight
+        self.currentExpandedInputRowHeight = expandedInputRowHeight
+        let isAIButtonInExpandedInputRow = !expandedInputRowHeight.isZero && mergeLeftSlot && self.isAIEnabled && !(self.richTextInputNode?.inputContentIsEmptyWhitespaceTrimmed ?? true)
+        // The chat controller lays the panel out immediately and animates only its frame; animate the contents with the same spring so the controls row stays in place while the text moves.
+        if expandedInputStateUpdated && !isFirstTime && !transition.isAnimated {
+            transition = .animated(duration: 0.4, curve: .spring)
+        }
         var panelHeight = self.panelHeight(textFieldHeight: textFieldHeight, metrics: metrics, bottomInset: bottomInset)
         if displayBotStartButton {
             panelHeight += 27.0
@@ -2700,6 +2804,9 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             default:
                 break
             }
+        }
+        if mergeRightSlot { // MARK: Swiftgram
+            textFieldInsets.right = max(textFieldInsets.right, 54.0)
         }
         
         var audioRecordingItemsAlpha: CGFloat = 1.0
@@ -3055,7 +3162,8 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             // empty the send button is hidden (scaled to ~0), so reserving its width over-insets the field;
             // the right inset then only needs to clear the in-field accessory buttons.
             let sendButtonShown = inputHasText || hasMediaDraft || hasForward || isEditingMedia
-            textInputViewRealInsets = calculateTextFieldRealInsets(presentationInterfaceState: presentationInterfaceState, accessoryButtonsWidth: accessoryButtonsWidth, actionControlsWidth: sendButtonShown ? effectiveActionButtonsSize.width : 0.0)
+            let actionControlsWidth = sendButtonShown && !mergeRightSlot ? effectiveActionButtonsSize.width : 0.0 // MARK: Swiftgram
+            textInputViewRealInsets = calculateTextFieldRealInsets(presentationInterfaceState: presentationInterfaceState, accessoryButtonsWidth: accessoryButtonsWidth, actionControlsWidth: actionControlsWidth)
             if !sendButtonShown {
                 // Empty state: the accessory-button clearance alone still over-insets slightly; trim 10pt more.
                 textInputViewRealInsets.right = max(0.0, textInputViewRealInsets.right - 10.0)
@@ -3079,8 +3187,8 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             }
         }
         
-        let textInputWidth = baseWidth - textFieldInsets.left - textFieldInsets.right
-        let textInputHeight = panelHeight - textFieldInsets.top - textFieldInsets.bottom
+        let textInputWidth = baseWidth - textFieldInsets.left - textFieldInsets.right + textInputBackgroundWidthOffset // MARK: Swiftgram
+        let textInputHeight = panelHeight - textFieldInsets.top - textFieldInsets.bottom - expandedInputRowHeight // MARK: Swiftgram
         
         if let accessoryPanel {
             var accessoryPanelTransition = ComponentTransition(transition)
@@ -3133,7 +3241,11 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         }
         
         if let _ = interfaceState.interfaceState.mediaDraftState {
-            let mediaPreviewPanelFrame = CGRect(origin: CGPoint(x: 0.0, y: contentHeight), size: CGSize(width: textInputWidth - effectiveActionButtonsSize.width - 8.0, height: 40.0))
+            // MARK: Swiftgram
+            // A merged left slot puts the delete button inside the field, where the preview must not cover it.
+            let sgMediaPreviewPanelLeftOffset: CGFloat = mergeLeftSlot ? 40.0 : 0.0
+            //
+            let mediaPreviewPanelFrame = CGRect(origin: CGPoint(x: sgMediaPreviewPanelLeftOffset, y: contentHeight), size: CGSize(width: textInputWidth - effectiveActionButtonsSize.width - 8.0 - sgMediaPreviewPanelLeftOffset, height: 40.0)) // MARK: Swiftgram
             var mediaPreviewPanelTransition = transition
             
             let mediaPreviewPanelNode: ChatRecordingPreviewInputPanelNodeImpl
@@ -3174,11 +3286,11 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         
         let textFieldTopContentOffset = contentHeight
         
-        contentHeight += textInputHeight
+        contentHeight += textInputHeight + expandedInputRowHeight // MARK: Swiftgram
         contentHeight += textFieldInsets.bottom
         
         let previousTextInputContainerBackgroundFrame = self.textInputContainerBackgroundView.frame
-        let textInputContainerBackgroundFrame = CGRect(x: hideOffset.x + leftInset + textFieldInsets.left, y: hideOffset.y + textFieldInsets.top, width: textInputWidth, height: contentHeight)
+        let textInputContainerBackgroundFrame = CGRect(x: hideOffset.x + leftInset + textFieldInsets.left - textInputBackgroundLeftOffset, y: hideOffset.y + textFieldInsets.top, width: textInputWidth, height: contentHeight) // MARK: Swiftgram
         let textInputFrame = textInputContainerBackgroundFrame
         
         transition.updateFrame(view: self.accessoryPanelContainer, frame: CGRect(origin: CGPoint(), size: textInputContainerBackgroundFrame.size))
@@ -3215,6 +3327,15 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         if hasSendAsButton {
             actualTextInputViewInternalInsets.left += 31.0
         }
+        // MARK: Swiftgram
+        actualTextInputViewInternalInsets.left += textInputViewInternalInsetsOffset.left
+        actualTextInputViewInternalInsets.right += textInputViewInternalInsetsOffset.right
+        let controlsRowInternalInsets = actualTextInputViewInternalInsets
+        if !expandedInputRowHeight.isZero {
+            actualTextInputViewInternalInsets.left = self.textInputViewInternalInsets.left
+            actualTextInputViewInternalInsets.right = self.sgExpandedTextViewRightInset
+            textInputViewRealInsets.right = 0.0
+        }
         
         let textFieldFrame = CGRect(origin: CGPoint(x: actualTextInputViewInternalInsets.left, y: actualTextInputViewInternalInsets.top + textFieldTopContentOffset), size: CGSize(width: textInputFrame.size.width - (actualTextInputViewInternalInsets.left + actualTextInputViewInternalInsets.right), height: textInputHeight - actualTextInputViewInternalInsets.top - actualTextInputViewInternalInsets.bottom))
         let textInputNodeClippingContainerFrame = CGRect(origin: CGPoint(x: textFieldFrame.minX - actualTextInputViewInternalInsets.left, y: textFieldFrame.minY - actualTextInputViewInternalInsets.top), size: CGSize(width: textFieldFrame.width + actualTextInputViewInternalInsets.left + actualTextInputViewInternalInsets.right,  height: textFieldFrame.height + actualTextInputViewInternalInsets.top + actualTextInputViewInternalInsets.bottom))
@@ -3235,7 +3356,14 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             
         if let richTextInputNode = self.richTextInputNode {
             richTextInputNode.textContainerInset = textInputViewRealInsets
+            richTextInputNode.setInputScrollIndicatorInsets(UIEdgeInsets(top: 9.0, left: 0.0, bottom: 9.0, right: mergeRightSlot ? -(actualTextInputViewInternalInsets.right + 2.0) : -13.0)) // MARK: Swiftgram
+            let previousTextFieldFrame = richTextInputNode.textFieldFrame // MARK: Swiftgram
             richTextInputNode.textFieldFrame = actualTextFieldFrame
+            // MARK: Swiftgram
+            if expandedInputStateUpdated && transition.isAnimated && !previousTextFieldFrame.isEmpty {
+                transition.animatePositionAdditive(layer: richTextInputNode.inputView.layer, offset: CGPoint(x: previousTextFieldFrame.minX - actualTextFieldFrame.minX, y: 0.0))
+            }
+            //
             // THE pass that applies the field's new height, so it is the one the caret's visibility
             // depends on: the editor no longer scrolls on its own when the content grows, and the
             // reveal here is computed against the height being applied rather than the one on screen.
@@ -3252,7 +3380,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             let placeholderLayout = TextNode.asyncLayout(self.contextPlaceholderNode)
             let contextPlaceholder = NSMutableAttributedString(attributedString: contextPlaceholder)
             contextPlaceholder.addAttribute(.foregroundColor, value: placeholderColor.withAlphaComponent(1.0), range: NSRange(location: 0, length: contextPlaceholder.length))
-            let (placeholderSize, placeholderApply) = placeholderLayout(TextNodeLayoutArguments(attributedString: contextPlaceholder, backgroundColor: nil, maximumNumberOfLines: 1, truncationType: .end, constrainedSize: CGSize(width: width - leftInset - rightInset - textFieldInsets.left - textFieldInsets.right - actualTextInputViewInternalInsets.left - actualTextInputViewInternalInsets.right - accessoryButtonsWidth, height: CGFloat.greatestFiniteMagnitude), alignment: .natural, cutout: nil, insets: UIEdgeInsets()))
+            let (placeholderSize, placeholderApply) = placeholderLayout(TextNodeLayoutArguments(attributedString: contextPlaceholder, backgroundColor: nil, maximumNumberOfLines: 1, truncationType: .end, constrainedSize: CGSize(width: width - leftInset - rightInset - textFieldInsets.left - textFieldInsets.right + textInputBackgroundWidthOffset - actualTextInputViewInternalInsets.left - actualTextInputViewInternalInsets.right - accessoryButtonsWidth, height: CGFloat.greatestFiniteMagnitude), alignment: .natural, cutout: nil, insets: UIEdgeInsets())) // MARK: Swiftgram
             let tintContextPlaceholder = NSMutableAttributedString(attributedString: contextPlaceholder)
             tintContextPlaceholder.addAttribute(.foregroundColor, value: UIColor.black, range: NSRange(location: 0, length: tintContextPlaceholder.length))
             let contextPlaceholderNode = placeholderApply()
@@ -3296,7 +3424,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
                 self.slowmodePlaceholderNode = slowmodePlaceholderNode
                 self.textInputContainerBackgroundView.contentView.insertSubview(slowmodePlaceholderNode.view, aboveSubview: self.textPlaceholderNode.view)
             }
-            let placeholderFrame = CGRect(origin: CGPoint(x: actualTextInputViewInternalInsets.left, y: textFieldInsets.top + actualTextInputViewInternalInsets.top + textInputViewRealInsets.top + UIScreenPixel + textFieldTopContentOffset), size: CGSize(width: width - leftInset - rightInset - textFieldInsets.left - textFieldInsets.right - actualTextInputViewInternalInsets.left - actualTextInputViewInternalInsets.right - accessoryButtonsWidth, height: 30.0))
+            let placeholderFrame = CGRect(origin: CGPoint(x: actualTextInputViewInternalInsets.left, y: textFieldInsets.top + actualTextInputViewInternalInsets.top + textInputViewRealInsets.top + UIScreenPixel + textFieldTopContentOffset), size: CGSize(width: width - leftInset - rightInset - textFieldInsets.left - textFieldInsets.right + textInputBackgroundWidthOffset - actualTextInputViewInternalInsets.left - actualTextInputViewInternalInsets.right - accessoryButtonsWidth, height: 30.0)) // MARK: Swiftgram
             slowmodePlaceholderNode.updateState(slowmodeState)
             if slowmodePlaceholderNode.bounds.isEmpty {
                 slowmodePlaceholderNode.frame = placeholderFrame
@@ -3312,16 +3440,19 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
 
         if (interfaceState.slowmodeState != nil && rightSlowModeInset.isZero && !isScheduledMessages && interfaceState.editMessageState == nil) || interfaceState.inputTextPanelState.contextPlaceholder != nil {
             self.textPlaceholderNode.isHidden = true
-            self.slowmodePlaceholderNode?.isHidden = inputHasText
+            self.slowmodePlaceholderNode?.isHidden = inputHasText || self.sgInputIsBlank // MARK: Swiftgram
         } else {
-            self.textPlaceholderNode.isHidden = inputHasText
+            self.textPlaceholderNode.isHidden = inputHasText || self.sgInputIsBlank // MARK: Swiftgram
             self.slowmodePlaceholderNode?.isHidden = true
         }
         
+        let actionButtonContentSpacing = max(0.0, controlsRowInternalInsets.right - 40.0) // MARK: Swiftgram
         var nextButtonTopRight = CGPoint(x: textInputContainerBackgroundFrame.width - accessoryButtonInset, y: textInputContainerBackgroundFrame.height - minimalInputHeight)
         if self.extendedSearchLayout {
             nextButtonTopRight.x -= 46.0
         } else if hasSlowmodeButton {
+        } else if mergeRightSlot { // MARK: Swiftgram
+            nextButtonTopRight.x = textInputContainerBackgroundFrame.width - 40.0 - actionButtonContentSpacing
         } else if inputHasText || hasMediaDraft || hasForward || isEditingMedia {
             nextButtonTopRight.x -= sendActionButtonsSize.width
         }
@@ -3352,6 +3483,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         }
         
         self.currentTextInputBackgroundWidthOffset = textInputBackgroundWidthOffset
+        self.currentTextInputBackgroundLeftOffset = textInputBackgroundLeftOffset // MARK: Swiftgram
         
         let textPlaceholderSize: CGSize
         let textPlaceholderMaxWidth: CGFloat = max(1.0, nextButtonTopRight.x - 12.0)
@@ -3420,7 +3552,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         transition.updateFrame(node: self.textPlaceholderNode, frame: textPlaceholderFrame)
         
         
-        let sendAsButtonFrame = CGRect(origin: CGPoint(x: 3.0, y: textInputContainerBackgroundFrame.height - 3.0 - 34.0), size: CGSize(width: 34.0, height: 34.0))
+        let sendAsButtonFrame = CGRect(origin: CGPoint(x: max(3.0, controlsRowInternalInsets.left - 40.0) + (isAIButtonInExpandedInputRow ? 28.0 : 0.0), y: textInputContainerBackgroundFrame.height - 3.0 - 34.0), size: CGSize(width: 34.0, height: 34.0)) // MARK: Swiftgram
         let sendAsAvatarButtonAlpha: CGFloat = audioRecordingItemsAlpha * (displaySendAsAvatarButton ? 1.0 : 0.0)
         transition.updatePosition(node: self.sendAsAvatarButtonNode, position: sendAsButtonFrame.center)
         transition.updateBounds(node: self.sendAsAvatarButtonNode, bounds: CGRect(origin: CGPoint(), size: sendAsButtonFrame.size))
@@ -3469,10 +3601,26 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         }
         
         var mediaActionButtonsFrame = CGRect(origin: CGPoint(x: textInputContainerBackgroundFrame.maxX + 6.0, y: textInputContainerBackgroundFrame.maxY - mediaActionButtonsSize.height), size: mediaActionButtonsSize)
-        if inputHasText || self.extendedSearchLayout || hasMediaDraft || interfaceState.interfaceState.forwardMessageIds != nil || hasSlowmodeButton || isEditingMedia {
-            mediaActionButtonsFrame.origin.x = width + 8.0
+        if mergeRightSlot { // MARK: Swiftgram
+            mediaActionButtonsFrame.origin.x = textInputContainerBackgroundFrame.maxX - mediaActionButtonsSize.width
         }
-        transition.updateFrame(node: self.mediaActionButtons, frame: mediaActionButtonsFrame)
+        if inputHasText || self.extendedSearchLayout || hasMediaDraft || interfaceState.interfaceState.forwardMessageIds != nil || hasSlowmodeButton || isEditingMedia {
+            if !mergeRightSlot { // MARK: Swiftgram
+                mediaActionButtonsFrame.origin.x = width + 8.0
+            }
+        }
+        let mediaActionButtonsFrameInParent: CGRect
+        if mergeRightSlot { // MARK: Swiftgram
+            mediaActionButtonsFrameInParent = mediaActionButtonsFrame.offsetBy(dx: -textInputContainerBackgroundFrame.minX, dy: -textInputContainerBackgroundFrame.minY)
+        } else {
+            mediaActionButtonsFrameInParent = mediaActionButtonsFrame
+        }
+        let mediaActionButtonsParentView = mergeRightSlot ? self.textInputContainerBackgroundView.contentView : self.glassBackgroundContainer.contentView // MARK: Swiftgram
+        if self.mediaActionButtons.view.superview !== mediaActionButtonsParentView {
+            self.mediaActionButtons.view.frame = mediaActionButtonsFrameInParent
+            mediaActionButtonsParentView.addSubview(self.mediaActionButtons.view)
+        }
+        transition.updateFrame(node: self.mediaActionButtons, frame: mediaActionButtonsFrameInParent)
         if let (rect, containerSize) = self.absoluteRect {
             self.mediaActionButtons.updateAbsoluteRect(CGRect(x: rect.origin.x + mediaActionButtonsFrame.origin.x, y: rect.origin.y + mediaActionButtonsFrame.origin.y, width: mediaActionButtonsFrame.width, height: mediaActionButtonsFrame.height), within: containerSize, transition: transition)
         }
@@ -3524,10 +3672,25 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             sendActionButtonsFrame.origin.x += (sendActionButtonsSize.width - 3.0 * 2.0) * 0.5 - 3.0
         }
         
-        transition.updateTransformScale(node: self.sendActionButtons, scale: CGPoint(x: sendActionsScale, y: sendActionsScale))
-        transition.updatePosition(node: self.sendActionButtons, position: sendActionButtonsFrame.center)
+        let sendActionButtonsFrameInParent: CGRect
+        if mergeRightSlot { // MARK: Swiftgram
+            sendActionButtonsFrameInParent = sendActionButtonsFrame.offsetBy(dx: -textInputContainerBackgroundFrame.minX, dy: -textInputContainerBackgroundFrame.minY)
+        } else {
+            sendActionButtonsFrameInParent = sendActionButtonsFrame
+        }
+        let sendActionButtonsParentView = mergeRightSlot ? self.textInputContainerBackgroundView.contentView : self.glassBackgroundContainer.contentView // MARK: Swiftgram
+        if self.sendActionButtons.view.superview !== sendActionButtonsParentView {
+            self.sendActionButtons.view.frame = sendActionButtonsFrameInParent
+            sendActionButtonsParentView.addSubview(self.sendActionButtons.view)
+        }
+        if mergeRightSlot { // MARK: Swiftgram
+            sendActionButtonsParentView.bringSubviewToFront(self.sendActionButtons.view)
+        }
         
-        transition.updateBounds(node: self.sendActionButtons, bounds: CGRect(origin: CGPoint(), size: sendActionButtonsFrame.size))
+        transition.updateTransformScale(node: self.sendActionButtons, scale: CGPoint(x: sendActionsScale, y: sendActionsScale))
+        transition.updatePosition(node: self.sendActionButtons, position: sendActionButtonsFrameInParent.center)
+        
+        transition.updateBounds(node: self.sendActionButtons, bounds: CGRect(origin: CGPoint(), size: sendActionButtonsFrameInParent.size))
         if let (rect, containerSize) = self.absoluteRect {
             self.sendActionButtons.updateAbsoluteRect(CGRect(x: rect.origin.x + sendActionButtonsFrame.origin.x, y: rect.origin.y + sendActionButtonsFrame.origin.y, width: sendActionButtonsFrame.width, height: sendActionButtonsFrame.height), within: containerSize, transition: transition)
         }
@@ -3538,6 +3701,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         if let _ = interfaceState.inputTextPanelState.mediaRecordingState {
             let text: String = interfaceState.strings.VoiceOver_MessageContextSend
             let mediaRecordingAccessibilityArea: AccessibilityAreaNode
+            let mediaRecordingAccessibilityParentView = self.mediaActionButtons.view.superview ?? self.glassBackgroundContainer.contentView // MARK: Swiftgram
             var added = false
             if let current = self.mediaRecordingAccessibilityArea {
                 mediaRecordingAccessibilityArea = current
@@ -3553,11 +3717,20 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
                     }
                     return true
                 }
-                self.glassBackgroundContainer.contentView.insertSubview(mediaRecordingAccessibilityArea.view, aboveSubview: self.mediaActionButtons.view)
+            }
+            if mediaRecordingAccessibilityArea.view.superview !== mediaRecordingAccessibilityParentView { // MARK: Swiftgram
+                if mediaRecordingAccessibilityArea.view.superview != nil {
+                    mediaRecordingAccessibilityArea.view.removeFromSuperview()
+                }
+                if self.mediaActionButtons.view.superview === mediaRecordingAccessibilityParentView {
+                    mediaRecordingAccessibilityParentView.insertSubview(mediaRecordingAccessibilityArea.view, aboveSubview: self.mediaActionButtons.view)
+                } else {
+                    mediaRecordingAccessibilityParentView.addSubview(mediaRecordingAccessibilityArea.view)
+                }
             }
             self.mediaActionButtons.isAccessibilityElement = false
             let size: CGFloat = 120.0
-            mediaRecordingAccessibilityArea.frame = CGRect(origin: CGPoint(x: mediaActionButtonsFrame.midX - size / 2.0, y: mediaActionButtonsFrame.midY - size / 2.0), size: CGSize(width: size, height: size))
+            mediaRecordingAccessibilityArea.frame = CGRect(origin: CGPoint(x: mediaActionButtonsFrameInParent.midX - size / 2.0, y: mediaActionButtonsFrameInParent.midY - size / 2.0), size: CGSize(width: size, height: size)) // MARK: Swiftgram
             if added {
                 DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.4, execute: {
                     [weak mediaRecordingAccessibilityArea] in
@@ -3596,15 +3769,36 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
                 attachmentPillHeight = threeLineHeight
             }
         }
+        // MARK: Swiftgram
+        var attachmentPillWidth: CGFloat = 40.0
+        if isAIButtonInExpandedInputRow {
+            isAIButtonVisible = true
+            attachmentPillHeight = 40.0
+            attachmentPillWidth = 40.0 + 28.0
+        }
+        //
 
-        let attachmentButtonFrame = CGRect(origin: CGPoint(x: attachmentButtonX, y: textInputFrame.maxY - attachmentPillHeight), size: CGSize(width: 40.0, height: attachmentPillHeight))
+        let attachmentButtonFrame = CGRect(origin: CGPoint(x: attachmentButtonX, y: textInputFrame.maxY - attachmentPillHeight), size: CGSize(width: attachmentPillWidth, height: attachmentPillHeight)) // MARK: Swiftgram
         attachmentButtonX += 40.0 + 6.0
-        self.attachmentButtonBackground.update(size: attachmentButtonFrame.size, cornerRadius: 40.0 * 0.5, isDark: interfaceState.theme.overallDarkAppearance, tintColor: defaultGlassTintColor, isInteractive: true, transition: ComponentTransition(transition))
+        let attachmentButtonParentView = mergeLeftSlot ? self.textInputContainerBackgroundView.contentView : self.glassBackgroundContainer.contentView // MARK: Swiftgram
+        if self.attachmentButtonBackground.superview !== attachmentButtonParentView {
+            attachmentButtonParentView.addSubview(self.attachmentButtonBackground)
+        }
+        if self.attachmentButtonDisabledNode.view.superview !== attachmentButtonParentView {
+            attachmentButtonParentView.addSubview(self.attachmentButtonDisabledNode.view)
+        }
+        let attachmentButtonFrameInParent: CGRect
+        if mergeLeftSlot { // MARK: Swiftgram
+            attachmentButtonFrameInParent = attachmentButtonFrame.offsetBy(dx: -textInputContainerBackgroundFrame.minX, dy: -textInputContainerBackgroundFrame.minY)
+        } else {
+            attachmentButtonFrameInParent = attachmentButtonFrame
+        }
+        self.attachmentButtonBackground.update(size: attachmentButtonFrame.size, cornerRadius: 40.0 * 0.5, isDark: interfaceState.theme.overallDarkAppearance, tintColor: defaultGlassTintColor, isInteractive: true, isVisible: !mergeLeftSlot, transition: ComponentTransition(transition)) // MARK: Swiftgram
 
-        transition.updateFrame(layer: self.attachmentButtonBackground.layer, frame: attachmentButtonFrame)
+        transition.updateFrame(layer: self.attachmentButtonBackground.layer, frame: attachmentButtonFrameInParent)
         // + tap target + disabled overlay + icon are pinned to the BOTTOM 40x40 slot of the capsule.
         transition.updateFrame(layer: self.attachmentButton.layer, frame: CGRect(origin: CGPoint(x: 0.0, y: attachmentButtonFrame.height - 40.0), size: CGSize(width: 40.0, height: 40.0)))
-        transition.updateFrame(node: self.attachmentButtonDisabledNode, frame: CGRect(origin: CGPoint(x: attachmentButtonFrame.minX, y: attachmentButtonFrame.maxY - 40.0), size: CGSize(width: 40.0, height: 40.0)))
+        transition.updateFrame(node: self.attachmentButtonDisabledNode, frame: CGRect(origin: CGPoint(x: attachmentButtonFrameInParent.minX, y: attachmentButtonFrameInParent.maxY - 40.0), size: CGSize(width: 40.0, height: 40.0)))
 
         if let _ = self.attachmentButtonIcon.image {
             transition.updateFrame(view: self.attachmentButtonIcon, frame: CGRect(origin: CGPoint(x: 0.0, y: attachmentButtonFrame.height - 40.0), size: CGSize(width: 40, height: 40)))
@@ -3636,10 +3830,21 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
                 self.attachmentButtonBackground.contentView.addSubview(aiButton.button)
             }
             aiButton.icon.tintColor = interfaceState.theme.chat.inputPanel.panelControlColor
-            let aiSlot = CGRect(origin: CGPoint(), size: CGSize(width: 40.0, height: 40.0))
-            transition.updateFrame(view: aiButton.button, frame: aiSlot)
+            var aiSlot = CGRect(origin: CGPoint(x: attachmentButtonFrame.width - 40.0, y: 0.0), size: CGSize(width: 40.0, height: 40.0)) // MARK: Swiftgram
+            // MARK: Swiftgram
+            // The button fades in at its slot and fades out where it stood instead of sliding along the capsule.
+            var aiButtonTransition = transition
+            if SGSimpleSettings.shared.wideGlassTextFieldMultiline {
+                if !isAIButtonVisible {
+                    aiSlot = aiButton.button.frame
+                } else if aiButton.icon.alpha.isZero {
+                    aiButtonTransition = .immediate
+                }
+            }
+            //
+            aiButtonTransition.updateFrame(view: aiButton.button, frame: aiSlot) // MARK: Swiftgram
             if let image = aiButton.icon.image {
-                let transition = ComponentTransition(transition)
+                let transition = ComponentTransition(aiButtonTransition) // MARK: Swiftgram
                 transition.setPosition(view: aiButton.icon, position: image.size.centered(in: aiSlot).center)
                 aiButton.icon.bounds = CGRect(origin: CGPoint(), size: image.size)
             }
@@ -3903,20 +4108,38 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             expandButton.icon.tintColor = interfaceState.theme.chat.inputPanel.inputControlColor
             if let image = expandButton.icon.image {
                 let expandButtonSize = CGSize(width: 40.0, height: 40.0)
-                let expandButtonFrame = CGRect(origin: CGPoint(x: textInputContainerBackgroundFrame.width - expandButtonSize.width - 3.0, y: textInputNodeClippingContainerFrame.minY), size: expandButtonSize)
+                var expandButtonFrame = CGRect(origin: CGPoint(x: textInputContainerBackgroundFrame.width - expandButtonSize.width - 3.0, y: textInputNodeClippingContainerFrame.minY), size: expandButtonSize)
+                // MARK: Swiftgram
+                // In the controls row the button follows the field's bottom edge, so it stays put on screen while the
+                // field resizes, and it appears or disappears in place with the AI button's scale. Once hidden it stays
+                // there, so a later pass doesn't move it to the corner while it is still fading out.
+                if !expandedInputRowHeight.isZero || expandedInputStateUpdated || (SGSimpleSettings.shared.wideGlassTextFieldMultiline && !textInputViewInternalInsetsOffset.right.isZero && expandButton.icon.alpha.isZero) {
+                    let rowX = expandedInputRowHeight.isZero ? expandButton.button.frame.minX : nextButtonTopRight.x - expandButtonSize.width + 6.0
+                    expandButtonFrame.origin = CGPoint(x: rowX, y: textInputContainerBackgroundFrame.height - expandButtonSize.height)
+                    if expandButton.icon.alpha.isZero {
+                        let startFrame = expandButtonFrame.offsetBy(dx: 0.0, dy: previousTextInputContainerBackgroundFrame.height - textInputContainerBackgroundFrame.height)
+                        expandButton.button.frame = startFrame
+                        expandButton.icon.center = startFrame.center
+                    }
+                }
+                //
                 transition.updateFrame(view: expandButton.button, frame: expandButtonFrame)
-                transition.updateFrame(view: expandButton.icon, frame: image.size.centered(in: expandButtonFrame))
+                transition.updatePosition(layer: expandButton.icon.layer, position: expandButtonFrame.center) // MARK: Swiftgram
+                expandButton.icon.bounds = CGRect(origin: CGPoint(), size: image.size) // MARK: Swiftgram
             }
             // The expand button always sits in the top-right corner, above the send button — never inline with the
             // text row. It appears whenever the field is tall enough (multi-line) to have room above the send
             // button, on all panel widths.
-            let isTallPanel = actualTextFieldFrame.height >= 70.0
+            let isTallPanel = actualTextFieldFrame.height >= 70.0 || !expandedInputRowHeight.isZero // MARK: Swiftgram
             let inputHasText = !(self.richTextInputNode?.inputContentIsEmptyWhitespaceTrimmed ?? true)
 
             let cornerAlpha: CGFloat = (isTallPanel && inputHasText) ? 1.0 : 0.0
             self.heightDependentExpandButtonAlpha = isTallPanel ? 1.0 : 0.0
             ComponentTransition(transition).setAlpha(view: expandButton.button, alpha: cornerAlpha)
             ComponentTransition(transition).setAlpha(view: expandButton.icon, alpha: cornerAlpha)
+            if SGSimpleSettings.shared.wideGlassTextFieldMultiline { // MARK: Swiftgram
+                ComponentTransition(transition).setScale(view: expandButton.icon, scale: cornerAlpha.isZero ? 0.001 : 1.0)
+            }
         } else {
             if let expandButton = self.expandButton {
                 self.expandButton = nil
@@ -4625,7 +4848,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             }
         }
         
-        if let expandButton = self.expandButton {
+        if let expandButton = self.expandButton, !SGSimpleSettings.shared.wideGlassTextFieldMultiline { // MARK: Swiftgram
             let transition: ContainedViewLayoutTransition = .immediate
             let inputHasText = !(self.richTextInputNode?.inputContentIsEmptyWhitespaceTrimmed ?? true)
 
@@ -4850,8 +5073,10 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
             leftInset += compactBottomSideInset
             rightInset += compactBottomSideInset
             
-            let baseWidth = width - leftInset - self.leftMenuInset - rightInset - self.rightSlowModeInset + self.currentTextInputBackgroundWidthOffset - additionalSideInsets.right
-            let (_, textFieldHeight, _) = self.calculateTextFieldMetrics(width: baseWidth, sendActionControlsWidth: self.sendActionButtons.bounds.width, maxHeight: maxHeight, metrics: metrics, bottomInset: bottomInset, interfaceState: interfaceState)
+            let hasMergedRightSlot = !self.currentTextInputViewInternalInsetsOffset.right.isZero // MARK: Swiftgram
+            let textFieldMeasurementWidthOffset = self.currentTextInputBackgroundWidthOffset - (hasMergedRightSlot ? 40.0 + 6.0 : 0.0) // MARK: Swiftgram
+            let baseWidth = width - leftInset - self.leftMenuInset - rightInset - self.rightSlowModeInset + textFieldMeasurementWidthOffset - additionalSideInsets.right
+            let (_, textFieldHeight, _) = self.calculateTextFieldMetrics(width: baseWidth, sendActionControlsWidth: hasMergedRightSlot ? 0.0 : self.sendActionButtons.bounds.width, maxHeight: maxHeight, metrics: metrics, bottomInset: bottomInset, interfaceState: interfaceState) // MARK: Swiftgram
             let panelHeight = self.panelHeight(textFieldHeight: textFieldHeight, metrics: metrics, bottomInset: bottomInset)
             if !self.bounds.size.height.isEqual(to: panelHeight) {
                 self.updateHeight(animated)
@@ -4898,6 +5123,9 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         }
         if shouldSendMessage {
             self.sendButtonPressed()
+            return false
+        }
+        if modifierFlags.isEmpty && self.sgEnterEmptyMultilineInputIfNeeded() { // MARK: Swiftgram
             return false
         }
         
@@ -5002,6 +5230,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         self.storedInputLanguage = richTextInputNode.primaryLanguage
         self.inputMenu.deactivate()
         self.dismissedEmojiSuggestionPosition = nil
+        self.sgExitEmptyMultilineInput() // MARK: Swiftgram
         
         if let presentationInterfaceState = self.presentationInterfaceState, !self.skipPresentationInterfaceStateUpdate {
             if let peer = presentationInterfaceState.renderedPeer?.peer as? TelegramUser, peer.botInfo != nil, let keyboardButtonsMessage = presentationInterfaceState.keyboardButtonsMessage, let keyboardMarkup = keyboardButtonsMessage.visibleButtonKeyboardMarkup, keyboardMarkup.flags.contains(.persistent) {
@@ -5032,6 +5261,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
     }
     
     public func chatInputTextNodeBackspaceWhileEmpty() {
+        self.sgExitEmptyMultilineInput() // MARK: Swiftgram
     }
     
     public func editableTextNodeTarget(forAction action: Selector) -> ASEditableTextNodeTargetForAction? {
@@ -5489,8 +5719,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         self.updateActivity()
         
         // MARK: Swiftgram
-        if SGSimpleSettings.shared.sendWithReturnKey && text == "\n" {
-            self.sendButtonPressed()
+        if text == "\n" && !self.sgShouldInsertLineBreak(deferringSend: false) {
             return false
         }
         //
@@ -6121,7 +6350,19 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         return self.attachmentButton
     }
     
+    // MARK: Swiftgram
+    private func frameInPanelCoordinates(for view: UIView) -> CGRect? {
+        guard let superview = view.superview else {
+            return nil
+        }
+        return self.view.convert(view.frame, from: superview)
+    }
+    
     public func frameForAttachmentButton() -> CGRect? {
+        // MARK: Swiftgram
+        if SGSimpleSettings.shared.wideGlassTextField, !self.attachmentButtonBackground.alpha.isZero, let frame = self.frameInPanelCoordinates(for: self.attachmentButtonBackground) {
+            return frame.insetBy(dx: 0.0, dy: -4.0).offsetBy(dx: 0.0, dy: 0.0)
+        }
         if !self.attachmentButtonBackground.alpha.isZero {
             return self.attachmentButtonBackground.frame.insetBy(dx: 0.0, dy: -4.0).offsetBy(dx: 0.0, dy: 0.0)
         }
@@ -6136,6 +6377,10 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
     }
     
     public func frameForInputActionButton() -> CGRect? {
+        // MARK: Swiftgram
+        if SGSimpleSettings.shared.wideGlassTextField, !self.mediaActionButtons.alpha.isZero, let frame = self.frameInPanelCoordinates(for: self.mediaActionButtons.view), frame.minX < self.bounds.width {
+            return frame.insetBy(dx: 0.0, dy: -4.0).offsetBy(dx: -3.0, dy: 0.0)
+        }
         if !self.mediaActionButtons.alpha.isZero && self.mediaActionButtons.frame.minX < self.bounds.width {
             return self.mediaActionButtons.frame.insetBy(dx: 0.0, dy: -4.0).offsetBy(dx: -3.0, dy: 0.0)
         }
@@ -6169,13 +6414,32 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         return nil
     }
 
-    public func makeSnapshotForTransition() -> (backgroundView: UIView, contentView: UIView, sourceRect: CGRect, scrollOffset: CGFloat)? {
+    public func makeSnapshotForTransition() -> (backgroundView: UIView, contentView: UIView, sourceRect: CGRect, scrollOffset: CGFloat, /* MARK: Swiftgram */ sgControlsRowHeight: CGFloat)? {
         guard let richTextInputNode = self.richTextInputNode else {
             return nil
         }
 
         let backgroundView = UIImageView()
-        backgroundView.frame = self.textInputBackgroundNode.view.convert(self.textInputBackgroundNode.bounds, to: self.view)
+        let backgroundFrame = self.textInputBackgroundNode.view.convert(self.textInputBackgroundNode.bounds, to: self.view)
+        backgroundView.frame = backgroundFrame
+        var sourceRect = self.view.convert(self.bounds, to: nil)
+
+        // MARK: Swiftgram
+        // Expanded multiline text already spans the field from its left edge; only the controls row is cut off.
+        let transitionBackgroundLeftOffset = self.currentExpandedInputRowHeight.isZero ? max(0.0, min(self.currentTextInputBackgroundLeftOffset, backgroundFrame.width)) : 0.0
+        let transitionBackgroundBottomOffset = max(0.0, min(self.currentExpandedInputRowHeight, backgroundFrame.height))
+        var sgTransitionBackgroundOrigin: CGPoint?
+        if !transitionBackgroundLeftOffset.isZero || !transitionBackgroundBottomOffset.isZero {
+            let transitionBackgroundFrame = CGRect(
+                x: backgroundFrame.minX + transitionBackgroundLeftOffset,
+                y: backgroundFrame.minY,
+                width: backgroundFrame.width - transitionBackgroundLeftOffset,
+                height: backgroundFrame.height - transitionBackgroundBottomOffset
+            )
+            backgroundView.frame = CGRect(origin: CGPoint(), size: transitionBackgroundFrame.size)
+            sourceRect = self.view.convert(transitionBackgroundFrame, to: nil)
+            sgTransitionBackgroundOrigin = transitionBackgroundFrame.origin
+        }
 
         let caretColor = richTextInputNode.inputCaretColor
         richTextInputNode.inputCaretColor = .clear
@@ -6187,16 +6451,23 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
 
         richTextInputNode.inputCaretColor = caretColor
 
-        if let textInputNodeSuperview = richTextInputNode.inputView.superview {
-            let _ = textInputNodeSuperview
-            contentView.frame = richTextInputNode.textFieldFrame.offsetBy(dx: 0.0, dy: self.textInputNodeClippingContainer.frame.minY)
+        if richTextInputNode.inputView.superview != nil {
+            var contentFrame = richTextInputNode.textFieldFrame.offsetBy(dx: 0.0, dy: self.textInputNodeClippingContainer.frame.minY)
+            // MARK: Swiftgram
+            // The text is placed against the trimmed background, which no longer starts where the field does: put it
+            // exactly where it is on screen.
+            if let sgTransitionBackgroundOrigin {
+                contentFrame = richTextInputNode.inputView.convert(richTextInputNode.inputView.bounds, to: self.view).offsetBy(dx: -sgTransitionBackgroundOrigin.x, dy: -sgTransitionBackgroundOrigin.y)
+            }
+            contentView.frame = contentFrame
         }
 
         return (
             backgroundView: backgroundView,
             contentView: contentView,
-            sourceRect: self.view.convert(self.bounds, to: nil),
-            scrollOffset: (self.richTextInputNode?.inputContentOffset.y ?? 0.0)
+            sourceRect: sourceRect,
+            scrollOffset: richTextInputNode.inputContentOffset.y,
+            sgControlsRowHeight: transitionBackgroundBottomOffset // MARK: Swiftgram
         )
     }
     
@@ -6237,6 +6508,66 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
 
 // MARK: Swiftgram
 extension ChatTextInputPanelNode {
+    
+    // The full-width text ends as far from the field's right edge as it starts from the left one. The editors end
+    // their text short of the text view's right edge for the accessory buttons (legacy 15pt, native 14pt), so the
+    // view reaches that far past the field's edge instead. Shrinking that margin would let the caret at a line end
+    // leave the view, which then scrolls sideways.
+    var sgExpandedTextViewRightInset: CGFloat {
+        let textRightMargin: CGFloat = (self.richTextInputNode?.usesNativeRichTextEngine ?? false) ? 14.0 : 15.0
+        return self.textInputViewInternalInsets.left - textRightMargin
+    }
+    
+    // Spaces and line breaks alone are trimmed away on send, so they don't count as something to send.
+    var sgInputIsBlank: Bool {
+        guard SGSimpleSettings.shared.wideGlassTextField, SGSimpleSettings.shared.wideGlassTextFieldMultiline, let richTextInputNode = self.richTextInputNode else {
+            return false
+        }
+        return !richTextInputNode.inputContentIsEmpty && richTextInputNode.inputContentIsEmptyWhitespaceTrimmed
+    }
+    
+    // A typed line break: the legacy input offers it through `chatInputTextNode(shouldChangeTextIn:)`, the native
+    // editors through `onShouldInsertLineBreak`, mid-keystroke, so a send waits for the keystroke to finish there.
+    // Returns whether to insert it.
+    func sgShouldInsertLineBreak(deferringSend: Bool) -> Bool {
+        if SGSimpleSettings.shared.sendWithReturnKey {
+            if deferringSend {
+                DispatchQueue.main.async { [weak self] in
+                    self?.sendButtonPressed()
+                }
+            } else {
+                self.sendButtonPressed()
+            }
+            return false
+        }
+        return !self.sgEnterEmptyMultilineInputIfNeeded()
+    }
+    
+    func sgEnterEmptyMultilineInputIfNeeded() -> Bool {
+        guard SGSimpleSettings.shared.wideGlassTextFieldMultiline, !self.currentTextInputViewInternalInsetsOffset.right.isZero, !self.isEmptyMultilineInput, let richTextInputNode = self.richTextInputNode, richTextInputNode.inputContentIsEmpty else {
+            return false
+        }
+        // An empty code block or quote in the native editors is still a block, and Return there is the editor's.
+        if richTextInputNode.usesNativeRichTextEngine, !richTextInputNode.currentInputContent().content.blocks.allSatisfy({ block in
+            if case .paragraph = block {
+                return true
+            }
+            return false
+        }) {
+            return false
+        }
+        self.isEmptyMultilineInput = true
+        self.updateTextHeight(animated: true)
+        return true
+    }
+    
+    func sgExitEmptyMultilineInput() {
+        guard self.isEmptyMultilineInput else {
+            return
+        }
+        self.isEmptyMultilineInput = false
+        self.updateTextHeight(animated: true)
+    }
     
     func initToolbarIfNeeded(context: AccountContext) {
         guard #available(iOS 13.0, *) else { return }

@@ -23,10 +23,15 @@ extension RichTextEngineEditorView {
             // keystrokes and pass untouched — the gate decides a keystroke, and an edit issued by a
             // rule has already been decided and carries its plan.
             guard !self.isDecidingAtGate, !self.isSettling, !self.isIssuingHostEdit else { return text }
+            // MARK: Swiftgram
+            // A typed line break is the host's first (`onShouldInsertLineBreak`), asked once here rather
+            // than in `decideTextInput`, which re-decides parts of one keystroke. A refusal is a veto.
+            let hostRefusesLineBreak = text == "\n" && !(self.onShouldInsertLineBreak?() ?? true)
+            //
             self.rolesBeforeEdit = self.currentRoles
             self.undoStepRegistrationCountAtGateEntry = self.undoStepRegistrationCount
             self.isDecidingAtGate = true
-            let decision = self.decideTextInput(range: range, text: text)
+            let decision = hostRefusesLineBreak ? .veto : self.decideTextInput(range: range, text: text) // MARK: Swiftgram
             self.isDecidingAtGate = false
             switch decision {
             case let .forward(forwarded):

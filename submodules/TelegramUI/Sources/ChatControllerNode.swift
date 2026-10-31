@@ -989,6 +989,8 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                         transition = .immediate
                     } else if let overrideUpdateTextInputHeightTransition = strongSelf.overrideUpdateTextInputHeightTransition {
                         transition = overrideUpdateTextInputHeightTransition
+                    } else if let textInputPanelNode = strongSelf.textInputPanelNode, textInputPanelNode.isExpandedInputStateChangePending { // MARK: Swiftgram
+                        transition = .animated(duration: 0.4, curve: .spring)
                     } else {
                         transition = .animated(duration: 0.1, curve: .easeInOut)
                     }
@@ -5455,12 +5457,16 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                             replyPanel = inputPanelNode.accessoryPanelView
                             
                             usedCorrelationId = correlationId
-                            let source: ChatMessageTransitionNodeImpl.Source = .textInput(textInput: ChatMessageTransitionNodeImpl.Source.TextInput(
+                            // MARK: Swiftgram
+                            let sgTextInput = ChatMessageTransitionNodeImpl.Source.TextInput(
                                 backgroundView: textInput.backgroundView,
                                 contentView: textInput.contentView,
                                 sourceRect: textInput.sourceRect,
                                 scrollOffset: textInput.scrollOffset
-                            ), replyPanel: replyPanel)
+                            )
+                            sgTextInput.sgControlsRowHeight = textInput.sgControlsRowHeight
+                            //
+                            let source: ChatMessageTransitionNodeImpl.Source = .textInput(textInput: sgTextInput, replyPanel: replyPanel) // MARK: Swiftgram
                             self.messageTransitionNode.add(correlationId: correlationId, source: source, initiated: {
                             })
                         }
