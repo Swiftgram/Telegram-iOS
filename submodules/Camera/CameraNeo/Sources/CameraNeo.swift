@@ -597,6 +597,11 @@ final class CameraNeo: NSObject, CameraProtocol {
         }
         let audioConfigured = !self.configuration.audio || self.configureAudio()
         self.session.commitConfiguration()
+        // MARK: Swiftgram
+        if !self.useMultiCam {
+            self.sgApplyNeutralZoom(position: self.positionValue.with { $0 })
+        }
+        //
         self.configureVideoStabilization()
         if videoConfigured && self.useMultiCam {
             videoConfigured = self.configureSupportedMultiCamCosts()
@@ -993,6 +998,7 @@ final class CameraNeo: NSObject, CameraProtocol {
         }
         //
         self.session.commitConfiguration()
+        self.sgApplyNeutralZoom(position: position) // MARK: Swiftgram
         self.configureVideoStabilization()
         self.logCaptureState(reason: "camera switched")
 
@@ -1029,6 +1035,18 @@ final class CameraNeo: NSObject, CameraProtocol {
         self.hasTorchPromise.set(device.hasTorch && device.isTorchAvailable)
         self.isFlashActivePromise.set(device.torchMode == .on)
     }
+
+    // MARK: Swiftgram
+    /// Committing a single camera session leaves a virtual back camera on its ultra-wide lens, whatever was set before.
+    private func sgApplyNeutralZoom(position: Camera.Position) {
+        guard position == .back, let backDevice = self.backDevice else {
+            return
+        }
+        self.withLockedDevice(backDevice) { device in
+            sgConfigureRoundVideoVirtualDevice(device)
+        }
+    }
+    //
 
     private func updateZoom(_ value: @escaping (AVCaptureDevice) -> CGFloat) {
         self.sessionQueue.async { [weak self] in
