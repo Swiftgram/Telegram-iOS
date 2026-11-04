@@ -517,3 +517,12 @@ open class TabBarControllerImpl: ViewController, TabBarController {
         }
     }
 }
+
+
+// MARK: Swiftgram
+extension TabBarControllerImpl {
+    public var sgIsTabBarHidden: Bool {
+        return self.tabBarControllerNode.tabBarHidden
+    }
+}
+//
