@@ -1491,10 +1491,14 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                     self.registerForNotifications(context: context.context, authorize: authorizeNotifications)
                     
                     self.resetIntentsIfNeeded(context: context.context)
+                    // MARK: Swiftgram - Disable automatic prompts to send crash logs to the upstream bot.
+                    #if false
                     self.crashReportPromptDisposable.set(setupCrashReportPrompt(context: context.context, isInternalBuild: buildConfig.isInternalBuild, navigationController: context.rootController, present: { [weak appDelegate = self, weak applicationContext = context] controller in
                         guard let appDelegate, let applicationContext, appDelegate.contextValue === applicationContext else { return }
                         appDelegate.mainWindow.present(controller, on: .root)
                     }))
+                    #endif
+                    //
                     
                     // MARK: Swiftgram
                     updateSGWebSettingsInteractivelly(context: context.context)

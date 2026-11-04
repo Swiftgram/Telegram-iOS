@@ -1028,7 +1028,7 @@ private enum DebugControllerEntry: ItemListNodeEntry {
         switch self {
         // MARK: Swiftgram
         case .SGDebug:
-            return ItemListDisclosureItem(presentationData: presentationData, title: "Swiftgram Debug", label: "", sectionId: self.section, style: .blocks, action: {
+            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: "Swiftgram Debug", label: "", sectionId: self.section, style: .blocks, action: {
                 guard let context = arguments.context else {
                     return
                 }
