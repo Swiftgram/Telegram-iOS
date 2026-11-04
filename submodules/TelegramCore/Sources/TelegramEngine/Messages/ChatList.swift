@@ -678,7 +678,7 @@ extension EngineChatList.AdditionalItem {
 }
 
 public extension EngineChatList {
-    convenience init(_ view: ChatListView, accountPeerId: PeerId, sgIncludeAvailableItemsAfterHoles: Bool = false) { // MARK: Swiftgram
+    convenience init(_ view: ChatListView, accountPeerId: PeerId) {
         var isLoading = false
         
         var displaySavedMessagesAsTopicList = false
@@ -697,9 +697,7 @@ public extension EngineChatList {
                 }
             case .HoleEntry:
                 isLoading = true
-                if !sgIncludeAvailableItemsAfterHoles { // MARK: Swiftgram
-                    break loop
-                } // MARK: Swiftgram
+                break loop
             }
         }
 
