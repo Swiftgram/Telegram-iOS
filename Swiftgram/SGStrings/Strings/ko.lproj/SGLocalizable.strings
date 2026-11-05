@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "라운드 비디오";
 "Settings.VideoNotes.StartWithRearCam" = "후면 카메라로 시작";
+"Settings.VideoNotes.ResetZoom" = "항상 확대 초기화";
 
 "Settings.CustomColors.Header" = "계정 색상";
 "Settings.CustomColors.Saturation" = "채도";

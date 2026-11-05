@@ -40,10 +40,20 @@ apple_resource_bundle(
     ],
 )
 
+# MARK: Swiftgram
+sgsrcs = [
+    "//Swiftgram/SGCameraNeoExtensions:SGCameraNeoExtensions",
+]
+
+sgdeps = [
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+]
+#
+
 swift_library(
     name = "CameraNeo",
     module_name = "CameraNeo",
-    srcs = glob([
+    srcs = sgsrcs + glob([ # MARK: Swiftgram
         "Sources/**/*.swift",
     ]),
     copts = [
@@ -52,7 +62,7 @@ swift_library(
     data = [
         ":CameraNeoBundle",
     ],
-    deps = [
+    deps = sgdeps + [ # MARK: Swiftgram
         "//submodules/AppBundle",
         "//submodules/Camera",
         "//submodules/GZip",

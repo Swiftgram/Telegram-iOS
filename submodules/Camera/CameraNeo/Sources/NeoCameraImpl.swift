@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
 import AVFoundation
@@ -6,7 +7,14 @@ import CoreVideo
 import DeviceModel
 import Camera
 
-let roundVideoCaptureFrameRate: Double = 30.0
+// MARK: Swiftgram
+/// Taken when a camera screen opens, so a recording in progress never sees a settings change.
+var sgRoundVideoProfile = SGSimpleSettings.shared.roundVideoProfile
+//
+
+var roundVideoCaptureFrameRate: Double { // MARK: Swiftgram
+    return sgRoundVideoProfile.frameRate
+}
 
 enum RoundVideoCaptureProfile: Int, CaseIterable {
     // Budget tiers: rear uses 16:9, front uses 4:3 to retain its field of view.
@@ -18,6 +26,11 @@ enum RoundVideoCaptureProfile: Int, CaseIterable {
         switch (position, width, height) {
         case (.back, 1920, 1080), (.front, 1920, 1440): self = .high
         case (.back, 1280, 720), (.front, 1280, 960): self = .medium
+        // MARK: Swiftgram
+        // The front camera's 4:3 formats stop at 30 FPS. Its 16:9 ones reach 60 with a narrower view.
+        case (.front, 1920, 1080) where sgRoundVideoProfile.frameRate > 30.0: self = .high
+        case (.front, 1280, 720) where sgRoundVideoProfile.frameRate > 30.0: self = .medium
+        //
         case (_, 640, 480): self = .vga
         default: return nil
         }
@@ -37,7 +50,8 @@ private func selectRoundVideoCaptureFormat(
     requiresMultiCam: Bool,
     preferStabilization: Bool,
     preferMediumProfile: Bool,
-    maximumProfile: RoundVideoCaptureProfile = .high
+    maximumProfile: RoundVideoCaptureProfile = .high,
+    /* MARK: Swiftgram */ frameRate: Double = roundVideoCaptureFrameRate
 ) -> Int? {
     let eligible = candidates.indices.filter { index in
         let candidate = candidates[index]
@@ -46,7 +60,7 @@ private func selectRoundVideoCaptureFormat(
         }
         return candidate.isNV12
             && (!requiresMultiCam || candidate.supportsMultiCam)
-            && candidate.frameRateRanges.contains(where: { $0.contains(roundVideoCaptureFrameRate) })
+            && candidate.frameRateRanges.contains(where: { $0.contains(frameRate) }) // MARK: Swiftgram
     }
     return eligible.min { lhsIndex, rhsIndex in
         let lhs = candidates[lhsIndex]
@@ -109,6 +123,16 @@ func roundVideoCaptureFormat(
         preferStabilization: mode != .vga && device.position == .back,
         preferMediumProfile: device.position == .front,
         maximumProfile: mode == .vga ? .vga : maximumProfile
+    // MARK: Swiftgram
+    // A camera without a 60 FPS format records at 30.
+    ) ?? selectRoundVideoCaptureFormat(
+        candidates,
+        requiresMultiCam: requiresMultiCam,
+        preferStabilization: mode != .vga && device.position == .back,
+        preferMediumProfile: device.position == .front,
+        maximumProfile: mode == .vga ? .vga : maximumProfile,
+        frameRate: 30.0
+    //
     ) else {
         return nil
     }
@@ -122,6 +146,12 @@ private func supportsDualCameraCapture(forRoundVideo: Bool, mode: NeoCameraImpl.
     if forRoundVideo && DeviceModel.current == .iPhoneXR {
         return false
     }
+    // MARK: Swiftgram
+    // The multi-camera budget steps down resolution only, and two 60 FPS cameras are rarely within it.
+    if forRoundVideo && sgRoundVideoProfile.frameRate > 30.0 {
+        return false
+    }
+    //
     let positions: [AVCaptureDevice.Position] = [.back, .front]
     return positions.allSatisfy { position in
         guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position) else {
@@ -146,6 +176,12 @@ public final class NeoCameraImpl: CameraImpl {
     public init(roundVideoMode: RoundVideoMode = .hdBilinear, log: ((String) -> Void)? = nil) {
         self.roundVideoMode = roundVideoMode
         self.log = log
+        // MARK: Swiftgram
+        sgRoundVideoProfile = SGSimpleSettings.shared.roundVideoProfile
+        if roundVideoMode == .vga {
+            sgRoundVideoProfile.outputSide = min(sgRoundVideoProfile.outputSide, 480)
+        }
+        //
         RoundVideoDecorationProvider.shared.warmUp()
     }
 

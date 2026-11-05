@@ -968,7 +968,7 @@ public class VideoMessageCameraScreen: ViewController {
             case .vga:
                 mode = .vga
             case .hdBilinear:
-                mode = .hdBilinear
+                mode = SGSimpleSettings.shared.videoNotesMaximumQuality ? .hdLanczos : .hdBilinear // MARK: Swiftgram
             case .hdLanczos:
                 mode = .hdLanczos
             }
@@ -1093,6 +1093,13 @@ public class VideoMessageCameraScreen: ViewController {
             guard let controller = self.controller, controller.allowLiveUpload, self.liveUploadInterface == nil else {
                 return
             }
+            // MARK: Swiftgram
+            // At maximum quality a recording may outgrow the server's limit, and then only its compressed copy is
+            // sent. A live upload of it would be wasted, and the server refuses small parts at part 120 of 256 KB.
+            if SGSimpleSettings.shared.videoNotesMaximumQuality {
+                return
+            }
+            //
             let liveUploadInterface = LegacyLiveUploadInterface(context: self.context)
             Queue.mainQueue().after(1.5, {
                 liveUploadInterface.setup(withFileURL: URL(fileURLWithPath: filePath))
@@ -1108,7 +1115,39 @@ public class VideoMessageCameraScreen: ViewController {
             
             let pinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(self.handlePinch(_:)))
             self.view.addGestureRecognizer(pinchGestureRecognizer)
+            // MARK: Swiftgram
+            if SGSimpleSettings.shared.videoNotesTapToFocus {
+                self.view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.sgHandleFocusTap(_:))))
+            }
+            //
         }
+        
+        // MARK: Swiftgram
+        @objc private func sgHandleFocusTap(_ gestureRecognizer: UITapGestureRecognizer) {
+            guard case .ended = gestureRecognizer.state, let camera = self.camera, self.resultPreviewView == nil else {
+                return
+            }
+            let location = gestureRecognizer.location(in: self.previewContainerView)
+            let bounds = self.previewContainerView.bounds
+            guard hypot(location.x - bounds.midX, location.y - bounds.midY) <= bounds.width * 0.5 else {
+                return
+            }
+            let previewView = self.cameraState.isDualCameraEnabled && self.cameraState.position == .front ? self.additionalPreviewView : self.mainPreviewView
+            camera.focus(at: previewView.cameraPoint(for: gestureRecognizer.location(in: previewView)), autoFocus: true)
+            
+            let indicatorSize: CGFloat = 64.0
+            let indicatorView = UIView(frame: CGRect(x: location.x - indicatorSize * 0.5, y: location.y - indicatorSize * 0.5, width: indicatorSize, height: indicatorSize))
+            indicatorView.isUserInteractionEnabled = false
+            indicatorView.layer.cornerRadius = indicatorSize * 0.5
+            indicatorView.layer.borderWidth = 1.5
+            indicatorView.layer.borderColor = UIColor.white.cgColor
+            self.previewContainerView.addSubview(indicatorView)
+            indicatorView.layer.animateScale(from: 1.3, to: 1.0, duration: 0.2)
+            indicatorView.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.25, delay: 0.7, removeOnCompletion: false, completion: { [weak indicatorView] _ in
+                indicatorView?.removeFromSuperview()
+            })
+        }
+        //
                 
         fileprivate func setupCamera() {
             guard self.camera == nil else {
@@ -1170,7 +1209,7 @@ public class VideoMessageCameraScreen: ViewController {
             case .ended:
                 let pinchStartTimestamp = self.pinchStartTimestamp
                 self.pinchStartTimestamp = nil
-                if let pinchStartTimestamp, CACurrentMediaTime() - pinchStartTimestamp <= 0.5 {
+                if let pinchStartTimestamp, CACurrentMediaTime() - pinchStartTimestamp <= 0.5, !SGSimpleSettings.shared.videoNotesResetZoom /* MARK: Swiftgram */ {
                     return
                 }
                 self.camera?.rampZoom(1.0, rate: 8.0)
@@ -1989,7 +2028,14 @@ public class VideoMessageCameraScreen: ViewController {
             } else {
                 finalDuration = duration
             }
-            
+
+            // MARK: Swiftgram
+            // Above the server's limit a round video arrives as a plain one, so it goes through the export, which fits it.
+            if let fileSize = (try? FileManager.default.attributesOfItem(atPath: video.videoPath))?[.size] as? NSNumber, fileSize.intValue > SGSimpleSettings.RoundVideoProfile.maximumFileSize {
+                hasAdjustments = true
+            }
+            //
+
             let dimensions = video.dimensions
             
             let thumbnailImage: Signal<UIImage, NoError>

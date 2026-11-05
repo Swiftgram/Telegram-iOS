@@ -66,6 +66,11 @@
 
 "Settings.VideoNotes.Header" = "КРУГЛЫЕ ВИДЕО";
 "Settings.VideoNotes.StartWithRearCam" = "На заднюю камеру";
+"Settings.VideoNotes.ResetZoom" = "Всегда сбрасывать зум";
+"Settings.VideoNotes.60FPS" = "Запись в 60 FPS";
+"Settings.VideoNotes.MaximumQuality" = "Максимальное качество (640p)";
+"Settings.VideoNotes.Quality.Notice" = "Чем выше качество, тем больше файл: он дольше отправляется и у получателей может не скачиваться автоматически. Telegram оставляет кружок кружком только до 12 МБ, поэтому длинная запись сжимается перед отправкой, и чем она длиннее, тем ниже качество. В 60 FPS у фронтальной камеры уже угол обзора, а при смене камеры во время записи будет короткий пропуск.";
+"Settings.VideoNotes.TapToFocus" = "Фокус по тапу";
 
 "Settings.CustomColors.Header" = "ПЕРСОНАЛЬНЫЕ ЦВЕТА";
 "Settings.CustomColors.Saturation" = "НАСЫЩЕННОСТЬ";

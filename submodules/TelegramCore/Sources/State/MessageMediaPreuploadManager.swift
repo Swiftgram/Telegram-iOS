@@ -109,7 +109,7 @@ private final class MessageMediaPreuploadManagerContext {
         }
     }
 
-    func upload(network: Network, postbox: Postbox, source: MultipartUploadSource, encrypt: Bool, tag: MediaResourceFetchTag?, hintFileSize: Int64?, hintFileIsLarge: Bool, forceNoBigParts: Bool) -> Signal<MultipartUploadResult, MultipartUploadError> {
+    func upload(network: Network, postbox: Postbox, source: MultipartUploadSource, encrypt: Bool, tag: MediaResourceFetchTag?, hintFileSize: Int64?, hintFileIsLarge: Bool, forceNoBigParts: Bool, /* MARK: Swiftgram */ useLargerParts: Bool) -> Signal<MultipartUploadResult, MultipartUploadError> {
         let queue = self.queue
         return Signal { [weak self] subscriber in
             if let strongSelf = self {
@@ -143,7 +143,7 @@ private final class MessageMediaPreuploadManagerContext {
                         }
                     }
                 } else {
-                    return multipartUpload(network: network, postbox: postbox, source: source, encrypt: encrypt, tag: tag, hintFileSize: hintFileSize, hintFileIsLarge: hintFileIsLarge, forceNoBigParts: forceNoBigParts).start(next: { next in
+                    return multipartUpload(network: network, postbox: postbox, source: source, encrypt: encrypt, tag: tag, hintFileSize: hintFileSize, hintFileIsLarge: hintFileIsLarge, forceNoBigParts: forceNoBigParts, /* MARK: Swiftgram */ useLargerParts: useLargerParts).start(next: { next in
                         subscriber.putNext(next)
                     }, error: { error in
                         subscriber.putError(error)
@@ -184,10 +184,10 @@ final class MessageMediaPreuploadManager {
         return disposable
     }
 
-    func upload(network: Network, postbox: Postbox, source: MultipartUploadSource, encrypt: Bool, tag: MediaResourceFetchTag?, hintFileSize: Int64?, hintFileIsLarge: Bool, forceNoBigParts: Bool) -> Signal<MultipartUploadResult, MultipartUploadError> {
+    func upload(network: Network, postbox: Postbox, source: MultipartUploadSource, encrypt: Bool, tag: MediaResourceFetchTag?, hintFileSize: Int64?, hintFileIsLarge: Bool, forceNoBigParts: Bool, /* MARK: Swiftgram */ useLargerParts: Bool = false) -> Signal<MultipartUploadResult, MultipartUploadError> {
         return Signal<Signal<MultipartUploadResult, MultipartUploadError>, MultipartUploadError> { subscriber in
             self.impl.with { context in
-                subscriber.putNext(context.upload(network: network, postbox: postbox, source: source, encrypt: encrypt, tag: tag, hintFileSize: hintFileSize, hintFileIsLarge: hintFileIsLarge, forceNoBigParts: forceNoBigParts))
+                subscriber.putNext(context.upload(network: network, postbox: postbox, source: source, encrypt: encrypt, tag: tag, hintFileSize: hintFileSize, hintFileIsLarge: hintFileIsLarge, forceNoBigParts: forceNoBigParts, /* MARK: Swiftgram */ useLargerParts: useLargerParts))
                 subscriber.putCompletion()
             }
             return EmptyDisposable
