@@ -1217,7 +1217,7 @@ public class ItemListPeerItemNode: ItemListRevealOptionsItemNode, ItemListItemNo
             if item.editing.editing {
                 let sizeAndApply = editableControlLayout(item.presentationData.theme, false)
                 editableControlSizeAndApply = sizeAndApply
-                editingOffset = sizeAndApply.0
+                editingOffset = (item.editing.canBeReordered && !item.editing.editable) ? 0.0 : sizeAndApply.0 // MARK: Swiftgram
                 
                 if item.editing.canBeReordered {
                     let reorderSizeAndApply = reorderControlLayout(item.presentationData.theme)

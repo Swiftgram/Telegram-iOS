@@ -128,6 +128,7 @@ private enum SGSliderSetting: String {
 private enum SGDisclosureLink: String {
     case contentSettings
     case languageSettings
+    case accountOrder
 }
 
 private struct PeerNameColorScreenState: Equatable {
@@ -306,6 +307,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     
     id.increment(10000)
     entries.append(.header(id: id.count, section: .other, text: strings.Appearance_Other.uppercased(), badge: nil))
+    entries.append(.disclosure(id: id.count, section: .other, link: .accountOrder, text: i18n("Settings.AccountOrder", lang)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .videoControlsInFooter, value: SGSimpleSettings.shared.videoControlsInFooter, text: i18n("Settings.videoControlsInFooter", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .swipeForVideoPIP, value: SGSimpleSettings.shared.videoPIPSwipeDirection == SGSimpleSettings.VideoPIPSwipeDirection.up.rawValue, text: i18n("Settings.swipeForVideoPIP", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.swipeForVideoPIP.Notice", lang)))
@@ -695,6 +697,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
         switch (link) {
             case .languageSettings:
                 pushControllerImpl?(context.sharedContext.makeLocalizationListController(context: context))
+            case .accountOrder:
+                pushControllerImpl?(sgAccountOrderController(context: context))
             case .contentSettings:
                 let _ = (getSGSettingsURL(context: context) |> deliverOnMainQueue).start(next: { [weak context] url in
                     guard let strongContext = context else {

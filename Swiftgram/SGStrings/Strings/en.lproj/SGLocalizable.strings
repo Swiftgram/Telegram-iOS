@@ -282,3 +282,5 @@
 "Settings.NY.Style.lightning" = "Lightning";
 "Settings.NY.Notice" = "Available for a limited time only!";
 "Settings.HideAccountInNotifications" = "Hide Account in Notifications";
+"Settings.AccountOrder" = "Account Order";
+"Settings.AccountOrder.Notice" = "Drag accounts to reorder them. The order is used in Settings and in the account menu, where the current account stays first.";
