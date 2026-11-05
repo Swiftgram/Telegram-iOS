@@ -249,3 +249,4 @@
 "PayWall.ValidationError.Expired" = "您的訂閱已過期。請重新訂閱以恢復訪問 Pro 功能。";
 "Settings.videoControlsInFooter" = "底部影片控制項";
 "Settings.HideAccountInNotifications" = "在通知中隱藏帳號";
+"Settings.classicChatScrollAnimation" = "經典聊天捲動動畫";

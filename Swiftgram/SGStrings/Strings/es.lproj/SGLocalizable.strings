@@ -151,3 +151,4 @@
 "Settings.swipeForVideoPIP" = "Video PIP con deslizamiento";
 "Settings.swipeForVideoPIP.Notice" = "Si está habilitado, deslizar el video lo abrirá en modo imagen en imagen.";
 "Settings.videoControlsInFooter" = "Controles de vídeo abajo";
+"Settings.classicChatScrollAnimation" = "Animación clásica de desplazamiento del chat";
