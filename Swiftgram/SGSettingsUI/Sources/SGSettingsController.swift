@@ -105,6 +105,7 @@ private enum SGBoolSetting: String {
     case nyStyleSnow
     case nyStyleLightning
     case tabBarSearchEnabled
+    case hideChatListSearchBar
     case videoControlsInFooter
     case hideAccountInNotifications
 }
@@ -175,6 +176,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .tabs, settingName: .showCallsTab, value: callListSettings.showTab, text: strings.CallSettings_TabIcon, enabled: !SGSimpleSettings.shared.hideTabBar))
     entries.append(.toggle(id: id.count, section: .tabs, settingName: .showTabNames, value: SGSimpleSettings.shared.showTabNames, text: i18n("Settings.Tabs.ShowNames", lang), enabled: !SGSimpleSettings.shared.hideTabBar))
     entries.append(.toggle(id: id.count, section: .tabs, settingName: .tabBarSearchEnabled, value: SGSimpleSettings.shared.tabBarSearchEnabled, text: i18n("Settings.Tabs.SearchButton", lang), enabled: !SGSimpleSettings.shared.hideTabBar))
+    entries.append(.toggle(id: id.count, section: .tabs, settingName: .hideChatListSearchBar, value: SGSimpleSettings.shared.hideChatListSearchBar, text: i18n("Settings.Tabs.HideTopSearchBar", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .tabs, settingName: .wideTabBar, value: SGSimpleSettings.shared.wideTabBar, text: i18n("Settings.Tabs.WideTabBar", lang), enabled: !SGSimpleSettings.shared.hideTabBar))
     entries.append(.notice(id: id.count, section: .tabs, text: i18n("Settings.Tabs.WideTabBar.Notice", lang)))
     
@@ -387,6 +389,9 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             ).start()
         case .tabBarSearchEnabled:
             SGSimpleSettings.shared.tabBarSearchEnabled = value
+        case .hideChatListSearchBar:
+            SGSimpleSettings.shared.hideChatListSearchBar = value
+            askForRestart?()
         case .wideTabBar:
             SGSimpleSettings.shared.wideTabBar = value
             askForRestart?()
