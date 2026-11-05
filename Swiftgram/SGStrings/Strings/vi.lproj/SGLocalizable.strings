@@ -130,6 +130,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Double-tap để chỉnh sửa tin nhắn";
 
 "Settings.wideChannelPosts" = "Bài đăng rộng trong các kênh";
+"Settings.wideGlassTextField" = "Trường văn bản kính rộng";
 "Settings.ForceEmojiTab" = "Bàn phím Emoji mặc định";
 
 "Settings.forceBuiltInMic" = "Buộc Micro Điện Thoại";

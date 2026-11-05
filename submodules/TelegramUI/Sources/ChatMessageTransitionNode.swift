@@ -490,6 +490,7 @@ public final class ChatMessageTransitionNodeImpl: ASDisplayNode, ChatMessageTran
             let contentView: UIView
             let sourceRect: CGRect
             let scrollOffset: CGFloat
+            var sgControlsRowHeight: CGFloat = 0.0 // MARK: Swiftgram
 
             init(backgroundView: UIView, contentView: UIView, sourceRect: CGRect, scrollOffset: CGFloat) {
                 self.backgroundView = backgroundView
@@ -728,6 +729,15 @@ public final class ChatMessageTransitionNodeImpl: ASDisplayNode, ChatMessageTran
                 let targetAbsoluteRect = self.contextSourceNode.view.convertAcrossWindows(self.contextSourceNode.contentRect, to: self.view)
 
                 let sourceRect = convertAnimatingSourceRectFromWindow(initialTextInput.sourceRect, toView: self.view)
+                // MARK: Swiftgram
+                // The full-width multiline field is wider than the bubble, so the bubble can wrap onto more lines than the field.
+                // The source then grows down into the field's controls row, so the bubble starts tall enough for its text and
+                // doesn't clip its last lines.
+                let sgBackgroundExtension = max(0.0, min(initialTextInput.sgControlsRowHeight, self.contextSourceNode.contentRect.height - initialTextInput.backgroundView.bounds.height))
+                if !sgBackgroundExtension.isZero {
+                    initialTextInput.backgroundView.frame.size.height += sgBackgroundExtension
+                }
+                //
                 let sourceBackgroundAbsoluteRect = initialTextInput.backgroundView.frame.offsetBy(dx: sourceRect.minX, dy: sourceRect.minY)
                 let sourceAbsoluteRect = CGRect(origin: CGPoint(x: sourceBackgroundAbsoluteRect.minX, y: sourceBackgroundAbsoluteRect.maxY - self.contextSourceNode.contentRect.height), size: self.contextSourceNode.contentRect.size)
 
@@ -766,8 +776,13 @@ public final class ChatMessageTransitionNodeImpl: ASDisplayNode, ChatMessageTran
 
                 self.itemNode.cancelInsertionAnimations()
 
-                let textHorizontalDuration = self.parameters.textHorizontalDuration
-                let horizontalCurve = self.parameters.horizontalCurve
+                // MARK: Swiftgram
+                // That field also starts well left of where the bubble lands, too far for the quick horizontal curve, which
+                // covers most of it in the first frames: the bubble moves along the vertical curve instead.
+                let sgMovesAlongVerticalCurve = !initialTextInput.sgControlsRowHeight.isZero
+                //
+                let textHorizontalDuration = sgMovesAlongVerticalCurve ? verticalDuration : self.parameters.textHorizontalDuration // MARK: Swiftgram
+                let horizontalCurve = sgMovesAlongVerticalCurve ? self.parameters.verticalCurve : self.parameters.horizontalCurve // MARK: Swiftgram
                 let horizontalTransition: ContainedViewLayoutTransition = .animated(duration: textHorizontalDuration, curve: horizontalCurve)
                 let verticalCurve = self.parameters.verticalCurve
                 let verticalTransition: ContainedViewLayoutTransition = .animated(duration: verticalDuration, curve: verticalCurve)

@@ -83,6 +83,7 @@ public struct ExperimentalUISettings: Codable, Equatable {
     public var forceClearGlass: Bool
     public var debugRipple: Bool
     public var useInputDecEngine: Bool
+    public var useNativeTextInput: Bool // MARK: Swiftgram
     public var coreListChatBackend: Bool
     public var inputDecTextBackend: Bool
     public var forceRLottieBackend: Bool
@@ -145,6 +146,7 @@ public struct ExperimentalUISettings: Codable, Equatable {
             forceClearGlass: false,
             debugRipple: false,
             useInputDecEngine: false,
+            useNativeTextInput: false, // MARK: Swiftgram
             coreListChatBackend: false,
             inputDecTextBackend: false,
             forceRLottieBackend: false,
@@ -205,6 +207,7 @@ public struct ExperimentalUISettings: Codable, Equatable {
         forceClearGlass: Bool,
         debugRipple: Bool,
         useInputDecEngine: Bool,
+        useNativeTextInput: Bool, // MARK: Swiftgram
         coreListChatBackend: Bool,
         inputDecTextBackend: Bool,
         forceRLottieBackend: Bool,
@@ -263,6 +266,7 @@ public struct ExperimentalUISettings: Codable, Equatable {
         self.forceClearGlass = forceClearGlass
         self.debugRipple = debugRipple
         self.useInputDecEngine = useInputDecEngine
+        self.useNativeTextInput = useNativeTextInput // MARK: Swiftgram
         self.coreListChatBackend = coreListChatBackend
         self.inputDecTextBackend = inputDecTextBackend
         self.forceRLottieBackend = forceRLottieBackend
@@ -327,6 +331,7 @@ public struct ExperimentalUISettings: Codable, Equatable {
         // `?? false` like its neighbours: an existing settings blob predates this key, and a
         // decode failure here would reset every other experimental flag the user has set.
         self.useInputDecEngine = try container.decodeIfPresent(Bool.self, forKey: "useInputDecEngine") ?? false
+        self.useNativeTextInput = try container.decodeIfPresent(Bool.self, forKey: "useNativeTextInput") ?? false // MARK: Swiftgram
         self.coreListChatBackend = try container.decodeIfPresent(Bool.self, forKey: "coreListChatBackend") ?? false
         self.inputDecTextBackend = try container.decodeIfPresent(Bool.self, forKey: "inputDecTextBackend") ?? false
         self.forceRLottieBackend = try container.decodeIfPresent(Bool.self, forKey: "forceRLottieBackend") ?? false
@@ -389,6 +394,7 @@ public struct ExperimentalUISettings: Codable, Equatable {
         try container.encodeIfPresent(self.forceClearGlass, forKey: "forceClearGlass")
         try container.encodeIfPresent(self.debugRipple, forKey: "debugRipple")
         try container.encodeIfPresent(self.useInputDecEngine, forKey: "useInputDecEngine")
+        try container.encodeIfPresent(self.useNativeTextInput, forKey: "useNativeTextInput") // MARK: Swiftgram
         try container.encodeIfPresent(self.coreListChatBackend, forKey: "coreListChatBackend")
         try container.encodeIfPresent(self.inputDecTextBackend, forKey: "inputDecTextBackend")
         try container.encodeIfPresent(self.forceRLottieBackend, forKey: "forceRLottieBackend")

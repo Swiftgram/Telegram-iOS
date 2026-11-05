@@ -151,6 +151,8 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Редактирование двойным тапом";
 
 "Settings.wideChannelPosts" = "Широкие посты в каналах";
+"Settings.wideGlassTextField" = "Широкое стеклянное поле ввода";
+"Settings.wideGlassTextFieldMultiline" = "Многострочный текст на всю ширину";
 "Settings.ForceEmojiTab" = "Сначала вкладка смайлов";
 
 "Settings.forceBuiltInMic" = "Микрофон устройства";

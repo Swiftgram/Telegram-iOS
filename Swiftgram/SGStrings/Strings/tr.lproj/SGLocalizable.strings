@@ -130,6 +130,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Mesajı düzenlemek için çift dokunun";
 
 "Settings.wideChannelPosts" = "Kanallardaki geniş gönderiler";
+"Settings.wideGlassTextField" = "Geniş cam metin alanı";
 "Settings.ForceEmojiTab" = "Varsayılan olarak Emoji klavyesi";
 
 "Settings.forceBuiltInMic" = "Cihaz Mikrofonunu Zorla";

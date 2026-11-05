@@ -129,6 +129,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Appuyez deux fois pour modifier le message";
 
 "Settings.wideChannelPosts" = "Messages larges dans les canaux";
+"Settings.wideGlassTextField" = "Champ de texte large en verre";
 "Settings.ForceEmojiTab" = "Clavier emoji par défaut";
 
 "Settings.forceBuiltInMic" = "Forcer le microphone de l'appareil";

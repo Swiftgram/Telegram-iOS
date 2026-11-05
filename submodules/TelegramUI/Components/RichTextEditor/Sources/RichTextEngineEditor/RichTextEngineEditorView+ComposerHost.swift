@@ -359,6 +359,20 @@ extension RichTextEngineEditorView {
         set { composerHostState.onHardwareReturn = newValue }
     }
 
+    // MARK: Swiftgram
+    /// Consulted at the surface gate before a typed line break is decided; `false` drops the keystroke.
+    public var onShouldInsertLineBreak: (() -> Bool)? {
+        get { composerHostState.onShouldInsertLineBreak }
+        set { composerHostState.onShouldInsertLineBreak = newValue }
+    }
+
+    /// Fired when Backspace reaches a caret, before any rule or the engine applies it.
+    public var onWillDeleteBackward: (() -> Void)? {
+        get { composerHostState.onWillDeleteBackward }
+        set { composerHostState.onWillDeleteBackward = newValue }
+    }
+    //
+
     /// Fired after the ENGINE takes the responder role — see `+Responder.swift`, where the wrapper
     /// deliberately never calls `super.becomeFirstResponder()`.
     public var onBecameFirstResponder: (() -> Void)? {
@@ -451,6 +465,8 @@ public struct ComposerHostState {
     /// composer sets it `false` explicitly.
     public var tapBelowAddsTrailingParagraph = true
     public var onHardwareReturn: ((UIKeyModifierFlags) -> Bool)?
+    public var onShouldInsertLineBreak: (() -> Bool)? // MARK: Swiftgram
+    public var onWillDeleteBackward: (() -> Void)? // MARK: Swiftgram
     public var onBecameFirstResponder: (() -> Void)?
     public var onResignedFirstResponder: (() -> Void)?
     public var theme: RichTextEditorTheme = .default

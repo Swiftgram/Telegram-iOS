@@ -130,6 +130,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Doppio tap per modificare il messaggio";
 
 "Settings.wideChannelPosts" = "Ampie colonne nei canali";
+"Settings.wideGlassTextField" = "Ampio campo di testo in vetro";
 "Settings.ForceEmojiTab" = "Tastiera emoji predefinita";
 
 "Settings.forceBuiltInMic" = "Forza Microfono Dispositivo";

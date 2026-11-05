@@ -132,6 +132,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Paina kahdesti muokataksesi viestiä";
 
 "Settings.wideChannelPosts" = "Leveitä viestejä kanavissa";
+"Settings.wideGlassTextField" = "Leveä lasinen tekstikenttä";
 "Settings.ForceEmojiTab" = "Emojivälilehti ensin";
 
 "Settings.forceBuiltInMic" = "Pakota laitteen mikrofoni";

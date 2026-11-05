@@ -85,6 +85,8 @@ public protocol RichTextEditor: UIView {
     var canvasBackgroundColor: UIColor? { get set }
     var tapBelowAddsTrailingParagraph: Bool { get set }
     var onHardwareReturn: ((UIKeyModifierFlags) -> Bool)? { get set }
+    var onShouldInsertLineBreak: (() -> Bool)? { get set } // MARK: Swiftgram
+    var onWillDeleteBackward: (() -> Void)? { get set } // MARK: Swiftgram
     var onBecameFirstResponder: (() -> Void)? { get set }
     var onResignedFirstResponder: (() -> Void)? { get set }
 

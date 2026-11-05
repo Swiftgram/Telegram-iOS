@@ -130,6 +130,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Dobbelttrykk for å redigere meldingen";
 
 "Settings.wideChannelPosts" = "Brede innlegg i kanaler";
+"Settings.wideGlassTextField" = "Bredt tekstfelt i glass";
 "Settings.ForceEmojiTab" = "Emoji-tastatur som standard";
 
 "Settings.forceBuiltInMic" = "Tving Mikrofon på enheten";
