@@ -178,6 +178,7 @@ public class SGSimpleSettings {
         case showProfileId
         case sendWithReturnKey
         case videoControlsInFooter
+        case combinedMediaViewer
         case hideAccountInNotifications
     }
     
@@ -334,6 +335,7 @@ public class SGSimpleSettings {
         Keys.showProfileId.rawValue: true,
         Keys.sendWithReturnKey.rawValue: false,
         Keys.videoControlsInFooter.rawValue: false,
+        Keys.combinedMediaViewer.rawValue: false,
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -618,6 +620,9 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.videoControlsInFooter.rawValue)
     public var videoControlsInFooter: Bool
+
+    @UserDefault(key: Keys.combinedMediaViewer.rawValue)
+    public var combinedMediaViewer: Bool
 
     @UserDefault(key: Keys.hideAccountInNotifications.rawValue, userDefaults: UserDefaults(suiteName: APP_GROUP_IDENTIFIER) ?? .standard)
     public var hideAccountInNotifications: Bool

@@ -106,6 +106,7 @@ private enum SGBoolSetting: String {
     case nyStyleLightning
     case tabBarSearchEnabled
     case videoControlsInFooter
+    case combinedMediaViewer
     case hideAccountInNotifications
 }
 
@@ -306,6 +307,8 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     
     id.increment(10000)
     entries.append(.header(id: id.count, section: .other, text: strings.Appearance_Other.uppercased(), badge: nil))
+    entries.append(.toggle(id: id.count, section: .other, settingName: .combinedMediaViewer, value: SGSimpleSettings.shared.combinedMediaViewer, text: i18n("Settings.CombinedMediaViewer", lang), enabled: true))
+    entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.CombinedMediaViewer.Notice", lang)))
     entries.append(.toggle(id: id.count, section: .other, settingName: .videoControlsInFooter, value: SGSimpleSettings.shared.videoControlsInFooter, text: i18n("Settings.videoControlsInFooter", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .other, settingName: .swipeForVideoPIP, value: SGSimpleSettings.shared.videoPIPSwipeDirection == SGSimpleSettings.VideoPIPSwipeDirection.up.rawValue, text: i18n("Settings.swipeForVideoPIP", lang), enabled: true))
     entries.append(.notice(id: id.count, section: .other, text: i18n("Settings.swipeForVideoPIP.Notice", lang)))
@@ -524,6 +527,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
         case .nyStyleLightning:
             SGSimpleSettings.shared.nyStyle = value ? SGSimpleSettings.NYStyle.lightning.rawValue : SGSimpleSettings.NYStyle.default.rawValue
             simplePromise.set(true) // Trigger update for 'enabled' field of other toggles
+        case .combinedMediaViewer:
+            SGSimpleSettings.shared.combinedMediaViewer = value
         case .videoControlsInFooter:
             SGSimpleSettings.shared.videoControlsInFooter = value
         case .hideAccountInNotifications:

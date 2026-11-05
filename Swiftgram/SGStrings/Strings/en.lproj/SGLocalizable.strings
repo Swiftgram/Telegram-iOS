@@ -179,6 +179,8 @@
 "Settings.swipeForVideoPIP" = "Video PIP with Swipe";
 "Settings.swipeForVideoPIP.Notice" = "If enabled, swiping video will open it in Picture-in-Picture mode.";
 "Settings.videoControlsInFooter" = "Bottom Video Controls";
+"Settings.CombinedMediaViewer" = "Combined Media Viewer";
+"Settings.CombinedMediaViewer.Notice" = "Swipe between photos, videos and GIFs together when opening media in a chat.";
 
 "SessionBackup.Title" = "Accounts Backup";
 "SessionBackup.Sessions.Title" = "Sessions";
