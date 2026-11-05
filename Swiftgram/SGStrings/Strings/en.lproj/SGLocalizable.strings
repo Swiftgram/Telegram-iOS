@@ -282,3 +282,5 @@
 "Settings.NY.Style.lightning" = "Lightning";
 "Settings.NY.Notice" = "Available for a limited time only!";
 "Settings.HideAccountInNotifications" = "Hide Account in Notifications";
+"Settings.ParallelDownloads" = "Parallel Downloads";
+"Settings.ParallelDownloads.Notice" = "Downloads several files at once, like Telegram for Android: up to 5 files of 20 MB or less and 2 larger ones per data center. Files share the speed, so one large file finishes later.";
