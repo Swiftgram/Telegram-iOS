@@ -418,7 +418,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                         content: .icon(imageName: "Chat List/ComposeIcon"),
                         // MARK: Swiftgram — Compose is a neutral action, not an accented confirmation.
                         tint: .generic,
-                        requiresOwnSection: true,
+                        requiresOwnSection: !SGSimpleSettings.shared.hideTabBar,
                         //
                         action: { [weak self] _ in
                             self?.composePressed()
@@ -7495,7 +7495,7 @@ private final class ChatListLocationContext {
                         content: .icon(imageName: "Chat List/ComposeIcon"),
                         // MARK: Swiftgram — Compose is a neutral action, not an accented confirmation.
                         tint: .generic,
-                        requiresOwnSection: true,
+                        requiresOwnSection: !SGSimpleSettings.shared.hideTabBar,
                         //
                         action: { [weak self] _ in
                             self?.parentController?.composePressed()
