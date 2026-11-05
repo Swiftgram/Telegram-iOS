@@ -3,3 +3,13 @@
 "Settings.Tabs.ShowNames" = "Zobraziť názvy záložiek";
 "ContextMenu.SaveToCloud" = "Uložiť na Cloud";
 "Settings.videoControlsInFooter" = "Ovládanie videa dole";
+"Chat.Created.Label" = "Vytvorené";
+"Chat.Created.Copy" = "Kopírovať dátum vytvorenia";
+"Chat.Created.Copied" = "Dátum vytvorenia bol skopírovaný do schránky.";
+"Chat.JoinedDate.Copy" = "Kopírovať dátum pripojenia";
+"Chat.JoinedDate.Copied" = "Dátum pripojenia bol skopírovaný do schránky.";
+"Chat.RegDate.Copy" = "Kopírovať dátum registrácie";
+"Chat.RegDate.Copied" = "Dátum registrácie bol skopírovaný do schránky.";
+"Chat.ID" = "ID";
+"Chat.ID.Copy" = "Kopírovať ID";
+"Chat.ID.Copied" = "ID bolo skopírované do schránky.";

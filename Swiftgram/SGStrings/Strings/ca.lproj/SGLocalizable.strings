@@ -120,12 +120,21 @@
 "Settings.DefaultEmojisFirst.Notice" = "Mostra emojis estàndard abans que premium al teclat emoji";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "creada: %@";
+"Chat.Created.Label" = "Creada";
+"Chat.Created.Copy" = "Copia la data de creació";
+"Chat.Created.Copied" = "La data de creació s'ha copiat al porta-retalls.";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
 "Chat.JoinedDateTitle" = "Unida a %@";
+"Chat.JoinedDate.Copy" = "Copia la data d'unió";
+"Chat.JoinedDate.Copied" = "La data d'unió s'ha copiat al porta-retalls.";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
 "Chat.RegDate" = "Inscrit";
+"Chat.RegDate.Copy" = "Copia la data de registre";
+"Chat.RegDate.Copied" = "La data de registre s'ha copiat al porta-retalls.";
+"Chat.ID" = "ID";
+"Chat.ID.Copy" = "Copia l'ID";
+"Chat.ID.Copied" = "L'ID s'ha copiat al porta-retalls.";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Toqueu dues vegades per editar el missatge";
 
