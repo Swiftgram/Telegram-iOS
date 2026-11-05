@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Video PIP con deslizamiento";
 "Settings.swipeForVideoPIP.Notice" = "Si está habilitado, deslizar el video lo abrirá en modo imagen en imagen.";
 "Settings.videoControlsInFooter" = "Controles de vídeo abajo";
+"Settings.SaveMediaInOrder" = "Guardar en el orden del mensaje";
+"Settings.SaveMediaInOrder.Notice" = "Las fotos y los vídeos guardados van al final del carrete, en el orden del mensaje.";

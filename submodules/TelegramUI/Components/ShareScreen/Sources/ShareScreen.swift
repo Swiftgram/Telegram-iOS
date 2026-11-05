@@ -700,7 +700,10 @@ public final class ShareScreen: ViewControllerComponentContainer {
         }
         guard !references.isEmpty else { return }
         self.isSaving = true
-        self.saveDisposable.set((combineLatest(references.map { location, reference in
+        // MARK: Swiftgram
+        let sgOrderedSaves = sgOrderedCameraRollSaves(context: self.context, items: references)
+        //
+        self.saveDisposable.set((combineLatest(sgOrderedSaves ?? references.map { location, reference in // MARK: Swiftgram
             SaveToCameraRoll.saveToCameraRoll(context: self.context, userLocation: location, mediaReference: reference) |> takeLast
         }) |> filter { values in values.allSatisfy { $0 >= 1.0 } } |> take(1) |> deliverOnMainQueue).start(next: { [weak self] _ in
             guard let self else { return }

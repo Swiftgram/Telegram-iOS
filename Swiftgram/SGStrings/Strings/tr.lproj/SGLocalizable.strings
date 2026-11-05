@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Videoyu kaydırarak PIP";
 "Settings.swipeForVideoPIP.Notice" = "Eğer etkinleştirildi ise videoyu kaydırmak, Piksel içinde Piksel modunda açılacaktır.";
 "Settings.videoControlsInFooter" = "Alttaki video kontrolleri";
+"Settings.SaveMediaInOrder" = "Medyayı mesaj sırasıyla kaydet";
+"Settings.SaveMediaInOrder.Notice" = "Kaydedilen fotoğraf ve videolar, mesajdaki sırayla film rulosunun sonuna eklenir.";

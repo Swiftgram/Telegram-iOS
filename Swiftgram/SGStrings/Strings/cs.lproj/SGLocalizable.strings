@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Video PIP s přetahováním";
 "Settings.swipeForVideoPIP.Notice" = "Pokud je povoleno, poslání videa jej otevře v režimu Obraz v obraze.";
 "Settings.videoControlsInFooter" = "Ovládání videa dole";
+"Settings.SaveMediaInOrder" = "Ukládat média v pořadí zprávy";
+"Settings.SaveMediaInOrder.Notice" = "Uložené fotky a videa se přidají na konec galerie v pořadí, v jakém jsou ve zprávě.";

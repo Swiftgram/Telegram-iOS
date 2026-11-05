@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Video PIP met veeg";
 "Settings.swipeForVideoPIP.Notice" = "Als ingeschakeld, opent het swipen van video het in de modus Beeld-in-Beeld.";
 "Settings.videoControlsInFooter" = "Videobediening onderaan";
+"Settings.SaveMediaInOrder" = "Media bewaren in berichtvolgorde";
+"Settings.SaveMediaInOrder.Notice" = "Bewaarde foto's en video's komen achteraan in je filmrol, in de volgorde van het bericht.";

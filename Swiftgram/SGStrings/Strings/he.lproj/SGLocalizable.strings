@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "וידאו PIP עם החלקה";
 "Settings.swipeForVideoPIP.Notice" = "אם מופעל, החלקת הווידאו תפתח אותו במצב תמונה בתוך תמונה.";
 "Settings.videoControlsInFooter" = "פקדי וידאו למטה";
+"Settings.SaveMediaInOrder" = "שמירת מדיה לפי סדר ההודעה";
+"Settings.SaveMediaInOrder.Notice" = "תמונות וסרטונים שנשמרו מתווספים לסוף גליל המצלמה, לפי הסדר שלהם בהודעה.";

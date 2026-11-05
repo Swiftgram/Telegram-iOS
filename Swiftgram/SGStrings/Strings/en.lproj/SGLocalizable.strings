@@ -282,3 +282,5 @@
 "Settings.NY.Style.lightning" = "Lightning";
 "Settings.NY.Notice" = "Available for a limited time only!";
 "Settings.HideAccountInNotifications" = "Hide Account in Notifications";
+"Settings.SaveMediaInOrder" = "Save Media in Message Order";
+"Settings.SaveMediaInOrder.Notice" = "Saved photos and videos go to the end of the camera roll, in the order of the message.";

@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Video PIP met Veeg";
 "Settings.swipeForVideoPIP.Notice" = "As geaktiveer, sal die veeg van die video dit in Prent-in-Prent modus oopmaak.";
 "Settings.videoControlsInFooter" = "Videokontroles onderaan";
+"Settings.SaveMediaInOrder" = "Stoor media in boodskapvolgorde";
+"Settings.SaveMediaInOrder.Notice" = "Gestoorde foto's en video's gaan na die einde van die kamerarol, in die volgorde van die boodskap.";

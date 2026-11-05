@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Video PIP med svep";
 "Settings.swipeForVideoPIP.Notice" = "Om aktiverat, kommer svepning av video att öppna det i bild-i-bild-läge.";
 "Settings.videoControlsInFooter" = "Videokontroller längst ner";
+"Settings.SaveMediaInOrder" = "Spara media i meddelandets ordning";
+"Settings.SaveMediaInOrder.Notice" = "Sparade bilder och videor hamnar sist i kamerarullen, i meddelandets ordning.";

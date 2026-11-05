@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Βίντεο PIP με Swipe";
 "Settings.swipeForVideoPIP.Notice" = "Αν είναι ενεργοποιημένο, το σ swipe video θα το ανοίξει σε λειτουργία Εικόνα μέσα στην Εικόνα.";
 "Settings.videoControlsInFooter" = "Χειριστήρια βίντεο στο κάτω μέρος";
+"Settings.SaveMediaInOrder" = "Αποθήκευση πολυμέσων με τη σειρά του μηνύματος";
+"Settings.SaveMediaInOrder.Notice" = "Οι αποθηκευμένες φωτογραφίες και τα βίντεο μπαίνουν στο τέλος του φιλμ, με τη σειρά του μηνύματος.";

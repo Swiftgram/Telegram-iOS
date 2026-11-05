@@ -249,3 +249,5 @@
 "PayWall.ValidationError.Expired" = "您的訂閱已過期。請重新訂閱以恢復訪問 Pro 功能。";
 "Settings.videoControlsInFooter" = "底部影片控制項";
 "Settings.HideAccountInNotifications" = "在通知中隱藏帳號";
+"Settings.SaveMediaInOrder" = "依訊息順序儲存媒體";
+"Settings.SaveMediaInOrder.Notice" = "儲存的照片和影片會依訊息中的順序加到相機膠卷的最後。";

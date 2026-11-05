@@ -277,3 +277,5 @@
 "Settings.NY.Notice" = "Доступны только на ограниченное время!";
 "Settings.videoControlsInFooter" = "Кнопки видео снизу";
 "Settings.HideAccountInNotifications" = "Скрыть аккаунт в уведомлениях";
+"Settings.SaveMediaInOrder" = "Сохранять медиа по порядку";
+"Settings.SaveMediaInOrder.Notice" = "Сохранённые фото и видео попадают в конец фотоплёнки в том порядке, в каком они в сообщении.";

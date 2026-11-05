@@ -273,3 +273,5 @@
 "Settings.NY.Style.snow" = "Neve";
 "Settings.NY.Style.lightning" = "Raio";
 "Settings.NY.Notice" = "Disponível por tempo limitado!";
+"Settings.SaveMediaInOrder" = "Salvar mídia na ordem da mensagem";
+"Settings.SaveMediaInOrder.Notice" = "Fotos e vídeos salvos vão para o fim do rolo da câmera, na ordem da mensagem.";

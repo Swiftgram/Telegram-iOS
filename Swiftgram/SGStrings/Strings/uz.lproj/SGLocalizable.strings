@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Video PIP bilan Surish";
 "Settings.swipeForVideoPIP.Notice" = "Agar yoqilgan bo'lsa, videoni surish uni Tasvir ichida Tasvir rejimida ochadi.";
 "Settings.videoControlsInFooter" = "Pastda video boshqaruvlari";
+"Settings.SaveMediaInOrder" = "Mediani xabar tartibida saqlash";
+"Settings.SaveMediaInOrder.Notice" = "Saqlangan rasm va videolar xabardagi tartibda kamera lentasining oxiriga qo‘shiladi.";

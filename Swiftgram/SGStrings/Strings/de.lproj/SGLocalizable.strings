@@ -151,3 +151,5 @@
 "Settings.swipeForVideoPIP" = "Video PIP mit Wischen";
 "Settings.swipeForVideoPIP.Notice" = "Wenn aktiviert, öffnet das Wischen des Videos es im Bild-in-Bild-Modus.";
 "Settings.videoControlsInFooter" = "Videosteuerung unten";
+"Settings.SaveMediaInOrder" = "Medien in Nachrichtenreihenfolge sichern";
+"Settings.SaveMediaInOrder.Notice" = "Gesicherte Fotos und Videos landen am Ende der Mediathek, in der Reihenfolge der Nachricht.";
