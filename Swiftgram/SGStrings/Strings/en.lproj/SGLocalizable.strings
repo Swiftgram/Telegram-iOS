@@ -120,6 +120,9 @@
 
 "ContextMenu.SaveToCloud" = "Save to Cloud";
 "ContextMenu.SelectFromUser" = "Select from Author";
+"Settings.MessageSelection.Header" = "MESSAGE SELECTION";
+"Settings.Selection.SaveToCloudButton" = "Save to Cloud Button";
+"Settings.Selection.HideSenderNamesButton" = "Hide Senders' Names Button";
 
 "Settings.ContextMenu" = "CONTEXT MENU";
 "Settings.ContextMenu.Notice" = "Disabled entries will be available in \"Swiftgram\" sub-menu.";

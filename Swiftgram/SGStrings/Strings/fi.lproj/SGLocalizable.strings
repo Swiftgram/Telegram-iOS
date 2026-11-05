@@ -96,6 +96,9 @@
 
 "ContextMenu.SaveToCloud" = "Tallenna Pilveen";
 "ContextMenu.SelectFromUser" = "Valitse Tekijältä";
+"Settings.MessageSelection.Header" = "VIESTIEN VALINTA";
+"Settings.Selection.SaveToCloudButton" = "Tallenna pilveen -painike";
+"Settings.Selection.HideSenderNamesButton" = "Piilota lähettäjien nimet -painike";
 
 "Settings.ContextMenu" = "KONTEKSTIVALIKKO";
 "Settings.ContextMenu.Notice" = "Poistetut kohteet ovat saatavilla 'Swiftgram'-alavalikossa.";

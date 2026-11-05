@@ -100,6 +100,9 @@
 
 "ContextMenu.SaveToCloud" = "轉傳到儲存的訊息";
 "ContextMenu.SelectFromUser" = "選取此人的所有訊息";
+"Settings.MessageSelection.Header" = "訊息選擇";
+"Settings.Selection.SaveToCloudButton" = "轉傳到儲存的訊息按鈕";
+"Settings.Selection.HideSenderNamesButton" = "隱藏寄件者名稱按鈕";
 
 "Settings.ContextMenu" = "內容選單";
 "Settings.ContextMenu.Notice" = "停用的選項可在 Swiftgram 選單中使用";
