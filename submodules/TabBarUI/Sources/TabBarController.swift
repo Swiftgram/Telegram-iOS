@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
 import AsyncDisplayKit
@@ -99,6 +100,7 @@ open class TabBarControllerImpl: ViewController, TabBarController {
     }
     
     private let pendingControllerDisposable = MetaDisposable()
+    private let sgSettingsDisposable = MetaDisposable() // MARK: Swiftgram
     
     private var theme: PresentationTheme
     private var strings: PresentationStrings
@@ -117,6 +119,17 @@ open class TabBarControllerImpl: ViewController, TabBarController {
                 controller.scrollToTop?()
             }
         }
+
+        // MARK: Swiftgram
+        self.sgSettingsDisposable.set((sgSimpleSettingsChangesSignal([.hideTabBar, .showTabNames, .wideTabBar])
+        |> deliverOnMainQueue).start(next: { [weak self] in
+            guard let self, self.isNodeLoaded else {
+                return
+            }
+            self.tabBarControllerNode.sgInvalidateLayout()
+            self.updateIsTabBarHidden(SGSimpleSettings.shared.hideTabBar, transition: .animated(duration: 0.4, curve: .slide))
+        }))
+        //
     }
 
     required public init(coder aDecoder: NSCoder) {
@@ -125,6 +138,7 @@ open class TabBarControllerImpl: ViewController, TabBarController {
     
     deinit {
         self.pendingControllerDisposable.dispose()
+        self.sgSettingsDisposable.dispose() // MARK: Swiftgram
     }
     
     public func updateTheme(theme: PresentationTheme) {

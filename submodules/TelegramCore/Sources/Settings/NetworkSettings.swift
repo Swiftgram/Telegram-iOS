@@ -37,4 +37,9 @@ public func updateNetworkSettingsInteractively(transaction: Transaction, network
             return current?.withUpdatedNetworkSettings(updatedSettings.mtNetworkSettings)
         }
     }
+    // MARK: Swiftgram
+    if let network, let updatedSettings {
+        network.sgUpdateExperimentalDownload(updatedSettings.useExperimentalDownload ?? true)
+    }
+    //
 }
