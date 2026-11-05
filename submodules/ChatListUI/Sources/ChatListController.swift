@@ -372,7 +372,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                         content: .icon(imageName: "Chat List/ComposeIcon"),
                         // MARK: Swiftgram — Compose is a neutral action, not an accented confirmation.
                         tint: .generic,
-                        requiresOwnSection: true,
+                        requiresOwnSection: !SGSimpleSettings.shared.hideTabBar,
                         //
                         action: { [weak self] _ in
                             self?.composePressed()
@@ -7418,7 +7418,7 @@ private final class ChatListLocationContext {
                         content: .icon(imageName: "Chat List/ComposeIcon"),
                         // MARK: Swiftgram — Compose is a neutral action, not an accented confirmation.
                         tint: .generic,
-                        requiresOwnSection: true,
+                        requiresOwnSection: !SGSimpleSettings.shared.hideTabBar,
                         //
                         action: { [weak self] _ in
                             self?.parentController?.composePressed()
@@ -7474,6 +7474,7 @@ private final class ChatListLocationContext {
                 if SGSimpleSettings.shared.hideTabBar {
                     self.settingsButton = NavigationBarComponent.Button(id: "settings",
                         content: .more,
+                        requiresOwnSection: true, // Its own capsule; New Message and Stories share the next one.
                         action: { [weak self] _ in
                             self?.parentController?.settingsPressed()
                         },
@@ -7483,7 +7484,8 @@ private final class ChatListLocationContext {
                             }
                             if let rootController = self.context.sharedContext.mainWindow?.viewController as? TelegramRootControllerInterface {
                                 if let accountSettingsController = rootController.accountSettingsController {
-                                    accountSettingsController.tabBarItemContextActionRawUIView(sourceView: sourceView, gesture: gesture)
+                                    // The menu morphs out of the button's capsule, as a navigation bar menu does.
+                                    accountSettingsController.tabBarItemContextActionRawUIView(sourceView: self.parentController?.chatListHeaderView()?.navigationButtonContextContainer(sourceView: sourceView) ?? sourceView, gesture: gesture)
                                 }
                             }
                         }
