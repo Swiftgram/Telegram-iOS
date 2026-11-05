@@ -102,8 +102,6 @@ private enum SGBoolSetting: String {
     case confirmCalls
     case swipeForVideoPIP
     case enableVoipTcp
-    case nyStyleSnow
-    case nyStyleLightning
     case tabBarSearchEnabled
     case videoControlsInFooter
     case hideAccountInNotifications
@@ -145,23 +143,12 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     
     let lang = presentationData.strings.baseLanguageCode
     let strings = presentationData.strings
-    let newStr = strings.Settings_New
     var entries: [SGControllerEntry] = []
     
     let id = SGItemListCounter()
     
     entries.append(.searchInput(id: id.count, section: .search, title: NSAttributedString(string: "🔍"), text: state.searchQuery ?? "", placeholder: strings.Common_Search))
     
-    
-    if SGSimpleSettings.shared.canUseNY {
-        entries.append(.header(id: id.count, section: .trending, text: i18n("Settings.NY.Header", lang), badge: newStr))
-        entries.append(.toggle(id: id.count, section: .trending, settingName: .nyStyleSnow, value: SGSimpleSettings.shared.nyStyle == SGSimpleSettings.NYStyle.snow.rawValue, text: i18n("Settings.NY.Style.snow", lang), enabled: true))
-        entries.append(.toggle(id: id.count, section: .trending, settingName: .nyStyleLightning, value: SGSimpleSettings.shared.nyStyle == SGSimpleSettings.NYStyle.lightning.rawValue, text: i18n("Settings.NY.Style.lightning", lang), enabled: true))
-        // entries.append(.oneFromManySelector(id: id.count, section: .trending, settingName: .nyStyle, text: i18n("Settings.NY.Style", lang), value: i18n("Settings.NY.Style.\(SGSimpleSettings.shared.nyStyle)", lang), enabled: true))
-        entries.append(.notice(id: id.count, section: .trending, text: i18n("Settings.NY.Notice", lang)))
-    } else {
-        id.increment(3)
-    }
     
     if appConfiguration.sgWebSettings.global.canEditSettings {
         entries.append(.disclosure(id: id.count, section: .content, link: .contentSettings, text: i18n("Settings.ContentSettings", lang)))
@@ -194,6 +181,9 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     entries.append(.toggle(id: id.count, section: .chatList, settingName: .compactMessagePreview, value: SGSimpleSettings.shared.chatListLines != SGSimpleSettings.ChatListLines.three.rawValue, text: i18n("Settings.CompactMessagePreview", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .chatList, settingName: .disableChatSwipeOptions, value: !SGSimpleSettings.shared.disableChatSwipeOptions, text: i18n("Settings.ChatSwipeOptions", lang), enabled: true))
     entries.append(.toggle(id: id.count, section: .chatList, settingName: .disableDeleteChatSwipeOption, value: !SGSimpleSettings.shared.disableDeleteChatSwipeOption, text: i18n("Settings.DeleteChatSwipeOption", lang), enabled: !SGSimpleSettings.shared.disableChatSwipeOptions))
+    
+    entries.append(.header(id: id.count, section: .trending, text: i18n("Settings.NY.Header", lang), badge: nil))
+    entries.append(.oneFromManySelector(id: id.count, section: .trending, settingName: .nyStyle, text: i18n("Settings.NY.Style", lang), value: i18n("Settings.NY.Style.\(SGSimpleSettings.shared.nyStyle)", lang), enabled: true))
     
     entries.append(.header(id: id.count, section: .profiles, text: i18n("Settings.Profiles.Header", lang), badge: nil))
     entries.append(.toggle(id: id.count, section: .profiles, settingName: .showProfileId, value: SGSimpleSettings.shared.showProfileId, text: i18n("Settings.ShowProfileID", lang), enabled: true))
@@ -518,12 +508,6 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
                     }
                 )
             ).start()
-        case .nyStyleSnow:
-            SGSimpleSettings.shared.nyStyle = value ? SGSimpleSettings.NYStyle.snow.rawValue : SGSimpleSettings.NYStyle.default.rawValue
-            simplePromise.set(true) // Trigger update for 'enabled' field of other toggles
-        case .nyStyleLightning:
-            SGSimpleSettings.shared.nyStyle = value ? SGSimpleSettings.NYStyle.lightning.rawValue : SGSimpleSettings.NYStyle.default.rawValue
-            simplePromise.set(true) // Trigger update for 'enabled' field of other toggles
         case .videoControlsInFooter:
             SGSimpleSettings.shared.videoControlsInFooter = value
         case .hideAccountInNotifications:
