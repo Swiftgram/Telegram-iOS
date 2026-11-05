@@ -1,5 +1,11 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+# MARK: Swiftgram
+sgdeps = [
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+]
+#
+
 swift_library(
     name = "RichTextAttachmentScreen",
     module_name = "RichTextAttachmentScreen",
@@ -9,7 +15,7 @@ swift_library(
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgdeps + [ # MARK: Swiftgram
         "//submodules/AsyncDisplayKit",
         "//submodules/Display",
         "//submodules/ComponentFlow",
