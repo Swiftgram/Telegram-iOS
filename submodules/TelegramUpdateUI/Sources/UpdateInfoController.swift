@@ -85,7 +85,7 @@ private func updateInfoControllerEntries(theme: PresentationTheme, strings: Pres
     var entries: [UpdateInfoControllerEntry] = []
     
     entries.append(.info(theme, appIcon, strings.Update_AppVersion(appUpdateInfo.version).string, appUpdateInfo.text, appUpdateInfo.entities))
-    entries.append(.update(theme, strings.Update_UpdateApp))
+    entries.append(.update(theme, strings.Update_UpdateApp.replacingOccurrences(of: "Telegram", with: "Swiftgram"))) // MARK: Swiftgram
     
     return entries
 }
