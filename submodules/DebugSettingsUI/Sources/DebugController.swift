@@ -690,8 +690,8 @@ private enum DebugLogAction {
 }
 
 private enum DebugControllerSection: Int32 {
-    case swiftgram // MARK: Swiftgram
     case appInfo
+    case swiftgram // MARK: Swiftgram
     case logs
     case accounts
     case resetApp
