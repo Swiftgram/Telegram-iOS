@@ -367,7 +367,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         precondition(!testIsLaunched)
         testIsLaunched = true
-        CrashReportCollector.shared.start()
+        NSLog("[SG.Launch] didFinishLaunching") // MARK: Swiftgram
         
         let _ = voipTokenPromise.get().start(next: { token in
             self.voipDeviceToken.set(.single(token))
@@ -465,9 +465,19 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         self.window = window
         self.nativeWindow = window
         // MARK: Swiftgram
-        if sgHardReset(present: self.mainWindow?.presentNative, beforePresent: { self.window?.makeKeyAndVisible() }) {
+        NSLog("[SG.Launch] Window created; checking recovery settings")
+        let sgPresentRecovery: SGResetPresenter = { [weak window] controller, completion in
+            window?.rootViewController?.present(controller, animated: false, completion: completion)
+        }
+        if sgHardReset(present: sgPresentRecovery, beforePresent: { self.window?.makeKeyAndVisible() }) {
             return true
         }
+        if sgDBResetIfNeeded(present: sgPresentRecovery, beforePresent: { self.window?.makeKeyAndVisible() }) {
+            return true
+        }
+        NSLog("[SG.Launch] Starting crash collector")
+        CrashReportCollector.shared.start()
+        NSLog("[SG.Launch] Starting normal initialization")
         //
         
         hostView.containerView.layer.addSublayer(MetalEngine.shared.rootLayer)
@@ -589,10 +599,13 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         
         let baseAppBundleId = Bundle.main.bundleIdentifier!
         let appGroupName = "group.\(baseAppBundleId)"
+        NSLog("[SG.Launch] Configuring passcode environment") // MARK: Swiftgram
         try! PasscodeEnvironment.shared.configure(PasscodeConfiguration(appGroupIdentifier: appGroupName, processRole: .mainApp, biometricKeychainService: walletBiometricKeychainService), privateAccessGroup: {
             BuildConfig.keychainAccessGroup(baseAppBundleId: baseAppBundleId)
         })
+        NSLog("[SG.Launch] Resolving app-group container") // MARK: Swiftgram
         let maybeAppGroupUrl = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupName)
+        NSLog("[SG.Launch] App-group container resolved: \(maybeAppGroupUrl != nil)") // MARK: Swiftgram
         
         let buildConfig = BuildConfig(baseAppBundleId: baseAppBundleId)
         self.buildConfig = buildConfig
@@ -745,9 +758,11 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         } else {
             rootPath = rootPathForBasePath(appGroupUrl.path)
         }
+        NSLog("[SG.Launch] Data root resolved; starting app-group upgrades") // MARK: Swiftgram
         if !isUITest {
             performAppGroupUpgrades(appGroupPath: appGroupUrl.path, rootPath: rootPath)
         }
+        NSLog("[SG.Launch] App-group upgrades complete; initializing encryption and temporary storage") // MARK: Swiftgram
         
         let deviceSpecificEncryptionParameters = BuildConfig.deviceSpecificEncryptionParameters(rootPath, baseAppBundleId: baseAppBundleId)
         let encryptionParameters = ValueBoxEncryptionParameters(forceEncryptionIfNoSet: false, key: ValueBoxEncryptionParameters.Key(data: deviceSpecificEncryptionParameters.key)!, salt: ValueBoxEncryptionParameters.Salt(data: deviceSpecificEncryptionParameters.salt)!)
@@ -778,11 +793,16 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             writeAbilityTestSuccess = false
         }
         
+        // MARK: Swiftgram
+        let sgFreeBytes = (try? FileManager.default.attributesOfFileSystem(forPath: appGroupUrl.path)[.systemFreeSize]) as? NSNumber
+        NSLog("[SG.Launch] Storage write test: \(writeAbilityTestSuccess); free bytes: \(sgFreeBytes?.int64Value ?? -1)")
+        //
         if !writeAbilityTestSuccess {
             let alertController = UIAlertController(title: nil, message: "The device does not have sufficient free space.", preferredStyle: .alert)
             alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: { _ in
                 preconditionFailure()
             }))
+            self.window?.makeKeyAndVisible() // MARK: Swiftgram
             self.mainWindow?.presentNative(alertController)
             
             return true
@@ -1107,6 +1127,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             }
         })
         
+        NSLog("[SG.Launch] Scheduling account-manager initialization") // MARK: Swiftgram
         let accountManager: AccountManager<TelegramAccountManagerTypes> = setupAccountManager(basePath: rootPath + "/accounts-metadata", isTemporary: false, isReadOnly: false, useCaches: true, removeDatabaseOnError: true, resetLocalSecrets: {
             try resetWalletLocalSecrets()
         })
@@ -1157,7 +1178,9 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         self.pushRegistry = pushRegistry
         pushRegistry.delegate = self
 
+        NSLog("[SG.Launch] Waiting for initial account records (synchronous)") // MARK: Swiftgram
         self.accountManagerState = extractAccountManagerState(records: accountManager._internalAccountRecordsSync())
+        NSLog("[SG.Launch] Initial account records loaded") // MARK: Swiftgram
         let _ = (accountManager.accountRecords()
         |> deliverOnMainQueue).start(next: { view in
             self.accountManagerState = extractAccountManagerState(records: view)
@@ -1176,6 +1199,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         }
         |> deliverOnMainQueue
         |> mapToSignal { [self] accountManager, initialPresentationDataAndSettings -> Signal<(SharedApplicationContext, LoggingSettings), NoError> in
+            NSLog("[SG.Launch] Initial presentation settings loaded") // MARK: Swiftgram
             self.mainWindow?.hostView.containerView.backgroundColor =  initialPresentationDataAndSettings.presentationData.theme.chatList.backgroundColor
             
             let legacyBasePath = appGroupUrl.path
@@ -1444,7 +1468,6 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             var network: Network?
             if let context = context {
                 network = context.context.account.network
-                sgDBResetIfNeeded(databasePath: context.context.sharedContext.accountManager.basePath + "/db", present: self.mainWindow?.presentNative) // MARK: Swiftgram
             }
             
             Logger.shared.log("App \(self.episodeId)", "received context \(String(describing: context)) account \(String(describing: context?.context.account.id)) network \(String(describing: network))")
@@ -1469,6 +1492,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                         print("Application: context took \(readyTime) to become ready")
                     }
                     print("Launch to ready took \((CFAbsoluteTimeGetCurrent() - launchStartTime) * 1000.0) ms")
+                    NSLog("[SG.Launch] Authorized context ready after \(CFAbsoluteTimeGetCurrent() - launchStartTime) seconds") // MARK: Swiftgram
 
                     self.mainWindow.debugAction = nil
                     self.mainWindow.viewController = context.rootController
