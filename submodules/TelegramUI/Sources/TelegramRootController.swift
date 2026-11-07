@@ -224,8 +224,8 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         var controllers: [ViewController] = []
         
         // MARK: Swiftgram
-        let sgContactsTabController = ContactsController(context: self.context)
-        sgContactsTabController.switchToChatsController = { [weak self] in
+        let sgContactsTabController = ContactsController(context: self.context, sgIsTabMode: true)
+        sgContactsTabController.sgSwitchToChatsController = { [weak self] in
             self?.openChatsController(activateSearch: false)
         }
         self.sgContactsTabController = sgContactsTabController

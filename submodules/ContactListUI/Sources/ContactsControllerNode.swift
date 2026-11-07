@@ -347,9 +347,16 @@ final class ContactsControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         }
         
         // Pushed (from Settings) the header has a back button.
-        let backPressed: (() -> Void)? = { [weak self] in
-            self?.controller?.navigationController?.popViewController(animated: true)
+        // MARK: Swiftgram
+        let backPressed: (() -> Void)?
+        if self.controller?.sgIsTabMode == true {
+            backPressed = nil
+        } else {
+            backPressed = { [weak self] in
+                self?.controller?.navigationController?.popViewController(animated: true)
+            }
         }
+        //
         let primaryContent = ChatListHeaderComponent.Content(
             title: self.presentationData.strings.Contacts_Title,
             titleComponent: nil,

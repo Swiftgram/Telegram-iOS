@@ -43,6 +43,10 @@ private final class HeaderContextReferenceContentSource: ContextReferenceContent
 
 public class ContactsController: ViewController {
     private let context: AccountContext
+    // MARK: Swiftgram
+    let sgIsTabMode: Bool
+    public var sgSwitchToChatsController: (() -> Void)?
+    //
     
     /// The contact list draws its own header (no Display bar); it takes part in navigation transitions itself.
     override public var navigationBarTransitionSource: NavigationBarTransitionSource? {
@@ -83,8 +87,9 @@ public class ContactsController: ViewController {
     
     /// The Contacts screen, pushed over Settings (Settings ▸ Contacts, `tg://contacts`): the header has a back button,
     /// Sort and Add.
-    public init(context: AccountContext) {
+    public init(context: AccountContext, sgIsTabMode: Bool = false /* MARK: Swiftgram */) {
         self.context = context
+        self.sgIsTabMode = sgIsTabMode // MARK: Swiftgram
         
         self.presentationData = context.sharedContext.currentPresentationData.with { $0 }
         
@@ -93,6 +98,12 @@ public class ContactsController: ViewController {
         self.statusBar.statusBarStyle = self.presentationData.theme.rootController.statusBarStyle.style
         
         self.title = self.presentationData.strings.Contacts_Title
+        // MARK: Swiftgram
+        self.sgUpdateTabBarItem()
+        if sgIsTabMode {
+            self.tabBarItemContextActionType = .always
+        }
+        //
         
         self.navigationItem.backBarButtonItem = UIBarButtonItem(title: self.presentationData.strings.Common_Back, style: .plain, target: nil, action: nil)
         
@@ -107,10 +118,11 @@ public class ContactsController: ViewController {
             if let strongSelf = self {
                 let previousTheme = strongSelf.presentationData.theme
                 let previousStrings = strongSelf.presentationData.strings
+                let sgPreviousReduceMotion = strongSelf.presentationData.reduceMotion // MARK: Swiftgram
                 
                 strongSelf.presentationData = presentationData
                 
-                if previousTheme !== presentationData.theme || previousStrings !== presentationData.strings {
+                if previousTheme !== presentationData.theme || previousStrings !== presentationData.strings || sgPreviousReduceMotion != presentationData.reduceMotion { // MARK: Swiftgram
                     strongSelf.updateThemeAndStrings()
                 }
             }
@@ -138,9 +150,23 @@ public class ContactsController: ViewController {
         self.statusBar.statusBarStyle = self.presentationData.theme.rootController.statusBarStyle.style
         
         self.title = self.presentationData.strings.Contacts_Title
+        self.sgUpdateTabBarItem() // MARK: Swiftgram
         self.navigationItem.backBarButtonItem = UIBarButtonItem(title: self.presentationData.strings.Common_Back, style: .plain, target: nil, action: nil)
     }
     
+    // MARK: Swiftgram
+    private func sgUpdateTabBarItem() {
+        guard self.sgIsTabMode else {
+            return
+        }
+        self.tabBarItem.title = self.presentationData.strings.Contacts_Title
+        let icon = UIImage(bundleImageName: useSpecialTabBarIcons() ? "Chat List/Tabs/Holiday/IconContacts" : "Chat List/Tabs/IconContacts")
+        self.tabBarItem.image = icon
+        self.tabBarItem.selectedImage = icon
+        self.tabBarItem.animationName = self.presentationData.reduceMotion ? nil : "TabContacts"
+    }
+    //
+
     override public func loadDisplayNode() {
         let sortOrderSignal: Signal<ContactsSortOrder, NoError> = combineLatest(self.sortOrderPromise.get(), self.isInVoiceOver.get())
         |> map { sortOrder, isInVoiceOver in
@@ -176,6 +202,11 @@ public class ContactsController: ViewController {
                             strongSelf.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: strongSelf.context, chatLocation: .peer(peer), purposefulAction: { [weak self] in
                                 if fromSearch {
                                     self?.deactivateSearch(animated: false)
+                                    // MARK: Swiftgram
+                                    if self?.sgIsTabMode == true {
+                                        self?.sgSwitchToChatsController?()
+                                    }
+                                    //
                                 }
                                 }, scrollToEndIfExists: scrollToEndIfExists, options: [.removeOnMasterDetails], completion: { [weak self] _ in
                                 if let strongSelf = self {
@@ -637,6 +668,25 @@ public class ContactsController: ViewController {
         })
     }
     
+    // MARK: Swiftgram
+    override public func tabBarItemContextAction(sourceView: ContextExtractedContentContainingView, gesture: ContextGesture) {
+        guard self.sgIsTabMode else {
+            return
+        }
+        let items: [ContextMenuItem] = [
+            .action(ContextMenuActionItem(text: self.presentationData.strings.Contacts_AddContact, icon: { theme in
+                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/AddUser"), color: theme.contextMenu.primaryColor)
+            }, action: { [weak self] controller, _ in
+                controller?.dismiss(completion: { [weak self] in
+                    self?.addPressed()
+                })
+            }))
+        ]
+        let controller = makeContextController(presentationData: self.presentationData, source: .reference(HeaderContextReferenceContentSource(controller: self, sourceView: sourceView.contentView)), items: .single(ContextController.Items(content: .list(items))), recognizer: nil, gesture: gesture)
+        self.context.sharedContext.mainWindow?.presentInGlobalOverlay(controller)
+    }
+    //
+
     override public func tabBarActivateSearch() {
         self.activateSearch()
     }
