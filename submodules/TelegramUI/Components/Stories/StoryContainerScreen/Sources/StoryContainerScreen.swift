@@ -1102,7 +1102,7 @@ private final class StoryContainerScreenComponent: Component {
                     guard let self else {
                         return
                     }
-                    if !value && (!self.isDisplayingInteractionGuide || !self.isDisplayingStoriesWarning) {
+                    if !value && !self.isDisplayingInteractionGuide && !self.isDisplayingStoriesWarning { // MARK: Swiftgram
                         if let stateValue = self.stateValue, let slice = stateValue.slice, let itemSetView = self.visibleItemSetViews[slice.peer.id], let currentItemView = itemSetView.view.view as? StoryItemSetContainerComponent.View {
                             currentItemView.maybeDisplayReactionTooltip()
                         }
@@ -1223,6 +1223,11 @@ private final class StoryContainerScreenComponent: Component {
         
         private var previousBackNavigationTime: Double?
         private func navigate(direction: StoryItemSetContainerComponent.NavigationDirection) {
+            // MARK: Swiftgram
+            guard !self.isDisplayingStoriesWarning else {
+                return
+            }
+            //
             guard let component = self.component, let environment = self.environment, let controller = environment.controller() as? StoryContainerScreen else {
                 return
             }
@@ -1283,7 +1288,7 @@ private final class StoryContainerScreenComponent: Component {
             guard let stateValue = self.stateValue, let slice = stateValue.slice, let itemSetView = self.visibleItemSetViews[slice.peer.id], let itemSetComponentView = itemSetView.view.view as? StoryItemSetContainerComponent.View else {
                 return false
             }
-            if self.isDisplayingInteractionGuide || self.itemSetPanState != nil {
+            if self.isDisplayingInteractionGuide || self.isDisplayingStoriesWarning || self.itemSetPanState != nil { // MARK: Swiftgram
                 return false
             }
             if !itemSetComponentView.allowsInteractiveGestures() || !itemSetComponentView.storyAccessibilityCanNavigate() {
@@ -1324,7 +1329,16 @@ private final class StoryContainerScreenComponent: Component {
         
         func accessibilityFocusShownStory() {
             Queue.mainQueue().after(0.5, { [weak self] in
-                guard let self, let slice = self.stateValue?.slice, let itemSetView = self.visibleItemSetViews[slice.peer.id], let itemSetComponentView = itemSetView.view.view as? StoryItemSetContainerComponent.View else {
+                // MARK: Swiftgram
+                guard let self, !self.isDisplayingStoriesWarning else {
+                    return
+                }
+                if self.isDisplayingInteractionGuide {
+                    UIAccessibility.post(notification: .layoutChanged, argument: self.interactionGuide.view)
+                    return
+                }
+                //
+                guard let slice = self.stateValue?.slice, let itemSetView = self.visibleItemSetViews[slice.peer.id], let itemSetComponentView = itemSetView.view.view as? StoryItemSetContainerComponent.View else { // MARK: Swiftgram
                     return
                 }
                 UIAccessibility.post(notification: .layoutChanged, argument: itemSetComponentView.storyAccessibilityFocusElement())
@@ -1989,7 +2003,7 @@ private final class StoryContainerScreenComponent: Component {
                             itemSetView.isHidden = isItemSetsContainerBand && self.isAnimatingOut && i != focusedIndex
                             // VoiceOver reads only the focused peer's stories: the neighbours kept for the cube
                             // transition are not on screen.
-                            itemSetView.accessibilityElementsHidden = i != focusedIndex
+                            itemSetView.accessibilityElementsHidden = i != focusedIndex || self.isDisplayingStoriesWarning // MARK: Swiftgram
                             if itemSetComponentView.superview == nil {
                                 itemSetView.tintLayer.isDoubleSided = false
                                 itemSetComponentView.layer.isDoubleSided = false
@@ -2173,12 +2187,13 @@ private final class StoryContainerScreenComponent: Component {
                             isInStealthMode: stealthModeTimeout != nil || SGSimpleSettings.shared.isStealthModeEnabled,
                             action: { [weak self] in
                                 self?.isDisplayingStoriesWarning = false
-                                self?.state?.updated(transition: .immediate)
                                 if let view = self?.storiesWarning.view as? SGStoryWarningComponent.View {
-                                    view.animateOut(completion: {
+                                    view.animateOut(completion: { [weak self] in
                                         view.removeFromSuperview()
+                                        self?.accessibilityFocusShownStory()
                                     })
                                 }
+                                self?.state?.updated(transition: .immediate)
                             },
                             close: { [weak self] in
                                 self?.environment?.controller()?.dismiss()
@@ -2194,15 +2209,19 @@ private final class StoryContainerScreenComponent: Component {
                     containerSize: availableSize
                 )
                 if let view = self.storiesWarning.view as? SGStoryWarningComponent.View {
-                    if view.superview == nil {
+                    let isNewlyPresented = view.superview == nil
+                    if isNewlyPresented {
                         self.addSubview(view)
                         
                         view.animateIn()
                     }
                     view.layer.zPosition = 1000.0
                     view.frame = CGRect(origin: .zero, size: availableSize)
+                    if isNewlyPresented {
+                        UIAccessibility.post(notification: .screenChanged, argument: view)
+                    }
                 }
-            } else if let view = self.storiesWarning.view as? StoryInteractionGuideComponent.View, view.superview != nil {
+            } else if let view = self.storiesWarning.view as? SGStoryWarningComponent.View, view.superview != nil {
                 view.animateOut(completion: {
                     view.removeFromSuperview()
                 })
@@ -2239,6 +2258,11 @@ private final class StoryContainerScreenComponent: Component {
                     view.removeFromSuperview()
                 })
             }
+            // MARK: Swiftgram
+            // Keep the guide's lifecycle, but let the warning take precedence until acknowledged.
+            self.interactionGuide.view?.isHidden = self.isDisplayingStoriesWarning
+            self.interactionGuide.view?.accessibilityElementsHidden = self.isDisplayingStoriesWarning
+            //
             
             return availableSize
         }

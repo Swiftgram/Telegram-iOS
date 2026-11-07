@@ -65,6 +65,7 @@ final class SGStoryWarningComponent: Component {
             
             super.init(frame: frame)
             
+            self.accessibilityViewIsModal = true
             self.addSubview(self.effectView)
             self.addSubview(self.containerView)
             
@@ -118,6 +119,7 @@ final class SGStoryWarningComponent: Component {
         
         func update(component: SGStoryWarningComponent, availableSize: CGSize, transition: ComponentTransition) -> CGSize {
             self.component = component
+            self.closeButton.accessibilityLabel = component.strings.Common_Close
             
             let sideInset: CGFloat = 48.0
             let topInset: CGFloat = min(48.0, floor(availableSize.width * 0.1))

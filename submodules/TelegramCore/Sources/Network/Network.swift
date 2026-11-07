@@ -1603,7 +1603,7 @@ extension Network {
     /// queue. Set `Logger.setSharedLogger` first: that pause is logged, and `Logger.shared` asserts
     /// when no logger is set.
     static func makeForTesting(engine: NetworkEngine, basePath: String, encryptionProvider: EncryptionProvider, datacenterId: Int = 2) -> Network {
-        let context = MTContext(serialization: Serialization(), encryptionProvider: encryptionProvider, apiEnvironment: MTApiEnvironment(deviceModelName: nil), isTestingEnvironment: true, useTempAuthKeys: true)
+        let context = MTContext(serialization: Serialization(), encryptionProvider: encryptionProvider, apiEnvironment: MTApiEnvironment(deviceModelName: nil), isTestingEnvironment: true, useTempAuthKeys: true, forceLocalDNS: false) // MARK: Swiftgram
         engine.activate()
         let connectionStatus = Promise<ConnectionStatus>(.waitingForNetwork)
         let mainSessionDelegate = NetworkMainSessionDelegate(connectionStatus: connectionStatus)
