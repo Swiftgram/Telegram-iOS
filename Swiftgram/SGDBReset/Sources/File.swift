@@ -15,12 +15,77 @@ private func sgDefaultDataPath() throws -> String {
     return (appGroupUrl.path as NSString).appendingPathComponent("telegram-data")
 }
 
-private func sgRemoveResetItem(atPath path: String) throws {
+private final class SGResetProgress {
+    private let lock = NSLock()
+    private var operation = "Waiting for recovery UI"
+    private var removedItems = 0
+    private var lastRemovalTime = Date()
+    private let startTime = Date()
+
+    func update(_ operation: String? = nil, removedItem: Bool = false) {
+        self.lock.lock()
+        if let operation = operation {
+            self.operation = operation
+        }
+        if removedItem {
+            self.removedItems += 1
+            self.lastRemovalTime = Date()
+        }
+        self.lock.unlock()
+    }
+
+    func message() -> String {
+        self.lock.lock()
+        let operation = self.operation
+        let removedItems = self.removedItems
+        let idleSeconds = Int(Date().timeIntervalSince(self.lastRemovalTime))
+        self.lock.unlock()
+        let elapsedSeconds = Int(Date().timeIntervalSince(self.startTime))
+        return "DO NOT CLOSE THE APP\n\n\(operation)\nItems removed: \(removedItems)\nElapsed: \(elapsedSeconds)s\nSince last removal: \(idleSeconds)s\n\nLarge media folders can take several minutes."
+    }
+}
+
+private func sgRemoveResetItem(atPath path: String, progress: SGResetProgress? = nil) throws {
+    let url = URL(fileURLWithPath: path)
+    let fileManager = FileManager.default
+    let keys: Set<URLResourceKey> = [.isDirectoryKey, .isSymbolicLinkKey]
+
+    func remove(_ url: URL) throws {
+        do {
+            // Do not descend into symbolic links. Stream children without a full directory inventory.
+            let values = try url.resourceValues(forKeys: keys)
+            if values.isDirectory == true && values.isSymbolicLink != true {
+                var enumerationError: Error?
+                guard let children = fileManager.enumerator(at: url, includingPropertiesForKeys: nil, options: [.skipsSubdirectoryDescendants], errorHandler: { _, error in
+                    enumerationError = error
+                    return false
+                }) else {
+                    throw NSError(domain: "SG.DBReset", code: 3, userInfo: [NSLocalizedDescriptionKey: "Unable to list reset folder: \(url.lastPathComponent)"])
+                }
+                for case let child as URL in children {
+                    try remove(child)
+                }
+                if let enumerationError = enumerationError {
+                    throw enumerationError
+                }
+            }
+            try fileManager.removeItem(at: url)
+            progress?.update(removedItem: true)
+        } catch let error as NSError where error.domain == NSCocoaErrorDomain && (error.code == NSFileNoSuchFileError || error.code == NSFileReadNoSuchFileError) {
+            // A vanished child must not skip its remaining siblings.
+        }
+    }
+
+    // Only expose the account/category, not individual media names, in periodic logs.
+    let components = url.pathComponents.suffix(3).joined(separator: "/")
+    NSLog("[SG.DBReset] Starting deletion: \(components)")
+    progress?.update("Removing \(components)")
     do {
-        NSLog("[SG.DBReset] Deleting \((path as NSString).lastPathComponent)")
-        try FileManager.default.removeItem(atPath: path)
-    } catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileNoSuchFileError {
+        try remove(url)
+        NSLog("[SG.DBReset] Finished deletion: \(components)")
+    } catch let error as NSError where error.domain == NSCocoaErrorDomain && (error.code == NSFileNoSuchFileError || error.code == NSFileReadNoSuchFileError) {
         // A missing item is already reset, including after an interrupted reset.
+        NSLog("[SG.DBReset] Already absent: \(components)")
     }
 }
 
@@ -30,8 +95,23 @@ private func sgPerformReset(dataPath: String?, hardReset: Bool, present: @escapi
         message: "DO NOT CLOSE THE APP\nPlease wait...",
         preferredStyle: .alert
     )
+    let progress = SGResetProgress()
+    let timer = Timer(timeInterval: 1.0, repeats: true) { [weak alert] _ in
+        alert?.message = progress.message()
+    }
+    RunLoop.main.add(timer, forMode: .common)
+    let heartbeat = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .utility))
+    heartbeat.schedule(deadline: .now() + 10.0, repeating: 10.0)
+    heartbeat.setEventHandler {
+        NSLog("[SG.DBReset] Progress: \(progress.message())")
+    }
+    heartbeat.resume()
+    NSLog("[SG.DBReset] Presenting progress UI")
     present(alert) {
-        sgResetFiles(dataPath: dataPath, hardReset: hardReset) { failure in
+        NSLog("[SG.DBReset] Progress UI presented; starting worker")
+        sgResetFiles(dataPath: dataPath, hardReset: hardReset, progress: progress) { failure in
+            timer.invalidate()
+            heartbeat.cancel()
             let title: String
             let message: String
             if let failure = failure {
@@ -58,13 +138,16 @@ private func sgPerformReset(dataPath: String?, hardReset: Bool, present: @escapi
     }
 }
 
-private func sgResetFiles(dataPath: String?, hardReset: Bool, completion: @escaping (Error?) -> Void) {
+private func sgResetFiles(dataPath: String?, hardReset: Bool, progress: SGResetProgress? = nil, completion: @escaping (Error?) -> Void) {
     // Container lookup and recursive deletion must never block launch or the recovery UI.
     DispatchQueue.global(qos: .userInitiated).async {
         let failure: Error?
         do {
+            progress?.update("Resolving app-group container")
             let rootPath = try dataPath ?? sgDefaultDataPath()
+            NSLog("[SG.DBReset] Data root resolved")
             if hardReset {
+                progress?.update("Listing account folders")
                 let fileManager = FileManager.default
                 let contents: [String]
                 do {
@@ -80,14 +163,14 @@ private func sgResetFiles(dataPath: String?, hardReset: Bool, completion: @escap
                     }
                     // Reclaim media first, before touching databases on an almost-full volume.
                     for item in ["media", "db"] {
-                        try sgRemoveResetItem(atPath: (accountPath as NSString).appendingPathComponent("postbox/\(item)"))
+                        try sgRemoveResetItem(atPath: (accountPath as NSString).appendingPathComponent("postbox/\(item)"), progress: progress)
                     }
                 }
                 for item in ["media", "db", "guard_db", "spotlight"] {
-                    try sgRemoveResetItem(atPath: (rootPath as NSString).appendingPathComponent("accounts-metadata/\(item)"))
+                    try sgRemoveResetItem(atPath: (rootPath as NSString).appendingPathComponent("accounts-metadata/\(item)"), progress: progress)
                 }
             } else {
-                try sgRemoveResetItem(atPath: (rootPath as NSString).appendingPathComponent("accounts-metadata/db"))
+                try sgRemoveResetItem(atPath: (rootPath as NSString).appendingPathComponent("accounts-metadata/db"), progress: progress)
             }
             failure = nil
         } catch {

@@ -46,6 +46,8 @@ swift_library(
         "//submodules/LegacyComponents:LegacyComponents",
         "//submodules/MediaPlayer:UniversalMediaPlayer",
         "//Swiftgram/SGSwiftUI:SGSwiftUI",
+        "//submodules/TelegramPresentationData:TelegramPresentationData",
+        "//submodules/TelegramUI/Components/NavigationBarNode:NavigationBarNode",
     ],
     data = [
         "//Telegram:GeneratedPresentationStrings/Resources/PresentationStrings.data",
@@ -65,7 +67,7 @@ ios_application(
         "//conditions:default": "codesigning/Playground.mobileprovision",
     }),
     infoplists = ["Resources/Info.plist"],
-    minimum_os_version = "14.0",
+    minimum_os_version = "15.0",
     visibility = ["//visibility:public"],
     strings = [
         "//Telegram:AppStringResources",

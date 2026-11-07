@@ -67,9 +67,9 @@ public final class PlaygroundSplashScreen: ViewController {
     
     public init() {
         
-        let navigationBarTheme = NavigationBarTheme(buttonColor: .white, disabledButtonColor: .white, primaryTextColor: .white, backgroundColor: .clear, enableBackgroundBlur: true, separatorColor: .clear, badgeBackgroundColor: THEME.navigationBar.badgeBackgroundColor, badgeStrokeColor: THEME.navigationBar.badgeStrokeColor, badgeTextColor: THEME.navigationBar.badgeTextColor)
+        let navigationBarTheme = NavigationBarTheme(overallDarkAppearance: true, buttonColor: .white, disabledButtonColor: .white, primaryTextColor: .white, badgeBackgroundColor: THEME.navigationBar.badgeBackgroundColor, badgeTextColor: THEME.navigationBar.badgeTextColor, accentButtonColor: .white, accentDisabledButtonColor: .white, accentForegroundColor: .black)
         
-        super.init(navigationBarPresentationData: NavigationBarPresentationData(theme: navigationBarTheme, strings: NavigationBarStrings(back: "", close: "")))
+        super.init(navigationBarPresentationData: NavigationBarPresentationData(theme: navigationBarTheme, strings: NavigationBarStrings(back: "", close: "", more: "")))
         
         self.statusBar.statusBarStyle = .White
     }

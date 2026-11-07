@@ -35,22 +35,22 @@ public func isKeyboardViewContainer(view: NSObject) -> Bool {
 
 public class ApplicationStatusBarHost: StatusBarHost {
     private let application = UIApplication.shared
+    private weak var scene: UIWindowScene?
+
+    public init(scene: UIWindowScene) {
+        self.scene = scene
+    }
     
     public var isApplicationInForeground: Bool {
-        switch self.application.applicationState {
-        case .background:
-            return false
-        default:
-            return true
-        }
+        return self.scene?.activationState == .foregroundActive || self.scene?.activationState == .foregroundInactive
     }
     
     public var statusBarFrame: CGRect {
-        return self.application.statusBarFrame
+        return self.scene?.statusBarManager?.statusBarFrame ?? .zero
     }
     public var statusBarStyle: UIStatusBarStyle {
         get {
-            return self.application.statusBarStyle
+            return self.scene?.statusBarManager?.statusBarStyle ?? .default
         } set(value) {
             self.setStatusBarStyle(value, animated: false)
         }
@@ -69,11 +69,11 @@ public class ApplicationStatusBarHost: StatusBarHost {
     }
     
     public var keyboardWindow: UIWindow? {
-        if #available(iOS 16.0, *) {
-            return UIApplication.shared.internalGetKeyboard()
+        if let window = UIApplication.shared.internalGetKeyboard(for: self.scene) {
+            return window
         }
         
-        for window in UIApplication.shared.windows {
+        for window in self.scene?.windows ?? [] {
             if isKeyboardWindow(window: window) {
                 return window
             }

@@ -280,15 +280,15 @@ func PlaygroundTransactionLockIcon(_ theme: PlaygroundTheme) -> UIImage? {
 
 public let ACCENT_COLOR = UIColor(rgb: 0x007ee5)
 public let NAVIGATION_BAR_THEME = NavigationBarTheme(
+    overallDarkAppearance: false,
     buttonColor: ACCENT_COLOR,
     disabledButtonColor: UIColor(rgb: 0xd0d0d0),
     primaryTextColor: .black,
-    backgroundColor: UIColor(rgb: 0xf7f7f7),
-    enableBackgroundBlur: true,
-    separatorColor: UIColor(rgb: 0xb1b1b1),
     badgeBackgroundColor: UIColor(rgb: 0xff3b30),
-    badgeStrokeColor: UIColor(rgb: 0xff3b30),
-    badgeTextColor: .white
+    badgeTextColor: .white,
+    accentButtonColor: ACCENT_COLOR,
+    accentDisabledButtonColor: UIColor(rgb: 0xd0d0d0),
+    accentForegroundColor: .white
 )
 public let THEME = PlaygroundTheme(
     info: PlaygroundInfoTheme(
