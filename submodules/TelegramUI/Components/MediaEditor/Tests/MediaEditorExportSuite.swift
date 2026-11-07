@@ -161,6 +161,11 @@ final class MediaEditorExportSuite {
             if scenario.kind == .video && scenario.checksDecodedOutput {
                 self.checkDecodedOutput(scenario: scenario, run: run)
             }
+            // MARK: Swiftgram
+            for failure in sgMediaEditorTelescopeExportFailures(scenario: scenario, run: run) {
+                self.fail(failure)
+            }
+            //
         }
     }
 
