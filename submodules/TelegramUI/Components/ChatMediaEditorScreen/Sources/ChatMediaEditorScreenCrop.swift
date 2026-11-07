@@ -253,6 +253,11 @@ extension ChatMediaEditorScreen.Node {
     }
 
     var previewMediaSize: CGSize {
+        // MARK: Swiftgram
+        if self.sgShowsTelescopePreview {
+            return mediaCropDisplayedSize(sgChatMediaEditorTelescopePreviewState(values: self.mediaEditor.values))
+        }
+        //
         return chatMediaEditorPreviewMediaSize(values: self.mediaEditor.values)
     }
 
@@ -266,7 +271,10 @@ extension ChatMediaEditorScreen.Node {
     }
 
     func updatePreviewContent(size: CGSize, transition: ContainedViewLayoutTransition) {
-        let state = chatMediaEditorCropState(values: self.mediaEditor.values)
+        // MARK: Swiftgram
+        self.previewContainerView.layer.cornerRadius = self.sgShowsTelescopePreview ? min(size.width, size.height) / 2.0 : 0.0
+        let state = self.sgShowsTelescopePreview ? sgChatMediaEditorTelescopePreviewState(values: self.mediaEditor.values) : chatMediaEditorCropState(values: self.mediaEditor.values)
+        //
         let placement = chatMediaEditorCropPreviewPlacement(state: state, frameSize: size)
         let mediaSize = CGSize(width: state.originalSize.width * placement.scale, height: state.originalSize.height * placement.scale)
 

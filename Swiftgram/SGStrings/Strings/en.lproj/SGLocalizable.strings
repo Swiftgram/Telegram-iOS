@@ -1,3 +1,5 @@
+"Telescope.PaidMediaConflict" = "Round videos cannot be sold as paid media. Turn off “Send as Round Video” or remove the media price, then try again.";
+
 "Settings.ContentSettings" = "Content Settings";
 
 "Settings.Tabs.Header" = "TABS";

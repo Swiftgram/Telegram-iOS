@@ -228,6 +228,7 @@ public final class ChatMediaEditorScreen: ViewController, ChatMediaGalleryContro
         weak var timerTooltipController: TooltipScreen?
         weak var muteTooltipController: TooltipScreen?
         var muteButton: UIButton?
+        var sgTelescopeButton: UIButton? // MARK: Swiftgram
         var coverModel: ChatMediaEditorCoverModel?
         var coverButton: ChatMediaEditorCoverButton?
         var coverEditView: ChatMediaEditorCoverEditView?
@@ -943,6 +944,16 @@ public final class ChatMediaEditorScreen: ViewController, ChatMediaGalleryContro
             guard let controller = self.controller, !self.isSending, !controller.isDismissing, !self.isInvalidated else {
                 return
             }
+            // MARK: Swiftgram
+            let sgCurrentId = self.pageModel.currentItem.uniqueId
+            let sgHasTelescope = self.mediaEditor.values.sgSendAsTelescope || (controller.selection?.selectedIds() ?? []).contains { uniqueId in
+                return uniqueId != sgCurrentId && controller.store.entry(for: uniqueId)?.values?.sgSendAsTelescope == true
+            }
+            if sgHasTelescope && controller.sgHasPaidMedia(sgCurrentId) {
+                self.sgPresentTelescopePaidMediaNotice()
+                return
+            }
+            //
             guard self.endCaptionEditing() else {
                 return
             }
@@ -1040,6 +1051,11 @@ public final class ChatMediaEditorScreen: ViewController, ChatMediaGalleryContro
     let initialTool: ChatMediaEditorInitialTool
     let initialCaption: NSAttributedString
     let recipientName: String?
+    // MARK: Swiftgram
+    let sgCanShowTelescope: Bool
+    let sgCanSendTelescope: Bool
+    let sgHasPaidMedia: (String) -> Bool
+    //
     let getCaptionPanelView: () -> TGCaptionPanelView?
     let hasSilentPosting: Bool
     let hasSchedule: Bool
@@ -1074,6 +1090,11 @@ public final class ChatMediaEditorScreen: ViewController, ChatMediaGalleryContro
         self.store = ChatMediaEditorItemStore()
         self.initialIndex = 0
         self.isGallery = false
+        // MARK: Swiftgram
+        self.sgCanShowTelescope = false
+        self.sgCanSendTelescope = false
+        self.sgHasPaidMedia = { _ in false }
+        //
         self.selection = nil
         self.captions = nil
         self.gallery = nil
@@ -1106,6 +1127,11 @@ public final class ChatMediaEditorScreen: ViewController, ChatMediaGalleryContro
         reminder: Bool,
         presentSchedulePicker: @escaping (@escaping (Int32, Bool) -> Void) -> Void,
         gallery: ChatMediaEditorGalleryConfiguration?,
+        // MARK: Swiftgram
+        sgCanShowTelescope: Bool = false,
+        sgCanSendTelescope: Bool = false,
+        sgHasPaidMedia: @escaping (String) -> Bool = { _ in false },
+        //
         completion: @escaping (ChatMediaEditorResult, _ silentPosting: Bool, _ scheduleTime: Int32, _ isCaptionAbove: Bool) -> Void
     ) {
         precondition(itemsSource.count > 0)
@@ -1114,6 +1140,11 @@ public final class ChatMediaEditorScreen: ViewController, ChatMediaGalleryContro
         self.store = store
         self.initialIndex = max(0, min(itemsSource.count - 1, initialIndex))
         self.isGallery = true
+        // MARK: Swiftgram
+        self.sgCanShowTelescope = sgCanShowTelescope
+        self.sgCanSendTelescope = sgCanSendTelescope
+        self.sgHasPaidMedia = sgHasPaidMedia
+        //
         self.selection = selection
         self.captions = captions
         self.gallery = gallery

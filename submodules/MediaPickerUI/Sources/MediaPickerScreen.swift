@@ -1,3 +1,4 @@
+import SGStrings // MARK: Swiftgram
 import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
@@ -1953,6 +1954,13 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                 return
             }
             controller.dismissAllTooltips()
+            // MARK: Swiftgram
+            if controller.sgSelectedMediaHasTelescope && controller.sgSelectedMediaHasPrice {
+                controller.isDismissing = false
+                controller.sgPresentTelescopePaidMediaNotice()
+                return
+            }
+            //
             
             var parameters = parameters
             if parameters == nil {
@@ -3996,10 +4004,22 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                                     return
                                 }
                                 
+                                // MARK: Swiftgram
+                                if self.sgSelectedMediaHasTelescope && (price ?? 0) <= 0 {
+                                    self.sgPresentTelescopePaidMediaNotice()
+                                    return
+                                }
+                                //
                                 let controller = self.context.sharedContext.makeStarsAmountScreen(context: self.context, initialValue: price, completion: { [weak self] amount in
                                     guard let self else {
                                         return
                                     }
+                                    // MARK: Swiftgram
+                                    if amount > 0 && self.sgSelectedMediaHasTelescope {
+                                        self.sgPresentTelescopePaidMediaNotice()
+                                        return
+                                    }
+                                    //
                                     if let selectionContext = self.interaction?.selectionState, let editingContext = self.interaction?.editingState {
                                         selectionContext.selectionLimit = Int32(self.enableMultiselection ? self.selectionLimit ?? 10 : 1)
                                         for case let item as TGMediaEditableItem in selectionContext.selectedItems() {
@@ -4140,6 +4160,12 @@ final class MediaPickerContext: AttachmentMediaPickerContext {
         guard let controller = self.controller else {
             return
         }
+        // MARK: Swiftgram
+        if price > 0 && controller.sgSelectedMediaHasTelescope {
+            controller.sgPresentTelescopePaidMediaNotice()
+            return
+        }
+        //
         if let selectionContext = controller.interaction?.selectionState, let editingContext = controller.interaction?.editingState {
             selectionContext.selectionLimit = 10
             for case let item as TGMediaEditableItem in selectionContext.selectedItems() {
@@ -5090,6 +5116,37 @@ public func coverMediaPickerController(
     controller.supportedOrientations = ViewControllerSupportedOrientations(regularSize: .all, compactSize: .portrait)
     return controller
 }
+
+// MARK: Swiftgram
+extension MediaPickerScreenImpl {
+    fileprivate var sgSelectedMediaHasTelescope: Bool {
+        return (self.interaction?.selectionState?.selectedItems() ?? []).contains { item in
+            guard let item = item as? TGMediaSelectableItem, let uniqueId = item.uniqueIdentifier else {
+                return false
+            }
+            return self.chatMediaEditorItemStore?.entry(for: uniqueId)?.values?.sgSendAsTelescope == true
+        }
+    }
+
+    fileprivate var sgSelectedMediaHasPrice: Bool {
+        guard let interaction = self.interaction else {
+            return false
+        }
+        return (interaction.selectionState?.selectedItems() ?? []).contains { item in
+            guard let item = item as? TGMediaEditableItem else {
+                return false
+            }
+            return (interaction.editingState.price(for: item)?.int64Value ?? 0) > 0
+        }
+    }
+
+    fileprivate func sgPresentTelescopePaidMediaNotice() {
+        let strings = self.presentationData.strings
+        let text = SGLocalizationManager.shared.localizedString("Telescope.PaidMediaConflict", strings.baseLanguageCode)
+        self.present(textAlertController(context: self.context, updatedPresentationData: self.updatedPresentationData, title: nil, text: text, actions: [TextAlertAction(type: .defaultAction, title: strings.Common_OK, action: {})]), in: .window(.root))
+    }
+}
+//
 
 private class SelectedButtonNode: ASDisplayNode {
     private let containerView: UIView

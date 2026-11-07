@@ -42,6 +42,7 @@ extension ChatMediaEditorScreen.Node {
     }
 
     func updateMuteButton(layout: ContainerViewLayout, safeInsets: UIEdgeInsets, transition: ContainedViewLayoutTransition) {
+        self.sgUpdateTelescopeButton(layout: layout, safeInsets: safeInsets, transition: transition) // MARK: Swiftgram
         guard self.isMuteButtonVisible else {
             self.muteButton?.removeFromSuperview()
             self.muteButton = nil
@@ -81,7 +82,18 @@ extension ChatMediaEditorScreen.Node {
             return
         }
         let muted = !self.mediaEditor.values.videoIsMuted
+        // MARK: Swiftgram
+        if muted && self.mediaEditor.values.sgSendAsTelescope {
+            self.toolStartValues = self.mediaEditor.values
+        }
+        //
         self.mediaEditor.setVideoIsMuted(muted)
+        // MARK: Swiftgram
+        if muted && self.mediaEditor.values.sgSendAsTelescope {
+            self.mediaEditor.values = self.mediaEditor.values.withUpdatedSgSendAsTelescope(false)
+            self.selectionEditCommitted()
+        }
+        //
         if muted {
             self.mediaEditor.play()
             self.presentMuteTooltip()

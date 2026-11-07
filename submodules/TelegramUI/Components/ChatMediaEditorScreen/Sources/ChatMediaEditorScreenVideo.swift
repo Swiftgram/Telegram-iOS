@@ -100,7 +100,7 @@ extension ChatMediaEditorScreen.Node {
                 generationTimestamp: playerState.generationTimestamp,
                 position: playerState.position,
                 minDuration: chatMediaEditorScrubberMinDuration,
-                maxDuration: max(chatMediaEditorScrubberMinDuration, mainTrack.duration),
+                maxDuration: max(chatMediaEditorScrubberMinDuration, self.mediaEditor.values.sgSendAsTelescope ? min(60.0, mainTrack.duration) : mainTrack.duration), // MARK: Swiftgram
                 isPlaying: playerState.isPlaying,
                 tracks: [MediaScrubberComponent.Track(mainTrack)],
                 isCollage: false,

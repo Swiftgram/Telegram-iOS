@@ -113,7 +113,7 @@ public func chatMediaEditorCommitVideoQuality(values: MediaEditorValues, preset:
 }
 
 public func chatMediaEditorVideoQualityIsEnabled(values: MediaEditorValues) -> Bool {
-    return !values.videoIsMuted
+    return !values.videoIsMuted && !values.sgSendAsTelescope // MARK: Swiftgram
 }
 
 public func chatMediaEditorShowsQualityTab(isGallery: Bool, hasCaptionModel: Bool, isAnimation: Bool) -> Bool {

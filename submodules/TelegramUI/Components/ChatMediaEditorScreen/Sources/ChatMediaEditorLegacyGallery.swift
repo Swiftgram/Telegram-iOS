@@ -544,6 +544,22 @@ public func makeChatMediaEditorGalleryController(context: AccountContext, parame
         reminder: parameters.reminder,
         presentSchedulePicker: parameters.presentSchedulePicker,
         gallery: gallery,
+        // MARK: Swiftgram
+        sgCanShowTelescope: context.currentAppConfiguration.with { $0 }.sgWebSettings.global.canShowTelescope,
+        sgCanSendTelescope: context.currentAppConfiguration.with { $0 }.sgWebSettings.user.canSendTelescope,
+        sgHasPaidMedia: { uniqueId in
+            var items = selectionContext?.selectedItems() ?? []
+            if let current = resolver.item(for: uniqueId) {
+                items.append(current)
+            }
+            return items.contains { item in
+                guard let item = item as? TGMediaEditableItem else {
+                    return false
+                }
+                return (editingContext.price(for: item)?.int64Value ?? 0) > 0
+            }
+        },
+        //
         completion: { _, _, _, _ in
         }
     )
