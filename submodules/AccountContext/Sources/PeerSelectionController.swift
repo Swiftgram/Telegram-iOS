@@ -71,6 +71,7 @@ public final class CommunityPeerSelectionOptions {
 
 public final class PeerSelectionControllerParams {
     public let context: AccountContext
+    public let forceHideNames: Bool
     public let updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?
     public let filter: ChatListNodePeersFilter
     public let requestPeerType: [ReplyMarkupButtonRequestPeerType]?
@@ -97,6 +98,7 @@ public final class PeerSelectionControllerParams {
     
     public init(
         context: AccountContext,
+        forceHideNames: Bool = false,
         updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil,
         filter: ChatListNodePeersFilter = [.onlyWriteable],
         requestPeerType: [ReplyMarkupButtonRequestPeerType]? = nil,
@@ -122,6 +124,7 @@ public final class PeerSelectionControllerParams {
         excludedPeerIds: Set<EnginePeer.Id> = []
     ) {
         self.context = context
+        self.forceHideNames = forceHideNames
         self.updatedPresentationData = updatedPresentationData
         self.filter = filter
         self.requestPeerType = requestPeerType

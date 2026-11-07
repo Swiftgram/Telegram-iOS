@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
 import SwiftSignalKit
@@ -1971,12 +1972,24 @@ extension ChatControllerImpl {
                     }
                 }
             }))
-        }, forwardSelectedMessages: { [weak self] in
+        }, forwardSelectedMessages: { [weak self] mode in
             if let strongSelf = self {
                 strongSelf.commitPurposefulAction()
                 if let forwardMessageIdsSet = strongSelf.presentationInterfaceState.interfaceState.selectionState?.selectedIds {
                     let forwardMessageIds = Array(forwardMessageIdsSet).sorted()
-                    strongSelf.forwardMessages(messageIds: forwardMessageIds)
+                    // MARK: Swiftgram
+                    if let mode = mode {
+                        switch (mode) {
+                        case "toCloud":
+                            strongSelf.forwardMessagesToCloud(messageIds: forwardMessageIds, removeNames: false, openCloud: false, resetCurrent: true)
+                        case "hideNames":
+                            strongSelf.forwardMessages(forceHideNames: true, messageIds: forwardMessageIds, options: ChatInterfaceForwardOptionsState(hideNames: true, hideCaptions: false, unhideNamesOnCaptionChange: false))
+                        default:
+                            strongSelf.forwardMessages(messageIds: forwardMessageIds)
+                        }
+                    } else {
+                        strongSelf.forwardMessages(messageIds: forwardMessageIds)
+                    }
                 }
             }
         }, forwardCurrentForwardMessages: { [weak self] in
@@ -1986,7 +1999,7 @@ extension ChatControllerImpl {
                     strongSelf.forwardMessages(messageIds: forwardMessageIds, options: strongSelf.presentationInterfaceState.interfaceState.forwardOptionsState, resetCurrent: true)
                 }
             }
-        }, forwardMessages: { [weak self] messages in
+        }, forwardMessages: { [weak self] messages, mode in
             if let strongSelf = self, !messages.isEmpty {
                 guard !strongSelf.presentAccountFrozenInfoIfNeeded(delay: true) else {
                     return
@@ -1994,7 +2007,22 @@ extension ChatControllerImpl {
                 
                 strongSelf.commitPurposefulAction()
                 let forwardMessageIds = messages.map { $0.id }.sorted()
-                strongSelf.forwardMessages(messageIds: forwardMessageIds)
+                // MARK: Swiftgram
+                if let mode = mode {
+                    switch (mode) {
+                        case "forwardMessagesToCloudWithNoNamesAndOpen":
+                            strongSelf.forwardMessagesToCloud(messageIds: forwardMessageIds, removeNames: true, openCloud: true)
+                        case "forwardMessagesToCloud":
+                            strongSelf.forwardMessagesToCloud(messageIds: forwardMessageIds, removeNames: false, openCloud: false)
+                        case "forwardMessagesWithNoNames":
+                            strongSelf.forwardMessages(forceHideNames: true, messageIds: forwardMessageIds, options: ChatInterfaceForwardOptionsState(hideNames: true, hideCaptions: false, unhideNamesOnCaptionChange: false))
+                        default:
+                            strongSelf.forwardMessages(messageIds: forwardMessageIds)
+                    }
+                } else {
+                    strongSelf.forwardMessages(messageIds: forwardMessageIds)
+                }
+
             }
         }, updateForwardOptionsState: { [weak self] f in
             if let strongSelf = self {
@@ -4611,6 +4639,18 @@ extension ChatControllerImpl {
             default:
                 break
             }
+            // MARK: Swiftgram
+            switch SGSimpleSettings.shared.translationBackendEnum {
+            case .system:
+                if #available(iOS 18.0, *) {
+                    useSystemTranslation = true
+                }
+            case .gtranslate:
+                useSystemTranslation = false
+            case .default:
+                break
+            }
+            //
 
             if useSystemTranslation {
                 presentTranslateScreen(

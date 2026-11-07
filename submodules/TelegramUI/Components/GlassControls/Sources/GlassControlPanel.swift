@@ -156,12 +156,16 @@ public final class GlassControlPanelComponent: Component {
         /// Leading to trailing, as the groups are laid out: they are added to the view as left, right, central.
         override public var accessibilityElements: [Any]? {
             get {
-                return [self.leftItemComponent, self.centralItemComponent, self.rightItemComponent].compactMap { item -> UIView? in
-                    guard let view = item?.view, view.superview != nil, !view.isHidden, view.alpha > 0.01 else {
-                        return nil
-                    }
-                    return view
+                let itemViews = [self.leftItemComponent, self.centralItemComponent, self.rightItemComponent].compactMap { $0?.view }
+                // MARK: Swiftgram
+                // Include controls hosted directly in glassContentView, such as gallery footer playback.
+                let additionalViews = self.glassContentView.subviews.filter { view in
+                    !itemViews.contains(where: { $0 === view })
                 }
+                //
+                return (itemViews + additionalViews /* MARK: Swiftgram */).filter { view in
+                    view.superview != nil && !view.isHidden && view.alpha > 0.01
+                }.sorted(by: { $0.frame.minX < $1.frame.minX }) // MARK: Swiftgram
             }
             set {
             }

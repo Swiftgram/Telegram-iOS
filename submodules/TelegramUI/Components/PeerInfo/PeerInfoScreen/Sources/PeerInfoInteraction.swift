@@ -8,6 +8,7 @@ import AccountContext
 import StatisticsUI
 
 final class PeerInfoInteraction {
+    let notifyTextCopied: () -> Void
     let openChat: (EnginePeer.Id?) -> Void
     let openUsername: (String, Bool, Promise<Bool>?) -> Void
     let openPhone: (String, ASDisplayNode, ContextGesture?, Promise<Bool>?) -> Void
@@ -92,6 +93,7 @@ final class PeerInfoInteraction {
     let getController: () -> ViewController?
     
     init(
+        notifyTextCopied: @escaping () -> Void,
         openUsername: @escaping (String, Bool, Promise<Bool>?) -> Void,
         openPhone: @escaping (String, ASDisplayNode, ContextGesture?, Promise<Bool>?) -> Void,
         editingOpenNotificationSettings: @escaping () -> Void,
@@ -175,6 +177,7 @@ final class PeerInfoInteraction {
         editingOpenBusinessChatBots: @escaping () -> Void,
         getController: @escaping () -> ViewController?
     ) {
+        self.notifyTextCopied = notifyTextCopied
         self.openUsername = openUsername
         self.openPhone = openPhone
         self.editingOpenNotificationSettings = editingOpenNotificationSettings

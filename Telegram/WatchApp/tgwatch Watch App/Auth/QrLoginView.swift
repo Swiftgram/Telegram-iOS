@@ -29,7 +29,7 @@ struct QrLoginContent: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            Text("Log in to Telegram by QR Code")
+            Text("Log in to Swiftgram by QR Code")
                 .font(.headline)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
@@ -61,7 +61,7 @@ struct QrLoginContent: View {
 
     private var instructionSteps: some View {
         VStack(spacing: 4) {
-            Text("Settings on your Phone")
+            Text("SG Settings on your Phone")
             Image(systemName: "chevron.down").font(.caption)
             Text("Devices")
             Image(systemName: "chevron.down").font(.caption)

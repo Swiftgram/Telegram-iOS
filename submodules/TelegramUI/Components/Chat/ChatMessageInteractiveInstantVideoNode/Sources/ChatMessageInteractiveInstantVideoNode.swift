@@ -231,6 +231,7 @@ public class ChatMessageInteractiveInstantVideoNode: ASDisplayNode {
     }
     
     deinit {
+        self.transcribeDisposable?.dispose()
         self.fetchDisposable.dispose()
         self.playbackStatusDisposable.dispose()
         self.playerStatusDisposable.dispose()
@@ -1937,6 +1938,7 @@ public class ChatMessageInteractiveInstantVideoNode: ASDisplayNode {
             }
         }
         
+        // TODO(swiftgram): Transcribe Video Messages
         if shouldBeginTranscription {
             if self.transcribeDisposable == nil {
                 self.audioTranscriptionState = .inProgress

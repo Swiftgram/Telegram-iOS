@@ -19,7 +19,7 @@ final class RustContextRegistryTests: XCTestCase {
     private func makeContext() -> MTContext {
         var apiEnvironment = MTApiEnvironment(deviceModelName: "registry tests")
         apiEnvironment.apiId = 9
-        return MTContext(serialization: Serialization(), encryptionProvider: UnusedEncryptionProvider(), apiEnvironment: apiEnvironment, isTestingEnvironment: false, useTempAuthKeys: true)
+        return MTContext(serialization: Serialization(), encryptionProvider: UnusedEncryptionProvider(), apiEnvironment: apiEnvironment, isTestingEnvironment: false, useTempAuthKeys: true, forceLocalDNS: false) // MARK: Swiftgram
     }
 
     private func verdict(_ registry: RustContextRegistry, keyId: Int64 = RustContextRegistryTests.keyId) -> String? {

@@ -1,3 +1,17 @@
+// MARK: Swiftgram
+import StoreKit
+import SGIAP
+import SGAPI
+import SGDeviceToken
+import SGAPIToken
+
+import SGActionRequestHandlerSanitizer
+import SGGHSettings
+import SGAPIWebSettings
+import SGLogging
+import SGStrings
+import SGSimpleSettings
+//
 import UIKit
 import SwiftSignalKit
 import Display
@@ -348,7 +362,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         precondition(!testIsLaunched)
         testIsLaunched = true
-        CrashReportCollector.shared.start()
+        NSLog("[SG.Launch] didFinishLaunching") // MARK: Swiftgram
         
         let _ = voipTokenPromise.get().start(next: { token in
             self.voipDeviceToken.set(.single(token))
@@ -445,6 +459,21 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         }
         self.window = window
         self.nativeWindow = window
+        // MARK: Swiftgram
+        NSLog("[SG.Launch] Window created; checking recovery settings")
+        let sgPresentRecovery: SGResetPresenter = { [weak window] controller, completion in
+            window?.rootViewController?.present(controller, animated: false, completion: completion)
+        }
+        if sgHardReset(present: sgPresentRecovery, beforePresent: { self.window?.makeKeyAndVisible() }) {
+            return true
+        }
+        if sgDBResetIfNeeded(present: sgPresentRecovery, beforePresent: { self.window?.makeKeyAndVisible() }) {
+            return true
+        }
+        NSLog("[SG.Launch] Starting crash collector")
+        CrashReportCollector.shared.start()
+        NSLog("[SG.Launch] Starting normal initialization")
+        //
         
         hostView.containerView.layer.addSublayer(MetalEngine.shared.rootLayer)
         // On the first start after an update, compile the pipelines that would otherwise stall their first use.
@@ -565,10 +594,13 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         
         let baseAppBundleId = Bundle.main.bundleIdentifier!
         let appGroupName = "group.\(baseAppBundleId)"
+        NSLog("[SG.Launch] Configuring passcode environment") // MARK: Swiftgram
         try! PasscodeEnvironment.shared.configure(PasscodeConfiguration(appGroupIdentifier: appGroupName, processRole: .mainApp, biometricKeychainService: walletBiometricKeychainService), privateAccessGroup: {
             BuildConfig.keychainAccessGroup(baseAppBundleId: baseAppBundleId)
         })
+        NSLog("[SG.Launch] Resolving app-group container") // MARK: Swiftgram
         let maybeAppGroupUrl = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupName)
+        NSLog("[SG.Launch] App-group container resolved: \(maybeAppGroupUrl != nil)") // MARK: Swiftgram
         
         let buildConfig = BuildConfig(baseAppBundleId: baseAppBundleId)
         self.buildConfig = buildConfig
@@ -721,9 +753,11 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         } else {
             rootPath = rootPathForBasePath(appGroupUrl.path)
         }
+        NSLog("[SG.Launch] Data root resolved; starting app-group upgrades") // MARK: Swiftgram
         if !isUITest {
             performAppGroupUpgrades(appGroupPath: appGroupUrl.path, rootPath: rootPath)
         }
+        NSLog("[SG.Launch] App-group upgrades complete; initializing encryption and temporary storage") // MARK: Swiftgram
         
         let deviceSpecificEncryptionParameters = BuildConfig.deviceSpecificEncryptionParameters(rootPath, baseAppBundleId: baseAppBundleId)
         let encryptionParameters = ValueBoxEncryptionParameters(forceEncryptionIfNoSet: false, key: ValueBoxEncryptionParameters.Key(data: deviceSpecificEncryptionParameters.key)!, salt: ValueBoxEncryptionParameters.Salt(data: deviceSpecificEncryptionParameters.salt)!)
@@ -754,11 +788,16 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             writeAbilityTestSuccess = false
         }
         
+        // MARK: Swiftgram
+        let sgFreeBytes = (try? FileManager.default.attributesOfFileSystem(forPath: appGroupUrl.path)[.systemFreeSize]) as? NSNumber
+        NSLog("[SG.Launch] Storage write test: \(writeAbilityTestSuccess); free bytes: \(sgFreeBytes?.int64Value ?? -1)")
+        //
         if !writeAbilityTestSuccess {
             let alertController = UIAlertController(title: nil, message: "The device does not have sufficient free space.", preferredStyle: .alert)
             alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: { _ in
                 preconditionFailure()
             }))
+            self.window?.makeKeyAndVisible() // MARK: Swiftgram
             self.mainWindow?.presentNative(alertController)
             
             return true
@@ -1014,6 +1053,32 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                 icons.append(PresentationAppIcon(name: "PremiumTurbo", imageName: "PremiumTurbo", isPremium: true))
                 icons.append(PresentationAppIcon(name: "PremiumBlack", imageName: "PremiumBlack", isPremium: true))
                 
+                
+                // MARK: Swiftgram
+                icons = [
+                    PresentationAppIcon(name: "SGDefault", imageName: "SGDefault", isDefault: true),
+                    PresentationAppIcon(name: "SGBlack", imageName: "SGBlack"),
+                    PresentationAppIcon(name: "SGLegacy", imageName: "SGLegacy"),
+                    PresentationAppIcon(name: "SGInverted", imageName: "SGInverted"),
+                    PresentationAppIcon(name: "SGWhite", imageName: "SGWhite"),
+                    PresentationAppIcon(name: "SGNight", imageName: "SGNight"),
+                    PresentationAppIcon(name: "SGSky", imageName: "SGSky"),
+                    PresentationAppIcon(name: "SGTitanium", imageName: "SGTitanium"),
+                    PresentationAppIcon(isSGPro: true, name: "SGPro", imageName: "SGPro"),
+                    PresentationAppIcon(isSGPro: true, name: "SGDay", imageName: "SGDay"),
+                    PresentationAppIcon(isSGPro: true, name: "SGGold", imageName: "SGGold"),
+                    SGSimpleSettings.shared.duckyAppIconAvailable ? PresentationAppIcon(isSGPro: true, name: "SGDucky", imageName: "SGDucky") : PresentationAppIcon(name: "", imageName: ""), // Empty
+                    PresentationAppIcon(name: "SGNeon", imageName: "SGNeon"),
+                    PresentationAppIcon(name: "SGNeonBlue", imageName: "SGNeonBlue"),
+                    PresentationAppIcon(name: "SGGlass", imageName: "SGGlass"),
+                    PresentationAppIcon(name: "SGSparkling", imageName: "SGSparkling"),
+                ]
+
+                if Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt" {
+                    icons.append(PresentationAppIcon(name: "SGBeta", imageName: "SGBeta"))
+                }
+                //
+                
                 return icons
             } else {
                 return []
@@ -1057,6 +1122,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             }
         })
         
+        NSLog("[SG.Launch] Scheduling account-manager initialization") // MARK: Swiftgram
         let accountManager: AccountManager<TelegramAccountManagerTypes> = setupAccountManager(basePath: rootPath + "/accounts-metadata", isTemporary: false, isReadOnly: false, useCaches: true, removeDatabaseOnError: true, resetLocalSecrets: {
             try resetWalletLocalSecrets()
         })
@@ -1107,7 +1173,9 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         self.pushRegistry = pushRegistry
         pushRegistry.delegate = self
 
+        NSLog("[SG.Launch] Waiting for initial account records (synchronous)") // MARK: Swiftgram
         self.accountManagerState = extractAccountManagerState(records: accountManager._internalAccountRecordsSync())
+        NSLog("[SG.Launch] Initial account records loaded") // MARK: Swiftgram
         let _ = (accountManager.accountRecords()
         |> deliverOnMainQueue).start(next: { view in
             self.accountManagerState = extractAccountManagerState(records: view)
@@ -1126,6 +1194,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         }
         |> deliverOnMainQueue
         |> mapToSignal { [self] accountManager, initialPresentationDataAndSettings -> Signal<(SharedApplicationContext, LoggingSettings), NoError> in
+            NSLog("[SG.Launch] Initial presentation settings loaded") // MARK: Swiftgram
             self.mainWindow?.hostView.containerView.backgroundColor =  initialPresentationDataAndSettings.presentationData.theme.chatList.backgroundColor
             
             let legacyBasePath = appGroupUrl.path
@@ -1317,7 +1386,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             |> deliverOnMainQueue
             |> map { accountAndSettings -> AuthorizedApplicationContext? in
                 return accountAndSettings.flatMap { context, callListSettings in
-                    return AuthorizedApplicationContext(sharedApplicationContext: sharedApplicationContext, mainWindow: self.mainWindow, context: context as! AccountContextImpl, accountManager: sharedApplicationContext.sharedContext.accountManager, showCallsTab: callListSettings.showTab, reinitializedNotificationSettings: {
+                    return AuthorizedApplicationContext(sharedApplicationContext: sharedApplicationContext, mainWindow: self.mainWindow, context: context as! AccountContextImpl, accountManager: sharedApplicationContext.sharedContext.accountManager, showContactsTab: callListSettings.showContactsTab, /* MARK: Swiftgram */ showCallsTab: callListSettings.showTab, reinitializedNotificationSettings: {
                         let _ = (self.context.get()
                         |> take(1)
                         |> deliverOnMainQueue).start(next: { context in
@@ -1418,6 +1487,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                         print("Application: context took \(readyTime) to become ready")
                     }
                     print("Launch to ready took \((CFAbsoluteTimeGetCurrent() - launchStartTime) * 1000.0) ms")
+                    NSLog("[SG.Launch] Authorized context ready after \(CFAbsoluteTimeGetCurrent() - launchStartTime) seconds") // MARK: Swiftgram
 
                     self.mainWindow.debugAction = nil
                     self.mainWindow.viewController = context.rootController
@@ -1446,10 +1516,30 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                     self.registerForNotifications(context: context.context, authorize: authorizeNotifications)
                     
                     self.resetIntentsIfNeeded(context: context.context)
+                    // MARK: Swiftgram - Disable automatic prompts to send crash logs to the upstream bot.
+                    #if false
                     self.crashReportPromptDisposable.set(setupCrashReportPrompt(context: context.context, isInternalBuild: buildConfig.isInternalBuild, navigationController: context.rootController, present: { [weak appDelegate = self, weak applicationContext = context] controller in
                         guard let appDelegate, let applicationContext, appDelegate.contextValue === applicationContext else { return }
                         appDelegate.mainWindow.present(controller, on: .root)
                     }))
+                    #endif
+                    //
+                    
+                    // MARK: Swiftgram
+                    updateSGWebSettingsInteractivelly(context: context.context)
+                    updateSGGHSettingsInteractivelly(context: context.context)
+                    let _ = (context.context.sharedContext.presentationData.start(next: { presentationData in
+                        SGLocalizationManager.shared.downloadLocale(presentationData.strings.baseLanguageCode)
+                    }))
+                    if #available(iOS 13.0, *) {
+                        let _ = Task {
+                            let primaryContext = await self.getPrimaryContext(anyContext: context.context)
+                            SGLogger.shared.log("SGIAP", "Verifying Status \(primaryContext.sharedContext.immediateSGStatus.status) for: \(primaryContext.account.peerId.id._internalGetInt64Value())")
+                            let _ = await self.fetchSGStatus(primaryContext: primaryContext)
+                        }
+                    }
+                    //
+                    
                 }))
             } else {
                 self.mainWindow.viewController = nil
@@ -1523,6 +1613,13 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                 authContextReadyDisposable.set(nil)
             }
         }))
+        
+        
+        // MARK: Swiftgram
+        if #available(iOS 13.0, *) {
+            self.setupIAP()
+        }
+        //
 
 
         let logoutDataSignal: Signal<(AccountManager, Set<PeerId>), NoError> = self.sharedContextPromise.get()
@@ -1604,7 +1701,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         
         if let url = launchOptions?[.url] {
             if let url = url as? URL, url.scheme == "tg" || url.scheme == "ton" || url.scheme == buildConfig.appSpecificUrlScheme || WalletContext.isTonConnectUrl(url.absoluteString) {
-                self.openUrlWhenReady(url: url, external: true)
+                self.openUrlWhenReady(url: sgActionRequestHandlerSanitizer(url), external: true) // MARK: Swiftgram
             } else if let urlString = url as? String, urlString.lowercased().hasPrefix("tg:") || urlString.lowercased().hasPrefix("ton:") || urlString.lowercased().hasPrefix("\(buildConfig.appSpecificUrlScheme):") || WalletContext.isTonConnectUrl(urlString), let url = URL(string: urlString) {
                 self.openUrlWhenReady(url: url, external: true)
             }
@@ -2127,6 +2224,10 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     }
     
     func runForegroundTasks() {
+        
+        
+        var sgTasksLaunched: Bool = false // MARK: Swiftgram
+        
         let _ = (self.sharedContextPromise.get()
         |> take(1)
         |> deliverOnMainQueue).start(next: { sharedApplicationContext in
@@ -2134,6 +2235,13 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
              |> take(1)
              |> deliverOnMainQueue).start(next: { activeAccounts in
                 for (_, context, _) in activeAccounts.accounts {
+                    // MARK: Swiftgram
+                    if !sgTasksLaunched {
+                        updateSGWebSettingsInteractivelly(context: context)
+                        updateSGGHSettingsInteractivelly(context: context)
+                        sgTasksLaunched = true
+                    }
+                    //
                     (context.downloadedMediaStoreManager as? DownloadedMediaStoreManagerImpl)?.runTasks()
                 }
             })
@@ -2683,6 +2791,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             }
         }
         |> deliverOnMainQueue).start(next: { sharedContext, context, authContext in
+            let url = sgActionRequestHandlerSanitizer(url) // MARK: Swiftgram
             if let authContext = authContext, let confirmationCode = parseConfirmationCodeUrl(sharedContext: sharedContext, url: url) {
                 authContext.rootController.applyConfirmationCode(confirmationCode)
             } else if let context = context {
@@ -3600,3 +3709,180 @@ private final class NavigationBarOverflowMenuReferenceSource: ContextReferenceCo
         return ContextControllerReferenceViewInfo(referenceView: self.sourceView, contentAreaInScreenSpace: mainWindowScreenBounds)
     }
 }
+
+// MARK: Swiftgram
+@available(iOS 13.0, *)
+extension AppDelegate {
+
+    func setupIAP() {
+        NotificationCenter.default.addObserver(forName: .SGIAPHelperPurchaseNotification, object: nil, queue: nil) { [weak self] notification in
+            SGLogger.shared.log("SGIAP", "Got SGIAPHelperPurchaseNotification")
+            guard let strongSelf = self else { return }
+            if let transactions = notification.object as? [SKPaymentTransaction] {
+                let _ = (strongSelf.context.get()
+                |> take(1)
+                |> deliverOnMainQueue).start(next: { [weak strongSelf] context in
+                    guard let veryStrongSelf = strongSelf else {
+                        SGLogger.shared.log("SGIAP", "Finishing transactions \(transactions.map({ $0.transactionIdentifier ?? "nil" }).joined(separator: ", "))")
+                        let defaultPaymentQueue = SKPaymentQueue.default()
+                        for transaction in transactions {
+                            defaultPaymentQueue.finishTransaction(transaction)
+                        }
+                        return
+                    }
+                    guard let context = context else {
+                        SGLogger.shared.log("SGIAP", "Empty app context (how?)")
+                        
+                        SGLogger.shared.log("SGIAP", "Finishing transactions \(transactions.map({ $0.transactionIdentifier ?? "nil" }).joined(separator: ", "))")
+                        let defaultPaymentQueue = SKPaymentQueue.default()
+                        for transaction in transactions {
+                            defaultPaymentQueue.finishTransaction(transaction)
+                        }
+                        return
+                    }
+                    SGLogger.shared.log("SGIAP", "Got context for SGIAPHelperPurchaseNotification")
+                    let _ = Task {
+                        await veryStrongSelf.sendReceiptForVerification(primaryContext: context.context)
+                        await veryStrongSelf.fetchSGStatus(primaryContext: context.context)
+                        
+                        SGLogger.shared.log("SGIAP", "Finishing transactions \(transactions.map({ $0.transactionIdentifier ?? "nil" }).joined(separator: ", "))")
+                        let defaultPaymentQueue = SKPaymentQueue.default()
+                        for transaction in transactions {
+                            defaultPaymentQueue.finishTransaction(transaction)
+                        }
+                    }
+                })
+            } else {
+                SGLogger.shared.log("SGIAP", "Wrong object in SGIAPHelperPurchaseNotification")
+                #if DEBUG
+                preconditionFailure("Wrong object in SGIAPHelperPurchaseNotification")
+                #endif
+            }
+        }
+    }
+    
+    func getPrimaryContext(anyContext context: AccountContext, fallbackToCurrent: Bool = false) async -> AccountContext {
+        var primaryUserId: Int64 = Int64(SGSimpleSettings.shared.primaryUserId) ?? 0
+        if primaryUserId == 0 {
+            primaryUserId = context.account.peerId.id._internalGetInt64Value()
+        }
+
+        var primaryContext = try? await getContextForUserId(context: context, userId: primaryUserId).awaitable()
+        if let primaryContext = primaryContext {
+            SGLogger.shared.log("SGIAP", "Got primary context for user id: \(primaryContext.account.peerId.id._internalGetInt64Value())")
+            return primaryContext
+        } else {
+            primaryContext = context
+            let newPrimaryUserId = context.account.peerId.id._internalGetInt64Value()
+            SGLogger.shared.log("SGIAP", "Primary context for user id \(primaryUserId) is nil! Falling back to current context with user id: \(newPrimaryUserId)")
+            return context
+        }
+    }
+    
+    func sendReceiptForVerification(primaryContext: AccountContext) async {
+        guard let receiptData = getPurchaceReceiptData() else {
+            return
+        }
+        
+        let encodedReceiptData = receiptData.base64EncodedData(options: [])
+
+        var deviceToken: String?
+        var apiToken: String?
+        do {
+            async let deviceTokenTask = getDeviceToken().awaitable()
+            async let apiTokenTask = getSGApiToken(context: primaryContext).awaitable()
+            
+            (deviceToken, apiToken) = try await (deviceTokenTask, apiTokenTask)
+        } catch {
+            SGLogger.shared.log("SGIAP", "Error getting device token or API token: \(error)")
+            return
+        }
+
+        if let deviceToken, let apiToken {
+            do {
+                let _ = try await postSGReceipt(token: apiToken,
+                                                deviceToken: deviceToken,
+                                                encodedReceiptData: encodedReceiptData).awaitable()
+            } catch let error as SignalCompleted {
+                let _ = error
+            } catch {
+                SGLogger.shared.log("SGIAP", "Error: \(error)")
+            }
+        }
+    }
+    
+    func fetchSGStatus(primaryContext: AccountContext) async {
+        // TODO(swiftgram): Stuck on getting shouldKeepConnection
+        // Perhaps, we can drop on some timeout?
+//        let currentShouldKeepConnection = await (primaryContext.account.network.shouldKeepConnection.get() |> take(1) |> deliverOnMainQueue).awaitable()
+        guard !primaryContext.account.testingEnvironment else {
+            return
+        }
+        let currentShouldKeepConnection = false
+        let userId = primaryContext.account.peerId.id._internalGetInt64Value()
+//        SGLogger.shared.log("SGIAP", "User id \(userId) currently keeps connection: \(currentShouldKeepConnection)")
+        if !currentShouldKeepConnection {
+            SGLogger.shared.log("SGIAP", "Asking user id \(userId) to keep connection: true")
+            primaryContext.account.network.shouldKeepConnection.set(.single(true))
+        }
+        // MARK: Swiftgram
+        let sgIqtpQueryString = makeIqtpQuery("s")
+        //
+        let iqtpResponse = try? await sgIqtpQuery(engine: primaryContext.engine, query: sgIqtpQueryString).awaitable()
+        guard let iqtpResponse = iqtpResponse else {
+            SGLogger.shared.log("SGIAP", "IQTP response is nil!")
+//            if !currentShouldKeepConnection {
+//                SGLogger.shared.log("SGIAP", "Setting user id \(userId) keep connection back to false")
+//                primaryContext.account.network.shouldKeepConnection.set(.single(false))
+//            }
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .SGIAPHelperValidationErrorNotification, object: nil, userInfo: ["error": "PayWall.ValidationError.TryAgain"])
+            }
+            return
+        }
+        SGLogger.shared.log("SGIAP", "Got IQTP response: \(iqtpResponse)")
+        let _ = try? await updateSGStatusInteractively(accountManager: primaryContext.sharedContext.accountManager, { value in
+            var value = value
+
+            let newStatus: Int64
+            if let status = Int64(iqtpResponse.value) {
+                newStatus = status
+            } else {
+                SGLogger.shared.log("SGIAP", "Can't parse IQTP response into status!")
+                newStatus = value.status // unparseable
+            }
+            
+            let userId = primaryContext.account.peerId.id._internalGetInt64Value()
+            if value.status != newStatus {
+                SGLogger.shared.log("SGIAP", "Updating \(userId) status \(value.status) -> \(newStatus)")
+                if newStatus > 1 {
+                    let stringUserId = String(userId)
+                    if SGSimpleSettings.shared.primaryUserId != stringUserId {
+                        SGLogger.shared.log("SGIAP", "Setting new primary user id: \(userId)")
+                        SGSimpleSettings.shared.primaryUserId = stringUserId
+                    }
+                } else {
+                    SGLogger.shared.log("SGIAP", "Status expired")
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: .SGIAPHelperValidationErrorNotification, object: nil, userInfo: ["error": "PayWall.ValidationError.Expired"])
+                    }
+                }
+                value.status = newStatus
+            } else {
+                SGLogger.shared.log("SGIAP", "Status \(value.status) for \(userId) hasn't changed")
+                if newStatus < 2 {
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: .SGIAPHelperValidationErrorNotification, object: nil, userInfo: ["error": "PayWall.ValidationError.TryAgain"])
+                    }
+                }
+            }
+            return value
+        }).awaitable()
+
+//        if !currentShouldKeepConnection {
+//            SGLogger.shared.log("SGIAP", "Setting user id \(userId) keep connection back to false")
+//            primaryContext.account.network.shouldKeepConnection.set(.single(false))
+//        }
+    }
+}
+//

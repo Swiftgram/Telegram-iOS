@@ -1,3 +1,5 @@
+import SGSimpleSettings // MARK: Swiftgram
+import SGLogging // MARK: Swiftgram
 import Foundation
 import UIKit
 import Display
@@ -148,6 +150,7 @@ public func effectiveIgnoredTranslationLanguages(context: AccountContext, ignore
     if baseLang.hasSuffix(rawSuffix) {
         baseLang = String(baseLang.dropLast(rawSuffix.count))
     }
+    baseLang = normalizeTranslationLanguage(baseLang) // MARK: Swiftgram
     
     var dontTranslateLanguages = Set<String>()
     if let ignoredLanguages = ignoredLanguages {
@@ -159,17 +162,6 @@ public func effectiveIgnoredTranslationLanguages(context: AccountContext, ignore
         }
     }
     return dontTranslateLanguages
-}
-
-public func normalizeTranslationLanguage(_ code: String) -> String {
-    var code = code
-    if code.contains("-") {
-        code = code.components(separatedBy: "-").first ?? code
-    }
-    if code == "nb" {
-        code = "no"
-    }
-    return code
 }
 
 public func canTranslateChats(context: AccountContext) -> Bool {
@@ -186,7 +178,7 @@ public func canTranslateChats(context: AccountContext) -> Bool {
     default:
         break
     }
-    return chatTranslationAvailable
+    return chatTranslationAvailable || true // MARK: Swiftgram
 }
 
 public func canTranslateText(context: AccountContext, text: String, showTranslate: Bool, showTranslateIfTopical: Bool = false, ignoredLanguages: [String]?) -> (canTranslate: Bool, language: String?) {
@@ -206,7 +198,7 @@ public func canTranslateText(context: AccountContext, text: String, showTranslat
     default:
         break
     }
-    
+    translateButtonAvailable = true // MARK: Swiftgram
     let showTranslate = showTranslate && translateButtonAvailable
         
     if #available(iOS 12.0, *) {
@@ -278,14 +270,16 @@ private struct TranslationViewImpl: View {
             }
             
             if let firstTaskLanguagePair {
-                if let configuration = self.configuration, configuration.source?.languageCode?.identifier == firstTaskLanguagePair.0, configuration.target?.languageCode?.identifier == firstTaskLanguagePair.1 {
+                // MARK: Swiftgram
+                if let configuration = self.configuration, (configuration.source?.languageCode?.identifier ?? "") == firstTaskLanguagePair.0, configuration.target?.languageCode?.identifier == firstTaskLanguagePair.1 {
                     self.configuration?.invalidate()
                 } else {
                     self.configuration = .init(
-                        source: Locale.Language(identifier: firstTaskLanguagePair.0),
+                        source: firstTaskLanguagePair.0.isEmpty ? nil : Locale.Language(identifier: firstTaskLanguagePair.0),
                         target: Locale.Language(identifier: firstTaskLanguagePair.1)
                     )
                 }
+                //
             }
         }
         .translationTask(self.configuration, action: { session in
@@ -322,7 +316,11 @@ private struct TranslationViewImpl: View {
                 
                 task.completion(resultMap)
             } catch let e {
-                print("Translation error: \(e)")
+                // MARK: Swiftgram
+                if SGSimpleSettings.shared.translatorLogsEnabled {
+                    SGLogger.shared.log("Translate", "[\(SGSimpleSettings.TranslationBackend.system.rawValue)] error translating \(task.texts.values.reduce(0) { $0 + $1.count }) chars\(task.fromLang.isEmpty ? "" : " from '\(task.fromLang)'") to '\(task.toLang)', error: \(e)")
+                }
+                //
                 task.completion(nil)
             }
             
@@ -335,14 +333,16 @@ private struct TranslationViewImpl: View {
             }
             
             if let firstTaskLanguagePair {
-                if let configuration = self.configuration, configuration.source?.languageCode?.identifier == firstTaskLanguagePair.0, configuration.target?.languageCode?.identifier == firstTaskLanguagePair.1 {
+                // MARK: Swiftgram
+                if let configuration = self.configuration, (configuration.source?.languageCode?.identifier ?? "") == firstTaskLanguagePair.0, configuration.target?.languageCode?.identifier == firstTaskLanguagePair.1 {
                     self.configuration?.invalidate()
                 } else {
                     self.configuration = .init(
-                        source: Locale.Language(identifier: firstTaskLanguagePair.0),
+                        source: firstTaskLanguagePair.0.isEmpty ? nil : Locale.Language(identifier: firstTaskLanguagePair.0),
                         target: Locale.Language(identifier: firstTaskLanguagePair.1)
                     )
                 }
+                //
             }
         })
     }

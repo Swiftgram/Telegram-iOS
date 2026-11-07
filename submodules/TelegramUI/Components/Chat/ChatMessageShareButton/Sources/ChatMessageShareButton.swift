@@ -110,7 +110,7 @@ public class ChatMessageShareButton: ASDisplayNode {
         self.morePressed?()
     }
     
-    public func update(presentationData: ChatPresentationData, controllerInteraction: ChatControllerInteraction, chatLocation: ChatLocation, subject: ChatControllerSubject?, message: EngineMessage, accountPeerId: EnginePeer.Id, disableComments: Bool = false, isSummarize: Bool = false) -> CGSize {
+    public func update(hasTranslation: Bool? = nil /* MARK: Swiftgram */, presentationData: ChatPresentationData, controllerInteraction: ChatControllerInteraction, chatLocation: ChatLocation, subject: ChatControllerSubject?, message: EngineMessage, accountPeerId: EnginePeer.Id, disableComments: Bool = false, isSummarize: Bool = false) -> CGSize {
         let isGlass = !presentationData.chatBubbleCorners.bubbleMode
         var isReplies = false
         var isNavigate = false
@@ -172,6 +172,8 @@ public class ChatMessageShareButton: ASDisplayNode {
             } else if case let .customChatContents(contents) = subject, case .hashTagSearch = contents.kind {
                 updatedIconImage = PresentationResourcesChat.chatFreeNavigateButtonIcon(presentationData.theme.theme, wallpaper: presentationData.theme.wallpaper)
                 updatedIconOffset = CGPoint(x: UIScreenPixel, y: 1.0)
+            } else if let hasTranslation = hasTranslation /* MARK: Swiftgram */ {
+                updatedIconImage = PresentationResourcesChat.chatTranslateShareButtonIcon(presentationData.theme.theme, wallpaper: presentationData.theme.wallpaper, undoTranslate: hasTranslation)
             } else if isNavigate {
                 updatedIconImage = PresentationResourcesChat.chatFreeNavigateToThreadButtonIcon(presentationData.theme.theme, wallpaper: presentationData.theme.wallpaper)
                 updatedIconOffset = CGPoint(x: UIScreenPixel, y: -3.0)
@@ -207,6 +209,8 @@ public class ChatMessageShareButton: ASDisplayNode {
                 topLabel = nil
             } else if case let .customChatContents(contents) = subject, case .hashTagSearch = contents.kind {
                 topLabel = presentationData.strings.SharedMedia_ViewInChat
+            } else if hasTranslation != nil { // MARK: Swiftgram
+                topLabel = presentationData.strings.Conversation_ContextMenuTranslate // MARK: Swiftgram
             } else if isNavigate {
                 topLabel = presentationData.strings.SharedMedia_ViewInChat
             } else if case .pinnedMessages = subject {

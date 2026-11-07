@@ -1,3 +1,6 @@
+// MARK: Swiftgram
+import SGSimpleSettings
+//
 import Foundation
 import UIKit
 import Display
@@ -81,6 +84,7 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
     
     /// The Contacts screen `openContacts()` pushed; `getContactsController()` returns it while it is open.
     private weak var contactsController: ContactsController?
+    private var sgContactsTabController: ContactsController? // MARK: Swiftgram
     public var callListController: CallListController?
     public var chatListController: ChatListController?
     public var accountSettingsController: PeerInfoScreen?
@@ -155,6 +159,11 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
     }
     
     public func getContactsController() -> ViewController? {
+        // MARK: Swiftgram
+        if let sgContactsTabController = self.sgContactsTabController, self.rootTabController?.controllers.contains(where: { $0 === sgContactsTabController }) == true {
+            return sgContactsTabController
+        }
+        //
         return self.contactsController
     }
     
@@ -200,7 +209,7 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         super.containerLayoutUpdated(layout, transition: transition)
     }
     
-    public func addRootControllers(showCallsTab: Bool, showNewsTab: Bool) {
+    public func addRootControllers(showCallsTab: Bool, showContactsTab: Bool, /* MARK: Swiftgram */ showNewsTab: Bool) {
         let tabBarController = TabBarControllerImpl(theme: self.presentationData.theme, strings: self.presentationData.strings)
         tabBarController.navigationPresentation = .master
         let chatListController = self.context.sharedContext.makeChatListController(context: self.context, location: .chatList(groupId: .root), controlsHistoryPreload: true, hideNetworkActivityStatus: false, previewing: false, enableDebugActions: !GlobalExperimentalSettings.isAppStoreBuild)
@@ -214,6 +223,17 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         
         var controllers: [ViewController] = []
         
+        // MARK: Swiftgram
+        let sgContactsTabController = ContactsController(context: self.context)
+        sgContactsTabController.switchToChatsController = { [weak self] in
+            self?.openChatsController(activateSearch: false)
+        }
+        self.sgContactsTabController = sgContactsTabController
+        if showContactsTab {
+            controllers.append(sgContactsTabController)
+        }
+        //
+
         if showCallsTab {
             controllers.append(callListController)
         }
@@ -252,11 +272,16 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         self.pushViewController(tabBarController, animated: false)
     }
         
-    public func updateRootControllers(showCallsTab: Bool, showNewsTab: Bool) {
+    public func updateRootControllers(showCallsTab: Bool, showContactsTab: Bool, /* MARK: Swiftgram */ showNewsTab: Bool) {
         guard let rootTabController = self.rootTabController as? TabBarControllerImpl else {
             return
         }
         var controllers: [ViewController] = []
+        // MARK: Swiftgram
+        if showContactsTab, let sgContactsTabController = self.sgContactsTabController {
+            controllers.append(sgContactsTabController)
+        }
+        //
         if showCallsTab {
             controllers.append(self.callListController!)
         }
@@ -810,7 +835,7 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
                         defer {
                             EngineTempBox.shared.dispose(tempFile)
                         }
-                        if let imageData = compressImageToJPEG(image, quality: 0.7, tempFilePath: tempFile.path) {
+                        if let imageData = compressImageToJPEG(image, quality: Float(SGSimpleSettings.shared.outgoingPhotoQuality) / 100.0, tempFilePath: tempFile.path) { // MARK: Swiftgram
                             media = .image(dimensions: dimensions, data: imageData, stickers: result.stickers)
                         }
                     case let .video(content, firstFrameImage, values, duration, dimensions):
@@ -833,7 +858,7 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
                             defer {
                                 EngineTempBox.shared.dispose(tempFile)
                             }
-                            let imageData = firstFrameImage.flatMap { compressImageToJPEG($0, quality: 0.6, tempFilePath: tempFile.path) }
+                            let imageData = firstFrameImage.flatMap { compressImageToJPEG($0, quality: Float(SGSimpleSettings.shared.outgoingPhotoQuality) / 100.0, tempFilePath: tempFile.path) } // MARK: Swiftgram
                             let firstFrameFile = imageData.flatMap { data -> EngineTempBoxFile? in
                                 let file = EngineTempBox.shared.tempFile(fileName: "image.jpg")
                                 if let _ = try? data.write(to: URL(fileURLWithPath: file.path)) {
@@ -906,13 +931,19 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         }
     }
     
-    /// Contacts has no tab: the Settings tab, with the screen Settings ▸ Contacts pushes over it.
+    /// Opens the optional Contacts tab, or pushes Contacts over Settings when the tab is hidden. // MARK: Swiftgram
     public func openContacts() {
         guard let rootTabController = self.rootTabController else {
             return
         }
         
         self.popToRoot(animated: false)
+        // MARK: Swiftgram
+        if let sgContactsTabController = self.sgContactsTabController, let index = rootTabController.controllers.firstIndex(where: { $0 === sgContactsTabController }) {
+            rootTabController.selectedIndex = index
+            return
+        }
+        //
     
         if let index = rootTabController.controllers.firstIndex(where: { $0 is PeerInfoScreenImpl }) {
             rootTabController.selectedIndex = index

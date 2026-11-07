@@ -1,9 +1,13 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+sgsrc = [
+    "//Swiftgram/SGSwiftSignalKit:SGSwiftSignalKit"
+]
+
 swift_library(
     name = "SwiftSignalKit",
     module_name = "SwiftSignalKit",
-    srcs = glob([
+    srcs = sgsrc + glob([
         "Source/**/*.swift",
     ]),
     copts = [

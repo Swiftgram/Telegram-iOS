@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
 import Display
@@ -581,6 +582,7 @@ public final class GalleryControllerPresentationArguments {
 private enum GalleryMessageHistoryView {
     case view(MessageHistoryView, Bool)
     case entries([MessageHistoryEntry], Bool, Bool)
+    case sgCombinedMediaViewer(SGCombinedMediaViewerHistory, Bool, HistoryViewInputTag) // MARK: Swiftgram
     
     var entries: [MessageHistoryEntry] {
         switch self {
@@ -588,6 +590,10 @@ private enum GalleryMessageHistoryView {
             return view.entries
         case let .entries(entries, _, _):
             return entries
+        // MARK: Swiftgram
+        case let .sgCombinedMediaViewer(history, _, _):
+            return history.entries
+        //
         }
     }
     
@@ -597,6 +603,10 @@ private enum GalleryMessageHistoryView {
             return nil
         case let .view(view, _):
             return view.tag
+        // MARK: Swiftgram
+        case let .sgCombinedMediaViewer(_, _, tag):
+            return tag
+        //
         }
     }
     
@@ -606,6 +616,10 @@ private enum GalleryMessageHistoryView {
             return hasEarlier
         case let .view(view, _):
             return view.earlierId != nil
+        // MARK: Swiftgram
+        case let .sgCombinedMediaViewer(history, _, _):
+            return history.hasEarlier
+        //
         }
     }
     
@@ -615,6 +629,10 @@ private enum GalleryMessageHistoryView {
             return hasLater
         case let .view(view, _):
             return view.laterId != nil
+        // MARK: Swiftgram
+        case let .sgCombinedMediaViewer(history, _, _):
+            return history.hasLater
+        //
         }
     }
     
@@ -624,6 +642,10 @@ private enum GalleryMessageHistoryView {
             return peerIsCopyProtected
         case .entries:
             return false
+        // MARK: Swiftgram
+        case let .sgCombinedMediaViewer(_, peerIsCopyProtected, _):
+            return peerIsCopyProtected
+        //
         }
     }
 }
@@ -654,6 +676,10 @@ public struct GalleryConfiguration {
     }
     
     static func with(appConfiguration: AppConfiguration) -> GalleryConfiguration {
+        // MARK: Swiftgram
+        if appConfiguration.sgWebSettings.global.ytPip {
+            return GalleryConfiguration(youtubePictureInPictureEnabled: true)
+        }
         if let data = appConfiguration.data, let value = data["youtube_pip"] as? String {
             return GalleryConfiguration(youtubePictureInPictureEnabled: value != "disabled")
         } else {
@@ -760,6 +786,7 @@ public class GalleryController: ViewController, StandalonePresentableController,
     private var hasRightEntries: Bool = false
     private var loadingMore: Bool = false
     private var tag: HistoryViewInputTag?
+    private var sgCombinedMediaViewer: Bool = false // MARK: Swiftgram
     private var centralEntryStableId: GalleryEntryStableId?
     private var configuration: GalleryConfiguration?
     
@@ -901,8 +928,10 @@ public class GalleryController: ViewController, StandalonePresentableController,
                     return messages.first(where: { $0.id == messageId }).flatMap { ($0, false) }
                 }
         }
+        let sgCombinedMediaViewerEnabled = SGSimpleSettings.shared.combinedMediaViewer // MARK: Swiftgram
         let messageView = message
         |> filter({ $0 != nil })
+        |> take(1) // MARK: Swiftgram
         |> mapToSignal { messageAndPeerIsCopyProtected -> Signal<GalleryMessageHistoryView?, NoError> in
             let (message, peerIsCopyProtected) = messageAndPeerIsCopyProtected!
             switch source {
@@ -922,11 +951,25 @@ public class GalleryController: ViewController, StandalonePresentableController,
                         } else {
                             inputTag = .tag(tags)
                         }
+                        // MARK: Swiftgram
+                        if sgCombinedMediaViewerEnabled && (tags == .photoOrVideo || tags == .gif) {
+                            // Open the tapped item immediately; retain both history subscriptions until their holes are filled.
+                            let anchorEntry = MessageHistoryEntry(message: message, isRead: false, location: nil, monthLocation: nil, attributes: MutableMessageHistoryEntryAttributes(authorIsContact: false))
+                            let initialHistory = SGCombinedMediaViewerHistory(entries: [anchorEntry], hasEarlier: false, hasLater: false)
+                            return Signal<GalleryMessageHistoryView?, NoError>.single(.sgCombinedMediaViewer(initialHistory, peerIsCopyProtected, inputTag))
+                            |> then(sgCombinedMediaViewerHistory(context: context, location: context.chatLocationInput(for: chatLocation, contextHolder: chatLocationContextHolder), anchor: message.index, namespaces: namespaces, tag: inputTag)
+                            |> take(1)
+                            |> map { history -> GalleryMessageHistoryView? in
+                                return .sgCombinedMediaViewer(history, peerIsCopyProtected, inputTag)
+                            })
+                        }
+                        //
                         return context.account.postbox.aroundMessageHistoryViewForLocation(context.chatLocationInput(for: chatLocation, contextHolder: chatLocationContextHolder), anchor: .index(message.index), ignoreMessagesInTimestampRange: nil, ignoreMessageIds: Set(), count: 50, clipHoles: false, fixedCombinedReadStates: nil, topTaggedMessageIdNamespaces: [], tag: inputTag, appendMessagesFromTheSameGroup: false, namespaces: namespaces, orderStatistics: [.combinedLocation])
                         |> mapToSignal { (view, _, _) -> Signal<GalleryMessageHistoryView?, NoError> in
                             let mapped = GalleryMessageHistoryView.view(view, peerIsCopyProtected)
                             return .single(mapped)
                         }
+                        |> take(1) // MARK: Swiftgram
                     } else {
                         return .single(GalleryMessageHistoryView.entries([MessageHistoryEntry(message: message, isRead: false, location: nil, monthLocation: nil, attributes: MutableMessageHistoryEntryAttributes(authorIsContact: false))], false, false))
                 }
@@ -943,9 +986,9 @@ public class GalleryController: ViewController, StandalonePresentableController,
                         }
                         return GalleryMessageHistoryView.entries(entries, hasMore, false)
                     }
+                    |> take(1) // MARK: Swiftgram
             }
-        }
-        |> take(1)
+        } // MARK: Swiftgram
         
         let semaphore: DispatchSemaphore?
         if synchronousLoad {
@@ -1005,7 +1048,17 @@ public class GalleryController: ViewController, StandalonePresentableController,
                             }
                         }
                         
+                        // MARK: Swiftgram
+                        if strongSelf.sgCombinedMediaViewer, let currentId = strongSelf.centralEntryStableId, entries.contains(where: { $0.stableId == currentId }) {
+                            centralEntryStableId = currentId
+                        }
+                        //
                         strongSelf.tag = view.tag
+                        // MARK: Swiftgram
+                        if case .sgCombinedMediaViewer = view {
+                            strongSelf.sgCombinedMediaViewer = true
+                        }
+                        //
                         
                         if invertItemOrder {
                             strongSelf.entries = entries.reversed()
@@ -1070,7 +1123,11 @@ public class GalleryController: ViewController, StandalonePresentableController,
                             
                             strongSelf.galleryNode.pager.replaceItems(items, centralItemIndex: centralItemIndex)
                             
-                            if strongSelf.temporaryDoNotWaitForReady {
+                            // MARK: Swiftgram
+                            if strongSelf.sgCombinedMediaViewer && strongSelf.didSetReady {
+                                // Already presented the anchor; loading neighbours must not reset readiness.
+                            } else if strongSelf.temporaryDoNotWaitForReady {
+                            //
                                 strongSelf.didSetReady = true
                                 strongSelf._ready.set(.single(true))
                             } else {
@@ -1759,12 +1816,21 @@ public class GalleryController: ViewController, StandalonePresentableController,
                                 } else {
                                     namespaces = .not(Namespaces.Message.allNonRegular)
                                 }
-                                let signal = strongSelf.context.account.postbox.aroundMessageHistoryViewForLocation(strongSelf.context.chatLocationInput(for: chatLocation, contextHolder: chatLocationContextHolder), anchor: .index(reloadAroundIndex), ignoreMessagesInTimestampRange: nil, ignoreMessageIds: Set(), count: 50, clipHoles: false, fixedCombinedReadStates: nil, topTaggedMessageIdNamespaces: [], tag: tag, appendMessagesFromTheSameGroup: false, namespaces: namespaces, orderStatistics: [.combinedLocation])
+                                var signal = strongSelf.context.account.postbox.aroundMessageHistoryViewForLocation(strongSelf.context.chatLocationInput(for: chatLocation, contextHolder: chatLocationContextHolder), anchor: .index(reloadAroundIndex), ignoreMessagesInTimestampRange: nil, ignoreMessageIds: Set(), count: 50, clipHoles: false, fixedCombinedReadStates: nil, topTaggedMessageIdNamespaces: [], tag: tag, appendMessagesFromTheSameGroup: false, namespaces: namespaces, orderStatistics: [.combinedLocation]) // MARK: Swiftgram
                                 |> mapToSignal { (view, _, _) -> Signal<GalleryMessageHistoryView?, NoError> in
                                     let mapped = GalleryMessageHistoryView.view(view, peerIsCopyProtected)
                                     return .single(mapped)
                                 }
                                 |> take(1)
+                                // MARK: Swiftgram
+                                if strongSelf.sgCombinedMediaViewer {
+                                    signal = sgCombinedMediaViewerHistory(context: strongSelf.context, location: strongSelf.context.chatLocationInput(for: chatLocation, contextHolder: chatLocationContextHolder), anchor: reloadAroundIndex, namespaces: namespaces, tag: tag)
+                                    |> map { history -> GalleryMessageHistoryView? in
+                                        return .sgCombinedMediaViewer(history, peerIsCopyProtected, tag)
+                                    }
+                                    |> take(1)
+                                }
+                                //
                                 
                                 strongSelf.updateVisibleDisposable.set((signal
                                 |> deliverOnMainQueue).start(next: { view in

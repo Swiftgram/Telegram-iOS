@@ -41,6 +41,7 @@ public enum OpenInLocationDirections: Equatable {
 
 public enum OpenInApplication: Equatable {
     case safari
+    case system // MARK: Swiftgram
     case maps
     case other(title: String, identifier: Int64, scheme: String, store: String?)
 }
@@ -67,6 +68,8 @@ public final class OpenInOption {
             switch self.application {
                 case .safari:
                     return "Safari"
+                case .system: // MARK: Swiftgram
+                    return "System"
                 case .maps:
                     return "Maps"
                 case let .other(title, _, _, _):
@@ -96,7 +99,7 @@ private func allOpenInOptions(context: AccountContext, item: OpenInItem) -> [Ope
                     return .openUrl(url: updatedUrl)
                 }))
             }
-            
+
             options.append(OpenInOption(identifier: "safari", application: .safari, action: {
                 var url = url
                 if url.hasPrefix("https://") {
@@ -104,6 +107,12 @@ private func allOpenInOptions(context: AccountContext, item: OpenInItem) -> [Ope
                 }
                 return .openUrl(url: url)
             }))
+
+            // MARK: Swiftgram
+            options.append(OpenInOption(identifier: "system", application: .system, action: {
+                return .openUrl(url: url)
+            }))
+            //
 
             options.append(OpenInOption(identifier: "chrome", application: .other(title: "Chrome", identifier: 535886823, scheme: "googlechrome", store: nil), action: {
                 if let url = URL(string: url), var components = URLComponents(url: url, resolvingAgainstBaseURL: true) {

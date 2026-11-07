@@ -28,4 +28,9 @@ public protocol TabBarController: ViewController {
     func updateLayout(transition: ContainedViewLayoutTransition)
     
     func updateControllerLayout(controller: ViewController)
+
+    // MARK: Swiftgram
+    /// The effective hidden state, including settings and screen-driven overrides.
+    var sgIsTabBarHidden: Bool { get }
+    //
 }

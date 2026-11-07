@@ -208,6 +208,13 @@ open class TabBarControllerImpl: ViewController, TabBarController {
                         updatedLayout.intrinsicInsets.bottom = tabBarHeight
                     }
                     
+                    // MARK: Swiftgram
+                    // Keep the glass tab bar's inset when reselecting the current tab so bottom folders don't drop onto it.
+                    if strongSelf.controllers[index] === strongSelf.currentController, !strongSelf.tabBarControllerNode.tabBarHidden, let sgBottomInset = strongSelf.tabBarControllerNode.containerLayoutUpdated(validLayout, toolbar: strongSelf.currentController?.toolbar, transition: .immediate) {
+                        updatedLayout.intrinsicInsets.bottom = sgBottomInset
+                    }
+                    //
+
                     strongSelf.controllers[index].containerLayoutUpdated(updatedLayout, transition: .immediate)
                 }
                 let startTime = CFAbsoluteTimeGetCurrent()
@@ -526,3 +533,12 @@ open class TabBarControllerImpl: ViewController, TabBarController {
         }
     }
 }
+
+
+// MARK: Swiftgram
+extension TabBarControllerImpl {
+    public var sgIsTabBarHidden: Bool {
+        return self.tabBarControllerNode.tabBarHidden
+    }
+}
+//

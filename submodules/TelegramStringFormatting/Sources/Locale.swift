@@ -13,7 +13,16 @@ private let systemLocaleRegionSuffix: String = {
 public let usEnglishLocale = Locale(identifier: "en_US")
 
 public func localeWithStrings(_ strings: PresentationStrings) -> Locale {
-    let languageCode = strings.baseLanguageCode
+    var languageCode = strings.baseLanguageCode
+    
+    // MARK: - Swiftgram fix for locale bugs, like location crash
+    if #available(iOS 18, *) {
+        let rawSuffix = "-raw"
+        if languageCode.hasSuffix(rawSuffix) {
+            languageCode = String(languageCode.dropLast(rawSuffix.count))
+        }
+    }
+    
     let code = languageCode + systemLocaleRegionSuffix
     return Locale(identifier: code)
 }

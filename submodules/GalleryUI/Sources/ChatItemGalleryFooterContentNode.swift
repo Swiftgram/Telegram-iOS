@@ -32,6 +32,7 @@ import SolidRoundedButtonNode
 import UrlHandling
 import GlassControls
 import ContextUI
+import VideoPlaybackControlsComponent // MARK: Swiftgram
 import ComponentFlow
 import ComponentDisplayAdapters
 import EdgeEffect
@@ -154,6 +155,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
     private var buttonNode: SolidRoundedButtonNode?
     private var buttonIconNode: ASImageNode?
     private let buttonPanel = ComponentView<Empty>()
+    private let playbackButtonPanel = ComponentView<Empty>() // MARK: Swiftgram
     
     private var textSelectionNode: TextSelectionNode?
     
@@ -300,6 +302,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                         self.statusButtonNode.isHidden = true
                         self.statusNode.isHidden = true
                 }
+                self.requestLayout?(.animated(duration: 0.2, curve: .easeInOut)) // MARK: Swiftgram
             }
         }
     }
@@ -1360,6 +1363,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         var leftControlItems: [GlassControlGroupComponent.Item] = []
         var rightControlItems: [GlassControlGroupComponent.Item] = []
         var centerControlItems: [GlassControlGroupComponent.Item] = []
+        let sgVideoControlsInFooter = sgVideoControlsInFooterEnabled // MARK: Swiftgram
         
         if let buttonsState = self.buttonsState {
             if buttonsState.displayActionButton {
@@ -1375,7 +1379,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                     accessibilityLabel: self.strings.Gallery_VoiceOver_Share
                 ))
             }
-            if buttonsState.displayPictureInPictureButton {
+            if !sgVideoControlsInFooter && buttonsState.displayPictureInPictureButton { // MARK: Swiftgram
                 centerControlItems.append(GlassControlGroupComponent.Item(
                     id: AnyHashable("pip"),
                     content: .icon("Media Gallery/PictureInPictureButton"),
@@ -1388,7 +1392,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                     accessibilityLabel: self.strings.Gallery_VoiceOver_PictureInPicture
                 ))
             }
-            if let settingsButtonState = buttonsState.settingsButtonState {
+            if !sgVideoControlsInFooter || !buttonsState.displayDeleteButton, let settingsButtonState = buttonsState.settingsButtonState { // MARK: Swiftgram
                 centerControlItems.append(GlassControlGroupComponent.Item(
                     id: AnyHashable("settings"),
                     content: .customIcon(id: AnyHashable("settings"), component: AnyComponent(SettingsNavigationIconComponent(
@@ -1448,7 +1452,7 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
                     accessibilityLabel: self.strings.Gallery_VoiceOver_Stickers
                 ))
             }
-            if buttonsState.displayFullscreenButton && !metrics.isTablet {
+            if !sgVideoControlsInFooter && buttonsState.displayFullscreenButton && !metrics.isTablet { // MARK: Swiftgram
                 centerControlItems.append(GlassControlGroupComponent.Item(
                     id: AnyHashable("fullscreen"),
                     content: .icon(isLandscape ? "Chat/Context Menu/Collapse" : "Chat/Context Menu/Expand"),
@@ -1480,7 +1484,29 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
             rightControlItems = centerControlItems
             centerControlItems = []
         }
-        
+
+        // MARK: Swiftgram
+        let sgPlaybackControlsVisible = sgVideoControlsInFooterEnabled && (!self.playbackControlButton.isHidden || self.hasSeekControls)
+        var sgPlaybackPanelSize = CGSize()
+        if sgPlaybackControlsVisible {
+            sgPlaybackPanelSize = self.playbackButtonPanel.update(
+                transition: ComponentTransition(transition),
+                component: AnyComponent(VideoPlaybackControlsComponent(
+                    layoutParams: .init(sideButtonSize: 44.0, centerButtonSize: 44.0, spacing: 12.0),
+                    isVisible: true,
+                    isPlaying: !self.currentIsPaused,
+                    displaySeekControls: self.hasSeekControls,
+                    togglePlayback: { [weak self] in self?.playbackControlPressed() },
+                    seek: { [weak self] isForward in isForward ? self?.forwardButtonPressed() : self?.backwardButtonPressed() },
+                    isFooter: true,
+                    accessibilityStrings: self.strings
+                )),
+                environment: {},
+                containerSize: CGSize(width: size.width - buttonPanelInsets.left - buttonPanelInsets.right, height: 44.0)
+            )
+        }
+        //
+
         let buttonPanelSize = self.buttonPanel.update(
             transition: ComponentTransition(transition),
             component: AnyComponent(GlassControlPanelComponent(
@@ -1509,6 +1535,17 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
             }
             ComponentTransition(transition).setFrame(view: buttonPanelView, frame: buttonPanelFrame)
         }
+
+        // MARK: Swiftgram
+        if sgPlaybackControlsVisible, let buttonPanelView = self.buttonPanel.view as? GlassControlPanelComponent.View, let sgPlaybackPanelView = self.playbackButtonPanel.view {
+            if sgPlaybackPanelView.superview !== buttonPanelView.glassContentView {
+                buttonPanelView.glassContentView.addSubview(sgPlaybackPanelView)
+            }
+            ComponentTransition(transition).setFrame(view: sgPlaybackPanelView, frame: CGRect(origin: CGPoint(x: floor((buttonPanelSize.width - sgPlaybackPanelSize.width) * 0.5), y: 0.0), size: sgPlaybackPanelSize))
+        } else if let sgPlaybackPanelView = self.playbackButtonPanel.view {
+            sgPlaybackPanelView.removeFromSuperview()
+        }
+        //
 
         if let image = self.backwardButton.backgroundIconNode.image {
             self.backwardButton.frame = CGRect(origin: CGPoint(x: floor(buttonsCenterX - image.size.width / 2.0) - 66.0, y: panelHeight - buttonPanelInsets.bottom - 44.0 + floorToScreenPixels((44.0 - image.size.height) * 0.5)), size: image.size)
@@ -1583,6 +1620,9 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         if let buttonPanelView = self.buttonPanel.view {
             buttonPanelView.alpha = 1.0
         }
+        if let sgPlaybackButtonPanelView = self.playbackButtonPanel.view { // MARK: Swiftgram
+            sgPlaybackButtonPanelView.alpha = 1.0
+        }
         
         self.backwardButton.alpha = self.hasSeekControls ? 1.0 : 0.0
         self.forwardButton.alpha = self.hasSeekControls ? 1.0 : 0.0
@@ -1611,6 +1651,9 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
         
         if let buttonPanelView = self.buttonPanel.view {
             buttonPanelView.alpha = 0.0
+        }
+        if let sgPlaybackButtonPanelView = self.playbackButtonPanel.view { // MARK: Swiftgram
+            sgPlaybackButtonPanelView.alpha = 0.0
         }
         
         self.backwardButton.alpha = 0.0
@@ -2369,6 +2412,18 @@ final class ChatItemGalleryFooterContentNode: GalleryFooterContentNode, ASScroll
             })
         }
     }
+
+
+    // MARK: Swiftgram
+    var sgDisplayFullscreenButtonInItems: Bool {
+        return self.buttonsState?.displayFullscreenButton == true
+    }
+
+    /// With the video controls in the footer, Settings stays in the footer's right slot when there is no Delete there.
+    var sgDisplaySettingsButtonInItems: Bool {
+        return self.buttonsState?.displayDeleteButton != false
+    }
+    //
 }
 
 private enum PlayPauseIconNodeState: Equatable {

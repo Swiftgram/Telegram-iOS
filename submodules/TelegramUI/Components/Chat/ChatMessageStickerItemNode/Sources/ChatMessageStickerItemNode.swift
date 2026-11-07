@@ -90,9 +90,10 @@ public class ChatMessageStickerItemNode: ChatMessageItemView {
     private var bubblelessHeaderNode: ChatMessageBubblelessHeaderNode?
     /// Whether the time is hidden because the sticker has no bubble, so that it comes back with bubbles.
     private var hidesStatusWithoutBubbles = false
+    public var sizeCoefficient: Float = 1.0 // MARK: Swiftgram
     
     private var viaBotNode: TextNode?
-    private let dateAndStatusNode: ChatMessageDateAndStatusNode
+    public let dateAndStatusNode: ChatMessageDateAndStatusNode // MARK: Swiftgram
     private var threadInfoNode: ChatMessageThreadInfoNode?
     private var replyInfoNode: ChatMessageReplyInfoNode?
     private var replyBackgroundContent: WallpaperBubbleBackgroundNode?
@@ -440,7 +441,7 @@ public class ChatMessageStickerItemNode: ChatMessageItemView {
     }
     
     override public func asyncLayout() -> (_ item: ChatMessageItem, _ params: ListViewItemLayoutParams, _ mergedTop: ChatMessageMerge, _ mergedBottom: ChatMessageMerge, _ dateHeaderAtBottom: ChatMessageHeaderSpec) -> (ListViewItemNodeLayout, (ListViewItemUpdateAnimation, ListViewItemApply, Bool) -> Void) {
-        let displaySize = CGSize(width: 184.0, height: 184.0)
+        let displaySize = CGSize(width: 184.0 * CGFloat(self.sizeCoefficient), height: 184.0 * CGFloat(self.sizeCoefficient)) // MARK: Swiftgram
         let telegramFile = self.telegramFile
         let layoutConstants = self.layoutConstants
         let imageLayout = self.imageNode.asyncLayout()

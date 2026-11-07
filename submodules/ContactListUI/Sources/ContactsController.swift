@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
 import Display
@@ -469,7 +470,7 @@ public class ContactsController: ViewController {
         // bar is laid out without the active search first (beside iPhone Duo's status island the active search's
         // placeholder is narrower), as the chat list does.
         let completion = self.contactsNode.deactivateSearch(placeholderNode: self.searchContentNode()?.placeholderNode, animated: animated)
-        (self.parent as? TabBarController)?.updateIsTabBarHidden(false, transition: .animated(duration: 0.5, curve: .spring))
+        (self.parent as? TabBarController)?.updateIsTabBarHidden(SGSimpleSettings.shared.hideTabBar, transition: .animated(duration: 0.5, curve: .spring)) // MARK: Swiftgram
         self.requestLayout(transition: .animated(duration: 0.5, curve: .spring))
         completion?()
     }

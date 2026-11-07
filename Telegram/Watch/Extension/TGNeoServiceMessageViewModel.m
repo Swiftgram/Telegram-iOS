@@ -94,7 +94,7 @@ const UIEdgeInsets TGNeoChatInfoInsets = { 12, 0, 12, 0 };
                     case TGBridgeMessageActionChatDeleteMember:
                     {
                         NSString *authorName = author.displayName;
-                        TGBridgeUser *user = users[@([actionAttachment.actionData[@"uid"] int32Value])];
+                        TGBridgeUser *user = users[@([actionAttachment.actionData[@"uid"] int64Value])];
                         
                         if (user.identifier == author.identifier)
                         {
@@ -172,7 +172,7 @@ const UIEdgeInsets TGNeoChatInfoInsets = { 12, 0, 12, 0 };
                         
                     case TGBridgeMessageActionChannelInviter:
                     {
-                        TGBridgeUser *user = users[@([actionAttachment.actionData[@"uid"] int32Value])];
+                        TGBridgeUser *user = users[@([actionAttachment.actionData[@"uid"] int64Value])];
                         NSString *authorName = user.displayName;
                         NSString *formatString = TGLocalized(@"Notification.ChannelInviter");
                         actionText = [[NSString alloc] initWithFormat:formatString, authorName];

@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
 import Display
@@ -905,7 +906,7 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
             let isSimulator = false
             #endif
             let isIpad = LegacyCameraImpl.shared.isIpad
-            let cameraCellBranch = mediaPickerCameraCellBranch(
+            let cameraCellBranch: MediaPickerCameraCellBranch = SGSimpleSettings.shared.disableGalleryCamera ? .none : mediaPickerCameraCellBranch( // MARK: Swiftgram
                 flagOn: controller.context.routesToChatMediaEditorV2(.inlineCameraCell) && controller.preparedCompletion != nil && controller.opensChatCameraWithHolder,
                 subject: cameraCellSubject,
                 isIpad: isIpad,
@@ -915,7 +916,7 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
             
             switch cameraCellBranch {
             case .legacyAttachmentCamera:
-                let enableAnimations = self.controller?.context.sharedContext.energyUsageSettings.fullTranslucency ?? true
+                let enableAnimations = (self.controller?.context.sharedContext.energyUsageSettings.fullTranslucency ?? true) && !SGSimpleSettings.shared.disableGalleryCameraPreview // MARK: Swiftgram
   
                 let cameraView = TGAttachmentCameraView(forSelfPortrait: false, videoModeByDefault: controller.bannedSendPhotos != nil && controller.bannedSendVideos == nil)!
                 cameraView.clipsToBounds = true
@@ -980,7 +981,7 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                     secondaryPreviewView: nil
                 )
                 self.modernCamera = camera
-                let enableAnimations = controller.context.sharedContext.energyUsageSettings.fullTranslucency
+                let enableAnimations = controller.context.sharedContext.energyUsageSettings.fullTranslucency && !SGSimpleSettings.shared.disableGalleryCameraPreview // MARK: Swiftgram
                 self.modernCameraHasLivePreview = enableAnimations
             case .editorCamera:
                 let cameraImpl = LegacyCameraImpl.shared
@@ -1026,7 +1027,9 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                         secondaryPreviewView: nil
                     )
                     self.modernCamera = camera
-                    camera.startCapture()
+                    if !SGSimpleSettings.shared.disableGalleryCameraPreview { // MARK: Swiftgram
+                        camera.startCapture()
+                    }
                 }
                 
                 if case .assets(nil, .createAvatar) = controller.subject {
@@ -1130,6 +1133,12 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                 return
             }
             let isChatCamera = self.cameraCellBranch == .chatCamera
+            // MARK: Swiftgram
+            if !isChatCamera && SGSimpleSettings.shared.disableGalleryCameraPreview {
+                previewView.isEnabled = true
+                camera.startCapture()
+            }
+            //
             if isChatCamera {
                 if self.openingMedia {
                     return
@@ -1176,14 +1185,18 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
             let isCameraActive = !self.isSuspended && !self.hasGallery && self.isCameraPreviewVisible
             if let cameraView = self.cameraView {
                 if isCameraActive {
-                    cameraView.resumePreview()
+                    // MARK: Swiftgram
+                    if !SGSimpleSettings.shared.disableGalleryCameraPreview {
+                        cameraView.resumePreview()
+                    }
+                    //
                 } else {
                     cameraView.pausePreview()
                 }
             } else if let camera = self.modernCamera, let cameraView = self.modernCameraView {
                 if self.cameraCellBranch == .chatCamera {
                     self.scheduleChatCameraCaptureUpdate()
-                } else if isCameraActive {
+                } else if isCameraActive && !SGSimpleSettings.shared.disableGalleryCameraPreview { // MARK: Swiftgram
                     cameraView.isEnabled = true
                     camera.startCapture()
                 } else {

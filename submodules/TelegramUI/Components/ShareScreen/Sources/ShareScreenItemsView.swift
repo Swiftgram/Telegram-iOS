@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import UIKit
 import Display
 import ComponentFlow
@@ -182,7 +183,7 @@ final class ShareScreenItemsView: UIView, UIScrollViewDelegate {
             self.sectionTitle.view?.isHidden = true
             var leadingPeers: [(EnginePeer?, Bool)] = []
             let showsLeadingItems = !model.defersItemsUntilFirstLoad || model.didCompleteFirstLoad
-            if showsLeadingItems && component.story != nil { leadingPeers.append((nil, true)) }
+            if showsLeadingItems && component.story != nil && SGSimpleSettings.shared.showRepostToStoryV2 { leadingPeers.append((nil, true)) } // MARK: Swiftgram
             if showsLeadingItems, let peer = model.accountPeer { leadingPeers.append((peer, false)) }
             let itemCount = leadingPeers.count + peers.count
             let visibleRange = shareScreenVisibleItems(min: visible.minY, max: visible.maxY, origin: y, stride: 100.0, count: itemCount, columns: columns)

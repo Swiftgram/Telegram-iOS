@@ -279,7 +279,7 @@ NSString *const TGGroupInfoControllerIdentifier = @"TGGroupInfoController";
     return [[TGUserInfoControllerContext alloc] initWithUser:_currentParticipantsModels[indexPath.row]];
 }
 
-+ (NSMutableArray *)sortedParticipantsList:(NSMutableArray *)list preferredOrder:(NSDictionary *)preferredOrder ownUid:(int32_t)ownUid
++ (NSMutableArray *)sortedParticipantsList:(NSMutableArray *)list preferredOrder:(NSDictionary *)preferredOrder ownUid:(int64_t)ownUid
 {
     NSMutableArray *resultList = [list mutableCopy];
     

@@ -1,15 +1,25 @@
 load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
+sgdeps = [
+    "//Swiftgram/SGStrings:SGStrings",
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+    "//submodules/TranslateUI:TranslateUI"
+]
+
+sgsrc = [
+    "//Swiftgram/SGDoubleTapMessageAction:SGDoubleTapMessageAction"
+]
+
 swift_library(
     name = "ChatMessageBubbleItemNode",
     module_name = "ChatMessageBubbleItemNode",
-    srcs = glob([
+    srcs = sgsrc + glob([
         "Sources/**/*.swift",
     ]),
     copts = [
         "-warnings-as-errors",
     ],
-    deps = [
+    deps = sgdeps + [
         "//submodules/AsyncDisplayKit",
         "//submodules/Display",
         "//submodules/SSignalKit/SwiftSignalKit",

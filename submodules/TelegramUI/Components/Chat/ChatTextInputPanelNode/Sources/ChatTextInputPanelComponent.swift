@@ -418,11 +418,11 @@ public final class ChatTextInputPanelComponent: Component {
                     deleteMessages: { _, _, f in
                         f(.default)
                     },
-                    forwardSelectedMessages: {
+                    forwardSelectedMessages: { _ in
                     },
                     forwardCurrentForwardMessages: {
                     },
-                    forwardMessages: { _ in
+                    forwardMessages: { _, _ in
                     },
                     updateForwardOptionsState: { _ in
                     },

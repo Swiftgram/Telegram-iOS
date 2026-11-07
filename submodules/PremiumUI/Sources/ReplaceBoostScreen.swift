@@ -182,7 +182,8 @@ private final class ReplaceBoostSheetContent: CombinedComponent {
                         }
                     },
                     tapAction: { _, _ in
-                        giftPremium()
+                        // MARK: Swiftgram
+                        if ({ return false }()) { giftPremium() }
                     }
                 ),
                 environment: {},

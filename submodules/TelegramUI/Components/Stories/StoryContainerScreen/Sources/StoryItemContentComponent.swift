@@ -1340,7 +1340,7 @@ final class StoryItemContentComponent: Component {
                             foreground: environment.theme.list.itemCheckColors.foregroundColor,
                             pressedColor: environment.theme.list.itemCheckColors.fillColor.withMultipliedAlpha(0.7)
                         ),
-                        content: AnyComponentWithIdentity(id: AnyHashable(""), component: AnyComponent(Text(text: component.strings.Story_UnsupportedAction, font: Font.semibold(17.0), color: environment.theme.list.itemCheckColors.foregroundColor
+                        content: AnyComponentWithIdentity(id: AnyHashable(""), component: AnyComponent(Text(text: component.strings.Story_UnsupportedAction.replacingOccurrences(of: "Telegram", with: "Swiftgram") /* MARK: Swiftgram */, font: Font.semibold(17.0), color: environment.theme.list.itemCheckColors.foregroundColor
                         ))),
                         isEnabled: true,
                         displaysProgress: false,
