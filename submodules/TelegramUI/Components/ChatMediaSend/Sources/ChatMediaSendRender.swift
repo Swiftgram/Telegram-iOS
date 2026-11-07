@@ -512,7 +512,13 @@ private func chatMediaSendRenderedMessages(items: [ChatMediaSendItem], global: C
                 }
                 let survivors = survivorIndices.map { updatedItems[$0] }
 
-                let plan = chatMediaSendPlan(items: survivors.map { $0.options }, global: global, makeGroupingKey: makeGroupingKey)
+                // MARK: Swiftgram
+                let plan = chatMediaSendPlan(items: survivors.map { item in
+                    var options = item.options
+                    options.sgSendAsTelescope = item.values?.sgSendAsTelescope == true
+                    return options
+                }, global: global, makeGroupingKey: makeGroupingKey)
+                //
                 let (messages, skippedIndices) = buildMessages(survivors, plan, forceHd, storeResourceData)
                 for skippedIndex in skippedIndices {
                     failed.insert(survivorIndices[skippedIndex])

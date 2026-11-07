@@ -11,6 +11,7 @@ public struct ChatMediaSendItemOptions: Equatable {
     public var isLivePhoto: Bool
     public var isMuted: Bool
     public var excludedFromGrouping: Bool
+    var sgSendAsTelescope: Bool = false // MARK: Swiftgram
 
     public init(caption: NSAttributedString? = nil, timer: Int32? = nil, spoiler: Bool = false, price: Int64? = nil, isAnimation: Bool = false, hasAnimatedPainting: Bool = false, livePhotoLoopOrBounce: Bool = false, isLivePhoto: Bool = false, isMuted: Bool = false, excludedFromGrouping: Bool = false) {
         self.caption = caption
@@ -78,7 +79,7 @@ public func chatMediaSendPlan(items: [ChatMediaSendItemOptions], global: ChatMed
     var grouping = global.grouping
     var price: Int64?
     for (index, item) in items.enumerated() {
-        if timers[index] != nil || item.isAnimation || item.isMuted || item.hasAnimatedPainting || item.livePhotoLoopOrBounce {
+        if timers[index] != nil || item.isAnimation || item.isMuted || item.hasAnimatedPainting || item.livePhotoLoopOrBounce || item.sgSendAsTelescope { // MARK: Swiftgram
             grouping = false
         }
         if price == nil {

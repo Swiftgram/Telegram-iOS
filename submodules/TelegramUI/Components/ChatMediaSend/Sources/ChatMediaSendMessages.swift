@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import UIKit
 import TelegramCore
@@ -112,7 +113,7 @@ func chatMediaSendRenderedImageMedia(image: UIImage, nominalDimensions: PixelDim
     defer {
         EngineTempBox.shared.dispose(tempFile)
     }
-    guard let scaledImageData = compressImageToJPEG(scaledImage, quality: 0.6, tempFilePath: tempFile.path) else {
+    guard let scaledImageData = compressImageToJPEG(scaledImage, quality: Float(SGSimpleSettings.shared.outgoingPhotoQuality) / 100.0, tempFilePath: tempFile.path) else { // MARK: Swiftgram
         return nil
     }
     let _ = try? scaledImageData.write(to: URL(fileURLWithPath: tempFilePath))
@@ -167,10 +168,10 @@ func chatMediaSendLegacyConversionPreset(_ preset: MediaQualityPreset?) -> TGMed
     }
 }
 
-private func chatMediaSendVideoFile(resource: TelegramMediaResource, dimensions: PixelDimensions, duration: Double, estimatedSize: UInt, fileName: String, previewRepresentations: [TelegramMediaImageRepresentation], videoCover: TelegramMediaImage?, stickerFiles: [TelegramMediaFile], isAnimated: Bool = false) -> TelegramMediaFile {
+private func chatMediaSendVideoFile(resource: TelegramMediaResource, dimensions: PixelDimensions, duration: Double, estimatedSize: UInt, fileName: String, previewRepresentations: [TelegramMediaImageRepresentation], videoCover: TelegramMediaImage?, stickerFiles: [TelegramMediaFile], isAnimated: Bool = false, sgSendAsTelescope: Bool = false) -> TelegramMediaFile { // MARK: Swiftgram
     var fileAttributes: [TelegramMediaFileAttribute] = []
     fileAttributes.append(.FileName(fileName: fileName))
-    fileAttributes.append(.Video(duration: duration, size: dimensions, flags: [.supportsStreaming], preloadSize: nil, coverTime: nil, videoCodec: nil))
+    fileAttributes.append(.Video(duration: duration, size: dimensions, flags: sgSendAsTelescope ? [.instantRoundVideo] : [.supportsStreaming], preloadSize: nil, coverTime: nil, videoCodec: nil)) // MARK: Swiftgram
     if isAnimated {
         fileAttributes.append(.Animated)
     }
@@ -184,6 +185,7 @@ private func chatMediaSendVideoFile(resource: TelegramMediaResource, dimensions:
 }
 
 func chatMediaSendEditedVideoFile(resource: TelegramMediaResource, values: MediaEditorValues, duration: Double, fileName: String, thumbnail: UIImage?, cover: UIImage?, stickerFiles: [TelegramMediaFile], storeResourceData: (EngineMediaResource.Id, Data) -> Void) -> TelegramMediaFile {
+    let thumbnail = values.sgSendAsTelescope ? sgChatMediaSendTelescopeThumbnail(thumbnail) : thumbnail // MARK: Swiftgram
     let finalDuration = chatMediaEditorVideoDuration(values: values, duration: duration)
     let finalDimensions = chatMediaEditorVideoFileDimensions(values: values, duration: duration)
 
@@ -193,10 +195,10 @@ func chatMediaSendEditedVideoFile(resource: TelegramMediaResource, values: Media
             previewRepresentations.append(representation)
         }
     }
-    let videoCover = cover.flatMap { chatMediaSendVideoCover($0, storeResourceData: storeResourceData) }
+    let videoCover = (values.sgSendAsTelescope ? nil : cover).flatMap { chatMediaSendVideoCover($0, storeResourceData: storeResourceData) } // MARK: Swiftgram
 
     let estimatedSize = TGMediaVideoConverter.estimatedSize(for: chatMediaSendLegacyConversionPreset(values.qualityPreset), duration: finalDuration, hasAudio: !values.videoIsMuted)
-    return chatMediaSendVideoFile(resource: resource, dimensions: finalDimensions, duration: finalDuration, estimatedSize: estimatedSize, fileName: fileName, previewRepresentations: previewRepresentations, videoCover: videoCover, stickerFiles: stickerFiles, isAnimated: values.videoIsMuted)
+    return chatMediaSendVideoFile(resource: resource, dimensions: finalDimensions, duration: finalDuration, estimatedSize: estimatedSize, fileName: fileName, previewRepresentations: previewRepresentations, videoCover: videoCover, stickerFiles: stickerFiles, isAnimated: values.videoIsMuted && !values.sgSendAsTelescope, sgSendAsTelescope: values.sgSendAsTelescope) // MARK: Swiftgram
 }
 
 func chatMediaSendUneditedVideoConversionPreset(dimensions: CGSize) -> TGMediaVideoConversionPreset {
@@ -235,7 +237,7 @@ func chatMediaSendUneditedVideoFile(resource: TelegramMediaResource, dimensions:
 }
 
 func chatMediaSendVideoSendValues(_ values: MediaEditorValues) -> MediaEditorValues {
-    if values.videoIsMuted {
+    if values.videoIsMuted && !values.sgSendAsTelescope { // MARK: Swiftgram
         return values.withUpdatedQualityPreset(.animation)
     } else {
         return values
@@ -258,6 +260,17 @@ private func chatMediaSendLibraryFileName(_ fileName: String?) -> String {
 }
 
 private func chatMediaSendItemMedia(item: ChatMediaSendItem, forceHd: Bool, storeResourceData: (EngineMediaResource.Id, Data) -> Void) -> (media: EngineRawMedia, stickerFiles: [TelegramMediaFile])? {
+    // MARK: Swiftgram
+    if item.values?.sgSendAsTelescope == true {
+        guard item.options.price == nil, !item.options.isAnimation, !item.options.isLivePhoto else { return nil }
+        switch item.source {
+        case .libraryAsset(_, _, true, _), .tempVideo:
+            break
+        default:
+            return nil
+        }
+    }
+    //
     if let preparedImage = item.preparedImage {
         return (preparedImage, item.stickers)
     }
@@ -271,7 +284,8 @@ private func chatMediaSendItemMedia(item: ChatMediaSendItem, forceHd: Bool, stor
     case let .libraryAsset(identifier, pixelSize, isVideo, duration):
         if isVideo {
             let fileName = chatMediaSendLibraryFileName(item.fileName)
-            if let values = item.values.map(chatMediaSendVideoSendValues) {
+            if let inputValues = item.values.map(chatMediaSendVideoSendValues) { // MARK: Swiftgram
+                guard let values = sgChatMediaSendTelescopeValues(inputValues, duration: duration) else { return nil } // MARK: Swiftgram
                 guard let adjustments = chatMediaEditorVideoAdjustments(values: values) else {
                     return nil
                 }
@@ -314,7 +328,8 @@ private func chatMediaSendItemMedia(item: ChatMediaSendItem, forceHd: Bool, stor
         }
         return (media, item.stickers)
     case let .tempVideo(path, dimensions, duration):
-        if let values = item.values.map(chatMediaSendVideoSendValues) {
+        if let inputValues = item.values.map(chatMediaSendVideoSendValues) { // MARK: Swiftgram
+            guard let values = sgChatMediaSendTelescopeValues(inputValues, duration: duration) else { return nil } // MARK: Swiftgram
             guard let adjustments = chatMediaEditorVideoAdjustments(values: values) else {
                 return nil
             }
@@ -368,6 +383,7 @@ func chatMediaSendBuildMessagesReportingSkipped(items: [ChatMediaSendItem], plan
             continue
         }
         let item = items[planned.index]
+        if item.values?.sgSendAsTelescope == true && planned.price != nil { skippedIndices.append(planned.index); continue } // MARK: Swiftgram
         guard let (media, stickerFiles) = chatMediaSendItemMedia(item: item, forceHd: forceHd && item.options.allowsHd, storeResourceData: storeResourceData) else {
             skippedIndices.append(planned.index)
             continue
@@ -386,7 +402,7 @@ func chatMediaSendBuildMessagesReportingSkipped(items: [ChatMediaSendItem], plan
                 paidMessage = PaidMessage(price: price, text: caption.text, entities: caption.entities, media: [media])
             }
         } else {
-            messages.append(chatMediaSendMessage(media: media, caption: caption, stickerFiles: stickerFiles, timer: planned.timer, spoiler: planned.spoiler, groupingKey: planned.groupingKey, uniqueId: item.uniqueId))
+            messages.append(chatMediaSendMessage(media: media, caption: caption, stickerFiles: stickerFiles, timer: planned.timer, spoiler: planned.spoiler, groupingKey: item.values?.sgSendAsTelescope == true ? nil : planned.groupingKey, uniqueId: item.uniqueId)) // MARK: Swiftgram
         }
     }
 

@@ -113,11 +113,16 @@ public func chatMediaEditorEnqueueMessage(
         }
         media = imageMedia
     case let .video(path, values, duration):
+        if values.sgSendAsTelescope && result.isAnimation { return nil } // MARK: Swiftgram
         if result.isAnimation, let originalMediaReference, originalMediaReference.media is TelegramMediaFile, chatMediaEditorGifSendsOriginal(values: values, hasStickers: !stickerFiles.isEmpty) {
             return chatMediaSendMessage(media: originalMediaReference.media, mediaReference: originalMediaReference, caption: chatMediaSendCaption(result.caption), stickerFiles: [], timer: nil, spoiler: false, groupingKey: nil, uniqueId: nil)
         }
-        let sendValues = result.isAnimation ? values.withUpdatedQualityPreset(.animation).withUpdatedVideoIsMuted(true) : values
-        let resource = LocalFileVideoMediaResource(randomId: Int64.random(in: Int64.min ... Int64.max), path: path, adjustments: chatMediaEditorVideoAdjustments(values: sendValues))
+        // MARK: Swiftgram
+        let inputValues = result.isAnimation ? values.withUpdatedQualityPreset(.animation).withUpdatedVideoIsMuted(true) : values
+        guard let sendValues = sgChatMediaSendTelescopeValues(inputValues, duration: duration),
+            let adjustments = chatMediaEditorVideoAdjustments(values: sendValues) else { return nil }
+        //
+        let resource = LocalFileVideoMediaResource(randomId: Int64.random(in: Int64.min ... Int64.max), path: path, adjustments: adjustments) // MARK: Swiftgram
         media = chatMediaSendEditedVideoFile(resource: resource, values: sendValues, duration: duration, fileName: "video.mp4", thumbnail: result.thumbnail, cover: nil, stickerFiles: stickerFiles, storeResourceData: storeResourceData)
     }
     return chatMediaSendMessage(media: media, caption: chatMediaSendCaption(result.caption), stickerFiles: stickerFiles, timer: nil, spoiler: false, groupingKey: nil, uniqueId: nil)

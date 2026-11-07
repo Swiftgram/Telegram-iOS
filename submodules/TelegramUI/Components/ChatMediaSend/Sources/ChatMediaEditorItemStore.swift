@@ -32,7 +32,7 @@ public func chatMediaEditorValuesAreEdited(_ values: MediaEditorValues, baseline
     if chatMediaEditorValuesHaveVisualEdits(values) {
         return true
     }
-    if values.videoIsMuted {
+    if values.videoIsMuted || values.sgSendAsTelescope { // MARK: Swiftgram
         return true
     }
     if let baselineQualityPreset, values.qualityPreset != baselineQualityPreset {
