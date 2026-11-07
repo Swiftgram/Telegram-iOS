@@ -50,7 +50,7 @@ public enum PreparedShareItemError {
     case fileTooBig(Int64)
 }
 
-private func preparedShareItem(postbox: Postbox, network: Network, to peerId: PeerId, value: [String: Any]) -> Signal<PreparedShareItem, PreparedShareItemError> {
+private func preparedShareItem(postbox: Postbox, network: Network, to peerId: PeerId, sgPhotoMaxDimension: CGFloat, sgPhotoQuality: CGFloat, /* MARK: Swiftgram */ value: [String: Any]) -> Signal<PreparedShareItem, PreparedShareItemError> {
     if let imageData = value["scaledImageData"] as? Data, let dimensions = value["scaledImageDimensions"] as? NSValue {
         let diminsionsSize = dimensions.cgSizeValue
         return .single(.preparing(false))
@@ -70,8 +70,8 @@ private func preparedShareItem(postbox: Postbox, network: Network, to peerId: Pe
         )
     } else if let image = value["image"] as? UIImage {
         let nativeImageSize = CGSize(width: image.size.width * image.scale, height: image.size.height * image.scale)
-        let dimensions = nativeImageSize.fitted(CGSize(width: 1280.0, height: 1280.0))
-        if let scaledImage = scalePhotoImage(image, dimensions: dimensions), let imageData = scaledImage.jpegData(compressionQuality: 0.52) {
+        let dimensions = nativeImageSize.fitted(CGSize(width: sgPhotoMaxDimension, height: sgPhotoMaxDimension) /* MARK: Swiftgram */)
+        if let scaledImage = scalePhotoImage(image, dimensions: dimensions), let imageData = scaledImage.jpegData(compressionQuality: sgPhotoQuality) /* MARK: Swiftgram */ {
             return .single(.preparing(false))
             |> then(
                 standaloneUploadedImage(postbox: postbox, network: network, peerId: peerId, text: "", source: .data(imageData), dimensions: PixelDimensions(width: Int32(dimensions.width), height: Int32(dimensions.height)))
@@ -261,8 +261,8 @@ private func preparedShareItem(postbox: Postbox, network: Network, to peerId: Pe
                     }
                 )
             } else {
-                let scaledImage = scalePhotoImage(image, dimensions: CGSize(width: image.size.width * image.scale, height: image.size.height * image.scale).fitted(CGSize(width: 1280.0, height: 1280.0)))!
-                let imageData = scaledImage.jpegData(compressionQuality: 0.54)!
+                let scaledImage = scalePhotoImage(image, dimensions: CGSize(width: image.size.width * image.scale, height: image.size.height * image.scale).fitted(CGSize(width: sgPhotoMaxDimension, height: sgPhotoMaxDimension) /* MARK: Swiftgram */))!
+                let imageData = scaledImage.jpegData(compressionQuality: sgPhotoQuality)! // MARK: Swiftgram
                 return .single(.preparing(false))
                 |> then(
                     standaloneUploadedImage(postbox: postbox, network: network, peerId: peerId, text: "", source: .data(imageData), dimensions: PixelDimensions(width: Int32(scaledImage.size.width), height: Int32(scaledImage.size.height)))
@@ -374,7 +374,7 @@ private func preparedShareItem(postbox: Postbox, network: Network, to peerId: Pe
     }
 }
 
-public func preparedShareItems(postbox: Postbox, network: Network, to peerId: PeerId, dataItems: [MTSignal]) -> Signal<PreparedShareItems, PreparedShareItemError> {
+public func preparedShareItems(postbox: Postbox, network: Network, to peerId: PeerId, sgPhotoMaxDimension: CGFloat = 1280.0, sgPhotoQuality: CGFloat = 0.52, /* MARK: Swiftgram */ dataItems: [MTSignal]) -> Signal<PreparedShareItems, PreparedShareItemError> {
     var dataSignals: Signal<[String: Any], PreparedShareItemError> = .complete()
     for dataItem in dataItems {
         let wrappedSignal: Signal<[String: Any], NoError> = Signal { subscriber in
@@ -403,7 +403,7 @@ public func preparedShareItems(postbox: Postbox, network: Network, to peerId: Pe
     })
     |> mapToSignal { items -> Signal<[PreparedShareItem], PreparedShareItemError> in
         return combineLatest(items.map {
-            preparedShareItem(postbox: postbox, network: network, to: peerId, value: $0)
+            preparedShareItem(postbox: postbox, network: network, to: peerId, sgPhotoMaxDimension: sgPhotoMaxDimension, sgPhotoQuality: sgPhotoQuality, /* MARK: Swiftgram */ value: $0)
         })
     }
         

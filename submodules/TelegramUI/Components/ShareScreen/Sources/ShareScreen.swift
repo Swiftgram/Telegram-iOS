@@ -304,6 +304,7 @@ public final class ShareScreen: ViewControllerComponentContainer {
         didSet { self.refreshComponent() }
     }
     public var canSendInHighQuality = false
+    public var sgRequestHighQualityPhotos: (() -> Void)? // MARK: Swiftgram
     fileprivate let externalConfiguration: ShareScreenExternalConfiguration?
     fileprivate var loadingNode: ASDisplayNode?
     fileprivate var captureCaption: (() -> NSAttributedString)?
@@ -533,12 +534,13 @@ public final class ShareScreen: ViewControllerComponentContainer {
         let showNames = self.showSenderNames
         let items: Signal<ContextController.Items, NoError> = showNames.get()
         |> map { [weak self] showNamesValue -> ContextController.Items in
-            func sendItem(_ title: String, icon: String, silently: Bool) -> ContextMenuItem {
+            func sendItem(_ title: String, icon: String, silently: Bool, sgHighQuality: Bool = false /* MARK: Swiftgram */) -> ContextMenuItem {
                 return .action(ContextMenuActionItem(text: title, icon: { theme in
                     generateTintedImage(image: UIImage(bundleImageName: icon), color: theme.contextMenu.primaryColor)
                 }, action: { _, dismiss in
                     dismiss(.default)
                     guard let self else { return }
+                    if sgHighQuality { self.sgRequestHighQualityPhotos?() } // MARK: Swiftgram
                     self.sender.hidesSenderNames = showsSenderNameOptions && !showNamesValue
                     self.sender.send(peers: self.model.selection.peers, topics: self.model.selection.topics, caption: self.captureCaption?() ?? self.caption, silently: silently)
                 }))
@@ -557,7 +559,7 @@ public final class ShareScreen: ViewControllerComponentContainer {
                 items.append(.separator)
             }
             if isExternal && canSendInHighQuality {
-                items.append(sendItem(data.strings.Attachment_SendInHd, icon: "Chat/Context Menu/QualityHd", silently: true))
+                items.append(sendItem(data.strings.Attachment_SendInHd, icon: "Chat/Context Menu/QualityHd", silently: false, sgHighQuality: true)) // MARK: Swiftgram
             }
             items.append(sendItem(data.strings.Conversation_SendMessage_SendSilently, icon: "Chat/Input/Menu/SilentIcon", silently: true))
             items.append(sendItem(data.strings.Conversation_ForwardOptions_SendMessage, icon: "Chat/Context Menu/Resend", silently: false))

@@ -12,7 +12,14 @@
 
 @implementation TGItemProviderSignals
 
+// MARK: Swiftgram
 + (NSArray<MTSignal *> *)itemSignalsForInputItems:(NSArray *)inputItems
+{
+    return [self sgItemSignalsForInputItems:inputItems imageMaxDimension:1280.0 imageQuality:0.52];
+}
+
++ (NSArray<MTSignal *> *)sgItemSignalsForInputItems:(NSArray *)inputItems imageMaxDimension:(CGFloat)imageMaxDimension imageQuality:(CGFloat)imageQuality
+//
 {
     NSMutableArray *itemSignals = [[NSMutableArray alloc] init];
     NSMutableArray *providers = [[NSMutableArray alloc] init];
@@ -59,7 +66,7 @@
         else if ([provider hasItemConformingToTypeIdentifier:UTTypeGIF.identifier])
             dataSignal = [self signalForDataItemProvider:provider];
         else if ([provider hasItemConformingToTypeIdentifier:UTTypeImage.identifier])
-            dataSignal = [self signalForImageItemProvider:provider];
+            dataSignal = [self sgSignalForImageItemProvider:provider imageMaxDimension:imageMaxDimension imageQuality:imageQuality]; // MARK: Swiftgram
         else if ([provider hasItemConformingToTypeIdentifier:UTTypeFileURL.identifier])
         {
             dataSignal = [[self signalForUrlItemProvider:provider] mapToSignal:^MTSignal *(NSURL *url)
@@ -168,13 +175,13 @@ __unused static CGSize TGFitSize(CGSize size, CGSize maxSize) {
     return size;
 }
 
-+ (MTSignal *)signalForImageItemProvider:(NSItemProvider *)itemProvider
++ (MTSignal *)sgSignalForImageItemProvider:(NSItemProvider *)itemProvider imageMaxDimension:(CGFloat)imageMaxDimension imageQuality:(CGFloat)imageQuality // MARK: Swiftgram
 {
     return [[MTSignal alloc] initWithGenerator:^id<MTDisposable>(MTSubscriber *subscriber)
     {
         bool preferAsFile = false;
         
-        CGSize maxSize = CGSizeMake(1280.0, 1280.0);
+        CGSize maxSize = CGSizeMake(imageMaxDimension, imageMaxDimension); // MARK: Swiftgram
         NSDictionary *imageOptions = @{
             NSItemProviderPreferredImageSizeKey: [NSValue valueWithCGSize:maxSize]
         };
@@ -235,7 +242,7 @@ __unused static CGSize TGFitSize(CGSize size, CGSize maxSize) {
                             NSString *tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[[NSString alloc] initWithFormat:@"img%d", (int)arc4random()]];
                             CFURLRef tempUrl = (__bridge CFURLRef)[NSURL fileURLWithPath:tempPath];
                             CGImageDestinationRef destination = CGImageDestinationCreateWithURL(tempUrl, (__bridge CFStringRef)UTTypeJPEG.identifier, 1, NULL);
-                            NSDictionary *properties = @{ (__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @(0.52)};
+                            NSDictionary *properties = @{ (__bridge NSString *)kCGImageDestinationLossyCompressionQuality: @(imageQuality)}; // MARK: Swiftgram
 
                             CGImageDestinationSetProperties(destination, (__bridge CFDictionaryRef)properties);
                             CGImageDestinationAddImage(destination, image, nil);

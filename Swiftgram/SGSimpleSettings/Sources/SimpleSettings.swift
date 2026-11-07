@@ -24,6 +24,10 @@ public class SGSimpleSettings {
     }
     
     private func migrate() {
+        if !Bundle.main.bundlePath.hasSuffix(".appex"), let defaults = UserDefaults(suiteName: APP_GROUP_IDENTIFIER) {
+            defaults.set(self.sendLargePhotos, forKey: Keys.sendLargePhotos.rawValue)
+            defaults.set(self.outgoingPhotoQuality, forKey: Keys.outgoingPhotoQuality.rawValue)
+        }
         let showRepostToStoryMigrationKey = "migrated_\(Keys.showRepostToStory.rawValue)"
         if let groupUserDefaults = UserDefaults(suiteName: APP_GROUP_IDENTIFIER) {
             if !groupUserDefaults.bool(forKey: showRepostToStoryMigrationKey) {
@@ -383,10 +387,22 @@ public class SGSimpleSettings {
     public var localDNSForProxyHost: Bool
     
     @UserDefault(key: Keys.sendLargePhotos.rawValue)
-    public var sendLargePhotos: Bool
+    public var sendLargePhotos: Bool {
+        didSet { UserDefaults(suiteName: APP_GROUP_IDENTIFIER)?.set(self.sendLargePhotos, forKey: Keys.sendLargePhotos.rawValue) }
+    }
     
     @UserDefault(key: Keys.outgoingPhotoQuality.rawValue)
-    public var outgoingPhotoQuality: Int32
+    public var outgoingPhotoQuality: Int32 {
+        didSet { UserDefaults(suiteName: APP_GROUP_IDENTIFIER)?.set(self.outgoingPhotoQuality, forKey: Keys.outgoingPhotoQuality.rawValue) }
+    }
+
+    // Read fresh values across processes; extension-local defaults do not contain the app's preferences.
+    public var sharePhotoSettings: (sendLargePhotos: Bool, quality: Double) {
+        let defaults = UserDefaults(suiteName: APP_GROUP_IDENTIFIER)
+        let large = defaults?.object(forKey: Keys.sendLargePhotos.rawValue) as? Bool ?? false
+        let quality = defaults?.object(forKey: Keys.outgoingPhotoQuality.rawValue) as? NSNumber
+        return (large, Double(min(100, max(0, quality?.intValue ?? 70))) / 100.0)
+    }
 
     @UserDefault(key: Keys.hideStories.rawValue)
     public var hideStories: Bool

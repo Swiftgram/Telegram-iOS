@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import UIKit
 import AsyncDisplayKit
 import Display
@@ -496,10 +497,17 @@ public class ShareRootControllerImpl {
                         let itemCount = max(1, extensionItems.reduce(0) { $0 + ($1.attachments?.count ?? 0) })
 
                         guard let appContext = context as? ShareControllerAppAccountContext else { return }
+                        var sgForceHD = false // MARK: Swiftgram
                         let shareController = ShareScreen(context: appContext.context, subject: .fromExternal(itemCount, { peerIds, threadIds, requireStars, additionalText, account, silently in
                             if let strongSelf = self, let inputItems = strongSelf.getExtensionContext()?.inputItems, !inputItems.isEmpty, !peerIds.isEmpty {
-                                let rawSignals = TGItemProviderSignals.itemSignals(forInputItems: inputItems)!
-                                return preparedShareItems(postbox: account.stateManager.postbox, network: account.stateManager.network, to: peerIds[0], dataItems: rawSignals)
+                                // MARK: Swiftgram
+                                let settings = SGSimpleSettings.shared.sharePhotoSettings
+                                let maxDimension: CGFloat = (sgForceHD || settings.sendLargePhotos) ? 2560.0 : 1280.0
+                                sgForceHD = false
+                                let quality = CGFloat(settings.quality)
+                                let rawSignals = TGItemProviderSignals.sgItemSignals(forInputItems: inputItems, imageMaxDimension: maxDimension, imageQuality: quality)!
+                                return preparedShareItems(postbox: account.stateManager.postbox, network: account.stateManager.network, to: peerIds[0], sgPhotoMaxDimension: maxDimension, sgPhotoQuality: quality, dataItems: rawSignals)
+                                //
                                 |> map(Optional.init)
                                 |> `catch` { error -> Signal<PreparedShareItems?, ShareControllerError> in
                                     switch error {
@@ -537,6 +545,7 @@ public class ShareRootControllerImpl {
                             guard let context = account.account as? ShareControllerAppAccountContext else { return nil }
                             return (context: context.context, peer: account.peer)
                         }, immediatePeerId: immediatePeerId))
+                        shareController.sgRequestHighQualityPhotos = { sgForceHD = true } // MARK: Swiftgram
                         shareController.presentationArguments = ViewControllerPresentationArguments(presentationAnimation: .modalSheet)
                         shareController.dismissed = {
                             //inForeground.set(false)
