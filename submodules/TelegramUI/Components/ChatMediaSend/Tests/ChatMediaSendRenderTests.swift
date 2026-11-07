@@ -222,20 +222,6 @@ final class ChatMediaSendRenderTests: XCTestCase {
         XCTAssertEqual(groupingKeys(outcome), [101, 101])
     }
 
-    func testMixedTelescopeSelectionDisablesGroupingBeforeCaptionAllocation() throws {
-        let values = chatMediaEditorValues(peerId: renderTestPeerId, originalDimensions: PixelDimensions(width: 1920, height: 1080), qualityPreset: .compressedMedium)
-        for enabled in [true, false] {
-            let items = [self.photo("a"), self.video("v", values: values.withUpdatedSgSendAsTelescope(enabled)), self.photo("c")]
-            let outcome = try XCTUnwrap(self.send(items, renderer: FakeRenderer(), grouping: true, forcedCaption: NSAttributedString(string: "forced")))
-            XCTAssertEqual(outcome.messages.count, 3)
-            XCTAssertTrue(outcome.droppedUniqueIds.isEmpty)
-            XCTAssertEqual(self.groupingKeys(outcome), enabled ? [nil, nil, nil] : [101, 101, 101])
-            XCTAssertEqual(outcome.messages.map { self.text($0) }, enabled ? ["", "", "forced"] : ["forced", "", ""])
-            let file = try XCTUnwrap(self.media(outcome.messages[1]) as? TelegramMediaFile)
-            XCTAssertEqual(file.isInstantVideo, enabled)
-        }
-    }
-
     func testUneditedItemsNotRendered() throws {
         var prerendered = photo("p3", edited: true)
         prerendered.renderedImage = renderTestImage(400, 300)

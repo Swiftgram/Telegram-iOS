@@ -482,6 +482,11 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
         fileprivate var isModernCameraHandedOff = false
         fileprivate var chatCameraCaptureState: Bool?
         private var isChatCameraCaptureUpdateScheduled = false
+        // MARK: Swiftgram
+        private var sgCreateModernCamera: (() -> CameraProtocol?)?
+        private var sgCameraPreviewObserver: NSObjectProtocol?
+        private var sgNeutralCameraTile: UIView?
+        //
         
         fileprivate var avatarEditorPreviewView: AvatarEditorPreviewView?
         
@@ -800,6 +805,11 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
         }
         
         deinit {
+            // MARK: Swiftgram
+            if let observer = self.sgCameraPreviewObserver {
+                NotificationCenter.default.removeObserver(observer)
+            }
+            //
             self.itemsDisposable?.dispose()
             self.hiddenMediaDisposable?.dispose()
             self.selectionChangedDisposable?.dispose()
@@ -947,7 +957,7 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                 self.modernCameraView = cameraPreviewView
                 
                 let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(self.cameraTapped))
-                cameraPreviewView.addGestureRecognizer(tapGestureRecognizer)
+                self.cameraWrapperView.addGestureRecognizer(tapGestureRecognizer) // MARK: Swiftgram — Keep the neutral tile tappable.
                 self.modernCameraTapGestureRecognizer = tapGestureRecognizer
                 
                 let _ = (cameraPreviewView.isPreviewing
@@ -968,22 +978,29 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                 }
                 self.gridHost.headerHostNode.addSubnode(self.cameraActivateAreaNode)
                 
-                let camera = cameraImpl.makeCamera(
-                    configuration: Camera.Configuration(
-                        preset: .hd1920x1080,
-                        position: .back,
-                        isDualEnabled: false,
-                        audio: false,
-                        photo: true,
-                        metadata: true,
-                        captureMode: .photo
-                    ),
-                    previewView: cameraPreviewView,
-                    secondaryPreviewView: nil
-                )
-                self.modernCamera = camera
-                let enableAnimations = controller.context.sharedContext.energyUsageSettings.fullTranslucency && !SGSimpleSettings.shared.disableGalleryCameraPreview // MARK: Swiftgram
-                self.modernCameraHasLivePreview = enableAnimations
+                // MARK: Swiftgram
+                // Construction itself starts capture. Defer it until inline preview or an explicit tap needs it.
+                self.sgCreateModernCamera = { [weak self, weak cameraPreviewView] in
+                    guard let self, let cameraPreviewView, !self.isModernCameraInvalidated else { return nil }
+                    let camera = cameraImpl.makeCamera(
+                        configuration: Camera.Configuration(
+                            preset: .hd1920x1080,
+                            position: .back,
+                            isDualEnabled: false,
+                            audio: false,
+                            photo: true,
+                            metadata: true,
+                            captureMode: .photo
+                        ),
+                        previewView: cameraPreviewView,
+                        secondaryPreviewView: nil
+                    )
+                    self.modernCamera = camera
+                    return camera
+                }
+                self.modernCameraHasLivePreview = controller.context.sharedContext.energyUsageSettings.fullTranslucency && !SGSimpleSettings.shared.disableGalleryCameraPreview
+                if self.modernCameraHasLivePreview { _ = self.sgCreateModernCamera?() }
+                //
             case .editorCamera:
                 let cameraImpl = LegacyCameraImpl.shared
                 var cameraPosition: Camera.Position = .back
@@ -996,7 +1013,7 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                 self.modernCameraView = cameraPreviewView
                 
                 let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(self.cameraTapped))
-                cameraPreviewView.addGestureRecognizer(tapGestureRecognizer)
+                self.cameraWrapperView.addGestureRecognizer(tapGestureRecognizer) // MARK: Swiftgram — Keep the neutral tile tappable.
                 self.modernCameraTapGestureRecognizer = tapGestureRecognizer
                 
                 if #available(iOS 13.0, *) {
@@ -1014,7 +1031,9 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                 
                 self.cameraWrapperView.addSubview(cameraPreviewView)
                 
-                let setupCamera = {
+                // MARK: Swiftgram
+                self.sgCreateModernCamera = { [weak self, weak cameraPreviewView] in
+                    guard let self, let cameraPreviewView, !self.isModernCameraInvalidated else { return nil }
                     let camera = cameraImpl.makeCamera(
                         configuration: Camera.Configuration(
                             preset: .hd1920x1080,
@@ -1028,26 +1047,57 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                         secondaryPreviewView: nil
                     )
                     self.modernCamera = camera
-                    if !SGSimpleSettings.shared.disableGalleryCameraPreview { // MARK: Swiftgram
-                        camera.startCapture()
-                    }
+                    camera.startCapture()
+                    return camera
                 }
-                
                 if case .assets(nil, .createAvatar) = controller.subject {
-                    Queue.mainQueue().after(0.4, {
-                        setupCamera()
+                    Queue.mainQueue().after(0.4, { [weak self] in
+                        guard let self, !SGSimpleSettings.shared.disableGalleryCameraPreview, self.modernCamera == nil else { return }
+                        _ = self.sgCreateModernCamera?()
+                        self.updateIsCameraActive()
                     })
-                } else {
-                    setupCamera()
+                } else if !SGSimpleSettings.shared.disableGalleryCameraPreview {
+                    _ = self.sgCreateModernCamera?()
                 }
+                //
             case .none:
                 if (cameraCellSubject == .sticker || cameraCellSubject == .avatar) && !isIpad {
                 } else {
                     self.containerNode.clipsToBounds = true
                 }
             }
+            // MARK: Swiftgram
+            self.sgCameraPreviewObserver = NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: UserDefaults.standard, queue: .main) { [weak self] _ in
+                self?.updateIsCameraActive()
+            }
+            self.updateIsCameraActive()
+            //
         }
         
+        // MARK: Swiftgram
+        private func sgUpdateCameraTile() {
+            guard !self.isModernCameraHandedOff, self.modernCameraView?.superview === self.cameraWrapperView else { return }
+            let disabled = SGSimpleSettings.shared.disableGalleryCameraPreview
+            if disabled && self.sgNeutralCameraTile == nil {
+                let tile = UIView(frame: self.cameraWrapperView.bounds)
+                tile.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                tile.backgroundColor = UIColor(white: 0.08, alpha: 1.0)
+                tile.isUserInteractionEnabled = false
+                let icon = UIImageView(image: UIImage(systemName: "camera.fill"))
+                icon.tintColor = .white
+                icon.contentMode = .center
+                icon.frame = tile.bounds
+                icon.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                tile.addSubview(icon)
+                self.cameraWrapperView.addSubview(tile)
+                self.sgNeutralCameraTile = tile
+            }
+            self.sgNeutralCameraTile?.isHidden = !disabled
+            self.modernCameraView?.alpha = disabled ? 0.0 : 1.0
+            if let tile = self.sgNeutralCameraTile { self.cameraWrapperView.bringSubviewToFront(tile) }
+        }
+        //
+
         func updateTopEdgeEffect() {
             guard let offset = self.currentContentOffset else {
                 return

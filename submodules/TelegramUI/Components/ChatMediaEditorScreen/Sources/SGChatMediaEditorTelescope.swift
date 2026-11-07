@@ -26,6 +26,11 @@ public func sgChatMediaEditorTelescopePreviewState(values: MediaEditorValues) ->
     return state
 }
 
+func sgChatMediaEditorTelescopeButtonFrame(headerFrame: CGRect, safeInsets: UIEdgeInsets, toolbarSide: ChatMediaEditorToolbarSide? = nil) -> CGRect {
+    let spacing = toolbarSide == nil ? chatMediaEditorMuteButtonSize / 5.0 : chatMediaEditorMuteButtonLeftInset
+    return chatMediaEditorMuteButtonFrame(headerFrame: headerFrame, safeInsets: safeInsets, toolbarSide: toolbarSide).offsetBy(dx: chatMediaEditorMuteButtonSize + spacing, dy: 0.0)
+}
+
 extension ChatMediaEditorScreen.Node {
     var sgShowsTelescopePreview: Bool {
         return self.sgIsTelescopeButtonVisible && self.controller?.sgCanSendTelescope == true && !self.mediaEditor.values.videoIsMuted && self.mediaEditor.values.sgSendAsTelescope && (self.activeTool == nil || self.activeTool == .cover)
@@ -60,7 +65,7 @@ extension ChatMediaEditorScreen.Node {
         let toolbarMinY = chatMediaEditorBottomPanelFrame(size: layout.size, safeInsets: safeInsets, toolbarHeight: chatMediaEditorToolbarHeight).minY
         let side = self.toolbarSide(layout: layout)
         let headerFrame = chatMediaEditorVideoHeaderFrame(size: layout.size, toolbarMinY: toolbarMinY, captionBaseHeight: self.captionPanelView?.baseHeight() ?? 0.0, safeInsets: safeInsets, toolbarSide: side, reservedCorners: layout.reservedCorners)
-        let frame = chatMediaEditorMuteButtonFrame(headerFrame: headerFrame, safeInsets: safeInsets, toolbarSide: side).offsetBy(dx: chatMediaEditorMuteButtonSize + chatMediaEditorMuteButtonLeftInset, dy: 0.0)
+        let frame = sgChatMediaEditorTelescopeButtonFrame(headerFrame: headerFrame, safeInsets: safeInsets, toolbarSide: side)
         transition.updateFrame(view: button, frame: frame)
         let hidden = !self.isVideoScrubberShown || self.activeTool != nil || self.isInterfaceHiddenBySwipe || self.isEditingCaption || (layout.inputHeight ?? 0.0) > 0.0 || self.isSending
         transition.updateAlpha(layer: button.layer, alpha: hidden ? 0.0 : 1.0)

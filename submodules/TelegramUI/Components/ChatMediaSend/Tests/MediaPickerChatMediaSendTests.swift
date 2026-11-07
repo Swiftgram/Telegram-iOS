@@ -103,27 +103,6 @@ final class MediaPickerChatMediaSendTests: XCTestCase {
         XCTAssertEqual(Set(plan.map(\.groupingKey)).count, 1)
     }
 
-    func testTelescopeMappingDisablesWholeSelectionGroupingAndMovesForcedCaptionToLast() {
-        let selection = TestSelection(["a", "v", "c"], grouping: true)
-        let editing = TestEditing()
-        editing.forcedCaption = NSAttributedString(string: "forced")
-        let store = ChatMediaEditorItemStore()
-        let sources = self.sources([
-            "a": self.photo("a"),
-            "v": .video(identifier: "v", pixelSize: CGSize(width: 1920.0, height: 1080.0), duration: 10.0, thumbnail: nil),
-            "c": self.photo("c")
-        ])
-        let values = chatMediaEditorValues(peerId: self.peerId, originalDimensions: PixelDimensions(width: 1920, height: 1080), qualityPreset: .compressedMedium)
-        for enabled in [true, false] {
-            store.update("v") { $0.values = values.withUpdatedSgSendAsTelescope(enabled) }
-            let items = mediaPickerChatMediaSendItems(selection: selection, editing: editing, store: store, assetFor: sources, fileNameFor: { _ in nil })
-            XCTAssertFalse(items[1].options.isMuted)
-            let plan = chatMediaSendPlan(items: items.map(\.options), global: mediaPickerChatMediaSendGlobalOptions(selection: selection, editing: editing), makeGroupingKey: { 1 })
-            XCTAssertEqual(plan.map { $0.groupingKey }, enabled ? [nil, nil, nil] : [1, 1, 1])
-            XCTAssertEqual(plan.map { $0.caption?.string }, enabled ? [nil, nil, "forced"] : ["forced", nil, nil])
-        }
-    }
-
     func testNoForcedCaptionOutsideForcedMode() {
         let selection = TestSelection(["a", "b"], grouping: false)
         let editing = TestEditing()

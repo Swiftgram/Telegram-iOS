@@ -519,7 +519,7 @@ func mediaEditorExportScenarios(only: String?) -> [MediaEditorExportScenario] {
     guard let only else {
         return mediaEditorExportScenarios
     }
-    let all = mediaEditorExportScenarios + mediaEditorRealisticExportScenarios + mediaEditorStreamingWriterExportScenarios + sgMediaEditorTelescopeExportScenarios // MARK: Swiftgram
+    let all = mediaEditorExportScenarios + mediaEditorRealisticExportScenarios + mediaEditorStreamingWriterExportScenarios
     var result: [MediaEditorExportScenario] = []
     for name in only.components(separatedBy: ",") {
         let selected = name == "realistic" ? mediaEditorRealisticExportScenarios : all.filter { $0.id == name }

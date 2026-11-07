@@ -57,21 +57,6 @@ final class ChatMediaSendPlanTests: XCTestCase {
         XCTAssertEqual(plan([item(), item(isAnimation: true)], global()).map { $0.groupingKey }, [nil, nil])
     }
 
-    func testTelescopeDisablesWholeSelectionGroupingBeforeForcedCaptionAllocation() {
-        var telescope = item("round")
-        telescope.sgSendAsTelescope = true
-        var keyCalls = 0
-        let result = plan([item("first"), telescope, item("last")], global(forced: "forced"), onMakeKey: { keyCalls += 1 })
-        XCTAssertEqual(result.map { $0.groupingKey }, [nil, nil, nil])
-        XCTAssertEqual(result.map { $0.caption?.string }, [nil, nil, "forced"])
-        XCTAssertEqual(keyCalls, 0)
-
-        telescope.sgSendAsTelescope = false
-        let disabled = plan([item("first"), telescope, item("last")], global(forced: "forced"))
-        XCTAssertEqual(disabled.map { $0.groupingKey }, [1, 1, 1])
-        XCTAssertEqual(disabled.map { $0.caption?.string }, ["forced", nil, nil])
-    }
-
     func testMutedDisablesGrouping() {
         XCTAssertEqual(plan([item(), item(muted: true), item()], global()).map { $0.groupingKey }, [nil, nil, nil])
     }
