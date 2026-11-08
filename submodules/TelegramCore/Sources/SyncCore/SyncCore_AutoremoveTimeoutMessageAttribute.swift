@@ -1,5 +1,6 @@
 import Foundation
 import Postbox
+import SGSimpleSettings
 
 public let viewOnceTimeout: Int32 = 0x7fffffff
 
@@ -19,8 +20,10 @@ public class AutoremoveTimeoutMessageAttribute: MessageAttribute {
     public init(timeout: Int32, countdownBeginTime: Int32?) {
         self.timeout = timeout
         self.countdownBeginTime = countdownBeginTime
-        
-        if let countdownBeginTime = countdownBeginTime {
+
+        // MARK: Swiftgram — "infinite view" keeps self-destructing content out of the
+        // automatic timestamp-based cleanup.
+        if let countdownBeginTime = countdownBeginTime, !SGSimpleSettings.shared.keepSecretMedia {
             self.automaticTimestampBasedAttribute = (0, autoremoveExpiryTimestamp(countdownBeginTime: countdownBeginTime, timeout: timeout))
         } else {
             self.automaticTimestampBasedAttribute = nil
@@ -30,8 +33,8 @@ public class AutoremoveTimeoutMessageAttribute: MessageAttribute {
     required public init(decoder: PostboxDecoder) {
         self.timeout = decoder.decodeInt32ForKey("t", orElse: 0)
         self.countdownBeginTime = decoder.decodeOptionalInt32ForKey("c")
-        
-        if let countdownBeginTime = self.countdownBeginTime {
+
+        if let countdownBeginTime = self.countdownBeginTime, !SGSimpleSettings.shared.keepSecretMedia {
             self.automaticTimestampBasedAttribute = (0, autoremoveExpiryTimestamp(countdownBeginTime: countdownBeginTime, timeout: self.timeout))
         } else {
             self.automaticTimestampBasedAttribute = nil
@@ -59,8 +62,9 @@ public class AutoclearTimeoutMessageAttribute: MessageAttribute {
     public init(timeout: Int32, countdownBeginTime: Int32?) {
         self.timeout = timeout
         self.countdownBeginTime = countdownBeginTime
-        
-        if let countdownBeginTime = countdownBeginTime {
+
+        // MARK: Swiftgram — see AutoremoveTimeoutMessageAttribute.
+        if let countdownBeginTime = countdownBeginTime, !SGSimpleSettings.shared.keepSecretMedia {
             if self.timeout == viewOnceTimeout {
                 self.automaticTimestampBasedAttribute = (1, countdownBeginTime)
             } else {
@@ -74,8 +78,8 @@ public class AutoclearTimeoutMessageAttribute: MessageAttribute {
     required public init(decoder: PostboxDecoder) {
         self.timeout = decoder.decodeInt32ForKey("t", orElse: 0)
         self.countdownBeginTime = decoder.decodeOptionalInt32ForKey("c")
-        
-        if let countdownBeginTime = self.countdownBeginTime {
+
+        if let countdownBeginTime = self.countdownBeginTime, !SGSimpleSettings.shared.keepSecretMedia {
             if self.timeout == viewOnceTimeout {
                 self.automaticTimestampBasedAttribute = (1, countdownBeginTime)
             } else {

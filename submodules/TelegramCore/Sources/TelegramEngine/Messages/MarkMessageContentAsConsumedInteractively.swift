@@ -2,6 +2,7 @@ import Foundation
 import Postbox
 internal import TelegramApi
 import SwiftSignalKit
+import SGSimpleSettings
 
 func _internal_markMessageContentAsConsumedInteractively(postbox: Postbox, messageId: MessageId) -> Signal<Void, NoError> {
     return postbox.transaction { transaction -> Void in
@@ -48,9 +49,12 @@ func _internal_markMessageContentAsConsumedInteractively(postbox: Postbox, messa
             }
             
             let timestamp = Int32(CFAbsoluteTimeGetCurrent() + NSTimeIntervalSince1970)
+            // MARK: Swiftgram — with "infinite view" the countdown is never started, so the
+            // media stays playable and is not replaced with expired content.
+            let sgKeepSecretMedia = SGSimpleSettings.shared.keepSecretMedia
             for i in 0 ..< updatedAttributes.count {
                 if let attribute = updatedAttributes[i] as? AutoremoveTimeoutMessageAttribute {
-                    if attribute.countdownBeginTime == nil || attribute.countdownBeginTime == 0 {
+                    if (attribute.countdownBeginTime == nil || attribute.countdownBeginTime == 0) && !sgKeepSecretMedia {
                         var timeout = attribute.timeout
                         if let duration = message.secretMediaDuration {
                             timeout = max(timeout, Int32(duration))
@@ -81,7 +85,7 @@ func _internal_markMessageContentAsConsumedInteractively(postbox: Postbox, messa
                         }
                     }
                 } else if let attribute = updatedAttributes[i] as? AutoclearTimeoutMessageAttribute {
-                    if attribute.countdownBeginTime == nil || attribute.countdownBeginTime == 0 {
+                    if (attribute.countdownBeginTime == nil || attribute.countdownBeginTime == 0) && !sgKeepSecretMedia {
                         var timeout = attribute.timeout
                         if let duration = message.secretMediaDuration, timeout != viewOnceTimeout {
                             timeout = max(timeout, Int32(duration))
@@ -198,10 +202,12 @@ func markMessageContentAsConsumedRemotely(transaction: Transaction, messageId: M
         
         let timestamp = Int32(CFAbsoluteTimeGetCurrent() + NSTimeIntervalSince1970)
         let countdownBeginTime = consumeDate ?? timestamp
+        // MARK: Swiftgram — "infinite view" never expires the consumed media locally.
+        let sgKeepSecretMedia = SGSimpleSettings.shared.keepSecretMedia
         
         for i in 0 ..< updatedAttributes.count {
             if let attribute = updatedAttributes[i] as? AutoremoveTimeoutMessageAttribute {
-                if (attribute.countdownBeginTime == nil || attribute.countdownBeginTime == 0) && message.containsSecretMedia {
+                if (attribute.countdownBeginTime == nil || attribute.countdownBeginTime == 0) && message.containsSecretMedia && !sgKeepSecretMedia {
                     updatedAttributes[i] = AutoremoveTimeoutMessageAttribute(timeout: attribute.timeout, countdownBeginTime: countdownBeginTime)
                     updateMessage = true
                                  
@@ -225,7 +231,7 @@ func markMessageContentAsConsumedRemotely(transaction: Transaction, messageId: M
                     }
                 }
             } else if let attribute = updatedAttributes[i] as? AutoclearTimeoutMessageAttribute {
-                if (attribute.countdownBeginTime == nil || attribute.countdownBeginTime == 0) && message.containsSecretMedia {
+                if (attribute.countdownBeginTime == nil || attribute.countdownBeginTime == 0) && message.containsSecretMedia && !sgKeepSecretMedia {
                     updatedAttributes[i] = AutoclearTimeoutMessageAttribute(timeout: attribute.timeout, countdownBeginTime: countdownBeginTime)
                     updateMessage = true
                     

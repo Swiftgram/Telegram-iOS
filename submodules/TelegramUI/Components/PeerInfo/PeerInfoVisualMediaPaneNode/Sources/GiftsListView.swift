@@ -27,6 +27,73 @@ import UndoUI
 import LottieComponent
 import ButtonComponent
 import ContextUI
+import SGSimpleSettings
+
+/// A locally generated "GRAM" premium gift tile. It exists only on this device and is never
+/// sent to the server; it is prepended to the owner's own gift grid when the tweak is enabled.
+private final class SGPhantomGiftView: UIView {
+    private let gradientLayer = CAGradientLayer()
+    private let starView = UIImageView()
+    private let titleLabel = UILabel()
+    private let captionLabel = UILabel()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+
+        self.isUserInteractionEnabled = false
+        self.clipsToBounds = true
+        self.layer.cornerRadius = 16.0
+        self.layer.addSublayer(self.gradientLayer)
+
+        self.gradientLayer.colors = [
+            UIColor(red: 1.0, green: 0.78, blue: 0.32, alpha: 1.0).cgColor,
+            UIColor(red: 0.94, green: 0.48, blue: 0.16, alpha: 1.0).cgColor
+        ]
+        self.gradientLayer.startPoint = CGPoint(x: 0.0, y: 0.0)
+        self.gradientLayer.endPoint = CGPoint(x: 1.0, y: 1.0)
+
+        self.starView.image = UIImage(systemName: "star.fill")
+        self.starView.tintColor = UIColor(white: 1.0, alpha: 0.95)
+        self.starView.contentMode = .scaleAspectFit
+        self.addSubview(self.starView)
+
+        self.titleLabel.text = "GRAM"
+        self.titleLabel.font = Font.with(size: 17.0, design: .round, weight: .bold)
+        self.titleLabel.textColor = .white
+        self.titleLabel.textAlignment = .center
+        self.addSubview(self.titleLabel)
+
+        self.captionLabel.text = "gift"
+        self.captionLabel.font = Font.with(size: 11.0, design: .round, weight: .semibold)
+        self.captionLabel.textColor = UIColor(white: 1.0, alpha: 0.75)
+        self.captionLabel.textAlignment = .center
+        self.addSubview(self.captionLabel)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        self.gradientLayer.frame = self.bounds
+
+        let starSide = floor(self.bounds.width * 0.32)
+        self.starView.frame = CGRect(
+            origin: CGPoint(x: floor((self.bounds.width - starSide) / 2.0), y: floor(self.bounds.height * 0.16)),
+            size: CGSize(width: starSide, height: starSide)
+        )
+        self.titleLabel.frame = CGRect(
+            origin: CGPoint(x: 4.0, y: self.starView.frame.maxY + floor(self.bounds.height * 0.06)),
+            size: CGSize(width: self.bounds.width - 8.0, height: 20.0)
+        )
+        self.captionLabel.frame = CGRect(
+            origin: CGPoint(x: 4.0, y: self.titleLabel.frame.maxY + 1.0),
+            size: CGSize(width: self.bounds.width - 8.0, height: 14.0)
+        )
+    }
+}
 
 final class GiftsListView: UIView {
     private let context: AccountContext
@@ -70,6 +137,7 @@ final class GiftsListView: UIView {
             
     private var starsProducts: [ProfileGiftsContext.State.StarGift]?
     private var starsItems: [AnyHashable: (StarGiftReference?, ComponentView<Empty>)] = [:]
+    private var phantomGiftView: SGPhantomGiftView?
 
     private(set) var resultsAreEmpty = false
     private var filteredResultsAreEmpty = false
@@ -444,9 +512,28 @@ final class GiftsListView: UIView {
         let optionWidth = (params.size.width - itemsSideInset * 2.0 - optionSpacing * CGFloat(itemsInRow - 1)) / CGFloat(itemsInRow)
         
         let starsOptionSize = CGSize(width: optionWidth, height: defaultOptionWidth)
+        
+        // MARK: Swiftgram — a locally generated premium gift shown only on the owner's profile.
+        var phantomGiftOffset: CGFloat = 0.0
+        let showsPhantomGift = SGSimpleSettings.shared.phantomGifts && self.peerId == self.context.account.peerId
+        if showsPhantomGift {
+            phantomGiftOffset = starsOptionSize.height + optionSpacing
+            let phantomGiftView: SGPhantomGiftView
+            if let current = self.phantomGiftView {
+                phantomGiftView = current
+            } else {
+                phantomGiftView = SGPhantomGiftView(frame: CGRect(origin: CGPoint(), size: starsOptionSize))
+                self.phantomGiftView = phantomGiftView
+                self.addSubview(phantomGiftView)
+            }
+            transition.setFrame(view: phantomGiftView, frame: CGRect(origin: CGPoint(x: itemsSideInset, y: topInset), size: starsOptionSize))
+        } else if let phantomGiftView = self.phantomGiftView {
+            self.phantomGiftView = nil
+            phantomGiftView.removeFromSuperview()
+        }
                     
         var validIds: [AnyHashable] = []
-        var itemFrame = CGRect(origin: CGPoint(x: itemsSideInset, y: topInset), size: starsOptionSize)
+        var itemFrame = CGRect(origin: CGPoint(x: itemsSideInset, y: topInset + phantomGiftOffset), size: starsOptionSize)
         
         var index: Int32 = 0
         for product in starsProducts {
@@ -767,7 +854,7 @@ final class GiftsListView: UIView {
             self.starsItems.removeValue(forKey: id)
         }
         
-        var contentHeight = ceil(CGFloat(starsProducts.count) / CGFloat(defaultItemsInRow)) * (starsOptionSize.height + optionSpacing) - optionSpacing + topInset + 16.0
+        var contentHeight = ceil(CGFloat(starsProducts.count) / CGFloat(defaultItemsInRow)) * (starsOptionSize.height + optionSpacing) - optionSpacing + topInset + 16.0 + phantomGiftOffset
         
         let size = params.size
         let sideInset = params.sideInset
