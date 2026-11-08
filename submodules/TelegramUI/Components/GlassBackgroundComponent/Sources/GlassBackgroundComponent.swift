@@ -6,6 +6,7 @@ import ComponentDisplayAdapters
 import UIKitRuntimeUtils
 import CoreImage
 import AppBundle
+import SGSimpleSettings
 
 private final class ContentContainer: UIView {
     private let maskContentView: UIView
@@ -488,13 +489,15 @@ public class GlassBackgroundView: UIView {
         public let tintColor: TintColor
         public let isInteractive: Bool
         public let isVisible: Bool
+        public let disableGlass: Bool
         
-        init(shape: Shape, isDark: Bool, tintColor: TintColor, isInteractive: Bool, isVisible: Bool) {
+        init(shape: Shape, isDark: Bool, tintColor: TintColor, isInteractive: Bool, isVisible: Bool, disableGlass: Bool) {
             self.shape = shape
             self.isDark = isDark
             self.tintColor = tintColor
             self.isInteractive = isInteractive
             self.isVisible = isVisible
+            self.disableGlass = disableGlass
         }
     }
     
@@ -679,6 +682,30 @@ public class GlassBackgroundView: UIView {
     }
 
     func update(size: CGSize, shape: Shape, isDark: Bool, tintColor: TintColor, isInteractive: Bool = false, isVisible: Bool = true, transition: ComponentTransition) {
+        // MARK: Swiftgram — "disable liquid glass" swaps every glass surface for a flat
+        // translucent colour instead of a real-time backdrop blur.
+        let sgDisableGlass = SGSimpleSettings.shared.disableLiquidGlass
+        if sgDisableGlass {
+            let solidColor: UIColor
+            switch tintColor.kind {
+            case .panel:
+                solidColor = isDark ? UIColor(white: 0.08, alpha: 0.94) : UIColor(white: 1.0, alpha: 0.92)
+            case .clear:
+                solidColor = .clear
+            case let .custom(_, color):
+                solidColor = color
+            }
+            if self.backgroundColor != solidColor {
+                self.backgroundColor = solidColor
+            }
+            if let nativeView = self.nativeView, nativeView.effect != nil {
+                nativeView.effect = nil
+            }
+            self.legacyView?.isHidden = true
+        } else if self.backgroundColor != nil {
+            self.backgroundColor = nil
+            self.legacyView?.isHidden = false
+        }
         
         if let glassHighlightRecognizer = self.glassHighlightRecognizer {
             glassHighlightRecognizer.isEnabled = isInteractive
@@ -771,7 +798,7 @@ public class GlassBackgroundView: UIView {
             innerBackgroundView.removeFromSuperview()
         }
         
-        let params = Params(shape: shape, isDark: isDark, tintColor: tintColor, isInteractive: isInteractive, isVisible: isVisible)
+        let params = Params(shape: shape, isDark: isDark, tintColor: tintColor, isInteractive: isInteractive, isVisible: isVisible, disableGlass: sgDisableGlass)
         if self.params != params {
             self.params = params
             
@@ -823,7 +850,7 @@ public class GlassBackgroundView: UIView {
                     if #available(iOS 26.0, *) {
                         var glassEffect: UIGlassEffect?
                         
-                        if isVisible {
+                        if isVisible && !sgDisableGlass {
                             let nativeTint = tintColor.nativeEffect(isDark: isDark)
                             let glassEffectValue = UIGlassEffect(style: nativeTint.isClear ? .clear : .regular)
                             glassEffectValue.tintColor = nativeTint.color

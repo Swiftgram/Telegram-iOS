@@ -4,6 +4,12 @@ import AsyncDisplayKit
 
 private var sharedIsReduceTransparencyEnabled = UIAccessibility.isReduceTransparencyEnabled
 
+// MARK: Swiftgram — read directly so Display does not depend on the Swiftgram settings module.
+// The key matches SGSimpleSettings.Keys.disableLiquidGlass.
+private var sgDisableLiquidGlass: Bool {
+    return UserDefaults.standard.bool(forKey: "disableLiquidGlass")
+}
+
 public final class NavigationBackgroundNode: ASDisplayNode {
     private var _color: UIColor
 
@@ -64,7 +70,7 @@ public final class NavigationBackgroundNode: ASDisplayNode {
             self.scheduledUpdate = true
             return
         }
-        if self.enableBlur && !sharedIsReduceTransparencyEnabled && ((self._color.alpha > .ulpOfOne && self._color.alpha < 0.95) || forceKeepBlur) {
+        if self.enableBlur && !sharedIsReduceTransparencyEnabled && !sgDisableLiquidGlass && ((self._color.alpha > .ulpOfOne && self._color.alpha < 0.95) || forceKeepBlur) {
             if self.effectView == nil {
                 let effectView = UIVisualEffectView(effect: UIBlurEffect(style: .light))
 
@@ -123,7 +129,7 @@ public final class NavigationBackgroundNode: ASDisplayNode {
         self.enableBlur = effectiveEnableBlur
         self.enableSaturation = effectiveEnableSaturation
 
-        if sharedIsReduceTransparencyEnabled {
+        if sharedIsReduceTransparencyEnabled || sgDisableLiquidGlass {
             transition.updateBackgroundColor(node: self.backgroundNode, color: self._color.withAlphaComponent(1.0))
         } else {
             transition.updateBackgroundColor(node: self.backgroundNode, color: self._color)
@@ -215,7 +221,7 @@ open class BlurredBackgroundView: UIView {
     }
     
     private func updateBackgroundBlur(forceKeepBlur: Bool) {
-        if let color = self._color, self.enableBlur && !sharedIsReduceTransparencyEnabled && ((color.alpha > .ulpOfOne && color.alpha < 0.95) || forceKeepBlur) {
+        if let color = self._color, self.enableBlur && !sharedIsReduceTransparencyEnabled && !sgDisableLiquidGlass && ((color.alpha > .ulpOfOne && color.alpha < 0.95) || forceKeepBlur) {
             if self.effectView == nil {
                 let effectView = UIVisualEffectView(effect: UIBlurEffect(style: .light))
 
@@ -271,7 +277,7 @@ open class BlurredBackgroundView: UIView {
         self._color = color
         self.enableBlur = effectiveEnableBlur
 
-        if sharedIsReduceTransparencyEnabled {
+        if sharedIsReduceTransparencyEnabled || sgDisableLiquidGlass {
             transition.updateBackgroundColor(layer: self.backgroundView.layer, color: color.withAlphaComponent(1.0))
         } else {
             transition.updateBackgroundColor(layer: self.backgroundView.layer, color: color)
