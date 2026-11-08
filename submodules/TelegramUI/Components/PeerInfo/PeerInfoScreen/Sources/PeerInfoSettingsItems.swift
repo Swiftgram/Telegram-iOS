@@ -212,7 +212,7 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
     // MARK: Swiftgram
     let sgWebSettings = context.currentAppConfiguration.with({ $0 }).sgWebSettings
     items[.swiftgram]!.append(contentsOf: sgPeerInfoSettingsItems(context: context, paymentsEnabled: sgWebSettings.global.paymentsEnabled, presentationData: presentationData, interaction: interaction))
-    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 100, label: .text(""), text: "Кастомные твики Swiftgram", icon: PresentationResourcesSettings.swiftgram, action: {
+    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 100, text: "Кастомные твики Swiftgram", icon: PresentationResourcesSettings.swiftgram, action: {
         interaction.openSettings(.customTweaks)
     }))
     //
