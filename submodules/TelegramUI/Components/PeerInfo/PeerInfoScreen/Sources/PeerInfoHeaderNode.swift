@@ -645,8 +645,11 @@ final class PeerInfoHeaderNode: ASDisplayNode {
         
         let currentSavedMusic = self.profileMusic(peer: peer, screenData: screenData)
         let currentWalletBalance: Int64?
-        if !self.isSettings, let balance = (screenData?.cachedData as? CachedUserData)?.walletCard?.balance, balance >= 100_000_000 {
-            currentWalletBalance = balance
+        // MARK: Swiftgram — the custom GRAM balance is shown even when the real balance is zero.
+        let sgCustomGramBalance = SGSimpleSettings.shared.customGramBalanceOverride
+        let sgWalletBalance = (screenData?.cachedData as? CachedUserData)?.walletCard?.balance
+        if !self.isSettings, sgCustomGramBalance != nil || (sgWalletBalance ?? 0) >= 100_000_000 {
+            currentWalletBalance = sgWalletBalance ?? 0
         } else {
             currentWalletBalance = nil
         }
@@ -2559,7 +2562,7 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                 self.walletBalance = componentView
                 return componentView
             }()
-            let formattedBalance = formatTonAmountText(currentWalletBalance, dateTimeFormat: presentationData.dateTimeFormat, maxDecimalPositions: 2)
+            let formattedBalance = sgCustomGramBalance ?? formatTonAmountText(currentWalletBalance, dateTimeFormat: presentationData.dateTimeFormat, maxDecimalPositions: 2)
             let decimalSeparator = presentationData.dateTimeFormat.decimalSeparator
             let isOverlay = self.isAvatarExpanded || hasBackground
             let primaryColor = isOverlay ? UIColor.white : presentationData.theme.list.itemPrimaryTextColor
