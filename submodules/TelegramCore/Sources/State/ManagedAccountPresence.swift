@@ -18,6 +18,7 @@ private final class AccountPresenceManagerImpl {
     private var onlineTimer: SignalKitTimer?
     
     private var wasOnline: Bool = false
+    private var ghostModeObserver: NSObjectProtocol?
     
     init(queue: Queue, shouldKeepOnlinePresence: Signal<Bool, NoError>, network: Network) {
         self.queue = queue
@@ -34,6 +35,16 @@ private final class AccountPresenceManagerImpl {
                 self.updatePresence(value)
             }
         })
+        
+        // MARK: Swiftgram — ghost mode changes must take effect without waiting for a presence change.
+        self.ghostModeObserver = NotificationCenter.default.addObserver(forName: .sgGhostModeChanged, object: nil, queue: nil, using: { [weak self] _ in
+            guard let self else {
+                return
+            }
+            self.queue.async {
+                self.updatePresence(self.wasOnline)
+            }
+        })
     }
     
     deinit {
@@ -41,6 +52,9 @@ private final class AccountPresenceManagerImpl {
         self.shouldKeepOnlinePresenceDisposable?.dispose()
         self.currentRequestDisposable.dispose()
         self.onlineTimer?.invalidate()
+        if let ghostModeObserver = self.ghostModeObserver {
+            NotificationCenter.default.removeObserver(ghostModeObserver)
+        }
     }
     
     private func updatePresence(_ isOnline: Bool) {
@@ -98,11 +112,4 @@ final class AccountPresenceManager {
             return disposable
         }
     }
-}
-
-// MARK: Swiftgram
-/// Immediately reports the account as offline. Ghost mode calls this when it is switched on so
-/// the change takes effect without waiting for the presence signal to change.
-public func sgApplyGhostModeOfflinePresence(network: Network) {
-    let _ = network.request(Api.functions.account.updateStatus(offline: .boolTrue)).start()
 }

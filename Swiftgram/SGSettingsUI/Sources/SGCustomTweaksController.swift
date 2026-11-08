@@ -190,10 +190,8 @@ public func sgCustomTweaksController(context: AccountContext) -> ViewController 
         switch kind {
         case .ghostMode:
             settings.ghostMode = value
-            if value {
-                // Apply immediately: tell the server we are offline instead of waiting for the next presence tick.
-                sgApplyGhostModeOfflinePresence(network: context.account.network)
-            }
+            // Re-apply presence immediately instead of waiting for the next presence tick.
+            NotificationCenter.default.post(name: .sgGhostModeChanged, object: nil)
         case .keepSecretMedia:
             settings.keepSecretMedia = value
         case .phantomGifts:

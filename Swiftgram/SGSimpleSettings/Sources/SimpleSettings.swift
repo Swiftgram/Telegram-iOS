@@ -700,6 +700,11 @@ extension SGSimpleSettings {
 
 // MARK: Custom Swiftgram tweaks
 
+public extension Notification.Name {
+    /// Posted after the ghost mode toggle changes so presence can be re-applied immediately.
+    static let sgGhostModeChanged = Notification.Name("sgGhostModeChanged")
+}
+
 extension SGSimpleSettings {
     /// Non-empty custom Stars balance, trimmed. `nil` means the real balance should be shown.
     public var customStarsBalanceOverride: String? {
