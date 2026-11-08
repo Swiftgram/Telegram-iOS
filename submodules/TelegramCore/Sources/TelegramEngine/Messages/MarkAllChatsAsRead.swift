@@ -3,9 +3,14 @@ internal import TelegramApi
 import Postbox
 import SwiftSignalKit
 import MtProtoKit
+import SGSimpleSettings
 
 
 func _internal_markAllChatsAsRead(postbox: Postbox, network: Network, stateManager: AccountStateManager) -> Signal<Void, NoError> {
+    // MARK: Swiftgram — ghost mode must not push read receipts, including the bulk "read all".
+    if SGSimpleSettings.shared.ghostMode {
+        return .complete()
+    }
     return network.request(Api.functions.messages.getDialogUnreadMarks(flags: 0, parentPeer: nil))
     |> map(Optional.init)
     |> `catch` { _ -> Signal<[Api.DialogPeer]?, NoError> in
