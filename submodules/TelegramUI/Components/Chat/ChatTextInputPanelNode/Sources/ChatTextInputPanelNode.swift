@@ -2100,6 +2100,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
         var updatedPlaceholder: String?
         var placeholderHasStar = false
         
+        self.toolbarNode?.view.overrideUserInterfaceStyle = interfaceState.theme.overallDarkAppearance ? .dark : .light // MARK: Swiftgram
         let themeUpdated = self.presentationInterfaceState?.theme !== interfaceState.theme
         // Text Size changes the placeholder font and the live text's decoration; neither is theme-keyed.
         // False on the first layout (no previous state): the placeholder is built by `initializedPlaceholder`
@@ -6751,6 +6752,8 @@ extension ChatTextInputPanelNode {
         )
         let toolbarHostingController = UIHostingController(rootView: toolbarView)
         toolbarHostingController.view.backgroundColor = .clear
+        let theme = self.presentationInterfaceState?.theme ?? context.sharedContext.currentPresentationData.with { $0 }.theme
+        toolbarHostingController.view.overrideUserInterfaceStyle = theme.overallDarkAppearance ? .dark : .light
         let toolbarNode = ASDisplayNode { toolbarHostingController.view }
         self.toolbarNode = toolbarNode
         // assigning toolbarHostingController bugs responsivness and overrides layout

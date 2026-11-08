@@ -896,6 +896,7 @@ public class AttachmentTextInputPanelNode: ASDisplayNode, TGCaptionPanelView, AS
     }
 
     public func updateLayout(width: CGFloat, leftInset: CGFloat, rightInset: CGFloat, bottomInset: CGFloat, keyboardHeight: CGFloat, additionalSideInsets: UIEdgeInsets, textFieldMaxHeight: CGFloat, availableHeight: CGFloat, isSecondary: Bool, transition: ContainedViewLayoutTransition, interfaceState: ChatPresentationInterfaceState, metrics: LayoutMetrics, isMediaInputExpanded: Bool) -> CGFloat {
+        self.toolbarNode?.view.overrideUserInterfaceStyle = interfaceState.theme.overallDarkAppearance ? .dark : .light // MARK: Swiftgram
         let hadLayout = self.validLayout != nil
         let previousLayout = self.validLayout
         self.validLayout = (width: width, leftInset: leftInset, rightInset: rightInset, bottomInset: bottomInset, keyboardHeight: keyboardHeight, additionalSideInsets: additionalSideInsets, textFieldMaxHeight: textFieldMaxHeight, availableHeight: availableHeight, metrics: metrics, isSecondary: isSecondary)
@@ -2477,6 +2478,8 @@ extension AttachmentTextInputPanelNode {
         )
         let toolbarHostingController = UIHostingController(rootView: toolbarView)
         toolbarHostingController.view.backgroundColor = .clear
+        let theme = self.presentationInterfaceState?.theme ?? context.sharedContext.currentPresentationData.with { $0 }.theme
+        toolbarHostingController.view.overrideUserInterfaceStyle = theme.overallDarkAppearance ? .dark : .light
         let toolbarNode = ASDisplayNode { toolbarHostingController.view }
         self.toolbarNode = toolbarNode
         // assigning toolbarHostingController bugs responsivness and overrides layout

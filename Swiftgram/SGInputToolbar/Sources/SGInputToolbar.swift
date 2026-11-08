@@ -118,6 +118,7 @@ public struct ChatToolbarView: View {
                 }
                 .buttonStyle(ToolbarButtonStyle())
             }
+            .modifier(ToolbarGlassContainer())
             .padding(.horizontal, 8)
             .padding(.vertical, 8)
         }
@@ -125,6 +126,20 @@ public struct ChatToolbarView: View {
     }
 }
 
+
+private struct ToolbarGlassContainer: ViewModifier {
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            // Keep the circles separate while sharing one glass rendering container.
+            GlassEffectContainer(spacing: 0.0) {
+                content
+            }
+        } else {
+            content
+        }
+    }
+}
 
 // UIKit blur for light appearance
 struct BlurView: UIViewRepresentable {
@@ -172,17 +187,26 @@ struct Glass: View {
 // Button style
 struct ToolbarButtonStyle: ButtonStyle {
     var size: CGFloat = 39
+    @Environment(\.isEnabled) private var isEnabled
 
+    @ViewBuilder
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .frame(width: size, height: size)
-            .contentShape(Circle())
-            .background(Glass())
-            .overlay(
-                Circle()
-                    .fill(Color.black.opacity(configuration.isPressed ? 0.08 : 0))
-            )
-            .scaleEffect(configuration.isPressed ? 0.95 : 1)
-            .animation(nil, value: configuration.isPressed)
+        if #available(iOS 26.0, *) {
+            configuration.label
+                .frame(width: size, height: size)
+                .contentShape(Circle())
+                .glassEffect(.regular.interactive(isEnabled), in: Circle())
+        } else {
+            configuration.label
+                .frame(width: size, height: size)
+                .contentShape(Circle())
+                .background(Glass())
+                .overlay(
+                    Circle()
+                        .fill(Color.black.opacity(configuration.isPressed ? 0.08 : 0))
+                )
+                .scaleEffect(configuration.isPressed ? 0.95 : 1)
+                .animation(nil, value: configuration.isPressed)
+        }
     }
 }
