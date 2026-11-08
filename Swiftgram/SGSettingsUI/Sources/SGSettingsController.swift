@@ -341,6 +341,7 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
 public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int? = nil*/) -> ViewController {
     var presentControllerImpl: ((ViewController, ViewControllerPresentationArguments?) -> Void)?
     var pushControllerImpl: ((ViewController) -> Void)?
+    var presentOneFromManyImpl: ((SGOneFromManySetting, [SGOneFromManyOption]) -> Void)?
 //    var getRootControllerImpl: (() -> UIViewController?)?
 //    var getNavigationControllerImpl: (() -> NavigationController?)?
     var askForRestart: (() -> Void)?
@@ -556,8 +557,7 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
 
     }, setOneFromManyValue: { setting in
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-        let actionSheet = ActionSheetController(presentationData: presentationData)
-        var items: [ActionSheetItem] = []
+        var options: [SGOneFromManyOption] = []
         
         switch (setting) {
             case .downloadSpeedBoost:
@@ -587,8 +587,7 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
                 }
 
                 for value in SGSimpleSettings.DownloadSpeedBoostValues.allCases {
-                    items.append(ActionSheetButtonItem(title: i18n("Settings.DownloadsBoost.\(value.rawValue)", presentationData.strings.baseLanguageCode), color: .accent, action: { [weak actionSheet] in
-                        actionSheet?.dismissAnimated()
+                    options.append(SGOneFromManyOption(title: i18n("Settings.DownloadsBoost.\(value.rawValue)", presentationData.strings.baseLanguageCode), isSelected: SGSimpleSettings.shared.downloadSpeedBoost == value.rawValue, action: {
                         setAction(value.rawValue)
                     }))
                 }
@@ -599,8 +598,7 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
                 }
 
                 for value in SGSimpleSettings.BottomTabStyleValues.allCases {
-                    items.append(ActionSheetButtonItem(title: i18n("Settings.Folders.BottomTabStyle.\(value.rawValue)", presentationData.strings.baseLanguageCode), color: .accent, action: { [weak actionSheet] in
-                        actionSheet?.dismissAnimated()
+                    options.append(SGOneFromManyOption(title: i18n("Settings.Folders.BottomTabStyle.\(value.rawValue)", presentationData.strings.baseLanguageCode), isSelected: SGSimpleSettings.shared.bottomTabStyle == value.rawValue, action: {
                         setAction(value.rawValue)
                     }))
                 }
@@ -620,8 +618,7 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
                         default:
                             title = i18n("Settings.Folders.AllChatsTitle.none", presentationData.strings.baseLanguageCode)
                     }
-                    items.append(ActionSheetButtonItem(title: title, color: .accent, action: { [weak actionSheet] in
-                        actionSheet?.dismissAnimated()
+                    options.append(SGOneFromManyOption(title: title, isSelected: SGSimpleSettings.shared.allChatsTitleLengthOverride == value.rawValue, action: {
                         setAction(value.rawValue)
                     }))
                 }
@@ -650,8 +647,7 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
                             continue // System translation is not available on iOS 17 and below
                         }
                     }
-                    items.append(ActionSheetButtonItem(title: i18n("Settings.Translation.Backend.\(value.rawValue)", presentationData.strings.baseLanguageCode), color: .accent, action: { [weak actionSheet] in
-                        actionSheet?.dismissAnimated()
+                    options.append(SGOneFromManyOption(title: i18n("Settings.Translation.Backend.\(value.rawValue)", presentationData.strings.baseLanguageCode), isSelected: SGSimpleSettings.shared.translationBackend == value.rawValue, action: {
                         setAction(value.rawValue)
                     }))
                 }
@@ -668,8 +664,7 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
                             continue // Apple recognition is not available on iOS 12
                         }
                     }
-                    items.append(ActionSheetButtonItem(title: i18n("Settings.Transcription.Backend.\(value.rawValue)", presentationData.strings.baseLanguageCode), color: .accent, action: { [weak actionSheet] in
-                        actionSheet?.dismissAnimated()
+                    options.append(SGOneFromManyOption(title: i18n("Settings.Transcription.Backend.\(value.rawValue)", presentationData.strings.baseLanguageCode), isSelected: SGSimpleSettings.shared.transcriptionBackend == value.rawValue, action: {
                         setAction(value.rawValue)
                     }))
                 }
@@ -680,19 +675,13 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
                 }
 
                 for value in SGSimpleSettings.NYStyle.allCases {
-                    items.append(ActionSheetButtonItem(title: i18n("Settings.NY.Style.\(value.rawValue)", presentationData.strings.baseLanguageCode), color: .accent, action: { [weak actionSheet] in
-                        actionSheet?.dismissAnimated()
+                    options.append(SGOneFromManyOption(title: i18n("Settings.NY.Style.\(value.rawValue)", presentationData.strings.baseLanguageCode), isSelected: SGSimpleSettings.shared.nyStyle == value.rawValue, action: {
                         setAction(value.rawValue)
                     }))
                 }
         }
         
-        actionSheet.setItemGroups([ActionSheetItemGroup(items: items), ActionSheetItemGroup(items: [
-            ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, color: .accent, font: .bold, action: { [weak actionSheet] in
-                actionSheet?.dismissAnimated()
-            })
-        ])])
-        presentControllerImpl?(actionSheet, ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+        presentOneFromManyImpl?(setting, options)
     }, openDisclosureLink: { [weak context] link in
         guard let context else {
             return
@@ -755,6 +744,12 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
     }
     
     let controller = ItemListController(context: context, state: signal)
+    presentOneFromManyImpl = { [weak controller] setting, options in
+        guard let controller else {
+            return
+        }
+        sgPresentOneFromManySelector(controller: controller, setting: setting, presentationData: context.sharedContext.currentPresentationData.with { $0 }, options: options)
+    }
     presentControllerImpl = { [weak controller] c, a in
         controller?.present(c, in: .window(.root), with: a)
     }

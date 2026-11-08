@@ -78,6 +78,7 @@ public func okUndoController(_ text: String, _ presentationData: PresentationDat
 public func sgProController(context: AccountContext) -> ViewController {
     var presentControllerImpl: ((ViewController, ViewControllerPresentationArguments?) -> Void)?
     var pushControllerImpl: ((ViewController) -> Void)?
+    var presentOneFromManyImpl: ((SGProOneFromManySetting, [SGOneFromManyOption]) -> Void)?
 
     let simplePromise = ValuePromise(true, ignoreRepeated: false)
     
@@ -89,8 +90,7 @@ public func sgProController(context: AccountContext) -> ViewController {
     }, setOneFromManyValue: { setting in
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
         let lang = presentationData.strings.baseLanguageCode
-        let actionSheet = ActionSheetController(presentationData: presentationData)
-        var items: [ActionSheetItem] = []
+        var options: [SGOneFromManyOption] = []
         
         switch (setting) {
             case .pinnedMessageNotifications:
@@ -101,8 +101,7 @@ public func sgProController(context: AccountContext) -> ViewController {
                 }
 
                 for value in SGSimpleSettings.PinnedMessageNotificationsSettings.allCases {
-                    items.append(ActionSheetButtonItem(title: "Notifications.PinnedMessages.value.\(value.rawValue)".i18n(lang), color: .accent, action: { [weak actionSheet] in
-                        actionSheet?.dismissAnimated()
+                    options.append(SGOneFromManyOption(title: "Notifications.PinnedMessages.value.\(value.rawValue)".i18n(lang), isSelected: SGSimpleSettings.shared.pinnedMessageNotifications == value.rawValue, action: {
                         setAction(value.rawValue)
                     }))
                 }
@@ -114,19 +113,13 @@ public func sgProController(context: AccountContext) -> ViewController {
                 }
 
                 for value in SGSimpleSettings.MentionsAndRepliesNotificationsSettings.allCases {
-                    items.append(ActionSheetButtonItem(title: "Notifications.MentionsAndReplies.value.\(value.rawValue)".i18n(lang), color: .accent, action: { [weak actionSheet] in
-                        actionSheet?.dismissAnimated()
+                    options.append(SGOneFromManyOption(title: "Notifications.MentionsAndReplies.value.\(value.rawValue)".i18n(lang), isSelected: SGSimpleSettings.shared.mentionsAndRepliesNotifications == value.rawValue, action: {
                         setAction(value.rawValue)
                     }))
                 }
         }
         
-        actionSheet.setItemGroups([ActionSheetItemGroup(items: items), ActionSheetItemGroup(items: [
-            ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, color: .accent, font: .bold, action: { [weak actionSheet] in
-                actionSheet?.dismissAnimated()
-            })
-        ])])
-        presentControllerImpl?(actionSheet, ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+        presentOneFromManyImpl?(setting, options)
     }, openDisclosureLink: { link in
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
         switch (link) {
@@ -174,6 +167,12 @@ public func sgProController(context: AccountContext) -> ViewController {
     }
     
     let controller = ItemListController(context: context, state: signal)
+    presentOneFromManyImpl = { [weak controller] setting, options in
+        guard let controller else {
+            return
+        }
+        sgPresentOneFromManySelector(controller: controller, setting: setting, presentationData: context.sharedContext.currentPresentationData.with { $0 }, options: options)
+    }
     presentControllerImpl = { [weak controller] c, a in
         controller?.present(c, in: .window(.root), with: a)
     }
