@@ -701,10 +701,15 @@ public class GlassBackgroundView: UIView {
             if let nativeView = self.nativeView, nativeView.effect != nil {
                 nativeView.effect = nil
             }
+            // The custom-glass fallback draws its own generated image and shadow.
             self.legacyView?.isHidden = true
+            self.foregroundView?.isHidden = true
+            self.shadowView?.isHidden = true
         } else if self.backgroundColor != nil {
             self.backgroundColor = nil
             self.legacyView?.isHidden = false
+            self.foregroundView?.isHidden = false
+            self.shadowView?.isHidden = false
         }
         
         if let glassHighlightRecognizer = self.glassHighlightRecognizer {
