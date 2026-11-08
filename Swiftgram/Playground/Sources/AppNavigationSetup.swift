@@ -5,16 +5,7 @@ import Display
 
 public func isKeyboardWindow(window: NSObject) -> Bool {
     let typeName = NSStringFromClass(type(of: window))
-    if #available(iOS 9.0, *) {
-        if typeName.hasPrefix("UI") && typeName.hasSuffix("RemoteKeyboardWindow") {
-            return true
-        }
-    } else {
-        if typeName.hasPrefix("UI") && typeName.hasSuffix("TextEffectsWindow") {
-            return true
-        }
-    }
-    return false
+    return typeName.hasPrefix("UI") && typeName.hasSuffix("RemoteKeyboardWindow")
 }
 
 public func isKeyboardView(view: NSObject) -> Bool {

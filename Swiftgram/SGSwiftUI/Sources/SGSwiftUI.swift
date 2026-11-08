@@ -5,7 +5,6 @@ import SwiftUI
 import TelegramPresentationData
 
 
-@available(iOS 13.0, *)
 public class ObservedValue<T>: ObservableObject {
     @Published public var value: T
 
@@ -14,28 +13,23 @@ public class ObservedValue<T>: ObservableObject {
     }
 }
 
-@available(iOS 13.0, *)
 public struct NavigationBarHeightKey: EnvironmentKey {
     public static let defaultValue: CGFloat = 0
 }
 
-@available(iOS 13.0, *)
 public struct ContainerViewLayoutKey: EnvironmentKey {
     public static let defaultValue: ContainerViewLayout? = nil
 }
 
-@available(iOS 13.0, *)
 public struct LangKey: EnvironmentKey {
     public static let defaultValue: String = "en"
 }
 
 // Perhaps, affects Performance a lot
-//@available(iOS 13.0, *)
 //public struct ContainerViewLayoutUpdateCountKey: EnvironmentKey {
 //    public static let defaultValue: ObservedValue<Int64> = ObservedValue(0)
 //}
 
-@available(iOS 13.0, *)
 public extension EnvironmentValues {
     var navigationBarHeight: CGFloat {
         get { self[NavigationBarHeightKey.self] }
@@ -59,7 +53,6 @@ public extension EnvironmentValues {
 }
 
 
-@available(iOS 13.0, *)
 public struct SGSwiftUIView<Content: View>: View {
     public let content: Content
     public let manageSafeArea: Bool
@@ -103,7 +96,6 @@ public struct SGSwiftUIView<Content: View>: View {
     
 }
 
-@available(iOS 13.0, *)
 public struct CustomSafeArea: ViewModifier {
     @Environment(\.navigationBarHeight) var navigationBarHeight: CGFloat
     @Environment(\.containerViewLayout) var containerViewLayout: ContainerViewLayout?
@@ -140,7 +132,6 @@ public struct CustomSafeArea: ViewModifier {
     }
 }
 
-@available(iOS 13.0, *)
 public extension View {
     func sgTopSafeAreaInset(_ containerViewLayout: ContainerViewLayout?, _ navigationBarHeight: CGFloat) -> CGFloat {
         return max(
@@ -164,7 +155,6 @@ public extension View {
 }
 
 
-@available(iOS 13.0, *)
 public final class LegacySwiftUIController: LegacyController {
     public var navigationBarHeightModel: ObservedValue<CGFloat>
     public var containerViewLayoutModel: ObservedValue<ContainerViewLayout?>
@@ -212,7 +202,6 @@ public final class LegacySwiftUIController: LegacyController {
     }
 }
 
-@available(iOS 13.0, *)
 extension UIHostingController {
     public convenience init(rootView: Content, ignoreSafeArea: Bool) {
         self.init(rootView: rootView)
@@ -270,7 +259,6 @@ extension UIHostingController {
 }
 
 
-@available(iOS 13.0, *)
 public struct TGNavigationBackButtonModifier: ViewModifier {
     weak var wrapperController: LegacyController?
     
@@ -286,7 +274,6 @@ public struct TGNavigationBackButtonModifier: ViewModifier {
     }
 }
 
-@available(iOS 13.0, *)
 public extension View {
     func tgNavigationBackButton(wrapperController: LegacyController?) -> some View {
         modifier(TGNavigationBackButtonModifier(wrapperController: wrapperController))
@@ -294,7 +281,6 @@ public extension View {
 }
 
 
-@available(iOS 13.0, *)
 public struct NavigationBarBackButton: View {
     let text: String
     let color: Color
@@ -324,7 +310,6 @@ public struct NavigationBarBackButton: View {
     }
 }
 
-@available(iOS 13.0, *)
 public extension View {
     func apply<V: View>(@ViewBuilder _ block: (Self) -> V) -> V { block(self) }
     
@@ -347,33 +332,10 @@ public extension View {
     }
 }
 
-@available(iOS 13.0, *)
 public extension Color {
  
     func uiColor() -> UIColor {
-
-        if #available(iOS 14.0, *) {
-            return UIColor(self)
-        }
-
-        let components = self.components()
-        return UIColor(red: components.r, green: components.g, blue: components.b, alpha: components.a)
-    }
-
-    private func components() -> (r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat) {
-
-        let scanner = Scanner(string: self.description.trimmingCharacters(in: CharacterSet.alphanumerics.inverted))
-        var hexNumber: UInt64 = 0
-        var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
-
-        let result = scanner.scanHexInt64(&hexNumber)
-        if result {
-            r = CGFloat((hexNumber & 0xff000000) >> 24) / 255
-            g = CGFloat((hexNumber & 0x00ff0000) >> 16) / 255
-            b = CGFloat((hexNumber & 0x0000ff00) >> 8) / 255
-            a = CGFloat(hexNumber & 0x000000ff) / 255
-        }
-        return (r, g, b, a)
+        return UIColor(self)
     }
     
     init(hex: String) {
@@ -401,7 +363,6 @@ public enum BackgroundMaterial {
     case thickMaterial
     case ultraThickMaterial
     
-    @available(iOS 15.0, *)
     var material: Material {
         switch self {
         case .ultraThinMaterial: return .ultraThinMaterial
@@ -429,7 +390,6 @@ public enum BounceBehavior {
 }
 
 
-@available(iOS 13.0, *)
 public extension View {
     func fontWeightIfAvailable(_ weight: SwiftUI.Font.Weight) -> some View {
         if #available(iOS 16.0, *) {
@@ -440,20 +400,10 @@ public extension View {
     }
     
     func backgroundIfAvailable(material: BackgroundMaterial) -> some View {
-        if #available(iOS 15.0, *) {
-            return self.background(material.material)
-        } else {
-            return self.background(
-                Color(.systemBackground)
-                    .opacity(0.75)
-                    .blur(radius: 3)
-                    .overlay(Color.white.opacity(0.1))
-            )
-        }
+        return self.background(material.material)
     }
 }
 
-@available(iOS 13.0, *)
 public extension View {
     func scrollBounceBehaviorIfAvailable(_ behavior: BounceBehavior) -> some View {
         if #available(iOS 16.4, *) {
@@ -464,14 +414,12 @@ public extension View {
     }
 }
 
-@available(iOS 13.0, *)
 public extension View {
     func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
         clipShape(RoundedCorner(radius: radius, corners: corners))
     }
 }
 
-@available(iOS 13.0, *)
 public struct RoundedCorner: Shape {
     var radius: CGFloat = .infinity
     var corners: UIRectCorner = .allCorners
@@ -486,7 +434,6 @@ public struct RoundedCorner: Shape {
     }
 }
 
-@available(iOS 13.0, *)
 public struct ContentSizeModifier: ViewModifier {
     @Binding var size: CGSize
     
@@ -505,7 +452,6 @@ public struct ContentSizeModifier: ViewModifier {
     }
 }
 
-@available(iOS 13.0, *)
 public extension View {
     func trackSize(_ size: Binding<CGSize>) -> some View {
         self.modifier(ContentSizeModifier(size: size))

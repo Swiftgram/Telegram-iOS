@@ -6,7 +6,6 @@ import TelegramPresentationData
 import UIKit
 
 /// Cross-screen navigation has one owner: Telegram. Native SwiftUI sheets keep their own dismiss action.
-@available(iOS 15.0, *)
 public final class SGSwiftUINavigation: NSObject {
     public private(set) weak var controller: ViewController?
 
@@ -62,23 +61,19 @@ public final class SGSwiftUINavigation: NSObject {
     }
 }
 
-@available(iOS 15.0, *)
 private protocol SGSwiftUIPresentationSource: AnyObject {
     var sgPresentationData: PresentationData { get }
     var sgPresentationDataSignal: Signal<PresentationData, NoError>? { get }
 }
 
-@available(iOS 15.0, *)
 private struct SGSwiftUINavigationKey: EnvironmentKey {
     static let defaultValue: SGSwiftUINavigation? = nil
 }
 
-@available(iOS 15.0, *)
 private struct SGSwiftUIVisibleKey: EnvironmentKey {
     static let defaultValue: Bool = false
 }
 
-@available(iOS 15.0, *)
 public extension EnvironmentValues {
     var sgNavigation: SGSwiftUINavigation? {
         get { self[SGSwiftUINavigationKey.self] }
@@ -92,7 +87,6 @@ public extension EnvironmentValues {
     }
 }
 
-@available(iOS 15.0, *)
 private struct SGSwiftUITitleKey: PreferenceKey {
     static let defaultValue: String? = nil
     static func reduce(value: inout String?, nextValue: () -> String?) {
@@ -100,7 +94,6 @@ private struct SGSwiftUITitleKey: PreferenceKey {
     }
 }
 
-@available(iOS 15.0, *)
 public extension View {
     /// Native navigationTitle/toolbar configure a native NavigationView, not Telegram's bar.
     func sgNavigationTitle(_ title: String) -> some View {
@@ -108,7 +101,6 @@ public extension View {
     }
 }
 
-@available(iOS 15.0, *)
 private final class SGSwiftUIScreenState: ObservableObject {
     @Published var layout: ContainerViewLayout?
     @Published var navigationHeight: CGFloat = 0.0
@@ -120,7 +112,6 @@ private final class SGSwiftUIScreenState: ObservableObject {
     }
 }
 
-@available(iOS 15.0, *)
 private struct SGSwiftUIRoot<Content: View>: View {
     let content: Content
     let navigation: SGSwiftUINavigation
@@ -145,7 +136,6 @@ private struct SGSwiftUIRoot<Content: View>: View {
     }
 }
 
-@available(iOS 15.0, *)
 private final class SGScreenHostingController<Content: View>: UIHostingController<Content> {
     var safeAreaChanged: (() -> Void)?
 
@@ -162,7 +152,6 @@ private final class SGScreenHostingController<Content: View>: UIHostingControlle
 
 /// A full SwiftUI screen in Telegram navigation. No safe-area swizzling, nested navigation controller,
 /// or per-screen padding. The hosting view fills the local container; UIKit owns keyboard avoidance.
-@available(iOS 15.0, *)
 public final class SGSwiftUIController<Content: View>: ViewController, SGSwiftUIPresentationSource {
     private let state: SGSwiftUIScreenState
     private let hostingController: SGScreenHostingController<SGSwiftUIRoot<Content>>
