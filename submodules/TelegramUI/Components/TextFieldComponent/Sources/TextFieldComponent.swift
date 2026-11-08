@@ -1943,34 +1943,26 @@ extension TextFieldComponent.View {
     public func sgToolbarAction(_ action: SGInputToolbarAction) {
         switch action {
             case .quote:
-                self.sgSelectLastWordIfIdle()
-                self.toggleAttribute(key: ChatTextInputAttributes.block, value: ChatTextInputTextQuoteAttribute(kind: .quote, isCollapsed: false))
+                self.sgToggleToolbarAttribute(key: ChatTextInputAttributes.block, value: ChatTextInputTextQuoteAttribute(kind: .quote, isCollapsed: false))
             case .spoiler:
-                self.sgSelectLastWordIfIdle()
-                self.toggleAttribute(key: ChatTextInputAttributes.spoiler)
+                self.sgToggleToolbarAttribute(key: ChatTextInputAttributes.spoiler)
             case .bold:
-                self.sgSelectLastWordIfIdle()
-                self.toggleAttribute(key: ChatTextInputAttributes.bold)
+                self.sgToggleToolbarAttribute(key: ChatTextInputAttributes.bold)
             case .italic:
-                self.sgSelectLastWordIfIdle()
-                self.toggleAttribute(key: ChatTextInputAttributes.italic)
+                self.sgToggleToolbarAttribute(key: ChatTextInputAttributes.italic)
             case .date:
                 break
             case .monospace:
-                self.sgSelectLastWordIfIdle()
-                self.toggleAttribute(key: ChatTextInputAttributes.monospace)
+                self.sgToggleToolbarAttribute(key: ChatTextInputAttributes.monospace)
             case .link:
                 self.sgSelectLastWordIfIdle()
                 self.openLinkEditing()
             case .underline:
-                self.sgSelectLastWordIfIdle()
-                self.toggleAttribute(key: ChatTextInputAttributes.underline)
+                self.sgToggleToolbarAttribute(key: ChatTextInputAttributes.underline)
             case .strikethrough:
-                self.sgSelectLastWordIfIdle()
-                self.toggleAttribute(key: ChatTextInputAttributes.strikethrough)
+                self.sgToggleToolbarAttribute(key: ChatTextInputAttributes.strikethrough)
             case .code:
-                self.sgSelectLastWordIfIdle()
-                self.toggleAttribute(key: ChatTextInputAttributes.block, value: ChatTextInputTextQuoteAttribute(kind: .code(language: nil), isCollapsed: false))
+                self.sgToggleToolbarAttribute(key: ChatTextInputAttributes.block, value: ChatTextInputTextQuoteAttribute(kind: .code(language: nil), isCollapsed: false))
             case .newLine:
                 self.sgSetNewLine()
             case .clearFormatting:
@@ -1979,63 +1971,48 @@ extension TextFieldComponent.View {
                 }
         }
     }
-    //
+
+    private func sgToggleToolbarAttribute(key: NSAttributedString.Key, value: Any? = nil) {
+        self.updateInputState { current in
+            return Self.sgInputStateSelectingLastWordIfIdle(current).addFormattingAttribute(attribute: key, value: value)
+        }
+    }
     
     func sgSelectLastWordIfIdle() {
         self.updateInputState { current in
-            // No changes to current selection
-            if !current.selectionRange.isEmpty {
-                return current
-            }
-            
-            let inputText = (current.inputText.mutableCopy() as? NSMutableAttributedString) ?? NSMutableAttributedString()
-            
-            // If text is empty or cursor is at the start, return current state
-            guard inputText.length > 0, current.selectionRange.lowerBound > 0 else {
-                return current
-            }
-            
-            let plainText = inputText.string
-            let nsString = plainText as NSString
-            
-            // Create character set for word boundaries
-            let wordBoundaries = CharacterSet.whitespacesAndNewlines
-            
-            // Start from cursor position instead of end of text
-            var endIndex = current.selectionRange.lowerBound - 1
-            
-            // Find last non-whitespace character before cursor
-            while endIndex >= 0 &&
-                  (nsString.substring(with: NSRange(location: endIndex, length: 1)) as NSString)
-                    .rangeOfCharacter(from: wordBoundaries).location != NSNotFound {
-                endIndex -= 1
-            }
-            
-            // If we only had whitespace before cursor, return current state
-            guard endIndex >= 0 else {
-                return current
-            }
-            
-            // Find start of the current word by looking backwards for whitespace
-            var startIndex = endIndex
-            while startIndex > 0 {
-                let char = nsString.substring(with: NSRange(location: startIndex - 1, length: 1))
-                if (char as NSString).rangeOfCharacter(from: wordBoundaries).location != NSNotFound {
-                    break
-                }
-                startIndex -= 1
-            }
-            
-            // Create range for the word at cursor
-            let wordLength = endIndex - startIndex + 1
-            let wordRange = NSRange(location: startIndex, length: wordLength)
-            
-            // Create new selection range
-            let newSelectionRange = wordRange.location ..< (wordRange.location + wordLength)
-            
-            return TextFieldComponent.InputState(inputText: inputText, selectionRange: newSelectionRange)
+            return Self.sgInputStateSelectingLastWordIfIdle(current)
         }
     }
+
+    private static func sgInputStateSelectingLastWordIfIdle(_ current: TextFieldComponent.InputState) -> TextFieldComponent.InputState {
+        // Keep an existing selection; an empty field or a caret at the start needs no change.
+        let selectionRange = current.selectionRange
+        guard selectionRange.isEmpty, selectionRange.lowerBound > 0 else {
+            return current
+        }
+        // Use UTF-16 offsets to match the editor's selection range; reject an out-of-bounds caret.
+        let text = current.inputText.string as NSString
+        guard selectionRange.lowerBound <= text.length else {
+            return current
+        }
+        // Word boundaries remain whitespace/newlines, not punctuation or linguistic word boundaries.
+        let boundaries = CharacterSet.whitespacesAndNewlines
+        // Start at the caret, skipping whitespace backwards to the previous word's exclusive end.
+        var end = selectionRange.lowerBound
+        while end > 0, (boundaries as NSCharacterSet).characterIsMember(text.character(at: end - 1)) {
+            end -= 1
+        }
+        // Only whitespace before the caret: keep the current state.
+        guard end > 0 else {
+            return current
+        }
+        // Find the preceding boundary; a caret inside a word selects only the portion before it.
+        let boundary = text.rangeOfCharacter(from: boundaries, options: .backwards, range: NSRange(location: 0, length: end))
+        let start = boundary.location == NSNotFound ? 0 : NSMaxRange(boundary)
+        // Reuse the original attributed text; the caller commits selection and formatting together.
+        return TextFieldComponent.InputState(inputText: current.inputText, selectionRange: start ..< end)
+    }
+    //
     
     func sgSetNewLine() {
         self.updateInputState { current in

@@ -21,14 +21,18 @@ public enum SGInputToolbarAction {
 public struct ChatToolbarView: View {
     var onAction: (SGInputToolbarAction) -> Void
     var showsDateAction: Bool
+    private let hasInputSelection: () -> Bool
+    @State private var actionGeneration = UUID()
     @Binding private var showNewLine: Bool
     
     public init(
         showsDateAction: Bool = false,
         showNewLine: Binding<Bool>,
+        hasInputSelection: @escaping () -> Bool = { true },
         onAction: @escaping (SGInputToolbarAction) -> Void
     ) {
         self.onAction = onAction
+        self.hasInputSelection = hasInputSelection
         self.showsDateAction = showsDateAction
         self._showNewLine = showNewLine
     }
@@ -36,54 +40,76 @@ public struct ChatToolbarView: View {
     public func setShowNewLine(_ value: Bool) {
         self.showNewLine = value
     }
-    
+
+    private func performAction(_ action: SGInputToolbarAction) {
+        let needsAutoSelection: Bool
+        switch action {
+        case .newLine, .clearFormatting:
+            needsAutoSelection = false
+        default:
+            needsAutoSelection = !self.hasInputSelection()
+        }
+        guard #available(iOS 26.0, *), needsAutoSelection else {
+            self.onAction(action)
+            return
+        }
+        // Auto-selecting text makes SwiftUI's glass button animation lag. Delay the action by
+        // 300 ms to let the animation settle smoothly before selection updates the input field.
+        // Read selection at tap time, not a cached SwiftUI value; existing selections stay immediate.
+        let generation = self.actionGeneration
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            guard self.actionGeneration == generation else { return }
+            self.onAction(action)
+        }
+    }
+
     public var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
                 if showNewLine {
-                    Button(action: { self.onAction(.newLine) }) {
+                    Button(action: { self.performAction(.newLine) }) {
                         Image(systemName: "return")
                     }
                     .buttonStyle(ToolbarButtonStyle())
                 }
-                Button(action: { self.onAction(.clearFormatting) }) {
+                Button(action: { self.performAction(.clearFormatting) }) {
                     Image(systemName: "pencil.slash")
                 }
                 .buttonStyle(ToolbarButtonStyle())
                 Spacer()
                 // Quote Button
-                Button(action: { self.onAction(.quote) }) {
+                Button(action: { self.performAction(.quote) }) {
                     Image(systemName: "text.quote")
                 }
                 .buttonStyle(ToolbarButtonStyle())
                 
                 // Spoiler Button
-                Button(action: { self.onAction(.spoiler) }) {
+                Button(action: { self.performAction(.spoiler) }) {
                     Image(systemName: "eye.slash")
                 }
                 .buttonStyle(ToolbarButtonStyle())
                 
                 // Bold Button
-                Button(action: { self.onAction(.bold) }) {
+                Button(action: { self.performAction(.bold) }) {
                     Image(systemName: "bold")
                 }
                 .buttonStyle(ToolbarButtonStyle())
                 
                 // Italic Button
-                Button(action: { self.onAction(.italic) }) {
+                Button(action: { self.performAction(.italic) }) {
                     Image(systemName: "italic")
                 }
                 .buttonStyle(ToolbarButtonStyle())
 
                 if showsDateAction {
-                    Button(action: { self.onAction(.date) }) {
+                    Button(action: { self.performAction(.date) }) {
                         Image(systemName: "calendar")
                     }
                     .buttonStyle(ToolbarButtonStyle())
                 }
                 
                 // Monospace Button
-                Button(action: { self.onAction(.monospace) }) {
+                Button(action: { self.performAction(.monospace) }) {
                     if #available(iOS 16.4, *) {
                         Text("M").monospaced()
                     } else {
@@ -93,27 +119,27 @@ public struct ChatToolbarView: View {
                 .buttonStyle(ToolbarButtonStyle())
                 
                 // Link Button
-                Button(action: { self.onAction(.link) }) {
+                Button(action: { self.performAction(.link) }) {
                     Image(systemName: "link")
                 }
                 .buttonStyle(ToolbarButtonStyle())
                 
                 // Underline Button
-                Button(action: { self.onAction(.underline) }) {
+                Button(action: { self.performAction(.underline) }) {
                     Image(systemName: "underline")
                 }
                 .buttonStyle(ToolbarButtonStyle())
                 
                 
                 // Strikethrough Button
-                Button(action: { self.onAction(.strikethrough) }) {
+                Button(action: { self.performAction(.strikethrough) }) {
                     Image(systemName: "strikethrough")
                 }
                 .buttonStyle(ToolbarButtonStyle())
                 
                 
                 // Code Button
-                Button(action: { self.onAction(.code) }) {
+                Button(action: { self.performAction(.code) }) {
                     Image(systemName: "chevron.left.forwardslash.chevron.right")
                 }
                 .buttonStyle(ToolbarButtonStyle())
@@ -123,6 +149,7 @@ public struct ChatToolbarView: View {
             .padding(.vertical, 8)
         }
         .background(Color.clear)
+        .onDisappear { self.actionGeneration = UUID() }
     }
 }
 

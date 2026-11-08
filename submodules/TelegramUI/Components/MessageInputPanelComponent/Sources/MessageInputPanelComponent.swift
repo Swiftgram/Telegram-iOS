@@ -3231,6 +3231,10 @@ extension MessageInputPanelComponent.View {
         let toolbar = ChatToolbarView(
             // TODO(swiftgram): Binding
             showNewLine: .constant(true), //.constant(self.sendWithReturnKey)
+            hasInputSelection: { [weak self] in
+                guard let textFieldView = self?.textField.view as? TextFieldComponent.View else { return false }
+                return textFieldView.inputTextView.selectedRange.length > 0
+            },
             onAction: { [weak self] action in
                 guard let self, let textFieldView = self.textField.view as? TextFieldComponent.View else { return }
                 textFieldView.sgToolbarAction(action)

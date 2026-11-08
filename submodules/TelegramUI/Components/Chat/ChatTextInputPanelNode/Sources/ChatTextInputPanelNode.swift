@@ -375,6 +375,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
     // MARK: Swiftgram
 //    private var toolbarHostingController: UIViewController? //Any? //  UIHostingController<ChatToolbarView>?
     private var toolbarNode: ASDisplayNode?
+    private var sgToolbarFormatting = false
     //
     
     public var isAIEnabled: Bool = false
@@ -5678,7 +5679,7 @@ public class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDeleg
     
     private final func updateFormattingAttribute(_ attribute: NSAttributedString.Key, value: Any?) {
         self.interfaceInteraction?.updateTextInputStateAndMode { current, inputMode in
-            return (chatTextInputAddFormattingAttribute(current, attribute: attribute, value: value), inputMode)
+            return (chatTextInputAddFormattingAttribute(self.sgToolbarFormatting ? sgChatTextInputStateSelectingLastWordIfIdle(current) : current, attribute: attribute, value: value), inputMode) // MARK: Swiftgram
         }
     }
     
@@ -6708,38 +6709,35 @@ extension ChatTextInputPanelNode {
         let toolbarView = ChatToolbarView(
             showsDateAction: true,
             showNewLine: .constant(true),
+            hasInputSelection: { [weak self] in
+                return (self?.richTextInputNode?.selectedRange.length ?? 0) > 0
+            },
             onAction: { [weak self] action in
                 guard let strongSelf = self else { return }
+                strongSelf.sgToolbarFormatting = true
+                defer { strongSelf.sgToolbarFormatting = false }
                 switch action {
                 case .quote:
-                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
                     strongSelf.formatAttributesQuote(strongSelf)
                 case .spoiler:
-                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
                     strongSelf.formatAttributesSpoiler(strongSelf)
                 case .bold:
-                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
                     strongSelf.formatAttributesBold(strongSelf)
                 case .italic:
-                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
                     strongSelf.formatAttributesItalic(strongSelf)
                 case .date:
                     strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
                     strongSelf.formatAttributesDate(strongSelf)
                 case .monospace:
-                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
                     strongSelf.formatAttributesMonospace(strongSelf)
                 case .link:
                     strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
                     strongSelf.formatAttributesLink(strongSelf)
                 case .underline:
-                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
                     strongSelf.formatAttributesUnderline(strongSelf)
                 case .strikethrough:
-                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
                     strongSelf.formatAttributesStrikethrough(strongSelf)
                 case .code:
-                    strongSelf.interfaceInteraction?.sgSelectLastWordIfIdle()
                     strongSelf.formatAttributesCodeBlock(strongSelf)
                 case .newLine:
                     strongSelf.interfaceInteraction?.sgSetNewLine()

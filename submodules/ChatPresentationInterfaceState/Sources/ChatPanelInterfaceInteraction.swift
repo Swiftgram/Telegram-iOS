@@ -476,57 +476,7 @@ public final class ChatPanelInterfaceInteraction {
         // MARK: Swiftgram
         self.sgSelectLastWordIfIdle = {
             updateTextInputStateAndMode { current, inputMode in
-                // No changes to current selection
-                if !current.selectionRange.isEmpty {
-                    return (current, inputMode)
-                }
-                
-                let inputText = (current.inputText.mutableCopy() as? NSMutableAttributedString) ?? NSMutableAttributedString()
-                
-                // If text is empty or cursor is at the start, return current state
-                guard inputText.length > 0, current.selectionRange.lowerBound > 0 else {
-                    return (current, inputMode)
-                }
-                
-                let plainText = inputText.string
-                let nsString = plainText as NSString
-                
-                // Create character set for word boundaries
-                let wordBoundaries = CharacterSet.whitespacesAndNewlines
-                
-                // Start from cursor position instead of end of text
-                var endIndex = current.selectionRange.lowerBound - 1
-                
-                // Find last non-whitespace character before cursor
-                while endIndex >= 0 &&
-                      (nsString.substring(with: NSRange(location: endIndex, length: 1)) as NSString)
-                        .rangeOfCharacter(from: wordBoundaries).location != NSNotFound {
-                    endIndex -= 1
-                }
-                
-                // If we only had whitespace before cursor, return current state
-                guard endIndex >= 0 else {
-                    return (current, inputMode)
-                }
-                
-                // Find start of the current word by looking backwards for whitespace
-                var startIndex = endIndex
-                while startIndex > 0 {
-                    let char = nsString.substring(with: NSRange(location: startIndex - 1, length: 1))
-                    if (char as NSString).rangeOfCharacter(from: wordBoundaries).location != NSNotFound {
-                        break
-                    }
-                    startIndex -= 1
-                }
-                
-                // Create range for the word at cursor
-                let wordLength = endIndex - startIndex + 1
-                let wordRange = NSRange(location: startIndex, length: wordLength)
-                
-                // Create new selection range
-                let newSelectionRange = wordRange.location ..< (wordRange.location + wordLength)
-                
-                return (ChatTextInputState(inputText: inputText, selectionRange: newSelectionRange), inputMode)
+                return (sgChatTextInputStateSelectingLastWordIfIdle(current), inputMode)
             }
         }
         self.sgSetNewLine = {
