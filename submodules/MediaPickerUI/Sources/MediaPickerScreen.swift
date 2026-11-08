@@ -485,7 +485,7 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
         // MARK: Swiftgram
         private var sgCreateModernCamera: (() -> CameraProtocol?)?
         private var sgCameraPreviewObserver: NSObjectProtocol?
-        private var sgNeutralCameraTile: UIView?
+        private var sgGenericCameraTile: UIView?
         //
         
         fileprivate var avatarEditorPreviewView: AvatarEditorPreviewView?
@@ -1078,23 +1078,26 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
         private func sgUpdateCameraTile() {
             guard !self.isModernCameraHandedOff, self.modernCameraView?.superview === self.cameraWrapperView else { return }
             let disabled = SGSimpleSettings.shared.disableGalleryCameraPreview
-            if disabled && self.sgNeutralCameraTile == nil {
-                let tile = UIView(frame: self.cameraWrapperView.bounds)
+            if disabled && self.sgGenericCameraTile == nil {
+                let tile = UIImageView(frame: self.cameraWrapperView.bounds)
                 tile.autoresizingMask = [.flexibleWidth, .flexibleHeight]
                 tile.backgroundColor = UIColor(white: 0.08, alpha: 1.0)
+                tile.contentMode = .scaleAspectFill
+                tile.clipsToBounds = true
                 tile.isUserInteractionEnabled = false
-                let icon = UIImageView(image: UIImage(systemName: "camera.fill"))
-                icon.tintColor = .white
-                icon.contentMode = .center
-                icon.frame = tile.bounds
-                icon.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-                tile.addSubview(icon)
+                let front: Bool
+                if case .assets(nil, .createAvatar) = self.controller?.subject {
+                    front = true
+                } else {
+                    front = false
+                }
+                tile.image = UIImage(bundleImageName: front ? "Camera/SelfiePlaceholder" : "Camera/Placeholder")
                 self.cameraWrapperView.addSubview(tile)
-                self.sgNeutralCameraTile = tile
+                self.sgGenericCameraTile = tile
             }
-            self.sgNeutralCameraTile?.isHidden = !disabled
+            self.sgGenericCameraTile?.isHidden = !disabled
             self.modernCameraView?.alpha = disabled ? 0.0 : 1.0
-            if let tile = self.sgNeutralCameraTile { self.cameraWrapperView.bringSubviewToFront(tile) }
+            if let tile = self.sgGenericCameraTile { self.cameraWrapperView.bringSubviewToFront(tile) }
         }
         //
 
@@ -1180,27 +1183,24 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
         }
         
         @objc private func cameraTapped() {
-            guard let camera = self.modernCamera, let previewView = self.modernCameraView else {
+            // MARK: Swiftgram
+            guard !self.openingMedia, !self.isModernCameraInvalidated, !self.isModernCameraHandedOff, self.controller?.openCamera != nil,
+                let previewView = self.modernCameraView,
+                let camera = self.modernCamera ?? self.sgCreateModernCamera?() else {
                 return
             }
-            let isChatCamera = self.cameraCellBranch == .chatCamera
-            // MARK: Swiftgram
-            if !isChatCamera && SGSimpleSettings.shared.disableGalleryCameraPreview {
-                previewView.isEnabled = true
-                camera.startCapture()
-            }
+            self.isModernCameraHandedOff = true
+            previewView.alpha = 1.0
+            previewView.isEnabled = true
+            camera.startCapture()
             //
+            let isChatCamera = self.cameraCellBranch == .chatCamera
+            // MARK: Swiftgram — Both modern camera branches transfer ownership before capture starts.
             if isChatCamera {
-                if self.openingMedia {
-                    return
-                }
                 self.dismissInput()
-                if !self.modernCameraHasLivePreview {
-                    camera.startCapture()
-                }
-                self.isModernCameraHandedOff = true
                 self.chatCameraCaptureState = nil
             }
+            //
             self.modernCameraTapGestureRecognizer?.isEnabled = false
             self.controller?.openCamera?(
                 CameraHolder(
@@ -1212,12 +1212,10 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                             return
                         }
                         if isChatCamera {
-                            self.isModernCameraHandedOff = false
                             self.chatCameraCaptureState = nil
                             if !self.isModernCameraInvalidated {
                                 let _ = camera.setCaptureMode(.photo).startStandalone()
                             }
-                            self.updateIsCameraActive()
                         }
                         self.modernCameraTapGestureRecognizer?.isEnabled = true
                         if let previewView {
@@ -1227,6 +1225,12 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
                                 previewView.layer.removeAllAnimations()
                             }
                         }
+                        // MARK: Swiftgram
+                        self.isModernCameraHandedOff = false
+                        self.sgGenericCameraTile?.removeFromSuperview()
+                        self.sgGenericCameraTile = nil
+                        self.updateIsCameraActive()
+                        //
                     }
                 )
             )
@@ -1234,20 +1238,27 @@ public final class MediaPickerScreenImpl: ViewController, MediaPickerScreen, Att
         
         func updateIsCameraActive() {
             let isCameraActive = !self.isSuspended && !self.hasGallery && self.isCameraPreviewVisible
+            // MARK: Swiftgram
+            guard !self.isModernCameraHandedOff else { return }
+            let previewDisabled = SGSimpleSettings.shared.disableGalleryCameraPreview
+            self.modernCameraHasLivePreview = (self.controller?.context.sharedContext.energyUsageSettings.fullTranslucency ?? true) && !previewDisabled
+            self.sgUpdateCameraTile()
+            if self.modernCamera == nil, self.modernCameraView != nil, !self.isModernCameraInvalidated,
+                isCameraActive, self.cameraWrapperView.window != nil,
+                !previewDisabled, self.cameraCellBranch != .chatCamera || self.modernCameraHasLivePreview {
+                _ = self.sgCreateModernCamera?()
+            }
+            //
             if let cameraView = self.cameraView {
-                if isCameraActive {
-                    // MARK: Swiftgram
-                    if !SGSimpleSettings.shared.disableGalleryCameraPreview {
-                        cameraView.resumePreview()
-                    }
-                    //
+                if isCameraActive && !previewDisabled { // MARK: Swiftgram
+                    cameraView.resumePreview()
                 } else {
                     cameraView.pausePreview()
                 }
             } else if let camera = self.modernCamera, let cameraView = self.modernCameraView {
                 if self.cameraCellBranch == .chatCamera {
                     self.scheduleChatCameraCaptureUpdate()
-                } else if isCameraActive && !SGSimpleSettings.shared.disableGalleryCameraPreview { // MARK: Swiftgram
+                } else if isCameraActive && !previewDisabled && !self.isModernCameraInvalidated { // MARK: Swiftgram
                     cameraView.isEnabled = true
                     camera.startCapture()
                 } else {
