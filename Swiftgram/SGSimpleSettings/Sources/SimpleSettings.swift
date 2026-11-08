@@ -74,7 +74,13 @@ public class SGSimpleSettings {
             { let _ = self.hideRecordingButton },
             { let _ = self.inputToolbar },
             { let _ = self.dismissedSGSuggestions },
-            { let _ = self.customAppBadge }
+            { let _ = self.customAppBadge },
+            { let _ = self.ghostMode },
+            { let _ = self.keepSecretMedia },
+            { let _ = self.phantomGifts },
+            { let _ = self.disableLiquidGlass },
+            { let _ = self.customStarsBalance },
+            { let _ = self.customGramBalance }
         ]
 
         tasks.forEach { task in
@@ -179,6 +185,14 @@ public class SGSimpleSettings {
         case sendWithReturnKey
         case videoControlsInFooter
         case hideAccountInNotifications
+        // MARK: Custom Swiftgram tweaks
+        case ghostMode
+        case keepSecretMedia
+        case phantomGifts
+        case disableLiquidGlass
+        case customStarsBalance
+        case customGramBalance
+        case userTags
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -334,6 +348,13 @@ public class SGSimpleSettings {
         Keys.showProfileId.rawValue: true,
         Keys.sendWithReturnKey.rawValue: false,
         Keys.videoControlsInFooter.rawValue: false,
+        Keys.ghostMode.rawValue: false,
+        Keys.keepSecretMedia.rawValue: false,
+        Keys.phantomGifts.rawValue: false,
+        Keys.disableLiquidGlass.rawValue: false,
+        Keys.customStarsBalance.rawValue: "",
+        Keys.customGramBalance.rawValue: "",
+        Keys.userTags.rawValue: [:],
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -621,6 +642,34 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.hideAccountInNotifications.rawValue, userDefaults: UserDefaults(suiteName: APP_GROUP_IDENTIFIER) ?? .standard)
     public var hideAccountInNotifications: Bool
+
+    // MARK: Custom Swiftgram tweaks
+
+    /// Stops the client from reporting "online" and from pushing read receipts to the server.
+    @UserDefault(key: Keys.ghostMode.rawValue)
+    public var ghostMode: Bool
+
+    /// Keeps self-destructing / view-once media on screen and in the local store instead of expiring it.
+    @UserDefault(key: Keys.keepSecretMedia.rawValue)
+    public var keepSecretMedia: Bool
+
+    /// Shows a locally generated premium gift on the owner's own profile.
+    @UserDefault(key: Keys.phantomGifts.rawValue)
+    public var phantomGifts: Bool
+
+    /// Replaces liquid glass / blur surfaces with flat translucent colours.
+    @UserDefault(key: Keys.disableLiquidGlass.rawValue)
+    public var disableLiquidGlass: Bool
+
+    /// Free-form text rendered instead of the real Telegram Stars balance. Empty means "use the real balance".
+    @UserDefault(key: Keys.customStarsBalance.rawValue)
+    public var customStarsBalance: String
+
+    /// Free-form text rendered instead of the real GRAM (TON) balance. Empty means "use the real balance".
+    @UserDefault(key: Keys.customGramBalance.rawValue)
+    public var customGramBalance: String
+
+    public var userTags = UserDefaultsBackedDictionary<String, String>(userDefaultsKey: Keys.userTags.rawValue, threadSafe: false)
 }
 
 extension SGSimpleSettings {
@@ -646,6 +695,46 @@ extension SGSimpleSettings {
 extension SGSimpleSettings {
     public var isNYEnabled: Bool {
         return canUseNY && NYStyle(rawValue: nyStyle) != .default
+    }
+}
+
+// MARK: Custom Swiftgram tweaks
+
+extension SGSimpleSettings {
+    /// Non-empty custom Stars balance, trimmed. `nil` means the real balance should be shown.
+    public var customStarsBalanceOverride: String? {
+        let value = self.customStarsBalance.trimmingCharacters(in: .whitespacesAndNewlines)
+        return value.isEmpty ? nil : value
+    }
+
+    /// Non-empty custom GRAM balance, trimmed. `nil` means the real balance should be shown.
+    public var customGramBalanceOverride: String? {
+        let value = self.customGramBalance.trimmingCharacters(in: .whitespacesAndNewlines)
+        return value.isEmpty ? nil : value
+    }
+
+    /// Locally stored tag for a peer, if any.
+    public func userTag(for peerId: Int64) -> String? {
+        guard let value = self.userTags.value(forKey: "\(peerId)") else {
+            return nil
+        }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    /// Stores (or removes, when `tag` is `nil`/empty) a local tag for a peer.
+    public func setUserTag(_ tag: String?, for peerId: Int64) {
+        let key = "\(peerId)"
+        let trimmed = tag?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if trimmed.isEmpty {
+            let _ = self.userTags.remove(key)
+        } else {
+            self.userTags.set(value: String(trimmed.prefix(64)), forKey: key)
+        }
+    }
+
+    public func clearUserTags() {
+        self.userTags.drop()
     }
 }
 

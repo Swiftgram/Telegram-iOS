@@ -13,6 +13,7 @@ import DeviceAccess
 import TelegramStringFormatting
 import PeerNameColorItem
 import WalletContext
+import SGSimpleSettings
 
 enum SettingsSection: Int, CaseIterable {
     case edit
@@ -166,7 +167,12 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
         
         if WalletConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 }).isAvailable {
             let balanceText: NSAttributedString
-            if let balance = settings.walletBalance, balance > 10_000_000 {
+            let smallLabelFont = Font.regular(floor(presentationData.listsFontSize.itemListBaseFontSize / 17.0 * 13.0))
+            let labelFont = Font.regular(presentationData.listsFontSize.itemListBaseFontSize)
+            let labelColor = presentationData.theme.list.itemSecondaryTextColor
+            if let customBalance = SGSimpleSettings.shared.customGramBalanceOverride {
+                balanceText = NSAttributedString(string: customBalance, font: labelFont, textColor: labelColor)
+            } else if let balance = settings.walletBalance, balance > 10_000_000 {
                 var formattedLabel = formatTonAmountText(balance, dateTimeFormat: presentationData.dateTimeFormat)
                 if let decimalRange = formattedLabel.range(of: presentationData.dateTimeFormat.decimalSeparator) {
                     let fractionalDigitsCount = formattedLabel[decimalRange.upperBound...].count
@@ -174,9 +180,6 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
                 } else {
                     formattedLabel += presentationData.dateTimeFormat.decimalSeparator + "00"
                 }
-                let smallLabelFont = Font.regular(floor(presentationData.listsFontSize.itemListBaseFontSize / 17.0 * 13.0))
-                let labelFont = Font.regular(presentationData.listsFontSize.itemListBaseFontSize)
-                let labelColor = presentationData.theme.list.itemSecondaryTextColor
                 balanceText = tonAmountAttributedString(formattedLabel, integralFont: labelFont, fractionalFont: smallLabelFont, color: labelColor, decimalSeparator: presentationData.dateTimeFormat.decimalSeparator)
             } else {
                 balanceText = NSAttributedString()
@@ -209,6 +212,9 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
     // MARK: Swiftgram
     let sgWebSettings = context.currentAppConfiguration.with({ $0 }).sgWebSettings
     items[.swiftgram]!.append(contentsOf: sgPeerInfoSettingsItems(context: context, paymentsEnabled: sgWebSettings.global.paymentsEnabled, presentationData: presentationData, interaction: interaction))
+    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 100, label: .text(""), text: "Кастомные твики Swiftgram", icon: PresentationResourcesSettings.swiftgram, action: {
+        interaction.openSettings(.customTweaks)
+    }))
     //
 
     var appIndex = 1000
@@ -299,13 +305,15 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
         }))
     }
     if let starsState = data.starsState {
-        if !isPremiumDisabled || abs(starsState.balance.value) > 0 {
+        if SGSimpleSettings.shared.customStarsBalanceOverride != nil || !isPremiumDisabled || abs(starsState.balance.value) > 0 {
             let balanceText: NSAttributedString
-            if abs(starsState.balance.value) > 0 {
+            let smallLabelFont = Font.regular(floor(presentationData.listsFontSize.itemListBaseFontSize / 17.0 * 13.0))
+            let labelFont = Font.regular(presentationData.listsFontSize.itemListBaseFontSize)
+            let labelColor = presentationData.theme.list.itemSecondaryTextColor
+            if let customBalance = SGSimpleSettings.shared.customStarsBalanceOverride {
+                balanceText = NSAttributedString(string: customBalance, font: labelFont, textColor: labelColor)
+            } else if abs(starsState.balance.value) > 0 {
                 let formattedLabel = formatStarsAmountText(starsState.balance, dateTimeFormat: presentationData.dateTimeFormat)
-                let smallLabelFont = Font.regular(floor(presentationData.listsFontSize.itemListBaseFontSize / 17.0 * 13.0))
-                let labelFont = Font.regular(presentationData.listsFontSize.itemListBaseFontSize)
-                let labelColor = presentationData.theme.list.itemSecondaryTextColor
                 balanceText = tonAmountAttributedString(formattedLabel, integralFont: labelFont, fractionalFont: smallLabelFont, color: labelColor, decimalSeparator: presentationData.dateTimeFormat.decimalSeparator)
             } else {
                 balanceText = NSAttributedString()
@@ -316,13 +324,15 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
         }
     }
     if let tonState = data.tonState {
-        if abs(tonState.balance.value) > 0 {
+        if SGSimpleSettings.shared.customGramBalanceOverride != nil || abs(tonState.balance.value) > 0 {
             let balanceText: NSAttributedString
-            if abs(tonState.balance.value) > 0 {
+            let smallLabelFont = Font.regular(floor(presentationData.listsFontSize.itemListBaseFontSize / 17.0 * 13.0))
+            let labelFont = Font.regular(presentationData.listsFontSize.itemListBaseFontSize)
+            let labelColor = presentationData.theme.list.itemSecondaryTextColor
+            if let customBalance = SGSimpleSettings.shared.customGramBalanceOverride {
+                balanceText = NSAttributedString(string: customBalance, font: labelFont, textColor: labelColor)
+            } else if abs(tonState.balance.value) > 0 {
                 let formattedLabel = formatTonAmountText(tonState.balance.value, dateTimeFormat: presentationData.dateTimeFormat)
-                let smallLabelFont = Font.regular(floor(presentationData.listsFontSize.itemListBaseFontSize / 17.0 * 13.0))
-                let labelFont = Font.regular(presentationData.listsFontSize.itemListBaseFontSize)
-                let labelColor = presentationData.theme.list.itemSecondaryTextColor
                 balanceText = tonAmountAttributedString(formattedLabel, integralFont: labelFont, fractionalFont: smallLabelFont, color: labelColor, decimalSeparator: presentationData.dateTimeFormat.decimalSeparator)
             } else {
                 balanceText = NSAttributedString()
