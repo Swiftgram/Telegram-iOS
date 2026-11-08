@@ -874,8 +874,8 @@ public class GlassBackgroundView: UIView {
                                         }
                                     }
                                 } else {
-                                    if transition.animation.isImmediate {
-                                        nativeView.effect = UIVisualEffect()
+                                    if transition.animation.isImmediate || sgDisableGlass {
+                                        nativeView.effect = nil
                                     } else {
                                         transition.animateView {
                                             nativeView.effect = UIVisualEffect()
