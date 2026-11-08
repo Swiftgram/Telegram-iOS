@@ -5452,9 +5452,6 @@ extension SharedAccountContextImpl {
     }
 
     public func makeSGPayWallController(context: AccountContext) -> ViewController? {
-        guard #available(iOS 13.0, *) else {
-            return nil
-        }
         guard let sgIAP = self.SGIAP else {
             return nil
         }
@@ -5483,7 +5480,7 @@ extension SharedAccountContextImpl {
         if let supportUrlString = sgWebSettings.global.proSupportUrl, !supportUrlString.isEmpty, let data = Data(base64Encoded: supportUrlString), let decodedString = String(data: data, encoding: .utf8) {
             supportUrl = decodedString
         }
-        payWallController = sgPayWallController(statusSignal: statusSignal, replacementController: proController, presentationData: presentationData, SGIAPManager: sgIAP, openUrl: openUrl, paymentsEnabled: sgWebSettings.global.paymentsEnabled, canBuyInBeta: sgWebSettings.user.canBuyInBeta, openAppStorePage: self.applicationBindings.openAppStorePage, proSupportUrl: supportUrl)
+        payWallController = sgPayWallController(statusSignal: statusSignal, replacementController: proController, presentationData: presentationData, presentationDataSignal: self.presentationData, SGIAPManager: sgIAP, openUrl: openUrl, paymentsEnabled: sgWebSettings.global.paymentsEnabled, canBuyInBeta: sgWebSettings.user.canBuyInBeta, openAppStorePage: self.applicationBindings.openAppStorePage, proSupportUrl: supportUrl) // MARK: Swiftgram
         return payWallController
     }
     

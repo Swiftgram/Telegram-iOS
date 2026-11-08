@@ -4,7 +4,7 @@ import StoreKit
 import SGSwiftUI
 import SGIAP
 import TelegramPresentationData
-import LegacyUI
+import UIKit
 import Display
 import SGConfig
 import SGStrings
@@ -13,31 +13,22 @@ import TelegramUIPreferences
 
 
 
-public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacementController: ViewController, presentationData: PresentationData? = nil, SGIAPManager: SGIAPManager, openUrl: @escaping (String, Bool) -> Void /* url, forceExternal */, paymentsEnabled: Bool, canBuyInBeta: Bool, openAppStorePage: @escaping () -> Void, proSupportUrl: String?) -> ViewController {
-    //    let theme = presentationData?.theme ?? (UITraitCollection.current.userInterfaceStyle == .dark ? defaultDarkColorPresentationTheme : defaultPresentationTheme)
-    let theme = defaultDarkColorPresentationTheme
-    let strings = presentationData?.strings ?? defaultPresentationStrings
+public func sgPayWallController(statusSignal: Signal<Int64, NoError>, replacementController: ViewController, presentationData: PresentationData, presentationDataSignal: Signal<PresentationData, NoError>? = nil, SGIAPManager: SGIAPManager, openUrl: @escaping (String, Bool) -> Void /* url, forceExternal */, paymentsEnabled: Bool, canBuyInBeta: Bool, openAppStorePage: @escaping () -> Void, proSupportUrl: String?) -> ViewController {
+    let darkPresentationDataSignal = presentationDataSignal.map { signal in
+        signal |> map { $0.withUpdated(theme: defaultDarkPresentationTheme) }
+    }
+    let controller = SGSwiftUIController(
+        presentationData: presentationData.withUpdated(theme: defaultDarkPresentationTheme),
+        presentationDataSignal: darkPresentationDataSignal,
+        showsNavigationBar: false,
+        ownsNavigation: false
+    ) {
+        SGPayWallView(replacementController: replacementController, SGIAP: SGIAPManager, statusSignal: statusSignal, openUrl: openUrl, openAppStorePage: openAppStorePage, paymentsEnabled: paymentsEnabled, canBuyInBeta: canBuyInBeta, proSupportUrl: proSupportUrl)
+    }
+    controller.overrideUserInterfaceStyle = .dark
+    controller.attemptNavigation = { _ in return false }
     
-    let legacyController = LegacySwiftUIController(
-        presentation: .modal(animateIn: true),
-        theme: theme,
-        strings: strings
-    )
-    //    legacyController.displayNavigationBar = false
-    legacyController.statusBar.statusBarStyle = .White
-    legacyController.attemptNavigation = { _ in return false }
-    legacyController.view.disablesInteractiveTransitionGestureRecognizer = true
-    
-    let swiftUIView = SGSwiftUIView<SGPayWallView>(
-        legacyController: legacyController,
-        content: {
-            SGPayWallView(wrapperController: legacyController, replacementController: replacementController, SGIAP: SGIAPManager, statusSignal: statusSignal, openUrl: openUrl, openAppStorePage: openAppStorePage, paymentsEnabled: paymentsEnabled, canBuyInBeta: canBuyInBeta, proSupportUrl: proSupportUrl)
-        }
-    )
-    let controller = UIHostingController(rootView: swiftUIView, ignoreSafeArea: true)
-    legacyController.bind(controller: controller)
-    
-    return legacyController
+    return controller
 }
 
 private let innerShadowWidth: CGFloat = 15.0
@@ -83,7 +74,7 @@ struct BackgroundView: View {
             )
             .edgesIgnoringSafeArea(.all)
         }
-        .background(Color.black)
+        .background(Color.black.ignoresSafeArea())
     }
     
     func innerShadow(x: CGFloat, y: CGFloat, blur: CGFloat, color: Color) -> some View {
@@ -127,22 +118,20 @@ struct SGPayWallFeatureDetails: View {
             // Bottom sheet content
             if showContent {
                 VStack {
-                    if #available(iOS 14.0, *) {
-                        TabView(selection: $shownFeature) {
-                            ForEach(features) { feature in
-                                ScrollView(showsIndicators: false) {
-                                    SGProFeatureView(
-                                        feature: feature
-                                    )
-                                    Color.clear.frame(height: 8.0) // paginator padding
-                                }
-                                .tag(feature.id)
-                                .scrollBounceBehaviorIfAvailable(.basedOnSize)
+                    TabView(selection: $shownFeature) {
+                        ForEach(features) { feature in
+                            ScrollView(showsIndicators: false) {
+                                SGProFeatureView(
+                                    feature: feature
+                                )
+                                Color.clear.frame(height: 8.0) // paginator padding
                             }
+                            .tag(feature.id)
+                            .scrollBounceBehaviorIfAvailable(.basedOnSize)
                         }
-                        .tabViewStyle(.page)
-                        .padding(.bottom, bottomOffset - 8.0)
                     }
+                    .tabViewStyle(.page)
+                    .padding(.bottom, bottomOffset - 8.0)
                     
                     // Spacer for purchase buttons
                     if !bottomOffset.isZero {
@@ -318,11 +307,9 @@ struct SGProFeature: Identifiable {
 
 
 struct SGPayWallView: View {
-    @Environment(\.navigationBarHeight) var navigationBarHeight: CGFloat
-    @Environment(\.containerViewLayout) var containerViewLayout: ContainerViewLayout?
+    @Environment(\.sgNavigation) private var navigation
     @Environment(\.lang) var lang: String
     
-    weak var wrapperController: LegacyController?
     let replacementController: ViewController
     let SGIAP: SGIAPManager
     let statusSignal: Signal<Int64, NoError>
@@ -343,7 +330,8 @@ struct SGPayWallView: View {
     @State private var product: SGIAPManager.SGProduct?
     @State private var currentStatus: Int64 = 1
     @State private var state: PayWallState = .ready
-    @State private var showErrorAlert: Bool = false
+    @State private var isErrorAlertPresented: Bool = false
+    @State private var errorMessage: String = ""
     @State private var showConfetti: Bool = false
     @State private var showDetails: Bool = false
     @State private var shownFeature: SGProFeatureId? = nil
@@ -418,8 +406,7 @@ struct SGPayWallView: View {
                     }
                     .padding(.vertical, (purchaseSectionSize.height / 2.0))
                 }
-                .padding(.leading, max(innerShadowWidth + 8.0, sgLeftSafeAreaInset(containerViewLayout)))
-                .padding(.trailing, max(innerShadowWidth + 8.0, sgRightSafeAreaInset(containerViewLayout)))
+                .padding(.horizontal, innerShadowWidth + 8.0)
                 
                 if showDetails {
                     SGPayWallFeatureDetails(
@@ -436,7 +423,14 @@ struct SGPayWallView: View {
         }
         .confetti(isActive: $showConfetti, duration: confettiDuration)
         .overlay(closeButtonView)
-        .colorScheme(.dark)
+        .preferredColorScheme(.dark)
+        .alert("Error", isPresented: $isErrorAlertPresented) {
+            Button("OK") {
+                state = .ready
+            }
+        } message: {
+            Text(errorMessage)
+        }
         .onReceive(productsPub) { _ in
             updateSelectedProduct()
         }
@@ -549,7 +543,7 @@ struct SGPayWallView: View {
                 }
             }
             .padding([.horizontal, .top])
-            .padding(.bottom, sgBottomSafeAreaInset(containerViewLayout) + 2.0)
+            .padding(.bottom, 2.0)
         }
         .foregroundColor(Color.black)
         .backgroundIfAvailable(material: .ultraThinMaterial)
@@ -598,7 +592,8 @@ struct SGPayWallView: View {
     
     private var closeButtonView: some View {
         Button(action: {
-            wrapperController?.dismiss(animated: true)
+            // Explicit Close bypasses attemptNavigation, which blocks implicit exits.
+            navigation?.controller?.dismiss()
         }) {
             Image(systemName: "xmark")
                 .font(.headline)
@@ -645,10 +640,8 @@ struct SGPayWallView: View {
     }
     
     private func showDetailsForFeature(_ featureId: SGProFeatureId) {
-        if #available(iOS 14.0, *) {
-            shownFeature = featureId
-            showDetails = true
-        } // pagination is not available on iOS 13
+        shownFeature = featureId
+        showDetails = true
     }
     
     private func dismissDetails() {
@@ -662,7 +655,7 @@ struct SGPayWallView: View {
     
     private func handlePurchase() {
         if currentStatus > 1 {
-            wrapperController?.replace(with: replacementController)
+            navigation?.controller?.replace(with: replacementController)
         } else {
             if Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt" && !canBuyInBeta {
                 openAppStorePage()
@@ -692,12 +685,9 @@ struct SGPayWallView: View {
     }
     
     private func showErrorAlert(_ message: String) {
-        let alertController = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
-        alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: { action in
-            state = .ready
-        }))
         DispatchQueue.main.async {
-            wrapperController?.present(alertController, animated: true)
+            errorMessage = message
+            isErrorAlertPresented = true
         }
     }
 }
@@ -766,11 +756,9 @@ struct FeatureRow<IconContent: View>: View {
                 }
                 
                 Spacer()
-                if #available(iOS 14.0, *) {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.secondary)
-                } // Descriptions are not available on iOS 13
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.secondary)
             }
             .padding()
             .background(

@@ -12,7 +12,6 @@ swift_library(
     deps = [
         "//submodules/AsyncDisplayKit:AsyncDisplayKit",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
-        "//submodules/LegacyUI:LegacyUI",
         "//submodules/Display:Display",
         "//submodules/TelegramPresentationData:TelegramPresentationData"
     ],

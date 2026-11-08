@@ -3,7 +3,6 @@ import SwiftUI
 import SGSwiftUI
 import SGStrings
 import SGSimpleSettings
-import LegacyUI
 import Display
 import TelegramPresentationData
 import AccountContext
@@ -35,12 +34,10 @@ func getAvailableAppBadges() -> [AppBadge] {
     return appBadges
 }
     
-@available(iOS 14.0, *)
 struct AppBadgeSettingsView: View {
-    weak var wrapperController: LegacyController?
     let context: AccountContext
     
-    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.sgTheme) private var theme
     @Environment(\.lang) var lang: String
     
     @State var selectedBadge: AppBadge
@@ -57,8 +54,7 @@ struct AppBadgeSettingsView: View {
         Array(repeating: GridItem(.flexible(), spacing: Layout.columnSpacing), count: 2)
     }
     
-    init(wrapperController: LegacyController?, context: AccountContext) {
-        self.wrapperController = wrapperController
+    init(context: AccountContext) {
         self.context = context
         
         for badge in self.availableAppBadges {
@@ -101,7 +97,7 @@ struct AppBadgeSettingsView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color(colorScheme == .dark ? .secondarySystemBackground : .systemBackground))
+                        .background(theme.secondaryBackgroundColor)
                         .cornerRadius(Layout.cardCorner)
                         .overlay(
                             RoundedRectangle(cornerRadius: Layout.cardCorner)
@@ -115,35 +111,19 @@ struct AppBadgeSettingsView: View {
             .padding(.vertical, 24)
 
         }
-        .background(Color(colorScheme == .light ? .secondarySystemBackground : .systemBackground).ignoresSafeArea())
+        .background(theme.backgroundColor.ignoresSafeArea())
+        .sgNavigationTitle("AppBadge.Title".i18n(lang))
     }
     
 }
 
-@available(iOS 14.0, *)
 public func sgAppBadgeSettingsController(context: AccountContext, presentationData: PresentationData? = nil) -> ViewController {
-    let theme = presentationData?.theme ?? (UITraitCollection.current.userInterfaceStyle == .dark ? defaultDarkColorPresentationTheme : defaultPresentationTheme)
-    let strings = presentationData?.strings ?? defaultPresentationStrings
-
-    let legacyController = LegacySwiftUIController(
-        presentation: .navigation,
-        theme: theme,
-        strings: strings
-    )
-
-    legacyController.statusBar.statusBarStyle = theme.rootController
-        .statusBarStyle.style
-    legacyController.title = "AppBadge.Title".i18n(strings.baseLanguageCode)
-    
-    let swiftUIView = SGSwiftUIView<AppBadgeSettingsView>(
-        legacyController: legacyController,
-        manageSafeArea: true,
-        content: {
-            AppBadgeSettingsView(wrapperController: legacyController, context: context)
-        }
-    )
-    let controller = UIHostingController(rootView: swiftUIView, ignoreSafeArea: true)
-    legacyController.bind(controller: controller)
-
-    return legacyController
+    let presentationData = presentationData ?? context.sharedContext.currentPresentationData.with { $0 }
+    return SGSwiftUIController(
+        title: "AppBadge.Title".i18n(presentationData.strings.baseLanguageCode),
+        presentationData: presentationData,
+        presentationDataSignal: context.sharedContext.presentationData
+    ) {
+        AppBadgeSettingsView(context: context)
+    }
 }

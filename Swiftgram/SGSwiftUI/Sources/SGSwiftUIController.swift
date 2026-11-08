@@ -164,6 +164,15 @@ private final class SGScreenHostingController<Content: View>: UIHostingControlle
         super.viewSafeAreaInsetsDidChange()
         self.safeAreaChanged?()
     }
+
+    override func present(_ viewControllerToPresent: UIViewController, animated flag: Bool, completion: (() -> Void)? = nil) {
+        if viewControllerToPresent is UIAlertController {
+            // Native alerts can be promoted outside the hosting child's trait hierarchy.
+            viewControllerToPresent.overrideUserInterfaceStyle = self.overrideUserInterfaceStyle
+            viewControllerToPresent.view.tintColor = self.view.tintColor
+        }
+        super.present(viewControllerToPresent, animated: flag, completion: completion)
+    }
 }
 
 /// A full SwiftUI screen in Telegram navigation. No safe-area swizzling, nested navigation controller,
@@ -333,6 +342,15 @@ public final class SGSwiftUIController<Content: View>: ViewController, SGSwiftUI
         super.viewDidDisappear(animated)
         guard !self.ignoreAppearanceMethodInvocations() else { return }
         self.endAppearance(false, animated: animated)
+    }
+
+    override public func present(_ viewControllerToPresent: UIViewController, animated flag: Bool, completion: (() -> Void)? = nil) {
+        if viewControllerToPresent is UIAlertController {
+            // Display forwards UIKit presentations to the window root; carry this screen's style.
+            viewControllerToPresent.overrideUserInterfaceStyle = self.hostingController.overrideUserInterfaceStyle
+            viewControllerToPresent.view.tintColor = self.hostingController.view.tintColor
+        }
+        super.present(viewControllerToPresent, animated: flag, completion: completion)
     }
 
     override public func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {

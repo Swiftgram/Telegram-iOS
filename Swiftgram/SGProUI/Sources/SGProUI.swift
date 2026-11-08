@@ -133,15 +133,11 @@ public func sgProController(context: AccountContext) -> ViewController {
             case .sessionBackupManager:
                 pushControllerImpl?(sgSessionBackupManagerController(context: context, presentationData: presentationData))
             case .messageFilter:
-                pushControllerImpl?(sgMessageFilterController(presentationData: presentationData))
+                pushControllerImpl?(sgMessageFilterController(context: context, presentationData: presentationData))
             case .appIcons:
                 pushControllerImpl?(themeSettingsController(context: context, focusOnItemTag: .icon))
             case .appBages:
-                if #available(iOS 14.0, *) {
-                    pushControllerImpl?(sgAppBadgeSettingsController(context: context, presentationData: presentationData))
-                } else {
-                    presentControllerImpl?(context.sharedContext.makeSGUpdateIOSController(), nil)
-                }
+                pushControllerImpl?(sgAppBadgeSettingsController(context: context, presentationData: presentationData))
         }
     }, action: { action in
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
