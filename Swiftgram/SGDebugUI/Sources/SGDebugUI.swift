@@ -189,6 +189,15 @@ public func sgDebugController(context: AccountContext) -> ViewController {
             context.sharedContext.SGIAP?.restorePurchases {}
         case .setIAP:
             #if DEBUG
+            let updateSettingsSignal = updateSGStatusInteractively(accountManager: context.sharedContext.accountManager, { status in
+                var status = status
+                status.status = 2
+                SGSimpleSettings.shared.primaryUserId = String(context.account.peerId.id._internalGetInt64Value())
+                return status
+            })
+            let _ = (updateSettingsSignal |> deliverOnMainQueue).start(next: {
+                presentControllerImpl?(okUndoController("OK", presentationData), nil)
+            })
             #endif
         case .resetIAP:
             let updateSettingsSignal = updateSGStatusInteractively(accountManager: context.sharedContext.accountManager, { status in
