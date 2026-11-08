@@ -9,3 +9,12 @@
 "Settings.Folders.BottomTab" = "بوخچەکان لە خوارەوە";
 "ContextMenu.SaveToCloud" = "هەڵگرتن لە کڵاود";
 "Settings.videoControlsInFooter" = "کۆنترۆڵی ڤیدیۆ لە خوارەوە";
+"Chat.Created.Label" = "دروستکراو";
+"Chat.Created.Copied" = "بەرواری دروستکردن کۆپی کرا";
+"Chat.JoinedDateTitle" = "بەشداری کرد لە %@";
+"Chat.RegDate" = "تۆمارکراو";
+"Chat.JoinedDate.Copied" = "بەرواری بەشداری کۆپی کرا";
+"Chat.RegDate.Copied" = "بەرواری تۆماربوون کۆپی کرا";
+"Chat.ID" = "id";
+"Chat.ID.Copy" = "کۆپی کردنی ID";
+"Chat.ID.Copied" = "ID کۆپی کرا";

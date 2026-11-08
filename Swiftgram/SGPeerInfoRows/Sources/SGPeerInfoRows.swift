@@ -24,8 +24,10 @@ func sgPeerInfoProfileItems(nearestChatParticipant: (String?, Int32?), data: Pee
     }
 
     if SGSimpleSettings.shared.showProfileId {
-        items.append(PeerInfoScreenLabeledValueItem(id: itemId, label: "id: \(idText)", text: "", textColor: .primary, action: nil, longTapAction: { sourceNode in
-            interaction.openPeerInfoContextMenu(.copy(idText), sourceNode, nil)
+        items.append(PeerInfoScreenLabeledValueItem(id: itemId, context: context, label: "\(i18n("Chat.ID", presentationData.strings.baseLanguageCode)): \(idText)", text: "", textColor: .primary, action: { node, _ in
+            interaction.openSgContextMenu(node, nil, .copy(text: idText, copyTitle: i18n("Chat.ID.Copy", presentationData.strings.baseLanguageCode), copiedTitle: i18n("Chat.ID.Copied", presentationData.strings.baseLanguageCode)))
+        }, longTapAction: nil, contextAction: { node, gesture, _ in
+            interaction.openSgContextMenu(node, gesture, .copy(text: idText, copyTitle: i18n("Chat.ID.Copy", presentationData.strings.baseLanguageCode), copiedTitle: i18n("Chat.ID.Copied", presentationData.strings.baseLanguageCode)))
         }, requestLayout: { _ in
             interaction.requestLayout(false)
         }))
@@ -65,8 +67,10 @@ func sgPeerInfoProfileItems(nearestChatParticipant: (String?, Int32?), data: Pee
         }
 
         if !dcText.isEmpty || !dcLabel.isEmpty {
-            items.append(PeerInfoScreenLabeledValueItem(id: itemId, label: dcLabel, text: dcText, textColor: .primary, action: nil, longTapAction: { sourceNode in
-                interaction.openPeerInfoContextMenu(.aboutDC, sourceNode, nil)
+            items.append(PeerInfoScreenLabeledValueItem(id: itemId, context: context, label: dcLabel, text: dcText, textColor: .primary, action: { node, _ in
+                interaction.openSgContextMenu(node, nil, .openURL(url: "https://core.telegram.org/api/datacenter", title: i18n("Chat.DataCenter.LearnMore", presentationData.strings.baseLanguageCode)))
+            }, longTapAction: nil, contextAction: { node, gesture, _ in
+                interaction.openSgContextMenu(node, gesture, .openURL(url: "https://core.telegram.org/api/datacenter", title: i18n("Chat.DataCenter.LearnMore", presentationData.strings.baseLanguageCode)))
             }, requestLayout: { _ in
                 interaction.requestLayout(false)
             }))
@@ -76,8 +80,10 @@ func sgPeerInfoProfileItems(nearestChatParticipant: (String?, Int32?), data: Pee
 
     if SGSimpleSettings.shared.showCreationDate, let channelCreationTimestamp = data.channelCreationTimestamp {
         let creationDateString = stringForDate(timestamp: channelCreationTimestamp, strings: presentationData.strings)
-        items.append(PeerInfoScreenLabeledValueItem(id: itemId, label: i18n("Chat.Created", presentationData.strings.baseLanguageCode, creationDateString), text: "", action: nil, longTapAction: { sourceNode in
-            interaction.openPeerInfoContextMenu(.copy(creationDateString), sourceNode, nil)
+        items.append(PeerInfoScreenLabeledValueItem(id: itemId, context: context, label: i18n("Chat.Created.Label", presentationData.strings.baseLanguageCode), text: creationDateString, textColor: .primary, action: { node, _ in
+            interaction.openSgContextMenu(node, nil, .copy(text: creationDateString, copyTitle: presentationData.strings.Chat_Context_Date_Copy, copiedTitle: i18n("Chat.Created.Copied", presentationData.strings.baseLanguageCode)))
+        }, longTapAction: nil, contextAction: { node, gesture, _ in
+            interaction.openSgContextMenu(node, gesture, .copy(text: creationDateString, copyTitle: presentationData.strings.Chat_Context_Date_Copy, copiedTitle: i18n("Chat.Created.Copied", presentationData.strings.baseLanguageCode)))
         }, requestLayout: { _ in
             interaction.requestLayout(false)
         }))
@@ -86,8 +92,10 @@ func sgPeerInfoProfileItems(nearestChatParticipant: (String?, Int32?), data: Pee
 
     if let invitedAt = nearestChatParticipant.1 {
         let joinedDateString = stringForDate(timestamp: invitedAt, strings: presentationData.strings)
-        items.append(PeerInfoScreenLabeledValueItem(id: itemId, label: i18n("Chat.JoinedDateTitle", presentationData.strings.baseLanguageCode, nearestChatParticipant.0 ?? "chat"), text: joinedDateString, action: nil, longTapAction: { sourceNode in
-            interaction.openPeerInfoContextMenu(.copy(joinedDateString), sourceNode, nil)
+        items.append(PeerInfoScreenLabeledValueItem(id: itemId, context: context, label: i18n("Chat.JoinedDateTitle", presentationData.strings.baseLanguageCode, nearestChatParticipant.0 ?? "chat"), text: joinedDateString, textColor: .primary, action: { node, _ in
+            interaction.openSgContextMenu(node, nil, .copy(text: joinedDateString, copyTitle: presentationData.strings.Chat_Context_Date_Copy, copiedTitle: i18n("Chat.JoinedDate.Copied", presentationData.strings.baseLanguageCode)))
+        }, longTapAction: nil, contextAction: { node, gesture, _ in
+            interaction.openSgContextMenu(node, gesture, .copy(text: joinedDateString, copyTitle: presentationData.strings.Chat_Context_Date_Copy, copiedTitle: i18n("Chat.JoinedDate.Copied", presentationData.strings.baseLanguageCode)))
         }, requestLayout: { _ in
             interaction.requestLayout(false)
         }))
@@ -116,8 +124,10 @@ func sgPeerInfoProfileItems(nearestChatParticipant: (String?, Int32?), data: Pee
             }
         }
         if !regDateString.isEmpty {
-            items.append(PeerInfoScreenLabeledValueItem(id: itemId, label: i18n("Chat.RegDate", presentationData.strings.baseLanguageCode), text: regDateString, action: nil, longTapAction: { sourceNode in
-                interaction.openPeerInfoContextMenu(.copy(regDateString), sourceNode, nil)
+            items.append(PeerInfoScreenLabeledValueItem(id: itemId, context: context, label: i18n("Chat.RegDate", presentationData.strings.baseLanguageCode), text: regDateString, textColor: .primary, action: { node, _ in
+                interaction.openSgContextMenu(node, nil, .copy(text: regDateString, copyTitle: presentationData.strings.Chat_Context_Date_Copy, copiedTitle: i18n("Chat.RegDate.Copied", presentationData.strings.baseLanguageCode)))
+            }, longTapAction: nil, contextAction: { node, gesture, _ in
+                interaction.openSgContextMenu(node, gesture, .copy(text: regDateString, copyTitle: presentationData.strings.Chat_Context_Date_Copy, copiedTitle: i18n("Chat.RegDate.Copied", presentationData.strings.baseLanguageCode)))
             }, requestLayout: { _ in
                 interaction.requestLayout(false)
             }))

@@ -120,12 +120,18 @@
 "Settings.DefaultEmojisFirst.Notice" = "Mostra gli emoji standard prima dei premium nella tastiera degli emoji";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "creato il: %@";
+"Chat.Created.Label" = "data di creazione";
+"Chat.Created.Copied" = "Data di creazione copiata";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
-"Chat.JoinedDateTitle" = "Sì è unito a %@";
+"Chat.JoinedDateTitle" = "data di adesione a %@";
+"Chat.JoinedDate.Copied" = "Data di adesione copiata";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
-"Chat.RegDate" = "Registrato";
+"Chat.RegDate" = "data di registrazione";
+"Chat.RegDate.Copied" = "Data di registrazione copiata";
+"Chat.ID" = "id";
+"Chat.ID.Copy" = "Copia ID";
+"Chat.ID.Copied" = "ID copiato";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Doppio tap per modificare il messaggio";
 

@@ -120,12 +120,18 @@
 "Settings.DefaultEmojisFirst.Notice" = "Wys standaard emojis voor premium op die emoji sleutelbord";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "geskep: %@";
+"Chat.Created.Label" = "geskep";
+"Chat.Created.Copied" = "Skeppingsdatum gekopieer";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
-"Chat.JoinedDateTitle" = "Sluit aan by %@";
+"Chat.JoinedDateTitle" = "sluit aan by %@";
+"Chat.JoinedDate.Copied" = "Aansluitdatum gekopieer";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
-"Chat.RegDate" = "Geregistreer";
+"Chat.RegDate" = "geregistreer";
+"Chat.RegDate.Copied" = "Registrasiedatum gekopieer";
+"Chat.ID" = "id";
+"Chat.ID.Copy" = "Kopieer ID";
+"Chat.ID.Copied" = "ID gekopieer";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "Dubbelklik om boodskap te wysig";
 

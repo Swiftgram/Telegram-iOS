@@ -8,3 +8,12 @@
 "Settings.Translation.QuickTranslateButton" = "دکمه ترجمه سریع";
 "ContextMenu.SaveToCloud" = "ذخیره در فضای ابری";
 "Settings.videoControlsInFooter" = "کنترل‌های ویدیو در پایین";
+"Chat.Created.Label" = "ایجاد شد";
+"Chat.Created.Copied" = "تاریخ ایجاد کپی شد";
+"Chat.JoinedDateTitle" = "به %@ پیوست";
+"Chat.RegDate" = "ثبت‌نام شده";
+"Chat.JoinedDate.Copied" = "تاریخ پیوستن کپی شد";
+"Chat.RegDate.Copied" = "تاریخ ثبت‌نام کپی شد";
+"Chat.ID" = "شناسه";
+"Chat.ID.Copy" = "کپی شناسه";
+"Chat.ID.Copied" = "شناسه کپی شد";

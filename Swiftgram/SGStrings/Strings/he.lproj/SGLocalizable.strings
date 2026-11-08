@@ -120,12 +120,18 @@
 "Settings.DefaultEmojisFirst.Notice" = "הצג רמזי פנים סטנדרטיים לפני פרימיום במקלדת רמזי פנים";
 
 /* Date when chat was created. "created: 24 May 2016" */
-"Chat.Created" = "נוצר: %@";
+"Chat.Created.Label" = "תאריך יצירה";
+"Chat.Created.Copied" = "תאריך היצירה הועתק";
 
 /* Date when user joined the chat. "Joined Swiftgram Chat" */
-"Chat.JoinedDateTitle" = "הצטרף/הצטרפה ב־%@";
+"Chat.JoinedDateTitle" = "תאריך הצטרפות ל־%@";
+"Chat.JoinedDate.Copied" = "תאריך ההצטרפות הועתק";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
-"Chat.RegDate" = "נרשם";
+"Chat.RegDate" = "תאריך הרשמה";
+"Chat.RegDate.Copied" = "תאריך ההרשמה הועתק";
+"Chat.ID" = "מזהה";
+"Chat.ID.Copy" = "העתקת מזהה";
+"Chat.ID.Copied" = "המזהה הועתק";
 
 "Settings.messageDoubleTapActionOutgoingEdit" = "לחץ פעמיים לעריכת הודעה";
 

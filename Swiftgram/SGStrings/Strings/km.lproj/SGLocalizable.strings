@@ -7,3 +7,12 @@
 "Settings.Folders.BottomTab" = "ថតឯបាត";
 "ContextMenu.SaveToCloud" = "រក្សាទុកទៅពពក";
 "Settings.videoControlsInFooter" = "ប៊ូតុងវីដេអូខាងក្រោម";
+"Chat.Created.Label" = "បានបង្កើត";
+"Chat.Created.Copied" = "បានចម្លងកាលបរិច្ឆេទបង្កើត";
+"Chat.JoinedDateTitle" = "បានចូលរួម %@";
+"Chat.RegDate" = "បានចុះឈ្មោះ";
+"Chat.JoinedDate.Copied" = "បានចម្លងកាលបរិច្ឆេទចូលរួម";
+"Chat.RegDate.Copied" = "បានចម្លងកាលបរិច្ឆេទចុះឈ្មោះ";
+"Chat.ID" = "id";
+"Chat.ID.Copy" = "ចម្លង ID";
+"Chat.ID.Copied" = "បានចម្លង ID";

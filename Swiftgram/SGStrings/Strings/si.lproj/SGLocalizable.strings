@@ -1,3 +1,12 @@
 "Settings.Tabs.Header" = "පටිති";
 "ContextMenu.SaveToCloud" = "මේඝයට සුරකින්න";
 "Settings.videoControlsInFooter" = "පහළ වීඩියෝ පාලක";
+"Chat.Created.Label" = "සාදන ලදි";
+"Chat.Created.Copied" = "නිර්මාණ දිනය පිටපත් කරන ලදී";
+"Chat.JoinedDateTitle" = "%@ වෙත එකතු විය";
+"Chat.RegDate" = "ලියාපදිංචි වී ඇත";
+"Chat.JoinedDate.Copied" = "එකතු වූ දිනය පිටපත් කරන ලදී";
+"Chat.RegDate.Copied" = "ලියාපදිංචි වූ දිනය පිටපත් කරන ලදී";
+"Chat.ID" = "id";
+"Chat.ID.Copy" = "ID පිටපත් කරන්න";
+"Chat.ID.Copied" = "ID පිටපත් කරන ලදී";
