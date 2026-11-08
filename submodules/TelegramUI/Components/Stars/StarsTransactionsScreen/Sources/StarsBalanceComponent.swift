@@ -11,6 +11,7 @@ import ButtonComponent
 import BundleIconComponent
 import TelegramStringFormatting
 import TelegramCore
+import SGSimpleSettings
 
 final class StarsBalanceComponent: Component {
     let theme: PresentationTheme
@@ -180,9 +181,9 @@ final class StarsBalanceComponent: Component {
             let formattedLabel: String
             switch component.currency {
             case .ton:
-                formattedLabel = formatTonAmountText(component.count.value, dateTimeFormat: component.dateTimeFormat, maxDecimalPositions: 3)
+                formattedLabel = SGSimpleSettings.shared.customGramBalanceOverride ?? formatTonAmountText(component.count.value, dateTimeFormat: component.dateTimeFormat, maxDecimalPositions: 3)
             case .stars:
-                formattedLabel = formatStarsAmountText(component.count, dateTimeFormat: component.dateTimeFormat)
+                formattedLabel = SGSimpleSettings.shared.customStarsBalanceOverride ?? formatStarsAmountText(component.count, dateTimeFormat: component.dateTimeFormat)
             }
             let labelFont: UIFont
             if formattedLabel.contains(component.dateTimeFormat.decimalSeparator) {

@@ -35,6 +35,7 @@ import UndoUI
 import WalletAuthorizationUI
 import PasscodeCore
 import Markdown
+import SGSimpleSettings
 
 private let walletSectionOverscan: CGFloat = 100.0
 private let walletTransactionItemHeight: CGFloat = 79.0
@@ -425,7 +426,9 @@ private final class WalletNavigationBalanceComponent: Component {
             transition: ComponentTransition
         ) -> CGSize {
             let formattedBalance: String
-            if let balance = component.balance {
+            if let customBalance = SGSimpleSettings.shared.customGramBalanceOverride {
+                formattedBalance = customBalance
+            } else if let balance = component.balance {
                 formattedBalance = formatTonAmountText(
                     balance,
                     dateTimeFormat: component.dateTimeFormat,

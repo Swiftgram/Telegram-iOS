@@ -26,6 +26,7 @@ import StarsWithdrawalScreen
 import PremiumDiamondComponent
 import StatisticsUI
 import EdgeEffect
+import SGSimpleSettings
 
 private let initialSubscriptionsDisplayedLimit: Int32 = 3
 
@@ -578,9 +579,9 @@ final class StarsTransactionsScreenComponent: Component {
             
             let formattedBalance: String
             if component.starsContext.ton {
-                formattedBalance = formatTonAmountText(self.starsState?.balance.value ?? 0, dateTimeFormat: environment.dateTimeFormat)
+                formattedBalance = SGSimpleSettings.shared.customGramBalanceOverride ?? formatTonAmountText(self.starsState?.balance.value ?? 0, dateTimeFormat: environment.dateTimeFormat)
             } else {
-                formattedBalance = formatStarsAmountText(self.starsState?.balance ?? StarsAmount.zero, dateTimeFormat: environment.dateTimeFormat)
+                formattedBalance = SGSimpleSettings.shared.customStarsBalanceOverride ?? formatStarsAmountText(self.starsState?.balance ?? StarsAmount.zero, dateTimeFormat: environment.dateTimeFormat)
             }
             let smallLabelFont = Font.regular(11.0)
             let labelFont = Font.semibold(14.0)
