@@ -19,6 +19,10 @@ The workflow is manual:
 4. When the job finishes, download the **Swiftgram-unsigned-ipa** artifact (contains
    `Swiftgram.ipa` and `Swiftgram.DSYMs.zip`), or open the created Release.
 
+Pushing a tag that starts with `build-` (for example `build-20261108-1200`) also runs the
+workflow and publishes the IPA as a GitHub Release with that tag, so the whole chain can be
+automated: `git push` + `git push <tag>` → build → release.
+
 What it does: checks out the repo with submodules, imports the fake codesigning
 certificates from `build-system/fake-codesigning`, builds
 `--configuration=release_arm64` with `build-system/appstore-configuration.json`, and copies

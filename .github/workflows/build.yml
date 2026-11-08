@@ -110,10 +110,10 @@ jobs:
           retention-days: 14
 
       - name: Publish release
-        if: ${{ inputs.release }}
+        if: ${{ inputs.release || startsWith(github.ref, 'refs/tags/') }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.run_number }}
-          name: Unsigned IPA build ${{ github.run_number }}
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('build-{0}', github.run_number) }}
+          name: ${{ startsWith(github.ref, 'refs/tags/') && format('Unsigned IPA {0}', github.ref_name) || format('Unsigned IPA build {0}', github.run_number) }}
           files: build/artifacts/*
           generate_release_notes: false
