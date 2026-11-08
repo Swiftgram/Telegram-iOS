@@ -648,7 +648,8 @@ final class PeerInfoHeaderNode: ASDisplayNode {
         // MARK: Swiftgram — the custom GRAM balance is shown even when the real balance is zero.
         let sgCustomGramBalance = SGSimpleSettings.shared.customGramBalanceOverride
         let sgWalletBalance = (screenData?.cachedData as? CachedUserData)?.walletCard?.balance
-        if !self.isSettings, sgCustomGramBalance != nil || (sgWalletBalance ?? 0) >= 100_000_000 {
+        let sgIsOwnProfile = peer?.id == self.context.account.peerId
+        if !self.isSettings, sgIsOwnProfile, sgCustomGramBalance != nil || (sgWalletBalance ?? 0) >= 100_000_000 {
             currentWalletBalance = sgWalletBalance ?? 0
         } else {
             currentWalletBalance = nil
