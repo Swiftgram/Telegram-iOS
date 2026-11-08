@@ -4,7 +4,6 @@ import UIKit
 import Display
 import SwiftSignalKit
 import TelegramCore
-import TelegramApi
 import TelegramPresentationData
 import ItemListUI
 import PresentationDataUtils
@@ -193,7 +192,7 @@ public func sgCustomTweaksController(context: AccountContext) -> ViewController 
             settings.ghostMode = value
             if value {
                 // Apply immediately: tell the server we are offline instead of waiting for the next presence tick.
-                let _ = context.account.network.request(Api.functions.account.updateStatus(offline: .boolTrue)).start()
+                sgApplyGhostModeOfflinePresence(network: context.account.network)
             }
         case .keepSecretMedia:
             settings.keepSecretMedia = value

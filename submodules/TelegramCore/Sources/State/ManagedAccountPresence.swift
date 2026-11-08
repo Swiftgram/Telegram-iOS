@@ -99,3 +99,10 @@ final class AccountPresenceManager {
         }
     }
 }
+
+// MARK: Swiftgram
+/// Immediately reports the account as offline. Ghost mode calls this when it is switched on so
+/// the change takes effect without waiting for the presence signal to change.
+public func sgApplyGhostModeOfflinePresence(network: Network) {
+    let _ = network.request(Api.functions.account.updateStatus(offline: .boolTrue)).start()
+}
