@@ -47,6 +47,7 @@ private enum SGDebugToggles: String {
     case legacyNotificationsFix
     case inputToolbar
     case translatorLogs
+    case bubbleMode
 }
 
 
@@ -57,7 +58,7 @@ private enum SGDebugOneFromManySetting: String {
 
 private typealias SGDebugControllerEntry = SGItemListUIEntry<SGDebugControllerSection, SGDebugToggles, AnyHashable, SGDebugOneFromManySetting, SGDebugDisclosureLink, SGDebugActions>
 
-private func SGDebugControllerEntries(presentationData: PresentationData) -> [SGDebugControllerEntry] {
+private func SGDebugControllerEntries(presentationData: PresentationData, themeSettings: PresentationThemeSettings) -> [SGDebugControllerEntry] {
     var entries: [SGDebugControllerEntry] = []
     
     let id = SGItemListCounter()
@@ -70,6 +71,7 @@ private func SGDebugControllerEntries(presentationData: PresentationData) -> [SG
     entries.append(.action(id: id.count, section: .base, actionType: .clearOutgoingTranslationLanguageCache, text: "Clear Outgoing Translation cache", kind: .generic))
     entries.append(.toggle(id: id.count, section: .base, settingName: .translatorLogs, value: SGSimpleSettings.shared.translatorLogsEnabled, text: "Translator logs", enabled: true))
     entries.append(.toggle(id: id.count, section: .base, settingName: .forceImmediateShareSheet, value: SGSimpleSettings.shared.forceSystemSharing, text: "Force System Share Sheet", enabled: true))
+    entries.append(.toggle(id: id.count, section: .base, settingName: .bubbleMode, value: themeSettings.chatBubbleSettings.bubbleMode, text: presentationData.strings.Appearance_BubbleMode, enabled: true))
     
     entries.append(.action(id: id.count, section: .base, actionType: .restorePurchases, text: "PayWall.RestorePurchases".i18n(presentationData.strings.baseLanguageCode), kind: .generic))
     #if DEBUG
@@ -89,8 +91,6 @@ public func sgDebugController(context: AccountContext) -> ViewController {
     var presentControllerImpl: ((ViewController, ViewControllerPresentationArguments?) -> Void)?
     var pushControllerImpl: ((ViewController) -> Void)?
 
-    let simplePromise = ValuePromise(true, ignoreRepeated: false)
-    
     let arguments = SGItemListArguments<SGDebugToggles, AnyHashable, SGDebugOneFromManySetting, SGDebugDisclosureLink, SGDebugActions>(context: context, setBoolValue: { toggleName, value in
         switch toggleName {
             case .forceImmediateShareSheet:
@@ -100,6 +100,12 @@ public func sgDebugController(context: AccountContext) -> ViewController {
                 SGSimpleSettings.shared.synchronizeShared()
             case .inputToolbar:
                 SGSimpleSettings.shared.inputToolbar = value
+            case .bubbleMode:
+                let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
+                    var current = current
+                    current.chatBubbleSettings.bubbleMode = value
+                    return current
+                }).start()
             case .translatorLogs:
                 SGSimpleSettings.shared.setTranslatorLogsEnabled(value)
                 if value {
@@ -203,10 +209,14 @@ public func sgDebugController(context: AccountContext) -> ViewController {
         }
     })
     
-    let signal = combineLatest(context.sharedContext.presentationData, simplePromise.get())
-    |> map { presentationData, _ ->  (ItemListControllerState, (ItemListNodeState, Any)) in
-        
-        let entries = SGDebugControllerEntries(presentationData: presentationData)
+    let signal = combineLatest(
+        queue: .mainQueue(),
+        context.sharedContext.presentationData,
+        context.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.presentationThemeSettings])
+    )
+    |> map { presentationData, sharedData ->  (ItemListControllerState, (ItemListNodeState, Any)) in
+        let themeSettings = sharedData.entries[ApplicationSpecificSharedDataKeys.presentationThemeSettings]?.get(PresentationThemeSettings.self) ?? PresentationThemeSettings.defaultSettings
+        let entries = SGDebugControllerEntries(presentationData: presentationData, themeSettings: themeSettings)
         
         let controllerState = ItemListControllerState(presentationData: ItemListPresentationData(presentationData), title: .text("Swiftgram Debug"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         
