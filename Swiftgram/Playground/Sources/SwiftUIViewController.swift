@@ -13,11 +13,22 @@ final class PlaygroundPresentation {
     private(set) var data = defaultPresentationData()
     let changes = ValuePromise<PresentationData>(defaultPresentationData(), ignoreRepeated: true)
     weak var navigationController: NavigationController?
+    private var usesPurpleAccent = false
 
     func toggleTheme() {
-        self.data = self.data.withUpdated(theme: self.data.theme.overallDarkAppearance ? defaultPresentationTheme : defaultDarkColorPresentationTheme)
+        self.updateTheme(dark: !self.data.theme.overallDarkAppearance)
+    }
+
+    func toggleAccent() {
+        self.usesPurpleAccent.toggle()
+        self.updateTheme(dark: self.data.theme.overallDarkAppearance)
+    }
+
+    private func updateTheme(dark: Bool) {
+        let base = dark ? defaultDarkPresentationTheme : defaultPresentationTheme
+        let theme = self.usesPurpleAccent ? customizePresentationTheme(base, editing: false, accentColor: UIColor(rgb: 0xAF52DE), outgoingAccentColor: nil, backgroundColors: [], bubbleColors: [], animateBubbleColors: false) : base
+        self.data = self.data.withUpdated(theme: theme)
         self.changes.set(self.data)
-        let theme = self.data.theme
         self.navigationController?.updateTheme(NavigationControllerTheme(statusBar: theme.overallDarkAppearance ? .white : .black, navigationBar: NavigationBarTheme(rootControllerTheme: theme), emptyAreaColor: theme.list.blocksBackgroundColor, separatorColor: theme.rootController.navigationBar.separatorColor, opaqueBackgroundColor: theme.list.blocksBackgroundColor))
     }
 }
@@ -71,6 +82,11 @@ private struct PlaygroundMenu: View {
                 }.accessibilityIdentifier("show-geometry")
                 Button("Present native SwiftUI sheet") { showsSheet = true }
                     .accessibilityIdentifier("swiftui-sheet")
+                Button("Live theme & accent") {
+                    navigation?.push(title: "SwiftUI theme") {
+                        PlaygroundThemeScreen(toggleAccent: { PlaygroundPresentation.shared.toggleAccent() }, toggleAppearance: { PlaygroundPresentation.shared.toggleTheme() })
+                    }
+                }.accessibilityIdentifier("show-theme")
                 Button("Toggle Telegram theme") { PlaygroundPresentation.shared.toggleTheme() }
                     .accessibilityIdentifier("toggle-theme")
             }

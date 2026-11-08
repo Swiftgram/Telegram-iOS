@@ -112,6 +112,23 @@ private final class SGSwiftUIScreenState: ObservableObject {
     }
 }
 
+// Telegram-specific conversion stays at the hosting boundary, not in SGSwiftUITheme.
+private extension SGSwiftUITheme {
+    init(presentationTheme theme: PresentationTheme) {
+        self.init(
+            accentColor: Color(uiColor: theme.rootController.navigationBar.accentTextColor),
+            accentForegroundColor: Color(uiColor: theme.list.itemCheckColors.foregroundColor),
+            overallDarkAppearance: theme.overallDarkAppearance,
+            primaryTextColor: Color(uiColor: theme.list.itemPrimaryTextColor),
+            secondaryTextColor: Color(uiColor: theme.list.itemSecondaryTextColor),
+            backgroundColor: Color(uiColor: theme.list.blocksBackgroundColor),
+            secondaryBackgroundColor: Color(uiColor: theme.list.itemBlocksBackgroundColor),
+            separatorColor: Color(uiColor: theme.list.itemBlocksSeparatorColor),
+            destructiveColor: Color(uiColor: theme.list.itemDestructiveColor)
+        )
+    }
+}
+
 private struct SGSwiftUIRoot<Content: View>: View {
     let content: Content
     let navigation: SGSwiftUINavigation
@@ -121,13 +138,12 @@ private struct SGSwiftUIRoot<Content: View>: View {
         self.content
             .environment(\.sgNavigation, self.navigation)
             .environment(\.sgIsVisible, self.state.isVisible)
+            .sgTheme(SGSwiftUITheme(presentationTheme: self.state.presentationData.theme))
             .environment(\.containerViewLayout, self.state.layout)
             .environment(\.navigationBarHeight, self.state.navigationHeight)
             .environment(\.lang, self.state.presentationData.strings.baseLanguageCode)
             .environment(\.locale, Locale(identifier: self.state.presentationData.strings.baseLanguageCode))
             .environment(\.layoutDirection, Locale.characterDirection(forLanguage: self.state.presentationData.strings.baseLanguageCode) == .rightToLeft ? .rightToLeft : .leftToRight)
-            .environment(\.colorScheme, self.state.presentationData.theme.overallDarkAppearance ? .dark : .light)
-            .accentColor(Color(self.state.presentationData.theme.rootController.navigationBar.accentTextColor))
             .onPreferenceChange(SGSwiftUITitleKey.self) { [weak navigation = self.navigation] title in
                 if let title, navigation?.controller?.title != title {
                     navigation?.controller?.title = title
@@ -207,6 +223,7 @@ public final class SGSwiftUIController<Content: View>: ViewController, SGSwiftUI
         self.addChild(self.hostingController)
         let hostView = self.hostingController.view!
         hostView.backgroundColor = .clear
+        hostView.tintColor = self.sgPresentationData.theme.rootController.navigationBar.accentTextColor
         // Telegram updates its node's bounds and the child's frame independently during transitions.
         // Autoresizing here would apply the same size delta twice (especially on modal entry).
         hostView.autoresizingMask = []
@@ -269,6 +286,7 @@ public final class SGSwiftUIController<Content: View>: ViewController, SGSwiftUI
         if self.state.presentationData != data { self.state.presentationData = data }
         self.setStatusBarStyle(data.theme.rootController.statusBarStyle.style, animated: false)
         self.hostingController.overrideUserInterfaceStyle = data.theme.overallDarkAppearance ? .dark : .light
+        self.hostingController.viewIfLoaded?.tintColor = data.theme.rootController.navigationBar.accentTextColor
         if self.showsNavigationBar {
             self.setNavigationBarPresentationData(NavigationBarPresentationData(theme: NavigationBarTheme(rootControllerTheme: data.theme), strings: NavigationBarStrings(presentationStrings: data.strings)), animated: false)
         }
