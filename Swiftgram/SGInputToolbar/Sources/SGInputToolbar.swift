@@ -121,13 +121,12 @@ public struct ChatToolbarView: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 8)
         }
-        .background(Color(UIColor.clear))
+        .background(Color.clear)
     }
 }
 
 
-// iOS 13–14 blur fallback
-@available(iOS 13.0, *)
+// UIKit blur for light appearance
 struct BlurView: UIViewRepresentable {
     let style: UIBlurEffect.Style
     func makeUIView(context: Context) -> UIVisualEffectView {
@@ -139,7 +138,6 @@ struct BlurView: UIViewRepresentable {
 }
 
 // Simple glass background (now supports round + adaptive brightness)
-@available(iOS 13.0, *)
 struct Glass: View {
     var cornerRadius: CGFloat?
     @Environment(\.colorScheme) private var colorScheme
@@ -148,26 +146,16 @@ struct Glass: View {
         let isDark = colorScheme == .dark
 
         Group {
-            if #available(iOS 15.0, *) {
+            if !isDark {
+                BlurView(style: .extraLight)
+                    .clipShape(Circle())
+            } else {
                 Circle()
                     .fill(.ultraThinMaterial)
                     .overlay(
                         Circle()
                             .fill(
-                                Color.white.opacity(isDark ? 0.05 : 0.25)
-                            )
-                    )
-            } else {
-                Circle()
-                    .fill(Color.clear)
-                    .background(
-                        BlurView(style: .systemThinMaterial)
-                            .clipShape(Circle())
-                    )
-                    .overlay(
-                        Circle()
-                            .fill(
-                                Color.white.opacity(isDark ? 0.05 : 0.25)
+                                Color.white.opacity(0.02)
                             )
                     )
             }
@@ -176,13 +164,12 @@ struct Glass: View {
             Circle()
                 .stroke(Color.white.opacity(0.25), lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+        .shadow(color: Color.black.opacity(isDark ? 0.12 : 0.04), radius: 6, x: 0, y: 3)
     }
 
 }
 
 // Button style
-@available(iOS 13.0, *)
 struct ToolbarButtonStyle: ButtonStyle {
     var size: CGFloat = 39
 
