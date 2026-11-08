@@ -872,7 +872,9 @@ public final class TabBarComponent: Component {
             let isSystemLayout = component.axis == .horizontal && !component.isCompact && component.usesSystemLayout
             var availableSize = CGSize(width: isSystemLayout ? availableSize.width : min(500.0, availableSize.width), height: availableSize.height) // MARK: Swiftgram
             // MARK: Swiftgram
-            if component.axis == .horizontal && !(SGSimpleSettings.shared.wideTabBar || component.search?.isActive ?? false) {
+            let sgUnreducedAvailableWidth = availableSize.width
+            // Compact layouts already size the bar for the visible items and search button.
+            if component.axis == .horizontal && !component.isCompact && !(SGSimpleSettings.shared.wideTabBar || component.search?.isActive ?? false) {
                 let widthReducer: CGFloat
 
                 switch component.items.count {
@@ -955,6 +957,15 @@ public final class TabBarComponent: Component {
                 )
                 titleWidths.append(itemSize.width)
             }
+
+            // MARK: Swiftgram
+            if isSystemLayout && (1 ... 3).contains(component.items.count) && !SGSimpleSettings.shared.wideTabBar && search?.isActive != true {
+                // Keep the compact width, but never squeeze the tabs below Telegram's content-fitting width.
+                let searchWidth: CGFloat = search == nil ? 0.0 : barHeight + 8.0
+                let nativeTabsWidth = tabBarSystemItemsLayout(fittedItemWidths: titleWidths, availableLength: max(0.0, sgUnreducedAvailableWidth - searchWidth), hasAccessory: false).size.width
+                availableSize.width = min(sgUnreducedAvailableWidth, max(availableSize.width, nativeTabsWidth + searchWidth))
+            }
+            //
 
             var availableLength: CGFloat = availableSize.width
             if search != nil {
