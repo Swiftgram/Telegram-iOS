@@ -22,6 +22,7 @@ import MultiAnimationRenderer
 import ComponentDisplayAdapters
 import GlassBackgroundComponent
 import AnimatedTextComponent
+import SGSimpleSettings
 
 private let titleFont = Font.with(size: 17.0, design: .regular, weight: .semibold, traits: [.monospacedNumbers])
 private let subtitleFont = Font.regular(13.0)
@@ -321,6 +322,11 @@ public final class ChatTitleView: UIView, NavigationBarTitleView {
                                         titleVerifiedIcon = .emojiStatus(PeerEmojiStatus(content: .emoji(fileId: verificationIconFileId), expirationDate: nil))
                                     }
                                 }
+                            }
+                            // MARK: Swiftgram — local user tag rendered next to the title.
+                            if !segments.isEmpty, peerView.peerId != self.context.account.peerId, peerView.peer is TelegramUser, let tag = SGSimpleSettings.shared.userTag(for: peerView.peerId.toInt64()) {
+                                let tagFont = Font.with(size: 11.0, design: .round, weight: .semibold)
+                                segments.append(.text(1000, NSAttributedString(string: "  \(tag)", font: tagFont, textColor: titleTheme.rootController.navigationBar.accentTextColor)))
                             }
                             if peerView.peerId.namespace == Namespaces.Peer.SecretChat {
                                 titleLeftIcon = .lock

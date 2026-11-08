@@ -3340,6 +3340,12 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                         }
                         titleAttributedString = NSAttributedString(string: displayTitle, font: titleFont, textColor: textColor)
                     }
+                    // MARK: Swiftgram — show a locally defined tag as a pill next to the name.
+                    if titleAttributedString != nil, let peerId = itemPeer.chatMainPeer?.id, let tag = SGSimpleSettings.shared.userTag(for: peerId.toInt64()) {
+                        if titleBadgeText == nil {
+                            titleBadgeText = tag
+                        }
+                    }
                 case .group:
                     titleAttributedString = NSAttributedString(string: item.presentationData.strings.ChatList_ArchivedChatsTitle, font: titleFont, textColor: theme.titleColor)
             }
