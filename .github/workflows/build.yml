@@ -45,6 +45,12 @@ jobs:
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
         run: python3 scripts/make_config.py
 
+      - name: Check fake provisioning profile dates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/check_fake_profiles.py
+
       - name: Import fake signing certificates
         run: python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
 
