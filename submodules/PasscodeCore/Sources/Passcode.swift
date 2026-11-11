@@ -14,12 +14,14 @@ public struct PasscodeConfiguration: Equatable, Sendable {
     public let processRole: ProcessRole
     public let biometricKeychainService: String?
     public let keychainScope: String?
+    public let usesPrivateStorage: Bool
 
-    public init(appGroupIdentifier: String, processRole: ProcessRole, biometricKeychainService: String? = nil, keychainScope: String? = nil) {
+    public init(appGroupIdentifier: String, processRole: ProcessRole, biometricKeychainService: String? = nil, keychainScope: String? = nil, usesPrivateStorage: Bool = false) {
         self.appGroupIdentifier = appGroupIdentifier
         self.processRole = processRole
         self.biometricKeychainService = biometricKeychainService
         self.keychainScope = keychainScope
+        self.usesPrivateStorage = usesPrivateStorage
     }
 }
 
@@ -52,6 +54,7 @@ public final class PasscodeEnvironment: @unchecked Sendable {
             return
         }
         guard configuration.processRole != .mainApp || privateAccessGroup != nil else { throw PasscodeError.unavailable }
+        guard !configuration.usesPrivateStorage || configuration.processRole == .mainApp else { throw PasscodeError.unavailable }
         self.configuration = configuration
         self.resolvePrivateAccessGroup = privateAccessGroup
     }
@@ -61,6 +64,16 @@ public final class PasscodeEnvironment: @unchecked Sendable {
         defer { self.mutex.unlock() }
         guard let scope = self.configuration?.keychainScope, !scope.isEmpty else { return nil }
         return scope
+    }
+
+    var usesPrivateStorage: Bool {
+        self.mutex.lock()
+        defer { self.mutex.unlock() }
+        return self.configuration?.usesPrivateStorage == true
+    }
+
+    public func scopedKeychainService(_ service: String) -> String {
+        return self.usesPrivateStorage ? "org.eblogram.standalone." + service : service
     }
 
     public var isMainApp: Bool {
@@ -124,7 +137,11 @@ final class PasscodeKeychain: PasscodeStorage {
             kSecAttrSynchronizable as String: false
         ]
         #if !os(macOS)
-        query[kSecAttrAccessGroup as String] = try account.hasPrefix("biometric.") ? self.environment.privateAccessGroup() : self.environment.sharedAccessGroup()
+        if self.environment.usesPrivateStorage || account.hasPrefix("biometric.") {
+            query[kSecAttrAccessGroup as String] = try self.environment.privateAccessGroup()
+        } else {
+            query[kSecAttrAccessGroup as String] = try self.environment.sharedAccessGroup()
+        }
         #endif
         return query
     }
@@ -134,7 +151,7 @@ final class PasscodeKeychain: PasscodeStorage {
         #if os(macOS)
         return PasscodeKeychainScope.service(service, environment: self.environment)
         #else
-        return service
+        return self.environment.scopedKeychainService(service)
         #endif
     }
 

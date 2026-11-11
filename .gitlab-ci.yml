@@ -22,11 +22,11 @@ internal:
     - export PATH=/opt/homebrew/opt/ruby/bin:$PATH                                  
     - export PATH=`gem environment gemdir`/bin:$PATH
     - python3 -u build-system/Make/Make.py vm-build --waitForLock --cacheHost="$TELEGRAM_BAZEL_CACHE_HOST" --configurationPath="build-system/appcenter-configuration.json" --gitCodesigningRepository="$TELEGRAM_GIT_CODESIGNING_REPOSITORY" --gitCodesigningType=adhoc --configuration=release_arm64 --embedWatchApp --watchApiId="$TELEGRAM_WATCHOS_APP_ID" --watchApiHash="$TELEGRAM_WATCHOS_APP_HASH"
-    - python3 -u build-system/Make/DeployBuild.py --configuration="$TELEGRAM_PRIVATE_DATA_PATH/deploy-configurations/internal-configuration.json" --ipa="build/artifacts/Telegram.ipa" --dsyms="build/artifacts/Telegram.DSYMs.zip"
+    - python3 -u build-system/Make/DeployBuild.py --configuration="$TELEGRAM_PRIVATE_DATA_PATH/deploy-configurations/internal-configuration.json" --ipa="build/artifacts/Eblogram.ipa" --dsyms="build/artifacts/Eblogram.DSYMs.zip"
     - rm -rf build-input/configuration-repository-workdir
     - rm -rf build-input/configuration-repository
     - python3 -u build-system/Make/Make.py vm-build --waitForLock --cacheHost="$TELEGRAM_BAZEL_CACHE_HOST" --configurationPath="$TELEGRAM_PRIVATE_DATA_PATH/build-configurations/enterprise-configuration.json" --gitCodesigningRepository="$TELEGRAM_GIT_CODESIGNING_REPOSITORY" --gitCodesigningType=enterprise --configuration=release_arm64 --embedWatchApp --watchApiId="$TELEGRAM_WATCHOS_APP_ID" --watchApiHash="$TELEGRAM_WATCHOS_APP_HASH"
-    - python3 -u build-system/Make/DeployBuild.py --configuration="$TELEGRAM_PRIVATE_DATA_PATH/deploy-configurations/enterprise-configuration.json" --ipa="build/artifacts/Telegram.ipa" --dsyms="build/artifacts/Telegram.DSYMs.zip"
+    - python3 -u build-system/Make/DeployBuild.py --configuration="$TELEGRAM_PRIVATE_DATA_PATH/deploy-configurations/enterprise-configuration.json" --ipa="build/artifacts/Eblogram.ipa" --dsyms="build/artifacts/Eblogram.DSYMs.zip"
   environment:
     name: internal
 
@@ -40,7 +40,7 @@ internal_testflight:
     - tags
   script:
     - python3 -u build-system/Make/Make.py vm-build --waitForLock --cacheHost="$TELEGRAM_BAZEL_CACHE_HOST" --configurationPath="build-system/appstore-configuration.json" --gitCodesigningRepository="$TELEGRAM_GIT_CODESIGNING_REPOSITORY" --gitCodesigningType=appstore --configuration=release_arm64 --embedWatchApp --watchApiId="$TELEGRAM_WATCHOS_APP_ID" --watchApiHash="$TELEGRAM_WATCHOS_APP_HASH"
-    - python3 -u build-system/Make/Make.py vm-deploy-testflight --waitForLock --ipa="build/artifacts/Telegram.ipa"
+    - python3 -u build-system/Make/Make.py vm-deploy-testflight --waitForLock --ipa="build/artifacts/Eblogram.ipa"
   environment:
     name: testflight_llc
   artifacts:
@@ -63,7 +63,7 @@ appstore_development:
     name: appstore-development
   artifacts:
     paths:
-      - build/artifacts/Telegram.DSYMs.zip
+      - build/artifacts/Eblogram.DSYMs.zip
     expire_in: 1 week
 
 experimental_i:
@@ -78,12 +78,12 @@ experimental_i:
     - export PATH=/opt/homebrew/opt/ruby/bin:$PATH                                  
     - export PATH=`gem environment gemdir`/bin:$PATH
     - python3 -u build-system/Make/Make.py vm-build --waitForLock --cacheHost="$TELEGRAM_BAZEL_CACHE_HOST" --configurationPath="build-system/appcenter-configuration.json" --gitCodesigningRepository="$TELEGRAM_GIT_CODESIGNING_REPOSITORY" --gitCodesigningType=adhoc --configuration=release_arm64
-    - python3 -u build-system/Make/Make.py vm-deploy-testflight --waitForLock --ipa="build/artifacts/Telegram.ipa"
+    - python3 -u build-system/Make/Make.py vm-deploy-testflight --waitForLock --ipa="build/artifacts/Eblogram.ipa"
   environment:
     name: experimental
   artifacts:
     paths:
-      - build/artifacts/Telegram.DSYMs.zip
+      - build/artifacts/Eblogram.DSYMs.zip
     expire_in: 1 week
 
 experimental:
@@ -100,7 +100,7 @@ experimental:
     name: experimental-2
   artifacts:
     paths:
-      - build/artifacts/Telegram.DSYMs.zip
+      - build/artifacts/Eblogram.DSYMs.zip
     expire_in: 1 week
 
 beta_testflight:
@@ -133,7 +133,7 @@ deploy_beta_testflight:
   except:
     - tags
   script:
-    - python3 -u build-system/Make/Make.py vm-deploy-testflight --waitForLock --ipa="build/artifacts/Telegram.ipa"
+    - python3 -u build-system/Make/Make.py vm-deploy-testflight --waitForLock --ipa="build/artifacts/Eblogram.ipa"
   environment:
     name: testflight_llc
 
@@ -147,10 +147,10 @@ verifysanity_beta_testflight:
   except:
     - tags
   script:
-    - rm -rf build/verify-input && mkdir -p build/verify-input && mv build/artifacts/Telegram.ipa build/verify-input/TelegramVerifySource.ipa
+    - rm -rf build/verify-input && mkdir -p build/verify-input && mv build/artifacts/Eblogram.ipa build/verify-input/TelegramVerifySource.ipa
     - python3 -u build-system/Make/Make.py vm-build --waitForLock --cacheHost="$TELEGRAM_BAZEL_CACHE_HOST" --configurationPath="build-system/appstore-configuration.json" --codesigningInformationPath=build-system/fake-codesigning --configuration=release_arm64
-    - python3 -u build-system/Make/Make.py vm-ipa-diff --waitForLock --ipa1="build/artifacts/Telegram.ipa" --ipa2="build/verify-input/TelegramVerifySource.ipa"
-    - if [ $? -ne 0 ]; then echo "Verification failed"; mkdir -p build/verifysanity_artifacts; cp build/artifacts/Telegram.ipa build/verifysanity_artifacts/; exit 1; fi
+    - python3 -u build-system/Make/Make.py vm-ipa-diff --waitForLock --ipa1="build/artifacts/Eblogram.ipa" --ipa2="build/verify-input/TelegramVerifySource.ipa"
+    - if [ $? -ne 0 ]; then echo "Verification failed"; mkdir -p build/verifysanity_artifacts; cp build/artifacts/Eblogram.ipa build/verifysanity_artifacts/; exit 1; fi
   environment:
     name: testflight_llc
   artifacts:
@@ -169,10 +169,10 @@ verify_beta_testflight:
   except:
     - tags
   script:
-    - rm -rf build/verify-input && mkdir -p build/verify-input && mv build/artifacts/Telegram.ipa build/verify-input/TelegramVerifySource.ipa
+    - rm -rf build/verify-input && mkdir -p build/verify-input && mv build/artifacts/Eblogram.ipa build/verify-input/TelegramVerifySource.ipa
     - python3 -u build-system/Make/Make.py vm-build --waitForLock --configurationPath="build-system/appstore-configuration.json" --codesigningInformationPath=build-system/fake-codesigning --configuration=release_arm64
-    - python3 -u build-system/Make/Make.py vm-ipa-diff --waitForLock --ipa1="build/artifacts/Telegram.ipa" --ipa2="build/verify-input/TelegramVerifySource.ipa"
-    - if [ $? -ne 0 ]; then echo "Verification failed"; mkdir -p build/verify_artifacts; cp build/artifacts/Telegram.ipa build/verify_artifacts/; exit 1; fi
+    - python3 -u build-system/Make/Make.py vm-ipa-diff --waitForLock --ipa1="build/artifacts/Eblogram.ipa" --ipa2="build/verify-input/TelegramVerifySource.ipa"
+    - if [ $? -ne 0 ]; then echo "Verification failed"; mkdir -p build/verify_artifacts; cp build/artifacts/Eblogram.ipa build/verify_artifacts/; exit 1; fi
   environment:
     name: testflight_llc
   artifacts:

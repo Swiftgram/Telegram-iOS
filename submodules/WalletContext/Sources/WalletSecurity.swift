@@ -99,7 +99,7 @@ enum WalletVault {
         #if os(macOS)
         return PasscodeKeychainScope.service(self.unscopedServicePrefix, environment: environment)
         #else
-        return self.unscopedServicePrefix
+        return environment.scopedKeychainService(self.unscopedServicePrefix)
         #endif
     }
 

@@ -59,6 +59,8 @@ load("//build-system/bazel-utils:plist_fragment.bzl",
 load(
     "@build_configuration//:variables.bzl",
     "telegram_bazel_path",
+    "telegram_app_specific_url_scheme",
+    "eblogram_standalone",
     "telegram_use_xcode_managed_codesigning",
     "telegram_bundle_id",
     "telegram_aps_environment",
@@ -459,11 +461,13 @@ plist_fragment(
             <key>CFBundleURLSchemes</key>
             <array>
                 <string>sg</string>
+                {fork_url_scheme}
             </array>
         </dict>
     </array>
     """.format(
         telegram_bundle_id = telegram_bundle_id,
+        fork_url_scheme = "<string>eblogram</string>" if telegram_app_specific_url_scheme == "eblogram" else "",
     )
 )
 #
@@ -572,12 +576,12 @@ app_groups_fragment = """
     <array>
         <string>group.{telegram_bundle_id}</string>
     </array>
+""".format(telegram_bundle_id = telegram_bundle_id)
+
+application_identifier_fragment = """
     <key>application-identifier</key>
     <string>{telegram_team_id}.{telegram_bundle_id}</string>
-""".format(
-    telegram_team_id=telegram_team_id,
-    telegram_bundle_id=telegram_bundle_id
-)
+""".format(telegram_team_id = telegram_team_id, telegram_bundle_id = telegram_bundle_id)
 
 official_communication_notifications_fragment = """
 <key>com.apple.developer.usernotifications.communication</key>
@@ -608,7 +612,8 @@ background_gpu_fragment = official_background_gpu_fragment if telegram_bundle_id
 plist_fragment(
     name = "TelegramEntitlements",
     extension = "entitlements",
-    template = "".join([
+    template = application_identifier_fragment if eblogram_standalone else "".join([
+        application_identifier_fragment,
         aps_fragment,
         app_groups_fragment,
         siri_fragment,
@@ -662,7 +667,7 @@ plist_fragment(
     template =
     """
     <key>CFBundleDisplayName</key>
-    <string>Swiftgram</string>
+    <string>Eblogram</string>
     """
 )
 #
@@ -1063,7 +1068,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.Share</string>
     <key>CFBundleName</key>
-    <string>Swiftgram</string>
+    <string>Eblogram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1170,7 +1175,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.NotificationContent</string>
     <key>CFBundleName</key>
-    <string>Swiftgram</string>
+    <string>Eblogram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1280,7 +1285,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.Widget</string>
     <key>CFBundleName</key>
-    <string>Swiftgram</string>
+    <string>Eblogram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1399,7 +1404,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.SiriIntents</string>
     <key>CFBundleName</key>
-    <string>Swiftgram</string>
+    <string>Eblogram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1565,9 +1570,9 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.SGActionRequestHandler</string>
     <key>CFBundleName</key>
-    <string>Swiftgram</string>
+    <string>Eblogram</string>
     <key>CFBundleDisplayName</key>
-    <string>Open in Swiftgram</string>
+    <string>Open in Eblogram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
 	<key>NSExtension</key>
@@ -1705,7 +1710,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.BroadcastUpload</string>
     <key>CFBundleName</key>
-    <string>Swiftgram</string>
+    <string>Eblogram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1801,7 +1806,7 @@ plist_fragment(
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}.NotificationService</string>
     <key>CFBundleName</key>
-    <string>Swiftgram</string>
+    <string>Eblogram</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
     <key>NSExtension</key>
@@ -1872,11 +1877,13 @@ plist_fragment(
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
-    <string>Swiftgram</string>
+    <string>Eblogram</string>
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}</string>
     <key>CFBundleName</key>
-    <string>Swiftgram</string>
+    <string>Eblogram</string>
+    <key>EblogramStandalone</key>
+    <{standalone}/>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
@@ -2051,6 +2058,7 @@ plist_fragment(
     <true/>
     """.format(
         telegram_bundle_id = telegram_bundle_id,
+        standalone = "true" if eblogram_standalone else "false",
     )
 )
 #
@@ -2081,7 +2089,7 @@ apple_prebuilt_watchos_application(
 )
 
 ios_application(
-    name = "Swiftgram", # MARK: Swiftgram
+    name = "Eblogram",
     bundle_id = "{telegram_bundle_id}".format(
         telegram_bundle_id = telegram_bundle_id,
     ),
@@ -2119,7 +2127,7 @@ ios_application(
     ],
     # MARK: Swiftgram
     settings_bundle = "//Swiftgram/SGSettingsBundle:SGSettingsBundle",
-    extensions = select({
+    extensions = [] if eblogram_standalone else select({
         ":disableExtensionsSetting": [],
         "//conditions:default": [
             # ":SGActionRequestHandler", # UX sucks https://t.me/swiftgramchat/7335 # MARK: Swiftgram
@@ -2134,7 +2142,7 @@ ios_application(
     # Embed the in-repo tgwatch watch app (Telegram/WatchApp) under Watch/ only when
     # --//Telegram:embedWatchApp is set (Make.py sets it for device configs when
     # --embedWatchApp is passed). Off by default, so simulator/dev builds are unaffected.
-    watch_application = select({
+    watch_application = None if eblogram_standalone else select({
         ":embedWatchAppSetting": ":SwiftgramWatchApp", # MARK: Swiftgram
         "//conditions:default": None,
     }),
@@ -2145,14 +2153,20 @@ ios_application(
     visibility = ["//visibility:public"],
 )
 
+alias(
+    name = "Swiftgram",
+    actual = ":Eblogram",
+    visibility = ["//visibility:public"],
+)
+
 xcodeproj(
     name = "Telegram_xcodeproj",
     bazel_path = telegram_bazel_path,
     bazel_env = {"LANG": "en_US.UTF-8","PATH": "/opt/homebrew/bin:/usr/local/bin:/bin:/usr/bin"}, # MARK: Swiftgram, otherwise Bazel through xcode does not see ccache
-    project_name = "Swiftgram", # MARK: Swiftgram
+    project_name = "Eblogram",
     tags = ["manual"],
     top_level_targets = [
-        top_level_target(":Swiftgram", target_environments = ["device", "simulator"]), # MARK: Swiftgram
+        top_level_target(":Eblogram", target_environments = ["device", "simulator"]),
         ":iOSAppUITestSuite",
     ],
     xcode_configurations = {
@@ -2194,7 +2208,7 @@ ios_ui_test_suite(
         ":iPhone-17__26.2",
     ],
     tags = ["manual"],
-    test_host = "//Telegram:Swiftgram", # MARK: Swiftgram
+    test_host = "//Telegram:Eblogram",
     visibility = ["@rules_xcodeproj//xcodeproj:generated"],
     deps = [":iOSAppUITestSuite.library"],
 )

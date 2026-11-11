@@ -16,7 +16,9 @@ import UIKit
         guard session.role == .windowApplication, let windowScene = scene as? UIWindowScene else {
             return
         }
+        NSLog("[EblogramStartup] scene.willConnect")
         guard let appDelegate = self.appDelegate else {
+            NSLog("[EblogramStartup] scene.appDelegateMissing")
             return
         }
         self.isPrimaryScene = true

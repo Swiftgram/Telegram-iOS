@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create a Swiftgram development/unsigned-IPA config from GitHub Secrets.
+"""Create an Eblogram sideload IPA config from GitHub Secrets.
 
 Never print API hash or embed any credentials in a committed file.
 """
@@ -10,7 +10,10 @@ from pathlib import Path
 
 api_id = os.environ.get('TELEGRAM_API_ID', '').strip()
 api_hash = os.environ.get('TELEGRAM_API_HASH', '').strip()
-if not api_id.isdigit() or int(api_id) <= 0:
+variant = os.environ.get('EBLOGRAM_VARIANT', 'standalone')
+if variant not in {'standalone', 'full'}:
+    raise SystemExit('EBLOGRAM_VARIANT must be standalone or full')
+if not re.fullmatch(r'[0-9]{1,10}', api_id) or not 0 < int(api_id) <= 2_147_483_647:
     raise SystemExit('Set TELEGRAM_API_ID in GitHub Settings > Secrets and variables > Actions')
 if not re.fullmatch(r'[0-9a-fA-F]{32}', api_hash):
     raise SystemExit('Set TELEGRAM_API_HASH (32 hex chars) in GitHub Actions secrets')
@@ -20,14 +23,15 @@ if not re.fullmatch(r'[0-9a-fA-F]{32}', api_hash):
 # This is NOT an Apple distribution certificate and is NOT suitable for TestFlight.
 config = {
     'bundle_id': 'ph.telegra.Telegraph',
-    'api_id': api_id,
+    'api_id': str(int(api_id)),
     'api_hash': api_hash,
     'team_id': 'C67CF9S4VU',
     'app_center_id': '0',
     'is_internal_build': 'true',
     'is_appstore_build': 'false',
     'appstore_id': '0',
-    'app_specific_url_scheme': 'tg',
+    'app_specific_url_scheme': 'eblogram',
+    'eblogram_standalone': variant == 'standalone',
     'premium_iap_product_id': '',
     'enable_siri': False,
     'enable_icloud': False,

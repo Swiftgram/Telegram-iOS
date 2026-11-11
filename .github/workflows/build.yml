@@ -1,13 +1,21 @@
-name: Build Swiftgram Fork (Local Features IPA)
+name: Build Eblogram IPA
 
 on:
   workflow_dispatch:
+    inputs:
+      variant:
+        description: Standalone for Sideloadly, or full with App Group extensions
+        type: choice
+        default: standalone
+        options:
+          - standalone
+          - full
 
 permissions:
   contents: read
 
 concurrency:
-  group: swiftgram-fork-${{ github.ref }}
+  group: eblogram-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -43,6 +51,7 @@ jobs:
         env:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+          EBLOGRAM_VARIANT: ${{ inputs.variant }}
         run: python3 scripts/make_config.py
 
       - name: Check fake provisioning profile dates
@@ -66,12 +75,15 @@ jobs:
             --configuration=release_arm64 \
             --buildNumber="${GITHUB_RUN_NUMBER}" \
             --outputBuildArtifactsPath=build/artifacts
-          test -s build/artifacts/Swiftgram.ipa
+      - name: Check IPA layout before re-signing
+        env:
+          EBLOGRAM_VARIANT: ${{ inputs.variant }}
+        run: python3 scripts/check_eblogram_ipa.py build/artifacts/Eblogram.ipa --variant "$EBLOGRAM_VARIANT"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Swiftgram-Fork-LocalFeatures-IPA
-          path: build/artifacts/Swiftgram.ipa
+          name: Eblogram-${{ inputs.variant }}-IPA
+          path: build/artifacts/Eblogram.ipa
           if-no-files-found: error
           retention-days: 7

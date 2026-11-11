@@ -121,7 +121,7 @@ actor WalletEngineStorage {
         #if os(macOS)
         return PasscodeKeychainScope.service(service)
         #else
-        return service
+        return PasscodeEnvironment.shared.scopedKeychainService(service)
         #endif
     }
 

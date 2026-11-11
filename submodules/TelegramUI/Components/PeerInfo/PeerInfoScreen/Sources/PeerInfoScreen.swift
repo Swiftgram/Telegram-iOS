@@ -7356,7 +7356,7 @@ public final class PeerInfoScreenImpl: ViewController, PeerInfoScreen, KeyShortc
 
         // MARK: Swiftgram
         #if DEBUG
-        items.append(.action(ContextMenuActionItem(text: "Swiftgram Debug", icon: { theme in
+        items.append(.action(ContextMenuActionItem(text: "Eblogram Debug", icon: { theme in
             return generateTintedImage(image: nil, color: theme.contextMenu.primaryColor)
         }, action: { [weak self] _, f in
             guard let self = self else {
@@ -7770,7 +7770,7 @@ extension PeerInfoScreenImpl {
 
         // MARK: Swiftgram
         #if DEBUG
-        items.append(.action(ContextMenuActionItem(text: "Swiftgram Debug", icon: { theme in
+        items.append(.action(ContextMenuActionItem(text: "Eblogram Debug", icon: { theme in
             return generateTintedImage(image: nil, color: theme.contextMenu.primaryColor)
         }, action: { [weak self] _, f in
             guard let self = self else {

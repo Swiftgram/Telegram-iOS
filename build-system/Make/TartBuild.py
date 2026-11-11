@@ -1137,11 +1137,11 @@ def remote_build_tart(macos_version, bazel_cache_host, configuration, build_inpu
             shutil.rmtree(artifacts_path)
         session.download_directory(remote_path='/Users/Shared/telegram-ios/build/artifacts', local_path=artifacts_path)
 
-        if os.path.exists(artifacts_path + '/Telegram.ipa'):
+        if os.path.exists(artifacts_path + '/Eblogram.ipa'):
             print('Artifacts have been stored at {}'.format(artifacts_path))
             sys.exit(0)
         else:
-            print('Telegram.ipa not found')
+            print('Eblogram.ipa not found')
             sys.exit(1)
 
 

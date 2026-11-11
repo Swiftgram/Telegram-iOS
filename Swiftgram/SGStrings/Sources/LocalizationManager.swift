@@ -38,7 +38,11 @@ public class SGLocalizationManager {
     public func localizedString(_ key: String, _ locale: String = SGFallbackLocale, args: CVarArg...) -> String {
         let sanitizedLocale = self.sanitizeLocale(locale)
         
-        if let localizedString = findLocalizedString(forKey: key, inLocale: sanitizedLocale) {
+        if var localizedString = findLocalizedString(forKey: key, inLocale: sanitizedLocale) {
+            // The upstream translation feed also contains attribution and its own subscription terms.
+            if !key.hasPrefix("PayWall.About.") && !key.hasPrefix("PayWall.Notice.") {
+                localizedString = localizedString.replacingOccurrences(of: "Swiftgram", with: "Eblogram")
+            }
             if args.isEmpty {
                 return String(format: localizedString)
             } else {

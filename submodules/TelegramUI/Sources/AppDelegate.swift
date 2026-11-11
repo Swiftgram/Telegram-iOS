@@ -365,6 +365,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     private var recaptchaClientsBySiteKey: [String: Promise<RecaptchaClient>] = [:]
         
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        NSLog("[EblogramStartup] delegate.didFinish.entered")
         precondition(!testIsLaunched)
         testIsLaunched = true
         CrashReportCollector.shared.start()
@@ -464,11 +465,55 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         }
         self.window = window
         self.nativeWindow = window
-        // MARK: Swiftgram
-        if sgHardReset(present: self.mainWindow?.presentNative, beforePresent: { self.window?.makeKeyAndVisible() }) {
+        NSLog("[EblogramStartup] window.created")
+
+        guard let baseAppBundleId = Bundle.main.bundleIdentifier else {
+            NSLog("[EblogramStartup] configuration.bundleIdentifierMissing")
+            self.showStartupError("The application bundle identifier is missing.")
             return true
         }
-        //
+        let appGroupName = "group.\(baseAppBundleId)"
+        let standalone = Bundle.main.object(forInfoDictionaryKey: "EblogramStandalone") as? Bool == true
+        let containerUrl: URL
+        if standalone {
+            do {
+                containerUrl = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+                    .appendingPathComponent("Eblogram", isDirectory: true)
+                try FileManager.default.createDirectory(at: containerUrl, withIntermediateDirectories: true)
+            } catch {
+                NSLog("[EblogramStartup] storage.privateUnavailable")
+                self.showStartupError("The application could not open its local storage.")
+                return true
+            }
+            NSLog("[EblogramStartup] storage.privateReady")
+        } else if let groupUrl = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupName) {
+            containerUrl = groupUrl
+            NSLog("[EblogramStartup] storage.appGroupReady")
+        } else {
+            NSLog("[EblogramStartup] storage.appGroupUnavailable")
+            self.showStartupError("This build requires access to its App Group. Use the standalone build for Sideloadly.")
+            return true
+        }
+
+        do {
+            try PasscodeEnvironment.shared.configure(
+                PasscodeConfiguration(appGroupIdentifier: appGroupName, processRole: .mainApp, biometricKeychainService: walletBiometricKeychainService, usesPrivateStorage: standalone),
+                privateAccessGroup: { BuildConfig.keychainAccessGroup(baseAppBundleId: baseAppBundleId) }
+            )
+            if standalone {
+                _ = try PasscodeEnvironment.shared.privateAccessGroup()
+            }
+        } catch {
+            NSLog("[EblogramStartup] storage.keychainConfigurationFailed")
+            self.showStartupError("The application could not configure its keychain. Check how the IPA was signed.")
+            return true
+        }
+        NSLog("[EblogramStartup] storage.keychainConfigured")
+
+        if sgHardReset(dataPath: rootPathForBasePath(containerUrl.path), present: self.mainWindow?.presentNative, beforePresent: { self.window?.makeKeyAndVisible() }) {
+            NSLog("[EblogramStartup] storage.resetRequested")
+            return true
+        }
         
         hostView.containerView.layer.addSublayer(MetalEngine.shared.rootLayer)
         // On the first start after an update, compile the pipelines that would otherwise stall their first use.
@@ -587,19 +632,13 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         
         let appVersion = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "unknown"
         
-        let baseAppBundleId = Bundle.main.bundleIdentifier!
-        let appGroupName = "group.\(baseAppBundleId)"
-        try! PasscodeEnvironment.shared.configure(PasscodeConfiguration(appGroupIdentifier: appGroupName, processRole: .mainApp, biometricKeychainService: walletBiometricKeychainService), privateAccessGroup: {
-            BuildConfig.keychainAccessGroup(baseAppBundleId: baseAppBundleId)
-        })
-        let maybeAppGroupUrl = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupName)
-        
         let buildConfig = BuildConfig(baseAppBundleId: baseAppBundleId)
         self.buildConfig = buildConfig
         let signatureDict = BuildConfigExtra.signatureDict()
         
         let apiId: Int32 = buildConfig.apiId
         let apiHash: String = buildConfig.apiHash
+        NSLog("[EblogramStartup] configuration.loaded")
         let languagesCategory = "ios"
         
         let autolockDeadine: Signal<Int32?, NoError>
@@ -715,11 +754,6 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             networkEngineFactory: RustNetworkEngineFactory()
         )
         
-        guard let appGroupUrl = maybeAppGroupUrl else {
-            self.mainWindow?.presentNative(UIAlertController(title: nil, message: "Error 2", preferredStyle: .alert))
-            return true
-        }
-        
         var isDebugConfiguration = false
         #if DEBUG
         isDebugConfiguration = true
@@ -739,14 +773,14 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
 
         let rootPath: String
         if isUITest {
-            let testDataPath = appGroupUrl.path + "/telegram-ui-tests-data"
+            let testDataPath = containerUrl.path + "/telegram-ui-tests-data"
             let _ = try? FileManager.default.removeItem(atPath: testDataPath)
             rootPath = rootPathForBasePath(testDataPath)
         } else {
-            rootPath = rootPathForBasePath(appGroupUrl.path)
+            rootPath = rootPathForBasePath(containerUrl.path)
         }
         if !isUITest {
-            performAppGroupUpgrades(appGroupPath: appGroupUrl.path, rootPath: rootPath)
+            performAppGroupUpgrades(appGroupPath: containerUrl.path, rootPath: rootPath)
         }
         
         let deviceSpecificEncryptionParameters = BuildConfig.deviceSpecificEncryptionParameters(rootPath, baseAppBundleId: baseAppBundleId)
@@ -779,15 +813,13 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         }
         
         if !writeAbilityTestSuccess {
-            let alertController = UIAlertController(title: nil, message: "The device does not have sufficient free space.", preferredStyle: .alert)
-            alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: { _ in
-                preconditionFailure()
-            }))
-            self.mainWindow?.presentNative(alertController)
+            NSLog("[EblogramStartup] storage.writeFailed")
+            self.showStartupError("The application could not write to its storage. Check the available space.")
             
             return true
         }
         
+        NSLog("[EblogramStartup] storage.writeReady")
         let legacyLogs: [String] = [
             "broadcast-logs",
             "siri-logs",
@@ -802,6 +834,11 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         let logsPath = rootPath + "/logs/app-logs"
         let _ = try? FileManager.default.createDirectory(atPath: logsPath, withIntermediateDirectories: true, attributes: nil)
         Logger.setSharedLogger(Logger(rootPath: rootPath, basePath: logsPath))
+        if standalone {
+            let forkLogsPath = rootPath + SGLogger.sgLogsPath
+            try? FileManager.default.createDirectory(atPath: forkLogsPath, withIntermediateDirectories: true)
+            SGLogger.setSharedLogger(SGLogger(rootPath: rootPath, basePath: forkLogsPath))
+        }
 
         setManagedAudioSessionLogger({ s in
             Logger.shared.log("ManagedAudioSession", s)
@@ -866,7 +903,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             |> distinctUntilChanged
         )
         
-        let applicationBindings = TelegramApplicationBindings(isMainApp: true, appBundleId: baseAppBundleId, appBuildType: buildConfig.isAppStoreBuild ? .public : .internal, containerPath: appGroupUrl.path, appSpecificScheme: buildConfig.appSpecificUrlScheme, openUrl: { url in
+        let applicationBindings = TelegramApplicationBindings(isMainApp: true, appBundleId: baseAppBundleId, appBuildType: buildConfig.isAppStoreBuild ? .public : .internal, containerPath: containerUrl.path, appSpecificScheme: buildConfig.appSpecificUrlScheme, openUrl: { url in
             var parsedUrl = URL(string: url)
             if let parsed = parsedUrl {
                 if parsed.scheme == nil || parsed.scheme!.isEmpty {
@@ -1107,10 +1144,12 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             }
         })
         
+        NSLog("[EblogramStartup] accounts.opening")
         let accountManager: AccountManager<TelegramAccountManagerTypes> = setupAccountManager(basePath: rootPath + "/accounts-metadata", isTemporary: false, isReadOnly: false, useCaches: true, removeDatabaseOnError: true, resetLocalSecrets: {
             try resetWalletLocalSecrets()
         })
         self.accountManager = accountManager
+        NSLog("[EblogramStartup] accounts.opened")
 
         telegramUIDeclareEncodables()
         initializeAccountManagement()
@@ -1178,7 +1217,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         |> mapToSignal { [self] accountManager, initialPresentationDataAndSettings -> Signal<(SharedApplicationContext, LoggingSettings), NoError> in
             self.mainWindow?.hostView.containerView.backgroundColor =  initialPresentationDataAndSettings.presentationData.theme.chatList.backgroundColor
             
-            let legacyBasePath = appGroupUrl.path
+            let legacyBasePath = containerUrl.path
             
             let presentationDataPromise = Promise<PresentationData>()
             let appLockContext = AppLockContextImpl(rootPath: rootPath, window: self.mainWindow!, rootController: self.window?.rootViewController, applicationBindings: applicationBindings, accountManager: accountManager, presentationDataSignal: presentationDataPromise.get(), lockIconInitialFrame: {
@@ -1323,6 +1362,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         }
         self.sharedContextPromise.set(sharedContextSignal
         |> mapToSignal { sharedApplicationContext, loggingSettings -> Signal<SharedApplicationContext, NoError> in
+            NSLog("[EblogramStartup] accounts.contextReady")
             Logger.shared.logToFile = loggingSettings.logToFile
             Logger.shared.logToConsole = loggingSettings.logToConsole
             Logger.shared.redactSensitiveData = loggingSettings.redactSensitiveData
@@ -1472,6 +1512,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
 
                     self.mainWindow.debugAction = nil
                     self.mainWindow.viewController = context.rootController
+                    NSLog("[EblogramStartup] interface.accountPresented")
                     
                     if firstTime {
                         let layer = context.rootController.view.layer
@@ -1579,6 +1620,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                 |> deliverOnMainQueue).start(next: { _ in
                     progressDisposable.dispose()
                     self.mainWindow.present(context.rootController, on: .root)
+                    NSLog("[EblogramStartup] interface.loginPresented")
                 }))
             } else {
                 authContextReadyDisposable.set(nil)
@@ -1847,9 +1889,33 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             }
         })
                 
+        NSLog("[EblogramStartup] delegate.didFinish.returned")
         return true
     }
-    
+
+    private func showStartupError(_ message: String) {
+        let controller = UIViewController()
+        controller.view.backgroundColor = .systemBackground
+
+        let label = UILabel()
+        label.text = "Eblogram\n\n" + message
+        label.textColor = .label
+        label.font = .preferredFont(forTextStyle: .body)
+        label.adjustsFontForContentSizeCategory = true
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        controller.view.addSubview(label)
+
+        let layout = controller.view.layoutMarginsGuide
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: layout.leadingAnchor),
+            label.trailingAnchor.constraint(equalTo: layout.trailingAnchor),
+            label.centerYAnchor.constraint(equalTo: layout.centerYAnchor),
+        ])
+        self.window?.rootViewController = controller
+    }
+
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
         let configuration = UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
         // Only the application-role scene owns the app's window and drives app-wide life-cycle
@@ -1887,6 +1953,11 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
 
         self.mainWindow?.updateDeviceMetrics()
         self.window?.makeKeyAndVisible()
+        if let window = self.window, window.windowScene === scene, window.rootViewController != nil, !window.isHidden {
+            NSLog("[EblogramStartup] scene.windowVisible")
+        } else {
+            NSLog("[EblogramStartup] scene.windowUnavailable")
+        }
 
         for context in connectionOptions.urlContexts {
             let url = context.url
