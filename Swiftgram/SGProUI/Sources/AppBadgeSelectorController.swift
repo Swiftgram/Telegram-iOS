@@ -74,7 +74,7 @@ struct AppBadgeSettingsView: View {
     private func onSelectBadge(_ badge: AppBadge) {
         self.selectedBadge = badge
         let image = UIImage(bundleImageName: selectedBadge.assetName) ?? UIImage(bundleImageName: "Components/AppBadge")
-        if self.context.sharedContext.immediateSGStatus.status > 1 {
+        if self.context.sharedContext.immediateSGStatus.localFeaturesEnabled {
             DispatchQueue.main.async {
                 SGSimpleSettings.shared.customAppBadge = selectedBadge.assetName
                 self.context.sharedContext.mainWindow?.badgeView.image = image

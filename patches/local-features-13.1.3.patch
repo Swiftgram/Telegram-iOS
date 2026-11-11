@@ -1,0 +1,119 @@
+--- a/Swiftgram/SGStatus/Sources/SGStatus.swift
++++ b/Swiftgram/SGStatus/Sources/SGStatus.swift
+@@ -3,8 +3,14 @@
+ import TelegramCore
+ 
+ public struct SGStatus: Equatable, Codable {
+     public var status: Int64
++
++    // Independent fork: local, on-device features are available to everyone.
++    // Keep `status` unchanged; it represents the server-issued subscription state.
++    public var localFeaturesEnabled: Bool {
++        return true
++    }
+     
+     public static var `default`: SGStatus {
+         return SGStatus(status: 1)
+     }
+--- a/Swiftgram/SGTelegramUIExtensions/Sources/SGTelegramUIExtensions.swift
++++ b/Swiftgram/SGTelegramUIExtensions/Sources/SGTelegramUIExtensions.swift
+@@ -42,9 +42,9 @@
+             lastViewController.present(ContactsController(context: context), in: .window(.root), with: ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+         }
+         return true
+     case "pro", "premium", "buy":
+-        if context.sharedContext.immediateSGStatus.status > 1 {
++        if context.sharedContext.immediateSGStatus.localFeaturesEnabled {
+             navigationController?.pushViewController(context.sharedContext.makeSGProController(context: context))
+         } else if let lastViewController = navigationController?.viewControllers.last as? ViewController {
+             if let payWallController = context.sharedContext.makeSGPayWallController(context: context) {
+                 lastViewController.present(payWallController, in: .window(.root), with: ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+--- a/Swiftgram/SGPeerInfoRows/Sources/SGPeerInfoRows.swift
++++ b/Swiftgram/SGPeerInfoRows/Sources/SGPeerInfoRows.swift
+@@ -166,9 +166,9 @@
+         swiftgramProLabel = .none
+     }
+ 
+     var items: [PeerInfoScreenItem] = []
+-    if paymentsEnabled || context.sharedContext.immediateSGStatus.status > 1 {
++    if paymentsEnabled || context.sharedContext.immediateSGStatus.localFeaturesEnabled {
+         items.append(PeerInfoScreenDisclosureItem(id: 0, label: swiftgramProLabel, text: "Swiftgram Pro", icon: PresentationResourcesSettings.swiftgramPro, action: {
+             interaction.openSettings(.swiftgramPro)
+         }))
+     }
+--- a/Swiftgram/SGProUI/Sources/AppBadgeSelectorController.swift
++++ b/Swiftgram/SGProUI/Sources/AppBadgeSelectorController.swift
+@@ -73,9 +73,9 @@
+     
+     private func onSelectBadge(_ badge: AppBadge) {
+         self.selectedBadge = badge
+         let image = UIImage(bundleImageName: selectedBadge.assetName) ?? UIImage(bundleImageName: "Components/AppBadge")
+-        if self.context.sharedContext.immediateSGStatus.status > 1 {
++        if self.context.sharedContext.immediateSGStatus.localFeaturesEnabled {
+             DispatchQueue.main.async {
+                 SGSimpleSettings.shared.customAppBadge = selectedBadge.assetName
+                 self.context.sharedContext.mainWindow?.badgeView.image = image
+             }
+--- a/submodules/TelegramUI/Components/MessageInputPanelComponent/Sources/MessageInputPanelComponent.swift
++++ b/submodules/TelegramUI/Components/MessageInputPanelComponent/Sources/MessageInputPanelComponent.swift
+@@ -3197,9 +3197,9 @@
+ extension MessageInputPanelComponent.View {
+     func initToolbarIfNeeded(context: AccountContext) {
+         guard #available(iOS 13.0, *) else { return }
+         guard SGSimpleSettings.shared.inputToolbar else { return }
+-        guard context.sharedContext.immediateSGStatus.status > 1 else { return }
++        guard context.sharedContext.immediateSGStatus.localFeaturesEnabled else { return }
+         guard self.toolbarView == nil else { return }
+         let toolbar = ChatToolbarView(
+             // TODO(swiftgram): Binding
+             showNewLine: .constant(true), //.constant(self.sendWithReturnKey)
+--- a/submodules/TelegramUI/Components/Chat/ChatTextInputPanelNode/Sources/ChatTextInputPanelNode.swift
++++ b/submodules/TelegramUI/Components/Chat/ChatTextInputPanelNode/Sources/ChatTextInputPanelNode.swift
+@@ -6240,9 +6240,9 @@
+     
+     func initToolbarIfNeeded(context: AccountContext) {
+         guard #available(iOS 13.0, *) else { return }
+         guard SGSimpleSettings.shared.inputToolbar else { return }
+-        guard context.sharedContext.immediateSGStatus.status > 1 else { return }
++        guard context.sharedContext.immediateSGStatus.localFeaturesEnabled else { return }
+         guard self.toolbarNode == nil else { return }
+         let toolbarView = ChatToolbarView(
+             showsDateAction: true,
+             showNewLine: .constant(true),
+--- a/submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoScreenSettingsActions.swift
++++ b/submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoScreenSettingsActions.swift
+@@ -55,9 +55,9 @@
+         switch section {
+         case .swiftgram:
+             self.controller?.push(sgSettingsController(context: self.context))
+         case .swiftgramPro:
+-            if self.context.sharedContext.immediateSGStatus.status > 1 {
++            if self.context.sharedContext.immediateSGStatus.localFeaturesEnabled {
+                 self.controller?.push(self.context.sharedContext.makeSGProController(context: self.context))
+             } else {
+                 if let payWallController = self.context.sharedContext.makeSGPayWallController(context: self.context) {
+                     self.controller?.present(payWallController, in: .window(.root), with: ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+--- a/submodules/SettingsUI/Sources/Themes/ThemeSettingsController.swift
++++ b/submodules/SettingsUI/Sources/Themes/ThemeSettingsController.swift
+@@ -633,9 +633,9 @@
+                     controller?.replace(with: c)
+                 }
+                 pushControllerImpl?(controller)
+             // MARK: Swiftgram
+-            } else if icon.isSGPro && context.sharedContext.immediateSGStatus.status < 2 {
++            } else if icon.isSGPro && !context.sharedContext.immediateSGStatus.localFeaturesEnabled {
+                 if let payWallController = context.sharedContext.makeSGPayWallController(context: context) {
+                     presentControllerImpl?(payWallController, ViewControllerPresentationArguments(presentationAnimation: .modalSheet))
+                 } else {
+                     presentControllerImpl?(context.sharedContext.makeSGUpdateIOSController(), nil)
+@@ -1122,9 +1122,9 @@
+         let mediaSettings = sharedData.entries[ApplicationSpecificSharedDataKeys.mediaDisplaySettings]?.get(MediaDisplaySettings.self) ?? MediaDisplaySettings.defaultSettings
+         
+         // MARK: Swiftgram
+         let sgStatus = sharedData.entries[ApplicationSpecificSharedDataKeys.sgStatus]?.get(SGStatus.self) ?? SGStatus.default
+-        let isPremium = sgStatus.status > 1
++        let isPremium = sgStatus.localFeaturesEnabled
+         
+         let themeReference: PresentationThemeReference
+         if presentationData.autoNightModeTriggered {
+             if let _ = settings.theme.emoticon {

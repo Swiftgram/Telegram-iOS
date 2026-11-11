@@ -4,6 +4,12 @@ import TelegramCore
 
 public struct SGStatus: Equatable, Codable {
     public var status: Int64
+
+    // Independent fork: local, on-device features are available to everyone.
+    // Keep `status` unchanged; it represents the server-issued subscription state.
+    public var localFeaturesEnabled: Bool {
+        return true
+    }
     
     public static var `default`: SGStatus {
         return SGStatus(status: 1)

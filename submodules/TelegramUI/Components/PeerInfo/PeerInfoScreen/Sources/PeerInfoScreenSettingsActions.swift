@@ -56,7 +56,7 @@ extension PeerInfoScreenNode {
         case .swiftgram:
             self.controller?.push(sgSettingsController(context: self.context))
         case .swiftgramPro:
-            if self.context.sharedContext.immediateSGStatus.status > 1 {
+            if self.context.sharedContext.immediateSGStatus.localFeaturesEnabled {
                 self.controller?.push(self.context.sharedContext.makeSGProController(context: self.context))
             } else {
                 if let payWallController = self.context.sharedContext.makeSGPayWallController(context: self.context) {
