@@ -14,8 +14,11 @@ private func fetchRawData(prefix: String) -> Signal<Data, FetchError> {
     return Signal { subscriber in
         // MARK: LupinGram
         // CKContainer.default() raises an uncatchable Obj-C exception when the iCloud entitlement is missing (sideloaded builds).
-        if ProcessInfo.processInfo.environment["LUPINGRAM_ENABLE_CLOUDKIT"] == nil {
-            subscriber.putError(.generic)
+        if getenv("LUPINGRAM_ENABLE_CLOUDKIT") == nil {
+            // The error must arrive asynchronously: `restart` below would otherwise resubscribe in a synchronous loop.
+            Queue.concurrentDefaultQueue().async {
+                subscriber.putError(.generic)
+            }
             return EmptyDisposable
         }
         let container = CKContainer.default()
