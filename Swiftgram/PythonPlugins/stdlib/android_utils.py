@@ -1,32 +1,35 @@
-"""exteraGram SDK compatibility layer: `android_utils` shim.
+"""exteraGram SDK: `android_utils` for iOS.
 
-exteraGram targets Android, so many plugins import `android_utils`. On iOS we
-map the handful of commonly used callbacks onto their TrollGram equivalents.
+Plugins written for Android import this for a few helpers. The ones with an iOS meaning
+are mapped; the rest raise `UnsupportedOnIOS`.
 """
 
-import client_utils
+import trollgram_bridge
 
 
-class _Handler:
-    def post(self, fn):
-        return client_utils.run_on_ui_thread(fn)
+def run_on_ui_thread(fn, delay=0):
+    return trollgram_bridge.schedule(fn, delay)
 
 
-handler = _Handler()
+def log(text):
+    return trollgram_bridge.log(text)
 
 
-def run_on_ui_thread(fn, *args, **kwargs):
-    return client_utils.run_on_ui_thread(fn, *args, **kwargs)
+class OnClickListener:
+    def __init__(self, fn):
+        self._fn = fn
+
+    def onClick(self, *args):
+        return self._fn(*args)
 
 
-def run_on_queue(fn, *args, **kwargs):
-    # iOS has no Looper; execute on the main queue for determinism.
-    return client_utils.run_on_ui_thread(fn, *args, **kwargs)
+class OnLongClickListener(OnClickListener):
+    pass
 
 
-def show_toast(text):
-    return client_utils.show_toast(text)
+def copy_to_clipboard(text):
+    trollgram_bridge.unsupported("android_utils.copy_to_clipboard")
 
 
 def get_application_context():
-    return None
+    trollgram_bridge.unsupported("android_utils.get_application_context")

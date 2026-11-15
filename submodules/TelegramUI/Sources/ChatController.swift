@@ -9421,10 +9421,45 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             return
         }
 
-        // TrollGram: exteraGram-compatible plugins may cancel or rewrite outgoing messages.
-        var pluginMessages: [Any] = messages.map { $0 as Any }
-        if PythonPluginsRuntime.dispatchSendMessageHook(peerId: peerId, messages: &pluginMessages) {
-            return
+        // TrollGram: exteraGram-compatible plugins may cancel or rewrite outgoing text messages.
+        // Messages with media, forwards and empty texts are never shown to plugins.
+        var messages = messages
+        do {
+            let context = self.context
+            PythonPluginsRuntime.sendTextHandler = { [weak context] peer, text in
+                guard let context else {
+                    return
+                }
+                let _ = context.engine.messages.enqueueOutgoingMessage(to: PeerId(peer), replyTo: nil, content: .text(text, [])).start()
+            }
+            PythonPluginsRuntime.toastHandler = { [weak self] text, _ in
+                guard let self else {
+                    return
+                }
+                self.present(UndoOverlayController(presentationData: self.presentationData, content: .info(title: nil, text: text, timeout: nil, customUndoText: nil), action: { _ in return false }), in: .window(.root))
+            }
+
+            var pluginProcessed: [EnqueueMessage] = []
+            for message in messages {
+                guard case let .message(text, attributes, inlineStickers, mediaReference, threadId, replyToMessageId, replyToStoryId, localGroupingKey, correlationId, bubbleUpEmojiOrStickersets) = message, mediaReference == nil, !text.isEmpty else {
+                    pluginProcessed.append(message)
+                    continue
+                }
+                switch PythonPluginsRuntime.dispatchSendHook(peerId: peerId.toInt64(), text: text) {
+                case .pass:
+                    pluginProcessed.append(message)
+                case .cancel:
+                    break
+                case let .modify(modifiedText):
+                    // Entity offsets refer to the old text, so formatting entities are dropped.
+                    let modifiedAttributes = attributes.filter { !($0 is TextEntitiesMessageAttribute) }
+                    pluginProcessed.append(.message(text: modifiedText, attributes: modifiedAttributes, inlineStickers: inlineStickers, mediaReference: mediaReference, threadId: threadId, replyToMessageId: replyToMessageId, replyToStoryId: replyToStoryId, localGroupingKey: localGroupingKey, correlationId: correlationId, bubbleUpEmojiOrStickersets: bubbleUpEmojiOrStickersets))
+                }
+            }
+            if pluginProcessed.isEmpty {
+                return
+            }
+            messages = pluginProcessed
         }
 
         let _ = (self.shouldDivertMessagesToScheduled(messages: messages)

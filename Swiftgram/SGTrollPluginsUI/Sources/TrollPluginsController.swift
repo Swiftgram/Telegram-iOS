@@ -19,6 +19,7 @@ private enum TrollPluginsEntry: ItemListNodeEntry {
     case header(id: Int32, text: String)
     case notice(id: Int32, text: String)
     case plugin(id: Int32, plugin: PythonPluginManager.Plugin)
+    case pluginStatus(id: Int32, text: String)
     case importPlugin(id: Int32, text: String)
     case logs(id: Int32, text: String)
     case clearLogs(id: Int32, text: String)
@@ -27,7 +28,7 @@ private enum TrollPluginsEntry: ItemListNodeEntry {
         switch self {
         case .header, .notice, .importPlugin:
             return TrollPluginsSection.install.rawValue
-        case .plugin:
+        case .plugin, .pluginStatus:
             return TrollPluginsSection.plugins.rawValue
         case .logs, .clearLogs:
             return TrollPluginsSection.logs.rawValue
@@ -36,7 +37,7 @@ private enum TrollPluginsEntry: ItemListNodeEntry {
 
     var stableId: Int32 {
         switch self {
-        case let .header(id, _), let .notice(id, _), let .plugin(id, _), let .importPlugin(id, _), let .logs(id, _), let .clearLogs(id, _):
+        case let .header(id, _), let .notice(id, _), let .plugin(id, _), let .pluginStatus(id, _), let .importPlugin(id, _), let .logs(id, _), let .clearLogs(id, _):
             return id
         }
     }
@@ -64,6 +65,8 @@ private enum TrollPluginsEntry: ItemListNodeEntry {
                     arguments.togglePlugin(plugin.id, value)
                 }
             )
+        case let .pluginStatus(_, text):
+            return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
         case let .importPlugin(_, text):
             return ItemListDisclosureItem(
                 presentationData: presentationData,
@@ -104,6 +107,34 @@ private final class TrollPluginsArguments {
         self.clearLogs = clearLogs
         self.importPlugins = importPlugins
     }
+}
+
+private func pluginStatusText(_ plugin: PythonPluginManager.Plugin) -> String {
+    var parts: [String] = []
+    if !plugin.author.isEmpty {
+        parts.append(plugin.author)
+    }
+    if !plugin.version.isEmpty {
+        parts.append("v" + plugin.version)
+    }
+    var lines: [String] = []
+    if !parts.isEmpty {
+        lines.append(parts.joined(separator: " · "))
+    }
+    if !plugin.description.isEmpty {
+        lines.append(plugin.description)
+    }
+    if let error = plugin.loadError {
+        lines.append("Error: " + error)
+    } else if plugin.isLoaded {
+        lines.append("Running")
+    } else if plugin.isEnabled {
+        lines.append("Enabled, not running yet")
+    }
+    if !plugin.unsupported.isEmpty {
+        lines.append("Not supported on iOS: " + plugin.unsupported.joined(separator: ", "))
+    }
+    return lines.joined(separator: "\n")
 }
 
 public func trollPluginsController(context: AccountContext) -> ViewController {
@@ -148,7 +179,10 @@ public func trollPluginsController(context: AccountContext) -> ViewController {
         entries.append(.header(id: nextId(), text: "PLUGINS DIRECTORY"))
         entries.append(.notice(id: nextId(), text: PythonPluginManager.shared.pluginsDirectoryPath))
         entries.append(.importPlugin(id: nextId(), text: "Import .py File"))
-        entries.append(.notice(id: nextId(), text: "Or send a .py file to any chat and open it on this device."))
+        entries.append(.notice(id: nextId(), text: "Plugins are off until you turn them on. A plugin is code that runs inside the app with its permissions, so only enable plugins you trust."))
+        if !PythonPluginsRuntime.isPluginHostAvailable {
+            entries.append(.notice(id: nextId(), text: "This build has no Python runtime, so plugins cannot run."))
+        }
 
         entries.append(.header(id: nextId(), text: "INSTALLED (\(state.plugins.count))"))
         if state.plugins.isEmpty {
@@ -156,6 +190,10 @@ public func trollPluginsController(context: AccountContext) -> ViewController {
         } else {
             for plugin in state.plugins {
                 entries.append(.plugin(id: nextId(), plugin: plugin))
+                let statusText = pluginStatusText(plugin)
+                if !statusText.isEmpty {
+                    entries.append(.pluginStatus(id: nextId(), text: statusText))
+                }
             }
         }
 

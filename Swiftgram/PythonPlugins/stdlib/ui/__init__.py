@@ -1,5 +1,5 @@
-"""exteraGram SDK compatibility layer: `ui` package."""
+"""exteraGram SDK: `ui` package."""
 
-from . import settings  # noqa: F401
+from . import alert, bulletin, settings  # noqa: F401
 
-__all__ = ["settings"]
+__all__ = ["alert", "bulletin", "settings"]
