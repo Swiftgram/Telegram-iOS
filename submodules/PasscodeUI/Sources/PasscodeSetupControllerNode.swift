@@ -116,7 +116,7 @@ final class PasscodeSetupControllerNode: ASDisplayNode {
             case .entry:
                 self.modeButtonNode.isHidden = true
                 self.modeButtonNode.isAccessibilityElement = false
-                text = self.presentationData.strings.EnterPasscode_EnterPasscode.replacingOccurrences(of: "Telegram", with: "Swiftgram") /* MARK: Swiftgram */
+                text = self.presentationData.strings.EnterPasscode_EnterPasscode.replacingOccurrences(of: "Telegram", with: "LupinGram") /* MARK: Swiftgram */
             case let .setup(change, _):
                 if change {
                     text = self.presentationData.strings.EnterPasscode_EnterNewPasscodeChange

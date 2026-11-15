@@ -179,7 +179,7 @@ private enum DebugLogAction {
         switch self {
         case .sendLogs: return "Logs"
         case .sendOneLog: return "Latest Logs"
-        case .sgSendLogs: return "Swiftgram Logs" // MARK: Swiftgram
+        case .sgSendLogs: return "LupinGram Logs" // MARK: Swiftgram
         case .sendShareLogs: return "Share Logs"
         case .sendGroupCallLogs: return "Group Call Logs"
         case .sendNotificationLogs: return "Notification Logs"
@@ -271,8 +271,8 @@ private enum DebugLogAction {
         // MARK: Swiftgram
         case .sendOneLog, .sgSendLogs:
             let logCollectionSignal = self == .sgSendLogs ? SGLogger.shared.collectLogs() : Logger.shared.collectLogs()
-            let fileName = self == .sgSendLogs ? "Log-iOS-Swiftgram.txt" : "Log-iOS-Short.txt"
-            let appName = self == .sgSendLogs ? "Swiftgram" : "Telegram"
+            let fileName = self == .sgSendLogs ? "Log-iOS-LupinGram.txt" : "Log-iOS-Short.txt"
+            let appName = self == .sgSendLogs ? "LupinGram" : "Telegram"
             //
             let _ = (logCollectionSignal // MARK: Swiftgram
                 |> deliverOnMainQueue).start(next: { logs in
@@ -1068,14 +1068,14 @@ private enum DebugControllerEntry: ItemListNodeEntry {
         switch self {
         // MARK: Swiftgram
         case .SGDebug:
-            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: "Swiftgram Debug", label: "", sectionId: self.section, style: .blocks, action: {
+            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: "LupinGram Debug", label: "", sectionId: self.section, style: .blocks, action: {
                 guard let context = arguments.context else {
                     return
                 }
                 arguments.pushController(sgDebugController(context: context))
             })
         case .sendSGLogs:
-            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: "Send Swiftgram Logs", label: "", sectionId: self.section, style: .blocks, action: {
+            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: "Send LupinGram Logs", label: "", sectionId: self.section, style: .blocks, action: {
                 let presentationData = arguments.sharedContext.currentPresentationData.with { $0 }
                 let actionSheet = ActionSheetController(presentationData: presentationData)
                 var items: [ActionSheetButtonItem] = []
@@ -2024,7 +2024,7 @@ private enum DebugControllerEntry: ItemListNodeEntry {
             let bundleId = bundle.bundleIdentifier ?? ""
             let bundleVersion = bundle.infoDictionary?["CFBundleShortVersionString"] ?? ""
             let bundleBuild = bundle.infoDictionary?[kCFBundleVersionKey as String] ?? ""
-            return ItemListTextItem(presentationData: presentationData, text: .plain("Telegram for iOS \(bundleVersion) (\(bundleBuild))\n\(bundleId)".replacingOccurrences(of: "Telegram", with: "Swiftgram")), sectionId: self.section, textAlignment: .center) // MARK: Swiftgram
+            return ItemListTextItem(presentationData: presentationData, text: .plain("Telegram for iOS \(bundleVersion) (\(bundleBuild))\n\(bundleId)".replacingOccurrences(of: "Telegram", with: "LupinGram")), sectionId: self.section, textAlignment: .center) // MARK: Swiftgram
         case .collectCpuProfile:
             return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Collect CPU Profile (10s)", kind: .generic, alignment: .natural, sectionId: self.section, style: .blocks, action: {
                 let presentationData = arguments.sharedContext.currentPresentationData.with { $0 }

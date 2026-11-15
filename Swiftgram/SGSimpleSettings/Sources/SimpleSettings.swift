@@ -346,7 +346,7 @@ public class SGSimpleSettings {
         Keys.legacyNotificationsFix.rawValue: false,
         Keys.pinnedMessageNotifications.rawValue: PinnedMessageNotificationsSettings.default.rawValue,
         Keys.mentionsAndRepliesNotifications.rawValue: MentionsAndRepliesNotificationsSettings.default.rawValue,
-        Keys.status.rawValue: 1,
+        Keys.status.rawValue: 2,
         Keys.showRepostToStoryV2.rawValue: true,
         Keys.hideAccountInNotifications.rawValue: false,
     ]
@@ -570,7 +570,7 @@ public class SGSimpleSettings {
     @UserDefault(key: Keys.status.rawValue, userDefaults: UserDefaults(suiteName: APP_GROUP_IDENTIFIER) ?? .standard)
     public var status: Int64
 
-    public var ephemeralStatus: Int64 = 1
+    public var ephemeralStatus: Int64 = 2
     
     @UserDefault(key: Keys.messageFilterKeywords.rawValue)
     public var messageFilterKeywords: [String]

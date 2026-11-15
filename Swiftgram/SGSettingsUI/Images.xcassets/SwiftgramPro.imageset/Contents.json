@@ -1,13 +1,12 @@
 {
-    "images" : [
-      {
-        "filename" : "SwiftgramPro.pdf",
-        "idiom" : "universal"
-      }
-    ],
-    "info" : {
-      "author" : "xcode",
-      "version" : 1
+  "images": [
+    {
+      "filename": "LupinGramPro.png",
+      "idiom": "universal"
     }
+  ],
+  "info": {
+    "author": "xcode",
+    "version": 1
   }
-  
+}

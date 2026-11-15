@@ -42,7 +42,7 @@ public struct UnsupportedContentPillStrings: Equatable {
     public init(strings: PresentationStrings) {
         self.init(
             title: strings.Conversation_UnsupportedMedia_Title,
-            text: strings.Conversation_UnsupportedMedia_Text.replacingOccurrences(of: "Telegram", with: "Swiftgram"), // MARK: Swiftgram
+            text: strings.Conversation_UnsupportedMedia_Text.replacingOccurrences(of: "Telegram", with: "LupinGram"), // MARK: Swiftgram
             action: strings.Conversation_UnsupportedMedia_Action
         )
     }

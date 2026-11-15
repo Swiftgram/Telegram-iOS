@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Piilota \"%@\"";
 "Settings.Folders.RememberLast" = "Avaa viimeisin kansio";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram avaa viimeksi käytetyn kansion uudelleenkäynnistyksen tai tilin vaihdon jälkeen.";
+"Settings.Folders.RememberLast.Notice" = "LupinGram avaa viimeksi käytetyn kansion uudelleenkäynnistyksen tai tilin vaihdon jälkeen.";
 
 "Settings.Folders.CompactNames" = "Pienempi väli";
 "Settings.Folders.AllChatsTitle" = "\"Kaikki chatit\" otsikko";
@@ -98,7 +98,7 @@
 "ContextMenu.SelectFromUser" = "Valitse Tekijältä";
 
 "Settings.ContextMenu" = "KONTEKSTIVALIKKO";
-"Settings.ContextMenu.Notice" = "Poistetut kohteet ovat saatavilla 'Swiftgram'-alavalikossa.";
+"Settings.ContextMenu.Notice" = "Poistetut kohteet ovat saatavilla 'LupinGram'-alavalikossa.";
 
 
 "Settings.ChatSwipeOptions" = "Chat List Swipe Options";
@@ -125,7 +125,7 @@
 "Chat.Created.Label" = "luotu";
 "Chat.Created.Copied" = "Luontipäivä kopioitu";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined LupinGram Chat" */
 "Chat.JoinedDateTitle" = "liittyi %@";
 "Chat.JoinedDate.Copied" = "Liittymispäivä kopioitu";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -146,7 +146,7 @@
 "Settings.showChannelBottomButton" = "Kanavan ala-paneeli";
 
 "Settings.CallConfirmation" = "Puhelun vahvistus";
-"Settings.CallConfirmation.Notice" = "Swiftgram pyytää vahvistustasi ennen puhelun soittamista.";
+"Settings.CallConfirmation.Notice" = "LupinGram pyytää vahvistustasi ennen puhelun soittamista.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Soita puhelu?";
@@ -212,16 +212,16 @@
 "PayWall.AppIcons.Title" = "Ainutlaatuiset sovelluskuvakkeet";
 "PayWall.AppIcons.Notice" = "Mukauta Swiftgramin ulkoasu aloitusnäytölläsi.";
 
-"PayWall.About.Title" = "Tietoja Swiftgram Prosta";
-"PayWall.About.Notice" = "Swiftgramin ilmainen versio tarjoaa kymmeniä ominaisuuksia ja parannuksia Telegram-sovellukseen verrattuna. Innovointi ja Swiftgramin synkronointi kuukausittaisiin Telegram-päivityksiin vaatii valtavasti aikaa ja kallista laitteistoa.\n\nSwiftgram on avoimen lähdekoodin sovellus, joka kunnioittaa yksityisyyttäsi eikä vaivaa sinua mainoksilla. Tilatessasi Swiftgram Prota saat pääsyn eksklusiivisiin ominaisuuksiin ja tuet itsenäistä kehittäjää.\n\n- @Kylmakalle";
+"PayWall.About.Title" = "Tietoja LupinGram Prosta";
+"PayWall.About.Notice" = "Swiftgramin ilmainen versio tarjoaa kymmeniä ominaisuuksia ja parannuksia Telegram-sovellukseen verrattuna. Innovointi ja Swiftgramin synkronointi kuukausittaisiin Telegram-päivityksiin vaatii valtavasti aikaa ja kallista laitteistoa.\n\nSwiftgram on avoimen lähdekoodin sovellus, joka kunnioittaa yksityisyyttäsi eikä vaivaa sinua mainoksilla. Tilatessasi LupinGram Prota saat pääsyn eksklusiivisiin ominaisuuksiin ja tuet itsenäistä kehittäjää.\n\n- @Kylmakalle";
 
 "PayWall.RestorePurchases" = "Palauta ostot";
 "PayWall.Terms" = "Käyttöehdot";
 "PayWall.Privacy" = "Tietosuojakäytäntö";
 "PayWall.TermsURL" = "https://swiftgram.app/ehtosuhteet";
 "PayWall.PrivacyURL" = "https://swiftgram.app/tietosuoja";
-"PayWall.Notice.Markdown" = "Tilatessasi Swiftgram Prota hyväksyt [Swiftgramin käyttöehdot](%1$@) ja [tietosuojakäytännön](%2$@).";
-"PayWall.Notice.Raw" = "Tilatessasi Swiftgram Prota hyväksyt Swiftgramin käyttöehdot ja tietosuojakäytännön.";
+"PayWall.Notice.Markdown" = "Tilatessasi LupinGram Prota hyväksyt [Swiftgramin käyttöehdot](%1$@) ja [tietosuojakäytännön](%2$@).";
+"PayWall.Notice.Raw" = "Tilatessasi LupinGram Prota hyväksyt Swiftgramin käyttöehdot ja tietosuojakäytännön.";
 
 "PayWall.Button.OpenPro" = "Käytä Pro-ominaisuuksia";
 "PayWall.Button.Purchasing" = "Ostetaan...";

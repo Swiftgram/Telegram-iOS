@@ -114,7 +114,7 @@ extension ChatMediaEditorScreen.Node {
             return
         }
         let strings = self.context.sharedContext.currentPresentationData.with { $0 }.strings
-        let alert = UIAlertController(title: "Convert in @TelescopyBot", message: "by Swiftgram", preferredStyle: .alert)
+        let alert = UIAlertController(title: "Convert in @TelescopyBot", message: "by LupinGram", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: strings.Common_Cancel, style: .cancel))
         alert.addAction(UIAlertAction(title: strings.WebApp_OpenBot, style: .default, handler: { [weak controller] _ in
             guard let url = URL(string: "sg://resolve?domain=TelescopyBot&start=sgconvertdemo") else {
