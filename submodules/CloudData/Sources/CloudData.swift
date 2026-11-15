@@ -12,6 +12,12 @@ private enum FetchError {
 @available(iOS 10.0, *)
 private func fetchRawData(prefix: String) -> Signal<Data, FetchError> {
     return Signal { subscriber in
+        // MARK: LupinGram
+        // CKContainer.default() raises an uncatchable Obj-C exception when the iCloud entitlement is missing (sideloaded builds).
+        if ProcessInfo.processInfo.environment["LUPINGRAM_ENABLE_CLOUDKIT"] == nil {
+            subscriber.putError(.generic)
+            return EmptyDisposable
+        }
         let container = CKContainer.default()
         let publicDatabase = container.database(with: .public)
         let recordId = CKRecord.ID(recordName: "emergency-datacenter-\(prefix)")
