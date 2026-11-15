@@ -14,6 +14,8 @@ jobs:
   build:
     runs-on: macos-latest
     timeout-minutes: 360
+    permissions:
+      contents: write
     steps:
       - name: Check secrets
         env:
@@ -100,3 +102,15 @@ jobs:
         with:
           name: LupinGram-unsigned-ipa
           path: build/artifacts/*.ipa
+
+      - name: Publish IPA as a prerelease (direct download on a phone)
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ios-build-${{ github.run_number }}
+          name: LupinGram iOS build ${{ github.run_number }}
+          prerelease: true
+          files: build/artifacts/*.ipa
+          body: |
+            Unsigned LupinGram iOS build (run ${{ github.run_number }}, commit ${{ github.sha }}).
+            Sign it with your certificate when installing.
