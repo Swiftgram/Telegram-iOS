@@ -723,9 +723,17 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             networkEngineFactory: RustNetworkEngineFactory()
         )
         
-        guard let appGroupUrl = maybeAppGroupUrl else {
-            self.mainWindow?.presentNative(UIAlertController(title: nil, message: "Error 2", preferredStyle: .alert))
-            return true
+        // MARK: LupinGram
+        // Sideloaded builds often lack the App Group entitlement; fall back to the app's own container instead of a black screen.
+        let appGroupUrl: URL
+        if let groupUrl = maybeAppGroupUrl {
+            appGroupUrl = groupUrl
+        } else {
+            let localBase = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: NSTemporaryDirectory())
+            let localUrl = localBase.appendingPathComponent("LupinGramLocalGroup", isDirectory: true)
+            try? FileManager.default.createDirectory(at: localUrl, withIntermediateDirectories: true, attributes: nil)
+            NSLog("[LG.Launch] App group unavailable, using local container")
+            appGroupUrl = localUrl
         }
         
         var isDebugConfiguration = false
