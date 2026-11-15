@@ -23,9 +23,12 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      - name: Checkout (manual, keeps the job log tail small)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git clone --depth 1 --branch "$GITHUB_REF_NAME" "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" .
+          git submodule update --init --recursive --depth 1 --jobs 4
 
       - name: Select newest Xcode
         run: |
@@ -70,17 +73,20 @@ jobs:
 
       - name: Build unsigned IPA
         run: |
-          python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
-          python3 -u build-system/Make/Make.py \
-            --overrideXcodeVersion \
-            --cacheDir ~/telegram-bazel-cache \
-            build \
-            --configurationPath build-system/lupingram-configuration.json \
-            --codesigningInformationPath build-system/fake-codesigning \
-            --disableProvisioningProfiles \
-            --configuration release_arm64 \
-            --buildNumber ${{ github.run_number }} \
-            --outputBuildArtifactsPath build/artifacts
+          set -o pipefail
+          {
+            python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs || echo "ImportCertificates failed (continuing)"
+            python3 -u build-system/Make/Make.py \
+              --overrideXcodeVersion \
+              --cacheDir "$HOME/telegram-bazel-cache" \
+              build \
+              --configurationPath build-system/lupingram-configuration.json \
+              --codesigningInformationPath build-system/fake-codesigning \
+              --disableProvisioningProfiles \
+              --configuration release_arm64 \
+              --buildNumber ${{ github.run_number }} \
+              --outputBuildArtifactsPath build/artifacts
+          } 2>&1 | tee build.log
 
       - name: Save Bazel cache
         if: always()
@@ -91,7 +97,11 @@ jobs:
 
       - name: Show build tail on failure
         if: failure()
-        run: ls -la build/artifacts 2>/dev/null || true
+        run: |
+          echo "===== BUILD LOG TAIL ====="
+          grep -nE "error:|ERROR|Error|FAILED|fatal|Traceback" build.log | tail -n 25 | cut -c1-300 || true
+          echo "===== LAST LINES ====="
+          tail -n 25 build.log | cut -c1-300
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
