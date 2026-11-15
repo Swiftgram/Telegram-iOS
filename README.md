@@ -44,22 +44,50 @@ complete anonymity or protection from Telegram's servers.
 
 ### Python plugins
 
-TrollGram includes experimental support for Python 3.11 plugins.
+TrollGram runs exteraGram-style Python 3.11 plugins on an embedded
+interpreter. It implements the parts of the plugin API that make sense on
+iOS and reports the rest instead of failing silently.
 
-- Import Python `.py` files.
-- Enable or disable individual plugins.
-- View plugin logs.
-- Store plugin data separately.
+- Import `.py` plugins from the Files app.
+- Plugins are **off until you enable them**; they start on the first
+  message you send after launching the app.
+- Plugin metadata (`__id__`, `__name__`, `__author__`, `__version__`) is
+  read without running the plugin.
+- The plugin screen shows author, version, running state, errors and
+  the features a plugin uses that iOS does not support.
+- Plugin settings and logs are stored on the device.
+
+Supported API:
+
+| Area | What works |
+| --- | --- |
+| Lifecycle | `on_plugin_load`, `on_plugin_unload` |
+| Outgoing text messages | `add_on_send_message_hook` with `HookResult(strategy=CANCEL / MODIFY / MODIFY_FINAL)` and priorities |
+| Settings | `get_setting`, `set_setting`, `export_settings`, `import_settings`, `ui.settings` widgets (values are stored; the widgets are not rendered yet) |
+| Client | `client_utils.send_text`, `send_message` (text only), `run_on_queue`, `ui.bulletin.BulletinHelper` toasts |
+
+Not supported on iOS (these raise `UnsupportedOnIOS`, which shows up in the
+plugin log): hooks on Telegram API requests and updates, Android/Java
+objects such as `get_messages_controller` or `get_last_fragment`, media
+sending, `hook_utils`, menu items and alert dialogs. Peers are numeric ids
+(users `id`, groups `-id`, channels `-100id`); usernames are not resolved.
+Modifying a message drops its formatting.
 
 Default directories:
 
 | Purpose | Path |
 | --- | --- |
 | Plugins | `Documents/Plugins` |
-| Plugin data | `Documents/PluginsData` |
+| Plugin data and settings | `Documents/PluginsData` |
 
 Only install plugins from sources you trust. Python plugins execute
 code within the application environment and may access available data.
+
+Run the plugin runtime tests (no device needed):
+
+```bash
+python3 -m unittest discover -s Swiftgram/PythonPlugins/tests
+```
 
 ### Compatibility
 
@@ -150,10 +178,10 @@ in the repository.
 | Path | Description |
 | --- | --- |
 | `Swiftgram/SGTrollPrivacy` | Privacy-related interface and features |
-| `SGTrollPrivacyCore` | Privacy feature implementation |
-| `PythonPlugins` | Python plugin support |
-| `SGTrollPluginsUI` | Plugin management interface |
-| `SGSettingsUI` | Application settings |
+| `Swiftgram/SGTrollPrivacyCore` | Privacy feature implementation |
+| `Swiftgram/PythonPlugins` | Python plugin host: Swift runtime, SDK modules (`stdlib/`), tests |
+| `Swiftgram/SGTrollPluginsUI` | Plugin management interface |
+| `Swiftgram/SGSettingsUI` | Application settings |
 | `submodules/TelegramCore` | Telegram Core components |
 
 ## Credits

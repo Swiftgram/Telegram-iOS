@@ -54,11 +54,35 @@ Do not describe client-side privacy features as providing complete anonymity.
 
 ## Python plugins
 
-Changes to the plugin system should preserve compatibility with
-the existing plugin structure.
+The plugin runtime lives in `Swiftgram/PythonPlugins`:
 
-Please document changes to the plugin API and avoid introducing
-unnecessary permissions or access to user data.
+- `stdlib/` is the Python side: the exteraGram-compatible SDK modules
+  (`base_plugin`, `client_utils`, `ui`, ...), the host (`trollgram_host`) and
+  the bridge (`trollgram_bridge`). It is packed into `python.zip` by
+  `build-system/setup_python.py`.
+- `Sources/` is the Swift side. All calls into the interpreter go through
+  `EmbeddedPython.call` on the main thread: one base64 JSON request in, one
+  JSON result out.
+- `tests/` has the unit tests for the Python side.
+
+Run the tests before opening a pull request:
+
+```bash
+python3 -m unittest discover -s Swiftgram/PythonPlugins/tests
+```
+
+Guidelines:
+
+- Follow the exteraGram API names and behavior where iOS can support them.
+- A feature that cannot work on iOS must raise `UnsupportedOnIOS`
+  (`trollgram_bridge.unsupported(...)`), never silently do nothing.
+- Plugin calls that reach Telegram or the UI are queued as actions in
+  `trollgram_bridge` and executed by Swift; do not add side effects in Python.
+- Plugins must stay disabled until the user enables them.
+- Document changes to the plugin API in the README and avoid introducing
+  unnecessary permissions or access to user data.
+- Note in the pull request whether the Swift part was built, since it needs
+  macOS and Xcode.
 
 ## Pull requests
 
