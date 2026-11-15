@@ -70,6 +70,7 @@ jobs:
               --overrideXcodeVersion \
               --cacheDir "$HOME/telegram-bazel-cache" \
               build \
+              --continueOnError \
               --configurationPath build-system/lupingram-configuration.json \
               --codesigningInformationPath build-system/fake-codesigning \
                 --configuration release_arm64 \

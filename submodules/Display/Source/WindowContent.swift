@@ -294,7 +294,7 @@ public final class WindowHostView {
     /// coordinates. Nil before iOS 27.1.
     fileprivate var activeDivision: CGRect? {
         if #available(iOS 27.1, *) {
-            return self.eventView.reservedRegions(kind: .division).first(where: \.isActive)?.frame
+            return self.eventView.reservedRegions(kind: .division).first(where: { $0.isActive })?.frame
         }
         return nil
     }
