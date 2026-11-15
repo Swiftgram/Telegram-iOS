@@ -3,6 +3,8 @@ name: LupinGram iOS (unsigned IPA)
 on:
   push:
     branches: [ "claude/gifted-rubin-nzkrec" ]
+    paths-ignore:
+      - ".github/workflows/tg-watch.yml"
   workflow_dispatch:
 
 env:
