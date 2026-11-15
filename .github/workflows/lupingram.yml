@@ -49,6 +49,7 @@ jobs:
           cfg = json.load(open("build-system/appstore-configuration.json"))
           cfg["api_id"] = os.environ["TG_API_ID"]
           cfg["api_hash"] = os.environ["TG_API_HASH"]
+          cfg.setdefault("sg_config", "")
           json.dump(cfg, open("build-system/lupingram-configuration.json", "w"), indent=2)
           PY
 
