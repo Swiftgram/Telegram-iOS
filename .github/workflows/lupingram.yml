@@ -46,20 +46,9 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, os
-          cfg = {
-              "bundle_id": "com.lupingram.app",
-              "api_id": os.environ["TG_API_ID"],
-              "api_hash": os.environ["TG_API_HASH"],
-              "team_id": "XXXXXXXXXX",
-              "is_internal_build": "true",
-              "is_appstore_build": "false",
-              "appstore_id": "0",
-              "app_specific_url_scheme": "tg",
-              "premium_iap_product_id": "",
-              "enable_siri": False,
-              "enable_icloud": False,
-              "sg_config": "",
-          }
+          cfg = json.load(open("build-system/appstore-configuration.json"))
+          cfg["api_id"] = os.environ["TG_API_ID"]
+          cfg["api_hash"] = os.environ["TG_API_HASH"]
           json.dump(cfg, open("build-system/lupingram-configuration.json", "w"), indent=2)
           PY
 
@@ -82,8 +71,7 @@ jobs:
               build \
               --configurationPath build-system/lupingram-configuration.json \
               --codesigningInformationPath build-system/fake-codesigning \
-              --disableProvisioningProfiles \
-              --configuration release_arm64 \
+                --configuration release_arm64 \
               --buildNumber ${{ github.run_number }} \
               --outputBuildArtifactsPath build/artifacts
           } 2>&1 | tee build.log
