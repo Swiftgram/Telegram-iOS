@@ -16,8 +16,7 @@ swift_library(
     ]),
     copts = [
         "-warnings-as-errors",
-        "-Xllvm",
-        "-sil-disable-pass=copy-propagation",
+        "-Onone",
     ],
     deps = sgdeps + [ # MARK: Swiftgram
         "//submodules/AsyncDisplayKit",
