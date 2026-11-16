@@ -1,51 +1,36 @@
-"""exteraGram SDK compatibility layer: `hook_utils` stub.
+"""exteraGram SDK: `hook_utils`.
 
-Full method hooking is not supported on iOS. The module exists so plugins
-that `import hook_utils` at load time never crash; hooks become no-ops.
+Java/Kotlin method hooking does not exist on iOS. The module imports cleanly so plugins load,
+and every hooking entry point raises `UnsupportedOnIOS` when used.
 """
 
-_MISSING = object()
+import trollgram_bridge
 
 
-def _noop(*args, **kwargs):
-    return None
+def _unsupported(name):
+    def fn(*args, **kwargs):
+        trollgram_bridge.unsupported("hook_utils." + name)
+    fn.__name__ = name
+    return fn
 
 
-def skip_hook(*args, **kwargs):
-    """Mark the following code path as "do not run the original method"."""
-    return False
+find_class = _unsupported("find_class")
+find_method = _unsupported("find_method")
+hook_method = _unsupported("hook_method")
+unhook_method = _unsupported("unhook_method")
+hook_all_methods = _unsupported("hook_all_methods")
+get_method_original = _unsupported("get_method_original")
+skip_hook = _unsupported("skip_hook")
 
 
-def get_method_original(method):
-    return method
-
-
-def find_class(*args, **kwargs):
-    return None
-
-
-def find_method(*args, **kwargs):
-    return _noop
-
-
-def hook_method(*args, **kwargs):
-    return _noop
-
-
-def unhook_method(*args, **kwargs):
-    return None
-
-
-def hook_all_methods(*args, **kwargs):
-    return _noop
-
-
-class Hook:
-    def __init__(self, *args, **kwargs):
+class MethodHook:
+    def before_hooked_method(self, param):
         pass
 
-    def __enter__(self):
-        return self
+    def after_hooked_method(self, param):
+        pass
 
-    def __exit__(self, *exc):
-        return False
+
+class MethodReplacement(MethodHook):
+    def replace_hooked_method(self, param):
+        pass

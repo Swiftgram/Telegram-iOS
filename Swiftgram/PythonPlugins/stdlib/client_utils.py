@@ -1,66 +1,76 @@
-"""Bridge between Python plugins and TrollGram (TelegramCore / UI thread).
+"""exteraGram SDK: `client_utils`, backed by TrollGram for iOS.
 
-Every call is marshalled to the native side through the `trollgram_bridge`
-module registered by `PythonPluginManager`. If the bridge is unavailable
-(unit tests, stub mode) calls become no-ops instead of raising.
+Working: `send_text`, `send_message` (text only), `run_on_queue`, `get_*` of the current
+account. Everything that hands out Android/Java objects (`get_messages_controller`,
+`get_last_fragment`, `send_request`, media sending, ...) raises `UnsupportedOnIOS`, which
+shows up in the plugin log instead of failing silently.
 """
 
-try:
-    import trollgram_bridge as _native
-except Exception:  # pragma: no cover - stub mode
-    _native = None
+import trollgram_bridge
+from trollgram_bridge import UnsupportedOnIOS  # noqa: F401
+
+PLUGINS_QUEUE = "plugins"
+GLOBAL_QUEUE = "global"
+STAGE_QUEUE = "stage"
+CACHE_CLEAR_QUEUE = "cache_clear"
+SEARCH_QUEUE = "search"
+PHONE_BOOK_QUEUE = "phone_book"
+THEME_QUEUE = "theme"
+EXTERNAL_NETWORK_QUEUE = "external_network"
 
 
-def _call(name, *args, **kwargs):
-    if _native is None:
-        return None
-    fn = getattr(_native, name, None)
-    if fn is None:
-        return None
-    return fn(*args, **kwargs)
+def send_text(peer_id, text, replyToMsg=None, parse_mode=None):
+    """Send `text` to `peer_id` (user id, `-group id` or `-100channel id`)."""
+    if parse_mode:
+        trollgram_bridge.log("send_text: parse_mode is ignored on iOS", level="warning")
+    return trollgram_bridge.send_text(peer_id, text, reply_to=replyToMsg if isinstance(replyToMsg, int) else None)
 
 
-def get_accounts():
-    return _call("get_accounts") or []
+def send_message(params, parse_mode=None):
+    """Low-level send from a dict of SendMessageParams fields (text messages only)."""
+    if not isinstance(params, dict):
+        params = dict(getattr(params, "__dict__", {}))
+    for key in ("photo", "document", "video", "audio", "sticker", "location", "poll"):
+        if params.get(key):
+            trollgram_bridge.unsupported("send_message with %s" % (key,))
+    peer = params.get("peer", params.get("peer_id"))
+    return send_text(peer, params.get("message", ""), parse_mode=parse_mode)
+
+
+def run_on_queue(task, queue=PLUGINS_QUEUE, delay_ms=0):
+    """Run `task` after `delay_ms`; on iOS every queue is the interpreter's single thread."""
+    return trollgram_bridge.schedule(task, delay_ms)
+
+
+def get_account_instance():
+    return trollgram_bridge.get_current_account()
 
 
 def get_current_account():
-    return _call("get_current_account")
+    return trollgram_bridge.get_current_account()
 
 
-def send_message(account, peer, text, reply_to=None):
-    """Send a text message. `peer` may be an id, @username or chat title."""
-    return _call("send_message", account, peer, text, reply_to)
+def _unsupported(name):
+    def fn(*args, **kwargs):
+        trollgram_bridge.unsupported("client_utils." + name)
+    fn.__name__ = name
+    return fn
 
 
-def edit_message(account, peer, message_id, text):
-    return _call("edit_message", account, peer, message_id, text)
+for _name in (
+    "send_request", "send_photo", "send_document", "send_video", "send_audio", "edit_message",
+    "get_last_fragment", "get_user_config", "get_connections_manager", "get_messages_controller",
+    "get_send_messages_helper", "get_contacts_controller", "get_media_data_controller",
+    "get_location_controller", "get_notifications_controller", "get_messages_storage",
+    "get_file_loader", "get_secret_chat_helper", "get_download_controller",
+    "get_notifications_settings", "get_notification_center", "get_media_controller",
+    "get_queue_by_name",
+):
+    globals()[_name] = _unsupported(_name)
 
 
-def delete_messages(account, peer, message_ids):
-    return _call("delete_messages", account, peer, list(message_ids))
+class NotificationCenterDelegate:
+    """Subclassable placeholder; notifications are never delivered on iOS."""
 
-
-def get_messages(account, peer, limit=20):
-    return _call("get_messages", account, peer, limit) or []
-
-
-def run_on_ui_thread(fn, *args, **kwargs):
-    """Queue `fn` on the main thread. Arguments must be primitives."""
-    return _call("run_on_ui_thread", fn.__name__ if hasattr(fn, "__name__") else str(fn), *args, **kwargs)
-
-
-def show_toast(text):
-    return _call("show_toast", text)
-
-
-def show_undo(title, text):
-    return _call("show_undo", title, text)
-
-
-def log(text):
-    return _call("log", text)
-
-
-def plugin_data_dir():
-    return _call("plugin_data_dir")
+    def didReceivedNotification(self, id, account, args):
+        pass

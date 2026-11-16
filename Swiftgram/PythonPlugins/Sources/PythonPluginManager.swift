@@ -1,12 +1,16 @@
 import Foundation
 import SwiftSignalKit
 
-/// Lightweight exteraGram plugin host.
+/// exteraGram-compatible plugin host.
 ///
-/// Executes `.py` plugins against an embedded CPython 3.11 interpreter (see
-/// `//third-party/python`). When the interpreter is not linked the manager
-/// still lists, enables and persists plugin settings, but hooks are
-/// pass-through.
+/// Plugins are `.py` files in `Documents/Plugins`, run by an embedded CPython 3.11 (see
+/// `//third-party/python` and `stdlib/trollgram_host.py`). Without the interpreter the manager still lists
+/// plugins and their enabled state, but nothing runs and each plugin reports why.
+///
+/// Plugins are **off until the user enables them**: a plugin is arbitrary code with the app's permissions.
+///
+/// Every call into Python happens on the main thread (see `EmbeddedPython`). Public entry points that
+/// touch the interpreter hop to the main queue themselves, so callers may use any thread.
 public final class PythonPluginManager {
     public static let shared = PythonPluginManager()
 
@@ -15,8 +19,14 @@ public final class PythonPluginManager {
         public let path: String
         public var title: String
         public var description: String
+        public var author: String
+        public var version: String
         public var isEnabled: Bool
+        /// `true` once the plugin's code is loaded and its hooks are live.
+        public var isLoaded: Bool
         public var loadError: String?
+        /// exteraGram features the plugin asked for that have no iOS backend.
+        public var unsupported: [String]
     }
 
     public struct State: Equatable {
@@ -25,12 +35,14 @@ public final class PythonPluginManager {
         public var logs: [String] = []
     }
 
-    private let queue = DispatchQueue(label: "app.trollgram.ios.plugins")
     private let statePromise = ValuePromise<State>(State(), ignoreRepeated: true)
     private let stateValue: Atomic<State>
 
     private let pluginsDirectory: String
     private let dataDirectory: String
+
+    /// Main thread only.
+    private var hasSynced = false
 
     private init() {
         self.stateValue = Atomic(value: State())
@@ -56,61 +68,114 @@ public final class PythonPluginManager {
         return EmbeddedPython.shared.isAvailable
     }
 
-    // MARK: - Interpreter
+    private func onMain<T>(_ f: () -> T) -> T {
+        if Thread.isMainThread {
+            return f()
+        }
+        return DispatchQueue.main.sync {
+            return f()
+        }
+    }
 
     private func ensureInterpreter() -> Bool {
         guard EmbeddedPython.shared.isAvailable else {
             return false
         }
-        let started = EmbeddedPython.shared.start(pluginDirectory: self.pluginsDirectory, dataDirectory: self.dataDirectory)
-        if started {
-            EmbeddedPython.shared.run("import trollgram_bridge")
-        }
-        return started
+        return EmbeddedPython.shared.start(dataDirectory: self.dataDirectory)
     }
 
-    // MARK: - Discovery
+    // MARK: - Discovery and lifecycle
 
+    /// Rescans the plugins folder and brings the loaded set in line with the enabled set.
     public func reload() {
-        self.queue.async {
-            let current = self.stateValue.with { $0 }
-            guard !current.isLoading else {
-                return
-            }
-            self.updateState { state in
-                var state = state
-                state.isLoading = true
-                return state
-            }
-
-            var found: [Plugin] = []
-            let fm = FileManager.default
-            if let entries = try? fm.contentsOfDirectory(atPath: self.pluginsDirectory) {
-                let enabled = self.loadEnabledIds()
-                for entry in entries where entry.hasSuffix(".py") {
-                    let id = (entry as NSString).deletingPathExtension
-                    found.append(Plugin(
-                        id: id,
-                        path: self.pluginsDirectory + "/" + entry,
-                        title: id,
-                        description: "",
-                        isEnabled: enabled.isEmpty || enabled.contains(id),
-                        loadError: nil
-                    ))
-                }
-            }
-
-            self.updateState { state in
-                var state = state
-                state.plugins = found.sorted { $0.id < $1.id }
-                state.isLoading = false
-                return state
-            }
-            self.appendLog("discovered \(found.count) plugin(s)")
+        self.onMain {
+            self.syncPlugins()
         }
     }
 
-    /// Installs a `.py` file dropped from a chat message.
+    private func syncPlugins() {
+        self.updateState { state in
+            var state = state
+            state.isLoading = true
+            return state
+        }
+
+        let enabled = self.loadEnabledIds()
+        var plugins: [Plugin]?
+
+        if self.ensureInterpreter() {
+            let request: [String: Any] = [
+                "op": "sync",
+                "dir": self.pluginsDirectory,
+                "enabled": enabled.sorted()
+            ]
+            if let result = EmbeddedPython.shared.call(request) {
+                self.handleActions(result)
+                if (result["ok"] as? Bool) == true, let list = result["plugins"] as? [[String: Any]] {
+                    plugins = list.compactMap { self.plugin(from: $0, enabled: enabled) }
+                } else {
+                    self.appendLog("plugin sync failed: \((result["error"] as? String) ?? "unknown error")")
+                }
+            } else {
+                self.appendLog("plugin sync failed: the Python interpreter did not answer")
+            }
+        }
+
+        let runtimeProblem = self.isInterpreterAvailable ? "the Python runtime could not be started" : "this build has no Python runtime"
+        let found = plugins ?? self.filesOnDisk(enabled: enabled, error: runtimeProblem)
+        self.hasSynced = true
+
+        self.updateState { state in
+            var state = state
+            state.plugins = found
+            state.isLoading = false
+            return state
+        }
+        let loaded = found.filter { $0.isLoaded }.count
+        self.appendLog("\(found.count) plugin(s) found, \(loaded) running")
+    }
+
+    private func plugin(from item: [String: Any], enabled: Set<String>) -> Plugin? {
+        guard let id = item["id"] as? String, let path = item["path"] as? String else {
+            return nil
+        }
+        return Plugin(
+            id: id,
+            path: path,
+            title: (item["name"] as? String) ?? id,
+            description: (item["description"] as? String) ?? "",
+            author: (item["author"] as? String) ?? "",
+            version: (item["version"] as? String) ?? "",
+            isEnabled: enabled.contains(id),
+            isLoaded: (item["loaded"] as? Bool) ?? false,
+            loadError: item["error"] as? String,
+            unsupported: (item["unsupported"] as? [String]) ?? []
+        )
+    }
+
+    /// Fallback listing used when Python is unavailable: file names only.
+    private func filesOnDisk(enabled: Set<String>, error: String) -> [Plugin] {
+        var found: [Plugin] = []
+        let entries = (try? FileManager.default.contentsOfDirectory(atPath: self.pluginsDirectory)) ?? []
+        for entry in entries.sorted() where entry.hasSuffix(".py") {
+            let id = (entry as NSString).deletingPathExtension
+            found.append(Plugin(
+                id: id,
+                path: self.pluginsDirectory + "/" + entry,
+                title: id,
+                description: "",
+                author: "",
+                version: "",
+                isEnabled: enabled.contains(id),
+                isLoaded: false,
+                loadError: enabled.contains(id) ? error : nil,
+                unsupported: []
+            ))
+        }
+        return found
+    }
+
+    /// Installs a `.py` file picked by the user. The plugin stays disabled until it is switched on.
     @discardableResult
     public func installPlugin(at path: String) -> Bool {
         let fm = FileManager.default
@@ -125,7 +190,7 @@ public final class PythonPluginManager {
         }
         do {
             try fm.copyItem(atPath: path, toPath: destination)
-            self.appendLog("installed \(name)")
+            self.appendLog("installed \(name) (turn it on to run it)")
             self.reload()
             return true
         } catch {
@@ -135,13 +200,6 @@ public final class PythonPluginManager {
     }
 
     public func setPlugin(_ id: String, enabled: Bool) {
-        self.updateState { state in
-            var state = state
-            if let index = state.plugins.firstIndex(where: { $0.id == id }) {
-                state.plugins[index].isEnabled = enabled
-            }
-            return state
-        }
         var enabledIds = self.loadEnabledIds()
         if enabled {
             enabledIds.insert(id)
@@ -150,54 +208,118 @@ public final class PythonPluginManager {
         }
         self.saveEnabledIds(enabledIds)
         self.appendLog("\(enabled ? "enabled" : "disabled") \(id)")
+        self.reload()
     }
 
     // MARK: - Hooks
 
-    public var hasEnabledPlugins: Bool {
-        return self.stateValue.with { $0.plugins.contains(where: { $0.isEnabled }) }
-    }
+    /// Runs the outgoing-message hooks of every loaded plugin. Plugins start on the first send after a
+    /// launch, so they work without the plugin screen ever being opened.
+    public func dispatchSendHook(peerId: Int64, text: String) -> PythonPluginsRuntime.SendResult {
+        return self.onMain { () -> PythonPluginsRuntime.SendResult in
+            if !self.hasSynced {
+                if self.loadEnabledIds().isEmpty {
+                    return .pass
+                }
+                self.syncPlugins()
+            }
+            guard self.stateValue.with({ $0.plugins.contains(where: { $0.isLoaded }) }) else {
+                return .pass
+            }
 
-    /// Intercepts outgoing messages; returns `true` when a plugin cancelled sending.
-    public func dispatchSendMessageHook(peerId: Any, messages: inout [Any]) -> Bool {
-        guard self.hasEnabledPlugins, self.ensureInterpreter() else {
-            return false
-        }
-        let text = messages.first.map { "\($0)" } ?? ""
-        let enabled = self.stateValue.with { $0.plugins.filter { $0.isEnabled } }
-        for plugin in enabled {
-            let result = EmbeddedPython.shared.dispatchSendMessageHook(module: plugin.id, text: text)
-            if result == 2 {
-                self.appendLog("\(plugin.id) cancelled outgoing message")
-                return true
+            let request: [String: Any] = [
+                "op": "send_hook",
+                "account": 0,
+                "peer": peerId,
+                "message": text
+            ]
+            guard let result = EmbeddedPython.shared.call(request) else {
+                return .pass
+            }
+            self.handleActions(result)
+            guard (result["ok"] as? Bool) == true else {
+                self.appendLog("send hook failed: \((result["error"] as? String) ?? "unknown error")")
+                return .pass
+            }
+            switch (result["action"] as? String) ?? "pass" {
+            case "cancel":
+                self.appendLog("\((result["by"] as? String) ?? "a plugin") cancelled an outgoing message")
+                return .cancel
+            case "modify":
+                guard let modified = result["message"] as? String, modified != text else {
+                    return .pass
+                }
+                if modified.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    self.appendLog("a plugin emptied an outgoing message, so it was not sent")
+                    return .cancel
+                }
+                return .modify(modified)
+            default:
+                return .pass
             }
         }
-        return false
     }
 
-    // MARK: - Settings storage
+    /// Carries out what plugins queued during a call: log lines, toasts, messages to send, delayed tasks.
+    /// Main thread only.
+    private func handleActions(_ result: [String: Any]) {
+        guard let actions = result["actions"] as? [[String: Any]] else {
+            return
+        }
+        for action in actions {
+            let kind = (action["kind"] as? String) ?? ""
+            switch kind {
+            case "log":
+                let text = (action["text"] as? String) ?? ""
+                let level = (action["level"] as? String) ?? "info"
+                let source = (action["source"] as? String).map { "[\($0)] " } ?? "[plugin] "
+                let marker = (level == "error" || level == "warning") ? level + ": " : ""
+                self.appendLog(source + marker + text)
+            case "toast":
+                let text = (action["text"] as? String) ?? ""
+                if let handler = PythonPluginsRuntime.toastHandler {
+                    handler(text, (action["style"] as? String) ?? "info")
+                } else {
+                    self.appendLog("toast: \(text)")
+                }
+            case "send_text":
+                guard let peer = (action["peer"] as? NSNumber)?.int64Value, let text = action["text"] as? String else {
+                    continue
+                }
+                if let handler = PythonPluginsRuntime.sendTextHandler {
+                    handler(peer, text)
+                } else {
+                    self.appendLog("a plugin tried to send a message, but no chat is open yet to send it from")
+                }
+            case "schedule":
+                guard let token = (action["token"] as? NSNumber)?.intValue, let delay = (action["delay_ms"] as? NSNumber)?.intValue else {
+                    continue
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(delay)) { [weak self] in
+                    self?.runScheduled(token: token)
+                }
+            default:
+                break
+            }
+        }
+    }
+
+    private func runScheduled(token: Int) {
+        guard let result = EmbeddedPython.shared.call(["op": "run_scheduled", "token": token]) else {
+            return
+        }
+        self.handleActions(result)
+    }
+
+    // MARK: - Storage
 
     public func pluginDataDirectoryPath() -> String {
         return self.dataDirectory
     }
 
+    /// Where `BasePlugin.get_setting` / `set_setting` keep a plugin's values.
     public func settingsPath(forPlugin id: String) -> String {
-        return self.dataDirectory + "/" + id + ".json"
-    }
-
-    public func loadSettings(forPlugin id: String) -> [String: Any] {
-        guard let data = FileManager.default.contents(atPath: self.settingsPath(forPlugin: id)) else {
-            return [:]
-        }
-        return (try? JSONSerialization.jsonObject(with: data, options: [])) as? [String: Any] ?? [:]
-    }
-
-    public func saveSettings(forPlugin id: String, values: [String: Any]) {
-        guard JSONSerialization.isValidJSONObject(values),
-              let data = try? JSONSerialization.data(withJSONObject: values, options: [.prettyPrinted]) else {
-            return
-        }
-        try? data.write(to: URL(fileURLWithPath: self.settingsPath(forPlugin: id)))
+        return self.dataDirectory + "/settings/" + id + ".json"
     }
 
     private var enabledIdsPath: String {
@@ -214,10 +336,10 @@ public final class PythonPluginManager {
     }
 
     private func saveEnabledIds(_ ids: Set<String>) {
-        guard let data = try? JSONSerialization.data(withJSONObject: Array(ids)) else {
+        guard let data = try? JSONSerialization.data(withJSONObject: ids.sorted(), options: []) else {
             return
         }
-        try? data.write(to: URL(fileURLWithPath: self.enabledIdsPath))
+        try? data.write(to: URL(fileURLWithPath: self.enabledIdsPath), options: [.atomic])
     }
 
     // MARK: - Logs
