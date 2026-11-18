@@ -103,6 +103,8 @@ python3 -m unittest discover -s Swiftgram/PythonPlugins/tests
 Guidelines:
 
 - Follow the exteraGram API names and behavior where iOS can support them.
+  exteraGram `.plugin` files are Python source and must keep loading unchanged.
+- Document SDK changes in `Swiftgram/PythonPlugins/README.md`.
 - A feature that cannot work on iOS must raise `UnsupportedOnIOS`
   (`trollgram_bridge.unsupported(...)`), never silently do nothing.
 - Plugin calls that reach Telegram or the UI are queued as actions in

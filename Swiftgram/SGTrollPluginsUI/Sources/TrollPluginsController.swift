@@ -25,6 +25,7 @@ private enum TrollPluginsEntry: ItemListNodeEntry {
     case jsSettings(id: Int32, plugin: JSPluginManager.Plugin)
     case plugin(id: Int32, plugin: PythonPluginManager.Plugin)
     case pluginStatus(id: Int32, text: String)
+    case pluginSettings(id: Int32, plugin: PythonPluginManager.Plugin)
     case importPlugin(id: Int32, text: String)
     case logs(id: Int32, text: String)
     case clearLogs(id: Int32, text: String)
@@ -35,7 +36,7 @@ private enum TrollPluginsEntry: ItemListNodeEntry {
             return TrollPluginsSection.install.rawValue
         case .jsPlugin, .jsStatus, .jsSettings:
             return TrollPluginsSection.jsPlugins.rawValue
-        case .plugin, .pluginStatus:
+        case .plugin, .pluginStatus, .pluginSettings:
             return TrollPluginsSection.plugins.rawValue
         case .logs, .clearLogs:
             return TrollPluginsSection.logs.rawValue
@@ -44,7 +45,7 @@ private enum TrollPluginsEntry: ItemListNodeEntry {
 
     var stableId: Int32 {
         switch self {
-        case let .header(id, _), let .notice(id, _), let .jsPlugin(id, _), let .jsStatus(id, _), let .jsSettings(id, _), let .plugin(id, _), let .pluginStatus(id, _), let .importPlugin(id, _), let .logs(id, _), let .clearLogs(id, _):
+        case let .header(id, _), let .notice(id, _), let .jsPlugin(id, _), let .jsStatus(id, _), let .jsSettings(id, _), let .plugin(id, _), let .pluginStatus(id, _), let .pluginSettings(id, _), let .importPlugin(id, _), let .logs(id, _), let .clearLogs(id, _):
             return id
         }
     }
@@ -74,6 +75,17 @@ private enum TrollPluginsEntry: ItemListNodeEntry {
             )
         case let .jsStatus(_, text):
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
+        case let .pluginSettings(_, plugin):
+            return ItemListDisclosureItem(
+                presentationData: presentationData,
+                title: "Settings",
+                label: "",
+                sectionId: self.section,
+                style: .blocks,
+                action: {
+                    arguments.openPythonSettings(plugin.id, plugin.title)
+                }
+            )
         case let .jsSettings(_, plugin):
             return ItemListDisclosureItem(
                 presentationData: presentationData,
@@ -132,14 +144,16 @@ private final class TrollPluginsArguments {
     let togglePlugin: (String, Bool) -> Void
     let toggleJSPlugin: (String, Bool) -> Void
     let openJSSettings: (String, String) -> Void
+    let openPythonSettings: (String, String) -> Void
     let clearLogs: () -> Void
     let importPlugins: () -> Void
 
-    init(context: AccountContext, togglePlugin: @escaping (String, Bool) -> Void, toggleJSPlugin: @escaping (String, Bool) -> Void, openJSSettings: @escaping (String, String) -> Void, clearLogs: @escaping () -> Void, importPlugins: @escaping () -> Void) {
+    init(context: AccountContext, togglePlugin: @escaping (String, Bool) -> Void, toggleJSPlugin: @escaping (String, Bool) -> Void, openJSSettings: @escaping (String, String) -> Void, openPythonSettings: @escaping (String, String) -> Void, clearLogs: @escaping () -> Void, importPlugins: @escaping () -> Void) {
         self.context = context
         self.togglePlugin = togglePlugin
         self.toggleJSPlugin = toggleJSPlugin
         self.openJSSettings = openJSSettings
+        self.openPythonSettings = openPythonSettings
         self.clearLogs = clearLogs
         self.importPlugins = importPlugins
     }
@@ -212,6 +226,9 @@ public func trollPluginsController(context: AccountContext) -> ViewController {
         openJSSettings: { id, title in
             controllerReference?.push(trollJSPluginSettingsController(context: context, pluginId: id, title: title))
         },
+        openPythonSettings: { id, title in
+            controllerReference?.push(trollPythonPluginSettingsController(context: context, pluginId: id, title: title))
+        },
         clearLogs: {
             PythonPluginManager.shared.clearLogs()
             JSPluginManager.shared.clearLogs()
@@ -242,7 +259,7 @@ public func trollPluginsController(context: AccountContext) -> ViewController {
 
         entries.append(.header(id: nextId(), text: "PLUGINS DIRECTORY"))
         entries.append(.notice(id: nextId(), text: PythonPluginManager.shared.pluginsDirectoryPath))
-        entries.append(.importPlugin(id: nextId(), text: "Import .js / .py File"))
+        entries.append(.importPlugin(id: nextId(), text: "Import .js / .plugin / .py File"))
         entries.append(.notice(id: nextId(), text: "Plugins are off until you turn them on. A plugin is code that runs inside the app with its permissions, so only enable plugins you trust."))
         entries.append(.header(id: nextId(), text: "JAVASCRIPT PLUGINS (\(jsState.plugins.count))"))
         if jsState.plugins.isEmpty {
@@ -260,7 +277,7 @@ public func trollPluginsController(context: AccountContext) -> ViewController {
         }
 
         if !PythonPluginsRuntime.isPluginHostAvailable {
-            entries.append(.notice(id: nextId(), text: "This build has no Python runtime, so .py plugins cannot run. JavaScript plugins do not need it."))
+            entries.append(.notice(id: nextId(), text: "This build has no Python runtime, so .plugin / .py plugins cannot run. JavaScript plugins do not need it."))
         }
 
         entries.append(.header(id: nextId(), text: "PYTHON PLUGINS (\(state.plugins.count))"))
@@ -272,6 +289,9 @@ public func trollPluginsController(context: AccountContext) -> ViewController {
                 let statusText = pluginStatusText(plugin)
                 if !statusText.isEmpty {
                     entries.append(.pluginStatus(id: nextId(), text: statusText))
+                }
+                if plugin.isLoaded && plugin.hasSettings {
+                    entries.append(.pluginSettings(id: nextId(), plugin: plugin))
                 }
             }
         }

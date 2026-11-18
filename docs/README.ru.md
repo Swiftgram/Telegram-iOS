@@ -70,7 +70,11 @@ JavaScript-плагины выполняются на JavaScriptCore, котор
 
 Доступные возможности:
 
-- Импорт файлов `.py`.
+- Импорт файлов `.plugin` (exteraGram) и `.py`: плагины exteraGram — это обычный
+  Python-код, они запускаются как есть.
+- Экран настроек плагина (`Header`, `Switch`, `Input`, `EditText`, `Selector`, `Text`)
+  рисуется нативно в меню плагинов.
+- Как писать плагины: [`Swiftgram/PythonPlugins/README.md`](../Swiftgram/PythonPlugins/README.md).
 - Включение и отключение отдельных плагинов.
 - Просмотр журналов работы.
 - Отдельное хранение данных плагинов.
@@ -140,6 +144,14 @@ python3 build-system/Make/Make.py \
 ```
 
 В зависимости от окружения параметры сборки могут потребовать изменений.
+
+## Сборка через GitHub Actions
+
+Workflow `.github/workflows/build-ipa.yml` собирает IPA. Для входа в аккаунт
+нужны секреты `TG_API_ID` и `TG_API_HASH` (приложение с my.telegram.org/apps,
+платформа «other»); для подписи — `P12_BASE64`, `P12_PASSWORD` и
+`MOBILEPROVISION_BASE64`. Полная таблица и команды: [SECRETS.md](SECRETS.md).
+Не публикуйте значения секретов в репозитории и не присылайте их в чат.
 
 ## Структура проекта
 

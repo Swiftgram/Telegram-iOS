@@ -3,7 +3,7 @@ import SwiftSignalKit
 
 /// exteraGram-compatible plugin host.
 ///
-/// Plugins are `.py` files in `Documents/Plugins`, run by an embedded CPython 3.11 (see
+/// Plugins are `.plugin` (exteraGram) or `.py` files in `Documents/Plugins`, run by an embedded CPython 3.11 (see
 /// `//third-party/python` and `stdlib/trollgram_host.py`). Without the interpreter the manager still lists
 /// plugins and their enabled state, but nothing runs and each plugin reports why.
 ///
@@ -13,6 +13,9 @@ import SwiftSignalKit
 /// touch the interpreter hop to the main queue themselves, so callers may use any thread.
 public final class PythonPluginManager {
     public static let shared = PythonPluginManager()
+
+    /// File extensions accepted as plugins. exteraGram's `.plugin` is Python source under another name.
+    public static let pluginExtensions = ["plugin", "py"]
 
     public struct Plugin: Equatable, Identifiable {
         public let id: String
@@ -27,6 +30,8 @@ public final class PythonPluginManager {
         public var loadError: String?
         /// exteraGram features the plugin asked for that have no iOS backend.
         public var unsupported: [String]
+        /// The plugin overrides `create_settings()`, so it has a settings screen.
+        public var hasSettings: Bool
     }
 
     public struct State: Equatable {
@@ -149,7 +154,8 @@ public final class PythonPluginManager {
             isEnabled: enabled.contains(id),
             isLoaded: (item["loaded"] as? Bool) ?? false,
             loadError: item["error"] as? String,
-            unsupported: (item["unsupported"] as? [String]) ?? []
+            unsupported: (item["unsupported"] as? [String]) ?? [],
+            hasSettings: (item["has_settings"] as? Bool) ?? false
         )
     }
 
@@ -157,7 +163,7 @@ public final class PythonPluginManager {
     private func filesOnDisk(enabled: Set<String>, error: String) -> [Plugin] {
         var found: [Plugin] = []
         let entries = (try? FileManager.default.contentsOfDirectory(atPath: self.pluginsDirectory)) ?? []
-        for entry in entries.sorted() where entry.hasSuffix(".py") {
+        for entry in entries.sorted() where PythonPluginManager.pluginExtensions.contains((entry as NSString).pathExtension) {
             let id = (entry as NSString).deletingPathExtension
             found.append(Plugin(
                 id: id,
@@ -169,24 +175,27 @@ public final class PythonPluginManager {
                 isEnabled: enabled.contains(id),
                 isLoaded: false,
                 loadError: enabled.contains(id) ? error : nil,
-                unsupported: []
+                unsupported: [],
+                hasSettings: false
             ))
         }
         return found
     }
 
-    /// Installs a `.py` file picked by the user. The plugin stays disabled until it is switched on.
+    /// Installs a `.plugin` or `.py` file picked by the user. The plugin stays disabled until it is switched on.
     @discardableResult
     public func installPlugin(at path: String) -> Bool {
         let fm = FileManager.default
         let name = (path as NSString).lastPathComponent
-        guard name.hasSuffix(".py") else {
-            self.appendLog("rejected \(name): not a .py plugin")
+        guard PythonPluginManager.pluginExtensions.contains((name as NSString).pathExtension) else {
+            self.appendLog("rejected \(name): not a .plugin or .py file")
             return false
         }
         let destination = self.pluginsDirectory + "/" + name
-        if fm.fileExists(atPath: destination) {
-            try? fm.removeItem(atPath: destination)
+        // A plugin id comes from the file name, so drop an older copy under the other extension.
+        let stem = (name as NSString).deletingPathExtension
+        for ext in PythonPluginManager.pluginExtensions {
+            try? fm.removeItem(atPath: self.pluginsDirectory + "/" + stem + "." + ext)
         }
         do {
             try fm.copyItem(atPath: path, toPath: destination)
@@ -209,6 +218,41 @@ public final class PythonPluginManager {
         self.saveEnabledIds(enabledIds)
         self.appendLog("\(enabled ? "enabled" : "disabled") \(id)")
         self.reload()
+    }
+
+    // MARK: - Settings screen
+
+    /// What the plugin's `create_settings()` returned (JSON objects with `type`, `index`, `key`, `text`, ...) and the
+    /// stored values by key. Empty when the plugin is not running.
+    public func settingsSnapshot(forPlugin id: String) -> (widgets: [[String: Any]], values: [String: Any]) {
+        return self.onMain {
+            guard self.ensureInterpreter(),
+                  let result = EmbeddedPython.shared.call(["op": "settings", "plugin": id]) else {
+                return ([], [:])
+            }
+            self.handleActions(result)
+            guard (result["ok"] as? Bool) == true else {
+                self.appendLog("settings of \(id) failed: \((result["error"] as? String) ?? "unknown error")")
+                return ([], [:])
+            }
+            return ((result["widgets"] as? [[String: Any]]) ?? [], (result["values"] as? [String: Any]) ?? [:])
+        }
+    }
+
+    /// `kind` is `change` (a new `value` for the widget at `index`) or `click`. The plugin's callback runs.
+    public func sendSettingsEvent(forPlugin id: String, index: Int, kind: String, value: Any?) {
+        self.onMain {
+            guard self.ensureInterpreter() else {
+                return
+            }
+            var request: [String: Any] = ["op": "settings_event", "plugin": id, "index": index, "kind": kind]
+            if let value {
+                request["value"] = value
+            }
+            if let result = EmbeddedPython.shared.call(request) {
+                self.handleActions(result)
+            }
+        }
     }
 
     // MARK: - Hooks

@@ -200,6 +200,42 @@ class HostTest(unittest.TestCase):
         self.assertEqual(widgets[1].to_dict()["key"], "on")
         json.dumps([w.to_dict() for w in widgets])
 
+    def test_plugin_extension_is_discovered(self):
+        self.write("ext.plugin", UPPER.replace('"upper"', '"ext"'))
+        plugins = self.sync(["ext"])
+        self.assertTrue(plugins["ext"]["loaded"])
+        self.assertTrue(plugins["ext"]["path"].endswith("ext.plugin"))
+
+    def test_settings_screen_protocol(self):
+        self.write("ui.plugin", """
+            from base_plugin import BasePlugin
+            from ui.settings import Header, Switch, Selector, Text
+            __id__ = "ui"
+            __name__ = "UI"
+            class P(BasePlugin):
+                def on_plugin_load(self):
+                    self.seen = []
+                def create_settings(self):
+                    return [Header("H"), Switch("on", "On", default=True, on_change=lambda v: self.seen.append(("on", v))),
+                            Selector("mode", "Mode", default=1, items=["a", "b"], on_change=lambda v: self.seen.append(("mode", v))),
+                            Text("Go", on_click=lambda view: self.seen.append(("go", view)))]
+        """)
+        self.sync(["ui"])
+        shown = host.handle_request({"op": "settings", "plugin": "ui"})
+        self.assertEqual([w["type"] for w in shown["widgets"]], ["Header", "Switch", "Selector", "Text"])
+        self.assertTrue(self.sync(["ui"])["ui"]["has_settings"])
+        self.assertFalse(self.sync(["ui"])["ui"]["unsupported"])
+        self.assertEqual(shown["widgets"][1]["actions"], ["on_change"])
+        self.assertEqual(shown["widgets"][2]["items"], ["a", "b"])
+        self.assertEqual(shown["widgets"][3]["actions"], ["on_click"])
+        host.handle_request({"op": "settings_event", "plugin": "ui", "index": 1, "kind": "change", "value": False})
+        host.handle_request({"op": "settings_event", "plugin": "ui", "index": 2, "kind": "change", "value": 0})
+        host.handle_request({"op": "settings_event", "plugin": "ui", "index": 3, "kind": "click"})
+        instance = host._records["ui"].instance
+        self.assertEqual(instance.seen, [("on", False), ("mode", 0), ("go", None)])
+        self.assertEqual(host.handle_request({"op": "settings", "plugin": "ui"})["values"], {"on": False, "mode": 0})
+        self.assertEqual(host.handle_request({"op": "settings", "plugin": "missing"}), {"widgets": [], "values": {}})
+
     def test_call_protocol(self):
         self.write("upper.py", UPPER)
         out = os.path.join(self.dir, "result.json")

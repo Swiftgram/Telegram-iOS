@@ -1,7 +1,9 @@
 """exteraGram SDK: `ui.settings` widgets.
 
-Widgets are plain value objects returned from `BasePlugin.create_settings()`. On iOS the
-plugin screen shows each plugin's persisted values; the widgets describe keys and defaults.
+Widgets are plain value objects returned from `BasePlugin.create_settings()`. The native plugin screen
+renders `Header`, `Divider`, `Switch`, `Input`, `EditText`, `Selector` and `Text` (a `Text` with `on_click` is
+a button); `Custom` widgets have no iOS counterpart and are skipped. A change is stored under the widget's
+`key` and then `on_change(new_value)` runs; a `Text` tap runs `on_click(None)`.
 """
 
 
@@ -23,6 +25,7 @@ class _Widget:
             except (TypeError, ValueError):
                 continue
             data[name] = value
+        data["actions"] = sorted(name for name, value in self.__dict__.items() if name.startswith("on_") and callable(value))
         return data
 
 

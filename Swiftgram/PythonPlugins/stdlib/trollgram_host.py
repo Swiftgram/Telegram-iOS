@@ -10,6 +10,7 @@ Ops: `sync` (discover + load the enabled set), `send_hook`, `run_scheduled`, `pi
 
 import ast
 import base64
+import importlib.machinery
 import importlib.util
 import json
 import os
@@ -50,6 +51,7 @@ class Record:
         self.module = None
         self.instance = None
         self.loaded = False
+        self.widgets = []
         self.module_name = "trollgram_plugin_" + plugin_id.replace("-", "_")
 
     def status(self):
@@ -59,6 +61,9 @@ class Record:
                 unsupported = self.instance.unsupported_features
             except Exception:
                 unsupported = []
+        has_settings = False
+        if self.instance is not None:
+            has_settings = type(self.instance).create_settings is not BasePlugin.create_settings
         return {
             "id": self.id,
             "path": self.path,
@@ -69,7 +74,12 @@ class Record:
             "loaded": self.loaded,
             "error": self.error,
             "unsupported": unsupported,
+            "has_settings": has_settings,
         }
+
+
+# exteraGram plugins are Python source in a `.plugin` file; plain `.py` files work too.
+PLUGIN_EXTENSIONS = (".plugin", ".py")
 
 
 def _error_text(error):
@@ -125,10 +135,10 @@ def discover(directory):
     except OSError:
         entries = []
     for entry in entries:
-        if not entry.endswith(".py"):
+        stem, extension = os.path.splitext(entry)
+        if extension not in PLUGIN_EXTENSIONS:
             continue
         path = os.path.join(directory, entry)
-        stem = entry[:-3]
         try:
             mtime = os.path.getmtime(path)
             with open(path, "r", encoding="utf-8") as handle:
@@ -172,7 +182,9 @@ def load(record):
         record.error = "needs Python packages that cannot be installed on iOS: " + ", ".join(map(str, missing))
         return
     try:
-        spec = importlib.util.spec_from_file_location(record.module_name, record.path)
+        # An explicit loader: importlib only guesses one for .py, not for exteraGram's .plugin files.
+        loader = importlib.machinery.SourceFileLoader(record.module_name, record.path)
+        spec = importlib.util.spec_from_file_location(record.module_name, record.path, loader=loader)
         module = importlib.util.module_from_spec(spec)
         sys.modules[record.module_name] = module
         spec.loader.exec_module(module)
@@ -263,6 +275,49 @@ def dispatch_send_message(account, peer, message):
     return {"action": "pass", "message": message}
 
 
+def settings_for(plugin_id):
+    """The plugin's `create_settings()` widgets as JSON plus the stored values, for the native screen."""
+    record = _records.get(plugin_id)
+    if record is None or not record.loaded or record.instance is None:
+        return {"widgets": [], "values": {}}
+    try:
+        record.widgets = list(record.instance.create_settings() or [])
+    except Exception as problem:
+        record.widgets = []
+        trollgram_bridge.log("%s create_settings failed: %s" % (record.id, _error_text(problem)),
+                             level="error", source=record.id)
+    widgets = []
+    for index, widget in enumerate(record.widgets):
+        to_dict = getattr(widget, "to_dict", None)
+        data = to_dict() if callable(to_dict) else {"type": "Custom"}
+        data["index"] = index
+        widgets.append(data)
+    return {"widgets": widgets, "values": record.instance.export_settings()}
+
+
+def settings_event(plugin_id, index, kind, value):
+    """`change`: store `value` under the widget's key and call `on_change(value)`. `click`: `on_click(None)`."""
+    record = _records.get(plugin_id)
+    if record is None or not record.loaded or not 0 <= index < len(record.widgets):
+        return {}
+    widget = record.widgets[index]
+    try:
+        if kind == "change":
+            key = getattr(widget, "key", None)
+            if key is not None:
+                record.instance.set_setting(key, value)
+            callback = getattr(widget, "on_change", None)
+        else:
+            callback = getattr(widget, "on_click", None)
+            value = None
+        if callable(callback):
+            callback(value)
+    except Exception as problem:
+        trollgram_bridge.log("%s settings %s failed: %s" % (record.id, kind, _error_text(problem)),
+                             level="error", source=record.id)
+    return {}
+
+
 def handle_request(request):
     op = request.get("op")
     trollgram_bridge.set_context({
@@ -276,6 +331,10 @@ def handle_request(request):
     if op == "send_hook":
         peer = to_plugin_id(request["peer"]) if isinstance(request.get("peer"), int) else None
         return dispatch_send_message(int(request.get("account", 0)), peer, request["message"])
+    if op == "settings":
+        return settings_for(request["plugin"])
+    if op == "settings_event":
+        return settings_event(request["plugin"], int(request["index"]), request.get("kind", "change"), request.get("value"))
     if op == "run_scheduled":
         trollgram_bridge.run_scheduled(request["token"])
         return {}

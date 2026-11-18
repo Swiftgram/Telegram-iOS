@@ -87,7 +87,8 @@ TrollGram runs exteraGram-style Python 3.11 plugins on an embedded
 interpreter. It implements the parts of the plugin API that make sense on
 iOS and reports the rest instead of failing silently.
 
-- Import `.py` plugins from the Files app.
+- Import `.plugin` (exteraGram) or `.py` plugins from the Files app. exteraGram
+  plugins are plain Python source, so they run as they are.
 - Plugins are **off until you enable them**; they start on the first
   message you send after launching the app.
 - Plugin metadata (`__id__`, `__name__`, `__author__`, `__version__`) is
@@ -102,8 +103,10 @@ Supported API:
 | --- | --- |
 | Lifecycle | `on_plugin_load`, `on_plugin_unload` |
 | Outgoing text messages | `add_on_send_message_hook` with `HookResult(strategy=CANCEL / MODIFY / MODIFY_FINAL)` and priorities |
-| Settings | `get_setting`, `set_setting`, `export_settings`, `import_settings`, `ui.settings` widgets (values are stored; the widgets are not rendered yet) |
+| Settings | `get_setting`, `set_setting`, `export_settings`, `import_settings`; `ui.settings` widgets (`Header`, `Switch`, `Input`, `EditText`, `Selector`, `Text`) are rendered natively on the plugin's Settings screen |
 | Client | `client_utils.send_text`, `send_message` (text only), `run_on_queue`, `ui.bulletin.BulletinHelper` toasts |
+
+Writing plugins: [`Swiftgram/PythonPlugins/README.md`](Swiftgram/PythonPlugins/README.md).
 
 Not supported on iOS (these raise `UnsupportedOnIOS`, which shows up in the
 plugin log): hooks on Telegram API requests and updates, Android/Java
@@ -209,6 +212,9 @@ Register an application at <https://my.telegram.org/apps> (platform
 them the build keeps the bundled `api_id` 8 -- Telegram's own App Store
 application -- and no login code is delivered to this build at all, neither
 by SMS nor as an in-app message.
+
+See [docs/SECRETS.md](docs/SECRETS.md) for every secret, where to get it
+and how to add it.
 
 Do not publish certificates, provisioning profiles or passwords
 in the repository.
