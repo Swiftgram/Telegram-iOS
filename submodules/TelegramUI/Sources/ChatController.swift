@@ -8058,6 +8058,13 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         super.viewDidAppear(animated)
         self.forwardSideListAppearance(.didAppear, animated: animated)
         
+        // TrollGram: plugins can use the account (sendMessage, getPeer) and show toasts once any chat is open.
+        TrollPluginsBridge.install(context: self.context, presentationData: { [weak self] in
+            return self?.presentationData
+        }, present: { [weak self] controller in
+            self?.present(controller, in: .window(.root))
+        })
+        
         self.didAppear = true
         
         self.chatDisplayNode.historyNode.experimentalSnapScrollToItem = false

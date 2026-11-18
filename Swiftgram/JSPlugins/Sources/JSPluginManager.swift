@@ -170,7 +170,7 @@ public final class JSPluginManager {
         guard let source = try? String(contentsOfFile: path, encoding: .utf8) else {
             return "cannot read the file"
         }
-        guard let context = JSContext() else {
+        guard let context = JSContext() as JSContext? else {
             return "cannot create a JavaScript context"
         }
         let instance = Instance(context: context, settings: self.readSettings(id: id))
@@ -223,7 +223,7 @@ public final class JSPluginManager {
     // MARK: - Natives exposed to JavaScript
 
     private func installNatives(into context: JSContext, id: String, instance: Instance) {
-        guard let native = JSValue(newObjectIn: context) else {
+        guard let native = JSValue(newObjectIn: context) as JSValue? else {
             return
         }
         let log: @convention(block) (String, String) -> Void = { [weak self] level, text in
@@ -256,11 +256,14 @@ public final class JSPluginManager {
             }
             return String(data: data, encoding: .utf8) ?? "{}"
         }
-        let settingsSet: @convention(block) (String, String) -> Void = { [weak self] key, json in
+        let settingsSet: @convention(block) (String, String) -> Void = { [weak self, weak instance] key, json in
             guard let value = try? JSONSerialization.jsonObject(with: Data(json.utf8), options: [.fragmentsAllowed]) else {
                 return
             }
-            self?.storeSetting(id: id, key: key, value: value)
+            guard let self, let instance else {
+                return
+            }
+            self.storeSetting(id: id, instance: instance, key: key, value: value)
         }
         let http: @convention(block) (Int, String) -> Void = { [weak self, weak instance] requestId, json in
             self?.performHTTP(id: id, instance: instance, requestId: requestId, json: json)
@@ -431,8 +434,8 @@ public final class JSPluginManager {
     /// Called by the settings screen; also notifies the plugin's `onSettingChange`.
     public func setSettingValue(forPlugin id: String, key: String, value: Any) {
         self.onMain {
-            self.storeSetting(id: id, key: key, value: value)
             if let instance = self.instances[id] {
+                self.storeSetting(id: id, instance: instance, key: key, value: value)
                 self.callHost(instance, "settingChanged", [key, value])
             }
         }
@@ -472,10 +475,7 @@ public final class JSPluginManager {
         return dict
     }
 
-    private func storeSetting(id: String, key: String, value: Any) {
-        guard let instance = self.instances[id] else {
-            return
-        }
+    private func storeSetting(id: String, instance: Instance, key: String, value: Any) {
         instance.settings[key] = value is NSNull ? nil : value
         if let data = try? JSONSerialization.data(withJSONObject: instance.settings, options: []) {
             try? data.write(to: URL(fileURLWithPath: self.settingsPath(id: id)), options: [.atomic])

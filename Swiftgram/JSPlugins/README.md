@@ -63,7 +63,7 @@ Read and write values with `TrollGram.settings.get(key, fallback)` and `TrollGra
 | `console.log/info/warn/error` | goes to the plugin log |
 
 `peer` is a Bot-API style id (user `id`, group `-id`, channel `-100id`) or `"me"`. `sendMessage` and `getPeer`
-need an account, which is available once any chat has been opened after launch.
+need an account, which is available once any chat has been opened after launch (before that they reject with an error).
 
 Anything else the app can do for a plugin is added as a named method in `TrollPluginsBridge.handleAPI`
 (`submodules/TelegramUI/Sources/TrollPluginsBridge.swift`) so the surface stays small and reviewable.
