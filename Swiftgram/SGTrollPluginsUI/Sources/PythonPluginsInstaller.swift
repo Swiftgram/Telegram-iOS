@@ -4,21 +4,26 @@ import Display
 import UniformTypeIdentifiers
 import AccountContext
 import PythonPlugins
+import JSPlugins
 
 public final class PythonPluginsInstaller {
     private var delegate: PickerDelegate?
 
     public init() {}
 
-    /// Presents a Files picker filtered to `.py` and installs the selection.
+    /// Presents a Files picker filtered to `.js` and `.py` and installs the selection.
     public func present(from context: AccountContext) {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.trollPythonScript], asCopy: true)
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.trollPythonScript, .trollJavaScript], asCopy: true)
         picker.allowsMultipleSelection = true
         picker.shouldShowFileExtensions = true
 
         let delegate = PickerDelegate(onPick: { urls in
             for url in urls {
-                _ = PythonPluginManager.shared.installPlugin(at: url.path)
+                if url.pathExtension.lowercased() == "js" {
+                    _ = JSPluginManager.shared.installPlugin(at: url.path)
+                } else {
+                    _ = PythonPluginManager.shared.installPlugin(at: url.path)
+                }
             }
         })
         picker.delegate = delegate
@@ -33,6 +38,12 @@ extension UTType {
     /// is derived from the file extension instead of hardcoding an identifier.
     public static var trollPythonScript: UTType {
         return UTType(filenameExtension: "py") ?? .plainText
+    }
+}
+
+extension UTType {
+    public static var trollJavaScript: UTType {
+        return UTType(filenameExtension: "js") ?? .plainText
     }
 }
 

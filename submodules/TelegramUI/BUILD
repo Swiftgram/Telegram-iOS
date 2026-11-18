@@ -10,6 +10,7 @@ sgdeps = [
     "//Swiftgram/SGSettingsUI:SGSettingsUI",
     "//Swiftgram/SGTrollPrivacyCore:SGTrollPrivacyCore",
     "//Swiftgram/PythonPlugins:PythonPlugins",
+    "//Swiftgram/JSPlugins:JSPlugins",
     "//Swiftgram/SGConfig:SGConfig",
     "//Swiftgram/SGAPIWebSettings:SGAPIWebSettings",
     "//Swiftgram/SGAppGroupIdentifier:SGAppGroupIdentifier",

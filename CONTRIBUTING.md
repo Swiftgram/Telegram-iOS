@@ -52,6 +52,35 @@ When submitting such changes, explain:
 
 Do not describe client-side privacy features as providing complete anonymity.
 
+## JavaScript plugins
+
+The JavaScript host lives in `Swiftgram/JSPlugins` and uses the system
+JavaScriptCore framework; do not add an embedded engine or native bridge.
+
+- `Sources/JSPrelude.swift` holds the JavaScript SDK (`TrollGram`, `fetch`,
+  timers) as a raw string literal. It is the only copy: the tests extract it.
+- `Sources/JSPluginManager.swift` discovers plugins, owns one `JSContext` per
+  plugin, exposes the natives and stores settings.
+- `Sources/JSPluginsRuntime.swift` is the small surface the app uses.
+  Account-bound work (sending, peer lookup, alerts) is installed as handlers
+  by `submodules/TelegramUI/Sources/TrollPluginsBridge.swift`.
+- `tests/prelude.test.js` runs the prelude under Node with a mocked
+  `__native`. Run it before opening a pull request:
+
+```bash
+node --test Swiftgram/JSPlugins/tests/prelude.test.js
+```
+
+Guidelines:
+
+- Plugins must stay disabled until the user enables them.
+- Expose new capabilities as a `__native` function plus a documented
+  `TrollGram.*` wrapper; plugins must not get raw file or process access.
+- Keep plugin-visible peer ids Bot-API style (they must fit a JS number).
+- Document API changes in `Swiftgram/JSPlugins/README.md` and the README.
+- Note in the pull request whether the Swift part was built, since it needs
+  macOS and Xcode.
+
 ## Python plugins
 
 The plugin runtime lives in `Swiftgram/PythonPlugins`:

@@ -11,6 +11,7 @@ swift_library(
     ],
     deps = [
         "//Swiftgram/PythonPlugins:PythonPlugins",
+        "//Swiftgram/JSPlugins:JSPlugins",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/AccountContext:AccountContext",
         "//submodules/ItemListUI:ItemListUI",

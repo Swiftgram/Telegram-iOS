@@ -6,7 +6,7 @@
 **An unofficial Telegram client for iOS**
 
 Built on Telegram iOS and Swiftgram, with additional privacy controls
-and experimental Python plugin support.
+and a plugin system (JavaScript on the built-in JavaScriptCore, plus experimental Python).
 
 [Features](#features) · [Installation](#installation) · [Building](#building) · [Contributing](CONTRIBUTING.md)
 
@@ -19,7 +19,8 @@ and experimental Python plugin support.
 TrollGram is an iOS Telegram client based on the Telegram iOS codebase.
 
 The project combines selected Swiftgram features, additional privacy
-controls and an experimental Python plugin system.
+controls and a plugin system: lightweight JavaScript plugins that need no
+extra runtime, and experimental exteraGram-style Python plugins.
 
 The goal is to provide useful client-side features while keeping the
 project open to modification and community contributions.
@@ -41,6 +42,44 @@ project open to modification and community contributions.
 
 These features operate on the client side. They do not guarantee
 complete anonymity or protection from Telegram's servers.
+
+### JavaScript plugins
+
+JavaScript plugins run on the JavaScriptCore engine that ships with iOS:
+no embedded interpreter, no native bridge libraries, nothing extra to
+build or download. Each plugin runs in its own isolated context.
+
+- Import `.js` plugins from the Files app (**Settings → Plugins**).
+- Plugins are **off until you enable them**.
+- A plugin can declare a settings screen (switches, text fields, buttons)
+  that the app renders natively.
+- Chat commands: a plugin handles outgoing `.command args` messages and
+  can answer with text.
+- Telegram access: `TrollGram.sendMessage`, `TrollGram.getPeer`, a generic
+  `TrollGram.api(method, params)`, the Telegram **Bot API** through
+  `TrollGram.bot(token)` and a Promise-based `fetch`.
+- Plugin logs and settings are stored on the device.
+
+```js
+// ==TrollGramPlugin==
+// @name Hello
+// @version 1.0
+// ==/TrollGramPlugin==
+TrollGram.plugin({
+  commands: { ping: () => 'pong' },
+  onSend: (msg) => msg.text.replace(/\bteh\b/g, 'the'),
+  settings: [{ type: 'switch', key: 'loud', title: 'Loud mode', default: false }]
+});
+```
+
+The full API is in [`Swiftgram/JSPlugins/README.md`](Swiftgram/JSPlugins/README.md);
+runnable samples are in `Swiftgram/JSPlugins/examples`. Peers are numeric ids
+(users `id`, groups `-id`, channels `-100id`) or `"me"`. Modifying a message
+drops its formatting. Run the tests (Node.js 18+, no device needed):
+
+```bash
+node --test Swiftgram/JSPlugins/tests/prelude.test.js
+```
 
 ### Python plugins
 
@@ -80,8 +119,9 @@ Default directories:
 | Plugins | `Documents/Plugins` |
 | Plugin data and settings | `Documents/PluginsData` |
 
-Only install plugins from sources you trust. Python plugins execute
-code within the application environment and may access available data.
+Only install plugins from sources you trust. Plugins execute code within
+the application environment and may access available data; JavaScript
+plugins can also make network requests and send messages as you.
 
 Run the plugin runtime tests (no device needed):
 
@@ -179,6 +219,7 @@ in the repository.
 | --- | --- |
 | `Swiftgram/SGTrollPrivacy` | Privacy-related interface and features |
 | `Swiftgram/SGTrollPrivacyCore` | Privacy feature implementation |
+| `Swiftgram/JSPlugins` | JavaScript plugin host (JavaScriptCore): Swift runtime, SDK prelude, examples, tests |
 | `Swiftgram/PythonPlugins` | Python plugin host: Swift runtime, SDK modules (`stdlib/`), tests |
 | `Swiftgram/SGTrollPluginsUI` | Plugin management interface |
 | `Swiftgram/SGSettingsUI` | Application settings |
@@ -190,9 +231,9 @@ TrollGram builds on the work of several open-source projects:
 
 - [Telegram iOS](https://github.com/TelegramMessenger/Telegram-iOS)
 - [Swiftgram](https://github.com/Swiftgram/Telegram-iOS)
-- [exteraGram](https://github.com/exteraSquad/exteraGram)
+- [exteraGram](https://github.com/exteraSquad/exteraGram) (plugin API design)
 
-Thanks to their developers and contributors.
+Thanks to their developers and contributors. See [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## Disclaimer
 
@@ -206,7 +247,7 @@ Telegram is a trademark of its respective owner.
 ## License
 
 TrollGram is distributed under the GNU General Public License,
-version 2 or, at your option, any later version.
+version 2 or, at your option, any later version. See [LICENSE](LICENSE).
 
 Some third-party components may be distributed under different
 licenses. See their respective license files.

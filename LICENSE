@@ -1,3 +1,18 @@
+TrollGram
+Copyright (C) 2025-2026 vnikolas2009 and TrollGram contributors
+(see CONTRIBUTORS.md)
+
+TrollGram is free software distributed under the terms of the GNU General
+Public License, version 2, the full text of which follows. It is a
+modified version of Telegram iOS and Swiftgram, whose copyright notices
+and licenses remain in effect for their code. Parts that come from
+third-party components keep their own licenses (see their directories).
+
+TrollGram is an unofficial project and is not affiliated with Telegram.
+There is NO WARRANTY, to the extent permitted by law.
+
+------------------------------------------------------------------------
+
                     GNU GENERAL PUBLIC LICENSE
                        Version 2, June 1991
 

@@ -9439,13 +9439,19 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 self.present(UndoOverlayController(presentationData: self.presentationData, content: .info(title: nil, text: text, timeout: nil, customUndoText: nil), action: { _ in return false }), in: .window(.root))
             }
 
+            TrollPluginsBridge.install(context: context, presentationData: { [weak self] in
+                return self?.presentationData
+            }, present: { [weak self] controller in
+                self?.present(controller, in: .window(.root))
+            })
+
             var pluginProcessed: [EnqueueMessage] = []
             for message in messages {
                 guard case let .message(text, attributes, inlineStickers, mediaReference, threadId, replyToMessageId, replyToStoryId, localGroupingKey, correlationId, bubbleUpEmojiOrStickersets) = message, mediaReference == nil, !text.isEmpty else {
                     pluginProcessed.append(message)
                     continue
                 }
-                switch PythonPluginsRuntime.dispatchSendHook(peerId: peerId.toInt64(), text: text) {
+                switch TrollPluginsBridge.dispatchSend(peerId: peerId, text: text) {
                 case .pass:
                     pluginProcessed.append(message)
                 case .cancel:
