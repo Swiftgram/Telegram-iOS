@@ -22,10 +22,12 @@ import AppBundle
 import WebKit
 import PeerNameColorScreen
 import UndoUI
+import SGTrollPluginsUI
 
 
 private enum SGControllerSection: Int32, SGItemListSection {
     case search
+    case privacy
     case trending
     case content
     case tabs
@@ -129,6 +131,8 @@ private enum SGSliderSetting: String {
 private enum SGDisclosureLink: String {
     case contentSettings
     case languageSettings
+    case trollPlugins
+    case trollTweaks
 }
 
 private struct PeerNameColorScreenState: Equatable {
@@ -153,7 +157,10 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     
     entries.append(.searchInput(id: id.count, section: .search, title: NSAttributedString(string: "🔍"), text: state.searchQuery ?? "", placeholder: strings.Common_Search))
     
-    
+    // MARK: TrollGram block: the toggles live on their own screens
+    entries.append(.header(id: id.count, section: .privacy, text: "TROLLGRAM", badge: newStr))
+    entries.append(.disclosure(id: id.count, section: .privacy, link: .trollTweaks, text: "TrollTweaks"))
+    entries.append(.disclosure(id: id.count, section: .privacy, link: .trollPlugins, text: "Plugins"))
     if SGSimpleSettings.shared.canUseNY {
         entries.append(.header(id: id.count, section: .trending, text: i18n("Settings.NY.Header", lang), badge: newStr))
         entries.append(.toggle(id: id.count, section: .trending, settingName: .nyStyleSnow, value: SGSimpleSettings.shared.nyStyle == SGSimpleSettings.NYStyle.snow.rawValue, text: i18n("Settings.NY.Style.snow", lang), enabled: true))
@@ -689,6 +696,10 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
         switch (link) {
             case .languageSettings:
                 pushControllerImpl?(context.sharedContext.makeLocalizationListController(context: context))
+            case .trollPlugins:
+                pushControllerImpl?(trollPluginsController(context: context))
+            case .trollTweaks:
+                pushControllerImpl?(trollTweaksController(context: context))
             case .contentSettings:
                 let _ = (getSGSettingsURL(context: context) |> deliverOnMainQueue).start(next: { [weak context] url in
                     guard let strongContext = context else {
@@ -724,7 +735,7 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
         
         let entries = SGControllerEntries(presentationData: presentationData, callListSettings: callListSettings, experimentalUISettings: experimentalUISettings, appConfiguration: appConfiguration, nameColors: PeerNameColors.with(availableReplyColors: availableReplyColors, availableProfileColors: availableProfileColors), state: state)
         
-        let controllerState = ItemListControllerState(presentationData: ItemListPresentationData(presentationData), title: .text("Swiftgram"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
+        let controllerState = ItemListControllerState(presentationData: ItemListPresentationData(presentationData), title: .text("TrollGram"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         
         // TODO(swiftgram): focusOnItemTag support
         /* var index = 0

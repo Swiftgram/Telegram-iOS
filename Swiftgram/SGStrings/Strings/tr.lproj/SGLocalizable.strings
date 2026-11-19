@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "\"%@\" Gizle";
 "Settings.Folders.RememberLast" = "Son klasörü aç";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram, yeniden başlatıldıktan ya da hesap değişiminden sonra son kullanılan klasörü açacaktır";
+"Settings.Folders.RememberLast.Notice" = "TrollGram, yeniden başlatıldıktan ya da hesap değişiminden sonra son kullanılan klasörü açacaktır";
 
 "Settings.Folders.CompactNames" = "Daha küçük aralık";
 "Settings.Folders.AllChatsTitle" = "\"Tüm Sohbetler\" başlığı";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Yeniden başlatma gerekli";
 "Common.RestartNow" = "Şimdi Yeniden Başlat";
 "Common.OpenTelegram" = "Telegram'ı Aç";
-"Common.UseTelegramForPremium" = "Unutmayın ki Telegram Premium'u edinmek için resmî Telegram uygulamasını kullanmanız gerekmektedir. Telegram Premium sahibi olduktan sonra onun tüm özellikleri Swiftgram'da mevcut olacaktır.";
+"Common.UseTelegramForPremium" = "Unutmayın ki Telegram Premium'u edinmek için resmî Telegram uygulamasını kullanmanız gerekmektedir. Telegram Premium sahibi olduktan sonra onun tüm özellikleri TrollGram'da mevcut olacaktır.";
 
 "Message.HoldToShowOrReport" = "Göstermek veya Bildirmek için Basılı Tutun.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Yazardan Seç";
 
 "Settings.ContextMenu" = "BAĞLAM MENÜSÜ";
-"Settings.ContextMenu.Notice" = "Devre dışı bırakılmış girişler \"Swiftgram\" alt menüsünde mevcut olacaktır.";
+"Settings.ContextMenu.Notice" = "Devre dışı bırakılmış girişler \"TrollGram\" alt menüsünde mevcut olacaktır.";
 
 
 "Settings.ChatSwipeOptions" = "Sohbet listesi kaydırma seçenekleri";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "oluşturuldu";
 "Chat.Created.Copied" = "Oluşturulma tarihi kopyalandı";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "katıldı: %@";
 "Chat.JoinedDate.Copied" = "Katılma tarihi kopyalandı";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Kanal Alt Panelini Gizle";
 
 "Settings.CallConfirmation" = "Arama Onayı";
-"Settings.CallConfirmation.Notice" = "Swiftgram, arama yapmadan önce onayınızı isteyecek.";
+"Settings.CallConfirmation.Notice" = "TrollGram, arama yapmadan önce onayınızı isteyecek.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Arama Yapmak mı?";

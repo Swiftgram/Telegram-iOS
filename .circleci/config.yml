@@ -1,0 +1,38 @@
+version: 2.1
+
+jobs:
+  build-ipa:
+    macos:
+      xcode: "16.2.0"
+    resource_class: m4pro.medium
+    steps:
+      - checkout
+      - run:
+          name: Check project structure
+          command: ls -la
+      - run:
+          name: Build App
+          command: |
+            # Замените TrollGram на точное имя вашей схемы или .xcworkspace/.xcodeproj
+            xcodebuild -scheme TrollGram \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+      - run:
+          name: Package IPA for TrollStore
+          command: |
+            mkdir -p Payload
+            cp -r build/Build/Products/Release-iphoneos/*.app Payload/
+            zip -r TrollGram.ipa Payload
+      - store_artifacts:
+          path: TrollGram.ipa
+          destination: TrollGram.ipa
+
+workflows:
+  build-workflow:
+    jobs:
+      - build-ipa

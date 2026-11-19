@@ -43,6 +43,20 @@ private final class AccountPresenceManagerImpl {
     }
     
     private func updatePresence(_ isOnline: Bool) {
+        // TrollGram Ghost Mode: never announce being online.
+        if TrollPrivacyRuntime.stayOffline && isOnline {
+            self.onlineTimer?.invalidate()
+            self.onlineTimer = nil
+            self.isPerformingUpdate.set(true)
+            self.currentRequestDisposable.set((self.network.request(Api.functions.account.updateStatus(offline: .boolTrue))
+            |> `catch` { _ -> Signal<Api.Bool, NoError> in
+                return .single(.boolFalse)
+            }
+            |> deliverOn(self.queue)).start(completed: { [weak self] in
+                self?.isPerformingUpdate.set(false)
+            }))
+            return
+        }
         let request: Signal<Api.Bool, MTRpcError>
         if isOnline {
             let timer = SignalKitTimer(timeout: 30.0, repeat: false, completion: { [weak self] in

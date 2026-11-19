@@ -330,6 +330,20 @@ public final class ShareScreen: ViewControllerComponentContainer {
     fileprivate var caption = NSAttributedString(string: "")
 
     public init(context: AccountContext, subject: Subject, externalShare: Bool = true, presetText: String? = nil, shareStory: (() -> Void)? = nil, preferredAction: ShareControllerPreferredAction = .default, externalShareSubject: ShareControllerSubject? = nil, shareAsLink: Bool = false, forceTheme: PresentationTheme? = nil, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil, externalConfiguration: ShareScreenExternalConfiguration? = nil, mediaParameters: ShareControllerSubject.MediaParameters? = nil, segmentedValues: [ShareScreenSegmentedValue]? = nil, collectibleItemInfo: TelegramCollectibleItemInfo? = nil, forcedActionTitle: String? = nil, showInChat: ((EngineRawMessage) -> Void)? = nil, immediatePeerId: EnginePeer.Id? = nil) {
+        // Plain control flow instead of Optional.map/flatMap and `??` before `super.init`: on Xcode 26.x their
+        // typed-throws error paths in a class initializer crash swift-frontend (invalid SIL in OSSACompleteLifetime).
+        var normalizedSegmentedValues: [ShareScreenSegmentedValue]? = nil
+        if let segmentedValues, !segmentedValues.isEmpty {
+            normalizedSegmentedValues = segmentedValues
+        }
+        var captionText = ""
+        if let presetText {
+            captionText = presetText
+        }
+        var containerTheme: ViewControllerComponentContainer.Theme = .default
+        if let forceTheme {
+            containerTheme = .custom(forceTheme)
+        }
         self.externalConfiguration = externalConfiguration
         self.context = context
         var subject = subject
@@ -338,13 +352,19 @@ public final class ShareScreen: ViewControllerComponentContainer {
         }
         self.subject = subject
         self.mediaParameters = mediaParameters
-        self.segmentedValues = segmentedValues.flatMap { $0.isEmpty ? nil : $0 }
+        self.segmentedValues = normalizedSegmentedValues
         self.collectibleItemInfo = collectibleItemInfo
         self.forcedActionTitle = forcedActionTitle
         self.shareStory = shareStory
         var preferredAction = preferredAction
         if case .default = preferredAction, let showInChat, case let .messages(messages) = subject, messages.count == 1, let message = messages.first {
-            let title = (updatedPresentationData?.initial ?? context.sharedContext.currentPresentationData.with { $0 }).strings.SharedMedia_ViewInChat
+            let presentationData: PresentationData
+            if let initial = updatedPresentationData?.initial {
+                presentationData = initial
+            } else {
+                presentationData = context.sharedContext.currentPresentationData.with { $0 }
+            }
+            let title = presentationData.strings.SharedMedia_ViewInChat
             preferredAction = .custom(action: ShareControllerAction(title: title, action: {
                 showInChat(message)
             }))
@@ -359,8 +379,8 @@ public final class ShareScreen: ViewControllerComponentContainer {
         self.model.firstLoadCompleted = {
             contentReady.set(.single(true))
         }
-        self.caption = NSAttributedString(string: presetText ?? "")
-        super.init(context: context, component: ShareScreenComponent(model: self.model, sender: self.sender, externalShare: externalShare, initialCaption: self.caption, hasStory: shareStory != nil, animateOut: self.animateOut), navigationBarAppearance: .none, statusBarStyle: .ignore, theme: forceTheme.map { .custom($0) } ?? .default, updatedPresentationData: updatedPresentationData)
+        self.caption = NSAttributedString(string: captionText)
+        super.init(context: context, component: ShareScreenComponent(model: self.model, sender: self.sender, externalShare: externalShare, initialCaption: self.caption, hasStory: shareStory != nil, animateOut: self.animateOut), navigationBarAppearance: .none, statusBarStyle: .ignore, theme: containerTheme, updatedPresentationData: updatedPresentationData)
         self.navigationPresentation = .flatModal
         self.configureSender()
         if let externalConfiguration {

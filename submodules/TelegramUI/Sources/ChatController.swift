@@ -1,4 +1,5 @@
 import SGSimpleSettings
+import PythonPlugins
 import Foundation
 import UIKit
 import Postbox
@@ -8057,6 +8058,13 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         super.viewDidAppear(animated)
         self.forwardSideListAppearance(.didAppear, animated: animated)
         
+        // TrollGram: plugins can use the account (sendMessage, getPeer) and show toasts once any chat is open.
+        TrollPluginsBridge.install(context: self.context, presentationData: { [weak self] in
+            return self?.presentationData
+        }, present: { [weak self] controller in
+            self?.present(controller, in: .window(.root))
+        })
+        
         self.didAppear = true
         
         self.chatDisplayNode.historyNode.experimentalSnapScrollToItem = false
@@ -9418,6 +9426,53 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         
         guard let peerId = self.chatLocation.peerId else {
             return
+        }
+
+        // TrollGram: exteraGram-compatible plugins may cancel or rewrite outgoing text messages.
+        // Messages with media, forwards and empty texts are never shown to plugins.
+        var messages = messages
+        do {
+            let context = self.context
+            PythonPluginsRuntime.sendTextHandler = { [weak context] peer, text in
+                guard let context else {
+                    return
+                }
+                let _ = context.engine.messages.enqueueOutgoingMessage(to: PeerId(peer), replyTo: nil, content: .text(text, [])).start()
+            }
+            PythonPluginsRuntime.toastHandler = { [weak self] text, _ in
+                guard let self else {
+                    return
+                }
+                self.present(UndoOverlayController(presentationData: self.presentationData, content: .info(title: nil, text: text, timeout: nil, customUndoText: nil), action: { _ in return false }), in: .window(.root))
+            }
+
+            TrollPluginsBridge.install(context: context, presentationData: { [weak self] in
+                return self?.presentationData
+            }, present: { [weak self] controller in
+                self?.present(controller, in: .window(.root))
+            })
+
+            var pluginProcessed: [EnqueueMessage] = []
+            for message in messages {
+                guard case let .message(text, attributes, inlineStickers, mediaReference, threadId, replyToMessageId, replyToStoryId, localGroupingKey, correlationId, bubbleUpEmojiOrStickersets) = message, mediaReference == nil, !text.isEmpty else {
+                    pluginProcessed.append(message)
+                    continue
+                }
+                switch TrollPluginsBridge.dispatchSend(peerId: peerId, text: text) {
+                case .pass:
+                    pluginProcessed.append(message)
+                case .cancel:
+                    break
+                case let .modify(modifiedText):
+                    // Entity offsets refer to the old text, so formatting entities are dropped.
+                    let modifiedAttributes = attributes.filter { !($0 is TextEntitiesMessageAttribute) }
+                    pluginProcessed.append(.message(text: modifiedText, attributes: modifiedAttributes, inlineStickers: inlineStickers, mediaReference: mediaReference, threadId: threadId, replyToMessageId: replyToMessageId, replyToStoryId: replyToStoryId, localGroupingKey: localGroupingKey, correlationId: correlationId, bubbleUpEmojiOrStickersets: bubbleUpEmojiOrStickersets))
+                }
+            }
+            if pluginProcessed.isEmpty {
+                return
+            }
+            messages = pluginProcessed
         }
 
         let _ = (self.shouldDivertMessagesToScheduled(messages: messages)

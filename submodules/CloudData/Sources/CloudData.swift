@@ -1,5 +1,7 @@
 import Foundation
+#if TELEGRAM_ENABLE_ICLOUD
 import CloudKit
+#endif
 import MtProtoKit
 import SwiftSignalKit
 import EncryptionProvider
@@ -11,6 +13,16 @@ private enum FetchError {
 
 @available(iOS 10.0, *)
 private func fetchRawData(prefix: String) -> Signal<Data, FetchError> {
+    #if !TELEGRAM_ENABLE_ICLOUD
+    // Without the iCloud entitlements `CKContainer.default()` raises an Objective-C exception that
+    // Swift cannot catch, which aborts the app. The emergency datacenter record lives in the
+    // original app's container anyway.
+    return Signal { subscriber in
+        subscriber.putError(.generic)
+        return ActionDisposable {
+        }
+    }
+    #else
     return Signal { subscriber in
         let container = CKContainer.default()
         let publicDatabase = container.database(with: .public)
@@ -45,6 +57,7 @@ private func fetchRawData(prefix: String) -> Signal<Data, FetchError> {
         return ActionDisposable {
         }
     }
+    #endif
 }
 
 @available(iOS 10.0, *)

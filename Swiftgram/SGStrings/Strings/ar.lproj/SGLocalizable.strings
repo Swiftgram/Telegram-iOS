@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "إخفاء \"%@\"";
 "Settings.Folders.RememberLast" = "فتح المجلد الأخير";
-"Settings.Folders.RememberLast.Notice" = "سيفتح Swiftgram آخر مجلد مستخدم عند إعادة تشغيل التطبيق أو تبديل الحسابات.";
+"Settings.Folders.RememberLast.Notice" = "سيفتح TrollGram آخر مجلد مستخدم عند إعادة تشغيل التطبيق أو تبديل الحسابات.";
 
 "Settings.Folders.CompactNames" = "مسافات أصغر";
 "Settings.Folders.AllChatsTitle" = "عنوان \"كل المحادثات\"";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "إعادة التشغيل مطلوب";
 "Common.RestartNow" = "إعادة التشغيل الآن";
 "Common.OpenTelegram" = "افتح Telegram";
-"Common.UseTelegramForPremium" = "يُرجى ملاحظة أنه للحصول على Telegram Premium، يجب عليك استخدام تطبيق تيليجرام الرسمي. بمجرد حصولك على Telegram Premium، ستصبح جميع ميزاته متاحة في Swiftgram.";
+"Common.UseTelegramForPremium" = "يُرجى ملاحظة أنه للحصول على Telegram Premium، يجب عليك استخدام تطبيق تيليجرام الرسمي. بمجرد حصولك على Telegram Premium، ستصبح جميع ميزاته متاحة في TrollGram.";
 
 "Message.HoldToShowOrReport" = "اضغط للعرض أو الإبلاغ.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "حدد من المؤلف";
 
 "Settings.ContextMenu" = "قائمة السياق";
-"Settings.ContextMenu.Notice" = "المدخلات المعطلة ستكون متوفرة في القائمة الفرعية \"Swiftgram\".";
+"Settings.ContextMenu.Notice" = "المدخلات المعطلة ستكون متوفرة في القائمة الفرعية \"TrollGram\".";
 
 
 "Settings.ChatSwipeOptions" = "خيارات التمرير لقائمة المحادثة";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "تاريخ الإنشاء";
 "Chat.Created.Copied" = "تم نسخ تاريخ الإنشاء";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "تاريخ الانضمام إلى %@";
 "Chat.JoinedDate.Copied" = "تم نسخ تاريخ الانضمام";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "إخفاء لوحة قاعدة القناة";
 
 "Settings.CallConfirmation" = "تأكيد الاتصال";
-"Settings.CallConfirmation.Notice" = "سيطلب Swiftgram تأكيدك قبل إجراء مكالمة.";
+"Settings.CallConfirmation.Notice" = "سيطلب TrollGram تأكيدك قبل إجراء مكالمة.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "هل ترغب في إجراء مكالمة؟";

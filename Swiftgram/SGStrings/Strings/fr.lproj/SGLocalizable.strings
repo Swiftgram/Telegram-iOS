@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Masquer \"%@\"";
 "Settings.Folders.RememberLast" = "Ouvrir le dernier dossier";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram ouvrira le dernier dossier utilisé après le redémarrage ou changement de compte";
+"Settings.Folders.RememberLast.Notice" = "TrollGram ouvrira le dernier dossier utilisé après le redémarrage ou changement de compte";
 
 "Settings.Folders.CompactNames" = "Espacement plus petit";
 "Settings.Folders.AllChatsTitle" = "Titre \"Tous les Chats\"";
@@ -82,7 +82,7 @@
 "Common.RestartRequired" = "Redémarrage nécessaire";
 "Common.RestartNow" = "Redémarrer maintenant";
 "Common.OpenTelegram" = "Ouvrir Telegram";
-"Common.UseTelegramForPremium" = "Veuillez noter que pour obtenir Telegram Premium, vous devez utiliser l'application Telegram officielle. Une fois que vous avez obtenu Telegram Premium, toutes ses fonctionnalités seront disponibles dans Swiftgram.";
+"Common.UseTelegramForPremium" = "Veuillez noter que pour obtenir Telegram Premium, vous devez utiliser l'application Telegram officielle. Une fois que vous avez obtenu Telegram Premium, toutes ses fonctionnalités seront disponibles dans TrollGram.";
 
 "Message.HoldToShowOrReport" = "Maintenir pour afficher ou rapporter.";
 
@@ -96,7 +96,7 @@
 "ContextMenu.SelectFromUser" = "Sélectionner de l'Auteur";
 
 "Settings.ContextMenu" = "MENU CONTEXTUEL";
-"Settings.ContextMenu.Notice" = "Les entrées désactivées seront disponibles dans le sous-menu 'Swiftgram'.";
+"Settings.ContextMenu.Notice" = "Les entrées désactivées seront disponibles dans le sous-menu 'TrollGram'.";
 
 
 "Settings.ChatSwipeOptions" = "Options de balayage de la liste de chat";
@@ -122,7 +122,7 @@
 "Chat.Created.Label" = "date de création";
 "Chat.Created.Copied" = "Date de création copiée";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "a rejoint %@";
 "Chat.JoinedDate.Copied" = "Date d'adhésion copiée";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */

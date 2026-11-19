@@ -1,0 +1,478 @@
+name: Build and Release TrollGram IPA
+
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: "Build configuration"
+        required: false
+        default: "release_arm64"
+        type: choice
+        options:
+          - release_arm64
+      create_release:
+        description: "Publish a GitHub Release with the IPA"
+        required: false
+        default: true
+        type: boolean
+      keep_going:
+        description: "Keep going after a compile error (slower, but reports more errors per run)"
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Build straight from the checkout: an extra copy of the tree cost several
+  # minutes per run and cache keys stay stable because the path is constant.
+  SOURCE_DIR: ${{ github.workspace }}
+  BAZEL_USER_ROOT: /private/var/tmp/_bazel_trollgram
+  BUILD_CACHE_DIR: /Users/Shared/trollgram-bazel-cache
+  BUILD_LOG: /Users/Shared/trollgram-build.log
+
+jobs:
+  build:
+    name: Build TrollGram.ipa
+    runs-on: macos-latest
+    timeout-minutes: 360
+    env:
+      P12_BASE64: ${{ secrets.P12_BASE64 }}
+      P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+      PROFILE_BASE64: ${{ secrets.MOBILEPROVISION_BASE64 }}
+
+    steps:
+      - name: Checkout
+        timeout-minutes: 20
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+          # Shallow clones: the build number comes from the run number, and
+          # full history of the main repo plus all submodules is the slowest
+          # part of the setup.
+          fetch-depth: "1"
+
+      - name: Free disk space
+        timeout-minutes: 20
+        run: |
+          set -x
+          sudo rm -rf /Users/runner/Library/Developer/Xcode/DerivedData/* || true
+          sudo rm -rf /Users/runner/Library/Caches/org.swift.swiftpm || true
+          sudo rm -rf /Applications/Xcode*.app/Contents/Developer/Platforms/AppleTV* || true
+          # The watchOS platform is kept: the build produces a watch app, and
+          # removing the SDK makes the build fail early.
+          sudo rm -rf /Applications/Xcode*.app/Contents/Developer/Platforms/DriverKit* || true
+          df -h /
+
+      - name: Select Xcode
+        timeout-minutes: 10
+        run: |
+          set -x
+          # actool (asset catalogs, also for device builds) needs an installed simulator runtime that fits
+          # the Xcode's iphonesimulator SDK, otherwise the build fails with "No simulator runtime version
+          # from [...] available to use with iphonesimulator SDK version ...". The runner image keeps many
+          # Xcodes but only the runtimes of some of them, so take the Xcode from versions.json if its SDK has
+          # a runtime, and otherwise the newest Xcode that does.
+          xcrun simctl list runtimes || true
+          python3 - <<'PY'
+          import glob, json, os, re, subprocess, sys
+
+          requested = json.load(open("versions.json"))["xcode"]
+          runtimes = subprocess.run(["xcrun", "simctl", "list", "runtimes"], capture_output=True, text=True).stdout
+
+          def version_key(path):
+              return tuple(int(part) for part in re.findall(r"\d+", os.path.basename(path)))
+
+          apps = sorted(
+              {path for path in glob.glob("/Applications/Xcode_*.app") if not re.search(r"beta|rc|candidate", path, re.I)},
+              key=version_key,
+              reverse=True,
+          )
+          first = "/Applications/Xcode_%s.app" % requested
+          order = ([first] if os.path.isdir(first) else []) + [path for path in apps if path != first]
+
+          chosen = None
+          for app in order:
+              developer_dir = os.path.join(app, "Contents/Developer")
+              result = subprocess.run(
+                  ["xcodebuild", "-version", "-sdk", "iphonesimulator", "ProductBuildVersion"],
+                  capture_output=True, text=True, env=dict(os.environ, DEVELOPER_DIR=developer_dir),
+              )
+              build = result.stdout.strip().splitlines()[-1] if result.stdout.strip() else ""
+              print("%s: iphonesimulator SDK build %s" % (app, build or "unknown"))
+              if build and build in runtimes:
+                  chosen = developer_dir
+                  break
+
+          if chosen is None:
+              print("No Xcode with a matching simulator runtime found, keeping the default")
+              sys.exit(0)
+          if not chosen.startswith(first + "/"):
+              print("Xcode %s has no matching simulator runtime, using %s instead" % (requested, chosen))
+          subprocess.run(["sudo", "xcode-select", "-s", chosen], check=True)
+          PY
+          xcodebuild -version
+          xcodebuild -version -sdk iphonesimulator ProductBuildVersion
+
+      - name: Fetch Python runtime
+        timeout-minutes: 15
+        run: |
+          set -x
+          python3 build-system/setup_python.py
+          du -sh third-party/python/Python.xcframework third-party/python/resources
+
+      - name: Prepare build log
+        timeout-minutes: 5
+        run: |
+          set -x
+          touch "$BUILD_LOG"
+
+      # Only the action/repository cache is persisted: it is what makes a
+      # re-run cheap. The Bazel output base is several extra GB and would push
+      # the entry over the 10 GB per-repository cache limit.
+      #
+      # restore/save are separate steps so that a failed build still warms the
+      # cache for the next attempt (actions/cache only saves on success).
+      - name: Restore Bazel cache
+        id: bazel-cache
+        timeout-minutes: 30
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.BUILD_CACHE_DIR }}
+          key: bazel-v2-${{ runner.os }}-${{ hashFiles('MODULE.bazel', 'MODULE.bazel.lock', 'versions.json') }}-${{ github.run_id }}
+          restore-keys: |
+            bazel-v2-${{ runner.os }}-
+
+      - name: Compute version
+        timeout-minutes: 10
+        run: |
+          set -x
+          cd "$SOURCE_DIR"
+          OFFSET="$(cat build_number_offset)"
+          APP_VERSION=$(python3 -c 'import json;print(json.load(open("versions.json"))["app"])')
+          XCODE_VERSION=$(python3 -c 'import json;print(json.load(open("versions.json"))["xcode"])')
+          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
+          echo "BUILD_NUMBER=$((GITHUB_RUN_NUMBER + OFFSET))" >> "$GITHUB_ENV"
+          echo "XCODE_VERSION=$XCODE_VERSION" >> "$GITHUB_ENV"
+          echo "CONFIGURATION=${{ github.event.inputs.configuration || 'release_arm64' }}" >> "$GITHUB_ENV"
+
+      # A login code is only delivered to the app the code belongs to. The
+      # bundled api_id is 8, Telegram's own iOS application: the servers treat
+      # that handshake as Telegram and push the code to the official App Store
+      # build, so a fork built with it receives nothing at all - no SMS, no
+      # in-app message. A fork must log in under its own application, which is
+      # registered at https://my.telegram.org/apps and put in these secrets.
+      # The identity is used only for this login handshake; sessions that are
+      # already authorised keep working.
+      - name: Log in under this fork's own api_id
+        id: api_credentials
+        timeout-minutes: 5
+        env:
+          OWN_API_ID: ${{ secrets.TG_API_ID }}
+          OWN_API_HASH: ${{ secrets.TG_API_HASH }}
+        run: |
+          set -euo pipefail
+          if [ -z "$OWN_API_ID" ] || [ -z "$OWN_API_HASH" ]; then
+            echo "::warning::TG_API_ID / TG_API_HASH are not set, so this build keeps api_id 8 and will receive no login code. Register an application at https://my.telegram.org/apps (platform: other) and add its api_id and api_hash as the TG_API_ID / TG_API_HASH secrets."
+            exit 0
+          fi
+          python3 - "$OWN_API_ID" "$OWN_API_HASH" <<'PY'
+          import json, sys
+
+          api_id, api_hash = sys.argv[1].strip(), sys.argv[2].strip()
+          if not api_id.isdigit():
+              sys.exit("TG_API_ID must be the numeric api_id from my.telegram.org, got %r" % api_id)
+          if len(api_hash) != 32 or any(character not in "0123456789abcdef" for character in api_hash.lower()):
+              sys.exit("TG_API_HASH must be the 32-character api_hash from my.telegram.org")
+
+          path = "build-system/appstore-configuration.json"
+          with open(path, encoding="utf-8") as handle:
+              configuration = json.load(handle)
+          configuration["api_id"] = api_id
+          configuration["api_hash"] = api_hash
+          with open(path, "w", encoding="utf-8") as handle:
+              json.dump(configuration, handle, indent="\t")
+              handle.write("\n")
+          print("login api_id: %s (the fork's own application)" % api_id)
+          PY
+
+      - name: Build app (unsigned)
+        timeout-minutes: 300
+        run: |
+          set -o pipefail
+          set -x
+          cd "$SOURCE_DIR"
+          mkdir -p "$BUILD_CACHE_DIR"
+
+          # rules_apple refuses to build a device configuration without provisioning profiles, and Make.py
+          # only picks up a profile whose app id starts with <team_id>.<bundle_id> from
+          # appstore-configuration.json. The bundled fake profiles are for ph.telegra.Telegraph, so
+          # retarget them to the configured bundle id. The IPA is re-signed later (sign_ipa.py).
+          BUNDLE_ID="$(python3 -c 'import json;print(json.load(open("build-system/appstore-configuration.json"))["bundle_id"])')"
+          FAKE_CODESIGNING="$RUNNER_TEMP/fake-codesigning"
+          rm -rf "$FAKE_CODESIGNING"
+          python3 build-system/fix_fake_profiles.py --bundle-id "$BUNDLE_ID" --out "$FAKE_CODESIGNING"
+          python3 build-system/Make/ImportCertificates.py --path "$FAKE_CODESIGNING/certs"
+
+          EXTRA_ARGS=(
+            --skipDsym
+            --enableParallelSwiftmoduleGeneration
+            --bazelProfile="$RUNNER_TEMP/bazel-profile.json"
+          )
+          if [ "${{ github.event.inputs.keep_going }}" = "true" ]; then
+            EXTRA_ARGS+=(--continueOnError)
+          fi
+
+          python3 -u build-system/Make/Make.py \
+            --cacheDir="$BUILD_CACHE_DIR" \
+            --bazelUserRoot="$BAZEL_USER_ROOT" \
+            --overrideXcodeVersion \
+            build \
+            --configurationPath="build-system/appstore-configuration.json" \
+            --codesigningInformationPath="$FAKE_CODESIGNING" \
+            --configuration="$CONFIGURATION" \
+            --buildNumber="$BUILD_NUMBER" \
+            "${EXTRA_ARGS[@]}" \
+            2>&1 | tee -a "$BUILD_LOG"
+
+      - name: Package unsigned IPA
+        timeout-minutes: 20
+        run: |
+          set -x
+          cd "$SOURCE_DIR"
+          # Take the bundle from the .ipa that bazel just wrote (bazel-bin follows the last build's
+          # configuration); the //Telegram:Swiftgram app target builds Swiftgram.ipa / Swiftgram.app.
+          IPA_SRC=""
+          for c in bazel-bin/Telegram/Swiftgram.ipa bazel-bin/Telegram/TrollGram.ipa bazel-bin/Telegram/Telegram.ipa; do
+            if [ -f "$c" ]; then IPA_SRC="$c"; break; fi
+          done
+          if [ -z "$IPA_SRC" ]; then
+            echo "Built .ipa not found in bazel-bin/Telegram" >&2
+            ls -la bazel-bin/Telegram/*.ipa 2>&1 | head -20 >&2 || true
+            exit 1
+          fi
+          rm -rf "$RUNNER_TEMP/ipa-extract"
+          mkdir -p "$RUNNER_TEMP/ipa-extract"
+          unzip -q -o "$IPA_SRC" -d "$RUNNER_TEMP/ipa-extract"
+          APP_DIR=$(find "$RUNNER_TEMP/ipa-extract/Payload" -maxdepth 1 -type d -name "*.app" | head -1)
+          if [ -z "$APP_DIR" ]; then
+            echo "No .app inside $IPA_SRC" >&2
+            ls -la "$RUNNER_TEMP/ipa-extract/Payload" >&2 || true
+            exit 1
+          fi
+          echo "Using $APP_DIR"
+          rm -rf "$RUNNER_TEMP/Payload" "$RUNNER_TEMP/TrollGram.ipa"
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$APP_DIR" "$RUNNER_TEMP/Payload/TrollGram.app"
+          rm -f "$RUNNER_TEMP/Payload/TrollGram.app/embedded.mobileprovision"
+
+          # Python.framework is a dylib, so it has to live in Frameworks/.
+          # rules_apple may already embed it; only copy when it is missing.
+          PY_FRAMEWORK="$SOURCE_DIR/third-party/python/Python.xcframework/ios-arm64/Python.framework"
+          if [ -d "$PY_FRAMEWORK" ] && [ ! -d "$RUNNER_TEMP/Payload/TrollGram.app/Frameworks/Python.framework" ]; then
+            mkdir -p "$RUNNER_TEMP/Payload/TrollGram.app/Frameworks"
+            cp -R "$PY_FRAMEWORK" "$RUNNER_TEMP/Payload/TrollGram.app/Frameworks/"
+          fi
+
+          # Verify the plugin stdlib actually made it into the bundle.
+          if [ -f "$RUNNER_TEMP/Payload/TrollGram.app/python.zip" ]; then
+            echo "python.zip bundled: $(du -h "$RUNNER_TEMP/Payload/TrollGram.app/python.zip" | cut -f1)"
+          else
+            echo "warning: python.zip is missing from the app bundle" >&2
+          fi
+
+          cd "$RUNNER_TEMP"
+          zip -qry TrollGram.ipa Payload
+          echo "IPA_SIZE=$(du -h TrollGram.ipa | cut -f1)" >> "$GITHUB_ENV"
+          ls -lh TrollGram.ipa
+
+      # Optional: sign the IPA with the certificate from the repository
+      # secrets. The build itself stays green when signing cannot work - the
+      # unsigned IPA is still published, and TrollStore installs it as is. A
+      # failure still has to be visible, though: `continue-on-error` used to
+      # turn this step into a success, which is why a run could report
+      # "Success" while the app was never signed.
+      - name: Sign IPA with personal certificate
+        id: sign
+        if: env.P12_BASE64 != '' && env.PROFILE_BASE64 != ''
+        timeout-minutes: 20
+        env:
+          # Through the environment, so no command line (or `set -x` trace)
+          # can print the password.
+          SIGN_P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+        run: |
+          set -o pipefail
+          printf '%s' "$P12_BASE64" | openssl base64 -d -A > "$RUNNER_TEMP/cert.p12"
+          printf '%s' "$PROFILE_BASE64" | openssl base64 -d -A > "$RUNNER_TEMP/profile.mobileprovision"
+          if python3 build-system/sign_ipa.py \
+            --input "$RUNNER_TEMP/TrollGram.ipa" \
+            --output "$RUNNER_TEMP/TrollGram-signed.ipa" \
+            --p12 "$RUNNER_TEMP/cert.p12" \
+            --password "$SIGN_P12_PASSWORD" \
+            --profile "$RUNNER_TEMP/profile.mobileprovision" \
+            2>&1 | tee "$RUNNER_TEMP/sign.log"; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Signing failed; publishing the unsigned IPA only. The reason is in the annotations below."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Report signing failure
+        if: always() && steps.sign.outcome != 'success'
+        timeout-minutes: 5
+        run: |
+          if [ -z "$P12_BASE64" ] || [ -z "$PROFILE_BASE64" ]; then
+            echo "::warning::P12_BASE64 / MOBILEPROVISION_BASE64 are not set, so the IPA is published unsigned."
+            exit 0
+          fi
+          if [ -f "$RUNNER_TEMP/sign.log" ]; then
+            tail -n 40 "$RUNNER_TEMP/sign.log" | while IFS= read -r line; do
+              echo "::warning::sign: $(printf '%s' "$line" | cut -c1-900)"
+            done
+          else
+            echo "::warning::sign: the signing step failed before producing a log"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 20
+        with:
+          name: TrollGram-${{ env.APP_VERSION }}-${{ env.BUILD_NUMBER }}
+          path: ${{ runner.temp }}/TrollGram*.ipa
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Determine release tag
+        id: release_meta
+        timeout-minutes: 5
+        run: |
+          set -x
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v$APP_VERSION-$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+            echo "publish=${{ github.event.inputs.create_release || 'true' }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create / update GitHub Release
+        if: steps.release_meta.outputs.publish == 'true'
+        timeout-minutes: 15
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -x
+          TAG="${{ steps.release_meta.outputs.tag }}"
+          TITLE="TrollGram $APP_VERSION ($BUILD_NUMBER)"
+          FILES=("$RUNNER_TEMP/TrollGram.ipa")
+          SIGNED_NOTE=""
+          if [ -f "$RUNNER_TEMP/TrollGram-signed.ipa" ]; then
+            FILES+=("$RUNNER_TEMP/TrollGram-signed.ipa")
+            SIGNED_NOTE="
+          TrollGram-signed.ipa is signed with the repository certificate and a
+          provisioning profile, use it for Sideloadly / AltStore."
+          fi
+          NOTES="TrollGram $APP_VERSION build $BUILD_NUMBER ($IPA_SIZE).
+
+          TrollGram.ipa is unsigned: install it with TrollStore.
+          No provisioning profile is embedded.${SIGNED_NOTE}"
+
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$TAG" "${FILES[@]}" --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$TAG" "${FILES[@]}" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$TITLE" \
+              --notes "$NOTES" \
+              --target "$GITHUB_SHA"
+          fi
+
+      # Compiler errors are mirrored as check-run annotations, which stay
+      # readable even when the raw job log download is blocked.
+      - name: Surface build errors as annotations
+        if: failure()
+        timeout-minutes: 10
+        run: |
+          if [ ! -f "$BUILD_LOG" ]; then
+            echo "::error::no build log at $BUILD_LOG"
+            exit 0
+          fi
+          grep -a -E "error|Error|ERROR|fatal|FAILED|Traceback|Exception|not found|No such file|denied|Verification failure" "$BUILD_LOG" \
+            | head -40 \
+            | while IFS= read -r line; do
+                echo "::error::$(printf '%s' "$line" | cut -c1-900)"
+              done
+          tail -n 25 "$BUILD_LOG" \
+            | while IFS= read -r line; do
+                echo "::error::tail: $(printf '%s' "$line" | cut -c1-900)"
+              done
+          echo "annotations emitted"
+
+      # Artifact/log downloads are blocked on some networks, so the compiler
+      # output is mirrored into an issue where the API can read it.
+      - name: Publish build log on failure
+        if: failure()
+        timeout-minutes: 10
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f "$BUILD_LOG" ]; then
+            echo "no build log at $BUILD_LOG"
+            exit 0
+          fi
+          {
+            echo "Build for \`$GITHUB_SHA\` (run \`$GITHUB_RUN_ID\`) failed."
+            echo
+            echo "### Errors"
+            echo '```'
+            grep -a -E "error:|ERROR:|error \[|FAILED:|fatal error" "$BUILD_LOG" | head -200 || true
+            echo '```'
+            echo
+            echo "### Last 250 lines"
+            echo '```'
+            tail -n 250 "$BUILD_LOG"
+            echo '```'
+          } > /tmp/report.md
+          head -c 60000 /tmp/report.md > /tmp/report-trimmed.md
+          ISSUE=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "CI build log in:title" --json number --jq '.[0].number // empty' || true)
+          if [ -z "$ISSUE" ]; then
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "CI build log" --body-file /tmp/report-trimmed.md \
+              || echo "::error::could not publish the build log to an issue"
+          else
+            gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body-file /tmp/report-trimmed.md \
+              || echo "::error::could not comment on the build log issue"
+          fi
+
+      # Persist the action/repository cache even when the build fails, so the
+      # next attempt starts warm instead of recompiling everything.
+      - name: Measure Bazel cache
+        id: cache_size
+        if: always()
+        timeout-minutes: 10
+        run: |
+          SIZE_KB=$(du -sk "$BUILD_CACHE_DIR" 2>/dev/null | cut -f1)
+          SIZE_KB=${SIZE_KB:-0}
+          echo "Bazel cache: $((SIZE_KB / 1024)) MB"
+          if [ "$SIZE_KB" -gt 8388608 ]; then
+            echo "::warning::Bazel cache is larger than 8 GB - not uploaded to stay under the repository cache limit"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Save Bazel cache
+        if: always() && steps.cache_size.outputs.ok == 'true' && steps.bazel-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 30
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.BUILD_CACHE_DIR }}
+          key: ${{ steps.bazel-cache.outputs.cache-primary-key }}

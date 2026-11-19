@@ -176,6 +176,18 @@ private func requestActivity(postbox: Postbox, network: Network, accountPeerId: 
             }
             
             if let inputPeer = apiInputPeer(peer) {
+                // TrollGram Ghost Mode: suppress "typing...", "recording voice..." and uploads.
+                if TrollPrivacyRuntime.suppressTyping {
+                    return .complete()
+                }
+                if let activity = activity, TrollPrivacyRuntime.suppressUploading {
+                    switch activity {
+                    case .uploadingFile, .uploadingPhoto, .uploadingVideo, .uploadingInstantVideo, .recordingInstantVideo:
+                        return .complete()
+                    default:
+                        break
+                    }
+                }
                 var flags: Int32 = 0
                 let topMessageId = threadId.flatMap { Int32(clamping: $0) }
                 if topMessageId != nil {

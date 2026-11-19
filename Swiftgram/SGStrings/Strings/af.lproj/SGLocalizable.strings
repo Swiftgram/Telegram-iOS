@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Versteek \"%@\"";
 "Settings.Folders.RememberLast" = "Maak laaste lêer oop";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram sal die laaste gebruikte lêer oopmaak na herbegin of rekeningwissel.";
+"Settings.Folders.RememberLast.Notice" = "TrollGram sal die laaste gebruikte lêer oopmaak na herbegin of rekeningwissel.";
 
 "Settings.Folders.CompactNames" = "Kleiner spasie";
 "Settings.Folders.AllChatsTitle" = "\"Alle Chats\" titel";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Herbegin benodig";
 "Common.RestartNow" = "Herbegin Nou";
 "Common.OpenTelegram" = "Maak Telegram oop";
-"Common.UseTelegramForPremium" = "Let daarop dat om Telegram Premium te kry, moet jy die amptelike Telegram-app gebruik. Nadat jy Telegram Premium verkry het, sal al sy funksies beskikbaar word in Swiftgram.";
+"Common.UseTelegramForPremium" = "Let daarop dat om Telegram Premium te kry, moet jy die amptelike Telegram-app gebruik. Nadat jy Telegram Premium verkry het, sal al sy funksies beskikbaar word in TrollGram.";
 
 "Message.HoldToShowOrReport" = "Hou vas om te Wys of te Rapporteer.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Kies vanaf Outeur";
 
 "Settings.ContextMenu" = "KONTEKSMENU";
-"Settings.ContextMenu.Notice" = "Gedeaktiveerde inskrywings sal beskikbaar wees in die \"Swiftgram\" sub-menu.";
+"Settings.ContextMenu.Notice" = "Gedeaktiveerde inskrywings sal beskikbaar wees in die \"TrollGram\" sub-menu.";
 
 
 "Settings.ChatSwipeOptions" = "Chat List Swipe Options";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "geskep";
 "Chat.Created.Copied" = "Skeppingsdatum gekopieer";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "sluit aan by %@";
 "Chat.JoinedDate.Copied" = "Aansluitdatum gekopieer";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Verberg Kanaal Onderpaneel";
 
 "Settings.CallConfirmation" = "Bel Bevestiging";
-"Settings.CallConfirmation.Notice" = "Swiftgram sal om jou bevestiging vra voordat 'n oproep gemaak word.";
+"Settings.CallConfirmation.Notice" = "TrollGram sal om jou bevestiging vra voordat 'n oproep gemaak word.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Maak 'n Oproep?";

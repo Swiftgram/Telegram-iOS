@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Ukryj \"%@\"";
 "Settings.Folders.RememberLast" = "Otwórz ostatni folder";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram otworzy ostatnio używany folder po ponownym uruchomieniu lub zmianie konta";
+"Settings.Folders.RememberLast.Notice" = "TrollGram otworzy ostatnio używany folder po ponownym uruchomieniu lub zmianie konta";
 
 "Settings.Folders.CompactNames" = "Mniejszy odstęp";
 "Settings.Folders.AllChatsTitle" = "Tytuł \"Wszystkie czaty\"";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Wymagany restart";
 "Common.RestartNow" = "Uruchom teraz ponownie";
 "Common.OpenTelegram" = "Otwórz Telegram";
-"Common.UseTelegramForPremium" = "Aby otrzymać Telegram Premium, musisz skorzystać z oficjalnej aplikacji Telegram. Po uzyskaniu Telegram Premium wszystkie jego funkcje staną się dostępne w Swiftgram.";
+"Common.UseTelegramForPremium" = "Aby otrzymać Telegram Premium, musisz skorzystać z oficjalnej aplikacji Telegram. Po uzyskaniu Telegram Premium wszystkie jego funkcje staną się dostępne w TrollGram.";
 "Common.UpdateOS" = "Wymagana aktualizacja iOS";
 
 "Message.HoldToShowOrReport" = "Przytrzymaj, aby Pokazać lub Zgłosić.";
@@ -98,7 +98,7 @@
 "ContextMenu.SelectFromUser" = "Zaznacz od autora";
 
 "Settings.ContextMenu" = "MENU KONTEKSTOWE";
-"Settings.ContextMenu.Notice" = "Wyłączone wpisy będą dostępne w podmenu „Swiftgram”.";
+"Settings.ContextMenu.Notice" = "Wyłączone wpisy będą dostępne w podmenu „TrollGram”.";
 
 
 "Settings.ChatSwipeOptions" = "Opcje przesuwania listy czatów";
@@ -125,7 +125,7 @@
 "Chat.Created.Label" = "data utworzenia";
 "Chat.Created.Copied" = "Data utworzenia skopiowana";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "data dołączenia do %@";
 "Chat.JoinedDate.Copied" = "Data dołączenia skopiowana";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -148,7 +148,7 @@
 "Settings.secondsInMessages" = "Sekundy w wiadomościach";
 
 "Settings.CallConfirmation" = "Potwierdzenie połączenia";
-"Settings.CallConfirmation.Notice" = "Swiftgram poprosi o twoje potwierdzenie przed wykonaniem połączenia.";
+"Settings.CallConfirmation.Notice" = "TrollGram poprosi o twoje potwierdzenie przed wykonaniem połączenia.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Wykonać połączenie?";
@@ -173,11 +173,11 @@
 "SessionBackup.LoggedIn" = "Zalogowano";
 "SessionBackup.LoggedOut" = "Wylogowano";
 "SessionBackup.DeleteAll.Title" = "Usunąć wszystkie sesje?";
-"SessionBackup.DeleteAll.Text" = "Wszystkie sesje zostaną usunięte z pęku kluczy.\n\nKonta nie zostaną wylogowane ze Swiftgram.";
+"SessionBackup.DeleteAll.Text" = "Wszystkie sesje zostaną usunięte z pęku kluczy.\n\nKonta nie zostaną wylogowane ze TrollGram.";
 "SessionBackup.DeleteSingle.Title" = "Usunąć 1 (jedną) sesję?";
-"SessionBackup.DeleteSingle.Text" = "%@ sesja zostanie usunięta z pęku kluczy.\n\nKonto nie zostanie wylogowane ze Swiftgram.";
+"SessionBackup.DeleteSingle.Text" = "%@ sesja zostanie usunięta z pęku kluczy.\n\nKonto nie zostanie wylogowane ze TrollGram.";
 "SessionBackup.RemoveFromApp.Title" = "Usunąć konto z aplikacji?";
-"SessionBackup.RemoveFromApp.Text" = "%@ sesja ZOSTANIE USUNIĘTA ze Swiftgram! Sesja pozostanie aktywna, więc możesz ją później przywrócić.";
+"SessionBackup.RemoveFromApp.Text" = "%@ sesja ZOSTANIE USUNIĘTA ze TrollGram! Sesja pozostanie aktywna, więc możesz ją później przywrócić.";
 "SessionBackup.Notice" = "Sesje są szyfrowane i przechowywane w pęku kluczy urządzenia. Sesje nigdy nie opuszczają urządzenia.\n\nWAŻNE: Aby przywrócić sesje na nowym urządzeniu lub po zresetowaniu systemu operacyjnego, MUSISZ włączyć szyfrowane kopie zapasowe, w przeciwnym razie pęk kluczy nie zostanie przeniesiony.\n\nUWAGA: Sesje mogą zostać unieważnione przez Telegram lub z innego urządzenia.";
 
 "MessageFilter.Title" = "Filtr wiadomości";
@@ -201,11 +201,11 @@
 
 "PayWall.SessionBackup.Title" = "Kopia zapasowa sesji";
 "PayWall.SessionBackup.Notice" = "Przywróć sesje z zaszyfrowanej lokalnej kopii zapasowej pęku kluczy Apple.";
-"PayWall.SessionBackup.Description" = "Zmiana urządzenia lub usunięcie Swiftgrama nie jest już problemem. Przywróć wszystkie sesje, które są nadal aktywne na serwerach Telegrama.";
+"PayWall.SessionBackup.Description" = "Zmiana urządzenia lub usunięcie TrollGrama nie jest już problemem. Przywróć wszystkie sesje, które są nadal aktywne na serwerach Telegrama.";
 
 "PayWall.MessageFilter.Title" = "Filtr wiadomości";
 "PayWall.MessageFilter.Notice" = "Zmniejsz widoczność SPAM-u, promocji i irytujących wiadomości.";
-"PayWall.MessageFilter.Description" = "Utwórz listę słów kluczowych, których nie chcesz często widzieć, a Swiftgram zredukuje liczbę elementów rozpraszających uwagę.";
+"PayWall.MessageFilter.Description" = "Utwórz listę słów kluczowych, których nie chcesz często widzieć, a TrollGram zredukuje liczbę elementów rozpraszających uwagę.";
 
 "PayWall.Notifications.Title" = "Wyłącz @wzmianki i odpowiedzi";
 "PayWall.Notifications.Notice" = "Ukryj lub wycisz nieistotne powiadomienia.";
@@ -216,10 +216,10 @@
 "PayWall.InputToolbar.Description" = "Zastosuj i wyczyść formatowanie lub wstaw nowe wiersze jak profesjonalista.";
 
 "PayWall.AppIcons.Title" = "Unikalne ikony aplikacji";
-"PayWall.AppIcons.Notice" = "Dostosuj wygląd Swiftgram na ekranie głównym.";
+"PayWall.AppIcons.Notice" = "Dostosuj wygląd TrollGram na ekranie głównym.";
 
-"PayWall.About.Title" = "O Swiftgram Pro";
-"PayWall.About.Notice" = "Bezpłatna wersja Swiftgram oferuje dziesiątki funkcji i ulepszeń w stosunku do aplikacji Telegram. Innowacje i synchronizacja Swiftgram z miesięcznymi aktualizacjami Telegram to ogromny wysiłek, który wymaga dużo czasu i drogiego sprzętu.\n\nSwiftgram to aplikacja typu open source, która szanuje twoją prywatność i nie przeszkadza ci reklamami. Subskrybując Swiftgram Pro uzyskujesz dostęp do ekskluzywnych funkcji i wspierasz niezależnego programistę.";
+"PayWall.About.Title" = "O TrollGram Pro";
+"PayWall.About.Notice" = "Bezpłatna wersja TrollGram oferuje dziesiątki funkcji i ulepszeń w stosunku do aplikacji Telegram. Innowacje i synchronizacja TrollGram z miesięcznymi aktualizacjami Telegram to ogromny wysiłek, który wymaga dużo czasu i drogiego sprzętu.\n\nTrollGram to aplikacja typu open source, która szanuje twoją prywatność i nie przeszkadza ci reklamami. Subskrybując TrollGram Pro uzyskujesz dostęp do ekskluzywnych funkcji i wspierasz niezależnego programistę.";
 /* DO NOT TRANSLATE */
 "PayWall.About.Signature" = "@Kylmakalle";
 /* DO NOT TRANSLATE */
@@ -233,8 +233,8 @@
 "PayWall.Privacy" = "Polityka prywatności";
 "PayWall.TermsURL" = "https://swiftgram.app/terms";
 "PayWall.PrivacyURL" = "https://swiftgram.app/privacy";
-"PayWall.Notice.Markdown" = "Subskrybując Swiftgram Pro akceptujesz [Warunki korzystania z usługi](%1$@) i [Politykę prywatności](%2$@) Swiftgram.";
-"PayWall.Notice.Raw" = "Subskrybując Swiftgram Pro akceptujesz Warunki korzystania z usługi i Politykę prywatności Swiftgram.";
+"PayWall.Notice.Markdown" = "Subskrybując TrollGram Pro akceptujesz [Warunki korzystania z usługi](%1$@) i [Politykę prywatności](%2$@) TrollGram.";
+"PayWall.Notice.Raw" = "Subskrybując TrollGram Pro akceptujesz Warunki korzystania z usługi i Politykę prywatności TrollGram.";
 
 "PayWall.Button.OpenPro" = "Używaj funkcji Pro";
 "PayWall.Button.Purchasing" = "Kupowanie…";

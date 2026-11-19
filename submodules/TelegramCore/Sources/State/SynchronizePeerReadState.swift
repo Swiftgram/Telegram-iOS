@@ -267,6 +267,10 @@ private func pushPeerReadState(network: Network, postbox: Postbox, stateManager:
         if maxIncomingReadIndex.timestamp <= 0 {
             return .single(readState)
         }
+        // TrollGram Ghost Mode: never report secret chat reads.
+        if TrollPrivacyRuntime.suppressReadReceipts {
+            return .single(readState)
+        }
         return inputSecretChat(postbox: postbox, peerId: peerId)
         |> mapToSignal { inputPeer -> Signal<PeerReadState, PeerReadStateValidationError> in
             // A rejected push must not be retried: the operation is only cleared once it
@@ -283,6 +287,10 @@ private func pushPeerReadState(network: Network, postbox: Postbox, stateManager:
             |> then(Signal<PeerReadState, PeerReadStateValidationError>.single(readState))
         }
     } else {
+        // TrollGram Ghost Mode: never push cloud/channel read receipts.
+        if TrollPrivacyRuntime.suppressReadReceipts {
+            return .single(readState)
+        }
         return inputPeer(postbox: postbox, peerId: peerId)
         |> mapToSignal { inputPeer -> Signal<PeerReadState, PeerReadStateValidationError> in
             switch inputPeer {
@@ -290,6 +298,10 @@ private func pushPeerReadState(network: Network, postbox: Postbox, stateManager:
                 let (channelId, accessHash) = (inputPeerChannelData.channelId, inputPeerChannelData.accessHash)
                 switch readState {
                 case let .idBased(maxIncomingReadId, _, _, _, markedUnread):
+                    // TrollGram Ghost Mode: suppress channel read receipts.
+                    if TrollPrivacyRuntime.suppressReadReceipts {
+                        return .complete()
+                    }
                     var pushSignal: Signal<Void, NoError> = network.request(Api.functions.channels.readHistory(channel: Api.InputChannel.inputChannel(.init(channelId: channelId, accessHash: accessHash)), maxId: maxIncomingReadId))
                     |> `catch` { _ -> Signal<Api.Bool, NoError> in
                         return .complete()
@@ -320,6 +332,10 @@ private func pushPeerReadState(network: Network, postbox: Postbox, stateManager:
             default:
                 switch readState {
                 case let .idBased(maxIncomingReadId, _, _, _, markedUnread):
+                    // TrollGram Ghost Mode: suppress private/group read receipts.
+                    if TrollPrivacyRuntime.suppressReadReceipts {
+                        return .complete()
+                    }
                     var pushSignal: Signal<Void, NoError> = network.request(Api.functions.messages.readHistory(peer: inputPeer, maxId: maxIncomingReadId))
                     |> map(Optional.init)
                     |> `catch` { _ -> Signal<Api.messages.AffectedMessages?, NoError> in

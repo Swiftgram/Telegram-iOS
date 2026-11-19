@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Απόκρυψη \"%@\"";
 "Settings.Folders.RememberLast" = "Άνοιγμα Τελευταίου Φακέλου";
-"Settings.Folders.RememberLast.Notice" = "Το Swiftgram θα ανοίξει τον τελευταίο φάκελο όταν επανεκκινήσετε την εφαρμογή ή αλλάξετε λογαριασμούς.";
+"Settings.Folders.RememberLast.Notice" = "Το TrollGram θα ανοίξει τον τελευταίο φάκελο όταν επανεκκινήσετε την εφαρμογή ή αλλάξετε λογαριασμούς.";
 
 "Settings.Folders.CompactNames" = "Μικρότερη απόσταση";
 "Settings.Folders.AllChatsTitle" = "\"Όλες οι συνομιλίες\" τίτλος";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Απαιτείται επανεκκίνηση";
 "Common.RestartNow" = "Επανεκκίνηση Τώρα";
 "Common.OpenTelegram" = "Άνοιγμα Telegram";
-"Common.UseTelegramForPremium" = "Παρακαλώ σημειώστε ότι για να πάρετε Telegram Premium, θα πρέπει να χρησιμοποιήσετε την επίσημη εφαρμογή Telegram. Μόλις λάβετε Telegram Premium, όλα τα χαρακτηριστικά του θα είναι διαθέσιμα στο Swiftgram.";
+"Common.UseTelegramForPremium" = "Παρακαλώ σημειώστε ότι για να πάρετε Telegram Premium, θα πρέπει να χρησιμοποιήσετε την επίσημη εφαρμογή Telegram. Μόλις λάβετε Telegram Premium, όλα τα χαρακτηριστικά του θα είναι διαθέσιμα στο TrollGram.";
 
 "Message.HoldToShowOrReport" = "Κρατήστε για προβολή ή αναφορά.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Επιλέξτε από τον Συγγραφέα";
 
 "Settings.ContextMenu" = "KONTEXTMENÜ";
-"Settings.ContextMenu.Notice" = "Deaktivierte Einträge sind im 'Swiftgram'-Untermenü verfügbar.";
+"Settings.ContextMenu.Notice" = "Deaktivierte Einträge sind im 'TrollGram'-Untermenü verfügbar.";
 
 
 "Settings.ChatSwipeOptions" = "Επιλογές Συρσίματος Λίστας Συνομιλίας";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "ημερομηνία δημιουργίας";
 "Chat.Created.Copied" = "Η ημερομηνία δημιουργίας αντιγράφηκε";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "εντάχθηκε στο %@";
 "Chat.JoinedDate.Copied" = "Η ημερομηνία ένταξης αντιγράφηκε";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Απόκρυψη Καναλιού Κάτω Πάνελ";
 
 "Settings.CallConfirmation" = "Επιβεβαίωση Κλήσης";
-"Settings.CallConfirmation.Notice" = "Η Swiftgram θα ζητήσει την επιβεβαίωσή σας πριν πραγματοποιήσει μια κλήση.";
+"Settings.CallConfirmation.Notice" = "Η TrollGram θα ζητήσει την επιβεβαίωσή σας πριν πραγματοποιήσει μια κλήση.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Να κάνω μια Κλήση;";

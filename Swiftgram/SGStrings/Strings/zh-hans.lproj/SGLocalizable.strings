@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "隐藏 \"%@\"";
 "Settings.Folders.RememberLast" = "打开上次分组";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram 将在重启或切换账户后打开最后使用的分组";
+"Settings.Folders.RememberLast.Notice" = "TrollGram 将在重启或切换账户后打开最后使用的分组";
 
 "Settings.Folders.CompactNames" = "缩小分组间距";
 "Settings.Folders.AllChatsTitle" = "\"所有对话\"标题";
@@ -87,7 +87,7 @@
 "Common.RestartRequired" = "需要重启";
 "Common.RestartNow" = "立即重启";
 "Common.OpenTelegram" = "打开 Telegram";
-"Common.UseTelegramForPremium" = "请注意，您必须使用官方的 Telegram 客户端才可购买 Telegram Premium，一旦您获得 Telegram Premium，其所有功能也将在 Swiftgram 中生效。";
+"Common.UseTelegramForPremium" = "请注意，您必须使用官方的 Telegram 客户端才可购买 Telegram Premium，一旦您获得 Telegram Premium，其所有功能也将在 TrollGram 中生效。";
 "Common.UpdateOS" = "需要 iOS 更新";
 
 "Message.HoldToShowOrReport" = "长按显示或举报";
@@ -102,7 +102,7 @@
 "ContextMenu.SelectFromUser" = "选择此人所有消息";
 
 "Settings.ContextMenu" = "消息菜单";
-"Settings.ContextMenu.Notice" = "已禁用的项目可在 Swiftgram 子菜单中找到";
+"Settings.ContextMenu.Notice" = "已禁用的项目可在 TrollGram 子菜单中找到";
 
 
 "Settings.ChatSwipeOptions" = "对话列表滑动选项";
@@ -129,7 +129,7 @@
 "Chat.Created.Label" = "创建日期";
 "Chat.Created.Copied" = "创建日期已复制";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "加入 %@";
 "Chat.JoinedDate.Copied" = "加入日期已复制";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -152,7 +152,7 @@
 "Settings.secondsInMessages" = "消息中的秒数";
 
 "Settings.CallConfirmation" = "通话确认";
-"Settings.CallConfirmation.Notice" = "Swiftgram 将在拨打电话前征求您的确认";
+"Settings.CallConfirmation.Notice" = "TrollGram 将在拨打电话前征求您的确认";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "拨打语音通话？";
@@ -177,11 +177,11 @@
 "SessionBackup.LoggedIn" = "已登录";
 "SessionBackup.LoggedOut" = "已登出";
 "SessionBackup.DeleteAll.Title" = "删除所有会话？";
-"SessionBackup.DeleteAll.Text" = "所有会话将从钥匙串中删除。\n\n帐号将不会从 Swiftgram 登出。";
+"SessionBackup.DeleteAll.Text" = "所有会话将从钥匙串中删除。\n\n帐号将不会从 TrollGram 登出。";
 "SessionBackup.DeleteSingle.Title" = "删除 1 个会话？";
-"SessionBackup.DeleteSingle.Text" = "%@ 会话将从钥匙串中删除。\n\n帐号将不会从 Swiftgram 登出。";
+"SessionBackup.DeleteSingle.Text" = "%@ 会话将从钥匙串中删除。\n\n帐号将不会从 TrollGram 登出。";
 "SessionBackup.RemoveFromApp.Title" = "从应用程序中移除帐户？";
-"SessionBackup.RemoveFromApp.Text" = "%@ 会话将从 Swiftgram 中移除！会话将保持活动状态，以便稍后恢复。";
+"SessionBackup.RemoveFromApp.Text" = "%@ 会话将从 TrollGram 中移除！会话将保持活动状态，以便稍后恢复。";
 "SessionBackup.Notice" = "会话已加密并存储在设备的钥匙串中。会话永远不会离开您的设备。\n\n重要提示：要在新设备或操作系统重置后恢复会话，您必须启用加密备份，否则钥匙串将无法转移。\n\n注意：会话仍可能被Telegram或另一台设备撤销。";
 
 "MessageFilter.Title" = "消息过滤器";
@@ -205,11 +205,11 @@
 
 "PayWall.SessionBackup.Title" = "账号备份";
 "PayWall.SessionBackup.Notice" = "即使在重新安装后也可以登录到没有代码的帐户。使用设备上的密钥链来安全存储。";
-"PayWall.SessionBackup.Description" = "更改设备或删除 Swiftgram 已不再是一个问题。还原在Telegram 服务器上仍然活跃的所有会话。";
+"PayWall.SessionBackup.Description" = "更改设备或删除 TrollGram 已不再是一个问题。还原在Telegram 服务器上仍然活跃的所有会话。";
 
 "PayWall.MessageFilter.Title" = "消息过滤器";
 "PayWall.MessageFilter.Notice" = "减少 SPAM、促销和令人烦恼的消息的可见性。";
-"PayWall.MessageFilter.Description" = "创建一个您不想经常看到的关键字列表，而Swiftgram 会减少干扰。";
+"PayWall.MessageFilter.Description" = "创建一个您不想经常看到的关键字列表，而TrollGram 会减少干扰。";
 
 "PayWall.Notifications.Title" = "禁用 @提及和回复";
 "PayWall.Notifications.Notice" = "隐藏或静音不重要的通知。";
@@ -220,10 +220,10 @@
 "PayWall.InputToolbar.Description" = "应用并清除格式化或插入像专业版这样的新行。";
 
 "PayWall.AppIcons.Title" = "独特的应用图标";
-"PayWall.AppIcons.Notice" = "自定义 Swiftgram 在主屏幕上的外观。";
+"PayWall.AppIcons.Notice" = "自定义 TrollGram 在主屏幕上的外观。";
 
-"PayWall.About.Title" = "关于 Swiftgram Pro";
-"PayWall.About.Notice" = "Swiftgram 的免费版本提供超过 Telegram 应用的多个功能和改进。创新并保持 Swiftgram 与每月的 Telegram 更新同步是一项庞大的工作，需要耗费大量的时间和昂贵的硬件。\n\nSwiftgram 是一个开源应用，尊重您的隐私，并且不打扰您广告。订阅 Swiftgram Pro，您将获得独享特性并支持独立开发者。\n\n- @Kylmakalle";
+"PayWall.About.Title" = "关于 TrollGram Pro";
+"PayWall.About.Notice" = "TrollGram 的免费版本提供超过 Telegram 应用的多个功能和改进。创新并保持 TrollGram 与每月的 Telegram 更新同步是一项庞大的工作，需要耗费大量的时间和昂贵的硬件。\n\nTrollGram 是一个开源应用，尊重您的隐私，并且不打扰您广告。订阅 TrollGram Pro，您将获得独享特性并支持独立开发者。\n\n- @Kylmakalle";
 /* DO NOT TRANSLATE */
 "PayWall.About.Signature" = "@Kylmakalle";
 /* DO NOT TRANSLATE */
@@ -237,8 +237,8 @@
 "PayWall.Privacy" = "隐私政策";
 "PayWall.TermsURL" = "https://swiftgram.app/terms";
 "PayWall.PrivacyURL" = "https://swiftgram.app/privacy";
-"PayWall.Notice.Markdown" = "通过订阅 Swiftgram Pro，您同意 [Swiftgram 服务条款](%1$@) 和 [隐私政策](%2$@)。";
-"PayWall.Notice.Raw" = "通过订阅 Swiftgram Pro，您同意 Swiftgram 服务条款和隐私政策。";
+"PayWall.Notice.Markdown" = "通过订阅 TrollGram Pro，您同意 [TrollGram 服务条款](%1$@) 和 [隐私政策](%2$@)。";
+"PayWall.Notice.Raw" = "通过订阅 TrollGram Pro，您同意 TrollGram 服务条款和隐私政策。";
 
 "PayWall.Button.OpenPro" = "使用专业功能";
 "PayWall.Button.Purchasing" = "正在购买……";

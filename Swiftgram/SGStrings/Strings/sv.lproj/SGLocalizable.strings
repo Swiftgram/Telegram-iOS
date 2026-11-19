@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Dölj \"%@\"";
 "Settings.Folders.RememberLast" = "Öppna senaste mapp";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram öppnar den senast använda mappen när du startar om appen eller byter konton.";
+"Settings.Folders.RememberLast.Notice" = "TrollGram öppnar den senast använda mappen när du startar om appen eller byter konton.";
 
 "Settings.Folders.CompactNames" = "Mindre avstånd";
 "Settings.Folders.AllChatsTitle" = "\"Alla chattar\" titel";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Omstart krävs";
 "Common.RestartNow" = "Starta om Nu";
 "Common.OpenTelegram" = "Öppna Telegram";
-"Common.UseTelegramForPremium" = "Observera att för att få Telegram Premium måste du använda den officiella Telegram-appen. När du har fått Telegram Premium, kommer alla dess funktioner att bli tillgängliga i Swiftgram.";
+"Common.UseTelegramForPremium" = "Observera att för att få Telegram Premium måste du använda den officiella Telegram-appen. När du har fått Telegram Premium, kommer alla dess funktioner att bli tillgängliga i TrollGram.";
 
 "Message.HoldToShowOrReport" = "Håll in för att Visa eller Rapportera.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Välj från Författaren";
 
 "Settings.ContextMenu" = "KONTEXTMENY";
-"Settings.ContextMenu.Notice" = "Inaktiverade poster kommer att vara tillgängliga i 'Swiftgram'-undermenyn.";
+"Settings.ContextMenu.Notice" = "Inaktiverade poster kommer att vara tillgängliga i 'TrollGram'-undermenyn.";
 
 
 "Settings.ChatSwipeOptions" = "Svepalternativ för chattlistan";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "skapad";
 "Chat.Created.Copied" = "Skapandedatum kopierat";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "gick med %@";
 "Chat.JoinedDate.Copied" = "Anslutningsdatum kopierat";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Dölj kanalle bottenpanel";
 
 "Settings.CallConfirmation" = "Samtalsbekräftelse";
-"Settings.CallConfirmation.Notice" = "Swiftgram kommer att be om din bekräftelse innan ett samtal görs.";
+"Settings.CallConfirmation.Notice" = "TrollGram kommer att be om din bekräftelse innan ett samtal görs.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Vill du ringa ett samtal?";

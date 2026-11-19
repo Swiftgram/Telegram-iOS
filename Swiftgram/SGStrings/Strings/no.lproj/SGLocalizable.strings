@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Skjul \"%@\"";
 "Settings.Folders.RememberLast" = "Åpne siste mappe";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram vil åpne den sist brukte mappen når du starter appen på nytt eller bytter kontoer.";
+"Settings.Folders.RememberLast.Notice" = "TrollGram vil åpne den sist brukte mappen når du starter appen på nytt eller bytter kontoer.";
 
 "Settings.Folders.CompactNames" = "Mindre avstand";
 "Settings.Folders.AllChatsTitle" = "\"Alle chater\" tittel";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Omstart kreves";
 "Common.RestartNow" = "Omstart Nå";
 "Common.OpenTelegram" = "Åpne Telegram";
-"Common.UseTelegramForPremium" = "Vær oppmerksom på at for å få Telegram Premium, må du bruke den offisielle Telegram-appen. Når du har tatt Telegram Premium, vil alle funksjonene bli tilgjengelige i Swiftgram.";
+"Common.UseTelegramForPremium" = "Vær oppmerksom på at for å få Telegram Premium, må du bruke den offisielle Telegram-appen. Når du har tatt Telegram Premium, vil alle funksjonene bli tilgjengelige i TrollGram.";
 
 "Message.HoldToShowOrReport" = "Hold for å vise eller rapportere.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Velg fra forfatter";
 
 "Settings.ContextMenu" = "KONTEKSTMENY";
-"Settings.ContextMenu.Notice" = "Deaktiverte oppføringer vil være tilgjengelige i 'Swiftgram'-undermenyen.";
+"Settings.ContextMenu.Notice" = "Deaktiverte oppføringer vil være tilgjengelige i 'TrollGram'-undermenyen.";
 
 
 "Settings.ChatSwipeOptions" = "Chat liste sveip alternativer";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "opprettet";
 "Chat.Created.Copied" = "Opprettelsesdato kopiert";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "ble med %@";
 "Chat.JoinedDate.Copied" = "Innmeldingsdato kopiert";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Skjul Kanal Bunnerpanel";
 
 "Settings.CallConfirmation" = "Ringebekreftelse";
-"Settings.CallConfirmation.Notice" = "Swiftgram vil spørre om din bekreftelse før det foretas et anrop.";
+"Settings.CallConfirmation.Notice" = "TrollGram vil spørre om din bekreftelse før det foretas et anrop.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Vil du ringe?";

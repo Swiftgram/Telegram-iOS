@@ -1,0 +1,96 @@
+name: Sign TrollGram IPA
+
+# Manual re-sign of an already published unsigned IPA (no Bazel build, ~2 min).
+# The main build workflow signs automatically when the secrets are present;
+# this workflow is for re-signing an older release.
+#
+# Required repository secrets:
+#   P12_BASE64             base64 of the .p12 certificate
+#   P12_PASSWORD           password of the .p12
+#   MOBILEPROVISION_BASE64 base64 of the .mobileprovision
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag with TrollGram.ipa (empty = latest release)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+env:
+  P12_BASE64: ${{ secrets.P12_BASE64 }}
+  P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+  PROFILE_BASE64: ${{ secrets.MOBILEPROVISION_BASE64 }}
+
+jobs:
+  sign:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check secrets
+        id: check
+        run: |
+          if [ -z "$P12_BASE64" ] || [ -z "$PROFILE_BASE64" ]; then
+            echo "::error::Secrets P12_BASE64 / MOBILEPROVISION_BASE64 are not set"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download unsigned IPA
+        if: steps.check.outputs.ok == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/in" && cd "$RUNNER_TEMP/in"
+          TAG="${{ github.event.inputs.tag }}"
+          if [ -z "$TAG" ]; then
+            TAG=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 1 --json tagName --jq '.[0].tagName // ""')
+          fi
+          if [ -n "$TAG" ] && gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern 'TrollGram.ipa' --clobber; then
+            echo "TAG=$TAG" >> "$GITHUB_ENV"
+          else
+            echo "No release with TrollGram.ipa - falling back to the latest successful build artifact"
+            RUN=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow build-ipa.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId // ""')
+            if [ -z "$RUN" ]; then
+              echo "::error::No unsigned TrollGram.ipa yet: there is no release and no successful 'Build and Release TrollGram IPA' run."
+              exit 1
+            fi
+            gh run download "$RUN" --repo "$GITHUB_REPOSITORY" --dir art
+            find art -name 'TrollGram.ipa' -exec mv {} TrollGram.ipa \;
+            [ -f TrollGram.ipa ] || { echo "::error::TrollGram.ipa not found in artifacts of run $RUN"; exit 1; }
+          fi
+          ls -lh TrollGram.ipa
+
+      - name: Sign
+        if: steps.check.outputs.ok == 'true'
+        run: |
+          set -x
+          printf '%s' "$P12_BASE64" | openssl base64 -d -A > "$RUNNER_TEMP/cert.p12"
+          printf '%s' "$PROFILE_BASE64" | openssl base64 -d -A > "$RUNNER_TEMP/profile.mobileprovision"
+          python3 build-system/sign_ipa.py \
+            --input "$RUNNER_TEMP/in/TrollGram.ipa" \
+            --output "$RUNNER_TEMP/TrollGram-signed.ipa" \
+            --p12 "$RUNNER_TEMP/cert.p12" \
+            --password "$P12_PASSWORD" \
+            --profile "$RUNNER_TEMP/profile.mobileprovision"
+
+      - name: Upload artifact
+        if: steps.check.outputs.ok == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: TrollGram-signed
+          path: ${{ runner.temp }}/TrollGram-signed.ipa
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Attach to release
+        if: steps.check.outputs.ok == 'true' && env.TAG != ''
+        run: |
+          gh release upload "$TAG" "$RUNNER_TEMP/TrollGram-signed.ipa" --clobber --repo "$GITHUB_REPOSITORY"

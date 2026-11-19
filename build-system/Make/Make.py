@@ -43,6 +43,9 @@ class BazelCommandLine:
         self.build_number = None
         self.configuration_args = None
         self.split_submodules = False
+        # TrollGram: release_arm64 generates dSYMs by default. They are useless
+        # for sideloaded builds and add a noticeable amount of build time.
+        self.skip_dsym = False
         self.custom_target = None
         self.continue_on_error = False
         self.show_actions = False
@@ -122,6 +125,15 @@ class BazelCommandLine:
     def add_cache_dir(self, path):
         self.cache_dir = path
 
+    def get_cache_dir_arguments(self):
+        # The repository cache keeps downloaded repositories next to the
+        # action cache, so a fresh output base does not have to fetch (and
+        # extract) all external dependencies again.
+        return [
+            '--disk_cache={path}'.format(path=self.cache_dir),
+            '--repository_cache={path}'.format(path=os.path.join(self.cache_dir, 'repository')),
+        ]
+
     def add_additional_args(self, additional_args):
         self.additional_args = additional_args
 
@@ -142,6 +154,9 @@ class BazelCommandLine:
 
     def set_split_swiftmodules(self, value):
         self.split_submodules = value
+
+    def set_skip_dsym(self, value):
+        self.skip_dsym = value
 
     def set_disable_provisioning_profiles(self):
         self.disable_provisioning_profiles = True
@@ -198,13 +213,18 @@ class BazelCommandLine:
 
                 # Always build universal Watch binaries.
                 '--watchos_cpus=arm64_32',
-
-                # Generate DSYM files when building.
-                '--apple_generate_dsym',
-
-                # Require DSYM files as build output.
-                '--output_groups=+dsyms',
             ] + self.common_release_args
+
+            # DSYMs roughly double the size of the produced artifacts and are
+            # never used for the sideloaded builds, so keep them opt-out.
+            if not self.skip_dsym:
+                self.configuration_args += [
+                    # Generate DSYM files when building.
+                    '--apple_generate_dsym',
+
+                    # Require DSYM files as build output.
+                    '--output_groups=+dsyms',
+                ]
         else:
             raise Exception('Unknown configuration {}'.format(configuration))
 
@@ -262,9 +282,7 @@ class BazelCommandLine:
                 '--experimental_remote_downloader={}'.format(self.remote_cache)
             ]
         elif self.cache_dir is not None:
-            combined_arguments += [
-                '--disk_cache={path}'.format(path=self.cache_dir)
-            ]
+            combined_arguments += self.get_cache_dir_arguments()
 
         if self.continue_on_error:
             combined_arguments += ['--keep_going']
@@ -328,9 +346,7 @@ class BazelCommandLine:
                 '--experimental_remote_downloader={}'.format(self.remote_cache)
             ]
         elif self.cache_dir is not None:
-            combined_arguments += [
-                '--disk_cache={path}'.format(path=self.cache_dir)
-            ]
+            combined_arguments += self.get_cache_dir_arguments()
 
         combined_arguments += self.configuration_args
         if self.profile_swift:
@@ -365,9 +381,7 @@ class BazelCommandLine:
                 '--experimental_remote_downloader={}'.format(self.remote_cache)
             ]
         elif self.cache_dir is not None:
-            combined_arguments += [
-                '--disk_cache={path}'.format(path=self.cache_dir)
-            ]
+            combined_arguments += self.get_cache_dir_arguments()
 
         combined_arguments += self.configuration_args
 
@@ -395,9 +409,7 @@ class BazelCommandLine:
                 '--experimental_remote_downloader={}'.format(self.remote_cache)
             ]
         elif self.cache_dir is not None:
-            combined_arguments += [
-                '--disk_cache={path}'.format(path=self.cache_dir)
-            ]
+            combined_arguments += self.get_cache_dir_arguments()
 
         # Add user-provided query arguments
         combined_arguments += query_args
@@ -489,16 +501,25 @@ def resolve_configuration(base_path, bazel_command_line: BazelCommandLine, argum
         shutil.rmtree(provisioning_path)
     os.makedirs(provisioning_path, exist_ok=True)
 
-    codesigning_data = resolve_codesigning(
-        arguments=arguments,
-        base_path=base_path,
-        build_configuration=build_configuration,
-        provisioning_profiles_path=provisioning_path,
-        additional_codesigning_output_path=additional_codesigning_output_path
-    )
-    if codesigning_data.aps_environment is None:
-        print('Could not find a valid aps-environment entitlement in the provided provisioning profiles')
-        sys.exit(1)
+    if arguments.disableProvisioningProfiles:
+        # Unsigned build: no provisioning profile or certificate required.
+        codesigning_data = ResolvedCodesigningData(
+            aps_environment='development',
+            use_xcode_managed_codesigning=False
+        )
+        print('Unsigned build: skipping provisioning profile validation.')
+    else:
+        codesigning_data = resolve_codesigning(
+            arguments=arguments,
+            base_path=base_path,
+            build_configuration=build_configuration,
+            provisioning_profiles_path=provisioning_path,
+            additional_codesigning_output_path=additional_codesigning_output_path
+        )
+
+        if codesigning_data.aps_environment is None:
+            print('Could not find a valid aps-environment entitlement in the provided provisioning profiles')
+            sys.exit(1)
 
     if bazel_command_line is not None:
         build_configuration.write_to_variables_file(bazel_path=bazel_command_line.bazel, use_xcode_managed_codesigning=codesigning_data.use_xcode_managed_codesigning, aps_environment=codesigning_data.aps_environment, path=configuration_repository_path + '/variables.bzl')
@@ -676,6 +697,7 @@ def build(bazel, arguments):
     bazel_command_line.set_profile_swift(arguments.profileSwift)
 
     bazel_command_line.set_split_swiftmodules(arguments.enableParallelSwiftmoduleGeneration)
+    bazel_command_line.set_skip_dsym(getattr(arguments, 'skipDsym', False))
 
     bazel_command_line.invoke_build()
 
@@ -1116,6 +1138,12 @@ if __name__ == '__main__':
         action='store_true',
         default=False,
         help='Show bazel actions.',
+    )
+    buildParser.add_argument(
+        '--skipDsym',
+        action='store_true',
+        default=False,
+        help='Do not generate dSYMs for release builds (faster, smaller artifacts).',
     )
     buildParser.add_argument(
         '--sandbox',

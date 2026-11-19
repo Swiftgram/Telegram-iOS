@@ -6,6 +6,10 @@ import SwiftSignalKit
 func _internal_markMessageContentAsConsumedInteractively(postbox: Postbox, messageId: MessageId) -> Signal<Void, NoError> {
     return postbox.transaction { transaction -> Void in
         if let message = transaction.getMessage(messageId), message.flags.contains(.Incoming) {
+            // TrollGram: keep a copy of self-destructing media before opening it starts the countdown.
+            if TrollPrivacyRuntime.saveSelfDestructingMedia && message.containsSecretMedia {
+                TrollMessageArchive.shared.captureSelfDestructing(message: message, mediaBox: postbox.mediaBox)
+            }
             var updateMessage = false
             var updatedAttributes = message.attributes
             
@@ -198,6 +202,12 @@ func markMessageContentAsConsumedRemotely(transaction: Transaction, messageId: M
         
         let timestamp = Int32(CFAbsoluteTimeGetCurrent() + NSTimeIntervalSince1970)
         let countdownBeginTime = consumeDate ?? timestamp
+
+        // TrollGram "View Once Media": the media is never replaced with an
+        // expired stub and the countdown never starts, so it stays replayable.
+        if TrollPrivacyRuntime.viewOnceMediaUnlocked {
+            return
+        }
         
         for i in 0 ..< updatedAttributes.count {
             if let attribute = updatedAttributes[i] as? AutoremoveTimeoutMessageAttribute {

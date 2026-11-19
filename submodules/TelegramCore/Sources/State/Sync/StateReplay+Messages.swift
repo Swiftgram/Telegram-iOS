@@ -317,6 +317,11 @@ extension ReplayContext {
                 generatedEvent = reactionGeneratedEvent(previousMessage.reactionsAttribute, message.reactionsAttribute, message: message, transaction: transaction)
             }
 
+            // TrollGram Edit History: a side-effect-only copy of the text this edit replaces; it changes nothing stored.
+            if TrollPrivacyRuntime.editHistoryEnabled && previousMessage.text != message.text {
+                TrollMessageArchive.shared.captureEdit(previous: previousMessage)
+            }
+
             return .update(mergedServerMessageUpdate(previous: previousMessage, updated: message))
         })
         // A fetch in flight may be bringing the message with its old content, over the edited one or, with none stored

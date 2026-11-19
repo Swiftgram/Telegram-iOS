@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Ascundeți „%@\"";
 "Settings.Folders.RememberLast" = "Deschideți ultimul dosar";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram va deschide ultimul folder utilizat atunci când reporniți aplicația sau schimbați conturile.";
+"Settings.Folders.RememberLast.Notice" = "TrollGram va deschide ultimul folder utilizat atunci când reporniți aplicația sau schimbați conturile.";
 
 "Settings.Folders.CompactNames" = "Spațiere mai mică";
 "Settings.Folders.AllChatsTitle" = "Titlul \"Toate conversațiile\"";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Repornire necesară";
 "Common.RestartNow" = "Repornește acum";
 "Common.OpenTelegram" = "Deschide telegrama";
-"Common.UseTelegramForPremium" = "Vă rugăm să reţineţi că, pentru a obţine Telegram Premium, trebuie să utilizaţi aplicaţia oficială Telegram. Odată ce ai obţinut Telegram Premium, toate caracteristicile sale vor deveni disponibile în Swiftgram.";
+"Common.UseTelegramForPremium" = "Vă rugăm să reţineţi că, pentru a obţine Telegram Premium, trebuie să utilizaţi aplicaţia oficială Telegram. Odată ce ai obţinut Telegram Premium, toate caracteristicile sale vor deveni disponibile în TrollGram.";
 
 "Message.HoldToShowOrReport" = "Țineți apăsat pentru a afișa sau raporta.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Selectați din autor";
 
 "Settings.ContextMenu" = "MENIU CONTEXTUAL";
-"Settings.ContextMenu.Notice" = "Intrările dezactivate vor fi disponibile în submeniul 'Swiftgram'.";
+"Settings.ContextMenu.Notice" = "Intrările dezactivate vor fi disponibile în submeniul 'TrollGram'.";
 
 
 "Settings.ChatSwipeOptions" = "Opțiuni de glisare a chatului";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "data creării";
 "Chat.Created.Copied" = "Data creării copiată";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "s-a alăturat %@";
 "Chat.JoinedDate.Copied" = "Data aderării copiată";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Ascundeți panoul de jos al canalului";
 
 "Settings.CallConfirmation" = "Confirmare apel";
-"Settings.CallConfirmation.Notice" = "Swiftgram va solicita confirmarea dumneavoastră înainte de a efectua un apel.";
+"Settings.CallConfirmation.Notice" = "TrollGram va solicita confirmarea dumneavoastră înainte de a efectua un apel.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Ești sigur că vrei să faci un apel?";

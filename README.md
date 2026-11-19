@@ -1,129 +1,283 @@
-# Swiftgram
 
-Supercharged Telegram fork for iOS
+<div align="center">
 
-[<img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" height="50">](https://apps.apple.com/app/apple-store/id6471879502?pt=126511626&ct=gh&mt=8)
+# TrollGram
 
-- Download: [App Store](https://apps.apple.com/app/apple-store/id6471879502?pt=126511626&ct=gh&mt=8)
-- Telegram channel: https://t.me/swiftgram
-- Telegram chat: https://t.me/swiftgramchat
-- TestFlight beta, local chats, translations and other [@SwiftgramLinks](https://t.me/s/SwiftgramLinks)
+**An unofficial Telegram client for iOS**
 
-Swiftgram's compilation steps are the same as for the official app. Below you'll find a complete compilation guide based on the official app.
+Built on Telegram iOS and Swiftgram, with additional privacy controls
+and a plugin system (JavaScript on the built-in JavaScriptCore, plus experimental Python).
 
-# Telegram iOS Source Code Compilation Guide
+[Features](#features) · [Installation](#installation) · [Building](#building) · [Contributing](CONTRIBUTING.md)
 
-We welcome all developers to use our API and source code to create applications on our platform.
-There are several things we require from **all developers** for the moment.
+</div>
 
-# Creating your Telegram Application
+---
 
-1. [**Obtain your own api_id**](https://core.telegram.org/api/obtaining_api_id) for your application.
-2. Please **do not** use the name Telegram for your app — or make sure your users understand that it is unofficial.
-3. Kindly **do not** use our standard logo (white paper plane in a blue circle) as your app's logo.
-3. Please study our [**security guidelines**](https://core.telegram.org/mtproto/security_guidelines) and take good care of your users' data and privacy.
-4. Please remember to publish **your** code too in order to comply with the licences.
+## About
 
-# Quick Compilation Guide
+TrollGram is an iOS Telegram client based on the Telegram iOS codebase.
 
-## Get the Code
+The project combines selected Swiftgram features, additional privacy
+controls and a plugin system: lightweight JavaScript plugins that need no
+extra runtime, and experimental exteraGram-style Python plugins.
 
+The goal is to provide useful client-side features while keeping the
+project open to modification and community contributions.
+
+## Features
+
+### TrollTweaks
+
+**Settings → TrollGram → TrollTweaks** holds the switches below. They ship
+enabled and work on the client side only.
+
+**Ghost Mode** (master switch; the sub-switches only act while it is on)
+
+- Hide Online Status, Read Receipts, Typing Status and Uploading Status
+- Hide Story Views: stories are not marked as seen
+- Hide Channel Post Views: channel posts are not counted as viewed by you
+
+**Saved Messages** (kept in a log on your device only, nothing is uploaded)
+
+- Save Deleted Messages: the text, sender, time and any already
+  downloaded photo, video, voice message or file of an incoming message are
+  copied before it is removed
+- Save Edit History: the text an edit replaced
+- Save Self-Destructing Media: a copy of one-time and timer media, made when
+  it is opened
+- Keep Self-Destructing Media Replayable: opening it does not start the
+  countdown
+- **Saved Messages Log**: browse the entries, copy their text, or clear the
+  log together with the saved files
+
+Deleted messages are **not** put back into the chat: the sync deletes what the
+server deleted, so the copy lives in the log. Messages you delete yourself are
+logged too until you clear it. Files are saved only if they were downloaded.
+
+**Content**
+
+- Remove Sponsored Messages
+- Copy Protected Content
+
+These features operate on the client side. They do not guarantee complete
+anonymity or protection from Telegram's servers, and other devices may keep
+showing a chat as unread while read receipts are hidden. Saving what others
+sent or deleted can conflict with their expectations and with the law where
+you live: use it responsibly.
+
+### JavaScript plugins
+
+JavaScript plugins run on the JavaScriptCore engine that ships with iOS:
+no embedded interpreter, no native bridge libraries, nothing extra to
+build or download. Each plugin runs in its own isolated context.
+
+- Import `.js` plugins from the Files app (**Settings → Plugins**).
+- Plugins are **off until you enable them**.
+- A plugin can declare a settings screen (switches, text fields, buttons)
+  that the app renders natively.
+- Chat commands: a plugin handles outgoing `.command args` messages and
+  can answer with text.
+- Telegram access: `TrollGram.sendMessage`, `TrollGram.getPeer`, a generic
+  `TrollGram.api(method, params)`, the Telegram **Bot API** through
+  `TrollGram.bot(token)` and a Promise-based `fetch`.
+- Plugin logs and settings are stored on the device.
+
+```js
+// ==TrollGramPlugin==
+// @name Hello
+// @version 1.0
+// ==/TrollGramPlugin==
+TrollGram.plugin({
+  commands: { ping: () => 'pong' },
+  onSend: (msg) => msg.text.replace(/\bteh\b/g, 'the'),
+  settings: [{ type: 'switch', key: 'loud', title: 'Loud mode', default: false }]
+});
 ```
-git clone --recursive -j8 https://github.com/Swiftgram/Telegram-iOS.git
+
+The full API is in [`Swiftgram/JSPlugins/README.md`](Swiftgram/JSPlugins/README.md);
+runnable samples are in `Swiftgram/JSPlugins/examples`. Peers are numeric ids
+(users `id`, groups `-id`, channels `-100id`) or `"me"`. Modifying a message
+drops its formatting. Run the tests (Node.js 18+, no device needed):
+
+```bash
+node --test Swiftgram/JSPlugins/tests/prelude.test.js
 ```
 
-## Setup Xcode
+### Python plugins
 
-Install Xcode (directly from https://developer.apple.com/download/applications or using the App Store).
+TrollGram runs exteraGram-style Python 3.11 plugins on an embedded
+interpreter. It implements the parts of the plugin API that make sense on
+iOS and reports the rest instead of failing silently.
 
-## Adjust Configuration
+- Import `.plugin` (exteraGram) or `.py` plugins from the Files app. exteraGram
+  plugins are plain Python source, so they run as they are.
+- Plugins are **off until you enable them**; they start on the first
+  message you send after launching the app.
+- Plugin metadata (`__id__`, `__name__`, `__author__`, `__version__`) is
+  read without running the plugin.
+- The plugin screen shows author, version, running state, errors and
+  the features a plugin uses that iOS does not support.
+- Plugin settings and logs are stored on the device.
 
-1. Generate a random identifier:
+Supported API:
+
+| Area | What works |
+| --- | --- |
+| Lifecycle | `on_plugin_load`, `on_plugin_unload` |
+| Outgoing text messages | `add_on_send_message_hook` with `HookResult(strategy=CANCEL / MODIFY / MODIFY_FINAL)` and priorities |
+| Settings | `get_setting`, `set_setting`, `export_settings`, `import_settings`; `ui.settings` widgets (`Header`, `Switch`, `Input`, `EditText`, `Selector`, `Text`) are rendered natively on the plugin's Settings screen |
+| Client | `client_utils.send_text`, `send_message` (text only), `run_on_queue`, `ui.bulletin.BulletinHelper` toasts |
+
+Writing plugins: [`Swiftgram/PythonPlugins/README.md`](Swiftgram/PythonPlugins/README.md).
+
+Not supported on iOS (these raise `UnsupportedOnIOS`, which shows up in the
+plugin log): hooks on Telegram API requests and updates, Android/Java
+objects such as `get_messages_controller` or `get_last_fragment`, media
+sending, `hook_utils`, menu items and alert dialogs. Peers are numeric ids
+(users `id`, groups `-id`, channels `-100id`); usernames are not resolved.
+Modifying a message drops its formatting.
+
+Default directories:
+
+| Purpose | Path |
+| --- | --- |
+| Plugins | `Documents/Plugins` |
+| Plugin data and settings | `Documents/PluginsData` |
+
+Only install plugins from sources you trust. Plugins execute code within
+the application environment and may access available data; JavaScript
+plugins can also make network requests and send messages as you.
+
+Run the plugin runtime tests (no device needed):
+
+```bash
+python3 -m unittest discover -s Swiftgram/PythonPlugins/tests
 ```
-openssl rand -hex 8
-```
-2. Create a new Xcode project. Use `Swiftgram` as the Product Name. Use `org.{identifier from step 1}` as the Organization Identifier.
-3. Open `Keychain Access` and navigate to `Certificates`. Locate `Apple Development: your@email.address (XXXXXXXXXX)` and double tap the certificate. Under `Details`, locate `Organizational Unit`. This is the Team ID.
-4. Edit `build-system/template_minimal_development_configuration.json`. Use data from the previous steps.
 
-## Generate an Xcode project
+### Compatibility
 
+The project includes selected features and compatibility components
+from exteraGram.
+
+Not every feature from other Telegram clients is available in TrollGram.
+
+## Installation
+
+The recommended way to install TrollGram is to use the IPA files
+published in [GitHub Releases](../../releases).
+
+Installation requirements depend on the signing method and the
+iOS version of your device.
+
+## Building
+
+### Requirements
+
+- macOS
+- Xcode
+- Python 3
+- Git
+- Git submodules initialized
+
+### Clone the repository
+
+```bash
+git clone --recursive https://github.com/vnikolas2009/TrollGram.git
+cd TrollGram
+git submodule update --init --recursive
 ```
+
+### Prepare the build environment
+
+```bash
+python3 build-system/setup_python.py
+```
+
+### Build
+
+```bash
 python3 build-system/Make/Make.py \
-    --cacheDir="$HOME/telegram-bazel-cache" \
-    generateProject \
-    --configurationPath=build-system/template_minimal_development_configuration.json \
-    --xcodeManagedCodesigning
+  --cacheDir="$HOME/bazel-cache" \
+  --bazelUserRoot="$HOME/bazel-trollgram" \
+  build \
+  --configurationPath=build-system/appstore-configuration.json \
+  --codesigningInformationPath=build-system/fake-codesigning \
+  --configuration=release_arm64 \
+  --buildNumber=1000 \
+  --skipDsym \
+  --overrideXcodeVersion
 ```
 
-# Advanced Compilation Guide
+The build configuration may need to be adjusted for your environment.
 
-## Xcode
+## GitHub Actions
 
-1. Copy and edit `build-system/appstore-configuration.json`.
-2. Copy `build-system/fake-codesigning`. Create and download provisioning profiles, using the `profiles` folder as a reference for the entitlements.
-3. Generate an Xcode project:
-```
-python3 build-system/Make/Make.py \
-    --cacheDir="$HOME/telegram-bazel-cache" \
-    generateProject \
-    --configurationPath=configuration_from_step_1.json \
-    --codesigningInformationPath=directory_from_step_2
-```
+The repository includes a workflow for building the application:
 
-## IPA
+`.github/workflows/build-ipa.yml`
 
-1. Repeat the steps from the previous section. Use distribution provisioning profiles.
-2. Run:
-```
-python3 build-system/Make/Make.py \
-    --cacheDir="$HOME/telegram-bazel-cache" \
-    build \
-    --configurationPath=...see previous section... \
-    --codesigningInformationPath=...see previous section... \
-    --buildNumber=100001 \
-    --configuration=release_arm64
-```
+Depending on the workflow configuration, signing may require these
+GitHub Actions secrets:
 
-# FAQ
+- `P12_BASE64`
+- `P12_PASSWORD`
+- `MOBILEPROVISION_BASE64`
 
-## Xcode is stuck at "build-request.json not updated yet"
+Logging in to the built app requires the fork's own Telegram application,
+because a login code is only delivered to the app it was issued for:
 
-Occasionally, you might observe the following message in your build log:
-```
-"/Users/xxx/Library/Developer/Xcode/DerivedData/Telegram-xxx/Build/Intermediates.noindex/XCBuildData/xxx.xcbuilddata/build-request.json" not updated yet, waiting...
-```
+- `TG_API_ID`
+- `TG_API_HASH`
 
-Should this occur, simply cancel the ongoing build and initiate a new one.
+Register an application at <https://my.telegram.org/apps> (platform
+"other"), then add its `api_id` and `api_hash` as the two secrets. Without
+them the build keeps the bundled `api_id` 8 -- Telegram's own App Store
+application -- and no login code is delivered to this build at all, neither
+by SMS nor as an in-app message.
 
-## Telegram_xcodeproj: no such package 
+See [docs/SECRETS.md](docs/SECRETS.md) for every secret, where to get it
+and how to add it.
 
-Following a system restart, the auto-generated Xcode project might encounter a build failure accompanied by this error:
-```
-ERROR: Skipping '@rules_xcodeproj_generated//generator/Telegram/Telegram_xcodeproj:Telegram_xcodeproj': no such package '@rules_xcodeproj_generated//generator/Telegram/Telegram_xcodeproj': BUILD file not found in directory 'generator/Telegram/Telegram_xcodeproj' of external repository @rules_xcodeproj_generated. Add a BUILD file to a directory to mark it as a package.
-```
+Do not publish certificates, provisioning profiles or passwords
+in the repository.
 
-If you encounter this issue, re-run the project generation steps in the README.
+## Project structure
 
+| Path | Description |
+| --- | --- |
+| `Swiftgram/SGTrollPrivacy` | TrollTweaks keys, defaults and groups (the screen is `SGSettingsUI/Sources/TrollTweaksController.swift`) |
+| `Swiftgram/SGTrollPrivacyCore` | Mirrors the TrollTweaks values into TelegramCore (`TrollPrivacyRuntime`, `TrollMessageArchive`) |
+| `Swiftgram/JSPlugins` | JavaScript plugin host (JavaScriptCore): Swift runtime, SDK prelude, examples, tests |
+| `Swiftgram/PythonPlugins` | Python plugin host: Swift runtime, SDK modules (`stdlib/`), tests |
+| `Swiftgram/SGTrollPluginsUI` | Plugin management interface |
+| `Swiftgram/SGSettingsUI` | Application settings |
+| `submodules/TelegramCore` | Telegram Core components |
 
-# Tips
+## Credits
 
-## Codesigning is not required for simulator-only builds
+TrollGram builds on the work of several open-source projects:
 
-Add `--disableProvisioningProfiles`:
-```
-python3 build-system/Make/Make.py \
-    --cacheDir="$HOME/telegram-bazel-cache" \
-    generateProject \
-    --configurationPath=path-to-configuration.json \
-    --codesigningInformationPath=path-to-provisioning-data \
-    --disableProvisioningProfiles
-```
+- [Telegram iOS](https://github.com/TelegramMessenger/Telegram-iOS)
+- [Swiftgram](https://github.com/Swiftgram/Telegram-iOS)
+- [exteraGram](https://github.com/exteraSquad/exteraGram) (plugin API design)
 
-## Versions
+Thanks to their developers and contributors. See [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
-Each release is built using a specific Xcode version (see `versions.json`). The helper script checks the versions of the installed software and reports an error if they don't match the ones specified in `versions.json`. It is possible to bypass these checks:
+## Disclaimer
 
-```
-python3 build-system/Make/Make.py --overrideXcodeVersion build ... # Don't check the version of Xcode
-```
+TrollGram is an unofficial third-party project.
+
+It is not affiliated with, endorsed by or sponsored by Telegram
+or any of the projects listed above.
+
+Telegram is a trademark of its respective owner.
+
+## License
+
+TrollGram is distributed under the GNU General Public License,
+version 2 or, at your option, any later version. See [LICENSE](LICENSE).
+
+Some third-party components may be distributed under different
+licenses. See their respective license files.
+

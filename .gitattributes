@@ -7,3 +7,6 @@ submodules/OpusBinding/* linguist-vendored
 submodules/sqlcipher/* linguist-vendored
 submodules/Stripe/* linguist-vendored
 third-party/* linguist-vendored
+
+# TrollGram plugin stdlib must keep LF endings
+Swiftgram/PythonPlugins/stdlib/** text eol=lf

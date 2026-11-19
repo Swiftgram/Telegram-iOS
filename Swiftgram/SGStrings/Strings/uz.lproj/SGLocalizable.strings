@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "\"%@\"ni yashirish";
 "Settings.Folders.RememberLast" = "Oxirgi Jildni ochish";
-"Settings.Folders.RememberLast.Notice" = "Ilovani qayta ishga tushirganingizda yoki hisoblarni almashtirganingizda Swiftgram oxirgi foydalanilgan jildni ochadi.";
+"Settings.Folders.RememberLast.Notice" = "Ilovani qayta ishga tushirganingizda yoki hisoblarni almashtirganingizda TrollGram oxirgi foydalanilgan jildni ochadi.";
 
 "Settings.Folders.CompactNames" = "Kichik bo'sh joy";
 "Settings.Folders.AllChatsTitle" = "\"Barcha Chatlar\" nomi";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Qayta ishga tushirish lozim";
 "Common.RestartNow" = "Hozir qayta ishlash";
 "Common.OpenTelegram" = "Telegramni ochish";
-"Common.UseTelegramForPremium" = "Iltimos, Telegram Premiumni olish uchun rasmiy Telegram ilovasidan foydalaning. Telegram Premiumni olinganidan so'ng, barcha xususiyatlar Swiftgram da mavjud bo'ladi.";
+"Common.UseTelegramForPremium" = "Iltimos, Telegram Premiumni olish uchun rasmiy Telegram ilovasidan foydalaning. Telegram Premiumni olinganidan so'ng, barcha xususiyatlar TrollGram da mavjud bo'ladi.";
 
 "Message.HoldToShowOrReport" = "Ko'rsatish yoki hisobga olish uchun tuting.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Avtordan tanlash";
 
 "Settings.ContextMenu" = "KONTEKS MENYU";
-"Settings.ContextMenu.Notice" = "O'chirilgan kirishlar \"Swiftgram\" pastki menudasiga o'tkaziladi.";
+"Settings.ContextMenu.Notice" = "O'chirilgan kirishlar \"TrollGram\" pastki menudasiga o'tkaziladi.";
 
 
 "Settings.ChatSwipeOptions" = "Chat Ro'yxati Sürüş variantlari";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "yaratildi";
 "Chat.Created.Copied" = "Yaratilgan sana nusxalandi";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "%@ga qo'shildi";
 "Chat.JoinedDate.Copied" = "Qo'shilgan sana nusxalandi";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Kanal Pastki Panellini yashirish";
 
 "Settings.CallConfirmation" = "Qo'ng'iroq tasdiqlanishi";
-"Settings.CallConfirmation.Notice" = "Swiftgram sizdan qo'ng'iroq qilishdan oldin tasdiqlashni so'raydi.";
+"Settings.CallConfirmation.Notice" = "TrollGram sizdan qo'ng'iroq qilishdan oldin tasdiqlashni so'raydi.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Qo'ng'iroq qilish?";

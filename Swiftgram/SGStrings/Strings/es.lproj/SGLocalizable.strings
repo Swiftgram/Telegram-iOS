@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Ocultar \"%@\"";
 "Settings.Folders.RememberLast" = "Abrir última carpeta";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram abrirá la última carpeta usada después de reiniciar o cambiar de cuenta";
+"Settings.Folders.RememberLast.Notice" = "TrollGram abrirá la última carpeta usada después de reiniciar o cambiar de cuenta";
 
 "Settings.Folders.CompactNames" = "Espaciado más pequeño";
 "Settings.Folders.AllChatsTitle" = "Título \"Todos los Chats\"";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Es necesario reiniciar";
 "Common.RestartNow" = "Reiniciar ahora";
 "Common.OpenTelegram" = "Abrir Telegram";
-"Common.UseTelegramForPremium" = "Ten en cuenta que para obtener Telegram Premium, debes usar la aplicación oficial de Telegram. Una vez que haya obtenido Telegram Premium, todas sus características estarán disponibles en Swiftgram.";
+"Common.UseTelegramForPremium" = "Ten en cuenta que para obtener Telegram Premium, debes usar la aplicación oficial de Telegram. Una vez que haya obtenido Telegram Premium, todas sus características estarán disponibles en TrollGram.";
 
 "Message.HoldToShowOrReport" = "Mantenga presionado para mostrar o reportar.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Seleccionar del autor";
 
 "Settings.ContextMenu" = "MENÚ CONTEXTUAL";
-"Settings.ContextMenu.Notice" = "Las entradas desactivadas estarán disponibles en el submenú \"Swiftgram\".";
+"Settings.ContextMenu.Notice" = "Las entradas desactivadas estarán disponibles en el submenú \"TrollGram\".";
 
 
 "Settings.ChatSwipeOptions" = "Opciones de deslizamiento de la lista de chats";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "fecha de creación";
 "Chat.Created.Copied" = "Fecha de creación copiada";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "fecha de ingreso a %@";
 "Chat.JoinedDate.Copied" = "Fecha de ingreso copiada";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Ocultar Panel Inferior del Canal";
 
 "Settings.CallConfirmation" = "Confirmación de llamada";
-"Settings.CallConfirmation.Notice" = "Swiftgram pedirá tu confirmación antes de realizar una llamada.";
+"Settings.CallConfirmation.Notice" = "TrollGram pedirá tu confirmación antes de realizar una llamada.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "¿Hacer una llamada?";

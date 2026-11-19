@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "\"%@\" 숨기기";
 "Settings.Folders.RememberLast" = "마지막 폴더 열기";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram은 재시작하거나 계정을 전환한 후 마지막으로 사용한 폴더를 엽니다";
+"Settings.Folders.RememberLast.Notice" = "TrollGram은 재시작하거나 계정을 전환한 후 마지막으로 사용한 폴더를 엽니다";
 
 "Settings.Folders.CompactNames" = "간격 작게";
 "Settings.Folders.AllChatsTitle" = "\"모든 채팅\" 제목";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "재시작 필요";
 "Common.RestartNow" = "지금 재시작";
 "Common.OpenTelegram" = "텔레그램 열기";
-"Common.UseTelegramForPremium" = "텔레그램 프리미엄을 받으려면 공식 텔레그램 앱을 사용해야 합니다. 텔레그램 프리미엄을 획득하면 모든 기능이 Swiftgram에서 사용 가능해집니다.";
+"Common.UseTelegramForPremium" = "텔레그램 프리미엄을 받으려면 공식 텔레그램 앱을 사용해야 합니다. 텔레그램 프리미엄을 획득하면 모든 기능이 TrollGram에서 사용 가능해집니다.";
 
 "Message.HoldToShowOrReport" = "보여주거나 신고하기 위해 길게 누르세요.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "사용자에서 선택";
 
 "Settings.ContextMenu" = "컨텍스트 메뉴";
-"Settings.ContextMenu.Notice" = "'Swiftgram' 하위 메뉴에서 비활성화된 항목을 사용할 수 있습니다.";
+"Settings.ContextMenu.Notice" = "'TrollGram' 하위 메뉴에서 비활성화된 항목을 사용할 수 있습니다.";
 
 
 "Settings.ChatSwipeOptions" = "채팅 목록 스와이프 옵션";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "생성됨";
 "Chat.Created.Copied" = "생성 날짜가 복사되었습니다";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "%@에 가입함";
 "Chat.JoinedDate.Copied" = "참여 날짜가 복사되었습니다";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "채널 하단 패널 숨기기";
 
 "Settings.CallConfirmation" = "통화 확인";
-"Settings.CallConfirmation.Notice" = "Swiftgram은 전화를 걸기 전에 귀하의 확인을 요청할 것입니다.";
+"Settings.CallConfirmation.Notice" = "TrollGram은 전화를 걸기 전에 귀하의 확인을 요청할 것입니다.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "통화를 하시겠습니까?";

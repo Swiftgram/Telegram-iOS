@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Ẩn \"%@\"";
 "Settings.Folders.RememberLast" = "Mở thư mục gần đây";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram sẽ mở thư mục gần nhất sau khi khởi động lại hoặc chuyển tài khoản";
+"Settings.Folders.RememberLast.Notice" = "TrollGram sẽ mở thư mục gần nhất sau khi khởi động lại hoặc chuyển tài khoản";
 
 "Settings.Folders.CompactNames" = "Khoảng cách nhỏ hơn";
 "Settings.Folders.AllChatsTitle" = "Tiêu đề \"Tất cả Chat\"";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Yêu cầu khởi động lại";
 "Common.RestartNow" = "Khởi động lại";
 "Common.OpenTelegram" = "Mở Telegram";
-"Common.UseTelegramForPremium" = "Vui lòng lưu ý rằng để có được Telegram Premium, bạn phải sử dụng ứng dụng Telegram chính thức. Sau khi bạn đã có Telegram Premium, tất cả các tính năng của nó sẽ trở nên có sẵn trong Swiftgram.";
+"Common.UseTelegramForPremium" = "Vui lòng lưu ý rằng để có được Telegram Premium, bạn phải sử dụng ứng dụng Telegram chính thức. Sau khi bạn đã có Telegram Premium, tất cả các tính năng của nó sẽ trở nên có sẵn trong TrollGram.";
 
 "Message.HoldToShowOrReport" = "Nhấn giữ để Hiển thị hoặc Báo cáo.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Chọn từ Tác giả";
 
 "Settings.ContextMenu" = "MENU NGỮ CẢNH";
-"Settings.ContextMenu.Notice" = "Mục nhập đã vô hiệu hóa sẽ có sẵn trong menu phụ 'Swiftgram'.";
+"Settings.ContextMenu.Notice" = "Mục nhập đã vô hiệu hóa sẽ có sẵn trong menu phụ 'TrollGram'.";
 
 
 "Settings.ChatSwipeOptions" = "Tuỳ chọn Lướt Danh sách Chat";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "đã tạo";
 "Chat.Created.Copied" = "Đã sao chép ngày tạo";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "đã tham gia %@";
 "Chat.JoinedDate.Copied" = "Đã sao chép ngày tham gia";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Ẩn thanh dưới cùng của kênh";
 
 "Settings.CallConfirmation" = "Xác nhận cuộc gọi";
-"Settings.CallConfirmation.Notice" = "Swiftgram sẽ yêu cầu bạn xác nhận trước khi thực hiện cuộc gọi.";
+"Settings.CallConfirmation.Notice" = "TrollGram sẽ yêu cầu bạn xác nhận trước khi thực hiện cuộc gọi.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Thực hiện cuộc gọi?";

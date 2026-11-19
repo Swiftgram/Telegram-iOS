@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Skrýt \"%@\"";
 "Settings.Folders.RememberLast" = "Otevřít poslední složku";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram otevře poslední použitou složku po restartu nebo přepnutí účtu.";
+"Settings.Folders.RememberLast.Notice" = "TrollGram otevře poslední použitou složku po restartu nebo přepnutí účtu.";
 
 "Settings.Folders.CompactNames" = "Menší vzdálenost";
 "Settings.Folders.AllChatsTitle" = "Název \"Všechny chaty\"";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Vyžadován restart";
 "Common.RestartNow" = "Restartovat nyní";
 "Common.OpenTelegram" = "Otevřít Telegram";
-"Common.UseTelegramForPremium" = "Vezměte prosím na vědomí, že abyste získali Premium, musíte použít oficiální aplikaci Telegram . Jakmile získáte Telegram Premium, všechny jeho funkce budou k dispozici ve Swiftgramu.";
+"Common.UseTelegramForPremium" = "Vezměte prosím na vědomí, že abyste získali Premium, musíte použít oficiální aplikaci Telegram . Jakmile získáte Telegram Premium, všechny jeho funkce budou k dispozici ve TrollGramu.";
 
 "Message.HoldToShowOrReport" = "Podržte pro zobrazení nebo nahlášení.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Vybrat od autora";
 
 "Settings.ContextMenu" = "KONTEXTOVÉ MENU";
-"Settings.ContextMenu.Notice" = "Zakázané položky budou dostupné v podmenu \"Swiftgram\".";
+"Settings.ContextMenu.Notice" = "Zakázané položky budou dostupné v podmenu \"TrollGram\".";
 
 
 "Settings.ChatSwipeOptions" = "Možnosti potáhnutí v seznamu chatu";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "vytvořeno";
 "Chat.Created.Copied" = "Datum vytvoření zkopírováno";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "datum připojení k %@";
 "Chat.JoinedDate.Copied" = "Datum připojení zkopírováno";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Skrýt panel dolního kanálu";
 
 "Settings.CallConfirmation" = "Potvrzení hovoru";
-"Settings.CallConfirmation.Notice" = "Swiftgram požádá o vaši potvrzení před uskutečněním hovoru.";
+"Settings.CallConfirmation.Notice" = "TrollGram požádá o vaši potvrzení před uskutečněním hovoru.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Uskutečnit hovor?";

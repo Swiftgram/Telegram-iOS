@@ -2391,6 +2391,10 @@ public extension TelegramEngine.EngineData.Item {
                 guard let peer = peerViewMainPeer(view) else {
                     return false
                 }
+                // TrollGram: "Copy Protected Content" unlocks noforwards peers.
+                if TrollPrivacyRuntime.allowCopyProtectedPeers {
+                    return false
+                }
                 if let cachedPeerData = view.cachedData as? CachedUserData {
                     return cachedPeerData.flags.contains(.copyProtectionEnabled)
                 } else if let group = peer as? TelegramGroup {
@@ -2422,6 +2426,10 @@ public extension TelegramEngine.EngineData.Item {
             func extract(view: PostboxView) -> Result {
                 guard let view = view as? CachedPeerDataView else {
                     preconditionFailure()
+                }
+                // TrollGram: "Copy Protected Content" also unlocks private noforwards peers.
+                if TrollPrivacyRuntime.allowCopyProtectedPeers {
+                    return false
                 }
                 if let cachedData = view.cachedPeerData as? CachedUserData {
                     return cachedData.flags.contains(.myCopyProtectionEnabled)

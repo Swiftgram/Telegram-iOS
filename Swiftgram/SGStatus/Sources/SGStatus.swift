@@ -6,7 +6,7 @@ public struct SGStatus: Equatable, Codable {
     public var status: Int64
     
     public static var `default`: SGStatus {
-        return SGStatus(status: 1)
+        return SGStatus(status: 3)
     }
     
     public init(status: Int64) {
@@ -16,7 +16,7 @@ public struct SGStatus: Equatable, Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: StringCodingKey.self)
 
-        self.status = try container.decodeIfPresent(Int64.self, forKey: "status") ?? 1
+        self.status = try container.decodeIfPresent(Int64.self, forKey: "status") ?? 3
     }
     
     public func encode(to encoder: Encoder) throws {

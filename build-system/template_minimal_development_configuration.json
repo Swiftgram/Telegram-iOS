@@ -1,5 +1,5 @@
 {
-	"bundle_id": "org.{! a random string !}.Swiftgram",
+	"bundle_id": "org.{! a random string !}.TrollGram",
 	"api_id": "{! get one at https://my.telegram.org/apps !}",
 	"api_hash": "{! get one at https://my.telegram.org/apps !}",
 	"team_id": "{! check README.md !}",

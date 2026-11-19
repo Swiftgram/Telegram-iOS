@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Elrejtése \"%@\"";
 "Settings.Folders.RememberLast" = "Utolsó mappa megnyitása";
-"Settings.Folders.RememberLast.Notice" = "A Swiftgram az utoljára használt mappát fogja megnyitni, amikor újraindítja az alkalmazást vagy fiókok között vált.";
+"Settings.Folders.RememberLast.Notice" = "A TrollGram az utoljára használt mappát fogja megnyitni, amikor újraindítja az alkalmazást vagy fiókok között vált.";
 
 "Settings.Folders.CompactNames" = "Kisebb térköz";
 "Settings.Folders.AllChatsTitle" = "\"Minden Beszélgetés\" cím";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Újraindítás szükséges";
 "Common.RestartNow" = "Újraindítás most";
 "Common.OpenTelegram" = "Telegram megnyitása";
-"Common.UseTelegramForPremium" = "Kérjük vegye figyelembe, hogy a Telegram Prémiumhoz az hivatalos Telegram appot kell használnia. Amint megkapta a Telegram Prémiumot, Swiftgram összes funkciója elérhető lesz.";
+"Common.UseTelegramForPremium" = "Kérjük vegye figyelembe, hogy a Telegram Prémiumhoz az hivatalos Telegram appot kell használnia. Amint megkapta a Telegram Prémiumot, TrollGram összes funkciója elérhető lesz.";
 
 "Message.HoldToShowOrReport" = "Tartsa lenyomva a Megjelenítéshez vagy Jelentéshez.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Kiválasztás a Szerzőtől";
 
 "Settings.ContextMenu" = "KONTEXTUS MENÜ";
-"Settings.ContextMenu.Notice" = "A kikapcsolt bejegyzések elérhetők lesznek a 'Swiftgram' almenüjében.";
+"Settings.ContextMenu.Notice" = "A kikapcsolt bejegyzések elérhetők lesznek a 'TrollGram' almenüjében.";
 
 
 "Settings.ChatSwipeOptions" = "Csevegőlista húzás opciók";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "létrehozva";
 "Chat.Created.Copied" = "Létrehozás dátuma másolva";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "csatlakozott %@";
 "Chat.JoinedDate.Copied" = "Csatlakozás dátuma másolva";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Kanal Alsó Panel Elrejtése";
 
 "Settings.CallConfirmation" = "Hívás megerősítése";
-"Settings.CallConfirmation.Notice" = "A Swiftgram megkéri a megerősítését, mielőtt hívást indítana.";
+"Settings.CallConfirmation.Notice" = "A TrollGram megkéri a megerősítését, mielőtt hívást indítana.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Hívást kezdeni?";

@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Verberge \"%@\"";
 "Settings.Folders.RememberLast" = "Letzten Ordner öffnen";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram wird den zuletzt genutzten Order öffnen, wenn du den Account wechselst oder die App neustartest";
+"Settings.Folders.RememberLast.Notice" = "TrollGram wird den zuletzt genutzten Order öffnen, wenn du den Account wechselst oder die App neustartest";
 
 "Settings.Folders.CompactNames" = "Kleinerer Abstand";
 "Settings.Folders.AllChatsTitle" = "Titel \"Alle Chats\"";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Benötigt Neustart";
 "Common.RestartNow" = "Jetzt neustarten";
 "Common.OpenTelegram" = "Telegram öffnen";
-"Common.UseTelegramForPremium" = "Bitte beachten Sie, dass Sie die offizielle Telegram-App verwenden müssen, um Telegram Premium zu erhalten. Sobald Sie Telegram Premium erhalten haben, werden alle Funktionen in Swiftgram verfügbar.";
+"Common.UseTelegramForPremium" = "Bitte beachten Sie, dass Sie die offizielle Telegram-App verwenden müssen, um Telegram Premium zu erhalten. Sobald Sie Telegram Premium erhalten haben, werden alle Funktionen in TrollGram verfügbar.";
 
 "Message.HoldToShowOrReport" = "Halten, zum Ansehen oder melden.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Vom Autor auswählen";
 
 "Settings.ContextMenu" = "KONTEXTMENÜ";
-"Settings.ContextMenu.Notice" = "Deaktivierte Einträge sind im 'Swiftgram'-Untermenü verfügbar.";
+"Settings.ContextMenu.Notice" = "Deaktivierte Einträge sind im 'TrollGram'-Untermenü verfügbar.";
 
 
 "Settings.ChatSwipeOptions" = "Chatlisten-Wisch-Optionen";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "Erstellt";
 "Chat.Created.Copied" = "Erstellungsdatum kopiert";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "Beigetreten am %@";
 "Chat.JoinedDate.Copied" = "Beitrittsdatum kopiert";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Kanalunteres Bedienfeld ausblenden";
 
 "Settings.CallConfirmation" = "Anrufbestätigung";
-"Settings.CallConfirmation.Notice" = "Swiftgram wird um Ihre Bestätigung bitten, bevor ein Anruf getätigt wird.";
+"Settings.CallConfirmation.Notice" = "TrollGram wird um Ihre Bestätigung bitten, bevor ein Anruf getätigt wird.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Einen Anruf tätigen?";

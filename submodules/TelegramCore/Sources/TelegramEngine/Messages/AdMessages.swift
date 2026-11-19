@@ -509,6 +509,10 @@ private class AdMessagesHistoryContextImpl {
                 }
 
                 return account.postbox.transaction { transaction -> (interPostInterval: Int32?, startDelay: Int32?, betweenDelay: Int32?, messages: [Message]) in
+                    // TrollGram: sponsored messages are never surfaced.
+                    if TrollPrivacyRuntime.removeSponsoredMessages {
+                        return (nil, nil, nil, [])
+                    }
                     switch result {
                     case let .sponsoredMessages(sponsoredMessagesData):
                         let (postsBetween, startDelay, betweenDelay, messages, chats, users) = (sponsoredMessagesData.postsBetween, sponsoredMessagesData.startDelay, sponsoredMessagesData.betweenDelay, sponsoredMessagesData.messages, sponsoredMessagesData.chats, sponsoredMessagesData.users)

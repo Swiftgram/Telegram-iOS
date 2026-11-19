@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Piilota \"%@\"";
 "Settings.Folders.RememberLast" = "Avaa viimeisin kansio";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram avaa viimeksi käytetyn kansion uudelleenkäynnistyksen tai tilin vaihdon jälkeen.";
+"Settings.Folders.RememberLast.Notice" = "TrollGram avaa viimeksi käytetyn kansion uudelleenkäynnistyksen tai tilin vaihdon jälkeen.";
 
 "Settings.Folders.CompactNames" = "Pienempi väli";
 "Settings.Folders.AllChatsTitle" = "\"Kaikki chatit\" otsikko";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Uudelleenkäynnistys vaaditaan";
 "Common.RestartNow" = "Käynnistä uudelleen nyt";
 "Common.OpenTelegram" = "Avaa Telegram";
-"Common.UseTelegramForPremium" = "Huomioi, että saat Telegram Premiumin käyttämällä virallista Telegram-sovellusta. Kun olet hankkinut Telegram Premiumin, kaikki sen ominaisuudet ovat saatavilla Swiftgramissa.";
+"Common.UseTelegramForPremium" = "Huomioi, että saat Telegram Premiumin käyttämällä virallista Telegram-sovellusta. Kun olet hankkinut Telegram Premiumin, kaikki sen ominaisuudet ovat saatavilla TrollGramissa.";
 "Common.UpdateOS" = "iOS päivitys vaaditaan";
 
 "Message.HoldToShowOrReport" = "Pidä esillä näyttääksesi tai ilmoittaaksesi.";
@@ -98,7 +98,7 @@
 "ContextMenu.SelectFromUser" = "Valitse Tekijältä";
 
 "Settings.ContextMenu" = "KONTEKSTIVALIKKO";
-"Settings.ContextMenu.Notice" = "Poistetut kohteet ovat saatavilla 'Swiftgram'-alavalikossa.";
+"Settings.ContextMenu.Notice" = "Poistetut kohteet ovat saatavilla 'TrollGram'-alavalikossa.";
 
 
 "Settings.ChatSwipeOptions" = "Chat List Swipe Options";
@@ -125,7 +125,7 @@
 "Chat.Created.Label" = "luotu";
 "Chat.Created.Copied" = "Luontipäivä kopioitu";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "liittyi %@";
 "Chat.JoinedDate.Copied" = "Liittymispäivä kopioitu";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -146,7 +146,7 @@
 "Settings.showChannelBottomButton" = "Kanavan ala-paneeli";
 
 "Settings.CallConfirmation" = "Puhelun vahvistus";
-"Settings.CallConfirmation.Notice" = "Swiftgram pyytää vahvistustasi ennen puhelun soittamista.";
+"Settings.CallConfirmation.Notice" = "TrollGram pyytää vahvistustasi ennen puhelun soittamista.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Soita puhelu?";
@@ -171,11 +171,11 @@
 "SessionBackup.LoggedIn" = "Sisäänkirjautuneena";
 "SessionBackup.LoggedOut" = "Uloskirjautuneena";
 "SessionBackup.DeleteAll.Title" = "Poista kaikki istunnot?";
-"SessionBackup.DeleteAll.Text" = "Kaikki istunnot poistetaan Keychainista.\n\nTilejä ei kirjaudu ulos Swiftgramista.";
+"SessionBackup.DeleteAll.Text" = "Kaikki istunnot poistetaan Keychainista.\n\nTilejä ei kirjaudu ulos TrollGramista.";
 "SessionBackup.DeleteSingle.Title" = "Poista 1 (yksi) istunto?";
-"SessionBackup.DeleteSingle.Text" = "%@ istunto poistetaan Keychainista.\n\nTiliä ei kirjaudu ulos Swiftgramista.";
+"SessionBackup.DeleteSingle.Text" = "%@ istunto poistetaan Keychainista.\n\nTiliä ei kirjaudu ulos TrollGramista.";
 "SessionBackup.RemoveFromApp.Title" = "Poista tili sovelluksesta?";
-"SessionBackup.RemoveFromApp.Text" = "%@ istunto POISTETAAN Swiftgramista! Istunto pysyy aktiivisena, joten voit palauttaa sen myöhemmin.";
+"SessionBackup.RemoveFromApp.Text" = "%@ istunto POISTETAAN TrollGramista! Istunto pysyy aktiivisena, joten voit palauttaa sen myöhemmin.";
 "SessionBackup.Notice" = "Istunnot on salattu ja tallennettu laitteen Keychain. Istunnot eivät koskaan jätä laitettasi.\n\nTÄRKEÄÄ: Voit palauttaa istunnot uudelle laitteelle tai käyttöjärjestelmän palautuksen jälkeen sinun TÄYTYY ottaa salatut varmuuskopiot käyttöön, muuten Keychain ei siirretä.\n\nHUOMAUTUS: Istunnot voidaan silti peruuttaa Telegramin tai toisen laitteen kautta.";
 
 "MessageFilter.Title" = "Viestisuoja";
@@ -210,18 +210,18 @@
 "PayWall.InputToolbar.Notice" = "Säästä aikaa valmistellessasi julkaisuja paneelilla juuri näppäimistösi yläpuolella.";
 
 "PayWall.AppIcons.Title" = "Ainutlaatuiset sovelluskuvakkeet";
-"PayWall.AppIcons.Notice" = "Mukauta Swiftgramin ulkoasu aloitusnäytölläsi.";
+"PayWall.AppIcons.Notice" = "Mukauta TrollGramin ulkoasu aloitusnäytölläsi.";
 
-"PayWall.About.Title" = "Tietoja Swiftgram Prosta";
-"PayWall.About.Notice" = "Swiftgramin ilmainen versio tarjoaa kymmeniä ominaisuuksia ja parannuksia Telegram-sovellukseen verrattuna. Innovointi ja Swiftgramin synkronointi kuukausittaisiin Telegram-päivityksiin vaatii valtavasti aikaa ja kallista laitteistoa.\n\nSwiftgram on avoimen lähdekoodin sovellus, joka kunnioittaa yksityisyyttäsi eikä vaivaa sinua mainoksilla. Tilatessasi Swiftgram Prota saat pääsyn eksklusiivisiin ominaisuuksiin ja tuet itsenäistä kehittäjää.\n\n- @Kylmakalle";
+"PayWall.About.Title" = "Tietoja TrollGram Prosta";
+"PayWall.About.Notice" = "TrollGramin ilmainen versio tarjoaa kymmeniä ominaisuuksia ja parannuksia Telegram-sovellukseen verrattuna. Innovointi ja TrollGramin synkronointi kuukausittaisiin Telegram-päivityksiin vaatii valtavasti aikaa ja kallista laitteistoa.\n\nTrollGram on avoimen lähdekoodin sovellus, joka kunnioittaa yksityisyyttäsi eikä vaivaa sinua mainoksilla. Tilatessasi TrollGram Prota saat pääsyn eksklusiivisiin ominaisuuksiin ja tuet itsenäistä kehittäjää.\n\n- @Kylmakalle";
 
 "PayWall.RestorePurchases" = "Palauta ostot";
 "PayWall.Terms" = "Käyttöehdot";
 "PayWall.Privacy" = "Tietosuojakäytäntö";
 "PayWall.TermsURL" = "https://swiftgram.app/ehtosuhteet";
 "PayWall.PrivacyURL" = "https://swiftgram.app/tietosuoja";
-"PayWall.Notice.Markdown" = "Tilatessasi Swiftgram Prota hyväksyt [Swiftgramin käyttöehdot](%1$@) ja [tietosuojakäytännön](%2$@).";
-"PayWall.Notice.Raw" = "Tilatessasi Swiftgram Prota hyväksyt Swiftgramin käyttöehdot ja tietosuojakäytännön.";
+"PayWall.Notice.Markdown" = "Tilatessasi TrollGram Prota hyväksyt [TrollGramin käyttöehdot](%1$@) ja [tietosuojakäytännön](%2$@).";
+"PayWall.Notice.Raw" = "Tilatessasi TrollGram Prota hyväksyt TrollGramin käyttöehdot ja tietosuojakäytännön.";
 
 "PayWall.Button.OpenPro" = "Käytä Pro-ominaisuuksia";
 "PayWall.Button.Purchasing" = "Ostetaan...";

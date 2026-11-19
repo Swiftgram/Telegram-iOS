@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Amaga \"%@\"";
 "Settings.Folders.RememberLast" = "Obrir l'última carpeta";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram obrirà l'última carpeta utilitzada després de reiniciar o canviar de compte.";
+"Settings.Folders.RememberLast.Notice" = "TrollGram obrirà l'última carpeta utilitzada després de reiniciar o canviar de compte.";
 
 "Settings.Folders.CompactNames" = "Espaiat més petit";
 "Settings.Folders.AllChatsTitle" = "Títol \"Tots els xats\"";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Reinici requerit";
 "Common.RestartNow" = "Reiniciar Ara";
 "Common.OpenTelegram" = "Obrir Telegram";
-"Common.UseTelegramForPremium" = "Recorda que per obtenir Telegram Premium, has d'utilitzar l'aplicació oficial de Telegram. Un cop hagis obtingut Telegram Premium, totes les seves funcions estaran disponibles a Swiftgram.";
+"Common.UseTelegramForPremium" = "Recorda que per obtenir Telegram Premium, has d'utilitzar l'aplicació oficial de Telegram. Un cop hagis obtingut Telegram Premium, totes les seves funcions estaran disponibles a TrollGram.";
 
 "Message.HoldToShowOrReport" = "Mantingues per Mostrar o Informar.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Seleccionar de l'Autor";
 
 "Settings.ContextMenu" = "MENÚ CONTEXTUAL";
-"Settings.ContextMenu.Notice" = "Les entrades desactivades estaran disponibles al submenú \"Swiftgram\".";
+"Settings.ContextMenu.Notice" = "Les entrades desactivades estaran disponibles al submenú \"TrollGram\".";
 
 
 "Settings.ChatSwipeOptions" = "Opcions desplaçament de la llista de xats";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "data de creació";
 "Chat.Created.Copied" = "Data de creació copiada";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "data d'unió a %@";
 "Chat.JoinedDate.Copied" = "Data d'unió copiada";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Amaga el panell inferior del canal";
 
 "Settings.CallConfirmation" = "Confirmació de trucada";
-"Settings.CallConfirmation.Notice" = "Swiftgram et demanarà la teva confirmació abans de fer una trucada.";
+"Settings.CallConfirmation.Notice" = "TrollGram et demanarà la teva confirmació abans de fer una trucada.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Vols fer una trucada?";

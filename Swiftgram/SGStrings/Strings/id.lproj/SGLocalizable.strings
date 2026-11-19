@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Sembunyikan \"%@\"";
 "Settings.Folders.RememberLast" = "Buka folder terakhir";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram akan membuka folder yang terakhir digunakan setelah restart atau pergantian akun";
+"Settings.Folders.RememberLast.Notice" = "TrollGram akan membuka folder yang terakhir digunakan setelah restart atau pergantian akun";
 
 "Settings.Folders.CompactNames" = "Pemisahan yang Lebih Kecil";
 "Settings.Folders.AllChatsTitle" = "Judul \"Semua Obrolan\"";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Diperlukan restart";
 "Common.RestartNow" = "Restart Sekarang";
 "Common.OpenTelegram" = "Buka Telegram";
-"Common.UseTelegramForPremium" = "Harap dicatat bahwa untuk mendapatkan Telegram Premium, Anda harus menggunakan aplikasi Telegram resmi. Setelah Anda mendapatkan Telegram Premium, semua fiturnya akan tersedia di Swiftgram.";
+"Common.UseTelegramForPremium" = "Harap dicatat bahwa untuk mendapatkan Telegram Premium, Anda harus menggunakan aplikasi Telegram resmi. Setelah Anda mendapatkan Telegram Premium, semua fiturnya akan tersedia di TrollGram.";
 
 "Message.HoldToShowOrReport" = "Tahan untuk Menampilkan atau Melaporkan.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Pilih dari Penulis";
 
 "Settings.ContextMenu" = "MENU KONTEKS";
-"Settings.ContextMenu.Notice" = "Entri yang dinonaktifkan akan tersedia di sub-menu \"Swiftgram\".";
+"Settings.ContextMenu.Notice" = "Entri yang dinonaktifkan akan tersedia di sub-menu \"TrollGram\".";
 
 
 "Settings.ChatSwipeOptions" = "Opsi gesek daftar obrolan";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "dibuat";
 "Chat.Created.Copied" = "Tanggal pembuatan disalin";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "bergabung %@";
 "Chat.JoinedDate.Copied" = "Tanggal bergabung disalin";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Sembunyikan Panel Bawah Saluran";
 
 "Settings.CallConfirmation" = "Konfirmasi Panggilan";
-"Settings.CallConfirmation.Notice" = "Swiftgram akan meminta konfirmasi Anda sebelum melakukan panggilan.";
+"Settings.CallConfirmation.Notice" = "TrollGram akan meminta konfirmasi Anda sebelum melakukan panggilan.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Buat Panggilan?";

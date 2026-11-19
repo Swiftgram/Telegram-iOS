@@ -29,7 +29,7 @@ struct QrLoginContent: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            Text("Log in to Swiftgram by QR Code")
+            Text("Log in to TrollGram by QR Code")
                 .font(.headline)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)

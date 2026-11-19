@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "Skjul \"%@\"";
 "Settings.Folders.RememberLast" = "Åbn sidste mappe";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram vil åbne den sidst brugte mappe efter genstart eller konto skift.";
+"Settings.Folders.RememberLast.Notice" = "TrollGram vil åbne den sidst brugte mappe efter genstart eller konto skift.";
 
 "Settings.Folders.CompactNames" = "Mindre afstand";
 "Settings.Folders.AllChatsTitle" = "\"Alle Chats\" titel";
@@ -83,7 +83,7 @@
 "Common.RestartRequired" = "Genstart krævet";
 "Common.RestartNow" = "Genstart Nu";
 "Common.OpenTelegram" = "Åben Telegram";
-"Common.UseTelegramForPremium" = "Bemærk venligst, at for at få Telegram Premium skal du bruge den officielle Telegram app. Når du har fået Telegram Premium, vil alle dens funktioner blive tilgængelige i Swiftgram.";
+"Common.UseTelegramForPremium" = "Bemærk venligst, at for at få Telegram Premium skal du bruge den officielle Telegram app. Når du har fået Telegram Premium, vil alle dens funktioner blive tilgængelige i TrollGram.";
 
 "Message.HoldToShowOrReport" = "Hold for at Vise eller Rapportere.";
 
@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Vælg fra Forfatter";
 
 "Settings.ContextMenu" = "KONTEKSTMENU";
-"Settings.ContextMenu.Notice" = "Deaktiverede indgange vil være tilgængelige i \"Swiftgram\" undermenuen.";
+"Settings.ContextMenu.Notice" = "Deaktiverede indgange vil være tilgængelige i \"TrollGram\" undermenuen.";
 
 
 "Settings.ChatSwipeOptions" = "Chat List Swipe Options";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "oprettet";
 "Chat.Created.Copied" = "Oprettelsesdato kopieret";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "tilmeldt %@";
 "Chat.JoinedDate.Copied" = "Tilslutningsdato kopieret";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Skjul Kanal Bund Panel";
 
 "Settings.CallConfirmation" = "Opkaldsbekræftelse";
-"Settings.CallConfirmation.Notice" = "Swiftgram vil bede om din bekræftelse, før der foretages et opkald.";
+"Settings.CallConfirmation.Notice" = "TrollGram vil bede om din bekræftelse, før der foretages et opkald.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Foretage et opkald?";

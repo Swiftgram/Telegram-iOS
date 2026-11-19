@@ -73,6 +73,8 @@ import MTProtoRustEngine
 import AlertComponent
 #endif
 
+import SGTrollPrivacyCore
+
 private let handleVoipNotifications = false
 
 private func isTonTransferUrl(_ url: URL) -> Bool {
@@ -363,6 +365,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         precondition(!testIsLaunched)
         testIsLaunched = true
         NSLog("[SG.Launch] didFinishLaunching") // MARK: Swiftgram
+        TrollPrivacyBootstrap.activate() // TrollGram: privacy gates before networking
         
         let _ = voipTokenPromise.get().start(next: { token in
             self.voipDeviceToken.set(.single(token))
@@ -723,9 +726,25 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             networkEngineFactory: RustNetworkEngineFactory()
         )
         
-        guard let appGroupUrl = maybeAppGroupUrl else {
-            self.mainWindow?.presentNative(UIAlertController(title: nil, message: "Error 2", preferredStyle: .alert))
-            return true
+        // TrollGram: a sideload profile often has no `group.<bundle id>` App Group, so the shared container
+        // does not resolve. Showing an alert on an empty window left a black screen; fall back to the app's
+        // own sandbox (no extensions are installed in that case, so nothing else needs the shared container).
+        let appGroupUrl: URL
+        if let maybeAppGroupUrl {
+            appGroupUrl = maybeAppGroupUrl
+        } else {
+            let applicationSupportUrl = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+                ?? URL(fileURLWithPath: NSTemporaryDirectory())
+            let fallbackUrl = applicationSupportUrl.appendingPathComponent("TrollGramData", isDirectory: true)
+            do {
+                try FileManager.default.createDirectory(at: fallbackUrl, withIntermediateDirectories: true, attributes: nil)
+            } catch {
+                NSLog("[SG.Launch] Could not create the fallback data directory: \(error)")
+                self.mainWindow?.presentNative(UIAlertController(title: nil, message: "Error 2", preferredStyle: .alert))
+                return true
+            }
+            NSLog("[SG.Launch] App group \(appGroupName) is not available (missing entitlement in the provisioning profile?); using \(fallbackUrl.path)")
+            appGroupUrl = fallbackUrl
         }
         
         var isDebugConfiguration = false

@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "\"%@\"を非表示";
 "Settings.Folders.RememberLast" = "最後に開いたフォルダを開く";
-"Settings.Folders.RememberLast.Notice" = "Swiftgramは再起動またはアカウント切替後に最後に使用したフォルダを開きます";
+"Settings.Folders.RememberLast.Notice" = "TrollGramは再起動またはアカウント切替後に最後に使用したフォルダを開きます";
 
 "Settings.Folders.CompactNames" = "より小さい間隔";
 "Settings.Folders.AllChatsTitle" = "「すべてのチャット」タイトル";
@@ -84,7 +84,7 @@
 "Common.RestartNow" = "今すぐ再実行";
 "Common.OpenTelegram" = "Telegram を開く";
 "Common.UseTelegramForPremium" = "Telegram Premiumを登録するには、公式のTelegramアプリが必要です。
-登録すると、Swiftgram等の非公式アプリ含め、Telegram Premiumをサポートする全てのアプリでプレミアムメソッドを利用できます。";
+登録すると、TrollGram等の非公式アプリ含め、Telegram Premiumをサポートする全てのアプリでプレミアムメソッドを利用できます。";
 "Common.UpdateOS" = "iOSの更新が必要です";
 
 "Message.HoldToShowOrReport" = "表示または報告するために押し続ける。";
@@ -99,7 +99,7 @@
 "ContextMenu.SelectFromUser" = "全て選択";
 
 "Settings.ContextMenu" = "コンテキスト メニュー";
-"Settings.ContextMenu.Notice" = "無効化されたエントリは、「Swiftgram」サブメニューから利用できます。";
+"Settings.ContextMenu.Notice" = "無効化されたエントリは、「TrollGram」サブメニューから利用できます。";
 
 
 "Settings.ChatSwipeOptions" = "チャットリストのスワイプ設定";
@@ -126,7 +126,7 @@
 "Chat.Created.Label" = "作成済み";
 "Chat.Created.Copied" = "作成日をコピーしました";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "%@ に参加しました";
 "Chat.JoinedDate.Copied" = "参加日をコピーしました";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -149,7 +149,7 @@
 "Settings.secondsInMessages" = "メッセージ内の秒数";
 
 "Settings.CallConfirmation" = "コール確認";
-"Settings.CallConfirmation.Notice" = "Swiftgram は、通話を行う前にあなたの確認を求めます。";
+"Settings.CallConfirmation.Notice" = "TrollGram は、通話を行う前にあなたの確認を求めます。";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "通話をかけますか？";
@@ -174,11 +174,11 @@
 "SessionBackup.LoggedIn" = "ログイン中";
 "SessionBackup.LoggedOut" = "ログアウトしました";
 "SessionBackup.DeleteAll.Title" = "すべてのセッションを削除しますか？";
-"SessionBackup.DeleteAll.Text" = "すべてのセッションがキーチェーンから削除されます。\n\nアカウントはSwiftgramからログアウトされません。";
+"SessionBackup.DeleteAll.Text" = "すべてのセッションがキーチェーンから削除されます。\n\nアカウントはTrollGramからログアウトされません。";
 "SessionBackup.DeleteSingle.Title" = "1つのセッションを削除しますか？";
-"SessionBackup.DeleteSingle.Text" = "%@のセッションがキーチェーンから削除されます。\n\nアカウントはSwiftgramからログアウトされません。";
+"SessionBackup.DeleteSingle.Text" = "%@のセッションがキーチェーンから削除されます。\n\nアカウントはTrollGramからログアウトされません。";
 "SessionBackup.RemoveFromApp.Title" = "アプリからアカウントを削除しますか？";
-"SessionBackup.RemoveFromApp.Text" = "%@のセッションがSwiftgramから削除されます！セッションはアクティブなままなので、後で復元できます。";
+"SessionBackup.RemoveFromApp.Text" = "%@のセッションがTrollGramから削除されます！セッションはアクティブなままなので、後で復元できます。";
 "SessionBackup.Notice" = "セッションは暗号化され、デバイスのキーチェーンに保存されます。セッションはあなたのデバイスを離れることはありません。\n\n重要: 新しいデバイスまたはOSのリセット後にセッションを復元するには、暗号化されたバックアップを有効にする必要があります。さもなければキーチェーンは移行されません。\n\n注意: セッションはTelegramや他のデバイスからも取り消される可能性があります。";
 
 "MessageFilter.Title" = "メッセージフィルター";
@@ -202,11 +202,11 @@
 
 "PayWall.SessionBackup.Title" = "アカウントのバックアップ";
 "PayWall.SessionBackup.Notice" = "コードなしでアカウントにログインできます。再インストール後も可能です。デバイス上のキーチェーンで安全に保存されています";
-"PayWall.SessionBackup.Description" = "デバイスを変更したりSwiftgramを削除したりしても、もはや問題にはなりません。Telegramサーバー上でまだアクティブなすべてのセッションを復元します";
+"PayWall.SessionBackup.Description" = "デバイスを変更したりTrollGramを削除したりしても、もはや問題にはなりません。Telegramサーバー上でまだアクティブなすべてのセッションを復元します";
 
 "PayWall.MessageFilter.Title" = "メッセージフィルター";
 "PayWall.MessageFilter.Notice" = "SPAM、プロモーション、および煩わしいメッセージの可視性を減少させます。";
-"PayWall.MessageFilter.Description" = "見たくないキーワードのリストを作成すると、Swiftgramがそのキーワードを非表示にします";
+"PayWall.MessageFilter.Description" = "見たくないキーワードのリストを作成すると、TrollGramがそのキーワードを非表示にします";
 
 "PayWall.Notifications.Title" = "@メンションと返信を無効にする";
 "PayWall.Notifications.Notice" = "重要でない通知を隠したりミュートしたりします。";
@@ -217,10 +217,10 @@
 "PayWall.InputToolbar.Description" = "書式を適用・解除したり、新しい行を挿入したりと、プロのように操作できます";
 
 "PayWall.AppIcons.Title" = "ユニークなアプリアイコン";
-"PayWall.AppIcons.Notice" = "ホーム画面でSwiftgramの外観をカスタマイズします。";
+"PayWall.AppIcons.Notice" = "ホーム画面でTrollGramの外観をカスタマイズします。";
 
-"PayWall.About.Title" = "Swiftgram Proについて";
-"PayWall.About.Notice" = "Swiftgramの無料版は、Telegramアプリ上で数十の機能と改善を提供します。 毎月のTelegramのアップデートとSwiftgramの同期を革新し、維持することは多くの時間と高価なハードウェアを必要とする膨大な努力です。\n\nSwiftgramはプライバシーを尊重し、広告を気にしないオープンソースのアプリです。 Swiftgram Proに登録すると、排他的な機能にアクセスでき、独立した開発者をサポートできます。";
+"PayWall.About.Title" = "TrollGram Proについて";
+"PayWall.About.Notice" = "TrollGramの無料版は、Telegramアプリ上で数十の機能と改善を提供します。 毎月のTelegramのアップデートとTrollGramの同期を革新し、維持することは多くの時間と高価なハードウェアを必要とする膨大な努力です。\n\nTrollGramはプライバシーを尊重し、広告を気にしないオープンソースのアプリです。 TrollGram Proに登録すると、排他的な機能にアクセスでき、独立した開発者をサポートできます。";
 /* DO NOT TRANSLATE */
 "PayWall.About.Signature" = "@Kylmakalle";
 /* DO NOT TRANSLATE */
@@ -234,8 +234,8 @@
 "PayWall.Privacy" = "プライバシーポリシー";
 "PayWall.TermsURL" = "https://swiftgram.app/terms";
 "PayWall.PrivacyURL" = "https://swiftgram.app/privacy";
-"PayWall.Notice.Markdown" = "Swiftgram Proに購読することで、[Swiftgram利用規約](%1$@)と[プライバシーポリシー](%2$@)に同意したことになります。";
-"PayWall.Notice.Raw" = "Swiftgram Proに購読することで、Swiftgramの利用規約とプライバシーポリシーに同意したことになります。";
+"PayWall.Notice.Markdown" = "TrollGram Proに購読することで、[TrollGram利用規約](%1$@)と[プライバシーポリシー](%2$@)に同意したことになります。";
+"PayWall.Notice.Raw" = "TrollGram Proに購読することで、TrollGramの利用規約とプライバシーポリシーに同意したことになります。";
 
 "PayWall.Button.OpenPro" = "プロ機能を使用する";
 "PayWall.Button.Purchasing" = "購入中…";

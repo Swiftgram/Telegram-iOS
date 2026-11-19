@@ -97,7 +97,7 @@
 "ContextMenu.SelectFromUser" = "Изабери од аутора";
 
 "Settings.ContextMenu" = "КОНТЕКСТ МЕНИ";
-"Settings.ContextMenu.Notice" = "Онемогућени уноси ће бити доступни у 'Swiftgram' подменују.";
+"Settings.ContextMenu.Notice" = "Онемогућени уноси ће бити доступни у 'TrollGram' подменују.";
 
 
 "Settings.ChatSwipeOptions" = "Опције превлачења списка разговора";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "креирано";
 "Chat.Created.Copied" = "Датум креирања копиран";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "датум придруживања у %@";
 "Chat.JoinedDate.Copied" = "Датум придруживања копиран";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "Сакриј донји панел канала";
 
 "Settings.CallConfirmation" = "Потврда позива";
-"Settings.CallConfirmation.Notice" = "Swiftgram ће затражити вашу потврду пре него што направи позив.";
+"Settings.CallConfirmation.Notice" = "TrollGram ће затражити вашу потврду пре него што направи позив.";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "Направити позив?";

@@ -15,7 +15,7 @@
 /* Example: Hide "All Chats" */
 "Settings.Folders.AllChatsHidden" = "\"%@\" छिपाएं";
 "Settings.Folders.RememberLast" = "आखिरी फोल्डर खोलें";
-"Settings.Folders.RememberLast.Notice" = "Swiftgram पुनः आरंभ या खाता स्विच करने के बाद अंतिम प्रयुक्त फोल्डर को खोलेगा";
+"Settings.Folders.RememberLast.Notice" = "TrollGram पुनः आरंभ या खाता स्विच करने के बाद अंतिम प्रयुक्त फोल्डर को खोलेगा";
 
 "Settings.Folders.CompactNames" = "कम अंतराल";
 "Settings.Folders.AllChatsTitle" = "\"सभी चैट\" शीर्षक";
@@ -123,7 +123,7 @@
 "Chat.Created.Label" = "निर्माण तिथि";
 "Chat.Created.Copied" = "निर्माण तिथि कॉपी हो गई";
 
-/* Date when user joined the chat. "Joined Swiftgram Chat" */
+/* Date when user joined the chat. "Joined TrollGram Chat" */
 "Chat.JoinedDateTitle" = "%@ में शामिल होने की तारीख";
 "Chat.JoinedDate.Copied" = "जुड़ने की तारीख कॉपी हो गई";
 /* Date when user registered in Telegram. Will be shown like "Registered\n24 May 2016" */
@@ -144,7 +144,7 @@
 "Settings.hideChannelBottomButton" = "चैनल बॉटम पैनल छिपाएँ";
 
 "Settings.CallConfirmation" = "कॉल पुष्टि";
-"Settings.CallConfirmation.Notice" = "Swiftgram कॉल करने से पहले आपकी पुष्टि मांगेगा।";
+"Settings.CallConfirmation.Notice" = "TrollGram कॉल करने से पहले आपकी पुष्टि मांगेगा।";
 
 /* Confirmation before making a Call */
 "CallConfirmation.Audio.Title" = "कॉल करें?";
