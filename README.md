@@ -27,21 +27,44 @@ project open to modification and community contributions.
 
 ## Features
 
-### Privacy controls
+### TrollTweaks
 
-- Anti-Delete
-- Edit History
-- Ghost Mode
-- Hide Online Status
-- Hide Read Receipts
-- Hide Typing Status
-- Hide Uploading Status
-- View Once Media
-- Copy Protected Media
+**Settings → TrollGram → TrollTweaks** holds the switches below. They ship
+enabled and work on the client side only.
+
+**Ghost Mode** (master switch; the sub-switches only act while it is on)
+
+- Hide Online Status, Read Receipts, Typing Status and Uploading Status
+- Hide Story Views: stories are not marked as seen
+- Hide Channel Post Views: channel posts are not counted as viewed by you
+
+**Saved Messages** (kept in a log on your device only, nothing is uploaded)
+
+- Save Deleted Messages: the text, sender, time and any already
+  downloaded photo, video, voice message or file of an incoming message are
+  copied before it is removed
+- Save Edit History: the text an edit replaced
+- Save Self-Destructing Media: a copy of one-time and timer media, made when
+  it is opened
+- Keep Self-Destructing Media Replayable: opening it does not start the
+  countdown
+- **Saved Messages Log**: browse the entries, copy their text, or clear the
+  log together with the saved files
+
+Deleted messages are **not** put back into the chat: the sync deletes what the
+server deleted, so the copy lives in the log. Messages you delete yourself are
+logged too until you clear it. Files are saved only if they were downloaded.
+
+**Content**
+
 - Remove Sponsored Messages
+- Copy Protected Content
 
-These features operate on the client side. They do not guarantee
-complete anonymity or protection from Telegram's servers.
+These features operate on the client side. They do not guarantee complete
+anonymity or protection from Telegram's servers, and other devices may keep
+showing a chat as unread while read receipts are hidden. Saving what others
+sent or deleted can conflict with their expectations and with the law where
+you live: use it responsibly.
 
 ### JavaScript plugins
 
@@ -223,8 +246,8 @@ in the repository.
 
 | Path | Description |
 | --- | --- |
-| `Swiftgram/SGTrollPrivacy` | Privacy-related interface and features |
-| `Swiftgram/SGTrollPrivacyCore` | Privacy feature implementation |
+| `Swiftgram/SGTrollPrivacy` | TrollTweaks keys, defaults and groups (the screen is `SGSettingsUI/Sources/TrollTweaksController.swift`) |
+| `Swiftgram/SGTrollPrivacyCore` | Mirrors the TrollTweaks values into TelegramCore (`TrollPrivacyRuntime`, `TrollMessageArchive`) |
 | `Swiftgram/JSPlugins` | JavaScript plugin host (JavaScriptCore): Swift runtime, SDK prelude, examples, tests |
 | `Swiftgram/PythonPlugins` | Python plugin host: Swift runtime, SDK modules (`stdlib/`), tests |
 | `Swiftgram/SGTrollPluginsUI` | Plugin management interface |

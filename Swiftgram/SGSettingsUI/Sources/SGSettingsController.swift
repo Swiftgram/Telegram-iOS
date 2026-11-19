@@ -22,8 +22,6 @@ import AppBundle
 import WebKit
 import PeerNameColorScreen
 import UndoUI
-import SGTrollPrivacy
-import SGTrollPrivacyCore
 import SGTrollPluginsUI
 
 
@@ -49,18 +47,6 @@ private enum SGControllerSection: Int32, SGItemListSection {
 }
 
 private enum SGBoolSetting: String {
-    // TrollGram privacy toggles. The raw value doubles as the storage key in
-    // the `app.trollgram.ios.privacy` suite read by `TrollPrivacyOptions`.
-    case trollPrivacyAntiDelete = "tg_privacy_anti_delete"
-    case trollPrivacyEditHistory = "tg_privacy_edit_history"
-    case trollPrivacyGhostMode = "tg_privacy_ghost_mode"
-    case trollPrivacyGhostHideOnline = "tg_privacy_ghost_hide_online"
-    case trollPrivacyGhostHideRead = "tg_privacy_ghost_hide_read"
-    case trollPrivacyGhostHideTyping = "tg_privacy_ghost_hide_typing"
-    case trollPrivacyGhostHideUpload = "tg_privacy_ghost_hide_upload"
-    case trollPrivacyViewOnce = "tg_privacy_view_once"
-    case trollPrivacyAllowCopy = "tg_privacy_allow_copy"
-    case trollPrivacyRemoveSponsored = "tg_privacy_remove_sponsored"
     case hidePhoneInSettings
     case showTabNames
     case showContactsTab
@@ -146,6 +132,7 @@ private enum SGDisclosureLink: String {
     case contentSettings
     case languageSettings
     case trollPlugins
+    case trollTweaks
 }
 
 private struct PeerNameColorScreenState: Equatable {
@@ -170,15 +157,10 @@ private func SGControllerEntries(presentationData: PresentationData, callListSet
     
     entries.append(.searchInput(id: id.count, section: .search, title: NSAttributedString(string: "🔍"), text: state.searchQuery ?? "", placeholder: strings.Common_Search))
     
-    // MARK: TrollGram privacy block (all features unlocked locally)
-    entries.append(.header(id: id.count, section: .privacy, text: "PRIVACY", badge: newStr))
+    // MARK: TrollGram block: the toggles live on their own screens
+    entries.append(.header(id: id.count, section: .privacy, text: "TROLLGRAM", badge: newStr))
+    entries.append(.disclosure(id: id.count, section: .privacy, link: .trollTweaks, text: "TrollTweaks"))
     entries.append(.disclosure(id: id.count, section: .privacy, link: .trollPlugins, text: "Plugins"))
-    for row in TrollPrivacyOptions.rows {
-        guard let setting = SGBoolSetting(rawValue: row.key) else {
-            continue
-        }
-        entries.append(.toggle(id: id.count, section: .privacy, settingName: setting, value: TrollPrivacyOptions.flag(row.key), text: row.title, enabled: true))
-    }    
     if SGSimpleSettings.shared.canUseNY {
         entries.append(.header(id: id.count, section: .trending, text: i18n("Settings.NY.Header", lang), badge: newStr))
         entries.append(.toggle(id: id.count, section: .trending, settingName: .nyStyleSnow, value: SGSimpleSettings.shared.nyStyle == SGSimpleSettings.NYStyle.snow.rawValue, text: i18n("Settings.NY.Style.snow", lang), enabled: true))
@@ -530,12 +512,6 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
             SGSimpleSettings.shared.forceEmojiTab = value
         case .forceBuiltInMic:
             SGSimpleSettings.shared.forceBuiltInMic = value
-        case .trollPrivacyAntiDelete, .trollPrivacyEditHistory, .trollPrivacyGhostMode,
-             .trollPrivacyGhostHideOnline, .trollPrivacyGhostHideRead, .trollPrivacyGhostHideTyping,
-             .trollPrivacyGhostHideUpload, .trollPrivacyViewOnce, .trollPrivacyAllowCopy,
-             .trollPrivacyRemoveSponsored:
-            TrollPrivacyOptions.setFlag(setting.rawValue, value)
-            TrollPrivacyBootstrap.mirror()
         case .hideChannelBottomButton:
             SGSimpleSettings.shared.hideChannelBottomButton = !value
         case .secondsInMessages:
@@ -722,6 +698,8 @@ public func sgSettingsController(context: AccountContext/*, focusOnItemTag: Int?
                 pushControllerImpl?(context.sharedContext.makeLocalizationListController(context: context))
             case .trollPlugins:
                 pushControllerImpl?(trollPluginsController(context: context))
+            case .trollTweaks:
+                pushControllerImpl?(trollTweaksController(context: context))
             case .contentSettings:
                 let _ = (getSGSettingsURL(context: context) |> deliverOnMainQueue).start(next: { [weak context] url in
                     guard let strongContext = context else {

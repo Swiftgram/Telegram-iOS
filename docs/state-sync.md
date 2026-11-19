@@ -379,6 +379,11 @@ the latter. `replayFinalState` runs, in order:
 all in the replay (`grep -rn 'StoreMessage(updating:' Sources` also hits one comment, in `StateReplay+Messages.swift`;
 `StoreMessageUpdatingTests`).
 
+TrollGram's "Save Edit History" adds one side-effect-only call to `applyEditMessage`: when the flag is on and the
+text changes, the previous text goes to the local `TrollMessageArchive` log. It writes nothing to Postbox and does not
+change the operation or its order; "Save Deleted Messages" does the same from `_internal_deleteMessages`, which is
+why deleted messages are logged, not kept in the chat (the history-fill confirmation would delete them again).
+
 ### Secret chats and the qts acknowledgement
 
 `updateEncryption` -> `.UpdateSecretChat`; `updateNewEncryptedMessage` -> `.AddSecretMessages`;

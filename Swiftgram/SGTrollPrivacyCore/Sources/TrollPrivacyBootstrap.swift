@@ -1,5 +1,6 @@
 import Foundation
 import TelegramCore
+import SGTrollPrivacy
 
 /// Mirrors TrollGram privacy flags into TelegramCore.
 ///
@@ -8,15 +9,8 @@ import TelegramCore
 public enum TrollPrivacyBootstrap {
     private static var activated = false
 
-    public static var defaults: UserDefaults {
-        return UserDefaults(suiteName: "app.trollgram.ios.privacy") ?? .standard
-    }
-
     public static func flag(_ key: String) -> Bool {
-        if defaults.object(forKey: key) == nil {
-            return true
-        }
-        return defaults.bool(forKey: key)
+        return TrollPrivacyOptions.flag(key)
     }
 
     /// Call once at launch, before the network is started.
@@ -30,19 +24,25 @@ public enum TrollPrivacyBootstrap {
 
     /// Re-reads every flag and pushes it into TelegramCore.
     public static func mirror() {
+        typealias Key = TrollPrivacyOptions.Key
         TrollPrivacyRuntime.apply(
-            ghostMode: flag("tg_privacy_ghost_mode"),
-            hideOnline: flag("tg_privacy_ghost_hide_online"),
-            hideReadReceipts: flag("tg_privacy_ghost_hide_read"),
-            hideTyping: flag("tg_privacy_ghost_hide_typing"),
-            hideUploading: flag("tg_privacy_ghost_hide_upload"),
-            allowCopyProtectedPeers: flag("tg_privacy_allow_copy"),
-            removeSponsoredMessages: flag("tg_privacy_remove_sponsored"),
-            viewOnceMediaUnlocked: flag("tg_privacy_view_once")
+            ghostMode: flag(Key.ghostMode),
+            hideOnline: flag(Key.ghostHideOnline),
+            hideReadReceipts: flag(Key.ghostHideRead),
+            hideTyping: flag(Key.ghostHideTyping),
+            hideUploading: flag(Key.ghostHideUpload),
+            allowCopyProtectedPeers: flag(Key.allowCopy),
+            removeSponsoredMessages: flag(Key.removeSponsored),
+            viewOnceMediaUnlocked: flag(Key.viewOnce)
         )
         TrollPrivacyRuntime.setArchiveFlags(
-            antiDelete: flag("tg_privacy_anti_delete"),
-            editHistory: flag("tg_privacy_edit_history")
+            antiDelete: flag(Key.antiDelete),
+            editHistory: flag(Key.editHistory),
+            saveSelfDestructingMedia: flag(Key.saveSelfDestructing)
+        )
+        TrollPrivacyRuntime.setGhostViewFlags(
+            hideStoryViews: flag(Key.ghostHideStories),
+            hideChannelViews: flag(Key.ghostHideChannelViews)
         )
     }
 }

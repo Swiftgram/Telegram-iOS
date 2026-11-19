@@ -17,6 +17,9 @@ public enum TrollPrivacyRuntime {
     private static var _viewOnceMediaUnlocked = false
     private static var _antiDeleteEnabled = false
     private static var _editHistoryEnabled = false
+    private static var _saveSelfDestructingMedia = false
+    private static var _hideStoryViews = false
+    private static var _hideChannelViews = false
 
     public static func apply(ghostMode: Bool, hideOnline: Bool, hideReadReceipts: Bool, hideTyping: Bool, hideUploading: Bool, allowCopyProtectedPeers: Bool = false, removeSponsoredMessages: Bool = false, viewOnceMediaUnlocked: Bool = false) {
         self.lock.lock()
@@ -31,11 +34,40 @@ public enum TrollPrivacyRuntime {
         self.lock.unlock()
     }
 
-    public static func setArchiveFlags(antiDelete: Bool, editHistory: Bool) {
+    public static func setArchiveFlags(antiDelete: Bool, editHistory: Bool, saveSelfDestructingMedia: Bool = false) {
         self.lock.lock()
         self._antiDeleteEnabled = antiDelete
         self._editHistoryEnabled = editHistory
+        self._saveSelfDestructingMedia = saveSelfDestructingMedia
         self.lock.unlock()
+    }
+
+    public static func setGhostViewFlags(hideStoryViews: Bool, hideChannelViews: Bool) {
+        self.lock.lock()
+        self._hideStoryViews = hideStoryViews
+        self._hideChannelViews = hideChannelViews
+        self.lock.unlock()
+    }
+
+    /// Keep a copy of self-destructing media when it is opened.
+    public static var saveSelfDestructingMedia: Bool {
+        self.lock.lock()
+        defer { self.lock.unlock() }
+        return self._saveSelfDestructingMedia
+    }
+
+    /// Do not mark stories as seen (no `stories.readStories` / `incrementStoryViews`).
+    public static var suppressStoryViews: Bool {
+        self.lock.lock()
+        defer { self.lock.unlock() }
+        return self._ghostMode && self._hideStoryViews
+    }
+
+    /// Ask `messages.getMessagesViews` for counts without incrementing them.
+    public static var suppressChannelViews: Bool {
+        self.lock.lock()
+        defer { self.lock.unlock() }
+        return self._ghostMode && self._hideChannelViews
     }
 
     /// Keep a local copy of deleted messages.

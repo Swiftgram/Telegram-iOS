@@ -6,6 +6,10 @@ import SwiftSignalKit
 func _internal_markMessageContentAsConsumedInteractively(postbox: Postbox, messageId: MessageId) -> Signal<Void, NoError> {
     return postbox.transaction { transaction -> Void in
         if let message = transaction.getMessage(messageId), message.flags.contains(.Incoming) {
+            // TrollGram: keep a copy of self-destructing media before opening it starts the countdown.
+            if TrollPrivacyRuntime.saveSelfDestructingMedia && message.containsSecretMedia {
+                TrollMessageArchive.shared.captureSelfDestructing(message: message, mediaBox: postbox.mediaBox)
+            }
             var updateMessage = false
             var updatedAttributes = message.attributes
             

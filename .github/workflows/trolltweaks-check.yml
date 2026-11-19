@@ -1,0 +1,30 @@
+name: TrollTweaks checks
+
+on:
+  push:
+    paths:
+      - "Swiftgram/SGTrollPrivacy/**"
+      - "Swiftgram/SGTrollPrivacyCore/**"
+      - "Swiftgram/PythonPlugins/**"
+  pull_request:
+    paths:
+      - "Swiftgram/SGTrollPrivacy/**"
+      - "Swiftgram/SGTrollPrivacyCore/**"
+      - "Swiftgram/PythonPlugins/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            Swiftgram
+            submodules/TelegramCore/Sources
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: TrollTweaks keys, groups and hooks
+        run: python3 -m unittest discover -s Swiftgram/SGTrollPrivacy/tests
+      - name: Python plugin host
+        run: python3 -m unittest discover -s Swiftgram/PythonPlugins/tests

@@ -52,6 +52,21 @@ When submitting such changes, explain:
 
 Do not describe client-side privacy features as providing complete anonymity.
 
+## TrollTweaks
+
+A switch needs four things, and `python3 -m unittest discover -s Swiftgram/SGTrollPrivacy/tests` checks they stay
+in step:
+
+1. A key in `TrollPrivacyOptions.Key` and a `Row` in one of its groups (that is the whole screen: no UI code per
+   switch). Features ship enabled; list a key in `defaultValues` only to change that.
+2. A mirror line in `TrollPrivacyBootstrap.mirror()` and a flag plus accessor in `TrollPrivacyRuntime`, which is the
+   only thing TelegramCore reads.
+3. The hook at its one choke point in TelegramCore, written as an early `if TrollPrivacyRuntime.<flag>`.
+4. A line in the README group.
+
+Do not change what state sync stores (`State/CLAUDE.md`): hooks there may only add side effects such as a log entry,
+and the same commit updates `docs/state-sync.md`.
+
 ## JavaScript plugins
 
 The JavaScript host lives in `Swiftgram/JSPlugins` and uses the system
