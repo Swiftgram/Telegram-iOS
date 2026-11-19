@@ -116,7 +116,7 @@ enum TrollPluginsBridge {
                 completion([
                     "id": botApiId(result.id),
                     "title": result.compactDisplayTitle,
-                    "username": result.addressName ?? NSNull()
+                    "username": (result.addressName.map { $0 as Any } ?? NSNull())
                 ], nil)
             })
         default:
