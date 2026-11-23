@@ -666,7 +666,7 @@ extension SGSimpleSettings {
 
 extension SGSimpleSettings {
     public var isNYEnabled: Bool {
-        return canUseNY && NYStyle(rawValue: nyStyle) != .default
+        return NYStyle(rawValue: nyStyle) != .default
     }
 }
 
