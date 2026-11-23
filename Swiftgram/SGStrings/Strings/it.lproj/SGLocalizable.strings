@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "Videomessaggi";
 "Settings.VideoNotes.StartWithRearCam" = "Inizia con la camera posteriore";
+"Settings.VideoNotes.ResetZoom" = "Ripristina sempre lo zoom";
 
 "Settings.CustomColors.Header" = "COLORI ACCOUNT";
 "Settings.CustomColors.Saturation" = "SATURAZIONE";

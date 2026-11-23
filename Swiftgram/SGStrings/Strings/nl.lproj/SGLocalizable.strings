@@ -48,6 +48,7 @@
 
 "Settings.VideoNotes.Header" = "RONDE VIDEO'S";
 "Settings.VideoNotes.StartWithRearCam" = "Start met achtercamera";
+"Settings.VideoNotes.ResetZoom" = "Zoom altijd herstellen";
 
 "Settings.CustomColors.Header" = "ACCOUNTKLEUREN";
 "Settings.CustomColors.Saturation" = "VERZADIGING";

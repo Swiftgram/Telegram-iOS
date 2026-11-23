@@ -42,6 +42,12 @@ apple_resource_bundle(
     ],
 )
 
+# MARK: Swiftgram
+sgdeps = [
+    "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
+]
+#
+
 swift_library(
     name = "MediaEditor",
     module_name = "MediaEditor",
@@ -54,7 +60,7 @@ swift_library(
     data = [
         ":MediaEditorBundle",
     ],
-    deps = [
+    deps = sgdeps + [ # MARK: Swiftgram
         "//submodules/AsyncDisplayKit",
         "//submodules/Display",
         "//submodules/Postbox",
