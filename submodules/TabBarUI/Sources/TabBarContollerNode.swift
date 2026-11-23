@@ -210,6 +210,13 @@ final class TabBarControllerNode: ASDisplayNode {
         }
     }
     
+    // MARK: Swiftgram
+    /// A setting the bar reads changed, so the next layout pass runs even with the same params.
+    func sgInvalidateLayout() {
+        self.layoutResult = nil
+    }
+    //
+
     /// Where the bar goes in `layout` when it is vertical, nil for the horizontal bar. Every path that lays
     /// out a tab asks this, so they agree on whether the bar's inset applies.
     func sidePlacement(for layout: ContainerViewLayout) -> TabBarSidePlacement? {
