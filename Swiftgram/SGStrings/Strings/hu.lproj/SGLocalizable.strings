@@ -136,6 +136,7 @@
 "Settings.messageDoubleTapActionOutgoingEdit" = "Dupla koppintás a üzenet szerkesztéséhez";
 
 "Settings.wideChannelPosts" = "Széles posztok csatornákban";
+"Settings.wideGlassTextField" = "Széles üveg szövegmező";
 "Settings.ForceEmojiTab" = "Alapértelmezett Emoji billentyűzet";
 
 "Settings.forceBuiltInMic" = "Eszköz mikrofonjának kényszerítése";

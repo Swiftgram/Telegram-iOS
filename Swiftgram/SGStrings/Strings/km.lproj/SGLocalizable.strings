@@ -16,3 +16,5 @@
 "Chat.ID" = "id";
 "Chat.ID.Copy" = "ចម្លង ID";
 "Chat.ID.Copied" = "បានចម្លង ID";
+
+"Settings.wideGlassTextField" = "ប្រអប់អត្ថបទកញ្ចក់ទូលាយ";

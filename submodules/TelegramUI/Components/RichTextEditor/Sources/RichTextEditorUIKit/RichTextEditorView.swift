@@ -216,6 +216,15 @@ public final class RichTextEditorView: UIView, UIScrollViewDelegate {
     /// a newline (the default when unset); `false` when the host consumed the Return (e.g. sent the message).
     /// The software keyboard's Return is unaffected (it always inserts a newline).
     public var onHardwareReturn: ((UIKeyModifierFlags) -> Bool)? { didSet { canvas.onHardwareReturn = onHardwareReturn } }
+    // MARK: Swiftgram
+    /// Consulted before a typed line break is inserted (the software keyboard's Return, or a hardware Return the
+    /// host let through); `false` drops it. The legacy input offers the same keystroke to its
+    /// `shouldChangeTextIn` delegate. Unset, the editor inserts it.
+    public var onShouldInsertLineBreak: (() -> Bool)? { didSet { canvas.onShouldInsertLineBreak = onShouldInsertLineBreak } }
+    /// Fired when Backspace reaches the editor, before it is applied, so a host can tell a Backspace in an empty
+    /// document, which changes nothing, from no keystroke at all (the legacy input's `backspaceWhileEmpty`).
+    public var onWillDeleteBackward: (() -> Void)? { didSet { canvas.onWillDeleteBackward = onWillDeleteBackward } }
+    //
 
     /// Configure each selection-handle ("knob") view. The closure is invoked once per handle view (start and
     /// end), passing it as a bare `UIView`. Use it to set host-framework properties the editor package can't

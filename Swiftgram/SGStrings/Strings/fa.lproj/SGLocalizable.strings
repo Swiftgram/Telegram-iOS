@@ -17,3 +17,5 @@
 "Chat.ID" = "شناسه";
 "Chat.ID.Copy" = "کپی شناسه";
 "Chat.ID.Copied" = "شناسه کپی شد";
+
+"Settings.wideGlassTextField" = "کادر متنی شیشه‌ای عریض";

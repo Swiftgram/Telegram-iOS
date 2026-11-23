@@ -12,3 +12,5 @@
 "Chat.ID" = "id";
 "Chat.ID.Copy" = "Kopírovať ID";
 "Chat.ID.Copied" = "ID skopírované";
+
+"Settings.wideGlassTextField" = "Široké sklenené textové pole";
