@@ -1770,7 +1770,7 @@ public final class MessageInputPanelComponent: Component {
                 let _ = aiButtonMinTextLength
 
                 let showCorner = isTallPanel && hasText
-                let shouldShow = showCorner && component.aiCompose != nil
+                let shouldShow = showCorner && component.aiCompose != nil && !SGSimpleSettings.shared.hideAIButton // MARK: Swiftgram
 
                 if shouldShow {
                     let aiButton: ComponentView<Empty>
