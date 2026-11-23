@@ -32,6 +32,18 @@ import ChatListFilterTabContainerNode
 import GlassControls
 import SideColumnLayout
 
+// MARK: Swiftgram
+/// Read once: the list's scroll metrics are set when its nodes are created, so this setting asks for a restart.
+private let sgChatListHidesSearchBar = SGSimpleSettings.shared.hideChatListSearchBar
+
+func sgChatListSearchScrollHeight(location: ChatListControllerLocation) -> CGFloat {
+    if sgChatListHidesSearchBar, case .chatList(groupId: .root) = location {
+        return 0.0
+    }
+    return ChatListNavigationBar.searchScrollHeight
+}
+//
+
 public enum ChatListContainerNodeFilter: Equatable {
     case all
     case filter(ChatListFilter)
@@ -1765,7 +1777,7 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
                 leftInset: layout.safeInsets.left,
                 rightInset: layout.safeInsets.right,
                 trailingButtonsInset: layout.navigationBarTrailingButtonsInset,
-                search: ChatListNavigationBar.Search(isEnabled: true),
+                search: sgChatListSearchScrollHeight(location: self.location) == 0.0 ? nil : ChatListNavigationBar.Search(isEnabled: true), // MARK: Swiftgram
                 activeSearch: self.isSearchDisplayControllerActive,
                 primaryContent: headerContent?.primaryContent,
                 secondaryContent: headerContent?.secondaryContent,
@@ -1849,7 +1861,7 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         
         self.mainContainerNode.updateScrollingOffset(navigationHeight: navigationHeight, offset: mainOffset, transition: transition)
         
-        mainOffset = min(mainOffset, ChatListNavigationBar.searchScrollHeight)
+        mainOffset = min(mainOffset, sgChatListSearchScrollHeight(location: self.location)) // MARK: Swiftgram
         if abs(mainOffset) < 0.1 {
             mainOffset = 0.0
         }
@@ -1866,7 +1878,7 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
             } else {
                 inlineOffset = navigationHeight
             }
-            inlineOffset = min(inlineOffset, ChatListNavigationBar.searchScrollHeight)
+            inlineOffset = min(inlineOffset, sgChatListSearchScrollHeight(location: self.location)) // MARK: Swiftgram
             if abs(inlineOffset) < 0.1 {
                 inlineOffset = 0.0
             }
@@ -1939,7 +1951,7 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         
         let navigationBarLayout = self.updateNavigationBar(layout: layout, deferScrollApplication: true, transition: ComponentTransition(transition))
         // The chat side list opens with its search shown, not scrolled under the header.
-        self.mainContainerNode.initialScrollingOffset = ((self.controller?.isSideList ?? false) ? 0.0 : ChatListNavigationBar.searchScrollHeight) + navigationBarLayout.storiesInset
+        self.mainContainerNode.initialScrollingOffset = ((self.controller?.isSideList ?? false) ? 0.0 : sgChatListSearchScrollHeight(location: self.location) /* MARK: Swiftgram */) + navigationBarLayout.storiesInset
         
         navigationBarHeight = navigationBarLayout.navigationHeight
         visualNavigationHeight = navigationBarLayout.navigationHeight
@@ -2437,7 +2449,7 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         
         if let clippedScrollOffset = navigationBarComponentView.clippedScrollOffset {
             let searchScrollOffset = clippedScrollOffset
-            if searchScrollOffset > 0.0 && searchScrollOffset < ChatListNavigationBar.searchScrollHeight {
+            if searchScrollOffset > 0.0 && searchScrollOffset < sgChatListSearchScrollHeight(location: self.location) { // MARK: Swiftgram
                 return true
             } else if clippedScrollOffset < 0.0 && clippedScrollOffset > -listView.tempTopInset {
                 return true
@@ -2479,7 +2491,7 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         
         if let clippedScrollOffset = navigationBarComponentView.clippedScrollOffset {
             let searchScrollOffset = clippedScrollOffset
-            if searchScrollOffset > 0.0 && searchScrollOffset < ChatListNavigationBar.searchScrollHeight {
+            if searchScrollOffset > 0.0 && searchScrollOffset < sgChatListSearchScrollHeight(location: self.location) { // MARK: Swiftgram
                 if searchScrollOffset < ChatListNavigationBar.searchScrollHeight * 0.5 {
                     let _ = listView.scrollToOffsetFromTop(0.0, animated: true)
                 } else {
