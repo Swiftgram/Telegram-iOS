@@ -12,3 +12,5 @@
 "Chat.ID" = "id";
 "Chat.ID.Copy" = "Kopírovať ID";
 "Chat.ID.Copied" = "ID skopírované";
+"Settings.SaveMediaInOrder" = "Ukladať médiá v poradí správy";
+"Settings.SaveMediaInOrder.Notice" = "Uložené fotky a videá sa pridajú na koniec galérie v poradí, v akom sú v správe.";

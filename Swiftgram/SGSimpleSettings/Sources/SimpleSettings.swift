@@ -102,6 +102,7 @@ public class SGSimpleSettings {
         case startTelescopeWithRearCam
         case accountColorsSaturation
         case uploadSpeedBoost
+        case saveMediaInOrder
         case downloadSpeedBoost
         case bottomTabStyle
         case rememberLastFolder
@@ -265,6 +266,7 @@ public class SGSimpleSettings {
         Keys.startTelescopeWithRearCam.rawValue: false,
         Keys.accountColorsSaturation.rawValue: 100,
         Keys.uploadSpeedBoost.rawValue: false,
+        Keys.saveMediaInOrder.rawValue: false,
         Keys.downloadSpeedBoost.rawValue: DownloadSpeedBoostValues.none.rawValue,
         Keys.rememberLastFolder.rawValue: false,
         Keys.bottomTabStyle.rawValue: BottomTabStyleValues.telegram.rawValue,
@@ -365,6 +367,9 @@ public class SGSimpleSettings {
     
     @UserDefault(key: Keys.uploadSpeedBoost.rawValue)
     public var uploadSpeedBoost: Bool
+
+    @UserDefault(key: Keys.saveMediaInOrder.rawValue)
+    public var saveMediaInOrder: Bool
     
     @UserDefault(key: Keys.downloadSpeedBoost.rawValue)
     public var downloadSpeedBoost: String
