@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "Uložit do cloudu";
 "ContextMenu.SelectFromUser" = "Vybrat od autora";
+"Settings.MessageSelection.Header" = "VÝBĚR ZPRÁV";
+"Settings.Selection.SaveToCloudButton" = "Tlačítko Uložit do cloudu";
+"Settings.Selection.HideSenderNamesButton" = "Tlačítko Skrýt jména odesílatelů";
 
 "Settings.ContextMenu" = "KONTEXTOVÉ MENU";
 "Settings.ContextMenu.Notice" = "Zakázané položky budou dostupné v podmenu \"Swiftgram\".";

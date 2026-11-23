@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "Lưu vào Đám mây";
 "ContextMenu.SelectFromUser" = "Chọn từ Tác giả";
+"Settings.MessageSelection.Header" = "CHỌN TIN NHẮN";
+"Settings.Selection.SaveToCloudButton" = "Nút Lưu vào Đám mây";
+"Settings.Selection.HideSenderNamesButton" = "Nút Ẩn tên người gửi";
 
 "Settings.ContextMenu" = "MENU NGỮ CẢNH";
 "Settings.ContextMenu.Notice" = "Mục nhập đã vô hiệu hóa sẽ có sẵn trong menu phụ 'Swiftgram'.";

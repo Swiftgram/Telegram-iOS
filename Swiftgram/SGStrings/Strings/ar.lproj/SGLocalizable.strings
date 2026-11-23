@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "الحفظ في السحابة";
 "ContextMenu.SelectFromUser" = "حدد من المؤلف";
+"Settings.MessageSelection.Header" = "تحديد الرسائل";
+"Settings.Selection.SaveToCloudButton" = "زر الحفظ في السحابة";
+"Settings.Selection.HideSenderNamesButton" = "زر إخفاء أسماء المرسلين";
 
 "Settings.ContextMenu" = "قائمة السياق";
 "Settings.ContextMenu.Notice" = "المدخلات المعطلة ستكون متوفرة في القائمة الفرعية \"Swiftgram\".";

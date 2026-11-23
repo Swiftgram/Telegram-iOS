@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "Сачувај у облак";
 "ContextMenu.SelectFromUser" = "Изабери од аутора";
+"Settings.MessageSelection.Header" = "ИЗБОР ПОРУКА";
+"Settings.Selection.SaveToCloudButton" = "Дугме Сачувај у облак";
+"Settings.Selection.HideSenderNamesButton" = "Дугме Сакриј имена пошиљалаца";
 
 "Settings.ContextMenu" = "КОНТЕКСТ МЕНИ";
 "Settings.ContextMenu.Notice" = "Онемогућени уноси ће бити доступни у 'Swiftgram' подменују.";

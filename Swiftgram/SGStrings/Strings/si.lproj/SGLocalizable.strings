@@ -10,3 +10,6 @@
 "Chat.ID" = "id";
 "Chat.ID.Copy" = "ID පිටපත් කරන්න";
 "Chat.ID.Copied" = "ID පිටපත් කරන ලදී";
+"Settings.MessageSelection.Header" = "පණිවිඩ තේරීම";
+"Settings.Selection.SaveToCloudButton" = "මේඝයට සුරකින්න බොත්තම";
+"Settings.Selection.HideSenderNamesButton" = "යවන්නන්ගේ නම් සඟවන්න බොත්තම";

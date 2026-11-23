@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "Stoor na Wolk";
 "ContextMenu.SelectFromUser" = "Kies vanaf Outeur";
+"Settings.MessageSelection.Header" = "BOODSKAPKEUSE";
+"Settings.Selection.SaveToCloudButton" = "Stoor na Wolk-knoppie";
+"Settings.Selection.HideSenderNamesButton" = "Knoppie om senders se name te versteek";
 
 "Settings.ContextMenu" = "KONTEKSMENU";
 "Settings.ContextMenu.Notice" = "Gedeaktiveerde inskrywings sal beskikbaar wees in die \"Swiftgram\" sub-menu.";

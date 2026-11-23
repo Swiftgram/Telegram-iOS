@@ -95,6 +95,9 @@
 
 "ContextMenu.SaveToCloud" = "Αποθήκευση στο σύννεφο";
 "ContextMenu.SelectFromUser" = "Επιλέξτε από τον Συγγραφέα";
+"Settings.MessageSelection.Header" = "ΕΠΙΛΟΓΗ ΜΗΝΥΜΑΤΩΝ";
+"Settings.Selection.SaveToCloudButton" = "Κουμπί Αποθήκευση στο σύννεφο";
+"Settings.Selection.HideSenderNamesButton" = "Κουμπί Απόκρυψη ονομάτων αποστολέων";
 
 "Settings.ContextMenu" = "KONTEXTMENÜ";
 "Settings.ContextMenu.Notice" = "Deaktivierte Einträge sind im 'Swiftgram'-Untermenü verfügbar.";
