@@ -1,3 +1,4 @@
+import SGSimpleSettings // MARK: Swiftgram
 import Foundation
 import Postbox
 import TelegramCore
@@ -117,6 +118,24 @@ private final class FetchManagerStatusContext {
         }
     }
 }
+
+// MARK: Swiftgram
+/// The queues of Telegram Android: per datacenter, up to 5 files of 20 MB or less and 2 larger ones.
+private struct SGDownloadQueue: Hashable {
+    let datacenterId: Int
+    let isLarge: Bool
+
+    var limit: Int {
+        return self.isLarge ? 2 : 5
+    }
+
+    init(entry: FetchManagerLocationEntry) {
+        let resource = entry.resourceReference.resource
+        self.datacenterId = (resource as? TelegramMultipartFetchableResource)?.datacenterId ?? 0
+        self.isLarge = (resource.size ?? 0) > 20 * 1024 * 1024
+    }
+}
+//
 
 private final class FetchManagerCategoryContext {
     private let postbox: Postbox
@@ -327,7 +346,8 @@ private final class FetchManagerCategoryContext {
             self.topEntryIdAndPriority = topEntryIdAndPriority
         }
         
-        if let topEntryId = self.topEntryIdAndPriority?.0 {
+        // MARK: Swiftgram
+        func sgActivateEntry(_ topEntryId: FetchManagerLocationEntryId) -> Bool {
             if let entry = self.entries[topEntryId] {
                 let ranges = entry.combinedRanges
                 
@@ -453,10 +473,56 @@ private final class FetchManagerCategoryContext {
                 assertionFailure()
                 return false
             }
+        }
+        
+        var sgActivatedAdditionalEntry = false
+        for entryId in self.sgAdditionalEntryIdsToActivate() {
+            if sgActivateEntry(entryId) {
+                sgActivatedAdditionalEntry = true
+            }
+        }
+        //
+        if let topEntryId = self.topEntryIdAndPriority?.0 {
+            return sgActivateEntry(topEntryId) || sgActivatedAdditionalEntry // MARK: Swiftgram
         } else {
-            return false
+            return sgActivatedAdditionalEntry // MARK: Swiftgram
         }
     }
+    
+    // MARK: Swiftgram
+    /// User-initiated files allowed to run beside the top entry. The rest of the queue, prefetch included, keeps one at a time.
+    private func sgAdditionalEntryIdsToActivate() -> [FetchManagerLocationEntryId] {
+        guard SGSimpleSettings.shared.parallelDownloads else {
+            return []
+        }
+        let topEntryId = self.topEntryIdAndPriority?.0
+        var runningCounts: [SGDownloadQueue: Int] = [:]
+        for (id, entry) in self.entries {
+            if entry.userInitiated, id == topEntryId || self.activeContexts[id] != nil {
+                runningCounts[SGDownloadQueue(entry: entry), default: 0] += 1
+            }
+        }
+        var candidates: [(FetchManagerLocationEntryId, FetchManagerPriorityKey)] = []
+        for (id, entry) in self.entries {
+            if entry.userInitiated, !entry.isPaused, id != topEntryId, self.activeContexts[id] == nil, let priorityKey = entry.priorityKey {
+                candidates.append((id, priorityKey))
+            }
+        }
+        candidates.sort(by: { $0.1 < $1.1 })
+        var result: [FetchManagerLocationEntryId] = []
+        for (id, _) in candidates {
+            guard let entry = self.entries[id] else {
+                continue
+            }
+            let queue = SGDownloadQueue(entry: entry)
+            if runningCounts[queue, default: 0] < queue.limit {
+                runningCounts[queue, default: 0] += 1
+                result.append(id)
+            }
+        }
+        return result
+    }
+    //
     
     func getEntryId(resourceId: String) -> FetchManagerLocationEntryId? {
         for (id, _) in self.entries {
