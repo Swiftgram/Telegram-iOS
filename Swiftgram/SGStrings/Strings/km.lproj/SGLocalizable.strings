@@ -16,3 +16,4 @@
 "Chat.ID" = "id";
 "Chat.ID.Copy" = "ចម្លង ID";
 "Chat.ID.Copied" = "បានចម្លង ID";
+"Settings.classicChatScrollAnimation" = "ចលនារំកិលការជជែកបែបបុរាណ";
