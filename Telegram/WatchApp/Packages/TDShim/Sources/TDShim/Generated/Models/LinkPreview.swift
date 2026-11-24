@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -36,7 +36,7 @@ public struct LinkPreview: Codable, Equatable, Hashable {
     /// True, if media must be shown above link preview description; otherwise, the media must be shown below the description
     public let showMediaAboveDescription: Bool
 
-    /// Short name of the site (e.g., Google Docs, App Store)
+    /// Short name of the website (e.g., Google Docs, App Store)
     public let siteName: String
 
     /// True, if there is no need to show an ordinary open URL confirmation, when opening the URL from the preview, because the URL is shown in the message text in clear

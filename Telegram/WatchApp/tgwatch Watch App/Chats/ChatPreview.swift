@@ -36,7 +36,7 @@ func chatPreview(_ chat: CachedChat, userNames: [Int64: String], selfUserId: Int
     case .messageVideo:    return "Video"
     case .messageVideoNote: return "Video message"
     case .messageDocument: return "Document"
-    case .messageLocation: return "Location"
+    case .messageLocation, .messageLiveLocation: return "Location"
     case .messageVenue(let m): return m.venue.title.isEmpty ? "Location" : m.venue.title
     case .messageContact:  return "Contact"
     case .messagePoll:     return "Poll"

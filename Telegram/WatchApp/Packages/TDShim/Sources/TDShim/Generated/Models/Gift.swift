@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -16,13 +16,13 @@ public struct Gift: Codable, Equatable, Hashable, Identifiable {
     /// Information about the auction on which the gift can be purchased; may be null if the gift can be purchased directly
     public let auctionInfo: GiftAuction?
 
-    /// Background of the gift
-    public let background: GiftBackground
+    /// Background of the gift; may be null if the gift has no background
+    public let background: GiftBackground?
 
     /// Number of Telegram Stars that can be claimed by the receiver instead of the regular gift by default. If the gift was paid with just bought Telegram Stars, then full value can be claimed
     public let defaultSellStarCount: Int64
 
-    /// Point in time (Unix timestamp) when the gift was send for the first time; for sold out gifts only
+    /// Point in time (Unix timestamp) when the gift was sent for the first time; for sold out gifts only
     public let firstSendDate: Int
 
     /// True, if the gift can be used to customize the user's name, and backgrounds of profile photo, reply header, and link preview
@@ -37,13 +37,13 @@ public struct Gift: Codable, Equatable, Hashable, Identifiable {
     /// True, if the gift can be bought only by Telegram Premium subscribers
     public let isPremium: Bool
 
-    /// Point in time (Unix timestamp) when the gift was send for the last time; for sold out gifts only
+    /// Point in time (Unix timestamp) when the gift was sent for the last time; for sold out gifts only
     public let lastSendDate: Int
 
     /// Point in time (Unix timestamp) when the gift can be sent next time by the current user; may be 0 or a date in the past. If the date is in the future, then call canSendGift to get the reason, why the gift can't be sent now
     public let nextSendDate: Int
 
-    /// Number of times the gift can be purchased all users; may be null if not limited
+    /// Number of times the gift can be purchased by all users; may be null if not limited
     public let overallLimits: GiftPurchaseLimits?
 
     /// Identifier of the chat that published the gift; 0 if none
@@ -67,7 +67,7 @@ public struct Gift: Codable, Equatable, Hashable, Identifiable {
 
     public init(
         auctionInfo: GiftAuction?,
-        background: GiftBackground,
+        background: GiftBackground?,
         defaultSellStarCount: Int64,
         firstSendDate: Int,
         hasColors: Bool,

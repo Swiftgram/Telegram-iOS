@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -25,6 +25,9 @@ public struct Message: Codable, Equatable, Hashable, Identifiable {
     /// Chat identifier
     public let chatId: Int64
 
+    /// Identifier that uniquely corresponds to the chat to which the message was sent; for bots only
+    public let chatInstance: TdInt64
+
     /// True, if the message contains an unread mention for the current user
     public let containsUnreadMention: Bool
 
@@ -37,11 +40,17 @@ public struct Message: Codable, Equatable, Hashable, Identifiable {
     /// Point in time (Unix timestamp) when the message was sent; 0 for scheduled messages
     public let date: Int
 
-    /// Point in time (Unix timestamp) when the message was last edited; 0 for scheduled messages
+    /// Point in time (Unix timestamp) when the message was last edited; 0 for scheduled messages. If getOption("show_message_edit_date_by_default") is true, then the date must be shown along with the message instead of the date when the message was sent
     public let editDate: Int
 
     /// Unique identifier of the effect added to the message; 0 if none
     public let effectId: TdInt64
+
+    /// Content of the message, which is visible only to the current user and must be shown instead of the regular content; may be null if none
+    public let ephemeralContent: EphemeralMessageContent?
+
+    /// Unique identifier of the ephemeral message if the message is ephemeral; for bots only
+    public let ephemeralMessageId: Int
 
     /// Information about fact-check added to the message; may be null if none
     public let factCheck: FactCheck?
@@ -73,11 +82,11 @@ public struct Message: Codable, Equatable, Hashable, Identifiable {
     /// True, if the message is outgoing
     public let isOutgoing: Bool
 
+    /// True, if the message is a suggested channel post which was paid in TON Grams; a warning must be shown if the message is deleted in less than getOption("suggested_post_lifetime_min") seconds after sending
+    public let isPaidGramSuggestedPost: Bool
+
     /// True, if the message is a suggested channel post which was paid in Telegram Stars; a warning must be shown if the message is deleted in less than getOption("suggested_post_lifetime_min") seconds after sending
     public let isPaidStarSuggestedPost: Bool
-
-    /// True, if the message is a suggested channel post which was paid in Toncoins; a warning must be shown if the message is deleted in less than getOption("suggested_post_lifetime_min") seconds after sending
-    public let isPaidTonSuggestedPost: Bool
 
     /// True, if the message is pinned
     public let isPinned: Bool
@@ -87,6 +96,9 @@ public struct Message: Codable, Equatable, Hashable, Identifiable {
 
     /// The number of Telegram Stars the sender paid to send the message
     public let paidMessageStarCount: Int64
+
+    /// Identifier of the user or the chat which received the ephemeral message; may be null. Always null for non-ephemeral messages
+    public let receiverId: MessageSender?
 
     /// Reply markup for the message; may be null if none
     public let replyMarkup: ReplyMarkup?
@@ -115,7 +127,7 @@ public struct Message: Codable, Equatable, Hashable, Identifiable {
     /// Identifier of the sender of the message
     public let senderId: MessageSender
 
-    /// Tag of the sender of the message in the supergroup at the time the message was sent; may be empty if none or unknown. For messages sent in basic groups or supergroup administrators, the current custom title or tag must be used instead
+    /// Tag of the sender of the message in the supergroup at the time the message was sent; may be empty if none or unknown. For messages sent in basic groups or by supergroup administrators, the current custom title or tag must be used instead
     public let senderTag: String
 
     /// The sending state of the message; may be null if the message isn't being sent and didn't fail to be sent
@@ -142,12 +154,15 @@ public struct Message: Codable, Equatable, Hashable, Identifiable {
         autoDeleteIn: Double,
         canBeSaved: Bool,
         chatId: Int64,
+        chatInstance: TdInt64,
         containsUnreadMention: Bool,
         containsUnreadPollVotes: Bool,
         content: MessageContent,
         date: Int,
         editDate: Int,
         effectId: TdInt64,
+        ephemeralContent: EphemeralMessageContent?,
+        ephemeralMessageId: Int,
         factCheck: FactCheck?,
         forwardInfo: MessageForwardInfo?,
         guestBotCallerId: MessageSender?,
@@ -158,11 +173,12 @@ public struct Message: Codable, Equatable, Hashable, Identifiable {
         isChannelPost: Bool,
         isFromOffline: Bool,
         isOutgoing: Bool,
+        isPaidGramSuggestedPost: Bool,
         isPaidStarSuggestedPost: Bool,
-        isPaidTonSuggestedPost: Bool,
         isPinned: Bool,
         mediaAlbumId: TdInt64,
         paidMessageStarCount: Int64,
+        receiverId: MessageSender?,
         replyMarkup: ReplyMarkup?,
         replyTo: MessageReplyTo?,
         restrictionInfo: RestrictionInfo?,
@@ -184,12 +200,15 @@ public struct Message: Codable, Equatable, Hashable, Identifiable {
         self.autoDeleteIn = autoDeleteIn
         self.canBeSaved = canBeSaved
         self.chatId = chatId
+        self.chatInstance = chatInstance
         self.containsUnreadMention = containsUnreadMention
         self.containsUnreadPollVotes = containsUnreadPollVotes
         self.content = content
         self.date = date
         self.editDate = editDate
         self.effectId = effectId
+        self.ephemeralContent = ephemeralContent
+        self.ephemeralMessageId = ephemeralMessageId
         self.factCheck = factCheck
         self.forwardInfo = forwardInfo
         self.guestBotCallerId = guestBotCallerId
@@ -200,11 +219,12 @@ public struct Message: Codable, Equatable, Hashable, Identifiable {
         self.isChannelPost = isChannelPost
         self.isFromOffline = isFromOffline
         self.isOutgoing = isOutgoing
+        self.isPaidGramSuggestedPost = isPaidGramSuggestedPost
         self.isPaidStarSuggestedPost = isPaidStarSuggestedPost
-        self.isPaidTonSuggestedPost = isPaidTonSuggestedPost
         self.isPinned = isPinned
         self.mediaAlbumId = mediaAlbumId
         self.paidMessageStarCount = paidMessageStarCount
+        self.receiverId = receiverId
         self.replyMarkup = replyMarkup
         self.replyTo = replyTo
         self.restrictionInfo = restrictionInfo

@@ -1,12 +1,21 @@
 {
   "pins" : [
     {
+      "identity" : "swift-qrcode-generator",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/fwcd/swift-qrcode-generator",
+      "state" : {
+        "revision" : "2b1980b825f08a81ccc762b0c4d17fcde9d5e953",
+        "version" : "2.0.2"
+      }
+    },
+    {
       "identity" : "tdlibframework",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Swiftgram/TDLibFramework",
       "state" : {
-        "revision" : "0fbc375942d5af2effd42699664cd04045b2b754",
-        "version" : "1.8.64-49b3bcbb"
+        "revision" : "b690d210792739ce43b8364b7509a0f6d77163b1",
+        "version" : "1.8.70-fe61d641"
       }
     }
   ],

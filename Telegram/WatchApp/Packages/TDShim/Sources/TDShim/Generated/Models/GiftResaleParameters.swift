@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -13,24 +13,24 @@ import Foundation
 /// Describes parameters of a unique gift available for resale
 public struct GiftResaleParameters: Codable, Equatable, Hashable {
 
+    /// Resale price of the gift in 1/100 of TON Gram
+    public let gramCentCount: Int64
+
+    /// True, if the gift can be bought only using Grams
+    public let gramOnly: Bool
+
     /// Resale price of the gift in Telegram Stars
     public let starCount: Int64
 
-    /// Resale price of the gift in 1/100 of Toncoin
-    public let toncoinCentCount: Int64
-
-    /// True, if the gift can be bought only using Toncoins
-    public let toncoinOnly: Bool
-
 
     public init(
-        starCount: Int64,
-        toncoinCentCount: Int64,
-        toncoinOnly: Bool
+        gramCentCount: Int64,
+        gramOnly: Bool,
+        starCount: Int64
     ) {
+        self.gramCentCount = gramCentCount
+        self.gramOnly = gramOnly
         self.starCount = starCount
-        self.toncoinCentCount = toncoinCentCount
-        self.toncoinOnly = toncoinOnly
     }
 }
 

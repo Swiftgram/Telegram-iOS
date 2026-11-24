@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -28,8 +28,8 @@ public struct PollOption: Codable, Equatable, Hashable, Identifiable {
     /// True, if the option was chosen by the user
     public let isChosen: Bool
 
-    /// Option media; may be null if none. If present, currently, can be only of the types messageAnimation, messageLocation, messagePhoto, messageSticker, messageVenue, or messageVideo without caption
-    public let media: MessageContent?
+    /// Option media; may be null if none. If present, currently, can be only of the types pollMediaAnimation, pollMediaLink, pollMediaLocation, pollMediaPhoto, pollMediaSticker, pollMediaVenue, or pollMediaVideo
+    public let media: PollMedia?
 
     /// Identifiers of recent voters for the option, if the poll is non-anonymous and poll results are available
     public let recentVoterIds: [MessageSender]
@@ -50,7 +50,7 @@ public struct PollOption: Codable, Equatable, Hashable, Identifiable {
         id: String,
         isBeingChosen: Bool,
         isChosen: Bool,
-        media: MessageContent?,
+        media: PollMedia?,
         recentVoterIds: [MessageSender],
         text: FormattedText,
         votePercentage: Int,

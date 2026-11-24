@@ -77,7 +77,7 @@ private func pinnedSnippetPhrase(target: CachedMessage?) -> String {
     case .messageVoiceNote: return "a voice message"
     case .messageAudio:    return "a music file"
     case .messageDocument: return "a document"
-    case .messageLocation: return "a location"
+    case .messageLocation, .messageLiveLocation: return "a location"
     case .messageVenue:    return "a venue"
     case .messageContact:  return "a contact"
     case .messagePoll:     return "a poll"

@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -22,7 +22,7 @@ public struct Animation: Codable, Equatable, Hashable {
     /// Original name of the file; as defined by the sender
     public let fileName: String
 
-    /// True, if stickers were added to the animation. The list of corresponding sticker set can be received using getAttachedStickerSets
+    /// True, if stickers were added to the animation. The list of corresponding sticker sets can be received using getAttachedStickerSets
     public let hasStickers: Bool
 
     /// Height of the animation

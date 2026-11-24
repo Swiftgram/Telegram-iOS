@@ -77,8 +77,8 @@ extension CachedChat {
 
     static func extractDraftText(_ draft: DraftMessage?) -> String? {
         guard let draft else { return nil }
-        if case .inputMessageText(let inputText) = draft.inputMessageText {
-            return inputText.text.text
+        if case .draftMessageContentText(let content) = draft.content {
+            return content.text.text
         }
         return ""
     }
