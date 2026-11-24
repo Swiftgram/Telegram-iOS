@@ -1,4 +1,5 @@
 import SwiftUI
+import WatchKit
 
 /// Where `AccountsListView` should appear from. Sheets layer on top of the
 /// current view; `.push` requires the caller to own a `NavigationStack`.
@@ -110,6 +111,11 @@ extension EnvironmentValues {
 /// both fire on watchOS 11 (a `Button` with an attached long press fires its
 /// tap instead). The long press opens the account switcher when one is in
 /// the environment.
+///
+/// A primitive style draws no pressed state, so the row takes one from the
+/// long press's `onPressingChanged`: it reports touch-down at once, and the
+/// end of the touch on release, on reaching the minimum duration, or when the
+/// finger moves off (a scroll).
 private struct AccountSwitcherRowButtonStyle: PrimitiveButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         AccountSwitcherRowButton(configuration: configuration)
@@ -119,17 +125,23 @@ private struct AccountSwitcherRowButtonStyle: PrimitiveButtonStyle {
 private struct AccountSwitcherRowButton: View {
     let configuration: PrimitiveButtonStyleConfiguration
     @Environment(\.accountSwitcherLongPress) private var longPress
+    @State private var isPressed = false
 
     var body: some View {
-        let label = configuration.label
+        configuration.label
             .contentShape(Rectangle())
+            .scaleEffect(isPressed ? 0.96 : 1)
+            .opacity(isPressed ? 0.7 : 1)
+            .animation(.easeOut(duration: 0.12), value: isPressed)
             .onTapGesture { configuration.trigger() }
+            .onLongPressGesture(minimumDuration: 0.6) {
+                guard let longPress else { return }
+                WKInterfaceDevice.current().play(.click)
+                longPress.perform()
+            } onPressingChanged: { pressing in
+                isPressed = pressing
+            }
             .accessibilityAddTraits(.isButton)
-        if let longPress {
-            label.onLongPressGesture(minimumDuration: 0.6) { longPress.perform() }
-        } else {
-            label
-        }
     }
 }
 

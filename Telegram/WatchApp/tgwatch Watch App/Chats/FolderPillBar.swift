@@ -81,12 +81,7 @@ struct FolderPillBar: View {
                         )
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
-                    // watchOS: List + ScrollView(.horizontal) gesture system can swallow
-                    // Button taps. A high-priority TapGesture on the button itself
-                    // ensures the tap reaches the pill even when the outer gestures are
-                    // competing. The Button action still fires for visual-feedback purposes.
-                    .highPriorityGesture(TapGesture().onEnded { onSelect(pill) })
+                    .modifier(PillButtonGestures(onTap: { onSelect(pill) }))
                     .accessibilityIdentifier("folderPill-\(pill.id)")
                 }
             }
@@ -95,5 +90,27 @@ struct FolderPillBar: View {
         }
         .id("folderPillBar")
         .focusable(false)
+    }
+}
+
+/// How a pill takes its gestures.
+private struct PillButtonGestures: ViewModifier {
+    let onTap: () -> Void
+
+    func body(content: Content) -> some View {
+        if #available(watchOS 26.0, *) {
+            // watchOS-26: List + ScrollView(.horizontal) gesture system can swallow
+            // Button taps. A high-priority TapGesture on the button itself
+            // ensures the tap reaches the pill even when the outer gestures are
+            // competing.
+            content
+                .buttonStyle(.plain)
+                .highPriorityGesture(TapGesture().onEnded { onTap() })
+        } else {
+            // watchOS-11: pills sit in a ScrollView, not a List, and the row style's
+            // own tap gesture reaches them. Its long press opens the account
+            // switcher, which a pill `Button` otherwise swallows there.
+            content.accountSwitcherRowButtonStyle()
+        }
     }
 }
