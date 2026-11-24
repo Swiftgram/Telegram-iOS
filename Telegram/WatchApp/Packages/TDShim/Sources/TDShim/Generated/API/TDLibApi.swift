@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -239,7 +239,7 @@ public class TDLibApi {
         return try await self.run(query: query)
     }
 
-    /// Loads more chats from a chat list. The loaded chats and their positions in the chat list will be sent through updates. Chats are sorted by the pair (chat.position.order, chat.id) in descending order. Returns a 404 error if all chats have been loaded
+    /// Loads more chats from a chat list. The loaded chats and their positions in the chat list will be sent through updates. Chats are sorted by the pair (chatPosition.order, chat.id) in descending order. Returns a 404 error if all chats have been loaded
     /// - Parameter chatList: The chat list in which to load chats; pass null to load chats from the main chat list
     /// - Parameter limit: The maximum number of chats to be loaded. For optimal performance, the number of loaded chats is chosen by TDLib and can be smaller than the specified limit, even if the end of the list is not reached
     /// - Returns: A 404 error if all chats have been loaded
@@ -255,7 +255,7 @@ public class TDLibApi {
         self.run(query: query, completion: completion)
     }
 
-    /// Loads more chats from a chat list. The loaded chats and their positions in the chat list will be sent through updates. Chats are sorted by the pair (chat.position.order, chat.id) in descending order. Returns a 404 error if all chats have been loaded
+    /// Loads more chats from a chat list. The loaded chats and their positions in the chat list will be sent through updates. Chats are sorted by the pair (chatPosition.order, chat.id) in descending order. Returns a 404 error if all chats have been loaded
     /// - Parameter chatList: The chat list in which to load chats; pass null to load chats from the main chat list
     /// - Parameter limit: The maximum number of chats to be loaded. For optimal performance, the number of loaded chats is chosen by TDLib and can be smaller than the specified limit, even if the end of the list is not reached
     /// - Returns: A 404 error if all chats have been loaded
@@ -272,13 +272,13 @@ public class TDLibApi {
         return try await self.run(query: query)
     }
 
-    /// Returns messages in a chat. The messages are returned in reverse chronological order (i.e., in order of decreasing message_id). For optimal performance, the number of returned messages is chosen by TDLib. This is an offline method if only_local is true
+    /// Returns messages in a chat. The messages are returned in reverse chronological order (i.e., in order of decreasing message.id). For optimal performance, the number of returned messages is chosen by TDLib. This is an offline method if only_local is true
     /// - Parameter chatId: Chat identifier
     /// - Parameter fromMessageId: Identifier of the message starting from which history must be fetched; use 0 to get results from the last message
     /// - Parameter limit: The maximum number of messages to be returned; must be positive and can't be greater than 100. If the offset is negative, then the limit must be greater than or equal to -offset. For optimal performance, the number of returned messages is chosen by TDLib and can be smaller than the specified limit
     /// - Parameter offset: Specify 0 to get results from exactly the message from_message_id or a negative number from -99 to -1 to get additionally -offset newer messages
     /// - Parameter onlyLocal: Pass true to get only messages that are available without sending network requests
-    /// - Returns: Messages in a chat. The messages are returned in reverse chronological order (i.e., in order of decreasing message_id). For optimal performance, the number of returned messages is chosen by TDLib
+    /// - Returns: Messages in a chat. The messages are returned in reverse chronological order (i.e., in order of decreasing message. For optimal performance, the number of returned messages is chosen by TDLib
     public final func getChatHistory(
         chatId: Int64?,
         fromMessageId: Int64?,
@@ -297,13 +297,13 @@ public class TDLibApi {
         self.run(query: query, completion: completion)
     }
 
-    /// Returns messages in a chat. The messages are returned in reverse chronological order (i.e., in order of decreasing message_id). For optimal performance, the number of returned messages is chosen by TDLib. This is an offline method if only_local is true
+    /// Returns messages in a chat. The messages are returned in reverse chronological order (i.e., in order of decreasing message.id). For optimal performance, the number of returned messages is chosen by TDLib. This is an offline method if only_local is true
     /// - Parameter chatId: Chat identifier
     /// - Parameter fromMessageId: Identifier of the message starting from which history must be fetched; use 0 to get results from the last message
     /// - Parameter limit: The maximum number of messages to be returned; must be positive and can't be greater than 100. If the offset is negative, then the limit must be greater than or equal to -offset. For optimal performance, the number of returned messages is chosen by TDLib and can be smaller than the specified limit
     /// - Parameter offset: Specify 0 to get results from exactly the message from_message_id or a negative number from -99 to -1 to get additionally -offset newer messages
     /// - Parameter onlyLocal: Pass true to get only messages that are available without sending network requests
-    /// - Returns: Messages in a chat. The messages are returned in reverse chronological order (i.e., in order of decreasing message_id). For optimal performance, the number of returned messages is chosen by TDLib
+    /// - Returns: Messages in a chat. The messages are returned in reverse chronological order (i.e., in order of decreasing message. For optimal performance, the number of returned messages is chosen by TDLib
     @available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
     public final func getChatHistory(
         chatId: Int64?,
@@ -381,7 +381,7 @@ public class TDLibApi {
     /// Changes the user answer to a poll
     /// - Parameter chatId: Identifier of the chat to which the poll belongs
     /// - Parameter messageId: Identifier of the message containing the poll
-    /// - Parameter optionIds: 0-based identifiers of answer options, chosen by the user. User can choose more than 1 answer option only is the poll allows multiple answers
+    /// - Parameter optionIds: 0-based identifiers of answer options, chosen by the user. User can choose more than 1 answer option only if the poll allows multiple answers
     public final func setPollAnswer(
         chatId: Int64?,
         messageId: Int64?,
@@ -399,7 +399,7 @@ public class TDLibApi {
     /// Changes the user answer to a poll
     /// - Parameter chatId: Identifier of the chat to which the poll belongs
     /// - Parameter messageId: Identifier of the message containing the poll
-    /// - Parameter optionIds: 0-based identifiers of answer options, chosen by the user. User can choose more than 1 answer option only is the poll allows multiple answers
+    /// - Parameter optionIds: 0-based identifiers of answer options, chosen by the user. User can choose more than 1 answer option only if the poll allows multiple answers
     @available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
     @discardableResult
     public final func setPollAnswer(
@@ -506,7 +506,7 @@ public class TDLibApi {
 
     /// Changes the draft message in a chat or a topic
     /// - Parameter chatId: Chat identifier
-    /// - Parameter draftMessage: New draft message; pass null to remove the draft. All files in draft message content must be of the type inputFileLocal. Media thumbnails and captions are ignored
+    /// - Parameter draftMessage: New draft message; pass null to remove the draft
     /// - Parameter topicId: Topic in which the draft will be changed; pass null to change the draft for the chat itself
     public final func setChatDraftMessage(
         chatId: Int64?,
@@ -524,7 +524,7 @@ public class TDLibApi {
 
     /// Changes the draft message in a chat or a topic
     /// - Parameter chatId: Chat identifier
-    /// - Parameter draftMessage: New draft message; pass null to remove the draft. All files in draft message content must be of the type inputFileLocal. Media thumbnails and captions are ignored
+    /// - Parameter draftMessage: New draft message; pass null to remove the draft
     /// - Parameter topicId: Topic in which the draft will be changed; pass null to change the draft for the chat itself
     @available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
     @discardableResult

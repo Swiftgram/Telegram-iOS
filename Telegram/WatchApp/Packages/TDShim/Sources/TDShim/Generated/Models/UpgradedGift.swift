@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -15,6 +15,9 @@ public struct UpgradedGift: Codable, Equatable, Hashable, Identifiable {
 
     /// Backdrop of the upgraded gift
     public let backdrop: UpgradedGiftBackdrop
+
+    /// True, if the gift NFT can be used as background_nft_address in setTonWalletCardStickers
+    public let canBeTonWalletCardBackground: Bool
 
     /// True, if an offer to purchase the gift can be sent using sendGiftPurchaseOffer
     public let canSendPurchaseOffer: Bool
@@ -37,7 +40,7 @@ public struct UpgradedGift: Codable, Equatable, Hashable, Identifiable {
     /// True, if the gift was used to craft another gift
     public let isBurned: Bool
 
-    /// True, if the gift was craft from another gifts
+    /// True, if the gift was crafted from other gifts
     public let isCrafted: Bool
 
     /// True, if the original gift could have been bought only by Telegram Premium subscribers
@@ -103,6 +106,7 @@ public struct UpgradedGift: Codable, Equatable, Hashable, Identifiable {
 
     public init(
         backdrop: UpgradedGiftBackdrop,
+        canBeTonWalletCardBackground: Bool,
         canSendPurchaseOffer: Bool,
         colors: UpgradedGiftColors?,
         craftProbabilityPerMille: Int,
@@ -133,6 +137,7 @@ public struct UpgradedGift: Codable, Equatable, Hashable, Identifiable {
         valueUsdAmount: Int64
     ) {
         self.backdrop = backdrop
+        self.canBeTonWalletCardBackground = canBeTonWalletCardBackground
         self.canSendPurchaseOffer = canSendPurchaseOffer
         self.colors = colors
         self.craftProbabilityPerMille = craftProbabilityPerMille

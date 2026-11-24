@@ -68,7 +68,7 @@ private func replySnippet(_ content: MessageContent) -> String {
         return m.caption.text.isEmpty ? (m.audio.title.isEmpty ? "Music" : m.audio.title) : m.caption.text
     case .messageDocument:
         return "Document"
-    case .messageLocation:
+    case .messageLocation, .messageLiveLocation:
         return "Location"
     case .messageVenue(let m):
         return m.venue.title.isEmpty ? "Location" : m.venue.title

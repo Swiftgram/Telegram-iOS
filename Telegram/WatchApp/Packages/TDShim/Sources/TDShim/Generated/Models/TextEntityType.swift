@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -36,6 +36,9 @@ public indirect enum TextEntityType: Codable, Equatable, Hashable {
 
     /// A bank card number. The getBankCardInfo method can be used to get information about the bank card
     case textEntityTypeBankCardNumber
+
+    /// An address in the TON blockchain
+    case textEntityTypeTonAddress
 
     /// A bold text
     case textEntityTypeBold
@@ -70,7 +73,7 @@ public indirect enum TextEntityType: Codable, Equatable, Hashable {
     /// A text description shown instead of a raw URL
     case textEntityTypeTextUrl(TextEntityTypeTextUrl)
 
-    /// A text shows instead of a raw mention of the user (e.g., when the user has no username)
+    /// A text shown instead of a raw mention of the user (e.g., when the user has no username)
     case textEntityTypeMentionName(TextEntityTypeMentionName)
 
     /// A custom emoji. The text behind a custom emoji must be an emoji. Only premium users can use premium custom emoji
@@ -94,6 +97,7 @@ public indirect enum TextEntityType: Codable, Equatable, Hashable {
         case textEntityTypeEmailAddress
         case textEntityTypePhoneNumber
         case textEntityTypeBankCardNumber
+        case textEntityTypeTonAddress
         case textEntityTypeBold
         case textEntityTypeItalic
         case textEntityTypeUnderline
@@ -135,6 +139,8 @@ public indirect enum TextEntityType: Codable, Equatable, Hashable {
             self = .textEntityTypePhoneNumber
         case .textEntityTypeBankCardNumber:
             self = .textEntityTypeBankCardNumber
+        case .textEntityTypeTonAddress:
+            self = .textEntityTypeTonAddress
         case .textEntityTypeBold:
             self = .textEntityTypeBold
         case .textEntityTypeItalic:
@@ -193,6 +199,8 @@ public indirect enum TextEntityType: Codable, Equatable, Hashable {
             try container.encode(Kind.textEntityTypePhoneNumber, forKey: .type)
         case .textEntityTypeBankCardNumber:
             try container.encode(Kind.textEntityTypeBankCardNumber, forKey: .type)
+        case .textEntityTypeTonAddress:
+            try container.encode(Kind.textEntityTypeTonAddress, forKey: .type)
         case .textEntityTypeBold:
             try container.encode(Kind.textEntityTypeBold, forKey: .type)
         case .textEntityTypeItalic:
@@ -259,7 +267,7 @@ public struct TextEntityTypeTextUrl: Codable, Equatable, Hashable {
     }
 }
 
-/// A text shows instead of a raw mention of the user (e.g., when the user has no username)
+/// A text shown instead of a raw mention of the user (e.g., when the user has no username)
 public struct TextEntityTypeMentionName: Codable, Equatable, Hashable {
 
     /// Identifier of the mentioned user

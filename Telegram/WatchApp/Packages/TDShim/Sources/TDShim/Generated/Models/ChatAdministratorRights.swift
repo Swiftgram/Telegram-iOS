@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -55,11 +55,14 @@ public struct ChatAdministratorRights: Codable, Equatable, Hashable {
     /// True, if the administrator can create new chat stories, or edit and delete posted stories; applicable to supergroups and channels only
     public let canPostStories: Bool
 
-    /// True, if the administrator can add new administrators with a subset of their own privileges or demote administrators that were directly or indirectly promoted by them
+    /// True, if the administrator can add new administrators with a subset of their own privileges or demote administrators that were directly or indirectly promoted by them; applicable to supergroups and channels only
     public let canPromoteMembers: Bool
 
     /// True, if the administrator can restrict, ban, or unban chat members or view supergroup statistics
     public let canRestrictMembers: Bool
+
+    /// True, if the administrator can manage and send welcome messages
+    public let canSendWelcomeMessages: Bool
 
     /// True, if the administrator isn't shown in the chat member list and sends messages anonymously; applicable to supergroups only
     public let isAnonymous: Bool
@@ -82,6 +85,7 @@ public struct ChatAdministratorRights: Codable, Equatable, Hashable {
         canPostStories: Bool,
         canPromoteMembers: Bool,
         canRestrictMembers: Bool,
+        canSendWelcomeMessages: Bool,
         isAnonymous: Bool
     ) {
         self.canChangeInfo = canChangeInfo
@@ -100,6 +104,7 @@ public struct ChatAdministratorRights: Codable, Equatable, Hashable {
         self.canPostStories = canPostStories
         self.canPromoteMembers = canPromoteMembers
         self.canRestrictMembers = canRestrictMembers
+        self.canSendWelcomeMessages = canSendWelcomeMessages
         self.isAnonymous = isAnonymous
     }
 }

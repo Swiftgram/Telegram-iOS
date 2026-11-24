@@ -3,14 +3,14 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
 
 
-/// Returns messages in a chat. The messages are returned in reverse chronological order (i.e., in order of decreasing message_id). For optimal performance, the number of returned messages is chosen by TDLib. This is an offline method if only_local is true
+/// Returns messages in a chat. The messages are returned in reverse chronological order (i.e., in order of decreasing message.id). For optimal performance, the number of returned messages is chosen by TDLib. This is an offline method if only_local is true
 public struct GetChatHistory: Codable, Equatable, Hashable {
 
     /// Chat identifier

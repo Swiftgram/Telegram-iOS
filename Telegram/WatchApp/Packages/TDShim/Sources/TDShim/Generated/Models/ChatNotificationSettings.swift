@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -37,28 +37,28 @@ public struct ChatNotificationSettings: Codable, Equatable, Hashable {
     /// Identifier of the notification sound to be played for stories; 0 if sound is disabled
     public let storySoundId: TdInt64
 
-    /// If true, the value for the relevant type of chat or the forum chat is used instead of disable_mention_notifications
+    /// If true, the value for the topic's chat, the chat's community, or the relevant type of chat is used instead of disable_mention_notifications
     public let useDefaultDisableMentionNotifications: Bool
 
-    /// If true, the value for the relevant type of chat or the forum chat is used instead of disable_pinned_message_notifications
+    /// If true, the value for the topic's chat, the chat's community, or the relevant type of chat is used instead of disable_pinned_message_notifications
     public let useDefaultDisablePinnedMessageNotifications: Bool
 
-    /// If true, the value for the relevant type of chat or the forum chat is used instead of mute_for
+    /// If true, the value for the topic's chat, the chat's community, or the relevant type of chat is used instead of mute_for
     public let useDefaultMuteFor: Bool
 
-    /// If true, the value for the relevant type of chat is used instead of mute_stories
+    /// If true, the value for the chat's community or the relevant type of chat is used instead of mute_stories
     public let useDefaultMuteStories: Bool
 
-    /// If true, the value for the relevant type of chat or the forum chat is used instead of show_preview
+    /// If true, the value for the topic's chat, the chat's community, or the relevant type of chat is used instead of show_preview
     public let useDefaultShowPreview: Bool
 
-    /// If true, the value for the relevant type of chat is used instead of show_story_poster
+    /// If true, the value for the chat's community or the relevant type of chat is used instead of show_story_poster
     public let useDefaultShowStoryPoster: Bool
 
-    /// If true, the value for the relevant type of chat or the forum chat is used instead of sound_id
+    /// If true, the value for the topic's chat, the chat's community, or the relevant type of chat is used instead of sound_id
     public let useDefaultSound: Bool
 
-    /// If true, the value for the relevant type of chat is used instead of story_sound_id
+    /// If true, the value for the chat's community or the relevant type of chat is used instead of story_sound_id
     public let useDefaultStorySound: Bool
 
 

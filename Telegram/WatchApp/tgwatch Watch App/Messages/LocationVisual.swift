@@ -1,8 +1,8 @@
 import Foundation
 import TDShim
 
-/// Per-location data the bubble consumes. Projected from `messageLocation`
-/// (static or live) and `messageVenue`. Mutually exclusive with the other
+/// Per-location data the bubble consumes. Projected from `messageLocation`,
+/// `messageLiveLocation` and `messageVenue`. Mutually exclusive with the other
 /// `MessageBubble` media fields. The map image itself is rendered locally by
 /// `MapSnapshotRenderer` in the view layer — there is no TDLib file to plumb.
 struct LocationVisual: Equatable, Hashable {
@@ -13,18 +13,18 @@ struct LocationVisual: Equatable, Hashable {
     let title: String?
     /// Venue address; nil for a plain location.
     let address: String?
-    /// True when `messageLocation.livePeriod != 0`; always false for a venue.
+    /// True for `messageLiveLocation`; always false for a plain location or a venue.
     let isLive: Bool
     /// Live-location direction in degrees (1–360); 0 = unknown / not live.
     let heading: Int
-    /// True when a live location has stopped updating (`livePeriod != 0 && expiresIn == 0`).
+    /// True when a live location has stopped updating (`expiresIn == 0`).
     let isExpired: Bool
     /// Last-update time of a live location (its edit time, falling back to send
     /// time); nil for static locations and venues. Drives the "Updated …" caption.
     let liveUpdatedAt: Foundation.Date?
 }
 
-/// Builds a `LocationVisual` for `messageLocation` / `messageVenue` content,
+/// Builds a `LocationVisual` for `messageLocation` / `messageLiveLocation` / `messageVenue` content,
 /// or returns `nil` for any other content. `messageDate` is the message's
 /// last-update time (used as the live-location "Updated …" basis). Internal
 /// (not `private`) so `LocationVisualTests` can exercise it directly via
@@ -32,16 +32,27 @@ struct LocationVisual: Equatable, Hashable {
 func locationVisual(for content: MessageContent, messageDate: Foundation.Date? = nil) -> LocationVisual? {
     switch content {
     case .messageLocation(let m):
-        let isLive = m.livePeriod != 0
         return LocationVisual(
             latitude: m.location.latitude,
             longitude: m.location.longitude,
             title: nil,
             address: nil,
-            isLive: isLive,
-            heading: m.heading,
-            isExpired: isLive && m.expiresIn == 0,
-            liveUpdatedAt: isLive ? messageDate : nil
+            isLive: false,
+            heading: 0,
+            isExpired: false,
+            liveUpdatedAt: nil
+        )
+    case .messageLiveLocation(let m):
+        // TDLib 1.8.70 split live locations out of `messageLocation`.
+        return LocationVisual(
+            latitude: m.location.location.latitude,
+            longitude: m.location.location.longitude,
+            title: nil,
+            address: nil,
+            isLive: true,
+            heading: m.location.heading,
+            isExpired: m.expiresIn == 0,
+            liveUpdatedAt: messageDate
         )
     case .messageVenue(let m):
         return LocationVisual(

@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -22,6 +22,9 @@ public indirect enum InputMessageReplyTo: Codable, Equatable, Hashable {
     /// Describes a story to be replied
     case inputMessageReplyToStory(InputMessageReplyToStory)
 
+    /// Describes an ephemeral message to be replied; for bots only
+    case inputMessageReplyToEphemeralMessage(InputMessageReplyToEphemeralMessage)
+
     /// Decoded when the @type is not one of the known cases (forward-compatible).
     case unsupported
 
@@ -29,6 +32,7 @@ public indirect enum InputMessageReplyTo: Codable, Equatable, Hashable {
         case inputMessageReplyToMessage
         case inputMessageReplyToExternalMessage
         case inputMessageReplyToStory
+        case inputMessageReplyToEphemeralMessage
     }
 
     public init(from decoder: Decoder) throws {
@@ -48,6 +52,9 @@ public indirect enum InputMessageReplyTo: Codable, Equatable, Hashable {
         case .inputMessageReplyToStory:
             let value = try InputMessageReplyToStory(from: decoder)
             self = .inputMessageReplyToStory(value)
+        case .inputMessageReplyToEphemeralMessage:
+            let value = try InputMessageReplyToEphemeralMessage(from: decoder)
+            self = .inputMessageReplyToEphemeralMessage(value)
         }
     }
 
@@ -62,6 +69,9 @@ public indirect enum InputMessageReplyTo: Codable, Equatable, Hashable {
             try value.encode(to: encoder)
         case .inputMessageReplyToStory(let value):
             try container.encode(Kind.inputMessageReplyToStory, forKey: .type)
+            try value.encode(to: encoder)
+        case .inputMessageReplyToEphemeralMessage(let value):
+            try container.encode(Kind.inputMessageReplyToEphemeralMessage, forKey: .type)
             try value.encode(to: encoder)
         case .unsupported:
             try container.encode("unsupported", forKey: .type)
@@ -148,6 +158,18 @@ public struct InputMessageReplyToStory: Codable, Equatable, Hashable {
     ) {
         self.storyId = storyId
         self.storyPosterChatId = storyPosterChatId
+    }
+}
+
+/// Describes an ephemeral message to be replied; for bots only
+public struct InputMessageReplyToEphemeralMessage: Codable, Equatable, Hashable {
+
+    /// The identifier of the ephemeral message to be replied
+    public let ephemeralMessageId: Int
+
+
+    public init(ephemeralMessageId: Int) {
+        self.ephemeralMessageId = ephemeralMessageId
     }
 }
 

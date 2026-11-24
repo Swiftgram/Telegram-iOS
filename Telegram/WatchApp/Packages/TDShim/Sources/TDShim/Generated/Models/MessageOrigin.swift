@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -16,7 +16,7 @@ public indirect enum MessageOrigin: Codable, Equatable, Hashable {
     /// The message was originally sent by a known user
     case messageOriginUser(MessageOriginUser)
 
-    /// The message was originally sent by a user, which is hidden by their privacy settings
+    /// The message was originally sent by a user who is hidden by their privacy settings
     case messageOriginHiddenUser(MessageOriginHiddenUser)
 
     /// The message was originally sent on behalf of a chat
@@ -91,7 +91,7 @@ public struct MessageOriginUser: Codable, Equatable, Hashable {
     }
 }
 
-/// The message was originally sent by a user, which is hidden by their privacy settings
+/// The message was originally sent by a user who is hidden by their privacy settings
 public struct MessageOriginHiddenUser: Codable, Equatable, Hashable {
 
     /// Name of the sender

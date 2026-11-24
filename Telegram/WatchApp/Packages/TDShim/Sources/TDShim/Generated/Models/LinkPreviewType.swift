@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -22,7 +22,7 @@ public indirect enum LinkPreviewType: Codable, Equatable, Hashable {
     /// The link is a link to an app at App Store or Google Play
     case linkPreviewTypeApp(LinkPreviewTypeApp)
 
-    /// The link is a link to a web site
+    /// The link is a link to a website
     case linkPreviewTypeArticle(LinkPreviewTypeArticle)
 
     /// The link is a link to an audio
@@ -82,7 +82,7 @@ public indirect enum LinkPreviewType: Codable, Equatable, Hashable {
     /// The link is a link to a Telegram Premium gift code
     case linkPreviewTypePremiumGiftCode
 
-    /// The link is a link to a dialog for creating of a managed bot
+    /// The link is a link to a dialog for creating a managed bot
     case linkPreviewTypeRequestManagedBot
 
     /// The link is a link to a shareable chat folder
@@ -468,7 +468,7 @@ public struct LinkPreviewTypeApp: Codable, Equatable, Hashable {
     }
 }
 
-/// The link is a link to a web site
+/// The link is a link to a website
 public struct LinkPreviewTypeArticle: Codable, Equatable, Hashable {
 
     /// Article's main photo; may be null

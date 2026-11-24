@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -22,6 +22,9 @@ public indirect enum ProxyType: Codable, Equatable, Hashable {
     /// An MTProto proxy server
     case proxyTypeMtproto(ProxyTypeMtproto)
 
+    /// A web proxy server. MTProto traffic goes through an HTTPS relay page hosted by the application in a hidden web view; see updateWebProxyCarrierOpened. The proxy server must be a domain name and the port must be 443
+    case proxyTypeWeb(ProxyTypeWeb)
+
     /// Decoded when the @type is not one of the known cases (forward-compatible).
     case unsupported
 
@@ -29,6 +32,7 @@ public indirect enum ProxyType: Codable, Equatable, Hashable {
         case proxyTypeSocks5
         case proxyTypeHttp
         case proxyTypeMtproto
+        case proxyTypeWeb
     }
 
     public init(from decoder: Decoder) throws {
@@ -48,6 +52,9 @@ public indirect enum ProxyType: Codable, Equatable, Hashable {
         case .proxyTypeMtproto:
             let value = try ProxyTypeMtproto(from: decoder)
             self = .proxyTypeMtproto(value)
+        case .proxyTypeWeb:
+            let value = try ProxyTypeWeb(from: decoder)
+            self = .proxyTypeWeb(value)
         }
     }
 
@@ -62,6 +69,9 @@ public indirect enum ProxyType: Codable, Equatable, Hashable {
             try value.encode(to: encoder)
         case .proxyTypeMtproto(let value):
             try container.encode(Kind.proxyTypeMtproto, forKey: .type)
+            try value.encode(to: encoder)
+        case .proxyTypeWeb(let value):
+            try container.encode(Kind.proxyTypeWeb, forKey: .type)
             try value.encode(to: encoder)
         case .unsupported:
             try container.encode("unsupported", forKey: .type)
@@ -120,6 +130,25 @@ public struct ProxyTypeMtproto: Codable, Equatable, Hashable {
 
 
     public init(secret: String) {
+        self.secret = secret
+    }
+}
+
+/// A web proxy server. MTProto traffic goes through an HTTPS relay page hosted by the application in a hidden web view; see updateWebProxyCarrierOpened. The proxy server must be a domain name and the port must be 443
+public struct ProxyTypeWeb: Codable, Equatable, Hashable {
+
+    /// Base path of the relay on the server, without leading and trailing slashes; may be empty. Consists of 0-128 characters; each "/"-separated segment must match [A-Za-z0-9][A-Za-z0-9_-]*
+    public let path: String
+
+    /// The MTProto proxy secret in hexadecimal encoding; must be 16 bytes long, optionally prefixed with the byte 0xdd
+    public let secret: String
+
+
+    public init(
+        path: String,
+        secret: String
+    ) {
+        self.path = path
         self.secret = secret
     }
 }

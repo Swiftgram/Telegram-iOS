@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -49,8 +49,8 @@ public indirect enum SettingsSection: Codable, Equatable, Hashable {
     /// The Telegram Star balance and transaction section
     case settingsSectionMyStars(SettingsSectionMyStars)
 
-    /// The Toncoin balance and transaction section
-    case settingsSectionMyToncoins
+    /// The TON Gram balance and transaction section
+    case settingsSectionMyGrams
 
     /// The notification settings section
     case settingsSectionNotifications(SettingsSectionNotifications)
@@ -92,7 +92,7 @@ public indirect enum SettingsSection: Codable, Equatable, Hashable {
         case settingsSectionInAppBrowser
         case settingsSectionLanguage
         case settingsSectionMyStars
-        case settingsSectionMyToncoins
+        case settingsSectionMyGrams
         case settingsSectionNotifications
         case settingsSectionPowerSaving
         case settingsSectionPremium
@@ -144,8 +144,8 @@ public indirect enum SettingsSection: Codable, Equatable, Hashable {
         case .settingsSectionMyStars:
             let value = try SettingsSectionMyStars(from: decoder)
             self = .settingsSectionMyStars(value)
-        case .settingsSectionMyToncoins:
-            self = .settingsSectionMyToncoins
+        case .settingsSectionMyGrams:
+            self = .settingsSectionMyGrams
         case .settingsSectionNotifications:
             let value = try SettingsSectionNotifications(from: decoder)
             self = .settingsSectionNotifications(value)
@@ -206,8 +206,8 @@ public indirect enum SettingsSection: Codable, Equatable, Hashable {
         case .settingsSectionMyStars(let value):
             try container.encode(Kind.settingsSectionMyStars, forKey: .type)
             try value.encode(to: encoder)
-        case .settingsSectionMyToncoins:
-            try container.encode(Kind.settingsSectionMyToncoins, forKey: .type)
+        case .settingsSectionMyGrams:
+            try container.encode(Kind.settingsSectionMyGrams, forKey: .type)
         case .settingsSectionNotifications(let value):
             try container.encode(Kind.settingsSectionNotifications, forKey: .type)
             try value.encode(to: encoder)

@@ -12,7 +12,7 @@ let package = Package(
         .library(name: "TDShim", targets: ["TDShim"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/Swiftgram/TDLibFramework", .exact("1.8.64-49b3bcbb")),
+        .package(url: "https://github.com/Swiftgram/TDLibFramework", .exact("1.8.70-fe61d641")),
     ],
     targets: [
         .target(

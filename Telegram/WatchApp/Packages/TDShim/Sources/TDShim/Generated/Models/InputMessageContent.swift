@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -44,6 +44,9 @@ public indirect enum InputMessageContent: Codable, Equatable, Hashable {
     /// A voice note message
     case inputMessageVoiceNote(InputMessageVoiceNote)
 
+    /// A message with a live location
+    case inputMessageLiveLocation(InputMessageLiveLocation)
+
     /// A message with a location
     case inputMessageLocation(InputMessageLocation)
 
@@ -74,6 +77,12 @@ public indirect enum InputMessageContent: Codable, Equatable, Hashable {
     /// A message with a checklist. Checklists can't be sent to secret chats, channel chats and channel direct messages chats; for Telegram Premium users only
     case inputMessageChecklist(InputMessageChecklist)
 
+    /// A message with an HTML widget; for bots only
+    case inputMessageWidget(InputMessageWidget)
+
+    /// A message with an existing shared widget; for bots only
+    case inputMessageSharedWidget(InputMessageSharedWidget)
+
     /// A forwarded message
     case inputMessageForwarded(InputMessageForwarded)
 
@@ -91,6 +100,7 @@ public indirect enum InputMessageContent: Codable, Equatable, Hashable {
         case inputMessageVideo
         case inputMessageVideoNote
         case inputMessageVoiceNote
+        case inputMessageLiveLocation
         case inputMessageLocation
         case inputMessageVenue
         case inputMessageContact
@@ -101,6 +111,8 @@ public indirect enum InputMessageContent: Codable, Equatable, Hashable {
         case inputMessageStakeDice
         case inputMessageStory
         case inputMessageChecklist
+        case inputMessageWidget
+        case inputMessageSharedWidget
         case inputMessageForwarded
     }
 
@@ -142,6 +154,9 @@ public indirect enum InputMessageContent: Codable, Equatable, Hashable {
         case .inputMessageVoiceNote:
             let value = try InputMessageVoiceNote(from: decoder)
             self = .inputMessageVoiceNote(value)
+        case .inputMessageLiveLocation:
+            let value = try InputMessageLiveLocation(from: decoder)
+            self = .inputMessageLiveLocation(value)
         case .inputMessageLocation:
             let value = try InputMessageLocation(from: decoder)
             self = .inputMessageLocation(value)
@@ -172,6 +187,12 @@ public indirect enum InputMessageContent: Codable, Equatable, Hashable {
         case .inputMessageChecklist:
             let value = try InputMessageChecklist(from: decoder)
             self = .inputMessageChecklist(value)
+        case .inputMessageWidget:
+            let value = try InputMessageWidget(from: decoder)
+            self = .inputMessageWidget(value)
+        case .inputMessageSharedWidget:
+            let value = try InputMessageSharedWidget(from: decoder)
+            self = .inputMessageSharedWidget(value)
         case .inputMessageForwarded:
             let value = try InputMessageForwarded(from: decoder)
             self = .inputMessageForwarded(value)
@@ -211,6 +232,9 @@ public indirect enum InputMessageContent: Codable, Equatable, Hashable {
         case .inputMessageVoiceNote(let value):
             try container.encode(Kind.inputMessageVoiceNote, forKey: .type)
             try value.encode(to: encoder)
+        case .inputMessageLiveLocation(let value):
+            try container.encode(Kind.inputMessageLiveLocation, forKey: .type)
+            try value.encode(to: encoder)
         case .inputMessageLocation(let value):
             try container.encode(Kind.inputMessageLocation, forKey: .type)
             try value.encode(to: encoder)
@@ -241,6 +265,12 @@ public indirect enum InputMessageContent: Codable, Equatable, Hashable {
         case .inputMessageChecklist(let value):
             try container.encode(Kind.inputMessageChecklist, forKey: .type)
             try value.encode(to: encoder)
+        case .inputMessageWidget(let value):
+            try container.encode(Kind.inputMessageWidget, forKey: .type)
+            try value.encode(to: encoder)
+        case .inputMessageSharedWidget(let value):
+            try container.encode(Kind.inputMessageSharedWidget, forKey: .type)
+            try value.encode(to: encoder)
         case .inputMessageForwarded(let value):
             try container.encode(Kind.inputMessageForwarded, forKey: .type)
             try value.encode(to: encoder)
@@ -253,7 +283,7 @@ public indirect enum InputMessageContent: Codable, Equatable, Hashable {
 /// A text message
 public struct InputMessageText: Codable, Equatable, Hashable {
 
-    /// True, if the chat message draft must be deleted
+    /// Pass true to delete message draft in the chat
     public let clearDraft: Bool
 
     /// Options to be used for generation of a link preview; may be null if none; pass null to use default link preview options
@@ -277,93 +307,48 @@ public struct InputMessageText: Codable, Equatable, Hashable {
 /// An animation message (GIF-style).
 public struct InputMessageAnimation: Codable, Equatable, Hashable {
 
-    /// File identifiers of the stickers added to the animation, if applicable
-    public let addedStickerFileIds: [Int]
-
-    /// Animation file to be sent
-    public let animation: InputFile
+    /// The animation to be sent
+    public let animation: InputAnimation
 
     /// Animation caption; pass null to use an empty caption; 0-getOption("message_caption_length_max") characters
     public let caption: FormattedText?
 
-    /// Duration of the animation, in seconds
-    public let duration: Int
-
     /// True, if the animation preview must be covered by a spoiler animation; not supported in secret chats
     public let hasSpoiler: Bool
-
-    /// Height of the animation; may be replaced by the server
-    public let height: Int
 
     /// True, if the caption must be shown above the animation; otherwise, the caption must be shown below the animation; not supported in secret chats
     public let showCaptionAboveMedia: Bool
 
-    /// Animation thumbnail; pass null to skip thumbnail uploading
-    public let thumbnail: InputThumbnail?
-
-    /// Width of the animation; may be replaced by the server
-    public let width: Int
-
 
     public init(
-        addedStickerFileIds: [Int],
-        animation: InputFile,
+        animation: InputAnimation,
         caption: FormattedText?,
-        duration: Int,
         hasSpoiler: Bool,
-        height: Int,
-        showCaptionAboveMedia: Bool,
-        thumbnail: InputThumbnail?,
-        width: Int
+        showCaptionAboveMedia: Bool
     ) {
-        self.addedStickerFileIds = addedStickerFileIds
         self.animation = animation
         self.caption = caption
-        self.duration = duration
         self.hasSpoiler = hasSpoiler
-        self.height = height
         self.showCaptionAboveMedia = showCaptionAboveMedia
-        self.thumbnail = thumbnail
-        self.width = width
     }
 }
 
 /// An audio message
 public struct InputMessageAudio: Codable, Equatable, Hashable {
 
-    /// Thumbnail of the cover for the album; pass null to skip thumbnail uploading
-    public let albumCoverThumbnail: InputThumbnail?
-
-    /// Audio file to be sent
-    public let audio: InputFile
+    /// Audio to be sent
+    public let audio: InputAudio
 
     /// Audio caption; pass null to use an empty caption; 0-getOption("message_caption_length_max") characters
     public let caption: FormattedText?
 
-    /// Duration of the audio, in seconds; may be replaced by the server
-    public let duration: Int
-
-    /// Performer of the audio; 0-64 characters, may be replaced by the server
-    public let performer: String
-
-    /// Title of the audio; 0-64 characters; may be replaced by the server
-    public let title: String
-
 
     public init(
-        albumCoverThumbnail: InputThumbnail?,
-        audio: InputFile,
-        caption: FormattedText?,
-        duration: Int,
-        performer: String,
-        title: String
+        audio: InputAudio,
+        caption: FormattedText?
     ) {
-        self.albumCoverThumbnail = albumCoverThumbnail
         self.audio = audio
         self.caption = caption
-        self.duration = duration
-        self.performer = performer
-        self.title = title
     }
 }
 
@@ -373,26 +358,16 @@ public struct InputMessageDocument: Codable, Equatable, Hashable {
     /// Document caption; pass null to use an empty caption; 0-getOption("message_caption_length_max") characters
     public let caption: FormattedText?
 
-    /// Pass true to disable automatic file type detection and send the document as a file. Always true for files sent to secret chats
-    public let disableContentTypeDetection: Bool
-
     /// Document to be sent
-    public let document: InputFile
-
-    /// Document thumbnail; pass null to skip thumbnail uploading
-    public let thumbnail: InputThumbnail?
+    public let document: InputDocument
 
 
     public init(
         caption: FormattedText?,
-        disableContentTypeDetection: Bool,
-        document: InputFile,
-        thumbnail: InputThumbnail?
+        document: InputDocument
     ) {
         self.caption = caption
-        self.disableContentTypeDetection = disableContentTypeDetection
         self.document = document
-        self.thumbnail = thumbnail
     }
 }
 
@@ -433,20 +408,14 @@ public struct InputMessagePaidMedia: Codable, Equatable, Hashable {
 /// A photo message
 public struct InputMessagePhoto: Codable, Equatable, Hashable {
 
-    /// File identifiers of the stickers added to the photo, if applicable
-    public let addedStickerFileIds: [Int]
-
     /// Photo caption; pass null to use an empty caption; 0-getOption("message_caption_length_max") characters
     public let caption: FormattedText?
 
     /// True, if the photo preview must be covered by a spoiler animation; not supported in secret chats
     public let hasSpoiler: Bool
 
-    /// Photo height
-    public let height: Int
-
-    /// Photo to send. The photo must be at most 10 MB in size. The photo's width and height must not exceed 10000 in total. Width and height ratio must be at most 20
-    public let photo: InputFile
+    /// Photo to be sent
+    public let photo: InputPhoto
 
     /// Photo self-destruct type; pass null if none; private chats only
     public let selfDestructType: MessageSelfDestructType?
@@ -454,38 +423,19 @@ public struct InputMessagePhoto: Codable, Equatable, Hashable {
     /// True, if the caption must be shown above the photo; otherwise, the caption must be shown below the photo; not supported in secret chats
     public let showCaptionAboveMedia: Bool
 
-    /// Photo thumbnail to be sent; pass null to skip thumbnail uploading. The thumbnail is sent to the other party only in secret chats
-    public let thumbnail: InputThumbnail?
-
-    /// Video of the live photo; not supported in secret chats; pass null if the photo isn't a live photo
-    public let video: InputFile?
-
-    /// Photo width
-    public let width: Int
-
 
     public init(
-        addedStickerFileIds: [Int],
         caption: FormattedText?,
         hasSpoiler: Bool,
-        height: Int,
-        photo: InputFile,
+        photo: InputPhoto,
         selfDestructType: MessageSelfDestructType?,
-        showCaptionAboveMedia: Bool,
-        thumbnail: InputThumbnail?,
-        video: InputFile?,
-        width: Int
+        showCaptionAboveMedia: Bool
     ) {
-        self.addedStickerFileIds = addedStickerFileIds
         self.caption = caption
         self.hasSpoiler = hasSpoiler
-        self.height = height
         self.photo = photo
         self.selfDestructType = selfDestructType
         self.showCaptionAboveMedia = showCaptionAboveMedia
-        self.thumbnail = thumbnail
-        self.video = video
-        self.width = width
     }
 }
 
@@ -495,54 +445,27 @@ public struct InputMessageSticker: Codable, Equatable, Hashable {
     /// Emoji used to choose the sticker
     public let emoji: String
 
-    /// Sticker height
-    public let height: Int
-
     /// Sticker to be sent
-    public let sticker: InputFile
-
-    /// Sticker thumbnail; pass null to skip thumbnail uploading
-    public let thumbnail: InputThumbnail?
-
-    /// Sticker width
-    public let width: Int
+    public let sticker: InputSticker
 
 
     public init(
         emoji: String,
-        height: Int,
-        sticker: InputFile,
-        thumbnail: InputThumbnail?,
-        width: Int
+        sticker: InputSticker
     ) {
         self.emoji = emoji
-        self.height = height
         self.sticker = sticker
-        self.thumbnail = thumbnail
-        self.width = width
     }
 }
 
 /// A video message
 public struct InputMessageVideo: Codable, Equatable, Hashable {
 
-    /// File identifiers of the stickers added to the video, if applicable
-    public let addedStickerFileIds: [Int]
-
     /// Video caption; pass null to use an empty caption; 0-getOption("message_caption_length_max") characters
     public let caption: FormattedText?
 
-    /// Cover of the video; pass null to skip cover uploading; not supported in secret chats and for self-destructing messages
-    public let cover: InputFile?
-
-    /// Duration of the video, in seconds
-    public let duration: Int
-
     /// True, if the video preview must be covered by a spoiler animation; not supported in secret chats
     public let hasSpoiler: Bool
-
-    /// Video height
-    public let height: Int
 
     /// Video self-destruct type; pass null if none; private chats only
     public let selfDestructType: MessageSelfDestructType?
@@ -550,83 +473,40 @@ public struct InputMessageVideo: Codable, Equatable, Hashable {
     /// True, if the caption must be shown above the video; otherwise, the caption must be shown below the video; not supported in secret chats
     public let showCaptionAboveMedia: Bool
 
-    /// Timestamp from which the video playing must start, in seconds
-    public let startTimestamp: Int
-
-    /// True, if the video is expected to be streamed
-    public let supportsStreaming: Bool
-
-    /// Video thumbnail; pass null to skip thumbnail uploading
-    public let thumbnail: InputThumbnail?
-
-    /// Video to be sent. The video is expected to be re-encoded to MPEG4 format with H.264 codec by the sender
-    public let video: InputFile
-
-    /// Video width
-    public let width: Int
+    /// Video to be sent
+    public let video: InputVideo
 
 
     public init(
-        addedStickerFileIds: [Int],
         caption: FormattedText?,
-        cover: InputFile?,
-        duration: Int,
         hasSpoiler: Bool,
-        height: Int,
         selfDestructType: MessageSelfDestructType?,
         showCaptionAboveMedia: Bool,
-        startTimestamp: Int,
-        supportsStreaming: Bool,
-        thumbnail: InputThumbnail?,
-        video: InputFile,
-        width: Int
+        video: InputVideo
     ) {
-        self.addedStickerFileIds = addedStickerFileIds
         self.caption = caption
-        self.cover = cover
-        self.duration = duration
         self.hasSpoiler = hasSpoiler
-        self.height = height
         self.selfDestructType = selfDestructType
         self.showCaptionAboveMedia = showCaptionAboveMedia
-        self.startTimestamp = startTimestamp
-        self.supportsStreaming = supportsStreaming
-        self.thumbnail = thumbnail
         self.video = video
-        self.width = width
     }
 }
 
 /// A video note message
 public struct InputMessageVideoNote: Codable, Equatable, Hashable {
 
-    /// Duration of the video, in seconds; 0-60
-    public let duration: Int
-
-    /// Video width and height; must be positive and not greater than 640
-    public let length: Int
-
     /// Video note self-destruct type; may be null if none; pass null if none; private chats only
     public let selfDestructType: MessageSelfDestructType?
 
-    /// Video thumbnail; may be null if empty; pass null to skip thumbnail uploading
-    public let thumbnail: InputThumbnail?
-
-    /// Video note to be sent. The video is expected to be encoded to MPEG4 format with H.264 codec and have no data outside of the visible circle
-    public let videoNote: InputFile
+    /// Video note to be sent
+    public let videoNote: InputVideoNote
 
 
     public init(
-        duration: Int,
-        length: Int,
         selfDestructType: MessageSelfDestructType?,
-        thumbnail: InputThumbnail?,
-        videoNote: InputFile
+        videoNote: InputVideoNote
     ) {
-        self.duration = duration
-        self.length = length
         self.selfDestructType = selfDestructType
-        self.thumbnail = thumbnail
         self.videoNote = videoNote
     }
 }
@@ -634,63 +514,48 @@ public struct InputMessageVideoNote: Codable, Equatable, Hashable {
 /// A voice note message
 public struct InputMessageVoiceNote: Codable, Equatable, Hashable {
 
-    /// Voice note caption; may be null if empty; pass null to use an empty caption; 0-getOption("message_caption_length_max") characters
+    /// Voice note caption; pass null to use an empty caption; 0-getOption("message_caption_length_max") characters
     public let caption: FormattedText?
-
-    /// Duration of the voice note, in seconds
-    public let duration: Int
 
     /// Voice note self-destruct type; may be null if none; pass null if none; private chats only
     public let selfDestructType: MessageSelfDestructType?
 
-    /// Voice note to be sent. The voice note must be encoded with the Opus codec and stored inside an OGG container with a single audio channel, or be in MP3 or M4A format as regular audio
-    public let voiceNote: InputFile
-
-    /// Waveform representation of the voice note in 5-bit format
-    public let waveform: Data
+    /// Voice note to be sent
+    public let voiceNote: InputVoiceNote
 
 
     public init(
         caption: FormattedText?,
-        duration: Int,
         selfDestructType: MessageSelfDestructType?,
-        voiceNote: InputFile,
-        waveform: Data
+        voiceNote: InputVoiceNote
     ) {
         self.caption = caption
-        self.duration = duration
         self.selfDestructType = selfDestructType
         self.voiceNote = voiceNote
-        self.waveform = waveform
+    }
+}
+
+/// A message with a live location
+public struct InputMessageLiveLocation: Codable, Equatable, Hashable {
+
+    /// Initial state of the live location to be sent. Live period must be equal to 0x7FFFFFFF for permanent live locations, or between 60 and 86400
+    public let location: LiveLocation
+
+
+    public init(location: LiveLocation) {
+        self.location = location
     }
 }
 
 /// A message with a location
 public struct InputMessageLocation: Codable, Equatable, Hashable {
 
-    /// For live locations, a direction in which the location moves, in degrees; 1-360. Pass 0 if unknown
-    public let heading: Int
-
-    /// Period for which the location can be updated, in seconds; must be between 60 and 86400 for a temporary live location, 0x7FFFFFFF for permanent live location, and 0 otherwise
-    public let livePeriod: Int
-
     /// Location to be sent
     public let location: Location
 
-    /// For live locations, a maximum distance to another chat member for proximity alerts, in meters (0-100000). Pass 0 if the notification is disabled. Can't be enabled in channels and Saved Messages
-    public let proximityAlertRadius: Int
 
-
-    public init(
-        heading: Int,
-        livePeriod: Int,
-        location: Location,
-        proximityAlertRadius: Int
-    ) {
-        self.heading = heading
-        self.livePeriod = livePeriod
+    public init(location: Location) {
         self.location = location
-        self.proximityAlertRadius = proximityAlertRadius
     }
 }
 
@@ -721,7 +586,7 @@ public struct InputMessageContact: Codable, Equatable, Hashable {
 /// A dice message
 public struct InputMessageDice: Codable, Equatable, Hashable {
 
-    /// True, if the chat message draft must be deleted
+    /// Pass true to delete message draft in the chat
     public let clearDraft: Bool
 
     /// Emoji on which the dice throw animation is based
@@ -855,8 +720,8 @@ public struct InputMessagePoll: Codable, Equatable, Hashable {
     /// True, if the poll needs to be sent already closed; for bots only
     public let isClosed: Bool
 
-    /// Media attached to the poll; pass null if none. Must be one of the following types: inputMessageAnimation, inputMessageAudio, inputMessageDocument, non-live inputMessageLocation, inputMessagePhoto, inputMessageVenue, or inputMessageVideo without caption
-    public let media: InputMessageContent?
+    /// Media attached to the poll; pass null if none. Must be one of the following types: inputPollMediaAnimation, inputPollMediaAudio, inputPollMediaDocument, inputPollMediaLocation, inputPollMediaPhoto, inputPollMediaVenue, or inputPollMediaVideo without caption
+    public let media: InputPollMedia?
 
     /// True, if only the users that are members of the chat for more than a day will be able to vote; for channel chats only
     public let membersOnly: Bool
@@ -886,7 +751,7 @@ public struct InputMessagePoll: Codable, Equatable, Hashable {
         hideResultsUntilCloses: Bool,
         isAnonymous: Bool,
         isClosed: Bool,
-        media: InputMessageContent?,
+        media: InputPollMedia?,
         membersOnly: Bool,
         openPeriod: Int,
         options: [InputPollOption],
@@ -915,11 +780,11 @@ public struct InputMessagePoll: Codable, Equatable, Hashable {
 /// A stake dice message
 public struct InputMessageStakeDice: Codable, Equatable, Hashable {
 
-    /// True, if the chat message draft must be deleted
+    /// Pass true to delete message draft in the chat
     public let clearDraft: Bool
 
-    /// The Toncoin amount that will be staked; in the smallest units of the currency. Must be in the range getOption("stake_dice_stake_amount_min")-getOption("stake_dice_stake_amount_max")
-    public let stakeToncoinAmount: Int64
+    /// The TON Gram amount that will be staked; in the smallest units of the currency. Must be in the range getOption("stake_dice_stake_amount_min")-getOption("stake_dice_stake_amount_max")
+    public let stakeGramAmount: Int64
 
     /// Hash of the stake dice state. The state hash can be used only if it was received recently enough. Otherwise, a new state must be requested using getStakeDiceState
     public let stateHash: String
@@ -927,11 +792,11 @@ public struct InputMessageStakeDice: Codable, Equatable, Hashable {
 
     public init(
         clearDraft: Bool,
-        stakeToncoinAmount: Int64,
+        stakeGramAmount: Int64,
         stateHash: String
     ) {
         self.clearDraft = clearDraft
-        self.stakeToncoinAmount = stakeToncoinAmount
+        self.stakeGramAmount = stakeGramAmount
         self.stateHash = stateHash
     }
 }
@@ -964,6 +829,89 @@ public struct InputMessageChecklist: Codable, Equatable, Hashable {
 
     public init(checklist: InputChecklist) {
         self.checklist = checklist
+    }
+}
+
+/// A message with an HTML widget; for bots only
+public struct InputMessageWidget: Codable, Equatable, Hashable {
+
+    /// Pass true to allow the widget to send queries to the bot
+    public let allowQueries: Bool
+
+    /// Widget caption; pass null to use an empty caption; 0-getOption("message_caption_length_max") characters
+    public let caption: FormattedText?
+
+    /// Data of the widget, which is specific to the chat
+    public let chatData: String
+
+    /// Height of the widget; 0 if the height of the widget isn't fixed
+    public let height: Int
+
+    /// HTML code of the widget; 1-32768 bytes; must not exceed 4096 bytes when compressed by zlib with the maximal compression level
+    public let html: String
+
+    /// Pass true to create a shared widget, which can be sent again by its identifier
+    public let isShared: Bool
+
+    /// Public data of the widget, which will be available in copies and forwards of the message
+    public let publicData: String
+
+    /// True, if the caption must be shown above the widget; otherwise, the caption must be shown below the widget
+    public let showCaptionAboveMedia: Bool
+
+    /// Width of the widget; 0 if the widget must occupy the whole width of the message bubble
+    public let width: Int
+
+
+    public init(
+        allowQueries: Bool,
+        caption: FormattedText?,
+        chatData: String,
+        height: Int,
+        html: String,
+        isShared: Bool,
+        publicData: String,
+        showCaptionAboveMedia: Bool,
+        width: Int
+    ) {
+        self.allowQueries = allowQueries
+        self.caption = caption
+        self.chatData = chatData
+        self.height = height
+        self.html = html
+        self.isShared = isShared
+        self.publicData = publicData
+        self.showCaptionAboveMedia = showCaptionAboveMedia
+        self.width = width
+    }
+}
+
+/// A message with an existing shared widget; for bots only
+public struct InputMessageSharedWidget: Codable, Equatable, Hashable {
+
+    /// Widget caption; pass null to use an empty caption; 0-getOption("message_caption_length_max") characters
+    public let caption: FormattedText?
+
+    /// Data of the widget, which is specific to the chat
+    public let chatData: String
+
+    /// True, if the caption must be shown above the widget; otherwise, the caption must be shown below the widget
+    public let showCaptionAboveMedia: Bool
+
+    /// Identifier of the shared widget
+    public let widgetId: TdInt64
+
+
+    public init(
+        caption: FormattedText?,
+        chatData: String,
+        showCaptionAboveMedia: Bool,
+        widgetId: TdInt64
+    ) {
+        self.caption = caption
+        self.chatData = chatData
+        self.showCaptionAboveMedia = showCaptionAboveMedia
+        self.widgetId = widgetId
     }
 }
 

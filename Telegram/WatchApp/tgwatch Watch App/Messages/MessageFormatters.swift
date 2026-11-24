@@ -17,7 +17,7 @@ func messageBody(_ content: MessageContent) -> String {
     case .messageAudio(let m):   return m.caption.text
     case .messageSticker:        return ""
     case .messageDocument:       return "Document"
-    case .messageLocation:       return ""
+    case .messageLocation, .messageLiveLocation: return ""
     case .messageVenue:          return ""
     case .messageContact:        return "Contact"
     case .messagePoll:           return ""
@@ -38,7 +38,7 @@ func isUnsupportedContent(_ content: MessageContent) -> Bool {
     switch content {
     case .messageText, .messagePhoto, .messageVideo, .messageVideoNote,
          .messageVoiceNote, .messageAudio, .messageSticker, .messageDocument,
-         .messageLocation, .messageVenue, .messageContact, .messagePoll:
+         .messageLocation, .messageLiveLocation, .messageVenue, .messageContact, .messagePoll:
         return false
     default:
         return true

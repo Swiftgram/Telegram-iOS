@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -103,11 +103,17 @@ public struct UserTypeBot: Codable, Equatable, Hashable {
     /// True, if the bot has the main Web App
     public let hasMainWebApp: Bool
 
+    /// True, if the bot has topics, which are shown in a sidebar
+    public let hasTopicSidebar: Bool
+
     /// True, if the bot has topics
     public let hasTopics: Bool
 
     /// Placeholder for inline queries (displayed on the application input field)
     public let inlineQueryPlaceholder: String
+
+    /// True, if the bot can be set as a guard bot in supergroup chats
+    public let isGuard: Bool
 
     /// True, if the bot supports inline queries
     public let isInline: Bool
@@ -129,8 +135,10 @@ public struct UserTypeBot: Codable, Equatable, Hashable {
         canManageBots: Bool,
         canReadAllGroupMessages: Bool,
         hasMainWebApp: Bool,
+        hasTopicSidebar: Bool,
         hasTopics: Bool,
         inlineQueryPlaceholder: String,
+        isGuard: Bool,
         isInline: Bool,
         needLocation: Bool,
         supportsGuestQueries: Bool
@@ -144,8 +152,10 @@ public struct UserTypeBot: Codable, Equatable, Hashable {
         self.canManageBots = canManageBots
         self.canReadAllGroupMessages = canReadAllGroupMessages
         self.hasMainWebApp = hasMainWebApp
+        self.hasTopicSidebar = hasTopicSidebar
         self.hasTopics = hasTopics
         self.inlineQueryPlaceholder = inlineQueryPlaceholder
+        self.isGuard = isGuard
         self.isInline = isInline
         self.needLocation = needLocation
         self.supportsGuestQueries = supportsGuestQueries

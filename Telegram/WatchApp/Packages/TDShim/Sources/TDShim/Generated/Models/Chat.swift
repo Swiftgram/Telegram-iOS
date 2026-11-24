@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -63,6 +63,9 @@ public struct Chat: Codable, Equatable, Hashable, Identifiable {
 
     /// True, if the chat has scheduled messages
     public let hasScheduledMessages: Bool
+
+    /// True, if the chat has welcome messages; for chat administrators with can_change_info administrator right only
+    public let hasWelcomeMessages: Bool
 
     /// Chat unique identifier
     public let id: Int64
@@ -161,6 +164,7 @@ public struct Chat: Codable, Equatable, Hashable, Identifiable {
         emojiStatus: EmojiStatus?,
         hasProtectedContent: Bool,
         hasScheduledMessages: Bool,
+        hasWelcomeMessages: Bool,
         id: Int64,
         isMarkedAsUnread: Bool,
         isTranslatable: Bool,
@@ -205,6 +209,7 @@ public struct Chat: Codable, Equatable, Hashable, Identifiable {
         self.emojiStatus = emojiStatus
         self.hasProtectedContent = hasProtectedContent
         self.hasScheduledMessages = hasScheduledMessages
+        self.hasWelcomeMessages = hasWelcomeMessages
         self.id = id
         self.isMarkedAsUnread = isMarkedAsUnread
         self.isTranslatable = isTranslatable

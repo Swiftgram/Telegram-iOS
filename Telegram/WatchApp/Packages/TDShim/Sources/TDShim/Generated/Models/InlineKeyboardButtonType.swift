@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -16,7 +16,7 @@ public indirect enum InlineKeyboardButtonType: Codable, Equatable, Hashable {
     /// A button that opens a specified URL
     case inlineKeyboardButtonTypeUrl(InlineKeyboardButtonTypeUrl)
 
-    /// A button that opens a specified URL and automatically authorize the current user by calling getLoginUrlInfo
+    /// A button that opens a specified URL and automatically authorize the current user by calling getLoginUrlInfo; not supported in ephemeral messages
     case inlineKeyboardButtonTypeLoginUrl(InlineKeyboardButtonTypeLoginUrl)
 
     /// A button that opens a Web App by calling openWebApp
@@ -43,6 +43,9 @@ public indirect enum InlineKeyboardButtonType: Codable, Equatable, Hashable {
     /// A button that copies specified text to clipboard
     case inlineKeyboardButtonTypeCopyText(InlineKeyboardButtonTypeCopyText)
 
+    /// A disabled button
+    case inlineKeyboardButtonTypeDisabled
+
     /// Decoded when the @type is not one of the known cases (forward-compatible).
     case unsupported
 
@@ -57,6 +60,7 @@ public indirect enum InlineKeyboardButtonType: Codable, Equatable, Hashable {
         case inlineKeyboardButtonTypeBuy
         case inlineKeyboardButtonTypeUser
         case inlineKeyboardButtonTypeCopyText
+        case inlineKeyboardButtonTypeDisabled
     }
 
     public init(from decoder: Decoder) throws {
@@ -95,6 +99,8 @@ public indirect enum InlineKeyboardButtonType: Codable, Equatable, Hashable {
         case .inlineKeyboardButtonTypeCopyText:
             let value = try InlineKeyboardButtonTypeCopyText(from: decoder)
             self = .inlineKeyboardButtonTypeCopyText(value)
+        case .inlineKeyboardButtonTypeDisabled:
+            self = .inlineKeyboardButtonTypeDisabled
         }
     }
 
@@ -129,6 +135,8 @@ public indirect enum InlineKeyboardButtonType: Codable, Equatable, Hashable {
         case .inlineKeyboardButtonTypeCopyText(let value):
             try container.encode(Kind.inlineKeyboardButtonTypeCopyText, forKey: .type)
             try value.encode(to: encoder)
+        case .inlineKeyboardButtonTypeDisabled:
+            try container.encode(Kind.inlineKeyboardButtonTypeDisabled, forKey: .type)
         case .unsupported:
             try container.encode("unsupported", forKey: .type)
         }
@@ -147,7 +155,7 @@ public struct InlineKeyboardButtonTypeUrl: Codable, Equatable, Hashable {
     }
 }
 
-/// A button that opens a specified URL and automatically authorize the current user by calling getLoginUrlInfo
+/// A button that opens a specified URL and automatically authorize the current user by calling getLoginUrlInfo; not supported in ephemeral messages
 public struct InlineKeyboardButtonTypeLoginUrl: Codable, Equatable, Hashable, Identifiable {
 
     /// If non-empty, new text of the button in forwarded messages

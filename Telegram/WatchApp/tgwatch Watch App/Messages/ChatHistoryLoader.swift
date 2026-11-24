@@ -159,10 +159,12 @@ struct TDLibChatHistoryLoader: ChatHistoryLoader {
             chatId: chatId,
             inputMessageContent: .inputMessageVoiceNote(InputMessageVoiceNote(
                 caption: nil,
-                duration: duration,
                 selfDestructType: nil,
-                voiceNote: .inputFileLocal(InputFileLocal(path: fileURL.path)),
-                waveform: waveform
+                voiceNote: InputVoiceNote(
+                    duration: duration,
+                    voiceNote: .inputFileLocal(InputFileLocal(path: fileURL.path)),
+                    waveform: waveform
+                )
             )),
             options: nil,
             replyMarkup: nil,
@@ -173,13 +175,12 @@ struct TDLibChatHistoryLoader: ChatHistoryLoader {
 
     func setChatDraftMessage(chatId: Int64, draftText: String) async throws {
         let draft: DraftMessage? = draftText.isEmpty ? nil : DraftMessage(
-            date: Int(Foundation.Date().timeIntervalSince1970),
-            effectId: 0,
-            inputMessageText: .inputMessageText(InputMessageText(
-                clearDraft: false,
+            content: .draftMessageContentText(DraftMessageContentText(
                 linkPreviewOptions: nil,
                 text: FormattedText(entities: [], text: draftText)
             )),
+            date: Int(Foundation.Date().timeIntervalSince1970),
+            effectId: 0,
             replyTo: nil,
             suggestedPostInfo: nil
         )
@@ -208,10 +209,12 @@ struct TDLibChatHistoryLoader: ChatHistoryLoader {
             chatId: chatId,
             inputMessageContent: .inputMessageSticker(InputMessageSticker(
                 emoji: emoji,
-                height: height,
-                sticker: .inputFileRemote(InputFileRemote(id: remoteFileId)),
-                thumbnail: nil,
-                width: width
+                sticker: InputSticker(
+                    height: height,
+                    sticker: .inputFileRemote(InputFileRemote(id: remoteFileId)),
+                    thumbnail: nil,
+                    width: width
+                )
             )),
             options: nil,
             replyMarkup: nil,
@@ -224,10 +227,7 @@ struct TDLibChatHistoryLoader: ChatHistoryLoader {
         try await client.sendMessage(
             chatId: chatId,
             inputMessageContent: .inputMessageLocation(InputMessageLocation(
-                heading: 0,
-                livePeriod: 0,
-                location: Location(horizontalAccuracy: 0, latitude: latitude, longitude: longitude),
-                proximityAlertRadius: 0
+                location: Location(horizontalAccuracy: 0, latitude: latitude, longitude: longitude)
             )),
             options: nil,
             replyMarkup: nil,

@@ -3,8 +3,8 @@
 //  tl2swift
 //
 //  Generated automatically. Any changes will be lost!
-//  Based on TDLib 1.8.64-49b3bcbb-49b3bcbb
-//  https://github.com/tdlib/td/tree/49b3bcbb
+//  Based on TDLib 1.8.70-fe61d641-fe61d641
+//  https://github.com/tdlib/td/tree/fe61d641
 //
 
 import Foundation
@@ -13,14 +13,14 @@ import Foundation
 /// Contains information about a message draft
 public struct DraftMessage: Codable, Equatable, Hashable {
 
+    /// Content of the message draft
+    public let content: DraftMessageContent
+
     /// Point in time (Unix timestamp) when the draft was created
     public let date: Int
 
     /// Identifier of the effect to apply to the message when it is sent; 0 if none
     public let effectId: TdInt64
-
-    /// Content of the message draft; must be of the type inputMessageText, inputMessageVideoNote, or inputMessageVoiceNote
-    public let inputMessageText: InputMessageContent
 
     /// Information about the message to be replied; inputMessageReplyToStory is unsupported; may be null if none
     public let replyTo: InputMessageReplyTo?
@@ -30,15 +30,15 @@ public struct DraftMessage: Codable, Equatable, Hashable {
 
 
     public init(
+        content: DraftMessageContent,
         date: Int,
         effectId: TdInt64,
-        inputMessageText: InputMessageContent,
         replyTo: InputMessageReplyTo?,
         suggestedPostInfo: InputSuggestedPostInfo?
     ) {
+        self.content = content
         self.date = date
         self.effectId = effectId
-        self.inputMessageText = inputMessageText
         self.replyTo = replyTo
         self.suggestedPostInfo = suggestedPostInfo
     }
