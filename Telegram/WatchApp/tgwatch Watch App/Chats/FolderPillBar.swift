@@ -24,6 +24,26 @@ struct FolderPillBar: View {
     let onUserInteraction: () -> Void
 
     var body: some View {
+        // onScrollGeometryChange observes content-offset changes directly on this ScrollView,
+        // so it fires even when outer gesture recognizers are cancelled.
+        if #available(watchOS 11.0, *) {
+            scrollBody.onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.x
+            } action: { _, _ in
+                pillLogger.info("folderbar.interact reason=scroll")
+                onUserInteraction()
+            }
+        } else {
+            scrollBody.simultaneousGesture(
+                DragGesture(minimumDistance: 1).onChanged { _ in
+                    pillLogger.info("folderbar.interact reason=scroll")
+                    onUserInteraction()
+                }
+            )
+        }
+    }
+
+    private var scrollBody: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 ForEach(pills) { pill in
@@ -75,16 +95,5 @@ struct FolderPillBar: View {
         }
         .id("folderPillBar")
         .focusable(false)
-        // Re-assert outer List crown focus whenever the user horizontally pans the pill bar.
-        // A horizontal drag moves watchOS crown focus to this inner ScrollView (bypassing the
-        // simultaneousGesture(DragGesture) on the List row, which the pan recognizer cancels).
-        // onScrollGeometryChange observes content-offset changes directly on this ScrollView,
-        // so it fires even when outer gesture recognizers are cancelled.
-        .onScrollGeometryChange(for: CGFloat.self) { geometry in
-            geometry.contentOffset.x
-        } action: { _, _ in
-            pillLogger.info("folderbar.interact reason=scroll")
-            onUserInteraction()
-        }
     }
 }
